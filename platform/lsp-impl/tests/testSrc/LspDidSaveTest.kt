@@ -3,10 +3,7 @@ package com.intellij.platform.lsp
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.common.FakeLspClientDescriptor
-import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -40,7 +37,6 @@ class LspDidSaveTest {
 
   @Nested
   inner class DidSaveWithoutText {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
@@ -53,7 +49,7 @@ class LspDidSaveTest {
     @Test
     fun `didSave notification does not include text when includeText is false`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "initial content").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectNotification(serverSession.DID_SAVE) {
@@ -73,7 +69,6 @@ class LspDidSaveTest {
 
   @Nested
   inner class DidSaveWithText {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
@@ -86,7 +81,7 @@ class LspDidSaveTest {
     @Test
     fun `didSave notification includes text when includeText is true`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "initial content").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       val modifiedText = "modified content"
@@ -117,7 +112,6 @@ class LspDidSaveTest {
 
     private val codeInsightFixture2 by codeInsightFixture(projectFixture2, tempDirFixture2)
 
-    @Suppress("unused")
     private val fakeLspIntegration1 by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
@@ -127,7 +121,6 @@ class LspDidSaveTest {
       },
     )
 
-    @Suppress("unused")
     private val fakeLspIntegration2 by projectFixture2.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
@@ -141,20 +134,15 @@ class LspDidSaveTest {
     fun `didSave notification is sent only once when two projects are open`(): Unit = timeoutRunBlocking {
       // Open a file in project1 and start LSP server for it
       val virtualFile1 = codeInsightFixture.configureByText("test1.txt", "content1").virtualFile
-      val serverSession1 = configureServerSession(project, virtualFile1)
+      val serverSession1 = fakeLspIntegration1.serverSession(virtualFile1)
 
       // Open a file in project2 and start LSP server for it
       val virtualFile2 = codeInsightFixture2.configureByText("test2.txt", "content2").virtualFile
-      configureServerSession(project2, virtualFile2)
+      fakeLspIntegration2.serverSession(virtualFile2)
 
       // Get the fake servers for both projects to track notifications
-      val clients1 = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
-      val descriptor1 = clients1.first().descriptor as FakeLspClientDescriptor
-      val fakeServer1 = descriptor1.server
-
-      val clients2 = LspClientManager.getInstance(project2).getClients(FakeLspIntegrationProvider::class.java)
-      val descriptor2 = clients2.first().descriptor as FakeLspClientDescriptor
-      val fakeServer2 = descriptor2.server
+      val fakeServer1 = (fakeLspIntegration1.client.descriptor as FakeLspClientDescriptor).server
+      val fakeServer2 = (fakeLspIntegration2.client.descriptor as FakeLspClientDescriptor).server
 
       val fileUri1 = serverSession1.fileUri(virtualFile1)
 

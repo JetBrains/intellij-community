@@ -4,7 +4,6 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.backend.documentation.DocumentationData
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -40,7 +39,6 @@ internal class LspHoverTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       hoverProvider = Either.forLeft(true)
@@ -52,7 +50,7 @@ internal class LspHoverTest {
     @Test
     fun `hover returns content for symbol`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.HOVER, { it.textDocument.uri == fileUri }) {
@@ -73,7 +71,7 @@ internal class LspHoverTest {
     @Test
     fun `hover returns null when no information available`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.HOVER, { it.textDocument.uri == fileUri }) {
@@ -95,7 +93,7 @@ internal class LspHoverTest {
     @Test
     fun `hover with plaintext content`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.HOVER, { it.textDocument.uri == fileUri }) {
@@ -116,7 +114,7 @@ internal class LspHoverTest {
     @Test
     fun `hover with markdown content`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.HOVER, { it.textDocument.uri == fileUri }) {
@@ -139,7 +137,7 @@ internal class LspHoverTest {
     @Test
     fun `hover with MarkedString content`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       @Suppress("DEPRECATION")
@@ -162,7 +160,7 @@ internal class LspHoverTest {
     @Test
     fun `hover with multiple MarkedString contents`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       @Suppress("DEPRECATION")
@@ -188,7 +186,7 @@ internal class LspHoverTest {
     @Test
     fun `hover with MarkupContent`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.HOVER, { it.textDocument.uri == fileUri }) {

@@ -11,11 +11,8 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.UnansweredRequest
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
-import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.completion.LspCompletionObject
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -68,7 +65,6 @@ internal class LspCompletionTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       completionProvider = CompletionOptions().apply {
@@ -101,7 +97,7 @@ internal class LspCompletionTest {
     @Test
     fun `basic completion returns items from server`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -120,7 +116,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion item kinds are correctly mapped`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -150,7 +146,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion items with textEdit are applied correctly`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -175,7 +171,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion items without textEdit use insertText`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -200,7 +196,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion items fall back to label when no insertText`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -228,7 +224,7 @@ internal class LspCompletionTest {
       val autoPopupTester = CompletionAutoPopupTester(codeInsightFixture)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, {
         it.textDocument.uri == serverSession.fileUri(virtualFile)
@@ -248,7 +244,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion item resolve fetches additional details`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -282,7 +278,7 @@ internal class LspCompletionTest {
     @Test
     fun `resolved item updates presentation`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -320,7 +316,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion prefix calculated from textEdit range`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hel<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -346,7 +342,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion item strikeout for deprecated tag`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -368,7 +364,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion item strikeout for deprecated property`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       @Suppress("DEPRECATION")
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
@@ -391,7 +387,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion item tailText from labelDetails detail`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -415,7 +411,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion item typeText from labelDetails description`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -439,7 +435,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion item typeText falls back to detail`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -464,7 +460,7 @@ internal class LspCompletionTest {
     @Test
     fun `plaintext format completion items inserted as-is`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -493,7 +489,7 @@ internal class LspCompletionTest {
     @Test
     fun `adjustIndentation insert text mode adjusts whitespace`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "  <caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -521,7 +517,7 @@ internal class LspCompletionTest {
     @Test
     fun `asIs insert text mode preserves whitespace`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "  <caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -552,7 +548,7 @@ internal class LspCompletionTest {
     @Test
     fun `completion item with additionalTextEdits applies all edits`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -583,7 +579,7 @@ internal class LspCompletionTest {
     @Test
     fun `default editRange is applied with textEditText or label`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hel<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forRight(CompletionList(false, listOf(
@@ -631,7 +627,7 @@ internal class LspCompletionTest {
     @Test
     fun `default Snippet insertTextFormat is applied on insertion`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forRight(CompletionList(false, listOf(
@@ -758,7 +754,7 @@ internal class LspCompletionTest {
     @Test
     fun `merged data is sent in completionItem resolve request`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forRight(CompletionList(false, listOf(
@@ -785,7 +781,7 @@ internal class LspCompletionTest {
       serverResponse: CompletionList,
     ): Map<String, CompletionItem> {
       val virtualFile = codeInsightFixture.configureByText("test.txt", documentText).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forRight(serverResponse)
       }
@@ -812,7 +808,7 @@ internal class LspCompletionTest {
     @Test
     fun `cancelled completion sends cancelRequest to the server`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       val pendingResponse = UnansweredRequest()
       val requestArrived = serverSession.expectRequest(
@@ -820,8 +816,7 @@ internal class LspCompletionTest {
         { it.textDocument.uri == serverSession.fileUri(virtualFile) },
       ) { pendingResponse.hold() }
 
-      val requestExecutor = LspClientManagerImpl.getInstanceImpl(project)
-        .getClients(FakeLspIntegrationProvider::class.java).first().requestExecutor
+      val requestExecutor = fakeLspIntegration.client.requestExecutor
 
       val indicator = EmptyProgressIndicator()
       val caller = launch(Dispatchers.IO) {

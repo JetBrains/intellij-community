@@ -19,7 +19,6 @@ import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.lsp.common.FakeLspServerSession
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -71,7 +70,6 @@ internal class LspDocumentLinkTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       documentLinkProvider = DocumentLinkOptions(true)
@@ -133,7 +131,7 @@ internal class LspDocumentLinkTest {
     @Test
     fun `given a link when the file is highlighted then its range is rendered as a link`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = URL))
 
       val highlighting = awaitLinkHighlighting().single()
@@ -146,7 +144,7 @@ internal class LspDocumentLinkTest {
     @Test
     fun `given a tooltip from the server when the file is highlighted then it wins over the defaults`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = URL, tooltip = "Open the manual"))
 
       val label = awaitLinkLabel()
@@ -158,7 +156,7 @@ internal class LspDocumentLinkTest {
     @Test
     fun `given no tooltip and a URL target when the file is highlighted then the label offers to open a browser`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = URL))
 
       val label = awaitLinkLabel()
@@ -171,7 +169,7 @@ internal class LspDocumentLinkTest {
     fun `given no tooltip and a file target when the file is highlighted then it carries no label`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
       val targetFile = addTargetFile()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = serverSession.fileUri(targetFile)))
 
       val label = awaitLinkLabel()
@@ -183,7 +181,7 @@ internal class LspDocumentLinkTest {
     @Test
     fun `given an unresolved link when the file is highlighted then it carries no label`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink())
 
       val label = awaitLinkLabel()
@@ -200,7 +198,7 @@ internal class LspDocumentLinkTest {
     fun `given a link without a target when the reference resolves then the resolved target is used`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
       val targetFile = addTargetFile()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val targetUri = serverSession.fileUri(targetFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink())
       serverSession.expectRequest(serverSession.DOCUMENT_LINK_RESOLVE, { it.range == LINK_RANGE }) {
@@ -218,7 +216,7 @@ internal class LspDocumentLinkTest {
     fun `given a file target when the reference resolves then navigation opens the file at its start`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
       val targetFile = addTargetFile()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = serverSession.fileUri(targetFile)))
 
       awaitLinkHighlighting()
@@ -234,7 +232,7 @@ internal class LspDocumentLinkTest {
     fun `given a directory target when the reference resolves then navigation goes to the directory`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
       val directory = virtualFile.parent
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = serverSession.fileUri(directory)))
 
       awaitLinkHighlighting()
@@ -247,7 +245,7 @@ internal class LspDocumentLinkTest {
     @Test
     fun `given a URL target when the reference resolves then navigation leaves the IDE`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = URL))
 
       awaitLinkHighlighting()
@@ -262,7 +260,7 @@ internal class LspDocumentLinkTest {
     @Test
     fun `given a target with no file when the reference resolves then there is no symbol`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val missingFileUri = serverSession.fileUri(virtualFile) + ".missing"
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = missingFileUri))
 
@@ -284,7 +282,7 @@ internal class LspDocumentLinkTest {
     fun `given a file target when hovering over the link then there is no hint`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
       val targetFile = addTargetFile()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = serverSession.fileUri(targetFile)))
 
       awaitLinkHighlighting()
@@ -297,7 +295,7 @@ internal class LspDocumentLinkTest {
     @Test
     fun `given a URL target when hovering over the link then the hint says what the editor says`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = URL))
 
       val editorLabel = awaitLinkLabel()
@@ -313,7 +311,7 @@ internal class LspDocumentLinkTest {
     fun `given a file target when the link resolves then it is located by its path within the server roots`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
       val targetFile = addTargetFile()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = serverSession.fileUri(targetFile)))
 
       awaitLinkHighlighting()
@@ -328,7 +326,7 @@ internal class LspDocumentLinkTest {
     fun `given a target outside the server roots when the link resolves then it is located by its full path`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
       val outsideRoots = virtualFile.parent.parent
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = serverSession.fileUri(outsideRoots)))
 
       awaitLinkHighlighting()
@@ -341,7 +339,7 @@ internal class LspDocumentLinkTest {
     @Test
     fun `given no link under the pointer then there is no hint`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.expectDocumentLink(serverSession.fileUri(virtualFile), documentLink(target = URL))
 
       awaitLinkHighlighting()

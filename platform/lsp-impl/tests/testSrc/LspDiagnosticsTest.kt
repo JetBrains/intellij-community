@@ -12,16 +12,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClientManager
-import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.SpaceTokenizingFileType
 import com.intellij.platform.lsp.common.UnansweredRequest
 import com.intellij.platform.lsp.common.assertCustomPsiTree
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.common.problemFileHighlightFilterFixture
 import com.intellij.platform.lsp.common.spaceTokenizingLanguageFixture
 import com.intellij.platform.lsp.common.wolfFixture
-import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
 import com.intellij.platform.lsp.testFramework.awaitDiagnosticsFromLspServer
@@ -85,7 +82,6 @@ internal class LspDiagnosticsTest {
 
   @Nested
   inner class PublishDiagnostics {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
     @Test
@@ -95,7 +91,7 @@ internal class LspDiagnosticsTest {
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", """hello world""").virtualFile
       val expectedData = createExpectedDataFromText("""<error descr="foo">!</error>hello world""")
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       launch(start = CoroutineStart.UNDISPATCHED) {
@@ -130,7 +126,7 @@ internal class LspDiagnosticsTest {
       <EOLError descr="EOL error 1"></EOLError>
       line 2<EOLError descr="EOL error 2"></EOLError>
       line 3<EOLError descr="EOF error"></EOLError><EOLError descr="EOL error 3"></EOLError>""".trimIndent()).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       val job = launch(start = CoroutineStart.LAZY) {
         serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
@@ -170,7 +166,7 @@ internal class LspDiagnosticsTest {
       <warning descr="w6">text-7xl</warning> <warning descr="w7">text-8xl</warning>
       <warning descr="w8">text-9xl</warning>
       "></div>""".trimIndent()).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       // Phase 1: publish 8 warnings and verify all are shown
@@ -224,7 +220,6 @@ internal class LspDiagnosticsTest {
 
   @Nested
   inner class PullDiagnostics {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         diagnosticProvider = DiagnosticRegistrationOptions()
@@ -239,7 +234,7 @@ internal class LspDiagnosticsTest {
       <error descr="error message">hello</error> world
       """.trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(listOf(
@@ -260,7 +255,7 @@ internal class LspDiagnosticsTest {
       line 2<EOLError descr="EOL error 2"></EOLError>
       line 3<EOLError descr="EOF error"></EOLError><EOLError descr="EOL error 3"></EOLError>""".trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(listOf(
@@ -285,7 +280,7 @@ internal class LspDiagnosticsTest {
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       // Phase 1: server reports an error.
@@ -329,7 +324,7 @@ internal class LspDiagnosticsTest {
       <warning descr="w8">text-9xl</warning>
       "></div>""".trimIndent()).virtualFile
       val initialData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       // Phase 1: answer the initial pull with 8 warnings and verify all are shown.
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
@@ -382,7 +377,7 @@ internal class LspDiagnosticsTest {
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       // Phase 1: the server answers the first pull with an error response.
@@ -412,7 +407,7 @@ internal class LspDiagnosticsTest {
 
       val otherFile = codeInsightFixture.addFileToProject("other.txt", "other").virtualFile
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       val pendingResponse = CompletableDeferred<DocumentDiagnosticReport>()
@@ -445,7 +440,7 @@ internal class LspDiagnosticsTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       val pendingResponse = UnansweredRequest()
@@ -480,7 +475,7 @@ internal class LspDiagnosticsTest {
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == null }) {
@@ -509,7 +504,7 @@ internal class LspDiagnosticsTest {
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == null }) {
@@ -547,9 +542,9 @@ internal class LspDiagnosticsTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
-      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
+      val client = fakeLspIntegration.client
 
       // Phase 1: establish a cached snapshot, so the burst below is not the "first pull" that skips the delay.
       // The test reads the cache directly: collectAndCheckHighlighting bumps the PSI counter on every call
@@ -600,9 +595,9 @@ internal class LspDiagnosticsTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
-      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
+      val client = fakeLspIntegration.client
 
       // Hold the first pull pending.
       val pendingResponse = UnansweredRequest()
@@ -632,9 +627,9 @@ internal class LspDiagnosticsTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
-      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
+      val client = fakeLspIntegration.client
 
       // Phase 1: a full report without a resultId, so the next pull carries no previousResultId.
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) {
@@ -677,7 +672,7 @@ internal class LspDiagnosticsTest {
     fun `file open triggers the initial pull without a highlighting pass`(): Unit = timeoutRunBlocking {
       // The first file only starts the server; its own on-open pull is not interesting here.
       val firstFile = codeInsightFixture.configureByText("first.txt", "hello").virtualFile
-      val serverSession = configureServerSession(project, firstFile)
+      val serverSession = fakeLspIntegration.serverSession(firstFile)
 
       val newFile = codeInsightFixture.addFileToProject("new.txt", "hello world").virtualFile
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(newFile) }) {
@@ -694,7 +689,7 @@ internal class LspDiagnosticsTest {
       }
       diagnosticsArrived.await()
 
-      val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
+      val client = fakeLspIntegration.client
       assertTrue(
         readAction { client.getDiagnosticsAndQuickFixes(newFile) }.isNotEmpty(),
         "the diagnostics of a just-opened file must be pulled without a highlighting pass",
@@ -709,7 +704,7 @@ internal class LspDiagnosticsTest {
       <error descr="stale">hello</error> world
       """.trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == null }) {
@@ -748,7 +743,7 @@ internal class LspDiagnosticsTest {
       <error descr="stale">hello</error> world
       """.trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == null }) {
@@ -790,7 +785,7 @@ internal class LspDiagnosticsTest {
       <error descr="stale">hello</error> world
       """.trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == null }) {
@@ -805,10 +800,7 @@ internal class LspDiagnosticsTest {
           Diagnostic(Range(Position(0, 0), Position(0, 5)), "fresh", DiagnosticSeverity.Error, null)
         )))
       }
-      LspClientManager.getInstance(project)
-        .getClients(FakeLspIntegrationProvider::class.java)
-        .single()
-        .invalidateServerResults()
+      fakeLspIntegration.client.invalidateServerResults()
 
       val expected = createExpectedDataFromText("""<error descr="fresh">hello</error> world""")
       waitUntilAssertSucceeds {
@@ -827,7 +819,7 @@ internal class LspDiagnosticsTest {
 
       // No highlighting markup in the file: stripping it would leave the document unsaved, and no didClose is sent for that.
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri && it.previousResultId == null }) {
@@ -861,7 +853,6 @@ internal class LspDiagnosticsTest {
 
   @Nested
   inner class WolfTheProblemSolverInterop {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         diagnosticProvider = DiagnosticRegistrationOptions()
@@ -879,7 +870,7 @@ internal class LspDiagnosticsTest {
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(listOf(
@@ -901,7 +892,7 @@ internal class LspDiagnosticsTest {
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(emptyList()))
@@ -929,7 +920,7 @@ internal class LspDiagnosticsTest {
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       // Phase 1: server reports an error.
@@ -973,7 +964,7 @@ internal class LspDiagnosticsTest {
       <error descr="error">hello</error> world
       """.trimIndent()).virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       // Phase 1: the server answers a single pull with an error; reactive path writes Wolf and bumps the gen.
@@ -1015,7 +1006,6 @@ internal class LspDiagnosticsTest {
     @Suppress("unused")
     private val spaceTokenizingLang = spaceTokenizingLanguageFixture()
 
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         diagnosticProvider = DiagnosticRegistrationOptions()
@@ -1032,7 +1022,7 @@ internal class LspDiagnosticsTest {
       assertCustomPsiTree(psiFile)
       val virtualFile = psiFile.virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(listOf(
@@ -1054,7 +1044,7 @@ internal class LspDiagnosticsTest {
       assertCustomPsiTree(psiFile)
       val virtualFile = psiFile.virtualFile
       val expectedData = stripHighlightingMarkup()
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(listOf(
@@ -1069,7 +1059,6 @@ internal class LspDiagnosticsTest {
 
   @Nested
   inner class DiagnosticsClearedOnServerStop {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
     @Test
@@ -1077,7 +1066,7 @@ internal class LspDiagnosticsTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", """
       <error descr="test error">hello</error> world
       """.trimIndent()).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       val publishJob = launch(start = CoroutineStart.LAZY) {
@@ -1094,7 +1083,7 @@ internal class LspDiagnosticsTest {
       publishJob.start()
       verifyDiagnosticsShown.await()
 
-      LspClientManager.getInstance(project).stopClients(FakeLspIntegrationProvider::class.java)
+      LspClientManager.getInstance(project).stopClients(fakeLspIntegration.providerClass)
 
       val expectedClean = createExpectedDataFromText("hello world")
       (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(expectedClean)
@@ -1109,7 +1098,6 @@ internal class LspDiagnosticsTest {
    */
   @Nested
   inner class UncommittedPsiReparse {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
     @Test
@@ -1120,7 +1108,7 @@ internal class LspDiagnosticsTest {
       val psiFile = fixture.configureByText("test.txt", "hello world")
       val virtualFile = psiFile.virtualFile
       val document = fixture.editor.document
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       // Publish a diagnostic on "world" while the PSI is still consistent
@@ -1159,7 +1147,7 @@ internal class LspDiagnosticsTest {
       fixture.canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = fixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
       writeCommandAction(project, "") {

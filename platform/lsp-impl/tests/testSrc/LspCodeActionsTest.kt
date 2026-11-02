@@ -1,7 +1,6 @@
 package com.intellij.platform.lsp
 
 import com.intellij.openapi.application.EDT
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -34,7 +33,6 @@ class LspCodeActionsTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       val codeActionOptions = CodeActionOptions().apply {
@@ -48,7 +46,7 @@ class LspCodeActionsTest {
   fun `intention action with multiple edits at the same position`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "1\n2\n3\n4").virtualFile
     awaitFileOpenedByLspServer(project, virtualFile)
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {

@@ -8,7 +8,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.common.FakeLspServerSession
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -52,7 +51,6 @@ internal class LspGotoTypeDefinitionTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       typeDefinitionProvider = Either.forLeft(true)
@@ -73,7 +71,7 @@ internal class LspGotoTypeDefinitionTest {
     fun `given type definition when go to type declaration is invoked then the caret moves to the type definition`() =
       timeoutRunBlocking {
         val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-        val serverSession = configureServerSession(project, virtualFile)
+        val serverSession = fakeLspIntegration.serverSession(virtualFile)
         val fileUri = serverSession.fileUri(virtualFile)
         serverSession.expectTypeDefinition(fileUri, typeDefinitionInThisFile(fileUri))
 
@@ -88,7 +86,7 @@ internal class LspGotoTypeDefinitionTest {
     @Test
     fun `given no type definition when go to type declaration is invoked then the caret stays put`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.expectTypeDefinition(fileUri, emptyList())
 
@@ -110,7 +108,7 @@ internal class LspGotoTypeDefinitionTest {
     @Test
     fun `given type definition when hovering over the reference then its range is highlighted as a link`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.expectTypeDefinition(fileUri, typeDefinitionInThisFile(fileUri))
 
@@ -125,7 +123,7 @@ internal class LspGotoTypeDefinitionTest {
     @Test
     fun `given no type definition when hovering over the reference then nothing is highlighted`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.expectTypeDefinition(fileUri, emptyList())
 

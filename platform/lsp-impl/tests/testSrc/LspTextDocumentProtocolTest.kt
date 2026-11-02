@@ -21,8 +21,6 @@ import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspFormattingSupport
 import com.intellij.platform.lsp.api.customization.LspOnTypeFormattingSupport
-import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.common.withPerformedAction
 import com.intellij.platform.lsp.impl.features.usages.LspSearchTarget
@@ -94,7 +92,6 @@ internal class LspTextDocumentProtocolTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     lspCustomization = object : LspCustomization() {
       override val formattingCustomizer = object : LspFormattingSupport() {
@@ -144,7 +141,7 @@ internal class LspTextDocumentProtocolTest {
     fun `textDocument didOpen -- server receives notification when file opens`() = timeoutRunBlocking {
       // Open the first file to bootstrap the server session
       val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
-      val serverSession = configureServerSession(project, bootstrapFile)
+      val serverSession = fakeLspIntegration.serverSession(bootstrapFile)
 
       // Now prepare to open a second file and await its didOpen notification
       val secondFile = codeInsightFixture.addFileToProject("opened.txt", "hello world").virtualFile
@@ -169,7 +166,7 @@ internal class LspTextDocumentProtocolTest {
     @Test
     fun `textDocument didClose -- server receives notification when file closes`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("closed.txt", "content to close").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       val didClose = serverSession.expectNotification(serverSession.DID_CLOSE) {
@@ -186,7 +183,7 @@ internal class LspTextDocumentProtocolTest {
     @Test
     fun `textDocument didChange -- server receives notification with updated content`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("changed.txt", "original").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       val didChange = serverSession.expectNotification(serverSession.DID_CHANGE) {
@@ -203,7 +200,7 @@ internal class LspTextDocumentProtocolTest {
     @Test
     fun `textDocument didSave -- server receives save notification`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("saved.txt", "save me").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       val didSave = serverSession.expectNotification(serverSession.DID_SAVE) {
@@ -228,7 +225,7 @@ internal class LspTextDocumentProtocolTest {
     @Test
     fun `textDocument hover -- markup response rendered`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("hover.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.HOVER, { it.textDocument.uri == fileUri }) {
@@ -252,7 +249,7 @@ internal class LspTextDocumentProtocolTest {
     @Test
     fun `textDocument completion -- items returned from server`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("complete.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         Either.forLeft(listOf(
@@ -274,7 +271,7 @@ internal class LspTextDocumentProtocolTest {
     @Test
     fun `textDocument formatting -- text edits applied`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("format.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.FORMATTING, { it.textDocument.uri == fileUri }) {
@@ -297,7 +294,7 @@ internal class LspTextDocumentProtocolTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("fold.txt", "line 1\nline 2\nline 3\nline 4\nline 5").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         listOf(FoldingRange(0, 2))
@@ -332,7 +329,7 @@ internal class LspTextDocumentProtocolTest {
 
       val sourceText = "color: red"
       val virtualFile = codeInsightFixture.configureByText("color.txt", sourceText).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.DOCUMENT_COLOR, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         listOf(ColorInformation(Range(Position(0, 7), Position(0, 10)), Color(1.0, 0.0, 0.0, 1.0)))
@@ -370,7 +367,7 @@ internal class LspTextDocumentProtocolTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("diag.txt", "<error descr=\"test error\">hello</error> world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       val job = launch(start = CoroutineStart.LAZY) {
@@ -396,7 +393,7 @@ internal class LspTextDocumentProtocolTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("pulldiag.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(emptyList()))
@@ -414,7 +411,7 @@ internal class LspTextDocumentProtocolTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("lens.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.CODE_LENS, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         emptyList()
@@ -432,7 +429,7 @@ internal class LspTextDocumentProtocolTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("link.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.DOCUMENT_LINK, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         emptyList()
@@ -450,7 +447,7 @@ internal class LspTextDocumentProtocolTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("hint.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         emptyList()
@@ -468,7 +465,7 @@ internal class LspTextDocumentProtocolTest {
       (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
       val virtualFile = codeInsightFixture.configureByText("tokens.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         SemanticTokens(emptyList())
@@ -484,7 +481,7 @@ internal class LspTextDocumentProtocolTest {
     @Test
     fun `textDocument definition -- definition location requested`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("def.txt", "hello <caret>world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DEFINITION, { it.textDocument.uri == fileUri }) {
@@ -539,7 +536,7 @@ internal class LspTextDocumentProtocolTest {
     ): GTDUOutcome? {
       val psiFile = codeInsightFixture.configureByText("def.txt", fileText)
       val virtualFile = psiFile.virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DEFINITION, { it.textDocument.uri == fileUri }) {
@@ -562,7 +559,7 @@ internal class LspTextDocumentProtocolTest {
     @Test
     fun `textDocument codeAction -- actions requested for range`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("action.txt", "hello <caret>world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         emptyList()
@@ -578,7 +575,7 @@ internal class LspTextDocumentProtocolTest {
     @Test
     fun `textDocument onTypeFormatting -- formatting requested on trigger character`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("ontype.txt", "<caret>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         emptyList()
@@ -597,14 +594,14 @@ internal class LspTextDocumentProtocolTest {
     @Test
     fun `textDocument references -- references requested`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("refs.txt", "hello <caret>world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.REFERENCES, { it.textDocument.uri == fileUri }) {
         emptyList()
       }
 
-      val lspClients = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
+      val lspClients = LspClientManager.getInstance(project).getClients(fakeLspIntegration.providerClass)
       val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)!! }
       val offset = withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset }
       val position = readAction { getLsp4jPosition(document, offset) }

@@ -4,7 +4,6 @@ import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Inlay
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -41,7 +40,6 @@ internal class LspDocumentColorTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       colorProvider = Either.forLeft(true)
@@ -56,7 +54,7 @@ internal class LspDocumentColorTest {
 
       val sourceText = "color: red"
       val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.DOCUMENT_COLOR, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         listOf(ColorInformation(Range(Position(0, 7), Position(0, 10)), Color(1.0, 0.0, 0.0, 1.0)))
@@ -76,7 +74,7 @@ internal class LspDocumentColorTest {
 
       val sourceText = "background: red; color: blue"
       val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.DOCUMENT_COLOR, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         listOf(
@@ -107,7 +105,7 @@ internal class LspDocumentColorTest {
 
     val sourceText = "red blue"
     val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.DOCUMENT_COLOR, { it.textDocument.uri == fileUri }) {

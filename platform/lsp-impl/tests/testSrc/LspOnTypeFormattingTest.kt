@@ -5,7 +5,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspOnTypeFormattingSupport
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspCoroutineScopeService
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -41,7 +40,6 @@ class LspOnTypeFormattingTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
   private val triggerCharacters = listOf("\n", "{", "}", ";", "\"")
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     lspCustomization = object : LspCustomization() {
       override val onTypeFormattingCustomizer = LspOnTypeFormattingSupport()
@@ -57,7 +55,7 @@ class LspOnTypeFormattingTest {
   @Test
   fun `on type formatting request sent on Enter typed in text file`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test_enter.txt", "line1<caret>").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
       it.textDocument.uri == serverSession.fileUri(virtualFile) && it.ch == "\n"
@@ -83,7 +81,7 @@ class LspOnTypeFormattingTest {
           </user>
       </root><caret>
       """.trimIndent()).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
       it.textDocument.uri == serverSession.fileUri(virtualFile) && it.ch == "\n"
@@ -110,7 +108,7 @@ class LspOnTypeFormattingTest {
   @Test
   fun `on type formatting request sent on closing brace`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test_brace.txt", "function(){<caret>").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
       it.textDocument.uri == serverSession.fileUri(virtualFile) && it.ch == "}"
@@ -127,7 +125,7 @@ class LspOnTypeFormattingTest {
   @Test
   fun `on type formatting request sent on double quote`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test_quote.txt", "Doublequote:<caret>").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
       it.textDocument.uri == serverSession.fileUri(virtualFile) && it.ch == "\""
@@ -147,7 +145,7 @@ class LspOnTypeFormattingTest {
   @Test
   fun `on type formatting request sent on semicolon`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test_semicolon.txt", "val x = 1<caret>").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
       it.textDocument.uri == serverSession.fileUri(virtualFile) && it.ch == ";"
@@ -165,7 +163,7 @@ class LspOnTypeFormattingTest {
   fun `on type formatting skipped when live template is active`(): Unit = timeoutRunBlocking {
     val virtualFile =
       codeInsightFixture.configureByText("test_completion.txt", "Test()<caret>").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
       it.textDocument.uri == serverSession.fileUri(virtualFile) && it.ch in triggerCharacters
@@ -183,7 +181,7 @@ class LspOnTypeFormattingTest {
   @Test
   fun `on type formatting skipped with multiple carets`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test_multicarets.txt", "line1<caret>\nline2<caret>").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     val requestDeferred = serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
       it.textDocument.uri == serverSession.fileUri(virtualFile) && it.ch in triggerCharacters
@@ -204,7 +202,7 @@ class LspOnTypeFormattingTest {
   @Test
   fun `on type formatting triggered once after 'fast' typing of 5 symbols (faster than server response)`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test_trigger.txt", "<caret>").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val times = 5
     repeat(times) {
       serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {
@@ -225,7 +223,7 @@ class LspOnTypeFormattingTest {
   @Test
   fun `on type formatting not triggered by non-trigger character`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test_nontrigger.txt", "<caret>").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
 
     val requestDeferred = serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, {

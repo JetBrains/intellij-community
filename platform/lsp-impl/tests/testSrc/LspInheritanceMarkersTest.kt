@@ -12,7 +12,6 @@ import com.intellij.platform.lsp.api.customization.LspDocumentSymbolDisabled
 import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersCustomizer
 import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersSupport
 import com.intellij.platform.lsp.common.UnansweredRequest
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -53,7 +52,6 @@ internal class LspInheritanceMarkersTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     lspCustomization = InheritanceMarkersTestCustomization(),
     configureServerCapabilities = {
@@ -93,7 +91,7 @@ internal class LspInheritanceMarkersTest {
   @Test
   fun `method of a subtyped class gets the overridden marker`() = timeoutRunBlocking {
     val virtualFile = configureFile("markers1.txt", "class C { fun foo() }")
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
@@ -120,7 +118,7 @@ internal class LspInheritanceMarkersTest {
   @Test
   fun `interface and its member get the implemented markers`() = timeoutRunBlocking {
     val virtualFile = configureFile("markers2.txt", "interface I { fun m() }")
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
@@ -147,7 +145,7 @@ internal class LspInheritanceMarkersTest {
   @Test
   fun `empty results produce no markers`() = timeoutRunBlocking {
     val virtualFile = configureFile("markers3.txt", "interface I { fun m() }")
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
@@ -172,7 +170,7 @@ internal class LspInheritanceMarkersTest {
   @Test
   fun `class without subtypes suppresses its method queries`() = timeoutRunBlocking {
     val virtualFile = configureFile("markers7.txt", "class C { fun foo() }")
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
@@ -197,7 +195,7 @@ internal class LspInheritanceMarkersTest {
   @Test
   fun `top-level function is not queried`() = timeoutRunBlocking {
     val virtualFile = configureFile("markers8.txt", "fun foo() {}")
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
@@ -217,7 +215,7 @@ internal class LspInheritanceMarkersTest {
   @Test
   fun `no requests when the customizer forbids the file`() = timeoutRunBlocking {
     val virtualFile = configureFile("disabled.txt", "fun foo() {}")
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     val documentSymbolRequested = serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL) { emptyList() }
 
@@ -233,7 +231,7 @@ internal class LspInheritanceMarkersTest {
   @Test
   fun `symbol count over the cap suppresses per-symbol requests`() = timeoutRunBlocking {
     val virtualFile = configureFile("markers4.txt", "x".repeat(250))
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
@@ -257,7 +255,7 @@ internal class LspInheritanceMarkersTest {
   @Test
   fun `typing cancels the in-flight batch and a new pull follows`() = timeoutRunBlocking {
     val virtualFile = configureFile("markers5.txt", "interface I { fun m() }")
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
@@ -305,7 +303,7 @@ internal class LspInheritanceMarkersTest {
   @Test
   fun `gutter click re-requests the targets and navigates`() = timeoutRunBlocking {
     val virtualFile = configureFile("markers6.txt", "interface I { fun m() }")
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {

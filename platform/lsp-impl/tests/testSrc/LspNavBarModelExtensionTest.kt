@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataMap
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.features.documentSymbol.LspFileBreadcrumbsCollector
 import com.intellij.platform.lsp.impl.features.documentSymbol.LspNavBarModelExtension
@@ -46,7 +45,6 @@ internal class LspNavBarModelExtensionTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       documentSymbolProvider = Either.forLeft(true)
@@ -84,7 +82,7 @@ internal class LspNavBarModelExtensionTest {
   @Test
   fun `editor breadcrumbs are hidden when the navigation bar shows the symbols`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("navbar3.txt", "class C").virtualFile
-    configureServerSession(project, virtualFile)
+    fakeLspIntegration.serverSession(virtualFile)
 
     readAction {
       val collector = LspFileBreadcrumbsCollector(project)
@@ -96,7 +94,7 @@ internal class LspNavBarModelExtensionTest {
   @Test
   fun `editor breadcrumbs are shown when the registry key is off`(@TestDisposable disposable: Disposable) = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("navbar4.txt", "class C").virtualFile
-    configureServerSession(project, virtualFile)
+    fakeLspIntegration.serverSession(virtualFile)
     Registry.get("lsp.navbar.members.hide.editor.breadcrumbs").setValue(false, disposable)
 
     readAction {
@@ -107,7 +105,7 @@ internal class LspNavBarModelExtensionTest {
   }
 
   private suspend fun CoroutineScope.expectDocumentSymbols(virtualFile: VirtualFile) {
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
     serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
       val method = DocumentSymbol("foo", SymbolKind.Method, range(10, 20), range(14, 17))

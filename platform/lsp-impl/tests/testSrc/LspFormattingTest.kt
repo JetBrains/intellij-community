@@ -6,7 +6,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspFormattingSupport
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -34,7 +33,6 @@ class LspFormattingTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     lspCustomization = object : LspCustomization() {
       override val formattingCustomizer = object : LspFormattingSupport() {
@@ -54,7 +52,7 @@ class LspFormattingTest {
   @Test
   fun `full file formatting`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "Simple text file").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.FORMATTING, { it.textDocument.uri == fileUri }) {
@@ -72,7 +70,7 @@ class LspFormattingTest {
   @Test
   fun `full file formatting with random TextEdits order`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "Simple text file with multiple words").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.FORMATTING, { it.textDocument.uri == fileUri }) {
@@ -96,7 +94,7 @@ class LspFormattingTest {
   @Test
   fun `range formatting`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "Line\nLine with 2 spaces\nLine").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.RANGE_FORMATTING, { it.textDocument.uri == fileUri }) {
@@ -116,7 +114,7 @@ class LspFormattingTest {
   @Test
   fun `range formatting with multiple ranges`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "Line with 2 spaces\nLine\nLine with tab\nAnother line\nMore tabs to the God of Tabs").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.RANGE_FORMATTING, { it.textDocument.uri == fileUri && it.range.start.line == 2 }) {
@@ -150,7 +148,7 @@ class LspFormattingTest {
   @Test
   fun `range formatting with range out of file length`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "Line 1\nLine 2").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.RANGE_FORMATTING, { it.textDocument.uri == fileUri }) {
@@ -171,7 +169,7 @@ class LspFormattingTest {
   @Test
   fun `range formatting with overlapping ranges`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "1234567890").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.RANGE_FORMATTING, { it.textDocument.uri == fileUri }) {
@@ -195,7 +193,7 @@ class LspFormattingTest {
   @Test
   fun `range formatting with multiple edits where some are out of range`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "Line 1\nLine 2").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.RANGE_FORMATTING, { it.textDocument.uri == fileUri }) {

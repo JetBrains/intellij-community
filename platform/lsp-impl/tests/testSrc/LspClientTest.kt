@@ -3,7 +3,6 @@ package com.intellij.platform.lsp
 import com.intellij.openapi.application.EDT
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.common.FakeLspClientDescriptor
-import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -30,12 +29,11 @@ internal class LspClientTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
   @Test
   fun `module initialization`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    val clients0 = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
+    val clients0 = LspClientManager.getInstance(project).getClients(fakeLspIntegration.providerClass)
     Assertions.assertTrue(clients0.isEmpty(), "No LSP clients should exist initially")
   }
 
@@ -43,7 +41,7 @@ internal class LspClientTest {
   fun `client initialization`() = timeoutRunBlocking(context = Dispatchers.EDT) {
     codeInsightFixture.configureByText("test.txt", "hello world")
     awaitFileOpenedByLspServer(project, codeInsightFixture.file.virtualFile)
-    val clients = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
+    val clients = LspClientManager.getInstance(project).getClients(fakeLspIntegration.providerClass)
     Assertions.assertTrue(clients.isNotEmpty(), "LSP client should be started after the file is opened")
   }
 
@@ -51,8 +49,7 @@ internal class LspClientTest {
   fun `server received initialized notification`() = timeoutRunBlocking {
     codeInsightFixture.configureByText("test.txt", "hello world")
     awaitFileOpenedByLspServer(project, codeInsightFixture.file.virtualFile)
-    val clients = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
-    val descriptor = clients.first().descriptor as FakeLspClientDescriptor
+    val descriptor = fakeLspIntegration.client.descriptor as FakeLspClientDescriptor
     Assertions.assertTrue(descriptor.server.initialized, "FakeServer should have received 'initialized' notification")
   }
 }

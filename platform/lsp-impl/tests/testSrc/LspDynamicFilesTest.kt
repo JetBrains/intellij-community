@@ -17,10 +17,7 @@ import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.UnansweredRequest
-import com.intellij.platform.lsp.common.configureServerSession
-import com.intellij.platform.lsp.common.currentServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
@@ -79,7 +76,6 @@ internal class LspDynamicFilesTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       hoverProvider = Either.forLeft(true)
@@ -92,9 +88,9 @@ internal class LspDynamicFilesTest {
   @Test
   fun `decompiled file keeps the original uri and the producing client`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val manager = LspClientManagerImpl.getInstanceImpl(project)
-    val client = manager.getRunningClients().single()
+    val client = fakeLspIntegration.client
 
     val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
     serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
@@ -122,8 +118,8 @@ internal class LspDynamicFilesTest {
   @Test
   fun `hover in a decompiled file uses the original uri`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
-    val client = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().single()
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
+    val client = fakeLspIntegration.client
 
     val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
     serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
@@ -149,9 +145,9 @@ internal class LspDynamicFilesTest {
   @Test
   fun `a stopped client serves no decompiled files`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val manager = LspClientManagerImpl.getInstanceImpl(project)
-    val client = manager.getRunningClients().single()
+    val client = fakeLspIntegration.client
 
     val uri = "jrt://jdk/java.base/java/lang/String.class"
     serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
@@ -170,9 +166,9 @@ internal class LspDynamicFilesTest {
   @Test
   fun `a restarted client adopts a decompiled file`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val manager = LspClientManagerImpl.getInstanceImpl(project)
-    val client = manager.getRunningClients().single()
+    val client = fakeLspIntegration.client
 
     val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
     serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
@@ -183,9 +179,9 @@ internal class LspDynamicFilesTest {
     assertNotNull(decompiled)
 
     stopClientsAndWait(manager)
-    manager.startClientsIfNeeded(FakeLspIntegrationProvider::class.java)
-    val restartedSession = configureServerSession(project, virtualFile)
-    val restarted = manager.getRunningClients().single()
+    manager.startClientsIfNeeded(fakeLspIntegration.providerClass)
+    val restartedSession = fakeLspIntegration.serverSession(virtualFile)
+    val restarted = fakeLspIntegration.client
     assertNotSame(client, restarted)
 
     restartedSession.expectNotification(restartedSession.DID_OPEN) {
@@ -202,9 +198,9 @@ internal class LspDynamicFilesTest {
   @Test
   fun `a restart serves a decompiled file when no local file is open`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val manager = LspClientManagerImpl.getInstanceImpl(project)
-    val client = manager.getRunningClients().single()
+    val client = fakeLspIntegration.client
 
     val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
     serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
@@ -217,10 +213,10 @@ internal class LspDynamicFilesTest {
     // only the decompiled tab remains: the open-editors scan cannot revive the server, the restart must reuse the descriptor
     withContext(Dispatchers.EDT) { FileEditorManager.getInstance(project).closeFile(virtualFile) }
     restartClientAndWait(manager, client)
-    val restarted = manager.getRunningClients().single()
+    val restarted = fakeLspIntegration.client
     assertNotSame(client, restarted)
 
-    val restartedSession = currentServerSession(project)
+    val restartedSession = fakeLspIntegration.serverSession()
     restartedSession.expectNotification(restartedSession.DID_OPEN) {
       it.textDocument.uri == uri && it.textDocument.text == "decompiled text" &&
       it.textDocument.languageId == "class" && it.textDocument.version == 0
@@ -234,9 +230,9 @@ internal class LspDynamicFilesTest {
   @Test
   fun `a client does not adopt a decompiled file from another provider's server`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val manager = LspClientManagerImpl.getInstanceImpl(project)
-    val client = manager.getRunningClients().single()
+    val client = fakeLspIntegration.client
 
     val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
     serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
@@ -248,8 +244,8 @@ internal class LspDynamicFilesTest {
     decompiled!!.putUserData(LspDynamicFiles.CONTENT_BY_SERVER_ID, getServerId(AnotherLspProvider::class.java, client.descriptor))
 
     stopClientsAndWait(manager)
-    manager.startClientsIfNeeded(FakeLspIntegrationProvider::class.java)
-    configureServerSession(project, virtualFile)
+    manager.startClientsIfNeeded(fakeLspIntegration.providerClass)
+    fakeLspIntegration.serverSession(virtualFile)
 
     val clients = readAction { manager.getClientsForFileRequests(decompiled) }
     assertTrue(clients.isEmpty(), "Another provider's server produced the file, so no client must adopt it: $clients")
@@ -258,8 +254,8 @@ internal class LspDynamicFilesTest {
   @Test
   fun `a jar target with server content is served by the server, not by the archive file system`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
-    val client = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().single()
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
+    val client = fakeLspIntegration.client
 
     val jarEntry = createJarEntry()
     val uri = "jar://${jarEntry.path}"
@@ -278,8 +274,8 @@ internal class LspDynamicFilesTest {
   @Test
   fun `a jar target without server content resolves through the descriptor only`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    configureServerSession(project, virtualFile)
-    val client = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().single()
+    fakeLspIntegration.serverSession(virtualFile)
+    val client = fakeLspIntegration.client
 
     val warnings = Collections.synchronizedList(mutableListOf<String>())
     val processor = object : LoggedErrorProcessor() {
@@ -299,8 +295,8 @@ internal class LspDynamicFilesTest {
   @Test
   fun `a jrt target decompiles without a uri warning`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
-    val client = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().single()
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
+    val client = fakeLspIntegration.client
 
     serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri.startsWith("jrt:") }) {
       TextDocumentContentResult("decompiled text")
@@ -326,8 +322,8 @@ internal class LspDynamicFilesTest {
   @Test
   fun `a content refresh replaces the text of the served file`(): Unit = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
-    val client = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().single()
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
+    val client = fakeLspIntegration.client
 
     val uri = "jar:///lib/foo.jar!/com/foo/Bar.class"
     serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
@@ -378,7 +374,7 @@ internal class LspDynamicFilesTest {
   @Test
   fun `showDocument opens a file with server content`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     val uri = "jar:///lib/foo.jar!/com/foo/Bar.txt"
     serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
@@ -397,7 +393,7 @@ internal class LspDynamicFilesTest {
   @Test
   fun `showDocument fails when the server answers the content request with an error`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     val uri = "jar:///lib/foo.jar!/com/foo/Unknown.txt"
     serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
@@ -414,7 +410,7 @@ internal class LspDynamicFilesTest {
   @Test
   fun `a server cancel of showDocument cancels the content request`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     val uri = "jar:///lib/foo.jar!/com/foo/Slow.txt"
     val pendingContent = UnansweredRequest()
@@ -434,7 +430,7 @@ internal class LspDynamicFilesTest {
   @Test
   fun `showDocument fails for a scheme without server content`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     val result = serverSession.sendRequest(serverSession.SHOW_DOCUMENT) { ShowDocumentParams("zip:///lib/foo.zip!/com/foo/Bar.txt") }
 
@@ -487,7 +483,7 @@ internal class LspDynamicFilesTest {
           removed.complete(Unit)
         }
       }, disposable, false)
-      LspClientManager.getInstance(project).stopClients(FakeLspIntegrationProvider::class.java)
+      LspClientManager.getInstance(project).stopClients(fakeLspIntegration.providerClass)
       removed.await()
     }
     finally {
@@ -496,7 +492,7 @@ internal class LspDynamicFilesTest {
   }
 }
 
-/** A provider that shares the descriptor with [FakeLspIntegrationProvider], to prove that the client identity includes the provider. */
+/** A provider that shares the descriptor with the fake provider, to prove that the client identity includes the provider. */
 private class AnotherLspProvider : LspIntegrationProvider {
   override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter) = Unit
 }

@@ -8,10 +8,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
-import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier
 import com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayApplier
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -46,7 +43,6 @@ internal class LspInMemoryFileRetentionTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
   @Test
@@ -72,8 +68,8 @@ internal class LspInMemoryFileRetentionTest {
   @Test
   fun `reading the document version does not retain an in-memory file`(): Unit = timeoutRunBlocking {
     val file = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
-    configureServerSession(project, file)
-    val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
+    fakeLspIntegration.serverSession(file)
+    val client = fakeLspIntegration.client
     useInMemoryFile { _, document ->
       client.getDocumentVersion(document)
     }.awaitCollected()

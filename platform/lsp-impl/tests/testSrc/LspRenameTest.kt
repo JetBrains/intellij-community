@@ -8,7 +8,6 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspRenameSupport
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.PsiFile
@@ -73,7 +72,6 @@ internal class LspRenameTest {
 
   @Nested
   inner class PrepareRename {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = object : LspCustomization() {
         override val renameCustomizer = object : LspRenameSupport() {
@@ -92,7 +90,7 @@ internal class LspRenameTest {
       TemplateManagerImpl.setTemplateTesting(project)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.PREPARE_RENAME, { it.textDocument.uri == fileUri }) {
@@ -118,7 +116,7 @@ internal class LspRenameTest {
       TemplateManagerImpl.setTemplateTesting(project)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.PREPARE_RENAME, { it.textDocument.uri == fileUri }) {
@@ -144,7 +142,7 @@ internal class LspRenameTest {
       TemplateManagerImpl.setTemplateTesting(project)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.PREPARE_RENAME, { it.textDocument.uri == fileUri }) {
@@ -168,7 +166,6 @@ internal class LspRenameTest {
 
   @Nested
   inner class PrepareRenameDisabled {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = object : LspCustomization() {
         override val renameCustomizer = object : LspRenameSupport() {
@@ -187,7 +184,7 @@ internal class LspRenameTest {
       TemplateManagerImpl.setTemplateTesting(project)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      configureServerSession(project, virtualFile)
+      fakeLspIntegration.serverSession(virtualFile)
 
       triggerRename()
 
@@ -205,7 +202,6 @@ internal class LspRenameTest {
 
   @Nested
   inner class PerformRename {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = object : LspCustomization() {
         override val renameCustomizer = object : LspRenameSupport() {
@@ -224,7 +220,7 @@ internal class LspRenameTest {
       TemplateManagerImpl.setTemplateTesting(project)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.PREPARE_RENAME, { it.textDocument.uri == fileUri }) {
@@ -249,7 +245,7 @@ internal class LspRenameTest {
       TemplateManagerImpl.setTemplateTesting(project)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.PREPARE_RENAME, { it.textDocument.uri == fileUri }) {
@@ -269,7 +265,7 @@ internal class LspRenameTest {
       TemplateManagerImpl.setTemplateTesting(project)
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.PREPARE_RENAME, { it.textDocument.uri == fileUri }) {
@@ -296,7 +292,7 @@ internal class LspRenameTest {
         """.trimIndent()
 
       val virtualFile = codeInsightFixture.configureByText("test.txt", text).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.PREPARE_RENAME, { it.textDocument.uri == fileUri }) {
@@ -331,7 +327,7 @@ internal class LspRenameTest {
 
       // The scenario emulates the rename of a top-level class: the server edits the text and renames the file
       val virtualFile = codeInsightFixture.configureByText("Foo.txt", "class <caret>Foo").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       val newFileUri = fileUri.removeSuffix("Foo.txt") + "Bar.txt"
 
@@ -366,7 +362,7 @@ internal class LspRenameTest {
       // The scenario emulates a rename that makes another file obsolete: the server edits the text and deletes that file
       val virtualFile = codeInsightFixture.configureByText("Baz.txt", "class <caret>Baz").virtualFile
       val obsoleteFile = codeInsightFixture.addFileToProject("Obsolete.txt", "obsolete content").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       val obsoleteFileUri = serverSession.fileUri(obsoleteFile)
 
@@ -399,7 +395,7 @@ internal class LspRenameTest {
       TemplateManagerImpl.setTemplateTesting(project)
 
       val virtualFile = codeInsightFixture.configureByText("test.xml", "<tag>text</tag>").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.PREPARE_RENAME, { it.textDocument.uri == fileUri }) {

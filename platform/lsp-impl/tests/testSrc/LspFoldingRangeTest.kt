@@ -2,7 +2,6 @@ package com.intellij.platform.lsp
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.FoldRegion
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -35,7 +34,6 @@ internal class LspFoldingRangeTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       foldingRangeProvider = Either.forLeft(true)
@@ -52,7 +50,7 @@ internal class LspFoldingRangeTest {
     @Test
     fun `folding regions detected in document`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "line 1\nline 2\nline 3\nline 4\nline 5").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         listOf(FoldingRange(0, 2))
@@ -71,7 +69,7 @@ internal class LspFoldingRangeTest {
     @Test
     fun `folding regions appear when the response arrives after highlighting`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "line 1\nline 2\nline 3").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         delay(1.seconds)
@@ -90,7 +88,7 @@ internal class LspFoldingRangeTest {
     @Test
     fun `collapsed text shown for folded region`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "line 1\nline 2\nline 3").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         listOf(FoldingRange(0, 2).apply { collapsedText = "..." })
@@ -107,7 +105,7 @@ internal class LspFoldingRangeTest {
     @Test
     fun `default collapsed text when not specified`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "line 1\nline 2\nline 3").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         listOf(FoldingRange(0, 2))  // No collapsedText set
@@ -127,7 +125,7 @@ internal class LspFoldingRangeTest {
     @Test
     fun `folding range with startLine and endLine only`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "line 1\nline 2\nline 3\nline 4").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         listOf(FoldingRange(1, 3))
@@ -146,7 +144,7 @@ internal class LspFoldingRangeTest {
     @Test
     fun `folding range with startCharacter and endCharacter`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "line 1\nline 2\nline 3").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         listOf(FoldingRange(0, 2).apply {
@@ -167,7 +165,7 @@ internal class LspFoldingRangeTest {
     @Test
     fun `nested folding regions supported`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "line 1\nline 2\nline 3\nline 4\nline 5").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         listOf(
@@ -188,7 +186,7 @@ internal class LspFoldingRangeTest {
     @Test
     fun `single line does not create folding region`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "line 1\nline 2\nline 3").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         listOf(FoldingRange(1, 1))  // Single line range
@@ -203,7 +201,7 @@ internal class LspFoldingRangeTest {
     @Test
     fun `empty file returns no folding regions`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
         emptyList()

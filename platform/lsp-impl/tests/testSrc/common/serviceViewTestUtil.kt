@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.serviceView.LspClientConsole
 import com.intellij.platform.lsp.impl.serviceView.LspServiceViewContributor
@@ -26,10 +27,10 @@ import kotlin.time.Duration.Companion.milliseconds
  * Stops the fake servers and waits until their processes end.
  * The client leaves the Services view before its process ends. A live process reader thread at the end of a test is a thread leak.
  */
-internal suspend fun stopFakeServers(project: Project) {
+internal suspend fun stopFakeServers(project: Project, providerClass: Class<out LspIntegrationProvider>) {
   val clientManager = LspClientManager.getInstance(project)
-  val servers = clientManager.getClients(FakeLspIntegrationProvider::class.java).map { (it.descriptor as FakeLspClientDescriptor).server }
-  clientManager.stopClients(FakeLspIntegrationProvider::class.java)
+  val servers = clientManager.getClients(providerClass).map { (it.descriptor as FakeLspClientDescriptor).server }
+  clientManager.stopClients(providerClass)
   while (LspServiceViewContributor().getServices(project).isNotEmpty()) {
     delay(50.milliseconds)
   }

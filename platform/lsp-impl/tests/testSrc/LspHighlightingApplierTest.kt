@@ -13,11 +13,8 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.FakeLspServerSession
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
-import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -62,7 +59,6 @@ internal class LspHighlightingApplierTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       semanticTokensProvider = SemanticTokensWithRegistrationOptions().apply {
@@ -174,9 +170,9 @@ internal class LspHighlightingApplierTest {
     TextEditorHighlightingPassRegistrar.getInstance(project)
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
     val document = codeInsightFixture.editor.document
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val uri = serverSession.fileUri(virtualFile)
-    val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
+    val client = fakeLspIntegration.client
 
     serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL, { it.textDocument.uri == uri }) {
       SemanticTokens(listOf(0, 0, 5, 0, 0))

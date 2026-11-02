@@ -2,8 +2,6 @@ package com.intellij.platform.lsp
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -42,7 +40,6 @@ internal class LspProgressTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
   private fun beginParams(token: String, title: String): ProgressParams =
@@ -60,7 +57,7 @@ internal class LspProgressTest {
   @Test
   fun `workDoneProgress End stops the progress job started by Begin`() = timeoutRunBlocking(30.seconds) {
     val virtualFile: VirtualFile = codeInsightFixture.configureByText("progress-sanity.txt", "hello").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     val managerJob = LspClientManagerImpl.getInstanceImpl(project).cs.coroutineContext.job
     val jobsBefore = managerJob.children.toSet()
@@ -86,11 +83,11 @@ internal class LspProgressTest {
   @Test
   fun `workDoneProgress Begin after the client stopped must not start a progress job`() = timeoutRunBlocking(60.seconds) {
     val virtualFile: VirtualFile = codeInsightFixture.configureByText("progress-leak.txt", "hello").virtualFile
-    configureServerSession(project, virtualFile)
+    fakeLspIntegration.serverSession(virtualFile)
 
     val manager = LspClientManagerImpl.getInstanceImpl(project)
     // Get the client and its handler before the stop: an explicit stop removes the client from the manager
-    val lspClient = manager.getClients(FakeLspIntegrationProvider::class.java).first()
+    val lspClient = fakeLspIntegration.client
     val handler = lspClient.serverNotificationsHandler
 
     withContext(Dispatchers.Default) { manager.stopRunningServer(lspClient) }

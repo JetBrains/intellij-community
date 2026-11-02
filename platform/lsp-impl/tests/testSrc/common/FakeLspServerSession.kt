@@ -1,33 +1,14 @@
 package com.intellij.platform.lsp.common
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspClientManager
-import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.job
 
-internal suspend fun CoroutineScope.configureServerSession(
-  project: Project,
-  file: VirtualFile,
-): FakeLspServerSession {
-  awaitFileOpenedByLspServer(project, file)
-  return currentServerSession(project)
-}
-
-/** The session of the already started fake server. Use when no local file open can settle the start. */
-internal fun CoroutineScope.currentServerSession(project: Project): FakeLspServerSession {
-  val clients = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
-  val descriptor = clients.first().descriptor as FakeLspClientDescriptor
-  return FakeLspServerSessionImpl(descriptor, this)
-}
-
-internal abstract class FakeLspServerSession : ServerSessionProtocolScope(), CoroutineScope {
+internal abstract class FakeLspServerSession : ServerSessionProtocolScope() {
   abstract fun fileUri(file: VirtualFile): String
 
   /**
@@ -104,10 +85,10 @@ internal data class ExpectedRequest(
   val deferred: CompletableDeferred<Unit>,
 )
 
-private class FakeLspServerSessionImpl(
+internal class FakeLspServerSessionImpl(
   private val descriptor: FakeLspClientDescriptor,
-  scope: CoroutineScope,
-) : FakeLspServerSession(), CoroutineScope by scope {
+  private val testJob: Job,
+) : FakeLspServerSession() {
   private val server = descriptor.server
   private val expectations = server.expectations
   private val pendingExpectations = mutableListOf<Deferred<Unit>>()
@@ -159,7 +140,7 @@ private class FakeLspServerSessionImpl(
    * It is a child of the test's job: an expectation that never matches keeps the test running until it is cancelled.
    */
   private fun newExpectationDeferred(): CompletableDeferred<Unit> =
-    CompletableDeferred<Unit>(coroutineContext.job).also { pendingExpectations.add(it) }
+    CompletableDeferred<Unit>(testJob).also { pendingExpectations.add(it) }
 
   override suspend fun <Params : Any, Response> sendRequest(
     method: ServerToClientLspRequest<Params, Response>,

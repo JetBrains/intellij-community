@@ -3,7 +3,6 @@ package com.intellij.platform.lsp
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.platform.lsp.common.TestNotebookDocumentAdapter
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspDocumentAdapter
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -34,7 +33,6 @@ internal class LspTextDocumentIncrementalSyncTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
@@ -48,7 +46,7 @@ internal class LspTextDocumentIncrementalSyncTest {
   @Test
   fun `textDocument didChange -- incremental sync sends notification on document change`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("incr.txt", "original text").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     val didChange = serverSession.expectNotification(serverSession.DID_CHANGE) {
@@ -86,7 +84,6 @@ internal class LspNotebookIncrementalSyncTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
@@ -109,7 +106,7 @@ internal class LspNotebookIncrementalSyncTest {
   fun `notebookDocument didChange -- incremental sync sends notebook change notification`() = timeoutRunBlocking {
     val content = "cell zero\n---\ncell one"
     val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     val didChange = serverSession.expectNotification(serverSession.NOTEBOOK_DID_CHANGE) { params ->

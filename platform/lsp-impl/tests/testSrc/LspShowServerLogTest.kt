@@ -10,7 +10,6 @@ import com.intellij.platform.lsp.api.LspBundle
 import com.intellij.platform.lsp.common.awaitErrorOutput
 import com.intellij.platform.lsp.common.awaitNotification
 import com.intellij.platform.lsp.common.collectNotifications
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.common.stopFakeServers
 import com.intellij.platform.lsp.impl.LspClientImpl
@@ -54,7 +53,6 @@ internal class LspShowServerLogTest {
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
   // The server error output opens in an editor tab with a LightVirtualFile. That file must not start one more fake server.
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(isSupportedFile = { it !is LightVirtualFile },
                                                                               offerServerLogInNotifications = true)
 
@@ -63,7 +61,7 @@ internal class LspShowServerLogTest {
   fun `error and warning messages offer to show the server log`() = timeoutRunBlocking {
     collectNotifications(project) { notifications ->
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.sendNotification(serverSession.SHOW_MESSAGE) { MessageParams(MessageType.Error, "error-marker") }
       serverSession.sendNotification(serverSession.SHOW_MESSAGE) { MessageParams(MessageType.Warning, "warning-marker") }
       serverSession.sendNotification(serverSession.SHOW_MESSAGE) { MessageParams(MessageType.Info, "info-marker") }
@@ -88,7 +86,7 @@ internal class LspShowServerLogTest {
                    "An error request should keep the server actions first and then offer to show the server log")
 
       showMessageRequest.cancel()
-      stopFakeServers(project)
+      stopFakeServers(project, fakeLspIntegration.providerClass)
     }
   }
 
@@ -97,7 +95,7 @@ internal class LspShowServerLogTest {
   fun `show server log opens the error output of a stopped server`() = timeoutRunBlocking {
     collectNotifications(project) { notifications ->
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val lspClient = LspServiceViewContributor().getServices(project).single() as LspClientImpl
       serverSession.writeErrorOutput("ERROR stopped-server-marker\n")
       awaitErrorOutput(lspClient, "stopped-server-marker")
@@ -105,7 +103,7 @@ internal class LspShowServerLogTest {
       val notification = awaitNotification(notifications, "error-marker")
       val action = notification.actions.filterIsInstance<ShowLspServerLogAction>().single()
 
-      stopFakeServers(project)
+      stopFakeServers(project, fakeLspIntegration.providerClass)
 
       withContext(Dispatchers.EDT) {
         action.actionPerformed(TestActionEvent.createTestEvent(), notification)
@@ -133,7 +131,7 @@ internal class LspShowServerLogTest {
   fun `show server log finds the console of the live client, then of the restarted client`() = timeoutRunBlocking {
     collectNotifications(project) { notifications ->
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val oldClient = LspServiceViewContributor().getServices(project).single() as LspClientImpl
       serverSession.sendNotification(serverSession.SHOW_MESSAGE) { MessageParams(MessageType.Error, "error-marker") }
       val notification = awaitNotification(notifications, "error-marker")
@@ -141,7 +139,7 @@ internal class LspShowServerLogTest {
       assertEquals(ShowLspServerLogAction.ServerLog.Console(oldClient), action.findServerLog(),
                    "The action should find the console of the live client")
 
-      stopFakeServers(project)
+      stopFakeServers(project, fakeLspIntegration.providerClass)
       assertEquals(ShowLspServerLogAction.ServerLog.NotAvailable, action.findServerLog(),
                    "Without the server error output and without a new client, the server log should not be available")
       val statusBarTexts = ConcurrentLinkedQueue<String>()
@@ -165,13 +163,13 @@ internal class LspShowServerLogTest {
                    statusBarTexts.toList(), "The status bar should tell that the server log is not available")
 
       val otherFile = codeInsightFixture.configureByText("other.txt", "hello again").virtualFile
-      configureServerSession(project, otherFile)
+      fakeLspIntegration.serverSession(otherFile)
       val newClient = LspServiceViewContributor().getServices(project).single() as LspClientImpl
       assertFalse(newClient === oldClient, "The second file should start a new client")
       assertEquals(ShowLspServerLogAction.ServerLog.Console(newClient), action.findServerLog(),
                    "The action should find the console of the restarted client")
 
-      stopFakeServers(project)
+      stopFakeServers(project, fakeLspIntegration.providerClass)
     }
   }
 }

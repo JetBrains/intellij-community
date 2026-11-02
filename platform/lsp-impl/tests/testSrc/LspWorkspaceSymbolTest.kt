@@ -6,7 +6,6 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.application.EDT
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.PsiElement
@@ -42,7 +41,6 @@ internal class LspWorkspaceSymbolTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       workspaceSymbolProvider = Either.forLeft(true)
@@ -54,7 +52,7 @@ internal class LspWorkspaceSymbolTest {
     @Test
     fun `LSP server returns SymbolInformation`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.WORKSPACE_SYMBOL, { it.query == "MyClass" }) {
@@ -98,7 +96,7 @@ internal class LspWorkspaceSymbolTest {
     @Test
     fun `LSP server returns WorkspaceSymbol`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("workspace_symbol.txt", "").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.WORKSPACE_SYMBOL, { it.query == "MyFunction" }) {
@@ -145,7 +143,7 @@ internal class LspWorkspaceSymbolTest {
       val file1 = codeInsightFixture.addFileToProject("request.txt", "").virtualFile
       val file2 = codeInsightFixture.addFileToProject("response.txt", "").virtualFile
       val file3 = codeInsightFixture.addFileToProject("error.txt", "").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.WORKSPACE_SYMBOL, { it.query == "Handler" }) {
         Either.forRight(listOf(
@@ -222,7 +220,7 @@ internal class LspWorkspaceSymbolTest {
     @Test
     fun `LSP server returns nothing`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("empty_result.txt", "").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.WORKSPACE_SYMBOL, { it.query == "NonExistent" }) {
         Either.forLeft(emptyList())
@@ -257,7 +255,7 @@ internal class LspWorkspaceSymbolTest {
       val file1 = codeInsightFixture.addFileToProject("model.txt", "").virtualFile
       val file2 = codeInsightFixture.addFileToProject("controller.txt", "").virtualFile
       val file3 = codeInsightFixture.addFileToProject("service.txt", "").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
       serverSession.expectRequest(serverSession.WORKSPACE_SYMBOL, { it.query == "User" }) {
         Either.forRight(listOf(

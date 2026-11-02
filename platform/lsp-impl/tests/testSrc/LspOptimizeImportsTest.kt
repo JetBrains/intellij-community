@@ -5,7 +5,6 @@ import com.intellij.formatting.service.FormattingService.Feature
 import com.intellij.lang.ImportOptimizer
 import com.intellij.lang.LanguageImportStatements
 import com.intellij.openapi.fileTypes.PlainTextLanguage
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -44,7 +43,6 @@ class LspOptimizeImportsTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       val codeActionOptions = CodeActionOptions().apply {
@@ -78,7 +76,7 @@ class LspOptimizeImportsTest {
   @Test
   fun `optimize imports with legacy changes format`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "Alpha Beta Gamma").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(
@@ -114,7 +112,7 @@ class LspOptimizeImportsTest {
   @Test
   fun `optimize imports with multiple code actions should be ignored`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "A B C D").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {
@@ -131,7 +129,7 @@ class LspOptimizeImportsTest {
   @Test
   fun `no code actions from the LSP server`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test3.txt", "No imports to organize").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {
@@ -145,7 +143,7 @@ class LspOptimizeImportsTest {
   @Test
   fun `server returns CodeAction with Command that triggers applyEdit`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("cmd.txt", "Alpha Beta").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(
@@ -180,7 +178,7 @@ class LspOptimizeImportsTest {
   @Test
   fun `server returns CodeAction with Command that doesn't trigger applyEdit`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("cmd2.txt", "Alpha Beta").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(
@@ -207,7 +205,7 @@ class LspOptimizeImportsTest {
   @Test
   fun `server returns bare Command that triggers applyEdit`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("bareCommand.txt", "Alpha Beta").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(
@@ -235,7 +233,7 @@ class LspOptimizeImportsTest {
   @Test
   fun `optimize imports - both modern and legacy edits present are ignored`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("both.txt", "Alpha Beta").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(

@@ -3,7 +3,6 @@ package com.intellij.platform.lsp
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.openapi.application.readAction
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeVisionFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -37,7 +36,6 @@ class LspCodeLensTest {
   private val sharedFileFixture = sourceRootFixture.psiFileFixture("test.txt", "")
   private val editorFixture = sharedFileFixture.editorFixture()
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       codeLensProvider = CodeLensOptions()
@@ -51,7 +49,7 @@ class LspCodeLensTest {
     val codeInsightContext = readAction { psiFile.codeInsightContext }
 
     val virtualFile = psiFile.virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.CODE_LENS, {
       it.textDocument.uri == serverSession.fileUri(virtualFile) && editorFixture.get().document.textLength > 0
@@ -75,7 +73,7 @@ class LspCodeLensTest {
     val codeInsightContext = readAction { psiFile.codeInsightContext }
 
     val virtualFile = psiFile.virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.CODE_LENS, {
       it.textDocument.uri == serverSession.fileUri(virtualFile) && editorFixture.get().document.textLength > 0
@@ -100,7 +98,7 @@ class LspCodeLensTest {
     val codeInsightContext = readAction { psiFile.codeInsightContext }
 
     val virtualFile = psiFile.virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.CODE_LENS, {
       it.textDocument.uri == serverSession.fileUri(virtualFile) && editorFixture.get().document.textLength > 0

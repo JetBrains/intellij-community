@@ -10,7 +10,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspGoToImplementationCustomizer
 import com.intellij.platform.lsp.api.customization.LspGoToImplementationDisabled
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.common.withPerformedAction
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -74,7 +73,6 @@ internal class LspGotoImplementationTest {
 
   @Nested
   inner class ImplementationSupported {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       configureServerCapabilities = {
         implementationProvider = Either.forLeft(true)
@@ -86,7 +84,7 @@ internal class LspGotoImplementationTest {
       // given
       val implFile = codeInsightFixture.addFileToProject("impl.txt", "class FooImpl : Foo").virtualFile
       val virtualFile = codeInsightFixture.configureByText("test.txt", "interface F<caret>oo").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       val implUri = serverSession.fileUri(implFile)
 
@@ -115,7 +113,7 @@ internal class LspGotoImplementationTest {
       // given
       val implFile = codeInsightFixture.addFileToProject("impl.txt", "class FooImpl : Foo").virtualFile
       val virtualFile = codeInsightFixture.configureByText("test.txt", "interface Foo<caret> {}").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       val implUri = serverSession.fileUri(implFile)
 
@@ -141,7 +139,7 @@ internal class LspGotoImplementationTest {
       // given
       val implFile = codeInsightFixture.addFileToProject("impl.txt", "class FooImpl : Foo").virtualFile
       val virtualFile = codeInsightFixture.configureByText("test.txt", "interface F<caret>oo").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val implUri = serverSession.fileUri(implFile)
 
       serverSession.expectRequest(serverSession.IMPLEMENTATION) {
@@ -163,14 +161,13 @@ internal class LspGotoImplementationTest {
 
   @Nested
   inner class ImplementationNotSupportedByServer {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
     @Test
     fun `no request when the server has no implementation capability`() = timeoutRunBlocking {
       // given
       val virtualFile = codeInsightFixture.configureByText("test.txt", "interface F<caret>oo").virtualFile
-      configureServerSession(project, virtualFile)
+      fakeLspIntegration.serverSession(virtualFile)
 
       // when
       val gotoData = gotoImplementationData()
@@ -182,7 +179,6 @@ internal class LspGotoImplementationTest {
 
   @Nested
   inner class ImplementationDisabledByCustomizer {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = object : LspCustomization() {
         override val goToImplementationCustomizer: LspGoToImplementationCustomizer = LspGoToImplementationDisabled
@@ -196,7 +192,7 @@ internal class LspGotoImplementationTest {
     fun `no request when the customizer disables the feature`() = timeoutRunBlocking {
       // given
       val virtualFile = codeInsightFixture.configureByText("test.txt", "interface F<caret>oo").virtualFile
-      configureServerSession(project, virtualFile)
+      fakeLspIntegration.serverSession(virtualFile)
 
       // when
       val gotoData = gotoImplementationData()

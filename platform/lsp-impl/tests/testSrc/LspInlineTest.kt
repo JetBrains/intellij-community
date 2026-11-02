@@ -11,7 +11,6 @@ import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -75,7 +74,6 @@ internal class LspInlineTest {
 
   @Nested
   inner class WithExtractCapability {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
@@ -90,7 +88,7 @@ internal class LspInlineTest {
     fun `inline applies the single returned code action`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {
@@ -116,7 +114,7 @@ internal class LspInlineTest {
     fun `inline runs the single returned bare command on the server`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {
@@ -138,7 +136,7 @@ internal class LspInlineTest {
       val otherElement = readAction { otherFile.findElementAt(0)!! }
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {
@@ -170,7 +168,6 @@ internal class LspInlineTest {
 
   @Nested
   inner class WithoutExtractCapability {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
@@ -185,7 +182,7 @@ internal class LspInlineTest {
     fun `inline works when the server supports no extract actions`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {
@@ -210,7 +207,7 @@ internal class LspInlineTest {
     @Test
     fun `extract is unavailable when the server supports no extract actions`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
-      configureServerSession(project, virtualFile)
+      fakeLspIntegration.serverSession(virtualFile)
 
       withContext(Dispatchers.EDT) {
         val presentation = codeInsightFixture.testAction(IntroduceVariableAction())
@@ -222,7 +219,6 @@ internal class LspInlineTest {
 
   @Nested
   inner class WithVariableExtractCapabilityOnly {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
@@ -237,7 +233,7 @@ internal class LspInlineTest {
     fun `extract method is unavailable when the server supports extract variable only`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      configureServerSession(project, virtualFile)
+      fakeLspIntegration.serverSession(virtualFile)
 
       withContext(Dispatchers.EDT) {
         val presentation = codeInsightFixture.testAction(ExtractMethodAction())
@@ -250,7 +246,7 @@ internal class LspInlineTest {
     fun `introduce variable works when the server supports extract variable only`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {
@@ -274,7 +270,6 @@ internal class LspInlineTest {
 
   @Nested
   inner class WithConstantExtractCapabilityOnly {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
@@ -289,7 +284,7 @@ internal class LspInlineTest {
     fun `introduce variable falls back to extract constant when the primary kind yields nothing`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(
@@ -324,7 +319,7 @@ internal class LspInlineTest {
     fun `introduce field falls back to extract constant when the primary kind yields nothing`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(
@@ -357,7 +352,6 @@ internal class LspInlineTest {
 
   @Nested
   inner class WithVariableAndConstantExtractCapabilities {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
@@ -372,7 +366,7 @@ internal class LspInlineTest {
     fun `introduce variable takes the primary kind and does not request the fallback`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       val variableRequested = serverSession.expectRequest(
@@ -409,7 +403,7 @@ internal class LspInlineTest {
     fun `introduce variable falls back to extract constant when the primary kind yields only disabled actions`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(
@@ -446,7 +440,6 @@ internal class LspInlineTest {
 
   @Nested
   inner class WithDroppingCustomization {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = DroppingCustomization(),
       configureServerCapabilities = {
@@ -461,7 +454,7 @@ internal class LspInlineTest {
     fun `inline skips the code actions the customizer drops`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {
@@ -494,7 +487,6 @@ internal class LspInlineTest {
 
   @Nested
   inner class WithQuickFixCapabilityOnly {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
@@ -509,7 +501,7 @@ internal class LspInlineTest {
     fun `inline works for a dynamic registration next to a static code action capability`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
         RegistrationParams(listOf(Registration("inline-actions", "textDocument/codeAction", CodeActionRegistrationOptions().apply {
@@ -538,7 +530,6 @@ internal class LspInlineTest {
 
   @Nested
   inner class WithSimilarlyNamedExtractCapability {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
       configureServerCapabilities = {
@@ -553,7 +544,7 @@ internal class LspInlineTest {
     fun `introduce variable is unavailable for a similarly prefixed capability kind`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
       awaitFileOpenedByLspServer(project, virtualFile)
-      configureServerSession(project, virtualFile)
+      fakeLspIntegration.serverSession(virtualFile)
 
       withContext(Dispatchers.EDT) {
         val presentation = codeInsightFixture.testAction(IntroduceVariableAction())
@@ -565,7 +556,6 @@ internal class LspInlineTest {
 
   @Nested
   inner class WithoutCodeActionCapability {
-    @Suppress("unused")
     private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
       lspCustomization = InlineAndExtractCustomization(),
     )
@@ -574,7 +564,7 @@ internal class LspInlineTest {
     @Test
     fun `inline works for a dynamically registered code action capability`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
         RegistrationParams(listOf(Registration("inline-actions", "textDocument/codeAction", CodeActionRegistrationOptions().apply {
@@ -604,7 +594,7 @@ internal class LspInlineTest {
     @Test
     fun `inline works when an earlier dynamic registration advertises other kinds only`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
         RegistrationParams(listOf(

@@ -3,7 +3,6 @@ package com.intellij.platform.lsp
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -39,13 +38,12 @@ class LspApplyEditTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
   @Test
   fun `incorrect uri - edit is not applied`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     val response = serverSession.sendRequest(serverSession.APPLY_EDIT) {
       ApplyWorkspaceEditParams(WorkspaceEdit(mapOf(
@@ -60,7 +58,7 @@ class LspApplyEditTest {
   @Test
   fun `apply edit to a single file`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "12345").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     val response = serverSession.sendRequest(serverSession.APPLY_EDIT) {
       ApplyWorkspaceEditParams(WorkspaceEdit(mapOf(
@@ -76,7 +74,7 @@ class LspApplyEditTest {
   fun `apply edit to two files`() = timeoutRunBlocking {
     val file1 = codeInsightFixture.configureByText("file1.txt", "first file").virtualFile
     val file2 = codeInsightFixture.addFileToProject("file2.txt", "second file").virtualFile
-    val serverSession = configureServerSession(project, file1)
+    val serverSession = fakeLspIntegration.serverSession(file1)
 
     val response = serverSession.sendRequest(serverSession.APPLY_EDIT) {
       ApplyWorkspaceEditParams(WorkspaceEdit(mapOf(
@@ -96,7 +94,7 @@ class LspApplyEditTest {
   fun `apply edit to two files using documentChanges`() = timeoutRunBlocking {
     val file1 = codeInsightFixture.configureByText("file1.txt", "first file").virtualFile
     val file2 = codeInsightFixture.addFileToProject("file2.txt", "second file").virtualFile
-    val serverSession = configureServerSession(project, file1)
+    val serverSession = fakeLspIntegration.serverSession(file1)
 
     val response = serverSession.sendRequest(serverSession.APPLY_EDIT) {
       ApplyWorkspaceEditParams(WorkspaceEdit(listOf(
@@ -123,7 +121,7 @@ class LspApplyEditTest {
     // The IntelliJ language server sends a delete quick fix in exactly this shape: one DeleteFile, nothing else
     val file1 = codeInsightFixture.configureByText("file1.txt", "first file").virtualFile
     val file2 = codeInsightFixture.addFileToProject("file2.txt", "second file").virtualFile
-    val serverSession = configureServerSession(project, file1)
+    val serverSession = fakeLspIntegration.serverSession(file1)
 
     val response = serverSession.sendRequest(serverSession.APPLY_EDIT) {
       ApplyWorkspaceEditParams(WorkspaceEdit(listOf(
@@ -139,7 +137,7 @@ class LspApplyEditTest {
   @Test
   fun `DeleteFile of a missing file with ignoreIfNotExists applies the rest of the edit`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     val response = serverSession.sendRequest(serverSession.APPLY_EDIT) {
       ApplyWorkspaceEditParams(WorkspaceEdit(listOf(

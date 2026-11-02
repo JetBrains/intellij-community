@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Inlay
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -43,7 +42,6 @@ internal class LspInlayHintTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       inlayHintProvider = Either.forRight(InlayHintRegistrationOptions().apply {
@@ -58,7 +56,7 @@ internal class LspInlayHintTest {
 
     val sourceText = "hello world"
     val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
       listOf(InlayHint(Position(0, 5), Either.forLeft(": String")))
@@ -78,7 +76,7 @@ internal class LspInlayHintTest {
 
     val sourceText = "foo bar baz"
     val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
       listOf(
@@ -101,7 +99,7 @@ internal class LspInlayHintTest {
 
     val sourceText = "hello world"
     val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) { emptyList() }
 
@@ -119,7 +117,7 @@ internal class LspInlayHintTest {
 
     val sourceText = "hello world"
     val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
       listOf(InlayHint(Position(0, 5), Either.forRight(mutableListOf(
@@ -142,7 +140,7 @@ internal class LspInlayHintTest {
 
     val sourceText = "hello world"
     val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
       listOf(InlayHint(Position(0, 5), Either.forRight(mutableListOf(
@@ -166,7 +164,7 @@ internal class LspInlayHintTest {
 
     val sourceText = "hello world"
     val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
@@ -193,7 +191,7 @@ internal class LspInlayHintTest {
 
     val sourceText = "hello world"
     val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
@@ -237,7 +235,7 @@ internal class LspInlayHintTest {
 
     val sourceText = "foo bar baz"
     val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
@@ -276,7 +274,7 @@ internal class LspInlayHintTest {
 
     val sourceText = "hello world"
     val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val fileUri = serverSession.fileUri(virtualFile)
 
     serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
@@ -301,7 +299,7 @@ internal class LspInlayHintTest {
     val settings = InlayHintsSettings.instance()
     val sourceText = "hello world"
     val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
       listOf(InlayHint(Position(0, 5), Either.forLeft(": String")))

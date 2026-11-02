@@ -1,9 +1,6 @@
 package com.intellij.platform.lsp
 
-import com.intellij.platform.lsp.api.LspClientManager
-import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.FakeLspServerSession
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -13,7 +10,6 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import org.eclipse.lsp4j.ExecuteCommandParams
 import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
@@ -38,7 +34,6 @@ class FakeLspServerSessionTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
   @Test
@@ -85,12 +80,11 @@ class FakeLspServerSessionTest {
     assertEquals(emptyList<Throwable?>(), loggedErrors)
   }
 
-  private suspend fun CoroutineScope.startServerSession(): FakeLspServerSession =
-    configureServerSession(project, codeInsightFixture.configureByText("test.txt", "").virtualFile)
+  private suspend fun startServerSession(): FakeLspServerSession =
+    fakeLspIntegration.serverSession(codeInsightFixture.configureByText("test.txt", "").virtualFile)
 
   private suspend fun executeCommand() {
-    LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java).first()
-      .sendRequest { it.workspaceService.executeCommand(ExecuteCommandParams("cmd", emptyList())) }
+    fakeLspIntegration.client.sendRequest { it.workspaceService.executeCommand(ExecuteCommandParams("cmd", emptyList())) }
   }
 
   private suspend fun executeCommandError(): ResponseErrorException =

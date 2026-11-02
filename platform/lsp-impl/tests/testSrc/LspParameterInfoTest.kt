@@ -2,7 +2,6 @@ package com.intellij.platform.lsp
 
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext
 import com.intellij.openapi.application.readAction
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.features.parameterInfo.LspParameterInfoContext
 import com.intellij.platform.lsp.impl.features.parameterInfo.LspParameterInfoHandler
@@ -36,7 +35,6 @@ internal class LspParameterInfoTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       signatureHelpProvider = SignatureHelpOptions()
@@ -157,7 +155,7 @@ internal class LspParameterInfoTest {
     }
 
   private suspend fun CoroutineScope.querySignatureHelp(mockSignatureHelp: SignatureHelp): MockUpdateParameterInfoContext {
-    val serverSession = configureServerSession(project, codeInsightFixture.file.virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(codeInsightFixture.file.virtualFile)
 
     fun expectResult() {
       serverSession.expectRequest(serverSession.SIGNATURE_HELP, { true }) {

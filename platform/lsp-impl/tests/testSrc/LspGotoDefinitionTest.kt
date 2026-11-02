@@ -12,7 +12,6 @@ import com.intellij.platform.lsp.api.customization.LspCustomization
 import com.intellij.platform.lsp.api.customization.LspHoverCustomizer
 import com.intellij.platform.lsp.api.customization.LspHoverDisabled
 import com.intellij.platform.lsp.common.FakeLspServerSession
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -83,13 +82,12 @@ internal class LspGotoDefinitionTest {
 
   @Nested
   inner class GoToDeclarationAction {
-    @Suppress("unused")
     private val fakeLspIntegration by definitionIntegrationFixture()
 
     @Test
     fun `given definition when go to declaration is invoked then the caret moves to the definition`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.expectDefinition(fileUri, definitionInThisFile(fileUri))
 
@@ -104,7 +102,7 @@ internal class LspGotoDefinitionTest {
     @Test
     fun `given no definition when go to declaration is invoked then the caret stays put`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.expectDefinition(fileUri, emptyList())
 
@@ -120,7 +118,7 @@ internal class LspGotoDefinitionTest {
     fun `given a definition pointing at the reference itself when go to declaration is invoked then the caret stays put`() =
       timeoutRunBlocking {
         val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-        val serverSession = configureServerSession(project, virtualFile)
+        val serverSession = fakeLspIntegration.serverSession(virtualFile)
         val fileUri = serverSession.fileUri(virtualFile)
         serverSession.expectDefinition(fileUri, listOf(LocationLink(fileUri, REFERENCE_RANGE, REFERENCE_RANGE, REFERENCE_RANGE)))
 
@@ -135,13 +133,12 @@ internal class LspGotoDefinitionTest {
 
   @Nested
   inner class GoToDeclarationOnlyAction {
-    @Suppress("unused")
     private val fakeLspIntegration by definitionIntegrationFixture()
 
     @Test
     fun `given definition when go to declaration only is invoked then the caret moves to the definition`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.expectDefinition(fileUri, definitionInThisFile(fileUri))
 
@@ -156,7 +153,7 @@ internal class LspGotoDefinitionTest {
     @Test
     fun `given no definition when go to declaration only is invoked then the caret stays put`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.expectDefinition(fileUri, emptyList())
 
@@ -171,13 +168,12 @@ internal class LspGotoDefinitionTest {
 
   @Nested
   inner class CtrlHover {
-    @Suppress("unused")
     private val fakeLspIntegration by definitionIntegrationFixture()
 
     @Test
     fun `given definition when hovering over the reference then its range is highlighted as a link`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.expectDefinition(fileUri, definitionInThisFile(fileUri))
 
@@ -192,7 +188,7 @@ internal class LspGotoDefinitionTest {
     @Test
     fun `given no definition when hovering over the reference then nothing is highlighted`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.expectDefinition(fileUri, emptyList())
 
@@ -205,7 +201,7 @@ internal class LspGotoDefinitionTest {
     @Test
     fun `given definition when hovering over the reference then there is no hint`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.expectDefinition(fileUri, definitionInThisFile(fileUri))
 
@@ -219,7 +215,7 @@ internal class LspGotoDefinitionTest {
     @Test
     fun `given the pointer moves within the reference range then the server is asked once`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       // a single expectation: a second request would go unanswered and produce no data
       serverSession.expectRequest(serverSession.DEFINITION, { it.textDocument.uri == fileUri }) {
@@ -237,7 +233,6 @@ internal class LspGotoDefinitionTest {
 
   @Nested
   inner class HoverDisabledByCustomizer {
-    @Suppress("unused")
     private val fakeLspIntegration by definitionIntegrationFixture(object : LspCustomization() {
       override val hoverCustomizer: LspHoverCustomizer = LspHoverDisabled
     })
@@ -245,7 +240,7 @@ internal class LspGotoDefinitionTest {
     @Test
     fun `given hover disabled when hovering over the reference then the server is not asked`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       val definitionRequest = serverSession.expectDefinition(fileUri, definitionInThisFile(fileUri))
 
@@ -260,7 +255,7 @@ internal class LspGotoDefinitionTest {
     @Test
     fun `given hover disabled when go to declaration is invoked then the caret moves to the definition`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
       serverSession.expectDefinition(fileUri, definitionInThisFile(fileUri))
 

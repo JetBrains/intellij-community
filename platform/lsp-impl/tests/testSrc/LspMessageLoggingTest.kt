@@ -2,7 +2,6 @@ package com.intellij.platform.lsp
 
 import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.logging.LanguageServiceLoggerService
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
@@ -37,7 +36,6 @@ internal class LspMessageLoggingTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
   private val lspLogger = Logger.getInstance(LanguageServiceLoggerService::class.java)
@@ -52,7 +50,7 @@ internal class LspMessageLoggingTest {
     lspLogger.setLevel(LogLevel.DEBUG)
 
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val uri = serverSession.fileUri(virtualFile)
 
     serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {

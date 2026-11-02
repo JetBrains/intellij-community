@@ -10,7 +10,6 @@ import com.intellij.platform.lsp.common.awaitConsoleText
 import com.intellij.platform.lsp.common.awaitErrorOutput
 import com.intellij.platform.lsp.common.awaitNotification
 import com.intellij.platform.lsp.common.collectNotifications
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.stopFakeServers
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.serviceView.LspServiceViewContributor
@@ -47,13 +46,12 @@ internal class LspServiceViewTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
 
   @Test
   fun `lsp server is shown in services view and its console receives messages`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
     val contributor = LspServiceViewContributor()
     val clients = contributor.getServices(project)
@@ -114,14 +112,14 @@ internal class LspServiceViewTest {
       assertTrue(logMessageNotificationLink.header.startsWith("←"), "An inbound payload popup title should use the inbound arrow")
     }
 
-    stopFakeServers(project)
+    stopFakeServers(project, fakeLspIntegration.providerClass)
   }
 
   @Test
   @TestFor(issues = ["IJPL-257420"])
   fun `server error output is printed to the console`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val lspClient = LspServiceViewContributor().getServices(project).single()
     val console = requireNotNull(LspServiceViewSupport.getInstance(project).getOrCreateConsole(lspClient)) {
       "A console should exist for a tracked LSP client"
@@ -145,14 +143,14 @@ internal class LspServiceViewTest {
       assertContentType(console.getConsoleViewForTests(), expectedLines[1], ConsoleViewContentType.ERROR_OUTPUT)
     }
 
-    stopFakeServers(project)
+    stopFakeServers(project, fakeLspIntegration.providerClass)
   }
 
   @Test
   @TestFor(issues = ["IJPL-257420"])
   fun `incomplete last line is printed when the server process terminates`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val lspClient = LspServiceViewContributor().getServices(project).single()
     val console = requireNotNull(LspServiceViewSupport.getInstance(project).getOrCreateConsole(lspClient)) {
       "A console should exist for a tracked LSP client"
@@ -166,14 +164,14 @@ internal class LspServiceViewTest {
     val consoleText = awaitConsoleText(console, listOf("STDERR ERROR tail-marker", "Server terminated unexpectedly"))
     assertEquals(1, consoleText.lines().count { "tail-marker" in it }, "The tail should be printed once, got:\n$consoleText")
 
-    stopFakeServers(project)
+    stopFakeServers(project, fakeLspIntegration.providerClass)
   }
 
   @Test
   @TestFor(issues = ["IJPL-257420"])
   fun `very long line is printed before its end comes`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val lspClient = LspServiceViewContributor().getServices(project).single()
     val console = requireNotNull(LspServiceViewSupport.getInstance(project).getOrCreateConsole(lspClient)) {
       "A console should exist for a tracked LSP client"
@@ -182,7 +180,7 @@ internal class LspServiceViewTest {
     serverSession.writeErrorOutput("long-line-marker " + "x".repeat(20_000))
     awaitConsoleText(console, listOf("STDERR long-line-marker xxx"))
 
-    stopFakeServers(project)
+    stopFakeServers(project, fakeLspIntegration.providerClass)
   }
 
   @Test
@@ -190,14 +188,14 @@ internal class LspServiceViewTest {
   fun `error message does not offer the server log when the descriptor does not opt in`() = timeoutRunBlocking {
     collectNotifications(project) { notifications ->
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       serverSession.sendNotification(serverSession.SHOW_MESSAGE) { MessageParams(MessageType.Error, "error-marker") }
 
       val notification = awaitNotification(notifications, "error-marker")
       assertFalse(notification.actions.any { it is ShowLspServerLogAction },
                   "Without the opt-in, an error message should not offer to show the server log")
 
-      stopFakeServers(project)
+      stopFakeServers(project, fakeLspIntegration.providerClass)
     }
   }
 

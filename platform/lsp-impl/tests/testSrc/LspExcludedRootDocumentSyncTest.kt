@@ -6,9 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
-import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -39,7 +37,6 @@ internal class LspExcludedRootDocumentSyncTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       textDocumentSync = Either.forRight(TextDocumentSyncOptions().apply {
@@ -53,14 +50,14 @@ internal class LspExcludedRootDocumentSyncTest {
   @TestFor(issues = ["IJPL-256620"])
   fun `un-excluding the directory of an open file sends didOpen`(): Unit = timeoutRunBlocking {
     val bootstrap = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
-    val serverSession = configureServerSession(project, bootstrap)
+    val serverSession = fakeLspIntegration.serverSession(bootstrap)
     val file = codeInsightFixture.addFileToProject("excluded/inside.txt", "hello").virtualFile
     val directory = file.parent
     edtWriteAction { PsiTestUtil.addExcludedRoot(module, directory) }
     var excluded = true
     try {
       withContext(Dispatchers.EDT) { FileEditorManager.getInstance(project).openFile(file, true) }
-      val client = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().single()
+      val client = fakeLspIntegration.client
       assertFalse(readAction { client.isFileOpened(file) }, "an excluded file must not be opened on the server")
 
       serverSession.expectNotification(serverSession.DID_OPEN) { it.textDocument.uri == serverSession.fileUri(file) }
@@ -77,7 +74,7 @@ internal class LspExcludedRootDocumentSyncTest {
   @TestFor(issues = ["IJPL-256620"])
   fun `excluding the directory of an open file sends didClose`(): Unit = timeoutRunBlocking {
     val bootstrap = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
-    val serverSession = configureServerSession(project, bootstrap)
+    val serverSession = fakeLspIntegration.serverSession(bootstrap)
     val file = codeInsightFixture.addFileToProject("excluded/inside.txt", "hello").virtualFile
     val directory = file.parent
 

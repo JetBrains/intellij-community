@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlightingResult
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.TextRange
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -38,7 +37,6 @@ internal class LspDocumentHighlightsTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     configureServerCapabilities = {
       documentHighlightProvider = Either.forLeft(true)
@@ -67,7 +65,7 @@ internal class LspDocumentHighlightsTest {
     @Test
     fun `given caret on symbol when highlight usages triggered then all occurrences are highlighted`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar foo baz foo").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DOCUMENT_HIGHLIGHT, { it.textDocument.uri == fileUri && it.position == Position(0, 0) }) {
@@ -91,7 +89,7 @@ internal class LspDocumentHighlightsTest {
     @Test
     fun `given caret on symbol with no usages when highlight usages triggered then no highlights are added`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DOCUMENT_HIGHLIGHT, { it.textDocument.uri == fileUri && it.position == Position(0, 0) }) {
@@ -117,7 +115,7 @@ internal class LspDocumentHighlightsTest {
         x = 2
       """.trimIndent()
         val virtualFile = codeInsightFixture.configureByText("test.txt", text).virtualFile
-        val serverSession = configureServerSession(project, virtualFile)
+        val serverSession = fakeLspIntegration.serverSession(virtualFile)
         val fileUri = serverSession.fileUri(virtualFile)
 
         serverSession.expectRequest(serverSession.DOCUMENT_HIGHLIGHT, { it.textDocument.uri == fileUri && it.position == Position(0, 4) }) {
@@ -147,7 +145,7 @@ internal class LspDocumentHighlightsTest {
     @Test
     fun `given caret on symbol with text kind when highlight usages triggered then treated as read`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar foo").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DOCUMENT_HIGHLIGHT, { it.textDocument.uri == fileUri && it.position == Position(0, 0) }) {
@@ -173,7 +171,7 @@ internal class LspDocumentHighlightsTest {
     @Test
     fun `given caret on symbol with no kind specified when highlight usages triggered then treated as read`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "foo bar foo").virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DOCUMENT_HIGHLIGHT, { it.textDocument.uri == fileUri && it.position == Position(0, 0) }) {
@@ -209,7 +207,7 @@ internal class LspDocumentHighlightsTest {
         }
       """.trimIndent()
         val virtualFile = codeInsightFixture.configureByText("test.txt", text).virtualFile
-        val serverSession = configureServerSession(project, virtualFile)
+        val serverSession = fakeLspIntegration.serverSession(virtualFile)
         val fileUri = serverSession.fileUri(virtualFile)
 
         serverSession.expectRequest(serverSession.DOCUMENT_HIGHLIGHT, { it.textDocument.uri == fileUri && it.position == Position(0, 9) }) {

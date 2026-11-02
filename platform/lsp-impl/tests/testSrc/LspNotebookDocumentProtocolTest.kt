@@ -21,9 +21,7 @@ import com.intellij.platform.lsp.api.customization.LspFormattingSupport
 import com.intellij.platform.lsp.api.customization.LspOnTypeFormattingSupport
 import com.intellij.platform.lsp.api.customization.LspRenameSupport
 import com.intellij.psi.PsiFile
-import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.TestNotebookDocumentAdapter
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspDocumentAdapter
 import com.intellij.platform.lsp.impl.features.usages.LspSearchTarget
@@ -104,7 +102,6 @@ internal class LspNotebookDocumentProtocolTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
     lspCustomization = object : LspCustomization() {
       override val formattingCustomizer = object : LspFormattingSupport() {
@@ -167,7 +164,7 @@ internal class LspNotebookDocumentProtocolTest {
       val content = "cell zero\n---\ncell one\n---\ncell two"
 
       val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
-      val serverSession = configureServerSession(project, bootstrapFile)
+      val serverSession = fakeLspIntegration.serverSession(bootstrapFile)
 
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
       val expectedUri = serverSession.fileUri(virtualFile)
@@ -197,7 +194,7 @@ internal class LspNotebookDocumentProtocolTest {
     fun `notebookDocument didClose -- sends correct identifiers`() = timeoutRunBlocking {
       val content = "cell zero\n---\ncell one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       val didClose = serverSession.expectNotification(serverSession.NOTEBOOK_DID_CLOSE) { params ->
@@ -218,7 +215,7 @@ internal class LspNotebookDocumentProtocolTest {
     fun `notebookDocument didSave -- sends notebook identifier`() = timeoutRunBlocking {
       val content = "cell zero\n---\ncell one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       val didSave = serverSession.expectNotification(serverSession.NOTEBOOK_DID_SAVE) { params ->
@@ -240,7 +237,7 @@ internal class LspNotebookDocumentProtocolTest {
     fun `notebookDocument didChange -- sends updated cell structure`() = timeoutRunBlocking {
       val content = "cell zero\n---\ncell one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       val didChange = serverSession.expectNotification(serverSession.NOTEBOOK_DID_CHANGE) { params ->
@@ -261,7 +258,7 @@ internal class LspNotebookDocumentProtocolTest {
     fun `textDocument hover -- request uses cell URI for notebook position`() = timeoutRunBlocking {
       val content = "cell zero\n---\ncell <caret>one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.HOVER, { params ->
@@ -288,7 +285,7 @@ internal class LspNotebookDocumentProtocolTest {
       // Without mapping, the range would be applied to host line 0 → "cell zer"
       val content = "cell zero\n---\ncell <caret>one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.HOVER, { params ->
@@ -312,7 +309,7 @@ internal class LspNotebookDocumentProtocolTest {
     fun `textDocument completion -- request uses cell URI for notebook position`(): Unit = timeoutRunBlocking {
       val content = "cell zero\n---\n<caret>"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.COMPLETION, { params ->
@@ -335,7 +332,7 @@ internal class LspNotebookDocumentProtocolTest {
     fun `textDocument definition -- request uses cell URI for notebook position`(): Unit = timeoutRunBlocking {
       val content = "target definition\n---\ngoto <caret>here"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DEFINITION, { params ->
@@ -356,7 +353,7 @@ internal class LspNotebookDocumentProtocolTest {
 
       val content = "<error descr=\"test error\">hello</error>\n---\nworld"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       val job = launch(start = CoroutineStart.LAZY) {
@@ -382,7 +379,7 @@ internal class LspNotebookDocumentProtocolTest {
       // Diagnostic at cell-relative (0,0)-(0,5) in cell 1 → host (2,0)-(2,5)
       val content = "hello\n---\n<error descr=\"test error\">world</error>"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       val job = launch(start = CoroutineStart.LAZY) {
@@ -406,7 +403,7 @@ internal class LspNotebookDocumentProtocolTest {
 
       val content = "line 0\nline 1\nline 2\n---\ncell one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { params ->
@@ -427,7 +424,7 @@ internal class LspNotebookDocumentProtocolTest {
 
       val sourceText = "color: red\n---\ncell one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", sourceText).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DOCUMENT_COLOR, { params ->
@@ -452,7 +449,7 @@ internal class LspNotebookDocumentProtocolTest {
 
       val content = "hello world\n---\ncell one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.CODE_LENS, { params ->
@@ -475,7 +472,7 @@ internal class LspNotebookDocumentProtocolTest {
       // registered before the notebook opens, because the client pulls as soon as the file is opened.
       val content = "hello world\n---\ncell one"
       val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
-      val serverSession = configureServerSession(project, bootstrapFile)
+      val serverSession = fakeLspIntegration.serverSession(bootstrapFile)
       val virtualFile = codeInsightFixture.addFileToProject("test.test-notebook", content).virtualFile
       val fileUri = serverSession.fileUri(virtualFile)
 
@@ -500,7 +497,7 @@ internal class LspNotebookDocumentProtocolTest {
 
       val content = "hello world\n---\ncell one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.INLAY_HINT, { params ->
@@ -523,7 +520,7 @@ internal class LspNotebookDocumentProtocolTest {
       // registered before the notebook opens, because the client pulls as soon as the file is opened.
       val content = "hello world\n---\ncell one"
       val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
-      val serverSession = configureServerSession(project, bootstrapFile)
+      val serverSession = fakeLspIntegration.serverSession(bootstrapFile)
       val virtualFile = codeInsightFixture.addFileToProject("test.test-notebook", content).virtualFile
       val fileUri = serverSession.fileUri(virtualFile)
 
@@ -550,7 +547,7 @@ internal class LspNotebookDocumentProtocolTest {
       // registered before the notebook opens, because the client pulls as soon as the file is opened.
       val content = "hello world\n---\ncell one"
       val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
-      val serverSession = configureServerSession(project, bootstrapFile)
+      val serverSession = fakeLspIntegration.serverSession(bootstrapFile)
       val virtualFile = codeInsightFixture.addFileToProject("test.test-notebook", content).virtualFile
       val fileUri = serverSession.fileUri(virtualFile)
 
@@ -573,7 +570,7 @@ internal class LspNotebookDocumentProtocolTest {
     fun `textDocument formatting -- request uses cell URI for notebook file`(): Unit = timeoutRunBlocking {
       val content = "hello world\n---\ncell one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.FORMATTING, { params ->
@@ -596,7 +593,7 @@ internal class LspNotebookDocumentProtocolTest {
     fun `textDocument onTypeFormatting -- request uses cell URI for notebook position`(): Unit = timeoutRunBlocking {
       val content = "cell zero\n---\n<caret>"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.ON_TYPE_FORMATTING, { params ->
@@ -614,7 +611,7 @@ internal class LspNotebookDocumentProtocolTest {
     fun `textDocument codeAction -- request uses cell URI for notebook position`(): Unit = timeoutRunBlocking {
       val content = "cell zero\n---\ncell <caret>one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.CODE_ACTION, { params ->
@@ -636,7 +633,7 @@ internal class LspNotebookDocumentProtocolTest {
       // registered before the notebook opens, because the client pulls as soon as the file is opened.
       val content = "cell zero\n---\ncell one"
       val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
-      val serverSession = configureServerSession(project, bootstrapFile)
+      val serverSession = fakeLspIntegration.serverSession(bootstrapFile)
       val virtualFile = codeInsightFixture.addFileToProject("test.test-notebook", content).virtualFile
       val fileUri = serverSession.fileUri(virtualFile)
 
@@ -672,7 +669,7 @@ internal class LspNotebookDocumentProtocolTest {
     fun `textDocument references -- request uses cell URI for notebook position`(): Unit = timeoutRunBlocking {
       val content = "cell zero\n---\ncell <caret>one"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.REFERENCES, { params ->
@@ -681,7 +678,7 @@ internal class LspNotebookDocumentProtocolTest {
         emptyList()
       }
 
-      val lspClients = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
+      val lspClients = LspClientManager.getInstance(project).getClients(fakeLspIntegration.providerClass)
       val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)!! }
       val offset = withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset }
       val position = readAction { getLsp4jPosition(document, offset) }
@@ -700,7 +697,7 @@ internal class LspNotebookDocumentProtocolTest {
       //       but without mapping it applies (0,0)-(0,3) to host line 0 ("ab") which fails
       val content = "ab\n---\ncde <caret>fgh"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       // Server returns a reference in cell-1 at cell-relative position (0,0)-(0,3)
@@ -710,7 +707,7 @@ internal class LspNotebookDocumentProtocolTest {
         listOf(Location("$fileUri#cell-1", Range(Position(0, 0), Position(0, 3))))
       }
 
-      val lspClients = LspClientManager.getInstance(project).getClients(FakeLspIntegrationProvider::class.java)
+      val lspClients = LspClientManager.getInstance(project).getClients(fakeLspIntegration.providerClass)
       val document = readAction { FileDocumentManager.getInstance().getDocument(virtualFile)!! }
       val offset = withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset }
       val position = readAction { getLsp4jPosition(document, offset) }
@@ -740,7 +737,7 @@ internal class LspNotebookDocumentProtocolTest {
       // Server returns fold range (0,1) for cell 1 → should map to host lines (4,5)
       val content = "line 0\nline 1\nline 2\n---\naaa\nbbb\nccc"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.FOLDING_RANGE, { params ->
@@ -774,7 +771,7 @@ internal class LspNotebookDocumentProtocolTest {
       // registered before the notebook opens, because the client pulls as soon as the file is opened.
       val content = "hello\n---\nworld"
       val bootstrapFile = codeInsightFixture.configureByText("bootstrap.txt", "bootstrap").virtualFile
-      val serverSession = configureServerSession(project, bootstrapFile)
+      val serverSession = fakeLspIntegration.serverSession(bootstrapFile)
       val virtualFile = codeInsightFixture.addFileToProject("test.test-notebook", content).virtualFile
       val fileUri = serverSession.fileUri(virtualFile)
 
@@ -818,7 +815,7 @@ internal class LspNotebookDocumentProtocolTest {
       // This tests that LocationLink targetUri with cell fragment is mapped back to the host file URI
       val content = "target def\n---\ngoto <caret>here"
       val virtualFile = codeInsightFixture.configureByText("test.test-notebook", content).virtualFile
-      val serverSession = configureServerSession(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
 
       serverSession.expectRequest(serverSession.DEFINITION, { params ->

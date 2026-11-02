@@ -7,7 +7,6 @@ import com.intellij.platform.lsp.api.LspCommunicationChannel
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.common.assertContentType
 import com.intellij.platform.lsp.common.awaitConsoleText
-import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.stopFakeServers
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.serviceView.LspServiceViewContributor
@@ -40,14 +39,13 @@ internal class LspServiceViewSocketTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  @Suppress("unused")
   private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(useSocket = true)
 
   @Test
   @TestFor(issues = ["IJPL-257420"])
   fun `server process output is printed to the console`() = timeoutRunBlocking {
     val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-    val serverSession = configureServerSession(project, virtualFile)
+    val serverSession = fakeLspIntegration.serverSession(virtualFile)
     val lspClient = LspServiceViewContributor().getServices(project).single()
     assertTrue(lspClient.descriptor.lspCommunicationChannel is LspCommunicationChannel.Socket, "The server should talk LSP over a socket")
     val console = requireNotNull(LspServiceViewSupport.getInstance(project).getOrCreateConsole(lspClient)) {
@@ -71,6 +69,6 @@ internal class LspServiceViewSocketTest {
       assertContentType(consoleView, "STDERR ERROR stderr-marker", ConsoleViewContentType.ERROR_OUTPUT)
     }
 
-    stopFakeServers(project)
+    stopFakeServers(project, fakeLspIntegration.providerClass)
   }
 }
