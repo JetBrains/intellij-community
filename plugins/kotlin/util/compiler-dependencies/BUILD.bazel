@@ -30,7 +30,6 @@ jvm_library(
         "//libraries/kotlinc/compose-compiler-plugin:libraries-kotlinc-compose-compiler-plugin",
         "//libraries/kotlinc/js-plain-objects-compiler-plugin:libraries-kotlinc-js-plain-objects-compiler-plugin",
         "//libraries/kotlinc/kotlin-dataframe-compiler-plugin:libraries-kotlinc-kotlin-dataframe-compiler-plugin",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
         "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
         "//libraries/kotlinc/kotlin-scripting-dependencies:libraries-kotlinc-kotlin-scripting-dependencies",
         "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl",

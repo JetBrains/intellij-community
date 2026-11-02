@@ -44,7 +44,7 @@ jvm_library(
         "//platform/util/jdom",
         "//jps/model-api:model",
         "//jps/model-serialization",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/projectModel-api:projectModel",
     ],

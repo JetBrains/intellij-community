@@ -51,8 +51,8 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-kotlin-jps-common_provided",
-    lib = "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+    name = "plugins_kotlin_jps_util_runtime_provided",
+    lib = "//plugins/kotlin/jps/util/runtime",
 )
 
 jvm_library(
@@ -115,7 +115,7 @@ jvm_library(
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
         ":libraries_kotlinc_libraries-kotlinc-compose-compiler-plugin_provided",
-        ":libraries_kotlinc_libraries-kotlinc-kotlin-jps-common_provided",
+        ":plugins_kotlin_jps_util_runtime_provided",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.codeInsight` end

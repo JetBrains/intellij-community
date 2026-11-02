@@ -54,7 +54,7 @@ jvm_library(
         "//libraries/jetbrains/annotations",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "@lib//:kotlinc-kotlin-build-tools-api",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",

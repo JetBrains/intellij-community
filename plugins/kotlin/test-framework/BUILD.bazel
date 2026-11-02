@@ -37,7 +37,7 @@ jvm_library(
         "//platform/lang-core",
         "//platform/lang-api:lang",
         "//platform/testFramework",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinx/coroutines/core",
         "//platform/ide-core-impl",

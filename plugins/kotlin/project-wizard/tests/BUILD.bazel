@@ -62,7 +62,7 @@ jvm_library(
         "//plugins/gradle/java",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/compiler-configuration",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//plugins/kotlin/formatter",
         "//plugins/maven/testFramework",
         "//plugins/kotlin/project-wizard/maven",

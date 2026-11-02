@@ -127,7 +127,7 @@ jvm_library(
         "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/migration",
         "//java/idea-ui:ui",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//plugins/IntelliLang/backend",
         "//platform/testRunner",
         "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",

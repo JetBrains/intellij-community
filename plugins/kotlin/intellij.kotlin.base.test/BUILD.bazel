@@ -71,7 +71,7 @@ jvm_library(
         "//plugins/kotlin/base/facet",
         "//platform/lang-core",
         "//platform/lang-api:lang",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//java/java-runtime:rt",
         "//plugins/kotlin/code-insight/utils",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",

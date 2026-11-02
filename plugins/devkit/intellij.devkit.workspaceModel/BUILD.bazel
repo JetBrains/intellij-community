@@ -50,7 +50,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/references",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//libraries/workspace-model-codegen",
         "//platform/code-style-api:codeStyle",
         "//platform/util/concurrency",

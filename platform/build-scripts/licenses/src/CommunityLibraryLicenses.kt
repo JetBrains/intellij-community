@@ -1538,7 +1538,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     jetbrainsLibrary("kotlinc.kotlin-dataframe-compiler-plugin"),
     jetbrainsLibrary("kotlinc.kotlin-dist"),
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
-    jetbrainsLibrary("kotlinc.kotlin-jps-common"),
     jetbrainsLibrary("kotlinc.kotlin-jps-plugin-classpath"),
     jetbrainsLibrary("kotlinc.kotlin-objcexport-header-generator"),
     jetbrainsLibrary("kotlinc.kotlin-script-runtime"),

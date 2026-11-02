@@ -3,12 +3,12 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.kotlin.builder.jps` start
-content_module_jar(module = ":builder")
+content_module_jar(module = ":kotlin-builder-jps")
 ### auto-generated section `dev intellij.kotlin.builder.jps` end
 
 ### auto-generated section `build intellij.kotlin.builder.jps` start
 create_kotlinc_options(
-    name = "custom_builder",
+    name = "custom_kotlin-builder-jps",
     api_version = "2.4",
     jvm_target = "11",
     language_version = "2.4",
@@ -20,7 +20,7 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "builder",
+    name = "kotlin-builder-jps",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -29,7 +29,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_builder",
+    kotlinc_opts = ":custom_kotlin-builder-jps",
     module_name = "intellij.kotlin.builder.jps",
     resource_strip_prefix = "resources",
     resources = glob(

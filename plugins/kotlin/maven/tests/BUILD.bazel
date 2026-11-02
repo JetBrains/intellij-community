@@ -57,7 +57,7 @@ jvm_library(
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/frontend-independent",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//plugins/kotlin/jvm/shared",
         "//plugins/kotlin/formatter",
         "//plugins/kotlin/maven",

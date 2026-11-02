@@ -114,7 +114,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.migration" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.jps.util.runtime" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.langInjection.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections" scope="TEST" />

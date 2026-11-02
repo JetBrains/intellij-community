@@ -9136,20 +9136,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_5_20-dev-3853_http",
-    downloaded_file_path = "kotlin-jps-common-for-ide-2.5.20-dev-3853.jar",
-    sha256 = "ce0de1dea418bd996f3a33f07216fe3cc00f5de4d6b4646074f084e832946c9d",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.5.20-dev-3853/kotlin-jps-common-for-ide-2.5.20-dev-3853.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_5_20-dev-3853-sources_http",
-    downloaded_file_path = "kotlin-jps-common-for-ide-2.5.20-dev-3853-sources.jar",
-    sha256 = "bfa638d388d982354ad2d34798f1ace4f0d1739ae41b87d43fbfca5ac80dc4bd",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-jps-common-for-ide/2.5.20-dev-3853/kotlin-jps-common-for-ide-2.5.20-dev-3853-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_kotlin-kotlin-script-runtime-2_5_20-dev-3853_http",
     downloaded_file_path = "kotlin-script-runtime-2.5.20-dev-3853.jar",
     sha256 = "7ddd8613f4abfe4253fc8fc5d69456138dfea2ffe6f99b49917c5bf9723f22e7",

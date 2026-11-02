@@ -11249,21 +11249,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.5.20-dev-3853.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_5_20-dev-3853_http//file",
-    out = "org.jetbrains.kotlin/kotlin-jps-common-for-ide-2.5.20-dev-3853.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "libraries-kotlinc-kotlin-jps-common-kotlinc-kotlin-jps-common",
-    jar = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_5_20-dev-3853_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-jps-common-for-ide-2_5_20-dev-3853-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/kotlin-script-runtime-2.5.20-dev-3853.jar_copy",
     src = "@org_jetbrains_kotlin-kotlin-script-runtime-2_5_20-dev-3853_http//file",
     out = "org.jetbrains.kotlin/kotlin-script-runtime-2.5.20-dev-3853.jar",

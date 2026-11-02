@@ -29,7 +29,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.compose.compiler.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.js.plain.objects.compiler.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.dataframe.compiler.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" scope="RUNTIME" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-objcexport-header-generator" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-swift-export" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.common" scope="RUNTIME" />

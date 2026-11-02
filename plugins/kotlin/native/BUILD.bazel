@@ -45,7 +45,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/psi",
         "//plugins/kotlin/base/indices",

@@ -53,7 +53,7 @@ jvm_library(
         "//platform/ide-core",
         "//plugins/kotlin/references",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",

@@ -42,7 +42,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.util" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" />
     <orderEntry type="module" module-name="intellij.kotlin.base.platforms" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.jps.util.runtime" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.common" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.jvm" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl" />

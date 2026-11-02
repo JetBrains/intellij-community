@@ -23,7 +23,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.jps.util.runtime" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />

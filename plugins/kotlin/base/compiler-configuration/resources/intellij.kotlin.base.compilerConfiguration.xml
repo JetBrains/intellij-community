@@ -2,7 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
-    <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>
+    <module name="intellij.kotlin.jps.util.runtime"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>

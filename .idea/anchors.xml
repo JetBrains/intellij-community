@@ -24,7 +24,6 @@
         <entry key="kotlinc.kotlin-dataframe-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-dist" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-gradle-statistics" value="kotlin.util.compiler-classpath" />
-        <entry key="kotlinc.kotlin-jps-common" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-jps-plugin-classpath" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-jps-plugin-classpath-bootstrap-for-tests" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-jps-plugin-tests" value="kotlin.util.compiler-classpath" />

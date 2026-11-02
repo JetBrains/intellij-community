@@ -51,7 +51,7 @@ jvm_library(
         "//plugins/kotlin/maven",
         "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
         "//plugins/maven",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//plugins/kotlin/base/plugin",
     ],
 )

@@ -53,7 +53,7 @@ jvm_library(
         "//libraries/workspace-model-codegen",
         "//platform/backend/workspace",
         "//plugins/kotlin/base/facet",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//platform/testFramework/junit5",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",

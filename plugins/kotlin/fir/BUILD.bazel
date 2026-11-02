@@ -101,7 +101,7 @@ jvm_library(
         "//plugins/kotlin/code-insight/utils",
         "//platform/lang-core",
         "//platform/util-class-loader:util-classLoader",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//plugins/kotlin/base/compiler-configuration",
         "//plugins/kotlin/bundled-compiler-plugins-support:compilerPlugins-support-bundled",
         "//platform/workspace/jps",

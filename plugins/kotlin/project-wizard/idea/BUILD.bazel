@@ -60,7 +60,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/observable",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//platform/platform-impl:ide-impl",
         "//platform/indexing-api:indexing",
         "//jps/model-api:model",

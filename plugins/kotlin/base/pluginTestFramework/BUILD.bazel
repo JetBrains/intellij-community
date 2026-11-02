@@ -20,7 +20,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//platform/editor-ui-api:editor-ui",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//libraries/guava",
         "//jps/model-api:model",
         "//platform/execution",

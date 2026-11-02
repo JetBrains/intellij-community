@@ -71,7 +71,7 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//plugins/kotlin/base/facet",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//platform/lang-impl",
         "//uast/uast-common:uast",
         "//java/openapi:java",

@@ -55,7 +55,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//libraries/guava",
         "//jps/model-api:model",
         "//platform/projectModel-api:projectModel",

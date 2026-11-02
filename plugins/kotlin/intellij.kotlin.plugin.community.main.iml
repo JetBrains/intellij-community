@@ -141,7 +141,8 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.postfixTemplates" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.featuresTrainer" exported="" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.jps.util.runtime" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.builder.jps" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.lombok.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.lombok.maven" exported="" />

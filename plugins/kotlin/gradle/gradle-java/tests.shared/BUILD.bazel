@@ -187,7 +187,7 @@ jvm_library(
         "//plugins/kotlin/base/indices",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/psi",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//plugins/kotlin/base/compiler-configuration",
         "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/base/plugin",

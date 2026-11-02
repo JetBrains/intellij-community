@@ -75,7 +75,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-gradle-statistics",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
         "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
         "//libraries/gradle",

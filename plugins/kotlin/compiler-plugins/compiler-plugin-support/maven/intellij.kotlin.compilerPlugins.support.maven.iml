@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.maven" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support" />
     <orderEntry type="module" module-name="intellij.maven" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" />
+    <orderEntry type="module" module-name="intellij.kotlin.jps.util.runtime" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="RUNTIME" />
   </component>

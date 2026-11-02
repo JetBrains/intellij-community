@@ -3,19 +3,19 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.kotlin.jps.util.runtime` start
-content_module_jar(module = ":common")
+content_module_jar(module = ":runtime")
 ### auto-generated section `dev intellij.kotlin.jps.util.runtime` end
 
 ### auto-generated section `build intellij.kotlin.jps.util.runtime` start
 create_kotlinc_options(
-    name = "custom_common",
+    name = "custom_runtime",
     api_version = "2.4",
     jvm_target = "11",
     language_version = "2.4",
 )
 
 jvm_library(
-    name = "common",
+    name = "runtime",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -24,7 +24,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_common",
+    kotlinc_opts = ":custom_runtime",
     module_name = "intellij.kotlin.jps.util.runtime",
     resource_strip_prefix = "resources",
     resources = glob(

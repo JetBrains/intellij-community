@@ -53,7 +53,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
+        "//plugins/kotlin/jps/util/runtime",
         "//platform/indexing-api:indexing",
         "//platform/projectModel-api:projectModel",
         "//plugins/kotlin/base/plugin",

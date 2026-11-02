@@ -32,7 +32,7 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" />
+    <orderEntry type="module" module-name="intellij.kotlin.jps.util.runtime" />
     <orderEntry type="module" module-name="intellij.libraries.java.compatibility" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />

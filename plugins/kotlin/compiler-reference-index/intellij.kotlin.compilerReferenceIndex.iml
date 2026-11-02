@@ -29,7 +29,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.symbol.light.classes" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.jps.common" />
+    <orderEntry type="module" module-name="intellij.kotlin.jps.util.runtime" />
     <orderEntry type="library" name="kotlinc.kotlin-build-tools-api" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-build-tools-impl" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-build-tools-cri-impl" level="project" />
