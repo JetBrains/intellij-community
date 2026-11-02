@@ -3,6 +3,7 @@ package com.intellij.java.psi;
 
 import com.intellij.core.CorePackageIndex;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
@@ -18,6 +19,11 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 @TestApplication
 public class JavaPluginOverridesBasicDefaultsTest {
   private static final TestFixture<Project> projectFixture = projectFixture();
+
+  @Test
+  public void applicationServices() {
+    assertNotEquals(JavaVersionService.class, JavaVersionService.getInstance().getClass());
+  }
 
   @Test
   public void projectServices() {
