@@ -119,7 +119,7 @@ internal class DefaultOpenProjectSelectionPredicateSupplier : OpenProjectSelecti
 @ApiStatus.Internal
 open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   override fun createPopup(event: AnActionEvent): JBPopup? {
-    val project = event.project
+    val project = event.frameProject
     if (project == null) return null
     val group = createActionGroup(event)
     if (group.childrenCount == 0) return null
@@ -162,10 +162,10 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   }
 
   override fun update(e: AnActionEvent) {
-    val eventProject = e.project
-    val project = eventProject ?: e.getData(IdeFrame.KEY)?.project // we can handle not yet fully-initialized projects
+    val project = e.frameProject
     val projectName = project?.name ?: ""
-    val projectInitialized = eventProject != null
+    // the frame project is in the context only once it is initialized, see ProjectFrameHelper.uiDataSnapshot
+    val projectInitialized = e.project != null
 
     e.presentation.setText(projectName, false)
     e.presentation.putClientProperty(projectKey, project)
@@ -587,3 +587,10 @@ private fun MutableList<in Icon>.addGap() {
 }
 
 private const val BETWEEN_ICONS_GAP = 9
+
+/**
+ * The project of the frame of the toolbar, else the project of the event. A frame that shows frame guests gives the active guest
+ * as its project, see `ProjectFrameHelper.uiDataSnapshot`, and the widget names the project that owns the frame.
+ */
+private val AnActionEvent.frameProject: Project?
+  get() = getData(IdeFrame.KEY)?.project ?: project
