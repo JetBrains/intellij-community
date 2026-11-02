@@ -27,6 +27,7 @@ const val BUILT_IN_HELP_MODULE_NAME: String = "intellij.builtInHelp"
  */
 private val HELP_ASSETS_DEV_SPEC: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED
 
+@Suppress("DEPRECATION")
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Pair<PluginLayout, String>? {
   val productName = context.applicationInfo.fullProductName
   val resourceRoot = context.paths.projectHome.resolve("help/plugin-resources")
@@ -111,7 +112,7 @@ internal fun helpPluginXml(version: String, buildNumber: String, productName: St
 }
 
 /**
- * Required due to write lock in [org.apache.lucene.index.IndexWriter.IndexWriter]
+ * Serializes help indexing runs that use the Lucene index write lock.
  */
 private val helpIndexerLock = ReentrantLock()
 
