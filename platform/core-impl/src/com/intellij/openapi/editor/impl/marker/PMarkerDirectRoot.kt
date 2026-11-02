@@ -45,12 +45,6 @@ class PMarkerDirectRoot private constructor(
 
   override fun isEmpty(): Boolean = root == null
 
-  /** Creates a stable handle without registering it in a lookup table. */
-  override fun <T : SnapshotRangeMarkerImpl> createHandle(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T?> =
-    if (retainStrong) StrongSnapshotMarkerReference(marker) else WeakSnapshotMarkerReference(marker)
-
-  override fun <T : SnapshotRangeMarkerImpl> createStrongHandle(marker: T): SnapshotMarkerReference<T> = StrongSnapshotMarkerReference(marker)
-
   override fun isValid(handle: SnapshotMarkerReference<*>): Boolean {
     val resolution = cachedResolutions?.get(handle.order) ?: PMarkerResolution.UNRESOLVED
     if (resolution != PMarkerResolution.UNRESOLVED) return true

@@ -45,7 +45,7 @@ internal class MarkerTransformResultTest {
         val failure = MarkerTransformResult(error)
         assertFalse(failure.isValid)
         assertEquals(error.message, failure.errorReason)
-        val handle = empty.createHandle(marker, true)
+        val handle = SnapshotMarkerReference.create(marker, true)
         val root = empty.insert(handle, 2, 4, spec = 0, flavorFlags = 0, policy = MarkerPolicy { _, _, _, _ -> failure })
         val invalidated = ArrayList<SnapshotMarkerReference<*>>()
         val affected = ArrayList<SnapshotMarkerReference<*>>()
@@ -77,7 +77,7 @@ internal class MarkerTransformResultTest {
       val policy = MarkerPolicy { _, _, _, _ -> MarkerTransformResult(1, 5) }
       val spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = false)
       val empty = PMarkerRoot.empty()
-      val handle = empty.createHandle(marker, true)
+      val handle = SnapshotMarkerReference.create(marker, true)
       val root = empty.insert(handle, 2, 4, spec, flavorFlags = 3, policy = policy)
       val edited = root.applyPatch(patch, before, after)
       assertEquals(TextRangeScalarUtil.toScalarRange(1, 5), edited.resolve(handle))

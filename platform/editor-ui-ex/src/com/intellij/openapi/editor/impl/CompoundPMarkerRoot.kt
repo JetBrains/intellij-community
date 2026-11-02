@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
-import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
@@ -25,12 +24,6 @@ open class CompoundPMarkerRoot private constructor(
   override val resolutionCacheIdentity: Any = Any()
 
   override fun emptyRoot(): CompoundPMarkerRoot = CompoundPMarkerRoot(exactRangeRoot.emptyRoot(), linesInRangeRoot.emptyRoot())
-
-  override fun <T : SnapshotRangeMarkerImpl> createHandle(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T?> =
-    exactRangeRoot.createHandle(marker, retainStrong)
-
-  override fun <T : SnapshotRangeMarkerImpl> createStrongHandle(marker: T): SnapshotMarkerReference<T> =
-    exactRangeRoot.createStrongHandle(marker)
 
   override fun restoreEntries(entries: List<MarkerEntry>): PMarkerRoot {
     return withRoots(exactRangeRoot.restoreEntries(entries.filter { exactRangeRoot.isValid(it.handle) }),

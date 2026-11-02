@@ -22,7 +22,7 @@ internal class PMarkerResolutionTest {
   private val handles: ArrayList<SnapshotMarkerReference<*>> = ArrayList()
 
   private fun handle(label: Long): SnapshotMarkerReference<*> {
-    while (handles.size <= label) handles.add(PMarkerRoot.empty().createHandle(markerForHandles, false))
+    while (handles.size <= label) handles.add(SnapshotMarkerReference.create(markerForHandles, false))
     return handles[label.toInt()]
   }
 

@@ -22,7 +22,7 @@ internal class SnapshotCaretMarkerStorage(
 ) {
   private var rootBeforeChange: PMarkerRoot? = null
   private var affectedHandles: List<SnapshotMarkerReference<SnapshotCaretMarker?>> = emptyList()
-  val rootStore: SnapshotMarkerRootStore<SnapshotCaretMarker?> = SnapshotMarkerRootStore.create(
+  val rootStore: SnapshotMarkerRootStore<SnapshotCaretMarker> = SnapshotMarkerRootStore.create(
     document, SnapshotCaretMarker::class.java,
     onDocumentChanged = ::documentChanged,
     onMarkersAffected = { affectedHandles = it },

@@ -23,19 +23,21 @@ import java.util.function.Consumer
  * The constructor registers this store with the document's [SnapshotMarkerStores].
  * An owner with a shorter lifetime than the document must call [dispose].
  *
- * @param T the marker type and nullability of all references in this store
+ * @param T the marker type in this store
  * @param document supplies snapshot transitions and owns the store registry
+ * @param retainStrong retains every marker when true; otherwise each marker selects its ownership
  * @param onMarkersInvalidated receives marker handles that became invalid during a text change
  * @param onDocumentChanged receives the document event after the marker callbacks run
  * @param onMarkersAffected receives handles for valid markers whose policies processed the text change
  */
-class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl?> private constructor(
+class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> private constructor(
   document: DocumentImpl,
-  private val onMarkersInvalidated: ((List<SnapshotMarkerReference<T>>) -> Unit)?,
+  private val markerClass: Class<T>,
+  private val retainStrong: Boolean,
+  private val onMarkersInvalidated: ((List<SnapshotMarkerReference<T?>>) -> Unit)?,
   private val onDocumentChanged: ((DocumentEvent) -> Unit)?,
-  private val onMarkersAffected: ((List<SnapshotMarkerReference<T>>) -> Unit)?,
+  private val onMarkersAffected: ((List<SnapshotMarkerReference<T?>>) -> Unit)?,
   @Volatile private var emptyRoot: PMarkerRoot,
-  private val referenceFactory: (PMarkerRoot, SnapshotRangeMarkerImpl, Boolean) -> SnapshotMarkerReference<T>,
 ) : MarkerRootUpdater() {
   private val documentReference: WeakReference<DocumentImpl> = WeakReference(document)
 
@@ -78,8 +80,8 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl?> private constructor(
 
   /** Returns [handles] with this store's marker type, or an empty list when [handles] is `null`. */
   @Suppress("UNCHECKED_CAST")
-  private fun markerReferences(handles: List<SnapshotMarkerReference<*>>?): List<SnapshotMarkerReference<T>> =
-    handles as List<SnapshotMarkerReference<T>>? ?: emptyList()
+  private fun markerReferences(handles: List<SnapshotMarkerReference<*>>?): List<SnapshotMarkerReference<T?>> =
+    handles as List<SnapshotMarkerReference<T?>>? ?: emptyList()
 
   /** Removes the document listener and the store registration. It also clears all snapshot roots. */
   fun dispose(markerStores: SnapshotMarkerStores) {
@@ -109,8 +111,8 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl?> private constructor(
   }
 
   /** Creates a handle for this store without reading a document snapshot. */
-  override fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<T> =
-    referenceFactory(emptyRoot, marker, retainStrong)
+  override fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<T?> =
+    SnapshotMarkerReference.create(markerClass.cast(marker), this.retainStrong || retainStrong)
 
   /**
    * Returns the shared atomic reference for [snapshot], creating a root entry from [initialRoot] when necessary.
@@ -383,40 +385,19 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl?> private constructor(
   }
 
   companion object {
-    /** Creates a store for markers with mixed ownership. */
+    /** Creates a store for [markerClass]. When [retainStrong] is true, the store retains every marker. */
     @JvmStatic
     @JvmOverloads
-    fun create(
-      document: DocumentImpl,
-      onMarkersInvalidated: ((List<SnapshotMarkerReference<SnapshotRangeMarkerImpl?>>) -> Unit)? = null,
-      onDocumentChanged: ((DocumentEvent) -> Unit)? = null,
-      onMarkersAffected: ((List<SnapshotMarkerReference<SnapshotRangeMarkerImpl?>>) -> Unit)? = null,
-      emptyRoot: PMarkerRoot = PMarkerRoot.empty(),
-    ): SnapshotMarkerRootStore<SnapshotRangeMarkerImpl?> = SnapshotMarkerRootStore(
-      document, onMarkersInvalidated, onDocumentChanged, onMarkersAffected, emptyRoot,
-    ) { root, marker, retainStrong -> root.createHandle(marker, retainStrong) }
-
-    /** Creates a store for [markerClass] with ownership selected by each marker. */
     fun <T : SnapshotRangeMarkerImpl> create(
       document: DocumentImpl,
       markerClass: Class<T>,
+      retainStrong: Boolean = false,
       onMarkersInvalidated: ((List<SnapshotMarkerReference<T?>>) -> Unit)? = null,
       onDocumentChanged: ((DocumentEvent) -> Unit)? = null,
       onMarkersAffected: ((List<SnapshotMarkerReference<T?>>) -> Unit)? = null,
       emptyRoot: PMarkerRoot = PMarkerRoot.empty(),
-    ): SnapshotMarkerRootStore<T?> = SnapshotMarkerRootStore(document, onMarkersInvalidated, onDocumentChanged, onMarkersAffected, emptyRoot,
-    ) { root, marker, retainStrong -> root.createHandle(markerClass.cast(marker), retainStrong) }
-
-    /** Creates a store that retains each marker of [markerClass]. */
-    fun <T : SnapshotRangeMarkerImpl> strong(
-      document: DocumentImpl,
-      markerClass: Class<T>,
-      onMarkersInvalidated: ((List<SnapshotMarkerReference<T>>) -> Unit)? = null,
-      onDocumentChanged: ((DocumentEvent) -> Unit)? = null,
-      onMarkersAffected: ((List<SnapshotMarkerReference<T>>) -> Unit)? = null,
-      emptyRoot: PMarkerRoot = PMarkerRoot.empty(),
     ): SnapshotMarkerRootStore<T> = SnapshotMarkerRootStore(
-      document, onMarkersInvalidated, onDocumentChanged, onMarkersAffected, emptyRoot,
-    ) { root, marker, _ -> root.createStrongHandle(markerClass.cast(marker)) }
+      document, markerClass, retainStrong, onMarkersInvalidated, onDocumentChanged, onMarkersAffected, emptyRoot,
+    )
   }
 }

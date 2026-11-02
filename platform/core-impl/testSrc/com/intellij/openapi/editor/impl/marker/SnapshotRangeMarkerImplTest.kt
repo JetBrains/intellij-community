@@ -155,7 +155,7 @@ internal class SnapshotRangeMarkerImplTest {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
       val marker = SnapshotMarkerEngine.createRangeMarker(DocumentImpl("", true), 0, 0, spec, false, DefaultMarkerPolicy)
-      val handle = PMarkerRoot.empty().createHandle(marker, false)
+      val handle = SnapshotMarkerReference.create(marker, false)
       (handle as Reference<*>).clear()
       val policy = MarkerPolicy { _, _, _, _ -> error("Insertion must not transform the marker") }
       val root = PMarkerRoot.empty().insert(handle, 2, 4, spec, flavorFlags = 0, policy = policy)

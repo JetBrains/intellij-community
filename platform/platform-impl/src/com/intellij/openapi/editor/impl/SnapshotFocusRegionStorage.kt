@@ -12,7 +12,7 @@ import com.intellij.util.Processor
 
 /** Stores focus regions for one editor without adding them to the document marker root. */
 internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
-  val rootStore: SnapshotMarkerRootStore<*> = SnapshotMarkerRootStore.create(document)
+  val rootStore: SnapshotMarkerRootStore<*> = SnapshotMarkerRootStore.create(document, SnapshotRangeMarkerImpl::class.java)
 
   fun dispose() {
     rootStore.dispose(document.snapshotMarkerStores)

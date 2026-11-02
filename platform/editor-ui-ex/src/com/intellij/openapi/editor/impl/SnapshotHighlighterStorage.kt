@@ -31,8 +31,8 @@ internal class SnapshotHighlighterStorage(
   /** A positive value prevents nested changes during before-removal notifications on the current thread. */
   private val removalDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
 
-  val rootStore: SnapshotMarkerRootStore<SnapshotRangeHighlighterImpl> = SnapshotMarkerRootStore.strong(
-    document, SnapshotRangeHighlighterImpl::class.java,
+  val rootStore: SnapshotMarkerRootStore<SnapshotRangeHighlighterImpl> = SnapshotMarkerRootStore.create(
+    document, SnapshotRangeHighlighterImpl::class.java, retainStrong = true,
     onMarkersInvalidated = ::highlightersChanged, emptyRoot = CompoundPMarkerRoot.empty(),
   )
 
@@ -141,13 +141,13 @@ internal class SnapshotHighlighterStorage(
     return MarkupIterator.mergeIterators(exact, lines, RangeHighlighterEx.BY_AFFECTED_START_OFFSET)
   }
 
-  private fun highlightersChanged(invalidatedHandles: List<SnapshotMarkerReference<SnapshotRangeHighlighterImpl>>) {
+  private fun highlightersChanged(invalidatedHandles: List<SnapshotMarkerReference<SnapshotRangeHighlighterImpl?>>) {
     val size = invalidatedHandles.size
     if (size == 0) return
     try {
       for (i in 0 until size) {
         val handle = invalidatedHandles[i]
-        val highlighter = handle.get()
+        val highlighter = checkNotNull(handle.get())
         if (!highlighter.isRegistered) continue
         beforeRemoved(highlighter)
         afterRemoved(highlighter)
@@ -155,7 +155,7 @@ internal class SnapshotHighlighterStorage(
     }
     finally {
       for (i in 0 until size) {
-        val highlighter = invalidatedHandles[i].get()
+        val highlighter = checkNotNull(invalidatedHandles[i].get())
         highlighter.unregister()
       }
       model.invalidateHighlighterCache()

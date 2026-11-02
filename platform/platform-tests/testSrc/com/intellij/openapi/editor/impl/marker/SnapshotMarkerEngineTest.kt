@@ -42,10 +42,9 @@ class SnapshotMarkerEngineTest {
     SnapshotMarkerEngine.createRangeMarker(DocumentImpl("", true), 0, 0, 0, false, DefaultMarkerPolicy)
   }
   private val handles: ArrayList<SnapshotMarkerReference<*>> = ArrayList()
-  private var handleRoot: PMarkerRoot = PMarkerRoot.empty()
 
   private fun handle(label: Long): SnapshotMarkerReference<*> {
-    while (handles.size <= label) handles.add(handleRoot.createHandle(markerForHandles, false))
+    while (handles.size <= label) handles.add(SnapshotMarkerReference.create(markerForHandles, false))
     return handles[label.toInt()]
   }
 
@@ -1311,7 +1310,6 @@ class SnapshotMarkerEngineTest {
     val rootStore = document.rangeMarkers.rootStore()
     var markerIds = mutableListOf<Long>()
     var nextMarkerId = 1L
-    handleRoot = rootStore.rootReference(document.core.snapshot()).get()
 
     repeat(10_000) { iteration ->
       when (random.nextInt(6)) {

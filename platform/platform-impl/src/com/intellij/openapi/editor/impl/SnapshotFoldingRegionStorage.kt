@@ -44,8 +44,8 @@ internal class SnapshotFoldingRegionStorage(
   private val foldRegionMarkerPolicy: MarkerPolicy = FoldRegionMarkerPolicy {
     model.setComplexDocumentChange(true)
   }
-  val rootStore: SnapshotMarkerRootStore<SnapshotFoldRegion> = SnapshotMarkerRootStore.strong(
-    document, SnapshotFoldRegion::class.java,
+  val rootStore: SnapshotMarkerRootStore<SnapshotFoldRegion> = SnapshotMarkerRootStore.create(
+    document, SnapshotFoldRegion::class.java, retainStrong = true,
     onMarkersInvalidated = ::processInvalidatedRegions,
     onMarkersAffected = ::processAffectedRegions,
   )
@@ -229,12 +229,12 @@ internal class SnapshotFoldingRegionStorage(
     }
   }
 
-  private fun processAffectedRegions(handles: List<SnapshotMarkerReference<SnapshotFoldRegion>>) {
+  private fun processAffectedRegions(handles: List<SnapshotMarkerReference<SnapshotFoldRegion?>>) {
     val regions = ArrayList<SnapshotFoldRegion>(handles.size)
     @Suppress("ReplaceManualRangeWithIndicesCalls")
     for (index in 0 until handles.size) {
       val handle = handles[index]
-      if (handle in registeredRegions) regions.add(handle.get())
+      if (handle in registeredRegions) regions.add(checkNotNull(handle.get()))
     }
     regions.sortWith(REGION_COMPARATOR)
     removeDuplicateRegions(regions)
@@ -279,12 +279,12 @@ internal class SnapshotFoldingRegionStorage(
 
   private fun sizeBeforeUpdate(region: SnapshotFoldRegion): Int = sizesBeforeUpdate[region.markerHandle] ?: 0
 
-  private fun processInvalidatedRegions(handles: List<SnapshotMarkerReference<SnapshotFoldRegion>>) {
+  private fun processInvalidatedRegions(handles: List<SnapshotMarkerReference<SnapshotFoldRegion?>>) {
     val size = handles.size
     for (index in 0 until size) {
       val handle = handles[index]
       if (registeredRegions.remove(handle)) {
-        val region = handle.get()
+        val region = checkNotNull(handle.get())
         region.markDisposed()
         model.snapshotFoldRegionInvalidated(region)
       }

@@ -18,7 +18,7 @@ abstract class MarkerRootUpdater {
   internal abstract val document: DocumentImpl?
 
   /**
-   * Creates a handle for [marker] that is compatible with this updater's roots.
+   * Creates a handle for [marker] with this updater's ownership policy.
    * This method does not insert the marker into a root.
    *
    * @param retainStrong requests strong retention of [marker]. The updater can enforce strong retention for all handles.

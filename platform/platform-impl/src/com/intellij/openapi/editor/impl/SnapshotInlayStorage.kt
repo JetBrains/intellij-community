@@ -32,12 +32,12 @@ internal class SnapshotInlayStorage(
   val document: DocumentImpl,
 ) {
   private val registeredMarkers: MutableSet<SnapshotMarkerReference<*>> = ConcurrentHashMap.newKeySet()
-  val rootStore: SnapshotMarkerRootStore<SnapshotInlayMarker<*>> = SnapshotMarkerRootStore.strong(
-    document, SnapshotInlayMarker::class.java,
+  val rootStore: SnapshotMarkerRootStore<SnapshotInlayMarker<*>> = SnapshotMarkerRootStore.create(
+    document, SnapshotInlayMarker::class.java, retainStrong = true,
     onMarkersInvalidated = ::saveInvalidatedMarkers,
     onDocumentChanged = ::processInvalidatedMarkers,
   )
-  private var invalidatedHandles: List<SnapshotMarkerReference<SnapshotInlayMarker<*>>> = emptyList()
+  private var invalidatedHandles: List<SnapshotMarkerReference<SnapshotInlayMarker<*>?>> = emptyList()
   private var querySnapshot: DocumentSnapshot? = null
 
   fun <R : EditorCustomElementRenderer> createInline(
@@ -191,7 +191,7 @@ internal class SnapshotInlayStorage(
     return marker
   }
 
-  private fun saveInvalidatedMarkers(handles: List<SnapshotMarkerReference<SnapshotInlayMarker<*>>>) {
+  private fun saveInvalidatedMarkers(handles: List<SnapshotMarkerReference<SnapshotInlayMarker<*>?>>) {
     invalidatedHandles = handles
   }
 
@@ -203,7 +203,7 @@ internal class SnapshotInlayStorage(
     for (index in 0 until size) {
       val handle = handles[index]
       if (!registeredMarkers.remove(handle)) continue
-      val marker = handle.get()
+      val marker = checkNotNull(handle.get())
       val delayNotification = marker is SnapshotInlineInlayMarker<*> && DocumentEventUtil.isMoveInsertion(event)
       model.snapshotInlayInvalidated(marker, delayNotification)
     }

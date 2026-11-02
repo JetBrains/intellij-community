@@ -15,6 +15,11 @@ sealed interface SnapshotMarkerReference<out T : SnapshotRangeMarkerImpl?> : Com
   companion object {
     private val sequence: AtomicLong = AtomicLong()
 
+    /** Creates a handle that retains [marker] when [retainStrong] is true. */
+    @JvmStatic
+    fun <T : SnapshotRangeMarkerImpl> create(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T?> =
+      if (retainStrong) StrongSnapshotMarkerReference(marker) else WeakSnapshotMarkerReference(marker)
+
     internal fun nextOrder(): Long = sequence.incrementAndGet()
   }
 }

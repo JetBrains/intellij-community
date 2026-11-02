@@ -59,7 +59,7 @@ class SnapshotRangeHighlighterImplTest {
       val original = exact.currentRootReference().get() as CompoundPMarkerRoot
       val entries = original.overlappingIterator(0, document.textLength, 0).asSequence().toList()
       val root = original.emptyRoot().insertMany(entries) as CompoundPMarkerRoot
-      val ids = listOf(line.markerHandle, exact.markerHandle, line.markerHandle, root.createStrongHandle(exact))
+      val ids = listOf(line.markerHandle, exact.markerHandle, line.markerHandle, SnapshotMarkerReference.create(exact, true))
 
       Assertions.assertThat(root.exactRangeRoot.resolve(exact.markerHandle)).isEqualTo(
         original.exactRangeRoot.resolve(exact.markerHandle)
@@ -99,7 +99,7 @@ class SnapshotRangeHighlighterImplTest {
 
       Assertions.assertThat(root.isValid(exact.markerHandle)).isTrue()
       Assertions.assertThat(root.isValid(line.markerHandle)).isTrue()
-      Assertions.assertThat(root.isValid(root.createStrongHandle(exact))).isFalse()
+      Assertions.assertThat(root.isValid(SnapshotMarkerReference.create(exact, true))).isFalse()
       Assertions.assertThat(root.remove(exact.markerHandle).isValid(exact.markerHandle)).isFalse()
       Assertions.assertThat(root.remove(line.markerHandle).isValid(line.markerHandle)).isFalse()
       Assertions.assertThat(root.isEmpty()).isFalse()

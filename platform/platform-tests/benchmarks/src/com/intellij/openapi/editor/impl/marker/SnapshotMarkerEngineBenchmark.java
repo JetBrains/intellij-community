@@ -67,7 +67,7 @@ public class SnapshotMarkerEngineBenchmark {
     for (int index = 0; index < MARKER_COUNT; index++) {
       var start = markerStart(index);
       root =
-        root.insert(root.createHandle(state.markerForHandles, false), start, start + MARKER_LENGTH, NON_GREEDY_SPEC, (byte)0,
+        root.insert(SnapshotMarkerReference.create(state.markerForHandles, false), start, start + MARKER_LENGTH, NON_GREEDY_SPEC, (byte)0,
                     0, DefaultMarkerPolicy.INSTANCE);
     }
     return root;
@@ -473,7 +473,7 @@ public class SnapshotMarkerEngineBenchmark {
     var handles = new SnapshotMarkerReference<?>[MARKER_COUNT];
     for (int index = 0; index < MARKER_COUNT; index++) {
       var start = markerStart(index);
-      handles[index] = root.createHandle(markerForHandles, false);
+      handles[index] = SnapshotMarkerReference.create(markerForHandles, false);
       root = root.insert(handles[index], start, start + MARKER_LENGTH, NON_GREEDY_SPEC, (byte)0,
                          0, DefaultMarkerPolicy.INSTANCE);
     }

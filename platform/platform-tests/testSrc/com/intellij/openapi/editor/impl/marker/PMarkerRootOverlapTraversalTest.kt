@@ -84,7 +84,7 @@ internal class PMarkerRootOverlapTraversalTest {
     val random = Random(17)
     val entries = List(128) { index ->
       val start = random.nextInt(200)
-      MarkerEntry(root.createHandle(markerForHandles, false), start, start + random.nextInt(20), 0, (index % 8).toByte())
+      MarkerEntry(SnapshotMarkerReference.create(markerForHandles, false), start, start + random.nextInt(20), 0, (index % 8).toByte())
     }
     return root.insertMany(entries)
   }

@@ -314,7 +314,7 @@ internal class PMarkerDirectRootTest {
   }
 
   private fun entry(start: Int, end: Int): MarkerEntry = MarkerEntry(
-    empty.createHandle(markerForHandles, false),
+    SnapshotMarkerReference.create(markerForHandles, false),
     start,
     end,
     MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false),

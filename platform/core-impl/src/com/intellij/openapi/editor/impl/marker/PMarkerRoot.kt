@@ -18,12 +18,6 @@ import java.util.function.Consumer
  * with the receiver.
  */
 interface PMarkerRoot {
-  /** Creates a handle that retains [marker] when [retainStrong] is true. */
-  fun <T : SnapshotRangeMarkerImpl> createHandle(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T?>
-
-  /** Creates a handle that retains [marker]. */
-  fun <T : SnapshotRangeMarkerImpl> createStrongHandle(marker: T): SnapshotMarkerReference<T>
-
   /** Identifies roots with the same marker offsets and validity. This token must not retain a root. */
   val resolutionCacheIdentity: Any
 

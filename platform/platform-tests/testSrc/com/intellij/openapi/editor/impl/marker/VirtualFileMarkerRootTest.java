@@ -98,7 +98,7 @@ final class VirtualFileMarkerRootTest {
     CountDownLatch updateStarted = new CountDownLatch(1);
     CountDownLatch finishUpdate = new CountDownLatch(1);
     var marker = (SnapshotRangeMarkerImpl)SnapshotMarkerEngine.INSTANCE.createRangeMarkerForVirtualFile(file, 0, -1, -1, -1, -1, false);
-    var handle = fileRoot.currentRootReference$intellij_platform_core_impl().get().createHandle(marker, false);
+    var handle = SnapshotMarkerReference.create(marker, false);
 
     FutureTask<Boolean> updateTask = new FutureTask<>(() ->
       fileRoot.updateCurrentRoot(root -> {

@@ -31,9 +31,8 @@ class VirtualFileMarkerRoot private constructor(
   override val document: DocumentImpl?
     get() = documentReference?.get()
 
-  @Synchronized
   override fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<*> =
-    rootReference.get().createHandle(marker, retainStrong)
+    SnapshotMarkerReference.create(marker, retainStrong)
 
   override fun currentRootReference(): AtomicReference<PMarkerRoot> {
     val observedDocumentReference = documentReference ?: return rootReference
