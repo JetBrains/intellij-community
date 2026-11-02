@@ -30,13 +30,13 @@ import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.ide.ideFingerprint
 import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.createProgressPipe
-import com.intellij.platform.util.progress.reportRawProgress
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -45,7 +45,6 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -67,49 +66,26 @@ internal fun prepareStartupEditorModel(
   source: Flow<EditorCompositeModel>,
   coroutineScope: CoroutineScope,
   publicationReady: Deferred<Unit>,
+  progress: ProgressPipe = coroutineScope.createProgressPipe(),
 ): Flow<EditorCompositeModel> {
-  val prepared = CompletableDeferred<EditorCompositeModel>()
-  val delivery = Mutex()
-  val collected = AtomicBoolean()
-  var deliveryClosed = false
-  val progress = coroutineScope.createProgressPipe()
-
-  suspend fun awaitModelClaimed(model: EditorCompositeModel) {
-    try {
-      val createdEditors = checkNotNull(model.createdEditors) { "Startup preparation requires a created editor sink" }
-      check(prepared.complete(model)) { "Startup preparation must produce one editor model" }
-      createdEditors.awaitClaimed()
-    }
-    finally {
-      withContext(NonCancellable) {
-        delivery.withLock {
-          deliveryClosed = true
-        }
-      }
-    }
-  }
+  val delivery = StartupEditorDelivery()
 
   val preparation = coroutineScope.async(CoroutineName("startup editor preparation")) {
     progress.collectProgressUpdates {
-      source.collect { model -> awaitModelClaimed(model) }
+      source.collect { model ->
+        delivery.completeAndAwaitClaim(model)
+      }
     }
   }
-  preparation.invokeOnCompletion { cause ->
-    prepared.completeExceptionally(cause ?: IllegalStateException("Startup preparation produced no editor model"))
-  }
+  preparation.invokeOnCompletion(delivery::failPreparation)
 
   return flow {
-    check(collected.compareAndSet(false, true)) { "A startup editor model can only be collected once" }
+    delivery.startCollection()
     try {
       progress.doUnderPreparationProgress {
         publicationReady.await()
-        val model = prepared.await()
-        delivery.withLock {
-          currentCoroutineContext().ensureActive()
-          preparation.ensureActive()
-          check(!deliveryClosed) { "Startup editor delivery is closed" }
-          emit(model)
-        }
+        val model = delivery.awaitModel()
+        delivery.deliver(model, preparation, this@flow)
       }
       preparation.await()
     }
@@ -119,21 +95,56 @@ internal fun prepareStartupEditorModel(
   }
 }
 
-private suspend inline fun ProgressPipe.doUnderPreparationProgress(crossinline action: suspend () -> Unit) {
-  coroutineScope {
-    reportRawProgress { reporter ->
-      val updates = launch {
-        progressUpdates().collect {
-          reporter.text(it.text)
-          reporter.details(it.details)
-          reporter.fraction(it.fraction)
-        }
+private class StartupEditorDelivery {
+  private val modelReady = CompletableDeferred<EditorCompositeModel>()
+  private val collectorStarted = AtomicBoolean()
+  private val mutex = Mutex()
+  private var closed = false
+
+  fun startCollection() {
+    check(collectorStarted.compareAndSet(false, true)) {
+      "A startup editor model can only be collected once"
+    }
+  }
+
+  suspend fun completeAndAwaitClaim(model: EditorCompositeModel) {
+    try {
+      val createdEditors = checkNotNull(model.createdEditors) {
+        "Startup preparation requires a created editor sink"
       }
-      try {
-        action()
-      }
-      finally {
-        updates.cancel()
+      completeModel(model)
+      createdEditors.awaitClaimed()
+    }
+    finally {
+      close()
+    }
+  }
+
+  private fun completeModel(model: EditorCompositeModel) {
+    check(modelReady.complete(model)) {
+      "Startup preparation must produce one editor model"
+    }
+  }
+
+  suspend fun awaitModel(): EditorCompositeModel = modelReady.await()
+
+  fun failPreparation(cause: Throwable?) {
+    modelReady.completeExceptionally(cause ?: IllegalStateException("Startup preparation produced no editor model"))
+  }
+
+  suspend fun deliver(model: EditorCompositeModel, preparation: Job, collector: FlowCollector<EditorCompositeModel>) {
+    mutex.withLock {
+      currentCoroutineContext().ensureActive()
+      preparation.ensureActive()
+      check(!closed) { "Startup editor delivery is closed" }
+      collector.emit(model)
+    }
+  }
+
+  private suspend fun close() {
+    withContext(NonCancellable) {
+      mutex.withLock {
+        closed = true
       }
     }
   }

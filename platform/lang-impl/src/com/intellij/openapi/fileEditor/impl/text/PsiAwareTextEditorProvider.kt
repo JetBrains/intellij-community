@@ -89,26 +89,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       project.serviceAsync<EncodingProjectManager>()
 
       val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
-        val scheme = serviceAsync<EditorColorsManager>().globalScheme
-        val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
-        // two separate read actions to avoid one long-running - https://youtrack.jetbrains.com/issue/IJPL-796
-        val highlighter = span("editor highlighter factory") {
-          readActionBlocking {
-            editorHighlighterFactory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
-          }
-        }
-        // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
-        // (the document text is compared, so, double work is not performed)
-        span("editor highlighter tokenization") {
-          highlighter.setText(effectiveDocument.immutableCharSequence)
-        }
-        if (effectiveDocument.immutableCharSequence.isNotEmpty()) {
-          // preload the syntax highlighter in BGT because it's expensive
-          // - to classload all highlighters and
-          // - enumerate and handle all extensions (see e.g. [com.intellij.ide.highlighter.XmlFileHighlighter.EMBEDDED_HIGHLIGHTERS])
-          highlighter.createIterator(0).textAttributes
-        }
-        highlighter
+        prepareHighlighter(project, file, effectiveDocument)
       }
 
       val editorDeferred = CompletableDeferred<EditorEx>()
@@ -124,49 +105,73 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       val factory = serviceAsync<EditorFactory>() as EditorFactoryImpl
       var pendingEditor: EditorFactoryImpl.PendingMainEditor? = null
-      var disposeOnFailure: (() -> Unit)? = null
+      var disposeUnclaimedEditor: (() -> Unit)? = null
 
       try {
-        if (SystemProperties.getBooleanProperty("idea.editor.highlighter.prepare.in.parallel", true) &&
-            this@PsiAwareTextEditorProvider.javaClass == PsiAwareTextEditorProvider::class.java &&
-            !highlighterDeferred.isCompleted) {
+        if (canPrepareEditorShell() && !highlighterDeferred.isCompleted) {
           span("editor shell construction on EDT", Dispatchers.EDT) {
-            if (!highlighterDeferred.isCompleted) {
-              val pending = factory.prepareMainEditor(effectiveDocument, project, file)
-              pendingEditor = pending
-              disposeOnFailure = pending::close
-            }
+            if (highlighterDeferred.isCompleted) return@span
+
+            val pending = factory.prepareMainEditor(effectiveDocument, project, file)
+            pendingEditor = pending
+            disposeUnclaimedEditor = pending::close
           }
         }
         val highlighter = span("editor prepared highlighter await") { highlighterDeferred.await() }
         val textEditor = span("initialize text editor on EDT", Dispatchers.EDT) {
-          val editor = pendingEditor?.complete(highlighter) { it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader) }
-                       ?: initializeEditor(factory, effectiveDocument, project, file, highlighter, asyncLoader)
-          disposeOnFailure = { factory.releaseEditor(editor) }
+          val editor = pendingEditor?.complete(highlighter) {
+            it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader)
+          } ?: initializeEditor(factory, effectiveDocument, project, file, highlighter, asyncLoader)
+
+          disposeUnclaimedEditor = { factory.releaseEditor(editor) }
           editorDeferred.complete(editor)
           editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
           val component = createPsiAwareTextEditorComponent(file = file, editor = editor)
           val textEditor = PsiAwareTextEditorImpl(project = project, file = file, component = component, asyncLoader = asyncLoader)
-          disposeOnFailure = { Disposer.dispose(textEditor) }
+          disposeUnclaimedEditor = { Disposer.dispose(textEditor) }
           asyncLoader.start(textEditor = textEditor, task = task)
           if (createdEditors != null) {
             createdEditors.register(textEditor)
-            disposeOnFailure = null
+            disposeUnclaimedEditor = null
           }
           textEditor
         }
-        disposeOnFailure = null
+        disposeUnclaimedEditor = null
         textEditor
       }
       finally {
-        val dispose = disposeOnFailure
+        val dispose = disposeUnclaimedEditor
         if (dispose != null) {
           withContext(NonCancellable + Dispatchers.EDT) {
-          dispose()
+            dispose()
           }
         }
       }
     }
+  }
+
+  /** The shell path bypasses [initializeEditor] and is available only for the base provider. */
+  private fun canPrepareEditorShell(): Boolean {
+    return SystemProperties.getBooleanProperty("idea.editor.highlighter.prepare.in.parallel", true) &&
+           javaClass == PsiAwareTextEditorProvider::class.java
+  }
+
+  private suspend fun prepareHighlighter(project: Project, file: VirtualFile, document: Document): EditorHighlighter {
+    val scheme = serviceAsync<EditorColorsManager>().globalScheme
+    val factory = serviceAsync<EditorHighlighterFactory>()
+    val highlighter = span("editor highlighter factory") {
+      readActionBlocking {
+        factory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
+      }
+    }
+    span("editor highlighter tokenization") {
+      highlighter.setText(document.immutableCharSequence)
+    }
+    if (document.immutableCharSequence.isNotEmpty()) {
+      // Load the highlighter attributes before EDT initialization.
+      highlighter.createIterator(0).textAttributes
+    }
+    return highlighter
   }
 
   @ApiStatus.Internal

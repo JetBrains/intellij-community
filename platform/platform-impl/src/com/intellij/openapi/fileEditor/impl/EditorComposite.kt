@@ -73,7 +73,6 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.createProgressPipe
-import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
@@ -93,7 +92,6 @@ import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
@@ -311,20 +309,8 @@ open class EditorComposite internal constructor(
           project, IdeBundle.message("progress.title.preparing.file", file.name), TaskCancellation.cancellable(),
           suspender = null, visibleInStatusBar = visibleInStatusBar,
         ) {
-          reportRawProgress { reporter ->
-            val updates = launch {
-              pipe.progressUpdates().collect {
-                reporter.text(it.text)
-                reporter.details(it.details)
-                reporter.fraction(it.fraction)
-              }
-            }
-            try {
-              availableJob.join()
-            }
-            finally {
-              updates.cancel()
-            }
+          pipe.doUnderPreparationProgress {
+            availableJob.join()
           }
         }
       }
@@ -451,40 +437,24 @@ open class EditorComposite internal constructor(
         // from here on the editors are listed by this composite, so `dispose` is what releases them
         model.createdEditors?.claim()
 
-        suspend fun finishOpening(scope: CoroutineScope) {
-          scope.ensureActive()
-          afterFileOpen(scope, model)
-          shownDeferred.complete(Unit)
+        ensureActive()
+        afterFileOpen(this, model)
+        shownDeferred.complete(Unit)
 
-          goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
-          @Suppress("DEPRECATION")
-          deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+        goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+        @Suppress("DEPRECATION")
+        deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
 
-          triggerStatOpen(
-            project = project,
-            file = file,
-            start = startTime,
-            composite = this@EditorComposite,
-            coroutineScope = coroutineScope,
-          )
+        triggerStatOpen(
+          project = project,
+          file = file,
+          start = startTime,
+          composite = this@EditorComposite,
+          coroutineScope = coroutineScope,
+        )
 
-          span("fileOpened event executing", Dispatchers.EDT) {
-            deprecatedPublisher.fileOpened(fileEditorManager, file)
-          }
-        }
-        // Before the claim, the editors have no owner: the sink disposes them,
-        // and the composite closes its own tab.
-        // After the claim, the tab is preserved, remaining work shall be continued
-        if (model.createdEditors != null) {
-          this@EditorComposite.coroutineScope.async(
-            Dispatchers.EDT + ModalityState.any().asContextElement() + clientId.asContextElement(),
-            start = CoroutineStart.UNDISPATCHED,
-          ) {
-            finishOpening(this)
-          }.await()
-        }
-        else {
-          finishOpening(this)
+        span("fileOpened event executing", Dispatchers.EDT) {
+          deprecatedPublisher.fileOpened(fileEditorManager, file)
         }
       }
     }

@@ -84,6 +84,7 @@ import com.intellij.platform.fileEditor.writeWindow
 import com.intellij.platform.ide.IdeFingerprint
 import com.intellij.platform.ide.ideFingerprint
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.BorderPainter
 import com.intellij.ui.ClientProperty
@@ -1562,7 +1563,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
 
     val delayedTasks = ConcurrentLinkedQueue<Job>()
     val compositeScopes = ConcurrentLinkedQueue<CoroutineScope>()
-    val createdComposites = mutableListOf<EditorComposite>()
+    val openedFiles = mutableListOf<TabToOpenOnStartup>()
     val windowAddedDeferred = CompletableDeferred<Unit>()
     try {
       val items = span("editor file entries compute") {
@@ -1592,18 +1593,17 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
         var window: EditorWindow? = null
         try {
           window = windowDeferred.await()
-          val openedFiles = fileEditorManager.prepareFilesOnStartupForOpen(
+          fileEditorManager.prepareFilesOnStartupForOpen(
             items = items,
             window = window,
             isLazyComposite = isLazyComposite,
-            createdComposites = createdComposites,
             tabActionGroup = editorActionGroup,
-          )
+          ).filterNotNullTo(openedFiles)
           fileEditorManager.openTabsOnStartup(
             window = window,
             requestFocus = requestFocus,
             windowAdded = suspend { windowAddedDeferred.await() },
-            openedFiles = openedFiles.filterNotNull(),
+            openedFiles = openedFiles,
           )
           window.updateTabsVisibility()
           addChild(window.component)
@@ -1644,7 +1644,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
             splitters.insideChange--
           }
           val window = if (windowDeferred.isCancelled) null else windowDeferred.getCompleted()
-          disposeFailedRestore(window, createdComposites)
+          disposeFailedRestore(window, openedFiles.map { it.composite })
         }
       }
     }
@@ -1696,55 +1696,38 @@ private fun computeFileEntry(
   val compositeCoroutineScope = splitters.coroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
   compositeScopes.add(compositeCoroutineScope)
 
-  val fileProviderDeferred = CompletableDeferred<VirtualFile>(compositeCoroutineScope.coroutineContext.job)
-
   // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
   // In the case of the JetBrains client, it's better to avoid a blocking protocol call inside [VirtualFile.contentsToByteArray]
-  val (tabFileDeferred, hint) = when {
+  val [tabFileDeferred, hint] = when {
     PlatformUtils.isJetBrainsClient() -> {
-      fileProviderDeferred.complete(notFullyPreparedFile)
-      fileProviderDeferred to null // In the case of the JetBrains client, the editor composite is requested from the backend
+      // In the case of the JetBrains client, the editor composite is requested from the backend
+      CompletableDeferred(notFullyPreparedFile) to null
     }
     else -> {
-      val prepareFile: suspend () -> VirtualFile = {
-        if (notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
-          withContext(Dispatchers.IO) {
-            withProgressReport {
-              ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
-                try {
-                  notFullyPreparedFile.contentsToByteArray(true)
-                }
-                catch (_: FileTooBigException) {
-                }
-                catch (e: Throwable) {
-                  rethrowControlFlowException(e)
-                  LOG.error(e)
-                }
-              }
-            }
+      val startEagerly = fileEntry.currentInTab || !isLazyComposite
+      // only the startup preparation of an eager composite reads this pipe; a lazy composite reports through its own one
+      val startupProgress = if (startEagerly) compositeCoroutineScope.createProgressPipe() else null
+      val preparedFile = compositeCoroutineScope.async(CoroutineName("editor file content preload"), start = CoroutineStart.LAZY) {
+        if (startupProgress == null) {
+          windowAdded.await()
+          preloadFileContent(notFullyPreparedFile, fileEditorManager.project)
+        }
+        else {
+          startupProgress.collectProgressUpdates {
+            preloadFileContent(notFullyPreparedFile, fileEditorManager.project)
           }
         }
-        fileProviderDeferred.complete(notFullyPreparedFile)
         notFullyPreparedFile
-      }
-      val startEagerly = fileEntry.currentInTab || !isLazyComposite
-      val doBackgroundPreload = if (startEagerly) {
-        null
-      } else {
-        compositeCoroutineScope.async(CoroutineName("editor file content preload"), start = CoroutineStart.LAZY) {
-          windowAdded.await()
-          prepareFile()
-        }
       }
 
       val model = fileEditorManager.createEditorCompositeModelOnStartup(
         compositeCoroutineScope = compositeCoroutineScope,
-        fileProvider = { doBackgroundPreload?.await() ?: prepareFile() },
+        fileProvider = { preparedFile.await() },
         fileEntry = fileEntry,
-        startEagerly = startEagerly,
         publicationReady = windowAdded,
+        startupProgress = startupProgress,
       )
-      (doBackgroundPreload ?: fileProviderDeferred) to StartupFileEditorOpenOptionsHint(compositeCoroutineScope, model)
+      preparedFile to StartupFileEditorOpenOptionsHint(compositeCoroutineScope, model)
     }
   }
 
@@ -1756,6 +1739,27 @@ private fun computeFileEntry(
                       notFullyPreparedFile,
                       placeholderIcon,
                       hint)
+}
+
+private suspend fun preloadFileContent(file: VirtualFile, project: Project) {
+  if (file is VirtualFileWithoutContent || file.isCharsetSet) {
+    return
+  }
+  withContext(Dispatchers.IO) {
+    withProgressReport {
+      ProjectLocator.withPreferredProject(file, project).use {
+        try {
+          file.contentsToByteArray(true)
+        }
+        catch (_: FileTooBigException) {
+        }
+        catch (e: Throwable) {
+          rethrowControlFlowException(e)
+          LOG.error(e)
+        }
+      }
+    }
+  }
 }
 
 @Internal

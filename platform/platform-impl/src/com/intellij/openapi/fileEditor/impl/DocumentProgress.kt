@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.util.progress.ProgressPipe
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.runIf
@@ -21,6 +22,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
@@ -48,6 +51,28 @@ internal class EditorDocumentPreparation(
   suspend fun await(): Document? {
     return documentPreparationTracer.spanBuilder("editor prepared document await").setAttribute("file", file.name).use {
       document.await()
+    }
+  }
+}
+
+/** Reports updates from this pipe while [action] runs. */
+internal suspend inline fun ProgressPipe.doUnderPreparationProgress(crossinline action: suspend () -> Unit) {
+  coroutineScope {
+    reportRawProgress { reporter ->
+      val updates = launch {
+        progressUpdates().collect {
+          reporter.text(it.text)
+          reporter.details(it.details)
+          reporter.fraction(it.fraction)
+        }
+      }
+
+      try {
+        action()
+      }
+      finally {
+        updates.cancel()
+      }
     }
   }
 }

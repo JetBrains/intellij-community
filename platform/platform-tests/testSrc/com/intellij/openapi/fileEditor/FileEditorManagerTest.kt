@@ -126,6 +126,7 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.job
@@ -493,6 +494,74 @@ class FileEditorManagerTest {
       assertThat(composite.isDisposed()).isFalse()
     }
     finally {
+      withContext(Dispatchers.EDT) { Disposer.dispose(composite) }
+    }
+  }
+
+  private class PausedEditorComposite(
+    file: VirtualFile,
+    model: Flow<EditorCompositeModel>,
+    project: Project,
+    scope: CoroutineScope,
+    val afterOpenStarted: CompletableDeferred<Unit>,
+    val continueAfterOpen: CompletableDeferred<Unit>,
+  ) : EditorWithProviderComposite(file, model, project, scope) {
+    override suspend fun afterFileOpen(scope: CoroutineScope, model: EditorCompositeModel) {
+      afterOpenStarted.complete(Unit)
+      continueAfterOpen.await()
+    }
+  }
+
+  private fun createPausedComposite(
+    file: VirtualFile,
+    scope: CoroutineScope,
+    afterOpenStarted: CompletableDeferred<Unit>,
+    continueAfterOpen: CompletableDeferred<Unit>,
+    collectionFinished: CompletableDeferred<Unit>,
+  ): PausedEditorComposite {
+    val provider = MockFileEditorProvider()
+    val editor = provider.createEditor(project, file)
+    val sink = CreatedFileEditorSink().also { it.register(editor) }
+    val model = flow {
+      try {
+        emit(EditorCompositeModel(listOf(FileEditorWithProvider(editor, provider)), sink))
+        awaitCancellation()
+      }
+      finally {
+        collectionFinished.complete(Unit)
+      }
+    }
+    return PausedEditorComposite(file, model, project, scope, afterOpenStarted, continueAfterOpen)
+  }
+
+  @Test
+  fun testCompositeCloseAfterClaimCancelsContinuation(): Unit = timeoutRunBlocking {
+    val file = LightVirtualFile("published-close.txt", PlainTextFileType.INSTANCE, "text")
+    captureFilePreparation(file)
+    val scope = childScope("Published continuation after composite close")
+    val afterOpenStarted = CompletableDeferred<Unit>()
+    val continueAfterOpen = CompletableDeferred<Unit>()
+    val collectionFinished = CompletableDeferred<Unit>()
+    val openedEvents = AtomicInteger()
+    project.messageBus.connect(disposable).subscribe(FileOpenedSyncListener.TOPIC, object : FileOpenedSyncListener {
+      override fun fileOpenedSync(source: FileEditorManager, file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>) {
+        openedEvents.incrementAndGet()
+      }
+    })
+    val composite = withContext(Dispatchers.EDT) {
+      createPausedComposite(file, scope, afterOpenStarted, continueAfterOpen, collectionFinished)
+    }
+    try {
+      composite.waitForAvailable()
+      afterOpenStarted.await()
+      withContext(Dispatchers.EDT) { Disposer.dispose(composite) }
+      continueAfterOpen.complete(Unit)
+      collectionFinished.await()
+      assertThat(composite.shownDeferred.isCompleted).isFalse()
+      assertThat(openedEvents.get()).isZero()
+    }
+    finally {
+      continueAfterOpen.complete(Unit)
       withContext(Dispatchers.EDT) { Disposer.dispose(composite) }
     }
   }
@@ -919,7 +988,11 @@ class FileEditorManagerTest {
     }
   }
 
-  private fun captureFilePreparation(file: VirtualFile, expectedVisibleInStatusBar: Boolean = true): PreparationProgress {
+  private fun captureFilePreparation(
+    file: VirtualFile,
+    expectedVisibleInStatusBar: Boolean = true,
+    holdProgress: Deferred<Unit>? = null,
+  ): PreparationProgress {
     val progress = PreparationProgress()
     val application = ApplicationManager.getApplication()
     val delegate = application.service<TaskSupport>()
@@ -944,6 +1017,7 @@ class FileEditorManagerTest {
           }
           progress.started.complete(currentCoroutineContext().job)
           try {
+            holdProgress?.await()
             pipe.collectProgressUpdates(action)
           }
           finally {
