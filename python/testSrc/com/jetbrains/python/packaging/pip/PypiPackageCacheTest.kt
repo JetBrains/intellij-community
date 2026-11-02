@@ -22,6 +22,11 @@ import kotlin.io.path.setLastModifiedTime
 @Components.Pip
 @Layers.Functional
 class PypiPackageCacheTest : PyTestCase() {
+  override fun setUp() {
+    super.setUp()
+    setRegistryPropertyForTest("disable.python.cache.memory.mapping", "true")
+  }
+  
   fun testCacheShouldNotBeUpdatedIfLocalStorageIsntExpired() {
     withLocalStoredPackages(listOf("c-pkg", "a-pkg", "b-pkg"), Instant.now())
     withPypiLoaderThrowingError()
