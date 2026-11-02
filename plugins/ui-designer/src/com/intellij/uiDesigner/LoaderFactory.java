@@ -11,14 +11,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.lw.AsmClassPropertiesProvider;
@@ -189,13 +189,23 @@ public final class LoaderFactory implements Disposable {
 
   /**
    * Classes of JDK 9 and later are not reachable through the classpath, they need an explicit {@code jrt:} root.
+   * The root comes from the class roots of the SDK, not from its home: the home of an IntelliJ Platform Plugin SDK is
+   * the IDE installation, and its JDK classes come from an internal JDK.
    */
   public static URL @Nullable [] getPlatformUrls(@NotNull Module module) {
     Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-    if (sdk == null || sdk.getHomePath() == null || !JavaSdk.getInstance().isOfVersionOrHigher(sdk, JavaSdkVersion.JDK_1_9)) {
+    if (sdk == null) {
       return null;
     }
-    return createPlatformUrls(sdk.getHomePath());
+    for (VirtualFile root : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+      if (root.getFileSystem() instanceof JrtFileSystem jrtFileSystem) {
+        VirtualFile jdkHome = jrtFileSystem.getLocalByEntry(root);
+        if (jdkHome != null) {
+          return createPlatformUrls(jdkHome.getPath());
+        }
+      }
+    }
+    return null;
   }
 
   private static URL @Nullable [] createPlatformUrls(@Nullable String jdkHomePath) {

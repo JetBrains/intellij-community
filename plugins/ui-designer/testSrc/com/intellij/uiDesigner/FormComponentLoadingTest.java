@@ -3,8 +3,13 @@ package com.intellij.uiDesigner;
 
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -109,6 +114,31 @@ public class FormComponentLoadingTest extends JavaCodeInsightFixtureTestCase {
    */
   public void testStandardComponentsResolveWithoutAModuleSdk() throws Exception {
     ModuleRootModificationUtil.setModuleSdk(getModule(), null);
+    VirtualFile formFile = copyForm("beanInfoSafety/TestStandardComponent.form");
+
+    LoaderFactory loaderFactory = LoaderFactory.getInstance(getProject());
+    LwRootContainer lwRootContainer = loaderFactory.readRootContainer(formFile, VfsUtilCore.loadText(formFile));
+    RadRootContainer rootContainer =
+      XmlReader.createRoot(new MyModuleProvider(getModule()), lwRootContainer, loaderFactory.getLoader(formFile), null);
+
+    RadComponent component = ((RadContainer)rootContainer.getComponent(0)).getComponent(0);
+    assertFalse("form rendered as an error component: " + component, component instanceof RadErrorComponent);
+    assertEquals(JButton.class, component.getDelegee().getClass());
+  }
+
+  /**
+   * IDEA-395451: the home of an IntelliJ Platform Plugin SDK is the IDE installation, and its JDK classes come from an
+   * internal JDK. The SDK has the version of that JDK, but its home holds no {@code jrt:} file system.
+   */
+  public void testStandardComponentsResolveWithAnSdkWhoseHomeIsNoJdk() throws Exception {
+    Sdk jdk = JavaSdk.getInstance().createJdk("IDEA-395451", System.getProperty("java.home"), false);
+    SdkModificator modificator = jdk.getSdkModificator();
+    modificator.setHomePath(FileUtil.toSystemIndependentName(FileUtil.createTempDirectory("ideHome", "").getPath()));
+    WriteAction.runAndWait(() -> {
+      modificator.commitChanges();
+      ProjectJdkTable.getInstance().addJdk(jdk, getTestRootDisposable());
+    });
+    ModuleRootModificationUtil.setModuleSdk(getModule(), jdk);
     VirtualFile formFile = copyForm("beanInfoSafety/TestStandardComponent.form");
 
     LoaderFactory loaderFactory = LoaderFactory.getInstance(getProject());
