@@ -149,7 +149,11 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
   }
 
   override fun cancelNewDiscussion(lineLocation: DiffLineLocation) {
-    discussionsContainer.cancelNewDiscussion(lineLocation)
+    if (lineLocation.first != Side.RIGHT) return
+    val vm = discussionsContainer.newDiscussions.value.find { vm ->
+      vm.position.value.position.mapToEditorLine(diffData) == lineLocation.second
+    } ?: return
+    discussionsContainer.cancelNewDiscussion(vm)
   }
 
   override fun lookupNextComment(line: Int, additionalIsVisible: (String) -> Boolean): String? =
