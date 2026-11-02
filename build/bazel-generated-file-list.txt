@@ -364,6 +364,7 @@ java/java-structure-view
 java/java-syntax
 java/java-tests
 java/java-todo
+java/javadoc-tests
 java/jdkAnnotations
 java/jsp-base-openapi
 java/jsp-openapi

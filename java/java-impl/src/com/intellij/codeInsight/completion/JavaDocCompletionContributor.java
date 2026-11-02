@@ -76,7 +76,6 @@ import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocFragmentName;
-import com.intellij.psi.javadoc.PsiDocFragmentRef;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
@@ -198,11 +197,10 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
           JavaCompletionContributor.addAllClasses(parameters, result, new JavaCompletionSession(result));
         }
         else if (position.getParent() instanceof PsiDocFragmentName docFragmentName) {
-          final PsiElement parent = docFragmentName.getParent();
-          final PsiClass classRef = parent instanceof PsiDocFragmentRef
-                                    ? ((PsiDocFragmentRef)docFragmentName.getParent()).getScope() : null;
-          if (classRef != null) {
-            for (JavaDocFragmentData anchor : JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(position.getProject(), classRef)) {
+          final PsiElement scope = docFragmentName.getScope();
+          if (scope != null) {
+            for (JavaDocFragmentData anchor : JavaDocFragmentAnchorCacheKt.getJavaDocFragments(
+              position.getProject(), scope)) {
               result.addElement(LookupElementBuilder.create(anchor.getName()).withIcon(AllIcons.Nodes.Related));
             }
           }

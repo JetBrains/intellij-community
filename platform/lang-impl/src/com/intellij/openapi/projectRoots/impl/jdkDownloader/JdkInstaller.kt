@@ -533,7 +533,7 @@ abstract class JdkInstallerBase {
 
   /**
    * This method does not check any existing or pending SDKs locally,
-   * use [prepareJdkInstallation()] to avoid extra work if possible
+   * use [prepareJdkInstallation] to avoid extra work if possible
    *
    * @see prepareJdkInstallation
    */

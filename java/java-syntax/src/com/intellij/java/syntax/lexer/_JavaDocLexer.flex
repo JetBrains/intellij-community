@@ -356,7 +356,7 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON, DOC
 }
 
 <TAG_DOC_SPACE> {WHITE_DOC_SPACE_CHAR}+ {
-  if (checkAhead('<') || checkAhead('\"')) yybegin(COMMENT_DATA)
+  if (checkAhead('<') || checkAhead('\"')) yybegin(COMMENT_DATA) // Originally for the @see tag. Affects the @index tag
   else if (checkAhead('\u007b')) yybegin(COMMENT_DATA)  // lbrace - there's a error in JLex when typing lbrace directly
   else yybegin(DOC_TAG_VALUE)
   return JavaDocSyntaxTokenType.DOC_SPACE

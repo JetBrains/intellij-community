@@ -1,0 +1,70 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.java.javadoc.tests` start
+jvm_library(
+    name = "javadoc-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.javadoc.tests",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//java/java-backend:backend",
+        "//java/java-frontend:frontend",
+    ],
+    runtime_deps = ["//xml/plugin"],
+    deps = [
+        # do not sort,
+        "//libraries/junit6",
+        "//platform/lang-core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/refactoring",
+        "//platform/testFramework",
+        "//java/testFramework",
+        "//java/java-impl:impl",
+        "//platform/platform-api:ide",
+        "//platform/platform-tests:tests_test_lib",
+        "//java/java-indexing-api:indexing",
+        "@lib//:easymock",
+        "@lib//:kotlin-stdlib",
+        "//java/java-backend:backend",
+        "//java/java-frontend:frontend",
+        "//platform/platform-impl:ide-impl",
+        "//platform/service-container",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/testFramework/junit5",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/lang-impl",
+        "//java/java-psi-api:psi",
+    ],
+)
+### auto-generated section `build intellij.java.javadoc.tests` end
+
+### auto-generated section `iml intellij.java.javadoc.tests` start
+exports_files(
+    [
+        "intellij.java.javadoc.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.javadoc.tests` end
+
+### auto-generated section `test intellij.java.javadoc.tests` start
+jps_test(
+    name = "javadoc-tests_test",
+    runtime_deps = [":javadoc-tests_test_lib"],
+)
+### auto-generated section `test intellij.java.javadoc.tests` end

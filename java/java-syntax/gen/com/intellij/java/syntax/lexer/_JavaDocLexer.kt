@@ -1119,7 +1119,7 @@ companion object {
             }
           71 -> { /* do nothing */ }
           17 -> {
-            if (checkAhead('<') || checkAhead('\"')) yybegin(COMMENT_DATA)
+            if (checkAhead('<') || checkAhead('\"')) yybegin(COMMENT_DATA) // Originally for the @see tag. Affects the @index tag
   else if (checkAhead('\u007b')) yybegin(COMMENT_DATA)  // lbrace - there's a error in JLex when typing lbrace directly
   else yybegin(DOC_TAG_VALUE)
   return JavaDocSyntaxTokenType.DOC_SPACE

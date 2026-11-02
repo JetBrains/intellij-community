@@ -2,6 +2,8 @@
 package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -10,9 +12,9 @@ import org.jetbrains.annotations.Nullable;
 public interface PsiDocFragmentRef extends PsiDocTagValue {
 
   /**
-   * Returns the class that contains the fragment reference, e.g. {@code Foo} in {@code Foo##my-id}.
+   * Returns the {@link PsiClass} or {@link PsiPackage} that contains the target fragment.
    */
-  @Nullable PsiClass getScope();
+  @Nullable PsiElement getScope();
 
   /**
    * Returns the name of the fragment reference, e.g. {@code my-id} in {@code Foo##my-id}.

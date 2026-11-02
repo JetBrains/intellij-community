@@ -51,6 +51,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import kotlin.Pair;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -156,6 +157,23 @@ public final class JavaDocUtil {
 
       aClass = PsiTreeUtil.getParentOfType(aClass, PsiClass.class, true);
     }
+    // No class found, maybe reference to a package
+    if (fragmentIndex >= 0) {
+      PsiPackage psiPackage = null;
+      if (!classRef.isEmpty()) {
+        psiPackage = facade.findPackage(classRef);
+      }
+      else if (context != null) {
+        PsiFile file = context.getContainingFile();
+        if (file instanceof PsiJavaFile && PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
+          psiPackage = facade.findPackage(((PsiJavaFile)file).getPackageName());
+        }
+      }
+      if (psiPackage != null) {
+        return findFragmentOwner(psiPackage, useNavigationElement, refTextCorrected, fragmentIndex, manager);
+      }
+    }
+    
     return null;
 
   }
@@ -192,24 +210,21 @@ public final class JavaDocUtil {
     return useNavigationElement && member != null ? member.getNavigationElement() : member;
   }
 
-  private static @Nullable PsiElement findFragmentOwner(@NotNull PsiClass aClass,
-                                                   boolean useNavigationElement,
-                                                   String refTextCorrected,
-                                                   int fragmentIndex,
-                                                   @NotNull PsiManager manager) {
+  private static @Nullable PsiElement findFragmentOwner(@NotNull PsiElement scope,
+                                                        boolean useNavigationElement,
+                                                        String refTextCorrected,
+                                                        int fragmentIndex,
+                                                        @NotNull PsiManager manager) {
     String fragmentName = refTextCorrected.substring(fragmentIndex + 2);
-    for (JavaDocFragmentData fragmentData : JavaDocFragmentAnchorCacheKt.getJavaDocFragmentsForClass(manager.getProject(), aClass)) {
-      if (fragmentName.equals(fragmentData.getName())) {
-        PsiElement ref = PsiUtilCore.getElementAtOffset(JavaDocFragmentAnchorCacheKt.getMaybeSourceClass(aClass).getContainingFile(),
-                                                        fragmentData.getOffset());
-        PsiDocComment docComment = PsiTreeUtil.getParentOfType(ref, PsiDocComment.class, false);
-        if (docComment == null) return null;
-        PsiElement owner = docComment.getOwner();
-        if (owner == null) return null;
-        return useNavigationElement ? owner.getNavigationElement() : owner;
-      }
-    }
-    return null;
+    Pair<PsiElement, JavaDocFragmentData> fragmentData =
+      JavaDocFragmentAnchorCacheKt.resolveJavaDocFragment(manager.getProject(), scope, fragmentName);
+    if (fragmentData == null) return null;
+    PsiElement ref = PsiUtilCore.getElementAtOffset(fragmentData.getFirst().getContainingFile(), fragmentData.getSecond().getOffset());
+    PsiDocComment docComment = PsiTreeUtil.getParentOfType(ref, PsiDocComment.class, false);
+    if (docComment == null) return null;
+    PsiElement owner = docComment.getOwner();
+    if (owner == null) return null;
+    return useNavigationElement ? owner.getNavigationElement() : owner;
   }
 
   private static PsiClass findClassFromRef(@NotNull PsiManager manager,
@@ -320,6 +335,9 @@ public final class JavaDocUtil {
   public static @Nullable String getReferenceText(Project project, PsiElement element) {
     if (element instanceof PsiPackage) {
       return ((PsiPackage)element).getQualifiedName();
+    }
+    else if (element instanceof PsiPackageStatement) {
+      return ((PsiPackageStatement)element).getPackageName();
     }
     else if (element instanceof PsiClass) {
       final String refText = ((PsiClass)element).getQualifiedName();
