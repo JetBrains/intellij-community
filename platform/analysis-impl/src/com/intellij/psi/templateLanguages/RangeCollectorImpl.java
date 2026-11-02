@@ -382,16 +382,18 @@ public final class RangeCollectorImpl extends TemplateDataElementType.RangeColle
     CharSequence chars = chameleon.getChars();
     if (myOuterAndRemoveRanges.isEmpty()) return parser.apply(chars);
 
-    StringBuilder stringBuilder = applyOuterAndRemoveRanges(chars);
+    // A cancelled expansion runs again later, so the expansion must not change the ranges of this collector.
+    RangeCollectorImpl expansion = new RangeCollectorImpl(myTemplateDataElementType, new ArrayList<>(myOuterAndRemoveRanges));
+    StringBuilder stringBuilder = expansion.applyOuterAndRemoveRanges(chars);
 
     OuterLanguageRangePatcher outerLanguageRangePatcher = OuterLanguageRangePatcher.EXTENSION.forLanguage(language);
     if (outerLanguageRangePatcher != null) {
-      insertDummyStringIntoInsertionRanges(outerLanguageRangePatcher, chars, stringBuilder);
+      expansion.insertDummyStringIntoInsertionRanges(outerLanguageRangePatcher, chars, stringBuilder);
     }
 
     ASTNode root = parser.apply(stringBuilder.toString());
     DebugUtil.performPsiModification("lazy parseable outer elements insertion", () ->
-      insertOuterElementsAndRemoveRanges((TreeElement)root, chars, SharedImplUtil.findCharTableByTree(chameleon), language));
+      expansion.insertOuterElementsAndRemoveRanges((TreeElement)root, chars, SharedImplUtil.findCharTableByTree(chameleon), language));
 
     return root;
   }
