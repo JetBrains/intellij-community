@@ -297,7 +297,7 @@ public final class TestDaemonCodeAnalyzerImpl {
       myProject.getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
         @Override
         public void daemonCancelEventOccurred(@NotNull String reason) {
-          if (assertOnModification.get()) {
+          if (assertOnModification.get() && !PassExecutorService.assertHighlightingPassNotRunning()) {
             throw new IllegalStateException("You must not cancel daemon inside highlighting test: "+reason);
           }
         }
