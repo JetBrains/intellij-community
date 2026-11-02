@@ -3,6 +3,7 @@ package com.intellij.application.options.schemes
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.options.Scheme
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import javax.swing.ListCellRenderer
@@ -17,6 +18,10 @@ internal fun <T : Scheme?> getRenderer(owner: SchemesCombo<T>): ListCellRenderer
 
     if (owner.schemeSeparators.containsKey(scheme)) {
       separator { text = owner.schemeSeparators[scheme] }
+    }
+
+    if (index >= 0) {
+      toolTipText = owner.getDescription(scheme)?.let { HtmlChunk.text(it).wrapWith(HtmlChunk.html()).toString() }
     }
 
     val indent = if (index < 0) 0 else owner.getIndent(scheme)

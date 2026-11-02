@@ -45,6 +45,7 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.ArrayUtilRt
@@ -180,7 +181,7 @@ open class KeymapImpl @JvmOverloads constructor(@field:Volatile private var data
   private var mouseShortcutToActionIds: Map<MouseShortcut, MutableList<String>> by cachedShortcuts { it as? MouseShortcut }
   private var gestureToActionIds: Map<KeyboardModifierGestureShortcut, MutableList<String>> by cachedShortcuts { it as? KeyboardModifierGestureShortcut }
 
-  override fun getPresentableName(): String = name
+  override fun getPresentableName(): @NlsSafe String = name
 
   override fun deriveKeymap(newName: String): KeymapImpl {
     if (canModify()) {

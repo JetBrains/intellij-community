@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.Groups;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
@@ -177,6 +178,11 @@ public final class EditableSchemesCombo<T extends Scheme> {
       }
 
       @Override
+      protected @Nullable @NlsContexts.Tooltip String getDescription(@NotNull T scheme) {
+        return mySchemesPanel.getSchemeDescription(scheme);
+      }
+
+      @Override
       protected @NotNull SimpleTextAttributes getSchemeAttributes(T scheme) {
         SchemesModel<T> model = mySchemesPanel.getModel();
         SimpleTextAttributes baseAttributes = !useBoldForNonRemovableSchemes() || model.canDeleteScheme(scheme)
@@ -191,6 +197,7 @@ public final class EditableSchemesCombo<T extends Scheme> {
     myComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
+        mySchemesPanel.updateSchemeDescription();
         mySchemesPanel.getActions().onSchemeChanged(getSelectedScheme());
       }
     });

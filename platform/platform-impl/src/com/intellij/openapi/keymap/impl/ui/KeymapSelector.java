@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
+import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.MessageType;
@@ -71,6 +72,11 @@ final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
   @Override
   protected @Nullable String getComboBoxLabel() {
     return null;
+  }
+
+  @Override
+  protected @Nullable @NlsContexts.Tooltip String getSchemeDescription(@NotNull KeymapScheme scheme) {
+    return DefaultKeymap.getInstance().getKeymapDescription(scheme.getCurrent());
   }
 
   @Override
