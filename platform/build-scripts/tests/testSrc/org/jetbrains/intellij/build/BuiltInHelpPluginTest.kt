@@ -10,6 +10,12 @@ import org.junit.jupiter.api.Test
 
 class BuiltInHelpPluginTest {
   @Test
+  fun `help plugin can access internal JetBrains modules`() {
+    val descriptor = JDOMUtil.load(helpPluginXml("263.7307.150.1", "263.7307.150", "IntelliJ IDEA"))
+    assertEquals("jetbrains", descriptor.getChild("content")?.getAttributeValue("namespace"))
+  }
+
+  @Test
   fun `help plugin requires the platform build that supplies its extension`() {
     val descriptor = JDOMUtil.load(helpPluginXml("263.7307.150.1", "263.7307.150", "IntelliJ IDEA"))
     assertEquals("263.7307.150", descriptor.getChild("idea-version").getAttributeValue("since-build"))
