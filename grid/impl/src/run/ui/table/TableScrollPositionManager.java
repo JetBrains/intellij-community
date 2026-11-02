@@ -2,8 +2,10 @@ package com.intellij.database.run.ui.table;
 
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.run.ui.grid.GridScrollPositionManager;
+import com.intellij.ui.TableCell;
 import com.intellij.ui.TableUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,13 +42,11 @@ class TableScrollPositionManager implements GridScrollPositionManager {
 
   @Override
   public void restore(@NotNull GridScrollPosition position) {
-    int viewRow = myMainTable.getRawIndexConverter().row2View().applyAsInt(position.myTopRowIdx.value);
-    int viewColumn = myMainTable.getRawIndexConverter().column2View().applyAsInt(position.myLeftColumnIdx.value);
-    Rectangle targetRect = myMainTable.getCellRect(myMainTable.isTransposed() ? viewColumn : viewRow,
-                                                   myMainTable.isTransposed() ? viewRow : viewColumn, true);
+    TableCell cell = tableCell(position.myTopRowIdx, position.myLeftColumnIdx);
+    Rectangle targetRect = myMainTable.getCellRect(cell.row, cell.column, true);
     Rectangle visibleRect = myMainTable.getVisibleRect();
     // A column that the pinned table shows has no place in the main table, so the main table keeps its horizontal scroll.
-    if (!myMainTable.isTransposed() && viewColumn < 0 && isShownInView(position.myLeftColumnIdx)) targetRect.x = visibleRect.x;
+    if (!myMainTable.isTransposed() && cell.column < 0 && isShownInView(position.myLeftColumnIdx)) targetRect.x = visibleRect.x;
     targetRect.width = visibleRect.width;
     targetRect.height = visibleRect.height;
     myMainTable.scrollRectToVisible(targetRect);
@@ -64,16 +64,31 @@ class TableScrollPositionManager implements GridScrollPositionManager {
     }
   }
 
-  /** The main table's first selected cell; with no selection {@code getCellRect(-1, -1)} is the top left corner. */
   @Override
-  public void scrollFirstSelectedCellToVisible() {
-    scrollTableCellToVisible(myMainTable.getSelectedRow(), myMainTable.getSelectedColumn());
+  public void scrollCellToVisible(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+    TableCell cell = tableCell(row, column);
+    if (cell.row < 0 && cell.column < 0) return;
+    Rectangle visibleRect = myMainTable.getVisibleRect();
+    Rectangle targetRect = myMainTable.getCellRect(cell.row, cell.column, true);
+    if (cell.row < 0) {
+      targetRect.y = visibleRect.y;
+      targetRect.height = 0;
+    }
+    if (cell.column < 0) {
+      targetRect.x = visibleRect.x;
+      targetRect.width = 0;
+    }
+    myMainTable.scrollRectToVisible(targetRect);
   }
 
-  /** Takes the main table's indices; a row or a column past the end is the table's far edge. */
-  @Override
-  public void scrollTableCellToVisible(int row, int column) {
-    myMainTable.scrollRectToVisible(myMainTable.getCellRect(row, column, true));
+  /**
+   * The main table's cell that shows a grid cell, as the Swing positions {@code getCellRect} takes; while transposed its rows are the
+   * grid's columns. An index is -1 on an axis the main table doesn't show.
+   */
+  private @NotNull TableCell tableCell(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+    int viewRow = myMainTable.getRawIndexConverter().row2View().applyAsInt(row.value);
+    int viewColumn = myMainTable.getRawIndexConverter().column2View().applyAsInt(column.value);
+    return myMainTable.isTransposed() ? new TableCell(viewColumn, viewRow) : new TableCell(viewRow, viewColumn);
   }
 
   /** Whether the view shows {@code column}, in the main table or in the pinned one. */

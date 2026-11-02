@@ -12,6 +12,7 @@ import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.RawIndexConverter;
 import com.intellij.database.datagrid.ResultView;
+import com.intellij.database.datagrid.ResultViewSelectionListener;
 import com.intellij.database.extractors.DataExtractor;
 import com.intellij.database.extractors.DataExtractorFactories;
 import com.intellij.database.extractors.DataExtractorFactory;
@@ -76,7 +77,6 @@ import java.util.Objects;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import static com.intellij.database.extractors.ExtractionConfigKt.builder;
 
@@ -222,7 +222,7 @@ public class TextResultView implements ResultView {
   }
 
   @Override
-  public void addSelectionChangedListener(@NotNull Consumer<Boolean> listener) {
+  public void addSelectionChangedListener(@NotNull ResultViewSelectionListener listener) {
 
   }
 

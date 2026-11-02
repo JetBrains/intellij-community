@@ -36,6 +36,7 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
   private final DataGrid myGrid;
   private final ListSelectionModel myRowSelection;
   /** The view's shared row sorter, which {@link TableRowOrder} sets before the view's constructor returns. */
+  @SuppressWarnings("NotNullFieldNotInitialized")
   private @NotNull RowSorter<? extends TableModel> myRowSorter;
   private final TableColumnModel myColumnModel;
   private final GridSelectionEvents myEvents;
@@ -283,20 +284,20 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
 
   @Override
   public void setSelection(@NotNull ModelIndexSet<GridRow> rows, @NotNull ModelIndexSet<GridColumn> columns) {
-    myEvents.runWithoutEvents(() -> {
+    myEvents.runAsOneChange(() -> {
       setRowSelection(rows, false);
       setColumnSelection(columns, false);
+      myEvents.requestNotification();
     });
-    myEvents.fireSelectionChanged();
   }
 
   @Override
   public void setSelection(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-    myEvents.runWithoutEvents(() -> {
+    myEvents.runAsOneChange(() -> {
       setRowSelection(row, false);
       setColumnSelection(column, false);
+      myEvents.requestNotification();
     });
-    myEvents.fireSelectionChanged();
   }
 
   @Override
@@ -390,12 +391,12 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
 
   @Override
   public int selectedViewRowsCount() {
-    return isTransposed() ? getSelectedRows().size() : getSelectedColumns().size();
+    return isTransposed() ? getSelectedColumns().size() : getSelectedRows().size();
   }
 
   @Override
   public int selectedViewColumnsCount() {
-    return isTransposed() ? getSelectedColumns().size() : getSelectedRows().size();
+    return isTransposed() ? getSelectedRows().size() : getSelectedColumns().size();
   }
 
   private static void setSelection(ListSelectionModel selectionModel, boolean add, int maxSelectionIdx, int... selection) {
@@ -468,16 +469,20 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     return ArrayUtil.toIntArray(newIndices);
   }
 
+  /** Puts {@code selection} back, its lead and anchor too, as one change that the grid's selection listeners hear of once. */
   @Override
   public void restore(@NotNull GridSelection<GridRow, GridColumn> selection) {
-    clearSelection();
-    SelectionModel<GridRow, GridColumn> selectionModel = myGrid.getSelectionModel();
-    selectionModel.setSelection(selection.getSelectedRows(), selection.getSelectedColumns());
+    myEvents.runAsOneChange(() -> {
+      clearSelection();
+      SelectionModel<GridRow, GridColumn> selectionModel = myGrid.getSelectionModel();
+      selectionModel.setSelection(selection.getSelectedRows(), selection.getSelectedColumns());
 
-    // Re-adding the rows and the columns put each lead on the last index of its interval, and anything following a lead jumps there.
-    restoreLeadAndAnchor(dataRowSelection(), toViewRow(selection.getCurrentRow()), toViewRow(selection.getRangeStartRow()));
-    restoreLeadAndAnchor(dataColumnSelection(), toViewColumn(selection.getCurrentColumn()),
-                         toViewColumn(selection.getRangeStartColumn()));
+      // Re-adding the rows and the columns put each lead on the last index of its interval, and anything following a lead jumps there.
+      restoreLeadAndAnchor(dataRowSelection(), toViewRow(selection.getCurrentRow()), toViewRow(selection.getRangeStartRow()));
+      restoreLeadAndAnchor(dataColumnSelection(), toViewColumn(selection.getCurrentColumn()),
+                           toViewColumn(selection.getRangeStartColumn()));
+      myEvents.requestNotification();
+    });
   }
 
   /** Puts the lead and the anchor back without changing the selection; a lead of -1 leaves both as they are. */

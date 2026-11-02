@@ -19,6 +19,7 @@ import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.RawIndexConverter;
 import com.intellij.database.datagrid.ResultView;
 import com.intellij.database.datagrid.ResultViewColumn;
+import com.intellij.database.datagrid.ResultViewSelectionListener;
 import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.datagrid.ViewIndex;
@@ -100,7 +101,6 @@ import javax.swing.JTable;
 import javax.swing.JViewport;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableColumnModel;
@@ -157,13 +157,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   private final DataGrid myGrid;
   private final GridColumns myColumns;
-  /**
-   * A slice that no table shows, over every column of the view's column model. The grid's selection listeners and the reveal of a pinned
-   * lead's row listen to it. It reports a selection change in either table, and a column move once, after the move. Swing tells the
-   * last-added listener first, so this slice, created before the main table's slice, reports after the main table took the change.
-   */
-  private final GridColumnSlice myAllColumnsSlice;
-  /** The grid's selection listeners, which hear of the row selection and of {@link #myAllColumnsSlice}. */
+  /** The grid's selection listeners, which hear of a change of the row or column selection once, after both tables took it. */
   private final GridSelectionEvents myGridSelectionEvents;
   /** The grid's selection model, which reads the view's models; the grid finds it on {@link #getComponent()}. */
   private final TableSelectionModel mySelectionModel;
@@ -224,8 +218,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     // Before any table listens: Swing tells the first listener last, so the grid hears of a new structure after every table took it.
     myDataModel.addTableModelListener(myDataStructureListener);
     myColumns = new GridColumns(grid, new ColumnsHost(), myDataModel);
-    // Created after GridColumns, which then hears of a column move after the slices and the main table.
-    myAllColumnsSlice = new GridColumnSlice(myColumns.getColumnModel(), myColumns, ColumnsToShow.ALL);
     myMainSlice = new GridColumnSlice(myColumns.getColumnModel(), myColumns, ColumnsToShow.UNPINNED);
     myMainTable = new GridTable(grid, myDataModel, myRowSelection, myMainSlice, myColumns.getColumnCache(), columnHeaderActions,
                               rowHeaderActions);
@@ -233,7 +225,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myTables = new MutableViewTables(grid, myMainTable, myMainSlice);
     myColumnHeaderPopupActions = columnHeaderActions;
     myRowHeaderPopupActions = rowHeaderActions;
-    myGridSelectionEvents = new GridSelectionEvents(myRowSelection, myAllColumnsSlice.getSelectionModel());
+    myGridSelectionEvents = new GridSelectionEvents(myRowSelection, myColumns.getColumnModel());
     mySelectionModel = new TableSelectionModel(grid, myRowSelection, myColumns.getColumnModel(),
                                                myGridSelectionEvents, myDataModel, this);
     myRowOrder = new TableRowOrder(grid, myRowSelection, myColumns.getColumnModel(), myRowHeights, myTables, mySelectionModel);
@@ -254,11 +246,9 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     // Both tables select through the view's column model, so this covers both.
     myColumns.getColumnModel().getSelectionModel().addListSelectionListener(e -> myGrower.reset());
     // The main table scrolls to the lead in its own columns only; a lead in the pinned table still needs its row in view.
-    ListSelectionListener pinnedLeadRowReveal = e -> {
-      if (!e.getValueIsAdjusting()) myFrozenColumnsController.revealPinnedLeadRow();
-    };
-    myAllColumnsSlice.getSelectionModel().addListSelectionListener(pinnedLeadRowReveal);
-    myRowSelection.addListSelectionListener(pinnedLeadRowReveal);
+    myGridSelectionEvents.addListener(isAdjusting -> {
+      if (!isAdjusting) myFrozenColumnsController.revealPinnedLeadRow();
+    });
     // A lead that moves into the other table, as with Find Next or a header click there, takes the focus along.
     // A column move or hide shifts the lead before the slices follow, so the lead's table is known only afterwards.
     // This stays: such a move requests no focus, so nothing asks getPreferredFocusedComponent for the lead's table.
@@ -568,7 +558,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     Disposer.dispose(myColumns);
     Disposer.dispose(myMainTable);
     myMainSlice.dispose();
-    myAllColumnsSlice.dispose();
     myEditedValue.setValue(null);
   }
 
@@ -784,7 +773,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   }
 
   @Override
-  public void addSelectionChangedListener(@NotNull Consumer<Boolean> listener) {
+  public void addSelectionChangedListener(@NotNull ResultViewSelectionListener listener) {
     myGridSelectionEvents.addListener(listener);
   }
 
@@ -804,9 +793,17 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     return myMainTable.rowIndexOfNumber(rowNumber);
   }
 
+  /**
+   * Selects and shows the row's cell in the first column the user sees, which is the first pinned one while columns are pinned. The caller
+   * can be a data request's thread, so the tables are read on the EDT.
+   */
   @Override
   public void showFirstCell(int rowNumOnCurrentPage) {
-    myGrid.showCell(rowIndexOfNumber(rowNumOnCurrentPage), modelColumnOfNumber(0));
+    ApplicationManager.getApplication().invokeLater(() -> {
+      GridTable pinned = myTables.getPinned();
+      int firstShown = pinned != null && pinned.getColumnCount() > 0 ? positionAt(pinned, 0) : 0;
+      myGrid.showCell(rowIndexOfNumber(rowNumOnCurrentPage), ViewIndex.forColumn(myGrid, firstShown).toModel(myGrid));
+    }, ignored -> myDisposed);
   }
 
   @Override
@@ -837,20 +834,24 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void setColumnEnabled(@NotNull ModelIndex<GridColumn> columnIdx, boolean enabled) {
-    // The table that shows the column gains or loses it through its slice.
-    myColumns.setColumnEnabled(columnIdx, enabled);
-    updatePinnedTable();
+    myGridSelectionEvents.runAsOneChange(() -> {
+      // The table that shows the column gains or loses it through its slice.
+      myColumns.setColumnEnabled(columnIdx, enabled);
+      updatePinnedTable();
+    });
   }
 
   @Override
   public void setColumnsEnabled(@NotNull List<ModelIndex<GridColumn>> columns, boolean enabled) {
-    myColumns.setColumnsEnabled(columns, enabled);
-    updatePinnedTable();
+    myGridSelectionEvents.runAsOneChange(() -> {
+      myColumns.setColumnsEnabled(columns, enabled);
+      updatePinnedTable();
+    });
   }
 
   @Override
   public void setRowEnabled(@NotNull ModelIndex<GridRow> rowIdx, boolean enabled) {
-    myColumns.setRowEnabled(rowIdx, enabled);
+    myGridSelectionEvents.runAsOneChange(() -> myColumns.setRowEnabled(rowIdx, enabled));
   }
 
   void startPaintingSession() {

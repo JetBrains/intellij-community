@@ -14,14 +14,11 @@ public interface GridScrollPositionManager {
 
   void scrollSelectionToVisible();
 
-  /** Scrolls the scrolling part as little as needed to show its first selected cell, or its top left cell with no selection. */
-  void scrollFirstSelectedCellToVisible();
-
   /**
-   * Scrolls the scrolling part as little as needed to show one of its cells. {@code row} and {@code column} are its own indices, as its
-   * {@code rowAtPoint} and {@code columnAtPoint} give them, not grid indices.
+   * Scrolls as little as needed to show the cell and keeps the selection.
+   * On an axis where the cell doesn't scroll, as in a pinned column, or isn't shown, the scroll stays.
    */
-  void scrollTableCellToVisible(int row, int column);
+  void scrollCellToVisible(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column);
 
   static @NotNull GridScrollPositionManager get(@NotNull ResultView resultView, @NotNull DataGrid grid) {
     GridScrollPositionManager manager =
@@ -55,11 +52,7 @@ public interface GridScrollPositionManager {
     }
 
     @Override
-    public void scrollFirstSelectedCellToVisible() {
-    }
-
-    @Override
-    public void scrollTableCellToVisible(int row, int column) {
+    public void scrollCellToVisible(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
     }
 
     @Override

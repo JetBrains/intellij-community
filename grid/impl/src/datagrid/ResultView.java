@@ -29,7 +29,6 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, GridColumn>, GridSearchSession.Listener, Disposable,
                                     LocalFilterState.Listener, ColumnHierarchyListener {
@@ -65,7 +64,7 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
 
   void shrinkSelection();
 
-  void addSelectionChangedListener(@NotNull Consumer<Boolean> listener);
+  void addSelectionChangedListener(@NotNull ResultViewSelectionListener listener);
 
   void restoreColumnsOrder(Map<Integer, ModelIndex<GridColumn>> expectedToModel);
 
@@ -126,7 +125,7 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
 
   /**
    * Whether {@code component} is part of the view: its cells or row numbers, and in some views its headers.
-   * The default counts the preferred focused component and the row header of the scroll pane around it.
+   * The default counts the preferred focused component and the row header of the scroll pane around it, such as an editor's gutter.
    */
   default boolean isViewComponent(@NotNull Component component) {
     JComponent focus = getPreferredFocusedComponent();

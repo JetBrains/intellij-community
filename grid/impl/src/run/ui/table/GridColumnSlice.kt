@@ -14,9 +14,9 @@ import javax.swing.event.TableColumnModelListener
 import javax.swing.table.TableColumn
 import javax.swing.table.TableColumnModel
 
-/** Which columns of the view's master column model a [GridColumnSlice] shows. */
+/** Which columns of the view's master column model a [GridColumnSlice] shows: those of the pinned table, or those of the main table. */
 @ApiStatus.Internal
-enum class ColumnsToShow { ALL, PINNED, UNPINNED }
+enum class ColumnsToShow { PINNED, UNPINNED }
 
 /**
  * A filtered window onto the view's column model, "the master". It gives one table its subset of the columns; the order, selection and
@@ -30,8 +30,8 @@ enum class ColumnsToShow { ALL, PINNED, UNPINNED }
  * updates the cache on each master event. So a table always reads the columns it was last told about, and gets the move's selection
  * events only after the move completes.
  *
- * The [ColumnsToShow.ALL] slice backs no table. The grid's selection listeners listen to it, so they are notified after both tables have
- * updated.
+ * The grid's selection listeners don't listen to a slice. The master reports the start and the end of each change, and they hear of it at
+ * the end, after both tables have updated.
  */
 @ApiStatus.Internal
 class GridColumnSlice(
@@ -140,7 +140,6 @@ class GridColumnSlice(
   }
 
   private fun shows(column: TableColumn): Boolean = when (columnsToShow) {
-    ColumnsToShow.ALL -> true
     ColumnsToShow.PINNED -> pins.isPinned(column)
     ColumnsToShow.UNPINNED -> !pins.isPinned(column)
   }
