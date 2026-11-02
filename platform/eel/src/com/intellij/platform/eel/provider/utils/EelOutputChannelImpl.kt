@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 
@@ -26,6 +27,8 @@ class EelOutputChannelImpl(override val prefersDirectBuffers: Boolean) : EelOutp
     val closedWithError: Throwable?,
     val closedForReceive: Boolean,
     val copyInProgress: Boolean,
+    val receiveInProgressGuard: Boolean,
+    val parallelReadDetected: Boolean,
     val buffer: ByteBuffer,
   ) {
     val available: Int = buffer.remaining()
@@ -40,7 +43,15 @@ class EelOutputChannelImpl(override val prefersDirectBuffers: Boolean) : EelOutp
     }
 
     companion object {
-      fun default(): State = State(closed = false, closedForReceive = false, copyInProgress = false, buffer = ByteBuffer.allocate(0), closedWithError = null)
+      fun default(): State = State(
+        closed = false,
+        closedForReceive = false,
+        copyInProgress = false,
+        receiveInProgressGuard = false,
+        parallelReadDetected = false,
+        buffer = ByteBuffer.allocate(0),
+        closedWithError = null
+      )
     }
   }
 
@@ -105,32 +116,43 @@ class EelOutputChannelImpl(override val prefersDirectBuffers: Boolean) : EelOutp
   }
 
   @Throws(EelChannelClosedException::class)
-  override suspend fun receive(dst: ByteBuffer): ReadResult {
-    val wasCopyInProgress = state.waitThenGetAndUpdate({ it.buffer.hasRemaining() || it.closed }) { it.copy(copyInProgress = true) }.copyInProgress
-    check(!wasCopyInProgress) {
-      "concurrent receive is not supported"
-    }
-    try {
-      return receiveInternal(dst, state.value)
-    } finally {
-      state.update { it.copy(copyInProgress = false) }
-    }
+  override suspend fun receive(dst: ByteBuffer): ReadResult = receiveImpl(dst) {
+    state.waitThenGetAndUpdate(
+      condition = { it.buffer.hasRemaining() || it.closed },
+      update = { it.copy(copyInProgress = true) }
+    )
   }
 
   @Throws(EelChannelClosedException::class)
-  override fun receiveAvailable(dst: ByteBuffer): ReadResult {
-    val wasCopyInProgress = state.getAndUpdate { it.copy(copyInProgress = true) }.copyInProgress
-    check(!wasCopyInProgress) {
-      "concurrent receive is not supported"
+  override fun receiveAvailable(dst: ByteBuffer): ReadResult = receiveImpl(dst) {
+    state.update { it.copy(copyInProgress = true) }
+  }
+
+  private inline fun receiveImpl(dst: ByteBuffer, acquireCopyLock: () -> Unit): ReadResult {
+    val state0 = state.updateAndGet {
+      if (it.receiveInProgressGuard) it.copy(parallelReadDetected = true) else it.copy(receiveInProgressGuard = true)
     }
+    check(!state0.parallelReadDetected) { "concurrent receive is not supported" }
+    var error: Throwable? = null
     try {
-      return receiveInternal(dst, state.value)
-    } finally {
-      state.update { it.copy(copyInProgress = false) }
+      acquireCopyLock()
+      return doCopy(dst, state.value)
+    }
+    catch (e: Throwable) {
+      error = e
+      throw e
+    }
+    finally {
+      val state2 = state.getAndUpdate { it.copy(copyInProgress = false, receiveInProgressGuard = false, parallelReadDetected = false) }
+      if (state2.parallelReadDetected) {
+        val exception = IllegalStateException("concurrent receive is not supported")
+        if (error != null) error.addSuppressed(exception)
+        else throw exception
+      }
     }
   }
 
-  private fun receiveInternal(dst: ByteBuffer, stateValue: State): ReadResult {
+  private fun doCopy(dst: ByteBuffer, stateValue: State): ReadResult {
     val bytesRead = dst.putPartially(stateValue.buffer)
     if (bytesRead == 0 && stateValue.closed) {
       if (stateValue.closedWithError != null) {

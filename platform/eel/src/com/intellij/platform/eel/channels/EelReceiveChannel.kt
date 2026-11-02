@@ -14,6 +14,7 @@ interface EelReceiveChannel {
   /**
    * Reads data to [dst] but might read less (see buffer position).
    * To read to the end, read until result is [ReadResult.EOF].
+   * Concurrent reading is not supported.
    *
    * @return [ReadResult] (see its doc for usage instructions)
    * @throws EelReceiveChannelException if some I/O error occured that certainly can be treated just as [ReadResult.EOF].

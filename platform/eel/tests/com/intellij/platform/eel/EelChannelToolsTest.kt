@@ -32,8 +32,10 @@ import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
@@ -67,6 +69,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.absoluteValue
 import kotlin.math.min
+import kotlin.test.assertFailsWith
 import kotlin.time.Duration.Companion.seconds
 
 @Suppress("checkedExceptions")
@@ -462,6 +465,56 @@ class EelChannelToolsTest {
 
   @Nested
   inner class TestEelOutputChannel {
+
+    @Test
+    fun testConcurrentReceive(): Unit = timeoutRunBlocking {
+      testConcurrentRead(receiveAvailable = false)
+    }
+
+    @Test
+    fun testReceiveAvailableDuringReceive(): Unit = timeoutRunBlocking {
+      testConcurrentRead(receiveAvailable = true)
+    }
+
+    private suspend fun testConcurrentRead(receiveAvailable: Boolean): Unit = coroutineScope {
+      val pipe = EelOutputChannel(false)
+      val firstReader = async(start = CoroutineStart.UNDISPATCHED) {
+        assertFailsWith<IllegalStateException> {
+          pipe.exposedSource.receive(allocate(1))
+        }
+      }
+      assertFailsWith<IllegalStateException> {
+        if (receiveAvailable) {
+          pipe.receiveAvailable(allocate(1))
+        }
+        else {
+          pipe.exposedSource.receive(allocate(1))
+        }
+      }
+      pipe.updateBuffer { wrap(byteArrayOf(1)) }
+      firstReader.await()
+
+      pipe.sendEof()
+      assertEquals(EOF, pipe.exposedSource.receive(allocate(1)))
+      assertEquals(EOF, pipe.receiveAvailable(allocate(1)))
+    }
+
+    @Test
+    fun testCancelReceiveAfterConcurrentRead(): Unit = timeoutRunBlocking {
+      val pipe = EelOutputChannel(false)
+      val firstReader = launch(start = CoroutineStart.UNDISPATCHED) {
+        pipe.exposedSource.receive(allocate(1))
+      }
+      assertFailsWith<IllegalStateException> {
+        pipe.receiveAvailable(allocate(1))
+      }
+      firstReader.cancelAndJoin()
+      assertTrue(firstReader.isCancelled)
+
+      pipe.sendEof()
+      assertEquals(EOF, pipe.receiveAvailable(allocate(1)))
+      assertEquals(EOF, pipe.exposedSource.receive(allocate(1)))
+    }
 
     @Test
     fun testSendWholeBuffer(): Unit = timeoutRunBlocking {
