@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.jsonSchema.JsonSchemaCatalogEntry
 import java.nio.file.FileSystems
 import java.nio.file.InvalidPathException
@@ -54,6 +53,7 @@ class JsonSchemaCatalogEntryFileMatcher(val entry: JsonSchemaCatalogEntry) {
 
   companion object {
     private val LOG = Logger.getInstance(JsonSchemaCatalogEntryFileMatcher::class.java)
+    private const val MAX_OPTIONAL_SEGMENT_COUNT = 4
 
     @JvmStatic
     fun getRelativePath(file: VirtualFile, project: Project): String? {
@@ -74,14 +74,29 @@ class JsonSchemaCatalogEntryFileMatcher(val entry: JsonSchemaCatalogEntry) {
     }
 
     private fun buildPathMatcher(fileMasks: Collection<String>): PathMatcher {
-      val refinedFileMasks = ContainerUtil.map(fileMasks) { fileMask -> StringUtil.trimStart(fileMask, "**/") }
-      return when {
-        refinedFileMasks.size == 1 ->
-          FileSystems.getDefault().getPathMatcher("glob:${ContainerUtil.getFirstItem(refinedFileMasks)}")
-        refinedFileMasks.isNotEmpty() ->
-          FileSystems.getDefault().getPathMatcher("glob:{${StringUtil.join(refinedFileMasks, ",")}}")
-        else -> PathMatcher { false }
+      val refinedFileMasks = fileMasks.flatMapTo(LinkedHashSet()) { expandDirectoryWildcards(it) }
+      // one matcher per mask, because a mask can contain a group, and a Java glob cannot nest groups
+      val matchers = refinedFileMasks.map { FileSystems.getDefault().getPathMatcher("glob:$it") }
+      return PathMatcher { path -> matchers.any { it.matches(path) } }
+    }
+
+    /**
+     * Returns [fileMask] and its variants without one or more `**` directory segments.
+     * In a catalog mask, a `**` directory segment matches zero or more directories.
+     * In a Java glob, it matches one or more directories.
+     * A mask with more than [MAX_OPTIONAL_SEGMENT_COUNT] such segments stays as it is.
+     */
+    private fun expandDirectoryWildcards(fileMask: String): List<String> {
+      val segments = fileMask.split('/')
+      val optionalSegments = segments.indices.filter { segments[it] == "**" && it < segments.lastIndex }
+      if (optionalSegments.isEmpty() || optionalSegments.size > MAX_OPTIONAL_SEGMENT_COUNT) return listOf(fileMask)
+
+      var variants = listOf(emptyList<String>())
+      for ((index, segment) in segments.withIndex()) {
+        val withSegment = variants.map { it + segment }
+        variants = if (index in optionalSegments) withSegment + variants else withSegment
       }
+      return variants.map { it.joinToString("/") }
     }
   }
 }

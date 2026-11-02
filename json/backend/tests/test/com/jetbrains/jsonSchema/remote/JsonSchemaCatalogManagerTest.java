@@ -55,6 +55,8 @@ public class JsonSchemaCatalogManagerTest {
   public void testCircleCI() {
     doTest(".circleci/config.yml", "https://json.schemastore.org/circleciconfig.json");
     doTest(".circleci/config.disable.yml", null);
+    doTest("site/.circleci/config.yml", "https://json.schemastore.org/circleciconfig.json");
+    doTest("a/b/.circleci/config.yml", "https://json.schemastore.org/circleciconfig.json");
   }
 
   @Test
@@ -63,6 +65,28 @@ public class JsonSchemaCatalogManagerTest {
     doTest(".github/workflows/main.yaml", "https://json.schemastore.org/github-workflow.json");
     doTest(".github/workflows/a/linter.yml", null);
     doTest(".github/workflows/b/main.yaml", null);
+    doTest("site/.github/workflows/nodejs.yml", "https://json.schemastore.org/github-workflow.json");
+    doTest("site/.github/workflows/a/linter.yml", null);
+  }
+
+  @Test
+  public void testInnerDirectoryWildcard() {
+    doTest("db/changelog/main.yaml", "https://json.schemastore.org/liquibase-3.2.json");
+    doTest("db/changelog/v1/main.yml", "https://json.schemastore.org/liquibase-3.2.json");
+    doTest("app/db/changelog/main.json", "https://json.schemastore.org/liquibase-3.2.json");
+    doTest("app/db/changelog/v1/v2/main.yaml", "https://json.schemastore.org/liquibase-3.2.json");
+    doTest("db/main.yaml", null);
+  }
+
+  @Test
+  public void testGroupInMask() {
+    doTest("group-single.json", "https://example.com/group-single.json");
+    doTest("a/group-single.yaml", "https://example.com/group-single.json");
+    doTest("group-single.toml", null);
+    doTest(".group-multi/x.json", "https://example.com/group-multi.json");
+    doTest("a/b/.group-multi/x.yaml", "https://example.com/group-multi.json");
+    doTest("a/group-multi.toml", "https://example.com/group-multi.json");
+    doTest(".group-multi/x.toml", null);
   }
 
   @Test

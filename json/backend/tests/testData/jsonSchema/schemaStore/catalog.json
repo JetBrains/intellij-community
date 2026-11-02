@@ -4754,6 +4754,18 @@
       "fileMatch": [".all-contributorsrc"],
       "name": "All Contributors configuration file",
       "url": "https://json.schemastore.org/all-contributors.json"
+    },
+    {
+      "description": "Test entry with a group in a single mask",
+      "fileMatch": ["**/group-single.{json,yaml}"],
+      "name": "Group in a single mask",
+      "url": "https://example.com/group-single.json"
+    },
+    {
+      "description": "Test entry with a group in one of several masks",
+      "fileMatch": ["**/.group-multi/*.{json,yaml}", "group-multi.toml"],
+      "name": "Group in several masks",
+      "url": "https://example.com/group-multi.json"
     }
   ],
   "version": 1
