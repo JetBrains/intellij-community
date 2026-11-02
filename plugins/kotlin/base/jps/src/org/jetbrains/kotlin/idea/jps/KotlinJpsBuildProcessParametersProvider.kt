@@ -14,7 +14,6 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinJpsPluginClasspathDownloader
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -66,24 +65,8 @@ class KotlinJpsBuildProcessParametersProvider(private val project: Project) : Bu
     override fun getPathParameters(): List<Pair<String, Path>> {
         val version = KotlinJpsPluginSettings.jpsVersion(project)
 
-        if (KotlinArtifactsDownloader.isBuildToolsApiEnabled(version)) {
-            val implementation = KotlinArtifactsDownloader.getBuildToolsImplDirectory(version)
-            if (!implementation.isDirectory()) {
-                downloadOrThrow(version)
-
-                if (!implementation.isDirectory()) {
-                    error("Unable to download the Kotlin Build Tools API implementation $version: it is not available after downloading at $implementation")
-                }
-            }
-            LOG.debug { "Kotlin JPS gets the Build Tools API implementation from $implementation" }
-
-            return listOf(
-                // Only the `KOTLIN_BUNDLED` path macro needs a Kotlin dist. The builder compiles through the implementation.
-                Pair("-Djps.kotlin.home=", KotlinPluginLayout.kotlincPath),
-                Pair("-D$BTA_IMPL_HOME_PROPERTY=", implementation),
-            )
-        }
-
+        // The `KOTLIN_BUNDLED` path macro of the project model points to the dist of the project version, as in the IDE.
+        // The macro expands to the standard library and to the compiler plugins, which must match the compiler.
         @Suppress("IO_FILE_USAGE")
         val kotlinDist = KotlinArtifactsDownloader.getUnpackedKotlinDistPath(project).toPath()
 
@@ -96,7 +79,24 @@ class KotlinJpsBuildProcessParametersProvider(private val project: Project) : Bu
             }
         }
 
-        return listOf(Pair("-Djps.kotlin.home=", kotlinDist))
+        if (!KotlinArtifactsDownloader.isBuildToolsApiEnabled(version)) {
+            return listOf(Pair("-Djps.kotlin.home=", kotlinDist))
+        }
+
+        val implementation = KotlinArtifactsDownloader.getBuildToolsImplDirectory(version)
+        if (!implementation.isDirectory()) {
+            downloadOrThrow(version)
+
+            if (!implementation.isDirectory()) {
+                error("Unable to download the Kotlin Build Tools API implementation $version: it is not available after downloading at $implementation")
+            }
+        }
+        LOG.debug { "Kotlin JPS gets the Build Tools API implementation from $implementation" }
+
+        return listOf(
+            Pair("-Djps.kotlin.home=", kotlinDist),
+            Pair("-D$BTA_IMPL_HOME_PROPERTY=", implementation),
+        )
     }
 
     override fun getVMArguments(): List<String> =

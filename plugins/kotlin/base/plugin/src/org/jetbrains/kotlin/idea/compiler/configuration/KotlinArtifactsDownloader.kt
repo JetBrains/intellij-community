@@ -58,7 +58,7 @@ object KotlinArtifactsDownloader {
 
     /**
      * @return whether JPS builds use the Kotlin JPS builder that the IDE bundles. It compiles through the Build Tools API
-     * and needs only the implementation of the project's Kotlin version, not the legacy JPS plugin and the Kotlin dist.
+     * implementation of the project's Kotlin version, not through the legacy JPS plugin.
      */
     fun isBuildToolsApiEnabled(jpsVersion: String): Boolean = isBuildToolsApiEnabled(IdeKotlinVersion.get(jpsVersion).kotlinVersion)
 
@@ -163,8 +163,9 @@ object KotlinArtifactsDownloader {
 
     /**
      * @return **true** if all dependencies are ready.
-     * With [isBuildToolsApiEnabled], the only dependency is the Build Tools API implementation of [jpsVersion].
-     * Otherwise, the dependencies are the legacy JPS plugin and the Kotlin dist of [jpsVersion].
+     * With [isBuildToolsApiEnabled], the dependencies are the Build Tools API implementation and the Kotlin dist of
+     * [jpsVersion]. Otherwise, they are the legacy JPS plugin and the Kotlin dist of [jpsVersion].
+     * The build process needs the dist in both cases: the `KOTLIN_BUNDLED` path macro of the project model points to it.
      */
     @Synchronized // Avoid manipulations with the same files from different threads
     fun lazyDownloadMissingJpsPluginDependencies(
@@ -174,7 +175,8 @@ object KotlinArtifactsDownloader {
         onError: (@Nls(capitalization = Nls.Capitalization.Sentence) String) -> Unit,
     ): Boolean {
         if (isBuildToolsApiEnabled(jpsVersion)) {
-            return lazyDownloadBuildToolsImpl(project, jpsVersion, indicator, onError)
+            return lazyDownloadBuildToolsImpl(project, jpsVersion, indicator, onError) &&
+                    lazyDownloadKotlincDistForJps(project, jpsVersion, indicator, onError)
         }
 
         val context = LazyKotlinJpsPluginClasspathDownloader.Context(project, indicator)
@@ -184,12 +186,20 @@ object KotlinArtifactsDownloader {
             return false
         }
 
+        return lazyDownloadKotlincDistForJps(project, jpsVersion, indicator, onError)
+    }
+
+    private fun lazyDownloadKotlincDistForJps(
+        project: Project,
+        jpsVersion: String,
+        indicator: ProgressIndicator,
+        onError: (@Nls(capitalization = Nls.Capitalization.Sentence) String) -> Unit,
+    ): Boolean {
         val unpackedDist = lazyDownloadAndUnpackKotlincDist(project, jpsVersion, indicator)
         if (unpackedDist == null) {
             onError(failedToDownloadUnbundledJpsMavenArtifact(project, KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID, jpsVersion))
             return false
         }
-
         return true
     }
 
