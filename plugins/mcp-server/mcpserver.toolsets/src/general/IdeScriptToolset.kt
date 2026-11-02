@@ -64,7 +64,9 @@ import javax.swing.JComponent
 import kotlin.time.Duration.Companion.seconds
 
 class IdeScriptToolset : McpToolset {
-  override fun isEnabled(): Boolean = isUnattended() || Registry.`is`(IDE_SCRIPT_TOOLSET_REGISTRY_KEY, false)
+  // The language server does not register IdeScriptEngineManager, so the toolset is off there.
+  override fun isEnabled(): Boolean =
+    (isUnattended() || Registry.`is`(IDE_SCRIPT_TOOLSET_REGISTRY_KEY, false)) && IdeScriptEngineManager.getInstance() != null
 
   override fun displayName(): String = McpServerBundle.message("toolset.display.name.ide.script")
 
@@ -411,7 +413,7 @@ class IdeScriptEngineService(private val scope: CoroutineScope) {
     }
     // A null loader asks the manager for AllPluginsLoader, which carries the whole IDE classpath.
     val current = engine
-                  ?: IdeScriptEngineManager.getInstance().getEngineByFileExtension(KOTLIN_SCRIPT_EXTENSION, null)
+                  ?: IdeScriptEngineManager.getInstance()?.getEngineByFileExtension(KOTLIN_SCRIPT_EXTENSION, null)
                     ?.also { engine = it }
                   ?: mcpFail("This IDE runs no Kotlin script engine. " +
                              "It needs the Kotlin plugin or the Kotlin Scripting plugin.")
