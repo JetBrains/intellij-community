@@ -13,9 +13,16 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.ex.EditorMarkupModel
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl
+import com.intellij.openapi.editor.markup.AnalyzerStatus
+import com.intellij.openapi.editor.markup.ErrorStripeRenderer
+import com.intellij.openapi.editor.markup.UIController
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
+import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 
@@ -70,6 +77,32 @@ class TrafficLightTest : DaemonAnalyzerTestCase() {
         "class Main {}"  // no error again
         ),
       listOf(HighlightSeverity.ERROR to 0),
+    )
+  }
+
+  fun `test installing a renderer updates the inspection widget status`() {
+    configureByText(JavaFileType.INSTANCE, "class Main {}")
+    val markupModel = editor.markupModel as EditorMarkupModelImpl
+    markupModel.isErrorStripeVisible = true
+    doHighlighting()
+    PlatformTestUtil.waitWithEventsDispatching(
+      "The daemon must install its renderer and publish its status",
+      { markupModel.errorStripeRenderer is TrafficLightRenderer && !markupModel.getCurrentStatus().isEmpty() },
+      10,
+    )
+    // The daemon repaints the widget with a delay. Let these repaints finish, so that only the install below can change the status.
+    repeat(5) {
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+      TimeoutUtil.sleep(100)
+    }
+
+    val title = "Installed renderer"
+    markupModel.setErrorStripeRenderer(ErrorStripeRenderer { AnalyzerStatus(EmptyIcon.ICON_16, title, "", UIController.EMPTY) })
+
+    PlatformTestUtil.waitWithEventsDispatching(
+      "The inspection widget must take the status of the installed renderer",
+      { markupModel.getCurrentStatus().title == title },
+      10,
     )
   }
 

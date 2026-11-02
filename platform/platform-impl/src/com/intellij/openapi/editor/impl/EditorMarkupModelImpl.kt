@@ -882,6 +882,8 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     if (renderer is Disposable) {
       Disposer.register(resourcesDisposable, renderer)
     }
+    // The daemon may have finished before the renderer
+    repaintTrafficLightIcon()
     //try to not cancel tooltips here, since it is being called after every writeAction, even to the console
     //HintManager.getInstance().getTooltipController().cancelTooltips();
   }
