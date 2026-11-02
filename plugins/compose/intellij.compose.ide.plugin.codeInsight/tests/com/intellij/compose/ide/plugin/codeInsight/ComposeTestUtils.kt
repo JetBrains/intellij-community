@@ -21,16 +21,31 @@ import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.compose.ide.plugin.shared.isComposeEnabledInModule
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.psi.KtFile
+import java.nio.file.Path
 import kotlin.test.assertTrue
 import kotlin.test.fail
+
+/** The test data root of this module. */
+internal fun composeCodeInsightTestDataRoot(): Path {
+  return if (BazelTestUtil.isUnderBazelTest) {
+    BazelTestUtil.getFileFromBazelRuntime(
+      "@community//plugins/compose/intellij.compose.ide.plugin.codeInsight:testData"
+    )
+  }
+  else {
+    Path.of(PathManagerEx.getCommunityHomePath(), "plugins/compose/intellij.compose.ide.plugin.codeInsight/testData")
+  }
+}
 
 /**
  * Enables Compose in the tests by adding Composable and RememberInComposition annotations to the test classpath.

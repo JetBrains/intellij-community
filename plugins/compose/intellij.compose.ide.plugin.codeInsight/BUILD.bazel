@@ -2,6 +2,43 @@ load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+)
+
+jps_test(
+    name = "ide-plugin-codeInsight-tests_test",
+    data = [
+        "@community//plugins/compose/intellij.compose.ide.plugin.codeInsight:testData",
+        "@community//plugins/kotlin/idea/tests:testData",
+        "@kotlin_test_deps//:annotations-java5-24.0.0.jar",
+        "@kotlin_test_deps//:junit.jar",
+        "@kotlin_test_deps//:kotlin-dist-for-ide.jar",
+        "@kotlin_test_deps//:kotlin-reflect.jar",
+        "@kotlin_test_deps//:kotlin-script-runtime.jar",
+        "@kotlin_test_deps//:kotlin-stdlib.jar",
+        "@kotlin_test_deps//:kotlin-stdlib-jdk8.jar",
+        "@kotlin_test_deps//:kotlin-stdlib-jdk8-sources.jar",
+        "@kotlin_test_deps//:kotlin-stdlib-sources.jar",
+        "@kotlin_test_deps//:kotlin-test.jar",
+        "@kotlin_test_deps//:kotlin-test-junit.jar",
+    ],
+    env_inherit = [
+        "ANDROID_HOME",
+        "GRADLE_USER_HOME",
+        "JAVA_HOME",
+        "JDK_11",
+        "JDK_17_0",
+        "JDK_18",
+    ],
+    tags = [
+        "compose-ide-plugin-code-insight-tests",
+    ],
+    runtime_deps = [":ide-plugin-codeInsight-tests_test_lib"],
+)
+### skip generation section `test intellij.compose.ide.plugin.codeInsight.tests`
+
 ### auto-generated section `build intellij.compose.ide.plugin.codeInsight` start
 create_kotlinc_options(
     name = "custom_ide-plugin-codeInsight",
@@ -174,10 +211,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.compose.ide.plugin.codeInsight.tests` end
-
-### auto-generated section `test intellij.compose.ide.plugin.codeInsight.tests` start
-jps_test(
-    name = "ide-plugin-codeInsight-tests_test",
-    runtime_deps = [":ide-plugin-codeInsight-tests_test_lib"],
-)
-### auto-generated section `test intellij.compose.ide.plugin.codeInsight.tests` end

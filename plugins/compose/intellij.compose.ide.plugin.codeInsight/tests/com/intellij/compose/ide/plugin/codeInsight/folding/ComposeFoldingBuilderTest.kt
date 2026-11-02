@@ -17,15 +17,15 @@
  */
 package com.intellij.compose.ide.plugin.codeInsight.folding
 
+import com.intellij.compose.ide.plugin.codeInsight.composeCodeInsightTestDataRoot
 import com.intellij.compose.ide.plugin.codeInsight.enableComposeInTest
-import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 
 internal class ComposeFoldingBuilderTest : KotlinLightCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
 
-  private val testPath = PlatformTestUtil.getCommunityPath() + "/plugins/compose/intellij.compose.ide.plugin.codeInsight/testData/folding"
+  private val testPath = composeCodeInsightTestDataRoot().resolve("folding")
 
   override fun setUp() {
     super.setUp()
