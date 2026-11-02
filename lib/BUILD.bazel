@@ -20452,17 +20452,17 @@ jvm_import(
 )
 
 copy_file(
-  name = "org.jetbrains/marketplace-zip-signer-0.1.43.jar_copy",
-  src = "@org_jetbrains-marketplace-zip-signer-0_1_43_http//file",
-  out = "org.jetbrains/marketplace-zip-signer-0.1.43.jar",
+  name = "org.jetbrains/marketplace-zip-signer-0.1.45.jar_copy",
+  src = "@org_jetbrains-marketplace-zip-signer-0_1_45_http//file",
+  out = "org.jetbrains/marketplace-zip-signer-0.1.45.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
 
 jvm_import(
   name = "zip-signer",
-  jar = "@org_jetbrains-marketplace-zip-signer-0_1_43_http//file",
-  source_jar = "@org_jetbrains-marketplace-zip-signer-0_1_43-sources_http//file",
+  jar = "@org_jetbrains-marketplace-zip-signer-0_1_45_http//file",
+  source_jar = "@org_jetbrains-marketplace-zip-signer-0_1_45-sources_http//file",
   visibility = ["//visibility:public"]
 )
 

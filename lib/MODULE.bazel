@@ -16289,17 +16289,17 @@ http_file(
 )
 
 http_file(
-  name = "org_jetbrains-marketplace-zip-signer-0_1_43_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/marketplace-zip-signer/0.1.43/marketplace-zip-signer-0.1.43.jar",
-  sha256 = "7db707d839949384760b0f3e58eff49bfedea05f822e4f3361c4b540aa5dcc16",
-  downloaded_file_path = "marketplace-zip-signer-0.1.43.jar"
+  name = "org_jetbrains-marketplace-zip-signer-0_1_45_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/marketplace-zip-signer/0.1.45/marketplace-zip-signer-0.1.45.jar",
+  sha256 = "715ddf235c8a422fe09a3b374ad0ed2d0a7c6ae96b03299ef43738ce6c197065",
+  downloaded_file_path = "marketplace-zip-signer-0.1.45.jar"
 )
 
 http_file(
-  name = "org_jetbrains-marketplace-zip-signer-0_1_43-sources_http",
-  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/marketplace-zip-signer/0.1.43/marketplace-zip-signer-0.1.43-sources.jar",
-  sha256 = "50233062bc38ac3d6405d7de0505440260588da59ebf8589ac7edabe7a499ead",
-  downloaded_file_path = "marketplace-zip-signer-0.1.43-sources.jar"
+  name = "org_jetbrains-marketplace-zip-signer-0_1_45-sources_http",
+  url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/marketplace-zip-signer/0.1.45/marketplace-zip-signer-0.1.45-sources.jar",
+  sha256 = "dd89a0c82097dedb3f1537fcb97b9b5c33863b7ea3004315f27ac7edffc27c99",
+  downloaded_file_path = "marketplace-zip-signer-0.1.45-sources.jar"
 )
 
 http_file(
