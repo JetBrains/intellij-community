@@ -3,9 +3,17 @@
 Reports <code>.compareTo()</code> calls whose result is compared with <code>0</code> using
 <code>==</code> or <code>!=</code> to check for equality. A direct <code>equals()</code> call expresses
 the intent more clearly.
-Not all classes have a <code>compareTo()</code> implementation that is consistent with <code>equals()</code>,
-so currently only calls on <code>String</code>, <code>Enum</code> and <code>Number</code> 
-but not <code>java.math.BigDecimal</code> expressions are reported.
+<p>
+Not all classes have a <code>compareTo()</code> implementation that is consistent with <code>equals()</code>.
+Currently, <code>compareTo()</code> calls on the following class types can be reported:
+<ul>
+  <li><code>java.lang.String</code>
+  <li><code>java.lang.Enum</code>, i.e. all enum classes
+  <li><code>java.lang.Number</code> subclasses, but not <code>java.math.BigDecimal</code>
+  <li><code>java.lang.Character</code>
+  <li><code>java.lang.Boolean</code>
+  <li>Most classes from the <code>java.time</code> package e.g. <code>java.time.LocalTime</code>
+</ul>
 <p><b>Example:</b></p>
 <pre><code>
   boolean isSame(String name) {

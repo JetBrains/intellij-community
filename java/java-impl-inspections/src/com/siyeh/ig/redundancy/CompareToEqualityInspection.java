@@ -3,7 +3,7 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -20,6 +20,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.PsiThisExpression;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -49,31 +51,47 @@ public final class CompareToEqualityInspection extends AbstractBaseJavaLocalInsp
         final PsiExpression argument = call.getArgumentList().getExpressions()[0];
         // compareTo(null) throws a NullPointerException, but equals(null) returns false, so the replacement
         // would change behavior when the argument may be null.
-        if (NullabilityUtil.getExpressionNullability(argument) == Nullability.NULLABLE) return;
+        boolean nullable = NullabilityUtil.getExpressionNullability(argument) == Nullability.NULLABLE;
         PsiMethod method = call.resolveMethod();
         if (method == null) return;
         PsiClass aClass = method.getContainingClass();
         if (aClass == null) return;
         final boolean replaceWithEquality = InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_ENUM);
-        boolean allowedType = replaceWithEquality || switch (aClass.getQualifiedName()) {
-          case CommonClassNames.JAVA_LANG_BYTE,
+        boolean mayChangeSemantics = nullable || (!replaceWithEquality && !isAllowedClass(aClass));
+        if (!isOnTheFly && mayChangeSemantics) return;
+        final PsiElement anchor =
+          !isOnTheFly || isVisibleHighlight(expression) ? call.getMethodExpression().getReferenceNameElement() : expression;
+        assert anchor != null;
+        ProblemHighlightType highlightType =
+          mayChangeSemantics ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+        holder.registerProblem(anchor, InspectionGadgetsBundle.message("compare.to.equality.problem.descriptor"),
+                               highlightType, new ReplaceWithEqualsFix(replaceWithEquality, mayChangeSemantics));
+      }
+
+      private static boolean isAllowedClass(PsiClass aClass) {
+        return switch (aClass.getQualifiedName()) {
+          case CommonClassNames.JAVA_LANG_CHARACTER,
+               CommonClassNames.JAVA_LANG_BOOLEAN,
+               CommonClassNames.JAVA_LANG_BYTE,
                CommonClassNames.JAVA_LANG_SHORT,
                CommonClassNames.JAVA_LANG_INTEGER,
                CommonClassNames.JAVA_LANG_LONG,
                CommonClassNames.JAVA_LANG_FLOAT,
                CommonClassNames.JAVA_LANG_DOUBLE,
                CommonClassNames.JAVA_LANG_STRING,
-               "java.math.BigInteger" -> true;
+               "java.math.BigInteger",
+               CommonClassNames.JAVA_TIME_LOCAL_TIME,
+               "java.time.OffsetTime",
+               "java.time.MonthDay",
+               "java.time.Year",
+               "java.time.YearMonth",
+               "java.time.Instant",
+               "java.time.Duration",
+               "java.time.ZoneOffset",
+               "java.time.OffsetDateTime" -> true;
           // note BigDecimal's compareTo() method is not consistent with its equals() method
           case null, default -> false;
         };
-        if (!allowedType) return;
-        final PsiElement anchor =
-          !isOnTheFly || isVisibleHighlight(expression) ? call.getMethodExpression().getReferenceNameElement() : expression;
-        assert anchor != null;
-        holder.registerProblem(anchor,
-                               InspectionGadgetsBundle.message("string.compare.to.equality.problem.descriptor"),
-                               new ReplaceWithEqualsFix(replaceWithEquality));
       }
     };
   }
@@ -101,16 +119,23 @@ public final class CompareToEqualityInspection extends AbstractBaseJavaLocalInsp
   private static class ReplaceWithEqualsFix extends PsiUpdateModCommandQuickFix {
 
     private final boolean myReplaceWithEquality;
+    private final boolean myMayChangeSemantics;
 
-    private ReplaceWithEqualsFix(boolean replaceWithEquality) {
+    private ReplaceWithEqualsFix(boolean replaceWithEquality, boolean mayChangeSemantics) {
       myReplaceWithEquality = replaceWithEquality;
+      myMayChangeSemantics = mayChangeSemantics;
     }
 
     @Override
     public @Nls @NotNull String getFamilyName() {
-      return myReplaceWithEquality
-       ? InspectionGadgetsBundle.message("string.compare.to.equality.quickfix")
-       : CommonQuickFixBundle.message("fix.replace.with.x.call", "equals()");
+      if (myReplaceWithEquality) {
+        return myMayChangeSemantics
+               ? InspectionGadgetsBundle.message("compare.to.equality.quickfix.may.change.semantics")
+               : InspectionGadgetsBundle.message("compare.to.equality.quickfix");
+      }
+      return myMayChangeSemantics
+             ? InspectionGadgetsBundle.message("compare.to.equality.convert.may.change.semantics.quickfix")
+             : InspectionGadgetsBundle.message("compare.to.equality.convert.quickfix");
     }
 
     @Override
@@ -119,17 +144,20 @@ public final class CompareToEqualityInspection extends AbstractBaseJavaLocalInsp
       final boolean negated = expression.getOperationTokenType().equals(JavaTokenType.NE);
       final PsiMethodCallExpression call = compareToComparedWithZero(expression);
       if (call == null) return;
-      final PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
+      final PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(methodExpression);
+      if (qualifier == null) return;
       final PsiExpression argument = call.getArgumentList().getExpressions()[0];
       final CommentTracker ct = new CommentTracker();
       final StringBuilder replacement = new StringBuilder();
       if (myReplaceWithEquality) {
-        replacement.append(qualifier == null ? "this" : ct.text(qualifier));
-        replacement.append(negated ? "!=" : "==").append(ct.text(argument));
+        replacement.append(ct.text(qualifier)).append(negated ? "!=" : "==").append(ct.text(argument));
       }
       else {
         if (negated) replacement.append('!');
-        if (qualifier != null) replacement.append(ct.text(qualifier)).append('.');
+        if (methodExpression.getQualifierExpression() != null || !(qualifier instanceof PsiThisExpression t) || t.getQualifier() != null) {
+          replacement.append(ct.text(qualifier)).append('.');
+        }
         replacement.append("equals(").append(ct.text(argument)).append(')');
       }
       ct.replaceAndRestoreComments(expression, replacement.toString());

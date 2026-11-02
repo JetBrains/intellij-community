@@ -3,6 +3,7 @@ package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,16 @@ public class CompareToEqualityInspectionTest extends LightJavaInspectionTestCase
   public void testCompareToEqualityFix() {
     doTest();
     checkQuickFixAll();
+  }
+
+  public void testMayChangeSemantics() {
+    doTest();
+    checkQuickFix(InspectionGadgetsBundle.message("compare.to.equality.convert.may.change.semantics.quickfix"));
+  }
+
+  public void testMayChangeSemanticsEquality() {
+    doTest();
+    checkQuickFix(InspectionGadgetsBundle.message("compare.to.equality.quickfix.may.change.semantics"));
   }
 
   @Override

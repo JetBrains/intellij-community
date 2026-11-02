@@ -233,12 +233,6 @@
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
-      <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.expressions</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <language>JAVA</language>
       <className>com.intellij.codeInsight.intention.impl.SwapIfStatementsIntentionAction</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.control.flow</categoryKey>
