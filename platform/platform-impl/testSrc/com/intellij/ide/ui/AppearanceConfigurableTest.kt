@@ -41,7 +41,7 @@ private suspend fun layOutPreview(pageWidth: (JComponent) -> Int): PreviewLayout
   val configurable = AppearanceConfigurable()
   try {
     val page = configurable.createComponent()!!
-    val preview = UIUtil.findComponentOfType(page, ToolWindowLayoutDiagramPanel::class.java)!!
+    val preview = UIUtil.findComponentOfType(page, ToolWindowLayoutPreviewPanel::class.java)!!
     val boundsAtPreferredWidth = layOut(page, page.preferredSize.width, preview)
     PreviewLayout(preview.preferredSize, boundsAtPreferredWidth, layOut(page, pageWidth(page), preview))
   }

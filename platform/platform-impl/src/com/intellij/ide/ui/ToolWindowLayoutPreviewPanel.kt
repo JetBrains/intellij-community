@@ -21,7 +21,7 @@ private fun getShowToolWindowNames(): Boolean {
  * A small mockup of the IDE main window illustrating how tool window layout
  * settings affect the placement of tool windows, tool window bars and the editor.
  */
-internal class ToolWindowLayoutDiagramPanel : JPanel() {
+internal class ToolWindowLayoutPreviewPanel : JPanel() {
 
   var wideScreenSupport: Boolean = UISettings.getInstance().wideScreenSupport
     set(value) { if (field != value) { field = value; repaint() } }
