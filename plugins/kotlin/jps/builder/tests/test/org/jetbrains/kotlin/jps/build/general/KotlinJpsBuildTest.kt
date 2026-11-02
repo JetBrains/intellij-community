@@ -75,6 +75,29 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
   }
 
   @Test
+  fun testSourcePackagePrefixMixedRoots() {
+    initProject(JVM_MOCK_RUNTIME)
+    buildAllModules().assertSuccessful()
+  }
+
+  @Test
+  fun testSourcePackagePrefixSameRoots() {
+    initProject(JVM_MOCK_RUNTIME)
+    buildAllModules().assertSuccessful()
+  }
+
+  @Test
+  fun testJavaSourceRootsArgumentsIgnored() {
+    initProject(JVM_MOCK_RUNTIME)
+    val result = buildAllModules()
+    result.assertSuccessful()
+
+    val warnings = result.getMessages(BuildMessage.Kind.WARNING).map { it.messageText }
+    val expected = "Argument '-Xjava-source-roots' is passed multiple times:"
+    assertTrue(warnings.any { it.startsWith(expected) }) { "Expected a warning that starts with \"$expected\", got: $warnings" }
+  }
+
+  @Test
   fun testExcludeFolderInSourceRoot() {
     doTest()
 

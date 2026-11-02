@@ -129,7 +129,6 @@ class JvmCompilationRunner(private val session: KotlinToolchains.BuildSession, p
 
     arguments.moduleName = request.moduleName
     arguments.commonSources = request.commonSources.map { it.path }.toTypedArray()
-    arguments.javaSourceRoots = (arguments.javaSourceRoots.orEmpty().toList() + request.javaSourceRoots.map { it.file.path }).distinct().toTypedArray()
     arguments.friendPaths = (arguments.friendPaths.orEmpty().toList() + request.friendDirectories.map { it.path }).distinct().toTypedArray()
     val classpath = (arguments.classpath?.split(File.pathSeparator).orEmpty() + request.classpathRoots.map { it.path })
       .filter { it.isNotEmpty() }
@@ -146,20 +145,36 @@ class JvmCompilationRunner(private val session: KotlinToolchains.BuildSession, p
     @Suppress("DEPRECATION")
     builder.compilerArguments.applyArgumentStrings(argumentStrings)
 
+    val (javaSourceRoots, javaPackagePrefix) = javaSourceRootsAndPackagePrefix(request.javaSourceRoots)
     // The typed options are set last: the last write wins, and these describe the target, not the user settings
     with(builder.compilerArguments) {
       this[JvmCompilerArguments.X_ALLOW_NO_SOURCE_FILES] = true
       this[JvmCompilerArguments.MODULE_NAME] = request.moduleName
       this[JvmCompilerArguments.NO_STDLIB] = true
       this[JvmCompilerArguments.NO_REFLECT] = true
-      // The compiler takes one package prefix for all the Java source roots, so a target with several of them loses it
-      this[JvmCompilerArguments.X_JAVA_PACKAGE_PREFIX] = request.javaSourceRoots.map { it.packagePrefix }.singleOrNull()
+      this[JvmCompilerArguments.X_JAVA_PACKAGE_PREFIX] = javaPackagePrefix
       this[JvmCompilerArguments.NO_JDK] = arguments.noJdk
       this[JvmCompilerArguments.JDK_HOME] = arguments.jdkHome?.let { Paths.get(it) }
       this[JvmCompilerArguments.CLASSPATH] = classpath.map { Paths.get(it) }.ifEmpty { null }
-      this[JvmCompilerArguments.X_JAVA_SOURCE_ROOTS] = arguments.javaSourceRoots.orEmpty().map { Paths.get(it) }
+      this[JvmCompilerArguments.X_JAVA_SOURCE_ROOTS] = javaSourceRoots.map { it.toPath() }
       this[JvmCompilerArguments.X_FRIEND_PATHS] = arguments.friendPaths.orEmpty().map { Paths.get(it) }
     }
+  }
+
+  /**
+   * `-Xjava-package-prefix` applies to all Java source roots, while JPS has a prefix per root. When the prefixes differ,
+   * the Java files of the roots with a prefix are passed one by one: the compiler reads the package of a single Java file
+   * from the file itself.
+   */
+  private fun javaSourceRootsAndPackagePrefix(roots: List<JvmSourceRoot>): Pair<List<File>, String?> {
+    val prefixes = roots.map { it.packagePrefix }.distinct()
+    if (prefixes.size <= 1) return roots.map { it.file } to prefixes.singleOrNull()
+
+    val files = roots.flatMap { (file, packagePrefix) ->
+      if (packagePrefix == null) listOf(file)
+      else file.walk().filter { it.isFile && it.extension == "java" }.toList()
+    }
+    return files to null
   }
 
   /** Keeps the first `-P plugin:<id>:<option>=<value>` of each option. */
