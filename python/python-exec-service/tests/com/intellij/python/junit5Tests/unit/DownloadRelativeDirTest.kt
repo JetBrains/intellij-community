@@ -3,6 +3,7 @@ package com.intellij.python.junit5Tests.unit
 
 import com.intellij.python.community.execService.impl.processLaunchers.computeDownloadRelativeDir
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 /**
@@ -21,5 +22,19 @@ class DownloadRelativeDirTest {
   fun `working dir under volume root yields subpath with trailing slash`() {
     assertEquals("sub/", computeDownloadRelativeDir("/home/user/proj/sub", "/home/user/proj"))
     assertEquals("a/b/", computeDownloadRelativeDir("/home/user/proj/a/b", "/home/user/proj"))
+  }
+
+  /** PY-91930: the target path of a volume root has a trailing slash. */
+  @Test
+  fun `trailing slash yields the same prefix`() {
+    assertEquals("", computeDownloadRelativeDir("/home/user/proj/", "/home/user/proj"))
+    assertEquals("", computeDownloadRelativeDir("/home/user/proj", "/home/user/proj/"))
+    assertEquals("sub/", computeDownloadRelativeDir("/home/user/proj/sub/", "/home/user/proj"))
+  }
+
+  @Test
+  fun `working dir outside volume root yields null`() {
+    assertNull(computeDownloadRelativeDir("/home/user/proj2", "/home/user/proj"))
+    assertNull(computeDownloadRelativeDir("/home/user", "/home/user/proj"))
   }
 }
