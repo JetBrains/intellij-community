@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.platform.util.annotations.paths.OsPath
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
@@ -74,7 +75,7 @@ sealed class PyTargetsIntrospectionFacade(
 
   @RequiresBackgroundThread(generateAssertion = false)
   @kotlin.jvm.Throws(ExecutionException::class)
-  open fun getInterpreterPaths(): List<String> = runBlockingMaybeCancellable {
+  open fun getInterpreterPaths(): List<@OsPath String> = runBlockingMaybeCancellable {
     ExecService().executeHelper(interpreter(), PyHelper(SYSPATH_PY)).orThrowExecException()
   }.lines().filter { it.isNotBlank() }
 
