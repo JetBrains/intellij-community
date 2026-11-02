@@ -152,7 +152,7 @@ private fun findIdeaPluginRootTagNameToken(xmlFile: XmlFile): XmlToken? {
   return tagNameToken.takeIf(::isIdeaPluginElementNameLeaf)
 }
 
-internal fun isIdeaPluginElementNameLeaf(leaf: PsiElement): Boolean {
+private fun isIdeaPluginElementNameLeaf(leaf: PsiElement): Boolean {
   if (leaf !is XmlToken) return false
   if (leaf.getNode().elementType != XmlTokenType.XML_NAME) return false
   val prev = PsiTreeUtil.getPrevSiblingOfType(leaf, XmlToken::class.java)
