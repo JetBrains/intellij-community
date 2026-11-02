@@ -6,12 +6,12 @@ import java.util.concurrent.atomic.AtomicLong
 
 /** Identifies one marker across snapshots and provides access to it with the selected ownership. */
 sealed interface SnapshotMarkerReference<out T : SnapshotRangeMarkerImpl> : Comparable<SnapshotMarkerReference<*>> {
-  val order: Long
+  val id: Long
 
   /** Returns the marker, or null after a weak marker is collected. */
   fun get(): T?
 
-  override fun compareTo(other: SnapshotMarkerReference<*>): Int = order.compareTo(other.order)
+  override fun compareTo(other: SnapshotMarkerReference<*>): Int = id.compareTo(other.id)
 
   companion object {
     private val sequence: AtomicLong = AtomicLong()
@@ -21,7 +21,7 @@ sealed interface SnapshotMarkerReference<out T : SnapshotRangeMarkerImpl> : Comp
     fun <T : SnapshotRangeMarkerImpl> create(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T> =
       if (retainStrong) StrongSnapshotMarkerReference(marker) else WeakSnapshotMarkerReference(marker)
 
-    internal fun nextOrder(): Long = sequence.incrementAndGet()
+    internal fun nextId(): Long = sequence.incrementAndGet()
   }
 }
 
@@ -34,7 +34,7 @@ internal val SnapshotMarkerReference<*>.states: PMarkerNodeHistory<PMarkerNodeSt
 
 /** Retains the marker while keeping only weak references to its states. */
 internal class StrongSnapshotMarkerReference<out T : SnapshotRangeMarkerImpl>(private val marker: T) : SnapshotMarkerReference<T> {
-  override val order: Long = SnapshotMarkerReference.nextOrder()
+  override val id: Long = SnapshotMarkerReference.nextId()
   val states: PMarkerNodeHistory<PMarkerNodeState> = PMarkerNodeHistory()
 
   override fun get(): T = marker
@@ -43,7 +43,7 @@ internal class StrongSnapshotMarkerReference<out T : SnapshotRangeMarkerImpl>(pr
 /** Queues this reference for cleanup after its marker is collected. */
 internal class WeakSnapshotMarkerReference<T : SnapshotRangeMarkerImpl>(marker: T) :
   WeakReference<T>(marker, SnapshotMarkerEngine.markerQueue), SnapshotMarkerReference<T> {
-  override val order: Long = SnapshotMarkerReference.nextOrder()
+  override val id: Long = SnapshotMarkerReference.nextId()
   val states: PMarkerNodeHistory<PMarkerNodeState> = PMarkerNodeHistory()
   internal val rootStorageReference: WeakReference<MarkerRootUpdater> = marker.rootStorage.weakReference
 

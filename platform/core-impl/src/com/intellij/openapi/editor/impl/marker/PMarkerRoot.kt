@@ -208,12 +208,12 @@ interface PMarkerRoot {
 
   /**
    * Returns a lazy iterator over valid markers that non-strictly intersect `[startOffset, endOffset]` and match [tastePreference].
-   * The iterator orders entries by start offset and handle order.
+   * The iterator orders entries by start offset and handle ID.
    */
   fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry>
 
   /**
-   * Processes all valid markers by increasing actual start offset, then increasing handle order.
+   * Processes all valid markers by increasing actual start offset, then increasing handle ID.
    * The start offset includes pending shifts in this root.
    * The end offset, flavor flags, and tree shape do not affect the order.
    *

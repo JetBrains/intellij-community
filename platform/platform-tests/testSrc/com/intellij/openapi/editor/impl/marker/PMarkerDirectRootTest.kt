@@ -168,7 +168,7 @@ internal class PMarkerDirectRootTest {
         }
         val cache = checkNotNull(resolutionCache(root))
         for ((handle, nodeStart, nodeEnd) in entries) {
-          assertEquals(TextRangeScalarUtil.toScalarRange(nodeStart, nodeEnd), cache[handle.order])
+          assertEquals(TextRangeScalarUtil.toScalarRange(nodeStart, nodeEnd), cache[handle.id])
         }
       }
     }

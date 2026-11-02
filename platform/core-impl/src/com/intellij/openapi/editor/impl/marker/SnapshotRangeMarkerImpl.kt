@@ -84,7 +84,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   }
 
   override fun getId(): Long {
-    return markerHandle.order
+    return markerHandle.id
   }
 
   override fun getDocument(): Document {

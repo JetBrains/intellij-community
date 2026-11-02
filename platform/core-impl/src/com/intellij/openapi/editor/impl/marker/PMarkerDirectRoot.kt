@@ -24,7 +24,7 @@ import java.util.function.Consumer
  *
  * @property version the revision used for state and parent lookup.
  * @property root the valid subtree, or null when this snapshot has no valid markers.
- * @property invalids the invalid and removed states retained by this snapshot, keyed by handle order.
+ * @property invalids the invalid and removed states retained by this snapshot, keyed by handle ID.
  * @property resolutionCacheIdentity the token shared by roots with unchanged marker offsets and validity.
  * @property cachedResolutions the valid resolutions already checked for this snapshot.
  * Only roots with the same resolution identity share it.
@@ -44,7 +44,7 @@ class PMarkerDirectRoot private constructor(
   override fun isEmpty(): Boolean = root == null
 
   override fun isValid(handle: SnapshotMarkerReference<*>): Boolean {
-    val resolution = cachedResolutions?.get(handle.order) ?: PMarkerResolution.UNRESOLVED
+    val resolution = cachedResolutions?.get(handle.id) ?: PMarkerResolution.UNRESOLVED
     if (resolution != PMarkerResolution.UNRESOLVED) return true
     return keepingRootAlive {
       val node = state(handle) as? PMarkerNode ?: return@keepingRootAlive false
@@ -61,11 +61,11 @@ class PMarkerDirectRoot private constructor(
 
   /** Reuses this snapshot's validated resolutions. A cache miss checks the state and follows versioned parents. */
   override fun resolve(handle: SnapshotMarkerReference<*>): Long {
-    val cached = cachedResolutions?.get(handle.order) ?: PMarkerResolution.UNRESOLVED
+    val cached = cachedResolutions?.get(handle.id) ?: PMarkerResolution.UNRESOLVED
     if (cached != PMarkerResolution.UNRESOLVED) return cached
     return keepingRootAlive {
       val resolution = resolveState(state(handle))
-      if (PMarkerResolution.isValid(resolution)) cacheResolution(handle.order, resolution)
+      if (PMarkerResolution.isValid(resolution)) cacheResolution(handle.id, resolution)
       resolution
     }
   }
@@ -77,7 +77,7 @@ class PMarkerDirectRoot private constructor(
   }
 
   /** Records a valid resolution after this snapshot checks the marker state and offsets. */
-  private fun cacheResolution(order: Long, resolution: Long) {
+  private fun cacheResolution(id: Long, resolution: Long) {
     var cache = cachedResolutions
     if (cache == null) {
       cache = Java11Shim.createConcurrentLongLongMap(PMarkerResolution.UNRESOLVED)
@@ -85,7 +85,7 @@ class PMarkerDirectRoot private constructor(
         cache = cachedResolutions
       }
     }
-    cache!!.putIfAbsent(order, resolution)
+    cache!!.putIfAbsent(id, resolution)
   }
 
   @TestOnly
@@ -179,7 +179,7 @@ class PMarkerDirectRoot private constructor(
         result = editor.delete(result, TextRangeScalarUtil.startOffset(offsets), handle)
       }
       editor.pending[handle] = PMarkerNodeHistory.purgedState
-      editor.invalidsBuilder.remove(handle.order)
+      editor.invalidsBuilder.remove(handle.id)
       changed = true
     }
     if (changed) editor.finish(result) else this
@@ -197,7 +197,7 @@ class PMarkerDirectRoot private constructor(
     var result = root
     for (entry in entries) {
       val handle = entry.handle
-      if (invalids.getUnchecked(handle.order) == null && !isValid(handle)) {
+      if (invalids.getUnchecked(handle.id) == null && !isValid(handle)) {
         result = editor.insert(result, handle, entry)
       }
     }
@@ -348,7 +348,7 @@ class PMarkerDirectRoot private constructor(
    */
   private fun state(handle: SnapshotMarkerReference<*>): PMarkerNodeState? {
     val state = handle.states.get(version)
-    return if (state is PMarkerInvalidNode && invalids.getUnchecked(handle.order) !== state) null else state
+    return if (state is PMarkerInvalidNode && invalids.getUnchecked(handle.id) !== state) null else state
   }
 
   /**
@@ -359,7 +359,7 @@ class PMarkerDirectRoot private constructor(
   private fun absoluteOffsets(initial: PMarkerNode): Long {
     if (root == null) return PMarkerResolution.ABSENT
     val cache = cachedResolutions
-    val cached = cache?.get(initial.handle.order) ?: PMarkerResolution.UNRESOLVED
+    val cached = cache?.get(initial.handle.id) ?: PMarkerResolution.UNRESOLVED
     if (cached != PMarkerResolution.UNRESOLVED) return cached
     var node = initial
     var delta = 0
@@ -367,7 +367,7 @@ class PMarkerDirectRoot private constructor(
       val parent = node.parents.get(version) ?: return PMarkerResolution.ABSENT
       delta += parent.lazyDelta
       node = parent
-      val parentOffsets = cache?.get(node.handle.order) ?: PMarkerResolution.UNRESOLVED
+      val parentOffsets = cache?.get(node.handle.id) ?: PMarkerResolution.UNRESOLVED
       if (parentOffsets != PMarkerResolution.UNRESOLVED && state(node.handle) === node) {
         delta += TextRangeScalarUtil.startOffset(parentOffsets) - node.entry.nodeStart
         break
@@ -452,17 +452,17 @@ class PMarkerDirectRoot private constructor(
       if (existing is PMarkerNode && !pending.containsKey(handle) && !isValid(handle)) existing = null
       require(existing == null || existing is PMarkerInvalidNode && existing.reason == 0) { "The marker already exists" }
       assert(existing == null) { "The marker handle must not be reused" }
-      invalidsBuilder.remove(handle.order)
+      invalidsBuilder.remove(handle.id)
       return insertNode(root, handle, entry)
     }
 
     /**
-     * Inserts by start offset and handle order, copying and balancing the search path.
+     * Inserts by start offset and handle ID, copying and balancing the search path.
      * The caller must check whether the handle already exists.
      */
     fun insertNode(initial: PMarkerNode?, handle: SnapshotMarkerReference<*>, entry: MarkerEntry): PMarkerNode {
       if (initial == null) {
-        invalidsBuilder.remove(handle.order)
+        invalidsBuilder.remove(handle.id)
         return make(entry)
       }
       val node = push(initial)
@@ -612,7 +612,7 @@ class PMarkerDirectRoot private constructor(
       return build(valid, 0, valid.size)
     }
 
-    /** Builds a balanced tree from entries sorted by start offset and handle order in `[from, to)`. */
+    /** Builds a balanced tree from entries sorted by start offset and handle ID in `[from, to)`. */
     private fun build(entries: List<MarkerEntry>, from: Int, to: Int): PMarkerNode? {
       if (from == to) return null
       val middle = (from + to) ushr 1
@@ -642,7 +642,7 @@ class PMarkerDirectRoot private constructor(
     fun recordInvalid(handle: SnapshotMarkerReference<*>, range: Long, reason: Int) {
       val state = PMarkerInvalidNode(range, reason)
       pending[handle] = state
-      invalidsBuilder.put(handle.order, state)
+      invalidsBuilder.put(handle.id, state)
     }
 
     /**
@@ -694,7 +694,7 @@ class PMarkerDirectRoot private constructor(
 
     private fun compare(start: Int, handle: SnapshotMarkerReference<*>, otherStart: Int, otherHandle: SnapshotMarkerReference<*>): Int {
       val order = start.compareTo(otherStart)
-      return if (order != 0) order else handle.order.compareTo(otherHandle.order)
+      return if (order != 0) order else handle.id.compareTo(otherHandle.id)
     }
 
     @Suppress("NOTHING_TO_INLINE")
