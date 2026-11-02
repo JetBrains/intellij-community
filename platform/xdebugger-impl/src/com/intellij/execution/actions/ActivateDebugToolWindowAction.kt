@@ -12,10 +12,10 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.StatusText
 import com.intellij.xdebugger.XDebuggerBundle
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class ActivateDebugToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.DEBUG, AllIcons.Toolwindows.ToolWindowDebugger) {
+internal class ActivateDebugToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.DEBUG, AllIcons.Toolwindows.ToolWindowDebugger) {
+  override fun hasEmptyState(project: Project): Boolean = !RunContentManager.isDebugMergedIntoRun()
+
   override fun ensureToolWindowCreated(project: Project) {
     val runContentManager = RunContentManager.getInstance(project) as RunContentManagerImpl
     runContentManager.registerToolWindow(DefaultDebugExecutor.getDebugExecutorInstance())

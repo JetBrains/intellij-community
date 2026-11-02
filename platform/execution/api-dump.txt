@@ -980,6 +980,7 @@ com.intellij.execution.ui.RunContentManager
 - a:getToolWindowByDescriptor(com.intellij.execution.ui.RunContentDescriptor):com.intellij.openapi.wm.ToolWindow
 - a:getToolWindowIdByEnvironment(com.intellij.execution.runners.ExecutionEnvironment):java.lang.String
 - a:hideRunContent(com.intellij.execution.Executor,com.intellij.execution.ui.RunContentDescriptor):V
+- s:isDebugMergedIntoRun():Z
 - a:removeRunContent(com.intellij.execution.Executor,com.intellij.execution.ui.RunContentDescriptor):Z
 - a:selectRunContent(com.intellij.execution.ui.RunContentDescriptor):V
 - a:showRunContent(com.intellij.execution.Executor,com.intellij.execution.ui.RunContentDescriptor):V

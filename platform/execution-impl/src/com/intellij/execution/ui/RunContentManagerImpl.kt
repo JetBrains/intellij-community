@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.content.SingleContentSupplier
@@ -63,10 +64,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiPredicate
 import javax.swing.Icon
 
-@ApiStatus.Internal
-@JvmField
-val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
-
 @Suppress("LiftReturnOrAssignment")
 class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private val descriptors: MutableMap<RunContentDescriptorId, RunContentDescriptor> = ConcurrentHashMap()
@@ -82,8 +79,12 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   }
 
   companion object {
+    @ApiStatus.Internal
     @JvmField
-    val ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = TerminateRemoteProcessDialog.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY
+    val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
+
+    @JvmField
+    val ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY: Key<Boolean> = TerminateRemoteProcessDialog.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY
 
     @ApiStatus.Internal
     @JvmField
@@ -174,6 +175,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
   @ApiStatus.Internal
   fun registerToolWindow(executor: Executor): ContentManager {
+    if (isRedirectedToRun(executor)) {
+      return registerToolWindow(DefaultRunExecutor.getRunExecutorInstance())
+    }
     val toolWindowManager = getToolWindowManager()
     val toolWindowId = executor.toolWindowId
     var toolWindow = toolWindowManager.getToolWindow(toolWindowId)
@@ -215,7 +219,8 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
         // Content manager contains contents related with different executors.
         // Try to get executor from content.
         // Must contain this user data since all content is added by this class.
-        val contentExecutor = executor ?: getExecutorByContent(content)!!
+        // With the merged Debug tool window, the Run tool window contains the content of both executors.
+        val contentExecutor = if (executor == null || RunContentManager.isDebugMergedIntoRun()) getExecutorByContent(content) ?: executor!! else executor
         syncPublisher.contentSelected(getRunContentDescriptorByContent(content), contentExecutor)
         content.helpId = contentExecutor.helpId
       }
@@ -515,7 +520,9 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
            ?: getOrCreateContentManagerForToolWindow(getToolWindowIdForRunner(executor, descriptor), executor)
   }
 
-  private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
+  private fun getOrCreateContentManagerForToolWindow(id: String, requestedExecutor: Executor): ContentManager {
+    // The Run executor owns the decoration of the merged tool window.
+    val executor = if (isRedirectedToRun(requestedExecutor)) DefaultRunExecutor.getRunExecutorInstance() else requestedExecutor
     val extension = RunContentManagerExtension.getInstance(project)
     val extensionToolWindowId = extension?.getToolWindowId(project)
 
@@ -648,6 +655,14 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       return runnerToolWindowId
     }
 
+    val extensionToolWindowId = getExtensionToolWindowId(executionEnvironment)
+    if (extensionToolWindowId != null) {
+      return extensionToolWindowId
+    }
+    return if (isRedirectedToRun(executionEnvironment.executor)) ToolWindowId.RUN else null
+  }
+
+  private fun getExtensionToolWindowId(executionEnvironment: ExecutionEnvironment): String? {
     val extension = RunContentManagerExtension.getInstance(project) ?: return null
     if (!extension.isSupported(project, executionEnvironment.executor)) return null
 
@@ -668,7 +683,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
     // For example, HotSwapProgressImpl.NOTIFICATION_GROUP. All notifications for this group is shown in Debug tool window,
     // however such notifications should be shown in Run Dashboard tool window, if run content is redirected to Run Dashboard tool window.
     val toolWindowId = getContentDescriptorToolWindowId(executionEnvironment)
-    return toolWindowId ?: executionEnvironment.executor.toolWindowId
+    return toolWindowId ?: getExecutorToolWindowId(executionEnvironment.executor)
   }
 
   private fun getDescriptorBy(handler: ProcessHandler, runnerInfo: Executor): RunContentDescriptor? {
@@ -857,7 +872,15 @@ private fun canReuseContent(c: Content, executionId: Long): Boolean {
 }
 
 private fun getToolWindowIdForRunner(executor: Executor, descriptor: RunContentDescriptor?): String {
-  return descriptor?.contentToolWindowId ?: executor.toolWindowId
+  return descriptor?.contentToolWindowId ?: getExecutorToolWindowId(executor)
+}
+
+private fun isRedirectedToRun(executor: Executor): Boolean {
+  return executor.toolWindowId == ToolWindowId.DEBUG && RunContentManager.isDebugMergedIntoRun()
+}
+
+private fun getExecutorToolWindowId(executor: Executor): String {
+  return if (isRedirectedToRun(executor)) ToolWindowId.RUN else executor.toolWindowId
 }
 
 private fun createNewContent(descriptor: RunContentDescriptor, executor: Executor): Content {

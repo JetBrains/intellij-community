@@ -816,7 +816,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       selectedContent = null;
     }
 
-    ToolWindow debugToolwindow = ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.DEBUG);
+    var debugToolWindowId = RunContentManager.isDebugMergedIntoRun() ? ToolWindowId.RUN : ToolWindowId.DEBUG;
+    var debugToolwindow = ToolWindowManager.getInstance(myProject).getToolWindow(debugToolWindowId);
     if (debugToolwindow != null) {
       for (Content content : debugToolwindow.getContentManager().getContents()) {
         if (content != selectedContent) {

@@ -8,7 +8,9 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -103,4 +105,12 @@ public interface RunContentManager {
 
   @NotNull
   String getToolWindowIdByEnvironment(@NotNull ExecutionEnvironment executionEnvironment);
+
+  /**
+   * Returns {@code true} if the run tabs of the executors with the {@link ToolWindowId#DEBUG} tool window
+   * show in the {@link ToolWindowId#RUN} tool window. In this mode, the Debug tool window does not show.
+   */
+  static boolean isDebugMergedIntoRun() {
+    return Registry.is("run.toolwindow.merge.debug", false);
+  }
 }

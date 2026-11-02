@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame.actions;
 
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -66,7 +67,8 @@ public class XToggleEvaluateExpressionFieldAction extends DumbAwareToggleAction 
     PropertiesComponent.getInstance().setValue(PROP_KEY, state, IS_ENABLED_BY_DEFAULT);
     Project project = e.getProject();
     if (project != null) {
-      var window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG);
+      var toolWindowId = RunContentManager.isDebugMergedIntoRun() ? ToolWindowId.RUN : ToolWindowId.DEBUG;
+      var window = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId);
       if (window != null) {
         for (Content content : window.getContentManager().getContents()) {
           var context = DataManager.getInstance().getDataContext(content.getComponent());

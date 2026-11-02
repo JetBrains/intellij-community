@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui
 import com.intellij.execution.actions.CreateAction
 import com.intellij.execution.runners.ExecutionEnvironmentProxy
 import com.intellij.execution.runners.RunContentBuilder
+import com.intellij.execution.ui.RunContentManager
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
@@ -140,7 +141,8 @@ open class XDebugSessionTabNewUI(
 }
 
 fun addDebugToolwindowActions(project: Project) {
-  val window = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.DEBUG)
+  val toolWindowId = if (RunContentManager.isDebugMergedIntoRun()) ToolWindowId.RUN else ToolWindowId.DEBUG
+  val window = ToolWindowManager.getInstance(project).getToolWindow(toolWindowId)
   fun showAddActionDialog(): List<Any>? = ActionGroupPanel.showDialog(
     XDebuggerBundle.message("debugger.add.action.dialog.title"),
     XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_EXTRA_GROUP

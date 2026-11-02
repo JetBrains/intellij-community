@@ -155,6 +155,10 @@
                  description="Run implementation for split mode."
                  key="run.toolwindow.split.enabled"
                  restartRequired="true"/>
+    <registryKey defaultValue="false"
+                 description="Show the debug sessions in the Run tool window. The Debug tool window does not show."
+                 key="run.toolwindow.merge.debug"
+                 restartRequired="true"/>
     <remote.customDataContextSerializer implementation="com.intellij.execution.RunContentDescriptorIdSerializer"/>
     <remote.customDataContextSerializer implementation="com.intellij.execution.ExecutionEnvironmentIdSerializer"/>
     <uiDataRule implementation="com.intellij.execution.impl.printing.RunProfileNameForPrintingRule"/>
