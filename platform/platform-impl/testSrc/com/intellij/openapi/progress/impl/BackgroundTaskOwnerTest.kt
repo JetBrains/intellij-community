@@ -86,6 +86,17 @@ internal class BackgroundTaskOwnerTest {
     assertFalse(isTaskShownByCollector(BackgroundTaskOwnerKind.GUESS, taskProjectId = null, collectorProjectId = projectId))
   }
 
+  @Test
+  fun `a collector of the own tasks shows the tasks of its project only`() {
+    val projectId = newProjectId()
+
+    assertTrue(isOwnTask(BackgroundTaskOwnerKind.PROJECT, taskProjectId = projectId, collectorProjectId = projectId))
+    assertFalse(isOwnTask(BackgroundTaskOwnerKind.PROJECT, taskProjectId = newProjectId(), collectorProjectId = projectId))
+    assertFalse(isOwnTask(BackgroundTaskOwnerKind.PROJECT, taskProjectId = null, collectorProjectId = projectId))
+    assertFalse(isOwnTask(BackgroundTaskOwnerKind.ALL_FRAMES, taskProjectId = null, collectorProjectId = projectId))
+    assertFalse(isOwnTask(BackgroundTaskOwnerKind.GUESS, taskProjectId = null, collectorProjectId = projectId))
+  }
+
   private suspend fun runAndCaptureTask(owner: BackgroundTaskOwner): StoredTask {
     return runAndCaptureTask { title, action -> withBackgroundProgress(owner, title, action) }
   }

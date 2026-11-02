@@ -15,6 +15,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.observable.util.whenDisposedOrNow
+import com.intellij.openapi.progress.impl.PerProjectTaskInfoEntityCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
@@ -113,10 +114,10 @@ internal fun createProjectFrameAllocator(options: OpenProjectTask, projectStoreB
  * The opener asks for it with `OpenProjectImplOptions.frameOwner`.
  *
  * The window manager records the guest before the startup activities of the guest run, so a lookup of its frame works from the
- * start, see `WindowManagerEx.addFrameGuest`. With a frame of [frameOwner], the status bar of the frame shows the status text of
- * the guest, the editor area of the frame gets a card with the editors of the guest, the saved editors of the guest come back into
- * the card, and the tool-window manager of the guest gets a default pane that no frame shows, so a tool window of the guest can
- * register. Without a frame of [frameOwner], as in a unit test, the guest opens as in a headless application.
+ * start, see `WindowManagerEx.addFrameGuest`. With a frame of [frameOwner], the status bar of the frame shows the status text and
+ * the background tasks of the guest, the editor area of the frame gets a card with the editors of the guest, the saved editors of
+ * the guest come back into the card, and the tool-window manager of the guest gets a default pane that no frame shows, so a tool
+ * window of the guest can register. Without a frame of [frameOwner], as in a unit test, the guest opens as in a headless application.
  */
 internal class FrameGuestProjectFrameAllocator(private val frameOwner: Project) : ProjectFrameAllocator {
   @Volatile
@@ -154,6 +155,8 @@ internal class FrameGuestProjectFrameAllocator(private val frameOwner: Project) 
         frameHelper.joinFrame(project)
       }
       projectInitObservable.awaitProjectInit()
+      // the status bar of the frame shows the background tasks of the guest, as it shows the status text
+      project.serviceAsync<PerProjectTaskInfoEntityCollector>().startCollectingOwnTasks()
       val fileEditorManager = FileEditorManager.getInstanceAsync(project) as FileEditorManagerImpl
       fileEditorManager.initJob.join()
       // DaemonCodeAnalyzer uses FileEditorManager

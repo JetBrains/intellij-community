@@ -43,6 +43,20 @@ internal class PerProjectTaskInfoEntityCollector(private val project: Project, p
     LOG.trace { "PerProjectTaskInfoEntityCollector started for $project" }
     collectActiveTasks(cs, project)
   }
+
+  /**
+   * Shows the tasks of this project only, see [isOwnTask]. For a project that shows in the frame of another project: the
+   * collector of that project shows the tasks of all frames already, so this one adds the tasks of its own project and nothing else.
+   */
+  fun startCollectingOwnTasks() {
+    LOG.trace { "PerProjectTaskInfoEntityCollector started for the own tasks of $project" }
+    val projectId = project.projectId()
+    TaskStorage.getInstance().collectEachTask(cs) { task ->
+      if (isOwnTask(task.info.ownerKind, task.info.projectId, projectId)) {
+        showTaskIndicator(project, task)
+      }
+    }
+  }
 }
 
 private fun collectActiveTasks(cs: CoroutineScope, project: Project?) {
@@ -51,6 +65,11 @@ private fun collectActiveTasks(cs: CoroutineScope, project: Project?) {
       showTaskIndicator(project, task)
     }
   }
+}
+
+/** Tells whether a task belongs to the project of a collector that shows its own tasks only, see [PerProjectTaskInfoEntityCollector.startCollectingOwnTasks]. */
+internal fun isOwnTask(ownerKind: BackgroundTaskOwnerKind, taskProjectId: ProjectId?, collectorProjectId: ProjectId): Boolean {
+  return ownerKind == BackgroundTaskOwnerKind.PROJECT && taskProjectId == collectorProjectId
 }
 
 /**
