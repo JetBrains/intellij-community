@@ -96,7 +96,7 @@
     <applicationService serviceInterface="com.intellij.psi.CommonReferenceProviderTypes"
                         serviceImplementation="com.intellij.psi.impl.CommonReferenceProviderTypesImpl"/>
     <applicationService serviceInterface="com.intellij.psi.impl.file.PsiPackageImplementationHelper"
-                        serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
+                        serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl" overrides="true"/>
 
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>

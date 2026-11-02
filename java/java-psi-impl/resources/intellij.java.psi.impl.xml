@@ -121,6 +121,8 @@
     <!-- The defaults for a process without a Java backend, such as JetBrains Light. The Java plugin overrides each of them. -->
     <applicationService serviceInterface="com.intellij.psi.JavaDirectoryService"
                         serviceImplementation="com.intellij.core.CoreJavaDirectoryService" open="true"/>
+    <applicationService serviceInterface="com.intellij.psi.impl.file.PsiPackageImplementationHelper"
+                        serviceImplementation="com.intellij.core.CorePsiPackageImplementationHelper" open="true"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleManager"
                     serviceImplementation="com.intellij.core.CoreJavaCodeStyleManager" open="true"/>
     <projectService serviceInterface="com.intellij.openapi.roots.PackageIndex"
