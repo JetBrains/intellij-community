@@ -1152,7 +1152,6 @@ public final class ConfigImportHelper {
     new com.intellij.openapi.application.migrations.SpaceMigration252().migratePlugins(options);
     new com.intellij.openapi.application.migrations.BigDataToolsMigration253().migratePlugins(options);
     new com.intellij.openapi.application.migrations.BigDataToolsMigration263().migratePlugins(options);
-    new com.intellij.openapi.application.migrations.VcsPluginsMigration261().migratePlugins(options);
     new com.intellij.openapi.application.migrations.CwmMigration261().migratePlugins(options);
     new com.intellij.openapi.application.migrations.RustMigration262().migratePlugins(options);
     new com.intellij.openapi.application.migrations.AIAssistantMigration263().migratePlugins(options);
