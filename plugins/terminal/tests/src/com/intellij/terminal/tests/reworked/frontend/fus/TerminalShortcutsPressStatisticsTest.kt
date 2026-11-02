@@ -53,14 +53,29 @@ internal class TerminalShortcutsPressStatisticsTest {
     val reports = pressKeys(
       disposable,
       view,
-      pressedKey(KeyEvent.VK_ENTER, '\n'),
       pressedKey(KeyEvent.VK_ESCAPE, Char(KeyEvent.VK_ESCAPE)),
+      pressedKey(KeyEvent.VK_ENTER, '\n', InputEvent.SHIFT_DOWN_MASK),
       pressedKey(KeyEvent.VK_TAB, '\t', InputEvent.SHIFT_DOWN_MASK),
       pressedKey(KeyEvent.VK_UP, KeyEvent.CHAR_UNDEFINED),
     )
 
-    assertThat(reports.map { it["input_event"] }).containsExactly("Enter", "Escape", "Shift+Tab", "Up")
+    assertThat(reports.map { it["input_event"] }).containsExactly("Escape", "Shift+Enter", "Shift+Tab", "Up")
     assertThat(reports).allSatisfy { assertThat(it).doesNotContainKey("process_executable") }
+  }
+
+  @Test
+  fun `does not report unmodified enter tab or backspace`(@TestDisposable disposable: Disposable) {
+    val view = shellView(shellIntegration(executedCommand = null))
+
+    val reports = pressKeys(
+      disposable,
+      view,
+      pressedKey(KeyEvent.VK_ENTER, '\n'),
+      pressedKey(KeyEvent.VK_TAB, '\t'),
+      pressedKey(KeyEvent.VK_BACK_SPACE, '\b'),
+    )
+
+    assertThat(reports).isEmpty()
   }
 
   @Test
