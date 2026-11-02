@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.navigation
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.navigation.ItemWithPresentation
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
@@ -287,6 +288,20 @@ internal class DescriptorsIncludingContentModuleCodeVisionProviderTest {
       ),
       popupTargets.sorted(),
     )
+  }
+
+  @Test
+  fun testPreview() {
+    val previewPath = "codeVisionProviders/${DescriptorsIncludingContentModuleCodeVisionProvider.ID}/preview.xml"
+    val previewText = DescriptorsIncludingContentModuleCodeVisionProvider::class.java.classLoader.getResource(previewPath)!!.readText()
+    myFixture.configureByText("preview.xml", previewText)
+
+    val provider = DescriptorsIncludingContentModuleCodeVisionProvider()
+    provider.preparePreview(myFixture.editor, myFixture.file)
+    val (range, entry) = runReadActionBlocking { provider.computeForEditor(myFixture.editor, myFixture.file) }.single()
+
+    assertEquals(0, range.startOffset)
+    assertEquals("Included in 2 descriptors", (entry as TextCodeVisionEntry).text)
   }
 
   private fun testCodeVision(

@@ -955,6 +955,7 @@
       implementation="org.jetbrains.idea.devkit.navigation.DescriptorsIncludingContentModuleCodeVisionProvider"/>
     <config.codeVisionGroupSettingProvider
       implementation="org.jetbrains.idea.devkit.navigation.DescriptorsIncludingContentModuleCodeVisionGroupSettingProvider"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="devkit.descriptors.including.content.module" language="XML"/>
     <psi.referenceContributor
       language="Properties"
       implementation="org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor"/>
