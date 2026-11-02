@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
@@ -34,6 +35,7 @@ class ConfigureImageDialog(
   private var shouldConvertToHtml: Boolean = false
 ) : DialogWrapper(project, true) {
   private var pathFieldText = path ?: ""
+  private val initialPath = pathFieldText.trim()
   private var widthFieldText = width ?: ""
   private var heightFieldText = height ?: ""
   private var titleFieldText = linkTitle ?: ""
@@ -100,7 +102,7 @@ class ConfigureImageDialog(
   override fun doOKAction() {
     super.doOKAction()
     onOk?.invoke(MarkdownImageData(
-      path = processInput(pathFieldText),
+      path = processPathInput(pathFieldText),
       width = processInput(widthFieldText),
       height = processInput(heightFieldText),
       title = processInput(titleFieldText),
@@ -111,6 +113,14 @@ class ConfigureImageDialog(
 
   private fun processInput(text: String): String {
     return text.trim()
+  }
+
+  private fun processPathInput(text: String): String {
+    val path = processInput(text)
+    if (path == initialPath || path.startsWith("\\\\")) {
+      return path
+    }
+    return FileUtil.toSystemIndependentName(path.removePrefix("\\"))
   }
 
   override fun getDimensionServiceKey() = DIMENSION_KEY
