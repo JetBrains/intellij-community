@@ -26,7 +26,6 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
-import java.awt.Frame
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.EventListener
@@ -123,23 +122,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl, glassPane: IdeGlassPan
       glassPane.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
           if (e.clickCount == 2 && e.y <= UIUtil.getTransparentTitleBarHeight(frame.rootPane)) {
-            val action = MacWindowPreferences.readString("AppleActionOnDoubleClick", "Apple Global Domain")
-            if (action != null && action != "Maximize") {
-              if (frame.extendedState == Frame.ICONIFIED) {
-                frame.setExtendedState(Frame.NORMAL)
-              }
-              else {
-                frame.setExtendedState(Frame.ICONIFIED)
-              }
-            }
-            else {
-              if (frame.extendedState == Frame.MAXIMIZED_BOTH) {
-                frame.setExtendedState(Frame.NORMAL)
-              }
-              else {
-                frame.setExtendedState(Frame.MAXIMIZED_BOTH)
-              }
-            }
+            MacTitleBarDoubleClick.perform(frame)
           }
           super.mouseClicked(e)
         }

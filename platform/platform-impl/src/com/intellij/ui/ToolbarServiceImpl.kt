@@ -2,6 +2,8 @@
 package com.intellij.ui
 
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.ui.mac.MacTitleBarDoubleClick
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.use
 import com.intellij.ui.paint.useCopy
@@ -11,15 +13,19 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.awt.Frame
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.Window
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.JRootPane
 import javax.swing.RootPaneContainer
+import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import javax.swing.border.AbstractBorder
 import javax.swing.border.Border
@@ -80,6 +86,19 @@ open class ToolbarServiceImpl : ToolbarService {
           graphics.color = color
         }
       }
+    }
+
+    // macOS doesn't zoom a full-content window on a title bar double-click; the project frame does it in MacMainFrameDecorator
+    if (window is Frame && window !is IdeFrameImpl) {
+      val doubleClickListener = object : MouseAdapter() {
+        override fun mouseClicked(e: MouseEvent) {
+          if (e.clickCount == 2 && SwingUtilities.isLeftMouseButton(e) && e.y < rootPane.insets.top) {
+            MacTitleBarDoubleClick.perform(window)
+          }
+        }
+      }
+      rootPane.addMouseListener(doubleClickListener)
+      onDispose { rootPane.removeMouseListener(doubleClickListener) }
     }
 
     @Suppress("NAME_SHADOWING")
