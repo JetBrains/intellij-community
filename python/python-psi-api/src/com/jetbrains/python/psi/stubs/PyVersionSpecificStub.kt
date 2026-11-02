@@ -3,8 +3,10 @@ package com.jetbrains.python.psi.stubs
 
 import com.google.common.collect.RangeSet
 import com.intellij.openapi.util.Version
+import org.jetbrains.annotations.ApiStatus
 
 interface PyVersionSpecificStub {
+  @get:ApiStatus.Internal
   val versions: RangeSet<Version>
 
   /**
