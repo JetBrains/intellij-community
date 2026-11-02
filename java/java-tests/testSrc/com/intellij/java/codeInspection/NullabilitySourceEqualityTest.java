@@ -19,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import static org.junit.Assert.assertNotEquals;
 
@@ -107,5 +108,57 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
 
   private static @NotNull PsiType returnType(@NotNull PsiClass aClass, @NotNull String name) {
     return aClass.findMethodsByName(name, false)[0].getReturnType();
+  }
+
+  public void testVarargsTypeArgument() {
+    assertStubAndAstNullable("void m(List<@Nullable String>... args) {}", aClass ->
+      ((PsiClassType)((PsiArrayType)parameterType(aClass)).getComponentType()).getParameters()[0]);
+  }
+
+  public void testQualifiedVarargs() {
+    assertStubAndAstNullable("void m(java.lang.@Nullable String... args) {}", aClass ->
+      ((PsiArrayType)parameterType(aClass)).getComponentType());
+  }
+
+  public void testTwoDimensionalArrayTypeArgument() {
+    assertStubAndAstNullable("List<@Nullable String>[][] f;", aClass -> {
+      PsiArrayType outer = (PsiArrayType)aClass.findFieldByName("f", false).getType();
+      PsiArrayType inner = (PsiArrayType)outer.getComponentType();
+      return ((PsiClassType)inner.getComponentType()).getParameters()[0];
+    });
+  }
+
+  public void testCStyleArrayTypeArgument() {
+    assertStubAndAstNullable("List<@Nullable String> f[];", aClass -> {
+      PsiArrayType array = (PsiArrayType)aClass.findFieldByName("f", false).getType();
+      return ((PsiClassType)array.getComponentType()).getParameters()[0];
+    });
+  }
+
+  private void assertStubAndAstNullable(@NotNull String member, @NotNull Function<PsiClass, PsiType> typeGetter) {
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("Stubbed.java", """
+      import org.jetbrains.annotations.*;
+      import java.util.List;
+
+      class Stubbed {
+        %s
+      }
+      """.formatted(member));
+    PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
+    PsiType fromStub = typeGetter.apply(aClass);
+    assertFalse(file.isContentsLoaded());
+    assertEquals("Stub: " + fromStub.getCanonicalText(true), Nullability.NULLABLE, fromStub.getNullability().nullability());
+
+    ASTNode node = file.getNode();
+    GCUtil.tryGcSoftlyReachableObjects();
+    assertTrue(file.withGreenStubTreeOrAst(_ -> false, _ -> true));
+    PsiType fromAst = typeGetter.apply(aClass);
+    assertEquals("AST: " + fromAst.getCanonicalText(true), Nullability.NULLABLE, fromAst.getNullability().nullability());
+    assertEquals(fromStub.getNullability(), fromAst.getNullability());
+    assertNotNull(node);
+  }
+
+  private static @NotNull PsiType parameterType(@NotNull PsiClass aClass) {
+    return aClass.findMethodsByName("m", false)[0].getParameterList().getParameters()[0].getType();
   }
 }

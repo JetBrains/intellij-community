@@ -486,14 +486,15 @@ public /*sealed*/ abstract class TypeInfo {
 
     assert typeElement != null : element + " in " + parentStub;
 
-    TypeInfo typeInfo = fromTypeElement(tree, typeElement);
+    TypeInfo elementInfo = fromTypeElement(tree, typeElement);
+    TypeInfo typeInfo = elementInfo;
     for (int i = 0; i < arrayCount; i++) {
       typeInfo = typeInfo.arrayOf();
     }
     byte[] prefix = new byte[arrayCount];
     Arrays.fill(prefix, ExplicitTypeAnnotationContainer.Collector.ARRAY_ELEMENT);
     ExplicitTypeAnnotationContainer.Collector collector = new ExplicitTypeAnnotationContainer.Collector(typeInfo);
-    collectAnnotations(typeInfo, collector, tree, typeElement, prefix);
+    collectAnnotations(elementInfo, collector, tree, typeElement, prefix);
     collector.install();
     return typeInfo;
   }
@@ -507,7 +508,7 @@ public /*sealed*/ abstract class TypeInfo {
     List<LighterASTNode> children = tree.getChildren(element);
     for (LighterASTNode child : children) {
       IElementType tokenType = child.getTokenType();
-      if (tokenType == JavaTokenType.LBRACKET) {
+      if (tokenType == JavaTokenType.LBRACKET || tokenType == JavaTokenType.ELLIPSIS) {
         arrayCount++;
       }
     }
@@ -523,14 +524,19 @@ public /*sealed*/ abstract class TypeInfo {
       }
       else if (tokenType == JavaElementType.TYPE && info instanceof DerivedTypeInfo) {
         byte[] newPrefix;
+        TypeInfo childInfo = ((DerivedTypeInfo)info).child();
         if (bound) {
           newPrefix = Arrays.copyOf(prefix, prefix.length + 1);
           newPrefix[prefix.length] = ExplicitTypeAnnotationContainer.Collector.WILDCARD_BOUND;
         } else {
           newPrefix = Arrays.copyOf(prefix, prefix.length + arrayCount);
           Arrays.fill(newPrefix, prefix.length, newPrefix.length, ExplicitTypeAnnotationContainer.Collector.ARRAY_ELEMENT);
+          // One type element holds all the brackets of a multidimensional array
+          for (int i = 1; i < arrayCount && childInfo instanceof DerivedTypeInfo; i++) {
+            childInfo = ((DerivedTypeInfo)childInfo).child();
+          }
         }
-        collectAnnotations(((DerivedTypeInfo)info).child(), collector, tree, child, newPrefix);
+        collectAnnotations(childInfo, collector, tree, child, newPrefix);
       }
       else if (tokenType == JavaTokenType.LBRACKET) {
         nestingLevel++;
