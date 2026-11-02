@@ -1179,30 +1179,36 @@ public class JavaDocInfoGenerator {
   }
 
   private void generatePackageJavaDoc(StringBuilder buffer, PsiPackage psiPackage, boolean generatePrologue) {
-    boolean hasInfo = false;
-    for (PsiDirectory directory : psiPackage.getDirectories(GlobalSearchScope.everythingScope(myProject))) {
+    var documentation = findPackageDocumentation(psiPackage);
+    if (documentation instanceof PsiDocComment comment) {
+      generatePackageJavaDoc(buffer, comment, generatePrologue);
+    }
+    else if (documentation instanceof PsiFile file) {
+      generatePackageHtmlJavaDoc(buffer, file, generatePrologue);
+    }
+    else {
+      generateDefaultPackageDoc(buffer, psiPackage, generatePrologue);
+    }
+  }
+
+  private static @Nullable PsiElement findPackageDocumentation(PsiPackage psiPackage) {
+    for (var directory : psiPackage.getDirectories(GlobalSearchScope.everythingScope(psiPackage.getProject()))) {
       PsiFile packageInfoFile = directory.findFile(PsiPackage.PACKAGE_INFO_FILE);
       if (packageInfoFile != null) {
         ASTNode node = packageInfoFile.getNode();
         if (node != null) {
           ASTNode docCommentNode = findRelevantCommentNode(node);
           if (docCommentNode != null) {
-            generatePackageJavaDoc(buffer, (PsiDocComment)docCommentNode.getPsi(), generatePrologue);
-            hasInfo = true;
-            break;
+            return docCommentNode.getPsi();
           }
         }
       }
       PsiFile packageHtmlFile = directory.findFile("package.html");
       if (packageHtmlFile != null) {
-        generatePackageHtmlJavaDoc(buffer, packageHtmlFile, generatePrologue);
-        hasInfo = true;
-        break;
+        return packageHtmlFile;
       }
     }
-    if (!hasInfo) {
-      generateDefaultPackageDoc(buffer, psiPackage, generatePrologue);
-    }
+    return null;
   }
 
   private void generateDefaultPackageDoc(StringBuilder buffer, PsiPackage aPackage, boolean generatePrologue) {
@@ -1786,8 +1792,18 @@ public class JavaDocInfoGenerator {
   }
 
   private URL getBaseUrl() {
-    if (myElement != null) {
-      PsiElement element = myElement.getNavigationElement();
+    var context = myElement;
+    if (context instanceof PsiDirectory directory) {
+      context = JavaDirectoryService.getInstance().getPackage(directory);
+    }
+    else if (context instanceof PsiPackageStatement statement && !isRendered()) {
+      context = JavaPsiFacade.getInstance(myProject).findPackage(statement.getPackageName());
+    }
+    if (context instanceof PsiPackage psiPackage) {
+      context = findPackageDocumentation(psiPackage);
+    }
+    if (context != null) {
+      PsiElement element = context.getNavigationElement();
       if (element != null) {
         PsiFile file = element.getContainingFile();
         if (file != null) {

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.codeInsight.javadoc.markdown.JavaDocMarkdownFlavourDescriptor;
 import com.intellij.help.impl.HelpManagerImpl;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -41,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NullMarked;
 
 import java.awt.Color;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Locale;
@@ -349,11 +351,12 @@ public class JavaDocInfoHtmlPrinter implements JavaDocInfoPrinter {
       StringBuilder result = new StringBuilder();
       int lastRef = 0;
 
-      if (text.toUpperCase(Locale.ROOT).contains("HREF=\"")) {
+      if (text.toUpperCase(Locale.ROOT).contains("HREF")) {
         PsiFile fromText = PsiFileFactory.getInstance(project)
           .createFileFromText("DUMMY__.html", FileTypeManager.getInstance().getFileTypeByExtension("html"), text,
                               System.currentTimeMillis(), false);
         Collection<XmlTag> tags = PsiTreeUtil.findChildrenOfType(fromText, XmlTag.class);
+        var baseUrl = getBaseUrl(tags);
         for (XmlTag tag : tags) {
           if (!tag.getName().toLowerCase(Locale.ROOT).equals("a")) {
             continue;
@@ -373,6 +376,13 @@ public class JavaDocInfoHtmlPrinter implements JavaDocInfoPrinter {
           String reference = "";
           try {
             reference = JavaDocInfoGenerator.createReferenceForRelativeLink(href, context);
+            if (reference == null && baseUrl != null && !href.isEmpty() && !href.startsWith("#") && !BrowserUtil.isAbsoluteURL(href)) {
+              //noinspection deprecation
+              reference = new URL(baseUrl, href).toExternalForm();
+            }
+          }
+          catch (MalformedURLException e) {
+            LOG.debug(e);
           }
           catch (IndexNotReadyException e) {
             LOG.debug(e);
@@ -397,5 +407,24 @@ public class JavaDocInfoHtmlPrinter implements JavaDocInfoPrinter {
     text = StringUtil.replaceIgnoreCase(text, "<p/>", "<p></p>"); //NON-NLS
     text = StringUtil.replace(text, "/>", ">");
     return text;
+  }
+
+  private static @Nullable URL getBaseUrl(Collection<? extends XmlTag> tags) {
+    for (var tag : tags) {
+      if (tag.getName().equalsIgnoreCase("base")) {
+        var href = tag.getAttributeValue(HREF_ATTRIBUTE_NAME);
+        if (href != null) {
+          try {
+            //noinspection deprecation
+            return new URL(href);
+          }
+          catch (MalformedURLException e) {
+            LOG.debug(e);
+          }
+        }
+        return null;
+      }
+    }
+    return null;
   }
 }
