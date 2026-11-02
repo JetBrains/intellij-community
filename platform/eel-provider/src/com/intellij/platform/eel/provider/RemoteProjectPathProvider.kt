@@ -27,6 +27,7 @@ private val REMOTE_PROJECT_IDENTITY_PATH_KEY: Key<String> = Key.create("com.inte
 @ApiStatus.Internal
 @VisibleToClasses(
   "com.intellij.air.shared.core.AirAgentEnvironmentTest",
+  "com.intellij.air.shared.core.AirProjectPathsTest",
   "com.intellij.ide.lightProducts.LightProjectOpeningKt",
   "com.jetbrains.thinclient.connection.ThinClientRdProjectViewSession",
 )
@@ -62,10 +63,31 @@ fun Project.setRemoteProjectBaseNioPath(rawHostPath: String) {
   "org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer",
 )
 fun Project.getRemoteProjectBaseNioPath(): Path? {
-  // The backend-provided path is a string in the host's path syntax, so it must be parsed
-  // through EelPath to be routed via MultiRoutingFileSystem to the correct environment.
   // The local fallback uses VirtualFile.toNioPathOrNull, which goes through the VFS to get
   // the correct local NIO path (including FS-specific quirks like the Windows bare-drive fix).
+  return getRemoteProjectBaseNioPath(whenNothingStored = { guessProjectDir()?.toNioPathOrNull() })
+}
+
+/**
+ * Same as [getRemoteProjectBaseNioPath], but [whenNothingStored] gives the answer for a project with no stored base
+ * directory, in place of [Project.guessProjectDir].
+ *
+ * A JetBrains Client and the JetBrains Light product open the project on a local store directory, so
+ * [Project.getBasePath] names that store directory and not the directory that the user opened. They store the user's
+ * directory with [setRemoteProjectBaseNioPath], or an empty string when the project has no directory on the host. A
+ * regular IDE and a remote development backend store nothing.
+ *
+ * This function exists for code that must keep its own answer when nothing is stored, for example
+ * [Project.getBasePath]. The fallback of [getRemoteProjectBaseNioPath] is [Project.guessProjectDir]: the first top-level
+ * content root, which is not always the directory of [Project.getBasePath]. With it, such code would get another
+ * directory in a regular IDE than before.
+ */
+@ApiStatus.Experimental
+@ApiStatus.Internal
+@VisibleToClasses("com.intellij.air.shared.core.AirProjectPathsKt")
+fun Project.getRemoteProjectBaseNioPath(whenNothingStored: Project.() -> Path?): Path? {
+  // The backend-provided path is a string in the host's path syntax, so it must be parsed
+  // through EelPath to be routed via MultiRoutingFileSystem to the correct environment.
   val basePathFromBackend = getUserData(REMOTE_PROJECT_BASE_PATH_KEY)
 
   if (basePathFromBackend == null) {
@@ -78,25 +100,10 @@ fun Project.getRemoteProjectBaseNioPath(): Path? {
       LOG.error("REMOTE_PROJECT_BASE_PATH_KEY not set on thin client; init order is broken")
       return null
     }
-  }
-  else {
-    if (basePathFromBackend.isEmpty()) {
-      // Checked-absent sentinel.
-      return null
-    }
-
-    val descriptor = getEelDescriptor()
-
-    return try {
-      EelPath.parse(basePathFromBackend, descriptor).asNioPath()
-    }
-    catch (e: EelPathException) {
-      LOG.error("Path '$basePathFromBackend' inconsistent with descriptor $descriptor", e)
-      null
-    }
+    return whenNothingStored()
   }
 
-  return guessProjectDir()?.toNioPathOrNull()
+  return parseStoredHostPath(basePathFromBackend)
 }
 
 /**
@@ -121,6 +128,21 @@ fun Project.setRemoteProjectIdentityNioPath(rawHostPath: String) {
  */
 @ApiStatus.Internal
 fun Project.getRemoteProjectIdentityNioPath(): Path? {
+  return getRemoteProjectIdentityNioPath(whenNothingStored = {
+    RecentProjectsManager.getInstance().getProjectPath(this) ?: guessProjectDir()?.toNioPathOrNull()
+  })
+}
+
+/**
+ * Same as [getRemoteProjectIdentityNioPath], but [whenNothingStored] gives the answer for a project with no stored
+ * identity path, in place of [RecentProjectsManager.getProjectPath] and [Project.guessProjectDir].
+ *
+ * It exists for the reason that the [getRemoteProjectBaseNioPath] function with `whenNothingStored` explains.
+ */
+@ApiStatus.Experimental
+@ApiStatus.Internal
+@VisibleToClasses("com.intellij.air.shared.core.AirProjectPathsKt")
+fun Project.getRemoteProjectIdentityNioPath(whenNothingStored: Project.() -> Path?): Path? {
   val identityPathFromBackend = getUserData(REMOTE_PROJECT_IDENTITY_PATH_KEY)
 
   if (identityPathFromBackend == null) {
@@ -128,21 +150,29 @@ fun Project.getRemoteProjectIdentityNioPath(): Path? {
       LOG.error("REMOTE_PROJECT_IDENTITY_PATH_KEY not set on thin client; init order is broken")
       return null
     }
-    return RecentProjectsManager.getInstance().getProjectPath(this)
-           ?: guessProjectDir()?.toNioPathOrNull()
+    return whenNothingStored()
   }
 
-  if (identityPathFromBackend.isEmpty()) {
+  return parseStoredHostPath(identityPathFromBackend)
+}
+
+/**
+ * Parses a path that the backend or the light product stored in the path syntax of the host, so that it routes through
+ * `MultiRoutingFileSystem` to the right environment. An empty string is the "checked-absent" sentinel and gives `null`.
+ */
+private fun Project.parseStoredHostPath(hostPath: String): Path? {
+  if (hostPath.isEmpty()) {
+    // Checked-absent sentinel.
     return null
   }
 
   val descriptor = getEelDescriptor()
 
   return try {
-    EelPath.parse(identityPathFromBackend, descriptor).asNioPath()
+    EelPath.parse(hostPath, descriptor).asNioPath()
   }
   catch (e: EelPathException) {
-    LOG.error("Path '$identityPathFromBackend' inconsistent with descriptor $descriptor", e)
+    LOG.error("Path '$hostPath' inconsistent with descriptor $descriptor", e)
     null
   }
 }
