@@ -115,6 +115,20 @@ public class MarkdownQuoteHandlerTest extends BasePlatformTestCase {
     myFixture.checkResult("```<caret>```");
   }
 
+  public void testBacktickShouldBeAddedAfterClosedCodeSpan() {
+    final PsiFile file = myFixture.configureByText("test.md", "`ff` <caret>");
+    assertInstanceOf(file, MarkdownFile.class);
+
+    myFixture.type('`');
+    myFixture.checkResult("`ff` `<caret>`");
+    myFixture.type('`');
+    myFixture.checkResult("`ff` ``<caret>``");
+  }
+
+  public void testBacktickShouldCloseUnclosedCodeSpan() {
+    doTest("`ff <caret>", '`', "`ff `<caret>");
+  }
+
   public void testBackticksGoodBalance() {
     doTest("Hello ``code<caret>`` world", '`', "Hello ``code`<caret>` world");
   }

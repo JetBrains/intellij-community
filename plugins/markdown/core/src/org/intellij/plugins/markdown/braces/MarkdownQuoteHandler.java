@@ -24,11 +24,14 @@ public final class MarkdownQuoteHandler implements QuoteHandler {
     final TextRange current = getRangeOfThisType(charsSequence, offset);
 
     final boolean isBacktick = charsSequence.charAt(offset) == '`';
-    final boolean seekPrev = isBacktick ||
-                             (current.getStartOffset() - 1 >= 0 &&
-                              !Character.isWhitespace(charsSequence.charAt(current.getStartOffset() - 1)));
-
-    if (seekPrev) {
+    if (isBacktick) {
+      int unclosedBacktickLength = findUnclosedBacktickLength(charsSequence, current.getStartOffset());
+      if (unclosedBacktickLength != -1) {
+        return unclosedBacktickLength <= current.getLength();
+      }
+    }
+    else if (current.getStartOffset() - 1 >= 0 &&
+             !Character.isWhitespace(charsSequence.charAt(current.getStartOffset() - 1))) {
       final int prev = locateNextPosition(charsSequence, charsSequence.charAt(offset), current.getStartOffset() - 1, -1);
       if (prev != -1) {
         return getRangeOfThisType(charsSequence, prev).getLength() <= current.getLength();
@@ -91,6 +94,36 @@ public final class MarkdownQuoteHandler implements QuoteHandler {
 
   private static boolean isWordPart(@NotNull CharSequence chars, int offset) {
     return offset >= 0 && offset < chars.length() && Character.isUnicodeIdentifierPart(chars.charAt(offset));
+  }
+
+  private static int findUnclosedBacktickLength(@NotNull CharSequence chars, int offset) {
+    int lineStart = offset;
+    while (lineStart > 0 && chars.charAt(lineStart - 1) != '\n') {
+      lineStart--;
+    }
+
+    int unclosedLength = -1;
+    int current = lineStart;
+    while (current < offset) {
+      if (chars.charAt(current) != '`') {
+        current++;
+        continue;
+      }
+
+      int runStart = current;
+      while (current < offset && chars.charAt(current) == '`') {
+        current++;
+      }
+
+      int runLength = current - runStart;
+      if (unclosedLength == -1) {
+        unclosedLength = runLength;
+      }
+      else if (runLength >= unclosedLength) {
+        unclosedLength = -1;
+      }
+    }
+    return unclosedLength;
   }
 
   private static int locateNextPosition(@NotNull CharSequence haystack, char needle, int from, int dx) {
