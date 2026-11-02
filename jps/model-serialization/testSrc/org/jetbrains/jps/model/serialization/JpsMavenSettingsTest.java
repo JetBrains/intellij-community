@@ -1,39 +1,39 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.testFramework.rules.TempDirectory;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JpsMavenSettingsTest {
-  @Rule public TempDirectory tempFolder = new TempDirectory();
+  @TempDir Path tempDir;
 
   @Test
   public void testLoadAuthenticationSettingsNoFilesExist() {
-    var nonExistingFile = tempFolder.getRootPath().resolve("non-existing-file");
+    var nonExistingFile = tempDir.resolve("non-existing-file");
     var result = JpsMavenSettings.loadAuthenticationSettings(nonExistingFile, nonExistingFile);
     assertTrue(result.isEmpty());
   }
 
   @Test
-  public void testLoadAuthenticationSettingsEmptyFile() {
-    var emptyFile = tempFolder.newFileNio("empty-file");
+  public void testLoadAuthenticationSettingsEmptyFile() throws Exception {
+    var emptyFile = Files.createFile(tempDir.resolve("empty-file"));
     var result = JpsMavenSettings.loadAuthenticationSettings(emptyFile, emptyFile);
     assertTrue(result.isEmpty());
   }
 
   @Test
   public void testLoadSettingsUnknownNamespace() throws Exception {
-    var wrongNsFile = tempFolder.newFileNio("wrong-namespace");
+    var wrongNsFile = Files.createFile(tempDir.resolve("wrong-namespace"));
     var wrongNsXml = """
       <settings xmlns="http://maven.apache.org/UNKNOWN">
           <localRepository>some/path</localRepository>
@@ -81,8 +81,8 @@ public class JpsMavenSettingsTest {
       </settings>
       """;
 
-    var globalSettings = tempFolder.newFileNio("global-settings");
-    var userSettings = tempFolder.newFileNio("user-settings");
+    var globalSettings = Files.createFile(tempDir.resolve("global-settings"));
+    var userSettings = Files.createFile(tempDir.resolve("user-settings"));
 
     Files.writeString(globalSettings, globalXml, StandardCharsets.UTF_8);
     Files.writeString(userSettings, userXml, StandardCharsets.UTF_8);
@@ -110,7 +110,7 @@ public class JpsMavenSettingsTest {
       </settings>
       """;
 
-    var settingsFile = tempFolder.newFileNio("settings");
+    var settingsFile = Files.createFile(tempDir.resolve("settings"));
     Files.writeString(settingsFile, xmlWithIncompleteCredentials, StandardCharsets.UTF_8);
 
     var result = JpsMavenSettings.loadAuthenticationSettings(settingsFile, settingsFile);
@@ -142,7 +142,7 @@ public class JpsMavenSettingsTest {
         </settings>
         """.formatted(xmlns);
 
-      var settingsFile = tempFolder.newFileNio("settings-" + Integer.toHexString(namespace.hashCode()) + ".xml");
+      var settingsFile = Files.createFile(tempDir.resolve("settings-" + Integer.toHexString(namespace.hashCode()) + ".xml"));
       Files.writeString(settingsFile, xml, StandardCharsets.UTF_8);
 
       var settings = JpsMavenSettings.loadAuthenticationSettings(settingsFile, settingsFile);

@@ -9,8 +9,7 @@ import org.jetbrains.jps.model.library.JpsRepositoryLibraryType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.junit.jupiter.api.Test;
 
-import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
-import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.jetbrains.jps.model.serialization.JpsModelFromTestData.getSerializationTestDataPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -26,21 +25,21 @@ public class JpsRepositoryLibrarySerializationTest {
     assertEquals("junit", properties.getArtifactId());
     assertEquals("3.8.1", properties.getVersion());
     assertTrue(properties.isIncludeTransitiveDependencies());
-    assertEmpty(properties.getExcludedDependencies());
+    assertThat(properties.getExcludedDependencies()).isEmpty();
   }
 
   @Test
   public void testWithoutTransitiveDependencies() {
     JpsMavenRepositoryLibraryDescriptor properties = loadLibrary("without-transitive-dependencies");
     assertFalse(properties.isIncludeTransitiveDependencies());
-    assertEmpty(properties.getExcludedDependencies());
+    assertThat(properties.getExcludedDependencies()).isEmpty();
   }
 
   @Test
   public void testWithExcludedDependencies() {
     JpsMavenRepositoryLibraryDescriptor properties = loadLibrary("with-excluded-dependencies");
     assertTrue(properties.isIncludeTransitiveDependencies());
-    assertSameElements(properties.getExcludedDependencies(), "org.apache.httpcomponents:httpclient");
+    assertThat(properties.getExcludedDependencies()).containsExactlyInAnyOrder("org.apache.httpcomponents:httpclient");
   }
 
   @NotNull

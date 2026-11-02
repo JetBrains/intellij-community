@@ -101,7 +101,6 @@ jvm_library(
         "//platform/projectModel-impl",
         "//jps/model-test-framework:model-testFramework",
         "//platform/util/base",
-        "//libraries/junit4",
         "//libraries/junit6",
     ],
 )

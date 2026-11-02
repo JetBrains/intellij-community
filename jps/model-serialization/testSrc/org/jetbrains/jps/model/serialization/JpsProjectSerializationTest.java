@@ -3,7 +3,6 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
@@ -40,11 +39,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
-import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.jetbrains.jps.model.serialization.JpsModelFromTestData.getSerializationTestDataPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -90,27 +89,27 @@ public class JpsProjectSerializationTest {
 
     List<JpsDependencyElement> dependencies = util.getDependenciesList().getDependencies();
     assertEquals(4, dependencies.size());
-    JpsSdkDependency sdkDependency = assertInstanceOf(dependencies.get(0), JpsSdkDependency.class);
+    JpsSdkDependency sdkDependency = assertInstanceOf(JpsSdkDependency.class, dependencies.get(0));
     assertSame(JpsJavaSdkType.INSTANCE, sdkDependency.getSdkType());
     JpsSdkReference<?> reference = sdkDependency.getSdkReference();
     assertNotNull(reference);
     assertEquals("1.5", reference.getSdkName());
-    assertInstanceOf(dependencies.get(1), JpsModuleSourceDependency.class);
-    assertInstanceOf(dependencies.get(2), JpsLibraryDependency.class);
-    JpsLibraryDependency moduleLibraryDependency = assertInstanceOf(dependencies.get(3), JpsLibraryDependency.class);
+    assertInstanceOf(JpsModuleSourceDependency.class, dependencies.get(1));
+    assertInstanceOf(JpsLibraryDependency.class, dependencies.get(2));
+    JpsLibraryDependency moduleLibraryDependency = assertInstanceOf(JpsLibraryDependency.class, dependencies.get(3));
     JpsLibrary moduleLibrary = moduleLibraryDependency.getLibrary();
     assertEquals("log4j", moduleLibrary.getName());
     assertEquals(util, ((JpsElementBase<?>)moduleLibrary).getParent().getParent());
 
-    assertEquals(projectData.getUrl(""), assertOneElement(main.getContentRootsList().getUrls()));
-    assertEquals(projectData.getUrl("src"), assertOneElement(main.getSourceRoots()).getUrl());
+    assertEquals(projectData.getUrl(""), assertThat(main.getContentRootsList().getUrls()).singleElement().actual());
+    assertEquals(projectData.getUrl("src"), assertThat(main.getSourceRoots()).singleElement().actual().getUrl());
     
-    JpsSdkDependency inheritedSdkDependency = assertInstanceOf(main.getDependenciesList().getDependencies().get(0), JpsSdkDependency.class);
+    JpsSdkDependency inheritedSdkDependency = assertInstanceOf(JpsSdkDependency.class, main.getDependenciesList().getDependencies().get(0));
     JpsSdkReference<?> projectSdkReference = inheritedSdkDependency.getSdkReference();
     assertNotNull(projectSdkReference);
     assertEquals("1.6", projectSdkReference.getSdkName());
 
-    assertEquals(projectData.getUrl("xxx"), assertOneElement(xxx.getContentRootsList().getUrls()));
+    assertEquals(projectData.getUrl("xxx"), assertThat(xxx.getContentRootsList().getUrls()).singleElement().actual());
     assertEquals(projectData.getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, true));
     assertEquals(projectData.getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, false));
   }
@@ -133,8 +132,8 @@ public class JpsProjectSerializationTest {
   public void testImlUnderDotIdea() {
     JpsProjectData projectData = loadProject(getSerializationTestDataPath("imlUnderDotIdea"));
     JpsProject project = projectData.getProject();
-    JpsModule module = assertOneElement(project.getModules());
-    JpsModuleSourceRoot root = assertOneElement(module.getSourceRoots());
+    JpsModule module = assertThat(project.getModules()).singleElement().actual();
+    JpsModuleSourceRoot root = assertThat(module.getSourceRoots()).singleElement().actual();
     assertEquals(projectData.getUrl("src"), root.getUrl());
   }
 
@@ -173,10 +172,10 @@ public class JpsProjectSerializationTest {
   @Test
   public void testExcludePatterns() {
     JpsProjectData projectData = loadProject(getSerializationTestDataPath("excludePatterns/excludePatterns.ipr"));
-    JpsModule module = assertOneElement(projectData.getProject().getModules());
-    JpsExcludePattern pattern = assertOneElement(module.getExcludePatterns());
+    JpsModule module = assertThat(projectData.getProject().getModules()).singleElement().actual();
+    JpsExcludePattern pattern = assertThat(module.getExcludePatterns()).singleElement().actual();
     assertEquals("*.class", pattern.getPattern());
-    assertEquals(assertOneElement(module.getContentRootsList().getUrls()), pattern.getBaseDirUrl());
+    assertEquals(assertThat(module.getContentRootsList().getUrls()).singleElement().actual(), pattern.getBaseDirUrl());
   }
 
   @Test
@@ -190,7 +189,7 @@ public class JpsProjectSerializationTest {
   @Test
   public void testInvalidDependencyScope() {
     JpsProjectData projectData = loadProject(getSerializationTestDataPath("invalidDependencyScope/invalidDependencyScope.ipr"));
-    JpsModule module = assertOneElement(projectData.getProject().getModules());
+    JpsModule module = assertThat(projectData.getProject().getModules()).singleElement().actual();
     List<JpsDependencyElement> dependencies = module.getDependenciesList().getDependencies();
     assertEquals(3, dependencies.size());
     JpsJavaDependencyExtension extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dependencies.get(2));
@@ -201,16 +200,16 @@ public class JpsProjectSerializationTest {
   @Test
   public void testDuplicatedModuleLibrary() {
     JpsProjectData projectData = loadProject(getSerializationTestDataPath("duplicatedModuleLibrary/duplicatedModuleLibrary.ipr"));
-    JpsModule module = assertOneElement(projectData.getProject().getModules());
+    JpsModule module = assertThat(projectData.getProject().getModules()).singleElement().actual();
     List<JpsDependencyElement> dependencies = module.getDependenciesList().getDependencies();
     assertEquals(4, dependencies.size());
-    JpsLibrary lib1 = assertInstanceOf(dependencies.get(2), JpsLibraryDependency.class).getLibrary();
+    JpsLibrary lib1 = assertInstanceOf(JpsLibraryDependency.class, dependencies.get(2)).getLibrary();
     assertNotNull(lib1);
-    UsefulTestCase.assertSameElements(lib1.getRootUrls(JpsOrderRootType.COMPILED), projectData.getUrl("data/lib1"));
-    JpsLibrary lib2 = assertInstanceOf(dependencies.get(3), JpsLibraryDependency.class).getLibrary();
+    assertThat(lib1.getRootUrls(JpsOrderRootType.COMPILED)).containsExactlyInAnyOrder(projectData.getUrl("data/lib1"));
+    JpsLibrary lib2 = assertInstanceOf(JpsLibraryDependency.class, dependencies.get(3)).getLibrary();
     assertNotSame(lib1, lib2);
     assertNotNull(lib2);
-    UsefulTestCase.assertSameElements(lib2.getRootUrls(JpsOrderRootType.COMPILED), projectData.getUrl("data/lib2"));
+    assertThat(lib2.getRootUrls(JpsOrderRootType.COMPILED)).containsExactlyInAnyOrder(projectData.getUrl("data/lib2"));
   }
 
   @Test
@@ -247,7 +246,7 @@ public class JpsProjectSerializationTest {
   @Test
   public void testResourceRoots() {
     JpsProjectData projectData = loadProject(getSerializationTestDataPath("resourceRoots/resourceRoots.ipr"));
-    JpsModule module = assertOneElement(projectData.getProject().getModules());
+    JpsModule module = assertThat(projectData.getProject().getModules()).singleElement().actual();
     List<JpsModuleSourceRoot> roots = module.getSourceRoots();
     assertSame(JavaSourceRootType.SOURCE, roots.get(0).getRootType());
     checkResourceRoot(roots.get(1), false, "");
@@ -259,11 +258,11 @@ public class JpsProjectSerializationTest {
   public void testMissingModuleSourcesOrderEntry() {
     JpsProjectData projectData =
       loadProject(getSerializationTestDataPath("missingModuleSourcesOrderEntry/missingModuleSourcesOrderEntry.ipr"));
-    JpsModule module = assertOneElement(projectData.getProject().getModules());
+    JpsModule module = assertThat(projectData.getProject().getModules()).singleElement().actual();
     List<JpsDependencyElement> dependencies = module.getDependenciesList().getDependencies();
     assertEquals(2, dependencies.size());
-    assertInstanceOf(dependencies.get(0), JpsSdkDependency.class);
-    assertInstanceOf(dependencies.get(1), JpsModuleSourceDependency.class);
+    assertInstanceOf(JpsSdkDependency.class, dependencies.get(0));
+    assertInstanceOf(JpsModuleSourceDependency.class, dependencies.get(1));
   }
 
   private static void checkResourceRoot(JpsModuleSourceRoot root, boolean forGenerated, String relativeOutput) {
@@ -277,7 +276,7 @@ public class JpsProjectSerializationTest {
   @Test
   public void testUnloadedModule() {
     JpsProjectData projectData = loadProject(getSerializationTestDataPath("unloadedModule"));
-    assertEquals("main", assertOneElement(projectData.getProject().getModules()).getName());
+    assertEquals("main", assertThat(projectData.getProject().getModules()).singleElement().actual().getName());
   }
 
   @Test
@@ -290,7 +289,7 @@ public class JpsProjectSerializationTest {
     try {
       JpsProjectData projectData = loadProject(getSerializationTestDataPath("missingContentUrlAttribute/missingContentUrlAttribute.ipr"));
       //the current implementation silently skips missing modules 
-      JpsModule module = assertOneElement(projectData.getProject().getModules());
+      JpsModule module = assertThat(projectData.getProject().getModules()).singleElement().actual();
       assertEquals("missingContentUrlAttribute", module.getName());
     }
     catch (CannotLoadJpsModelException e) {
@@ -311,10 +310,10 @@ public class JpsProjectSerializationTest {
   @Test
   public void testExcludesInLibraries() {
     JpsProjectData projectData = loadProject(getSerializationTestDataPath("excludesInLibraries"));
-    JpsLibrary library = assertOneElement(projectData.getProject().getLibraryCollection().getLibraries());
+    JpsLibrary library = assertThat(projectData.getProject().getLibraryCollection().getLibraries()).singleElement().actual();
     assertEquals("junit", library.getName());
     assertEquals(JpsPathUtil.getLibraryRootUrl(projectData.resolvePath("lib/junit.jar").toFile()), 
-                 assertOneElement(library.getRoots(JpsOrderRootType.COMPILED)).getUrl());
+                 assertThat(library.getRoots(JpsOrderRootType.COMPILED)).singleElement().actual().getUrl());
   }
 
   private @NotNull JpsProjectData loadProject(String projectPath) {

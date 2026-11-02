@@ -16,7 +16,6 @@
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.util.containers.ContainerUtil;
-import junit.framework.AssertionFailedError;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationProperties;
 import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurationType;
@@ -28,9 +27,10 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
 import static org.jetbrains.jps.model.serialization.JpsModelFromTestData.getSerializationTestDataPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class JpsRunConfigurationsSerializationTest {
   @Test
@@ -61,7 +61,7 @@ public class JpsRunConfigurationsSerializationTest {
     List<JpsRunConfiguration> all = project.getRunConfigurations();
     JpsRunConfiguration junit = findByName(all, "test");
     JpsRunConfigurationType type = ((JpsTypedRunConfiguration)junit).getType();
-    assertEquals("JUnit", assertInstanceOf(type, JpsUnknownRunConfigurationType.class).getTypeId());
+    assertEquals("JUnit", assertInstanceOf(JpsUnknownRunConfigurationType.class, type).getTypeId());
   }
 
   private static JpsRunConfiguration findByName(List<JpsRunConfiguration> configurations, String name) {
@@ -70,6 +70,6 @@ public class JpsRunConfigurationsSerializationTest {
         return configuration;
       }
     }
-    throw new AssertionFailedError("'" + name + "' run configuration not found");
+    return fail("'" + name + "' run configuration not found");
   }
 }

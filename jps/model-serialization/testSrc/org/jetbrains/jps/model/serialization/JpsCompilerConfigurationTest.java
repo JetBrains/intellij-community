@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.Map;
 
-import static com.intellij.testFramework.UsefulTestCase.assertSameElements;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.jetbrains.jps.model.serialization.JpsModelFromTestData.getSerializationTestDataPath;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -48,9 +48,9 @@ public class JpsCompilerConfigurationTest {
     assertEquals("gen", defaultProfile.getGeneratedSourcesDirectoryName(false));
 
     JpsCompilerExcludes excludes = configuration.getCompilerExcludes();
-    assertSameElements(excludes.getExcludedFiles(), new File(srcDir, "A.java"));
-    assertSameElements(excludes.getExcludedDirectories(), new File(srcDir, "nonrec"));
-    assertSameElements(excludes.getRecursivelyExcludedDirectories(), new File(srcDir, "rec"));
+    assertThat(excludes.getExcludedFiles()).containsExactlyInAnyOrder(new File(srcDir, "A.java"));
+    assertThat(excludes.getExcludedDirectories()).containsExactlyInAnyOrder(new File(srcDir, "nonrec"));
+    assertThat(excludes.getRecursivelyExcludedDirectories()).containsExactlyInAnyOrder(new File(srcDir, "rec"));
 
     assertFalse(isExcluded(excludes, "src/nonrec/x/Y.java", projectData));
     assertTrue(isExcluded(excludes, "src/nonrec/Y.java", projectData));
