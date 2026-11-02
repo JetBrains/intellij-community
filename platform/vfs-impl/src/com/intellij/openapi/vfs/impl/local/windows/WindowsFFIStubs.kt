@@ -239,58 +239,62 @@ internal class Windows(val arena: Arena) : Closeable {
       }
     }
 
+    // According to the docs (https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/ntifs/ns-ntifs-_file_full_dir_information) every entry is 8-byte aligned
+    // but in practice NextEntryOffset is sometimes only 4-byte aligned (RIDER-143624)
     object FILE_FULL_DIR_INFORMATION {
-      private val nextEntryOffsetHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("NextEntryOffset"))
-      private val fileNameLengthHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("FileNameLength"))
-      private val creationTimeHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("CreationTime"))
-      private val lastAccessTimeHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("LastAccessTime"))
-      private val lastWriteTimeHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("LastWriteTime"))
-      private val fileAttributesHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("FileAttributes"))
-      private val endOfFileHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("EndOfFile"))
+      private fun offsetOf(field: String): Long = WindowsStubs.FILE_FULL_DIR_INFORMATION.byteOffset(MemoryLayout.PathElement.groupElement(field))
+
+      private val nextEntryOffset = offsetOf("NextEntryOffset")
+      private val fileNameLength = offsetOf("FileNameLength")
+      private val creationTime = offsetOf("CreationTime")
+      private val lastAccessTime = offsetOf("LastAccessTime")
+      private val lastWriteTime = offsetOf("LastWriteTime")
+      private val fileAttributes = offsetOf("FileAttributes")
+      private val endOfFile = offsetOf("EndOfFile")
+      private val fileName = offsetOf("FileName")
 
       fun fetchNextInBuffer(current: MemorySegment, buffer: MemorySegment): MemorySegment {
         if (current == NULL) return NULL
         val offset = NextEntryOffset(current)
         if (offset == 0) return NULL
-        return buffer.asSlice((current.address() - buffer.address()) + offset.toLong(), WindowsStubs.FILE_FULL_DIR_INFORMATION)
+        return buffer.asSlice((current.address() - buffer.address()) + offset.toUInt().toLong())
       }
 
       fun fetchFirstInBuffer(buffer: MemorySegment): MemorySegment {
-        return buffer.asSlice(0, WindowsStubs.FILE_FULL_DIR_INFORMATION)
+        return buffer.asSlice(0)
       }
 
-      fun NextEntryOffset(buffer: MemorySegment): Int {
-        return nextEntryOffsetHandle.get(buffer, 0L) as Int
+      fun NextEntryOffset(record: MemorySegment): Int {
+        return record.get(ValueLayout.JAVA_INT_UNALIGNED, nextEntryOffset)
       }
 
-      fun FileNameLength(buffer: MemorySegment): Int {
-        return fileNameLengthHandle.get(buffer, 0L) as Int
+      fun FileNameLength(record: MemorySegment): Int {
+        return record.get(ValueLayout.JAVA_INT_UNALIGNED, fileNameLength)
       }
 
       // buffer should start with current
       fun fetchFileNameSegment(strLen: Int, current: MemorySegment, buffer: MemorySegment): MemorySegment {
-        val startOffset = WindowsStubs.FILE_FULL_DIR_INFORMATION.byteOffset(MemoryLayout.PathElement.groupElement("FileName"))
-        return buffer.asSlice(current.address() - buffer.address() + startOffset, strLen.toLong())
+        return buffer.asSlice(current.address() - buffer.address() + fileName, strLen.toLong())
       }
 
-      fun CreationTime(buffer: MemorySegment): Long {
-        return creationTimeHandle.get(buffer, 0L) as Long
+      fun CreationTime(record: MemorySegment): Long {
+        return record.get(ValueLayout.JAVA_LONG_UNALIGNED, creationTime)
       }
 
-      fun LastAccessTime(buffer: MemorySegment): Long {
-        return lastAccessTimeHandle.get(buffer, 0L) as Long
+      fun LastAccessTime(record: MemorySegment): Long {
+        return record.get(ValueLayout.JAVA_LONG_UNALIGNED, lastAccessTime)
       }
 
-      fun LastWriteTime(buffer: MemorySegment): Long {
-        return lastWriteTimeHandle.get(buffer, 0L) as Long
+      fun LastWriteTime(record: MemorySegment): Long {
+        return record.get(ValueLayout.JAVA_LONG_UNALIGNED, lastWriteTime)
       }
 
-      fun FileAttributes(buffer: MemorySegment): Int {
-        return fileAttributesHandle.get(buffer, 0L) as Int
+      fun FileAttributes(record: MemorySegment): Int {
+        return record.get(ValueLayout.JAVA_INT_UNALIGNED, fileAttributes)
       }
 
-      fun EndOfFile(buffer: MemorySegment): Long {
-        return endOfFileHandle.get(buffer, 0L) as Long
+      fun EndOfFile(record: MemorySegment): Long {
+        return record.get(ValueLayout.JAVA_LONG_UNALIGNED, endOfFile)
       }
     }
 
