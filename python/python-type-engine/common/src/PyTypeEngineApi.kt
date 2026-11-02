@@ -32,18 +32,6 @@ data class PyTypeEngineSelectionRequest(
 )
 
 @Serializable
-data class PyTypeEngineRequest(val projectId: ProjectId, val typeEngineId: PyTypeEngineId)
-
-@Serializable
-sealed interface PyTypeEngineOperationResultDto {
-  @Serializable
-  data class Success(val state: PyTypeEngineStateDto, val path: String?) : PyTypeEngineOperationResultDto
-
-  @Serializable
-  data class Failure(val message: String) : PyTypeEngineOperationResultDto
-}
-
-@Serializable
 enum class PyTypeEngineEvent { SETTINGS_OPENED, STATUS_WIDGET_CLICKED }
 
 @Serializable
@@ -55,8 +43,6 @@ interface PyTypeEngineApi : RemoteApi<Unit> {
   suspend fun observeState(projectId: ProjectId): Flow<PyTypeEngineStateDto>
 
   suspend fun select(request: PyTypeEngineSelectionRequest): PyTypeEngineStateDto
-
-  suspend fun install(request: PyTypeEngineRequest): PyTypeEngineOperationResultDto
 
   suspend fun logEvent(request: PyTypeEngineEventRequest)
 
