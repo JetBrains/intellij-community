@@ -351,7 +351,7 @@
 
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
-    <reference ref="Refactorings.QuickListPopupAction"/>
+      <reference ref="Refactorings.QuickListPopupAction"/>
       <reference ref="RenameElement"/>
       <reference ref="ChangeSignature"/>
       <separator/>

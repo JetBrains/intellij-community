@@ -405,6 +405,10 @@
     <group id="OpenProjectWindows" class="com.intellij.openapi.wm.impl.ProjectWindowActionGroup" overrides="true" keep-content="true"/>
     <group id="CopyReferencePopupGroup" class="com.intellij.ide.actions.CopyReferencePopup" overrides="true" keep-content="true"/>
     <group id="IntroduceActionsGroup" class="com.intellij.ide.actions.PopupInMainMenuActionGroup" overrides="true" keep-content="true"/>
+    <group id="RefactoringMenu" class="com.intellij.refactoring.actions.RefactoringMenuGroup" overrides="true" keep-content="true"/>
+    <group id="CodeMenuRefactoringGroup" class="com.intellij.refactoring.actions.CodeMenuRefactoringGroup" searchable="false">
+      <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="Generate"/>
+    </group>
     <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
     <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
     <action id="NewFile" class="com.intellij.ide.actions.CreateFileAction" icon="AllIcons.FileTypes.Text">
