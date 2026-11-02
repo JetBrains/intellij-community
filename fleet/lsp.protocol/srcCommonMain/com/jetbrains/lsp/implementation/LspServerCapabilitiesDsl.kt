@@ -470,3 +470,22 @@ fun LspServerCapabilitiesBuilder.willRenameFiles(
 }, register = {
     request(Workspace.WillRenameFiles, handler)
 })
+
+/**
+ * `workspace.fileOperations.didRename`. Merges into [ServerWorkspaceCapabilities] rather than replacing it,
+ * so it composes with the other `workspace` capabilities.
+ */
+fun LspServerCapabilitiesBuilder.didRenameFiles(
+    filters: List<FileOperationFilter>,
+    handler: suspend context(LspHandlerContext) CoroutineScope.(RenameFilesParams) -> Unit,
+): Unit = capability(update = {
+    val workspace = workspace ?: ServerWorkspaceCapabilities()
+    copy(
+        workspace = workspace.copy(
+            fileOperations = (workspace.fileOperations ?: FileOperations())
+                .copy(didRename = FileOperationRegistrationOptions(filters = filters)),
+        )
+    )
+}, register = {
+    notification(Workspace.DidRenameFiles, handler)
+})
