@@ -324,13 +324,19 @@ public class InspectionProfileImpl extends NewInspectionProfile {
         continue;
       }
 
+      ToolsImpl toolList = myTools.get(toolName);
+      LOG.assertTrue(toolList != null);
+      var unchangedSettings = toolList.getUnchangedSettings();
+      if (unchangedSettings != null) {
+        element.addContent(unchangedSettings.clone());
+        continue;
+      }
+
       if (!myLockedProfile && !changedToolNames.contains(toolName)) {
         markSettingsMerged(toolName, element);
         continue;
       }
 
-      ToolsImpl toolList = myTools.get(toolName);
-      LOG.assertTrue(toolList != null);
       Element inspectionElement = new Element(INSPECTION_TOOL_TAG);
       inspectionElement.setAttribute(CLASS_TAG, toolName);
       try {
@@ -655,13 +661,14 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     boolean enabled = myBaseProfile != null && myBaseProfile.getToolsOrNull(shortName, project) != null
                       ? myBaseProfile.isToolEnabled(key)
                       : toolWrapper.isEnabledByDefault();
-    ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled);
+    ToolsImpl toolsList = new ToolsImpl(toolWrapper, level, !myLockedProfile && enabled, enabled, null);
     Element element = myUninitializedSettings.remove(shortName);
     try {
       if (element != null) {
         element = element.clone();
         getPathMacroManager().expandPaths(element);
         toolsList.readExternal(element, myProfileManager, dependencies);
+        toolsList.rememberOriginalSettings(element);
       }
       else if (!myUninitializedSettings.containsKey(InspectionElementsMergerBase.getMergedMarkerName(shortName))) {
         InspectionElementsMergerBase merger = getMerger(shortName);
@@ -857,6 +864,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       throw new IllegalStateException();
     }
     state.setTool(copyToolSettings(baseDefaultWrapper));
+    myTools.get(toolId).resetOriginalSettings();
     mySchemeState = SchemeState.POSSIBLY_CHANGED;
   }
 

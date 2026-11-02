@@ -42,25 +42,7 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl)
   private fun copyToolsConfigurations(profile: InspectionProfileImpl, project: Project?) {
     try {
       for (toolList in profile.myTools.values) {
-        val tools = myTools[toolList.shortName]!!
-        val defaultState = toolList.defaultState
-        tools.setDefaultState(copyToolSettings(defaultState.tool), defaultState.isEnabled, defaultState.level, defaultState.editorAttributesExternalName)
-        tools.removeAllScopes()
-        val nonDefaultToolStates = toolList.nonDefaultTools
-        if (nonDefaultToolStates != null) {
-          for (state in nonDefaultToolStates) {
-            val toolWrapper = copyToolSettings(state.tool)
-            val scope = state.getScope(project)
-            val tool = if (scope == null) {
-              tools.addTool(state.scopeName, toolWrapper, state.isEnabled, state.level)
-            }
-            else {
-              tools.addTool(scope, toolWrapper, state.isEnabled, state.level)
-            }
-            state.editorAttributesKey?.externalName?.let { tool.editorAttributesExternalName = it }
-          }
-        }
-        tools.isEnabled = toolList.isEnabled
+        myTools[toolList.shortName] = toolList.copy(project)
       }
     }
     catch (e: WriteExternalException) {

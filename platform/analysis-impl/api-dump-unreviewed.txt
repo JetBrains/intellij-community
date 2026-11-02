@@ -2115,7 +2115,6 @@ f:com.intellij.codeInspection.ex.ToolsImpl
 - removeScope(java.lang.String):V
 - setDefaultState(com.intellij.codeInspection.ex.InspectionToolWrapper,Z,com.intellij.codeHighlighting.HighlightDisplayLevel):V
 - setDefaultState(com.intellij.codeInspection.ex.InspectionToolWrapper,Z,com.intellij.codeHighlighting.HighlightDisplayLevel,java.lang.String):V
-- setEditorAttributesKey(java.lang.String,java.lang.String):V
 - setLevel(com.intellij.codeHighlighting.HighlightDisplayLevel):V
 - setLevel(com.intellij.codeHighlighting.HighlightDisplayLevel,com.intellij.psi.PsiElement):V
 - setLevel(com.intellij.codeHighlighting.HighlightDisplayLevel,java.lang.String,com.intellij.openapi.project.Project):V

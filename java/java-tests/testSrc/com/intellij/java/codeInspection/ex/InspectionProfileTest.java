@@ -1148,6 +1148,137 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     }
   }
 
+  public void testUnchangedDefaultSettingsArePreserved() throws Exception {
+    checkUnchangedDefaultSettingsArePreserved(false, false);
+  }
+
+  public void testInitializedDefaultSettingsArePreserved() throws Exception {
+    checkUnchangedDefaultSettingsArePreserved(true, false);
+  }
+
+  public void testInitializedDefaultScopeSettingsArePreserved() throws Exception {
+    checkUnchangedDefaultSettingsArePreserved(true, true);
+  }
+
+  private void checkUnchangedDefaultSettingsArePreserved(boolean initialize, boolean scoped) throws Exception {
+    var shortName = "ijpl259054DefaultSettings";
+    var stateName = "ijpl259054DefaultState";
+    var otherName = "ijpl259054OtherSettings";
+    var supplier = createLazySettingsToolSupplier(shortName, stateName, otherName);
+    var profile = createProfile(supplier);
+    var settings = JDOMUtil.load("""
+      <profile version="1.0">
+        <option name="myName" value="Foo" />
+        <inspection_tool class="ijpl259054DefaultSettings" enabled="true" level="ERROR" enabled_by_default="true">
+          <option name="option" value="true" />
+        </inspection_tool>
+        <inspection_tool class="ijpl259054DefaultState" enabled="true" level="ERROR" enabled_by_default="true" />
+        <inspection_tool class="ijpl259054MissingInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+      </profile>""");
+    var original = settings.getChild("inspection_tool");
+    if (scoped) {
+      var scope = new Element("scope").setAttribute("name", "Production")
+        .setAttribute("level", "ERROR").setAttribute("enabled", "true");
+      scope.addContent(original.getChild("option").detach());
+      original.addContent(scope);
+    }
+    try {
+      profile.readExternal(settings);
+      profile.initInspectionTools(getProject());
+      assertEquals(0, countInitializedTools(profile));
+      if (initialize) {
+        profile.getTools(shortName, getProject()).getInspectionTool(null).getTool();
+      }
+      profile.modifyProfile(model -> model.setToolEnabled(otherName, false));
+      var expected = settings.clone();
+      expected.addContent(new Element("inspection_tool").setAttribute("class", otherName).setAttribute("enabled", "false")
+                            .setAttribute("level", "ERROR").setAttribute("enabled_by_default", "false"));
+      assertThat(profile.writeScheme()).isEqualTo(expected);
+      if (!initialize) {
+        assertEquals(0, countInitializedTools(profile));
+      }
+    }
+    finally {
+      HighlightDisplayKey.unregister(shortName);
+      HighlightDisplayKey.unregister(stateName);
+      HighlightDisplayKey.unregister(otherName);
+    }
+  }
+
+  public void testChangedSettingsCanReturnToDefaults() throws Exception {
+    var shortName = "ijpl259054ChangedSettings";
+    var profile = createProfile(createLazySettingsToolSupplier(shortName));
+    try {
+      profile.readExternal(JDOMUtil.load("""
+        <profile version="1.0">
+          <option name="myName" value="Foo" />
+          <inspection_tool class="ijpl259054ChangedSettings" enabled="false" level="ERROR" enabled_by_default="false">
+            <option name="option" value="false" />
+          </inspection_tool>
+        </profile>"""));
+      profile.modifyProfile(model -> {
+        model.setToolEnabled(shortName, true);
+        ((LazySettingsTool)model.getTools(shortName, getProject()).getTool().getTool()).option = true;
+      });
+      assertThat(profile.writeScheme()).isEqualTo(JDOMUtil.load("""
+        <profile version="1.0">
+          <option name="myName" value="Foo" />
+        </profile>"""));
+    }
+    finally {
+      HighlightDisplayKey.unregister(shortName);
+    }
+  }
+
+  public void testResetToBaseRemovesExplicitDefaults() throws Exception {
+    var shortName = "ijpl259054ResetSettings";
+    var profile = createProfile(createLazySettingsToolSupplier(shortName));
+    try {
+      profile.readExternal(JDOMUtil.load("""
+        <profile version="1.0">
+          <option name="myName" value="Foo" />
+          <inspection_tool class="ijpl259054ResetSettings" enabled="true" level="ERROR" enabled_by_default="true" />
+        </profile>"""));
+      profile.modifyProfile(model -> model.resetToBase(getProject()));
+      assertThat(profile.writeScheme()).isEqualTo(JDOMUtil.load("""
+        <profile version="1.0">
+          <option name="myName" value="Foo" />
+        </profile>"""));
+    }
+    finally {
+      HighlightDisplayKey.unregister(shortName);
+    }
+  }
+
+  public void testChangedScopeNameIsSaved() throws Exception {
+    var shortName = "ijpl259054ScopeSettings";
+    var profile = createProfile(createLazySettingsToolSupplier(shortName));
+    var settings = JDOMUtil.load("""
+      <profile version="1.0">
+        <option name="myName" value="Foo" />
+        <inspection_tool class="ijpl259054ScopeSettings" enabled="true" level="ERROR" enabled_by_default="true">
+          <scope name="Production" level="ERROR" enabled="true">
+            <option name="option" value="false" />
+          </scope>
+        </inspection_tool>
+      </profile>""");
+    try {
+      profile.readExternal(settings);
+      profile.modifyProfile(model -> {
+        var tools = model.getTools(shortName, getProject());
+        var state = tools.getNonDefaultTools().getFirst();
+        tools.removeAllScopes();
+        tools.addTool("Other scope", state.getTool(), state.isEnabled(), state.getLevel());
+      });
+      var expected = settings.clone();
+      expected.getChild("inspection_tool").getChild("scope").setAttribute("name", "Other scope");
+      assertThat(profile.writeScheme()).isEqualTo(expected);
+    }
+    finally {
+      HighlightDisplayKey.unregister(shortName);
+    }
+  }
+
   public void testScopeSettingsAreReadLazily() throws Exception {
     String shortName = "ijpl257488LazyScopeSettings";
     InspectionToolsSupplier toolSupplier = createLazySettingsToolSupplier(shortName);
@@ -1232,17 +1363,19 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return foo.getAllTools().stream().map(ScopeToolState::getTool).filter(InspectionToolWrapper::isInitialized).toList();
   }
 
-  private InspectionToolsSupplier createLazySettingsToolSupplier(String shortName) {
+  private InspectionToolsSupplier createLazySettingsToolSupplier(String... shortNames) {
     InspectionToolsSupplier supplier = new InspectionToolsSupplier() {
       @Override
       public @NotNull List<InspectionToolWrapper<?, ?>> createTools() {
-        LocalInspectionEP ep = new LocalInspectionEP();
-        ep.shortName = ep.displayName = ep.groupDisplayName = shortName;
-        ep.level = "ERROR";
-        ep.enabledByDefault = true;
-        ep.implementationClass = LazySettingsTool.class.getName();
-        ep.setPluginDescriptor(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
-        return List.of(new LocalInspectionToolWrapper(ep));
+        return ContainerUtil.map(shortNames, shortName -> {
+          var ep = new LocalInspectionEP();
+          ep.shortName = ep.displayName = ep.groupDisplayName = shortName;
+          ep.level = "ERROR";
+          ep.enabledByDefault = true;
+          ep.implementationClass = LazySettingsTool.class.getName();
+          ep.setPluginDescriptor(PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID));
+          return new LocalInspectionToolWrapper(ep);
+        });
       }
     };
     Disposer.register(getTestRootDisposable(), supplier);

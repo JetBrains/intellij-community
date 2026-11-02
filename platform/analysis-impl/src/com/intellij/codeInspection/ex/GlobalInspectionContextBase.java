@@ -422,7 +422,8 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     }
     Set<Tools> set = CollectionFactory.createCustomHashingStrategySet(TOOLS_HASHING_STRATEGY);
     set.addAll(tools);
-    set.addAll(ContainerUtil.map(dependentTools, toolWrapper -> new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true)));
+    set.addAll(ContainerUtil.map(dependentTools,
+                                toolWrapper -> new ToolsImpl(toolWrapper, toolWrapper.getDefaultLevel(), true, true, null)));
     return new ArrayList<>(set);
   }
 
@@ -454,7 +455,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
           // add to existing inspections to run
           InspectionProfileEntry batchTool = batchInspection.getTool();
           ScopeToolState defaultState = tool.getDefaultState();
-          ToolsImpl newTool = new ToolsImpl(batchInspection, defaultState.getLevel(), true, defaultState.isEnabled());
+          ToolsImpl newTool = new ToolsImpl(batchInspection, defaultState.getLevel(), true, defaultState.isEnabled(), null);
           for (ScopeToolState state : tool.getTools()) {
             NamedScope scope = state.getScope(getProject());
             if (scope != null) {

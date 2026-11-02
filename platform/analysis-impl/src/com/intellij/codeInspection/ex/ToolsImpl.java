@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.profile.ProfileEx;
@@ -50,15 +51,20 @@ public final class ToolsImpl implements Tools {
   private final ScopeToolState myDefaultState;
   private List<ScopeToolState> myTools;
   private boolean myEnabled;
+  private @Nullable OriginalSettings myOriginalSettings;
+
+  record OriginalSettings(@NotNull Element element, @NotNull ToolsImpl tools) { }
 
   ToolsImpl(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
             @NotNull HighlightDisplayLevel level,
             boolean enabled,
-            boolean enabledByDefault) {
+            boolean enabledByDefault,
+            @Nullable OriginalSettings originalSettings) {
     myShortName = toolWrapper.getShortName();
     myDefaultState = new ScopeToolState(CustomScopesProviderEx.getAllScope(), toolWrapper, enabledByDefault, level);
     myTools = null;
     myEnabled = enabled;
+    myOriginalSettings = originalSettings;
   }
 
   public @NotNull ScopeToolState addTool(@NotNull NamedScope scope,
@@ -258,6 +264,26 @@ public final class ToolsImpl implements Tools {
     }
 
     myEnabled = isEnabled;
+  }
+
+  void rememberOriginalSettings(@NotNull Element toolElement) {
+    assert myOriginalSettings == null;
+    myOriginalSettings = new OriginalSettings(JDOMUtil.internElement(toolElement), copy(null));
+  }
+
+  @Nullable Element getUnchangedSettings() {
+    var original = myOriginalSettings;
+    if (original == null || !equals(original.tools())) return null;
+    var states = getTools();
+    var originalStates = original.tools().getTools();
+    for (int i = 0; i < states.size(); i++) {
+      if (!states.get(i).getScopeName().equals(originalStates.get(i).getScopeName())) return null;
+    }
+    return original.element();
+  }
+
+  void resetOriginalSettings() {
+    myOriginalSettings = null;
   }
 
   private static @NotNull Element extractSettings(@NotNull Element element,
@@ -560,7 +586,7 @@ public final class ToolsImpl implements Tools {
   }
 
 
-  public void setEditorAttributesKey(@Nullable String externalName, @Nullable String scopeName) {
+  void setEditorAttributesKey(@Nullable String externalName, @Nullable String scopeName) {
     if (scopeName == null) {
       myDefaultState.setEditorAttributesExternalName(externalName);
     }
@@ -665,7 +691,7 @@ public final class ToolsImpl implements Tools {
   @ApiStatus.Internal
   public @NotNull ToolsImpl copy(@Nullable Project project) {
     InspectionToolWrapper<?, ?> defaultTool = InspectionProfileImpl.copyToolSettings(myDefaultState.getTool());
-    ToolsImpl copy = new ToolsImpl(defaultTool, myDefaultState.getLevel(), myEnabled, myDefaultState.isEnabled());
+    ToolsImpl copy = new ToolsImpl(defaultTool, myDefaultState.getLevel(), myEnabled, myDefaultState.isEnabled(), myOriginalSettings);
     copy.myDefaultState.setEditorAttributesExternalName(myDefaultState.getEditorAttributesExternalName());
     if (myTools != null) {
       for (ScopeToolState state : myTools) {
