@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiParenthesizedExpression
+import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiTypeCastExpression
 import com.intellij.psi.PsiTypeElement
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -36,6 +37,18 @@ internal class KotlinEvaluationExpressionConverter : DebuggerEvaluationExpressio
     is PsiParenthesizedExpression -> {
       val inner = element.expression ?: return "()"
       "(${convertToKotlin(inner)})"
+    }
+    is PsiReferenceExpression -> {
+      // A plugin may rename the field (atomicfu: `_state` to `_state$volatile`); prefill the source name.
+      val name = element.referenceName
+      val displayName = name?.let { KotlinMangledMemberContributor.getDisplayName(it) }
+      val qualifier = element.qualifierExpression
+      if (displayName != null && qualifier != null) {
+        "${convertToKotlin(qualifier)}.$displayName"
+      } else {
+        val children = element.children
+        if (children.isEmpty()) element.text else children.joinToString("") { convertToKotlin(it) }
+      }
     }
     else -> {
       val children = element.children
