@@ -28,11 +28,13 @@ import com.intellij.python.pytools.common.PyToolValidationDto
 import com.intellij.python.pytools.common.PyToolsRequest
 import com.intellij.python.pytools.backend.statistics.PyToolUsagesCollector
 import com.jetbrains.python.Result
+import com.jetbrains.python.TraceContext
 import com.jetbrains.python.errorProcessing.PyResult
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 internal class PyToolApiProvider : RemoteApiProvider {
@@ -127,8 +129,10 @@ private object PyToolApiImpl : PyToolApi {
       // that its binary just appeared. A server that it runs, and anything that it caches from the
       // binary, stay out of date until it is told. It installs machine-wide, so every project here
       // is affected.
-      tool.performToolInstallation(project.getEelDescriptor().toEelApi())
-        .also { if (it is Result.Success) tool.notifyExecutableChanged(project.getEelDescriptor()) }
+      withContext(TraceContext(PyToolsBundle.message("python.packaging.installing.package", tool.packageName.name))) {
+        tool.performToolInstallation(project.getEelDescriptor().toEelApi())
+          .also { if (it is Result.Success) tool.notifyExecutableChanged(project.getEelDescriptor()) }
+      }
     }
 
   override suspend fun upgrade(request: PyToolRequest): PyToolOperationResultDto =
@@ -147,8 +151,11 @@ private object PyToolApiImpl : PyToolApi {
     PyToolSdkBackendService.getInstance().getDependencyGroups(request.tool.projectId.findProject(), request)
 
   override suspend fun installIntoSdk(request: PyToolSdkInstallRequest): PyToolSdkOperationResultDto {
-    val project = request.target.tool.projectId.findProject()
-    return PyToolSdkBackendService.getInstance().install(project, requireTool(request.target.tool), request)
+    val tool = requireTool(request.target.tool)
+    return withContext(TraceContext(PyToolsBundle.message("python.packaging.installing.package", tool.packageName.name))) {
+      val project = request.target.tool.projectId.findProject()
+      PyToolSdkBackendService.getInstance().install(project, requireTool(request.target.tool), request)
+    }
   }
 
   override suspend fun logEvent(request: PyToolLogEventRequest) {
