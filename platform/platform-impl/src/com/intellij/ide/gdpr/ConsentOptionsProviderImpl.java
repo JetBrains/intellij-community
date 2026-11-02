@@ -66,9 +66,7 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
     if (settings == null) {
       return false; // AIA plugin is required for TRACE data collection
     }
-    boolean isAllowed = isTraceDataCollectionAllowedByMetadata(metadata);
-    boolean isDisabled = settings.isForciblyDisabled();
-    return isAllowed && !isDisabled;
+    return isTraceDataCollectionAllowedByMetadata(metadata) && !settings.isForciblyDisabled();
   }
 
   private static boolean isTraceDataCollectionAllowedByMetadata(@NotNull String metadata) {
