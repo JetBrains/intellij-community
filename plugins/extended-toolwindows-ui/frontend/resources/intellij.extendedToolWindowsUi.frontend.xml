@@ -1,6 +1,7 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.frontend"/>
@@ -11,6 +12,13 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+
+  <actions resource-bundle="messages.ExtendedToolWindowsUiBundle">
+    <action id="ExtendedToolWindowsUi.ShowToolWindowNumbers"
+            class="com.intellij.extendedToolWindowsUi.frontend.ToolWindowShowNumbersAction">
+      <add-to-group group-id="ToolWindowStripeButtonPopup" anchor="last"/>
+    </action>
+  </actions>
 
   <extensions defaultExtensionNs="com.intellij">
     <toolWindowStripeExtension implementation="com.intellij.extendedToolWindowsUi.frontend.ToolWindowStripeExtensionImpl"/>
