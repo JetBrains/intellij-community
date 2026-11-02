@@ -37,7 +37,6 @@ import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
@@ -81,7 +80,6 @@ import com.intellij.ui.content.tabs.TabbedContentAction
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SingleAlarm
-import com.intellij.util.StartupUiGate
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -766,15 +764,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
 
   internal fun scheduleContentInitializationIfNeeded() {
     // todo use lazy loading (e.g. JBLoadingPanel)
-    if (StartupUiGate.isReady) {
-      createContentIfNeeded()
-    }
-    else {
-      toolWindowManager.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        StartupUiGate.awaitEditorsShown()
-        createContentIfNeeded()
-      }
-    }
+    createContentIfNeeded()
   }
 
   @Deprecated("Do not use. Tool window content will be initialized automatically.", level = DeprecationLevel.ERROR)
