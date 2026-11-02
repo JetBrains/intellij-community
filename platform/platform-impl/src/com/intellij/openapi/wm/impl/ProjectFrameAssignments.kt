@@ -58,7 +58,7 @@ class FrameGuestLeft internal constructor(
  * `WindowManagerImpl` and `TestWindowManager` each hold one instance, so a unit test sees the lifecycle of the IDE.
  *
  * A write takes the lock and swaps the snapshots. A read uses the snapshots without the lock, on any thread.
- * Each change is published through [publisher] after the lock is released, on the calling thread.
+ * A change of the active project is published through [publisher] after the lock is released, on the calling thread.
  */
 @Internal
 class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener) {
@@ -155,7 +155,6 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
       byOwner = byOwner + (frameOwner to current.copy(guests = current.guests + guest, activation = current.activation + guest))
       ownerOfGuest = ownerOfGuest + (guest to frameOwner)
     }
-    publisher().onFrameGuestsChanged(frameOwner)
   }
 
   /**
@@ -183,9 +182,7 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
       val activeChange = if (active === current.active) null else ActiveProjectChange(frameOwner, current.active, active)
       left = FrameGuestLeft(frameOwner, activeChange)
     }
-    val listener = publisher()
-    listener.onFrameGuestsChanged(left.frameOwner)
-    left.activeChange?.let { listener.onActiveProjectChanged(it.frameOwner, it.active) }
+    left.activeChange?.let { publisher().onActiveProjectChanged(it.frameOwner, it.active) }
     return left
   }
 

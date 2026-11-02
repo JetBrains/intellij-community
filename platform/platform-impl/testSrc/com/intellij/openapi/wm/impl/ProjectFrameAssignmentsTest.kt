@@ -12,24 +12,18 @@ import org.junit.jupiter.api.Test
 
 /** The record of the frame owners, the frame guests and the active projects, without a frame. */
 internal class ProjectFrameAssignmentsTest {
-  private sealed interface Event {
-    data class GuestsChanged(val frameOwner: Project) : Event
-    data class ActiveChanged(val frameOwner: Project, val active: Project) : Event
-  }
+  /** One `onActiveProjectChanged` event of the publisher. */
+  private data class ActiveChanged(val frameOwner: Project, val active: Project)
 
   private val disposable = Disposer.newDisposable()
-  private val events = ArrayList<Event>()
+  private val events = ArrayList<ActiveChanged>()
   private val assignments = ProjectFrameAssignments {
     object : WindowManagerListener {
       override fun onFramesChanged() {
       }
 
-      override fun onFrameGuestsChanged(frameOwner: Project) {
-        events.add(Event.GuestsChanged(frameOwner))
-      }
-
       override fun onActiveProjectChanged(frameOwner: Project, activeProject: Project) {
-        events.add(Event.ActiveChanged(frameOwner, activeProject))
+        events.add(ActiveChanged(frameOwner, activeProject))
       }
     }
   }
@@ -61,7 +55,7 @@ internal class ProjectFrameAssignmentsTest {
     assertThat(assignments.frameHelperOf(first)).isNull()
     assertThat(assignments.activeProjectOf(first)).isSameAs(owner)
     assertThat(assignments.assignmentOf(owner)!!.frameHelper).isNull()
-    assertThat(events).containsExactly(Event.GuestsChanged(owner))
+    assertThat(events).describedAs("a join changes no active project").isEmpty()
   }
 
   @Test
@@ -70,7 +64,7 @@ internal class ProjectFrameAssignmentsTest {
     assignments.addGuest(owner, first)
 
     assertThat(assignments.guestsOf(owner)).containsExactly(first)
-    assertThat(events).containsExactly(Event.GuestsChanged(owner))
+    assertThat(events).describedAs("a join changes no active project").isEmpty()
   }
 
   @Test
@@ -98,12 +92,10 @@ internal class ProjectFrameAssignmentsTest {
     assertThat(assignments.assignmentOf(owner)).describedAs("a record without a frame goes with its last guest").isNull()
 
     assertThat(events).containsExactly(
-      Event.ActiveChanged(owner, second),
-      Event.ActiveChanged(owner, first),
-      Event.GuestsChanged(owner),
-      Event.ActiveChanged(owner, second),
-      Event.GuestsChanged(owner),
-      Event.ActiveChanged(owner, owner),
+      ActiveChanged(owner, second),
+      ActiveChanged(owner, first),
+      ActiveChanged(owner, second),
+      ActiveChanged(owner, owner),
     )
   }
 

@@ -13,10 +13,6 @@ interface WindowManagerListener {
 
   fun onFramesChanged()
 
-  /** The frame of [frameOwner] got a frame guest, or lost one. Called on the thread of the change. */
-  fun onFrameGuestsChanged(frameOwner: Project) {
-  }
-
   /** The frame of [frameOwner] gives [activeProject] to an action from now on. Called on the thread of the change. */
   fun onActiveProjectChanged(frameOwner: Project, activeProject: Project) {
   }
