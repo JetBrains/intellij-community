@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.community.execService.DownloadConfig
@@ -24,6 +26,7 @@ import com.intellij.python.requirements.parser.PyRequirementParser
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
+import com.jetbrains.python.sdk.add.v2.EelOrTarget
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
@@ -40,6 +43,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
+
+private val LOG = fileLogger()
 
 /**
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
@@ -263,12 +268,34 @@ internal suspend fun setupPoetry(
   ).mapSuccess { it.path }
 }
 
-internal suspend fun <P : PathHolder> detectPoetryEnvs(
-  searchPath: Path,
+/**
+ * The Python binaries of the poetry environments for the project in [projectPath], on the machine of [fileSystem].
+ *
+ * Poetry runs `env list` in [projectPath]. On a target, poetry also runs `env list` without a working directory, so it
+ * starts in the default folder of the target. That is the `WORKDIR` of a Docker image, or the home folder on SSH.
+ * The result is a failure only when every `env list` call fails. Without [poetryExecutable], the poetry of [fileSystem] runs.
+ */
+@Internal
+suspend fun <P : PathHolder> detectPoetryEnvironments(
+  projectPath: Path,
   fileSystem: FileSystem<P>,
-  poetryExecutable: P? = null,
-): List<P> = getPoetryEnvs(searchPath, fileSystem, poetryExecutable).mapNotNull { homePath ->
-  fileSystem.parsePath(homePath).successOrNull?.let { fileSystem.resolvePythonBinary(it) }
+  poetryExecutable: P?,
+): PyResult<List<P>> {
+  val projectEnvRoots = getPoetryEnvs(projectPath, fileSystem, poetryExecutable)
+  val defaultFolderEnvRoots = when (fileSystem.eelOrTarget) {
+    is EelOrTarget.IsEel -> null
+    is EelOrTarget.IsTarget -> getPoetryEnvs(projectPath = null, fileSystem = fileSystem, poetryExecutable = poetryExecutable, inProjectEnv = false)
+      .onFailure { LOG.debug { "poetry env list failed in the default folder of the target: $it" } }
+      .successOrNull
+  }
+  projectEnvRoots.errorOrNull?.let { error ->
+    if (defaultFolderEnvRoots == null) return PyResult.failure(error)
+    LOG.info("poetry env list failed in $projectPath: $error")
+  }
+  val envRoots = (projectEnvRoots.successOrNull.orEmpty() + defaultFolderEnvRoots.orEmpty()).distinct()
+  return PyResult.success(envRoots.mapNotNull { envRoot ->
+    fileSystem.parsePath(envRoot).successOrNull?.let { fileSystem.resolvePythonBinary(it) }
+  })
 }
 
 private suspend fun getPoetryVersion(sdk: Sdk): String? =
@@ -453,17 +480,23 @@ internal suspend fun configurePoetryEnvironment(modulePath: Path, vararg args: S
   configurePoetryEnvironment(modulePath, modulePath.toEelFileSystem(), args = args)
 }
 
+/**
+ * The environment roots that `poetry env list` gives in [projectPath]. With a null [projectPath], poetry runs without
+ * a working directory.
+ */
 private suspend fun <P : PathHolder> getPoetryEnvs(
-  projectPath: Path,
+  projectPath: Path?,
   fileSystem: FileSystem<P>,
   poetryExecutable: P?,
-): List<String> {
-  val executionResult = runPoetry(
+  inProjectEnv: Boolean? = null,
+): PyResult<List<String>> {
+  val output = runPoetry(
     fileSystem = fileSystem,
     projectPath = projectPath,
     "env", "list", "--full-path",
     poetryExecutable = poetryExecutable,
-    uploadConfig = projectPath.createPoetryMetadataUploadConfig(fileSystem),
-  )
-  return executionResult.getOrNull()?.lineSequence()?.map { it.split(" ")[0] }?.filterNot { it.isEmpty() }?.toList() ?: emptyList()
+    inProjectEnv = inProjectEnv,
+    uploadConfig = projectPath?.createPoetryMetadataUploadConfig(fileSystem),
+  ).getOr { return it }
+  return PyResult.success(output.lineSequence().map { it.split(" ")[0] }.filterNot { it.isEmpty() }.toList())
 }
