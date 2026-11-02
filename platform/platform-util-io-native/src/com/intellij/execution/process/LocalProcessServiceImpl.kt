@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.SystemProperties
@@ -60,7 +61,14 @@ class LocalProcessServiceImpl : LocalProcessService {
       builder.setWindowsSuspendedProcessCallback(options.winSuspendedProcessCallback!!)
     }
 
-    val process = builder.start()
+    val process = try {
+      builder.start()
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      addJnaLoadFailureDiagnostic(e)
+      throw e
+    }
 
     if (options.winSuspendedProcessCallback != null && process !is WinConPtyProcess) {
       logger<LocalProcessServiceImpl>().error("Windows suspended process callback is only applicable for a WinConPtyProcess instance")
