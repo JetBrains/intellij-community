@@ -1,0 +1,8 @@
+LineBreakpoint created at atomicfuVolatileField.kt:16
+Run Java
+Connected to the target VM
+atomicfuVolatileField.kt:16
+Compile bytecode for (this as kotlinx.coroutines.JobSupport)._state != null
+Disconnected from the target VM
+
+Process finished with exit code 0

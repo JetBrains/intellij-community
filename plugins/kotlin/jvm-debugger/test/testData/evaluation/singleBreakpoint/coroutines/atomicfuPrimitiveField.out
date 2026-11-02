@@ -1,0 +1,8 @@
+LineBreakpoint created at atomicfuPrimitiveField.kt:30
+Run Java
+Connected to the target VM
+atomicfuPrimitiveField.kt:30
+Compile bytecode for (saved as kotlinx.coroutines.CancellableContinuationImpl<*>)._decisionAndIndex
+Disconnected from the target VM
+
+Process finished with exit code 0

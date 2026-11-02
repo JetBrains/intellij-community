@@ -1,0 +1,8 @@
+LineBreakpoint created at atomicfuIsCheck.kt:17
+Run Java
+Connected to the target VM
+atomicfuIsCheck.kt:17
+Compile bytecode for value is kotlinx.atomicfu.AtomicInt
+Disconnected from the target VM
+
+Process finished with exit code 0

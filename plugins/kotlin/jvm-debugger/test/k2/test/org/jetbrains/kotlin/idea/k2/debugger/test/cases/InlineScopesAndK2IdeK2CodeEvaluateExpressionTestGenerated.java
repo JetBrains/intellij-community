@@ -559,6 +559,31 @@ public abstract class InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated 
                     runTest("../testData/evaluation/singleBreakpoint/coroutines/anyUpdateVariable.kt");
                 }
 
+                @TestMetadata("atomicfuIsCheck.kt")
+                public void testAtomicfuIsCheck() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/atomicfuIsCheck.kt");
+                }
+
+                @TestMetadata("atomicfuPrimitiveField.kt")
+                public void testAtomicfuPrimitiveField() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/atomicfuPrimitiveField.kt");
+                }
+
+                @TestMetadata("atomicfuPrimitiveValueChain.kt")
+                public void testAtomicfuPrimitiveValueChain() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/atomicfuPrimitiveValueChain.kt");
+                }
+
+                @TestMetadata("atomicfuValueChain.kt")
+                public void testAtomicfuValueChain() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/atomicfuValueChain.kt");
+                }
+
+                @TestMetadata("atomicfuVolatileField.kt")
+                public void testAtomicfuVolatileField() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/atomicfuVolatileField.kt");
+                }
+
                 @TestMetadata("capturedReceiverName.kt")
                 public void testCapturedReceiverName() throws Exception {
                     runTest("../testData/evaluation/singleBreakpoint/coroutines/capturedReceiverName.kt");

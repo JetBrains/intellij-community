@@ -1,0 +1,8 @@
+LineBreakpoint created at atomicfuPrimitiveValueChain.kt:25
+Run Java
+Connected to the target VM
+atomicfuPrimitiveValueChain.kt:25
+Compile bytecode for (saved as kotlinx.coroutines.CancellableContinuationImpl<*>)._decisionAndIndex.value == (saved as kotlinx.coroutines.CancellableContinuationImpl<*>)._decisionAndIndex.value
+Disconnected from the target VM
+
+Process finished with exit code 0

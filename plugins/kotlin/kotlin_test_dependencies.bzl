@@ -187,6 +187,12 @@ download_file(
 )
 
 download_file(
+    name = "atomicfu-jvm-0.27.0.jar",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/atomicfu-jvm/0.27.0/atomicfu-jvm-0.27.0.jar",
+    sha256 = "2b68464170070a8b085d8a7224c7c002dbd65ea14e1f8b97a9605115a252f7fb",
+)
+
+download_file(
     name = "annotations-java5-24.0.0.jar",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/annotations-java5/24.0.0/annotations-java5-24.0.0.jar",
     sha256 = "2d033590350f9e936a787bfa407ecae221a80220762c9cf56c0066ff5e52fd10",
