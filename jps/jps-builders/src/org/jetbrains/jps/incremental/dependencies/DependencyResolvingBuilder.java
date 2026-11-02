@@ -102,6 +102,7 @@ import static org.jetbrains.jps.model.serialization.JpsMavenSettings.getMavenRep
 public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(DependencyResolvingBuilder.class);
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
+  private static final int MAX_CHECKSUM_REDOWNLOAD_ATTEMPTS = 3;
 
   private static final Key<Pair<ArtifactRepositoryManager, Map<String, ArtifactRepositoryManager>>> MANAGERS_KEY = GlobalContextKey.create("_artifact_repository_manager_"); // pair[unnamedManager: {namedManagers}]
 
@@ -276,9 +277,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
           context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.resolving.0.library", lib.getName()), currentTargets));
           LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
 
-          final Collection<File> resolved = effectiveRepoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
-                                                                                   descriptor.getVersion(),
-                                                                                   descriptor.isIncludeTransitiveDependencies(), descriptor.getExcludedDependencies());
+          final Collection<File> resolved = resolveDependency(effectiveRepoManager, descriptor);
           if (!resolved.isEmpty()) {
             syncPaths(required, resolved);
           }
@@ -297,12 +296,38 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
             }
           }
         }
-        verifyLibraryRootsChecksums(context, lib.getName(), descriptor, compiledRoots, verifySha256Checksums);
+        for (int attempt = 0; attempt <= MAX_CHECKSUM_REDOWNLOAD_ATTEMPTS; attempt++) {
+          var invalidRoots = verifyLibraryRootsChecksums(context, lib.getName(), descriptor, compiledRoots,
+                                                        verifySha256Checksums, attempt);
+          if (invalidRoots.isEmpty()) {
+            break;
+          }
+          context.checkCanceled();
+          var cachedArtifacts = resolveDependency(effectiveRepoManager, descriptor);
+          for (var invalidRoot : invalidRoots) {
+            var cachedArtifact = ContainerUtil.find(cachedArtifacts, file -> FileUtil.filesEqual(file, invalidRoot));
+            if (cachedArtifact == null) {
+              cachedArtifact = mapArtifactsByName(cachedArtifacts).get(invalidRoot.getName());
+            }
+            if (cachedArtifact != null) {
+              Files.deleteIfExists(cachedArtifact.toPath());
+            }
+            Files.deleteIfExists(invalidRoot.toPath());
+          }
+          context.checkCanceled();
+          syncPaths(invalidRoots, resolveDependency(effectiveRepoManager, descriptor));
+        }
       }
       catch (TransferCancelledException e) {
         context.checkCanceled();
       }
     });
+  }
+
+  private static Collection<File> resolveDependency(ArtifactRepositoryManager repositoryManager,
+                                                    JpsMavenRepositoryLibraryDescriptor descriptor) throws Exception {
+    return repositoryManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion(),
+                                               descriptor.isIncludeTransitiveDependencies(), descriptor.getExcludedDependencies());
   }
 
   private static void syncPaths(final Collection<? extends File> required, @NotNull Collection<? extends File> resolved) throws Exception {
@@ -311,13 +336,7 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     libFiles.removeAll(resolved);
 
     if (!libFiles.isEmpty()) {
-      final Map<String, File> nameToArtifactMap = CollectionFactory.createFilePathMap();
-      for (File f : resolved) {
-        final File prev = nameToArtifactMap.put(f.getName(), f);
-        if (prev != null) {
-          throw new Exception("Ambiguous artifacts with the same name: " + prev.getPath() + " and " + f.getPath());
-        }
-      }
+      final Map<String, File> nameToArtifactMap = mapArtifactsByName(resolved);
       for (File file : libFiles) {
         final File resolvedArtifact = nameToArtifactMap.get(file.getName());
         if (resolvedArtifact != null) {
@@ -325,6 +344,17 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
         }
       }
     }
+  }
+
+  private static Map<String, File> mapArtifactsByName(Collection<? extends File> artifacts) throws Exception {
+    final Map<String, File> nameToArtifactMap = CollectionFactory.createFilePathMap();
+    for (File file : artifacts) {
+      final File previous = nameToArtifactMap.put(file.getName(), file);
+      if (previous != null) {
+        throw new Exception("Ambiguous artifacts with the same name: " + previous.getPath() + " and " + file.getPath());
+      }
+    }
+    return nameToArtifactMap;
   }
 
   private static ArtifactRepositoryManager getRepositoryManager(@NotNull CompileContext context,
@@ -382,14 +412,15 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
     return true;
   }
 
-  private static void verifyLibraryRootsChecksums(@NotNull CompileContext context,
-                                                  @NotNull String libraryName,
-                                                  @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                                  @NotNull List<? extends File> compiledRoots,
-                                                  boolean verifySha256Checksums) throws ArtifactVerificationException {
+  private static @NotNull List<File> verifyLibraryRootsChecksums(@NotNull CompileContext context,
+                                                                @NotNull String libraryName,
+                                                                @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                                @NotNull List<? extends File> compiledRoots,
+                                                                boolean verifySha256Checksums,
+                                                                int redownloadAttempt) throws ArtifactVerificationException {
     // don't verify checksums if the library doesn't have a fixed version or when verification is disabled
     if (!verifySha256Checksums || !isLibraryVersionFixed(descriptor)) {
-      return;
+      return Collections.emptyList();
     }
 
     if (!isAllCompiledRootsVerificationPresent(descriptor, compiledRoots)) {
@@ -411,10 +442,14 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
       .stream()
       .collect(Collectors.toMap(it -> JpsPathUtil.urlToFile(it.getUrl()).getAbsolutePath(), it -> it));
 
+    List<File> invalidRoots = new SmartList<>();
     for (File compiledRoot : compiledRoots) {
       ArtifactVerification verification = absolutePathToVerificationMetadata.get(compiledRoot.getAbsolutePath());
-      checkSha256ChecksumValid(context, descriptor, libraryName, verification);
+      if (!checkSha256ChecksumValid(context, descriptor, libraryName, verification, redownloadAttempt)) {
+        invalidRoots.add(compiledRoot);
+      }
     }
+    return invalidRoots;
   }
 
 
@@ -440,10 +475,11 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
   }
 
 
-  private static void checkSha256ChecksumValid(@NotNull CompileContext context,
-                                               @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
-                                               @NotNull String libraryName,
-                                               @NotNull JpsMavenRepositoryLibraryDescriptor.ArtifactVerification verification)
+  private static boolean checkSha256ChecksumValid(@NotNull CompileContext context,
+                                                 @NotNull JpsMavenRepositoryLibraryDescriptor descriptor,
+                                                 @NotNull String libraryName,
+                                                 @NotNull JpsMavenRepositoryLibraryDescriptor.ArtifactVerification verification,
+                                                 int redownloadAttempt)
     throws ArtifactVerificationException {
     Path path = JpsPathUtil.urlToFile(verification.getUrl()).toPath();
 
@@ -459,10 +495,17 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
 
     if (!Objects.equals(expectedSha256Sum, actualSha256Sum)) {
       reportInvalidArtifactChecksum(context, libraryName, descriptor, path, actualSha256Sum);
-      throw new ArtifactVerificationException(
-        JpsBuildBundle.message("build.message.error.invalid.sha256.checksum", libraryName, path, expectedSha256Sum, actualSha256Sum)
-      );
+      var message = JpsBuildBundle.message("build.message.error.invalid.sha256.checksum",
+                                          libraryName, path, expectedSha256Sum, actualSha256Sum);
+      if (redownloadAttempt == MAX_CHECKSUM_REDOWNLOAD_ATTEMPTS) {
+        throw new ArtifactVerificationException(message);
+      }
+      context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.WARNING,
+                                                JpsBuildBundle.message("build.message.warning.retrying.artifact.download", message,
+                                                                       redownloadAttempt + 1, MAX_CHECKSUM_REDOWNLOAD_ATTEMPTS)));
+      return false;
     }
+    return true;
   }
 
   private static void reportCorruptedArtifactZip(@NotNull CompileContext context,
