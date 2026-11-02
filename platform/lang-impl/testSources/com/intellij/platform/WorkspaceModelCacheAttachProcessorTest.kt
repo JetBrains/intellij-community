@@ -15,7 +15,9 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
+import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.projectImport.ProjectAttachProcessor
@@ -29,6 +31,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.testEntities.TestModuleEntitySource
 import com.intellij.util.io.createDirectories
 import com.intellij.workspaceModel.ide.ProjectRootEntity
+import com.intellij.workspaceModel.ide.WsmProjectSettingsEntityUtils
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
@@ -58,9 +61,9 @@ internal class WorkspaceModelCacheAttachProcessorTest {
     ProjectAttachProcessor.EP_NAME.point.registerExtension(WorkspaceModelCacheAttachProcessor(), disposableRule.disposable)
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     ProjectEntitiesAttacher.EP.point.registerExtension(object : ProjectEntitiesAttacher {
-      override fun extractEntitiesToAttach(storage: EntityStorage): MutableEntityStorage {
+      override fun extractEntitiesToAttach(currentSnapshot: EntityStorage, attachingProjectStorage: EntityStorage): MutableEntityStorage {
         return MutableEntityStorage.create().also { newStorage ->
-          newStorage.replaceBySource({ it is TestModuleEntitySource }, storage)
+          newStorage.replaceBySource({ it is TestModuleEntitySource }, attachingProjectStorage)
         }
       }
     }, disposableRule.disposable)
@@ -141,13 +144,24 @@ internal class WorkspaceModelCacheAttachProcessorTest {
       writeAction {
         ProjectJdkTable.getInstance(project).addJdk(sdk, disposableRule.disposable)
       }
+      project.workspaceModel.update("Set project sdk") {
+        WsmProjectSettingsEntityUtils.addOrModifyProjectSettingsEntity(project, it) { entity ->
+          entity.projectSdk = SdkId("sdk1", "JavaSDK")
+        }
+      }
     }
 
     val newProjectPath = tempDirManager.newPath("new_project", refreshVfs = false).also { it.createDirectories() }
     ProjectManagerEx.getInstanceEx().openProjectAsync(newProjectPath, OpenProjectTask { projectRootDir = newProjectPath })!!
       .useProjectAsync { newProject ->
+        newProject.workspaceModel.update("Set project sdk") {
+          WsmProjectSettingsEntityUtils.addOrModifyProjectSettingsEntity(newProject, it) { entity ->
+            entity.projectSdk = SdkId("sdk2", "JavaSDK")
+          }
+        }
         assertThat(attachToProjectAsync(newProject, attachedProjectPath)).isTrue()
         assertThat(newProject.workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()).hasSize(1)
+        assertThat(newProject.workspaceModel.currentSnapshot.entities(ProjectSettingsEntity ::class.java).toList()).hasSize(1)
       }
   }
 
