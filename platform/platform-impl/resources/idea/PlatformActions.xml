@@ -841,6 +841,8 @@
       </group>
       <reference ref="EditorToggleColumnMode"/>
       <separator/>
+      <group id="EditorPopupMenu0" searchable="false"/>
+      <separator/>
       <group id="EditorPopupMenu1" searchable="false">
         <reference ref="FindSelectionInPath"/>
       </group>
