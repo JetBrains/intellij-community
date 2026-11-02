@@ -74,7 +74,7 @@ DEV_DIST_PLUGIN_COMPONENTS = {
             "intellij.java.plugin": "//build/dev-dist-descriptors/intellij.java.plugin:intellij.java.plugin_dev_plugin",
             "intellij.java.ide.customization": "//java/ide-customization:intellij.java.ide.customization_dev_plugin",
             "intellij.copyright": "//plugins/copyright:intellij.copyright_dev_plugin",
-            "intellij.properties": "//plugins/properties/properties-common:intellij.properties_dev_plugin",
+            "intellij.properties.plugin": "//plugins/properties/plugin:intellij.properties.plugin_dev_plugin",
             "intellij.terminal": {
                 "darwin_aarch64": "//plugins/terminal:intellij.terminal_darwin_aarch64_component",
                 "darwin_x64": "//plugins/terminal:intellij.terminal_darwin_x64_component",
@@ -197,7 +197,7 @@ DEV_DIST_PLUGIN_COMPONENTS = {
             "intellij.java.plugin": "//build/dev-dist-descriptors/intellij.java.plugin:intellij.java.plugin_dev_plugin",
             "intellij.java.ide.customization": "//java/ide-customization:intellij.java.ide.customization_dev_plugin",
             "intellij.copyright": "//plugins/copyright:intellij.copyright_dev_plugin",
-            "intellij.properties": "//plugins/properties/properties-common:intellij.properties_dev_plugin",
+            "intellij.properties.plugin": "//plugins/properties/plugin:intellij.properties.plugin_dev_plugin",
             "intellij.terminal": {
                 "darwin_aarch64": "//plugins/terminal:intellij.terminal_darwin_aarch64_component",
                 "darwin_x64": "//plugins/terminal:intellij.terminal_darwin_x64_component",

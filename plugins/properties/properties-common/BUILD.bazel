@@ -1,35 +1,8 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.properties` start
 content_module_jar(module = ":properties")
-
-dev_dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.properties.copyright",
-        "intellij.properties.backend.psi",
-        "intellij.properties.backend",
-        "intellij.properties.structuralSearch",
-        "intellij.properties.psi",
-    ],
-    descriptor = "resources/META-INF/plugin.xml",
-    jars = {
-        "lib/intellij.properties.jar": ["intellij.properties"],
-    },
-    main_module = "intellij.properties",
-    mode_refused_content_modules = {
-        "frontend": [
-            "intellij.properties.backend.psi",
-            "intellij.properties.backend",
-            "intellij.properties.structuralSearch",
-        ],
-    },
-    module_jar_paths = {
-        "intellij.properties.psi": "lib/intellij.properties.psi.jar",
-    },
-)
 ### auto-generated section `dev intellij.properties` end
 
 ### auto-generated section `build intellij.properties` start
@@ -80,7 +53,6 @@ jvm_library(
 exports_files(
     [
         "intellij.properties.iml",
-        "resources/META-INF/plugin.xml",
         "resources/intellij.properties.xml",
     ],
     visibility = ["//visibility:public"],

@@ -1789,6 +1789,7 @@ plugins/performanceTesting/todo
 plugins/performanceTesting/vcs
 plugins/properties
 plugins/properties/copyright
+plugins/properties/plugin
 plugins/properties/properties-common
 plugins/properties/properties-psi-api
 plugins/properties/properties-psi-impl
