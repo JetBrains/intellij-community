@@ -19,7 +19,7 @@ import java.util.Set;
  *
  * @see LanguagePostfixTemplate#EP_NAME
  * @see PostfixTemplate
- * @see <a href=https://plugins.jetbrains.com/docs/intellij/postfix-completion.html">Postfix Completion (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/postfix-completion.html">Postfix Completion (IntelliJ Platform Docs)</a>
  */
 public interface PostfixTemplateProvider {
 
