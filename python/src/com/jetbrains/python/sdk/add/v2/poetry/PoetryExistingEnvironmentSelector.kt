@@ -2,15 +2,16 @@
 package com.jetbrains.python.sdk.add.v2.poetry
 
 import com.jetbrains.python.sdk.add.v2.addInterpreterByBinary
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.community.impl.poetry.common.POETRY_UI_INFO
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.CustomExistingEnvironmentSelector
 import com.jetbrains.python.sdk.add.v2.DetectedSelectableInterpreter
@@ -20,7 +21,7 @@ import com.jetbrains.python.sdk.add.v2.ToolValidator
 import com.jetbrains.python.sdk.add.v2.ValidatedPath
 import com.jetbrains.python.sdk.add.v2.pathHolder
 import com.jetbrains.python.sdk.poetry.createPoetrySdk
-import com.jetbrains.python.sdk.poetry.detectPoetryEnvs
+import com.jetbrains.python.sdk.poetry.detectPoetryEnvironments
 import com.jetbrains.python.sdk.workingDirectory
 import com.jetbrains.python.statistics.InterpreterType
 import java.nio.file.Path
@@ -58,10 +59,13 @@ internal class PoetryExistingEnvironmentSelector<P : PathHolder>(model: PythonMu
 
   override suspend fun detectEnvironments(modulePath: Path): List<DetectedSelectableInterpreter<P>> {
     val poetryExecutable = model.poetryViewModel.poetryExecutable.get()?.pathHolder?.successOrNull
-    val existingEnvs = detectPoetryEnvs(modulePath, model.fileSystem, poetryExecutable).mapNotNull { pythonBinary ->
+    // The selector has no place for an error, so a failure gives an empty list and goes to the log.
+    val pythonBinaries = detectPoetryEnvironments(modulePath, model.fileSystem, poetryExecutable).orLogException(LOG) ?: return emptyList()
+    return pythonBinaries.mapNotNull { pythonBinary ->
       val pythonInfo = model.fileSystem.getBinaryToExec(pythonBinary).validatePythonAndGetInfo().successOrNull ?: return@mapNotNull null
       DetectedSelectableInterpreter(pythonBinary, pythonInfo, false, POETRY_UI_INFO)
     }
-    return existingEnvs
   }
 }
+
+private val LOG = fileLogger()
