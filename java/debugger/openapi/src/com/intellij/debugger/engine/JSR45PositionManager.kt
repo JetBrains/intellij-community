@@ -15,7 +15,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.ContainerUtil
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.ClassNotPreparedException
@@ -82,12 +81,6 @@ abstract class JSR45PositionManager<Scope> @Deprecated(
 
   fun getStratumId(): String? {
     return stratumId
-  }
-
-  @RequiresBlockingContext
-  @Throws(NoDataException::class)
-  override fun getSourcePosition(location: Location?): SourcePosition? {
-    return super.getSourcePosition(location)
   }
 
   @RequiresBackgroundThread

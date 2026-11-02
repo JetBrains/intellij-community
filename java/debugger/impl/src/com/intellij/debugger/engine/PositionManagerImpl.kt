@@ -126,12 +126,6 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
     }
   }
 
-  @RequiresBlockingContext
-  @Throws(NoDataException::class)
-  override fun getSourcePosition(location: Location?): SourcePosition? {
-    return super.getSourcePosition(location)
-  }
-
   @RequiresBackgroundThread
   override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? {
     assertIsManagerThread()

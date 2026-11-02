@@ -34,7 +34,6 @@ import com.intellij.psi.util.PsiClassUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.AbsentInformationException
@@ -118,12 +117,6 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
       }
     }
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor, "$qName$*")
-  }
-
-  @RequiresBlockingContext
-  @Throws(NoDataException::class)
-  override fun getSourcePosition(location: Location?): SourcePosition? {
-    return super.getSourcePosition(location)
   }
 
   @RequiresBackgroundThread
