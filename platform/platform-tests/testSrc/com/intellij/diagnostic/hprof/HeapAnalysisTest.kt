@@ -23,6 +23,7 @@ import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.lang.ref.PhantomReference
 import java.lang.ref.WeakReference
 
 class HeapAnalysisTest {
@@ -73,6 +74,65 @@ class HeapAnalysisTest {
                        listOf("TestClassB",
                               "TestClassA",
                               "TestString"))
+    }
+  }
+
+  @Test
+  fun testPathsThroughPhantomReference() {
+    class Holder(val next: Any)
+    class TestTarget
+    class TestPhantomOnly
+
+    ReferenceStore().use { refStore ->
+      val scenario: HProfBuilder.() -> Unit = {
+        val target = TestTarget()
+        // The phantom path to the target is one step shorter than the strong path.
+        addRootGlobalJNI(listOf(refStore.createPhantomReference(target),
+                                refStore.createPhantomReference(TestPhantomOnly())))
+        addRootUnknown(Holder(Holder(Holder(Holder(target)))))
+      }
+      runHProfScenario(scenario, "testPathsThroughPhantomReference.txt",
+                       listOf("TestTarget", "TestPhantomOnly"))
+    }
+  }
+
+  @Test
+  fun testDisposedObjectPathIgnoresPhantomReference() {
+    val objectTree = ObjectTreeTestWrapper()
+
+    class TestDisposable : Disposable {
+      override fun dispose() {
+      }
+    }
+
+    class TestAccessibleContext(val owner: Any)
+    class Holder(val next: Any)
+    class TestDisposer
+
+    val root = TestDisposable()
+    val panel = TestDisposable()
+    objectTree.register(root, panel)
+    objectTree.dispose(panel)
+
+    val accessibleContext = TestAccessibleContext(panel)
+
+    ReferenceStore().use { refStore ->
+      class TestDisposerStatics {
+        @JvmField
+        val phantomMap = hashMapOf(refStore.createPhantomReference(accessibleContext) to 1L)
+      }
+
+      val scenario: HProfBuilder.() -> Unit = {
+        addDisposer(this, objectTree)
+        registerStaticsForClass(TestDisposer::class.java, TestDisposerStatics())
+        addObject(TestDisposer::class.java)
+        // The strong path to the disposed object is one step longer than the path through the phantom reference.
+        addRootUnknown(Holder(Holder(Holder(Holder(Holder(accessibleContext))))))
+        addRootUnknown(root)
+      }
+      object : HProfScenarioRunner(tmpFolder, remapInMemory) {
+        override fun adjustConfig(config: AnalysisConfig): AnalysisConfig = configWithDisposedObjectsOnly()
+      }.run(scenario, "testDisposedObjectPathIgnoresPhantomReference.txt", null)
     }
   }
 
@@ -242,6 +302,26 @@ class HeapAnalysisTest {
     )
   )
 
+  private fun configWithDisposedObjectsOnly() = AnalysisConfig(
+    AnalysisConfig.PerClassOptions(
+      classNames = listOf(),
+      includeClassList = false,
+    ),
+    AnalysisConfig.HistogramOptions(includeByCount = false,
+                                    includeBySize = false,
+                                    includeSummary = false),
+    AnalysisConfig.DisposerOptions(
+      includeDisposerTree = false,
+      includeDisposerTreeSummary = false,
+      includeDisposedObjectsSummary = true,
+      includeDisposedObjectsDetails = true,
+      disposedObjectsDetailsTreeDisplayOptions = AnalysisConfig.TreeDisplayOptions.all(),
+    ),
+    dominatorTreeOptions = AnalysisConfig.DominatorTreeOptions(
+      includeDominatorTree = false,
+    )
+  )
+
   private fun configWithDominatorTreeOnly() = AnalysisConfig(
     AnalysisConfig.PerClassOptions(
       classNames = listOf(),
@@ -283,7 +363,7 @@ class HeapAnalysisTest {
 
 
 /**
- * Helper class to keep strong references to objects referenced by newly created weak references.
+ * Helper class to keep strong references to objects referenced by newly created weak and phantom references.
  */
 private class ReferenceStore : AutoCloseable {
   private val set = HashSet<Any?>()
@@ -291,6 +371,11 @@ private class ReferenceStore : AutoCloseable {
   fun <T> createWeakReference(obj: T): WeakReference<T> {
     set.add(obj)
     return WeakReference(obj)
+  }
+
+  fun <T> createPhantomReference(obj: T): PhantomReference<T> {
+    set.add(obj)
+    return PhantomReference(obj, null)
   }
 
   override fun close() {

@@ -30,6 +30,14 @@ class ObjectTreeTestWrapper {
     method.invoke(tree, parent, child)
   }
 
+  /**
+   * Disposes [disposable] and records it in the disposed objects of the tree, as `Disposer.dispose` does.
+   */
+  fun dispose(disposable: Disposable) {
+    val method = treeClazz.getDeclaredMethod("executeAll", Disposable::class.java, Boolean::class.javaPrimitiveType).apply { isAccessible = true }
+    method.invoke(tree, disposable, true)
+  }
+
   companion object {
     private val treeClazz = Class.forName("com.intellij.openapi.util.ObjectTree")
   }

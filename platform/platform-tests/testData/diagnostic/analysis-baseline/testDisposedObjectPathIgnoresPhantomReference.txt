@@ -1,0 +1,19 @@
+================= DISPOSED OBJECTS ================
+Count of disposed-but-strong-referenced objects: 1
+  1 TestDisposable
+
+Disposed-but-strong-referenced dominator object count: 1
+Disposed-but-strong-referenced dominator sub-graph size: 8B
+      8B - 1 TestDisposable
+
+Disposed but still strong-referenced objects: 1 TestDisposable, most common paths from GC-roots:
+Root 1:
+[    1/100%/    8B]   104B          1   ROOT: Unknown
+[    1/100%/    8B]   104B          1   (root): Holder
+[    1/100%/    8B]    88B          1   next: Holder
+[    1/100%/    8B]    72B          1   next: Holder
+[    1/100%/    8B]    56B          1   next: Holder
+[    1/100%/    8B]    40B          1   next: Holder
+[    1/100%/    8B]    24B          1   next: TestAccessibleContext
+[    1/100%/    8B]     8B          1 * owner: TestDisposable (disposed)
+

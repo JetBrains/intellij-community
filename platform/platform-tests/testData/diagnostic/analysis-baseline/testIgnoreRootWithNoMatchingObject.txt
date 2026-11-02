@@ -10,6 +10,7 @@ Class count: 6
 Finalizable size: 0B
 Soft-reachable size: 0B
 Weak-reachable size: 0B
+Phantom-reachable size: 0B
 Reachable only from disposer tree: 0
 ======== INSTANCES OF EACH NOMINATED CLASS ========
 Nominated classes:

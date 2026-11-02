@@ -1,0 +1,43 @@
+==================== HISTOGRAM ====================
+Histogram. Top 2147483647 by instance count [All-objects] [Only-strong-ref]:
+    1: [   16/1.85KB] [   16/1.85KB] java.lang.Class
+    2: [    4/   64B] [    4/   64B] Holder
+    3: [    2/   16B] [    2/   16B] java.lang.ref.PhantomReference
+    4: [    1/    8B] [    1/    8B] java.lang.ref.ReferenceQueue$Null
+    5: [    1/    8B] [    1/    8B] java.lang.ref.ReferenceQueue$Lock
+    6: [    1/   16B] [    1/   16B] java.util.Arrays$ArrayList
+    7: [    1/    8B] [    0/    0B] TestPhantomOnly
+    8: [    1/   28B] [    1/   28B] java.lang.ref.PhantomReference[]
+    9: [    1/    8B] [    1/    8B] TestTarget
+Total -        All:    28 2.01KB 9 classes (Total instances: 28)
+Total - Strong-ref:    27  2.0KB 8 classes (Total instances: 27)
+Unreachable objects:     0      0B
+=================== HEAP SUMMARY ==================
+Class count: 16
+Finalizable size: 0B
+Soft-reachable size: 0B
+Weak-reachable size: 0B
+Phantom-reachable size: 8B
+Reachable only from disposer tree: 0
+======== INSTANCES OF EACH NOMINATED CLASS ========
+Nominated classes:
+ --> [1/8B] TestTarget
+ --> [1/8B] TestPhantomOnly
+
+CLASS: TestTarget (1 objects)
+Root 1:
+[    1/100%/    8B]    72B          1   ROOT: Unknown
+[    1/100%/    8B]    72B          1   (root): Holder
+[    1/100%/    8B]    56B          1   next: Holder
+[    1/100%/    8B]    40B          1   next: Holder
+[    1/100%/    8B]    24B          1   next: Holder
+[    1/100%/    8B]     8B          1 * next: TestTarget
+
+CLASS: TestPhantomOnly (1 objects)
+Root 1:
+[    1/100%/    8B]    84B          1   ROOT: Global JNI
+[    1/100%/    8B]    84B          1   (root): java.util.Arrays$ArrayList
+[    1/100%/    8B]    68B          1   a: java.lang.ref.PhantomReference[]
+[    1/100%/    8B]    16B          1   []: java.lang.ref.PhantomReference
+[    1/100%/    8B]     8B          1 * (phantom): TestPhantomOnly
+

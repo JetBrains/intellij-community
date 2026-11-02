@@ -71,6 +71,7 @@ Class count: 702
 Finalizable size: 8.36KB
 Soft-reachable size: 120KB
 Weak-reachable size: 0B
+Phantom-reachable size: 0B
 Reachable only from disposer tree: 0
 ======== INSTANCES OF EACH NOMINATED CLASS ========
 Nominated classes:
