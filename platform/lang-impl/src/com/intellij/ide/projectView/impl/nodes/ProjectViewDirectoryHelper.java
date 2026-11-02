@@ -14,6 +14,7 @@ import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.project.impl.ProjectRootPersistentStateComponent;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -287,7 +289,37 @@ public class ProjectViewDirectoryHelper {
         }
       }
     }
+    if (result.isEmpty()) {
+      result.addAll(expectedProjectRoots());
+    }
     return result;
+  }
+
+  /**
+   * Returns the project roots that the project open registers later.
+   * The open registers the project directory as a project root after the first update of the view, see {@code ProjectRootsSynchronizer}.
+   * The view shows these roots until then, so the root node does not disappear and come back when the entity arrives.
+   * The roots are the roots of the previous session, or the project directory when the project has no stored roots.
+   */
+  private @NotNull List<VirtualFile> expectedProjectRoots() {
+    if (!Registry.is("ide.create.project.root.entity")) {
+      return List.of();
+    }
+    var roots = new ArrayList<VirtualFile>();
+    var fileManager = VirtualFileManager.getInstance();
+    for (String url : myProject.getService(ProjectRootPersistentStateComponent.class).getProjectRootUrls()) {
+      var root = fileManager.findFileByUrl(url);
+      if (root != null && root.isDirectory() && isTopLevelRoot(root)) {
+        roots.add(root);
+      }
+    }
+    if (roots.isEmpty()) {
+      var projectDir = ProjectUtil.guessProjectDir(myProject);
+      if (projectDir != null && isTopLevelRoot(projectDir)) {
+        roots.add(projectDir);
+      }
+    }
+    return roots;
   }
 
   @NotNull
