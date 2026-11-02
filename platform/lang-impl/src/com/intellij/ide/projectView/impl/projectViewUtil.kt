@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiDirectory
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
@@ -136,6 +137,11 @@ private fun getFileAttributes(ioFile: Path?): BasicFileAttributes? {
 }
 
 internal fun getFileTimestamp(file: VirtualFile?): Long? {
+  if (IdeProductMode.isLight && !IdeProductMode.isMonolithLight) {
+    // Direct file access through EEL is too slow. Use VFS instead.
+    // No check for isInLocalFileSystem because "local" doesn't make sense for remote Light.
+    return if (file?.isDirectory == false) file.timeStamp else null
+  }
   val ioFile = try {
     getFilePath(file)
   }
