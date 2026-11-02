@@ -67,6 +67,7 @@ exports_files(
         "intellij.java.indexing.impl.iml",
         "resources/META-INF/JavaIndexingPlugin.xml",
         "resources/META-INF/RegistryKeysIndexingImpl.xml",
+        "resources/intellij.java.indexing.impl.analyzer.xml",
         "resources/intellij.java.indexing.impl.xml",
     ],
     visibility = ["//visibility:public"],

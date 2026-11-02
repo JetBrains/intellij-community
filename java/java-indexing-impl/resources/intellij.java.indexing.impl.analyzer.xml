@@ -1,0 +1,12 @@
+<!--
+Analyzer/Language Server-only descriptor of intellij.java.indexing.impl, loaded explicitly from init.kt (org.jetbrains.ls.plugin.java).
+The analyzer does not load intellij.java.indexing.impl.xml with all its dependencies. It keeps only the dependency that
+registers the PackageIndex override of JavaIndexingPlugin.xml after its default in intellij.java.psi.impl.xml.
+-->
+<idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <dependencies>
+    <module name="intellij.java.psi.impl"/>
+  </dependencies>
+
+  <xi:include href="/META-INF/JavaIndexingPlugin.xml"/>
+</idea-plugin>

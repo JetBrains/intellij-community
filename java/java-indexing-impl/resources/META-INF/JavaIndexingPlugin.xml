@@ -64,7 +64,7 @@
     <projectService serviceInterface="com.intellij.psi.search.PsiShortNamesCache"
                     serviceImplementation="com.intellij.psi.impl.CompositeShortNamesCache"/>
     <projectService serviceInterface="com.intellij.openapi.roots.PackageIndex"
-                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectPackageIndexImpl"/>
+                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectPackageIndexImpl" overrides="true"/>
     <projectService serviceInterface="com.intellij.psi.impl.search.JavaFilesSearchScopeProvider"
                     serviceImplementation="com.intellij.psi.impl.search.JavaFilesSearchScopeProviderImpl"
                     open="true"/>
