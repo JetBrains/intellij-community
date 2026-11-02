@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
 import com.intellij.platform.pluginSystem.testFramework.buildPluginSet
@@ -451,6 +452,37 @@ class ServiceContainerTest {
       }
     }
     assertThat(componentManager.getService(ClsService::class.java)).isExactlyInstanceOf(ClsService::class.java)
+  }
+
+  @Test
+  fun `a main descriptor cannot override a default of its optional content module`(@TempDir pluginsDir: Path) {
+    val pluginSet = buildPluginSet(pluginsDir, configureClassLoaders = false) {
+      plugin("rider.android") {
+        content(namespace = "jetbrains") {
+          module("java.psi.impl") {
+            extensions("""
+              <applicationService serviceInterface="${ClsService::class.java.name}"
+                                  serviceImplementation="${ClsServiceImpl1::class.java.name}" open="true"/>
+            """.trimIndent())
+          }
+        }
+        extensions("""
+          <applicationService serviceInterface="${ClsService::class.java.name}"
+                              serviceImplementation="${ClsServiceImpl2::class.java.name}" overrides="true"/>
+        """.trimIndent())
+      }
+    }
+    val componentManager = TestComponentManager()
+    // the main descriptor registers before its optional content module, so the override has no base yet and is dropped
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      for (descriptor in pluginSet.sequenceResolvedSortedDescriptorsForRegistration()) {
+        for (service in descriptor.appContainerDescriptor.services) {
+          componentManager.registerService(service, descriptor)
+        }
+      }
+    }
+    assertInstanceOf<InstanceNotRegisteredException>(error)
+    assertThat(componentManager.getService(ClsService::class.java)).isExactlyInstanceOf(ClsServiceImpl1::class.java)
   }
 
   @Test
