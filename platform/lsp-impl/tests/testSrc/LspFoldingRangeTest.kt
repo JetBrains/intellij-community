@@ -12,12 +12,14 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import kotlinx.coroutines.delay
 import org.eclipse.lsp4j.FoldingRange
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 
 @TestApplication
@@ -64,6 +66,22 @@ internal class LspFoldingRangeTest {
         assertEquals(0, document.getLineNumber(regions[0].startOffset))
         assertEquals(2, document.getLineNumber(regions[0].endOffset))
       }
+    }
+
+    @Test
+    fun `folding regions appear when the response arrives after highlighting`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "line 1\nline 2\nline 3").virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+
+      serverSession.expectRequest(serverSession.FOLDING_RANGE, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+        delay(1.seconds)
+        listOf(FoldingRange(0, 2))
+      }
+
+      codeInsightFixture.doHighlighting()
+      serverSession.awaitExpected()
+
+      checkFoldRegionsRetrying(1)
     }
   }
 
@@ -203,10 +221,17 @@ internal class LspFoldingRangeTest {
     check: ((Array<FoldRegion>) -> Unit)? = null,
   ) {
     waitUntilAssertSucceeds(message = "Expected $expectedCount LSP fold regions") {
-      readAction {
-        val regions = codeInsightFixture.editor.foldingModel.allFoldRegions
-        assertEquals(expectedCount, regions.size)
-        check?.invoke(regions)
+      try {
+        readAction {
+          val regions = codeInsightFixture.editor.foldingModel.allFoldRegions
+          assertEquals(expectedCount, regions.size)
+          check?.invoke(regions)
+        }
+      }
+      catch (e: AssertionError) {
+        // A response that arrives after the last highlighting only restarts the daemon, which doesn't run by itself in tests.
+        codeInsightFixture.doHighlighting()
+        throw e
       }
     }
   }
