@@ -5,6 +5,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -70,7 +71,8 @@ public final class CharsetToolkit {
   private static final byte EF = (byte)0xef;
   private static final byte BB = (byte)0xbb;
   private static final byte BF = (byte)0xbf;
-  private static final int BINARY_THRESHOLD = 9; // characters with codes below this considered to be binary
+  @VisibleForTesting
+  public static final int BINARY_THRESHOLD = 9; // characters with codes below this considered to be binary
 
   private final byte[] buffer;
   private final @NotNull Charset defaultCharset;
@@ -93,19 +95,19 @@ public final class CharsetToolkit {
 
   /**
    * Constructor of the {@code CharsetToolkit} utility class.
-   *  @param buffer the byte buffer of which we want to know the encoding.
+   * @param buffer the byte buffer of which we want to know the encoding.
    * @param defaultCharset the default Charset to use in case an 8-bit charset is recognized.
    * @param enforce8Bit If US-ASCII is recognized, enforce to return the default encoding, rather than US-ASCII.
    *     It might be a file without any special character in the range 128-255, but that may be or become
    *     a file encoded with the default {@code charset} rather than US-ASCII.
    */
   public CharsetToolkit(byte @NotNull [] buffer, @NotNull Charset defaultCharset, boolean enforce8Bit) {
-    this.buffer = buffer;
-    this.defaultCharset = defaultCharset;
-    this.enforce8Bit = enforce8Bit;
     if (buffer.length == 0){
       throw new IllegalArgumentException("Can't analyze empty buffer");
     }
+    this.buffer = buffer;
+    this.defaultCharset = defaultCharset;
+    this.enforce8Bit = enforce8Bit;
   }
 
   public static @NotNull InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
@@ -302,6 +304,22 @@ public final class CharsetToolkit {
   }
 
   public @NotNull GuessedEncoding guessFromContent(int startOffset, int endOffset) {
+    return guessFromContent(buffer, startOffset, endOffset);
+  }
+
+  /// Guesses encoding of buffer region `[startOffset..endOffset)`
+  ///
+  /// Encoding is:
+  /// - [GuessedEncoding#SEVEN_BIT] if there are _no_ bytes with the highest bit set
+  /// - [GuessedEncoding#BINARY] if there is a byte with _just_ lowest 3 bits set (i.e. `[0..BINARY_THRESHOLD)`)
+  /// - [GuessedEncoding#VALID_UTF8] if there are _only_ valid UTF8 byte sequences (including archaic RFC_2279/1998 5-6
+  ///   bytes sequences that are not considered valid by modern RFC_3629)
+  ///   TODO RC: should we still support archaic RFC_2279, or it is time to abandon the past?
+  ///
+  /// **Note**: the method considers buffer as [GuessedEncoding#VALID_UTF8] even if `endOffset` cuts off trailing UTF-8 byte
+  /// sequence in the middle -- even though it is impossible to check is the trailing sequence indeed fully valid.
+  public static @NotNull GuessedEncoding guessFromContent(byte[] buffer,
+                                                          int startOffset, int endOffset) {
     // if a byte has its most significant bit set, the file is in UTF-8 or in the default encoding
     // otherwise, the file is in US-ASCII
     boolean highOrderBit = false;
@@ -310,25 +328,21 @@ public final class CharsetToolkit {
     // if it's not the case, we can assume the encoding is the default encoding of the system
     boolean validU8Char = true;
 
-    // true if char bytes < BINARY_THRESHOLD occurred
-    boolean hasBinary = false;
-
     int end = Math.min(buffer.length, endOffset);
     int i = startOffset;
     while (i < end) {
       byte b0 = buffer[i];
-      byte b1 = i + 1 >= end ? 0 : buffer[i + 1];
-      byte b2 = i + 2 >= end ? 0 : buffer[i + 2];
-      byte b3 = i + 3 >= end ? 0 : buffer[i + 3];
-      byte b4 = i + 4 >= end ? 0 : buffer[i + 4];
-      byte b5 = i + 5 >= end ? 0 : buffer[i + 5];
+      //MAYBE RC: fast-path for ascii/binary since most source-files are ascii-dominated?
+
       if (b0 < 0) {
         // a high order bit was encountered, thus the encoding is not US-ASCII
         // it may be either an 8-bit encoding or UTF-8
         highOrderBit = true;
+
         // a two-bytes sequence was encountered
         if (isTwoBytesSequence(b0)) {
-          if (i+1 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
+          if (i + 1 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
+          byte b1 = buffer[i + 1];
           // there must be one continuation byte of the form 10xxxxxx,
           // otherwise the following characters is not a valid UTF-8 construct
           if (!isContinuationChar(b1)) {
@@ -340,9 +354,11 @@ public final class CharsetToolkit {
         }
         // a three-bytes sequence was encountered
         else if (isThreeBytesSequence(b0)) {
-          if (i+2 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
+          if (i + 2 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
           // there must be two continuation bytes of the form 10xxxxxx,
           // otherwise the following characters is not a valid UTF-8 construct
+          byte b1 = buffer[i + 1];
+          byte b2 = buffer[i + 2];
           if (!(isContinuationChar(b1) && isContinuationChar(b2))) {
             validU8Char = false;
           }
@@ -352,9 +368,12 @@ public final class CharsetToolkit {
         }
         // a four-bytes sequence was encountered
         else if (isFourBytesSequence(b0)) {
-          if (i+3 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
+          if (i + 3 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
           // there must be three continuation bytes of the form 10xxxxxx,
           // otherwise the following characters is not a valid UTF-8 construct
+          byte b1 = buffer[i + 1];
+          byte b2 = buffer[i + 2];
+          byte b3 = buffer[i + 3];
           if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3))) {
             validU8Char = false;
           }
@@ -364,9 +383,13 @@ public final class CharsetToolkit {
         }
         // a five-bytes sequence was encountered
         else if (isFiveBytesSequence(b0)) {
-          if (i+4 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
+          if (i + 4 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
           // there must be four continuation bytes of the form 10xxxxxx,
           // otherwise the following characters is not a valid UTF-8 construct
+          byte b1 = buffer[i + 1];
+          byte b2 = buffer[i + 2];
+          byte b3 = buffer[i + 3];
+          byte b4 = buffer[i + 4];
           if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3) && isContinuationChar(b4))) {
             validU8Char = false;
           }
@@ -376,9 +399,14 @@ public final class CharsetToolkit {
         }
         // a six-bytes sequence was encountered
         else if (isSixBytesSequence(b0)) {
-          if (i+5 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
+          if (i + 5 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
           // there must be five continuation bytes of the form 10xxxxxx,
           // otherwise the following characters is not a valid UTF-8 construct
+          byte b1 = buffer[i + 1];
+          byte b2 = buffer[i + 2];
+          byte b3 = buffer[i + 3];
+          byte b4 = buffer[i + 4];
+          byte b5 = buffer[i + 5];
           if (!(isContinuationChar(b1) &&
                 isContinuationChar(b2) &&
                 isContinuationChar(b3) &&
@@ -395,20 +423,18 @@ public final class CharsetToolkit {
         }
       }
       else if (b0 < BINARY_THRESHOLD) {
-        hasBinary = true;
-        break;
+        return GuessedEncoding.BINARY;
       }
+
       i++;
     }
 
-    if (hasBinary) {
-      return GuessedEncoding.BINARY;
-    }
     if (!highOrderBit) {
       return GuessedEncoding.SEVEN_BIT;
     }
     // finally, if it's not UTF-8 nor US-ASCII
     if (!validU8Char) {
+      //we can't return early, on first invalid char, since we still need to scan for BINARY
       return GuessedEncoding.INVALID_UTF8;
     }
 
@@ -455,43 +481,49 @@ public final class CharsetToolkit {
   /**
    * If the byte has the form 10xxxxx, then it's a continuation byte of a multiple byte character;
    */
-  private static boolean isContinuationChar(byte b) {
-    return b <= -65;
+  @VisibleForTesting
+  public static boolean isContinuationChar(byte b) {
+    return (b & 0b1100_0000) == 0b1000_0000;
   }
 
   /**
    * If the byte has the form 110xxxx, then it's the first byte of a two-bytes sequence character.
    */
-  private static boolean isTwoBytesSequence(byte b) {
-    return -64 <= b && b <= -33;
+  @VisibleForTesting
+  public static boolean isTwoBytesSequence(byte b) {
+    return (b & 0b1110_0000) == 0b1100_0000;
   }
 
   /**
    * If the byte has the form 1110xxx, then it's the first byte of a three-bytes sequence character.
    */
-  private static boolean isThreeBytesSequence(byte b) {
-    return -32 <= b && b <= -17;
+  @VisibleForTesting
+  public static boolean isThreeBytesSequence(byte b) {
+    return (b & 0b1111_0000) == 0b1110_0000;
   }
 
   /**
    * If the byte has the form 11110xx, then it's the first byte of a four-bytes sequence character.
    */
-  private static boolean isFourBytesSequence(byte b) {
-    return -16 <= b && b <= -9;
+  @VisibleForTesting
+  public static boolean isFourBytesSequence(byte b) {
+    return (b & 0b1111_1000) == 0b1111_0000;
   }
 
   /**
-   * If the byte has the form 11110xx, then it's the first byte of a five-bytes sequence character.
+   * If the byte has the form 111110xx, then it's the first byte of a five-bytes sequence character.
    */
-  private static boolean isFiveBytesSequence(byte b) {
-    return -8 <= b && b <= -5;
+  @VisibleForTesting
+  public static boolean isFiveBytesSequence(byte b) {
+    return (b & 0b1111_1100) == 0b1111_1000;
   }
 
   /**
-   * If the byte has the form 1110xxx, then it's the first byte of a six-bytes sequence character.
+   * If the byte has the form 1111110xxx, then it's the first byte of a six-bytes sequence character.
    */
-  private static boolean isSixBytesSequence(byte b) {
-    return -4 <= b && b <= -3;
+  @VisibleForTesting
+  public static boolean isSixBytesSequence(byte b) {
+    return (b & 0b1111_1110) == 0b1111_1100;
   }
 
   /**

@@ -41,6 +41,7 @@ jvm_library(
         "//platform/indexing-impl/backend",
         "//platform/util:util-tests_test_lib",
         "//platform/core-impl",
+        "//platform/util",
     ],
 )
 ### auto-generated section `build intellij.platform.benchmarks` end
