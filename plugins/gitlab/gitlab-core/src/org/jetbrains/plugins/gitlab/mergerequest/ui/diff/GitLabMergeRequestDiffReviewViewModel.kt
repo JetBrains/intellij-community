@@ -111,7 +111,10 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   }
 
   override fun cancelNewDiscussion(lineLocation: DiffLineLocation) {
-    discussionsContainer.cancelNewDiscussion(lineLocation)
+    val vm = discussionsContainer.newDiscussions.value.find { vm ->
+      vm.position.value.position.mapToDiffLineLocation(diffData) == lineLocation
+    } ?: return
+    discussionsContainer.cancelNewDiscussion(vm)
   }
 
   override fun markViewed() {

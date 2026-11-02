@@ -7,7 +7,6 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.async.transformConsecutiveSuccesses
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPosition
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
@@ -17,7 +16,6 @@ import com.intellij.diff.util.Side
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
-import git4idea.changes.GitTextFilePatchWithHistory
 import git4idea.changes.findCumulativeChange
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,12 +35,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLeftSideLine
-import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToRightSideLine
 import org.jetbrains.plugins.gitlab.ui.GitLabMarkdownToHtmlConverter
 import org.jetbrains.plugins.gitlab.ui.GitLabViewModelWithTextCompletion
@@ -80,7 +76,7 @@ interface GitLabMergeRequestDiscussionsViewModels {
   fun lookupPreviousComment(currentThreadId: String, isVisible: (String) -> Boolean): String?
 
   fun requestNewDiscussion(position: NewDiscussionPosition, focus: Boolean)
-  fun cancelNewDiscussion(lineLocation: DiffLineLocation)
+  fun cancelNewDiscussion(oldVm: NewGitLabNoteViewModelWithAdjustablePosition)
 
   class NewDiscussionPosition(val position: GitLabMergeRequestNewDiscussionPosition, val side: Side) {
     override fun equals(other: Any?): Boolean {
@@ -192,26 +188,9 @@ internal class GitLabMergeRequestDiscussionsViewModelsImpl(
     }
   }
 
-  private fun cancelNewDiscussion(oldVm: NewGitLabNoteViewModelWithAdjustablePosition) {
+  override fun cancelNewDiscussion(oldVm: NewGitLabNoteViewModelWithAdjustablePosition) {
     _newDiscussions.update {
-      val newList = it - oldVm
-      cs.launch {
-        oldVm.destroy()
-      }
-      newList
-    }
-  }
-
-  override fun cancelNewDiscussion(lineLocation: DiffLineLocation) {
-    _newDiscussions.update {
-      val oldVm = it.find { vm ->
-        val position = vm.position.value
-        val loc = position.side to if (position.side == Side.LEFT)
-          position.position.endLineIndexLeft
-        else
-          position.position.endLineIndexRight
-        loc == lineLocation
-      } ?: return@update it
+      if (oldVm !in it) return@update it
       val newList = it - oldVm
       cs.launch {
         oldVm.destroy()
