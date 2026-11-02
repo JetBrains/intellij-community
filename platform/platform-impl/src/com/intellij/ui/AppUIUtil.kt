@@ -380,6 +380,7 @@ object AppUIUtil {
       val licenseTypeFlag = LicensingFacade.getInstance()?.metadata?.getOrNull(10)
       when (licenseTypeFlag) {
         'F' -> localConsents.removeIf(LocalConsentOptions.condTraceDataCollectionComLocalConsent())
+        null -> removeTraceLocalConsents(localConsents)
         else -> localConsents.removeIf(LocalConsentOptions.condTraceDataCollectionNonComLocalConsent())
       }
     }
