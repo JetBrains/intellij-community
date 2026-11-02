@@ -18,6 +18,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
+import com.intellij.psi.PsiComment
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.spellchecker.inspections.IdentifierSplitter.MINIMAL_TYPO_LENGTH
 import com.intellij.spellchecker.inspections.SpellCheckingInspection.SpellCheckingScope
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy.getSpellcheckingStrategy
@@ -54,7 +56,8 @@ internal class SpellingTextChecker : TextChecker() {
   private fun useTextLevelSpellchecking(context: ProofreadingContext, scopes: Set<SpellCheckingScope>): Boolean {
     val element = context.text.getUserData(EXTRACTOR_SOURCE) ?: return true
     val strategy = getSpellcheckingStrategy(element)
-    return strategy != null && strategy.elementFitsScope(element, scopes) && strategy.useTextLevelSpellchecking(element)
+    val scopeElement = PsiTreeUtil.getNonStrictParentOfType(element, PsiComment::class.java) ?: element
+    return strategy != null && strategy.elementFitsScope(scopeElement, scopes) && strategy.useTextLevelSpellchecking(element)
   }
 
   private fun getCachedTypos(context: ProofreadingContext, configStamp: Long): List<TypoProblem>? {

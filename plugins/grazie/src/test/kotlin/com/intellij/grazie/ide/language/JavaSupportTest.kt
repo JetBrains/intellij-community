@@ -6,6 +6,7 @@ package com.intellij.grazie.ide.language
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.grazieTestFixture
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
@@ -42,6 +43,18 @@ class JavaSupportTest {
   @Test
   fun `test spellcheck in constructs`() {
     grazie.runHighlightTestForFile("ide/language/java/Constructs.java")
+  }
+
+  @Test
+  fun `test spellcheck in Javadoc with code processing disabled`() {
+    grazie.fixture.enableInspections(GrazieSpellCheckingInspection().apply { processCode = false })
+    grazie.fixture.configureByText("Main.java", """
+      /**
+       * <TYPO descr="Typo: In word 'Thsi'">Thsi</TYPO> is a test.
+       */
+      class Main {}
+    """.trimIndent())
+    grazie.fixture.checkHighlighting()
   }
 
   @Test
