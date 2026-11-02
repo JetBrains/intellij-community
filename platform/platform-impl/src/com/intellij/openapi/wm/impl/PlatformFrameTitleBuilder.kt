@@ -7,7 +7,6 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil.getCustomEditorTabTitle
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil.getCustomEditorTabTitleAsync
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.appendModuleName
 import com.intellij.openapi.project.decorateWithLibraryName
 import com.intellij.openapi.project.displayUrlRelativeToProject
@@ -25,9 +24,10 @@ import org.jetbrains.annotations.SystemIndependent
 open class PlatformFrameTitleBuilder : FrameTitleBuilder() {
   override fun getProjectTitle(project: Project): String {
     val basePath: @SystemIndependent @NonNls String = project.basePath ?: return project.name
-    val projects = ProjectManager.getInstance().openProjects
-    val sameNamedProjects = projects.count { it.name == project.name }
-    if (sameNamedProjects == 1 && !UISettings.getInstance().fullPathsInWindowHeader) {
+    // only another frame owner with the same name asks for the path: a frame guest shares the frame and the name of its owner
+    val frameOwner = frameOwnerOf(project)
+    val otherSameNamed = openFrameOwners().any { it !== frameOwner && it.name == project.name }
+    if (!otherSameNamed && !UISettings.getInstance().fullPathsInWindowHeader) {
       return project.name
     }
 

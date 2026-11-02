@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
+import com.intellij.openapi.wm.impl.isFrameGuest
 import com.intellij.platform.project.registerNewProjectId
 import com.intellij.platform.project.unregisterProjectId
 import com.intellij.platform.util.coroutines.childScope
@@ -216,6 +217,8 @@ open class ProjectImpl(parent: ComponentManagerImpl, private val isLightTestProj
     messageBus.syncPublisher(ProjectNameListener.TOPIC).nameChanged(name)
     StartupManager.getInstance(this).runAfterOpened {
       getCoroutineScope().launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+        // the frame of a frame guest belongs to another project, whose name the title shows
+        if (isFrameGuest(this@ProjectImpl)) return@launch
         (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(WindowManager::class.java)?.getFrame(this@ProjectImpl)?.let { frame ->
           (app as? ComponentManagerEx)?.getServiceAsyncIfDefined(FrameTitleBuilder::class.java)?.getProjectTitle(this@ProjectImpl)?.let { title ->
             frame.title = title
