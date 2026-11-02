@@ -1,12 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<NotificationGroupManagerImpl>()
@@ -81,13 +83,15 @@ private fun registerNotificationGroup(extension: NotificationGroupEP,
       return
     }
 
-    val notificationGroup = NotificationGroup.create(
+    val notificationGroup = NotificationGroup.createWithLazyTitle(
       displayId = groupId,
       displayType = type,
       isLogByDefault = extension.isLogByDefault,
       toolWindowId = extension.toolWindowId,
-      title = extension.getDisplayName(pluginDescriptor),
-      pluginId = pluginDescriptor.pluginId)
+      pluginId = pluginDescriptor.pluginId,
+    ) {
+      computeGroupTitle(extension, pluginDescriptor)
+    }
     notificationGroup.isHideFromSettings = extension.hideFromSettings
     registeredGroups.put(groupId, notificationGroup)?.let { old ->
       LOG.warn("Notification group $groupId is already registered (group=$old). Plugin descriptor: $pluginDescriptor")
@@ -96,5 +100,16 @@ private fun registerNotificationGroup(extension: NotificationGroupEP,
   }
   catch (e: Exception) {
     LOG.warn("Cannot create notification group: $extension", e)
+  }
+}
+
+private fun computeGroupTitle(extension: NotificationGroupEP, pluginDescriptor: PluginDescriptor): @NotificationTitle String? {
+  try {
+    return extension.getDisplayName(pluginDescriptor)
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    LOG.warn("Cannot get the title of notification group: $extension", e)
+    return null
   }
 }

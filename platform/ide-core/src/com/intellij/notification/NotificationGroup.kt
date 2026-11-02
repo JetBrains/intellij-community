@@ -26,9 +26,10 @@ class NotificationGroup private constructor(
   val displayType: NotificationDisplayType,
   val isLogByDefault: Boolean = true,
   val toolWindowId: String? = null,
-  private var title: @NotificationTitle String? = null,
+  @NotificationTitle title: String? = null,
   pluginId: PluginId? = null,
-  registerGroup: Boolean = false
+  registerGroup: Boolean = false,
+  titleSupplier: (() -> @NotificationTitle String?)? = null,
 ) {
   //<editor-fold desc="Deprecated stuff.">
   @Deprecated("Use `com.intellij.notification.impl.NotificationGroupEP` and `com.intellij.notification.NotificationGroupManager`")
@@ -53,6 +54,12 @@ class NotificationGroup private constructor(
     this(displayId, displayType, isLogByDefault, toolWindowId, registerGroup = true)
   //</editor-fold>
 
+  private val lazyTitle: Lazy<@NotificationTitle String?> = when {
+    titleSupplier != null -> lazy(LazyThreadSafetyMode.PUBLICATION, titleSupplier)
+    title == null && registerGroup -> lazyOf(registeredTitles[displayId])
+    else -> lazyOf(title)
+  }
+
   var parentId: String? = null
     private set
 
@@ -70,11 +77,6 @@ class NotificationGroup private constructor(
         logger<NotificationGroup>().info("Notification group ${displayId} is already registered", Throwable())
       }
       registeredGroups[displayId] = this
-
-      if (title == null) {
-        title = registeredTitles[displayId]
-      }
-
       fireGroupEvent(displayId, true)
     }
   }
@@ -106,6 +108,25 @@ class NotificationGroup private constructor(
       title: @NotificationTitle String?,
       pluginId: PluginId?
     ): NotificationGroup = NotificationGroup(displayId, displayType, isLogByDefault, toolWindowId, title, pluginId, registerGroup = false)
+
+    /**
+     * Creates a group that calls [title] on the first read of the group title.
+     * Use it when the title comes from a resource bundle: the bundle loads only when some code asks for the title.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun createWithLazyTitle(displayId: String,
+                            displayType: NotificationDisplayType,
+                            isLogByDefault: Boolean,
+                            toolWindowId: String?,
+                            pluginId: PluginId?,
+                            title: () -> @NotificationTitle String?): NotificationGroup =
+      NotificationGroup(displayId = displayId,
+                        displayType = displayType,
+                        isLogByDefault = isLogByDefault,
+                        toolWindowId = toolWindowId,
+                        pluginId = pluginId,
+                        titleSupplier = title)
 
     //<editor-fold desc="Deprecated stuff.">
     @JvmStatic
@@ -170,9 +191,13 @@ class NotificationGroup private constructor(
         ?.getService(NotificationGroupManager::class.java)
         ?.getNotificationGroup(displayId)
 
+    /**
+     * Returns the title of the group with [displayId].
+     * The first call for a group can load the resource bundle of the plugin that registers the group.
+     */
     @JvmStatic
     fun getGroupTitle(displayId: String): String? =
-      findRegisteredGroup(displayId)?.title ?: registeredTitles[displayId]
+      findRegisteredGroup(displayId)?.lazyTitle?.value ?: registeredTitles[displayId]
 
     val allRegisteredGroups: Iterable<NotificationGroup>
       get() = (NotificationGroupManager.getInstance().registeredNotificationGroups.asSequence() + registeredGroups.values).asIterable()
