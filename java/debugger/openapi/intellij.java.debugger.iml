@@ -27,7 +27,6 @@
     <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
   </component>
   <component name="copyright">
     <Base>
