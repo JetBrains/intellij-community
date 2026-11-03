@@ -52,6 +52,7 @@ import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.openapi.wm.impl.SquareStripeButtonLook
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.frameOwnerOf
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.NewUI
 import com.intellij.util.PlatformUtils
@@ -89,7 +90,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    val project = e?.project ?: return emptyArray()
+    val project = e?.frameOwner ?: return emptyArray()
     val twm = ToolWindowManagerEx.getInstanceEx(project)
     val toolWindows = ToolWindowsGroup.getToolWindowActions(project, false)
     val actions = toolWindows.sortedBy { getOrder(twm, it.toolWindowId) }.mapNotNullTo(ArrayList(), myFactory::get)
@@ -131,11 +132,11 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     }
 
     private fun isSelected(e: AnActionEvent): Boolean {
-      return e.project?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(toolWindowId)?.isVisible == true
+      return e.frameOwner?.let { ToolWindowManagerEx.getInstanceEx(it) }?.getToolWindow(toolWindowId)?.isVisible == true
     }
 
     private fun setSelected(e: AnActionEvent, state: Boolean) {
-      val project = e.project ?: return
+      val project = e.frameOwner ?: return
       val twm = ToolWindowManager.getInstance(project)
       val toolWindowId = toolWindowId
       val toolWindow = twm.getToolWindow(toolWindowId)
@@ -176,7 +177,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
         override fun addNotify() {
           super.addNotify()
-          project = PlatformDataKeys.PROJECT.getData(dataContext)
+          project = PlatformDataKeys.PROJECT.getData(dataContext)?.let(::frameOwnerOf)
           project?.service<ButtonsRepaintService>()?.trackButton(this)
         }
 
@@ -194,7 +195,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
     }
 
     private fun getChildren(e: AnActionEvent?): List<AnAction> {
-      val project = e?.project ?: return emptyList()
+      val project = e?.frameOwner ?: return emptyList()
       val children = ToolWindowsGroup.getToolWindowActions(project, false).map { ac ->
         object : AnActionWrapper(ac) {
           override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -336,6 +337,10 @@ internal class ButtonsStateService: PersistentStateComponent<Element> {
 }
 
 private val buttonState get() = ApplicationManager.getApplication().service<ButtonsStateService>()
+
+/** The project whose manager shows the tool windows of the frame: a frame guest shows no tool window of its own. */
+private val AnActionEvent.frameOwner: Project?
+  get() = project?.let(::frameOwnerOf)
 
 private val customizedGroup get() = getGroupPath(GROUP_MAIN_TOOLBAR_NEW_UI, GROUP_MAIN_TOOLBAR_CENTER)
 
