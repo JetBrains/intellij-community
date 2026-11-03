@@ -36,7 +36,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -48,6 +47,7 @@ import java.util.concurrent.atomic.AtomicReference
 import javax.swing.Icon
 import javax.swing.tree.TreePath
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -60,12 +60,19 @@ import kotlin.time.Duration.Companion.seconds
  * collapse cancel it, so a Refresh restarts the load. A child whose attributes do not
  * arrive in time appears as an unresolved node, and a lazy background job resolves it.
  * A symlink is not expandable; it becomes expandable when the resolution finds a directory target.
+ *
+ * Both the listing and the wait for it are bounded. A listing that does not finish within
+ * [listingTimeout] counts as unlistable, and the node shows the error overlay icon.
+ * The wait for the listing job has its own bound, so the invoker thread goes free
+ * even when a kernel-stuck native call ignores the thread interrupt.
  */
 @ApiStatus.Internal
 class NioFileTreeModel(
   descriptor: FileChooserDescriptor,
   sortDirectories: Boolean = true,
   internal val contributor: UniversalFileChooserContributor? = null,
+  private val listingTimeout: Duration = LISTING_TIMEOUT,
+  private val listingAttributesTimeout: Duration = LISTING_ATTRIBUTES_TIMEOUT,
 ) : AbstractTreeModel(), InvokerSupplier {
 
   companion object {
@@ -73,13 +80,16 @@ class NioFileTreeModel(
     private val LOG = Logger.getInstance(NioFileTreeModel::class.java)
 
     /** The most symlink resolutions that run at the same time; the rest wait for a permit. */
-    private const val MAX_SYM_LINKS_RESOLVED = 4
+    private const val MAX_SYM_LINKS_RESOLVED = 10
 
     /** How long a listing waits for the attributes of one child before the child stays unresolved. */
-    private val LISTING_ATTRIBUTES_TIMEOUT = 5.seconds
+    private val LISTING_ATTRIBUTES_TIMEOUT = 3.seconds
+
+    /** How long one directory listing runs before the directory counts as unlistable. */
+    private val LISTING_TIMEOUT = 5.seconds
 
     /** How long a lazy resolution runs before it marks the node as not valid. */
-    private val RESOLVE_TIMEOUT = 10.seconds
+    private val RESOLVE_TIMEOUT = 5.seconds
 
     /**
      * Whether a node may point to a directory. The listing uses this for the visibility filter
@@ -252,6 +262,10 @@ class NioFileTreeModel(
    * Waits for the listing of [node] on the caller thread.
    * The blocking NIO calls run in a cancellable coroutine on [Dispatchers.IO],
    * so [cancelLoading] frees the shared invoker thread when a path hangs.
+   * The wait itself is bounded: the waiter is not a parent of the listing job,
+   * so the timeout always frees the invoker thread, even when the blocked native call
+   * ignores the thread interrupt. The stuck job then holds only one [Dispatchers.IO] worker.
+   * On a timed-out wait the directory counts as unlistable.
    * Returns null when the listing was cancelled.
    */
   private fun loadChildren(node: Node): Listing? {
@@ -263,28 +277,36 @@ class NioFileTreeModel(
       job
     }
     return runBlockingMaybeCancellable {
-      deferred.join()
-      // `isCancelled` also covers a failed listing; the entry stays in the loading-required state
-      if (deferred.isCancelled) null else Listing(deferred.await())
+      val joined = withTimeoutOrNull(listingTimeout + listingAttributesTimeout) { deferred.join() }
+      when {
+        joined == null -> Listing(null)  // the wait timed out: the directory counts as unlistable
+        // `isCancelled` also covers a failed listing; the entry stays in the loading-required state
+        deferred.isCancelled -> null
+        else -> Listing(deferred.await())
+      }
     }
   }
 
   /**
    * Lists [directory] with the NOFOLLOW attributes that [PlatformNioHelper.visitDirectory] already read.
+   * The visit itself is bounded by [listingTimeout], because the directory open, the stream
+   * iteration, and the attribute prefetch of the stream can block on a mount that does not answer.
    * The attributes a directory stream did not cache are read concurrently, each within
-   * [LISTING_ATTRIBUTES_TIMEOUT], so one child that does not answer cannot stall the listing.
-   * Returns null when the directory cannot be listed.
+   * [listingAttributesTimeout], so one child that does not answer cannot stall the listing.
+   * Returns null when the directory cannot be listed or the visit times out.
    */
   private suspend fun listChildren(directory: Path): List<ChildEntry>? {
     val candidates = try {
-      runInterruptible(Dispatchers.IO) {
-        val found = ArrayList<ChildEntry>()
-        PlatformNioHelper.visitDirectory(directory, null, false) { childPath, attrsResult ->
-          found.add(ChildEntry(childPath, runCatching { attrsResult?.get() }.getOrNull()))
-          true
+      withTimeoutOrNull(listingTimeout) {
+        runInterruptible(Dispatchers.IO) {
+          val found = ArrayList<ChildEntry>()
+          PlatformNioHelper.visitDirectory(directory, null, false) { childPath, attrsResult ->
+            found.add(ChildEntry(childPath, runCatching { attrsResult?.get() }.getOrNull()))
+            true
+          }
+          found
         }
-        found
-      }
+      } ?: return null
     }
     catch (e: IOException) {
       LOG.debug("cannot list directory: $directory", e)
@@ -305,12 +327,12 @@ class NioFileTreeModel(
 
   /**
    * Reads the NOFOLLOW attributes of one child.
-   * Returns an unresolved entry when the read does not answer within [LISTING_ATTRIBUTES_TIMEOUT],
+   * Returns an unresolved entry when the read does not answer within [listingAttributesTimeout],
    * and null when the child is unreadable, so the listing skips it.
    */
   private suspend fun readChildEntry(path: Path): ChildEntry? {
     val attrs = try {
-      withTimeoutOrNull(LISTING_ATTRIBUTES_TIMEOUT) {
+      withTimeoutOrNull(listingAttributesTimeout) {
         runInterruptible(Dispatchers.IO) { NioFiles.readAttributes(path) }
       }
     }
@@ -369,6 +391,16 @@ class NioFileTreeModel(
         treeStructureChanged(entry, null, null)
       }
       return
+    }
+  }
+
+  /**
+   * Marks the node of [entry] after a failed or timed-out listing.
+   * The node becomes not valid and shows the error overlay icon, as the resolve path does.
+   */
+  private fun markUnlistable(entry: Entry<Node>) {
+    if (entry.node.markUnlistable()) {
+      treeNodesChanged(entry, null, null)
     }
   }
 
@@ -487,11 +519,24 @@ class NioFileTreeModel(
   ) : NioFileNode(path) {
     var isDirectory: Boolean = resolveIsDirectory(path, attrs)
       private set
+    private var unlistable = false
     private val resolveState = AtomicReference(
       if (path != null && (attrs == null || attrs.isSymbolicLink)) ResolveState.UNRESOLVED else ResolveState.RESOLVED)
 
     init {
       updateContent(attrs)
+    }
+
+    /**
+     * Marks the node after a failed or timed-out listing: not valid, with the error overlay icon.
+     * Returns true when the presentation changed. Runs on the invoker thread.
+     */
+    fun markUnlistable(): Boolean {
+      if (unlistable) return false
+      unlistable = true
+      var changed = updateValid(false)
+      changed = updateIcon(LayeredIcon.layeredIcon(arrayOf(icon ?: unresolvedIcon(), AllIcons.Nodes.ErrorMark))) || changed
+      return changed
     }
 
     /** Moves the node into the resolving state. Returns false when no resolution is needed or one is in flight. */
@@ -624,6 +669,7 @@ class NioFileTreeModel(
       val children = listing.entries
       if (children == null) {
         tree.update(parent, null)
+        state.model.markUnlistable(parent)
         return
       }
       if (children.isEmpty()) {
