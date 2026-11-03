@@ -95,7 +95,7 @@ internal class IntelliJCodeHighlighter(
 
         // First, try to find a highlighter using the standard IntelliJ Platform services.
         // This is the best-case scenario as it uses the full power of an installed language plugin.
-        val nativeHighlighter = findNativeHighlighter(language)
+        val nativeHighlighter = findNativeHighlighter(code, language)
         if (nativeHighlighter != null) {
             return createHighlightingFlow(nativeHighlighter, code)
         }
@@ -112,13 +112,20 @@ internal class IntelliJCodeHighlighter(
     /**
      * Attempts to find a high-quality highlighter from a native IntelliJ Platform language plugin.
      *
+     * A code fence language provider can return a language together with a file extension, for example the TextMate
+     * language with the `js` extension. In that case, the highlighter gets a [LightVirtualFile] with that extension.
+     *
+     * @param code The source code to highlight, needed for the [LightVirtualFile].
      * @param name The language name or alias (e.g., "kotlin", "kt").
      * @return A [SyntaxHighlighter] if a native plugin is found, otherwise `null`.
      */
-    private fun findNativeHighlighter(name: String): SyntaxHighlighter? {
-        val language = CodeFenceLanguageGuesser.guessLanguageForInjection(name) ?: return null
+    private fun findNativeHighlighter(code: String, name: String): SyntaxHighlighter? {
+        val guessed = CodeFenceLanguageGuesser.guessLanguageForInjection(name) ?: return null
+        val language = guessed.language
+        val virtualFile =
+            guessed.extension?.let { LightVirtualFile("markdown_code_block_${code.hashCode()}.$it", language, code) }
 
-        return SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, null)?.takeIf {
+        return SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, virtualFile)?.takeIf {
             it.highlightingLexer !is EmptyLexer
         }
     }
