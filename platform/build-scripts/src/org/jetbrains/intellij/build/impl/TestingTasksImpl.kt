@@ -458,7 +458,10 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               mainModule.name != "intellij.clion.main.tests" &&
               !(mainModule.name == "intellij.idea.ultimate.tests.main" && options.testGroups?.split(';')?.contains("COMMUNITY_JAVA_TESTS") == true) &&
               !(testModule.name == "intellij.idea.ultimate.tests.integration" && options.testGroups?.split(';')?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true) &&
-              !(testModule.name == "intellij.idea.ultimate.codeInsight.tests" && options.testGroups?.split(';')?.any { it == GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED || it == "IdeaSmokeTests" } == true)
+              !(testModule.name == "intellij.idea.ultimate.codeInsight.tests" && options.testGroups?.split(';')?.any { it == GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED || it == "IdeaSmokeTests" } == true) &&
+              !(testModule.name == "intellij.gradle.java.tests" && options.testGroups?.split(';')?.contains("GRADLE_ON_EEL_INTEGRATION_TESTS") == true) &&
+              !(testModule.name == "intellij.gradle.tests" && options.testGroups?.split(';')?.contains("GRADLE_ON_EEL_INTEGRATION_TESTS") == true) &&
+              !(testModule.name == "intellij.maven.tests" && options.testGroups?.split(';')?.contains("MAVEN_IN_DOCKER_INTEGRATION_TESTS") == true)
             } ?: mainModule,
             testGroups = options.testGroups,
             testPatterns = options.testPatterns,
