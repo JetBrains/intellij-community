@@ -1,0 +1,8 @@
+FunctionBreakpoint created at functionBreakpointInSuspendFun.kt:21
+Run Java
+Connected to the target VM
+functionBreakpointInSuspendFun.kt:21
+resuming functionBreakpointInSuspendFun.kt:24
+Disconnected from the target VM
+
+Process finished with exit code 0

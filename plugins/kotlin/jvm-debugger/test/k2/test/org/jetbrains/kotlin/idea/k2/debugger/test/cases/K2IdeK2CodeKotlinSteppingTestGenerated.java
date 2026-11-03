@@ -1418,9 +1418,39 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/funLiteral.kt");
         }
 
+        @TestMetadata("functionBreakpointInRecursiveSuspendFun.kt")
+        public void testFunctionBreakpointInRecursiveSuspendFun() throws Exception {
+            runTest("../testData/stepping/custom/functionBreakpointInRecursiveSuspendFun.kt");
+        }
+
         @TestMetadata("functionBreakpointInStdlib.kt")
         public void testFunctionBreakpointInStdlib() throws Exception {
             runTest("../testData/stepping/custom/functionBreakpointInStdlib.kt");
+        }
+
+        @TestMetadata("functionBreakpointInSuspendFun.kt")
+        public void testFunctionBreakpointInSuspendFun() throws Exception {
+            runTest("../testData/stepping/custom/functionBreakpointInSuspendFun.kt");
+        }
+
+        @TestMetadata("functionBreakpointInSuspendFunNoReturnValues.kt")
+        public void testFunctionBreakpointInSuspendFunNoReturnValues() throws Exception {
+            runTest("../testData/stepping/custom/functionBreakpointInSuspendFunNoReturnValues.kt");
+        }
+
+        @TestMetadata("functionBreakpointInSuspendFunNotEmulated.kt")
+        public void testFunctionBreakpointInSuspendFunNotEmulated() throws Exception {
+            runTest("../testData/stepping/custom/functionBreakpointInSuspendFunNotEmulated.kt");
+        }
+
+        @TestMetadata("functionBreakpointInSuspendMemberFun.kt")
+        public void testFunctionBreakpointInSuspendMemberFun() throws Exception {
+            runTest("../testData/stepping/custom/functionBreakpointInSuspendMemberFun.kt");
+        }
+
+        @TestMetadata("functionBreakpointInTailCallSuspendFun.kt")
+        public void testFunctionBreakpointInTailCallSuspendFun() throws Exception {
+            runTest("../testData/stepping/custom/functionBreakpointInTailCallSuspendFun.kt");
         }
 
         @TestMetadata("functionBreakpoints.kt")
