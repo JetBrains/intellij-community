@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.definition.AbstractBasicJavaDefinitionService;
@@ -22,7 +22,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,11 +139,10 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
       return;
     }
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-    PsiJavaToken token = ObjectUtils.tryCast(file.findElementAt(offset), PsiJavaToken.class);
-    if (token == null) return;
-    PsiLiteralExpression textBlock = ObjectUtils.tryCast(token.getParent(), PsiLiteralExpression.class);
-    if (textBlock == null) return;
-    CodeStyleManager.getInstance(project).reformat(textBlock);
-    editor.getCaretModel().moveToOffset(textBlock.getTextRange().getEndOffset() - 3);
+    if (!(file.findElementAt(offset) instanceof PsiJavaToken token)) return;
+    PsiElement element = token.getParent();
+    if (!(element instanceof PsiLiteralExpression)) return;
+    element = CodeStyleManager.getInstance(project).reformat(element);
+    editor.getCaretModel().moveToOffset(element.getTextRange().getEndOffset() - 3);
   }
 }

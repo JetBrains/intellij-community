@@ -1,16 +1,29 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AbstractBasicJavaQuoteTest;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.IdeaTestUtil;
 
 public class JavaQuoteTest extends AbstractBasicJavaQuoteTest {
   //requires formatter
-  public void testTextBlock() { doTest("\"\"<caret> ", "  \"\"\"\n            <caret>\"\"\" "); }
+  public void testTextBlock() {
+    doTest("\"\"<caret> ",
+           "  \"\"\"\n            <caret>\"\"\" ");
+  }
+  
+  public void testTextBlockFormatting() {
+    JavaCodeStyleSettings settings = getCurrentCodeStyleSettings().getCustomSettings(JavaCodeStyleSettings.class);
+    settings.STRIP_WHITESPACE_FROM_BLANK_LINES_IN_TEXT_BLOCKS = true;
+    doTest("\"\"<caret> ",
+           "  \"\"\"\n            <caret>\"\"\" ");
+  }
 
   //requires formatter
   public void testPrecedingTextBlock() {
-    doTest("f(\"\"<caret> + \"\"\"\n  .\"\"\")", "f(\"\"\"\n          <caret>\"\"\" + \"\"\"\n  .\"\"\")");
+    doTest("f(\"\"<caret> + \"\"\"\n  .\"\"\")",
+           "f(\"\"\"\n          <caret>\"\"\" + \"\"\"\n  .\"\"\")");
   }
 
   //requires formatter
@@ -24,10 +37,10 @@ public class JavaQuoteTest extends AbstractBasicJavaQuoteTest {
             String s = STR."\\{i}";""",
              """
             Integer i = 5;
-                          
+            
             String s1 = ""\"
                     ""\"
-                          
+            
             String s = STR."\\{i}";""");
     });
   }
