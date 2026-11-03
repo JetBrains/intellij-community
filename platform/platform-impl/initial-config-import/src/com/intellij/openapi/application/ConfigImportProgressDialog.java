@@ -70,11 +70,4 @@ public final class ConfigImportProgressDialog extends JDialog {
       return true;
     }
   }
-
-  @SuppressWarnings("HardCodedStringLiteral")
-  public static void main(String[] args) {
-    ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
-    dialog.getIndicator().setText2("Downloading plugin 'Scala'");
-    dialog.setVisible(true);
-  }
 }
