@@ -22,7 +22,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 
 @ApiStatus.Internal
-public final class MapBasedTree<K, N> {
+public class MapBasedTree<K, N> {
   private static final Logger LOG = Logger.getInstance(MapBasedTree.class);
 
   private final Map<K, Entry<N>> map;
