@@ -520,7 +520,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * The tool windows of the extension point are not registered, and a task that [invokeLater] queued before this call is dropped.
    */
   internal suspend fun initDetachedDefaultPane(frame: JFrame) {
-    val pane = ToolWindowPane.create(frame, coroutineScope, WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
+    // a Swing component: created on the EDT, as IdeProjectFrameHelper.createCenterComponent creates the pane of a frame
+    val pane = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      ToolWindowPane.create(frame, coroutineScope, WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
+    }
     detachedDefaultPane = pane
     doInit(
       pane = pane,
