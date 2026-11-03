@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.idea.TestFor;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.ref.GCWatcher;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -190,6 +191,16 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.enableInspections(PyDeprecationInspection.class);
     myFixture.configureByFile("deprecation/deprecatedProtocolMethod.py");
     myFixture.checkHighlighting(true, false, false);
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testDeprecatedMemberInPyiNotParsed() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.copyDirectoryToProject("deprecation/deprecatedMemberInPyiNotParsed", "");
+    myFixture.configureByFile("main.py");
+    myFixture.checkHighlighting(true, false, false);
+    assertNotParsed(myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("lib.pyi")));
+    assertNotParsed(myFixture.getPsiManager().findFile(myFixture.findFileInTempDir("lib.py")));
   }
 
   // PY-80732
