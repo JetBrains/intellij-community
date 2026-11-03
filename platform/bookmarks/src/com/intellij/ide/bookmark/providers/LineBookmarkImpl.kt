@@ -14,7 +14,7 @@ class LineBookmarkImpl @ApiStatus.Internal constructor(
   file: VirtualFile,
   line: Int,
   expectedText: String? = null,
-  internal val memorialAdded: Boolean = false,
+  internal val memorialKey: String? = null,
 ) : LineBookmark {
   constructor(provider: LineBookmarkProvider, file: VirtualFile, line: Int) : this(provider, file, line, null)
 
@@ -29,6 +29,14 @@ class LineBookmarkImpl @ApiStatus.Internal constructor(
   internal var expectedText: String? = expectedText
     private set
 
+  internal val memorialAdded: Boolean
+    get() = memorialKey != null
+
+  internal fun movedTo(line: Int, expectedText: String? = this.expectedText): LineBookmarkImpl =
+    LineBookmarkImpl(provider, file, line, expectedText, memorialKey)
+
+  internal fun invalidated(): InvalidBookmark = InvalidBookmark(provider, file.url, line, expectedText, memorialKey)
+
   internal fun ensureExpectedTextInitialized(document: Document) {
     if (expectedText == null) {
       expectedText = LineBookmarkProvider.Util.readLineText(document, line)
@@ -40,6 +48,7 @@ class LineBookmarkImpl @ApiStatus.Internal constructor(
       put("url", file.url)
       put("line", line.toString())
       expectedText?.let { put("lineText", it) }
+      memorialKey?.let { put("memorialKey", it) }
     }
 
   @ApiStatus.Internal
