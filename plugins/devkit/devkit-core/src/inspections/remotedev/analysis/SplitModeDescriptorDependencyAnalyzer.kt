@@ -234,7 +234,7 @@ private fun resolvePluginDependencyDescriptors(ideaPlugin: IdeaPlugin, dependenc
 private fun getDirectPredefinedDependencyFacts(
   ideaPlugin: IdeaPlugin,
   dependencyName: String,
-  descriptorLocation: DescriptorLocation,
+  descriptorLocation: DependencyTraceStep.Descriptor,
 ): DependencyFacts? {
   val project = ideaPlugin.xmlElement?.project ?: return null
   val dependencyInfo = DependencyInfo(dependencyName, directDependencyTrace(descriptorLocation))
@@ -300,8 +300,7 @@ private fun createImpliedRpcDependencyInfo(
     name = RPC_MODULE_NAME,
     trace = DependencyTrace(
       cacheKey = "implied-rpc|$predefinedDependencyName|${predefinedDependencyTrace.cacheKey}",
-      description = "${predefinedDependencyTrace.description}\n" +
-                    "via predefined ${predefinedModuleKind.id} dependency '$predefinedDependencyName'",
+      steps = predefinedDependencyTrace.steps + DependencyTraceStep.ImpliedRpc(predefinedModuleKind, predefinedDependencyName),
     ),
   )
 }
@@ -314,13 +313,13 @@ private fun createPredefinedDependencyInfo(
     name = getExplicitPlatformDependencyName(moduleKind),
     trace = DependencyTrace(
       cacheKey = "predefined|${predefinedModuleKind.cacheKey}",
-      description = predefinedModuleKind.reasoning,
+      steps = listOf(DependencyTraceStep.Predefined(predefinedModuleKind.reasoning)),
     ),
   )
 }
 
 private class DependencyFactsAccumulator(
-  private val descriptorLocation: DescriptorLocation,
+  private val descriptorLocation: DependencyTraceStep.Descriptor,
 ) {
   private val seenDependencyNames = mutableSetOf<String>()
   private var frontendEvidence: DependencyInfo? = null
@@ -454,45 +453,21 @@ private data class ContentModuleDependency(
   fun resolveDescriptor(): IdeaPlugin? = resolver()
 }
 
-private data class DescriptorLocation(
-  val descriptorName: String,
-  val moduleName: String?,
-) {
-  fun presentableName(): String {
-    return if (moduleName != null) {
-      "descriptor '$descriptorName' in module '$moduleName'"
-    }
-    else {
-      "descriptor '$descriptorName'"
-    }
-  }
-}
-
-private fun directDependencyTrace(descriptorLocation: DescriptorLocation): DependencyTrace {
+private fun directDependencyTrace(descriptorLocation: DependencyTraceStep.Descriptor): DependencyTrace {
   return DependencyTrace(
     cacheKey = "direct|${descriptorLocation.moduleName}|${descriptorLocation.descriptorName}",
-    description = descriptorLocation.presentableName(),
+    steps = listOf(descriptorLocation),
   )
 }
 
 private fun transitiveDependencyTrace(
-  descriptorLocation: DescriptorLocation,
+  descriptorLocation: DependencyTraceStep.Descriptor,
   viaDependencyName: String,
   nestedTrace: DependencyTrace,
 ): DependencyTrace {
-  val nestedDescription = nestedTrace.description
   return DependencyTrace(
     cacheKey = "transitive|${descriptorLocation.moduleName}|${descriptorLocation.descriptorName}|$viaDependencyName|${nestedTrace.cacheKey}",
-    description = buildString {
-      append(descriptorLocation.presentableName())
-      append("\nvia dependency '")
-      append(viaDependencyName)
-      append("' -> ")
-      append(nestedDescription)
-      if (!nestedDescription.endsWith(".")) {
-        append('.')
-      }
-    },
+    steps = listOf(descriptorLocation, DependencyTraceStep.ViaDependency(viaDependencyName)) + nestedTrace.steps,
   )
 }
 
@@ -502,18 +477,18 @@ private fun contentModuleDependencyTrace(
 ): DependencyTrace {
   return DependencyTrace(
     cacheKey = "content|${loadingRule.value}|${nestedTrace.cacheKey}",
-    description = "${loadingRule.value} content module ${nestedTrace.description}",
+    steps = listOf(DependencyTraceStep.ContentModule(loadingRule)) + nestedTrace.steps,
   )
 }
 
-private fun getDescriptorLocation(ideaPlugin: IdeaPlugin): DescriptorLocation {
+private fun getDescriptorLocation(ideaPlugin: IdeaPlugin): DependencyTraceStep.Descriptor {
   val xmlFile = getDescriptorXmlFile(ideaPlugin)
   if (xmlFile == null) {
-    return DescriptorLocation("unknown descriptor location", null)
+    return DependencyTraceStep.Descriptor("unknown descriptor location", null)
   }
 
   val module = ModuleUtilCore.findModuleForPsiElement(xmlFile)
-  return DescriptorLocation(xmlFile.name, module?.name)
+  return DependencyTraceStep.Descriptor(xmlFile.name, module?.name)
 }
 
 private fun getDescriptorXmlFile(ideaPlugin: IdeaPlugin): XmlFile? {

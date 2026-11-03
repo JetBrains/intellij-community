@@ -27,21 +27,21 @@ internal data class ModuleKindEvidence(
 
 internal data class ResolvedModuleKind(
   val kind: SplitModeApiRestrictionsService.ModuleKind,
-  val reasoning: @NlsSafe String,
-)
+  val reason: ModuleKindReason,
+) {
+  val reasoning: @NlsSafe String
+    get() = reason.toPlainText()
+}
 
 internal data class DependencyTrace(
   val cacheKey: String,
-  val description: @NlsSafe String,
+  val steps: List<DependencyTraceStep>,
 )
 
 internal data class DependencyInfo(
   val name: String,
   val trace: DependencyTrace,
-) {
-  val originDescription: @NlsSafe String
-    get() = trace.description
-}
+)
 
 /**
  * @property rpcEvidence a dependency path to `intellij.platform.rpc`.
