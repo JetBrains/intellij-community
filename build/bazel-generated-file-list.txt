@@ -59,6 +59,7 @@ android/android/rendering
 android/android/res
 android/android/run
 android/android/sdk
+android/android/smali
 android/android/ui
 android/android/ui.designer.overlays
 android/android/ui.resourcemanager

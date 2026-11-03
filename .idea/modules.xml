@@ -166,6 +166,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/android/res/intellij.android.core.res.iml" filepath="$PROJECT_DIR$/android/android/res/intellij.android.core.res.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/run/intellij.android.core.run.iml" filepath="$PROJECT_DIR$/android/android/run/intellij.android.core.run.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/sdk/intellij.android.core.sdk.iml" filepath="$PROJECT_DIR$/android/android/sdk/intellij.android.core.sdk.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/android/smali/intellij.android.core.smali.iml" filepath="$PROJECT_DIR$/android/android/smali/intellij.android.core.smali.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/intellij.android.core.tests.iml" filepath="$PROJECT_DIR$/android/android/intellij.android.core.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/ui/intellij.android.core.ui.iml" filepath="$PROJECT_DIR$/android/android/ui/intellij.android.core.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/ui.designer.overlays/intellij.android.core.ui.designer.overlays.iml" filepath="$PROJECT_DIR$/android/android/ui.designer.overlays/intellij.android.core.ui.designer.overlays.iml" />
