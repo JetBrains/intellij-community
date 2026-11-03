@@ -15,7 +15,7 @@ GOTO :CMDSCRIPT
 set -eu
 root="$(cd "$(dirname "$0")" && cd .. && pwd)"
 
-exec "$root/build/run_build_target.sh" "$root" @community//python/build:i_build_target "$@"
+exec "$root/build/run_build_target.sh" "$root" @community//python/build:pycharm_community_installers "$@"
 
 :CMDSCRIPT
 
@@ -23,5 +23,5 @@ exec "$root/build/run_build_target.sh" "$root" @community//python/build:i_build_
   -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass ^
   -File "%~dp0..\build\run_build_target.ps1" ^
   "%~dp0.." ^
-  "@community//python/build:i_build_target" ^
+  "@community//python/build:pycharm_community_installers" ^
   %*

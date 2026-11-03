@@ -20,9 +20,8 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 
-# Can't name the target 'installers' since it triggers elevation in Windows
 java_binary(
-    name = "i_build_target",
+    name = "pycharm_community_installers",
     add_opens = INTELLIJ_ADD_OPENS,
     data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
     jvm_flags = [
@@ -30,6 +29,13 @@ java_binary(
     ],
     main_class = "PyCharmCommunityInstallersBuildTarget",
     runtime_deps = [":build"],
+)
+
+# Temporary alias until TeamCity config is migrated to the new target
+alias(
+    name = "i_build_target",
+    actual = "//python/build:pycharm_community_installers",
+    visibility = ["//visibility:public"],
 )
 
 ### auto-generated section `build intellij.pycharm.community.build` start

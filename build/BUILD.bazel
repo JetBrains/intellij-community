@@ -150,9 +150,8 @@ jps_to_bazel_targets_json(
     }.items()
 ]
 
-# Can't name the target 'installers' since it triggers elevation in Windows
 java_binary(
-    name = "i_build_target",
+    name = "intellij_community_installers",
     add_opens = INTELLIJ_ADD_OPENS,
     data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
     jvm_flags = [
@@ -160,6 +159,13 @@ java_binary(
     ],
     main_class = "OpenSourceCommunityInstallersBuildTarget",
     runtime_deps = [":build"],
+)
+
+# Temporary alias until TeamCity config is migrated to the new target
+alias(
+    name = "i_build_target",
+    actual = "//build:intellij_community_installers",
+    visibility = ["//visibility:public"],
 )
 
 java_binary(

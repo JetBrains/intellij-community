@@ -15,7 +15,7 @@ GOTO :CMDSCRIPT
 set -eu
 root="$(cd "$(dirname "$0")"; pwd)"
 
-exec "$root/build/run_build_target.sh" "$root" //build:i_build_target "$@"
+exec "$root/build/run_build_target.sh" "$root" //build:intellij_community_installers "$@"
 
 :CMDSCRIPT
 
@@ -26,5 +26,5 @@ set "ROOT=%ROOT:~0,-1%"
   -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass ^
   -File "%~dp0build\run_build_target.ps1" ^
   "%ROOT%" ^
-  "@community//build:i_build_target" ^
+  "@community//build:intellij_community_installers" ^
   %*
