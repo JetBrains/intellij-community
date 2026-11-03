@@ -765,7 +765,13 @@ private suspend fun <T> runWithContext(
   // Ensure the job is canceled when the corresponding CoroutineScope is closed.
   // For example, cancellation of the work performed in Dispatchers.Default within the debugger context
   // is ensured by this scope attachment.
-  return parentScope.async(context, block = block).await()
+  val task = parentScope.async(context, block = block)
+  try {
+    return task.await()
+  }
+  finally {
+    task.cancel()
+  }
 }
 
 private fun <T> wrapVMDisconnectedException(block: suspend CoroutineScope.() -> T): suspend CoroutineScope.() -> T {
