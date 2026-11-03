@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
@@ -54,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static com.jetbrains.python.debugger.pydev.transport.BaseDebuggerTransport.logFrame;
@@ -92,6 +94,12 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private final Map<Pair<String, Integer>, String> myTempBreakpoints = Maps.newHashMap();
 
+  /**
+   * Sends the line breakpoint commands one by one, in the call order.
+   * pydevd identifies a line breakpoint by its file and line, so a remove must not overtake the set that follows it.
+   */
+  private final ExecutorService myBreakpointCommandExecutor =
+    SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Python Debugger Breakpoint Commands");
 
   private final List<RemoteDebuggerCloseListener> myCloseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -534,8 +542,7 @@ public class RemoteDebugger implements ProcessDebugger {
   public void removeTempBreakpoint(@NotNull String file, int line) {
     String type = myTempBreakpoints.remove(Pair.create(file, line));
     if (type != null) {
-      final RemoveBreakpointCommand command = new RemoveBreakpointCommand(this, type, file, line);
-      execute(command);  // remove temp. breakpoint
+      executeInOrder(new RemoveBreakpointCommand(this, type, file, line));
     }
     else {
       LOG.warn("Temp breakpoint not found for " + file + ":" + line);
@@ -556,15 +563,17 @@ public class RemoteDebugger implements ProcessDebugger {
                                logExpression,
                                funcName,
                                policy);
-    execute(command);
+    executeInOrder(command);
   }
 
 
   @Override
   public void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line) {
-    final RemoveBreakpointCommand command =
-      new RemoveBreakpointCommand(this, typeId, file, line);
-    execute(command);
+    executeInOrder(new RemoveBreakpointCommand(this, typeId, file, line));
+  }
+
+  private void executeInOrder(@NotNull LineBreakpointCommand command) {
+    myBreakpointCommandExecutor.execute(() -> executeCommandSafely(command));
   }
 
   @Override
