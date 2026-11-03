@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.project.impl.frameGuestOpening
 import com.intellij.openapi.project.impl.getOrCreateIdeFrameDeferred
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -392,8 +393,14 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       val remainingGuests = assignments.releaseOwner(project)?.guests ?: emptyList()
       frameStateListeners.remove(project)?.let { releasedFrameHelper.frame.removeComponentListener(it) }
       if (remainingGuests.isNotEmpty()) {
-        // the close of an owner closes its guests first; a guest that is still here keeps no frame
-        LOG.warn("The frame of $project is released while it shows the frame guests $remainingGuests")
+        // the close of an owner closes its open guests first, and ends the open of a guest that still opens
+        val openGuests = remainingGuests.filter { it.frameGuestOpening == null }
+        if (openGuests.isEmpty()) {
+          LOG.info("The frame of $project is released while the frame guests $remainingGuests still open; each open ends as cancelled")
+        }
+        else {
+          LOG.warn("The frame of $project is released while it shows the frame guests $openGuests")
+        }
       }
 
       if (frameReuseEnabled && frameToReuse.get() == null && project !is LightEditCompatible && remainingGuests.isEmpty()) {

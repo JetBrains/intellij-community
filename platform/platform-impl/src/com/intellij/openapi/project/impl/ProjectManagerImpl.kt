@@ -460,9 +460,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     }
   }
 
-  /** The frame guests that the close of their owner asked for a veto already, see [closeProject]. Used under the write-intent lock. */
-  private val guestsPastVetoCheck = HashSet<Project>()
-
   protected open fun closeProject(project: Project, saveProject: Boolean = true, dispose: Boolean = true, checkCanClose: Boolean): Boolean {
     val projectCloseStartedMs = System.currentTimeMillis()
 
@@ -489,7 +486,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       projectImpl.setTemporarilyDisposed(false)
     }
     else if (!isProjectOpened(project) && !LightEdit.owns(project)) {
-      if (dispose) {
+      // a project that is disposed already is closed already
+      if (dispose && !project.isDisposed) {
         if (project is ComponentManagerEx) {
           project.stopServicePreloading()
         }
@@ -527,7 +525,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
 
       // the owner is sure to close now, so a guest never closes for an owner that stays open
-      if (!closeFrameGuests(guests, saveProject = saveProject, checkCanClose = checkCanClose)) {
+      if (!closeFrameGuests(owner = project, askedGuests = guests, saveProject = saveProject, checkCanClose = checkCanClose)) {
         return@withDisabledAutoSaveBlocking false
       }
 
@@ -537,13 +535,14 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   /**
-   * The open frame guests that close with [project], before it, so no guest stays open with a released frame.
-   * They close after [project] saved and confirmed its close, so a cancel of that close keeps them open.
-   * An exit closes every project itself, the guests before the owners, see [prepareProjectsForExit].
+   * The open frame guests of [project] that its close asks for a veto. They close with [project], before it, so no guest
+   * stays open with a released frame, see [closeFrameGuests]. A guest whose open is in progress is not asked: its open ends
+   * as cancelled when [project] closes. An exit closes every project itself, the guests before the owners, see
+   * [prepareProjectsForExit].
    */
   private fun frameGuestsToCloseWith(project: Project): List<Project> {
     if (ApplicationManagerEx.getApplicationEx().isExitInProgress) return emptyList()
-    return frameGuestsOf(project).filter { !it.isDisposed }
+    return frameGuestsOf(project).filter { !it.isDisposed && it.frameGuestOpening == null }
   }
 
   /**
@@ -551,19 +550,28 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
    * A guest that is still opening is not asked, as any project that is not open. A guest whose owner asked already is not asked again.
    */
   private fun canCloseWithGuests(project: Project, guests: List<Project>): Boolean {
-    if (project in guestsPastVetoCheck) return true
+    if (project.getUserData(FRAME_GUEST_CLOSE_ASKED_KEY) == true) return true
     return canClose(project) && guests.all { !isProjectOpened(it) || canClose(it) }
   }
 
-  /** Closes [guests] one by one. A guest that stays open stops the close, and the guests closed before it stay closed. */
-  private fun closeFrameGuests(guests: List<Project>, saveProject: Boolean, checkCanClose: Boolean): Boolean {
-    for (guest in guests) {
-      guestsPastVetoCheck.add(guest)
+  /**
+   * Closes the frame guests of [owner] one by one, at the point of no return of its close: [owner] saved and confirmed its
+   * close, so no guest closes for an owner that stays open. A guest whose open is in progress is not closed here: its
+   * allocator ends the open as cancelled, see [FrameGuestOpening.endForOwnerClose], and the open closes the guest on its own.
+   * A guest that finished its open after the veto check is not in [askedGuests], and its own close asks it.
+   * A guest that stays open stops the close, and the guests closed before it stay closed.
+   */
+  private fun closeFrameGuests(owner: Project, askedGuests: List<Project>, saveProject: Boolean, checkCanClose: Boolean): Boolean {
+    if (ApplicationManagerEx.getApplicationEx().isExitInProgress) return true
+    for (guest in frameGuestsOf(owner)) {
+      if (guest.isDisposed || guest.frameGuestOpening?.endForOwnerClose() == true) continue
+      val asked = guest in askedGuests
+      if (asked) guest.putUserData(FRAME_GUEST_CLOSE_ASKED_KEY, true)
       val closed = try {
         closeProject(project = guest, saveProject = saveProject, dispose = true, checkCanClose = checkCanClose)
       }
       finally {
-        guestsPastVetoCheck.remove(guest)
+        if (asked) guest.putUserData(FRAME_GUEST_CLOSE_ASKED_KEY, null)
       }
       if (!closed) return false
     }
@@ -965,6 +973,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
 
       if (unitTestMode) {
+        // a frame guest leaves the record here too; the rest of `failedToOpenProject` has no place in a test
+        frameAllocator.projectNotLoaded(cannotConvertException = null)
         throw e
       }
 
@@ -1408,6 +1418,13 @@ private fun message(e: Throwable): String {
 
 private val LOG = logger<ProjectManagerImpl>()
 
+/**
+ * Set on a frame guest while the close of its owner closes it: the owner close asked the close handlers of the guest
+ * already, see `ProjectManagerImpl.closeProject`. Used under the write-intent lock.
+ */
+private val FRAME_GUEST_CLOSE_ASKED_KEY = Key.create<Boolean>("Project.FrameGuestCloseAsked")
+
+
 private val LISTENERS_IN_PROJECT_KEY = Key.create<MutableList<ProjectManagerListener>>("LISTENERS_IN_PROJECT_KEY")
 private val CLOSE_HANDLER_EP = ExtensionPointName<ProjectCloseHandler>("com.intellij.projectCloseHandler")
 
@@ -1589,6 +1606,10 @@ private class ProjectInitHelper(
 
   fun notifyInit(project: Project) {
     initProjectDeferred.complete(project)
+  }
+
+  override fun cancelOpening(cause: CancellationException) {
+    cs.cancel(cause)
   }
 }
 

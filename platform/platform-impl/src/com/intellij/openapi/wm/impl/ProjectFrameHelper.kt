@@ -33,6 +33,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.IdeGlassPane
@@ -95,6 +96,9 @@ import javax.swing.WindowConstants
 
 private const val INIT_BOUNDS_KEY = "InitBounds"
 
+/** The status text relay of a frame guest while it is in a frame, see [ProjectFrameHelper.joinFrame]. EDT only. */
+private val GUEST_STATUS_CONNECTION_KEY = Key.create<SimpleMessageBusConnection>("ProjectFrameHelper.guestStatusConnection")
+
 private val LOG: Logger
   get() = logger<ProjectFrameHelper>()
 
@@ -116,9 +120,6 @@ abstract class ProjectFrameHelper internal constructor(
   private var fileTitle: String? = null
   private var currentFile: Path? = null
   private var project: Project? = null
-
-  /** The status text relay of each frame guest, see [joinFrame]. EDT only. */
-  private val guestConnections = HashMap<Project, SimpleMessageBusConnection>()
 
   private val glassPane: IdeGlassPaneImpl
   private val frameHeaderHelper: ProjectFrameCustomHeaderHelper
@@ -471,17 +472,18 @@ abstract class ProjectFrameHelper internal constructor(
    */
   @RequiresEdt
   internal open fun joinFrame(guest: Project) {
-    if (guest in guestConnections) return
+    if (isDisposed() || guest.getUserData(GUEST_STATUS_CONNECTION_KEY) != null) return
     val statusBar = statusBar ?: return
     val connection = guest.messageBus.simpleConnect()
     connection.subscribe(StatusBar.Info.TOPIC, statusBar)
-    guestConnections[guest] = connection
+    guest.putUserData(GUEST_STATUS_CONNECTION_KEY, connection)
   }
 
   /** Takes [guest] out of the UI of this frame, see [joinFrame]. */
   @RequiresEdt
   internal open fun leaveFrame(guest: Project) {
-    guestConnections.remove(guest)?.disconnect()
+    guest.getUserData(GUEST_STATUS_CONNECTION_KEY)?.disconnect()
+    guest.putUserData(GUEST_STATUS_CONNECTION_KEY, null)
   }
 
   /** Shows [active], the new active project of this frame, see `WindowManagerEx.setActiveProject`. */
@@ -579,10 +581,6 @@ abstract class ProjectFrameHelper internal constructor(
 
   open fun dispose() {
     coroutineScope.cancel()
-    for (connection in guestConnections.values) {
-      connection.disconnect()
-    }
-    guestConnections.clear()
     MouseGestureManager.getInstance().remove(this)
     balloonLayout?.let {
       balloonLayout = null
