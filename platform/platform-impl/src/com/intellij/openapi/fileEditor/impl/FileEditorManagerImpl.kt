@@ -2565,6 +2565,7 @@ open class FileEditorManagerImpl(
       createdComposites.add(composite)
       composite.preparationVisibleInStatusBar = false
       if (fileEntry.currentInTab || !isLazyComposite) {
+        composite.showPreparationProgress = false
         composite.initDeferred.complete(Unit)
       }
 
