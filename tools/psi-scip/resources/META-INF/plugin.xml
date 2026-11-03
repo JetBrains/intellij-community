@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.tools.psiScip">
+<idea-plugin>
   <id>com.intellij.tools.psiScip</id>
   <name>PSI SCIP Export</name>
   <category>Platform Development</category>
