@@ -28,7 +28,7 @@ import com.intellij.util.SystemProperties
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withTimeoutOrNull
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.TreeSet
@@ -98,6 +98,8 @@ private class ExportOptions(
  * The starter never saves the project or the application settings.
  * Run it with dedicated `idea.config.path` and `idea.system.path`, and on a copy of the project.
  * The exit code is 0 after the index is written, 1 on a failure and 2 on a usage error.
+ * A wait that exceeds its timeout is a failure; the waits use [withTimeoutOrNull],
+ * because the [kotlinx.coroutines.TimeoutCancellationException] of `withTimeout` is a cancellation that the failure handler rethrows.
  */
 internal class PsiScipStarter : ModernApplicationStarter() {
   override val isHeadless: Boolean = true
@@ -244,14 +246,15 @@ private suspend fun openProject(options: ExportOptions): Project {
     }
   }
   log("opening $root")
-  val project = withTimeout(timeoutFromProperty(OPEN_TIMEOUT_PROPERTY, 20.minutes)) {
+  val timeout = timeoutFromProperty(OPEN_TIMEOUT_PROPERTY, 20.minutes)
+  val project = withTimeoutOrNull(timeout) {
     if (root.resolve(".idea").isDirectory()) {
       ProjectManagerEx.getInstanceEx().openProjectAsync(root, task)
     }
     else {
       ProjectUtil.openOrImportAsync(root, task)
-    }
-  } ?: error("the project did not open: $root")
+    } ?: error("the project did not open: $root")
+  } ?: error("the project did not open within $timeout ($OPEN_TIMEOUT_PROPERTY): $root")
   TrustedProjects.setProjectTrusted(project, true)
   // an import can skip the tasks of the open, and the SDK setup is idempotent
   configureSdk(project, options.jdk)
@@ -263,17 +266,18 @@ private suspend fun openProject(options: ExportOptions): Project {
  * An import can give modules JDK names that do not exist yet, so the wait repeats until [configureSdk] registers no new name.
  */
 private suspend fun waitForProject(project: Project, jdkHome: Path) {
-  withTimeout(timeoutFromProperty(SMART_MODE_TIMEOUT_PROPERTY, 120.minutes)) {
+  val timeout = timeoutFromProperty(SMART_MODE_TIMEOUT_PROPERTY, 120.minutes)
+  withTimeoutOrNull(timeout) {
     repeat(3) {
       project.waitForSmartMode()
       log("smart mode; waiting for the project configuration")
       Observation.awaitConfiguration(project) { message -> log("configuration: $message") }
       project.waitForSmartMode()
       if (!configureSdk(project, jdkHome)) {
-        return@withTimeout
+        return@withTimeoutOrNull
       }
     }
-  }
+  } ?: error("smart mode and the project configuration took longer than $timeout ($SMART_MODE_TIMEOUT_PROPERTY)")
 }
 
 /**
