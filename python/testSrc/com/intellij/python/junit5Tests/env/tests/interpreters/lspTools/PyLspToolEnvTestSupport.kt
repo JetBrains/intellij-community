@@ -7,8 +7,11 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspIntegrationProvider
@@ -18,25 +21,32 @@ import com.intellij.platform.lsp.testFramework.awaitDiagnosticsFromLspServer
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.lsp.util.messageIfStringOrEmpty
 import com.intellij.psi.PsiManager
+import com.intellij.python.lsp.core.pyServedModules
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.test.env.junit5.LspToolVersions
 import com.intellij.python.test.env.junit5.installToolPackage
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.jetbrains.python.project.PyProject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.DiagnosticSeverity
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Shared helpers for the end-to-end LSP-tool env tests (Ruff, ty, basedpyright).
+ * Shared helpers for the end-to-end LSP-tool env tests (Ruff, ty, basedpyright, Zuban).
  *
  * These tests deliberately use the real tool executables installed into the test venv, so the
  * whole [com.intellij.python.lsp.core.PyLspToolIntegrationProvider] pipeline is exercised: executable
@@ -104,8 +114,8 @@ private suspend fun readLspErrorDiagnostics(
 }
 
 /**
- * Waits until the client that [findClient] returns holds a diagnostic for [file] that matches [predicate], and returns
- * every matching one.
+ * Waits until the diagnostics for [file] of the client that [findClient] returns satisfy [until], and returns them.
+ * Fails with the last diagnostics after 2 minutes.
  *
  * It waits for the events the way [awaitLspErrorDiagnostics] does. Use it when the project runs more than one
  * client of a tool, because [awaitLspErrorDiagnostics] reads only the first one.
@@ -118,11 +128,11 @@ internal suspend fun awaitLspDiagnostics(
   file: VirtualFile,
   providerClass: Class<out LspIntegrationProvider>,
   findClient: () -> LspClient?,
-  predicate: (Diagnostic) -> Boolean,
-): List<Diagnostic> =
-  withTimeout(2.minutes) {
-    var matching = findClient().diagnosticsOf(file).filter(predicate)
-    while (matching.isEmpty()) {
+  until: (List<Diagnostic>) -> Boolean,
+): List<Diagnostic> {
+  var diagnostics = findClient().diagnosticsOf(file)
+  val reached = withTimeoutOrNull(2.minutes) {
+    while (!until(diagnostics)) {
       try {
         withTimeoutOrNull(LSP_EVENT_WAIT_LIMIT) { awaitDiagnosticsFromLspServer(project, file) }
       }
@@ -131,10 +141,58 @@ internal suspend fun awaitLspDiagnostics(
         assertNoUnexpectedShutdown(project, providerClass, e)
         delay(LSP_EVENT_WAIT_LIMIT)
       }
-      matching = findClient().diagnosticsOf(file).filter(predicate)
+      diagnostics = findClient().diagnosticsOf(file)
     }
-    matching
   }
+  return if (reached != null) diagnostics else fail("The diagnostics of ${file.path} did not reach the expected state: $diagnostics")
+}
+
+/** The running client of [providerClass] that [condition] accepts, or `null`. */
+internal fun runningLspClient(
+  project: Project,
+  providerClass: Class<out LspIntegrationProvider>,
+  condition: (LspClient) -> Boolean = { true },
+): LspClient? =
+  LspClientManager.getInstance(project).getClients(providerClass).firstOrNull { it.state == LspServerState.Running && condition(it) }
+
+/**
+ * Waits until a running client of [providerClass] serves [module] and [condition] holds for it, and returns the client.
+ * Fails with [failure] after 90 seconds.
+ *
+ * A later restart can replace the client, so a caller that waits again later looks the client up again.
+ */
+internal suspend fun awaitLspClientOf(
+  project: Project,
+  providerClass: Class<out LspIntegrationProvider>,
+  module: Module,
+  failure: String,
+  condition: (LspClient) -> Boolean = { true },
+): LspClient {
+  val client = withTimeoutOrNull(90.seconds) {
+    var found: LspClient? = null
+    while (found == null) {
+      found = runningLspClient(project, providerClass) { module in it.pyServedModules && condition(it) }
+      if (found == null) delay(200.milliseconds)
+    }
+    found
+  }
+  return client ?: fail(failure)
+}
+
+/** Whether [client] is the only client of [providerClass] in its project, and serves exactly [modules]. */
+internal fun isOnlyLspServerOf(client: LspClient, providerClass: Class<out LspIntegrationProvider>, modules: Set<Module>): Boolean =
+  client.pyServedModules.toSet() == modules &&
+  LspClientManager.getInstance(client.descriptor.project).getClients(providerClass).size == 1
+
+/** Writes [text] into the file `main.py` of [directory], and checks that the file belongs to [module]. */
+internal suspend fun writeModuleFile(project: Project, directory: Path, module: Module, text: String): VirtualFile {
+  val path = directory.resolve("main.py")
+  withContext(Dispatchers.IO) { path.writeText(text) }
+  val file = checkNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path)) { "$path is not in the VFS" }
+  val owner = readAction { ModuleUtilCore.findModuleForFile(file, project) }
+  assertEquals(module, owner, "$path must belong to module '${module.name}'")
+  return file
+}
 
 private suspend fun LspClient?.diagnosticsOf(file: VirtualFile): List<Diagnostic> {
   val client = this as? LspClientImpl ?: return emptyList()
