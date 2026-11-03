@@ -1954,7 +1954,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     //    ProfilingUtil.captureCPUSnapshot("testing");
     long elapsed = System.currentTimeMillis() - start;
 
-    data.checkResult(file, infos, file.getText());
+    data.checkResult(file, infos, ReadAction.computeBlocking(() -> file.getText()));
     if (data.hasLineMarkers()) {
       Document document = getDocument(getFile());
       data.checkLineMarkers(file, LineMarkersPass.getDisplayedLineMarkers(document, getProject()), document.getText());
