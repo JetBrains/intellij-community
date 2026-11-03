@@ -4,12 +4,15 @@ package org.jetbrains.fir.uast.test
 import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.VfsTestUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinMultiPlatformProjectDescriptor.PlatformDescriptor
+import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
 import org.jetbrains.uast.UCallExpression
+import org.jetbrains.uast.toUElementOfType
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 
@@ -61,21 +64,38 @@ class FirUastMultiplatformResolveTest : KotlinLightMultiplatformCodeInsightFixtu
         )
     }
 
+    fun testImplicitDelegationCallOfSecondaryConstructor() {
+        configureCommonFile("class Sample { constructor() }")
+
+        val delegationCall = PsiTreeUtil.findChildOfType(myFixture.file, KtConstructorDelegationCall::class.java)
+        assertNotNull("No constructor delegation call", delegationCall)
+        val call = delegationCall.toUElementOfType<UCallExpression>()
+        assertNotNull("The constructor delegation call is not converted to UAST", call)
+        checkResolvedMethod(call!!, "the implicit constructor delegation call")
+    }
+
     private fun doTest(@Language("kotlin") fileText: String, @Language("kotlin") callText: String) {
+        configureCommonFile(fileText)
+        val call = myFixture.file.findUElementByTextFromPsi<UCallExpression>(callText)
+        checkResolvedMethod(call, "'$callText'")
+    }
+
+    private fun configureCommonFile(@Language("kotlin") fileText: String) {
         val sourceRoot = PlatformDescriptor.COMMON.sourceRoot() ?: error("No source root for ${PlatformDescriptor.COMMON}")
         val virtualFile = VfsTestUtil.createFile(sourceRoot, "main.kt", fileText)
         myFixture.configureFromExistingVirtualFile(virtualFile)
+    }
 
-        val call = myFixture.file.findUElementByTextFromPsi<UCallExpression>(callText)
+    private fun checkResolvedMethod(call: UCallExpression, callDescription: String) {
         val method = call.resolve()
-        assertNotNull("'$callText' is not resolved", method)
+        assertNotNull("$callDescription is not resolved", method)
         method!!
 
         resolveClassReference(method.returnType)
         for (parameter in method.parameterList.parameters) {
             resolveClassReference(parameter.type)
         }
-        assertNotNull("${method::class.simpleName} for '$callText' has no containing file", method.containingFile)
+        assertNotNull("${method::class.simpleName} for $callDescription has no containing file", method.containingFile)
     }
 
     private fun resolveClassReference(type: PsiType?) {
