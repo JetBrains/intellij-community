@@ -396,7 +396,7 @@ object PyTypeInferenceCspFactory {
       is PyParenthesizedExpression
         -> return findChildCsp(expression.containedExpression)
       is PyKeywordArgument
-        -> return expression.valueExpression
+        -> return findChildCsp(expression.valueExpression)
       else
         -> return expression
     }
