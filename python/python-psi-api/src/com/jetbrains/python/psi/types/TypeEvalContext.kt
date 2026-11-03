@@ -8,10 +8,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.psi.PyCallable
-import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyTypedElement
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ConcurrentMap
 
 abstract class TypeEvalContext protected constructor() {
   @get:ApiStatus.Internal
@@ -53,23 +51,6 @@ abstract class TypeEvalContext protected constructor() {
 
   @ApiStatus.Internal
   abstract fun getVarianceCache(): MutableMap<PyTypeParameterType, PyVariance>
-
-  /**
-   * Whether a class has a method or an attribute of a name, keyed by the class and then by the name and the `inherited` flag.
-   *
-   * The outer map can hold its keys weakly, so the key is the class and not a pair made for one lookup.
-   */
-  @ApiStatus.Internal
-  abstract fun getClassMethodPresenceCache(): ConcurrentMap<PyClass, ConcurrentMap<Pair<String, Boolean>, Boolean>>
-
-  /**
-   * The protocol members and the matching members of a class, keyed by the class of the protocol and then by the pair
-   * of the protocol type and the class type. The two maps are for the reason that [getClassMethodPresenceCache] gives.
-   */
-  @ApiStatus.Internal
-  abstract fun getProtocolMembersCache():
-    ConcurrentMap<PyClass, ConcurrentMap<Pair<PyClassType, PyClassType>, List<Pair<PyTypeMember, List<PyTypeMember>>>>>
-
   abstract fun getKnownType(element: PyTypedElement): PyType?
   abstract fun getKnownReturnType(callable: PyCallable): PyType?
 

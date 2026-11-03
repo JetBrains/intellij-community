@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.util.RecursionManager
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
@@ -138,9 +139,8 @@ object PyABCUtil {
     if (context == null) {
       return computeHasMethod(cls, name, inherited, null)
     }
-    val cache = context.getClassMethodPresenceCache()
-    // Not `computeIfAbsent`: the computation runs type evaluation, which can call this again and deadlock the map
-    val forClass = cache[cls] ?: ConcurrentHashMap<Pair<String, Boolean>, Boolean>().let { cache.putIfAbsent(cls, it) ?: it }
+    // The cached value is an empty map, so the recursion guard below decides which answers it keeps
+    val forClass = PyUtil.getParameterizedCachedValue(cls, context) { ConcurrentHashMap<Pair<String, Boolean>, Boolean>() }
     val question = name to inherited
     forClass[question]?.let { return it }
     val stamp = RecursionManager.markStack()
