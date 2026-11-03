@@ -104,12 +104,21 @@ abstract class FileBasedStorage internal constructor(
     override fun saveLocally(dataWriter: DataWriter, events: MutableList<VFileEvent>?) {
       val lineSeparator = getOrCacheLineSeparator()
 
+      if (events != null && storage.cachedVirtualFile == null) {
+        NioFiles.createDirectories(storage.file.parent)
+      }
       val virtualFile = if (events == null) null else storage.getVirtualFile()
+      val parentVirtualFile = if (events != null && virtualFile == null) {
+        VirtualFileManager.getInstance().findFileByNioPath(storage.file.parent)
+      }
+      else {
+        null
+      }
       writeFile(file = storage.file, requestor = this, dataWriter = dataWriter, lineSeparator = lineSeparator, prependXmlProlog = storage.isUseXmlProlog)
       if (events != null) {
         if (virtualFile == null) {
-          VirtualFileManager.getInstance().refreshAndFindFileByNioPath(storage.file.parent)?.let { dir ->
-            events.add(creationEvent(storage.file, dir))
+          if (parentVirtualFile != null) {
+            events.add(creationEvent(storage.file, parentVirtualFile))
           }
         }
         else {
