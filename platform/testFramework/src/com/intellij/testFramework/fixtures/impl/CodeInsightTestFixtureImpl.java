@@ -1804,6 +1804,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
+      myVirtualFile = copy;
       if (!copy.getFileType().isBinary()) {
         switch (mySelectionAndCaretMarkupApplyPolicy) {
           case UPDATE_FILE_AND_KEEP_DOCUMENT_CLEAN -> {
