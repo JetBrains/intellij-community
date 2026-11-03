@@ -6572,7 +6572,6 @@ c:com.intellij.ui.JBCardLayout
 - first(java.awt.Container):V
 - last(java.awt.Container):V
 - layoutContainer(java.awt.Container):V
-- s:main(java.lang.String[]):V
 - next(java.awt.Container):V
 - previous(java.awt.Container):V
 - removeLayoutComponent(java.awt.Component):V

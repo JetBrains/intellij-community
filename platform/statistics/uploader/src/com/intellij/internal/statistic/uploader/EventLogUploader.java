@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 public final class EventLogUploader {
   private static final int WAIT_FOR_IDE_MS = 2000;
 
-  public static void main(String[] args) {
+  static void main(String[] args) {
     DataCollectorDebugLogger logger = new ExternalDataCollectorLogger();
     ExternalEventsLogger eventsLogger = new ExternalEventsLogger();
     try {
