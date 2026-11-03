@@ -365,7 +365,6 @@
     <orderEntry type="module" module-name="intellij.devkit.kotlin.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.fileChooser.universal.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.multiverse.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.declarativeSync.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.markdown.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.settingsRepository.tests" scope="RUNTIME" />

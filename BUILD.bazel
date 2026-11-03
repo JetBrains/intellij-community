@@ -365,7 +365,6 @@ jvm_library(
         "//platform/platform-impl/presentation-assistant",
         "//platform/platform-impl/tab-in-editor",
         "//plugins/github/plugin",
-        "//plugins/gradle/gradle-declarative-sync:declarativeSync-tests_test_lib",
         "//python:python-community-tests_test_lib",
         "//python/python-markdown:markdown-tests_test_lib",
         "//plugins/settings-repository:settingsRepository-tests_test_lib",

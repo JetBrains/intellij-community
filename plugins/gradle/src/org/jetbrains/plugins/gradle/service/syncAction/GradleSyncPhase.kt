@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncAction
 
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
@@ -82,13 +82,6 @@ sealed interface GradleSyncPhase : Comparable<GradleSyncPhase> {
      */
     @JvmField
     val INITIAL_PHASE: GradleSyncPhase = Static(0, "INITIAL_PHASE")
-
-    /**
-     * In this phase, Gradle sync contributors,
-     * contribute to the IDE project model based on the static Gradle DCL model.
-     */
-    @JvmField
-    val DECLARATIVE_PHASE: GradleSyncPhase = Static(1000, "DECLARATIVE_PHASE")
 
     /**
      * In this phase, Gradle sync contributors provide a base IDE model for Gradle script files
