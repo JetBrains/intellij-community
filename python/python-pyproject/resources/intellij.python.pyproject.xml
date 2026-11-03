@@ -67,6 +67,7 @@
 
   <extensions defaultExtensionNs="Pythonid">
     <pyDependenciesFileProvider implementation="com.intellij.python.pyproject.model.internal.PyProjectTomlFileProvider"/>
+    <interpreterUpdateStep id="sdkGate" order="first" implementation="com.intellij.python.pyproject.model.evolution.PythonInterpreterUpdateGateStep"/>
   </extensions>
 
   <extensionPoints>

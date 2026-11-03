@@ -3,6 +3,7 @@ package com.intellij.python.sdk.backend
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -26,14 +27,18 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.associatedModuleDir
+import com.jetbrains.python.sdk.createSkeletonsRootDirectory
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.isTargetBased
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pySdkAdditionalData
+import com.jetbrains.python.sdk.skeletonsPath
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.IOException
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.isExecutable
 import kotlin.io.path.pathString
 
@@ -83,8 +88,8 @@ fun PythonInterpreter.getSdkAPI(): Sdk = sdk
  *
  * No recorded version means the interpreter was never set up successfully, so it is a failure like the other two, and
  * not a report that the environment is unreachable right now. An interpreter that answered once keeps the version it
- * gave: a probe that cannot reach its target leaves the recorded one alone rather than overwriting it — see
- * `PythonSdkUpdater.updateSdkVersion`. So a Docker or SSH interpreter still states its version while its host is down.
+ * gave: a probe that cannot reach its target leaves the recorded one alone rather than overwriting it, see
+ * [PythonInterpreterProbe]. So a Docker or SSH interpreter still states its version while its host is down.
  *
  * Nothing caches this: it reads a few fields, so computing it again is cheaper than remembering it.
  */
@@ -269,6 +274,28 @@ fun PythonInterpreter.languageLevel(project: Project): LanguageLevel =
   PythonInterpreterDetails.getInstance(project).version(this)?.let { LanguageLevel.getLanguageLevelFromVersionStringStaticSafe(it) }
   ?: LanguageLevel.getDefault()
 
+/** The root of the binary skeletons of this interpreter, on the disk of the IDE, or `null` when it has no home path. */
+@get:Internal
+val PythonInterpreter.skeletonsPath: Path?
+  get() = sdk.skeletonsPath
+
+/**
+ * Makes the skeletons root of this interpreter when it is not there, see [skeletonsPath]. A failure is logged: the
+ * skeletons are optional, and their generation reports its own failure.
+ */
+@Internal
+@RequiresBackgroundThread(generateAssertion = false)
+fun PythonInterpreter.ensureSkeletonsRoot() {
+  val path = skeletonsPath ?: return
+  if (path.exists()) return
+  try {
+    sdk.createSkeletonsRootDirectory()
+  }
+  catch (e: IOException) {
+    logger<PythonInterpreter>().warn("Failed to create skeletons directory $path", e)
+  }
+}
+
 /**
  * Whether the SDK of this interpreter is disposed. The registry can still hold such an interpreter for a moment after
  * the SDK is removed, and its roots and version are then gone.
@@ -278,10 +305,10 @@ val PythonInterpreter.isDisposed: Boolean
 
 /**
  * The class roots of this interpreter in [project]: the directories its `sys.path` holds, the skeletons and the bundled
- * stubs, see [PythonInterpreterDetails.classRoots].
+ * stubs, see [PythonInterpreterRoots.classRoots].
  */
 fun PythonInterpreter.classRoots(project: Project): Array<VirtualFile> =
-  PythonInterpreterDetails.getInstance(project).classRoots(this).toTypedArray()
+  PythonInterpreterRoots.getInstance(project).classRoots(this).toTypedArray()
 
 /**
  * The directory of the generated skeletons of this interpreter in [project], or `null` when it has none: the class root

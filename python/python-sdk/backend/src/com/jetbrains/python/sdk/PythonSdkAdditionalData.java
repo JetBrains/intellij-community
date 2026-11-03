@@ -16,10 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.jetbrains.python.PyInternalExecApi;
-import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData;
 import com.jetbrains.python.sdk.flavors.PyFlavorData;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -31,7 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -64,9 +62,14 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private static final @NonNls String FLAVOR_DATA = "FLAVOR_DATA";
   private static final Path EMPTY_WORKING_DIRECTORY = Path.of("");
 
-  private final VirtualFilePointerContainer myAddedPaths;
-  private final VirtualFilePointerContainer myExcludedPaths;
-  private final VirtualFilePointerContainer myPathsToTransfer;
+  /**
+   * The URLs of the paths that the user added, that the user excluded, and that move to the module. They are URLs, and
+   * not pointers: the bridge of an SDK builds a new copy of this data at each reload, and nothing disposes the old one,
+   * so a pointer would outlive it. A reader resolves a URL to its file, see {@link #getAddedPathFiles()}.
+   */
+  private final List<String> myAddedPaths = new ArrayList<>();
+  private final List<String> myExcludedPaths = new ArrayList<>();
+  private final List<String> myPathsToTransfer = new ArrayList<>();
   private @NotNull UUID myUUID = UUID.randomUUID();
 
   private PyFlavorAndData<?, ?> myFlavorAndData;
@@ -90,9 +93,6 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   @ApiStatus.Internal
   public PythonSdkAdditionalData(@Nullable PyFlavorAndData<?, ?> flavorAndData) {
     myFlavorAndData = (flavorAndData != null ? flavorAndData : UNKNOWN_DATA);
-    myAddedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
-    myExcludedPaths = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
-    myPathsToTransfer = VirtualFilePointerManager.getInstance().createContainer(PythonPluginDisposable.getInstance());
   }
 
   public PythonSdkAdditionalData(@Nullable PyFlavorAndData<?, ?> flavorAndData, @NotNull Path workingDirectory) {
@@ -121,39 +121,37 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   public final void setAddedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
-    myAddedPaths.clear();
-    for (VirtualFile file : addedPaths) {
-      myAddedPaths.add(file);
-    }
+    setUrls(myAddedPaths, addedPaths);
   }
 
   /** Sets the paths added by the user from their URLs, which need not exist yet. */
   @ApiStatus.Internal
   public final void setAddedPathsFromUrls(@NotNull List<String> urls) {
     myAddedPaths.clear();
-    urls.forEach(myAddedPaths::add);
+    collectPaths(urls, myAddedPaths);
   }
 
   /** Sets the paths excluded by the user from their URLs, which need not exist yet. */
   @ApiStatus.Internal
   public final void setExcludedPathsFromUrls(@NotNull List<String> urls) {
     myExcludedPaths.clear();
-    urls.forEach(myExcludedPaths::add);
+    collectPaths(urls, myExcludedPaths);
   }
 
   @ApiStatus.Internal
   public final void setExcludedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
-    myExcludedPaths.clear();
-    for (VirtualFile file : addedPaths) {
-      myExcludedPaths.add(file);
-    }
+    setUrls(myExcludedPaths, addedPaths);
   }
 
   @ApiStatus.Internal
   public final void setPathsToTransferFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
-    myPathsToTransfer.clear();
-    for (VirtualFile file : addedPaths) {
-      myPathsToTransfer.add(file);
+    setUrls(myPathsToTransfer, addedPaths);
+  }
+
+  private static void setUrls(@NotNull List<String> urls, @NotNull Collection<VirtualFile> files) {
+    urls.clear();
+    for (VirtualFile file : files) {
+      if (!urls.contains(file.getUrl())) urls.add(file.getUrl());
     }
   }
 
@@ -256,8 +254,8 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     JDOMExternalizer.write(rootElement, FLAVOR_DATA, myGson.toJson(myFlavorAndData.getData(), myFlavorAndData.getDataClass()));
   }
 
-  private static void savePaths(Element rootElement, VirtualFilePointerContainer paths, String root, String element) {
-    for (String addedPath : paths.getUrls()) {
+  private static void savePaths(Element rootElement, List<String> paths, String root, String element) {
+    for (String addedPath : paths) {
       final Element child = new Element(root);
       child.setAttribute(element, addedPath);
       rootElement.addContent(child);
@@ -436,12 +434,12 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   private record FlavorMigrationResult(@Nullable Path workingDirectory, boolean changed) {
   }
 
-  private static void collectPaths(@NotNull List<String> paths, VirtualFilePointerContainer container) {
+  private static void collectPaths(@NotNull List<String> paths, @NotNull List<String> urls) {
     for (String path : paths) {
       if (StringUtil.isEmpty(path)) continue;
       final String protocol = VirtualFileManager.extractProtocol(path);
       final String url = protocol != null ? path : VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, path);
-      container.add(url);
+      if (!urls.contains(url)) urls.add(url);
     }
   }
 
@@ -466,9 +464,14 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     return getPathsAsVirtualFiles(myPathsToTransfer);
   }
 
-  private static Set<VirtualFile> getPathsAsVirtualFiles(VirtualFilePointerContainer paths) {
+  /** The files of {@code urls}. A URL that names no file is left out. */
+  private static Set<VirtualFile> getPathsAsVirtualFiles(List<String> urls) {
     Set<VirtualFile> ret = new LinkedHashSet<>();
-    Collections.addAll(ret, paths.getFiles());
+    final VirtualFileManager manager = VirtualFileManager.getInstance();
+    for (String url : urls) {
+      final VirtualFile file = manager.findFileByUrl(url);
+      if (file != null) ret.add(file);
+    }
     return ret;
   }
 

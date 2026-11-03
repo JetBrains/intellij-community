@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
@@ -57,7 +56,8 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
 
   /**
    * Holds [sdk] as the SDK of [key], and stores its record. An SDK held before for [key] is disposed. The data of [sdk]
-   * must name the owner directory of [key], so that the interpreter built from it has [key].
+   * must name the owner directory of [key], so that the interpreter built from it has [key]. The record keeps its facts
+   * when [sdk] is the SDK held before, and takes them from [sdk] otherwise, see [recordOf].
    *
    * One SDK is one interpreter. When the data of [sdk] changed its ref, the key it had before goes with its record.
    */
@@ -67,8 +67,10 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
       sdks.remove(oldKey)
       store.remove(oldKey)
     }
-    sdks.put(key, sdk)?.takeIf { it !== sdk }?.let(::dispose)
-    store.put(key, recordOf(key, sdk))
+    val previous = sdks.put(key, sdk)
+    previous?.takeIf { it !== sdk }?.let(::dispose)
+    // The facts of the record are of the SDK held before. Another SDK, such as a new SDK for the same key, brings its own.
+    store.put(key, recordOf(key, sdk, store.recordOf(key).takeIf { previous === sdk }))
   }
 
   /** Drops the SDK and the record of [key]. The caller disposes the SDK, see [dispose], when no reader holds it. */
@@ -82,10 +84,14 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
     if (sdk is Disposable && sdks.values.none { it === sdk }) Disposer.dispose(sdk)
   }
 
-  /** Stores the record of [sdk] again, after a commit of it. Does nothing for an SDK that this service does not hold. */
+  /**
+   * Stores the data of [sdk] in its record again, after a commit of it, see [recordOf]. The facts of the record stay: the
+   * SDK holds none. Does nothing for an SDK that this service does not hold.
+   */
   fun sdkChanged(sdk: Sdk) {
     val key = keyOf(sdk) ?: return
-    PythonInterpreterRecords.getInstance(project).put(key, recordOf(key, sdk))
+    val store = PythonInterpreterRecords.getInstance(project)
+    store.put(key, recordOf(key, sdk, store.recordOf(key)))
   }
 
   override fun dispose() {
@@ -97,19 +103,6 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
   companion object {
     @JvmStatic
     fun getInstance(project: Project): PythonInterpreterSdks = project.service()
-
-    /**
-     * The `sys.path` of [sdk] that the SDK updater read last, or `null` before the first update. The store saves it,
-     * see [PythonInterpreterRecords.StoredInterpreter.sysPath].
-     */
-    @JvmStatic
-    fun sysPathOf(sdk: Sdk): List<String>? = sdk.getUserData(SYS_PATH_KEY)
-
-    /** Records [sysPath] as the `sys.path` of [sdk], see [sysPathOf]. The SDK updater calls it. */
-    @JvmStatic
-    fun setSysPath(sdk: Sdk, sysPath: List<String>) {
-      sdk.putUserData(SYS_PATH_KEY, sysPath.toList())
-    }
 
     /** [sdkChanged] in every open project, for a writer that has no project, such as the SDK updater. */
     @JvmStatic
@@ -139,31 +132,43 @@ class PythonInterpreterSdks(private val project: Project) : Disposable {
       }
     }
 
-    /** The `sys.path` that the record of [sdk] saves, see [recordOf]. */
+    /** The `sys.path` that a new record of [sdk] saves, see [recordOf]. */
     @TestOnly
     @JvmStatic
-    fun recordedSysPathForTests(sdk: Sdk): List<String> = sysPathOf(sdk) ?: sysPathOfRoots(sdk)
-
-    private val SYS_PATH_KEY = Key.create<List<String>>("python.interpreter.sysPath")
+    fun recordedSysPathForTests(sdk: Sdk): List<String> = sysPathOfRoots(sdk)
   }
 }
 
 /**
- * The record of [sdk], the SDK of [key]: what its ref cannot give, see [PythonInterpreterRecords]. An SDK without a
- * `sys.path`, such as an SDK of the SDK table that the migration imports, gives the one its roots state, see
- * [sysPathOfRoots].
+ * The record of [sdk], the SDK of [key]: what its ref cannot give, see [PythonInterpreterRecords]. The facts, see
+ * [PythonInterpreterFacts], come from [existing], the record that the store holds: the SDK holds no facts. A new record,
+ * such as one of an SDK of the SDK table that the migration imports, takes them once from the SDK: its version, and the
+ * `sys.path` and the bundled stub packages that its roots state, see [sysPathOfRoots].
  */
-internal fun recordOf(key: PythonInterpreterKey, sdk: Sdk): PythonInterpreterRecords.StoredInterpreter =
+internal fun recordOf(
+  key: PythonInterpreterKey,
+  sdk: Sdk,
+  existing: PythonInterpreterRecords.StoredInterpreter? = null,
+): PythonInterpreterRecords.StoredInterpreter =
   PythonInterpreterRecords.StoredInterpreter().apply {
     ownerDir = key.ownerDir.toString()
     ref = key.ref.toString()
-    version = sdk.versionString
-    sysPath += PythonInterpreterSdks.sysPathOf(sdk) ?: sysPathOfRoots(sdk)
-    val data = sdk.sdkAdditionalData as? PythonSdkAdditionalData ?: return@apply
+    val data = sdk.sdkAdditionalData as? PythonSdkAdditionalData
+    if (existing != null) {
+      version = existing.version
+      sysPath += existing.sysPath
+      addedPaths += existing.addedPaths
+      excludedPaths += existing.excludedPaths
+    }
+    else {
+      version = sdk.versionString
+      sysPath += sysPathOfRoots(sdk)
+      addedPaths += data?.addedPathFiles.orEmpty().map { it.url }
+      excludedPaths += data?.excludedPathFiles.orEmpty().map { it.url }
+    }
+    if (data == null) return@apply
     uuid = data.uuid.toString()
     requirementsFile = data.requirementsFile
-    addedPaths += data.addedPathFiles.map { it.url }
-    excludedPaths += data.excludedPathFiles.map { it.url }
     if (data is PyTargetAwareAdditionalData) {
       pathMappings += data.pathMappings.pathMappings.map { mapping ->
         PythonInterpreterRecords.StoredPathMapping().apply {
@@ -175,8 +180,9 @@ internal fun recordOf(key: PythonInterpreterKey, sdk: Sdk): PythonInterpreterRec
   }
 
 /**
- * Gives [data], the SDK data that the ref built, what [record] saved for it. The version and the `sys.path` belong to
- * the SDK, see [applySdkFields].
+ * Gives [data], the SDK data that the ref built, what [record] saved for it. The facts stay in the record, see
+ * [PythonInterpreterFacts]. The SDK gets a copy of the user paths, for the code that reads them from an SDK, such as the
+ * `PYTHONPATH` of a run. Nothing reads them back from it.
  */
 internal fun applyRecord(data: PythonSdkAdditionalData, record: PythonInterpreterRecords.StoredInterpreter) {
   record.uuid.takeIf { it.isNotEmpty() }?.let { data.uuid = UUID.fromString(it) }
@@ -188,18 +194,13 @@ internal fun applyRecord(data: PythonSdkAdditionalData, record: PythonInterprete
   }
 }
 
-/** Gives [sdk] the version and the `sys.path` that [record] saved. */
-internal fun applySdkFields(sdk: Sdk, record: PythonInterpreterRecords.StoredInterpreter) {
-  if (record.sysPath.isNotEmpty()) PythonInterpreterSdks.setSysPath(sdk, record.sysPath)
-}
-
 /**
  * The `sys.path` that the roots of [sdk] state, for an SDK that the updater wrote in the legacy flow: the class roots
  * that come from `sys.path`, and the paths that were transferred to the module. The skeletons, the bundled stubs and the
  * added paths are not on `sys.path`, so they are left out. The order is the one of the class roots, and the transferred
  * paths go last. The next update reads the real `sys.path` again.
  */
-private fun sysPathOfRoots(sdk: Sdk): List<String> {
+internal fun sysPathOfRoots(sdk: Sdk): List<String> {
   val data = sdk.sdkAdditionalData as? PythonSdkAdditionalData
   val added = data?.addedPathFiles.orEmpty()
   val skeletons = PythonSdkUtil.getSkeletonsRootPath(PathManager.getSystemPath()).let(FileUtil::toSystemIndependentName)

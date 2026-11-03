@@ -27,8 +27,7 @@ import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.python.sdk.backend.PY_INTERPRETER_LIBRARY_KIND_ID
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
-import com.intellij.python.sdk.backend.PythonInterpreterDetails
-import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.classRoots
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
@@ -42,7 +41,7 @@ import org.jetbrains.annotations.TestOnly
 
 /**
  * The source of the interpreter libraries, see [PyInterpreterLibraryName], and of the source roots that a module gets
- * from the `sys.path` of its interpreter, see [PythonInterpreterDetails.sourceRoots]. It is no file, so the workspace
+ * from the `sys.path` of its interpreter, see [PythonInterpreterRoots.sourceRoots]. It is no file, so the workspace
  * model never saves them: no `.iml` stores these roots, they hold local paths, and live only in the cache of this
  * machine. [PyInterpreterLibrarySync] builds them again from the interpreters.
  */
@@ -50,7 +49,7 @@ internal object PyInterpreterLibraryEntitySource : EntitySource
 
 /**
  * Builds the interpreter library of each Python project, and the source roots that its module gets from the `sys.path`
- * of the interpreter, see [PythonInterpreterDetails.sourceRoots].
+ * of the interpreter, see [PythonInterpreterRoots.sourceRoots].
  *
  * A module stores only the name of its interpreter library. The library itself holds the roots of the interpreter, and
  * is not stored, see [PyInterpreterLibraryEntitySource]. So this service builds it again. [EvoPyProjectModel] calls
@@ -64,8 +63,8 @@ internal object PyInterpreterLibraryEntitySource : EntitySource
 class PyInterpreterLibrarySync(private val project: Project, private val scope: CoroutineScope) {
   internal fun start() {
     scope.launch {
-      // The SDK updater writes the new roots of an interpreter, which no snapshot reports.
-      PythonInterpreterDetails.getInstance(project).changes
+      // The roots of an interpreter change with its facts and its contributors, which no snapshot reports.
+      PythonInterpreterRoots.getInstance(project).changes
         .conflate()
         .collect { sync(EvoPyProjectModel.getInstance(project).snapshotOrNull()?.evoPyProjects ?: return@collect) }
     }
@@ -113,14 +112,14 @@ class PyInterpreterLibrarySync(private val project: Project, private val scope: 
    */
   private suspend fun syncSourceRoots(evoPyProjects: Sequence<EvoPyProject>) {
     val workspaceModel = project.workspaceModel
-    // Only the SDK updater writes source roots. Without it there are none, and a closing project creates no service.
-    val roots = project.serviceIfCreated<PythonInterpreterDetails>()
+    // A closing project creates no service.
+    val roots = project.serviceIfCreated<PythonInterpreterRoots>()
     val storage = workspaceModel.currentSnapshot
     val wanted = mutableMapOf<ModuleId, Set<String>>()
     for (evoPyProject in evoPyProjects) {
       val interpreter = evoPyProject.interpreter ?: continue
       val module = evoPyProject.pyProject.residesOnModule.findModuleEntity(storage) ?: continue
-      val sourceRoots = roots?.sourceRoots(PythonInterpreterKey(interpreter.ownerDir, interpreter.ref)).orEmpty()
+      val sourceRoots = roots?.sourceRoots(interpreter).orEmpty()
       if (sourceRoots.isNotEmpty()) wanted[module.symbolicId] = sourceRoots.mapTo(LinkedHashSet()) { it.url }
     }
     if (currentSourceRoots(storage) == plannedSourceRoots(storage, wanted).mapValues { (_, planned) -> planned.keys }) return
@@ -204,7 +203,7 @@ private val JAVA_SOURCE_ROOT_TYPE: SourceRootTypeId = SourceRootTypeId("java-sou
 
 /**
  * The URLs of the source roots that [module] has from the `sys.path` of its interpreter, see
- * [PythonInterpreterDetails.sourceRoots]. No `.iml` stores them, so the Project Structure page shows them, but does not let
+ * [PythonInterpreterRoots.sourceRoots]. No `.iml` stores them, so the Project Structure page shows them, but does not let
  * the user change them: the next sync would give them back.
  */
 @ApiStatus.Internal

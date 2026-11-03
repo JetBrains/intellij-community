@@ -68,12 +68,28 @@
     <extensionPoint qualifiedName="Pythonid.pythonEnvironmentProvider"
                     interface="com.intellij.python.sdk.backend.PythonEnvironmentProvider"
                     dynamic="true"/>
+    <!-- The steps of an environment update, in their order: they run once for an environment of several projects. -->
+    <extensionPoint qualifiedName="Pythonid.environmentUpdateStep"
+                    interface="com.intellij.python.sdk.backend.PythonEnvironmentStep"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.interpreterRootsContributor"
+                    interface="com.intellij.python.sdk.backend.PythonInterpreterRootsContributor"
+                    dynamic="true"/>
+    <!-- The steps of an interpreter update in a project, in their order. -->
+    <extensionPoint qualifiedName="Pythonid.interpreterUpdateStep"
+                    interface="com.intellij.python.sdk.backend.PythonInterpreterUpdateStep"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.targetSupportsFilter"
                     interface="com.jetbrains.python.sdk.filter.TargetSupportsFilterExtension"
                     dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="Pythonid">
+    <environmentUpdateStep id="probe" order="first" implementation="com.intellij.python.sdk.backend.PythonEnvironmentProbeStep"/>
+    <interpreterUpdateStep id="probe" order="after sdkGate" implementation="com.intellij.python.sdk.backend.PythonInterpreterFactsStep"/>
+    <interpreterRootsContributor id="skeletons" order="first" implementation="com.intellij.python.sdk.backend.PythonInterpreterSkeletonRoots"/>
+    <interpreterRootsContributor id="typeshedStdlib" order="after skeletons" implementation="com.intellij.python.sdk.backend.PythonInterpreterTypeshedStdlibRoots"/>
+    <interpreterUpdateStep id="environmentBackground" order="after probe" implementation="com.intellij.python.sdk.backend.PythonInterpreterBackgroundFactsStep"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor"/>
     <pythonSdkFlavor implementation="com.jetbrains.python.sdk.flavors.WinPythonSdkFlavor"/>
