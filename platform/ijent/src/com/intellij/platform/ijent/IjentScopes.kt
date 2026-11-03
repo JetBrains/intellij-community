@@ -321,7 +321,7 @@ class IjentScope internal constructor(
     }
 
     /** The scope fails because of a symptom, and the resolver waits for a root cause. */
-    class Destroying(override val exitReasonAwaiter: CompletableDeferred<Exception>) : Pending {
+    class Destroying(override val exitReasonAwaiter: CompletableDeferred<Exception>, val symptom: Exception) : Pending {
       override fun toString(): String = "destroying"
     }
 
@@ -400,10 +400,9 @@ class IjentScope internal constructor(
   }
 
   /**
-   * Awaits the canonical exit reason for at most [timeout].
+   * Awaits the canonical exit reason for at most [timeout]. If the resolver still waits, returns the first symptom instead.
    *
-   * Returns `null` if the reason has not been resolved within the bound, so boundary code can fall back to its
-   * default behavior without blocking indefinitely.
+   * Returns `null` if neither an exit reason nor a symptom is known within the bound.
    *
    * Returns `null` immediately if the IJent scope is not shutting down.
    * The scope shuts down when it is not active, or when [destroy] was called.
@@ -431,7 +430,11 @@ class IjentScope internal constructor(
     val exitReason = when (val current = state.get()) {
       is State.Destroyed -> current.exitReason
       is State.Active if (s.coroutineContext.job.isActive) -> null
-      is State.Pending -> awaitExitReason(timeout, callerJob)
+      is State.Pending -> awaitExitReason(timeout, callerJob) ?: when (val latest = state.get()) {
+        is State.Active -> null
+        is State.Destroying -> latest.symptom
+        is State.Destroyed -> latest.exitReason
+      }
     }
     return when (exitReason) {
       null -> null
@@ -629,7 +632,7 @@ class IjentScope internal constructor(
     while (true) {
       when (val current = state.get()) {
         is State.Active -> {
-          if (state.compareAndSet(current, State.Destroying(current.exitReasonAwaiter))) {
+          if (state.compareAndSet(current, State.Destroying(current.exitReasonAwaiter, err))) {
             break
           }
         }
