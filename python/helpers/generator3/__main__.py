@@ -71,6 +71,13 @@ def parse_args(gen_version):
         help='Limit generation only to the modules in `sys.builtin_module_names`.'
     )
     parser.add_argument(
+        '--stdlib-stubs', metavar='NAME_LIST',
+        type=(lambda s: set(filter(None, s.split(',')))), default=None,
+        help='Comma-separated names of the top-level standard library modules that have stubs in the IDE. '
+             'The generator skips the built-in modules and the binary modules of the standard library '
+             'with these names, and deletes their skeletons.'
+    )
+    parser.add_argument(
         '--state-file', metavar='PATH',
         type=argparse.FileType('rb'),
         help='Path to the input ".state.json" file. If "-", the file is passed via '
@@ -162,7 +169,8 @@ def main():
                 else:
                     generator.discover_and_process_all_modules(
                         name_pattern=args.name_pattern,
-                        builtins_only=args.builtins_only
+                        builtins_only=args.builtins_only,
+                        stdlib_stubs=args.stdlib_stubs,
                     )
 
         finally:

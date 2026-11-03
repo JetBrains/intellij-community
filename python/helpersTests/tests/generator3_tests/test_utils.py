@@ -86,3 +86,17 @@ class MiscellaneousUtilTest(TestCase):
 
         self.assertEqual(2, compute(2))
         self.assertEqual(1, computation_count[2])
+
+
+class StdlibBinaryTest(TestCase):
+    def test_binary_module_in_stdlib(self):
+        from generator3.core import is_stdlib_binary
+
+        # The tests run in a virtual environment, so this also checks that the base interpreter is used
+        self.assertTrue(is_stdlib_binary(os.path.join(os.path.dirname(os.__file__), 'lib-dynload', 'mod.so')))
+
+    def test_binary_module_in_site_packages(self):
+        import sysconfig
+        from generator3.core import is_stdlib_binary
+
+        self.assertFalse(is_stdlib_binary(os.path.join(sysconfig.get_paths()['platlib'], 'pkg', 'mod.so')))

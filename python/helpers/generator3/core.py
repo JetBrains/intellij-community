@@ -138,6 +138,31 @@ def has_own_stub(roots, dir_path, short_mod_name, qname):
     return False
 
 
+@cached
+def stdlib_dirs():
+    # type: () -> List[str]
+    import sysconfig
+    # A virtualenv before version 20 gives the base interpreter only in "sys.real_prefix"
+    base_prefix = getattr(sys, 'real_prefix', None) or getattr(sys, 'base_prefix', sys.prefix)
+    base_exec_prefix = getattr(sys, 'real_prefix', None) or getattr(sys, 'base_exec_prefix', sys.exec_prefix)
+    # In a virtual environment, the default paths of sysconfig point into the environment
+    paths = sysconfig.get_paths(vars={'base': base_prefix, 'installed_base': base_prefix,
+                                      'platbase': base_exec_prefix, 'installed_platbase': base_exec_prefix})
+    dirs = [os.path.dirname(os.__file__), paths.get('stdlib'), paths.get('platstdlib'),
+            # Binary modules of the standard library on Windows
+            os.path.join(base_exec_prefix, 'DLLs')]
+    return sorted(set(os.path.normcase(os.path.realpath(d)) for d in dirs if d))
+
+
+def is_stdlib_binary(path):
+    # type: (str) -> bool
+    path = os.path.normcase(os.path.realpath(path))
+    parts = path.split(os.sep)
+    if 'site-packages' in parts or 'dist-packages' in parts:
+        return False
+    return any(path.startswith(d + os.sep) for d in stdlib_dirs())
+
+
 def is_module(d, root):
     return (os.path.exists(os.path.join(root, d, "__init__.py")) or
             os.path.exists(os.path.join(root, d, "__init__.pyc")) or
@@ -471,7 +496,11 @@ class SkeletonGenerator(object):
     def shutdown(self):
         self.executor.shutdown()
 
-    def discover_and_process_all_modules(self, name_pattern=None, builtins_only=False):
+    def discover_and_process_all_modules(self,
+                                         name_pattern=None,
+                                         builtins_only=False,
+                                         stdlib_stubs=None):
+        # type: (Optional[str], bool, Optional[Set[str]]) -> None
         if name_pattern is None:
             name_pattern = '*'
 
@@ -481,9 +510,18 @@ class SkeletonGenerator(object):
             progress("Discovering binary modules...")
             all_modules.extend(sorted(self.discover_binary_modules(), key=(lambda b: b.qname)))
 
+        def has_stdlib_stub(mod):
+            # type: (BinaryModule) -> bool
+            return mod.qname in stdlib_stubs and (mod.path is None or is_stdlib_binary(mod.path))
+
+        modules_with_stubs = list(self.modules_with_own_stubs)
+        if stdlib_stubs:
+            modules_with_stubs.extend(m for m in all_modules if has_stdlib_stub(m))
+            all_modules = [m for m in all_modules if not has_stdlib_stub(m)]
+
         matching_modules = [m for m in all_modules if fnmatch.fnmatchcase(m.qname, name_pattern)]
 
-        for mod in self.modules_with_own_stubs:
+        for mod in modules_with_stubs:
             if fnmatch.fnmatchcase(mod.qname, name_pattern):
                 self.delete_skeleton(mod.qname)
 
