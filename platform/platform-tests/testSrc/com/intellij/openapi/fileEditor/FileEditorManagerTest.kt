@@ -639,9 +639,8 @@ class FileEditorManagerTest {
     }
   }
 
-  @ParameterizedTest
-  @ValueSource(booleans = [false, true])
-  fun testRestoredCharsetReadStartsAfterSkeleton(cancel: Boolean): Unit = timeoutRunBlocking {
+  @Test
+  fun testRestoredCharsetReadStartsAfterSkeleton(): Unit = timeoutRunBlocking {
     val started = CompletableDeferred<Unit>()
     val release = CountDownLatch(1)
     val file = object : BinaryLightVirtualFile("charset.txt", PlainTextFileType.INSTANCE, "text".toByteArray()) {
@@ -663,7 +662,6 @@ class FileEditorManagerTest {
         return if (fileEntry.url == file.url) file else adapter.getFile(fileEntry, virtualFileManager, project)
       }
     }, disposable)
-    val progress = captureFilePreparation(file, expectedVisibleInStatusBar = false)
     val state = EditorSplitterState(JDOMUtil.load("""
       <component>
         <leaf>
@@ -677,17 +675,11 @@ class FileEditorManagerTest {
       val composite = withContext(Dispatchers.EDT) {
         assertThatNotNull(manager.getComposite(file)).also { assertThat(it.isAvailable()).isFalse() }
       }
-      assertThat(progress.started.await().isActive).isTrue()
-      if (cancel) {
-        progress.started.await().cancel()
-        composite.availableJob.join()
-      }
       release.countDown()
       composite.availableJob.join()
       withContext(Dispatchers.EDT) {
-        assertThat(manager.isFileOpen(file)).isEqualTo(!cancel)
-        assertThat(composite.isDisposed()).isEqualTo(cancel)
-        if (!cancel) assertThat(composite.allEditors).hasSize(1)
+        assertThat(manager.isFileOpen(file)).isTrue()
+        assertThat(composite.allEditors).hasSize(1)
       }
     }
     finally {

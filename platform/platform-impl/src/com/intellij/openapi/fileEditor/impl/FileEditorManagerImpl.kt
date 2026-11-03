@@ -2620,6 +2620,7 @@ open class FileEditorManagerImpl(
         composite.preparationVisibleInStatusBar = false
         val isInitializedNow = fileEntry.currentInTab || !isLazyComposite
         if (isInitializedNow) {
+          composite.showPreparationProgress = false
           composite.initDeferred.complete(Unit)
         }
 
