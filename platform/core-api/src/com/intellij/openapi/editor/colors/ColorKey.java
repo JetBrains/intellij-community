@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -63,14 +62,11 @@ public final class ColorKey implements Comparable<ColorKey> {
   }
 
   public static @NotNull ColorKey createColorKeyWithFallback(@NonNls @NotNull String externalName, @Nullable ColorKey fallbackColorKey) {
-    ColorKey existing = ourRegistry.get(externalName);
-    if (existing != null) {
-      if (Comparing.equal(existing.getFallbackColorKey(), fallbackColorKey)) return existing;
-      // some crazy life cycle assumes we can overwrite color
-      ourRegistry.remove(externalName, existing);
-    }
-    ColorKey newKey = new ColorKey(externalName, existing == null ? null : existing.getDefaultColor(), fallbackColorKey);
-    ColorKey res = ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, newKey);
+    // some crazy life cycle assumes we can overwrite color; the replacement is atomic, see createColorKey(String, Color)
+    ColorKey res = ourRegistry.compute(externalName, (name, existing) -> {
+      if (existing != null && Comparing.equal(existing.getFallbackColorKey(), fallbackColorKey)) return existing;
+      return new ColorKey(name, existing == null ? null : existing.getDefaultColor(), fallbackColorKey);
+    });
 
     if (fallbackColorKey != null) {
       JBIterable<ColorKey> it = JBIterable.generate(fallbackColorKey, o -> o == res ? null : o.myFallbackColorKey);
@@ -84,15 +80,13 @@ public final class ColorKey implements Comparable<ColorKey> {
   }
 
   public static @NotNull ColorKey createColorKey(@NonNls @NotNull String externalName, @Nullable Color defaultColor) {
-    ColorKey existing = ourRegistry.get(externalName);
-    if (existing != null) {
-      if (Comparing.equal(existing.getDefaultColor(), defaultColor)) return existing;
-      // some crazy life cycle assumes we should overwrite default color
-      // (e.g. when read from external schema HintUtil.INFORMATION_COLOR_KEY with null color, then try to re-create it with not-null color in HintUtil initializer)
-      ourRegistry.remove(externalName, existing);
-    }
-    ColorKey newKey = new ColorKey(externalName, defaultColor, existing == null ? null : existing.getFallbackColorKey());
-    return ConcurrencyUtil.cacheOrGet(ourRegistry, externalName, newKey);
+    // some crazy life cycle assumes we should overwrite default color
+    // (e.g. when read from external schema HintUtil.INFORMATION_COLOR_KEY with null color, then try to re-create it with not-null color in HintUtil initializer).
+    // The replacement is atomic: a concurrent find() between a remove and a put would leave the key without its default color.
+    return ourRegistry.compute(externalName, (name, existing) -> {
+      if (existing != null && Comparing.equal(existing.getDefaultColor(), defaultColor)) return existing;
+      return new ColorKey(name, defaultColor, existing == null ? null : existing.getFallbackColorKey());
+    });
   }
 
   @Override
