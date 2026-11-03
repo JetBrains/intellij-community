@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JButton
 import javax.swing.JPanel
@@ -28,5 +29,7 @@ internal class ProjectJdkConfigurableUi {
         .component
       editButton = button(ApplicationBundle.message("button.edit")) {}.component
     }
+  }.apply {
+    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, jdkComboBox)
   }
 }
