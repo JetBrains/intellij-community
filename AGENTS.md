@@ -49,7 +49,7 @@ Branch Deck is optional. First check for the `branch-deck` skill: the skill list
 
 ## Tools
 
-Search the repository with `./tools/accio.cmd`, not with the `search_*` tools of an IDE MCP server. It answers from the working tree of the current checkout, a lease included. An answer that is not `exact` and `complete` is a lead: read the code it points to. For a log, build output, or a path outside the repository, use `./tools/rg.cmd` or `./tools/fd.cmd`. The `Glob` and `Grep` tools, `find`, a recursive `grep`, and `git grep` are denied. A rename or a move is a search too: `accio locate '<regex>' --mode regex --files` lists the files to change.
+Search the repository with `./tools/accio.cmd`, not with the `search_*` tools of an IDE MCP server. It answers from the working tree of the current checkout, a lease included. An answer that is not `exact` and `complete` is a lead: read the code it points to. Do not cut or filter the output of a search with `head`, `tail`, `grep`, `sed`, `awk`, `cut` or a similar tool. A cut output cannot prove that a match does not exist. For a log, build output, or a path outside the repository, use `./tools/rg.cmd` or `./tools/fd.cmd`. The `Glob` and `Grep` tools, `find`, a recursive `grep`, and `git grep` are denied. A rename or a move is a search too: `accio locate '<regex>' --mode regex --files` lists the files to change.
 
 When JetBrains MCP is available, check the changed files with `lint_files` and fix the warnings of your change, and use `rename_refactoring` instead of a search and replace. An IDE answers from the project that it has open, not from a lease.
 

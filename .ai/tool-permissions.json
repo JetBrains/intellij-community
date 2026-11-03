@@ -16,7 +16,7 @@
     "mean dropping those commands outright, which prompts on every `out/` and `idea.log` read.",
     "",
     "Each harness matches every stage of a pipeline independently, which is why the read-only",
-    "filters at the end of `allow` are listed at all: without them `rg.cmd x | head -5` prompts.",
+    "filters at the end of `allow` are listed at all: without them `git log | head -5` prompts.",
     "",
     "`deny` wins over `allow` in both harnesses and is the load-bearing half: it also overrides",
     "Claude Code's built-in read-only command set, which is what `find` is listed for.",
