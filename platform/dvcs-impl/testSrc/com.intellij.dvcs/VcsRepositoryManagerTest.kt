@@ -1,108 +1,107 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.dvcs;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.dvcs
 
-import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.repo.VcsRepositoryCreator;
-import com.intellij.dvcs.repo.VcsRepositoryManager;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.ExtensionTestUtil;
-import com.intellij.vcs.test.VcsPlatformTest;
-import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.junit.Ignore;
+import com.intellij.dvcs.repo.Repository
+import com.intellij.dvcs.repo.VcsRepositoryCreator
+import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsKey
+import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.vcs.test.VcsPlatformTestContext
+import com.intellij.vcs.test.vcsPlatformFixture
+import com.intellij.vcs.test.vcsTestProjectPathFixture
+import com.intellij.vcsUtil.VcsUtil
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.FutureTask
+import java.util.concurrent.TimeUnit
 
-import java.util.Collections;
-import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
+private const val LOCK_ERROR_TEXT = "Possible dead lock occurred!"
+private const val TIMEOUT_SECONDS = 10L
 
-import static com.intellij.openapi.vcs.Executor.cd;
-import static com.intellij.openapi.vcs.Executor.mkdir;
+@TestApplication
+class VcsRepositoryManagerTest {
+  private val fixture = projectFixture(vcsTestProjectPathFixture(), openAfterCreation = true).vcsPlatformFixture()
+  private val context: VcsPlatformTestContext get() = fixture.get()
 
-@Ignore("AT-4013")
-public class VcsRepositoryManagerTest extends VcsPlatformTest {
-  private MockAbstractVcs myVcs;
-  private CountDownLatch CONTINUE_MODIFY;
-  private CountDownLatch READY_TO_READ;
-  private static final String LOCK_ERROR_TEXT = "Possible dead lock occurred!";
+  private lateinit var vcs: MockAbstractVcs
+  private lateinit var continueModify: CountDownLatch
+  private lateinit var readyToRead: CountDownLatch
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    cd(getProjectRoot());
+  @BeforeEach
+  fun setUp(@TestDisposable disposable: Disposable): Unit = with(context) {
+    cd(projectRoot)
 
-    myVcs = new MockAbstractVcs(myProject);
-    vcsManager.registerVcs(myVcs);
-    READY_TO_READ = new CountDownLatch(1);
-    CONTINUE_MODIFY = new CountDownLatch(1);
+    vcs = MockAbstractVcs(project)
+    vcsManager.registerVcs(vcs)
+    readyToRead = CountDownLatch(1)
+    continueModify = CountDownLatch(1)
 
-    VcsRepositoryCreator mockCreator = createMockRepositoryCreator();
-    ExtensionTestUtil.maskExtensions(VcsRepositoryManager.EP_NAME, Collections.singletonList(mockCreator), getTestRootDisposable(), false);
+    val mockCreator = createMockRepositoryCreator()
+    ExtensionTestUtil.maskExtensions(VcsRepositoryManager.EP_NAME, listOf(mockCreator), disposable, false)
   }
 
-  public void testRepositoryInfoReadingWhileModifying() throws Exception {
-    VirtualFile repositoryFile = createExternalRepository();
-    VcsRepositoryManager repositoryManager = VcsRepositoryManager.getInstance(myProject);
-    assertNotNull(repositoryManager.getRepositoryForRoot(repositoryFile));
+  @Test
+  fun testRepositoryInfoReadingWhileModifying(): Unit = with(context) {
+    val repositoryFile = createExternalRepository()
+    val repositoryManager = VcsRepositoryManager.getInstance(project)
+    assertThat(repositoryManager.getRepositoryForRoot(repositoryFile)).isNotNull()
 
-    FutureTask<Repository> readExistingRepo = new FutureTask<>(() -> repositoryManager.getRepositoryForRoot(repositoryFile));
+    val readExistingRepo = FutureTask { repositoryManager.getRepositoryForRoot(repositoryFile) }
 
-    FutureTask<Boolean> modifyRepositoryMapping = new FutureTask<>(() -> {
-      vcsManager.setDirectoryMappings(VcsUtil.addMapping(vcsManager.getDirectoryMappings(), getProjectRoot().getPath(), myVcs.getName()));
-      repositoryManager.waitForAsyncTaskCompletion();
-      return !repositoryManager.getRepositories().isEmpty();
-    });
-    Future<?> modify = ApplicationManager.getApplication().executeOnPooledThread(modifyRepositoryMapping);
+    val modifyRepositoryMapping = FutureTask {
+      vcsManager.setDirectoryMappings(VcsUtil.addMapping(vcsManager.getDirectoryMappings(), projectRoot.path, vcs.name))
+      repositoryManager.waitForAsyncTaskCompletion()
+      repositoryManager.getRepositories().isNotEmpty()
+    }
+    val modify = ApplicationManager.getApplication().executeOnPooledThread(modifyRepositoryMapping)
 
     //wait until modification starts
-    assertTrue(LOCK_ERROR_TEXT, READY_TO_READ.await(1, TimeUnit.SECONDS));
+    assertThat(readyToRead.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)).withFailMessage(LOCK_ERROR_TEXT).isTrue()
 
-    Future<?> read = ApplicationManager.getApplication().executeOnPooledThread(readExistingRepo);
-    assertNotNull(readExistingRepo.get(1, TimeUnit.SECONDS));
-    CONTINUE_MODIFY.countDown();
-    assertTrue(modifyRepositoryMapping.get(1, TimeUnit.SECONDS));
-    read.get();
-    modify.get();
+    val read = ApplicationManager.getApplication().executeOnPooledThread(readExistingRepo)
+    assertThat(readExistingRepo.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)).isNotNull()
+    continueModify.countDown()
+    assertThat(modifyRepositoryMapping.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)).isTrue()
+    read.get()
+    modify.get()
   }
 
-  private @NotNull VirtualFile createExternalRepository() {
-    cd(getProjectRoot());
-    String externalName = "external";
-    mkdir(externalName);
-    getProjectRoot().refresh(false, true);
-    final VirtualFile repositoryFile = Objects.requireNonNull(this.getProjectRoot().findChild(externalName));
-    MockRepositoryImpl externalRepo = new MockRepositoryImpl(myProject, repositoryFile, myProject);
-    VcsRepositoryManager.getInstance(myProject).addExternalRepository(repositoryFile, externalRepo);
-    return repositoryFile;
+  private fun VcsPlatformTestContext.createExternalRepository(): VirtualFile {
+    cd(projectRoot)
+    val externalName = "external"
+    mkdir(externalName)
+    projectRoot.refresh(false, true)
+    val repositoryFile = requireNotNull(projectRoot.findChild(externalName))
+    val externalRepo = MockRepositoryImpl(project, repositoryFile, project)
+    VcsRepositoryManager.getInstance(project).addExternalRepository(repositoryFile, externalRepo)
+    return repositoryFile
   }
 
-  private @NotNull VcsRepositoryCreator createMockRepositoryCreator() {
-    return new VcsRepositoryCreator() {
-      @Override
-      public @NotNull VcsKey getVcsKey() {
-        return myVcs.getKeyInstanceMethod();
-      }
+  private fun createMockRepositoryCreator(): VcsRepositoryCreator {
+    return object : VcsRepositoryCreator {
+      override fun getVcsKey(): VcsKey = vcs.keyInstanceMethod
 
-      @Override
-      public @Nullable Repository createRepositoryIfValid(@NotNull Project project, @NotNull VirtualFile root, @NotNull Disposable parentDisposable) {
-        READY_TO_READ.countDown();
+      override fun createRepositoryIfValid(project: Project, root: VirtualFile, parentDisposable: Disposable): Repository? {
+        readyToRead.countDown()
         try {
           //wait until reading thread gets existing info
-          if (!CONTINUE_MODIFY.await(1, TimeUnit.SECONDS)) return null;
+          if (!continueModify.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)) return null
         }
-        catch (InterruptedException e) {
-          return null;
+        catch (_: InterruptedException) {
+          return null
         }
-        return new MockRepositoryImpl(myProject, root, parentDisposable);
+        return MockRepositoryImpl(project, root, parentDisposable)
       }
-    };
+    }
   }
 }

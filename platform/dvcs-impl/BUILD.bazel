@@ -100,6 +100,12 @@ jvm_library(
     ),
     associates = ["//platform/dvcs-impl:vcs-dvcs-impl"],
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/vcs/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -121,6 +127,8 @@ jvm_library(
         "//platform/lang-core",
         "//libraries/junit4",
         "//libraries/junit6",
+        "//platform/testFramework/junit5",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl.tests` end
