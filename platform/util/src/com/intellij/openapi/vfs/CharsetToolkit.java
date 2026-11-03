@@ -316,8 +316,12 @@ public final class CharsetToolkit {
   ///   bytes sequences that are not considered valid by modern RFC_3629)
   ///   TODO RC: should we still support archaic RFC_2279, or it is time to abandon the past?
   ///
-  /// **Note**: the method considers buffer as [GuessedEncoding#VALID_UTF8] even if `endOffset` cuts off trailing UTF-8 byte
+  /// **Note 1**: the method considers buffer as [GuessedEncoding#VALID_UTF8] even if `endOffset` cuts off trailing UTF-8 byte
   /// sequence in the middle -- even though it is impossible to check is the trailing sequence indeed fully valid.
+  ///
+  /// **Note 2**: seems like the method checks only _structural_ validity of UTF-8 byte sequences -- i.e. a continuation sequence
+  /// has correct number of bytes with correct header bits each. But it **does not** check the validity of payload, i.e. that payload
+  /// bits of those bytes being combined, encodes a valid UTF8 code point.
   public static @NotNull GuessedEncoding guessFromContent(byte[] buffer,
                                                           int startOffset, int endOffset) {
     // if a byte has its most significant bit set, the file is in UTF-8 or in the default encoding

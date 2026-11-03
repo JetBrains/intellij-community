@@ -83,16 +83,21 @@ public class CharsetToolkitBenchmark {
         var multibyteCount = (int)Math.round((double)byteCount * multibytePercentage / denominator);
         var asciiCount = byteCount - multibyteCount * bytesPerCodePoint;
 
+        // generate ASCII/non-ASCII symbols in groups, like in real files
         var offset = 0;
         while (asciiCount + multibyteCount > 0) {
-          if (random.nextInt(asciiCount + multibyteCount) < asciiCount) {
-            bytes[offset++] = (byte)random.nextInt(0x20, 0x7F);
-            asciiCount--;
-          }
-          else {
-            writeMultibyteCodePoint(bytes, offset, random);
-            offset += bytesPerCodePoint;
-            multibyteCount--;
+          var asciiRun = random.nextInt(asciiCount + multibyteCount) < asciiCount;
+          var runLength = random.nextInt(1, 7); // run length (=word) in U[4..30]
+          while (runLength-- > 0 && (asciiRun ? asciiCount : multibyteCount) > 0) {
+            if (asciiRun) {
+              bytes[offset++] = (byte)random.nextInt(0x20, 0x7F);
+              asciiCount--;
+            }
+            else {
+              writeMultibyteCodePoint(bytes, offset, random);
+              offset += bytesPerCodePoint;
+              multibyteCount--;
+            }
           }
         }
         return bytes;
@@ -154,13 +159,13 @@ public class CharsetToolkitBenchmark {
       if ((b & 0b1000_0000) != 0) {
         nonAsciiBytesExists = true;
       }
-      else if ((b & 0b1111_1000) == 0 /*b < BINARY_THRESHOLD*/) {
+      else if ((b & 0b1111_1000) == 0 /* == (b < BINARY_THRESHOLD)*/) {
         return CharsetToolkit.GuessedEncoding.BINARY;
       }
     }
 
     return nonAsciiBytesExists ?
-           CharsetToolkit.GuessedEncoding.VALID_UTF8:
+           CharsetToolkit.GuessedEncoding.VALID_UTF8 :
            CharsetToolkit.GuessedEncoding.SEVEN_BIT;
   }
 
@@ -174,13 +179,15 @@ public class CharsetToolkitBenchmark {
     int i = 0;
     for (; i + Long.BYTES <= count; i += Long.BYTES) {
       long l = (long)LONG_VIEW.get(bytes, i);
-      if ((l & 0x8080_8080_8080_8080L) != 0) {
+      if ((l & 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000L) != 0) {
         nonAsciiBytesExists = true;
       }
-      else if ( (l & 0b1111_1000_1111_1000_1111_1000_1111_1000_1111_1000_1111_1000_1111_1000_1111_1000L) == 0 ) {
+      if (hasZeroByte(l & 0b1111_1000_1111_1000_1111_1000_1111_1000_1111_1000_1111_1000_1111_1000_1111_1000L)) {
+        //TODO RC: it is not an equivalent to < BINARY_THRESHOLD(9) -- instead it checks <=7
         return CharsetToolkit.GuessedEncoding.BINARY;
       }
     }
+    //finish the sub-8-bytes tail:
     for (; i < count; i++) {
       byte b = bytes[i];
       if ((b & 0b1000_0000) != 0) {
@@ -191,9 +198,15 @@ public class CharsetToolkitBenchmark {
       }
     }
 
-    return nonAsciiBytesExists  ?
-           CharsetToolkit.GuessedEncoding.VALID_UTF8:
+    return nonAsciiBytesExists ?
+           CharsetToolkit.GuessedEncoding.VALID_UTF8 :
            CharsetToolkit.GuessedEncoding.SEVEN_BIT;
+  }
+
+  private static boolean hasZeroByte(long x) {
+    return ((x - 0x0101010101010101L)
+            & ~x
+            & 0x8080808080808080L) != 0;
   }
 
 
@@ -211,6 +224,8 @@ public class CharsetToolkitBenchmark {
   }
 
 
+  private static final boolean BYTE_ORDER_BE = ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN;
+
   public @NotNull CharsetToolkit.GuessedEncoding guessFromContentAlt(byte[] buffer, int startOffset, int endOffset) {
     // if a byte has its most significant bit set, the file is in UTF-8 or in the default encoding
     // otherwise, the file is in US-ASCII
@@ -222,101 +237,139 @@ public class CharsetToolkitBenchmark {
 
     int end = Math.min(buffer.length, endOffset);
     int i = startOffset;
+    outer:
     while (i < end) {
-      byte b0 = buffer[i];
-      if (b0 < 0) {
-        // a high order bit was encountered, thus the encoding is not US-ASCII
-        // it may be either an 8-bit encoding or UTF-8
-        highOrderBit = true;
 
-        // a two-bytes sequence was encountered
-        if (CharsetToolkit.isTwoBytesSequence(b0)) {
-          if (i + 1 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
-          byte b1 = buffer[i + 1];
-          // there must be one continuation byte of the form 10xxxxxx,
-          // otherwise the following characters is not a valid UTF-8 construct
-          if (!isContinuationChar(b1)) {
-            validU8Char = false;
-          }
-          else {
-            i++;
-          }
+      //TODO RC: this approach is 3-6 faster on mostly-ascii content. But I don't like it in its' current shape, because
+      //         1) the code is quite convoluted 2) VarHandle is not available in `platform.util` module (java1.8), so a
+      //         mix of Unsafe/VarHandle is needed 3) it could be slower for heavily non-ASCII files.
+      //         So, the solution is quite promising, but it needs a lot of polishing before going production
+
+      //try read 8-byte block of ascii:
+      if (i <= end - Long.BYTES) {
+        long block8Bytes = (long)LONG_VIEW.get(buffer, i);
+        if (hasZeroByte(block8Bytes & 0b1111_1000_1111_1000_1111_1000_1111_1000_1111_1000_1111_1000_1111_1000_1111_1000L)) {
+          //TODO RC: not an equivalent to < BINARY_THRESHOLD(9), it checks <= 7
+          return CharsetToolkit.GuessedEncoding.BINARY;
         }
-        // a three-bytes sequence was encountered
-        else if (isThreeBytesSequence(b0)) {
-          if (i + 2 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
-          // there must be two continuation bytes of the form 10xxxxxx,
-          // otherwise the following characters is not a valid UTF-8 construct
-          byte b1 = buffer[i + 1];
-          byte b2 = buffer[i + 2];
-          if (!(isContinuationChar(b1) && isContinuationChar(b2))) {
-            validU8Char = false;
+        long highestBits = block8Bytes & 0b10000000_10000000_10000000_10000000_10000000_10000000_10000000_10000000L;
+        if (highestBits != 0) {
+          int firstNonAsciiByteIndex;
+          if (BYTE_ORDER_BE) {
+            firstNonAsciiByteIndex = Long.numberOfLeadingZeros(highestBits) >>> 3;
           }
           else {
-            i += 2;
+            firstNonAsciiByteIndex = Long.numberOfTrailingZeros(highestBits) >>> 3;
           }
-        }
-        // a four-bytes sequence was encountered
-        else if (isFourBytesSequence(b0)) {
-          if (i + 3 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
-          // there must be three continuation bytes of the form 10xxxxxx,
-          // otherwise the following characters is not a valid UTF-8 construct
-          byte b1 = buffer[i + 1];
-          byte b2 = buffer[i + 2];
-          byte b3 = buffer[i + 3];
-          if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3))) {
-            validU8Char = false;
-          }
-          else {
-            i += 3;
-          }
-        }
-        // a five-bytes sequence was encountered
-        else if (isFiveBytesSequence(b0)) {
-          if (i + 4 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
-          // there must be four continuation bytes of the form 10xxxxxx,
-          // otherwise the following characters is not a valid UTF-8 construct
-          byte b1 = buffer[i + 1];
-          byte b2 = buffer[i + 2];
-          byte b3 = buffer[i + 3];
-          byte b4 = buffer[i + 4];
-          if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3) && isContinuationChar(b4))) {
-            validU8Char = false;
-          }
-          else {
-            i += 4;
-          }
-        }
-        // a six-bytes sequence was encountered
-        else if (isSixBytesSequence(b0)) {
-          if (i + 5 >= end) break; // multibyte sequence is at the end, it's hard to say is it correct
-          // there must be five continuation bytes of the form 10xxxxxx,
-          // otherwise the following characters is not a valid UTF-8 construct
-          byte b1 = buffer[i + 1];
-          byte b2 = buffer[i + 2];
-          byte b3 = buffer[i + 3];
-          byte b4 = buffer[i + 4];
-          byte b5 = buffer[i + 5];
-          if (!(isContinuationChar(b1) &&
-                isContinuationChar(b2) &&
-                isContinuationChar(b3) &&
-                isContinuationChar(b4) &&
-                isContinuationChar(b5))) {
-            validU8Char = false;
-          }
-          else {
-            i += 5;
-          }
+          i += firstNonAsciiByteIndex;
+          highOrderBit = true;
         }
         else {
-          validU8Char = false;
+          i += Long.BYTES;
+          continue outer;
         }
       }
-      else if (b0 < BINARY_THRESHOLD) {
-        return CharsetToolkit.GuessedEncoding.BINARY;
-      }
 
-      i++;
+      //if ascii read fails -> process at least this block in a 'normal' way
+      int blockEnd = Math.min(end, i + Long.BYTES);
+      while (i < blockEnd) {
+        byte b0 = buffer[i];
+
+        //switch to full utf8 sequences parsing
+        if (b0 < 0) {
+          // a high order bit was encountered, thus the encoding is not US-ASCII
+          // it may be either an 8-bit encoding or UTF-8
+          highOrderBit = true;
+
+          // a two-bytes sequence was encountered
+          if (CharsetToolkit.isTwoBytesSequence(b0)) {
+            if (i + 1 >= end) break outer; // multibyte sequence is at the end, it's hard to say is it correct
+            byte b1 = buffer[i + 1];
+            // there must be one continuation byte of the form 10xxxxxx,
+            // otherwise the following characters is not a valid UTF-8 construct
+            if (!isContinuationChar(b1)) {
+              validU8Char = false;
+            }
+            else {
+              i++;
+            }
+          }
+          // a three-bytes sequence was encountered
+          else if (isThreeBytesSequence(b0)) {
+            if (i + 2 >= end) break outer; // multibyte sequence is at the end, it's hard to say is it correct
+            // there must be two continuation bytes of the form 10xxxxxx,
+            // otherwise the following characters is not a valid UTF-8 construct
+            byte b1 = buffer[i + 1];
+            byte b2 = buffer[i + 2];
+            if (!(isContinuationChar(b1) && isContinuationChar(b2))) {
+              validU8Char = false;
+            }
+            else {
+              i += 2;
+            }
+          }
+          // a four-bytes sequence was encountered
+          else if (isFourBytesSequence(b0)) {
+            if (i + 3 >= end) break outer; // multibyte sequence is at the end, it's hard to say is it correct
+            // there must be three continuation bytes of the form 10xxxxxx,
+            // otherwise the following characters is not a valid UTF-8 construct
+            byte b1 = buffer[i + 1];
+            byte b2 = buffer[i + 2];
+            byte b3 = buffer[i + 3];
+            if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3))) {
+              validU8Char = false;
+            }
+            else {
+              i += 3;
+            }
+          }
+          // a five-bytes sequence was encountered
+          else if (isFiveBytesSequence(b0)) {
+            if (i + 4 >= end) break outer; // multibyte sequence is at the end, it's hard to say is it correct
+            // there must be four continuation bytes of the form 10xxxxxx,
+            // otherwise the following characters is not a valid UTF-8 construct
+            byte b1 = buffer[i + 1];
+            byte b2 = buffer[i + 2];
+            byte b3 = buffer[i + 3];
+            byte b4 = buffer[i + 4];
+            if (!(isContinuationChar(b1) && isContinuationChar(b2) && isContinuationChar(b3) && isContinuationChar(b4))) {
+              validU8Char = false;
+            }
+            else {
+              i += 4;
+            }
+          }
+          // a six-bytes sequence was encountered
+          else if (isSixBytesSequence(b0)) {
+            if (i + 5 >= end) break outer; // multibyte sequence is at the end, it's hard to say is it correct
+            // there must be five continuation bytes of the form 10xxxxxx,
+            // otherwise the following characters is not a valid UTF-8 construct
+            byte b1 = buffer[i + 1];
+            byte b2 = buffer[i + 2];
+            byte b3 = buffer[i + 3];
+            byte b4 = buffer[i + 4];
+            byte b5 = buffer[i + 5];
+            if (!(isContinuationChar(b1) &&
+                  isContinuationChar(b2) &&
+                  isContinuationChar(b3) &&
+                  isContinuationChar(b4) &&
+                  isContinuationChar(b5))) {
+              validU8Char = false;
+            }
+            else {
+              i += 5;
+            }
+          }
+          else {
+            validU8Char = false;
+          }
+        }
+        else if (b0 < BINARY_THRESHOLD) {
+          return CharsetToolkit.GuessedEncoding.BINARY;
+        }
+
+        i++;
+      }
     }
 
     if (!highOrderBit) {

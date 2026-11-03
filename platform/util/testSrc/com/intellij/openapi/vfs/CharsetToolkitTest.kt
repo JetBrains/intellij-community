@@ -74,6 +74,19 @@ class CharsetToolkitTest {
       .isEqualTo(GuessedEncoding.SEVEN_BIT)
   }
 
+  @ParameterizedTest
+  @ValueSource(ints = [0, 1, 2, 3, 4, 5, 6, 7, 8])
+  fun `uses requested ranges from zero to eight bytes`(rangeLength: Int) {
+    val start = 3
+    val end = start + rangeLength
+    val bytes = ByteArray(end + 3)
+    bytes.fill('x'.code.toByte(), start, end)
+
+    assertThat(CharsetToolkit.guessFromContent(bytes, start, end))
+      .describedAs("an ASCII range of $rangeLength bytes between binary bytes")
+      .isEqualTo(GuessedEncoding.SEVEN_BIT)
+  }
+
   @Test
   fun `binary input takes precedence over invalid UTF-8`() {
     assertThat(guess(byteArrayOf(0xFF.toByte(), 0)))
@@ -87,6 +100,25 @@ class CharsetToolkitTest {
       val expected = if (bytes.any { it < 0 }) GuessedEncoding.VALID_UTF8 else GuessedEncoding.SEVEN_BIT
       assertThat(guess(bytes))
         .describedAs("valid generated text")
+        .isEqualTo(expected)
+    }
+  }
+
+  @Test
+  fun `a generated slice is classified independently of surrounding bytes`() {
+    val boundaries = Generator.zipWith(Generator.integers(0, 1_000), Generator.integers(0, 1_000)) { first, second ->
+      first to second
+    }
+    val slices = Generator.zipWith(validTextBytes(), boundaries) { bytes, (first, second) ->
+      val firstBoundary = first % (bytes.size + 1)
+      val secondBoundary = second % (bytes.size + 1)
+      Triple(bytes, minOf(firstBoundary, secondBoundary), maxOf(firstBoundary, secondBoundary))
+    }
+
+    checkProperty(slices) { [bytes, start, end] ->
+      val expected = guess(bytes.copyOfRange(start, end))
+      assertThat(CharsetToolkit.guessFromContent(bytes, start, end))
+        .describedAs("the generated range [$start, $end)")
         .isEqualTo(expected)
     }
   }
@@ -155,9 +187,9 @@ class CharsetToolkitTest {
     }
   }
 
-  private fun checkProperty(generator: Generator<ByteArray>, assertion: (ByteArray) -> Unit) {
-    PropertyChecker.customized().withIterationCount(PROPERTY_ITERATIONS).forAll(generator) { bytes ->
-      assertion(bytes)
+  private fun <T> checkProperty(generator: Generator<T>, assertion: (T) -> Unit) {
+    PropertyChecker.customized().withIterationCount(PROPERTY_ITERATIONS).forAll(generator) { value ->
+      assertion(value)
       true
     }
   }
