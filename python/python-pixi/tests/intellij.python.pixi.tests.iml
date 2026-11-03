@@ -27,27 +27,45 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.eel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.remote.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.conda" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pixi.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pixi.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pixi.frontend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pixi.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.pixi.test.env" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pytools.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pytools.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pytools.frontend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.sdk.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.test.env.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.pixi.backend" />

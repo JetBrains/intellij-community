@@ -742,6 +742,10 @@
                     interface="com.jetbrains.python.inspections.dependencies.DependenciesPsiProvider"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="Pythonid.addInterpreterProvider"
+                    interface="com.jetbrains.python.sdk.add.v2.PythonAddInterpreterProvider"
+                    dynamic="true"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.platform">

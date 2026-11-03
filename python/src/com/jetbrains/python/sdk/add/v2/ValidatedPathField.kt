@@ -47,6 +47,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionListener
 import java.awt.event.FocusAdapter
@@ -63,7 +64,8 @@ import javax.swing.event.DocumentEvent
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
-internal interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
+@ApiStatus.Internal
+interface PathValidator<T, P : PathHolder, VP : ValidatedPath<T, P>> {
   /**
    * [backProperty] should only be used in [PathValidator] and its inheritors
    */
@@ -99,7 +101,8 @@ private object ValidationInProgressExtension : ExtendableTextComponent.Extension
 }
 
 @OptIn(FlowPreview::class, ExperimentalAtomicApi::class)
-internal class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
+@ApiStatus.Internal
+class ValidatedPathField<T, P : PathHolder, VP : ValidatedPath<T, P>>(
   val fileSystem: FileSystem<P>,
   val pathValidator: PathValidator<T, P, VP>,
   val canBeEdited: Boolean,
@@ -307,7 +310,8 @@ private fun <T, P : PathHolder, V : ValidatedPath<T, P>> Panel.missingToolRow(
   return tooltip
 }
 
-internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePathField(
+@ApiStatus.Internal
+fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePathField(
   fileSystem: FileSystem<P>,
   pathValidator: PathValidator<T, P, VP>,
   validationRequestor: DialogValidationRequestor,

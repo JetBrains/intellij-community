@@ -2,18 +2,71 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.night.config.toml"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.annotations"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.community.impl"/>
     <module name="intellij.python.pixi.common"/>
+    <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools.backend"/>
+    <module name="intellij.python.pytools.backend.runtime"/>
     <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.requirements.backend"/>
+    <module name="intellij.python.requirements.common"/>
     <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.sdk.common"/>
+    <module name="intellij.toml.core"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <runAnything.executionProvider implementation="com.intellij.python.pixi.backend.runAnything.PixiRunAnythingProvider"/>
+    <editorNotificationProvider implementation="com.intellij.python.pixi.backend.packaging.PixiPackageManagerEditorBanner"/>
+    <lang.inspectionSuppressor language="TOML"
+                              implementationClass="com.intellij.python.pixi.backend.packaging.PixiDependenciesInspectionSuppressor"/>
     <python.pytools.pyTool implementation="com.intellij.python.pixi.backend.PixiPyTool"/>
+    <python.pyproject.model.pyprojectmanager implementation="com.intellij.python.pixi.backend.project.PixiPyProjectManager"/>
   </extensions>
+  <extensions defaultExtensionNs="com.jetbrains.python.inspections.dependencies">
+    <dependenciesInspectionProvider implementation="com.intellij.python.pixi.backend.packaging.PixiDependenciesPsiProvider"/>
+  </extensions>
+  <extensions defaultExtensionNs="Pythonid">
+    <pythonEnvironmentProvider id="pixi" order="before conda"
+                               implementation="com.intellij.python.pixi.backend.sdk.PixiEnvironmentProvider"/>
+    <pyDependenciesFileProvider implementation="com.intellij.python.pixi.backend.packaging.PixiDependenciesFileProvider"/>
+    <pythonPackageManagerProvider order="first" implementation="com.intellij.python.pixi.backend.packaging.PixiPackageManagerProvider"/>
+    <packageInstalledIconProvider implementation="com.intellij.python.pixi.backend.packaging.PixiPackageInstalledIconProvider"/>
+    <projectSdkConfigurationExtension id="pixi"
+                                      implementation="com.intellij.python.pixi.backend.sdk.PixiSdkConfiguration"/>
+    <evoEnvironmentProvider id="PixiEvoProvider"
+                            order="after CondaEvoProvider, before PipEvoProvider"
+                            implementation="com.intellij.python.pixi.backend.evolution.PixiEvoEnvironmentProvider"/>
+    <pySdkDataProvider implementation="com.intellij.python.pixi.backend.sdk.PixiSdkDataProvider"/>
+    <pythonFlavorProvider implementation="com.intellij.python.pixi.backend.sdk.PixiSdkFlavorProvider"/>
+    <addInterpreterProvider implementation="com.intellij.python.pixi.backend.add.PixiAddInterpreterProvider"/>
+  </extensions>
+  <actions resource-bundle="messages.PyPixiBackendBundle">
+    <action id="Python.Pixi.ExportEnvironment"
+            class="com.intellij.python.pixi.backend.packaging.PixiExportEnvironmentAction"
+            icon="AllIcons.General.Export">
+      <add-to-group group-id="PythonPackageManagerActions"/>
+    </action>
+  </actions>
 </idea-plugin>

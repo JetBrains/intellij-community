@@ -51,6 +51,9 @@ import com.intellij.python.community.common.promotion.PyAddInterpreterPopupPromo
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
+import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterProvider
+import com.jetbrains.python.sdk.add.v2.PythonAddInterpreterProviders
+import com.jetbrains.python.sdk.add.v2.PythonEnvironmentManager
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.target.PythonLanguageRuntimeType
 import kotlinx.coroutines.CompletableDeferred
@@ -114,6 +117,9 @@ fun collectAddInterpreterActions(moduleOrProject: ModuleOrProject, onSdkCreated:
   return mutableListOf<DialogAction>().apply {
     if (targetModuleSitsOn == null || eelNativeMode) {
       add(createAddLocalInterpreterAction(moduleOrProject, onSdkCreated::accept))
+      PythonAddInterpreterProviders().quickActionProviders().forEach { provider ->
+        add(createAddLocalInterpreterAction(moduleOrProject, onSdkCreated::accept, provider))
+      }
     }
     addAll(collectNewInterpreterOnTargetActions(moduleOrProject, targetModuleSitsOn, onSdkCreated::accept))
   }
@@ -135,10 +141,14 @@ internal class AddLocalInterpreterAction(
   private val moduleOrProject: ModuleOrProject,
   private val onSdkCreated: (Sdk) -> Unit,
   private val bestGuessCreateSdkInfo: Deferred<CreateSdkInfoWithTool?>,
+  private val preselectManager: PythonEnvironmentManager? = null,
+  dynamicText: Supplier<@NlsActions.ActionText String> = PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"),
+  icon: Icon = AllIcons.Nodes.HomeFolder,
+  target: @Nls String = PyBundle.message("sdk.create.targets.local"),
 ) : DialogAction(
-  dynamicText = PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"),
-  icon = AllIcons.Nodes.HomeFolder,
-  target = PyBundle.message("sdk.create.targets.local"),
+  dynamicText = dynamicText,
+  icon = icon,
+  target = target,
   project = moduleOrProject.project,
 ), DumbAware {
   override fun createDialog(): PythonAddLocalInterpreterDialog {
@@ -148,7 +158,7 @@ internal class AddLocalInterpreterAction(
       // Model provides flow, but we need to call Consumer
       sdkCreatedFlow.oneShotConsumer(onSdkCreated)
     }
-    return PythonAddLocalInterpreterDialog(dialogPresenter)
+    return PythonAddLocalInterpreterDialog(dialogPresenter, preselectManager)
   }
 }
 
@@ -247,9 +257,22 @@ private class ToolDetectionService(project: Project, val coroutineScope: Corouti
   }
 }
 
-private fun createAddLocalInterpreterAction(moduleOrProject: ModuleOrProject, onSdkCreated: (Sdk) -> Unit): AddLocalInterpreterAction {
+private fun createAddLocalInterpreterAction(
+  moduleOrProject: ModuleOrProject,
+  onSdkCreated: (Sdk) -> Unit,
+  provider: PythonAddInterpreterProvider? = null,
+): AddLocalInterpreterAction {
   val bestGuessCreateSdkInfo = moduleOrProject.moduleIfExists?.let {
     ToolDetectionService.forModule(it)
   } ?: CompletableDeferred(value = null)
-  return AddLocalInterpreterAction(moduleOrProject, onSdkCreated, bestGuessCreateSdkInfo)
+  return AddLocalInterpreterAction(
+    moduleOrProject = moduleOrProject,
+    onSdkCreated = onSdkCreated,
+    bestGuessCreateSdkInfo = bestGuessCreateSdkInfo,
+    preselectManager = provider?.manager,
+    dynamicText = provider?.quickActionName?.let { name -> Supplier { name } }
+                  ?: PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"),
+    icon = provider?.manager?.icon ?: AllIcons.Nodes.HomeFolder,
+    target = provider?.manager?.displayName ?: PyBundle.message("sdk.create.targets.local"),
+  )
 }

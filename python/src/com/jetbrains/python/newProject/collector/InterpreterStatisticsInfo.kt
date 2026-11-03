@@ -4,9 +4,11 @@ package com.jetbrains.python.newProject.collector
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
+import org.jetbrains.annotations.ApiStatus
 
 // This class will be internal soon, do not use it in third party plugins.
-internal data class InterpreterStatisticsInfo(
+@ApiStatus.Internal
+data class InterpreterStatisticsInfo(
   val type: InterpreterType,
   val target: InterpreterTarget,
   val globalSitePackage: Boolean = false,

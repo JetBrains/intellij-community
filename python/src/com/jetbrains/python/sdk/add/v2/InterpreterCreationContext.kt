@@ -2,7 +2,8 @@
 package com.jetbrains.python.sdk.add.v2
 
 /** The UI that adds the interpreter. Each context shows a different set of options in the shared panels. */
-internal enum class InterpreterCreationContext {
+@org.jetbrains.annotations.ApiStatus.Internal
+enum class InterpreterCreationContext {
   /** The New Project wizard. The project directory is new. The panels hide the existing environments of a tool and the uv mode choice. */
   NEW_PROJECT_WIZARD,
 

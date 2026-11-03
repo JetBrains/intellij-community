@@ -8,6 +8,7 @@ import com.intellij.platform.eel.fs.EelFileUtils
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.pytools.backend.PackageManagerPyTool
 import com.intellij.python.pytools.backend.PyTool
@@ -34,6 +35,7 @@ import java.nio.file.attribute.PosixFilePermission
 
 private val LOG = Logger.getInstance(PixiPyTool::class.java)
 private const val PIXI_TOOL_NAME = "pixi"
+internal val PIXI_TOOL_ID = ToolId(PIXI_TOOL_NAME)
 
 internal class PixiPyTool : PackageManagerPyTool {
   override val packageName: PyPackageName = PyPackageName.from(PIXI_TOOL_NAME)

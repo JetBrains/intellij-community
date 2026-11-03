@@ -53,7 +53,8 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
 ) {
   internal val modificationCounter: AtomicProperty<Int> = AtomicProperty(0)
 
-  internal val propertyGraph: PropertyGraph = PropertyGraph()
+  @ApiStatus.Internal
+  val propertyGraph: PropertyGraph = PropertyGraph()
   internal val navigator: PythonNewEnvironmentDialogNavigator = PythonNewEnvironmentDialogNavigator()
   open val state: AddInterpreterState<P> = AddInterpreterState(propertyGraph)
 

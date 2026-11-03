@@ -8,6 +8,7 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.add.v2.PathHolderAndValidationResult.Error
 import com.jetbrains.python.sdk.add.v2.PathHolderAndValidationResult.ErrorWithPath
 import com.jetbrains.python.sdk.add.v2.PathHolderAndValidationResult.Success
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -82,7 +83,8 @@ internal val <T, P : PathHolder>ValidatedPath<T, P>.validationResult: PyResult<S
  * See [ValidatedPath]
  * Returns [T] only if the state is [Success], `null` otherwise
  */
-internal val <T>ValidatedPath<T, *>.successOrNull: T? get() = validationResult.successOrNull?.validationInfo
+@get:ApiStatus.Internal
+val <T>ValidatedPath<T, *>.successOrNull: T? get() = validationResult.successOrNull?.validationInfo
 
 /**
  * See [ValidatedPath]
@@ -94,7 +96,8 @@ internal val <T>ValidatedPath<T, *>.errorOrNull: PyError? get() = validationResu
 /**
  * Returns the path ([P]) if it exists ([Success] or [ErrorWithPath]), error otherwise
  */
-internal val <T, P : PathHolder>ValidatedPath<T, P>.pathHolder: PyResult<P>
+@get:ApiStatus.Internal
+val <T, P : PathHolder>ValidatedPath<T, P>.pathHolder: PyResult<P>
   get() = when (val result = pathHolderAndValidationResult) {
     is Error -> PyResult.failure(result.error)
     is ErrorWithPath, is Success -> PyResult.success(result.pathHolder)

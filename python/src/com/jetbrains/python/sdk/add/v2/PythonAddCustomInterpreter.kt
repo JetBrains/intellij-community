@@ -72,21 +72,31 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
   private val _selectExisting = propertyGraph.booleanProperty(selectionMethod, PythonInterpreterSelectionMethod.SELECT_EXISTING)
 
   @Internal
-  val newInterpreterManager: ObservableMutableProperty<PythonSupportedEnvironmentManagers> = propertyGraph.property(VIRTUALENV)
+  val newInterpreterManager: ObservableMutableProperty<PythonEnvironmentManager> = propertyGraph.property(VIRTUALENV)
 
-  private val existingInterpreterManager = propertyGraph.property(PYTHON)
+  private val existingInterpreterManager: ObservableMutableProperty<PythonEnvironmentManager> = propertyGraph.property(PYTHON)
 
-  private val newInterpreterCreators = if (model.fileSystem.isReadOnly) emptyMap()
-  else mapOf(
-    VIRTUALENV to { EnvironmentCreatorVenv(model) },
-    CONDA to { CondaNewEnvironmentCreator(model) },
-    PIPENV to { EnvironmentCreatorPip(model, errorSink) },
-    POETRY to { EnvironmentCreatorPoetry(model, module, errorSink) },
-    UV to { EnvironmentCreatorUv(model, module, errorSink, context) },
-    HATCH to { HatchNewEnvironmentCreator(model, errorSink) },
-  ).filterKeys { it.isFSSupported(model.fileSystem) }.mapValues { it.value() }
+  private val providerContext = PythonAddInterpreterProviderContext(model, module, errorSink, context)
+  private val providers = PythonAddInterpreterProviders().providersFor(model.fileSystem, providerContext.creationContext)
 
-  private val existingInterpreterSelectors = buildMap {
+  private val newInterpreterCreators: Map<PythonEnvironmentManager, PythonNewEnvironmentCreator<P>> =
+    if (model.fileSystem.isReadOnly) emptyMap()
+    else buildMap {
+      mapOf(
+        VIRTUALENV to { EnvironmentCreatorVenv(model) },
+        CONDA to { CondaNewEnvironmentCreator(model) },
+        PIPENV to { EnvironmentCreatorPip(model, errorSink) },
+        POETRY to { EnvironmentCreatorPoetry(model, module, errorSink) },
+        UV to { EnvironmentCreatorUv(model, module, errorSink, context) },
+        HATCH to { HatchNewEnvironmentCreator(model, errorSink) },
+      ).filterKeys { it.supports(model.fileSystem) }.forEach { (manager, factory) -> put(manager, factory()) }
+      providers.forEach { provider ->
+        provider.createNewEnvironment(providerContext)?.let { put(provider.manager, it) }
+      }
+    }
+
+  private val existingInterpreterSelectors: Map<PythonEnvironmentManager, PythonExistingEnvironmentConfigurator<P>> =
+    buildMap<PythonEnvironmentManager, () -> PythonExistingEnvironmentConfigurator<P>> {
     put(PYTHON) { PythonExistingEnvironmentSelector(model, module) }
     put(CONDA) { CondaExistingEnvironmentSelector(model) }
     when (context) {
@@ -97,7 +107,11 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
         put(HATCH) { HatchExistingEnvironmentSelector(model) }
       }
     }
-  }.filterKeys { it.isFSSupported(model.fileSystem) }.mapValues { it.value() }
+    }.filterKeys { it.supports(model.fileSystem) }.mapValues { it.value() }.toMutableMap().apply {
+      providers.forEach { provider ->
+        provider.selectExistingEnvironment(providerContext)?.let { put(provider.manager, it) }
+      }
+    }
 
   val currentSdkManager: PythonAddEnvironment<P>
     get() {
@@ -111,6 +125,12 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
       navigator.selectionMethod = selectionMethod
       navigator.newEnvManager = newInterpreterManager
       navigator.existingEnvManager = existingInterpreterManager
+      navigator.environmentManagers = {
+        when (selectionMethod.get()) {
+          PythonInterpreterSelectionMethod.CREATE_NEW -> newInterpreterCreators.keys
+          PythonInterpreterSelectionMethod.SELECT_EXISTING -> existingInterpreterSelectors.keys
+        }
+      }
     }
 
     with(outerPanel) {
@@ -233,7 +253,8 @@ internal class PythonAddCustomInterpreter<P : PathHolder>(
       }
     }
 
-    val tool = PythonSupportedEnvironmentManagers.entries.singleOrNull { it.toolId == createSdkInfoWithTool.toolId } ?: return
+    val tool = (newInterpreterCreators.keys + existingInterpreterSelectors.keys)
+      .singleOrNull { it.toolId == createSdkInfoWithTool.toolId } ?: return
     if (tool in configurators) {
       manager.set(tool)
     }

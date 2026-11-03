@@ -12,9 +12,11 @@ import com.intellij.ui.dsl.builder.components.ValidationType
 import com.intellij.ui.dsl.builder.components.validationTooltip
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.jetbrains.python.PyBundle.message
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-internal sealed class VenvExistenceValidationState {
+@ApiStatus.Internal
+sealed class VenvExistenceValidationState {
   data object Invisible : VenvExistenceValidationState()
 
   data class Warning(

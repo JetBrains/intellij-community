@@ -47,7 +47,9 @@ import com.jetbrains.python.sdk.configuration.PIPENV_TOOL_ID
 import com.jetbrains.python.sdk.configuration.VENV_TOOL_ID
 import com.jetbrains.python.sdk.createSdkGuessingTypeByPath
 import com.jetbrains.python.sdk.excludeInnerVirtualEnv
+import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 import com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder.Companion.PYTHON_INSTALLATION_INTERRUPTED
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import kotlinx.coroutines.CoroutineScope
@@ -114,7 +116,8 @@ abstract class PythonAddEnvironment<P : PathHolder>(open val model: PythonAddInt
   /** @see PySdkCreator.createPythonModuleStructure */
   open suspend fun createPythonModuleStructure(module: Module, createGitRepository: Boolean): PyResult<Unit> = Result.success(Unit)
 
-  internal abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
+  @ApiStatus.Internal
+  abstract fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo
 }
 
 abstract class PythonNewEnvironmentCreator<P : PathHolder>(override val model: PythonMutableTargetAddInterpreterModel<P>) :
@@ -143,24 +146,33 @@ abstract class PythonNewEnvironmentCreator<P : PathHolder>(override val model: P
   }
 }
 
-internal abstract class PythonExistingEnvironmentConfigurator<P : PathHolder>(model: PythonAddInterpreterModel<P>) :
+@ApiStatus.Internal
+abstract class PythonExistingEnvironmentConfigurator<P : PathHolder>(model: PythonAddInterpreterModel<P>) :
   PythonAddEnvironment<P>(model)
 
 
 enum class PythonSupportedEnvironmentManagers(
-  val toolId: ToolId,
+  override val toolId: ToolId,
   val nameKey: String,
-  val icon: Icon,
-  val sshAutoUploadRequired: Boolean,
-  val isFSSupported: (FileSystem<*>) -> Boolean = { it.isLocal },
-) {
+  override val icon: Icon,
+  override val sshAutoUploadRequired: Boolean,
+  private val isFileSystemSupported: (FileSystem<*>) -> Boolean = { it.isLocal },
+) : PythonEnvironmentManager {
   VIRTUALENV(VENV_TOOL_ID, "sdk.create.custom.virtualenv", PythonVenvCommonIcons.VirtualEnv, sshAutoUploadRequired = false, { true }),
   CONDA(CONDA_TOOL_ID, "sdk.create.custom.conda", PythonCommunityImplCondaCommonIcons.Anaconda, sshAutoUploadRequired = false, { true }),
   POETRY(POETRY_TOOL_ID, "sdk.create.custom.poetry", PythonCommunityImplPoetryCommonIcons.Poetry, sshAutoUploadRequired = true, { true }),
   PIPENV(PIPENV_TOOL_ID, "sdk.create.custom.pipenv", PythonCommunityImplPipenvCommonIcons.Pipenv, sshAutoUploadRequired = true, { true }),
   UV(UV_TOOL_ID, "sdk.create.custom.uv", PythonUvCommonIcons.UV, sshAutoUploadRequired = true, { true }),
   HATCH(HATCH_TOOL_ID, "sdk.create.custom.hatch", PythonHatchCommonIcons.Logo, sshAutoUploadRequired = true, { true }),
-  PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, sshAutoUploadRequired = false, { true })
+  PYTHON(VENV_TOOL_ID, "sdk.create.custom.python", PythonParserIcons.PythonFile, sshAutoUploadRequired = false, { true });
+
+  override val displayName: String
+    get() = message(nameKey)
+
+  override val order: Int
+    get() = ordinal
+
+  override fun supports(fileSystem: FileSystem<*>): Boolean = isFileSystemSupported(fileSystem)
 }
 
 enum class PythonInterpreterSelectionMode(val nameKey: String) {
@@ -175,7 +187,8 @@ enum class PythonInterpreterCreationTargets(val nameKey: String, val icon: Icon)
   SSH("", AllIcons.Nodes.HomeFolder),
 }
 
-internal fun PythonInterpreterCreationTargets.toStatisticsField(): InterpreterTarget {
+@ApiStatus.Internal
+fun PythonInterpreterCreationTargets.toStatisticsField(): InterpreterTarget {
   return when (this) {
     PythonInterpreterCreationTargets.LOCAL_MACHINE -> InterpreterTarget.LOCAL
     else -> throw NotImplementedError("PythonInterpreterCreationTargets added, but not accounted for in statistics")
@@ -186,6 +199,19 @@ internal fun PythonInterpreterCreationTargets.toStatisticsField(): InterpreterTa
 enum class PythonInterpreterSelectionMethod {
   CREATE_NEW, SELECT_EXISTING
 }
+
+/** Creates statistics for a custom environment manager. */
+@ApiStatus.Internal
+fun customEnvironmentStatistics(
+  type: InterpreterType,
+  target: PythonInterpreterCreationTargets,
+  previouslyConfigured: Boolean,
+): InterpreterStatisticsInfo = InterpreterStatisticsInfo(
+  type = type,
+  target = target.toStatisticsField(),
+  previouslyConfigured = previouslyConfigured,
+  creationMode = InterpreterCreationMode.CUSTOM,
+)
 
 internal suspend fun installBaseSdk(installRequest: InstallablePythonSdk): kotlin.Result<PythonInterpreter> {
   // installBinary (reached via InstallablePythonSdk.install) is @RequiresEdt because it drives a

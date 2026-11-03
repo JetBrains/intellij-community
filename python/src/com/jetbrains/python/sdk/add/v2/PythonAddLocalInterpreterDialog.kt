@@ -31,7 +31,7 @@ import javax.swing.JComponent
 internal class PythonAddLocalInterpreterDialog(
   private val dialogPresenter: PythonAddLocalInterpreterPresenter,
   /** Environment manager to preselect (e.g. when opened from a specific tool's "add new environment" row); `null` keeps the dialog default. */
-  private val preselectManager: PythonSupportedEnvironmentManagers? = null,
+  private val preselectManager: PythonEnvironmentManager? = null,
 ) : DialogWrapper(dialogPresenter.moduleOrProject.project) {
 
   private lateinit var mainPanel: PythonAddCustomInterpreter<PathHolder.Eel>

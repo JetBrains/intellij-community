@@ -184,9 +184,11 @@ enum class InterpreterType(val value: String) {
   PYENV("pyenv"),
   UV("uv"),
   HATCH("hatch"),
+  PIXI("pixi"),
 }
 
-internal enum class InterpreterCreationMode(val value: String) {
+@ApiStatus.Internal
+enum class InterpreterCreationMode(val value: String) {
   SIMPLE("simple"),
   CUSTOM("custom"),
   NA("not_applicable"),

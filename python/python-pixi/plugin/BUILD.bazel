@@ -8,6 +8,7 @@ dev_dist_plugin(
         "intellij.python.pixi.common",
         "intellij.python.pixi.backend",
         "intellij.python.pixi.frontend",
+        "intellij.libraries.night.config.toml",
     ],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {

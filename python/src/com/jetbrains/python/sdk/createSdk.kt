@@ -159,7 +159,8 @@ suspend fun createLocalSdkGuessingTypeByPath(
 /**
  * Use this API only if you do not know SDK type in advance (in most cases you do, please prefer [createSdk])
  */
-internal suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
+@ApiStatus.Internal
+suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
   homePath: P,
   fileSystem: FileSystem<P>,
   moduleOrProject: ModuleOrProject,

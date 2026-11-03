@@ -80,13 +80,14 @@ internal fun <T> PropertyGraph.booleanProperty(dependency: ObservableProperty<T>
 class PythonNewEnvironmentDialogNavigator {
   var selectionMode: ObservableMutableProperty<PythonInterpreterSelectionMode>? = null
   lateinit var selectionMethod: ObservableMutableProperty<PythonInterpreterSelectionMethod>
-  lateinit var newEnvManager: ObservableMutableProperty<PythonSupportedEnvironmentManagers>
-  lateinit var existingEnvManager: ObservableMutableProperty<PythonSupportedEnvironmentManagers>
+  lateinit var newEnvManager: ObservableMutableProperty<PythonEnvironmentManager>
+  lateinit var existingEnvManager: ObservableMutableProperty<PythonEnvironmentManager>
+  lateinit var environmentManagers: () -> Collection<PythonEnvironmentManager>
 
   fun navigateTo(
     newMode: PythonInterpreterSelectionMode? = null,
     newMethod: PythonInterpreterSelectionMethod? = null,
-    newManager: PythonSupportedEnvironmentManagers? = null,
+    newManager: PythonEnvironmentManager? = null,
   ) {
     newMode?.let { selectionMode?.set(it) }
     newMethod?.let { method ->
@@ -115,7 +116,7 @@ class PythonNewEnvironmentDialogNavigator {
       val method = selectionMethod.get()
       val manager = if (method == CREATE_NEW) newEnvManager.get() else existingEnvManager.get()
       properties.setValue(FAV_METHOD, method.toString())
-      properties.setValue(FAV_MANAGER, manager.toString())
+      properties.setValue(FAV_MANAGER, if (manager is PythonSupportedEnvironmentManagers) manager.name else manager.toolId.id)
     }
     else {
       // restore defaults
@@ -164,9 +165,11 @@ class PythonNewEnvironmentDialogNavigator {
     return methodString.toEnumOrNull<PythonInterpreterSelectionMethod>()
   }
 
-  private fun loadEnvironmentManager(properties: PropertiesComponent): PythonSupportedEnvironmentManagers? {
+  private fun loadEnvironmentManager(properties: PropertiesComponent): PythonEnvironmentManager? {
     val managerString = properties.getValue(FAV_MANAGER) ?: return null
-    return managerString.toEnumOrNull<PythonSupportedEnvironmentManagers>()
+    val managers = environmentManagers()
+    return managers.firstOrNull { it is PythonSupportedEnvironmentManagers && it.name == managerString }
+           ?: managers.firstOrNull { it.toolId.id == managerString }
   }
 
   private inline fun <reified T : Enum<T>> String.toEnumOrNull(): T? {
@@ -314,9 +317,9 @@ class CondaEnvComboBoxListCellRenderer : ColoredListCellRenderer<PyCondaEnv>() {
 class PythonEnvironmentComboBoxRenderer : ColoredListCellRenderer<Any>() {
   override fun customizeCellRenderer(list: JList<out Any>, value: Any, index: Int, selected: Boolean, hasFocus: Boolean) {
     when (value) {
-      is PythonSupportedEnvironmentManagers -> {
+      is PythonEnvironmentManager -> {
         icon = value.icon
-        append(message(value.nameKey))
+        append(value.displayName)
       }
       is PythonInterpreterCreationTargets -> {
         icon = value.icon
