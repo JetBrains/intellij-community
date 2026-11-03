@@ -128,7 +128,7 @@ private fun failure(await: String?, message: String?, details: String?): String 
 }
 
 private fun section(label: String, elements: List<*>): String {
-  return "\n\t$label:\n\t\t" + if (elements.isEmpty()) "none" else elements.joinToString("\n\t\t")
+  return "\n\t$label:\n\t\t" + if (elements.isEmpty()) "none" else printableString(elements.joinToString("\n\t\t"))
 }
 
 private fun logAwaitStart(message: String?, timeout: Duration) {

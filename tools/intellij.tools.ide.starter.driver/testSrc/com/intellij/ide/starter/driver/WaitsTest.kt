@@ -152,4 +152,16 @@ internal class WaitsTest {
 
     assertEquals("Timeout(0s)", failure.message)
   }
+
+  @Test
+  fun `waitAny cuts a long list in the error to the length of the log`() {
+    val elements = (1..100).map { "element-$it" }
+
+    val failure = assertThrows<WaitForException> {
+      waitAny(message = "a tab opens", timeout = Duration.ZERO, getter = { elements }, checker = { false })
+    }
+
+    assertEquals("Timeout(0s): a tab opens: Await any\n\tnot suitable:\n\t\t" + elements.joinToString("\n\t\t").take(600) + "...",
+                 failure.message)
+  }
 }
