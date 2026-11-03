@@ -62,6 +62,7 @@ import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.PyTypeParameterListOwner;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyFileImpl;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.impl.stubs.PyTypingAliasStubType;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -276,6 +277,23 @@ public class PyStubsTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON312, () -> assertMembers(vFile, List.of("new", "common"), List.of("top_new")));
     runWithLanguageLevel(LanguageLevel.PYTHON311, () -> assertMembers(vFile, List.of("old", "common"), List.of("top_old")));
     runWithLanguageLevel(LanguageLevel.PYTHON312, () -> assertMembers(vFile, List.of("new", "common"), List.of("top_new")));
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testMembersFollowSpecifiedLanguageLevel() {
+    final VirtualFile vFile = myFixture.copyFileToProject("VersionSpecificMembersFollowLanguageLevel.py");
+    final PsiFile file = myFixture.getPsiManager().findFile(vFile);
+    try {
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(vFile, LanguageLevel.PYTHON312);
+      assertMembers(vFile, List.of("new", "common"), List.of("top_new"));
+      // A specified level reloads no PSI, so only the level stamp can drop the caches of the same file
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(vFile, LanguageLevel.PYTHON311);
+      assertSame(file, myFixture.getPsiManager().findFile(vFile));
+      assertMembers(vFile, List.of("old", "common"), List.of("top_old"));
+    }
+    finally {
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(vFile, null);
+    }
   }
 
   @TestFor(issues = "PY-83189")
