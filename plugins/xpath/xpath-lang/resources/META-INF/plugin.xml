@@ -1,7 +1,7 @@
 <idea-plugin allow-bundled-update="true">
   <id>XPathView</id>
   <name>XPathView + XSLT</name>
-  <category>HTML and XML</category>
+  <category>Languages</category>
   <vendor>JetBrains</vendor>
 
   <description><![CDATA[

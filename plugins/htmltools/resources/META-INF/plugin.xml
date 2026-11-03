@@ -6,7 +6,7 @@
 
   <description>Provides advanced features for HTML/CSS editing: inspections, quickfixes, smart navigation actions and more.</description>
 
-  <category>HTML and XML</category>
+  <category>Languages</category>
   <vendor>JetBrains</vendor>
 
   <dependencies>
