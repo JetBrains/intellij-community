@@ -57,6 +57,11 @@ object BazelTestUtil {
     return BazelRunfiles.getFileByLabel(label)
   }
 
+  @JvmStatic
+  fun getFileFromBazelRuntime(bazelLabel: String): Path {
+    return getFileFromBazelRuntime(BazelLabel.fromString(bazelLabel))
+  }
+
   /**
    * Tests under community root may run in community (OSS) or in the ultimate monorepo context.
    *
