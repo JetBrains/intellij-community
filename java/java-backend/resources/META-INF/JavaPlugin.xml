@@ -1125,7 +1125,6 @@
 
     <trigramIndexFilterExcludeExtension implementation="com.intellij.java.JavaLibrarySourcesExcludingIndexFilterExtension"/>
 
-    <virtualFileCustomDataProvider implementation="com.intellij.ide.JavaCodeStyleSettingsCustomDataSynchronizer"/>
     <consoleFilterProvider implementation="com.intellij.java.impl.nullaway.NullAwayFilterProvider"/>
 
     <!--from JavaAnalaysisPlugin.xml for java.analysis.impl-->
