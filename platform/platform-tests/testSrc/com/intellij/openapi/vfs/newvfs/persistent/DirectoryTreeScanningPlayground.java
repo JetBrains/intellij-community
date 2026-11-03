@@ -357,7 +357,7 @@ public class DirectoryTreeScanningPlayground {
 
   public static final int THREADS = Runtime.getRuntime().availableProcessors() * 2;
 
-  public static void main(String[] args) {
+  static void main() {
     final Path path = ROOT.toPath();
 
     System.out.println("Statistic for " + path);

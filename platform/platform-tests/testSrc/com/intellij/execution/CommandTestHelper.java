@@ -12,7 +12,7 @@ public final class CommandTestHelper {
   public static final String ENV = "-env";
   public static final String OUT = "-out";
 
-  public static void main(String[] args) throws IOException {
+  static void main(String[] args) throws IOException {
     String mode = null, out = null;
     if (args.length >= 3) {
       if (ARG.equals(args[0])) mode = ARG;

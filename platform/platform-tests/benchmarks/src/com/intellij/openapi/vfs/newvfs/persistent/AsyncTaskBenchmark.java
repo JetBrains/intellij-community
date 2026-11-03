@@ -207,7 +207,7 @@ public class AsyncTaskBenchmark {
     }
   }
 
-  public static void main(final String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     final Options opt = new OptionsBuilder()
       .jvmArgs()
       //.mode(Mode.SingleShotTime)

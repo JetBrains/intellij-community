@@ -12,7 +12,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowStateListener;
 
 public final class CustomDialogTest {
-  public static void main(String[] args) {
+  static void main() {
     final JFrame frame = new JFrame("Custom Dialog Test");
     frame.setLocation(0, 0);
     frame.setSize(800, 600);

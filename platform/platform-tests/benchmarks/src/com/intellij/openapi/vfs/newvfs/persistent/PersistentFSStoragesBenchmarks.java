@@ -668,7 +668,7 @@ public class PersistentFSStoragesBenchmarks {
     }
   }
 
-  public static void main(String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     final Options opt = new OptionsBuilder()
       //.include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*AccessTest.*Volatile.*")
       .include(PersistentFSStoragesBenchmarks.class.getSimpleName() + ".*ReadAccessTest.*Buffer.*SingleInt32.*")

@@ -206,7 +206,7 @@ public class StringSerializationBenchmark {
   }
 
 
-  public static void main(final String[] args) throws Exception {
+  static void main() throws Exception {
 
     final Options opt = new OptionsBuilder()
       .jvmArgs(

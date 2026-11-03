@@ -63,7 +63,7 @@ public final class ShapeTransformTest {
   }
 
 
-  public static void main(String[] args) {
+  static void main() {
     final JFrame frame = new JFrame();
     frame.getContentPane().setLayout(new BorderLayout());
     final JPanel content = new JPanel(new FlowLayout(FlowLayout.CENTER));

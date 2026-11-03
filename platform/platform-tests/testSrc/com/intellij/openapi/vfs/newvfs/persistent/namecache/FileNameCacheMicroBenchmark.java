@@ -22,7 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 public final class FileNameCacheMicroBenchmark {
-  public static void main(String[] args) throws Exception {
+  static void main() throws Exception {
     SwingUtilities.invokeAndWait(() -> {
       try {
         IdeaTestFixture fixture =

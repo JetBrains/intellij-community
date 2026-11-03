@@ -210,7 +210,7 @@ public class EnumeratorsBenchmark {
   }
 
 
-  public static void main(String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     final Options opt = new OptionsBuilder()
       //.mode(Mode.SampleTime)
       //.forks(0)
