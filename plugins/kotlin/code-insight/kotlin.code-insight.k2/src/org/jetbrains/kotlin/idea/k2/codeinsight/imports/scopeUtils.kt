@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.components.importingScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.packageScope
 import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
+import org.jetbrains.kotlin.analysis.api.fir.components.KaFirIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
@@ -30,7 +30,7 @@ internal fun buildImportingScopes(originalFile: KtFile, imports: Collection<Impo
 
     // FIXME: KTIJ-34274
     @OptIn(KaImplementationDetail::class)
-    return KaBaseIllegalPsiException.allowIllegalPsiAccess { fileWithImports.importingScopeContext }.scopes.map { originalScope ->
+    return KaFirIllegalPsiException.allowIllegalPsiAccess { fileWithImports.importingScopeContext }.scopes.map { originalScope ->
 
         // we have to add this scope by hand, because buildFileWithImports builds a file without a package
         val fixedPackageScope = if (originalScope.kind is KaScopeKind.PackageMemberScope) {

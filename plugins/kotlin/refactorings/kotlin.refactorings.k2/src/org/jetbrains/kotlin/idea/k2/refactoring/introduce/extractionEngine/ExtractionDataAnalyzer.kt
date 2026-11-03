@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.analysis.api.dataflow.KaDataFlowExitPointSnapshot
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
+import org.jetbrains.kotlin.analysis.api.fir.components.KaFirIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -175,7 +175,7 @@ internal class ExtractionDataAnalyzer(private val extractionData: ExtractionData
     override fun createOutputDescriptor(): OutputDescriptor<KaType> = analyze(extractionData.commonParent) {
         // FIXME: KTIJ-34278
         @OptIn(KaImplementationDetail::class)
-        KaBaseIllegalPsiException.allowIllegalPsiAccess {
+        KaFirIllegalPsiException.allowIllegalPsiAccess {
             val exitSnapshot: KaDataFlowExitPointSnapshot =
                 org.jetbrains.kotlin.analysis.api.dataflow.computeExitPointSnapshot(extractionData.expressions)
 
