@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.LineSeparator
+import com.intellij.util.ui.EDT
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
@@ -151,6 +152,11 @@ abstract class FileBasedStorage internal constructor(
 
   override fun loadLocalData(): Element? {
     blockSaving = null
+
+    val app = ApplicationManager.getApplication()
+    if (EDT.isCurrentThreadEdt() && app != null && !app.isHeadlessEnvironment && !app.isUnitTestMode) {
+      LOG.warnWithDebug(Throwable("Loading persistent state ${fileSpec} on UI Thread (EDT)"))
+    }
 
     try {
       val attributes: BasicFileAttributes?
