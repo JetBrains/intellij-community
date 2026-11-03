@@ -77,11 +77,14 @@ override it.
   branch. Such a failure is expected until the user accepts the ADR.
 - A `Proposed` ADR that amends or supersedes another ADR does not change the status of that ADR. The old status
   changes when the new ADR is accepted.
-- An accepted ADR is not rewritten. A change to the decision is a new ADR that amends or supersedes it, and only
-  the status of the old ADR changes.
+- An accepted ADR keeps its decision. You may reword it, clarify it, or add details to it, when the decision stays
+  the same. A missed detail or a wrong statement about the code is fixed in place. You may also add a missed
+  consequence or rejected alternative.
+- An addition that changes the meaning of an ADR is a new ADR. A sign of it: the title no longer states the
+  decision, and the ADR would need a rename.
+- A change to the decision is a new ADR that amends or supersedes it, and only the status of the old ADR changes.
 - A chain of amendments and supersessions holds at most 2 ADRs. `SettingsDocsTest` checks it. Merge a longer
-  chain into one ADR, as [Merging an ADR chain](#merging-an-adr-chain) says. This is the only case where an
-  accepted ADR is rewritten.
+  chain into one ADR, as [Merging an ADR chain](#merging-an-adr-chain) says.
 - A folded ADR has no file in `adr/`. A link or a mention of an ADR that is not in `adr/` points to a folded ADR.
   Search `adr/` for `### NNNN,` to find the merged ADR. The old text is in the git history of `adr/`.
 - One decision per ADR. An ADR links the spec that holds the resulting behavior.
