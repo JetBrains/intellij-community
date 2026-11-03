@@ -17,6 +17,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.ui.IconDeferrer
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import javax.swing.Icon
@@ -64,9 +65,18 @@ object SplitModeModuleKindIcons {
 
   private suspend fun getAccurateDescriptorIcon(descriptorFile: PsiFile, fastIcon: Icon): Icon {
     return smartReadAction(descriptorFile.project) {
-      val kind = recognizeSplitModeModuleKind(descriptorFile)?.kind
-      kind?.let { getKindIcon(it, descriptorFile.name) } ?: fastIcon
+      computeAccurateDescriptorIcon(descriptorFile, fastIcon)
     }
+  }
+
+  /**
+   * Returns the icon that [getDescriptorIcon] shows after the evaluation of its deferred icon.
+   * Call it in a read action in smart mode.
+   */
+  @RequiresReadLock
+  internal fun computeAccurateDescriptorIcon(descriptorFile: PsiFile, fastIcon: Icon): Icon {
+    val kind = recognizeSplitModeModuleKind(descriptorFile)?.kind
+    return kind?.let { getKindIcon(it, descriptorFile.name) } ?: fastIcon
   }
 
   private fun recognizeLightweightModuleKind(descriptorFile: PsiFile): SplitModeApiRestrictionsService.ModuleKind? {

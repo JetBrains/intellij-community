@@ -5,12 +5,14 @@ import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
+import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
@@ -19,7 +21,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.findDependingContentModuleEntriesInFile
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService.ModuleKind
-import org.jetbrains.idea.devkit.inspections.remotedev.analysis.recognizeSplitModeModuleKind
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 
@@ -53,8 +55,13 @@ internal class DescriptorSplitModeCodeVisionProvider : DaemonBoundCodeVisionProv
     if (!DescriptorUtil.isPluginXml(file)) return emptyList()
     val xmlFile = file as XmlFile
     val rootTag = DescriptorUtil.getIdeaPlugin(xmlFile)?.xmlTag ?: return emptyList()
-    val (text, tooltip) = getDescriptorSplitModeInlayInfo(xmlFile) ?: return emptyList()
-    val entry = TextCodeVisionEntry(text = text, providerId = id, tooltip = tooltip)
+    val info = getDescriptorSplitModeInlayInfo(xmlFile) ?: return emptyList()
+    val entry = ClickableTextCodeVisionEntry(
+      text = info.text,
+      providerId = id,
+      onClick = { event, clickedEditor -> showDescriptorSplitModeReasonPopup(clickedEditor, event, info.reason) },
+      tooltip = info.tooltip,
+    )
     return listOf(rootTag.textRange to entry)
   }
 
@@ -75,26 +82,39 @@ internal class DescriptorSplitModeCodeVisionGroupSettingProvider : CodeVisionGro
   override val description: String get() = DevKitBundle.message("inlay.split.mode.module.kind.description")
 }
 
+/**
+ * @property reason the content of the popup that opens on a click on the inlay.
+ */
 internal data class DescriptorSplitModeInlayInfo(
   val text: @Nls String,
   val tooltip: @NlsContexts.Tooltip String,
+  val reason: DescriptorSplitModeReason,
 )
 
 internal fun getDescriptorSplitModeInlayInfo(xmlFile: XmlFile): DescriptorSplitModeInlayInfo? {
-  val recognizedModuleKind = recognizeSplitModeModuleKind(xmlFile) ?: return null
+  val module = ModuleUtilCore.findModuleForPsiElement(xmlFile) ?: return null
+  val resolvedModuleKind = SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(xmlFile).resolvedModuleKind
   val descriptorKindMessageKey = getDescriptorKindMessageKey(xmlFile)
   val descriptorKind = DevKitBundle.message(descriptorKindMessageKey)
+  val text = DevKitBundle.message(
+    "inlay.split.mode.module.kind.presentation",
+    getPresentableModuleKind(resolvedModuleKind.kind),
+    descriptorKind,
+  )
+  val compatibilityTarget = getCompatibilityTarget(resolvedModuleKind.kind)
   return DescriptorSplitModeInlayInfo(
-    DevKitBundle.message(
-      "inlay.split.mode.module.kind.presentation",
-      getPresentableModuleKind(recognizedModuleKind.kind),
-      descriptorKind,
-    ),
-    DevKitBundle.message(
+    text = text,
+    tooltip = DevKitBundle.message(
       "inlay.split.mode.module.kind.tooltip",
       descriptorKind,
-      getCompatibilityTarget(recognizedModuleKind.kind),
-      normalizeTooltipReasoning(recognizedModuleKind.reasoning),
+      compatibilityTarget,
+      normalizeTooltipReasoning(resolvedModuleKind.reasoning),
+    ),
+    reason = DescriptorSplitModeReason(
+      presentation = text,
+      compatibilityTarget = compatibilityTarget,
+      analyzedDescriptor = DescriptorLink(xmlFile.name, module.name),
+      reason = resolvedModuleKind.reason,
     ),
   )
 }
@@ -103,7 +123,7 @@ private fun normalizeTooltipReasoning(reasoning: String): String {
   return reasoning.lineSequence().map(String::trim).filter(String::isNotEmpty).joinToString(" ")
 }
 
-private fun getPresentableModuleKind(kind: ModuleKind): String {
+internal fun getPresentableModuleKind(kind: ModuleKind): @NlsSafe String {
   val presentableId = when (kind) {
     ModuleKind.FRONTEND -> ModuleKind.FRONTEND.id
     ModuleKind.BACKEND -> ModuleKind.BACKEND.id

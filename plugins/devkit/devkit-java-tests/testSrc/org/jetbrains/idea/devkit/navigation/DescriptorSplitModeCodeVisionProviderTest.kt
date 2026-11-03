@@ -2,18 +2,27 @@
 package org.jetbrains.idea.devkit.navigation
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.ClickableTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightProjectFixture
+import com.intellij.psi.xml.XmlFile
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.codeVision.CodeVisionTestUtil
 import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.module.PluginModuleType
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 internal class DescriptorSplitModeCodeVisionProviderTest {
@@ -181,6 +190,124 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
   }
 
   @Test
+  fun testReasonPopupShowsTransitiveDependencyChain() {
+    createModuleWithModuleDescriptor("dependency.module", "dependency.module.xml", """
+      <idea-plugin>
+        <dependencies>
+          <module name="intellij.platform.backend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    createModuleWithModuleDescriptor("root.plugin", "plugin.xml", """
+      <idea-plugin>
+        <dependencies>
+          <module name="dependency.module"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromTempProjectFile("root.plugin/plugin.xml")
+
+    val entry = runReadActionBlocking { computeCodeVisionEntry() }
+    assertInstanceOf(ClickableTextCodeVisionEntry::class.java, entry)
+    val reasonHtml = computeReasonHtml()
+    assertEquals(
+      "Backend plugin Can be installed into: backend IDE " +
+      "Backend dependency intellij.platform.backend: " +
+      "plugin.xml module root.plugin " +
+      "\u2193 depends on dependency.module " +
+      "dependency.module.xml module dependency.module " +
+      "\u2193 depends on " +
+      "intellij.platform.backend",
+      toPlainText(reasonHtml.html),
+    )
+    assertEquals(
+      listOf(DescriptorLink("plugin.xml", "root.plugin"), DescriptorLink("dependency.module.xml", "dependency.module")),
+      reasonHtml.links,
+    )
+    assertEquals(setOf("plugin", "descriptor", "backend"), reasonHtml.icons.keys)
+
+    val resolvedDescriptors = runReadActionBlocking { resolveDescriptors(myFixture.project, reasonHtml.links) }
+    assertEquals(
+      mapOf(reasonHtml.links[0] to "root.plugin/plugin.xml", reasonHtml.links[1] to "dependency.module/dependency.module.xml"),
+      resolvedDescriptors.mapValues { (_, resolved) -> "${resolved.file.parent.name}/${resolved.file.name}" },
+    )
+    val reasonHtmlWithFileIcons = computeReason().toHtml(resolvedDescriptors.mapValues { it.value.icon })
+    assertEquals(
+      setOf("file:root.plugin/plugin.xml", "file:dependency.module/dependency.module.xml", "backend"),
+      reasonHtmlWithFileIcons.icons.keys,
+    )
+  }
+
+  @Test
+  fun testReasonPopupShowsMissingRpcDependency() {
+    createDeclaringModule()
+    createModuleWithModuleDescriptor("test.module", "test.module.xml", """
+      <idea-plugin>
+        <dependencies>
+          <module name="intellij.platform.frontend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromTempProjectFile("test.module/test.module.xml")
+
+    assertEquals(
+      "LiteFrontend content module Can be installed into: lite frontend IDE " +
+      "Frontend dependency intellij.platform.frontend: " +
+      "test.module.xml module test.module " +
+      "\u2193 depends on " +
+      "intellij.platform.frontend " +
+      "No dependency on intellij.platform.rpc was found. The module can be installed only into a lite frontend.",
+      toPlainText(computeReasonHtml().html),
+    )
+  }
+
+  @Test
+  fun testReasonPopupShowsPredefinedDependencyAsOneNode() {
+    val service = SplitModeApiRestrictionsService.getInstance(myFixture.project)
+    service.scheduleLoadRestrictions()
+    timeoutRunBlocking {
+      waitUntil("API restrictions failed to load", 2.seconds) { service.isLoaded() }
+    }
+    createDeclaringModule()
+    val frontendModule = PsiTestUtil.addModule(
+      myFixture.project,
+      PluginModuleType.getInstance(),
+      "intellij.platform.frontend",
+      myFixture.tempDirFixture.findOrCreateDir("intellij.platform.frontend"),
+    )
+    PsiTestUtil.addSourceRoot(
+      frontendModule,
+      myFixture.tempDirFixture.findOrCreateDir("intellij.platform.frontend/resources"),
+      JavaResourceRootType.RESOURCE,
+    )
+    myFixture.addFileToProject("intellij.platform.frontend/resources/intellij.platform.frontend.xml", "<idea-plugin/>")
+    createModuleWithModuleDescriptor("test.module", "test.module.xml", """
+      <idea-plugin>
+        <dependencies>
+          <module name="intellij.platform.frontend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromTempProjectFile("test.module/test.module.xml")
+
+    val reasonHtml = computeReasonHtml()
+    assertEquals(
+      "LiteFrontend content module Can be installed into: lite frontend IDE " +
+      "Frontend dependency intellij.platform.frontend: " +
+      "test.module.xml module test.module " +
+      "\u2193 depends on " +
+      "intellij.platform.frontend predefined " +
+      "No dependency on intellij.platform.rpc was found. The module can be installed only into a lite frontend.",
+      toPlainText(reasonHtml.html),
+    )
+    assertEquals(setOf("descriptor", "frontend"), reasonHtml.icons.keys)
+  }
+
+  @Test
   fun testPreview() {
     val previewPath = "codeVisionProviders/${DescriptorSplitModeCodeVisionProvider.ID}/preview.xml"
     val previewText = DescriptorSplitModeCodeVisionProvider::class.java.classLoader.getResource(previewPath)!!.readText()
@@ -218,6 +345,16 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
 
   private fun computeCodeVisionEntry(): CodeVisionEntry {
     return DescriptorSplitModeCodeVisionProvider().computeForEditor(myFixture.editor, myFixture.file).single().second
+  }
+
+  private fun computeReason(): DescriptorSplitModeReason {
+    return runReadActionBlocking { getDescriptorSplitModeInlayInfo(myFixture.file as XmlFile) }!!.reason
+  }
+
+  private fun computeReasonHtml(): DescriptorSplitModeReasonHtml = computeReason().toHtml()
+
+  private fun toPlainText(html: String): String {
+    return StringUtil.unescapeXmlEntities(StringUtil.removeHtmlTags(html, true)).replace(Regex("\\s+"), " ").trim()
   }
 
   private fun expectedTooltip(descriptorKind: String, compatibilityTarget: String, reason: String): String {
