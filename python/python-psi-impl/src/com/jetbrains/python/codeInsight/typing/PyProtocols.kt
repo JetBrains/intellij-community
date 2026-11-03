@@ -14,6 +14,7 @@ import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyPossibleClassMember
 import com.jetbrains.python.psi.PyPsiFacade
 import com.jetbrains.python.psi.PyTypeParameter
+import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassLikeType
@@ -47,11 +48,10 @@ fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: Typ
 typealias ProtocolAndSubclassElements = Pair<PyTypeMember, List<PyTypeMember>>
 
 fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, context: TypeEvalContext): List<ProtocolAndSubclassElements> {
-  val cache = context.getProtocolMembersCache()
-  // Not `computeIfAbsent`: the computation runs type evaluation, which can call this again and deadlock the map
-  val forProtocol = cache[protocol.pyClass]
-                    ?: ConcurrentHashMap<Pair<PyClassType, PyClassType>, List<ProtocolAndSubclassElements>>()
-                      .let { cache.putIfAbsent(protocol.pyClass, it) ?: it }
+  // The cached value is an empty map, so the recursion guard below decides which members it keeps
+  val forProtocol = PyUtil.getParameterizedCachedValue(protocol.pyClass, context) {
+    ConcurrentHashMap<Pair<PyClassType, PyClassType>, List<ProtocolAndSubclassElements>>()
+  }
   val pair = protocol to subclass
   forProtocol[pair]?.let { return it }
   val stamp = RecursionManager.markStack()
