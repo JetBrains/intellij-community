@@ -96,7 +96,7 @@ class SnapshotMarkerStores {
     isCurrent: () -> Boolean,
     publish: () -> Unit,
   ): Boolean {
-    SnapshotMarkerEngine.processQueue()
+    SnapshotMarkerReference.processQueue()
     val version: Long
     val capturedRoots: List<CapturedRoot>
     synchronized(this) {
@@ -163,7 +163,7 @@ class SnapshotMarkerStores {
    * @return [metadataSnapshot] if the snapshots are identical or no store contains either snapshot; otherwise, a new snapshot
    */
   fun mergeMarkerRoots(markerSnapshot: DocumentSnapshot, metadataSnapshot: DocumentSnapshot): DocumentSnapshot {
-    SnapshotMarkerEngine.processQueue()
+    SnapshotMarkerReference.processQueue()
     if (markerSnapshot === metadataSnapshot) return metadataSnapshot
 
     val relevantRegistrations = registrations.filter {

@@ -50,9 +50,9 @@ final class VirtualFileMarkerRootTest {
   @Test
   void restorationComparesResolvedMarkerOffsetsInsteadOfJustMarkerEntryNodeStart() {
     var file = new LightVirtualFile("test.txt", "abcdef");
-    var firstMarker = SnapshotMarkerEngine.INSTANCE.createRangeMarkerForVirtualFile(file, 1, 0, 1, 0, 1, true);
-    var middleMarker = SnapshotMarkerEngine.INSTANCE.createRangeMarkerForVirtualFile(file, 3, 0, 3, 0, 3, true);
-    var lastMarker = SnapshotMarkerEngine.INSTANCE.createRangeMarkerForVirtualFile(file, 5, 0, 5, 0, 5, true);
+    var firstMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 1, 0, 1, 0, 1, true);
+    var middleMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 3, 0, 3, 0, 3, true);
+    var lastMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 5, 0, 5, 0, 5, true);
     //noinspection KotlinInternalInJava
     var fileRoot = VirtualFileMarkerRoot.Companion.getOrCreate$intellij_platform_core_impl(file);
     var document = new DocumentImpl("abcdef", true);
@@ -75,8 +75,8 @@ final class VirtualFileMarkerRootTest {
   @ValueSource(ints = {3, 5})
   void restorationResolvesUnchangedMarkersBeforeLaterRestores(int initialOffset) {
     var file = new LightVirtualFile("test.txt", "abcdef");
-    var unchangedMarker = SnapshotMarkerEngine.INSTANCE.createRangeMarkerForVirtualFile(file, 1, 0, 1, 0, 1, true);
-    var restoredMarker = SnapshotMarkerEngine.INSTANCE.createRangeMarkerForVirtualFile(file, initialOffset, 0, 3, 0, 3, true);
+    var unchangedMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, 1, 0, 1, 0, 1, true);
+    var restoredMarker = SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(file, initialOffset, 0, 3, 0, 3, true);
     var offsetMarker = LazyRangeMarkerFactory.getInstance(projectFixture.get()).createRangeMarker(file, 5);
     var document = new DocumentImpl("abcdef", true);
 

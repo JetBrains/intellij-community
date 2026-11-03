@@ -152,7 +152,7 @@ public class SnapshotMarkerEngineBenchmark {
 
     for (int index = 0; index < MARKER_COUNT; index++) {
       int startOffset = markerStart(index);
-      SnapshotRangeMarkerImpl marker = SnapshotMarkerEngine.INSTANCE.createRangeMarker(
+      SnapshotRangeMarkerImpl marker = SnapshotRangeMarkerImpl.createRangeMarker(
         state.document,
         startOffset,
         startOffset + MARKER_LENGTH,
@@ -168,7 +168,7 @@ public class SnapshotMarkerEngineBenchmark {
   }
 
   /**
-   * Resolves markers 4,000,000 times through {@link SnapshotMarkerEngine}.
+   * Resolves markers 4,000,000 times through {@link SnapshotRangeMarkerImpl}.
    *
    * <p>The precomputed access order visits every one of the 50,000 markers exactly 80 times in a permuted order. Each
    * loop iteration resolves one marker and consumes both resolved offsets through the returned checksum.</p>
@@ -267,7 +267,7 @@ public class SnapshotMarkerEngineBenchmark {
 
       for (int index = 0; index < MARKER_COUNT; index++) {
         int startOffset = markerStart(index);
-        markers[index] = SnapshotMarkerEngine.INSTANCE.createRangeMarker(
+        markers[index] = SnapshotRangeMarkerImpl.createRangeMarker(
           document,
           startOffset,
           startOffset + MARKER_LENGTH,
@@ -328,7 +328,7 @@ public class SnapshotMarkerEngineBenchmark {
 
       for (int index = 0; index < MARKER_COUNT; index++) {
         int startOffset = markerStart(index);
-        markers[index] = SnapshotMarkerEngine.INSTANCE.createRangeMarker(
+        markers[index] = SnapshotRangeMarkerImpl.createRangeMarker(
           document,
           startOffset,
           startOffset + MARKER_LENGTH,
@@ -461,7 +461,7 @@ public class SnapshotMarkerEngineBenchmark {
   }
 
   private static SnapshotRangeMarkerImpl createMarkerForHandles() {
-    return SnapshotMarkerEngine.INSTANCE.createRangeMarker(
+    return SnapshotRangeMarkerImpl.createRangeMarker(
       new DocumentImpl(""), 0, 0, NON_GREEDY_SPEC, false, DefaultMarkerPolicy.INSTANCE
     );
   }

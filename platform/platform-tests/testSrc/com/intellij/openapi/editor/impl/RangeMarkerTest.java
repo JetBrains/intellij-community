@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference;
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -1273,7 +1273,7 @@ public class RangeMarkerTest {
     GCUtil.tryGcSoftlyReachableObjects(() -> reference.get() == null);
     assertNull(reference.get());
     if (snapshotMarker) {
-      while (!SnapshotMarkerEngine.INSTANCE.processQueue()) {
+      while (!SnapshotMarkerReference.processQueue()) {
         Thread.yield();
       }
     }

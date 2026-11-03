@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine;
+import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -52,7 +52,7 @@ public final class RMTreeReference extends WeakReference<RangeMarkerTree<RangeMa
     int estimatedLength = RangeMarkerImpl.estimateDocumentLength(file);
     offset = Math.min(offset, estimatedLength);
     if (RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION) {
-      return SnapshotMarkerEngine.INSTANCE.createRangeMarkerForVirtualFile(
+      return SnapshotRangeMarkerImpl.createRangeMarkerForVirtualFile(
         file, offset, startLine, startCol, endLine, endCol, persistent
       );
     }

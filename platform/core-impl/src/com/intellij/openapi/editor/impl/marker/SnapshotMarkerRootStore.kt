@@ -122,7 +122,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
     snapshot: DocumentSnapshot,
     processor: Processor<in RangeMarkerEx>,
   ): Boolean {
-    SnapshotMarkerEngine.processQueue()
+    SnapshotMarkerReference.processQueue()
     val root = root(snapshot) ?: return true
     val markerProcessor = MarkerProcessor(processor)
     try {
@@ -145,7 +145,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
     tastePreference: Int,
     processor: Processor<in RangeMarkerEx>,
   ): Boolean {
-    SnapshotMarkerEngine.processQueue()
+    SnapshotMarkerReference.processQueue()
     val root = root(snapshot) ?: return true
     val markerProcessor = MarkerProcessor(processor)
     try {

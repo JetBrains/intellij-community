@@ -136,14 +136,14 @@ class VirtualFileMarkerRoot private constructor(
 
     @JvmStatic
     fun restoreRangeMarkersFromFile(document: DocumentImpl, file: VirtualFile, tabSize: Int) {
-      SnapshotMarkerEngine.processQueue()
+      SnapshotMarkerReference.processQueue()
       val fileRoot = find(file) ?: return
       fileRoot.restoreAndAttach(document, tabSize)
     }
 
     @JvmStatic
     fun areRangeMarkersRetainedFor(file: VirtualFile): Boolean {
-      SnapshotMarkerEngine.processQueue()
+      SnapshotMarkerReference.processQueue()
       return find(file) != null
     }
 

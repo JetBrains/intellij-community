@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy;
 import com.intellij.openapi.editor.impl.marker.MarkerSpec;
 import com.intellij.openapi.editor.impl.marker.PersistentMarkerPolicy;
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore;
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl;
 import com.intellij.openapi.util.ProperTextRange;
@@ -63,7 +62,7 @@ public final class RangeMarkersImpl implements RangeMarkers {
                                                   boolean surviveOnExternalChange) {
     if (myRangeMarkerTree == null) {
       byte spec = MarkerSpec.create(false, false);
-      return SnapshotMarkerEngine.INSTANCE.createRangeMarker(
+      return SnapshotRangeMarkerImpl.createRangeMarker(
         hostDocument,
         startOffset,
         endOffset,

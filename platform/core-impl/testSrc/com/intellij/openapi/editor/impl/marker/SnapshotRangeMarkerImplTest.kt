@@ -196,7 +196,7 @@ internal class SnapshotRangeMarkerImplTest {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)
       val policy = MarkerPolicy { entry, _, _, _ -> MarkerTransformResult(entry.nodeStart, 6) }
-      val marker = SnapshotMarkerEngine.createRangeMarker(
+      val marker = SnapshotRangeMarkerImpl.createRangeMarker(
         document, 2, 4, MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = policy,
       )
 
