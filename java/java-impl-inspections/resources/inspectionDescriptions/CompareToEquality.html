@@ -14,6 +14,12 @@ Currently, <code>compareTo()</code> calls on the following class types can be re
   <li><code>java.lang.Boolean</code>
   <li>Most classes from the <code>java.time</code> package e.g. <code>java.time.LocalTime</code>
 </ul>
+The inspection does not report when the argument may be <code>null</code>, because
+<code>compareTo(null)</code> throws a <code>NullPointerException</code> while <code>equals(null)</code>
+returns <code>false</code>, so the replacement would change behavior.
+<p>
+The quick-fix is available even when nothing is reported,
+so it's always possible to convert <code>compareTo()</code> method call expressions to <code>equals()</code> calls. 
 <p><b>Example:</b></p>
 <pre><code>
   boolean isSame(String name) {
@@ -28,9 +34,7 @@ Currently, <code>compareTo()</code> calls on the following class types can be re
 </code></pre>
 <!-- tooltip end -->
 <p>
-  The inspection does not report when the argument may be <code>null</code>, because
-  <code>compareTo(null)</code> throws a <code>NullPointerException</code> while <code>equals(null)</code>
-  returns <code>false</code>, so the replacement would change behavior.
+  <small>New in 2027.1</small>
 </p>
 </body>
 </html>
