@@ -58,8 +58,8 @@ internal enum class PersistentLongMapImplementation(private val emptyMap: Persis
   MAP_16(PersistentLongMap16()),
   VECTOR_32(PersistentVector32()),
   VECTOR_64(PersistentVector64()),
-  PAGED_VECTOR_128(PersistentPagedVector128()),
-  PAGED_VECTOR_256(PersistentPagedVector256()),
+  PAGED_VECTOR_128(PersistentPagedVector(pageBits = 7)),
+  PAGED_VECTOR_256(PersistentPagedVector(pageBits = 8)),
   CHAMP(PersistentLongChampMap()),
   CHAMP_64(PersistentLongChampMap(bitsPerLevel = 6));
 
@@ -1300,16 +1300,23 @@ internal class PersistentVector64<V : Any> private constructor(
 }
 
 /**
- * Persistent vector of 128-element pages.
- *
- * A lookup performs a shallow [PersistentVector32] page-table lookup followed by one array access. An update copies one
- * 128-element page and the page-table path.
+ * Persistent vector with pages of `1 shl pageBits` elements.
+ * A lookup uses a [PersistentVector32] page table and one array access. An update copies one page and the page-table path.
  */
-internal class PersistentPagedVector128<V : Any> private constructor(
+internal class PersistentPagedVector<V : Any> private constructor(
+  private val pageBits: Int,
   private val pages: PersistentVector32<Page<V>>,
   private val size: Int,
 ) : PersistentLongMap<V> {
-  constructor() : this(PersistentVector32(), 0)
+  constructor(pageBits: Int) : this(pageBits, PersistentVector32(), 0) {
+    require(pageBits in 1..30) { "pageBits must be between 1 and 30" }
+  }
+
+  private val pageSize: Int
+    get() = 1 shl pageBits
+
+  private val pageMask: Long
+    get() = (pageSize - 1).toLong()
 
   override operator fun get(key: Long): V? {
     requireNonNegativeKey(key)
@@ -1317,35 +1324,35 @@ internal class PersistentPagedVector128<V : Any> private constructor(
   }
 
   override fun getUnchecked(key: Long): V? {
-    val page = pages.getUnchecked(key ushr PAGE_BITS) ?: return null
+    val page = pages.getUnchecked(key ushr pageBits) ?: return null
     @Suppress("UNCHECKED_CAST")
-    return page.values[(key and PAGE_MASK).toInt()] as V?
+    return page.values[(key and pageMask).toInt()] as V?
   }
 
-  override fun put(key: Long, value: V): PersistentPagedVector128<V> {
+  override fun put(key: Long, value: V): PersistentPagedVector<V> {
     requireNonNegativeKey(key)
-    val pageKey = key ushr PAGE_BITS
-    val slot = (key and PAGE_MASK).toInt()
+    val pageKey = key ushr pageBits
+    val slot = (key and pageMask).toInt()
     val oldPage = pages[pageKey]
-    val values = oldPage?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE)
+    val values = oldPage?.values?.copyOf() ?: arrayOfNulls(pageSize)
     val added = values[slot] == null
     val newPageSize = (oldPage?.size ?: 0) + if (added) 1 else 0
     values[slot] = value
-    return PersistentPagedVector128(pages.put(pageKey, Page(values, newPageSize)), size + if (added) 1 else 0)
+    return PersistentPagedVector(pageBits, pages.put(pageKey, Page(values, newPageSize)), size + if (added) 1 else 0)
   }
 
-  override fun remove(key: Long): PersistentPagedVector128<V> {
+  override fun remove(key: Long): PersistentPagedVector<V> {
     requireNonNegativeKey(key)
-    val pageKey = key ushr PAGE_BITS
-    val slot = (key and PAGE_MASK).toInt()
+    val pageKey = key ushr pageBits
+    val slot = (key and pageMask).toInt()
     val oldPage = pages[pageKey] ?: return this
     if (oldPage.values[slot] == null) return this
 
-    if (oldPage.size == 1) return PersistentPagedVector128(pages.remove(pageKey), size - 1)
+    if (oldPage.size == 1) return PersistentPagedVector(pageBits, pages.remove(pageKey), size - 1)
 
     val values = oldPage.values.copyOf()
     values[slot] = null
-    return PersistentPagedVector128(pages.put(pageKey, Page(values, oldPage.size - 1)), size - 1)
+    return PersistentPagedVector(pageBits, pages.put(pageKey, Page(values, oldPage.size - 1)), size - 1)
   }
 
   override fun size(): Int = size
@@ -1354,7 +1361,7 @@ internal class PersistentPagedVector128<V : Any> private constructor(
 
   override fun forEachEntry(action: (Long, V) -> Unit) {
     pages.forEachEntry { pageKey, page ->
-      val prefix = pageKey shl PAGE_BITS
+      val prefix = pageKey shl pageBits
       for (slot in page.values.indices) {
         val value = page.values[slot] ?: continue
         @Suppress("UNCHECKED_CAST")
@@ -1367,7 +1374,7 @@ internal class PersistentPagedVector128<V : Any> private constructor(
 
   private class Page<V : Any>(val values: Array<Any?>, var size: Int, val owner: Any? = null)
 
-  private class Builder<V : Any>(private val source: PersistentPagedVector128<V>) : PersistentLongMapBuilder<V> {
+  private class Builder<V : Any>(private val source: PersistentPagedVector<V>) : PersistentLongMapBuilder<V> {
     private val owner: Any = Any()
     private val pages: PersistentLongMapBuilder<Page<V>> = source.pages.builder()
     private var size: Int = source.size
@@ -1386,16 +1393,16 @@ internal class PersistentPagedVector128<V : Any> private constructor(
     }
 
     private fun find(key: Long): V? {
-      val page = pages.getUnchecked(key ushr PAGE_BITS) ?: return null
+      val page = pages.getUnchecked(key ushr source.pageBits) ?: return null
       @Suppress("UNCHECKED_CAST")
-      return page.values[(key and PAGE_MASK).toInt()] as V?
+      return page.values[(key and source.pageMask).toInt()] as V?
     }
 
     override fun put(key: Long, value: V) {
       checkActive()
       requireNonNegativeKey(key)
-      val pageKey = key ushr PAGE_BITS
-      val slot = (key and PAGE_MASK).toInt()
+      val pageKey = key ushr source.pageBits
+      val slot = (key and source.pageMask).toInt()
       val oldPage = pages[pageKey]
       val page = editable(oldPage)
       if (page !== oldPage) pages.put(pageKey, page)
@@ -1410,8 +1417,8 @@ internal class PersistentPagedVector128<V : Any> private constructor(
     override fun remove(key: Long) {
       checkActive()
       requireNonNegativeKey(key)
-      val pageKey = key ushr PAGE_BITS
-      val slot = (key and PAGE_MASK).toInt()
+      val pageKey = key ushr source.pageBits
+      val slot = (key and source.pageMask).toInt()
       val oldPage = pages[pageKey] ?: return
       if (oldPage.values[slot] == null) return
 
@@ -1433,176 +1440,16 @@ internal class PersistentPagedVector128<V : Any> private constructor(
       @Suppress("UNCHECKED_CAST")
       val builtPages = pages.build() as PersistentVector32<Page<V>>
       active = false
-      return if (dirty) PersistentPagedVector128(builtPages, size) else source
+      return if (dirty) PersistentPagedVector(source.pageBits, builtPages, size) else source
     }
 
     private fun editable(page: Page<V>?): Page<V> {
       if (page?.owner === owner) return page
-      return Page(page?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE), page?.size ?: 0, owner)
+      return Page(page?.values?.copyOf() ?: arrayOfNulls(source.pageSize), page?.size ?: 0, owner)
     }
 
     private fun checkActive() {
       check(active) { "PersistentLongMapBuilder has already been built" }
     }
-  }
-
-  companion object {
-    private const val PAGE_BITS: Int = 7
-    private const val PAGE_SIZE: Int = 1 shl PAGE_BITS
-    private const val PAGE_MASK: Long = (PAGE_SIZE - 1).toLong()
-  }
-}
-
-/**
- * Persistent vector of 256-element pages.
- *
- * Compared with [PersistentPagedVector128], it reduces page-table size and can reduce lookup depth, but each isolated
- * update copies a larger page.
- */
-internal class PersistentPagedVector256<V : Any> private constructor(
-  private val pages: PersistentVector32<Page<V>>,
-  private val size: Int,
-) : PersistentLongMap<V> {
-  constructor() : this(PersistentVector32(), 0)
-
-  override operator fun get(key: Long): V? {
-    requireNonNegativeKey(key)
-    return getUnchecked(key)
-  }
-
-  override fun getUnchecked(key: Long): V? {
-    val page = pages.getUnchecked(key ushr PAGE_BITS) ?: return null
-    @Suppress("UNCHECKED_CAST")
-    return page.values[(key and PAGE_MASK).toInt()] as V?
-  }
-
-  override fun put(key: Long, value: V): PersistentPagedVector256<V> {
-    requireNonNegativeKey(key)
-    val pageKey = key ushr PAGE_BITS
-    val slot = (key and PAGE_MASK).toInt()
-    val oldPage = pages[pageKey]
-    val values = oldPage?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE)
-    val added = values[slot] == null
-    val newPageSize = (oldPage?.size ?: 0) + if (added) 1 else 0
-    values[slot] = value
-    return PersistentPagedVector256(pages.put(pageKey, Page(values, newPageSize)), size + if (added) 1 else 0)
-  }
-
-  override fun remove(key: Long): PersistentPagedVector256<V> {
-    requireNonNegativeKey(key)
-    val pageKey = key ushr PAGE_BITS
-    val slot = (key and PAGE_MASK).toInt()
-    val oldPage = pages[pageKey] ?: return this
-    if (oldPage.values[slot] == null) return this
-
-    if (oldPage.size == 1) return PersistentPagedVector256(pages.remove(pageKey), size - 1)
-
-    val values = oldPage.values.copyOf()
-    values[slot] = null
-    return PersistentPagedVector256(pages.put(pageKey, Page(values, oldPage.size - 1)), size - 1)
-  }
-
-  override fun size(): Int = size
-
-  override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
-
-  override fun forEachEntry(action: (Long, V) -> Unit) {
-    pages.forEachEntry { pageKey, page ->
-      val prefix = pageKey shl PAGE_BITS
-      for (slot in page.values.indices) {
-        val value = page.values[slot] ?: continue
-        @Suppress("UNCHECKED_CAST")
-        action(prefix or slot.toLong(), value as V)
-      }
-    }
-  }
-
-  override fun toString(): String = mapToString()
-
-  private class Page<V : Any>(val values: Array<Any?>, var size: Int, val owner: Any? = null)
-
-  private class Builder<V : Any>(private val source: PersistentPagedVector256<V>) : PersistentLongMapBuilder<V> {
-    private val owner: Any = Any()
-    private val pages: PersistentLongMapBuilder<Page<V>> = source.pages.builder()
-    private var size: Int = source.size
-    private var dirty: Boolean = false
-    private var active: Boolean = true
-
-    override fun get(key: Long): V? {
-      checkActive()
-      requireNonNegativeKey(key)
-      return find(key)
-    }
-
-    override fun getUnchecked(key: Long): V? {
-      checkActive()
-      return find(key)
-    }
-
-    private fun find(key: Long): V? {
-      val page = pages.getUnchecked(key ushr PAGE_BITS) ?: return null
-      @Suppress("UNCHECKED_CAST")
-      return page.values[(key and PAGE_MASK).toInt()] as V?
-    }
-
-    override fun put(key: Long, value: V) {
-      checkActive()
-      requireNonNegativeKey(key)
-      val pageKey = key ushr PAGE_BITS
-      val slot = (key and PAGE_MASK).toInt()
-      val oldPage = pages[pageKey]
-      val page = editable(oldPage)
-      if (page !== oldPage) pages.put(pageKey, page)
-      if (page.values[slot] == null) {
-        page.size++
-        size++
-      }
-      page.values[slot] = value
-      dirty = true
-    }
-
-    override fun remove(key: Long) {
-      checkActive()
-      requireNonNegativeKey(key)
-      val pageKey = key ushr PAGE_BITS
-      val slot = (key and PAGE_MASK).toInt()
-      val oldPage = pages[pageKey] ?: return
-      if (oldPage.values[slot] == null) return
-
-      if (oldPage.size == 1) {
-        pages.remove(pageKey)
-      }
-      else {
-        val page = editable(oldPage)
-        if (page !== oldPage) pages.put(pageKey, page)
-        page.values[slot] = null
-        page.size--
-      }
-      size--
-      dirty = true
-    }
-
-    override fun build(): PersistentLongMap<V> {
-      checkActive()
-      @Suppress("UNCHECKED_CAST")
-      val builtPages = pages.build() as PersistentVector32<Page<V>>
-      active = false
-      return if (dirty) PersistentPagedVector256(builtPages, size) else source
-    }
-
-    private fun editable(page: Page<V>?): Page<V> {
-      if (page?.owner === owner) return page
-      return Page(page?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE), page?.size ?: 0, owner)
-    }
-
-    private fun checkActive() {
-      check(active) { "PersistentLongMapBuilder has already been built" }
-    }
-  }
-
-  companion object {
-    private const val PAGE_BITS: Int = 8
-    private const val PAGE_SIZE: Int = 1 shl PAGE_BITS
-    private const val PAGE_MASK: Long = (PAGE_SIZE - 1).toLong()
   }
 }
