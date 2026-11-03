@@ -2,11 +2,11 @@
 package com.intellij.compose.ide.plugin.resources.gradle
 
 import com.intellij.compose.ide.plugin.resources.COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH
+import com.intellij.compose.ide.plugin.resources.composeResourcesTestDataRoot
 import com.intellij.compose.ide.plugin.shared.ANDROID_MAIN
 import com.intellij.compose.ide.plugin.shared.COMMON_MAIN
 import com.intellij.compose.ide.plugin.shared.IOS_MAIN
 import com.intellij.compose.ide.plugin.shared.TARGET_GRADLE_VERSION
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.util.Computable
 import com.intellij.testFramework.common.runAll
@@ -14,9 +14,11 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameters
+import java.io.File
 import kotlin.test.assertNotNull as kAssertNotNull
 
 
@@ -43,11 +45,19 @@ abstract class ComposeResourcesGradleImportingTestCase : KotlinGradleImportingTe
   protected val codeInsightTestFixture: CodeInsightTestFixture
     get() = kAssertNotNull(_codeInsightTestFixture, "_codeInsightTestFixture was not initialized")
 
+  @Suppress("IO_FILE_USAGE", "UsePropertyAccessSyntax")
+  override fun testDataDirectory(): File {
+    val testDataFileName = requireNotNull(KotlinTestUtils.getTestDataFileName(javaClass, getName())) {
+      "Missing @TestMetadata for ${getName()}"
+    }
+    return composeResourcesTestDataRoot().resolve(testDataFileName).toFile()
+  }
+
   override fun setUpFixtures() {
     myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
     _codeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
     codeInsightTestFixture.setUp()
-    codeInsightTestFixture.testDataPath = PathManagerEx.getCommunityHomePath() + "/$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH/"
+    codeInsightTestFixture.testDataPath = composeResourcesTestDataRoot().toString()
   }
 
   override fun tearDownFixtures() {

@@ -1,6 +1,33 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "ide-plugin-resources-tests_test",
+    data = [
+        "@community//plugins/compose/intellij.compose.ide.plugin.resources:testData",
+        "@community//plugins/kotlin/idea/tests:testData",
+        "@kotlin_test_deps//:annotations-java5-24.0.0.jar",
+        "@kotlin_test_deps//:junit.jar",
+        "@kotlin_test_deps//:kotlin-dist-for-ide.jar",
+        "@kotlin_test_deps//:kotlin-test-junit.jar",
+    ],
+    env_inherit = [
+        "ANDROID_HOME",
+        "GRADLE_USER_HOME",
+        "JAVA_HOME",
+        "JDK_17_0",
+    ],
+    tags = ["compose-ide-plugin-resources-tests"],
+    runtime_deps = [":ide-plugin-resources-tests_test_lib"],
+)
+
+### skip generation section `test intellij.compose.ide.plugin.resources.tests`
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+)
+
 ### auto-generated section `build intellij.compose.ide.plugin.resources` start
 jvm_library(
     name = "ide-plugin-resources",
@@ -166,10 +193,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.compose.ide.plugin.resources.tests` end
-
-### auto-generated section `test intellij.compose.ide.plugin.resources.tests` start
-jps_test(
-    name = "ide-plugin-resources-tests_test",
-    runtime_deps = [":ide-plugin-resources-tests_test_lib"],
-)
-### auto-generated section `test intellij.compose.ide.plugin.resources.tests` end

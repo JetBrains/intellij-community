@@ -2,6 +2,7 @@
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.testFramework.common.BazelTestUtil
 import java.nio.file.Path
 
 /**
@@ -19,7 +20,12 @@ internal const val COMPOSE_RESOURCES_PROJECT_NAME: String = "ComposeResources"
 
 /** The absolute test data root of this module. */
 internal fun composeResourcesTestDataRoot(): Path =
-  Path.of(PathManagerEx.getCommunityHomePath(), COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH)
+  if (BazelTestUtil.isUnderBazelTest) {
+    BazelTestUtil.getFileFromBazelRuntime("@community//plugins/compose/intellij.compose.ide.plugin.resources:testData")
+  }
+  else {
+    Path.of(PathManagerEx.getCommunityHomePath(), COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH)
+  }
 
 /** The absolute root of the test data project. */
 internal fun composeResourcesProjectRoot(): Path =

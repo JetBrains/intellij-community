@@ -6,14 +6,12 @@ import com.android.ide.common.vectordrawable.VdPreview
 import com.android.ide.common.vectordrawable.VdPreview.TargetSize
 import com.android.tools.idea.rendering.GutterIconFactory
 import com.android.utils.XmlUtils
-import com.intellij.compose.ide.plugin.resources.COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH
+import com.intellij.compose.ide.plugin.resources.composeResourcesTestDataRoot
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer.RenderResult
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcesDrawablePreviewRenderer
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.scale.ScaleContext.Companion.create
 import com.intellij.util.IconUtil
@@ -23,11 +21,11 @@ import com.intellij.util.ui.JBUI
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
-import java.io.File
 import javax.imageio.ImageIO
 import javax.swing.Icon
 import kotlin.io.path.createTempFile
 import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
 import kotlin.io.path.writeBytes
 import kotlin.test.assertNotNull as kAssertNotNull
 
@@ -36,15 +34,16 @@ private const val IMAGE_DIFF_THRESHOLD = 1.25f
 /** Tests compares [ComposeResourcesGutterIconFactory] icons and [GutterIconFactory]'s icons */
 class ComposeResourcesGutterIconTest : BasePlatformTestCase() {
 
+  override fun getTestDataPath(): String = composeResourcesTestDataRoot().toString()
+
   private val maxWidth get() = JBUI.scale(16)
 
   fun `test XML produces matching icon`() {
-    val path = "$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH/vectordrawable/test_fill_gradient.xml"
-    val file = File(PlatformTestUtil.getCommunityPath(), path)
-    assertTrue("Test image not found: ${file.absolutePath}", file.exists())
+    val file = composeResourcesTestDataRoot().resolve("vectordrawable/test_fill_gradient.xml")
+    assertTrue("Test image not found: $file", file.exists())
 
-    val vf = StandardFileSystems.local().findFileByPath(file.absolutePath)
-    kAssertNotNull(vf, "Could not find VirtualFile for: ${file.absolutePath}")
+    val vf = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(file)
+    kAssertNotNull(vf, "Could not find VirtualFile for: $file")
 
     val gutterIcon = createXmlAndroidGutterIcon(vf, maxWidth)
     kAssertNotNull(gutterIcon, "Gutter icon should not be null")

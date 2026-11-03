@@ -3,10 +3,8 @@ package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.compose.ide.plugin.resources.android.AndroidDrawablePreviewRenderer
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcesDrawablePreviewRenderer
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.xml.sax.InputSource
-import java.io.File
 import java.io.StringReader
 import java.io.StringWriter
 import java.nio.file.Files
@@ -17,6 +15,7 @@ import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
+import kotlin.io.path.exists
 
 /**
  * Tests for SVG to VectorDrawable XML conversion.
@@ -506,9 +505,8 @@ internal class ComposeResourcesSvgConverterTest : BasePlatformTestCase() {
 
   private fun loadSvgResource(testCase: String): Path {
     val fileName = "$testCase.svg"
-    val path = "$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH/vectordrawable/$fileName"
-    val file = File(PlatformTestUtil.getCommunityPath(), path)
-    if (file.exists()) return file.toPath()
+    val file = composeResourcesTestDataRoot().resolve("vectordrawable/$fileName")
+    if (file.exists()) return file
 
     val stream = javaClass.classLoader.getResourceAsStream("testData/vectordrawable/$fileName")
                  ?: error("Test resource not found: $testCase")

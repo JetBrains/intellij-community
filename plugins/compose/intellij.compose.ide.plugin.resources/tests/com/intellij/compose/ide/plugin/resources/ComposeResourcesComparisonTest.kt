@@ -6,12 +6,12 @@ import com.intellij.compose.ide.plugin.resources.android.AndroidDrawablePreviewR
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer.RenderResult
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer.VectorDrawableOverrideInfo
 import com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcesDrawablePreviewRenderer
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.awt.Color
-import java.io.File
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 /**
  * Compares the ComposeResources VectorDrawable renderer against Android's VdPreview implementation.
@@ -164,8 +164,7 @@ class ComposeResourcesComparisonTest : BasePlatformTestCase() {
   }
 
   private fun loadLocalTestData(fileName: String): String? {
-    val path = "$COMPOSE_RESOURCES_TEST_DATA_RELATIVE_PATH/vectordrawable/$fileName"
-    val file = File(PlatformTestUtil.getCommunityPath(), path)
+    val file = composeResourcesTestDataRoot().resolve("vectordrawable/$fileName")
     return file.takeIf { it.exists() }?.readText()
   }
 
