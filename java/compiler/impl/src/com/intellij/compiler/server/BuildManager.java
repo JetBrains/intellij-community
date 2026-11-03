@@ -571,8 +571,8 @@ public final class BuildManager implements Disposable {
             // In this situation filesDeleted and filesChanged sets will contain paths which are different only in case.
             // Thus, the order in which BuildManager processes the changes, is important:
             // first deleted paths must be processed and only then changed paths
-            var changed = data.addDeleted(Iterators.filter(_deleted, PATH_FILTER::test));
-            changed |= data.addChanged(Iterators.filter(_changed, PATH_FILTER::test));
+            var changed = data.addDeleted(Iterators.filter(_deleted, PATH_FILTER));
+            changed |= data.addChanged(Iterators.filter(_changed, PATH_FILTER));
             if (changed) {
               var projectPath = entry.getKey();
               var future = myBuildsInProgress.get(projectPath);
