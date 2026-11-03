@@ -49,6 +49,12 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() 
         doTest()
     }
 
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0.0+")
+    fun testJavaModulesCallingCommonDeclarations() {
+        doTest()
+    }
+
     // Adopted from the K1 tier 1 tests
     @Test
     @PluginTargetVersions(pluginVersion = "1.9.30-dev-0+")
