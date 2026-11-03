@@ -390,7 +390,6 @@ c:com.intellij.execution.impl.ExecutionManagerImpl
 - startRunProfile(com.intellij.execution.RunProfileStarter,com.intellij.execution.runners.ExecutionEnvironment):V
 f:com.intellij.execution.impl.ExecutionManagerImpl$Companion
 - f:getInstanceIfCreated(com.intellij.openapi.project.Project):com.intellij.execution.impl.ExecutionManagerImpl
-- f:getLOG():com.intellij.openapi.diagnostic.Logger
 - f:isProcessRunning(com.intellij.execution.ui.RunContentDescriptor):Z
 c:com.intellij.execution.impl.ProjectRunConfigurationConfigurable
 - com.intellij.execution.impl.RunConfigurable

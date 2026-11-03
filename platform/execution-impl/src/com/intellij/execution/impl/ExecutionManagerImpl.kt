@@ -15,7 +15,6 @@ import com.intellij.execution.ExecutionTarget
 import com.intellij.execution.ExecutionTargetManager
 import com.intellij.execution.Executor
 import com.intellij.execution.ExecutorRegistry
-import com.intellij.execution.KillableProcess
 import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunProfileStarter
@@ -80,7 +79,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.content.ContentManager
@@ -93,17 +91,12 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
@@ -122,9 +115,10 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 
-open class ExecutionManagerImpl(private val project: Project, private val coroutineScope: CoroutineScope) : ExecutionManager(), Disposable {
+private val LOG = logger<ExecutionManagerImpl>()
+
+open class ExecutionManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : ExecutionManager(), Disposable {
   companion object {
-    val LOG = logger<ExecutionManagerImpl>()
     private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
 
     internal val DELEGATED_RUN_PROFILE_KEY = Key.create<RunProfile>("DELEGATED_RUN_PROFILE_KEY")
@@ -159,15 +153,15 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
     }
 
     @JvmField
-    val EXECUTION_SESSION_ID_KEY = ExecutionManager.EXECUTION_SESSION_ID_KEY
+    val EXECUTION_SESSION_ID_KEY: Key<Any> = ExecutionManager.EXECUTION_SESSION_ID_KEY
 
     @JvmField
-    val EXECUTION_SKIP_RUN = ExecutionManager.EXECUTION_SKIP_RUN
+    val EXECUTION_SKIP_RUN: Key<Boolean> = ExecutionManager.EXECUTION_SKIP_RUN
 
     internal val TERMINATING_FOR_RERUN = Key.create<Boolean>("TERMINATING_FOR_RERUN")
     internal val REPORT_NEXT_START_AS_RERUN = Key.create<Boolean>("REPORT_NEXT_START_AS_RERUN")
 
-    @ApiStatus.Internal
+    @Internal
     @JvmField
     val PARENT_PROFILE_IDE_ACTIVITY: Key<StructuredIdeActivity> = Key.create("PARENT_PROFILE_IDE_ACTIVITY")
 
@@ -206,7 +200,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
       return project.serviceIfCreated<RunContentManager>()?.allDescriptors ?: emptyList()
     }
 
-    @ApiStatus.Internal
+    @Internal
     @JvmStatic
     fun setDelegatedRunProfile(runProfile: RunProfile, runProfileToDelegate: RunProfile) {
       if (runProfile !== runProfileToDelegate && runProfile is UserDataHolder) {
@@ -214,7 +208,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
       }
     }
 
-    @ApiStatus.Internal
+    @Internal
     @JvmStatic
     fun getDelegatedRunProfile(runProfile: RunProfile): RunProfile? {
       return if (runProfile is UserDataHolder) runProfile.getUserData(DELEGATED_RUN_PROFILE_KEY) else null
@@ -234,7 +228,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
 
   @set:TestOnly
   @Volatile
-  var forceCompilationInTests = false
+  var forceCompilationInTests: Boolean = false
 
   private val awaitingTerminationAlarm = Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD)
   private val awaitingRunProfiles = HashMap<RunProfile, ExecutionEnvironment>()
@@ -256,7 +250,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
   /**
    * Internal usage only. Maybe removed or changed in any moment. No backward compatibility.
    */
-  @ApiStatus.Internal
+  @Internal
   override fun startRunProfile(environment: ExecutionEnvironment, starter: () -> Promise<RunContentDescriptor?>) {
     doStartRunProfile(environment) {
       // errors are handled by startRunProfile
@@ -427,8 +421,8 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
     runningConfigurations.clear()
   }
 
-  @Suppress("OverridingDeprecatedMember")
-  override fun getContentManager() = RunContentManager.getInstance(project)
+  @Suppress("OverridingDeprecatedMember", "OVERRIDE_DEPRECATION")
+  override fun getContentManager(): RunContentManager = RunContentManager.getInstance(project)
 
   override fun getRunningProcesses(): Array<ProcessHandler> {
     var handlers: MutableList<ProcessHandler>? = null
@@ -526,12 +520,12 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
             return@executeOnPooledThread
           }
         }
-        catch (e: ProcessCanceledException) {
-          LOG.debug("Before launch task '$task' cancelled, cancelling execution", e)
+        catch (pce: ProcessCanceledException) {
+          LOG.debug("Before launch task '$task' cancelled, cancelling execution")
           if (onCancelRunnable != null) {
             SwingUtilities.invokeLater(onCancelRunnable)
           }
-          return@executeOnPooledThread
+          throw pce
         }
       }
 
@@ -559,7 +553,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
         try {
           startRunnable.run()
         }
-        catch (ignored: IndexNotReadyException) {
+        catch (_: IndexNotReadyException) {
           handleExecutionError(environment, ExecutionException(
             ExecutionBundle.message("dialog.message.cannot.start.while.indexing.in.progress")))
         }
@@ -697,7 +691,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
   }
 
   override fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?> {
-    if (!(environment.runProfile is TargetEnvironmentAwareRunProfile)) {
+    if (environment.runProfile !is TargetEnvironmentAwareRunProfile) {
       return resolvedPromise()
     }
 
@@ -719,6 +713,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
     val toolWindow = buildContentManager.orCreateToolWindow
     val contentManager: ContentManager = toolWindow.contentManager
     val contentImpl = ContentImpl(component, contentName, true)
+    @Suppress("SSBasedInspection")
     contentImpl.putUserData(ToolWindow.SHOW_CONTENT_ICON, java.lang.Boolean.TRUE)
     contentImpl.icon = environment.runProfile.icon
 
@@ -766,7 +761,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
       catch (t: Throwable) {
         LOG.warn(t)
         promise.setError(ExecutionBundle.message("message.error.happened.0", t.localizedMessage))
-        processHandler.notifyTextAvailable(StringUtil.notNullize(t.localizedMessage), ProcessOutputType.STDERR)
+        processHandler.notifyTextAvailable(t.localizedMessage ?: "", ProcessOutputType.STDERR)
         processHandler.notifyTextAvailable("\n", ProcessOutputType.STDERR)
       }
       finally {
@@ -778,7 +773,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
     return promise
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun executeConfiguration(environment: ExecutionEnvironment, showSettings: Boolean, assignNewId: Boolean = true) {
     withEnvironmentDataContext(environment.dataContext) {
       environment.project.messageBus.syncPublisher(ExecutionEnvironmentListener.TOPIC).executionRequested(environment)
@@ -897,12 +892,12 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   protected open fun handleProgramRunnerExecutionError(project: Project, environment: ExecutionEnvironment, e: Throwable, profile: RunProfile?) {
     ProgramRunnerUtil.handleExecutionError(project, environment, e, profile)
   }
 
-  @ApiStatus.Internal
+  @Internal
   protected open fun handleExecutionError(environment: ExecutionEnvironment, e: ExecutionException) {
     ExecutionUtil.handleExecutionError(environment, e)
   }
@@ -923,7 +918,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   override fun isStartingFlow(configurationId: String, executorId: String, runnerId: String): Flow<Boolean> {
     return channelFlow {
       inProgress.collectLatest {
@@ -1025,7 +1020,7 @@ open class ExecutionManagerImpl(private val project: Project, private val corout
   }
 }
 
-@ApiStatus.Internal
+@Internal
 fun RunnerAndConfigurationSettings.isOfSameType(runnerAndConfigurationSettings: RunnerAndConfigurationSettings): Boolean {
   if (this === runnerAndConfigurationSettings) return true
   val thisConfiguration = configuration
@@ -1082,7 +1077,7 @@ private fun createEnvironmentBuilder(project: Project,
 
   val runner = configuration?.let { ProgramRunner.getRunner(executor.id, it.configuration) }
   if (runner == null && configuration != null) {
-    ExecutionManagerImpl.LOG.error("Cannot find runner for ${configuration.name}")
+    LOG.error("Cannot find runner for ${configuration.name}")
   }
   else if (runner != null) {
     builder.runnerAndSettings(runner, configuration)
