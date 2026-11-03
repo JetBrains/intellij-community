@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
+import kotlin.io.path.Path
 
 /**
  * Checks that [codeInsightProjectFixture] as an instance property gives each test a new project.
@@ -22,7 +23,7 @@ class CodeInsightProjectFixtureTest {
 
   @Test
   fun `fixture temp dir is the project directory`() {
-    assertEquals(myFixture.project.basePath, myFixture.tempDirPath)
+    assertEquals(Path(myFixture.project.basePath!!), Path(myFixture.tempDirPath))
   }
 
   @RepeatedTest(2)
