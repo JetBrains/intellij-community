@@ -4,6 +4,8 @@ import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.waitAny
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
+import com.intellij.driver.sdk.waitNotNullAsync
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
@@ -89,5 +91,17 @@ internal class WaitsTest {
     assertEquals("Timeout(0s): Failed: one tab. \n\tExpected one suitable instance, but got:" +
                  "\n\tsuitable:\n\t\ta\n\t\tc" +
                  "\n\tnot suitable:\n\t\tb", failure.message)
+  }
+
+  @Test
+  fun `waitNotNullAsync fails with its errorMessage when the last observation is null`() {
+    val failure = assertThrows<WaitForException> {
+      runBlocking {
+        waitNotNullAsync<String>(timeout = 50.milliseconds, interval = 10.milliseconds,
+                                 errorMessage = { "no project, last value: $it" }, getter = { null })
+      }
+    }
+
+    assertEquals("Timeout(50ms): no project, last value: null", failure.message)
   }
 }

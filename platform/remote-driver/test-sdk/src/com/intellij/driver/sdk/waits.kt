@@ -185,11 +185,13 @@ suspend fun <T> waitForAsync(
   checker: suspend (T) -> Boolean,
 ): T {
   var result: T? = null
+  var observed = false
   return try {
     withTimeout(timeout) {
       val startTime = System.nanoTime()
       while (true) {
         result = getter()
+        observed = true
         if (checker(result)) {
           break
         }
@@ -204,8 +206,9 @@ suspend fun <T> waitForAsync(
   }
   catch (_: TimeoutCancellationException) {
     currentCoroutineContext().ensureActive()
+    @Suppress("UNCHECKED_CAST")
     val errorMessage =
-      if (errorMessage != null && result != null) errorMessage.invoke(result)
+      if (errorMessage != null && observed) errorMessage.invoke(result as T)
       else ("Failed: $message" + if (result !is Boolean) ". Actual: $result" else "")
     val exception = WaitForException(timeout, errorMessage)
     LOG.warn(exception)
