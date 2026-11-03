@@ -78,7 +78,6 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.OwnerOptional;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -528,9 +527,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       commandProcessor.enterModal();
       LaterInvocator.enterModal(myDialog);
 
-      var pair = ApplicationManager.getApplication().isWriteAccessAllowed()
-                 ? new Pair<>(EmptyCoroutineContext.INSTANCE, emptyFunction)
-                 : ApplicationManager.getApplication().getThreadingSupport().parallelizeLock(false);
+      var pair = ApplicationManager.getApplication().getThreadingSupport().parallelizeLockForEventLoop();
       lockContextWrapper = (r) -> {
         ThreadContext.installThreadContext(pair.getFirst(), true, () -> {
           r.run();

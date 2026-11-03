@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 @ApiStatus.Internal
 interface ThreadingSupport {
@@ -270,6 +271,14 @@ interface ThreadingSupport {
    */
   @ApiStatus.Internal
   fun parallelizeLock(checkTopmostReadAction: Boolean): Pair<CoroutineContext, CleanupAction>
+
+  /**
+   * Parallelizes the lock for a nested event loop, so that a pending background write action does not block the events of the loop.
+   * Under a write action, it does nothing, because [parallelizeLock] would downgrade the write lock.
+   */
+  @ApiStatus.Internal
+  fun parallelizeLockForEventLoop(): Pair<CoroutineContext, CleanupAction> =
+    if (isWriteAccessAllowed()) EmptyCoroutineContext to {} else parallelizeLock(false)
 
   /**
    * Returns current coroutine context element that corresponds to the read-write lock.
