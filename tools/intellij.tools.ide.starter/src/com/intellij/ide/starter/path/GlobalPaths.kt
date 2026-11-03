@@ -4,10 +4,13 @@ import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.di.di
 import org.kodein.di.direct
 import org.kodein.di.instance
+import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 import kotlin.io.path.createDirectories
 import kotlin.io.path.div
+import kotlin.io.path.writeText
 
 const val TEST_DATA_CACHE_NAME = "test-data-cache"
 
@@ -32,6 +35,10 @@ abstract class GlobalPaths(val checkoutDir: Path) {
   }
 
   open val testHomePath: Path = intelliJOutDirectory.resolve(IDE_TESTS_SUBSTRING).createDirectories()
+
+  init {
+    stopEditorConfigLookup(testHomePath)
+  }
 
   open val devServerDirectory: Path = intelliJOutDirectory.resolve("dev-run").createDirectories()
 
@@ -59,5 +66,19 @@ abstract class GlobalPaths(val checkoutDir: Path) {
   companion object {
     val instance: GlobalPaths
       get() = di.direct.instance<GlobalPaths>()
+  }
+}
+
+/**
+ * Writes a `.editorconfig` with only `root = true` to [directory], so that EditorConfig does not read the files above it.
+ * A local run keeps the test projects inside the checkout, and the `.editorconfig` of the checkout would change their code style.
+ * An existing file stays as it is.
+ */
+internal fun stopEditorConfigLookup(directory: Path) {
+  try {
+    directory.createDirectories().resolve(".editorconfig").writeText("root = true\n", Charsets.UTF_8, StandardOpenOption.CREATE_NEW)
+  }
+  catch (_: FileAlreadyExistsException) {
+    // Another run or the user wrote it first.
   }
 }
