@@ -895,6 +895,7 @@
     <scratch.rootType implementation="com.intellij.ide.actions.WelcomeFilesRootType"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.actions.WelcomeNonProjectFileWritingAccessExtension"/>
     <projectCloseHandler implementation="com.intellij.ide.actions.WelcomeProjectCloseHandler" order="last"/>
+    <postStartupActivity implementation="com.intellij.ide.actions.WelcomeFilesReopenActivity"/>
     <!--  Inlay hints  -->
     <editorFactoryMouseListener implementation="com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayEditorMouseListener"/>
     <editorFactoryMouseListener implementation="com.intellij.codeInsight.hints.presentation.listeners.InlayEditorMouseListener"/>

@@ -5,11 +5,13 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.scratch.ScratchFileCreationHelper
 import com.intellij.ide.scratch.ScratchFileCreator
+import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.ide.ui.WindowFocusFrontendService
 import com.intellij.ide.util.DeleteHandler
 import com.intellij.ide.welcomeScreen.WelcomeUtils
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -24,6 +26,8 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
@@ -31,6 +35,8 @@ import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseHandler
+import com.intellij.openapi.project.impl.getPostOpenEditorsDeferred
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.MessageConstants.YesNoCancelResult
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -91,6 +97,39 @@ class WelcomeFilesRootType : RootType("HomeFiles", "") {
 
     fun isWelcomeFile(project: Project, file: VirtualFile): Boolean {
       return WelcomeUtils.isWelcomeProject(project) && instance.containsFile(file)
+    }
+  }
+}
+
+/**
+ * Opens every Home file that has no editor after the welcome project restores its editors.
+ * A file opens without the focus and does not become the selected tab.
+ * A remote dev host opens nothing, because the client restores the editors.
+ */
+internal class WelcomeFilesReopenActivity : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    if (AppMode.isRemoteDevHost() || !WelcomeUtils.isWelcomeProject(project)) {
+      return
+    }
+    // null when the project opens without a frame
+    val postOpenEditors = project.getPostOpenEditorsDeferred() ?: return
+    postOpenEditors.await()
+    if (FileEditorManagerKeys.DO_NOT_REOPEN_FILES.isIn(project)) {
+      return
+    }
+
+    val root = ScratchFileService.getInstance().getVirtualFile(WelcomeFilesRootType.Util.instance) ?: return
+    val files = root.children.filter { !it.isDirectory }.sortedBy { it.name }
+    if (files.isEmpty()) {
+      return
+    }
+
+    val fileEditorManager = FileEditorManager.getInstanceAsync(project)
+    val request = FileEditorOpenRequest.defaults().withSelectAsCurrent(false)
+    for (file in files) {
+      if (!project.isDisposed && file.isValid && !fileEditorManager.isFileOpen(file)) {
+        fileEditorManager.openFile(file, request)
+      }
     }
   }
 }
