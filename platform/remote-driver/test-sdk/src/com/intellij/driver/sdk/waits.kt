@@ -229,11 +229,13 @@ fun <T> waitForOne(
 ): T {
   return waitFor(message = message, timeout = timeout,
                  interval = interval,
-                 errorMessage = { (all) ->
+                 errorMessage = { (all, suitable, notSuitable) ->
+                   fun printable(elements: List<T>) = if (elements.isEmpty()) "none" else elements.joinToString("\n\t\t")
                    errorMessage?.invoke(all)
                    ?: ("Failed: $message. " +
                        "\n\tExpected one suitable instance, but got:" +
-                       "\n\t${if (all.isEmpty()) "none" else all.joinToString("\n\t")}")
+                       "\n\tsuitable:\n\t\t${printable(suitable)}" +
+                       "\n\tnot suitable:\n\t\t${printable(notSuitable)}")
                  },
                  getter = { observe(getter(), checker) },
                  checker = { it.suitable.size == 1 }

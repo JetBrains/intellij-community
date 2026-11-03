@@ -81,11 +81,13 @@ internal class WaitsTest {
   }
 
   @Test
-  fun `waitForOne fails with the full list of the last observation`() {
+  fun `waitForOne fails with the suitable and not suitable elements of the last observation`() {
     val failure = assertThrows<WaitForException> {
-      waitForOne<String>(message = "one tab", timeout = Duration.ZERO, getter = { listOf("a", "b") })
+      waitForOne<String>(message = "one tab", timeout = Duration.ZERO, getter = { listOf("a", "b", "c") }, checker = { it != "b" })
     }
 
-    assertEquals("Timeout(0s): Failed: one tab. \n\tExpected one suitable instance, but got:\n\ta\n\tb", failure.message)
+    assertEquals("Timeout(0s): Failed: one tab. \n\tExpected one suitable instance, but got:" +
+                 "\n\tsuitable:\n\t\ta\n\t\tc" +
+                 "\n\tnot suitable:\n\t\tb", failure.message)
   }
 }
