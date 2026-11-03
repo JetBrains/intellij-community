@@ -182,6 +182,7 @@ jvm_library(
         "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage-tests_test_lib",
         "//plugins/git4idea/terminal:vcs-git-terminal-tests_test_lib",
         "//plugins/git4idea:vcs-git-backend-tests_test_lib",
+        "//plugins/github/plugin",
         "//plugins/github/github-core:vcs-github-tests_test_lib",
         "//plugins/gitlab/gitlab-core:vcs-gitlab-tests_test_lib",
         "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml-tests_test_lib",
