@@ -81,14 +81,10 @@ object MarkdownCodeFenceUtils {
    */
   @JvmStatic
   fun isAbleToAcceptInjections(host: MarkdownCodeFence): Boolean {
-    if (host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_END) }
-        || host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_START) }) {
-      return false
-    }
-
-    val newlines = host.children.count { MarkdownPsiUtil.WhiteSpaces.isNewLine(it) }
-
-    return newlines >= 2
+    val children = generateSequence(host.node.firstChildNode) { it.treeNext }
+    return children.any { it.elementType == MarkdownTokenTypes.CODE_FENCE_START } &&
+           children.any { it.elementType == MarkdownTokenTypes.CODE_FENCE_END } &&
+           children.count { it.elementType in MarkdownTokenTypeSets.WHITE_SPACES && it.textLength == 1 && it.chars[0] == '\n' } >= 2
   }
 
   /**
