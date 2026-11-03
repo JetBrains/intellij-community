@@ -152,6 +152,20 @@ internal class ToolVersionProbeTest {
       .containsExactly(workingDirectory.toRealPath().resolve("venv/bin/python").toString())
   }
 
+  // PY-93598
+  @Test
+  @Timeout(30)
+  @DisabledOnOs(OS.WINDOWS)
+  fun `environment detection ignores a trailing slash of a directory`(@TempDir workingDirectory: Path): Unit = timeoutRunBlocking {
+    createFakePython(workingDirectory.resolve(".venv"), "Python 3.12.7", freeThreaded = false)
+
+    val output = runHelper(workingDirectory, "", "$workingDirectory/")
+    val snapshot = parseTargetProbeOutput(output, emptyList(), null).getOrThrow()
+
+    assertThat(snapshot.environments.map { it.path.pathString })
+      .containsExactly(workingDirectory.resolve(".venv/bin/python").toString())
+  }
+
   private suspend fun runHelper(processWorkingDirectory: Path, pythonPath: String, detectEnvironmentsDirectory: String): String {
     val helper = PythonHelpersLocator.findPathInHelpers("tool_version_probe.sh")
     return ExecService().execGetStdout(

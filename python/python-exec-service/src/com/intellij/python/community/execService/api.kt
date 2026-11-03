@@ -27,6 +27,7 @@ import com.intellij.python.community.execService.impl.PyExecBundle.message
 import com.intellij.python.community.execService.impl.Uploader
 import com.intellij.python.community.execService.impl.transformerToHandler
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
@@ -447,6 +448,7 @@ class Args(vararg initialArgs: String) {
 
   /**
    * Make the full [localDir] available on the remote machine.
+   * To copy none of the files of [localDir], use [addLocalDirWithoutUpload].
    * In [dirScope], call [DirScope.findChild] for each file in [localDir] that you must give to the process.
    * ```kotlin
    *     addLocalDir(etc) {
@@ -478,7 +480,22 @@ class Args(vararg initialArgs: String) {
         download = true
       }
     }.dirScope()
-    _args.add(Arg.DirArg(localDir, files, download))
+    _args.add(Arg.DirArg(localDir, files, download, upload = true))
+    return this
+  }
+
+  /**
+   * Give the process the directory that stands for [localDir] on its machine, but copy none of the files there.
+   * The process sees only the files that are already in that directory, such as the files of a sync folder or of an earlier upload.
+   * That directory can be missing.
+   * If [localDir] is on the same machine as the process, the process gets [localDir] itself.
+   * [andReport] tells how to give the directory to the process.
+   * This function has no download after execution, because a download can delete the local files that the function did not copy.
+   */
+  @PyInternalExecApi
+  @ApiStatus.Internal
+  fun addLocalDirWithoutUpload(localDir: Directory, andReport: FileReporter): Args {
+    _args.add(Arg.DirArg(localDir, listOf(DirEntry.Root to andReport), download = false, upload = false))
     return this
   }
 

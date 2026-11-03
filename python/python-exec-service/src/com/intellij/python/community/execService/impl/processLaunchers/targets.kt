@@ -91,6 +91,13 @@ internal suspend fun createProcessLauncherOnTarget(
       add(it)
     }
   }
+  val dirsToUpload = launchRequest.args.localArgs.mapNotNullTo(mutableSetOf()) { localArg ->
+    when (localArg) {
+      is Arg.FileArg -> localArg.file.parent
+      is Arg.DirArg -> localArg.root.takeIf { localArg.upload }
+    }
+  } + setOfNotNull(workingDir)
+  val dirsWithoutUpload = dirsToMap - dirsToUpload
   val uploadRoots = TargetEnvironmentRequestHandler.mapUploadRoots(request, dirsToMap, workingDir)
   request.uploadVolumes.addAll(uploadRoots.map { it.value.root })
 
@@ -138,6 +145,8 @@ internal suspend fun createProcessLauncherOnTarget(
     }
   }
   for (volume in targetEnv.uploadVolumes.values) {
+    // A directory from `Args.addLocalDirWithoutUpload` gets a target path, but no file.
+    if (volume.localRoot in dirsWithoutUpload) continue
     val skipUploading = uploadRoots[volume.localRoot]?.uploadVolumeExplicitly == false
     if (!skipUploading) { // Volume explicitly marked as non-uploadable, i.e.: helpers (they are uploaded by handlers)
       uploadVolume(volume, workingDir, uploadConfig, launchRequest.args.localArgs)
@@ -160,9 +169,11 @@ internal suspend fun createProcessLauncherOnTarget(
     override suspend fun uploadFile(localFile: Path): Result<FullPathOnTarget, MessageError> =
       Result.success(getRemotePath(localFile))
 
-    override suspend fun uploadDir(localDir: Directory): Result<PathMapper, MessageError> = Result.success(PathMapper { entry ->
-      getRemotePath(entry.resolveAgainst(localDir))
-    })
+    // The upload loop above already copies no file of a directory with `upload` false.
+    override suspend fun uploadDir(localDir: Directory, upload: Boolean): Result<PathMapper, MessageError> =
+      Result.success(PathMapper { entry ->
+        getRemotePath(entry.resolveAgainst(localDir))
+      })
   }).getOr { return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(it.error)) }
 
   val exePath: FullPathOnTarget
@@ -216,7 +227,7 @@ private fun uploadVolume(
     val localPathsInWorkingDir = localArgs.mapNotNull { localArg ->
       when (localArg) {
         is Arg.FileArg -> localArg.file.takeIf { it.parent == workingDir }
-        is Arg.DirArg -> localArg.root.takeIf { it.startsWith(workingDir) }
+        is Arg.DirArg -> localArg.root.takeIf { localArg.upload && it.startsWith(workingDir) }
       }
     }
     val localRelativePaths = localPathsInWorkingDir.map { workingDir.relativize(it).pathString.ifEmpty { "." } }
