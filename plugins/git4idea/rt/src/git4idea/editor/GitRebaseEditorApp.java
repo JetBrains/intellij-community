@@ -79,7 +79,7 @@ public class GitRebaseEditorApp implements ExternalApp, ExternalCli {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static void main(String[] args) {
+  static void main(String[] args) {
     var exitCode = new GitRebaseEditorApp().entryPoint(ExternalAppEntry.fromMain(args));
     System.exit(exitCode);
   }

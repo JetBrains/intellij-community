@@ -80,7 +80,7 @@ public class GitAskPassApp implements ExternalApp, ExternalCli {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static void main(String[] args) {
+  static void main(String[] args) {
     var exitCode = new GitAskPassApp().entryPoint(ExternalAppEntry.fromMain(args));
     System.exit(exitCode);
   }
