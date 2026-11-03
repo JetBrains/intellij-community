@@ -25,7 +25,7 @@ public final class AddToClasspathJavaAgent {
     }
   }
 
-  public static void main(String[] args) throws Exception {
+  static void main(String[] args) throws Exception {
     if (args.length != 4 || !args[0].equals("attach-agent")) {
       System.err.println("Usage: ./app attach-agent PID AGENT_JAR AGENT_ARGUMENTS");
       System.exit(1);
