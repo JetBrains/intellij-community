@@ -26,8 +26,8 @@ internal data class ArgsAndEnv private constructor(val commandArgs: List<String>
             commandArgs.add(arg.arg)
           }
           is Arg.DirArg -> {
-            // Upload the full root directory
-            val mapper = fileMapper.uploadDir(arg.root)
+            // Map the root directory. If `upload` is false, copy none of its files.
+            val mapper = fileMapper.uploadDir(arg.root, upload = arg.upload)
             for ((entry, fileReporter) in arg.filesToReport) {
               addFileArgument(fileReporter, mapper.getRemotePath(entry), commandArgs, env)
             }
@@ -63,9 +63,10 @@ internal interface Uploader {
   suspend fun uploadFile(localFile: Path): FullPathOnTarget
 
   /**
-   * Upload the full [localDir] and return a [PathMapper] for the files in it.
+   * Map the full [localDir] to the remote machine and return a [PathMapper] for the files in it.
+   * If [upload] is false, map [localDir], but copy none of its files.
    */
-  suspend fun uploadDir(localDir: Directory): PathMapper
+  suspend fun uploadDir(localDir: Directory, upload: Boolean): PathMapper
 }
 
 internal fun interface PathMapper {
