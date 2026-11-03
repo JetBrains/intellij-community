@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.html
 
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.markdown.MarkdownTokenTypes
@@ -21,6 +22,14 @@ internal class DefaultCodeFenceGeneratingProvider(
   private val project: Project? = null,
   private val file: VirtualFile? = null
 ): GeneratingProvider {
+  private val isProjectTrusted by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    project != null && TrustedProjects.isProjectTrusted(project)
+  }
+
+  private fun CodeFenceGeneratingProvider.canProcess(language: String): Boolean {
+    return isApplicable(language) && (!requiresTrustedProject || isProjectTrusted)
+  }
+
   private fun pluginGeneratedHtml(language: String?, codeFenceContent: String, codeFenceRawContent: String, node: ASTNode): String {
     if (language == null) {
       return buildHighlightedFenceContent(
@@ -31,7 +40,7 @@ internal class DefaultCodeFenceGeneratingProvider(
         additionalLineProcessor = ::processCodeLine
       )
     }
-    val html = when (val provider = cacheProviders.firstOrNull { it.isApplicable(language) }) {
+    val html = when (val provider = cacheProviders.firstOrNull { it.canProcess(language) }) {
       null -> buildHighlightedFenceContent(
         codeFenceContent,
         highlightedRanges = emptyList(),
