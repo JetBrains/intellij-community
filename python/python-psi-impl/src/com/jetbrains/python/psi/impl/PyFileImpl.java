@@ -81,6 +81,7 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,6 +108,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
   private volatile @NotNull SoftReference<TopLevelStubChildren> myTopLevelStubChildren = new SoftReference<>(null);
   private final @NotNull PsiModificationTracker myModificationTracker;
 
+  /** The effective language level and the stamp it is valid for, see {@link #getEffectiveLanguageLevel()}. */
+  private record EffectiveLanguageLevel(long stamp, @NotNull LanguageLevel level) {}
+
+  private volatile @Nullable EffectiveLanguageLevel myEffectiveLanguageLevel;
+
   private final class ExportedNameCache {
     private final Set<String> myNameDefinerNegativeCache = new HashSet<>();
     private long myNameDefinerOOCBModCount = -1;
@@ -118,7 +124,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
       myModificationStamp = modificationStamp;
 
       final StubElement<?> stub = getStub();
-      LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(PyFileImpl.this);
+      LanguageLevel languageLevel = getEffectiveLanguageLevel();
       processDeclarations(PyFileImpl.this, stub, languageLevel, element -> {
         if (element instanceof PsiNamedElement namedElement &&
             !(element instanceof PyKeywordArgument) &&
@@ -249,6 +255,24 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
     super(viewProvider, language);
     myFutureFeatures = new HashMap<>();
     myModificationTracker = PsiModificationTracker.getInstance(getProject());
+  }
+
+  /**
+   * Returns the effective language level of this file, the level that selects the {@code sys.version_info} branches of its stub.
+   * It is not {@link #getLanguageLevel()}: a {@code .pyi} file parses with the latest level.
+   * The level stays until the PSI modification count changes, or until a level changes without a PSI change, see
+   * {@link PythonLanguageLevelPusher#getLevelModificationCount()}.
+   */
+  @ApiStatus.Internal
+  public final @NotNull LanguageLevel getEffectiveLanguageLevel() {
+    final long stamp = myModificationTracker.getModificationCount() + PythonLanguageLevelPusher.getLevelModificationCount();
+    final EffectiveLanguageLevel cached = myEffectiveLanguageLevel;
+    if (cached != null && cached.stamp() == stamp) {
+      return cached.level();
+    }
+    final LanguageLevel level = PyLanguageFacadeKt.getEffectiveLanguageLevel(this);
+    myEffectiveLanguageLevel = new EffectiveLanguageLevel(stamp, level);
+    return level;
   }
 
   @Override
@@ -843,7 +867,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
       for (Class<? extends PyElement> type : TOP_LEVEL_CHILD_TYPES) {
         byType.put(type, new ArrayList<>());
       }
-      final LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(PyFileImpl.this);
+      final LanguageLevel languageLevel = getEffectiveLanguageLevel();
       for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
         final PsiElement childPsi = child.getPsi();
         for (Class<? extends PyElement> type : TOP_LEVEL_CHILD_TYPES) {
@@ -885,7 +909,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
     if (stub != null && TOP_LEVEL_CHILD_TYPES.contains(type)) {
       return getTopLevelStubChildren(stub).get(type);
     }
-    @NotNull LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(this);
+    @NotNull LanguageLevel languageLevel = getEffectiveLanguageLevel();
     final List<T> result = new ArrayList<>();
     if (stub != null) {
       for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {

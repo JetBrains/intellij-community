@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -90,11 +91,27 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
 
   private final Map<Module, Sdk> myModuleSdks = new WeakHashMap<>();
 
+  private static final SimpleModificationTracker LEVEL_MODIFICATIONS = new SimpleModificationTracker();
+
+  /**
+   * Counts the changes of a level that no PSI change reports: a pushed or a specified level, a forced level, and a root
+   * change, which can give a module a new SDK. A file keeps its level until this count or the PSI modification count changes, see
+   * {@link PyFileImpl#getEffectiveLanguageLevel()}.
+   */
+  static long getLevelModificationCount() {
+    return LEVEL_MODIFICATIONS.getModificationCount();
+  }
+
+  static void levelsChanged() {
+    LEVEL_MODIFICATIONS.incModificationCount();
+  }
+
   @Override
   public void initExtra(@NotNull Project project) {
     final Map<Module, Sdk> moduleSdks = getPythonModuleSdks(project);
 
     myModuleSdks.putAll(moduleSdks);
+    levelsChanged();
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, moduleSdks);
     guessLanguageLevelWithCaching(project, moduleSdks::values);
@@ -172,6 +189,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     LanguageLevel oldLanguageLevel = KEY.getPersistentValue(fileOrDir);
     boolean changed = KEY.setPersistentValue(fileOrDir, level);
     if (!changed) return;
+    levelsChanged();
 
     if (!areLanguageLevelsCompatible(oldLanguageLevel, level) || !ProjectFileIndex.getInstance(project).isInContent(fileOrDir)) {
       PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, PythonLanguageLevelPusher::isPythonFile);
@@ -216,6 +234,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     });
 
     myModuleSdks.putAll(moduleSdks);
+    levelsChanged();
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, moduleSdks);
 
@@ -454,11 +473,13 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   @TestOnly
   public static void setForcedLanguageLevel(@NotNull Project project, @Nullable LanguageLevel languageLevel) {
     LanguageLevel.FORCE_LANGUAGE_LEVEL = languageLevel;
+    levelsChanged();
     PushedFilePropertiesUpdater.getInstance(project).pushAll(new PythonLanguageLevelPusher());
   }
 
   public static void specifyFileLanguageLevel(@NotNull VirtualFile file, @Nullable LanguageLevel languageLevel) {
     KEY.setPersistentValue(file, languageLevel);
+    levelsChanged();
   }
 
   private static @Nullable LanguageLevel specifiedFileLanguageLevel(@Nullable VirtualFile file) {

@@ -146,14 +146,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private volatile @Nullable List<PyTargetExpression> myClassAttributesFromClassMethods;
 
   private volatile Map<String, Property> myLocalPropertyCache;
-  private volatile @Nullable VersionSpecificChildren myVersionSpecificChildren;
   private volatile @Nullable List<PyFunction> myMethods;
-
-  /**
-   * The children of {@code stub} that the language level of the file keeps.
-   * Keyed by the stub, not by the modification stamp: the stamp needs the containing file, which this cache avoids.
-   */
-  private record VersionSpecificChildren(@NotNull StubElement<?> stub, @NotNull Iterable<@NotNull StubElement<?>> children) {}
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
@@ -1219,7 +1212,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     else {
       getStatementList().acceptChildren(
-        new PyTypeCheckedTopLevelElementVisitor(PyLanguageFacadeKt.getEffectiveLanguageLevel(getContainingFile())) {
+        new PyTypeCheckedTopLevelElementVisitor(getEffectiveLanguageLevelOfFile()) {
           @Override
           protected void checkAddElement(PsiElement psiElement) {
             if (psiElement instanceof PyAssignmentStatement assignmentStatement) {
@@ -1466,14 +1459,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   private @NotNull Iterable<@NotNull StubElement<?>> getVersionSpecificChildrenStubs(@NotNull PyClassStub stub) {
-    final VersionSpecificChildren cached = myVersionSpecificChildren;
-    if (cached != null && cached.stub() == stub) {
-      return cached.children();
-    }
-    final Iterable<@NotNull StubElement<?>> children =
-      PyVersionSpecificStubBaseKt.getChildrenStubs(stub, PyLanguageFacadeKt.getEffectiveLanguageLevel(getContainingFile()));
-    myVersionSpecificChildren = new VersionSpecificChildren(stub, children);
-    return children;
+    return PyVersionSpecificStubBaseKt.getChildrenStubs(stub, getEffectiveLanguageLevelOfFile());
+  }
+
+  private @NotNull LanguageLevel getEffectiveLanguageLevelOfFile() {
+    final PsiFile file = getContainingFile();
+    return file instanceof PyFileImpl pyFile ? pyFile.getEffectiveLanguageLevel() : PyLanguageFacadeKt.getEffectiveLanguageLevel(file);
   }
 
   @Override
@@ -1573,7 +1564,6 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     myFallbackInstanceAttributes = null;
     myClassAttributesFromClassMethods = null;
     myLocalPropertyCache = null;
-    myVersionSpecificChildren = null;
     myMethods = null;
   }
 
