@@ -227,29 +227,17 @@ fun <T> waitForOne(
   getter: () -> Collection<T>,
   checker: (T) -> Boolean = { true },
 ): T {
-  logAwaitStart(message, timeout)
-  var resultList = getter()
-  var filteredResultList = resultList.filter { checker(it) }
-  val start = TimeSource.Monotonic.markNow()
-  while (start.elapsedNow() < timeout && filteredResultList.size != 1) {
-    Thread.sleep(interval.inWholeMilliseconds)
-    resultList = getter()
-    filteredResultList = resultList.filter { checker(it) }
-  }
-  if (filteredResultList.size != 1) {
-    val resultListString = if (resultList.isEmpty()) "none" else resultList.joinToString("\n\t")
-    throw WaitForException(timeout,
-                           errorMessage = errorMessage?.invoke(resultList)
-                                          ?: ("Failed: $message. " +
-                                              "\n\tExpected one suitable instance, but got:" +
-                                              "\n\t$resultListString"))
-      .also { LOG.warn(it) }
-  }
-  else {
-    return filteredResultList.single().also {
-      logAwaitFinish(message, it, start.elapsedNow())
-    }
-  }
+  return waitFor(message = message, timeout = timeout,
+                 interval = interval,
+                 errorMessage = { (all) ->
+                   errorMessage?.invoke(all)
+                   ?: ("Failed: $message. " +
+                       "\n\tExpected one suitable instance, but got:" +
+                       "\n\t${if (all.isEmpty()) "none" else all.joinToString("\n\t")}")
+                 },
+                 getter = { observe(getter(), checker) },
+                 checker = { it.suitable.size == 1 }
+  ).suitable.single()
 }
 
 /**

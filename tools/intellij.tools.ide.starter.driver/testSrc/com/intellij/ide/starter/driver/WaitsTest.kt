@@ -3,6 +3,7 @@ package com.intellij.ide.starter.driver
 import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.waitAny
 import com.intellij.driver.sdk.waitFor
+import com.intellij.driver.sdk.waitForOne
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
@@ -68,5 +69,23 @@ internal class WaitsTest {
     }
 
     assertEquals("Timeout(0s): Failed: a tab opens. Actual: [a, b]", failure.message)
+  }
+
+  @Test
+  fun `waitForOne returns the element that satisfied the checker in the successful observation`() {
+    val checked = mutableSetOf<String>()
+
+    val result = waitForOne(timeout = 5.seconds, getter = { listOf("a", "b") }, checker = { it == "b" && checked.add(it) })
+
+    assertEquals("b", result)
+  }
+
+  @Test
+  fun `waitForOne fails with the full list of the last observation`() {
+    val failure = assertThrows<WaitForException> {
+      waitForOne<String>(message = "one tab", timeout = Duration.ZERO, getter = { listOf("a", "b") })
+    }
+
+    assertEquals("Timeout(0s): Failed: one tab. \n\tExpected one suitable instance, but got:\n\ta\n\tb", failure.message)
   }
 }
