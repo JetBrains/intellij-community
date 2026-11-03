@@ -60,23 +60,18 @@ object EelPathUtils {
     return path.getEelDescriptor() == LocalEelDescriptor
   }
 
+  /**
+   * Replaces `~` with the user home of [eelDescriptor] when [path] is `~` or starts with `~/` or `~\`.
+   * Gets the Eel API only for such a path, so any other path needs no connection to the environment.
+   */
   fun expandUserHome(eelDescriptor: EelDescriptor, path: String): Path {
-    val userHome = runBlocking { eelDescriptor.toEelApi() }.userInfo.home
     val path = runCatching { Path(path).asEelPath().toString() }.getOrNull() ?: path // try to normalize path
+    if (path != "~" && !path.startsWith("~/") && !path.startsWith("~\\")) {
+      return eelDescriptor.getPath(path).asNioPath()
+    }
 
-    return eelDescriptor.getPath(
-      when {
-        path == "~" -> {
-          userHome.toString()
-        }
-        path.startsWith("~/") || path.startsWith("~\\") -> {
-          userHome.toString() + path.substring(1)
-        }
-        else -> {
-          path
-        }
-      }
-    ).asNioPath()
+    val userHome = runBlocking { eelDescriptor.toEelApi() }.userInfo.home
+    return eelDescriptor.getPath(userHome.toString() + path.substring(1)).asNioPath()
   }
 
   private suspend fun createTemporaryDirectoryImpl(
