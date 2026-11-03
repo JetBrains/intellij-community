@@ -9,6 +9,7 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.MouseDragHelper;
@@ -60,11 +61,18 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
 
   @Override
   protected boolean isDragOut(@NotNull MouseEvent event, @NotNull Point dragToScreenPoint, @NotNull Point startScreenPoint) {
-    if (dragSource == null || !dragSource.canBeDraggedOut()) {
+    TabInfo source = dragSource;
+    if (source == null && Registry.is("ide.tabs.smooth.drag", true)) {
+      TabLabel pressedTabLabel = SoftReference.dereference(myPressedTabLabel);
+      if (pressedTabLabel != null) {
+        source = pressedTabLabel.getInfo();
+      }
+    }
+    if (source == null || !source.canBeDraggedOut()) {
       return false;
     }
 
-    TabLabel label = tabs.getTabLabel(dragSource);
+    TabLabel label = tabs.getTabLabel(source);
     if (label == null) {
       return false;
     }
@@ -178,6 +186,7 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
     if (isDragJustStarted()) {
       TabLabel pressedTabLabel = SoftReference.dereference(myPressedTabLabel);
       if (pressedTabLabel == null) return;
+      pressedTabLabel.cancelPendingSelection();
 
       final Rectangle labelBounds = pressedTabLabel.getBounds();
 
@@ -351,6 +360,14 @@ public class DragHelper extends MouseDragHelper<JBTabsImpl> {
   }
 
   private void endDrag(boolean willDragOutStart) {
+    if (willDragOutStart && dragSource == null) {
+      TabLabel pressedTabLabel = SoftReference.dereference(myPressedTabLabel);
+      if (pressedTabLabel != null) {
+        pressedTabLabel.cancelPendingSelection();
+        dragSource = pressedTabLabel.getInfo();
+        tabs.onDragStateChanged(true);
+      }
+    }
     if (willDragOutStart) {
       myDragOutSource = dragSource;
     }

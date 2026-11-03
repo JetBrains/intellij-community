@@ -93,6 +93,7 @@ import com.intellij.ui.tabs.JBTabsPosition
 import com.intellij.ui.tabs.JBTabsPresentation
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
+import com.intellij.ui.tabs.TabsUtil
 import com.intellij.ui.tabs.UiDecorator
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
 import com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
@@ -250,10 +251,11 @@ open class JBTabsImpl internal constructor(
     @JvmStatic
     fun getComponentImage(info: TabInfo): Image {
       val component = info.component
-      if (component.isShowing) {
+      if (component.isShowing || (component.width > 0 && component.height > 0)) {
         val width = component.width
         val height = component.height
-        val image = ImageUtil.createImage(info.component.graphicsConfiguration, if (width > 0) width else 500, if (height > 0) height else 500,
+        val image = ImageUtil.createImage(info.component.graphicsConfiguration ?: info.tabLabel?.graphicsConfiguration,
+                                          if (width > 0) width else 500, if (height > 0) height else 500,
                                           BufferedImage.TYPE_INT_ARGB)
         val g = image.createGraphics()
         component.paint(g)
@@ -2170,10 +2172,13 @@ open class JBTabsImpl internal constructor(
       headerFitSize = computeHeaderFitSize()
       val visible = getVisibleInfos().toMutableList()
       if (dropInfo != null && !visible.contains(dropInfo) && showDropLocation) {
+        val sameTabIndex = dropInfo?.`object`?.let { obj -> visible.indexOfFirst { it.`object` == obj } } ?: -1
         if (dropInfoIndex >= 0 && dropInfoIndex < visible.size) {
-          visible.add(dropInfoIndex, dropInfo!!)
+          if (sameTabIndex == -1 || (dropInfoIndex != sameTabIndex && dropInfoIndex != sameTabIndex + 1)) {
+            visible.add(dropInfoIndex, dropInfo!!)
+          }
         }
-        else {
+        else if (sameTabIndex == -1 || (dropInfoIndex >= visible.size && sameTabIndex != visible.size - 1)) {
           visible.add(dropInfo!!)
         }
       }
@@ -2295,7 +2300,7 @@ open class JBTabsImpl internal constructor(
   }
 
   protected open val draggedTabSelectionInfo: TabInfo?
-    get() = selectedInfo
+    get() = dragHelper?.dragSource ?: selectedInfo
 
   private fun computeHeaderFitSize(): Dimension {
     val max = computeMaxSize()
@@ -3468,7 +3473,7 @@ open class JBTabsImpl internal constructor(
   override fun startDropOver(tabInfo: TabInfo, point: RelativePoint): Image {
     dropInfo = tabInfo
     val pointInMySpace = point.getPoint(this)
-    val rawIndex = effectiveLayout.getDropIndexFor(pointInMySpace)
+    val rawIndex = getDropIndexFor(pointInMySpace)
     showDropLocation = isDropIndexAllowed(rawIndex, tabInfo)
     val index = if (showDropLocation) rawIndex else -1
     dropInfoIndex = index
@@ -3487,10 +3492,12 @@ open class JBTabsImpl internal constructor(
 
   override fun processDropOver(over: TabInfo, point: RelativePoint) {
     val pointInMySpace = point.getPoint(this)
-    val rawIndex = effectiveLayout.getDropIndexFor(pointInMySpace)
+    val rawIndex = getDropIndexFor(pointInMySpace)
     val showDropLocation = dropInfo?.let { isDropIndexAllowed(rawIndex, it) } ?: true
     val index = if (showDropLocation) rawIndex else -1
-    val side: Int = if (visibleInfos.isEmpty()) {
+    val draggedObject = dropInfo?.`object`
+    val hasOtherVisibleTabs = visibleInfos.any { draggedObject == null || it.`object` != draggedObject }
+    val side: Int = if (!hasOtherVisibleTabs) {
       SwingConstants.CENTER
     }
     else {
@@ -3507,6 +3514,38 @@ open class JBTabsImpl internal constructor(
     if (side != dropSide) {
       dropSide = side
       relayout(forced = true, layoutNow = false)
+    }
+  }
+
+  /**
+   * Returns the drop index of the layout.
+   * When the drop preview has an object and [point] is in the tab row after the last tab, returns the index after the last tab.
+   * The layout returns `-1` there, and the drop then gets a side that splits the window.
+   */
+  private fun getDropIndexFor(point: Point): Int {
+    val index = effectiveLayout.getDropIndexFor(point)
+    val dropInfo = dropInfo
+    if (index != -1 || dropInfo?.`object` == null || !isAfterLastTab(point, dropInfo)) {
+      return index
+    }
+    return getVisibleInfos().count { it !== dropInfo }
+  }
+
+  private fun isAfterLastTab(point: Point, dropInfo: TabInfo): Boolean {
+    val pass = lastLayoutPass ?: return false
+    if (pass.moreRect.contains(point) || pass.entryPointRect.contains(point)) {
+      return false
+    }
+    val bounds = pass.visibleInfos.lastOrNull { it !== dropInfo }?.tabLabel?.bounds ?: return false
+    if (bounds.isEmpty) {
+      return false
+    }
+    val tolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE)
+    return if (isHorizontalTabs) {
+      point.x >= bounds.maxX && point.x < width && point.y >= bounds.y - tolerance && point.y < bounds.maxY + tolerance
+    }
+    else {
+      point.y >= bounds.maxY && point.y < height && point.x >= bounds.x - tolerance && point.x < bounds.maxX + tolerance
     }
   }
 

@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow.Companion.DRAG_START_PI
 import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeGlassPaneUtil
 import com.intellij.ui.awt.RelativePoint
@@ -194,7 +195,9 @@ class DockableEditorTabbedContainer internal constructor(
     }
     var dropInBetweenPinnedTabs: Boolean? = null
     var dropInPinnedRow = false
-    val index = if (currentOver != null) (currentOver as JBTabsEx).dropInfoIndex else -1
+    val rawIndex = if (currentOver != null) (currentOver as JBTabsEx).dropInfoIndex else -1
+    val dragStartIndex = file.getUserData(DRAG_START_INDEX_KEY)
+    val index = if (sameWindow && Registry.`is`("ide.tabs.smooth.drag", true) && dragStartIndex != null && dragStartIndex in 0 until rawIndex) rawIndex - 1 else rawIndex
     if (currentOver != null && getBoolean("editor.keep.pinned.tabs.on.left")) {
       if (index >= 0 && index <= currentOver!!.tabCount) {
         val tabInfo = if (index == currentOver!!.tabCount) null else currentOver!!.getTabAt(index)
@@ -217,7 +220,6 @@ class DockableEditorTabbedContainer internal constructor(
         }
       }
 
-      val dragStartIndex = file.getUserData(DRAG_START_INDEX_KEY)
       val isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && sameWindow
       if (!isDroppedToOriginalPlace) {
         file.putUserData(DRAG_START_PINNED_KEY, dropInBetweenPinnedTabs)
@@ -229,8 +231,14 @@ class DockableEditorTabbedContainer internal constructor(
       }
     }
     recordDragStats(if (dropIntoNewlyCreatedWindow) -1 else SwingConstants.CENTER, sameWindow)
+    val selectAsCurrent = !sameWindow || !Registry.`is`("ide.tabs.smooth.drag", true) || dockableEditor.isSelected
     coroutineScope.launch {
-      val openOptions = FileEditorOpenOptions(index = index, requestFocus = true, pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
+      val openOptions = FileEditorOpenOptions(
+        index = index,
+        selectAsCurrent = selectAsCurrent,
+        requestFocus = selectAsCurrent,
+        pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned,
+      )
       splitters.manager.checkForbidSplitAndOpenFile(window = window, file = file, options = openOptions)
     }
   }
@@ -269,6 +277,18 @@ class DockableEditorTabbedContainer internal constructor(
   val currentDropSide: Int
     get() = if (currentOver is JBTabsEx) (currentOver as JBTabsEx).dropSide else -1
 
+  internal fun isSameWindowCenterDrop(editorTabs: JBTabs): Boolean {
+    if (currentOver !== editorTabs) return false
+    if (currentDropSide == SwingConstants.CENTER) return true
+    if (currentDropSide == -1 && !TabLayout.showPinnedTabsSeparately()) {
+      val rawIndex = (editorTabs as JBTabsEx).dropInfoIndex
+      val dragStartIndex = (currentOverInfo?.`object` as? VirtualFile)?.getUserData(DRAG_START_INDEX_KEY)
+      val index = if (dragStartIndex != null && dragStartIndex in 0 until rawIndex) rawIndex - 1 else rawIndex
+      return rawIndex == -1 || index == dragStartIndex
+    }
+    return false
+  }
+
   override fun processDropOver(content: DockableContent<*>, point: RelativePoint): Image? {
     val current = getTabsAt(content, point)
     if (currentOver != null && currentOver !== current) {
@@ -279,6 +299,9 @@ class DockableEditorTabbedContainer internal constructor(
       currentOver = current
       val presentation = content.presentation
       val dropInfo = TabInfo(JLabel("")).setText(presentation.text).setIcon(presentation.icon)
+      if (content is DockableEditor && Registry.`is`("ide.tabs.smooth.drag", true)) {
+        dropInfo.setObject(content.file)
+      }
       currentOverInfo = dropInfo
       if (current is EditorTabs && content is DockableEditor) {
         current.prepareDropPreview(dropInfo = dropInfo, file = content.file, isPinned = content.isPinned)
@@ -374,6 +397,13 @@ class DockableEditorTabbedContainer internal constructor(
       val r = currentOver!!.dropArea
       val currentDropSide: Int = currentDropSide
       if (currentDropSide == -1) {
+        return
+      }
+      val file = currentOverInfo?.`object` as? VirtualFile
+      val dragStartLocation = file?.getUserData(DRAG_START_LOCATION_HASH_KEY)
+      if (currentDropSide == SwingConstants.CENTER &&
+          dragStartLocation != null &&
+          dragStartLocation == System.identityHashCode(currentOver)) {
         return
       }
 

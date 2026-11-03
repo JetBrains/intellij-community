@@ -372,6 +372,21 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     @Override
+    public @NotNull Point adjustDropPoint(@NotNull Point point) {
+      var layout = myLayout.lastSingRowLayout;
+      if (layout == null) return point;
+      var columnRect = layout.getHeaderRectangle();
+      var dropTolerance = JBUI.scale(TabsUtil.UNSCALED_DROP_TOLERANCE);
+      var adjustedPoint = new Point(point);
+      // Allow the tab to be dragged to the left or right of the tab column without detaching,
+      // as long as the tab has not been dragged further away than the drop tolerance.
+      if (adjustedPoint.x >= columnRect.x - dropTolerance && adjustedPoint.x <= columnRect.x + columnRect.width + dropTolerance) {
+        adjustedPoint.x = columnRect.x + columnRect.width / 2; // pretend the mouse is centered horizontally and not moved away at all
+      }
+      return adjustedPoint;
+    }
+
+    @Override
     public boolean isToCenterTextWhenStretched() {
       return false;
     }

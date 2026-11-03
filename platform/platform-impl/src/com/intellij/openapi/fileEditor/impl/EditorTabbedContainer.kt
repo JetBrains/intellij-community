@@ -337,6 +337,7 @@ class DockableEditor(
   @JvmField internal val isPinned: Boolean,
   @JvmField internal val isSingletonEditorInWindow: Boolean,
   @JvmField internal val isNorthPanelAvailable: Boolean = true,
+  @JvmField internal val isSelected: Boolean = true,
 ) : DockableContent<VirtualFile?> {
   override fun getKey(): VirtualFile = file
 
@@ -478,6 +479,7 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
 
   override fun dragOutStarted(mouseEvent: MouseEvent, info: TabInfo) {
     val img = JBTabsImpl.getComponentImage(info)
+    val isSelected = editorTabs.selectedInfo == info
     val file = hideDragSource(info)
     val presentation = Presentation(info.text)
     presentation.icon = info.icon
@@ -493,6 +495,7 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
         isPinned = window.isFilePinned(file = file),
         isSingletonEditorInWindow = isSingletonEditorInWindow,
         isNorthPanelAvailable = isNorthPanelAvailable(editors),
+        isSelected = isSelected,
       ),
     )
   }
@@ -503,13 +506,15 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
     val dragStartIndex = editorTabs.getIndexOf(info)
     val isPinnedAtStart = info.isPinned
 
-    // setting isHidden to true will hide the tab - we must select another tab now
-    window.getTabToSelect(tabBeingClosed = info, fileBeingClosed = file, componentIndex = dragStartIndex)?.let {
-      WriteIntentReadAction.run {
-        window.setCurrentCompositeAndSelectTab(it)
+    if (!Registry.`is`("ide.tabs.smooth.drag", true)) {
+      // setting isHidden to true will hide the tab - we must select another tab now
+      window.getTabToSelect(tabBeingClosed = info, fileBeingClosed = file, componentIndex = dragStartIndex)?.let {
+        WriteIntentReadAction.run {
+          window.setCurrentCompositeAndSelectTab(it)
+        }
       }
+      info.isHidden = true
     }
-    info.isHidden = true
 
     this.file = file
     file.putUserData(DRAG_START_INDEX_KEY, dragStartIndex)
@@ -528,6 +533,15 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
       source.isHidden = false
     }
     else {
+      val dockContainer = DockManager.getInstance(window.manager.project)
+        .getContainerFor(editorTabs) { it is DockableEditorTabbedContainer } as? DockableEditorTabbedContainer
+      if (!source.isHidden && dockContainer?.isSameWindowCenterDrop(editorTabs) == true) {
+        session!!.cancel()
+        event.consume()
+        file = null
+        session = null
+        return
+      }
       val file = file!!
       file.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, true)
       window.manager.closeFile(window = window, composite = source.composite, runChecks = false)

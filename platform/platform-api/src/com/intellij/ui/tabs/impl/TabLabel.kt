@@ -99,6 +99,12 @@ open class TabLabel @Internal constructor(
   var isForcePaintBorders: Boolean = false
 
   private val labelPlaceholder = Wrapper(/* isDoubleBuffered = */ false)
+  private var isSelectionPressed = false
+
+  @Internal
+  fun cancelPendingSelection() {
+    isSelectionPressed = false
+  }
 
   init {
     label = createLabel(tabs = tabs, info = info)
@@ -123,6 +129,7 @@ open class TabLabel @Internal constructor(
     @Suppress("LeakingThis")
     addMouseListener(object : MouseAdapter() {
       override fun mousePressed(e: MouseEvent) {
+        isSelectionPressed = false
         if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) {
           return
         }
@@ -137,10 +144,11 @@ open class TabLabel @Internal constructor(
             return
           }
 
-          tabs.select(info = info, requestFocus = true)
-          val container = PopupUtil.getPopupContainerFor(this@TabLabel)
-          if (container != null && ClientProperty.isTrue(container.content, MorePopupAware::class.java)) {
-            container.cancel()
+          if (Registry.`is`("ide.tabs.smooth.drag", true)) {
+            isSelectionPressed = true
+          }
+          else {
+            selectTab()
           }
         }
         else {
@@ -154,6 +162,13 @@ open class TabLabel @Internal constructor(
 
       override fun mouseReleased(e: MouseEvent) {
         info.previousSelection = null
+        if (isSelectionPressed) {
+          isSelectionPressed = false
+          if (!e.isPopupTrigger && contains(SwingUtilities.convertPoint(e.component, e.point, this@TabLabel))) {
+            selectTab()
+            return
+          }
+        }
         handlePopup(e)
       }
 
@@ -459,6 +474,14 @@ open class TabLabel @Internal constructor(
       // can be empty in case of dragging tab label
       return !infos.isEmpty() && infos[infos.size - 1] == info
     }
+
+  private fun selectTab() {
+    tabs.select(info = info, requestFocus = true)
+    val container = PopupUtil.getPopupContainerFor(this@TabLabel)
+    if (container != null && ClientProperty.isTrue(container.content, MorePopupAware::class.java)) {
+      container.cancel()
+    }
+  }
 
   protected open fun handlePopup(e: MouseEvent) {
     if (e.clickCount != 1 || !e.isPopupTrigger || PopupUtil.getPopupContainerFor(this) != null) {
