@@ -183,6 +183,11 @@ public class K2MoveFileOrDirectoriesTestGenerated extends AbstractK2MoveFileOrDi
         runTest("testData/moveFile/kotlin/moveFileWithPackageRename/moveFileWithPackageRename.test");
     }
 
+    @TestMetadata("kotlin/moveFileWithStdlibAndJavaReferences/moveFileWithStdlibAndJavaReferences.test")
+    public void testKotlin_moveFileWithStdlibAndJavaReferences_MoveFileWithStdlibAndJavaReferences() throws Exception {
+        runTest("testData/moveFile/kotlin/moveFileWithStdlibAndJavaReferences/moveFileWithStdlibAndJavaReferences.test");
+    }
+
     @TestMetadata("kotlin/moveFileWithoutDeclarations/moveFileWithoutDeclarations.test")
     public void testKotlin_moveFileWithoutDeclarations_MoveFileWithoutDeclarations() throws Exception {
         runTest("testData/moveFile/kotlin/moveFileWithoutDeclarations/moveFileWithoutDeclarations.test");

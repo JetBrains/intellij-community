@@ -1,0 +1,8 @@
+{
+  "mainFile": "refactor/copy/test.kt",
+  "type": "MOVE_FILES",
+  "targetPackage": "refactor.copy2",
+  "withRuntime": "true",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}
