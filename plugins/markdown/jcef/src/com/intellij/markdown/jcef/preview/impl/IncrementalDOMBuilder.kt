@@ -36,9 +36,9 @@ class IncrementalDOMBuilder(
     // language=JavaScript
     return """
       () => {
-        const o = (tag, ...attrs) => IncrementalDOM.elementOpen(tag, null, null, ...attrs.map(decodeURIComponent));
+        const o = (tag, ...attrs) => IncrementalDOM.elementOpen(decodeURIComponent(tag), null, null, ...attrs.map(decodeURIComponent));
         const t = content => IncrementalDOM.text(decodeURIComponent(content));
-        const c = IncrementalDOM.elementClose;
+        const c = tag => IncrementalDOM.elementClose(decodeURIComponent(tag));
         ${generateDomBuildCalls()}
       }
     """
@@ -63,11 +63,11 @@ class IncrementalDOMBuilder(
   private fun openTag(node: Node) {
     with(builder) {
       append("o('")
-      append(ensureCorrectTag(node.nodeName()))
+      append(encodeArgument(ensureCorrectTag(node.nodeName())))
       append("'")
       for (attribute in node.attributes()) {
         append(",'")
-        append(attribute.key)
+        append(encodeArgument(attribute.key))
         append('\'')
         val value = attribute.value
         @Suppress("SENSELESS_COMPARISON")
@@ -84,7 +84,7 @@ class IncrementalDOMBuilder(
   private fun closeTag(node: Node) {
     with(builder) {
       append("c('")
-      append(ensureCorrectTag(node.nodeName()))
+      append(encodeArgument(ensureCorrectTag(node.nodeName())))
       append("');")
     }
   }
