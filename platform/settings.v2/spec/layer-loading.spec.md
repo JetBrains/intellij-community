@@ -42,6 +42,8 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
   vault also starts with no open project. The start must not delay the startup. See
   [ADR 0116](../adr/0116-the-vault-drives-loading-with-no-timeout-and-a-provider-returns-its-layers.md). No test
   covers it, because the platform runs no application activity in the unit test mode.
+- A vault that something creates before the start at the application load must log an error, and must work anyway.
+  The check is off in the unit test mode.
 - The vault must reload the application scope when it starts, and a project scope when the project opens.
 - `reload(scope)` must ask every provider for its data of the scope. See
   [ADR 0116](../adr/0116-the-vault-drives-loading-with-no-timeout-and-a-provider-returns-its-layers.md). It asks a
