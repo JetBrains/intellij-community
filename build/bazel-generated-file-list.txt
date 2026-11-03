@@ -2090,6 +2090,7 @@ tools/intellij.tools.ide.starter.product.webstorm
 tools/intellij.tools.ide.starter/testSrc
 tools/intellij.tools.ide.util.common
 tools/launcher-generator
+tools/psi-scip
 tools/reproducibleBuilds.diff
 tools/testUtil/debugger.ui.test.util
 tools/testUtil/jupyter.ui.test.util
