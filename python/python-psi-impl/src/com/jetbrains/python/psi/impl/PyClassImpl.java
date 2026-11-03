@@ -146,7 +146,10 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private volatile @Nullable List<PyTargetExpression> myClassAttributesFromClassMethods;
 
   private volatile Map<String, Property> myLocalPropertyCache;
-  private volatile @Nullable List<PyFunction> myMethods;
+  private volatile @Nullable MethodsAtLevel myMethods;
+
+  /** The methods of this class for the language level that selected its version-specific children. */
+  private record MethodsAtLevel(@NotNull LanguageLevel level, @NotNull List<PyFunction> methods) {}
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
@@ -624,13 +627,15 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @Override
   public PyFunction @NotNull [] getMethods() {
     // Do not cache the array: callers can change it, so each call gets a new one
-    List<PyFunction> methods = myMethods;
-    if (methods == null) {
+    // subtreeChanged drops the methods, but a level can change without a PSI change
+    final LanguageLevel level = getEffectiveLanguageLevelOfFile();
+    MethodsAtLevel methods = myMethods;
+    if (methods == null || methods.level() != level) {
       final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.getInstance().getFunctionDeclarationTokens();
-      methods = getClassChildrenList(functionDeclarationTokens, PyFunction.class);
+      methods = new MethodsAtLevel(level, getClassChildrenList(functionDeclarationTokens, PyFunction.class));
       myMethods = methods;
     }
-    return ContainerUtil.toArray(methods, PyFunction.ARRAY_FACTORY);
+    return ContainerUtil.toArray(methods.methods(), PyFunction.ARRAY_FACTORY);
   }
 
   @Override
