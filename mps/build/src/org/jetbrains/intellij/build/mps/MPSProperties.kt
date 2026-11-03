@@ -109,6 +109,8 @@ class MPSProperties : JetBrainsProductProperties() {
             for (moduleName in listOf("intellij.platform.testFramework", "intellij.platform.testFramework.common", "intellij.java.testFramework", "intellij.platform.testFramework.core", "intellij.platform.testFramework.teamCity")) {
               layout.withModule(moduleName, "testFramework.jar")
             }
+            // To be used in the app classpath
+            layout.withModule("intellij.java.rt", "idea_rt.jar")
 
             // Contains the expanded plugin.xml inside
             layout.withModule("intellij.mps.resources", "mps-resources.zip")
