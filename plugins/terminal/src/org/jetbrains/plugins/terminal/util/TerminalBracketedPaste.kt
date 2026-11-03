@@ -11,25 +11,15 @@ private const val BRACKETED_PASTE_END = "\u001b[201~"
 /**
  * Wraps [text] in the bracketed paste markers `ESC[200~` and `ESC[201~`.
  *
- * The function removes every start and end marker from [text] before the wrap.
- * Thus, the text cannot end the paste early, and no part of it reaches the program as keystrokes.
- * The removal also catches a marker that only appears after the removal of an inner marker.
+ * The function replaces every ESC in [text] with the visible symbol `␛` (U+241B).
+ * A text without ESC cannot contain the end marker, so it cannot end the paste early and run a command.
+ * The user sees `␛` in the pasted text and knows that the copied text has a control character.
+ *
+ * A pasted text is not expected to contain escape sequences, so the function has no special support for them.
+ * If a real case needs them, revisit this decision.
+ *
+ * See [IJPL-260504](https://youtrack.jetbrains.com/issue/IJPL-260504).
  */
 fun wrapInBracketedPaste(text: String): String {
-  return BRACKETED_PASTE_START + removeBracketedPasteMarkers(text) + BRACKETED_PASTE_END
-}
-
-private fun removeBracketedPasteMarkers(text: String): String {
-  if (!text.contains('\u001b')) {
-    return text
-  }
-  // A marker in the result ends with the '~' that completes it, so a check at each '~' removes every marker.
-  val result = StringBuilder(text.length)
-  for (ch in text) {
-    result.append(ch)
-    if (ch == '~' && (result.endsWith(BRACKETED_PASTE_START) || result.endsWith(BRACKETED_PASTE_END))) {
-      result.setLength(result.length - BRACKETED_PASTE_START.length)
-    }
-  }
-  return result.toString()
+  return BRACKETED_PASTE_START + text.replace('\u001b', '␛') + BRACKETED_PASTE_END
 }

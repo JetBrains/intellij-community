@@ -32,34 +32,36 @@ import kotlin.time.Duration.Companion.seconds
 
 private const val START = "\u001b[200~"
 private const val END = "\u001b[201~"
+private const val VISIBLE_ESC = "␛"
 
 /**
  * Tests that a text cannot end the bracketed paste early with its own paste markers.
  */
 internal class TerminalBracketedPasteTest {
   @Test
-  fun `a text without markers is wrapped as is`() {
-    assertThat(wrapInBracketedPaste("echo hi\r\u001b[A")).isEqualTo("${START}echo hi\r\u001b[A$END")
+  fun `a text without ESC is wrapped as is`() {
+    assertThat(wrapInBracketedPaste("echo hi\r")).isEqualTo("${START}echo hi\r$END")
   }
 
   @Test
-  fun `the start and end markers inside the text are removed before the wrap`() {
-    assertThat(wrapInBracketedPaste("a${END}rm -rf ~\r${START}b")).isEqualTo("${START}arm -rf ~\rb$END")
+  fun `every ESC of the text becomes a visible symbol`() {
+    assertThat(wrapInBracketedPaste("echo hi\r\u001b[A")).isEqualTo("${START}echo hi\r$VISIBLE_ESC[A$END")
   }
 
   @Test
-  fun `a marker that appears after the removal of an inner marker is removed too`() {
-    assertThat(wrapInBracketedPaste("x\u001b[20${END}1~y")).isEqualTo("${START}xy$END")
-    assertThat(wrapInBracketedPaste("\u001b[\u001b[2${START}01~201~")).isEqualTo("$START$END")
+  fun `the start and end markers inside the text become visible text`() {
+    assertThat(wrapInBracketedPaste("a${END}rm -rf ~\r${START}b"))
+      .isEqualTo("${START}a$VISIBLE_ESC[201~rm -rf ~\r$VISIBLE_ESC[200~b$END")
   }
 
   @Test
-  fun `a text of markers only becomes an empty paste`() {
-    assertThat(wrapInBracketedPaste("$END$END$START")).isEqualTo("$START$END")
+  fun `a nested marker cannot form an end marker`() {
+    assertThat(wrapInBracketedPaste("x\u001b[20${END}1~y"))
+      .isEqualTo("${START}x$VISIBLE_ESC[20$VISIBLE_ESC[201~1~y$END")
   }
 
   @Test
-  fun `sendText in bracketed paste mode removes the markers of the text`(): Unit = timeoutRunBlocking {
+  fun `sendText in bracketed paste mode makes the markers of the text visible`(): Unit = timeoutRunBlocking {
     val scope = childScope("TerminalBracketedPasteTest")
     try {
       val session = RecordingTerminalSession(scope)
@@ -78,7 +80,7 @@ internal class TerminalBracketedPasteTest {
 
       assertThat(sent).isTrue()
       val bytes = withTimeout(5.seconds) { (session.inputEvents.receive() as TerminalWriteBytesEvent).bytes }
-      assertThat(String(bytes, StandardCharsets.UTF_8)).isEqualTo("${START}safetouch pwned\r$END")
+      assertThat(String(bytes, StandardCharsets.UTF_8)).isEqualTo("${START}safe$VISIBLE_ESC[201~touch pwned\r$END")
     }
     finally {
       scope.cancel()
