@@ -209,30 +209,36 @@ internal class WslEelMachineNioFsUriProvider : EelMachineNioFsUriProvider {
 private fun getWslNioFsUri(distributionId: String): URI =
   URI("ijent", "wsl", "/$distributionId", null, null)
 
-private val WSL_UNC_SERVER_NAMES: List<String> = WSL_PREFIXES.map { "//$it/" }
+/**
+ * Matches the start of a sanitized WSL UNC path: the server name (group 1) and the share name (group 2).
+ * The share name is the distribution ID.
+ *
+ * A separator is `/` or `\`, and it can occur more than one time, because Windows reads `\\wsl$\\Debian\\foo`
+ * and `\\wsl$/Debian/foo` as `\\wsl$\Debian\foo`.
+ */
+private val WSL_REGEX: Regex = Regex(
+  """^[\\/]{2,}(${WSL_PREFIXES.joinToString("|") { Regex.escape(it) }})[\\/]+([^\\/]+)""",
+  RegexOption.IGNORE_CASE,
+)
 
 internal object WslPathParser {
-  // wsl root -> distribution id
-  internal fun parsePath(sanitizedPath: String): Pair<String, String>? {
-    @NioPath
-    val wslRoot: String
-    val distributionId: String
-
-    val serverNameEndIdx = WSL_UNC_SERVER_NAMES.firstOrNull { sanitizedPath.startsWith(it, ignoreCase = true) }?.length
-                           ?: return null
-
-    val shareNameEndIdx = sanitizedPath.indexOf('/', startIndex = serverNameEndIdx)
-
-    if (shareNameEndIdx == -1) {
-      wslRoot = "$sanitizedPath/"
-      distributionId = sanitizedPath.substring(serverNameEndIdx)
-    }
-    else {
-      wslRoot = sanitizedPath.take(shareNameEndIdx + 1)
-      distributionId = sanitizedPath.substring(serverNameEndIdx, shareNameEndIdx)
-    }
-
-    return wslRoot to distributionId
+  /**
+   * Finds the WSL root and the distribution ID in a WSL UNC path.
+   *
+   * The function accepts all server names from [WSL_PREFIXES] in all letter cases. As Windows does, it accepts `/` and `\`
+   * as separators and ignores repeated separators. Thus, `//wsl$//Debian//foo`, `\\wsl$/Debian/foo`
+   * and `//wsl$/Debian/foo` give the same result.
+   *
+   * @param sanitizedPath a path after [MultiRoutingFileSystem.sanitizeRoot]. On Windows, it has only `/` as a separator,
+   * but the function does not require this.
+   * @return the pair of the WSL root and the distribution ID, or `null` if [sanitizedPath] is not a WSL UNC path
+   * or has no share name.
+   * The WSL root has one `/` between its parts and a `/` at the end, for example `//wsl$/Debian/`.
+   * The server name and the distribution ID keep their letter case from [sanitizedPath].
+   */
+  internal fun parsePath(sanitizedPath: String): Pair<@NioPath String, String>? {
+    val (serverName, distributionId) = WSL_REGEX.find(sanitizedPath)?.destructured ?: return null
+    return "//$serverName/$distributionId/" to distributionId
   }
 }
 

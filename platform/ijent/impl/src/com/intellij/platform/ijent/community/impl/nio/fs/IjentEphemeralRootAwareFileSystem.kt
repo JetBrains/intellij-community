@@ -61,6 +61,33 @@ private fun Path.toIjentPath(): IjentNioPath = toIjentPathOrNull() ?: throw Ille
 private fun Path.toOriginalPath(): Path = toIjentPathOrNull() ?: this
 
 /**
+ * A path string with `/` as the separator and no sequence of separators.
+ * For example, `\\wsl$\\Debian\\foo` gives `//wsl$/Debian/foo`, and `/mnt/root//foo` gives `/mnt/root/foo`.
+ *
+ * The normalization is for all operating systems: Windows and POSIX both read a sequence of separators as one separator.
+ * A leading `//` stays: on Windows, it starts a UNC path, and on POSIX, its meaning is implementation-defined.
+ */
+@JvmInline
+private value class NormalizedInvariantPath private constructor(val value: String) {
+  companion object {
+    operator fun invoke(path: String): NormalizedInvariantPath {
+      val invariantPath = toSystemIndependentName(path)
+      // `getPath` calls this function for each path. Most paths have no sequence of separators, so return them without a copy.
+      if (invariantPath.indexOf("//", startIndex = 1) == -1) {
+        return NormalizedInvariantPath(invariantPath)
+      }
+      return NormalizedInvariantPath(buildString(invariantPath.length) {
+        for ([index, char] in invariantPath.withIndex()) {
+          if (char != '/' || index <= 1 || invariantPath[index - 1] != '/') {
+            append(char)
+          }
+        }
+      })
+    }
+  }
+}
+
+/**
  * The `RootAwarePath `class delegates all operations to the original IjentNioPath.
  * The root is used only as an information holder and for computing the `toUri` and `toString`.
  */
@@ -493,9 +520,10 @@ class IjentEphemeralRootAwareFileSystem(
   }
 
   override fun getPath(first: String, vararg more: String): Path {
-    if (isPathUnderRoot(first)) {
+    val invariantFirst = NormalizedInvariantPath(first)
+    if (isPathUnderRoot(invariantFirst)) {
       val parts = more.flatMap { it.split(root.fileSystem.separator) }.filter(String::isNotEmpty).toTypedArray()
-      val relativized = relativizeToRoot(first, parts, eelDescriptor)
+      val relativized = relativizeToRoot(invariantFirst, parts, eelDescriptor)
       val ijentNioPath =
         ijentFs.getPath(localToIjent(relativized.first()), *relativized.drop(1).map { localToIjent(it) }.toTypedArray()) as IjentNioPath
       return IjentEphemeralRootAwarePath(this, root, ijentNioPath)
@@ -545,8 +573,8 @@ class IjentEphemeralRootAwareFileSystem(
            caseInsensitiveRoot == other.caseInsensitiveRoot
   }
 
-  private fun isPathUnderRoot(path: String): Boolean {
-    val invariantPath = toSystemIndependentName(path)
+  private fun isPathUnderRoot(path: NormalizedInvariantPath): Boolean {
+    val invariantPath = path.value
     if (!invariantPath.startsWith(invariantSeparatorRootPathString, ignoreCase = caseInsensitiveRoot)) {
       return false
     }
@@ -554,9 +582,12 @@ class IjentEphemeralRootAwareFileSystem(
     return invariantPath.length == invariantSeparatorRootPathString.length || invariantPath[invariantSeparatorRootPathString.length] == '/'
   }
 
-  private fun relativizeToRoot(path: String, parts: Array<String>, eelDescriptor: EelDescriptor): Array<String> {
+  /**
+   * @param path a path for which [isPathUnderRoot] returns `true`.
+   */
+  private fun relativizeToRoot(path: NormalizedInvariantPath, parts: Array<String>, eelDescriptor: EelDescriptor): Array<String> {
     // `isPathUnderRoot` has verified the prefix; `substring` also works when the prefix matched case-insensitively.
-    val relativePath = toSystemIndependentName(path).substring(invariantSeparatorRootPathString.length).nullize()
+    val relativePath = path.value.substring(invariantSeparatorRootPathString.length).nullize()
     return when (eelDescriptor.osFamily) {
       EelOsFamily.Posix -> {
         arrayOf(relativePath ?: "/", *parts)
