@@ -1,0 +1,81 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="660" viewBox="0 0 1120 660">
+  <title>Snapshot markers: factories, stores, and marker types</title>
+  <desc>The marker companion creates regular and lazy markers. Markers use stores to resolve and update immutable roots. A document registry updates each active snapshot store.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 0 1 L 9 5 L 0 9 Z" fill="#52677f"/>
+    </marker>
+    <marker id="base" markerWidth="12" markerHeight="12" refX="11" refY="6" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 1 1 L 11 6 L 1 11 Z" fill="#ffffff" stroke="#52677f" stroke-width="1.5"/>
+    </marker>
+  </defs>
+  <style>
+    text { font-family: 'Segoe UI', sans-serif; fill: #23364b; font-size: 15px; }
+    .title { font-size: 28px; font-weight: 600; }
+    .section { font-size: 18px; font-weight: 600; }
+    .type { font-size: 17px; font-weight: 600; }
+    .small { font-size: 13px; }
+    .muted { fill: #52677f; }
+    .edge { fill: none; stroke: #52677f; stroke-width: 1.6; marker-end: url(#arrow); }
+    .base { fill: none; stroke: #52677f; stroke-width: 1.6; marker-end: url(#base); }
+  </style>
+  <rect width="1120" height="660" fill="#ffffff"/>
+  <text x="24" y="42" class="title">Snapshot markers</text>
+  <text x="24" y="69" class="muted">com.intellij.openapi.editor.impl.marker</text>
+  <text x="1096" y="69" text-anchor="end" class="muted">Factories, stores, and marker types</text>
+
+  <text x="24" y="116" class="section">Companion factories</text>
+  <rect x="24" y="140" width="284" height="126" rx="8" fill="#f2edff" stroke="#bdafdb"/>
+  <text x="40" y="174" class="type">SnapshotRangeMarkerImpl</text>
+  <text x="40" y="205">createRangeMarker()</text>
+  <text x="40" y="231">createRangeMarkerForVirtualFile()</text>
+  <polyline points="308,203 400,203" class="edge"/>
+  <text x="354" y="190" text-anchor="middle" class="small muted">creates</text>
+
+  <text x="400" y="116" class="section">Marker types</text>
+  <rect x="400" y="140" width="696" height="126" rx="10" fill="#fafcfb" stroke="#d6e5de"/>
+  <rect x="416" y="154" width="296" height="98" rx="6" fill="#eaf7f1" stroke="#a4c8b8"/>
+  <text x="432" y="182" class="type">SnapshotRangeMarkerImpl</text>
+  <text x="432" y="210">Regular range marker</text>
+  <text x="432" y="235">Base for specialized markers</text>
+  <rect x="784" y="154" width="296" height="98" rx="6" fill="#eaf7f1" stroke="#a4c8b8"/>
+  <text x="800" y="182" class="type">SnapshotLazyRangeMarker</text>
+  <text x="800" y="210">Created before a document loads</text>
+  <text x="800" y="235">Uses VirtualFileMarkerRoot</text>
+  <polyline points="784,203 712,203" class="base"/>
+  <text x="748" y="190" text-anchor="middle" class="small muted">extends</text>
+
+  <polyline points="748,266 748,350" class="edge"/>
+  <text x="764" y="311" class="muted">resolve and update through</text>
+
+  <text x="24" y="326" class="section">Store registry</text>
+  <rect x="24" y="350" width="284" height="150" rx="8" fill="#eaf3ff" stroke="#a8c0db"/>
+  <text x="40" y="384" class="type">SnapshotMarkerStores</text>
+  <text x="40" y="415">One registry for each document</text>
+  <text x="40" y="443">Updates every active snapshot store</text>
+  <text x="40" y="479" class="small muted">Publishes roots with the document snapshot.</text>
+
+  <text x="400" y="326" class="section">Stores</text>
+  <rect x="400" y="350" width="696" height="150" rx="10" fill="#fafbfe" stroke="#d9e1ec"/>
+  <text x="416" y="378" class="type">MarkerRootUpdater</text>
+  <text x="1080" y="378" text-anchor="end" class="muted">Shared API for both stores</text>
+  <rect x="416" y="400" width="312" height="84" rx="6" fill="#eaf3ff" stroke="#a8c0db"/>
+  <text x="432" y="430" class="type">SnapshotMarkerRootStore&lt;T&gt;</text>
+  <text x="432" y="462">Keeps a root for each snapshot.</text>
+  <rect x="768" y="400" width="312" height="84" rx="6" fill="#eaf3ff" stroke="#a8c0db"/>
+  <text x="784" y="430" class="type">VirtualFileMarkerRoot</text>
+  <text x="784" y="462">Keeps state without a loaded document.</text>
+  <polyline points="308,442 416,442" class="edge"/>
+  <text x="354" y="429" text-anchor="middle" class="small muted">tracks</text>
+
+  <polyline points="572,484 572,552" class="edge"/>
+  <text x="588" y="532" class="small muted">roots by snapshot</text>
+  <polyline points="924,484 924,552" class="edge"/>
+  <text x="940" y="532" class="small muted">current root</text>
+  <rect x="400" y="552" width="696" height="62" rx="8" fill="#eef3f7" stroke="#b6c7d5"/>
+  <text x="416" y="580" class="type">PMarkerRoot</text>
+  <text x="416" y="601">Immutable marker state for a document snapshot</text>
+
+  <text x="24" y="646" class="small muted">Tree nodes, histories, policies, and caches are omitted to keep this overview compact.</text>
+</svg>

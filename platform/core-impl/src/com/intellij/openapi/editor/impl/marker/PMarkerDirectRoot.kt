@@ -22,6 +22,8 @@ import java.util.function.Consumer
  * Handles select states and parents through weak histories for [version].
  * Updates copy changed paths and publish histories after the new root retains the resulting tree.
  *
+ * ![Snapshot ownership diagram](pmarker-direct-structure.svg)
+ *
  * @property version the revision used for state and parent lookup.
  * @property root the valid subtree, or null when this snapshot has no valid markers.
  * @property invalids the invalid and removed states retained by this snapshot, keyed by handle ID.
