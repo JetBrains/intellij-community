@@ -27,6 +27,10 @@ write, and a very slow provider at the same time. The case is rare, but it is a 
 vault owns the reload cycle (cold start, project open, VCS change): it calls every provider concurrently, installs
 what returns, sweeps, and lifts the readiness gate. `push` is only for spontaneous watcher updates.**
 
+The cold start begins at the application load, before a project opens. An application initialized listener of the
+shared module creates the vault. The vault init then reloads the application scope in the background. The vault is
+an application service, so without this listener the platform creates it only on its first use.
+
 **A reload has no timeout. The vault waits for every provider of the reload to answer.** The reload runs in the
 background. A slow reload delays only the writes under its scope. Reads do not wait. The reload still ends when
 its caller's scope is cancelled, for example when the project closes.

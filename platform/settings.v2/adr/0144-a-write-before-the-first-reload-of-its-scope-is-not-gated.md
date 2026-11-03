@@ -17,6 +17,8 @@ while a reload runs for its context or an ancestor.
 So a write before the first reload of the application or a project does not wait:
 
 - The vault starts the application reload in its init, in a launched coroutine, after it loads the snapshot cache.
+  The vault is created at the application load. See
+  [ADR 0116](./0116-the-vault-drives-loading-with-no-timeout-and-a-provider-returns-its-layers.md).
 - A project reload starts in a startup activity, after the cache load of the project. Other startup activities run
   at the same time.
 
