@@ -127,6 +127,23 @@ public class TrigramBuilderTest {
   }
 
   @Test
+  public void trigramsOfLargeText_KeepTableSizedForTrigramCount() {
+    String text = "String$CharData ".repeat(100_000);
+    TrigramBuilder.AddonlyIntSet trigrams = (TrigramBuilder.AddonlyIntSet)trigramsUsingBuilder(text);
+    IntSet expected = etalonTrigramsOf("String$CharData");
+    assertEquals(expected, trigrams);
+    assertEquals(trigrams, expected);
+    assertEquals(32, trigrams.capacity());
+
+    IntSet expectedAfterAdd = etalonTrigramsOf(List.of("String$CharData", "another"));
+    for (int trigram : etalonTrigramsOf("another")) {
+      trigrams.add(trigram);
+    }
+    assertEquals(expectedAfterAdd, trigrams);
+    assertEquals(trigrams, expectedAfterAdd);
+  }
+
+  @Test
   public void trigramsOfText_concatenatedFromIdentifiersWithDelimiters_AreSameAsTrigramsOfAllIdentifiers_RegardlessOfIdentifiersOrder() {
     //Generate not too many id, because there are a lot of delimiters:
     List<String> identifiers = generateIdentifiers(/*count: */128);
