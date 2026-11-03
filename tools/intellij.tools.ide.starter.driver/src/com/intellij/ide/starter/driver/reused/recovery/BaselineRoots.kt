@@ -4,6 +4,9 @@ import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.testContextCache.utils.FileTreeSnapshot
 import java.nio.file.Path
+import kotlin.io.path.copyTo
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
 
 /** The baseline of one root, captured from [baselineContext]. */
 internal class BaselineRoot(
@@ -82,20 +85,33 @@ private fun MutableList<BaselineRootSpec>.addConfigAndPluginsRootSpecs(
 }
 
 /**
+ * Copies the config databases of [cachedContext] into [testContext], also for the frontend. No IDE may run.
+ *
+ * The baseline captures a running IDE, so only the cached context holds a saved copy.
+ */
+internal fun rewindConfigDatabases(testContext: IDETestContext, cachedContext: IDETestContext) {
+  for (fileName in configDatabaseFiles) {
+    val cachedFile = cachedContext.paths.configDir.resolve(fileName)
+    val file = testContext.paths.configDir.resolve(fileName)
+    if (cachedFile.exists()) cachedFile.copyTo(file, overwrite = true) else file.deleteIfExists()
+  }
+  if (testContext is IDERemDevTestContext && cachedContext is IDERemDevTestContext) {
+    rewindConfigDatabases(testContext.frontendIDEContext, cachedContext.frontendIDEContext)
+  }
+}
+
+/**
+ * The IDE keeps these databases open, writes them at most every 2 minutes, and reads them once into memory.
+ * So their files do not show their state, and a rewrite under the open database can break it.
+ * Live recovery never rewinds them. A restart rewinds them with [rewindConfigDatabases].
+ */
+private val configDatabaseFiles: Set<String> = setOf("app-internal-state.db", "updatedBrokenPlugins.db")
+
+/**
  * Top-level config files that the running IDE owns, which a settings baseline never tracks.
  *
  * Each IDE writes its own lock at its start, and `ConfigImportHelper` skips the same lock and token files on an import.
- * The IDE keeps the databases open, writes them at most every 2 minutes, and reads them once into memory. So their files
- * do not show their state, and a rewrite under the open database can break it. A reused session never rewinds them,
- * with or without a restart, so their changes go into the next test.
  */
-private val ideRuntimeConfigFiles: Set<String> = setOf(
-  ".lock",
-  "port.lock",
-  "token",
-  "user.web.token",
-  "app-internal-state.db",
-  "updatedBrokenPlugins.db",
-)
+private val ideRuntimeConfigFiles: Set<String> = setOf(".lock", "port.lock", "token", "user.web.token") + configDatabaseFiles
 
 private val EVENT_LOG_METADATA_DIRECTORY: Path = Path.of("event-log-metadata")

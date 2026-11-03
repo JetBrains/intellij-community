@@ -55,7 +55,8 @@ class ReusedSessionBaseline internal constructor(private val cachedTestContext: 
    * Rewinds the files before an IDE start. The IDE process does not run yet.
    *
    * Before the capture, it rewinds the project files to the prepared state of the cached context. A test that starts
-   * an IDE of its own can share the cached context and leave its files behind. After the capture, it calls [restore].
+   * an IDE of its own can share the cached context and leave its files behind. After the capture, it calls [restore]
+   * and copies the config databases of the cached context, see [rewindConfigDatabases].
    *
    * @return whether the restore wrote to the project files. The caller then owes the IDE a VFS refresh.
    */
@@ -64,7 +65,7 @@ class ReusedSessionBaseline internal constructor(private val cachedTestContext: 
       logOutput("[ReusedRecovery] Restoring the prepared project files before the first start...")
       return cachedTestContext.restorePreparedProjectFiles()
     }
-    return restore(testContext)
+    return restore(testContext).also { rewindConfigDatabases(testContext, cachedTestContext.testContext) }
   }
 
   /**

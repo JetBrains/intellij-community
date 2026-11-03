@@ -64,8 +64,8 @@ test of the class:
 
 - **The memory of the services.** A cache in memory stays across the tests of the class.
 - **The config databases.** The IDE keeps `app-internal-state.db` and `updatedBrokenPlugins.db` open, and writes them
-  at most every 2 minutes. No restore rewinds them, also not a restart. The plugin advertiser cache and the
-  EditorConfig encoding cache live there.
+  at most every 2 minutes. Live recovery does not rewind them. A restart copies them from the cached context.
+  The plugin advertiser cache, the EditorConfig encoding cache, and the `$CACHE_FILE$` settings live there.
 - **The lock and the tokens of the process.** No restore touches `config/.lock`.
 - **The SDK table and the global libraries.** The IDE reads `jdk.table.xml` and `applicationLibraries.xml` only at
   its start. Recovery rewinds the files, but an SDK that a test adds stays in memory until a restart.
