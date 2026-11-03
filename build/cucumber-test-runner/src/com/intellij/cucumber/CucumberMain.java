@@ -26,7 +26,7 @@ public final class CucumberMain {
     System.setProperty("apple.awt.UIElement", "true");
   }
 
-  public static void main(String[] args) {
+  static void main(String[] args) {
     int exitStatus;
     try {
       ClassLoader original = Thread.currentThread().getContextClassLoader();
