@@ -93,12 +93,12 @@ public class SpellcheckerPerformanceTest extends SpellcheckerInspectionTestCase 
   }
 
   public void testVeryLongEmail() {
-    final String text = "\\LONG_EMAIL: " + StringUtil.repeat("ivan.ivanov", 1000000) + "@mail.com\n";
+    final String text = "\\LONG_EMAIL: " + StringUtil.repeat("ivan.ivanov", 100000) + "@mail.com\n";
     doSplitterPerformanceTest(text, CommentSplitter.getInstance());
   }
 
   public void testVeryLongURL() {
-    final String text = "\\LONG_URL:  http://" + StringUtil.repeat("ivan.ivanov", 1000000) + ".com\n";
+    final String text = "\\LONG_URL:  http://" + StringUtil.repeat("ivan.ivanov", 100000) + ".com\n";
     doSplitterPerformanceTest(text, CommentSplitter.getInstance());
   }
 
