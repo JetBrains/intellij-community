@@ -312,6 +312,10 @@ class MarkdownPreviewFileEditor(
   private fun attachHtmlPanel() {
     ThreadingAssertions.assertEventDispatchThread()
 
+    if (panel != null) {
+      logger.debug("MarkdownPreviewFileEditor: the panel is already attached")
+      return
+    }
     if (!MarkdownHtmlPanelProvider.hasAvailableProviders()) {
       logger.debug("MarkdownPreviewFileEditor: no preview panel provider is available")
       return
