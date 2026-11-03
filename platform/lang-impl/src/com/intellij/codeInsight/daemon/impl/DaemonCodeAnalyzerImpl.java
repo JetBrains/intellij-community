@@ -1657,8 +1657,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     return Map.copyOf(myUpdateProgress);
   }
 
+  /**
+   * @return the file editors that the daemon highlights
+   */
+  @ApiStatus.Internal
+  @VisibleForTesting
   @RequiresEdt
-  private @NotNull Collection<? extends FileEditor> getSelectedEditors() {
+  public @NotNull Collection<? extends FileEditor> getSelectedEditors() {
     ThreadingAssertions.assertEventDispatchThread();
     // editors in modal context
     List<? extends Editor> editors = EditorTracker.Companion.getInstance(myProject).getActiveEditors();

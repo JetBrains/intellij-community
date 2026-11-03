@@ -372,18 +372,6 @@ private class TestParentNode(project: Project) : Node(project) {
   override fun update(project: Project, presentation: PresentationData) {}
 }
 
-private class TestCodeInsightContext(private val name: String) : CodeInsightContext {
-  override fun toString(): String = name
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is TestCodeInsightContext) return false
-    return name == other.name
-  }
-
-  override fun hashCode(): Int = name.hashCode()
-}
-
 private class TestHighlightingProblem(
   provider: ProblemsProvider,
   file: VirtualFile,
