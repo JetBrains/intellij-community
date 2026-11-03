@@ -44,6 +44,7 @@ public interface TypeEvalContextCache {
    *
    * @param delegating the context that delegates the types of library elements, not a library context to store
    */
+  @ApiStatus.Internal
   @NotNull
   TypeEvalContext getLibraryContext(@NotNull TypeEvalContext delegating);
 }
