@@ -304,7 +304,6 @@ Most options use the `intellij.build.test.*` prefix. Bucketing uses `idea.test.*
 
 ```kotlin
 // Test selection (mutually exclusive, in priority order)
-testConfigurations  // -Dintellij.build.test.configurations=<config>
 testPatterns        // -Dintellij.build.test.patterns=<pattern>
 testGroups          // -Dintellij.build.test.groups=<group>
 

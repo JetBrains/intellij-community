@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build
 
 import com.intellij.TestCaseLoader
 import com.intellij.util.text.nullize
-import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
+import org.jetbrains.intellij.build.impl.TestSearchScope
 
 private val OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
 
@@ -66,12 +66,6 @@ open class TestingOptions {
   var testSimplePatterns: String? = System.getProperty("intellij.build.test.simple.patterns").nullize(nullizeSpaces = true)
 
   /**
-   * Semicolon-separated names of JUnit run configurations in the project that need to be executed. If this option is specified,
-   * [testGroups], [testPatterns] and [mainModule] will be ignored.
-   */
-  var testConfigurations: String? = System.getProperty("intellij.build.test.configurations").nullize(nullizeSpaces = true)
-
-  /**
    * Specifies components from which product will be used to run tests, by default, IDEA Ultimate will be used.
    */
   var platformPrefix: String? = System.getProperty("intellij.build.test.platform.prefix", OLD_PLATFORM_PREFIX)
@@ -109,7 +103,7 @@ open class TestingOptions {
   var mainModule: String? = System.getProperty("intellij.build.test.main.module").nullize(nullizeSpaces = true)
 
   /**
-   * Abort tests execution if [mainModule] does not match the module specified in the Run Configuration from [testConfigurations].
+   * Abort tests execution if [mainModule] is not specified.
    */
   var validateMainModule: Boolean = System.getProperty("intellij.build.test.main.module.validate")?.toBooleanStrict() ?: false
 
@@ -135,7 +129,7 @@ open class TestingOptions {
    * Specifies a list of semicolon-separated modules names which are used together with their transitive dependencies
    * to determine source and output paths for a Coverage report.
    *
-   * If it isn't specified, then either [testConfigurations] or [mainModule] are used.
+   * If it isn't specified, then [mainModule] is used.
    *
    * Required if [enableCoverage] is set to `true`.
    */
@@ -221,7 +215,7 @@ open class TestingOptions {
    * - `moduleWithDependencies`
    * By default, tests are searched across module dependencies.
    */
-  var searchScope: String = System.getProperty("intellij.build.test.search.scope", JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized)
+  var searchScope: String = System.getProperty("intellij.build.test.search.scope", TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized)
 
   /**
    * If `true` then a test process's stdout is redirected to a file,

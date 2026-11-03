@@ -8,7 +8,7 @@ import org.jetbrains.intellij.build.BuildPaths.Companion.ULTIMATE_HOME
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
-import org.jetbrains.intellij.build.impl.JUnitRunConfigurationProperties
+import org.jetbrains.intellij.build.impl.TestSearchScope
 import org.jetbrains.intellij.build.impl.asBazelIfNeeded
 import org.jetbrains.intellij.build.impl.createCompilationContext
 import org.jsoup.Jsoup
@@ -32,14 +32,13 @@ class CoverageTest {
     coveredClassesPatterns = coveredClass.packageName + ".*"
     testPatterns = CoverageTest::class.java.canonicalName
     // The nested run must be driven solely by [testPatterns]. Clear the other selectors so an ambient
-    // 'intellij.build.test.groups'/'…configurations'/'…simple.patterns' system property (set, for example, when this
+    // 'intellij.build.test.groups'/'…simple.patterns' system property (set, for example, when this
     // test itself is launched from a test group such as BUILD_SCRIPTS_PLATFORM_TESTS) is not inherited by TestingOptions
     // and does not trip the mutually-exclusive option check in TestingTasksImpl.checkOptions.
     testGroups = null
-    testConfigurations = null
     testSimplePatterns = null
     mainModule = "intellij.platform.buildScripts.tests"
-    searchScope = JUnitRunConfigurationProperties.TestSearchScope.SINGLE_MODULE.serialized
+    searchScope = TestSearchScope.SINGLE_MODULE.serialized
   }
 
   private suspend fun context(): CompilationContext {

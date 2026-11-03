@@ -85,22 +85,11 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
                              ?.map { it.trim() }
                              ?.toList()
                              ?.takeIf { it.any() }
-                           ?: runConfigurations
-                             .map { it.moduleName }
-                             .takeIf { it.any() }
                            ?: listOfNotNull(options.mainModule),
       coveredClasses = requireNotNull(options.coveredClassesPatterns) {
         "Test coverage is enabled but the classes pattern is not specified"
       }.splitToSequence(';').map(::Regex).toList(),
     )
-  }
-
-  private val runConfigurations: List<JUnitRunConfigurationProperties> by lazy {
-    options.testConfigurations
-      ?.splitToSequence(';')
-      ?.filter(String::isNotEmpty)
-      ?.flatMap { loadRunConfigurations(name = it, projectHome = context.paths.projectHome) }
-      ?.toList() ?: emptyList()
   }
 
   @Deprecated("the `defaultMainModule` should be passed via `TestingOptions#mainModule`")
@@ -166,40 +155,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     val mainModule = options.mainModule
     checkOptions(mainModule)
 
-    if (options.validateMainModule) {
-      checkNotNull(mainModule)
-      val withModuleMismatch = runConfigurations.filter { it.moduleName != mainModule }
-      if (withModuleMismatch.isNotEmpty()) {
-        val errorMessage = withModuleMismatch.joinToString(
-          prefix = "Run configuration module mismatch, expected '$mainModule' (set in option 'intellij.build.test.main.module'), actual:\n",
-          separator = "\n",
-        ) { "  * Run configuration: '${it.name}', module: '${it.moduleName}'" }
-        context.messages.logErrorAndThrow(errorMessage)
-      }
-    }
-
     val systemProperties = LinkedHashMap<String, String>(additionalSystemProperties)
     try {
       blockWithDefaultFlowId("compile modules") {
-        if (runConfigurations.any { it.buildProject }) {
-          context.messages.info(
-            "Building the entire project as requested by run configurations: " +
-            runConfigurations.filter { it.buildProject }.map { it.name }
-          )
-          context.compileModules(moduleNames = null, includingTestsInModules = null)
-        }
-        else if (runConfigurations.any()) {
-          context.compileModules(
-            moduleNames = listOf("intellij.tools.testsBootstrap"),
-            includingTestsInModules = listOf("intellij.platform.buildScripts") + runConfigurations.map { it.moduleName },
-          )
-        }
-        else {
-          context.compileModules(
-            moduleNames = listOf("intellij.tools.testsBootstrap"),
-            includingTestsInModules = listOfNotNull(mainModule, "intellij.platform.buildScripts"),
-          )
-        }
+        context.compileModules(
+          moduleNames = listOf("intellij.tools.testsBootstrap"),
+          includingTestsInModules = listOfNotNull(mainModule, "intellij.platform.buildScripts"),
+        )
       }
     }
     catch (e: Exception) {
@@ -223,19 +185,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       if (options.enableCoverage) {
         coverage.enable(jvmOptions = effectiveAdditionalJvmOptions, systemProperties = systemProperties)
       }
-      if (runConfigurations.none()) {
-        runTestsFromGroupsAndPatterns(
-          additionalJvmOptions = effectiveAdditionalJvmOptions,
-          mainModule = checkNotNull(mainModule) {
-            "Main module is not specified"
-          },
-          rootExcludeCondition = rootExcludeCondition,
-          systemProperties = systemProperties
-        )
-      }
-      else {
-        runTestsFromRunConfigurations(effectiveAdditionalJvmOptions, runConfigurations, systemProperties)
-      }
+      runTestsFromGroupsAndPatterns(
+        additionalJvmOptions = effectiveAdditionalJvmOptions,
+        mainModule = checkNotNull(mainModule) {
+          "Main module is not specified"
+        },
+        rootExcludeCondition = rootExcludeCondition,
+        systemProperties = systemProperties
+      )
       if (options.isTestDiscoveryEnabled) {
         publishTestDiscovery(context.messages, testDiscoveryTraceFilePath)
       }
@@ -246,25 +203,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
   }
 
   private fun checkOptions(mainModule: String?) {
-    if (options.testConfigurations != null) {
-      val testConfigurationsOptionName = "intellij.build.test.configurations"
-      if (options.testPatterns != null) {
-        errorOptionIgnored(testConfigurationsOptionName, testPatternSystemPropertyKey)
-      }
-      if (options.testSimplePatterns != null) {
-        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.simple.patterns")
-      }
-      if (options.testGroups != null) {
-        errorOptionIgnored(testConfigurationsOptionName, testGroupSystemPropertyKey)
-      }
-      if (mainModule != null && !options.validateMainModule) {
-        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.main.module")
-      }
-      if (options.searchScope != JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized) {
-        errorOptionIgnored(testConfigurationsOptionName, "intellij.build.test.search.scope")
-      }
-    }
-    else if (options.testPatterns != null) {
+    if (options.testPatterns != null) {
       if (options.testSimplePatterns != null) {
         errorOptionIgnored(testPatternSystemPropertyKey, "intellij.build.test.simple.patterns")
       }
@@ -278,16 +217,16 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       }
     }
 
-    if (options.testConfigurations == null && options.testPatterns == null && options.testSimplePatterns == null && options.testGroups == null) {
-      context.messages.logErrorAndThrow("'intellij.build.test.configurations', '$testPatternSystemPropertyKey', 'intellij.build.test.simple.patterns', or '$testGroupSystemPropertyKey' option should be set")
+    if (options.testPatterns == null && options.testSimplePatterns == null && options.testGroups == null) {
+      context.messages.logErrorAndThrow("'$testPatternSystemPropertyKey', 'intellij.build.test.simple.patterns', or '$testGroupSystemPropertyKey' option should be set")
     }
 
     if (options.validateMainModule && mainModule.isNullOrEmpty()) {
       context.messages.logErrorAndThrow("'intellij.build.test.main.module.validate' option requires 'intellij.build.test.main.module' to be set")
     }
 
-    if (options.searchScope != JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized) {
-      if (options.searchScope != JUnitRunConfigurationProperties.TestSearchScope.SINGLE_MODULE.serialized) {
+    if (options.searchScope != TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized) {
+      if (options.searchScope != TestSearchScope.SINGLE_MODULE.serialized) {
         context.messages.logErrorAndThrow("Unsupported 'intellij.build.test.search.scope' value: ${options.searchScope}")
       }
     }
@@ -301,45 +240,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
   private fun errorOptionIgnored(specifiedOption: String, ignoredOption: String) {
     context.messages.logErrorAndThrow("'${specifiedOption}' option is specified, so '${ignoredOption}' will be ignored.")
-  }
-
-  private fun runTestsFromRunConfigurations(
-    additionalJvmOptions: List<String>,
-    runConfigurations: List<JUnitRunConfigurationProperties>,
-    systemProperties: MutableMap<String, String>,
-  ) {
-    for (configuration in runConfigurations) {
-      blockWithDefaultFlowId("run '${configuration.name}' run configuration") {
-        runTestsFromRunConfiguration(runConfigurationProperties = configuration, additionalJvmOptions = additionalJvmOptions, systemProperties = systemProperties)
-      }
-    }
-  }
-
-  private fun runTestsFromRunConfiguration(
-    runConfigurationProperties: JUnitRunConfigurationProperties,
-    additionalJvmOptions: List<String>,
-    systemProperties: Map<String, String>,
-  ) {
-    try {
-      runTestsProcess(
-        testsModule = context.findRequiredModule(runConfigurationProperties.moduleName),
-        testGroups = null,
-        testPatterns = runConfigurationProperties.testClassPatterns.joinToString(separator = ";"),
-        jvmArgs = removeStandardJvmOptions(runConfigurationProperties.vmParameters) + additionalJvmOptions,
-        systemProperties = systemProperties + listOf(
-          "intellij.build.test.process.name" to runConfigurationProperties.name,
-        ),
-        envVariables = runConfigurationProperties.envVariables,
-        remoteDebugging = false,
-        searchForTestsAcrossModuleDependencies = runConfigurationProperties.testSearchScope == JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES,
-        rootExcludeCondition = null,
-      )
-    }
-    catch (e: NoTestsFound) {
-      throw RuntimeException("No tests were found in the configuration '${runConfigurationProperties.name}'").apply {
-        addSuppressed(e)
-      }
-    }
   }
 
   private fun guessTestModulesForGroupsAndPatterns(
@@ -423,7 +323,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
         options.testGroups?.contains("COMMUNITY_JAVA_TESTS") == true
       )
 
-    val searchForTestsAcrossModuleDependencies = options.searchScope == JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized
+    val searchForTestsAcrossModuleDependencies = options.searchScope == TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized
     val testModules = let {
       if (searchForTestsAcrossModuleDependencies && System.getProperty("pass.jar.dependencies.to.tests") == null && options.testSimplePatterns == null) guessTestModulesForGroupsAndPatterns(mainModule, rootExcludeCondition, systemProperties)
       else listOf(mainModule)
@@ -548,9 +448,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     }
     if (options.testPatterns != null) {
       context.messages.warning("'$testPatternSystemPropertyKey' option is ignored while debugging via TeamCity plugin")
-    }
-    if (options.testConfigurations != null) {
-      context.messages.warning("'intellij.build.test.configurations' option is ignored while debugging via TeamCity plugin")
     }
     runTestsProcess(
       testsModule = context.findRequiredModule(mainModule),
@@ -905,7 +802,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     context.compileModules(moduleNames = null, includingTestsInModules = null)
     val tests = spanBuilder("loading all tests annotated with @SkipInHeadlessEnvironment").use { loadTestsSkippedInHeadlessEnvironment() }
     for (it in tests) {
-      options.searchScope = JUnitRunConfigurationProperties.TestSearchScope.SINGLE_MODULE.serialized
+      options.searchScope = TestSearchScope.SINGLE_MODULE.serialized
       options.testPatterns = it.getFirst()
       options.mainModule = it.getSecond()
       runTests()
