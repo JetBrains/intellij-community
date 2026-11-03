@@ -1101,7 +1101,8 @@ private fun recordActionOffenders(actions: List<AnAction>) : AutoCloseable {
 }
 
 private fun logTimeMillis(startedAt: Long, action: AnAction) {
-  EventWatcher.getInstanceOrNull()?.logTimeMillis(action.toString(), startedAt)
+  val watcher = EventWatcher.getInstanceOrNull() ?: return
+  watcher.logTimeMillis(ActionManager.getInstance().getId(action) ?: action.javaClass.name, startedAt)
 }
 
 // http://www.oracle.com/technetwork/java/javase/documentation/jdk12locales-5294582.html
