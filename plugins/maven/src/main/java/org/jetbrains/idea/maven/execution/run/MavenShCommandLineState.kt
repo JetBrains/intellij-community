@@ -35,9 +35,11 @@ import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.extensions.forEachExtensionSafeInline
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -82,6 +84,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.server.DaemonedMavenDistribution
+import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerEmbedder
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -109,14 +112,17 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
   private suspend fun collectParameters(eelApi: EelApi, debug: Boolean): MavenProcessExecutionData {
     val exe = if (isWindows()) "cmd.exe" else "/bin/sh"
-    val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), debug)
+    val jdk = getJdk()
+    val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), jdk, debug)
 
     val charset = tryToGetCharset(env, eelApi) ?: Charsets.UTF_8
     val envWithCharsets = applyCharset(env, charset)
 
-    val params = collectArguments(eelApi)
-    MAVEN_EXECUTION_CONFIGURATOR.forEachExtensionSafe {
-      it.createConfigurator(environment, myConfiguration)?.configureParameters(envWithCharsets, params)
+    val script = getScript(eelApi)
+    val params = collectArguments(eelApi, script.path)
+    val context = MavenExecutionContext(eelApi, script.distribution, script.mavenHome, jdk)
+    MAVEN_EXECUTION_CONFIGURATOR.forEachExtensionSafeInline {
+      it.createConfigurator(environment, myConfiguration, context)?.configureParameters(envWithCharsets, params)
     }
 
     return MavenProcessExecutionData(
@@ -431,9 +437,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   }
 
 
-  private fun collectArguments(eel: EelApi): ParametersList {
+  private fun collectArguments(eel: EelApi, scriptPath: String): ParametersList {
     val args = ParametersList()
-    args.add(getScriptPath(eel))
+    args.add(scriptPath)
     addIdeaParameters(args, eel)
     addSettingParameters(args)
 
@@ -561,21 +567,20 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   private val effectiveRunnerSettings: MavenRunnerSettings
     get() = myConfiguration.runnerSettings ?: MavenRunner.getInstance(myConfiguration.project).state
 
-  private suspend fun getJavaHome(): String? {
+  private suspend fun getJdk(): Sdk {
     val runnerSettings = effectiveRunnerSettings
     val isGlobalRunnerSettings = runnerSettings === MavenRunner.getInstance(myConfiguration.project).state
-    val javaHome = readAction {
+    return readAction {
       MavenExternalParameters.getJdk(myConfiguration.project, runnerSettings.jreName, isGlobalRunnerSettings)
-    }.homePath ?: return null
-    return Path.of(javaHome).asEelPath().toString()
+    }
   }
 
-  private suspend fun getEnv(existingEnv: Map<String, String>, debug: Boolean): MutableMap<String, String> {
+  private fun getEnv(existingEnv: Map<String, String>, jdk: Sdk, debug: Boolean): MutableMap<String, String> {
     val runnerSettings = effectiveRunnerSettings
     val map = HashMap<String, String>()
     map.putAll(existingEnv)
-    val javaHome = getJavaHome() ?: throw ExecutionException(MavenProjectBundle.message("exec.message.failed.to.find.maven.jdk"))
-    map["JAVA_HOME"] = javaHome
+    val javaHome = jdk.homePath ?: throw ExecutionException(MavenProjectBundle.message("exec.message.failed.to.find.maven.jdk"))
+    map["JAVA_HOME"] = Path.of(javaHome).asEelPath().toString()
     map.putAll(runnerSettings.environmentProperties)
     val optsBuilder = StringBuilder(map["MAVEN_OPTS"] ?: "")
     runnerSettings.vmOptions.nullize(nullizeSpaces = true)?.let {
@@ -596,36 +601,36 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   }
 
 
-  private fun getScriptPath(eel: EelApi): String {
+  private fun getScript(eel: EelApi): MavenScript {
+    val distribution = MavenDistributionsCache.getInstance(myConfiguration.project)
+      .getMavenDistribution(myConfiguration.runnerParameters.workingDirPath)
     val type: MavenHomeType = MavenProjectsManager.getInstance(myConfiguration.project).getGeneralSettings().getMavenHomeType()
     if (type is MavenWrapper) {
       val path = getPathToWrapperScript()
       val file = workingDir.resolve(path)
       if (file.asNioPath().exists()) {
-        return path
+        return MavenScript(path, distribution, mavenHome = null)
       }
-      return getMavenExecutablePath(BundledMaven3, eel)
+      return getMavenExecutable(distribution, BundledMaven3, eel)
     }
 
-    return getMavenExecutablePath(type, eel)
+    return getMavenExecutable(distribution, type, eel)
   }
 
-  private fun getMavenExecutablePath(type: MavenHomeType, eel: EelApi): String {
-    val distribution = MavenDistributionsCache.getInstance(myConfiguration.project)
-      .getMavenDistribution(myConfiguration.runnerParameters.workingDirPath)
-
+  private fun getMavenExecutable(distribution: MavenDistribution, type: MavenHomeType, eel: EelApi): MavenScript {
     var mavenHome = distribution.mavenHome
 
     if (type is BundledMaven) {
       mavenHome = transferLocalContentToRemote(mavenHome, TransferTarget.Temporary(eel.descriptor))
     }
 
-    if (distribution is DaemonedMavenDistribution) {
-      return distribution.daemonHome.resolve("bin").resolve(if (isWindows()) "mvnd.cmd" else "mvnd.sh").asEelPath().toString()
+    val path = if (distribution is DaemonedMavenDistribution) {
+      distribution.daemonHome.resolve("bin").resolve(if (isWindows()) "mvnd.cmd" else "mvnd.sh").asEelPath().toString()
     }
     else {
-      return mavenHome.resolve("bin").resolve(if (isWindows()) "mvn.cmd" else "mvn").asEelPath().toString()
+      mavenHome.resolve("bin").resolve(if (isWindows()) "mvn.cmd" else "mvn").asEelPath().toString()
     }
+    return MavenScript(path, distribution, mavenHome)
   }
 
   private fun getPathToWrapperScript(): String {
@@ -693,6 +698,14 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
   override fun isPollConnection(): Boolean = true
 
 }
+
+/**
+ * The script at the first parameter of a Maven process.
+ *
+ * @property path the script path in the execution environment.
+ * @property mavenHome the home of the Maven that the script runs, or null for the Maven wrapper script of the project.
+ */
+private class MavenScript(val path: String, val distribution: MavenDistribution, val mavenHome: Path?)
 
 private data class MavenProcessExecutionData(
   val isWindows: Boolean,

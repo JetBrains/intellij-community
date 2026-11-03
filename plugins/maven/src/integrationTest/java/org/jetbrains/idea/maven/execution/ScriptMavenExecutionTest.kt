@@ -30,6 +30,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.run.MAVEN_EXECUTION_CONFIGURATOR
 import org.jetbrains.idea.maven.execution.run.MavenExecutionConfigurator
 import org.jetbrains.idea.maven.execution.run.MavenExecutionConfiguratorProvider
+import org.jetbrains.idea.maven.execution.run.MavenExecutionContext
 import org.jetbrains.idea.maven.fixtures.ExecutionInfo
 import org.jetbrains.idea.maven.fixtures.checkUpdatingExcludedFoldersAfterExecution
 import org.jetbrains.idea.maven.fixtures.debugMavenRunConfiguration
@@ -499,7 +500,11 @@ class ScriptMavenExecutionTest(mavenVersion: String, modelVersion: String) {
     maven.mavenGeneralSettings.mavenHomeType = MavenWrapper
     addExtensions(MAVEN_EXECUTION_CONFIGURATOR, listOf(
       object : MavenExecutionConfiguratorProvider {
-        override fun createConfigurator(environment: ExecutionEnvironment, myConfiguration: MavenRunConfiguration): MavenExecutionConfigurator? {
+        override suspend fun createConfigurator(
+          environment: ExecutionEnvironment,
+          myConfiguration: MavenRunConfiguration,
+          context: MavenExecutionContext,
+        ): MavenExecutionConfigurator? {
           return MyTestConfiguratorExtension()
         }
 
