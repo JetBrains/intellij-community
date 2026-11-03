@@ -128,6 +128,12 @@ private fun selfTearDownRunnable(vcsPlatformTestContext: VcsPlatformTestContext)
   )
 }
 
+/**
+ * [VcsPlatformTestContext.testNioRoot] as a [VirtualFile].
+ */
+val VcsPlatformTestContext.testRoot: VirtualFile
+  get() = requireNotNull(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(testNioRoot))
+
 fun VcsPlatformTestContext.updateChangeListManager() {
   VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
   changeListManager.ensureUpToDate()
