@@ -100,3 +100,22 @@ class IDEA105004 {
   class A {}
   static class B extends <error descr="No enclosing instance of type 'IDEA105004' is in scope">A</error> {}
 }
+
+class IDEA342508 {
+  class Z {}
+  static void x() {
+    class Y extends <error descr="No enclosing instance of type 'IDEA342508' is in scope">Z</error> {}
+    class YQualified extends Z {
+      YQualified(IDEA342508 outer) { outer.super(); }
+    }
+  }
+  static {
+    class Y extends <error descr="No enclosing instance of type 'IDEA342508' is in scope">Z</error> {}
+  }
+  void instance() {
+    class Y extends Z {}
+  }
+  static class Nested {
+    class Y extends <error descr="No enclosing instance of type 'IDEA342508' is in scope">Z</error> {}
+  }
+}

@@ -193,7 +193,6 @@ final class ClassChecker {
 
           if (resolve == resolved &&
               baseClass != null &&
-              (!PsiTreeUtil.isAncestor(baseClass, extendRef, true) || aClass.hasModifierProperty(PsiModifier.STATIC)) &&
               !InheritanceUtil.hasEnclosingInstanceInScope(baseClass, extendRef, psiClass -> psiClass != aClass, true) &&
               !qualifiedNewCalledInConstructors(aClass)) {
             myVisitor.report(JavaErrorKinds.CLASS_REFERENCE_LIST_NO_ENCLOSING_INSTANCE.create(extendRef, baseClass));
