@@ -1337,6 +1337,7 @@ plugins/github/github-core
 plugins/github/github-git
 plugins/github/github-json
 plugins/github/github-tracker
+plugins/github/plugin
 plugins/github/ultimate-promo
 plugins/gitlab
 plugins/gitlab/frontend

@@ -25,8 +25,8 @@ dev_dist_plugin_descriptor(
         "intellij.vcs.github.tracker",
         "intellij.vcs.github.ultimatePromo",
     ],
-    descriptor = "//plugins/github/github-core:resources/META-INF/plugin.xml",
-    main_module = "intellij.vcs.github",
+    descriptor = "//plugins/github/plugin:resources/META-INF/plugin.xml",
+    main_module = "intellij.vcs.github.plugin",
     mode_refused_content_modules = {
         "frontend": [
             "intellij.vcs.github.git",
@@ -43,22 +43,26 @@ dev_dist_plugin_descriptor(
 )
 
 dev_plugin(
-    name = "intellij.vcs.github_dev_plugin",
+    name = "intellij.vcs.github.plugin_dev_plugin",
     content_module_jars = [
+        "//plugins/github/github-core:vcs-github_content_module_jar",
         "//plugins/github/github-git:vcs-github-git_content_module_jar",
         "//plugins/github/github-json:vcs-github-json_content_module_jar",
         "//plugins/github/github-tracker:vcs-github-tracker_content_module_jar",
         "//plugins/github/ultimate-promo:ultimate-promo_content_module_jar",
     ],
-    descriptor = "//build/dev-dist-descriptors/intellij.vcs.github:intellij.vcs.github_dev_descriptor",
+    descriptor = "//build/dev-dist-descriptors/intellij.vcs.github.plugin:intellij.vcs.github.plugin_dev_descriptor",
     jars = {
-        "lib/intellij.vcs.github.jar": [
-            "intellij.vcs.github",
+        "lib/vcs-github-plugin.jar": [
+            "intellij.vcs.github.plugin",
         ],
     },
-    main_module = "intellij.vcs.github",
+    main_module = "intellij.vcs.github.plugin",
+    module_jar_paths = {
+        "intellij.vcs.github": "lib/intellij.vcs.github.jar",
+    },
     modules = {
-        "//plugins/github/github-core:vcs-github": "intellij.vcs.github",
+        "//plugins/github/plugin": "intellij.vcs.github.plugin",
     },
     plugin_directory = "plugins/vcs-github",
 )
