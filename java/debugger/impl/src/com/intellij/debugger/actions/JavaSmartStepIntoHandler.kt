@@ -1,561 +1,643 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.actions;
+package com.intellij.debugger.actions
 
-import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.ContextUtil;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.SuspendContextImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
-import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
-import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.statistics.DebuggerStatistics;
-import com.intellij.debugger.statistics.Engine;
-import com.intellij.execution.filters.LineNumbersMapping;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaRecursiveElementVisitor;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiCallExpression;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiConditionalExpression;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiEnumConstantInitializer;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIfStatement;
-import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiMethodReferenceExpression;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiNewExpression;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.Range;
-import com.intellij.util.ThreeState;
-import com.sun.jdi.Location;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.IntStream;
+import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.actions.JavaSmartStepIntoBytecodeMatcher.PreparedBytecode
+import com.intellij.debugger.engine.ContextUtil
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
+import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.JvmMethodMatcher
+import com.intellij.debugger.engine.SuspendContextImpl
+import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
+import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator
+import com.intellij.debugger.engine.withDebugContext
+import com.intellij.debugger.impl.DebuggerContextImpl
+import com.intellij.debugger.impl.DebuggerSession
+import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.impl.DebuggerUtilsImpl
+import com.intellij.debugger.impl.PrioritizedTask
+import com.intellij.debugger.impl.runBlockingAssertNotInReadAction
+import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.debugger.statistics.DebuggerStatistics.logSmartStepIntoTargetsDetection
+import com.intellij.debugger.statistics.Engine
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.execution.filters.LineNumbersMapping
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiAnonymousClass
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiConditionalExpression
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiEnumConstantInitializer
+import com.intellij.psi.PsiExpression
+import com.intellij.psi.PsiExpressionList
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiIfStatement
+import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiMethodCallExpression
+import com.intellij.psi.PsiMethodReferenceExpression
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiNewExpression
+import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiStatement
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
+import com.intellij.util.DocumentUtil
+import com.intellij.util.Range
+import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.asCancellablePromise
+import org.jetbrains.concurrency.rejectedPromise
 
-public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
-  private static final Logger LOG = Logger.getInstance(JavaSmartStepIntoHandler.class);
+internal open class JavaSmartStepIntoHandler : JvmSmartStepIntoHandler() {
+  override fun isAvailable(position: SourcePosition): Boolean = position.file.language.isKindOf(JavaLanguage.INSTANCE)
 
-  @Override
-  public boolean isAvailable(final SourcePosition position) {
-    final PsiFile file = position.getFile();
-    return file.getLanguage().isKindOf(JavaLanguage.INSTANCE);
+  override fun findSmartStepTargetsAsync(position: SourcePosition, session: DebuggerSession): Promise<List<SmartStepTarget>> =
+    findSmartStepTargetsAsync(position, session, true)
+
+  override fun findStepIntoTargets(position: SourcePosition, session: DebuggerSession): Promise<List<SmartStepTarget>> {
+    if (!DebuggerSettings.getInstance().ALWAYS_SMART_STEP_INTO) return rejectedPromise()
+    return findSmartStepTargetsAsync(position, session, false)
   }
 
-  private @NotNull Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session, boolean smart) {
-    var res = new AsyncPromise<List<SmartStepTarget>>();
-    DebuggerContextImpl context = session.getContextManager().getContext();
-    Objects.requireNonNull(context.getManagerThread()).schedule(new DebuggerContextCommandImpl(context) {
-      @Override
-      public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        if (!Objects.equals(ContextUtil.getSourcePosition(suspendContext), position)) {
-          // The source position has changed - just cancel the current command
-          res.cancel();
-          return;
+  private fun findSmartStepTargetsAsync(
+    position: SourcePosition,
+    session: DebuggerSession,
+    smart: Boolean,
+  ): Promise<List<SmartStepTarget>> {
+    val context = session.contextManager.context
+    val suspendContext = context.suspendContext ?: return rejectedPromise()
+    return suspendContext.coroutineScope.async {
+      withDebugContext(context, PrioritizedTask.Priority.NORMAL) {
+        if (ContextUtil.getSourcePosition(suspendContext) != position) throw CancellationException()
+        findStepTargetsAsync(position, suspendContext, context, smart) {
+          if (session.contextManager.context !== context) throw CancellationException()
         }
-
-        Promises.compute(res, () ->
-          ReadAction.nonBlocking(() -> findStepTargets(position, suspendContext, getDebuggerContext(), smart)).executeSynchronously());
       }
-
-      @Override
-      protected void commandCancelled() {
-        res.cancel();
-      }
-
-      @Override
-      public Priority getPriority() {
-        return Priority.NORMAL;
-      }
-    });
-    return res;
+    }.asCompletableFuture().asCancellablePromise()
   }
 
-  @Override
-  public @NotNull Promise<List<SmartStepTarget>> findSmartStepTargetsAsync(SourcePosition position, DebuggerSession session) {
-    return findSmartStepTargetsAsync(position, session, true);
+  override fun findSmartStepTargets(position: SourcePosition?): List<SmartStepTarget> {
+    throw IllegalStateException("Should not be used")
   }
 
-  @Override
-  public @NotNull Promise<List<SmartStepTarget>> findStepIntoTargets(SourcePosition position, DebuggerSession session) {
-    if (DebuggerSettings.getInstance().ALWAYS_SMART_STEP_INTO) {
-      return findSmartStepTargetsAsync(position, session, false);
-    }
-    return Promises.rejectedPromise();
+  @TestOnly
+  @JvmName("findStepTargets")
+  @RequiresBlockingContext
+  @RequiresReadLockAbsence
+  internal fun findStepTargets(
+    position: SourcePosition,
+    suspendContext: SuspendContextImpl?,
+    debuggerContext: DebuggerContextImpl,
+    smart: Boolean,
+  ): List<SmartStepTarget> = runBlockingAssertNotInReadAction {
+    findStepTargetsAsync(position, suspendContext, debuggerContext, smart)
   }
 
-  @Override
-  public @NotNull List<SmartStepTarget> findSmartStepTargets(SourcePosition position) {
-    throw new IllegalStateException("Should not be used");
-  }
-
-  protected List<SmartStepTarget> findStepTargets(final SourcePosition position,
-                                                  @Nullable SuspendContextImpl suspendContext,
-                                                  @NotNull DebuggerContextImpl debuggerContext,
-                                                  boolean smart) {
-    return reorderWithSteppingFilters(findStepTargetsInt(position, suspendContext, debuggerContext, smart));
-  }
-
-  private List<SmartStepTarget> findStepTargetsInt(final SourcePosition position,
-                                                   @Nullable SuspendContextImpl suspendContext,
-                                                   @NotNull DebuggerContextImpl debuggerContext,
-                                                   boolean smart) {
-    final int line = position.getLine();
-    if (line < 0) {
-      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
-      return Collections.emptyList(); // the document has been changed
-    }
-
-    final PsiFile file = position.getFile();
-    final VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null) {
-      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
-      // the file is not physical
-      return Collections.emptyList();
-    }
-
-    final Document doc = FileDocumentManager.getInstance().getDocument(vFile);
-    if (doc == null || line >= doc.getLineCount()) {
-      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
-      return Collections.emptyList(); // the document has been changed
-    }
-    TextRange curLineRange = DocumentUtil.getLineTextRange(doc, line);
-    PsiElement element = position.getElementAt();
-    PsiElement body = DebuggerUtilsEx.getBody(DebuggerUtilsEx.getContainingMethod(element));
-    final TextRange lineRange = (body != null) ? curLineRange.intersection(body.getTextRange()) : curLineRange;
-
-    if (lineRange == null || lineRange.isEmpty() || element == null || element instanceof PsiCompiledElement) {
-      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION);
-      return Collections.emptyList();
-    }
-
-    final PsiElement initial = element;
-    element = getTopmostParentAfterOffset(element, lineRange.getStartOffset());
-
-    final PsiElement statementParent = PsiTreeUtil.getNonStrictParentOfType(initial, PsiStatement.class, PsiField.class);
-    if (statementParent != null
-        && (body == null || body.getTextRange().contains(statementParent.getTextRange()))
-        // take only wider statements
-        && statementParent.getTextRange().contains(element.getTextRange())) {
-      element = statementParent;
-    }
-
-    final List<SmartStepTarget> targets = new ArrayList<>();
-
-    final Ref<TextRange> textRange = new Ref<>(lineRange);
-
-    final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
-      final Deque<PsiMethod> myContextStack = new LinkedList<>();
-      final Deque<String> myParamNameStack = new LinkedList<>();
-      private int myNextLambdaExpressionOrdinal = 0;
-
-      private @Nullable String getCurrentParamName() {
-        return myParamNameStack.peekFirst();
-      }
-
-      @Override
-      public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
-        if (!matchLine(aClass)) return;
-        PsiExpressionList argumentList = aClass.getArgumentList();
-        if (argumentList != null) {
-          argumentList.accept(this);
-        }
-        for (PsiMethod psiMethod : aClass.getMethods()) {
-          if (isSteppableMethod(psiMethod)) {
-            targets.addFirst(new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true, null));
+  @RequiresReadLockAbsence
+  private suspend fun findStepTargetsAsync(
+    position: SourcePosition,
+    suspendContext: SuspendContextImpl?,
+    debuggerContext: DebuggerContextImpl,
+    smart: Boolean,
+    checkContext: () -> Unit = {},
+  ): List<SmartStepTarget> {
+    DebuggerManagerThreadImpl.assertIsManagerThread()
+    ThreadingAssertions.assertNoReadAccess()
+    val project = requireNotNull(debuggerContext.project)
+    while (true) {
+      currentCoroutineContext().ensureActive()
+      checkContext()
+      val plan = readAction { JavaSmartStepIntoPlan.build(position, project) } ?: return emptyList()
+      currentCoroutineContext().ensureActive()
+      checkContext()
+      try {
+        val selection = plan.evaluate(debuggerContext.createEvaluationContext())
+        val frame = suspendContext?.frameProxy
+        val bytecode = if (frame != null) {
+          val vm = frame.virtualMachine
+          if (vm.canGetConstantPool() && vm.canGetBytecodes()) {
+            PreparedBytecode.prepare(frame.location(), plan.lines, plan.methods, suspendContext.debugProcess)
           }
-        }
-      }
-
-      @Override
-      public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
-        super.visitLambdaExpression(expression);
-        if (!matchLine(expression)) return;
-        targets.addFirst(new LambdaSmartStepTarget(expression,
-                                                   getCurrentParamName(),
-                                                   expression.getBody(),
-                                                   myNextLambdaExpressionOrdinal++,
-                                                   null,
-                                                   !isInsideLambda(expression)));
-      }
-
-      @Override
-      public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
-        PsiElement element = expression.resolve();
-        if (matchLine(expression) && element instanceof PsiMethod) {
-          PsiElement navMethod = element.getNavigationElement();
-          if (navMethod instanceof PsiMethod method && isSteppableMethod(method)) {
-            targets.addFirst(new MethodSmartStepTarget(method, null, expression, true, null));
+          else if (!smart) {
+            logSmartStepIntoTargetsDetection(project, Engine.JAVA, SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE)
+            return emptyList()
           }
+          else null
+        }
+        else null
+        val result = readAction {
+          if (!plan.isUpToDate(project)) null
+          else filterTargets(plan, selection, bytecode, debuggerContext, smart)
+        } ?: continue
+        currentCoroutineContext().ensureActive()
+        checkContext()
+        if (result.error != null) {
+          JvmSmartStepIntoErrorReporter.report(result.error, debuggerContext.debuggerSession)
+        }
+        logSmartStepIntoTargetsDetection(project, Engine.JAVA, result.status)
+        return result.targets
+      }
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        if (!readAction { plan.isUpToDate(project) }) continue
+        DebuggerUtilsImpl.logError(e)
+        logSmartStepIntoTargetsDetection(project, Engine.JAVA, SmartStepIntoDetectionStatus.INTERNAL_ERROR)
+        return emptyList()
+      }
+    }
+  }
+
+  @RequiresReadLock
+  private fun filterTargets(
+    plan: JavaSmartStepIntoPlan,
+    selection: BooleanArray,
+    bytecode: PreparedBytecode?,
+    debuggerContext: DebuggerContextImpl,
+    smart: Boolean,
+  ): SearchResult {
+    val [matchingTargets, selectedTargets] = plan.createTargets(selection)
+    if (selectedTargets.isEmpty()) return SearchResult(emptyList(), SmartStepIntoDetectionStatus.NO_TARGETS)
+    if (bytecode != null) {
+      val [notFoundTargets, collidingTargets, alreadyExecutedTargets, conditionallyExecutedTargets] =
+        JavaSmartStepIntoBytecodeMatcher(bytecode, requireNotNull(debuggerContext.debugProcess), matchingTargets, !smart).match()
+      val collisions = collidingTargets.filter { it in selectedTargets }
+      val notFound = notFoundTargets.filter { it in selectedTargets }
+      val errorMessage = buildList {
+        if (collisions.isNotEmpty()) {
+          add("Target occurred multiple times in bytecode: ${JvmSmartStepIntoErrorReporter.joinTargetInfo(collisions)}")
+        }
+        if (notFound.isNotEmpty()) {
+          add("Target not found in bytecode: ${JvmSmartStepIntoErrorReporter.joinTargetInfo(notFound)}")
+        }
+      }.joinToString("\n")
+      if (errorMessage.isNotEmpty()) {
+        val error = JvmSmartStepIntoErrorReporter.SourceInfo(
+          plan.element.text, plan.element.containingFile.virtualFile.canonicalPath, errorMessage
+        )
+        return SearchResult(emptyList(), SmartStepIntoDetectionStatus.TARGETS_MISMATCH, error)
+      }
+      selectedTargets.removeAll(alreadyExecutedTargets)
+      val conditionalTargets = conditionallyExecutedTargets.filterTo(HashSet()) { it in selectedTargets }
+      if (!smart && selectedTargets.isNotEmpty() && conditionalTargets.isNotEmpty()) {
+        val oldSize = selectedTargets.size
+        selectedTargets.removeAll(conditionalTargets)
+        assert(oldSize == selectedTargets.size + conditionalTargets.size)
+        if (selectedTargets.isNotEmpty() && selectedTargets.none { it is MethodSmartStepTarget && !it.needsBreakpointRequest() }) {
+          selectedTargets.addAll(conditionalTargets)
         }
       }
+    }
 
-      @Override
-      public void visitField(@NotNull PsiField field) {
-        if (checkTextRange(field, true)) {
-          super.visitField(field);
+    val removed = matchingTargets.filter { it !in selectedTargets }
+    for (target in removed) {
+      if (target !is MethodSmartStepTarget || target.needsBreakpointRequest()) continue
+      val method = target.method
+      for (other in matchingTargets) {
+        if (other is MethodSmartStepTarget && !other.needsBreakpointRequest() &&
+            method.manager.areElementsEquivalent(method, other.method) && other.ordinal > target.ordinal) {
+          other.ordinal--
         }
       }
+    }
+    return SearchResult(reorderWithSteppingFilters(selectedTargets), SmartStepIntoDetectionStatus.SUCCESS)
+  }
 
-      @Override
-      public void visitMethod(@NotNull PsiMethod method) {
-        if (checkTextRange(method, false)) {
-          super.visitMethod(method);
+  private class SearchResult(
+    val targets: List<SmartStepTarget>,
+    val status: SmartStepIntoDetectionStatus,
+    val error: JvmSmartStepIntoErrorReporter.SourceInfo? = null,
+  )
+
+  /** A PSI plan whose branches can be evaluated on the debugger manager thread without a read lock. */
+  private class JavaSmartStepIntoPlan private constructor(
+    private val targets: List<TargetDescription>,
+    private val root: Sequence,
+    val lines: Set<Int>,
+    private val sourceLines: Range<Int>,
+    val element: PsiElement,
+    val methods: Map<PsiMethod, JvmMethodMatcher.MethodInfo>,
+    private val document: Document,
+    private val documentStamp: Long,
+    private val psiStamp: Long,
+  ) {
+    @RequiresReadLock
+    fun isUpToDate(project: Project): Boolean =
+      document.modificationStamp == documentStamp && PsiModificationTracker.getInstance(project).modificationCount == psiStamp
+
+    @RequiresReadLockAbsence
+    fun evaluate(context: EvaluationContextImpl?): BooleanArray {
+      DebuggerManagerThreadImpl.assertIsManagerThread()
+      val result = BooleanArray(targets.size)
+      root.evaluate(context?.withAutoLoadClasses(false), result)
+      return result
+    }
+
+    @RequiresReadLock
+    fun createTargets(selection: BooleanArray): TargetLists {
+      val matchingTargets = ArrayList<SmartStepTarget>()
+      val selectedTargets = ArrayList<SmartStepTarget>()
+      for ([id, immediate, factory] in targets) {
+        if (!selection[id] && !immediate) continue
+        val target = factory()
+        target.callingExpressionLines = sourceLines
+        matchingTargets.add(target)
+        if (selection[id]) selectedTargets.add(target)
+      }
+      return TargetLists(matchingTargets, selectedTargets)
+    }
+
+    /**
+     * Both lists share the same target instances.
+     *
+     * @property matchingTargets includes immediate calls from unselected branches to preserve the ordinals for bytecode matching
+     * @property selectedTargets contains targets from selected branches; filtering removes targets and adjusts the ordinals for stepping
+     */
+    data class TargetLists(val matchingTargets: List<SmartStepTarget>, val selectedTargets: MutableList<SmartStepTarget>)
+
+    private data class TargetDescription(
+      val id: Int,
+      val immediate: Boolean,
+      val factory: () -> SmartStepTarget,
+    ) : Node {
+      override fun evaluate(context: EvaluationContextImpl?, selection: BooleanArray) {
+        selection[id] = true
+      }
+    }
+
+    private sealed interface Node {
+      fun evaluate(context: EvaluationContextImpl?, selection: BooleanArray)
+    }
+
+    private data class Sequence(val nodes: List<Node>) : Node {
+      override fun evaluate(context: EvaluationContextImpl?, selection: BooleanArray) {
+        for (node in nodes) {
+          ProgressManager.checkCanceled()
+          node.evaluate(context, selection)
         }
       }
+    }
 
-      @Override
-      public void visitStatement(@NotNull PsiStatement statement) {
-        if (checkTextRange(statement, true)) {
-          super.visitStatement(statement);
-        }
-      }
-
-      @Override
-      public void visitIfStatement(@NotNull PsiIfStatement statement) {
-        visitConditional(statement.getCondition(), statement.getThenBranch(), statement.getElseBranch());
-      }
-
-      @Override
-      public void visitConditionalExpression(@NotNull PsiConditionalExpression expression) {
-        visitConditional(expression.getCondition(), expression.getThenExpression(), expression.getElseExpression());
-      }
-
-      private void visitConditional(@Nullable PsiElement condition,
-                                      @Nullable PsiElement thenBranch,
-                                      @Nullable PsiElement elseBranch) {
-        if (condition != null && checkTextRange(condition, true)) {
-          condition.accept(this);
-        }
-        ThreeState conditionRes = evaluateCondition(condition);
-        if (conditionRes != ThreeState.NO && thenBranch != null && checkTextRange(thenBranch, true)) {
-          thenBranch.accept(this);
-        }
-        if (conditionRes != ThreeState.YES && elseBranch != null && checkTextRange(elseBranch, true)) {
-          elseBranch.accept(this);
-        }
-      }
-
-      private ThreeState evaluateCondition(@Nullable PsiElement condition) {
-        if (condition != null && !DebuggerUtils.hasSideEffects(condition)) {
+    private data class Conditional(
+      val evaluator: ExpressionEvaluator?,
+      val thenBranch: Sequence,
+      val elseBranch: Sequence,
+    ) : Node {
+      override fun evaluate(context: EvaluationContextImpl?, selection: BooleanArray) {
+        var value = ThreeState.UNSURE
+        if (evaluator != null && context != null) {
           try {
-            var evaluationContext = debuggerContext.createEvaluationContext();
-            if (evaluationContext != null) {
-              ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(condition, position);
-              return ThreeState.fromBoolean(DebuggerUtilsEx.evaluateBoolean(evaluator, evaluationContext.withAutoLoadClasses(false)));
-            }
+            value = ThreeState.fromBoolean(DebuggerUtilsEx.evaluateBoolean(evaluator, context))
           }
-          catch (EvaluateException e) {
-            LOG.info(e);
+          catch (e: EvaluateException) {
+            LOG.info(e)
           }
         }
-        return ThreeState.UNSURE;
+        when (value) {
+          ThreeState.YES -> thenBranch.evaluate(context, selection)
+          ThreeState.NO -> elseBranch.evaluate(context, selection)
+          ThreeState.UNSURE -> {
+            thenBranch.evaluate(context, selection)
+            elseBranch.evaluate(context, selection)
+          }
+        }
+      }
+    }
+
+    private class Builder(
+      private val position: SourcePosition,
+      private val project: Project,
+      private val lineRange: TextRange,
+    ) : JavaRecursiveElementVisitor() {
+      private val targets = ArrayList<TargetDescription>()
+      private val nodes = ArrayList<Node>()
+      private val methods = ArrayList<MethodCalls>()
+      private val methodInfo = HashMap<PsiMethod, JvmMethodMatcher.MethodInfo>()
+      private var textRange = lineRange
+      private val contextStack = ArrayDeque<PsiMethod>()
+      private val paramNameStack = ArrayDeque<String>()
+      private var nextLambdaExpressionOrdinal = 0
+      private var nextTargetId = 0
+      private var currentNodes: MutableList<Node> = nodes
+
+      @RequiresReadLock
+      fun build(element: PsiElement, document: Document, mapping: LineNumbersMapping?): JavaSmartStepIntoPlan? {
+        element.accept(this)
+        var sibling = element.nextSibling
+        while (sibling != null) {
+          if (!lineRange.intersects(sibling.textRange)) break
+          sibling.accept(this)
+          sibling = sibling.nextSibling
+        }
+        if (targets.isEmpty()) {
+          logSmartStepIntoTargetsDetection(project, Engine.JAVA, SmartStepIntoDetectionStatus.NO_TARGETS)
+          return null
+        }
+
+        val sourceLines = Range(document.getLineNumber(textRange.startOffset), document.getLineNumber(textRange.endOffset))
+        val lines = (sourceLines.from..sourceLines.to).mapNotNullTo(HashSet()) { sourceLine ->
+          if (mapping == null) sourceLine else (mapping.sourceToBytecode(sourceLine + 1) - 1).takeIf { it >= 0 }
+        }
+        return JavaSmartStepIntoPlan(targets.toList(), Sequence(nodes.toList()), lines.toSet(), sourceLines,
+                                     element, methodInfo.toMap(), document, document.modificationStamp,
+                                     PsiModificationTracker.getInstance(project).modificationCount)
       }
 
-      @Override
-      public void visitExpression(@NotNull PsiExpression expression) {
-        checkTextRange(expression, true);
-        super.visitExpression(expression);
+      private fun methodTarget(
+        method: PsiMethod,
+        label: String?,
+        highlightElement: PsiElement?,
+        needsBreakpoint: Boolean,
+        countOrdinal: Boolean,
+      ): TargetDescription {
+        val ordinal = if (countOrdinal) {
+          val calls = methods.firstOrNull { method.manager.areElementsEquivalent(method, it.method) }
+                      ?: MethodCalls(method).also { methods.add(it) }
+          val ordinal = calls.count
+          if (!needsBreakpoint) calls.count++
+          ordinal
+        }
+        else 0
+        methodInfo.computeIfAbsent(method, JvmMethodMatcher::getMethodInfo)
+        val target = TargetDescription(nextTargetId++, !needsBreakpoint) {
+          MethodSmartStepTarget(method, label, highlightElement, needsBreakpoint, null).also { it.ordinal = ordinal }
+        }
+        currentNodes.add(target)
+        return target
       }
 
-      boolean checkTextRange(@NotNull PsiElement expression, boolean expand) {
-        TextRange range = expression.getTextRange();
+      private val currentParamName: String?
+        get() = paramNameStack.firstOrNull()
+
+      override fun visitAnonymousClass(aClass: PsiAnonymousClass) {
+        if (!matchLine(aClass)) return
+        aClass.argumentList?.accept(this)
+        for (method in aClass.methods) {
+          if (isSteppableMethod(method)) {
+            targets.addFirst(methodTarget(method, currentParamName, method.body, needsBreakpoint = true, countOrdinal = false))
+          }
+        }
+      }
+
+      override fun visitLambdaExpression(expression: PsiLambdaExpression) {
+        super.visitLambdaExpression(expression)
+        if (!matchLine(expression)) return
+        val label = currentParamName
+        val body = expression.body
+        val lambdaOrdinal = nextLambdaExpressionOrdinal++
+        val async = !isInsideLambda(expression)
+        val target = TargetDescription(nextTargetId++, false) {
+          LambdaSmartStepTarget(expression, label, body, lambdaOrdinal, null, async)
+        }
+        currentNodes.add(target)
+        targets.addFirst(target)
+      }
+
+      override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
+        val resolved = expression.resolve()
+        if (matchLine(expression) && resolved is PsiMethod) {
+          val method = resolved.navigationElement
+          if (method is PsiMethod && isSteppableMethod(method)) {
+            targets.addFirst(methodTarget(method, null, expression, needsBreakpoint = true, countOrdinal = false))
+          }
+        }
+      }
+
+      override fun visitField(field: PsiField) {
+        if (checkTextRange(field, true)) super.visitField(field)
+      }
+
+      override fun visitMethod(method: PsiMethod) {
+        if (checkTextRange(method, false)) super.visitMethod(method)
+      }
+
+      override fun visitStatement(statement: PsiStatement) {
+        if (checkTextRange(statement, true)) super.visitStatement(statement)
+      }
+
+      override fun visitIfStatement(statement: PsiIfStatement) {
+        visitConditional(statement.condition, statement.thenBranch, statement.elseBranch)
+      }
+
+      override fun visitConditionalExpression(expression: PsiConditionalExpression) {
+        visitConditional(expression.condition, expression.thenExpression, expression.elseExpression)
+      }
+
+      private fun visitConditional(condition: PsiElement?, thenBranch: PsiElement?, elseBranch: PsiElement?) {
+        if (condition != null && checkTextRange(condition, true)) condition.accept(this)
+        val constantValue = condition?.let { JavaPsiFacade.getInstance(project).constantEvaluationHelper.computeConstantExpression(it) }
+        if (constantValue is Boolean) {
+          val branch = if (constantValue) thenBranch else elseBranch
+          if (branch != null && checkTextRange(branch, true)) branch.accept(this)
+          return
+        }
+        val evaluator = if (condition != null && !DebuggerUtils.hasSideEffects(condition)) {
+          try {
+            EvaluatorBuilderImpl.getInstance().build(condition, position)
+          }
+          catch (e: EvaluateException) {
+            LOG.info(e)
+            null
+          }
+        }
+        else null
+        val thenNodes = buildBranch(thenBranch)
+        val elseNodes = buildBranch(elseBranch)
+        currentNodes.add(Conditional(evaluator, thenNodes, elseNodes))
+      }
+
+      private fun buildBranch(branch: PsiElement?): Sequence {
+        val previousNodes = currentNodes
+        currentNodes = ArrayList()
+        try {
+          if (branch != null && checkTextRange(branch, true)) branch.accept(this)
+          return Sequence(currentNodes.toList())
+        }
+        finally {
+          currentNodes = previousNodes
+        }
+      }
+
+      override fun visitExpression(expression: PsiExpression) {
+        checkTextRange(expression, true)
+        super.visitExpression(expression)
+      }
+
+      private fun checkTextRange(expression: PsiElement, expand: Boolean): Boolean {
+        val range = expression.textRange
         if (lineRange.intersects(range)) {
           if (expand) {
             // only expand to the bottom of the file
-            TextRange current = textRange.get();
-            int delta = range.getEndOffset() - current.getEndOffset();
-            if (delta > 0) {
-              textRange.set(current.grown(delta));
-            }
+            val delta = range.endOffset - textRange.endOffset
+            if (delta > 0) textRange = textRange.grown(delta)
           }
-          return true;
+          return true
         }
-        return false;
+        return false
       }
 
-      boolean matchLine(@NotNull PsiElement elem) {
-        return lineRange.getStartOffset() <= elem.getTextRange().getStartOffset();
+      private fun matchLine(element: PsiElement): Boolean = lineRange.startOffset <= element.textRange.startOffset
+
+      override fun visitExpressionList(expressionList: PsiExpressionList) {
+        visitArguments(expressionList, contextStack.firstOrNull())
       }
 
-      @Override
-      public void visitExpressionList(@NotNull PsiExpressionList expressionList) {
-        visitArguments(expressionList, myContextStack.peekFirst());
-      }
-
-      void visitArguments(PsiExpressionList expressionList, PsiMethod psiMethod) {
-        if (psiMethod != null) {
-          final String methodName = psiMethod.getName();
-          final PsiExpression[] expressions = expressionList.getExpressions();
-          final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-          for (int idx = 0; idx < expressions.length; idx++) {
-            final PsiExpression argExpression = expressions[idx];
-            if (!matchLine(argExpression)) continue;
-            final String paramName =
-              (idx < parameters.length && !parameters[idx].isVarArgs()) ? parameters[idx].getName() : "arg" + (idx + 1);
-            myParamNameStack.push(methodName + ": " + paramName + ".");
-            try {
-              argExpression.accept(this);
-            }
-            finally {
-              myParamNameStack.pop();
-            }
+      private fun visitArguments(expressionList: PsiExpressionList, method: PsiMethod?) {
+        if (method == null) {
+          super.visitExpressionList(expressionList)
+          return
+        }
+        val methodName = method.name
+        val expressions = expressionList.expressions
+        val parameters = method.parameterList.parameters
+        for ([index, expression] in expressions.withIndex()) {
+          if (!matchLine(expression)) continue
+          val parameter = parameters.getOrNull(index)
+          val paramName = if (parameter != null && !parameter.isVarArgs) parameter.name else "arg${index + 1}"
+          paramNameStack.addFirst("$methodName: $paramName.")
+          try {
+            expression.accept(this)
+          }
+          finally {
+            paramNameStack.removeFirst()
           }
         }
-        else {
-          super.visitExpressionList(expressionList);
-        }
       }
 
-      @Override
-      public void visitCallExpression(final @NotNull PsiCallExpression expression) {
-        int pos = -1;
-        if (myContextStack.isEmpty()) { // always move the outmost item in the group to the top
-          pos = targets.size();
+      override fun visitCallExpression(expression: PsiCallExpression) {
+        // Always move the outermost item in the group to the top.
+        val pos = if (contextStack.isEmpty()) targets.size else -1
+        val method = expression.resolveMethod()
+        if (expression is PsiMethodCallExpression) {
+          expression.methodExpression.qualifierExpression?.accept(this)
+          visitArguments(expression.argumentList, method)
         }
-        final PsiMethod psiMethod = expression.resolveMethod();
-        if (expression instanceof PsiMethodCallExpression callExpr) {
-          PsiExpression qualifier = callExpr.getMethodExpression().getQualifierExpression();
-          if (qualifier != null) {
-            qualifier.accept(this);
-          }
-          visitArguments(expression.getArgumentList(), psiMethod);
-        }
-        if (psiMethod != null) {
-          myContextStack.push(psiMethod);
-        }
+        if (method != null) contextStack.addFirst(method)
         try {
-          PsiElement callExpression = expression instanceof PsiMethodCallExpression callExpr
-                                      ? callExpr.getMethodExpression().getReferenceNameElement()
-                                      : expression instanceof PsiNewExpression newExpr
-                                        ? newExpr.getClassOrAnonymousClassReference()
-                                        : expression;
-          if (psiMethod != null && isSteppableMethod(psiMethod) && (callExpression == null || matchLine(callExpression))) {
-            var needBreakpointRequest = isInsideLambda(expression) ||
-                                        (expression instanceof PsiNewExpression newExpr && newExpr.getAnonymousClass() != null);
-            var targetMethod = needBreakpointRequest ? psiMethod : getInvocationMethod(psiMethod, callExpression);
-            MethodSmartStepTarget target = new MethodSmartStepTarget(
-              targetMethod,
-              null,
-              callExpression,
-              needBreakpointRequest,
-              null
-            );
-            target.setOrdinal(Math.toIntExact(existingMethodCalls(targets, targetMethod).count()));
-            if (pos != -1) {
-              targets.add(pos, target);
-            }
-            else {
-              targets.add(target);
-            }
+          val callExpression = when (expression) {
+            is PsiMethodCallExpression -> expression.methodExpression.referenceNameElement
+            is PsiNewExpression -> expression.classOrAnonymousClassReference
+            else -> expression
           }
-          if (expression instanceof PsiMethodCallExpression) {
-            checkTextRange(expression, true);
+          if (method != null && isSteppableMethod(method) && (callExpression == null || matchLine(callExpression))) {
+            val needsBreakpoint = isInsideLambda(expression) || (expression is PsiNewExpression && expression.anonymousClass != null)
+            val targetMethod = if (needsBreakpoint) method else getInvocationMethod(method, callExpression)
+            val target = methodTarget(targetMethod, null, callExpression, needsBreakpoint = needsBreakpoint, countOrdinal = true)
+            if (pos != -1) targets.add(pos, target) else targets.add(target)
+          }
+          if (expression is PsiMethodCallExpression) {
+            checkTextRange(expression, true)
           }
           else {
-            super.visitCallExpression(expression);
+            super.visitCallExpression(expression)
           }
         }
         finally {
-          if (psiMethod != null) {
-            myContextStack.pop();
-          }
-        }
-      }
-    };
-    element.accept(methodCollector);
-    for (PsiElement sibling = element.getNextSibling(); sibling != null; sibling = sibling.getNextSibling()) {
-      if (!lineRange.intersects(sibling.getTextRange())) {
-        break;
-      }
-      sibling.accept(methodCollector);
-    }
-    if (targets.isEmpty()) {
-      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.NO_TARGETS);
-      return Collections.emptyList();
-    }
-
-    Range<Integer> sourceLines =
-      new Range<>(doc.getLineNumber(textRange.get().getStartOffset()), doc.getLineNumber(textRange.get().getEndOffset()));
-    targets.forEach(t -> t.setCallingExpressionLines(sourceLines));
-
-    Set<Integer> lines = new HashSet<>();
-    IntStream.rangeClosed(sourceLines.getFrom(), sourceLines.getTo()).forEach(lines::add);
-    LineNumbersMapping mapping = vFile.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY);
-    if (mapping != null) {
-      lines = StreamEx.of(lines).map(l -> mapping.sourceToBytecode(l + 1) - 1).filter(l -> l >= 0).toSet();
-    }
-
-    StackFrameProxyImpl frameProxy = suspendContext != null ? suspendContext.getFrameProxy() : null;
-    if (frameProxy == null) {
-      DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.SUCCESS);
-      return targets;
-    }
-
-    VirtualMachineProxyImpl virtualMachine = frameProxy.getVirtualMachine();
-    if (!virtualMachine.canGetConstantPool() || !virtualMachine.canGetBytecodes()) {
-      if (smart) {
-        DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.SUCCESS);
-        return targets;
-      } else {
-        DebuggerStatistics.logSmartStepIntoTargetsDetection(debuggerContext.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE);
-        return Collections.emptyList();
-      }
-    }
-
-    try {
-      DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
-      Location location = frameProxy.location();
-
-      ArrayList<SmartStepTarget> all = new ArrayList<>(targets);
-
-      JavaSmartStepIntoBytecodeMatcher.Result bytecodeMatch =
-        new JavaSmartStepIntoBytecodeMatcher(location, debugProcess, lines, targets, !smart).match();
-      List<SmartStepTarget> targetsWithCollisions = bytecodeMatch.getCollidingTargets();
-      List<SmartStepTarget> notFoundTargets = bytecodeMatch.getNotFoundTargets();
-
-      StringBuilder errorMessage = new StringBuilder();
-      if (!targetsWithCollisions.isEmpty()) {
-        errorMessage.append("Target occurred multiple times in bytecode: ")
-          .append(JvmSmartStepIntoErrorReporter.joinTargetInfo(targetsWithCollisions));
-      }
-      if (!notFoundTargets.isEmpty()) {
-        if (!errorMessage.isEmpty()) errorMessage.append('\n');
-        errorMessage.append("Target not found in bytecode: ")
-          .append(JvmSmartStepIntoErrorReporter.joinTargetInfo(notFoundTargets));
-      }
-
-      if (!errorMessage.isEmpty()) {
-        JvmSmartStepIntoErrorReporter.report(element, debuggerContext.getDebuggerSession(), position, errorMessage.toString());
-        DebuggerStatistics.logSmartStepIntoTargetsDetection(element.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.TARGETS_MISMATCH);
-        return Collections.emptyList();
-      }
-
-      // remove already executed
-      targets.removeAll(bytecodeMatch.getAlreadyExecutedTargets());
-
-      Set<SmartStepTarget> conditionallyExecutedTargets = bytecodeMatch.getConditionallyExecutedTargets();
-      if (!smart && !targets.isEmpty() && !conditionallyExecutedTargets.isEmpty()) {
-        int oldSize = targets.size();
-        targets.removeAll(conditionallyExecutedTargets);
-        assert oldSize == targets.size() + conditionallyExecutedTargets.size(); // this allows us easy fallback below
-
-        // check if anything real left, otherwise fallback to the previous state
-        if (!targets.isEmpty() && immediateMethodCalls(targets).findAny().isEmpty()) {
-          targets.addAll(conditionallyExecutedTargets);
+          if (method != null) contextStack.removeFirst()
         }
       }
 
-      // fix ordinals
-      ArrayList<SmartStepTarget> removed = new ArrayList<>(all);
-      removed.removeAll(targets);
-      for (SmartStepTarget m : removed) {
-        if (!(m instanceof MethodSmartStepTarget target)) continue;
-        existingMethodCalls(all, target.getMethod())
-          .forEach(t -> {
-            int ordinal = t.getOrdinal();
-            if (ordinal > target.getOrdinal()) {
-              t.setOrdinal(ordinal - 1);
-            }
-          });
+      private fun isInsideLambda(element: PsiElement): Boolean =
+        PsiTreeUtil.getParentOfType(element, PsiLambdaExpression::class.java) != null
+
+      private fun isSteppableMethod(method: PsiMethod): Boolean =
+        !method.hasModifierProperty(PsiModifier.NATIVE) || PsiUtil.canBeOverridden(method)
+
+      private fun getInvocationMethod(method: PsiMethod, highlightElement: PsiElement?): PsiMethod {
+        val initializer = method.containingClass as? PsiEnumConstantInitializer ?: return method
+        val reference = highlightElement?.parent as? PsiReferenceExpression ?: return method
+        val qualifier = reference.qualifierExpression as? PsiReferenceExpression ?: return method
+        if (qualifier.resolve() is PsiEnumConstant) {
+          return method.findSuperMethods(initializer.containingClass).singleOrNull() ?: method
+        }
+        return method
       }
-      DebuggerStatistics.logSmartStepIntoTargetsDetection(element.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.SUCCESS);
-      return targets;
-    }
-    catch (Exception e) {
-      DebuggerUtilsImpl.logError(e);
-      DebuggerStatistics.logSmartStepIntoTargetsDetection(element.getProject(), Engine.JAVA, SmartStepIntoDetectionStatus.INTERNAL_ERROR);
-      return Collections.emptyList();
-    }
-  }
 
-  /**
-   * Find the topmost parent element whose range starts after the target offset.
-   */
-  private static PsiElement getTopmostParentAfterOffset(PsiElement element, int offset) {
-    if (element == null) return null;
-    while (true) {
-      final PsiElement parent = element.getParent();
-      if (parent == null || (parent.getTextRange().getStartOffset() < offset)) {
-        return element;
+      private class MethodCalls(val method: PsiMethod, var count: Int = 0)
+    }
+
+    companion object {
+      private val LOG = Logger.getInstance(JavaSmartStepIntoPlan::class.java)
+
+      @RequiresReadLock
+      fun build(position: SourcePosition, project: Project): JavaSmartStepIntoPlan? {
+        val line = position.line
+        if (line < 0) {
+          logSmartStepIntoTargetsDetection(project, Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION)
+          return null // the document has been changed
+        }
+
+        val file = position.file
+        val vFile = file.virtualFile
+        if (vFile == null) {
+          logSmartStepIntoTargetsDetection(project, Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION)
+          // the file is not physical
+          return null
+        }
+
+        val doc = FileDocumentManager.getInstance().getDocument(vFile)
+        if (doc == null || line >= doc.lineCount) {
+          logSmartStepIntoTargetsDetection(project, Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION)
+          return null // the document has been changed
+        }
+        val curLineRange = DocumentUtil.getLineTextRange(doc, line)
+        var element = position.elementAt
+        val body = DebuggerUtilsEx.getBody(DebuggerUtilsEx.getContainingMethod(element))
+        val lineRange = if (body != null) curLineRange.intersection(body.textRange) else curLineRange
+
+        if (lineRange == null || lineRange.isEmpty || element == null || element is PsiCompiledElement) {
+          logSmartStepIntoTargetsDetection(project, Engine.JAVA, SmartStepIntoDetectionStatus.INVALID_POSITION)
+          return null
+        }
+
+        val initial = element
+        element = getTopmostParentAfterOffset(element, lineRange.startOffset)
+
+        val statementParent = PsiTreeUtil.getNonStrictParentOfType(initial, PsiStatement::class.java, PsiField::class.java)
+        if (statementParent != null &&
+            (body == null || body.textRange.contains(statementParent.textRange)) &&
+            // take only wider statements
+            statementParent.textRange.contains(element.textRange)) {
+          element = statementParent
+        }
+
+        val mapping = vFile.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)
+        return Builder(position, project, lineRange).build(element, doc, mapping)
       }
-      element = parent;
-    }
-  }
 
-  private static boolean isInsideLambda(@NotNull PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class) != null;
-  }
-
-  private static boolean isSteppableMethod(@NotNull PsiMethod method) {
-    return !method.hasModifierProperty(PsiModifier.NATIVE) || PsiUtil.canBeOverridden(method);
-  }
-
-  private static boolean isImmediateMethodCall(SmartStepTarget target) {
-    return !target.needsBreakpointRequest();
-  }
-
-  private static StreamEx<MethodSmartStepTarget> immediateMethodCalls(List<SmartStepTarget> targets) {
-    return StreamEx.of(targets)
-      .select(MethodSmartStepTarget.class)
-      .filter(JavaSmartStepIntoHandler::isImmediateMethodCall);
-  }
-
-  private static StreamEx<MethodSmartStepTarget> existingMethodCalls(List<SmartStepTarget> targets, PsiMethod psiMethod) {
-    return immediateMethodCalls(targets)
-      .filter(t -> psiMethod.getManager().areElementsEquivalent(psiMethod, t.getMethod()));
-  }
-
-  private static @NotNull PsiMethod getInvocationMethod(@NotNull PsiMethod method, @Nullable PsiElement highlightElement) {
-    if (method.getContainingClass() instanceof PsiEnumConstantInitializer initializer &&
-        highlightElement != null && highlightElement.getParent() instanceof PsiReferenceExpression reference &&
-        reference.getQualifierExpression() instanceof PsiReferenceExpression qualifier &&
-        qualifier.resolve() instanceof PsiEnumConstant) {
-      var superMethods = method.findSuperMethods(initializer.getContainingClass());
-      if (superMethods.length == 1) {
-        return superMethods[0];
+      /** Finds the topmost parent element whose range starts after the target offset. */
+      private fun getTopmostParentAfterOffset(element: PsiElement, offset: Int): PsiElement {
+        var result = element
+        while (true) {
+          val parent = result.parent
+          if (parent == null || parent.textRange.startOffset < offset) return result
+          result = parent
+        }
       }
     }
-    return method;
   }
 }

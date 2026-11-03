@@ -12,10 +12,8 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.JVMName;
-import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.JavaValue;
-import com.intellij.debugger.engine.PositionManagerImpl;
+import com.intellij.debugger.engine.JvmMethodMatcher;
 import com.intellij.debugger.engine.SourcePositionHighlighter;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
@@ -28,7 +26,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.UnBoxingEvaluator;
-import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.engine.requests.StepRequestor;
 import com.intellij.debugger.jdi.GeneratedLocation;
@@ -1109,42 +1106,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
                                       @Nullable String name,
                                       String signature,
                                       DebugProcessImpl process) {
-    record MethodInfo(PsiClass containingClass, String className, JVMName signature) { }
-    var methodInfo = ReadAction.computeBlocking(() -> {
-      var containingClass = psiMethod.getContainingClass();
-      if (containingClass == null || name != null && !JVMNameUtil.getJVMMethodName(psiMethod).equals(name)) {
-        return null;
-      }
-      return new MethodInfo(containingClass, JVMNameUtil.getClassVMName(containingClass), JVMNameUtil.getJVMSignature(psiMethod));
-    });
-    if (methodInfo == null) {
-      return false;
-    }
-    try {
-      if (methodInfo.signature().getName(process).equals(signature)) {
-        String methodClassName = methodInfo.className();
-        if (Objects.equals(methodClassName, className)) {
-          return true;
-        }
-        if (methodClassName != null) {
-          if (ContainerUtil.exists(VirtualMachineProxy.getCurrent().classesByName(className), t -> instanceOf(t, methodClassName))) {
-            return true;
-          }
-          return ReadAction.computeBlocking(() -> {
-            var containingClass = methodInfo.containingClass();
-            if (!containingClass.isValid()) {
-              return false;
-            }
-            var aClass = PositionManagerImpl.findClass(process.getProject(), className, process.getSearchScope(), true);
-            return aClass != null && aClass.isInheritor(containingClass, true);
-          });
-        }
-      }
-    }
-    catch (EvaluateException e) {
-      LOG.debug(e);
-    }
-    return false;
+    return JvmMethodMatcher.matches(psiMethod, className, name, signature, process);
   }
 
   public static @Nullable PsiElement getContainingMethod(@Nullable PsiElement elem) {
