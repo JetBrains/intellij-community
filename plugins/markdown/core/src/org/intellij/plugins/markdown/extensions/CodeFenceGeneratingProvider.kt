@@ -19,6 +19,9 @@ interface CodeFenceGeneratingProvider {
    */
   fun isApplicable(language: String): Boolean
 
+  val requiresTrustedProject: Boolean
+    get() = false
+
   /**
    * Consumes code fence content and generates appropriate html
    * [language] is a language that is stated in a code fence

@@ -32,6 +32,9 @@ class PlantUMLCodeGeneratingProvider: CodeFenceGeneratingProvider, MarkdownExten
     return isEnabled && isAvailable && PlantUMLCodeFenceLanguageProvider.isPlantUmlInfoString(language.lowercase())
   }
 
+  override val requiresTrustedProject: Boolean
+    get() = true
+
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
     val content = obtainGeneratedContent(raw)
     val header = "data:image/png;base64,"
