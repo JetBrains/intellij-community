@@ -85,6 +85,7 @@ internal object OptInFixFactories {
                 return OptInGeneralUtils.collectPropagateOptInAnnotationOnPrimaryConstructorFix(
                     targetElement,
                     annotationClassId,
+                    kind,
                     isOverrideError
                 )
             }
@@ -103,7 +104,7 @@ internal object OptInFixFactories {
         fun collectUseOptInAnnotationFix(targetElement: KtElement, kind: AddAnnotationFix.Kind): ModCommandAction {
             val priority = if (isOverrideError) PriorityAction.Priority.NORMAL else PriorityAction.Priority.HIGH
             if (targetElement is KtClass && kind is AddAnnotationFix.Kind.Constructor) {
-                return OptInFixes.UseOptInAnnotationOnPrimaryConstructorFix(
+                return OptInFixes.UseOptInAnnotationFix(
                     targetElement,
                     optInClassId,
                     kind,
@@ -172,13 +173,15 @@ private object OptInGeneralUtils : OptInGeneralUtilsBase() {
     fun collectPropagateOptInAnnotationOnPrimaryConstructorFix(
         targetElement: KtClass,
         annotationClassId: ClassId,
+        kind: AddAnnotationFix.Kind,
         isOverrideError: Boolean
     ): AddAnnotationFix? {
         if (KtPsiUtil.isLocal(targetElement)) return null
         val priority = if (isOverrideError) PriorityAction.Priority.HIGH else PriorityAction.Priority.NORMAL
-        return OptInFixes.PropagateOptInAnnotationOnPrimaryConstructorFix(
+        return OptInFixes.PropagateOptInAnnotationFix(
             targetElement,
             annotationClassId,
+            kind,
             argumentClassFqName = null,
             priority = priority
         )

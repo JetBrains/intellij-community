@@ -10,4 +10,4 @@ abstract class X @Ann constructor()
 
 class Y : X<caret>()
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationOnPrimaryConstructorFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix
