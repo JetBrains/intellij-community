@@ -13,7 +13,7 @@ import com.intellij.platform.searchEverywhere.SeResultEvent
 import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.SeResultSkippedEvent
 import com.intellij.platform.searchEverywhere.composedWeight
-import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
+import com.intellij.platform.searchEverywhere.equalityProviders.platformProviderPriority
 import com.intellij.platform.searchEverywhere.isCommand
 import com.intellij.platform.searchEverywhere.isExactMatch
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -50,7 +50,7 @@ interface SeResultList {
 
 @ApiStatus.Internal
 fun SeResultList.handleEvent(
-  searchContext: SeSearchContext,
+  searchPattern: String,
   event: SeResultEvent,
   isZeroOffset: Boolean,
   onAdd: ((SeItemData) -> Unit)? = null,
@@ -62,7 +62,7 @@ fun SeResultList.handleEvent(
         SeLog.log(SeLog.DEFAULT) { "SeResultAddedEvent: uuid ${event.itemData.uuid} was skipped because it was supposed to be replaced by an element which came earlier" }
       }
       else {
-        val index = indexToAdd(event.itemData, searchContext.searchPattern, isZeroOffset)
+        val index = indexToAdd(event.itemData, searchPattern, isZeroOffset)
         addRow(index, SeResultListItemRow(event.itemData))
         onAdd?.invoke(event.itemData)
 
@@ -87,20 +87,24 @@ fun SeResultList.handleEvent(
       }.sortedDescending()
 
       if (indexes.isEmpty()) {
-        val index = indexToAdd(event.newItemData, searchContext.searchPattern, isZeroOffset)
+        val index = indexToAdd(event.newItemData, searchPattern, isZeroOffset)
         addRow(index, SeResultListItemRow(event.newItemData))
         onAdd?.invoke(event.newItemData)
       }
       else {
+        // The new item goes to its place by the ordering key.
+        // A frozen item keeps its place, which is the smallest index of the replaced items.
+        val firstIndex = indexes.last()
+        val isReinserted = firstIndex >= frozenCount
+
         indexes.forEach { index ->
           removeRow(index)
           onRemove?.invoke()
-          if (index == indexes.last()) {
-            // We replace only one element with the smallest index
-            addRow(index, SeResultListItemRow(event.newItemData))
-            onAdd?.invoke(event.newItemData)
-          }
         }
+
+        val index = if (isReinserted) indexToAdd(event.newItemData, searchPattern, isZeroOffset) else firstIndex
+        addRow(index, SeResultListItemRow(event.newItemData))
+        onAdd?.invoke(event.newItemData)
       }
     }
     is SeResultEndEvent, is SeResultSkippedEvent -> {} // Do nothing
@@ -138,42 +142,44 @@ private fun SeResultList.indexToAdd(newItem: SeItemData, searchPattern: String, 
     }
     else frozenCount
 
+  val newItemKey = newItem.orderingKey
   return firstIndexOrNull(startIndex) { item ->
     if (item.isCommand) return@firstIndexOrNull false
 
-    shouldInsertAbove(
-      newProviderPriority = SeResultList.prioritizedProvidersPriorities[newItem.providerId] ?: 0,
-      newIsExactMatch = newItem.isExactMatch,
-      newWeight = newItem.composedWeight,
-      itemProviderPriority = SeResultList.prioritizedProvidersPriorities[item.providerId] ?: 0,
-      itemIsExactMatch =  item.isExactMatch,
-      itemWeight = item.composedWeight,
-      prioritizeExactMatch = Registry.`is`("search.everywhere.exact.match.priority", false) && newItem.providerId == item.providerId
-    )
+    val prioritizeExactMatch = Registry.`is`("search.everywhere.exact.match.priority", false) && newItem.providerId == item.providerId
+    newItemKey.compare(item.orderingKey, prioritizeExactMatch) > 0
   } ?: lastIndexToInsertItem
 }
 
+/** The priority of the provider of this item in the result list. See [SeResultList.prioritizedProvidersPriorities]. */
+private val SeItemData.providerMajorPriority: Int get() = SeResultList.prioritizedProvidersPriorities[providerId] ?: 0
+
+/** The priority of the provider of this item among the platform providers. See [platformProviderPriority]. */
+private val SeItemData.providerMinorPriority: Int get() = platformProviderPriority(providerId.value)
+
+private val SeItemData.orderingKey: SeResultOrderingKey
+  get() = SeResultOrderingKey(providerMajorPriority, isExactMatch, composedWeight, providerMinorPriority)
+
 /**
- * Decides whether a freshly arrived item should be inserted before an already displayed one, within the not-frozen
- * region of the result list. Ordering, most-significant first:
- *  1. provider priority (existing behavior — pinned providers such as Calculator/TopHit stay on top);
- *  2. exact match of the search pattern (new: an exact match wins over a partial/fuzzy/ML-reweighted sibling);
- *  3. item weight (existing behavior).
+ * The values that decide the place of an item in the result list.
  *
- * Kept as a pure function so the ordering can be unit-tested without building the (DB-backed) [SeItemData] items.
+ * A test can build a key without the [SeItemData] of an item.
  */
-internal fun shouldInsertAbove(
-  newProviderPriority: Int,
-  newIsExactMatch: Boolean,
-  newWeight: SeComposedWeight,
-  itemProviderPriority: Int,
-  itemIsExactMatch: Boolean,
-  itemWeight: SeComposedWeight,
-  prioritizeExactMatch: Boolean
-): Boolean {
-  if (newProviderPriority != itemProviderPriority) return newProviderPriority > itemProviderPriority
-  if (prioritizeExactMatch && newIsExactMatch != itemIsExactMatch) return newIsExactMatch
-  return newWeight > itemWeight
+internal class SeResultOrderingKey(
+  val providerMajorPriority: Int,
+  val isExactMatch: Boolean,
+  val weight: SeComposedWeight,
+  val providerMinorPriority: Int,
+) {
+  fun compare(other: SeResultOrderingKey, prioritizeExactMatch: Boolean): Int {
+    if (providerMajorPriority != other.providerMajorPriority) return providerMajorPriority.compareTo(other.providerMajorPriority)
+    if (prioritizeExactMatch && isExactMatch != other.isExactMatch) return isExactMatch.compareTo(other.isExactMatch)
+
+    val weightOrder = weight.compareTo(other.weight)
+    if (weightOrder != 0) return weightOrder
+
+    return providerMinorPriority.compareTo(other.providerMinorPriority)
+  }
 }
 
 private fun SeResultList.firstIndexOrNull(startIndex: Int = frozenCount, acceptMoreRow: Boolean = false, predicate: (SeItemData) -> Boolean): Int? {

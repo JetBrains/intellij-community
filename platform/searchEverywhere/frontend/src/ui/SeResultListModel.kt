@@ -72,13 +72,13 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
       // The list is valid and has rows, so each item must be sorted with the rows that are already in the list.
       throttledEvent is ThrottledOneItem<SeResultEvent> || !wasEmpty -> {
         throttledEvent.items.forEach {
-          resultListAdapter.handleEvent(searchContext, it, isZeroOffset, onAdd, onRemove)
+          resultListAdapter.handleEvent(searchContext.searchPattern, it, isZeroOffset, onAdd, onRemove)
         }
       }
       else -> {
         val accumulatedList = SeResultListCollection(pendingReplacementElementUuids)
         throttledEvent.items.forEach {
-          accumulatedList.handleEvent(searchContext, it, isZeroOffset)
+          accumulatedList.handleEvent(searchContext.searchPattern, it, isZeroOffset)
         }
 
         addAll(accumulatedList.list)

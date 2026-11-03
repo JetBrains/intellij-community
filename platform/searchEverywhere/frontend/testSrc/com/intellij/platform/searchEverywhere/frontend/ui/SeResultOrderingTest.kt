@@ -47,28 +47,37 @@ class SeResultOrderingTest {
     assertFalse(insertComposed(newWeight = composed(50, 999), itemWeight = composed(100, 0)))
   }
 
+  @Test
+  fun higherMinorPriorityBreaksTieOfWeight() {
+    // As in the old Search Everywhere: a class (priority 9900) goes above a file (priority 9800) with the same weight.
+    assertTrue(insertRanked(newWeight = 100, newMinorPriority = 9900, itemWeight = 100, itemMinorPriority = 9800))
+    assertFalse(insertRanked(newWeight = 100, newMinorPriority = 9800, itemWeight = 100, itemMinorPriority = 9900))
+    // An equal minor priority keeps the arrival order.
+    assertFalse(insertRanked(newWeight = 100, newMinorPriority = 9900, itemWeight = 100, itemMinorPriority = 9900))
+    // The weight wins over the minor priority.
+    assertFalse(insertRanked(newWeight = 50, newMinorPriority = 9900, itemWeight = 100, itemMinorPriority = 9800))
+  }
+
   private fun insert(
     newProvider: Int, newExact: Boolean, newWeight: Int,
     itemProvider: Int, itemExact: Boolean, itemWeight: Int,
-  ): Boolean = shouldInsertAbove(
-    newProviderPriority = newProvider,
-    newIsExactMatch = newExact,
-    newWeight = SeComposedWeight(newWeight),
-    itemProviderPriority = itemProvider,
-    itemIsExactMatch = itemExact,
-    itemWeight = SeComposedWeight(itemWeight),
-    prioritizeExactMatch = true
+  ): Boolean = isAbove(
+    SeResultOrderingKey(newProvider, newExact, SeComposedWeight(newWeight), 0),
+    SeResultOrderingKey(itemProvider, itemExact, SeComposedWeight(itemWeight), 0),
   )
 
-  private fun insertComposed(newWeight: SeComposedWeight, itemWeight: SeComposedWeight): Boolean = shouldInsertAbove(
-    newProviderPriority = 0,
-    newIsExactMatch = false,
-    newWeight = newWeight,
-    itemProviderPriority = 0,
-    itemIsExactMatch = false,
-    itemWeight = itemWeight,
-    prioritizeExactMatch = true
+  private fun insertComposed(newWeight: SeComposedWeight, itemWeight: SeComposedWeight): Boolean = isAbove(
+    SeResultOrderingKey(0, false, newWeight, 0),
+    SeResultOrderingKey(0, false, itemWeight, 0),
   )
+
+  private fun insertRanked(newWeight: Int, newMinorPriority: Int, itemWeight: Int, itemMinorPriority: Int): Boolean = isAbove(
+    SeResultOrderingKey(0, false, SeComposedWeight(newWeight), newMinorPriority),
+    SeResultOrderingKey(0, false, SeComposedWeight(itemWeight), itemMinorPriority),
+  )
+
+  private fun isAbove(newKey: SeResultOrderingKey, itemKey: SeResultOrderingKey): Boolean =
+    newKey.compare(itemKey, prioritizeExactMatch = true) > 0
 
   private fun composed(match: Int, recency: Int): SeComposedWeight =
     SeComposedWeight.of(listOf(SeWeightComponent(match), SeWeightComponent(SeWeightKey.RECENCY, recency)))

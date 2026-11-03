@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.withSafeCatch
 import com.intellij.platform.searchEverywhere.SeItemData
 import com.intellij.platform.searchEverywhere.SeLegacyItem
-import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.withUuidToReplace
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
@@ -195,29 +194,10 @@ private class DummySearchEverywhereContributor<Any>(private val providerId: Stri
   override fun getElementsRenderer(): ListCellRenderer<in Any> = textListCellRenderer("Dummy") { "Dummy" }
 }
 
-/**
- * The priorities of the platform providers. A provider with a higher priority is more important.
- * Each priority comes from the sort weight of the legacy contributor with the same id. See [sortWeightToPriority].
- */
-private val platformProviderPriorities: Map<String, Int> = mapOf(
-  SeProviderIdUtils.TOP_HIT_HOST_ID to 9950,
-  SeProviderIdUtils.TOP_HIT_ID to 9950,
-  SeProviderIdUtils.RECENT_FILES_ID to 9930,
-  SeProviderIdUtils.CLASSES_ID to 9900,
-  SeProviderIdUtils.FILES_ID to 9800,
-  SeProviderIdUtils.SYMBOLS_ID to 9700,
-  SeProviderIdUtils.RUN_CONFIGURATIONS_ID to 9650,
-  SeProviderIdUtils.ACTIONS_ID to 9600,
-  SeProviderIdUtils.NON_INDEXABLE_FILES_ID to 9000,
-  SeProviderIdUtils.TEXT_ID to 8500,
-)
 
-private const val DEFAULT_PROVIDER_PRIORITY = 0
-
-/** A legacy contributor with this sort weight gets [DEFAULT_PROVIDER_PRIORITY]. */
+/** A legacy contributor with this sort weight gets [DEFAULT_PLATFORM_PROVIDER_PRIORITY]. */
 private const val DEFAULT_SORT_WEIGHT = 10000
 
-private fun platformProviderPriority(providerId: String): Int = platformProviderPriorities[providerId] ?: DEFAULT_PROVIDER_PRIORITY
 
 /**
  * Converts the sort weight of a legacy contributor to a provider priority.

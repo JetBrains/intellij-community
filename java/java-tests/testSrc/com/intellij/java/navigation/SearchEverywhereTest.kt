@@ -1,212 +1,95 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation
 
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
-import com.intellij.ide.actions.searcheverywhere.RecentFilesSEContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
-import com.intellij.ide.actions.searcheverywhere.SearchListener
-import com.intellij.ide.actions.searcheverywhere.TopHitSEContributor
-import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SplitSearchListener
 import com.intellij.java.ide.gotoByName.GotoActionTest
 import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
-import com.intellij.testFramework.PlatformTestUtil.waitForFuture
+import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionsTab
+import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
+import com.intellij.platform.searchEverywhere.frontend.tabs.classes.SeClassesTab
+import com.intellij.platform.searchEverywhere.testFramework.SePopupTestFixture
+import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.Processor
-import org.mockito.Mockito
-import javax.swing.DefaultListCellRenderer
-import javax.swing.ListCellRenderer
 
 class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
-  companion object {
-    const val SEARCH_TIMEOUT = 50000L
-  }
-
-  private var mySearchUI: SearchEverywhereUI? = null
-
-  private lateinit var waitForEssentialFlag: SEParam
-
-  override fun setUp() {
-    super.setUp()
-    SearchEverywhereFeature.allRegistryKeys.forEach { setRegistryPropertyForTest(it, "false") }
-
-    waitForEssentialFlag = SEParam(
-      { AdvancedSettings.getBoolean("search.everywhere.wait.for.contributors") },
-      { AdvancedSettings.setBoolean("search.everywhere.wait.for.contributors", it) })
-  }
-
-  override fun tearDown() {
-    try {
-      if (mySearchUI != null) {
-        Disposer.dispose(mySearchUI!!)
-        mySearchUI = null
-      }
-      waitForEssentialFlag.reset()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
-
   fun `test switch to external files when nothing is found`() {
     val strBuffer = myFixture.addClass("class StrBuffer{ }")
     val stringBuffer = myFixture.findClass("java.lang.StringBuffer")
+    val popup = SePopupTestFixture.open(project, testRootDisposable, SeClassesTab.ID)
 
-    val ui = createTestUI(listOf(ChooseByNameTest.createClassContributor(project, testRootDisposable)))
+    assertEquals(listOf(strBuffer), popup.findElements("StrBuffer"))
+    assertFalse(popup.isEverywhere)
 
-    var future = ui.findElementsForPattern("StrBuffer")
-    assertEquals(listOf(strBuffer), waitForFuture(future, SEARCH_TIMEOUT))
-
-    future = ui.findElementsForPattern("StringBuffer")
-    assertEquals(listOf(stringBuffer), waitForFuture(future, SEARCH_TIMEOUT))
+    // The project has no StringBuffer, so the tab turns on the everywhere filter and searches again.
+    assertEmpty(popup.findElements("StringBuffer"))
+    assertTrue(popup.isEverywhere)
+    assertEquals(listOf(stringBuffer), popup.findElements("StringBuffer"))
   }
 
   fun `test mixing classes and files`() {
     val testClass = myFixture.addClass("class TestClass{}")
     val anotherTestClass = myFixture.addClass("class AnotherTestClass{}")
     val testFile = myFixture.addFileToProject("testClass.txt", "")
+    val popup = SePopupTestFixture.open(project, testRootDisposable, SeAllTab.ID)
 
-    val ui = createTestUI(listOf(
-      ChooseByNameTest.createClassContributor(project, testRootDisposable),
-      ChooseByNameTest.createFileContributor(project, testRootDisposable)
-    ))
-
-    var future = ui.findElementsForPattern("TestClass")
-    assertEquals(listOf(testClass, testFile, anotherTestClass), waitForFuture(future, SEARCH_TIMEOUT))
-
-    future = ui.findElementsForPattern("testClass")
-    assertEquals(listOf(testFile, testClass, anotherTestClass), waitForFuture(future, SEARCH_TIMEOUT))
+    assertEquals(listOf(testClass, testFile, anotherTestClass), popup.findPsiElements("TestClass"))
+    assertEquals(listOf(testFile, testClass, anotherTestClass), popup.findPsiElements("testClass"))
 
     val testClass2 = myFixture.addClass("class testClass2{}")
-
-    future = ui.findElementsForPattern("testClass")
-    assertEquals(listOf(testClass2, testFile, testClass, anotherTestClass), waitForFuture(future, SEARCH_TIMEOUT))
-  }
-
-  fun `test mixing results from stub contributors`() {
-    val contributor1 = StubContributor("contributor1", 1)
-    val contributor2 = StubContributor("contributor2", 2)
-    val contributor3 = StubContributor("contributor3", 3)
-
-    contributor1.addElements(mapOf("item1" to 10, "item2" to 12, "item3" to 8))
-    contributor2.addElements(mapOf("item3" to 8, "item4" to 10, "item5" to 11, "item8" to 15))
-    contributor3.addElements(mapOf("item3" to 8, "item5" to 11, "item6" to 10, "item7" to 15))
-
-    val ui = createTestUI(listOf(contributor2, contributor1, contributor3))
-    val future = ui.findElementsForPattern("ignored")
-    assertEquals(listOf("item8", "item7", "item2", "item5", "item1", "item4", "item6", "item3"), waitForFuture(future, SEARCH_TIMEOUT))
+    assertEquals(listOf(testClass2, testFile, testClass, anotherTestClass), popup.findPsiElements("testClass"))
   }
 
   fun `test priority for actions with space in pattern`() {
-    waitForEssentialFlag.set(false)
-
     val action1 = StubAction("Bravo Charlie")
     val action2 = StubAction("Alpha Bravo Charlie")
     val class1 = myFixture.addClass("class BravoCharlie{}")
     val class2 = myFixture.addClass("class AlphaBravoCharlie{}")
+    registerActions(mapOf("ia1" to action1, "ia2" to action2))
+    val popup = SePopupTestFixture.open(project, testRootDisposable, SeAllTab.ID)
 
-    val ui = createTestUI(listOf(
-      ChooseByNameTest.createClassContributor(project, testRootDisposable),
-      GotoActionTest.createActionContributor(project, testRootDisposable)
-    ))
+    var matchedAction1 = GotoActionTest.createMatchedAction(action1, "bravocharlie")
+    var matchedAction2 = GotoActionTest.createMatchedAction(action2, "bravocharlie")
+    assertEquals(listOf(class1, matchedAction1, class2, matchedAction2),
+                 popup.findElements("bravocharlie", among = setOf(class1, class2, matchedAction1, matchedAction2)))
 
-    val actions = mapOf("ia1" to action1, "ia2" to action2)
-    val actionManager = ActionManager.getInstance()
-    actions.forEach { (key, value) -> actionManager.registerAction(key, value) }
-    try {
-      var future = ui.findElementsForPattern("bravocharlie")
-      var matchedAction1 = GotoActionTest.createMatchedAction(action1, "bravocharlie")
-      var matchedAction2 = GotoActionTest.createMatchedAction(action2, "bravocharlie")
-      assertEquals(listOf(class1, matchedAction1, class2, matchedAction2), waitForFuture(future, SEARCH_TIMEOUT))
-
-      future = ui.findElementsForPattern("bravo charlie")
-      matchedAction1 = GotoActionTest.createMatchedAction(action1, "bravo charlie")
-      matchedAction2 = GotoActionTest.createMatchedAction(action2, "bravo charlie")
-      assertEquals(listOf(matchedAction1, class1, matchedAction2, class2), waitForFuture(future, SEARCH_TIMEOUT))
-    } finally {
-      actions.forEach { (key, _) -> actionManager.unregisterAction(key) }
-    }
+    matchedAction1 = GotoActionTest.createMatchedAction(action1, "bravo charlie")
+    matchedAction2 = GotoActionTest.createMatchedAction(action2, "bravo charlie")
+    assertEquals(listOf(matchedAction1, class1, matchedAction2, class2),
+                 popup.findElements("bravo charlie", among = setOf(class1, class2, matchedAction1, matchedAction2)))
   }
 
   fun `test top hit priority`() {
-    waitForEssentialFlag.set(false)
-
     val action1 = StubAction("Bravo Charlie")
     val action2 = StubAction("Alpha Bravo Charlie")
     val class1 = myFixture.addClass("class BravoCharlie{}")
     val class2 = myFixture.addClass("class AlphaBravoCharlie{}")
+    registerActions(mapOf("ia1" to action1, "ia2" to action2))
+    val matchedAction1 = GotoActionTest.createMatchedAction(action1, "bravo")
+    val matchedAction2 = GotoActionTest.createMatchedAction(action2, "bravo")
+    val testElements = setOf(action1, action2, matchedAction1, matchedAction2, class1, class2)
+    val popup = SePopupTestFixture.open(project, testRootDisposable, SeAllTab.ID)
 
-    val ui = createTestUI(listOf(
-      ChooseByNameTest.createClassContributor(project, testRootDisposable),
-      GotoActionTest.createActionContributor(project, testRootDisposable),
-      TopHitSEContributor(project, null, null)
-    ))
+    assertEquals(listOf(class1, matchedAction1, class2, matchedAction2), popup.findElements("bravo", among = testElements))
 
-    val actions = mapOf("ia1" to action1, "ia2" to action2)
-    val actionManager = ActionManager.getInstance()
-    val abbreviationManager = AbbreviationManager.getInstance()
-    actions.forEach { (key, value) -> actionManager.registerAction(key, value) }
-    try {
-      val matchedAction1 = GotoActionTest.createMatchedAction(action1, "bravo")
-      val matchedAction2 = GotoActionTest.createMatchedAction(action2, "bravo")
-
-      // filter out occasional matches in IDE actions
-      val testElements = setOf(action1, action2, matchedAction1, matchedAction2, class1, class2)
-
-      var future = ui.findElementsForPattern("bravo")
-      var bravoResult = waitForFuture(future, SEARCH_TIMEOUT)
-      assert(bravoResult.filter { it in testElements } == listOf(class1, matchedAction1, class2, matchedAction2))
-
-      @Suppress("UnresolvedPluginConfigReference")
-      abbreviationManager.register("bravo", "ia2")
-      future = ui.findElementsForPattern("bravo")
-      bravoResult = waitForFuture(future, SEARCH_TIMEOUT)
-      assertEquals(listOf(action2, class1, matchedAction1, class2), bravoResult.filter { it in testElements })
-    }
-    finally {
-      actions.forEach { (key, _) -> actionManager.unregisterAction(key) }
-      @Suppress("UnresolvedPluginConfigReference")
-      abbreviationManager.removeAllAbbreviations("ia2")
-    }
+    registerAbbreviation("bravo", "ia2")
+    assertEquals(listOf(action2, class1, matchedAction1, class2), popup.findElements("bravo", among = testElements))
   }
 
   fun `test abbreviations on top`() {
-    val abbreviationManager = AbbreviationManager.getInstance()
     val actionManager = ActionManager.getInstance()
-    val ui = createTestUI(listOf(GotoActionTest.createActionContributor(project, testRootDisposable)))
+    val popup = SePopupTestFixture.open(project, testRootDisposable, SeActionsTab.ID)
 
-    try {
-      abbreviationManager.register("cp", "CloseProject")
-      val future = ui.findElementsForPattern("cp")
-      val firstItem = waitForFuture(future, SEARCH_TIMEOUT).firstOrNull()
-      val matchedAction = GotoActionTest.createMatchedAction(actionManager.getAction("CloseProject"), "cp")
-      assertEquals(matchedAction, firstItem)
-    }
-    finally {
-      abbreviationManager.remove("cp", "CloseProject")
-    }
+    registerAbbreviation("cp", "CloseProject")
+    assertEquals(GotoActionTest.createMatchedAction(actionManager.getAction("CloseProject"), "cp"), popup.findElements("cp").firstOrNull())
+    AbbreviationManager.getInstance().remove("cp", "CloseProject")
 
-    try {
-      abbreviationManager.register("cp", "SaveAll")
-      val future = ui.findElementsForPattern("cp")
-      val firstItem = waitForFuture(future, SEARCH_TIMEOUT)[0]
-      val matchedAction = GotoActionTest.createMatchedAction(actionManager.getAction("SaveAll"), "cp")
-      assertEquals(matchedAction, firstItem)
-    } finally {
-      abbreviationManager.remove("cp", "SaveAll")
-    }
+    registerAbbreviation("cp", "SaveAll")
+    assertEquals(GotoActionTest.createMatchedAction(actionManager.getAction("SaveAll"), "cp"), popup.findElements("cp").firstOrNull())
   }
 
   fun `test recent files at the top of results`() {
@@ -220,107 +103,66 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
       val file5 = myFixture.addFileToProject("SecondAppInfoFile.txt", "")
       val file6 = myFixture.addFileToProject("SecondAppFile.txt", "")
       val wrongFile = myFixture.addFileToProject("wrong.txt", "")
+      val popup = SePopupTestFixture.open(project, testRootDisposable, SeAllTab.ID)
 
-      val recentFilesContributor = RecentFilesSEContributor(ChooseByNameTest.createEvent(project))
-      Disposer.register(testRootDisposable, recentFilesContributor)
-      val ui = createTestUI(listOf(
-        ChooseByNameTest.createFileContributor(project, testRootDisposable),
-        recentFilesContributor
-      ))
-
-      var future = ui.findPsiElementsForPattern("appfile")
-      assertEquals(listOf(file2, file1, file4, file3, file6, file5), waitForFuture(future, SEARCH_TIMEOUT))
+      assertEquals(listOf(file2, file1, file4, file3, file6, file5), popup.findPsiElements("appfile"))
 
       myFixture.openFileInEditor(file4.originalFile.virtualFile)
       myFixture.openFileInEditor(file3.originalFile.virtualFile)
       myFixture.openFileInEditor(file5.originalFile.virtualFile)
       myFixture.openFileInEditor(wrongFile.originalFile.virtualFile)
-      future = ui.findPsiElementsForPattern("appfile")
-      assertEquals(listOf(file4, file3, file5, file2, file1, file6), waitForFuture(future, SEARCH_TIMEOUT))
-    } finally {
+      assertEquals(listOf(file4, file3, file5, file2, file1, file6), popup.findPsiElements("appfile"))
+    }
+    finally {
       AdvancedSettings.setBoolean("search.everywhere.recent.at.top", savedFlag)
     }
   }
 
-  fun `test search events topic`() {
-    val contributor1 = StubContributor("contributor1", 1)
-    val contributor2 = StubContributor("contributor2", 2)
-    contributor1.addElements(mapOf("item1" to 10, "item2" to 12, "item3" to 8))
-    contributor2.addElements(mapOf("item3" to 9, "item4" to 10, "item5" to 11))
-
-    val ui = createTestUI(listOf(contributor1, contributor2))
-    val mockListener: SearchListener = Mockito.mock(SearchListener::class.java)
-    ApplicationManager.getApplication().messageBus.connect(ui).subscribe(SearchEverywhereUI.SEARCH_EVENTS, mockListener)
-    val future = ui.findElementsForPattern("ignored")
-    waitForFuture(future, SEARCH_TIMEOUT)
-
-    val inOrder = Mockito.inOrder(mockListener)
-    inOrder.verify(mockListener).searchStarted(Mockito.eq("ignored"), Mockito.any())
-    inOrder.verify(mockListener, Mockito.atLeastOnce()).elementsAdded(Mockito.any())
-    inOrder.verify(mockListener, Mockito.times(2)).contributorFinished(Mockito.any(), Mockito.eq(false))
-    inOrder.verify(mockListener).searchFinished(Mockito.any())
-  }
-
-  private fun createTestUI(contributorsList: List<SearchEverywhereContributor<out Any>>): SearchEverywhereUI {
-    mySearchUI?.let { Disposer.dispose(it) }
-
-    mySearchUI = SearchEverywhereUI(project, contributorsList)
-    val tab = if (contributorsList.size > 1)
-      SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
-    else
-      contributorsList.first().getSearchProviderId()
-    mySearchUI?.switchToTab(tab)
-    return mySearchUI!!
-  }
-
-  private class StubContributor(private val myId: String, private val mySortWeight: Int) :
-    WeightedSearchEverywhereContributor<Any> {
-
-    private val myElements = mutableMapOf<Any, Int>()
-
-    fun addElements(elements: Map<Any, Int>) {
-      myElements.putAll(elements)
-    }
-
-    override fun fetchWeightedElements(
-      pattern: String,
-      progressIndicator: ProgressIndicator,
-      consumer: Processor<in FoundItemDescriptor<Any>>
-    ) {
-      myElements.forEach { (element, weight) ->
-        consumer.process(FoundItemDescriptor(element, weight))
+  fun `test search events`() {
+    myFixture.addClass("class TestClass{}")
+    val popup = SePopupTestFixture.open(project, testRootDisposable, SeClassesTab.ID)
+    val events = mutableListOf<String>()
+    popup.addSearchListener(object : SplitSearchListener {
+      override fun searchStarted(pattern: String, tabId: String) {
+        events += "started '$pattern' in $tabId"
       }
-    }
 
-    override fun getSearchProviderId(): String = myId
+      override fun elementsAdded(uuidToElement: Map<String, Any>) {
+        events += "added ${uuidToElement.size}"
+      }
 
-    override fun getGroupName(): String = myId
+      override fun searchFinished(count: Int) {
+        events += "finished $count"
+      }
+    })
 
-    override fun getSortWeight(): Int = mySortWeight
+    popup.findElements("TestClass")
 
-    override fun showInFindResults(): Boolean = false
-
-    override fun processSelectedItem(selected: Any, modifiers: Int, searchText: String): Boolean = false
-
-    override fun getElementsRenderer(): ListCellRenderer<in Any> = DefaultListCellRenderer()
+    // The search of the empty pattern can send its last events after the listener is added.
+    // The popup can also run the search again, for example when the dumb mode changes. So the last search counts.
+    val startedEvent = "started 'TestClass' in ${SeClassesTab.ID}"
+    val eventsOfSearch = events.drop(events.lastIndexOf(startedEvent))
+    assertEquals(listOf(startedEvent, "added 1", "finished 1"), eventsOfSearch)
   }
+
+  private fun registerActions(actions: Map<String, AnAction>) {
+    val actionManager = ActionManager.getInstance()
+    actions.forEach { actionManager.registerAction(it.key, it.value) }
+    Disposer.register(testRootDisposable) { actions.keys.forEach { actionManager.unregisterAction(it) } }
+  }
+
+  private fun registerAbbreviation(abbreviation: String, actionId: String) {
+    AbbreviationManager.getInstance().register(abbreviation, actionId)
+    Disposer.register(testRootDisposable) { AbbreviationManager.getInstance().remove(abbreviation, actionId) }
+  }
+
+  /** Searches for [pattern] and returns only the PSI elements. The All tab also shows the text search results. */
+  private fun SePopupTestFixture.findPsiElements(pattern: String): List<PsiElement> = findElements(pattern).filterIsInstance<PsiElement>()
+
+  /** Searches for [pattern] and returns only the elements in [among]. A tab also shows the matches in the IDE itself. */
+  private fun SePopupTestFixture.findElements(pattern: String, among: Set<Any>): List<Any> = findElements(pattern).filter { it in among }
 
   private class StubAction(text: String) : AnAction(text) {
     override fun actionPerformed(e: AnActionEvent) {}
-  }
-
-  private class SEParam(private val getter: () -> Boolean, private val setter: (Boolean) -> Unit) {
-    private val defaultValue: Boolean = getter()
-
-    fun get(): Boolean = getter()
-
-    fun set(value: Boolean) {
-      if (get() == value) return
-      setter(value)
-    }
-
-    fun reset() {
-      set(defaultValue)
-    }
   }
 }

@@ -8,12 +8,13 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.java.navigation.ChooseByNameTest
-import com.intellij.java.navigation.SearchEverywhereTest
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+
+private const val SEARCH_TIMEOUT_MS = 50_000L
 
 abstract class KotlinSearchEverywhereTestCase : LightJavaCodeInsightFixtureTestCase() {
     protected fun findPsiByPattern(pattern: String, action: (List<PsiElement>) -> Unit) {
@@ -41,7 +42,7 @@ abstract class KotlinSearchEverywhereTestCase : LightJavaCodeInsightFixtureTestC
             ui.switchToTab(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID)
             val future = ui.findElementsForPattern(pattern)
             action(
-                PlatformTestUtil.waitForFuture(future, SearchEverywhereTest.SEARCH_TIMEOUT)
+                PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT_MS)
             )
         } finally {
             Disposer.dispose(disposable)

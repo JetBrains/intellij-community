@@ -162,6 +162,9 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       popupScope.cancel()
       throw t
     }
+    // The cancel callback does not run for a popup that has no window, such as a popup in a headless test.
+    // So the session also ends when the popup goes away.
+    Disposer.register(popup) { popupClosedCompletable.complete(Unit) }
 
     val showIdlePopupEndTime = System.currentTimeMillis()
     SeLog.log { "Search Everywhere Idle popup opened in ${showIdlePopupEndTime - showPopupStartTime} ms" }
@@ -380,7 +383,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     popupVm.showTab(tabId)
 
     popupContentPane.setVm(popupVm)
-    popupFuture.complete(SePopupInstance(popupVm, popupContentPane, searchStatePublisher))
+    popupFuture.complete(SePopupInstance(project, popupVm, popupContentPane, searchStatePublisher))
   }
 
   private fun createAdaptedTabsIfMonolith(

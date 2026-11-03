@@ -8,6 +8,8 @@ import com.intellij.ide.actions.searcheverywhere.SplitSearchListener
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
+import com.intellij.platform.searchEverywhere.SeSearchRestartListener
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -18,7 +20,8 @@ import java.util.concurrent.Future
 import javax.swing.text.Document
 
 @ApiStatus.Internal
-class SePopupInstance(private val popupVm: SePopupVm,
+class SePopupInstance(private val project: Project?,
+                      private val popupVm: SePopupVm,
                       private val popupContentPane: SePopupContentPane,
                       private val combinedListener: SeSearchStatePublisher): SearchEverywherePopupInstance {
   val registerShortcut: (AnAction) -> Unit = { action -> popupContentPane.registerMnemonicShortcut(action) }
@@ -68,34 +71,57 @@ class SePopupInstance(private val popupVm: SePopupVm,
     SeLog.warn("Changing scope is not supported in the split implementation.")
   }
 
+  /**
+   * Searches for [pattern] in the selected tab, and returns the raw objects of the result list after the search.
+   *
+   * Only the finished search of [pattern] completes the future.
+   * An earlier search, a paused search, or a search that the next search stops does not complete it.
+   * When the search field already holds [pattern], the search runs again.
+   */
   @ApiStatus.Internal
   @TestOnly
   override fun findElementsForPattern(pattern: String): Future<List<Any>> {
     val future = CompletableFuture<List<Any>>()
 
     ApplicationManager.getApplication().invokeLater {
-      var listenerToRemove: SplitSearchListener? = null
-      val listener = object: SplitSearchListener {
-        override fun searchStarted(pattern: String, tabId: String) {}
+      val searchedPattern = pattern
+      val listener = object : SplitSearchListener {
+        private var isSearchOfPattern = false
+
+        override fun searchStarted(pattern: String, tabId: String) {
+          isSearchOfPattern = pattern == searchedPattern
+        }
+
         override fun elementsAdded(uuidToElement: Map<String, Any>) {}
 
         override fun searchFinished(count: Int) {
-          if (count < 0) return
+          // A negative count means that the next search stopped this one. A paused search has no finished results yet.
+          if (!isSearchOfPattern || count < 0) return
+          val finishedResults = popupContentPane.finishedSearchResults ?: return
 
-          listenerToRemove?.let { combinedListener.removeListener(it) }
-          val results = popupContentPane.currentResultsInList.mapNotNull { it.fetchItemIfExists()?.rawObject }
-          future.complete(results)
+          combinedListener.removeListener(this)
+          future.complete(finishedResults.mapNotNull { it.fetchItemIfExists()?.rawObject })
         }
       }
-
-      listenerToRemove = listener
       combinedListener.addListener(listener)
 
-      popupContentPane.searchFieldDocument.remove(0, popupContentPane.searchFieldDocument.length)
-      popupContentPane.searchFieldDocument.insertString(0, pattern, null)
+      if (popupVm.searchPattern.value == pattern) {
+        project?.messageBus?.syncPublisher(SeSearchRestartListener.TOPIC)?.restartSearch()
+      }
+      else {
+        popupContentPane.searchFieldDocument.remove(0, popupContentPane.searchFieldDocument.length)
+        popupContentPane.searchFieldDocument.insertString(0, pattern, null)
+      }
     }
 
     return future
+  }
+
+  /** Makes the tabs load all their results, as if the user scrolls to the end of the list. */
+  @ApiStatus.Internal
+  @TestOnly
+  fun loadAllResults() {
+    popupContentPane.loadAllResults()
   }
 
   fun saveSearchText() {

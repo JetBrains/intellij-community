@@ -234,6 +234,9 @@ class SePopupContentPane(
   private var extendedInfoComponent: ExtendedInfoComponent? = null
 
   private val isSearchCompleted: AtomicBoolean = AtomicBoolean(false)
+
+  // A list in a headless test has no viewport, so it never scrolls to the end. See [loadAllResults].
+  private val isLoadingAllResults = MutableStateFlow(false)
   private val adaptedProviderRenderersCache = mutableMapOf<SeProviderId, ListCellRenderer<Any>>()
 
   var isCompactViewMode: Boolean = true
@@ -244,6 +247,25 @@ class SePopupContentPane(
 
   val currentResultsInList: List<SeItemData> get() =
     resultListModel.elements().iterator().asSequence().mapNotNull { (it as? SeResultListItemRow)?.item }.toList()
+
+  /**
+   * The items of the last search after it finished, or `null` while the search runs.
+   *
+   * A search that finds nothing leaves the rows of the previous search in the invalid list. Then the items are empty.
+   */
+  @get:TestOnly
+  val finishedSearchResults: List<SeItemData>?
+    get() = when {
+      !isSearchCompleted.load() -> null
+      !resultListModel.isValid -> emptyList()
+      else -> currentResultsInList
+    }
+
+  /** Makes the tabs load all their results, as if the user scrolls to the end of the list. */
+  @TestOnly
+  fun loadAllResults() {
+    isLoadingAllResults.value = true
+  }
 
   init {
     layout = GridLayout()
@@ -521,10 +543,10 @@ class SePopupContentPane(
     launch {
       vm.currentTabFlow.collectLatest { tabVm ->
         coroutineScope {
-          combine(isScrolledAlmostToAnEnd, resultListModel.isValidState) {
-            it[0] to it[1]
-          }.collect { (isScrolledAlmostToAnEnd, isValidList) ->
-            tabVm.shouldLoadMore = isScrolledAlmostToAnEnd || !isValidList
+          combine(isScrolledAlmostToAnEnd, resultListModel.isValidState, isLoadingAllResults) { isScrolledAlmostToAnEnd, isValidList, isLoadingAll ->
+            isScrolledAlmostToAnEnd || !isValidList || isLoadingAll
+          }.collect { shouldLoadMore ->
+            tabVm.shouldLoadMore = shouldLoadMore
           }
         }
       }
