@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="com.jetbrains.fus.reporting.fus-api" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:fus-api:2.0.250">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:fus-api:2.0.251">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/fus-api/2.0.250/fus-api-2.0.250.jar">
-          <sha256sum>7dcc4cf5e60009850dbbf9208f878f309ed0a54c8b81c67b299256078feb826b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/fus-api/2.0.251/fus-api-2.0.251.jar">
+          <sha256sum>2b4824775a5928999bdfb84661a565472ed5c0a2fb6a0a4416f816b68551bcb7</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/fus-api/2.0.250/fus-api-2.0.250.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/fus-api/2.0.251/fus-api-2.0.251.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/fus-api/2.0.250/fus-api-2.0.250-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/fus-api/2.0.251/fus-api-2.0.251-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
