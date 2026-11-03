@@ -7,30 +7,34 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.PythonEnvironmentKey
+import com.intellij.python.sdk.backend.PythonEnvironmentWatchers
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.isDisposed
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.IncorrectOperationException
-import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkUpdater
-import com.jetbrains.python.sdk.pySdkAdditionalData
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import org.jetbrains.annotations.TestOnly
 
 internal class PythonPackageManagerServiceImpl(
   private val project: Project,
-  scope: CoroutineScope,
+  private val scope: CoroutineScope,
 ) : PythonPackageManagerService, Disposable {
-  private val cache = ConcurrentHashMap<UUID, CachedManager>()
+  /** One entry for each interpreter. Two interpreters of one SDK, with two owners, have two managers. */
+  private val cache = ConcurrentHashMap<PythonInterpreter, CachedManager>()
 
   private val bridgeCache = ConcurrentHashMap<UUID, PythonPackageManagementServiceBridge>()
 
@@ -38,17 +42,44 @@ internal class PythonPackageManagerServiceImpl(
   private val watchersLock = ReentrantLock()
 
   init {
+    // A provider that comes or goes can build another manager for an interpreter, so the managers it replaces go.
+    PythonPackageManagerProvider.EP_NAME.addChangeListener(scope) { dropAllManagers() }
     // The structure of the project, and not the workspace model it is derived from: a model listener reports the
     // change earlier, while `EvoPyProjectModel` still holds the generation before it, and reading that one would
     // reconcile against the interpreters of a moment that has passed.
     scope.launch {
-      EvoPyProjectModel.getInstance(project).snapshotFlow().collect { syncWatchers(it) }
+      EvoPyProjectModel.getInstance(project).snapshotFlow().collect { snapshot ->
+        syncWatchers(snapshot)
+        startManagers(snapshot)
+      }
+    }
+  }
+
+  /**
+   * Starts the manager of each interpreter of [snapshot], so its installed packages, and the derived roots that follow
+   * them, are there right after the start, see [com.jetbrains.python.packaging.PythonInstalledPackagesCache]. A manager whose environment did not
+   * change since its last list runs no process.
+   */
+  private fun startManagers(snapshot: EvoPyProjectModel.Snapshot) {
+    // A snapshot can still hold an interpreter whose SDK is gone, and such an interpreter gets no manager.
+    for (interpreter in snapshot.interpreters.filterNot { it.isDisposed }) {
+      forPythonInterpreter(project, interpreter).startInit()
     }
   }
 
   /** One cached manager, and the watcher of the interpreter paths that it has while the project uses the interpreter. */
   private class CachedManager(val interpreter: PythonInterpreter, val manager: PythonPackageManager) {
     var watcher: Disposable? = null
+
+    /** Whether [watcher] has its subscription. The key of the environment can come later, see [watchInterpreterPaths]. */
+    @Volatile
+    var subscribed: Boolean = false
+
+    /** Removes this entry when its SDK goes, see [removeOnSdkDisposal]. A dropped entry disposes it, so none piles up. */
+    var removal: Disposable? = null
+
+    /** Whether the manager of this entry still matches its SDK, see [PythonPackageManager.matchesSdk]. */
+    fun isCurrent(): Boolean = manager.matchesSdk()
 
     /** The SDK of [interpreter], for the watcher and the SDK updater, which still take one. */
     @Suppress("DEPRECATION")
@@ -77,7 +108,7 @@ internal class PythonPackageManagerServiceImpl(
     if (cache.isEmpty() || structure == null) return
     val interpretersInUse = structure.interpreters
     watchersLock.withLock {
-      for ((key, entry) in cache) {
+      for ([key, entry] in cache) {
         val watched = entry.watcher != null
         val inUse = entry.interpreter in interpretersInUse
         if (inUse && !watched) {
@@ -87,18 +118,17 @@ internal class PythonPackageManagerServiceImpl(
           logger.info("The project does not use '${entry.sdk.name}' any more, so its paths are not watched")
           entry.watcher?.let { Disposer.dispose(it) }
           entry.watcher = null
+          entry.subscribed = false
         }
       }
     }
   }
 
   /** Always call under [watchersLock]. */
-  private fun watchInterpreterPaths(key: UUID, entry: CachedManager) {
+  private fun watchInterpreterPaths(key: PythonInterpreter, entry: CachedManager) {
     val watcher = Disposer.newDisposable("VFS listener for ${entry.sdk.name} in scope of ${project.name}")
     try {
-      // Under the interpreter, because `runOnChangeUnderInterpreterPaths` requires a parent that does not outlive it:
-      // its listener throws for a disposed interpreter, on every file event of the whole application. The manager
-      // outlives the interpreter, so it cannot be that parent.
+      // Under the interpreter, so the watch goes with it. The manager outlives the interpreter, so it cannot be that parent.
       Disposer.register(entry.sdk as? Disposable ?: entry.manager, watcher)
     }
     catch (e: IncorrectOperationException) {
@@ -106,19 +136,30 @@ internal class PythonPackageManagerServiceImpl(
       cache.remove(key, entry)
       return
     }
-    PyPackageUtil.runOnChangeUnderInterpreterPaths(entry.sdk, watcher) {
-      // A background request: a change under the paths of an interpreter that the project does not use must not
-      // start it, see PY-88315.
-      PythonSdkUpdater.scheduleBackgroundUpdate(entry.interpreter, project)
-    }
     entry.watcher = watcher
+    // One listener for each environment, for every project that runs it, see PythonEnvironmentWatchers. The key of a
+    // WSL or Docker environment needs its machine resolved, as the facts that the listener reads are stored under that
+    // key, so the watch starts when the key is known. A watcher that goes before that watches nothing.
+    scope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+      // An SDK that names no binary has no paths to watch.
+      val environment = PythonEnvironmentKey.of(entry.sdk) ?: return@launch
+      watchersLock.withLock {
+        if (entry.watcher !== watcher) return@launch
+        PythonEnvironmentWatchers.getInstance().watch(environment, watcher) {
+          // A background request: a change under the paths of an interpreter that the project does not use must not
+          // start it, see PY-88315.
+          PythonInterpreterUpdater.getInstance(project).request(entry.interpreter, PythonInterpreterUpdateRequest(packages = true, background = true))
+        }
+        entry.subscribed = true
+      }
+    }
   }
 
   /**
    * Returns a cached [PythonPackageManager] for the given [interpreter], creating one on first access.
    *
    * On cache hit the call is effectively free (a [ConcurrentHashMap] lookup).
-   * On cache miss (once per SDK per project lifetime) the method creates the manager
+   * On cache miss (once per interpreter per project lifetime) the method creates the manager
    * and registers Disposer listeners — this may involve lightweight I/O
    * (e.g. flavor detection in [com.jetbrains.python.sdk.pySdkAdditionalData]).
    * In practice the first call happens during project/SDK setup on a background thread,
@@ -132,19 +173,15 @@ internal class PythonPackageManagerServiceImpl(
    * Requires the SDK of [interpreter] to be a Python SDK with [com.jetbrains.python.sdk.PythonSdkAdditionalData].
    */
   override fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager {
-    // The managers are keyed by the SDK and its additional data, so this service reads the SDK.
-    @Suppress("DEPRECATION")
-    val sdk = interpreter.getSdkAPI()
-    val cacheKey = sdk.pySdkAdditionalData.uuid
-    cache[cacheKey]?.takeIf { it.manager.matchesSdk() }?.let { return it.manager }
+    cache[interpreter]?.takeIf { it.isCurrent() }?.let { return it.manager }
 
     var newEntry = false
     val entry = watchersLock.withLock {
-      cache.compute(cacheKey) { _, cached ->
-        if (cached != null && cached.manager.matchesSdk()) return@compute cached
+      cache.compute(interpreter) { _, cached ->
+        if (cached != null && cached.isCurrent()) return@compute cached
         newEntry = true
-        if (cached == null) removeOnSdkDisposal(sdk, cacheKey) else dropEntry(cached)
-        CachedManager(interpreter, createManager(project, interpreter))
+        if (cached != null) dropEntry(cached)
+        CachedManager(interpreter, createManager(project, interpreter)).also(::removeOnSdkDisposal)
       }!!
     }
     // Only a new entry needs one: an entry that is already cached gets its watcher from the next structure that moves
@@ -153,23 +190,44 @@ internal class PythonPackageManagerServiceImpl(
     return entry.manager
   }
 
+  override fun cachedFor(interpreter: PythonInterpreter): PythonPackageManager? =
+    cache[interpreter]?.takeIf { it.isCurrent() }?.manager
+
+  /** Disposes every cached manager, so the next call builds each one again, see [forPythonInterpreter]. */
+  private fun dropAllManagers() {
+    watchersLock.withLock {
+      for (entry in cache.values) dropEntry(entry)
+      cache.clear()
+    }
+  }
+
   /** Always call under [watchersLock]. Disposes the watcher of [entry], whose parent is the SDK, and then its manager. */
   private fun dropEntry(entry: CachedManager) {
-    logger.info("The dependency file of '${entry.sdk.name}' selects another package manager, so the manager is rebuilt")
+    logger.info("The manager of '${entry.sdk.name}' is not the current one, so it is rebuilt")
     entry.watcher?.let { Disposer.dispose(it) }
     entry.watcher = null
+    entry.subscribed = false
+    entry.removal?.let { Disposer.dispose(it) }
+    entry.removal = null
     Disposer.dispose(entry.manager)
   }
 
-  private fun removeOnSdkDisposal(sdk: Sdk, cacheKey: UUID) {
-    if (sdk !is Disposable) return
+  /**
+   * Removes [entry] when its SDK goes. It removes only [entry], so the disposal of an old SDK keeps the entry of a newer
+   * SDK of the same interpreter.
+   */
+  private fun removeOnSdkDisposal(entry: CachedManager) {
+    val sdk = entry.sdk as? Disposable ?: return
     val localCache = cache
+    val removal = Disposable { localCache.remove(entry.interpreter, entry) }
     try {
-      Disposer.register(sdk, Disposable { localCache.remove(cacheKey) })
+      Disposer.register(sdk, removal)
     }
     catch (e: IncorrectOperationException) {
+      Disposer.dispose(entry.manager)
       throw AlreadyDisposedException("Requesting a package manager for an already disposed SDK $sdk, ${e.localizedMessage}")
     }
+    entry.removal = removal
   }
 
   private fun createManager(project: Project, interpreter: PythonInterpreter): PythonPackageManager {
@@ -186,26 +244,14 @@ internal class PythonPackageManagerServiceImpl(
     return manager
   }
 
-  /**
-   * Drops every cached manager. A light test project keeps its interpreter for the whole run, so a test that replaces
-   * the managers through [PythonPackageManagerProvider] gets a new one after this.
-   */
+  /** The disposable that owns the watcher of the paths of [interpreter], or `null` when they are not watched. */
   @TestOnly
-  fun dropManagersForTests() {
-    watchersLock.withLock {
-      for (entry in cache.values) dropEntry(entry)
-      cache.clear()
-    }
-  }
+  internal fun interpreterPathsWatcher(interpreter: PythonInterpreter): Disposable? = cache[interpreter]?.watcher
 
-  /** The disposable that owns the watcher of the paths of [sdk], or `null` when they are not watched. */
+  /** Whether the paths of [interpreter] are watched: its watcher has its subscription. */
   @TestOnly
-  internal fun interpreterPathsWatcher(sdk: Sdk): Disposable? =
-    cache[(sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.uuid]?.watcher
-
-  /** Whether the paths of [sdk] are watched. */
-  @TestOnly
-  internal fun watchesInterpreterPaths(sdk: Sdk): Boolean = interpreterPathsWatcher(sdk) != null
+  internal fun watchesInterpreterPaths(interpreter: PythonInterpreter): Boolean =
+    cache[interpreter]?.let { it.watcher != null && it.subscribed } == true
 
   override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
     val cacheKey = (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid

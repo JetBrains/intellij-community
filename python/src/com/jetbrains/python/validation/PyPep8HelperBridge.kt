@@ -14,19 +14,24 @@ import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.community.execService.python.executeHelper
 import com.intellij.python.community.execService.toEnvVars
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
+import kotlinx.coroutines.withContext
 
 @RequiresBackgroundThread
 internal fun execPep8Helper(helper: PyHelper, python: PythonBinary, stdin: ByteArray, options: List<String>): String? {
+  // The annotator runs for no command that a user ran, so its process is a background one.
   val res = runBlockingMaybeCancellable {
-    ExecService().executeHelper(python.asBinToExec(python.parent.asEelPath()),
-                                helper,
-                                Args(*options.toTypedArray()),
-      // Helper returns != 0, expected
-                                execOptions,
-                                stdInProvider = StdInProvider(stdin),
-                                processOutputTransformer = ZeroCodeStdoutTransformerTyped(checkExitCode = false) { it })
+    withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+      ExecService().executeHelper(python.asBinToExec(python.parent.asEelPath()),
+                                  helper,
+                                  Args(*options.toTypedArray()),
+        // Helper returns != 0, expected
+                                  execOptions,
+                                  stdInProvider = StdInProvider(stdin),
+                                  processOutputTransformer = ZeroCodeStdoutTransformerTyped(checkExitCode = false) { it })
+    }
   }
   return when (res) {
     is Result.Failure -> {

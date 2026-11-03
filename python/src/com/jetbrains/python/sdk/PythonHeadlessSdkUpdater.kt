@@ -9,13 +9,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.python.sdk.backend.binaryPathString
 import com.jetbrains.python.PyBundle
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.seconds
 
 internal class PythonHeadlessSdkUpdater : ProjectActivity, DumbAware {
-  private val DELAY = 10.seconds
 
   companion object {
     private val LOG: Logger = logger<PythonHeadlessSdkUpdater>()
@@ -33,7 +32,7 @@ internal class PythonHeadlessSdkUpdater : ProjectActivity, DumbAware {
   private suspend fun scheduleTasks(project: Project) {
     EvoPyProjectModel.getInstance(project).snapshot().interpreters.forEach { interpreter ->
       LOG.info("Scheduling update: ${interpreter.binaryPathString}")
-      PythonSdkUpdater.scheduleUpdate(interpreter, project)
+      PythonInterpreterUpdater.getInstance(project).request(interpreter, PythonInterpreterUpdateRequest(packages = true, background = false))
     }
   }
 
@@ -42,9 +41,7 @@ internal class PythonHeadlessSdkUpdater : ProjectActivity, DumbAware {
     val start = System.currentTimeMillis()
 
     LOG.info("Waiting for $title tasks...")
-    while (EvoPyProjectModel.getInstance(project).snapshot().interpreters.any { PythonSdkUpdater.isUpdateScheduled(it) }) {
-      delay(DELAY)
-    }
+    PythonInterpreterUpdater.getInstance(project).awaitIdle()
 
     val duration = StringUtil.formatDuration(System.currentTimeMillis() - start)
     LOG.info("Completed waiting for $title tasks in $duration")

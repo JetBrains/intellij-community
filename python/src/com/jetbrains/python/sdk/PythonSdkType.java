@@ -13,8 +13,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.AdditionalDataConfigurable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -35,10 +36,11 @@ import com.intellij.platform.eel.provider.EelProviderProjectUtilKt;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.platform.ide.progress.ModalTaskOwner;
 import com.intellij.platform.ide.progress.TaskCancellation;
+import com.intellij.python.sdk.backend.PyInterpreterLibraryFlowKt;
 import com.intellij.python.sdk.backend.PythonBinaryExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.reference.SoftReference;
+import com.intellij.python.sdk.backend.PythonInterpreterProbe;
 import com.intellij.remote.ExceptionFix;
 import com.intellij.remote.RemoteSdkException;
 import com.intellij.util.ExceptionUtil;
@@ -78,13 +80,9 @@ import java.lang.ref.WeakReference;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.platform.ide.progress.TasksKt.runWithModalProgressBlocking;
@@ -94,12 +92,6 @@ import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_
  * Class should be final and singleton since some code checks its instance by ref.
  */
 public final class PythonSdkType extends SdkType {
-
-  @ApiStatus.Internal public static final @NotNull Key<List<String>> MOCK_SYS_PATH_KEY = Key.create("PY_MOCK_SYS_PATH_KEY");
-
-  @ApiStatus.Internal public static final @NotNull Key<String> MOCK_PY_VERSION_KEY = Key.create("PY_MOCK_PY_VERSION_KEY");
-
-  @ApiStatus.Internal public static final @NotNull Key<Boolean> MOCK_PY_MARKER_KEY = Key.create("MOCK_PY_MARKER_KEY");
 
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
 
@@ -428,27 +420,46 @@ public final class PythonSdkType extends SdkType {
     return FileUtil.toSystemDependentName(path);
   }
 
+  /**
+   * Sets up a legacy SDK for the platform, which gives no project: it writes the version and the class roots straight
+   * into the SDK, see {@link PythonInterpreterProbe#probeLegacySdkBlocking}. It does nothing in the interpreter library
+   * flow. The code of this plugin sets up an interpreter through its project instead, see {@code PythonInterpreterPathsSetup}.
+   */
   @Override
   public void setupSdkPaths(@NotNull Sdk sdk) {
     if (PlatformUtils.isFleetBackend()) return;
-    final WeakReference<Component> ownerComponentRef = sdk.getUserData(SDK_CREATOR_COMPONENT_KEY);
-    final Component ownerComponent = SoftReference.dereference(ownerComponentRef);
-    AtomicReference<Project> projectRef = new AtomicReference<>();
-    if (PlatformUtils.isQodana()) {
-      Project project = ContainerUtil.getFirstItem(Arrays.asList(ProjectManager.getInstance().getOpenProjects()));
-      projectRef.set(project);
+    if (!updateLegacySdkPaths(sdk)) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> Messages.showErrorDialog(PyBundle.message("python.sdk.cannot.setup.sdk", sdk.getName()), PyBundle.message("python.sdk.invalid.python.sdk"))
+      );
     }
-    else {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        if (ownerComponent != null) {
-          projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent)));
-        }
-        else {
-          projectRef.set(CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
-        }
-      });
+  }
+
+  /**
+   * Reads the version and the local {@code sys.path} of {@code sdk} and writes them straight into it. It shows a modal
+   * progress on the EDT, as the interpreter settings do.
+   *
+   * @return false if the version or the paths could not be read.
+   */
+  private static boolean updateLegacySdkPaths(@NotNull Sdk sdk) {
+    if (PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled()) return true;
+    final ThrowableComputable<Boolean, InvalidSdkException> update = () -> {
+      final var error = PythonInterpreterProbe.probeLegacySdkBlocking(sdk).getErrorOrNull();
+      if (error != null) {
+        throw new InvalidSdkException(PyBundle.message("python.sdk.cannot.evaluate.sdk.version.error.message") + ": " + error.getMessage());
+      }
+      return true;
+    };
+    try {
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        return ProgressManager.getInstance().runProcessWithProgressSynchronously(update, PyBundle.message("sdk.gen.updating.interpreter"), false, null);
+      }
+      return update.compute();
     }
-    PythonSdkUpdater.updateOrShowError(sdk, projectRef.get(), ownerComponent);
+    catch (InvalidSdkException e) {
+      LOG.warn("Error while evaluating path and version: ", e);
+      return false;
+    }
   }
 
   @Override
@@ -515,19 +526,12 @@ public final class PythonSdkType extends SdkType {
       catch (RemoteSdkException e) {
         // Null, not a placeholder: an unreachable target says nothing about the interpreter on it, and the version
         // recorded for it is persisted. "undefined" was written to jdk.table.xml and outlived the outage that caused
-        // it, leaving the interpreter with no readable version for good. See PythonSdkUpdater.updateSdkVersion.
+        // it, leaving the interpreter with no readable version for good.
         LOG.info("Cannot read the version of " + sdk.getName(), e);
         return null;
       }
     }
     else {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        final var version = sdk.getUserData(MOCK_PY_VERSION_KEY);
-        if (version != null) {
-          return version;
-        }
-      }
-
       String homePath = sdk.getHomePath();
       return homePath == null ? null : getVersionString(homePath);
     }
@@ -604,26 +608,5 @@ public final class PythonSdkType extends SdkType {
   @Override
   public boolean allowWslSdkForLocalProject() {
     return true;
-  }
-
-  /**
-   * @return if SDK is mock (used by tests only)
-   */
-  @SuppressWarnings("TestOnlyProblems")
-  @ApiStatus.Internal
-  public static boolean isMock(@NotNull Sdk sdk) {
-    return (sdk.getUserData(MOCK_PY_VERSION_KEY) != null) ||
-           (sdk.getUserData(MOCK_SYS_PATH_KEY) != null) ||
-           (sdk.getUserData(MOCK_PY_MARKER_KEY) != null);
-  }
-
-  /**
-   * Returns mocked path (stored in sdk with {@link #MOCK_SYS_PATH_KEY} in test)
-   */
-  @ApiStatus.Internal
-  public static @NotNull List<String> getMockPath(@NotNull Sdk sdk) {
-    var workDir = Paths.get(Objects.requireNonNull(sdk.getHomePath())).getParent().toString();
-    var mockPaths = sdk.getUserData(MOCK_SYS_PATH_KEY);
-    return mockPaths != null ? Collections.unmodifiableList(mockPaths) : Collections.singletonList(workDir);
   }
 }

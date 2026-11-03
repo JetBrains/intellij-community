@@ -9,11 +9,12 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.NamedConfigurable
+import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import javax.swing.JComponent
 
@@ -61,7 +62,7 @@ internal class PythonTargetInterpreterDetailsConfigurable(private val project: P
     // note that after committing the changes `sdkModificator` becomes unusable
     runWriteAction { sdkModificator.commitChanges() }
 
-    PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
+    PythonInterpreterUpdater.getInstance(project).request(sdk, PythonInterpreterUpdateRequest(packages = true, background = false))
   }
 
   override fun getDisplayName(): String = targetConfigurable.displayName

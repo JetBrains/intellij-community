@@ -183,5 +183,6 @@
     <orderEntry type="module" module-name="intellij.platform.wsl.impl" />
     <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
     <orderEntry type="module" module-name="intellij.platform.util.annotations" />
+    <orderEntry type="module" module-name="intellij.python.packaging" />
   </component>
 </module>

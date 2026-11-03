@@ -1,13 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
-import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
-import com.intellij.python.sdk.backend.PythonSdkTable
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
-import com.intellij.openapi.application.EDT
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -17,6 +10,7 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.DumbAwareAction
@@ -28,22 +22,29 @@ import com.intellij.openapi.ui.MasterDetailsComponent
 import com.intellij.openapi.util.Condition
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
+import com.intellij.python.sdk.backend.PythonSdkTable
+import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.python.sdk.backend.pyInterpreterItems
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
 import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
-import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.customizeWithSdkValue
 import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
 import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -282,6 +283,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
         ApplicationManager.getApplication().runWriteAction {
           sdkModificator.commitChanges()
         }
+        writeUserPaths(project, sdk, pathEditor.addedPaths, pathEditor.excludedPaths)
         // now added and excluded paths are updated in `sdk` instance
         pythonPathsModified = true
         reloadSdk(sdk)
@@ -307,7 +309,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
   }
 
   private fun reloadSdk(sdk: Sdk) {
-    PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
+    PythonInterpreterUpdater.getInstance(project).request(sdk, PythonInterpreterUpdateRequest(packages = true, background = false))
   }
 
   companion object {

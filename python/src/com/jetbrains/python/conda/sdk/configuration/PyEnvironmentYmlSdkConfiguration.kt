@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.conda.sdk.configuration
 
-import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.ValidationInfo
@@ -17,6 +16,8 @@ import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvir
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.sdk.backend.PythonEnvironment
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.resolvePythonBinary
@@ -35,7 +36,7 @@ import com.jetbrains.python.project.getEel
 import com.jetbrains.python.project.project
 import com.jetbrains.python.project.resolveFile
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
-import com.jetbrains.python.sdk.PythonSdkUpdater
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
@@ -143,7 +144,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     }
 
     val sdk = createAndAddCondaEnv(pyProject, condaExecutable!!, envExists)
-    return sdk.onSuccess { interpreter -> PythonSdkUpdater.scheduleUpdate(interpreter, pyProject.project) }
+    return sdk.onSuccess { interpreter -> PythonInterpreterUpdater.getInstance(pyProject.project).request(interpreter, PythonInterpreterUpdateRequest(packages = true, background = false)) }
   }
 
   private suspend fun createAndAddCondaEnv(pyProject: PyProject, condaExecutable: PathHolder.Eel, envExists: Boolean): PyResult<PythonInterpreter> {

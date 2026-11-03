@@ -10,7 +10,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.ui.SdkPathEditor;
 import com.intellij.openapi.roots.OrderRootType;
@@ -41,11 +40,10 @@ import javax.swing.ListCellRenderer;
 import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 @ApiStatus.Internal
@@ -93,6 +91,16 @@ class PythonPathEditor extends SdkPathEditor {
     }
     setModified(false);
     myPathListModel.apply(sdkModificator);
+  }
+
+  /** The paths that the user added in this editor, see {@code PythonInterpreterDetails.writeAddedPaths}. */
+  @NotNull Set<VirtualFile> getAddedPaths() {
+    return myPathListModel.myAdded;
+  }
+
+  /** The paths that the user excluded in this editor, see {@code PythonInterpreterDetails.writeExcludedPaths}. */
+  @NotNull Set<VirtualFile> getExcludedPaths() {
+    return myPathListModel.myExcluded;
   }
 
   @Override
@@ -209,8 +217,11 @@ class PythonPathEditor extends SdkPathEditor {
       return ArrayUtil.toIntArray(toRemove);
     }
 
+    /**
+     * Applies the roots that this list hides back to the SDK. The paths that the user added and excluded are facts of the
+     * interpreter: the dialog writes them through {@code writeUserPaths}, and not into the SDK data.
+     */
     public void apply(@NotNull SdkModificator sdkModificator) {
-      sdkModificator.setSdkAdditionalData(collectSdkAdditionalData(sdkModificator));
       addFilteredOutRoots(sdkModificator);
     }
 
@@ -218,15 +229,6 @@ class PythonPathEditor extends SdkPathEditor {
       for (VirtualFile file : myFilteredOut) {
         sdkModificator.addRoot(file, myOrderRootType);
       }
-    }
-
-    private @NotNull SdkAdditionalData collectSdkAdditionalData(@NotNull SdkModificator sdkModificator) {
-      PythonSdkAdditionalData data = (PythonSdkAdditionalData)sdkModificator.getSdkAdditionalData();
-      // We can't have sdk without additional data in python
-      Objects.requireNonNull(data);
-      data.setAddedPathsFromVirtualFiles(myAdded);
-      data.setExcludedPathsFromVirtualFiles(myExcluded);
-      return data;
     }
 
     public void setAdded(Set<VirtualFile> added) {

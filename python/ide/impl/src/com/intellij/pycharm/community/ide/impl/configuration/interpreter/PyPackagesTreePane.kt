@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
-import com.jetbrains.python.errorProcessing.ErrorSink
-import com.jetbrains.python.errorProcessing.emit
 import com.intellij.execution.ExecutionException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
@@ -32,6 +30,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.icons.PythonIcons
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -314,10 +314,7 @@ internal class PyPackagesTreePane(
   private var currentManager: PythonPackageManager? = null
 
   init {
-    // Application bus, not project — `PACKAGE_MANAGEMENT_TOPIC` is published on the app bus and only
-    // propagates to direct children, but PPTW's own listener uses the app bus too, so match it here
-    // to avoid a subtle propagation mismatch that made change-version updates land only on reopen.
-    ApplicationManager.getApplication().messageBus.connect(parentDisposable).subscribe(
+    project.messageBus.connect(parentDisposable).subscribe(
       PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC,
       object : PythonPackageManagementListener {
         override fun packagesChanged(interpreter: PythonInterpreter) {
@@ -729,7 +726,7 @@ internal class PyPackagesTreePane(
    * `workspaceMember` argument routes uv / poetry through `uv remove --package <member> <pkg>` (or
    * the equivalent) so a package declared inside a workspace member is removed from that member's
    * pyproject.toml rather than from the workspace root. The tree is refreshed via
-   * [PACKAGE_MANAGEMENT_TOPIC] once the manager publishes the change; the explicit bounce is a
+   * [PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC] once the manager publishes the change; the explicit bounce is a
    * safety net for the case where the SDK is deactivated between commit and event.
    */
   private fun triggerDeletePackage(pkg: PackageTreeNode, workspaceMemberName: String?) {

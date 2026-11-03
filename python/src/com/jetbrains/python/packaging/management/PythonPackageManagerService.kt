@@ -29,6 +29,9 @@ internal interface PythonPackageManagerService {
   @Throws(AlreadyDisposedException::class)
   fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager
 
+  /** The cached manager of [interpreter], or `null` when no caller asked for it yet. It creates no manager. */
+  fun cachedFor(interpreter: PythonInterpreter): PythonPackageManager?
+
   /**
    * Provides an implementation bridge for Python package management operations
    * specific to the given project and SDK. The bridge serves as a connection point

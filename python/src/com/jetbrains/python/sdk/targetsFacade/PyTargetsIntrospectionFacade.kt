@@ -7,20 +7,16 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.util.annotations.paths.OsPath
-import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.PYTHON_VERSION_ARG
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper.Constants.SYSPATH_PY
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.InvalidSdkException
-import com.jetbrains.python.sdk.execGetStdout
 import com.jetbrains.python.sdk.executeHelper
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus
 
@@ -62,16 +58,6 @@ sealed class PyTargetsIntrospectionFacade(
 
 
   abstract val isLocalTarget: Boolean
-
-  @Throws(ExecutionException::class)
-  @RequiresBackgroundThread
-  fun getInterpreterVersion(): String? =
-    runBlockingMaybeCancellable {
-      PythonSdkFlavor.getVersionStringFromOutput(
-        ExecService().execGetStdout(interpreter(), Args(PYTHON_VERSION_ARG))
-          .orThrowExecException()
-      )
-    }
 
   @RequiresBackgroundThread(generateAssertion = false)
   @kotlin.jvm.Throws(ExecutionException::class)

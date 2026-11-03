@@ -116,6 +116,7 @@
     <module name="intellij.python.hatch"/>
     <module name="intellij.python.hatch.common"/>
     <module name="intellij.python.navigation"/>
+    <module name="intellij.python.packaging"/>
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.pydev"/>
     <module name="intellij.python.pyproject"/>
@@ -241,6 +242,8 @@
 
   <projectListeners>
     <listener class="com.jetbrains.python.packaging.PyDependencyCollectorListener"
+              topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
+    <listener class="com.jetbrains.python.packaging.management.PythonPackageStubRootsListener"
               topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
     <listener class="com.jetbrains.python.statistics.PyPackageDaemonListener"
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
@@ -426,11 +429,14 @@
 
     <projectService serviceInterface="com.jetbrains.python.packaging.management.PythonPackageManagerService"
                     serviceImplementation="com.jetbrains.python.packaging.management.PythonPackageManagerServiceImpl"/>
+    <projectService serviceInterface="com.intellij.python.sdk.backend.PythonInterpreterPathsSetup"
+                    serviceImplementation="com.jetbrains.python.sdk.PythonInterpreterFactsPathsSetup"/>
 
     <externalAnnotator language="Python" implementationClass="com.jetbrains.python.validation.Pep8ExternalAnnotator"/>
 
     <postStartupActivity implementation="com.jetbrains.python.sdk.PythonHeadlessSdkUpdater"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdateProjectActivity"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.packaging.management.PythonPackageManagersStartupActivity"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkAdditionalDataMigrationActivity"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.uv.UvModeMigrationActivity"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.testing.PyTestConfigurationPropertiesPreloader"/>
@@ -754,6 +760,12 @@
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
+    <interpreterUpdateStep id="sdkLegacySourceRoots" order="after probe" implementation="com.jetbrains.python.sdk.PythonSdkLegacySourceRootsStep"/>
+    <interpreterUpdateStep id="sdkSources" order="after sdkLegacySourceRoots, before environmentBackground" implementation="com.jetbrains.python.sdk.PythonSdkSourcesStep"/>
+    <environmentUpdateStep id="skeletons" order="after probe" implementation="com.jetbrains.python.sdk.PythonEnvironmentSkeletonsStep"/>
+    <interpreterUpdateStep id="sdkSkeletonsFailure" order="after environmentBackground" implementation="com.jetbrains.python.sdk.PythonSdkSkeletonsFailureStep"/>
+    <interpreterUpdateStep id="sdkPackages" order="after sdkSkeletonsFailure" implementation="com.jetbrains.python.sdk.PythonSdkPackagesStep"/>
+    <interpreterRootsContributor id="packageStubs" order="after typeshedStdlib" implementation="com.jetbrains.python.packaging.management.PythonPackageStubRoots"/>
     <pyRunToolProvider implementation="com.jetbrains.python.sdk.uv.run.UvRunToolProvider"/>
     <pythonDebugBackendRunner implementation="com.jetbrains.python.debugger.PydevdDebugBackendRunner"/>
     <pyRunToolProvider implementation="com.jetbrains.python.hatch.run.HatchRunToolProvider"/>

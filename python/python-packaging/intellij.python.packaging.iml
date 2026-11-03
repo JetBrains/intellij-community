@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
     <orderEntry type="module" module-name="intellij.python.community" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" />
   </component>
 </module>

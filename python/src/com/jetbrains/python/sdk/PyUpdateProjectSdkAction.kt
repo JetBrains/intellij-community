@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.python.pyproject.model.evolution.evoPyProjects
+import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import org.jetbrains.annotations.ApiStatus
 
@@ -20,7 +22,7 @@ class PyUpdateProjectSdkAction : DumbAwareAction() {
           LOG.info("Skipping ${evoPyProject.pyProject.baseDir}, because it has no interpreter")
           continue
         }
-        PythonSdkUpdater.scheduleUpdate(interpreter, project)
+        PythonInterpreterUpdater.getInstance(project).request(interpreter, PythonInterpreterUpdateRequest(packages = true, background = false))
       }
     }
   }

@@ -37,6 +37,9 @@ import org.jetbrains.annotations.ApiStatus
  * 1. Is not a .pyi stub file
  * 2. Is located in a library directory
  *
+ * The resolution skips the stub roots, such as the typeshed: resolve gives only the top result, and a stub of an
+ * installed package ranks above its `.py` file.
+ *
  * @param project the project context
  * @param interpreter the interpreter to resolve against
  * @param fqns the fully-qualified names to resolve (e.g., "pytest.fixture")
@@ -44,7 +47,7 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 fun canResolveFqn(project: Project, interpreter: PythonInterpreter, fqns: List<String>): Boolean {
-  val context = fromInterpreter(project, interpreter).copyWithMembers()
+  val context = fromInterpreter(project, interpreter).copyWithMembers().copyWithoutStubs()
   val fileIndex = ProjectFileIndex.getInstance(project)
 
   fun canResolveSingleFqn(fqn: String): Boolean {

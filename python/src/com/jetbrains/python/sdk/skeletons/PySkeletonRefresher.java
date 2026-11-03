@@ -223,20 +223,29 @@ public final class PySkeletonRefresher {
       LOG.info("Could not find skeletons path for SDK path " + homePath);
     }
     else {
-      LOG.info("Refreshing skeletons for " + homePath);
-      final PySkeletonRefresher refresher = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator, null);
+      // An update runs one generation for each environment at a time, see PythonEnvironments.
+      generateSkeletons(project, skeletonsPath, sdk, indicator);
+    }
+  }
 
-      changeGeneratingSkeletons(1);
-      try {
-        final List<String> errors = refresher.regenerateSkeletons();
-        if (!errors.isEmpty()) {
-          var failedSkeletons = StringUtil.join(errors, ", ");
-          LOG.warn(String.format("%s: %s", PyBundle.message("sdk.some.skeletons.failed"), failedSkeletons));
-        }
+  private static void generateSkeletons(@Nullable Project project,
+                                        @NotNull Path skeletonsPath,
+                                        @NotNull Sdk sdk,
+                                        @Nullable ProgressIndicator indicator)
+    throws InvalidSdkException, ExecutionException {
+    LOG.info("Refreshing skeletons for " + sdk.getHomePath());
+    final PySkeletonRefresher refresher = new PySkeletonRefresher(project, sdk, skeletonsPath, indicator, null);
+
+    changeGeneratingSkeletons(1);
+    try {
+      final List<String> errors = refresher.regenerateSkeletons();
+      if (!errors.isEmpty()) {
+        var failedSkeletons = StringUtil.join(errors, ", ");
+        LOG.warn(String.format("%s: %s", PyBundle.message("sdk.some.skeletons.failed"), failedSkeletons));
       }
-      finally {
-        changeGeneratingSkeletons(-1);
-      }
+    }
+    finally {
+      changeGeneratingSkeletons(-1);
     }
   }
 

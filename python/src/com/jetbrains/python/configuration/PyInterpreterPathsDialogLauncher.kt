@@ -8,11 +8,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.PythonInterpreterSdks
+import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.updateInterpreterFacts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -31,7 +36,7 @@ object PyInterpreterPathsDialogLauncher {
   /**
    * `PythonPathDialog` is a Swing `DialogWrapper`, so the show / edit phase runs on the EDT. The
    * commit uses `edtWriteAction` — the coroutine-friendly EDT write helper — and the follow-up
-   * `PythonSdkUpdater` call hops onto `Dispatchers.Default` so the caller's coroutine unblocks the
+   * `PythonInterpreterUpdater` call hops onto `Dispatchers.Default` so the caller's coroutine unblocks the
    * EDT the moment the dialog closes.
    */
   suspend fun open(project: Project, sdk: Sdk, onPathsChanged: (Sdk) -> Unit = {}): Boolean {
@@ -40,11 +45,11 @@ object PyInterpreterPathsDialogLauncher {
       val editor = strategy.createEditor(project, sdk)
       editor.setModuleSourceRoots(moduleSourceRootsOf(project, sdk))
       // Wire the "Reload paths" toolbar action inside the paths editor to a full interpreter
-      // re-detection: `PythonSdkUpdater` walks the SDK binary again and refreshes version +
+      // re-detection: `PythonInterpreterUpdater` walks the SDK binary again and refreshes version +
       // site-packages / typeshed roots. Without this callback the toolbar button would only
       // refresh the editor's view of already-known roots, not re-scan the interpreter itself.
       // Same wiring as legacy `PythonInterpreterMasterDetails.ShowPathsAction` (`reloadSdk`).
-      editor.addReloadPathsActionCallback { PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project) }
+      editor.addReloadPathsActionCallback { PythonInterpreterUpdater.getInstance(project).request(sdk, PythonInterpreterUpdateRequest(packages = true, background = false)) }
       val sdkModificator = sdk.sdkModificator
       val dialog = PythonPathDialog(project, editor)
       editor.reset(sdkModificator)
@@ -52,12 +57,11 @@ object PyInterpreterPathsDialogLauncher {
       if (!editor.isModified) return@withContext editor to false
       editor.apply(sdkModificator)
       edtWriteAction { sdkModificator.commitChanges() }
+      writeUserPaths(project, sdk, editor.addedPaths, editor.excludedPaths)
       editor to true
     }
     if (!modified) return false
-    withContext(Dispatchers.Default) {
-      PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
-    }
+    PythonInterpreterRegistry.getInstance(project).interpreterOf(sdk)?.let { updateInterpreterFacts(it, project) }
     onPathsChanged(sdk)
     return true
   }
@@ -95,5 +99,20 @@ private sealed interface PathEditorStrategy {
  */
 private fun moduleSourceRootsOf(project: Project, sdk: Sdk): Collection<VirtualFile> {
   val key = PythonInterpreterSdks.getInstance(project).keyOf(sdk) ?: return emptyList()
-  return PythonInterpreterDetails.getInstance(project).sourceRoots(key)
+  val interpreter = PythonInterpreterRegistry.getInstance(project).resolveIfReady(key) ?: return emptyList()
+  return PythonInterpreterRoots.getInstance(project).sourceRoots(interpreter)
+}
+
+/**
+ * Writes [added] and [excluded], the paths that the user set in the paths dialog, as facts of the interpreter of [sdk],
+ * see [PythonInterpreterDetails.writeAddedPaths]. The SDK commit of the dialog keeps what is SDK data, such as the path
+ * mappings of a remote interpreter. Does nothing for an SDK that names no interpreter of [project].
+ */
+@ApiStatus.Internal
+fun writeUserPaths(project: Project, sdk: Sdk, added: Collection<VirtualFile>, excluded: Collection<VirtualFile>) {
+  val key = PythonInterpreterSdks.getInstance(project).keyOf(sdk) ?: return
+  val interpreter = PythonInterpreterRegistry.getInstance(project).resolveIfReady(key) ?: return
+  val details = PythonInterpreterDetails.getInstance(project)
+  details.writeAddedPaths(interpreter, added.mapNotNull { it.toNioPathOrNull() })
+  details.writeExcludedPaths(interpreter, excluded.mapNotNullTo(HashSet()) { it.toNioPathOrNull() })
 }

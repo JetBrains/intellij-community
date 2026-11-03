@@ -34,12 +34,12 @@ import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.AddInterpreterActions;
 import com.jetbrains.python.sdk.ModuleOrProject;
 import com.jetbrains.python.sdk.ProjectExtKt;
+import com.jetbrains.python.sdk.PythonSdkUpdatesKt;
 import com.jetbrains.python.sdk.PyCustomSdkUiProvider;
 import com.jetbrains.python.sdk.PyInterpreterSelection;
 import com.jetbrains.python.sdk.PyRenderedSdkType;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PyTransferredSdkRootsKt;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -254,7 +254,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   public final void apply() {
     final Sdk selectedSdk = getOriginalSelectedSdk();
     if (selectedSdk != null) {
-      ((PythonSdkType)selectedSdk.getSdkType()).setupSdkPaths(selectedSdk);
+      PythonSdkUpdatesKt.launchUpdateOrShowError(selectedSdk, myProject);
     }
     setSdk(selectedSdk);
   }

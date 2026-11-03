@@ -45,6 +45,7 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.pythonProjectBaseDirs
+import com.intellij.python.pyproject.model.evolution.readStoredInterpreter
 import com.intellij.python.pyproject.model.evolution.setOnWorkspace
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.pytools.backend.PyTool
@@ -52,6 +53,7 @@ import com.intellij.python.pytools.backend.performToolInstallation
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.python.sdk.backend.asItem
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.detectedEnvironment
@@ -108,7 +110,6 @@ import com.jetbrains.python.project.eelDescriptor
 import com.jetbrains.python.project.project
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.add.collector.PythonNewInterpreterAddedCollector
 import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystemWithEel
@@ -135,7 +136,7 @@ import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.slowLoadThreshold
 import com.jetbrains.python.sdk.getAssignablePythonSdks
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.isSdkConfigurationInProgress
-import com.intellij.python.pyproject.model.evolution.readStoredInterpreter
+import com.jetbrains.python.sdk.updateInterpreterFacts
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
@@ -144,7 +145,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -157,7 +157,6 @@ import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.pathString
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTimedValue
 import kotlin.time.Duration as KotlinDuration
@@ -174,9 +173,6 @@ private const val PACKAGE_MANAGER_ACTIONS_GROUP: String = "PythonPackageManagerA
  * the widget look stuck.
  */
 private val SDK_QUIESCE_TIMEOUT: KotlinDuration = 20.seconds
-
-/** How often [PyEvoSdkApiImpl.awaitSdkQuiet] re-asks. `isUpdateScheduled` is a lock and a set lookup, so this is cheap. */
-private val SDK_QUIESCE_POLL: KotlinDuration = 200.milliseconds
 
 /**
  * The statistics identity of [nodeId], taken from the provider that owns it.
@@ -827,9 +823,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val interpreter = PythonInterpreterRegistry.getInstance(pyProject.project).interpreters(pyProject)
                         .firstOrNull { it.ref == ref } ?: return
     withTimeoutOrNull(SDK_QUIESCE_TIMEOUT) {
-      while (PythonSdkUpdater.isUpdateScheduled(interpreter)) {
-        delay(SDK_QUIESCE_POLL)
-      }
+      PythonInterpreterUpdater.getInstance(pyProject.project).awaitUpdate(interpreter)
     } ?: LOG.info("Evo: '${interpreter.ref}' is still refreshing after ${SDK_QUIESCE_TIMEOUT}; rebuilding anyway")
   }
 
@@ -860,9 +854,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    * is nothing to undo.
    */
   private suspend fun refreshRebuiltSdk(pythonInterpreter: PythonInterpreter, project: Project) {
-    val updated = withContext(Dispatchers.IO) {
-      PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(pythonInterpreter, project)
-    }
+    val updated = updateInterpreterFacts(pythonInterpreter, project) is com.jetbrains.python.Result.Success
     if (!updated) LOG.warn("Evo: rebuilt ${pythonInterpreter.detectedEnvironment?.pythonBinaryPath ?: pythonInterpreter}, but could not re-read its version and paths")
   }
 

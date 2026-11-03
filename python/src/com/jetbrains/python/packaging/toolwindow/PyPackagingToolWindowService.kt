@@ -1,24 +1,29 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.packaging.toolwindow
 
-import com.intellij.python.pyproject.model.evolution.currentPythonInterpreter
 import com.intellij.notification.NotificationGroupManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.roots.ModuleRootEvent
-import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.ex.SingleConfigurableEditor
 import com.intellij.openapi.project.Project
-import com.jetbrains.python.sdk.ModuleOrProject
+import com.intellij.openapi.roots.ModuleRootEvent
+import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.pyproject.model.evolution.currentPythonInterpreter
+import com.intellij.python.pyproject.model.evolution.evoPyProjects
+import com.intellij.python.requirements.pyRequirement
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.asItem
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
@@ -32,13 +37,8 @@ import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
-import com.intellij.python.sdk.backend.asItem
-import com.intellij.openapi.module.Module
-import com.intellij.python.pyproject.model.evolution.evoPyProjects
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.conda.CondaPackage
-import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -48,12 +48,7 @@ import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.management.ui.notify
 import com.jetbrains.python.packaging.packageRequirements.PackagesUnavailableNode
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
-import com.jetbrains.python.packaging.toolwindow.packages.PackagesUnavailableAction
-import com.jetbrains.python.packaging.utils.PyPIPackageRanking
-import com.jetbrains.python.showProcessExecutionErrorDialog
-import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
-import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PyRepositoriesList
 import com.jetbrains.python.packaging.repository.checkValid
@@ -69,7 +64,10 @@ import com.jetbrains.python.packaging.toolwindow.model.PyPackagesViewData
 import com.jetbrains.python.packaging.toolwindow.model.RequirementPackage
 import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
-import com.jetbrains.python.sdk.pySdkAdditionalData
+import com.jetbrains.python.packaging.toolwindow.packages.PackagesUnavailableAction
+import com.jetbrains.python.packaging.utils.PyPIPackageRanking
+import com.jetbrains.python.sdk.ModuleOrProject
+import com.jetbrains.python.showProcessExecutionErrorDialog
 import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_DELETED
 import com.jetbrains.python.statistics.PythonPackagesIdsHolder.Companion.PYTHON_PACKAGE_INSTALLED
 import kotlinx.coroutines.CoroutineScope
@@ -625,7 +623,7 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
 
 
   private fun subscribeToPackageManagementChanges() {
-    ApplicationManager.getApplication().messageBus.connect(serviceScope)
+    project.messageBus.connect(serviceScope)
       .subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
         override fun packagesChanged(interpreter: PythonInterpreter) {
           val context = interpreterContext ?: return

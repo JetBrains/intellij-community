@@ -10,7 +10,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -22,7 +21,11 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.model.spi.ProjectName
+import com.intellij.python.sdk.backend.NativePythonInterpreter
+import com.intellij.python.sdk.backend.PythonEnvironmentKey
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterDetails
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -32,9 +35,12 @@ import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
+import com.jetbrains.python.packaging.InstalledPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
+import com.jetbrains.python.packaging.PythonInstalledPackagesCache
+import com.jetbrains.python.packaging.common.PyDependencyGroupName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -48,20 +54,16 @@ import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUti
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.requirements.PyDependenciesFileProvider
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModuleDir
 import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.readOnlyErrorMessage
 import com.jetbrains.python.sdk.refreshPaths
-import java.nio.file.Path
-import java.util.SequencedMap
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
@@ -77,7 +79,11 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.TestOnly
+import java.net.URI
+import java.nio.file.Path
+import java.util.SequencedMap
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.cancellation.CancellationException
 
 
 /**
@@ -121,6 +127,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   protected val managerScope: CoroutineScope = PyPackageCoroutine.getScope(project).childScope("PythonPackageManager for ${sdk.name}")
 
   private val isInited = AtomicBoolean(false)
+
+  /** Whether the installed packages came from the cache, and no list checked the outdated packages since. */
+  private val outdatedPending = AtomicBoolean(false)
   private val packageReloadMutex = Mutex()
 
   private val dependencyCache = DependencyCache()
@@ -162,6 +171,10 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @Volatile
   private var installedPackagesMetadataLoad: Deferred<Map<PyPackageName, PythonPackageMetadata>> = CompletableDeferred(emptyMap())
+
+  /** The last check of the outdated packages, see [awaitOutdatedPackages]. */
+  @Volatile
+  private var outdatedPackagesLoad: Job = Job().apply { complete() }
 
   @get:ApiStatus.Internal
   open val treeProvider: DependencyTreeProvider? = null
@@ -245,26 +258,18 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       val packages = loadPackagesCommand().getOr { return it }
 
       val changed = packages != installedPackages
-      if (!changed) return PyResult.success(listInstalledPackagesSnapshot())
+      if (!changed) {
+        // A list from the cache did not check the outdated packages, see [publishInstalledPackages]. The first list of the
+        // process does it, also when it gives the same packages.
+        if (outdatedPending.compareAndSet(true, false)) startOutdatedPackagesLoad()
+        return PyResult.success(listInstalledPackagesSnapshot())
+      }
 
       // Transactional commit: state mutation + listener notification
       // must complete atomically even if the caller is cancelled.
       withContext(NonCancellable) {
-        this@PythonPackageManager.installedPackages = packages
-        // Replaced before `packagesChanged`, so a listener that reads the metadata awaits the new package list.
-        installedPackagesMetadataLoad = managerScope.async(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-          // A load that a newer reload replaced must not overwrite the newer snapshot.
-          loadMetadata(packages).also { if (installedPackages === packages) installedPackagesMetadata = it }
-        }
-
-        ApplicationManager.getApplication().messageBus.apply {
-          syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(interpreter)
-          syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
-        }
-
-        managerScope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-          reloadOutdatedPackages()
-        }
+        storeInstalledPackages(packages)
+        publishInstalledPackages(packages)
       }
       packages
     }
@@ -277,6 +282,70 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     }
 
     return PyResult.success(packages)
+  }
+
+  /**
+   * Makes [packages] the installed packages of this manager and tells the listeners, see [PACKAGE_MANAGEMENT_TOPIC].
+   * Always call under [packageReloadMutex].
+   *
+   * A list that the process gave starts the metadata and the outdated packages at once. A list from the cache, see
+   * [cachedInstalledPackages], starts none of them: the metadata loads when a reader awaits it, see
+   * [awaitInstalledPackagesMetadata], and the outdated packages with the next list, also one with the same packages. So
+   * a start runs no process.
+   */
+  private suspend fun publishInstalledPackages(packages: List<PythonPackage>, fromCache: Boolean = false) {
+    withContext(NonCancellable) {
+      this@PythonPackageManager.installedPackages = packages
+      // Replaced before `packagesChanged`, so a listener that reads the metadata awaits the new package list.
+      installedPackagesMetadataLoad = managerScope.async(
+        NON_INTERACTIVE_ROOT_TRACE_CONTEXT,
+        start = if (fromCache) CoroutineStart.LAZY else CoroutineStart.DEFAULT,
+      ) {
+        // A load that a newer reload replaced must not overwrite the newer snapshot.
+        loadMetadata(packages).also { if (installedPackages === packages) installedPackagesMetadata = it }
+      }
+
+      project.messageBus.syncPublisher(PACKAGE_MANAGEMENT_TOPIC).packagesChanged(interpreter)
+      ApplicationManager.getApplication().messageBus.syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
+
+      outdatedPending.set(fromCache)
+      if (!fromCache) startOutdatedPackagesLoad()
+    }
+  }
+
+  /**
+   * The installed packages of the last list of the environment by a manager of this class, when its fingerprint did not
+   * change since, see [PythonInstalledPackagesCache]. `null` for an environment that the cache cannot tell, such as one
+   * on a target.
+   */
+  private suspend fun cachedInstalledPackages(): List<PythonPackage>? {
+    val [environment, fingerprint] = environmentFingerprint() ?: return null
+    return PythonInstalledPackagesCache.getInstance().packagesOf(environment, javaClass.name, fingerprint)?.map { it.toPythonPackage() }
+  }
+
+  /**
+   * Keeps [packages] as the installed packages of the environment, for the next start, see [cachedInstalledPackages]. A
+   * list with a package of a subclass, such as a conda package, has data that the cache does not keep, so the cache drops
+   * the environment instead.
+   */
+  private suspend fun storeInstalledPackages(packages: List<PythonPackage>) {
+    val [environment, fingerprint] = environmentFingerprint() ?: return
+    val cache = PythonInstalledPackagesCache.getInstance()
+    if (packages.any { it.javaClass != PythonPackage::class.java }) cache.drop(environment, javaClass.name)
+    else cache.store(environment, javaClass.name, fingerprint, packages.map { it.toInstalledPackage() })
+  }
+
+  /** The environment of [interpreter] and its fingerprint now, see [PythonInstalledPackagesCache.fingerprintOf]. */
+  private suspend fun environmentFingerprint(): Pair<PythonEnvironmentKey, String>? {
+    // The cache reads the site-packages directories on the disk of the IDE, so a target environment has no fingerprint.
+    when (interpreter) {
+      is NativePythonInterpreter -> Unit
+      is TargetPythonInterpreter -> return null
+    }
+    val environment = PythonEnvironmentKey.of(sdk) ?: return null
+    val sysPath = PythonInterpreterDetails.getInstance(project).facts(interpreter).sysPath
+    val fingerprint = withContext(Dispatchers.IO) { PythonInstalledPackagesCache.fingerprintOf(sysPath) } ?: return null
+    return environment to fingerprint
   }
 
 
@@ -345,11 +414,23 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   suspend fun awaitInstalledPackagesMetadata(): Map<PyPackageName, PythonPackageMetadata> {
     waitForInit()
+    // A load of a list from the cache starts here, see [publishInstalledPackages].
     return installedPackagesMetadataLoad.await()
   }
 
   @ApiStatus.Internal
   fun listInstalledPackagesMetadataSnapshot(): Map<PyPackageName, PythonPackageMetadata> = installedPackagesMetadata
+
+  /** Starts a check of the outdated packages in the background, see [awaitOutdatedPackages]. */
+  private fun startOutdatedPackagesLoad() {
+    outdatedPackagesLoad = managerScope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) { reloadOutdatedPackages() }
+  }
+
+  /** Suspends until the last check of the outdated packages that this manager started ends. */
+  @ApiStatus.Internal
+  suspend fun awaitOutdatedPackages() {
+    outdatedPackagesLoad.join()
+  }
 
   private suspend fun reloadOutdatedPackages() {
     if (listInstalledPackagesSnapshot().isEmpty()) {
@@ -364,9 +445,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     if (outdatedPackages == packageMap) return
 
     outdatedPackages = packageMap
-    ApplicationManager.getApplication().messageBus.apply {
-      syncPublisher(PACKAGE_MANAGEMENT_TOPIC).outdatedPackagesChanged(interpreter)
-    }
+    project.messageBus.syncPublisher(PACKAGE_MANAGEMENT_TOPIC).outdatedPackagesChanged(interpreter)
   }
 
   /**
@@ -521,17 +600,25 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     initializationJob.join()
   }
 
+  /** Starts the init of this manager, see [waitForInit], and does not wait for it. */
+  @ApiStatus.Internal
+  fun startInit() {
+    initializationJob.start()
+  }
+
 
   private suspend fun initInstalledPackages() {
     try {
       if (isInited.getAndSet(true)) return
-      if (!PythonSdkType.isMock(sdk)) {
-        loadPackagesImpl(isInit = true)
-      }
-      // Populate the declared-packages snapshot so non-suspend readers (e.g. inspection
-      // visitors) observe it without waiting for an explicit suspend caller. This runs
-      // even for mock SDKs because it only depends on dependency files (not an interpreter).
-      dependencyCache.awaitLatest()
+      // An environment that did not change since its last list starts no process: the cache gives its packages.
+      val cached = cachedInstalledPackages()
+      if (cached != null) packageReloadMutex.withLock { publishInstalledPackages(cached, fromCache = true) }
+      else loadPackagesImpl(isInit = true)
+      // Populate the declared-packages snapshot so non-suspend readers (e.g. inspection visitors) observe it without
+      // waiting for an explicit suspend caller. The init does not wait for it: the declared packages can need a process,
+      // such as `uv tree`, and the derived roots need only the installed packages. A reader that must have them awaits
+      // [listDeclaredPackagesCached].
+      managerScope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) { loadDeclaredPackages() }
     }
     catch (t: CancellationException) {
       throw t
@@ -539,6 +626,11 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     catch (t: ExecutionException) {
       thisLogger().warn("Failed to initialize PythonPackageManager for $sdk", t)
     }
+  }
+
+  /** Loads the declared packages into their snapshot, see [listDeclaredPackagesSnapshot]. */
+  private suspend fun loadDeclaredPackages() {
+    dependencyCache.awaitLatest()?.onFailure { thisLogger().warn("Failed to read the declared packages of $sdk: $it") }
   }
 
   /**
@@ -615,7 +707,12 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
         // Stale completion (a newer entry replaced this one) — leave the snapshot alone.
         if (entry !== newEntry) return@invokeOnCompletion
         // StateFlow deduplicates by .equals — assigning the same list is a no-op.
-        snapshot.value = if (cause == null) deferred.getCompleted()?.getOrNull() else null
+        val declared = if (cause == null) deferred.getCompleted()?.getOrNull() else null
+        if (snapshot.value != declared) {
+          snapshot.value = declared
+          // The init does not wait for this read, so a reader that ran before it reads again.
+          project.messageBus.syncPublisher(PACKAGE_MANAGEMENT_TOPIC).declaredPackagesChanged(interpreter)
+        }
       }
       newEntry
     }
@@ -654,17 +751,11 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager =
       project.service<PythonPackageManagerService>().forPythonInterpreter(project, interpreter)
 
-    /** For tests: drops the cached managers of [project], see [PythonPackageManagerServiceImpl.dropManagersForTests]. */
-    @TestOnly
-    @ApiStatus.Internal
-    @JvmStatic
-    fun dropManagersForTests(project: Project) {
-      project.serviceIfCreated<PythonPackageManagerService>()?.let { (it as? PythonPackageManagerServiceImpl)?.dropManagersForTests() }
-    }
 
-    @Topic.AppLevel
+    /** The changes of the packages of the interpreters of a project. The manager publishes them on the bus of its project. */
+    @Topic.ProjectLevel
     val PACKAGE_MANAGEMENT_TOPIC: Topic<PythonPackageManagementListener> =
-      Topic(PythonPackageManagementListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
+      Topic(PythonPackageManagementListener::class.java, Topic.BroadcastDirection.NONE)
   }
 }
 
@@ -732,3 +823,11 @@ interface PythonWorkspaceSupport {
    */
   suspend fun resolveModule(member: PyWorkspaceMember): Module? = null
 }
+
+private fun PythonPackage.toInstalledPackage(): InstalledPackage =
+  InstalledPackage(name, version, isEditableMode, dependencyGroup?.name, editableLocation?.toString())
+
+private fun InstalledPackage.toPythonPackage(): PythonPackage =
+  PythonPackage(name, version, editable, dependencyGroup?.let(::PyDependencyGroupName)).also { pkg ->
+    pkg.editableLocation = editableLocation?.let(URI::create)
+  }

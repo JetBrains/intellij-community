@@ -40,6 +40,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//python/python-pyproject:pyproject",
         "//python/openapi:community",
+        "//python/python-sdk/backend",
     ],
 )
 ### auto-generated section `build intellij.python.packaging` end

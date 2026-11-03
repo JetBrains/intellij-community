@@ -1,11 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging;
 
-import com.google.common.collect.Sets;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -14,29 +9,17 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.AsyncFileListener;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiManager;
 import com.intellij.python.requirements.parser.PyRequirementParser;
-import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
 import com.jetbrains.python.packaging.requirementsTxt.RequirementsTxtManipulationHelper;
@@ -52,17 +35,13 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
-import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static com.jetbrains.python.packaging.setupPy.SetupPyHelpers.SETUP_PY;
 
@@ -261,93 +240,5 @@ public final class PyPackageUtil {
     if (setupPyFile != null) {
       SetupPyHelpers.addRequirementsToSetupPy(setupPyFile, requirementName, languageLevel);
     }
-  }
-
-
-  /**
-   * Execute the given executable on a pooled thread whenever there is a VFS event happening under some of the roots of the SDK.
-   *
-   * @param sdk              SDK those roots need to be watched. It must be disposed not later than "parentDisposable"
-   * @param parentDisposable disposable for the registered event listeners. It must not outlive sdk
-   * @param runnable         executable that's going to be executed
-   */
-  public static void runOnChangeUnderInterpreterPaths(@NotNull Sdk sdk,
-                                                      @NotNull Disposable parentDisposable,
-                                                      @NotNull Runnable runnable) {
-    final Application app = ApplicationManager.getApplication();
-    VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
-      @Override
-      public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
-        if (sdk instanceof Disposable && Disposer.isDisposed((Disposable)sdk)) {
-          throw new AlreadyDisposedException("SDK " + sdk + " (" + sdk.getClass() + ") is already disposed");
-        }
-        final Set<VirtualFile> roots = getPackagingAwareSdkRoots(sdk);
-        if (roots.isEmpty()) return null;
-        allEvents:
-        for (VFileEvent event : events) {
-          if (event instanceof VFileContentChangeEvent || event instanceof VFilePropertyChangeEvent) continue;
-          // In case of create event getFile() returns null as the file hasn't been created yet
-          VirtualFile parent = null;
-          if (event instanceof VFileCreateEvent) {
-            parent = ((VFileCreateEvent)event).getParent();
-          }
-          else {
-            VirtualFile file = event.getFile();
-            if (file != null) parent = file.getParent();
-          }
-
-          if (parent != null && roots.contains(parent)) {
-            InterpreterChangeEvents.LOG.debug("Interpreter change in " + parent + " indicated by " + event +
-                                              " (all events: " + events + ")");
-            app.executeOnPooledThread(runnable);
-            break allEvents;
-          }
-        }
-        // No continuation in write action is needed
-        return null;
-      }
-    }, parentDisposable);
-  }
-
-  private static @NotNull Set<VirtualFile> getPackagingAwareSdkRoots(@NotNull Sdk sdk) {
-    final Set<VirtualFile> result = Sets.newHashSet(PythonSdkUtil.getPythonClassRoots(sdk));
-    var targetAdditionalData = SdkExtKt.getTargetAdditionalData(sdk);
-    if (targetAdditionalData != null) {
-      // For targets that support VFS we are interested not only in local dirs, but also for VFS on target
-      // When user changes something on WSL FS for example, we still need to trigger path updates
-      for (var remoteSourceToVfs : getRemoteSourceToVfsMapping(targetAdditionalData).entrySet()) {
-        if (result.contains(remoteSourceToVfs.getKey())) {
-          result.add(remoteSourceToVfs.getValue());
-        }
-      }
-    }
-    final String skeletonsPath = PythonSdkUtil.getSkeletonsPath(PathManager.getSystemPath(), sdk.getHomePath());
-    final VirtualFile skeletonsRoot = StandardFileSystems.local().findFileByPath(skeletonsPath);
-    result.removeIf(vf -> vf.equals(skeletonsRoot) || PyTypeShed.INSTANCE.isInside(vf));
-    return result;
-  }
-
-  /**
-   * If target provides access to its FS using VFS, rerun all mappings in format [path-to-"remote_sources" -> vfs-on-target]
-   * i.e: "c:\remote_sources -> \\wsl$\..."
-   */
-  private static @NotNull Map<@NotNull VirtualFile, @NotNull VirtualFile> getRemoteSourceToVfsMapping(@NotNull PyTargetAwareAdditionalData additionalData) {
-    var configuration = additionalData.getTargetEnvironmentConfiguration();
-    if (configuration == null) return Collections.emptyMap();
-    var vfsMapper = PythonInterpreterTargetEnvironmentFactory.getTargetWithMappedLocalVfs(configuration);
-    if (vfsMapper == null) return Collections.emptyMap();
-    var vfs = StandardFileSystems.local();
-    var result = new HashMap<@NotNull VirtualFile, @NotNull VirtualFile>();
-    for (var remoteSourceAndVfs : ContainerUtil.map(additionalData.getPathMappings().getPathMappings(),
-                                                    m -> Pair.create(
-                                                      vfs.findFileByPath(m.getLocalRoot()),
-                                                      vfsMapper.getVfsFromTargetPath(m.getRemoteRoot())))) {
-      var remoteSourceDir = remoteSourceAndVfs.first;
-      var vfsDir = remoteSourceAndVfs.second;
-      if (remoteSourceDir != null && vfsDir != null) {
-        result.put(remoteSourceDir, vfsDir);
-      }
-    }
-    return result;
   }
 }
