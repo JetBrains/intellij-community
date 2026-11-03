@@ -23,7 +23,6 @@ import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.lang.ByteBufferCleaner
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.ImageUtil
@@ -61,7 +60,9 @@ import java.awt.image.DataBufferInt
 import java.awt.image.DirectColorModel
 import java.awt.image.Raster
 import java.io.IOException
-import java.nio.ByteBuffer
+import java.lang.foreign.Arena
+import java.lang.foreign.MemorySegment
+import java.lang.foreign.ValueLayout
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.file.AtomicMoveNotSupportedException
@@ -70,7 +71,6 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
-import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.name
 
@@ -81,6 +81,8 @@ private var SPLASH_WINDOW: Splash? = null
 private val splashJob = AtomicReference<Job>(CompletableDeferred<Unit>())
 
 private fun isTooLateToShowSplash(): Boolean = LoadingState.COMPONENTS_LOADED.isOccurred
+
+private val LE_INT: ValueLayout.OfInt = ValueLayout.JAVA_INT_UNALIGNED.withOrder(ByteOrder.LITTLE_ENDIAN)
 
 // don't use `error` on it, because it can crash the application
 private fun logger(): Logger = Logger.getInstance("com.intellij.platform.ide.bootstrap.SplashManager")
@@ -298,36 +300,29 @@ private fun getCacheFile(scale: Float, path: String, build: String): Pair<Path, 
 
 private suspend fun loadRaster(file: Path, scale: Float, isJreHiDPIEnabled: Boolean): BufferedImage? {
   try {
-    val buffer = try {
-      withContext(Dispatchers.IO) {
-        FileChannel.open(file).use { channel ->
-          channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size()).order(ByteOrder.LITTLE_ENDIAN)
+    Arena.ofShared().use { arena ->
+      val segment = try {
+        withContext(Dispatchers.IO) {
+          FileChannel.open(file).use { channel ->
+            channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size(), arena)
+          }
         }
       }
-    }
-    catch (_: NoSuchFileException) {
-      return null
-    }
+      catch (_: NoSuchFileException) {
+        return null
+      }
 
-    currentCoroutineContext().ensureActive()
+      currentCoroutineContext().ensureActive()
 
-    try {
-      val intBuffer = buffer.asIntBuffer()
-      val w = intBuffer.get()
-      val h = intBuffer.get()
-
+      val w = segment.get(LE_INT, 0)
+      val h = segment.get(LE_INT, Int.SIZE_BYTES.toLong())
       val dataBuffer = DataBufferInt(w * h)
-      intBuffer.get(SunWritableRaster.stealData(dataBuffer, 0))
+      MemorySegment.copy(segment, LE_INT, 2L * Int.SIZE_BYTES, SunWritableRaster.stealData(dataBuffer, 0), 0, w * h)
       SunWritableRaster.makeTrackable(dataBuffer)
       val colorModel = ColorModel.getRGBdefault() as DirectColorModel
       val raster = Raster.createPackedRaster(dataBuffer, w, h, w, colorModel.masks, Point(0, 0))
-
-      @Suppress("UndesirableClassUsage")
-      val rawImage = BufferedImage(colorModel, raster, false, null)
+      val rawImage = BufferedImage(colorModel, raster, /*isRasterPremultiplied =*/ false, /*properties =*/ null)
       return createHiDpiAwareImage(rawImage, scale, isJreHiDPIEnabled)
-    }
-    finally {
-      ByteBufferCleaner.unmapBuffer(buffer)
     }
   }
   catch (e: CancellationException) { throw e }
@@ -368,30 +363,14 @@ private fun writeRaster(file: Path, image: BufferedImage, prefixHash: String) {
   val cacheDir = NioFiles.createDirectories(file.parent)
   val tempFile = Files.createTempFile(cacheDir, file.fileName.toString(), ".tmp")
   try {
-    FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE)).use { channel ->
-      val imageData = (image.raster.dataBuffer as DataBufferInt).data
-
-      val buffer = ByteBuffer.allocateDirect(imageData.size * Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN)
-      try {
-        buffer.putInt(image.width)
-        buffer.putInt(image.height)
-        buffer.flip()
-        do {
-          channel.write(buffer)
-        }
-        while (buffer.hasRemaining())
-
-        buffer.clear()
-
-        buffer.asIntBuffer().put(imageData)
-        buffer.position(0)
-        do {
-          channel.write(buffer)
-        }
-        while (buffer.hasRemaining())
-      }
-      finally {
-        ByteBufferCleaner.unmapBuffer(buffer)
+    val imageData = (image.raster.dataBuffer as DataBufferInt).data
+    val size = (2L + imageData.size) * Int.SIZE_BYTES
+    FileChannel.open(tempFile, StandardOpenOption.READ, StandardOpenOption.WRITE).use { channel ->
+      Arena.ofConfined().use { arena ->
+        val segment = channel.map(FileChannel.MapMode.READ_WRITE, 0, size, arena)
+        segment.set(LE_INT, 0, image.width)
+        segment.set(LE_INT, Int.SIZE_BYTES.toLong(), image.height)
+        MemorySegment.copy(imageData, 0, segment, LE_INT, 2L * Int.SIZE_BYTES, imageData.size)
       }
     }
 
