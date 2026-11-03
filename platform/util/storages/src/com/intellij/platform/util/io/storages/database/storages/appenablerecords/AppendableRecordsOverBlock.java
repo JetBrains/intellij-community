@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 
+import static com.intellij.platform.util.io.storages.database.DurableDatabaseSafety.asReadOnlyIfNeeded;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE;
 import static com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ALLOCATED;
 
@@ -140,7 +141,7 @@ public final class AppendableRecordsOverBlock {
     return recordOffset;
   }
 
-  /// @return a read-only view of a committed payload
+  /// @return a view of a committed payload for reading
   public @NotNull MemorySegment read(int recordOffset) throws CorruptedException {
     return readRecord(recordOffset).payload();
   }
@@ -228,8 +229,8 @@ public final class AppendableRecordsOverBlock {
 
   private @NotNull Record record(int recordOffset, @NotNull RecordHeader header) throws CorruptedException {
     var previousRef = readPreviousRef(recordOffset, header);
-    MemorySegment payload = payload(recordOffset, header).asReadOnly();
-    return new Record(previousRef, payload);
+    MemorySegment payload = payload(recordOffset, header);
+    return new Record(previousRef, asReadOnlyIfNeeded(payload));
   }
 
   private long readPreviousRef(int recordOffset, @NotNull RecordHeader header) throws CorruptedException {

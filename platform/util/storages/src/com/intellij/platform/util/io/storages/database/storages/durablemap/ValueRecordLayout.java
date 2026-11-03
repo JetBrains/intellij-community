@@ -9,6 +9,7 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
 
+import static com.intellij.platform.util.io.storages.database.DurableDatabaseSafety.asReadOnlyIfNeeded;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT64_UNALIGNED_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT8_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.fieldHandle;
@@ -65,7 +66,7 @@ public final class ValueRecordLayout {
     if (reference <= 0) {
       throw new CorruptedException("Value record reference(=" + reference + ") must be positive");
     }
-    var payload = record.asSlice(HEADER_SIZE).asReadOnly();
+    var payload = asReadOnlyIfNeeded(record.asSlice(HEADER_SIZE));
     if (kind == Kind.TOMBSTONE && payload.byteSize() != 0) {
       throw new CorruptedException("TOMBSTONE value record must not have a payload");
     }

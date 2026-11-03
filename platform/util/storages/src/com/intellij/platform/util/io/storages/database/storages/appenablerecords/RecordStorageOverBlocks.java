@@ -166,7 +166,7 @@ public final class RecordStorageOverBlocks {
     }
   }
 
-  /// @return a read-only view of the committed payload
+  /// @return a view of the committed payload for reading
   public @NotNull MemorySegment read(long recordRef) throws IOException {
     return readRecord(recordRef).payload();
   }

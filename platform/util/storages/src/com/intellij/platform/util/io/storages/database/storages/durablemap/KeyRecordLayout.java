@@ -9,6 +9,7 @@ import java.lang.foreign.MemoryLayout;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.VarHandle;
 
+import static com.intellij.platform.util.io.storages.database.DurableDatabaseSafety.asReadOnlyIfNeeded;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT32_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.INT64_UNALIGNED_LAYOUT;
 import static com.intellij.platform.util.io.storages.database.impl.layout.LayoutUtils.fieldHandle;
@@ -82,10 +83,10 @@ public final class KeyRecordLayout {
     return (int)KEY_HASH_HANDLE.get(record, 0L);
   }
 
-  /// @return a read-only view of the serialized key
+  /// @return a view of the serialized key for reading
   public static @NotNull MemorySegment keyPayload(@NotNull MemorySegment record) throws CorruptedException {
     validate(record);
-    return record.asSlice(HEADER_SIZE).asReadOnly();
+    return asReadOnlyIfNeeded(record.asSlice(HEADER_SIZE));
   }
 
   private static void validate(@NotNull MemorySegment record) throws CorruptedException {

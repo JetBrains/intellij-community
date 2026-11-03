@@ -21,6 +21,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 
 import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static com.intellij.util.io.IOUtil.KiB;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /** Verifies append and recovery for records in durable map ENTRIES blocks. */
 public class RecordStorageOverBlocksTest {
@@ -112,6 +114,8 @@ public class RecordStorageOverBlocksTest {
 
   @Test
   public void appendReturnsReadablePayload(@TempDir Path databaseDirectory) throws Exception {
+    assumeTrue(getBooleanProperty("com.intellij.platform.util.io.storages.database.USE_READ_ONLY_SEGMENTS_FOR_READ_OPERATIONS", false),
+               "Read-only segments are disabled");
     try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
       var blockCatalog = DurableMapBlockCatalog.open(database.openStore("map", 1));
       var records = openRecords(blockCatalog, /*appendOnly: */ true);

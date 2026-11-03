@@ -21,6 +21,7 @@ import static com.intellij.platform.util.io.storages.database.storages.durablema
 import static com.intellij.platform.util.io.storages.database.storages.durablemap.ValueRecordLayout.Kind.PATCH;
 import static com.intellij.platform.util.io.storages.database.storages.durablemap.ValueRecordLayout.Kind.SNAPSHOT;
 import static com.intellij.platform.util.io.storages.database.storages.durablemap.ValueRecordLayout.Kind.TOMBSTONE;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.lang.foreign.ValueLayout.JAVA_BYTE;
 import static java.lang.foreign.MemoryLayout.PathElement.groupElement;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /// Verifies the binary payload formats of `KEYS` and `VALUES` records.
 public class DurableMapRecordLayoutsTest {
@@ -47,6 +49,8 @@ public class DurableMapRecordLayoutsTest {
 
   @Test
   public void keyRecordKeepsTheStableKeyAndMutableValueReference() throws Exception {
+    assumeTrue(getBooleanProperty("com.intellij.platform.util.io.storages.database.USE_READ_ONLY_SEGMENTS_FOR_READ_OPERATIONS", false),
+               "Read-only segments are disabled");
     var keyBytes = new byte[]{1, 2, 3};
     var recordSize = KeyRecordLayout.recordSize(keyBytes.length);
     try (var arena = Arena.ofConfined()) {
@@ -70,6 +74,8 @@ public class DurableMapRecordLayoutsTest {
 
   @Test
   public void keyAndValueRecordsUseTheirOwnBlockRoles(@TempDir Path databaseDirectory) throws Exception {
+    assumeTrue(getBooleanProperty("com.intellij.platform.util.io.storages.database.USE_READ_ONLY_SEGMENTS_FOR_READ_OPERATIONS", false),
+               "Read-only segments are disabled");
     var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
     var keyBytes = new byte[]{10, 20};
     var snapshotBytes = new byte[]{30, 40};
