@@ -6,8 +6,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
+import com.intellij.python.sdk.backend.languageLevel
+import com.jetbrains.python.psi.LanguageLevel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -94,6 +97,14 @@ internal class PythonLanguageLevels(private val project: Project, private val co
     /** The current layout of [project]. */
     @JvmStatic
     fun layoutOf(project: Project): PythonLanguageLevelLayout = getInstance(project).layout.value
+
+    /**
+     * The level of [interpreter] in the current layout of [project]. When the layout does not have [interpreter] yet, the
+     * level comes from its version, see [languageLevel].
+     */
+    @JvmStatic
+    fun levelOf(project: Project, interpreter: PythonInterpreter): LanguageLevel =
+      layoutOf(project).interpreterLevels[interpreter] ?: interpreter.languageLevel(project)
   }
 }
 

@@ -21,7 +21,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.languageLevel
 import com.intellij.python.sdk.backend.skeletonsDirectory
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -37,6 +36,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyImportResolver
+import com.jetbrains.python.psi.impl.PythonLanguageLevels
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import org.jetbrains.annotations.ApiStatus
@@ -281,7 +281,7 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
   // for a context that visits all modules, otherwise the interpreter of the context or of its module.
   val languageInterpreter =
     if (context.visitAllModules) consoleInterpreter else storedInterpreter ?: module?.pythonInterpreterIfReady()
-  val languageLevel = languageInterpreter?.languageLevel(context.project)
+  val languageLevel = languageInterpreter?.let { PythonLanguageLevels.levelOf(context.project, it) }
 
   val visitor = RootVisitor { root, _, _, isModuleSource ->
     val results = if (isModuleSource) moduleResults else sdkResults
