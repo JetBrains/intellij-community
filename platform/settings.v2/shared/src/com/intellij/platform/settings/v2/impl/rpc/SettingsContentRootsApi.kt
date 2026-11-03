@@ -4,7 +4,7 @@ package com.intellij.platform.settings.v2.impl.rpc
 // @spec ../../../../../../../../../spec/frontend-file-contexts.spec.md
 
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -37,6 +37,6 @@ interface SettingsContentRootsApi : RemoteApi<Unit> {
 
   companion object {
     suspend fun getInstance(): SettingsContentRootsApi =
-      RemoteApiProviderService.resolve(remoteApiDescriptor<SettingsContentRootsApi>())
+      LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<SettingsContentRootsApi>())
   }
 }

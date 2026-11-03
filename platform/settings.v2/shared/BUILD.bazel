@@ -41,7 +41,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/core-ui",
         "//platform/platform-api:ide",
-        "//platform/kernel/rpc",
+        "//platform/kernel/rpc.lite",
         "//platform/project/shared:project",
         "//fleet/util/core",
     ],
