@@ -328,9 +328,6 @@ public class XBreakpointActionsPanel extends XBreakpointPropertiesSubPanel {
     return null;
   }
 
-  public void dispose() {
-  }
-
   public void hide() {
     myContentPane.setVisible(false);
   }
