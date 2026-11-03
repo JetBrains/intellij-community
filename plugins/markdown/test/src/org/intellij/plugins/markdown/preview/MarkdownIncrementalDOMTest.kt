@@ -46,6 +46,22 @@ class MarkdownIncrementalDOMTest : BasePlatformTestCase() {
     assertGeneratedContains(js, "o('a','href'")
   }
 
+  fun testQuoteInAttributeNameIsEncoded() {
+    val html = """<body><div x');alert(1);('=v>a</div></body>"""
+    val js = IncrementalDOMBuilder(html, null, null).generateDomBuildCalls()
+    assertGeneratedDoesNotContain(js, "alert(1)")
+    assertGeneratedContains(js, "o('div','${PreviewEncodingUtil.encodeUrl("x');alert(1);('")}','v');")
+  }
+
+  fun testQuoteInTagNameIsEncoded() {
+    val html = """<body><x');alert(1);('>a</x');alert(1);('></body>"""
+    val js = IncrementalDOMBuilder(html, null, null).generateDomBuildCalls()
+    assertGeneratedDoesNotContain(js, "alert(1)")
+    val tag = PreviewEncodingUtil.encodeUrl("x');alert(1);('")
+    assertGeneratedContains(js, "o('$tag');")
+    assertGeneratedContains(js, "c('$tag');")
+  }
+
   /** The `other` meta is the control: it proves traversal sees meta at all, so the filter did the work. */
   fun testReferrerMetaIsDropped() {
     val html = """<body><p>a</p><meta name="referrer" content="unsafe-url"><meta name="other" content="value"></body>"""
