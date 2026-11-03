@@ -36,6 +36,7 @@
     <settings.v2.layerProvider id="settings.v2.projectProvider" order="after settings.v2.appProvider"
                                implementation="com.intellij.platform.settings.v2.impl.providers.ProjectLayerProvider"/>
     <cachesInvalidator implementation="com.intellij.platform.settings.v2.impl.SettingsCacheInvalidator"/>
+    <applicationActivity implementation="com.intellij.platform.settings.v2.impl.SettingsVaultInitializer"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.platform.settings.v2.impl.SettingsAppLifecycleListener"
