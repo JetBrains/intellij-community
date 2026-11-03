@@ -584,10 +584,25 @@ open class ConsoleViewImpl protected constructor(
   }
 
   open fun print(text: String, contentType: ConsoleViewContentType, info: HyperlinkInfo?) {
+    print(text, contentType, info, null)
+  }
+
+  @ApiStatus.Internal
+  fun printWithReference(text: String, contentType: ConsoleViewContentType, textId: Any) {
+    val result = myInputMessageFilter.get().applyFilter(text, contentType)
+                 ?: listOf(com.intellij.openapi.util.Pair(text, contentType))
+    for (pair in result) {
+      if (pair.first != null) {
+        print(pair.first, pair.second ?: contentType, null, textId)
+      }
+    }
+  }
+
+  private fun print(text: String, contentType: ConsoleViewContentType, info: HyperlinkInfo?, textId: Any?) {
     val effectiveText = Strings.convertLineSeparators(text, keepSlashR)
     synchronized(LOCK) {
       val hasEditor = editor != null
-      myDeferredBuffer.print(effectiveText, contentType, info)
+      myDeferredBuffer.print(effectiveText, contentType, info, textId)
       if (hasEditor) {
         if (contentType === ConsoleViewContentType.USER_INPUT) {
           requestFlushImmediately()
@@ -679,8 +694,6 @@ open class ConsoleViewImpl protected constructor(
     if (!shouldStickToEnd) {
       editor.scrollingModel.accumulateViewportChanges()
     }
-    val contentTypes = HashSet<ConsoleViewContentType>()
-    val contents = ArrayList<com.intellij.openapi.util.Pair<String, ConsoleViewContentType>>()
     val addedText: CharSequence
     try {
       // the text can contain one "\r" at the start meaning we should delete the last line
@@ -693,7 +706,10 @@ open class ConsoleViewImpl protected constructor(
         }
       }
       val startIndex = if (startsWithCR) 1 else 0
-      val refinedTokens= arrayOfNulls<TokenBuffer.TokenInfo>(deferredTokens.size - startIndex)
+      val refinedTokens = arrayOfNulls<TokenBuffer.TokenInfo>(deferredTokens.size - startIndex)
+      val contentTypes = HashSet<ConsoleViewContentType>()
+      val contents = ArrayList<com.intellij.openapi.util.Pair<String, ConsoleViewContentType>>()
+
       val evaluatedText = ConsoleTokenUtil.evaluateBackspacesInTokens(deferredTokens, startIndex, refinedTokens)
       val backspacePrefixLength = ConsoleTokenUtil.getBackspacePrefixLength(evaluatedText)
       if (backspacePrefixLength > 0) {
@@ -706,12 +722,31 @@ open class ConsoleViewImpl protected constructor(
       addedText = evaluatedText.subSequence(backspacePrefixLength, evaluatedText.length)
       document.insertString(document.textLength, addedText)
       ConsoleTokenUtil.highlightTokenTextAttributes(this.editor!!, project, refinedTokens as Array<TokenBuffer.TokenInfo>, getHyperlinks()!!, contentTypes, contents)
+      invokeListeners(document, refinedTokens, contentTypes, contents)
     }
     finally {
       if (!shouldStickToEnd) {
         editor.scrollingModel.flushViewportChanges()
       }
     }
+    psiDisposedCheck.performCheck()
+
+    val startLine = if (lastProcessedOutput.isValid) editor.document.getLineNumber(lastProcessedOutput.endOffset) else 0
+    lastProcessedOutput.dispose()
+    highlightHyperlinksAndFoldings(startLine, myPredefinedFiltersUpdateExpirableTokenProvider.createExpirable())
+
+    if (shouldStickToEnd) {
+      scrollToEnd()
+    }
+    sendUserInput(addedText)
+  }
+
+  private fun invokeListeners(
+    document: Document,
+    refinedTokens: Array<TokenBuffer.TokenInfo>,
+    contentTypes: HashSet<ConsoleViewContentType>,
+    contents: ArrayList<com.intellij.openapi.util.Pair<String, ConsoleViewContentType>>,
+  ) {
     if (!contentTypes.isEmpty()) {
       for (each in myListeners) {
         @Suppress("removal", "DEPRECATION")
@@ -725,16 +760,19 @@ open class ConsoleViewImpl protected constructor(
         }
       }
     }
-    psiDisposedCheck.performCheck()
+    onReferencedTextAdded(document, refinedTokens)
+  }
 
-    val startLine = if (lastProcessedOutput.isValid) editor.document.getLineNumber(lastProcessedOutput.endOffset) else 0
-    lastProcessedOutput.dispose()
-    highlightHyperlinksAndFoldings(startLine, myPredefinedFiltersUpdateExpirableTokenProvider.createExpirable())
-
-    if (shouldStickToEnd) {
-      scrollToEnd()
+  private fun onReferencedTextAdded(document: Document, tokens: Array<TokenBuffer.TokenInfo>) {
+    var endOffset = document.textLength
+    for (token in tokens.reversed()) {
+      val startOffset = endOffset - token.length()
+      val referenceId = token.textId
+      if (referenceId != null) {
+        myListeners.forEach { it.textRangeAdded(referenceId, TextRange(startOffset, endOffset)) }
+      }
+      endOffset = startOffset
     }
-    sendUserInput(addedText)
   }
 
   private val isDisposed: Boolean

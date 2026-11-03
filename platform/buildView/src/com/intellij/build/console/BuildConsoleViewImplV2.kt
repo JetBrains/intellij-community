@@ -16,6 +16,7 @@ import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.ConsoleViewWithDelegate
 import com.intellij.execution.ui.ExecutionConsole
+import com.intellij.execution.ui.ObservableConsoleView
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -119,16 +120,7 @@ internal class BuildConsoleViewImplV2(
   }
 
   private fun onOutputEvent(event: OutputBuildEvent) {
-    val startOffset = delegate.contentSize
-    BuildTextConsoleView.print(delegate, event.message, event.outputType)
-    val endOffset = delegate.contentSize
-    state.access {
-      // The start and end offsets are invalid when the console size was reduced after printing.
-      // For example, when single `\r` is printed or console buffer was truncated due to an overflow.
-      if (endOffset in startOffset..editor.document.textLength) {
-        addOutputMarker(event.id, startOffset, endOffset)
-      }
-    }
+    BuildTextConsoleView.print(delegate, event.message, event.outputType, event.id)
   }
 
   private fun onOutputReferenceEvent(event: OutputReferenceEvent) {
@@ -336,6 +328,15 @@ internal class BuildConsoleViewImplV2(
     private val pendingStateActions = ArrayDeque<ConsoleViewStateAccessor.() -> Unit>()
     private var isDrainScheduled = false
 
+    init {
+      consoleView.addChangeListener(object : ObservableConsoleView.ChangeListener {
+        override fun textRangeAdded(textId: Any, range: TextRange) {
+          val document = consoleView.editor?.document ?: return
+          outputMarkers[textId] = document.createRangeMarker(range)
+        }
+      }, consoleView)
+    }
+
     fun access(action: ConsoleViewStateAccessor.() -> Unit) {
       invokeAndWaitIfNeeded {
         pendingStateActions.addLast(action)
@@ -380,10 +381,6 @@ internal class BuildConsoleViewImplV2(
 
     inner class ConsoleViewStateAccessor(val editor: Editor) {
 
-      fun addOutputMarker(outputId: Any, startOffset: Int, endOffset: Int) {
-        outputMarkers[outputId] = editor.document.createRangeMarker(startOffset, endOffset)
-      }
-
       fun addNodeOutputMarkers(nodeId: Any, outputIds: Collection<Any>) {
         nodeToOutputMarkers.computeIfAbsent(nodeId) { HashSet() }
           .addAll(outputIds)
@@ -406,6 +403,7 @@ internal class BuildConsoleViewImplV2(
           .mapNotNull { outputMarkers[it] }
           .filter { it.isValid }
           .map { it.textRange }
+          .filter { !it.isEmpty }
           .sortedBy { it.startOffset }
           .toList()
 

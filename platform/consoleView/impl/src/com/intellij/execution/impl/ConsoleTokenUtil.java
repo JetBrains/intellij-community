@@ -89,7 +89,7 @@ public final class ConsoleTokenUtil {
         normalizeBackspaceCharacters(tokenTextBuilder);
         backspacesFromNextToken = getBackspacePrefixLength(tokenTextBuilder);
         String newText = tokenTextBuilder.substring(backspacesFromNextToken);
-        newToken = new TokenBuffer.TokenInfo(token.contentType, newText, token.getHyperlinkInfo());
+        newToken = new TokenBuffer.TokenInfo(token.contentType, newText, token.getHyperlinkInfo(), token.getTextId());
       }
       else {
         newToken = token;

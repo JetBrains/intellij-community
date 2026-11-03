@@ -46,6 +46,23 @@ public final class BuildTextConsoleView extends ConsoleViewImpl implements Build
   }
 
   @ApiStatus.Internal
+  public static void print(
+    @NotNull ConsoleViewImpl consoleView,
+    @NotNull String text,
+    @NotNull Key<?> outputType,
+    @NotNull Object textId
+  ) {
+    if (consoleView instanceof BuildTextConsoleView buildTextConsoleView) {
+      buildTextConsoleView.myAnsiEscapeDecoder.escapeText(text, outputType, (decodedText, attributes) ->
+        buildTextConsoleView.printWithReference(decodedText, ConsoleViewContentType.getConsoleViewType(attributes), textId)
+      );
+    }
+    else {
+      consoleView.printWithReference(text, ConsoleViewContentType.getConsoleViewType(outputType), textId);
+    }
+  }
+
+  @ApiStatus.Internal
   public static void print(@NotNull ConsoleView consoleView, @NotNull String text, @NotNull Key<?> outputType) {
     if (consoleView instanceof BuildTextConsoleView buildTextConsoleView) {
       // Route through the ANSI-decoding print so that escape sequences in the build output are converted into text

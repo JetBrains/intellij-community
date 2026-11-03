@@ -15,6 +15,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessOutputType
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.execution.ui.ObservableConsoleView
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionManager
@@ -243,6 +244,37 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     assertEquals("Hello\nProgress 2", console.text)
     assertEquals(console.text.length, contentSize)
     assertEquals(console.text.length, console.contentSize)
+  }
+
+  private class RecordingRangeListener : ObservableConsoleView.ChangeListener {
+
+    val ranges: MutableList<Pair<Any, TextRange>> = mutableListOf()
+
+    override fun textRangeAdded(textId: Any, range: TextRange) {
+      ranges.add(textId to range)
+    }
+  }
+
+  fun testLineRangeOnCallbackEmit() {
+    val listener = RecordingRangeListener()
+    console.addChangeListener(listener, testRootDisposable)
+
+    val printId1 = Any()
+    console.printWithReference("123", ConsoleViewContentType.NORMAL_OUTPUT, printId1)
+    console.flushDeferredText()
+
+    assertEquals(listener.ranges, listOf(
+      printId1 to TextRange(0, 3)
+    ))
+
+    val printId2 = Any()
+    console.printWithReference("456\r12", ConsoleViewContentType.NORMAL_OUTPUT, printId2)
+    console.flushDeferredText()
+
+    assertEquals(listener.ranges, listOf(
+      printId1 to TextRange(0, 3),
+      printId2 to TextRange(0, 2)
+    ))
   }
 
   fun testCaretAfterMultilineOutput() {

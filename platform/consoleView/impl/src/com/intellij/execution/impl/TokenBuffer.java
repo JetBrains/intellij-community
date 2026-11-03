@@ -28,7 +28,7 @@ import java.util.List;
 public final class TokenBuffer {
   // special token which means that the deferred text starts with "\r" so it shouldn't be appended to the document end.
   // Instead, the last line of the document should be removed
-  public static final TokenInfo CR_TOKEN = new TokenInfo(ConsoleViewContentType.SYSTEM_OUTPUT, "\r", null);
+  public static final TokenInfo CR_TOKEN = new TokenInfo(ConsoleViewContentType.SYSTEM_OUTPUT, "\r", null, null);
   private final int maxCapacity;  // if size becomes > maxCapacity we should trim tokens from the beginning
   private final Deque<TokenInfo> tokens = new ArrayDeque<>(10); // each call to print() is stored here
   private int size; // total lengths of all tokens except CR_TOKEN
@@ -40,7 +40,12 @@ public final class TokenBuffer {
     if (maxCapacity <= 0) throw new IllegalArgumentException(String.valueOf(maxCapacity));
   }
 
-  public void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
+  public void print(
+    @NotNull String text,
+    @NotNull ConsoleViewContentType contentType,
+    @Nullable HyperlinkInfo info,
+    @Nullable Object textId
+  ) {
     int start = 0;
     while (start < text.length()) {
       if (hasTrailingCR()) {
@@ -48,14 +53,14 @@ public final class TokenBuffer {
       }
       int crIndex = text.indexOf('\r', start);
       if (crIndex == -1 || crIndex == text.length() - 1) {
-        TokenInfo tokenInfo = new TokenInfo(contentType, text.substring(start), info);
+        TokenInfo tokenInfo = new TokenInfo(contentType, text.substring(start), info, textId);
         tokens.addLast(tokenInfo);
         size += tokenInfo.length();
         break;
       }
 
       if (start!=crIndex) {
-        TokenInfo tokenInfo = new TokenInfo(contentType, text.substring(start, crIndex), info);
+        TokenInfo tokenInfo = new TokenInfo(contentType, text.substring(start, crIndex), info, textId);
         tokens.addLast(tokenInfo);
         size += tokenInfo.length();
       }
@@ -81,7 +86,7 @@ public final class TokenBuffer {
       int lastLength = lastText.length();
       if (lastLength != 1) {
         String lastTextWithNoCR = lastText.substring(0, lastLength - 1);
-        TokenInfo newLast = new TokenInfo(last.contentType, lastTextWithNoCR, last.getHyperlinkInfo());
+        TokenInfo newLast = new TokenInfo(last.contentType, lastTextWithNoCR, last.getHyperlinkInfo(), last.getTextId());
         tokens.addLast(newLast);
         size --;
       }
@@ -98,7 +103,7 @@ public final class TokenBuffer {
       int lfIndex = text.lastIndexOf('\n');
       if (lfIndex != -1) {
         // split token
-        TokenInfo newToken = new TokenInfo(last.contentType, text.substring(0, lfIndex + 1), last.getHyperlinkInfo());
+        TokenInfo newToken = new TokenInfo(last.contentType, text.substring(0, lfIndex + 1), last.getHyperlinkInfo(), last.getTextId());
         tokens.addLast(newToken);
         size -= text.length() - newToken.length();
         return;
@@ -184,7 +189,8 @@ public final class TokenBuffer {
     if (startIndex != 0) {
       // slice the first token
       TokenInfo first = list.getFirst();
-      TokenInfo sliced = new TokenInfo(first.contentType, first.getText().substring(startIndex), first.getHyperlinkInfo());
+      TokenInfo sliced =
+        new TokenInfo(first.contentType, first.getText().substring(startIndex), first.getHyperlinkInfo(), first.getTextId());
       return ContainerUtil.concat(Collections.singletonList(sliced), list.subList(1, list.size()));
     }
     return list;
@@ -199,12 +205,15 @@ public final class TokenBuffer {
     public final @NotNull ConsoleViewContentType contentType;
     private final String text;
     private final HyperlinkInfo myHyperlinkInfo;
+    private final Object textId;
 
     public TokenInfo(@NotNull ConsoleViewContentType contentType,
                      @NotNull String text,
-                     @Nullable HyperlinkInfo hyperlinkInfo) {
+                     @Nullable HyperlinkInfo hyperlinkInfo,
+                     @Nullable Object textId) {
       this.contentType = contentType;
       myHyperlinkInfo = hyperlinkInfo;
+      this.textId = textId;
       this.text = text;
     }
 
@@ -221,6 +230,11 @@ public final class TokenBuffer {
     @ApiStatus.Internal
     public HyperlinkInfo getHyperlinkInfo() {
       return myHyperlinkInfo;
+    }
+
+    @ApiStatus.Internal
+    public @Nullable Object getTextId() {
+      return textId;
     }
 
     @NotNull

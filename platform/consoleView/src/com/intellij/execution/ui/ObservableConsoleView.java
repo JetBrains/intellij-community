@@ -17,6 +17,8 @@
 package com.intellij.execution.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -32,5 +34,7 @@ public interface ObservableConsoleView  {
     @Deprecated(forRemoval = true)
     default void contentAdded(@NotNull Collection<? extends ConsoleViewContentType> types) {}
     default void textAdded(@NotNull String text, @NotNull ConsoleViewContentType type) {}
+    @ApiStatus.Internal
+    default void textRangeAdded(@NotNull Object textId, @NotNull TextRange range) {}
   }
 }
