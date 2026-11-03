@@ -8,8 +8,11 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.utils.appendSemicolonBeforeLambdaContainingElement
 import org.jetbrains.kotlin.idea.util.CommentSaver
+import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 internal object RemoveUnnamedPropertyFixFactory {
@@ -34,6 +37,9 @@ internal object RemoveUnnamedPropertyFixFactory {
       val initializer = element.initializer ?: return
       val commentSaver = CommentSaver(element)
       val result = element.replace(initializer.copy())
+      if (generateSequence(result) { it.firstChild }.any { it is KtLambdaExpression }) {
+        KtPsiFactory(element.project).appendSemicolonBeforeLambdaContainingElement(result)
+      }
       commentSaver.restore(result)
     }
   }
