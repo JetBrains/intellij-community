@@ -432,14 +432,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   @RequiresEdt
-  public void invalidateRange(int startOffset, int endOffset, boolean invalidateSize) {
+  public void invalidateRange(@NotNull DocumentText document, int startOffset, int endOffset, boolean invalidateSize) {
     invalidateAnimationCaches(null);
-    int textLength = myDocument.getTextLength();
+    int textLength = document.length();
     if (startOffset > endOffset || startOffset >= textLength || endOffset < 0) {
       return;
     }
-    int startLine = myDocument.getLineNumber(Math.max(0, startOffset));
-    int endLine = myDocument.getLineNumber(Math.min(textLength, endOffset));
+    int startLine = document.lineNumber(Math.max(0, startOffset));
+    int endLine = document.lineNumber(Math.min(textLength, endOffset));
     myTextLayoutCache.invalidateLines(startLine, endLine);
     if (invalidateSize) {
       mySizeManager.invalidateRange(startOffset, endOffset);

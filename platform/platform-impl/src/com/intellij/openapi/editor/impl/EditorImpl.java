@@ -97,6 +97,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorModel;
@@ -1120,14 +1121,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int startLine = document.getLineNumber(start);
     int endLine = document.getLineNumber(end);
     if (start != end && (newChange.fontStyleChanged() || newChange.foregroundColorChanged())) {
-      myView.invalidateRange(start, end, false);
+      myView.invalidateRange(document.getDocumentText(), start, end, false);
     }
     boolean softWrapCountChanged = false;
     if (newChange.fontStyleChanged()) {
       int fontStart = MathUtil.clamp(newChange.fontStart(), 0, docTextLength);
       int fontEnd = MathUtil.clamp(newChange.fontEnd(), fontStart, docTextLength);
       if (fontStart != fontEnd) {
-        myView.invalidateRange(fontStart, fontEnd, true);
+        myView.invalidateRange(document.getDocumentText(), fontStart, fontEnd, true);
         int softWrapCount = mySoftWrapModel.getRegisteredSoftWraps().size();
         mySoftWrapModel.onFontStyleChanged(fontStart, fontEnd);
         softWrapCountChanged = mySoftWrapModel.getRegisteredSoftWraps().size() != softWrapCount;
@@ -2228,10 +2229,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
     assertIsDispatchThread();
-    int minEndOffset = Math.min(endOffset, getEditorModel().getDocument().getTextLength());
+    DocumentText documentText = getEditorModel().getDocument().getDocumentText();
+    int minEndOffset = Math.min(endOffset, documentText.length());
 
     if (invalidateTextLayout) {
-      myView.invalidateRange(startOffset, minEndOffset, true);
+      myView.invalidateRange(
+        documentText,
+        startOffset,
+        minEndOffset,
+        true
+      );
     }
 
     if (!isShowing()) {
