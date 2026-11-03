@@ -146,7 +146,4 @@ public class Xslt2FunctionContext extends DefaultFunctionContext {
   public static FunctionContext getInstance() {
     return getInstance(Xslt2ContextProvider.TYPE, FACTORY);
   }
-
-  public static void main(String[] args) {
-  }
 }
