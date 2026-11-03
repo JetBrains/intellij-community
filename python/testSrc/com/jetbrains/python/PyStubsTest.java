@@ -10,11 +10,13 @@ import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
 import com.intellij.idea.TestFor;
 import com.intellij.lang.FileASTNode;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -92,6 +94,8 @@ import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -232,6 +236,92 @@ public class PyStubsTest extends PyTestCase {
         element(PyFromImportStatementStub.class, versionAtMost("2.1"))
       )
       .test(file.getStub());
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testContainsVersionMatchesVersions() {
+    final PsiFileImpl file = (PsiFileImpl)getTestFile("StubStructureWithVersionChecks.py");
+    final List<Version> versions =
+      ContainerUtil.map(List.of("2.0", "2.1", "2.2", "2.5", "3.0", "3.11", "3.12", "3.13"), Version::parseVersion);
+    final List<StubElement<?>> stubs = new ArrayList<>();
+    collectStubs(file.getStub(), stubs);
+    int allVersions = 0;
+    int someVersions = 0;
+    for (StubElement<?> stub : stubs) {
+      if (!(stub instanceof PyVersionSpecificStub versionSpecific)) continue;
+      if (versionSpecific.getVersions().encloses(Range.all())) {
+        allVersions++;
+      }
+      else {
+        someVersions++;
+      }
+      for (Version version : versions) {
+        assertEquals(stub + " at " + version, versionSpecific.getVersions().contains(version), versionSpecific.containsVersion(version));
+      }
+    }
+    assertTrue(allVersions > 0);
+    assertTrue(someVersions > 0);
+  }
+
+  private static void collectStubs(@NotNull StubElement<?> stub, @NotNull List<StubElement<?>> result) {
+    result.add(stub);
+    for (StubElement<?> child : stub.getChildrenStubs()) {
+      collectStubs(child, result);
+    }
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testVersionSpecificMembersFollowLanguageLevel() {
+    final VirtualFile vFile = myFixture.copyFileToProject(getTestName(false) + ".py");
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> assertMembers(vFile, List.of("new", "common"), List.of("top_new")));
+    runWithLanguageLevel(LanguageLevel.PYTHON311, () -> assertMembers(vFile, List.of("old", "common"), List.of("top_old")));
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> assertMembers(vFile, List.of("new", "common"), List.of("top_new")));
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testMembersFollowFileChange() throws IOException {
+    final VirtualFile vFile = myFixture.copyFileToProject(getTestName(false) + ".py");
+    assertMembers(vFile, List.of("first"), List.of("f"));
+    WriteAction.runAndWait(() -> VfsUtil.saveText(vFile, """
+      class A:
+          def first(self): ...
+          def second(self): ...
+
+
+      def f(): ...
+      def g(): ...
+      """));
+    assertMembers(vFile, List.of("first", "second"), List.of("f", "g"));
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testMethodsFollowEditOfClass() {
+    myFixture.configureByText("a.py", """
+      class A:
+          def first(self): ...
+      """);
+    final PyClass cls = ((PyFile)myFixture.getFile()).findTopLevelClass("A");
+    assertNotNull(cls);
+    assertSameElements(ContainerUtil.map(cls.getMethods(), PyFunction::getName), "first");
+    final Document document = myFixture.getEditor().getDocument();
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      document.insertString(document.getTextLength(), "    def second(self): ...\n");
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitDocument(document);
+    });
+    // The same class object, so the methods come from its cache
+    assertTrue(cls.isValid());
+    assertSameElements(ContainerUtil.map(cls.getMethods(), PyFunction::getName), "first", "second");
+  }
+
+  /** Checks the methods of the class {@code A} and the top-level functions of the file, and that the stub answers both. */
+  private void assertMembers(@NotNull VirtualFile vFile, @NotNull List<String> methods, @NotNull List<String> functions) {
+    final PyFile file = (PyFile)myFixture.getPsiManager().findFile(vFile);
+    assertNotNull(file);
+    final PyClass cls = file.findTopLevelClass("A");
+    assertNotNull(cls);
+    assertSameElements(ContainerUtil.map(cls.getMethods(), PyFunction::getName), methods);
+    assertSameElements(ContainerUtil.map(file.getTopLevelFunctions(), PyFunction::getName), functions);
+    assertNotParsed(file);
   }
 
   public void testLoadingDeeperTreeRemainsKnownPsiElement() {

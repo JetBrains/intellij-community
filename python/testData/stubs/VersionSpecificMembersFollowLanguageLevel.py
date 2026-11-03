@@ -1,0 +1,16 @@
+import sys
+
+
+class A:
+    if sys.version_info >= (3, 12):
+        def new(self): ...
+    else:
+        def old(self): ...
+
+    def common(self): ...
+
+
+if sys.version_info >= (3, 12):
+    def top_new(): ...
+else:
+    def top_old(): ...
