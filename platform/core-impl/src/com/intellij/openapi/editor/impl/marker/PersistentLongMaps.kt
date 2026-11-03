@@ -56,8 +56,8 @@ internal interface PersistentLongMapBuilder<V : Any> {
 /** Available implementations of [PersistentLongMap]. */
 internal enum class PersistentLongMapImplementation(private val emptyMap: PersistentLongMap<Any>) {
   MAP_16(PersistentLongMap16()),
-  VECTOR_32(PersistentVector32()),
-  VECTOR_64(PersistentVector64()),
+  VECTOR_32(PersistentVector(bitsPerLevel = 5)),
+  VECTOR_64(PersistentVector(bitsPerLevel = 6)),
   PAGED_VECTOR_128(PersistentPagedVector(pageBits = 7)),
   PAGED_VECTOR_256(PersistentPagedVector(pageBits = 8)),
   CHAMP(PersistentLongChampMap()),
@@ -747,16 +747,23 @@ internal class PersistentLongChampMap<V : Any> private constructor(
 }
 
 /**
- * Persistent 32-way indexed vector.
- *
- * A key `k` is stored at index `k`. For 50,000 marker IDs, lookups traverse four array levels.
+ * Persistent indexed vector that consumes [bitsPerLevel] key bits at each level.
  */
-internal class PersistentVector32<V : Any> private constructor(
+internal class PersistentVector<V : Any> private constructor(
+  private val bitsPerLevel: Int,
   private val root: Node?,
   private val shift: Int,
   private val size: Int,
 ) : PersistentLongMap<V> {
-  constructor() : this(null, 0, 0)
+  constructor(bitsPerLevel: Int) : this(bitsPerLevel, null, 0, 0) {
+    require(bitsPerLevel in 1..6) { "bitsPerLevel must be between 1 and 6" }
+  }
+
+  private val width: Int
+    get() = 1 shl bitsPerLevel
+
+  private val mask: Long
+    get() = (width - 1).toLong()
 
   override operator fun get(key: Long): V? {
     requireNonNegativeKey(key)
@@ -765,17 +772,17 @@ internal class PersistentVector32<V : Any> private constructor(
 
   override fun getUnchecked(key: Long): V? = get(root, shift, key)
 
-  override fun put(key: Long, value: V): PersistentVector32<V> {
+  override fun put(key: Long, value: V): PersistentVector<V> {
     requireNonNegativeKey(key)
     val updated = put(root, shift, key, value)
     val newSize = size + if (getUnchecked(key) == null) 1 else 0
-    return PersistentVector32(updated.root, updated.shift, newSize)
+    return PersistentVector(bitsPerLevel, updated.root, updated.shift, newSize)
   }
 
-  override fun remove(key: Long): PersistentVector32<V> {
+  override fun remove(key: Long): PersistentVector<V> {
     requireNonNegativeKey(key)
     val updated = remove(root, shift, key)
-    return if (!updated.removed) this else PersistentVector32(updated.root, updated.shift, size - 1)
+    return if (!updated.removed) this else PersistentVector(bitsPerLevel, updated.root, updated.shift, size - 1)
   }
 
   override fun size(): Int = size
@@ -798,7 +805,7 @@ internal class PersistentVector32<V : Any> private constructor(
         action(key, element as V)
       }
       else {
-        forEachEntry(element as Node, shift - BITS, key, action)
+        forEachEntry(element as Node, shift - bitsPerLevel, key, action)
       }
     }
   }
@@ -811,7 +818,7 @@ internal class PersistentVector32<V : Any> private constructor(
 
   private data class NodeRemoval(val node: Node?, val removed: Boolean)
 
-  private class Builder<V : Any>(private val source: PersistentVector32<V>) : PersistentLongMapBuilder<V> {
+  private class Builder<V : Any>(private val source: PersistentVector<V>) : PersistentLongMapBuilder<V> {
     private val owner: Any = Any()
     private var root: Node? = source.root
     private var shift: Int = source.shift
@@ -822,27 +829,27 @@ internal class PersistentVector32<V : Any> private constructor(
     override fun get(key: Long): V? {
       checkActive()
       requireNonNegativeKey(key)
-      return get(root, shift, key)
+      return source.get(root, shift, key)
     }
 
     override fun getUnchecked(key: Long): V? {
       checkActive()
-      return get(root, shift, key)
+      return source.get(root, shift, key)
     }
 
     override fun put(key: Long, value: V) {
       checkActive()
       requireNonNegativeKey(key)
-      if (get<V>(root, shift, key) == null) size++
-      val requiredShift = requiredShift(key)
+      if (source.get(root, shift, key) == null) size++
+      val requiredShift = source.requiredShift(key)
       var expandedRoot = root
       var expandedShift = if (expandedRoot == null) requiredShift else shift
 
       while (expandedRoot != null && expandedShift < requiredShift) {
-        val slots = arrayOfNulls<Any>(WIDTH)
+        val slots = arrayOfNulls<Any>(source.width)
         slots[0] = expandedRoot
         expandedRoot = Node(slots, owner)
-        expandedShift += BITS
+        expandedShift += source.bitsPerLevel
       }
 
       root = putNode(expandedRoot, expandedShift, key, value)
@@ -854,10 +861,10 @@ internal class PersistentVector32<V : Any> private constructor(
       checkActive()
       requireNonNegativeKey(key)
       val currentRoot = root ?: return
-      if (requiredShift(key) > shift) return
+      if (source.requiredShift(key) > shift) return
       val result = removeNode(currentRoot, shift, key)
       if (!result.removed) return
-      val trimmed = trim(result.node, shift)
+      val trimmed = source.trim(result.node, shift)
       root = trimmed.root
       shift = trimmed.shift
       size--
@@ -867,23 +874,23 @@ internal class PersistentVector32<V : Any> private constructor(
     override fun build(): PersistentLongMap<V> {
       checkActive()
       active = false
-      return if (dirty) PersistentVector32(root, shift, size) else source
+      return if (dirty) PersistentVector(source.bitsPerLevel, root, shift, size) else source
     }
 
     private fun putNode(node: Node?, shift: Int, index: Long, value: V): Node {
       val editable = editable(node)
-      val slot = slot(index, shift)
+      val slot = source.slot(index, shift)
       editable.slots[slot] = if (shift == 0) {
         value
       }
       else {
-        putNode(editable.slots[slot] as? Node, shift - BITS, index, value)
+        putNode(editable.slots[slot] as? Node, shift - source.bitsPerLevel, index, value)
       }
       return editable
     }
 
     private fun removeNode(node: Node, shift: Int, index: Long): NodeRemoval {
-      val slot = slot(index, shift)
+      val slot = source.slot(index, shift)
       val child = node.slots[slot] ?: return NodeRemoval(node, false)
       val editable = editable(node)
 
@@ -891,17 +898,17 @@ internal class PersistentVector32<V : Any> private constructor(
         editable.slots[slot] = null
       }
       else {
-        val result = removeNode(child as Node, shift - BITS, index)
+        val result = removeNode(child as Node, shift - source.bitsPerLevel, index)
         if (!result.removed) return NodeRemoval(node, false)
         editable.slots[slot] = result.node
       }
 
-      return NodeRemoval(if (isEmpty(editable.slots)) null else editable, true)
+      return NodeRemoval(if (source.isEmpty(editable.slots)) null else editable, true)
     }
 
     private fun editable(node: Node?): Node {
       if (node?.owner === owner) return node
-      return Node(node?.slots?.copyOf() ?: arrayOfNulls(WIDTH), owner)
+      return Node(node?.slots?.copyOf() ?: arrayOfNulls(source.width), owner)
     }
 
     private fun checkActive() {
@@ -909,406 +916,123 @@ internal class PersistentVector32<V : Any> private constructor(
     }
   }
 
-  companion object {
-    private const val BITS: Int = 5
-    private const val WIDTH: Int = 1 shl BITS
-    private const val MASK: Int = WIDTH - 1
+  private fun requiredShift(index: Long): Int {
+    if (index == 0L) return 0
+    val highestBit = Long.SIZE_BITS - 1 - java.lang.Long.numberOfLeadingZeros(index)
+    return highestBit / bitsPerLevel * bitsPerLevel
+  }
 
-    private fun requiredShift(index: Long): Int {
-      if (index == 0L) return 0
-      val highestBit = Long.SIZE_BITS - 1 - java.lang.Long.numberOfLeadingZeros(index)
-      return highestBit / BITS * BITS
+  private fun fitsInRoot(index: Long, shift: Int): Boolean {
+    return shift >= Long.SIZE_BITS - bitsPerLevel || index ushr (shift + bitsPerLevel) == 0L
+  }
+
+  private fun slot(index: Long, shift: Int): Int = ((index ushr shift) and mask).toInt()
+
+  private fun get(root: Node?, shift: Int, index: Long): V? {
+    var node = root ?: return null
+    if (!fitsInRoot(index, shift)) return null
+    var currentShift = shift
+
+    while (currentShift > 0) {
+      node = node.slots[slot(index, currentShift)] as? Node ?: return null
+      currentShift -= bitsPerLevel
     }
 
-    private fun fitsInRoot(index: Long, shift: Int): Boolean {
-      return shift >= Long.SIZE_BITS - BITS || index ushr (shift + BITS) == 0L
+    @Suppress("UNCHECKED_CAST")
+    return node.slots[slot(index, 0)] as V?
+  }
+
+  private fun put(root: Node?, shift: Int, index: Long, value: V): RootState {
+    val requiredShift = requiredShift(index)
+    var expandedRoot = root
+    var expandedShift = if (root == null) requiredShift else shift
+
+    while (expandedRoot != null && expandedShift < requiredShift) {
+      val slots = arrayOfNulls<Any>(width)
+      slots[0] = expandedRoot
+      expandedRoot = Node(slots)
+      expandedShift += bitsPerLevel
     }
 
-    private fun slot(index: Long, shift: Int): Int = ((index ushr shift) and MASK.toLong()).toInt()
+    return RootState(putNode(expandedRoot, expandedShift, index, value), expandedShift)
+  }
 
-    private fun <V : Any> get(root: Node?, shift: Int, index: Long): V? {
-      var node = root ?: return null
-      if (!fitsInRoot(index, shift)) return null
-      var currentShift = shift
+  private fun putNode(node: Node?, shift: Int, index: Long, value: V): Node {
+    val slots = node?.slots?.copyOf() ?: arrayOfNulls(width)
+    val slot = slot(index, shift)
+    slots[slot] = if (shift == 0) {
+      value
+    }
+    else {
+      putNode(slots[slot] as? Node, shift - bitsPerLevel, index, value)
+    }
+    return Node(slots)
+  }
 
-      while (currentShift > 0) {
-        node = node.slots[slot(index, currentShift)] as? Node ?: return null
-        currentShift -= BITS
-      }
+  private fun remove(root: Node?, shift: Int, index: Long): Removal {
+    root ?: return Removal(null, shift, false)
+    if (requiredShift(index) > shift) return Removal(root, shift, false)
+    val result = removeNode(root, shift, index)
+    if (!result.removed) return Removal(root, shift, false)
+    val trimmed = trim(result.node, shift)
+    return Removal(trimmed.root, trimmed.shift, true)
+  }
 
-      @Suppress("UNCHECKED_CAST")
-      return node.slots[slot(index, 0)] as V?
+  private fun removeNode(node: Node, shift: Int, index: Long): NodeRemoval {
+    val slot = slot(index, shift)
+    val child = node.slots[slot] ?: return NodeRemoval(node, false)
+    val slots = node.slots.copyOf()
+
+    if (shift == 0) {
+      slots[slot] = null
+    }
+    else {
+      val result = removeNode(child as Node, shift - bitsPerLevel, index)
+      if (!result.removed) return NodeRemoval(node, false)
+      slots[slot] = result.node
     }
 
-    private fun <V : Any> put(root: Node?, shift: Int, index: Long, value: V): RootState {
-      val requiredShift = requiredShift(index)
-      var expandedRoot = root
-      var expandedShift = if (root == null) requiredShift else shift
+    return NodeRemoval(if (isEmpty(slots)) null else Node(slots), true)
+  }
 
-      while (expandedRoot != null && expandedShift < requiredShift) {
-        val slots = arrayOfNulls<Any>(WIDTH)
-        slots[0] = expandedRoot
-        expandedRoot = Node(slots)
-        expandedShift += BITS
-      }
+  private fun trim(root: Node?, shift: Int): RootState {
+    var currentRoot = root ?: return RootState(null, 0)
+    var currentShift = shift
 
-      return RootState(putNode(expandedRoot, expandedShift, index, value), expandedShift)
-    }
-
-    private fun <V : Any> putNode(node: Node?, shift: Int, index: Long, value: V): Node {
-      val slots = node?.slots?.copyOf() ?: arrayOfNulls(WIDTH)
-      val slot = slot(index, shift)
-      slots[slot] = if (shift == 0) {
-        value
-      }
-      else {
-        putNode(slots[slot] as? Node, shift - BITS, index, value)
-      }
-      return Node(slots)
-    }
-
-    private fun remove(root: Node?, shift: Int, index: Long): Removal {
-      root ?: return Removal(null, shift, false)
-      if (requiredShift(index) > shift) return Removal(root, shift, false)
-      val result = removeNode(root, shift, index)
-      if (!result.removed) return Removal(root, shift, false)
-      val trimmed = trim(result.node, shift)
-      return Removal(trimmed.root, trimmed.shift, true)
-    }
-
-    private fun removeNode(node: Node, shift: Int, index: Long): NodeRemoval {
-      val slot = slot(index, shift)
-      val child = node.slots[slot] ?: return NodeRemoval(node, false)
-      val slots = node.slots.copyOf()
-
-      if (shift == 0) {
-        slots[slot] = null
-      }
-      else {
-        val result = removeNode(child as Node, shift - BITS, index)
-        if (!result.removed) return NodeRemoval(node, false)
-        slots[slot] = result.node
-      }
-
-      return NodeRemoval(if (isEmpty(slots)) null else Node(slots), true)
-    }
-
-    private fun trim(root: Node?, shift: Int): RootState {
-      var currentRoot = root ?: return RootState(null, 0)
-      var currentShift = shift
-
-      while (currentShift > 0) {
-        var childIndex = -1
-        for (index in currentRoot.slots.indices) {
-          if (currentRoot.slots[index] != null) {
-            if (childIndex != -1) return RootState(currentRoot, currentShift)
-            childIndex = index
-          }
+    while (currentShift > 0) {
+      var childIndex = -1
+      for (index in currentRoot.slots.indices) {
+        if (currentRoot.slots[index] != null) {
+          if (childIndex != -1) return RootState(currentRoot, currentShift)
+          childIndex = index
         }
-        if (childIndex != 0) return RootState(currentRoot, currentShift)
-        currentRoot = currentRoot.slots[0] as Node
-        currentShift -= BITS
       }
-
-      return RootState(currentRoot, currentShift)
+      if (childIndex != 0) return RootState(currentRoot, currentShift)
+      currentRoot = currentRoot.slots[0] as Node
+      currentShift -= bitsPerLevel
     }
 
-    private fun isEmpty(slots: Array<Any?>): Boolean {
-      for (value in slots) {
-        if (value != null) return false
-      }
-      return true
-    }
-  }
-}
-
-/**
- * Persistent 64-way indexed vector.
- *
- * It consumes six index bits per level. For 50,000 marker IDs, lookups traverse three array levels. Updates copy
- * larger arrays than [PersistentVector32].
- */
-internal class PersistentVector64<V : Any> private constructor(
-  private val root: Node?,
-  private val shift: Int,
-  private val size: Int,
-) : PersistentLongMap<V> {
-  constructor() : this(null, 0, 0)
-
-  override operator fun get(key: Long): V? {
-    requireNonNegativeKey(key)
-    return getUnchecked(key)
+    return RootState(currentRoot, currentShift)
   }
 
-  override fun getUnchecked(key: Long): V? = get(root, shift, key)
-
-  override fun put(key: Long, value: V): PersistentVector64<V> {
-    requireNonNegativeKey(key)
-    val updated = put(root, shift, key, value)
-    val newSize = size + if (getUnchecked(key) == null) 1 else 0
-    return PersistentVector64(updated.root, updated.shift, newSize)
-  }
-
-  override fun remove(key: Long): PersistentVector64<V> {
-    requireNonNegativeKey(key)
-    val updated = remove(root, shift, key)
-    return if (!updated.removed) this else PersistentVector64(updated.root, updated.shift, size - 1)
-  }
-
-  override fun size(): Int = size
-
-  override fun builder(): PersistentLongMapBuilder<V> = Builder(this)
-
-  override fun forEachEntry(action: (Long, V) -> Unit) {
-    forEachEntry(root, shift, 0L, action)
-  }
-
-  override fun toString(): String = mapToString()
-
-  private fun forEachEntry(node: Node?, shift: Int, prefix: Long, action: (Long, V) -> Unit) {
-    node ?: return
-    for (slot in node.slots.indices) {
-      val element = node.slots[slot] ?: continue
-      val key = prefix or (slot.toLong() shl shift)
-      if (shift == 0) {
-        @Suppress("UNCHECKED_CAST")
-        action(key, element as V)
-      }
-      else {
-        forEachEntry(element as Node, shift - BITS, key, action)
-      }
+  private fun isEmpty(slots: Array<Any?>): Boolean {
+    for (value in slots) {
+      if (value != null) return false
     }
-  }
-
-  private class Node(val slots: Array<Any?>, val owner: Any? = null)
-
-  private data class RootState(val root: Node?, val shift: Int)
-
-  private data class Removal(val root: Node?, val shift: Int, val removed: Boolean)
-
-  private data class NodeRemoval(val node: Node?, val removed: Boolean)
-
-  private class Builder<V : Any>(private val source: PersistentVector64<V>) : PersistentLongMapBuilder<V> {
-    private val owner: Any = Any()
-    private var root: Node? = source.root
-    private var shift: Int = source.shift
-    private var size: Int = source.size
-    private var dirty: Boolean = false
-    private var active: Boolean = true
-
-    override fun get(key: Long): V? {
-      checkActive()
-      requireNonNegativeKey(key)
-      return get(root, shift, key)
-    }
-
-    override fun getUnchecked(key: Long): V? {
-      checkActive()
-      return get(root, shift, key)
-    }
-
-    override fun put(key: Long, value: V) {
-      checkActive()
-      requireNonNegativeKey(key)
-      if (get<V>(root, shift, key) == null) size++
-      val requiredShift = requiredShift(key)
-      var expandedRoot = root
-      var expandedShift = if (expandedRoot == null) requiredShift else shift
-
-      while (expandedRoot != null && expandedShift < requiredShift) {
-        val slots = arrayOfNulls<Any>(WIDTH)
-        slots[0] = expandedRoot
-        expandedRoot = Node(slots, owner)
-        expandedShift += BITS
-      }
-
-      root = putNode(expandedRoot, expandedShift, key, value)
-      shift = expandedShift
-      dirty = true
-    }
-
-    override fun remove(key: Long) {
-      checkActive()
-      requireNonNegativeKey(key)
-      val currentRoot = root ?: return
-      if (requiredShift(key) > shift) return
-      val result = removeNode(currentRoot, shift, key)
-      if (!result.removed) return
-      val trimmed = trim(result.node, shift)
-      root = trimmed.root
-      shift = trimmed.shift
-      size--
-      dirty = true
-    }
-
-    override fun build(): PersistentLongMap<V> {
-      checkActive()
-      active = false
-      return if (dirty) PersistentVector64(root, shift, size) else source
-    }
-
-    private fun putNode(node: Node?, shift: Int, index: Long, value: V): Node {
-      val editable = editable(node)
-      val slot = slot(index, shift)
-      editable.slots[slot] = if (shift == 0) {
-        value
-      }
-      else {
-        putNode(editable.slots[slot] as? Node, shift - BITS, index, value)
-      }
-      return editable
-    }
-
-    private fun removeNode(node: Node, shift: Int, index: Long): NodeRemoval {
-      val slot = slot(index, shift)
-      val child = node.slots[slot] ?: return NodeRemoval(node, false)
-      val editable = editable(node)
-
-      if (shift == 0) {
-        editable.slots[slot] = null
-      }
-      else {
-        val result = removeNode(child as Node, shift - BITS, index)
-        if (!result.removed) return NodeRemoval(node, false)
-        editable.slots[slot] = result.node
-      }
-
-      return NodeRemoval(if (isEmpty(editable.slots)) null else editable, true)
-    }
-
-    private fun editable(node: Node?): Node {
-      if (node?.owner === owner) return node
-      return Node(node?.slots?.copyOf() ?: arrayOfNulls(WIDTH), owner)
-    }
-
-    private fun checkActive() {
-      check(active) { "PersistentLongMapBuilder has already been built" }
-    }
-  }
-
-  companion object {
-    private const val BITS: Int = 6
-    private const val WIDTH: Int = 1 shl BITS
-    private const val MASK:Long = (WIDTH - 1).toLong()
-
-    private fun requiredShift(index: Long): Int {
-      if (index == 0L) return 0
-      val highestBit = Long.SIZE_BITS - 1 - java.lang.Long.numberOfLeadingZeros(index)
-      return highestBit / BITS * BITS
-    }
-
-    private fun fitsInRoot(index: Long, shift: Int): Boolean {
-      return shift >= Long.SIZE_BITS - BITS || index ushr (shift + BITS) == 0L
-    }
-
-    private fun slot(index: Long, shift: Int): Int = ((index ushr shift) and MASK).toInt()
-
-    private fun <V : Any> get(root: Node?, shift: Int, index: Long): V? {
-      var node = root ?: return null
-      if (!fitsInRoot(index, shift)) return null
-      var currentShift = shift
-
-      while (currentShift > 0) {
-        node = node.slots[slot(index, currentShift)] as? Node ?: return null
-        currentShift -= BITS
-      }
-
-      @Suppress("UNCHECKED_CAST")
-      return node.slots[slot(index, 0)] as V?
-    }
-
-    private fun <V : Any> put(root: Node?, shift: Int, index: Long, value: V): RootState {
-      val requiredShift = requiredShift(index)
-      var expandedRoot = root
-      var expandedShift = if (root == null) requiredShift else shift
-
-      while (expandedRoot != null && expandedShift < requiredShift) {
-        val slots = arrayOfNulls<Any>(WIDTH)
-        slots[0] = expandedRoot
-        expandedRoot = Node(slots)
-        expandedShift += BITS
-      }
-
-      return RootState(putNode(expandedRoot, expandedShift, index, value), expandedShift)
-    }
-
-    private fun <V : Any> putNode(node: Node?, shift: Int, index: Long, value: V): Node {
-      val slots = node?.slots?.copyOf() ?: arrayOfNulls(WIDTH)
-      val slot = slot(index, shift)
-      slots[slot] = if (shift == 0) {
-        value
-      }
-      else {
-        putNode(slots[slot] as? Node, shift - BITS, index, value)
-      }
-      return Node(slots)
-    }
-
-    private fun remove(root: Node?, shift: Int, index: Long): Removal {
-      root ?: return Removal(null, shift, false)
-      if (requiredShift(index) > shift) return Removal(root, shift, false)
-      val result = removeNode(root, shift, index)
-      if (!result.removed) return Removal(root, shift, false)
-      val trimmed = trim(result.node, shift)
-      return Removal(trimmed.root, trimmed.shift, true)
-    }
-
-    private fun removeNode(node: Node, shift: Int, index: Long): NodeRemoval {
-      val slot = slot(index, shift)
-      val child = node.slots[slot] ?: return NodeRemoval(node, false)
-      val slots = node.slots.copyOf()
-
-      if (shift == 0) {
-        slots[slot] = null
-      }
-      else {
-        val result = removeNode(child as Node, shift - BITS, index)
-        if (!result.removed) return NodeRemoval(node, false)
-        slots[slot] = result.node
-      }
-
-      return NodeRemoval(if (isEmpty(slots)) null else Node(slots), true)
-    }
-
-    private fun trim(root: Node?, shift: Int): RootState {
-      var currentRoot = root ?: return RootState(null, 0)
-      var currentShift = shift
-
-      while (currentShift > 0) {
-        var childIndex = -1
-        for (index in currentRoot.slots.indices) {
-          if (currentRoot.slots[index] != null) {
-            if (childIndex != -1) return RootState(currentRoot, currentShift)
-            childIndex = index
-          }
-        }
-        if (childIndex != 0) return RootState(currentRoot, currentShift)
-        currentRoot = currentRoot.slots[0] as Node
-        currentShift -= BITS
-      }
-
-      return RootState(currentRoot, currentShift)
-    }
-
-    private fun isEmpty(slots: Array<Any?>): Boolean {
-      for (value in slots) {
-        if (value != null) return false
-      }
-      return true
-    }
+    return true
   }
 }
 
 /**
  * Persistent vector with pages of `1 shl pageBits` elements.
- * A lookup uses a [PersistentVector32] page table and one array access. An update copies one page and the page-table path.
+ * A lookup uses a 32-way [PersistentVector] page table and one array access. An update copies one page and the page-table path.
  */
 internal class PersistentPagedVector<V : Any> private constructor(
   private val pageBits: Int,
-  private val pages: PersistentVector32<Page<V>>,
+  private val pages: PersistentVector<Page<V>>,
   private val size: Int,
 ) : PersistentLongMap<V> {
-  constructor(pageBits: Int) : this(pageBits, PersistentVector32(), 0) {
+  constructor(pageBits: Int) : this(pageBits, PersistentVector(bitsPerLevel = 5), 0) {
     require(pageBits in 1..30) { "pageBits must be between 1 and 30" }
   }
 
@@ -1438,7 +1162,7 @@ internal class PersistentPagedVector<V : Any> private constructor(
     override fun build(): PersistentLongMap<V> {
       checkActive()
       @Suppress("UNCHECKED_CAST")
-      val builtPages = pages.build() as PersistentVector32<Page<V>>
+      val builtPages = pages.build() as PersistentVector<Page<V>>
       active = false
       return if (dirty) PersistentPagedVector(source.pageBits, builtPages, size) else source
     }
