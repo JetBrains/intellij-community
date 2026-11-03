@@ -57,39 +57,49 @@ class FrameGuestLeft internal constructor(
  * The record is independent of the UI: a guest joins before its startup activities run, and before its owner has a frame.
  * `WindowManagerImpl` and `TestWindowManager` each hold one instance, so a unit test sees the lifecycle of the IDE.
  *
- * A write takes the lock and swaps the snapshots. A read uses the snapshots without the lock, on any thread.
+ * A write takes the lock and swaps one immutable [State]. A query reads that state once, without the lock, on any thread,
+ * so its answer is the record before or after a write, never a mix of the two.
  * A change of the active project is published through [publisher] after the lock is released, on the calling thread.
  */
 @Internal
 class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener) {
+  /** The record at one point in time: the frame of each owner, and the owner of each guest. */
+  private class State(
+    val byOwner: Map<Project, FrameAssignment>,
+    val ownerOfGuest: Map<Project, Project>,
+  ) {
+    fun ownerOf(project: Project): Project = ownerOfGuest[project] ?: project
+
+    /** The record of the frame that shows [project], for an owner and for a guest. */
+    fun frameOf(project: Project): FrameAssignment? = byOwner[ownerOf(project)]
+  }
+
   private val lock = ReentrantLock()
 
   @Volatile
-  private var byOwner: Map<Project, FrameAssignment> = emptyMap()
-
-  @Volatile
-  private var ownerOfGuest: Map<Project, Project> = emptyMap()
+  private var state = State(byOwner = emptyMap(), ownerOfGuest = emptyMap())
 
   /** The record of every frame owner. */
-  fun assignments(): Collection<FrameAssignment> = byOwner.values
+  fun assignments(): Collection<FrameAssignment> = state.byOwner.values
 
   /** The record of [frameOwner], or `null` when [frameOwner] owns no frame and has no guest. */
-  fun assignmentOf(frameOwner: Project): FrameAssignment? = byOwner[frameOwner]
+  fun assignmentOf(frameOwner: Project): FrameAssignment? = state.byOwner[frameOwner]
 
   /** The project that owns the frame that shows [project]: [project] itself unless it is a frame guest. */
-  fun ownerOf(project: Project): Project = ownerOfGuest[project] ?: project
+  fun ownerOf(project: Project): Project = state.ownerOf(project)
 
-  fun isGuest(project: Project): Boolean = project in ownerOfGuest
+  fun isGuest(project: Project): Boolean = project in state.ownerOfGuest
 
-  fun guestsOf(frameOwner: Project): List<Project> = byOwner[frameOwner]?.guests ?: emptyList()
+  fun guestsOf(frameOwner: Project): List<Project> = state.byOwner[frameOwner]?.guests ?: emptyList()
 
   /** The frame helper of the frame that shows [project], for an owner and for a guest. */
-  fun frameHelperOf(project: Project): ProjectFrameHelper? = byOwner[ownerOf(project)]?.frameHelper
+  fun frameHelperOf(project: Project): ProjectFrameHelper? = state.frameOf(project)?.frameHelper
 
   /** The active project of the frame that shows [project]: the owner of that frame when the frame has no active guest. */
   fun activeProjectOf(project: Project): Project {
-    val owner = ownerOf(project)
-    val active = byOwner[owner]?.active ?: return owner
+    val state = state
+    val owner = state.ownerOf(project)
+    val active = state.byOwner[owner]?.active ?: return owner
     return if (active.isDisposed) owner else active
   }
 
@@ -99,17 +109,18 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
    */
   fun assignOwner(owner: Project, frameHelper: ProjectFrameHelper) {
     lock.withLock {
-      val ownerOfOwner = ownerOfGuest[owner]
+      val state = state
+      val ownerOfOwner = state.ownerOfGuest[owner]
       if (ownerOfOwner != null) {
         LOG.error("$owner is a frame guest of $ownerOfOwner and cannot own a frame")
         return
       }
-      val current = byOwner[owner]
+      val current = state.byOwner[owner]
       if (current?.frameHelper != null) {
         LOG.error("$owner owns a frame already")
       }
       val assignment = current?.copy(frameHelper = frameHelper) ?: FrameAssignment(owner, frameHelper, emptyList(), emptyList(), owner)
-      byOwner = byOwner + (owner to assignment)
+      this.state = State(byOwner = state.byOwner + (owner to assignment), ownerOfGuest = state.ownerOfGuest)
     }
   }
 
@@ -120,11 +131,9 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
    */
   fun releaseOwner(owner: Project): FrameAssignment? {
     lock.withLock {
-      val released = byOwner[owner] ?: return null
-      byOwner = byOwner - owner
-      if (released.guests.isNotEmpty()) {
-        ownerOfGuest = ownerOfGuest - released.guests.toSet()
-      }
+      val state = state
+      val released = state.byOwner[owner] ?: return null
+      this.state = State(byOwner = state.byOwner - owner, ownerOfGuest = state.ownerOfGuest - released.guests.toSet())
       return released
     }
   }
@@ -135,25 +144,26 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
    */
   fun addGuest(frameOwner: Project, guest: Project) {
     lock.withLock {
-      val ownerOfOwner = ownerOfGuest[frameOwner]
+      val state = state
+      val ownerOfOwner = state.ownerOfGuest[frameOwner]
       if (ownerOfOwner != null) {
         LOG.error("$frameOwner is a frame guest of $ownerOfOwner and cannot host $guest")
         return
       }
-      if (guest === frameOwner || guest in byOwner) {
+      if (guest === frameOwner || guest in state.byOwner) {
         LOG.error("$guest owns a frame and cannot join the frame of $frameOwner")
         return
       }
-      val currentOwner = ownerOfGuest[guest]
+      val currentOwner = state.ownerOfGuest[guest]
       if (currentOwner != null) {
         if (currentOwner !== frameOwner) {
           LOG.error("$guest is a frame guest of $currentOwner and cannot join the frame of $frameOwner")
         }
         return
       }
-      val current = byOwner[frameOwner] ?: FrameAssignment(frameOwner, null, emptyList(), emptyList(), frameOwner)
-      byOwner = byOwner + (frameOwner to current.copy(guests = current.guests + guest, activation = current.activation + guest))
-      ownerOfGuest = ownerOfGuest + (guest to frameOwner)
+      val current = state.byOwner[frameOwner] ?: FrameAssignment(frameOwner, null, emptyList(), emptyList(), frameOwner)
+      val joined = current.copy(guests = current.guests + guest, activation = current.activation + guest)
+      this.state = State(byOwner = state.byOwner + (frameOwner to joined), ownerOfGuest = state.ownerOfGuest + (guest to frameOwner))
     }
   }
 
@@ -166,19 +176,20 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
   fun removeGuest(guest: Project): FrameGuestLeft? {
     val left: FrameGuestLeft
     lock.withLock {
-      val frameOwner = ownerOfGuest[guest] ?: return null
-      val current = byOwner.getValue(frameOwner)
+      val state = state
+      val frameOwner = state.ownerOfGuest[guest] ?: return null
+      val current = state.byOwner.getValue(frameOwner)
       val guests = current.guests - guest
       val activation = current.activation - guest
       val active = if (current.active === guest) activation.lastOrNull { !it.isDisposed } ?: frameOwner else current.active
-      ownerOfGuest = ownerOfGuest - guest
       // a record without a frame exists for its guests only
-      byOwner = if (current.frameHelper == null && guests.isEmpty()) {
-        byOwner - frameOwner
+      val byOwner = if (current.frameHelper == null && guests.isEmpty()) {
+        state.byOwner - frameOwner
       }
       else {
-        byOwner + (frameOwner to current.copy(guests = guests, activation = activation, active = active))
+        state.byOwner + (frameOwner to current.copy(guests = guests, activation = activation, active = active))
       }
+      this.state = State(byOwner = byOwner, ownerOfGuest = state.ownerOfGuest - guest)
       val activeChange = if (active === current.active) null else ActiveProjectChange(frameOwner, current.active, active)
       left = FrameGuestLeft(frameOwner, activeChange)
     }
@@ -189,16 +200,18 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
   /**
    * Makes [project] the active project of the frame that shows it.
    *
-   * @return the change, or `null` when no frame shows [project] or when [project] is active already
+   * @return the change, or `null` when no frame shows [project], when [project] is active already, or when [project] is disposed
    */
   fun setActive(project: Project): ActiveProjectChange? {
     val change: ActiveProjectChange
     lock.withLock {
-      val frameOwner = ownerOf(project)
-      val current = byOwner[frameOwner] ?: return null
+      if (project.isDisposed) return null
+      val state = state
+      val frameOwner = state.ownerOf(project)
+      val current = state.byOwner[frameOwner] ?: return null
       if (current.active === project) return null
       val activation = if (project === frameOwner) current.activation else current.activation - project + project
-      byOwner = byOwner + (frameOwner to current.copy(activation = activation, active = project))
+      this.state = State(byOwner = state.byOwner + (frameOwner to current.copy(activation = activation, active = project)), ownerOfGuest = state.ownerOfGuest)
       change = ActiveProjectChange(frameOwner, current.active, project)
     }
     publisher().onActiveProjectChanged(change.frameOwner, change.active)

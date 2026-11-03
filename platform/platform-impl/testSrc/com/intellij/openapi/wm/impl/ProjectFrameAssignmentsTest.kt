@@ -169,4 +169,17 @@ internal class ProjectFrameAssignmentsTest {
     assertThat(assignments.isGuest(owner)).isFalse()
     assertThat(assignments.assignmentOf(second)).isNull()
   }
+
+  @Test
+  fun `a disposed guest is not active and cannot become active`() {
+    val guestDisposable = Disposer.newDisposable(disposable, "guest")
+    val guest: Project = MockProject(null, guestDisposable)
+    assignments.addGuest(owner, guest)
+    assignments.setActive(guest)
+    Disposer.dispose(guestDisposable)
+
+    assertThat(assignments.activeProjectOf(owner)).describedAs("a disposed active guest gives way to the owner").isSameAs(owner)
+    assertThat(assignments.setActive(guest)).isNull()
+    assertThat(assignments.activeProjectOf(guest)).isSameAs(owner)
+  }
 }
