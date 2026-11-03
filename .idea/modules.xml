@@ -532,10 +532,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/ide-features-trainer/onboarding/intellij.featuresTrainer.onboarding.iml" filepath="$PROJECT_DIR$/plugins/ide-features-trainer/onboarding/intellij.featuresTrainer.onboarding.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.tests.iml" filepath="$PROJECT_DIR$/plugins/ide-features-trainer/intellij.featuresTrainer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/ide-features-trainer/tips/intellij.featuresTrainer.tips.iml" filepath="$PROJECT_DIR$/plugins/ide-features-trainer/tips/intellij.featuresTrainer.tips.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.iml" filepath="$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/filePrediction/java/intellij.filePrediction.java.iml" filepath="$PROJECT_DIR$/plugins/filePrediction/java/intellij.filePrediction.java.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.tests.iml" filepath="$PROJECT_DIR$/plugins/filePrediction/intellij.filePrediction.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/filePrediction/vcs/intellij.filePrediction.vcs.iml" filepath="$PROJECT_DIR$/plugins/filePrediction/vcs/intellij.filePrediction.vcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/findUsagesMl/intellij.findUsagesMl.iml" filepath="$PROJECT_DIR$/plugins/findUsagesMl/intellij.findUsagesMl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/findUsagesMl/intellij.findUsagesMl.tests.iml" filepath="$PROJECT_DIR$/plugins/findUsagesMl/intellij.findUsagesMl.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.iml" />

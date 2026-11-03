@@ -1492,7 +1492,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
   jetbrainsLibrary("debugger-memory-agent"),
   jetbrainsLibrary("diogen-analysis"),
   jetbrainsLibrary("download-pgp-verifier"),
-  jetbrainsLibrary("file-prediction-model"),
   jetbrainsLibrary("find-action-model"),
   jetbrainsLibrary("find-all-model-experimental"),
   jetbrainsLibrary("find-classes-model"),

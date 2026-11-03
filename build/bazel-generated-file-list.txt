@@ -1315,9 +1315,6 @@ plugins/execution-multilaunch
 plugins/execution-multilaunch/core
 plugins/extended-toolwindows-ui
 plugins/extended-toolwindows-ui/frontend
-plugins/filePrediction
-plugins/filePrediction/java
-plugins/filePrediction/vcs
 plugins/findUsagesMl
 plugins/git-features-trainer
 plugins/git-modal-commit

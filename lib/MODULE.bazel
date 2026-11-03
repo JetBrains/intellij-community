@@ -1037,20 +1037,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0_http",
-    downloaded_file_path = "file-prediction-model-0.3.0.jar",
-    sha256 = "e506fd77462afcdb16f0ccfe7c96c1549443580a3be240c5dcff1ae2bfac0555",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.3.0/file-prediction-model-0.3.0.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0-sources_http",
-    downloaded_file_path = "file-prediction-model-0.3.0-sources.jar",
-    sha256 = "83a91f58607212b7a69a5828ccd3b0b47066dd212db4e43a93b63e6ac4034228",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.3.0/file-prediction-model-0.3.0-sources.jar",
-)
-
-http_file(
     name = "aws_sdk_kotlin-s3-jvm-1_0_69_http",
     downloaded_file_path = "s3-jvm-1.0.69.jar",
     sha256 = "3d6cd0bf48c65e965903fa4720d713badeeaa5433bd7b278075c484e3a5709a8",

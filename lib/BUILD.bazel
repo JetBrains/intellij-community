@@ -1505,28 +1505,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps.filePrediction.model/file-prediction-model-0.3.0.jar_copy",
-    src = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0_http//file",
-    out = "org.jetbrains.intellij.deps.filePrediction.model/file-prediction-model-0.3.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "file_prediction-file-prediction-model",
-    jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "file_prediction-tests-file-prediction-model",
-    jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0_http//file",
-    source_jar = "@org_jetbrains_intellij_deps_filePrediction_model-file-prediction-model-0_3_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "aws.sdk.kotlin/s3-jvm-1.0.69.jar_copy",
     src = "@aws_sdk_kotlin-s3-jvm-1_0_69_http//file",
     out = "aws.sdk.kotlin/s3-jvm-1.0.69.jar",

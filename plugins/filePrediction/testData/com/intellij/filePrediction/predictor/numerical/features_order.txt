@@ -1,6 +1,0 @@
-history_position
-history_uni_max
-history_uni_mle
-history_position=UNDEFINED
-history_uni_min
-history_uni_max=UNDEFINED

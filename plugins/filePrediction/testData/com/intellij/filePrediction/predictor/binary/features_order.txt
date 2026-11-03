@@ -1,5 +1,0 @@
-in_project
-in_source=UNDEFINED
-in_library
-in_source
-in_ref
