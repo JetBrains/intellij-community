@@ -73,7 +73,7 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
   }
   val eel = exePath.descriptor.toEelApi()
 
-  // Local directory to its copy on the remote eel. There is no copy for a directory on the same eel.
+  // Local directory to the directory that stands for it on the remote eel. A directory on the same eel has no entry.
   val remoteCopies = mutableMapOf<Directory, Path>()
 
   val (args, env) = launchRequest.args.getArgsAndEnv(object : Uploader {
@@ -85,14 +85,17 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
     }
 
 
-    override suspend fun uploadDir(localDir: Directory): PathMapper {
+    override suspend fun uploadDir(localDir: Directory, upload: Boolean): PathMapper {
       val remoteDir = if (eel.descriptor.equalsMayBeUsingMachine(localDir.getEelDescriptor())) {
         // In persistent mode, `transferLocalContentToRemote` copies the files also when the eel is local.
         // Do this check to prevent a copy from local to local.
         localDir
       }
-      else {
+      else if (upload) {
         uploadToEelOnce(eel, localDir).also { remoteCopies[localDir] = it }
+      }
+      else {
+        getRemoteDir(eel, localDir).also { remoteCopies[localDir] = it }
       }
       log.debug { "$localDir mapped to $remoteDir" }
       return PathMapper {
@@ -232,13 +235,21 @@ suspend fun getHelpersRootOnEel(eel: EelApi, helpersRoot: Path = PythonHelpersLo
   if (eel.descriptor.equalsMayBeUsingMachine(helpersRoot.getEelDescriptor())) helpersRoot.asEelPath() else uploadToEelOnce(eel, helpersRoot).asEelPath()
 
 /**
- * Uploads [localDir] to `~/.pycharm/<build>/<hash>` on [eel] and returns the copy.
+ * Returns `~/.pycharm/<build>/<hash>` on [eel]. This directory stands for [localDir] on [eel].
+ * The function does not create the directory.
+ */
+private suspend fun getRemoteDir(eel: EelApi, localDir: Directory): Path {
+  val build = ApplicationInfo.getInstance().build.toString()
+  val home = eel.userInfo.home.resolve(".pycharm").resolve(build)
+  return home.resolve(localDir.toHash()).asNioPath()
+}
+
+/**
+ * Uploads [localDir] to the [getRemoteDir] directory on [eel] and returns the copy.
  * The upload runs once after startup, and again when the entry in [remoteDirCheck] expires.
  */
 private suspend fun uploadToEelOnce(eel: EelApi, localDir: Directory): Path {
-  val build = ApplicationInfo.getInstance().build.toString()
-  val home = eel.userInfo.home.resolve(".pycharm").resolve(build)
-  val remoteDir = home.resolve(localDir.toHash()).asNioPath()
+  val remoteDir = getRemoteDir(eel, localDir)
   return withContext(Dispatchers.IO) {
     // Two concurrent uploads to the same directory are not necessary.
     // A mutex for each eel or directory is possible, but usually there is only one. Thus, one global mutex is sufficient.
