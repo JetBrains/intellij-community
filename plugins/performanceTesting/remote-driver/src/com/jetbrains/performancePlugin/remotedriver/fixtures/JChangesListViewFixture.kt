@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin.remotedriver.fixtures
 
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.performancePlugin.remotedriver.dataextractor.computeOnEdt
 import org.assertj.swing.core.Robot
@@ -40,10 +41,10 @@ class JChangesListViewFixture(private val robot: Robot, private val component: J
     if (checkbox.isSelected == setEnabled) return null
 
     val fileTreePathLocation = component.getPathBounds(fileTreePath) ?: error("Have not found bounds")
-    val checkBoxBounds = checkbox.bounds
 
-    val clickX = fileTreePathLocation.x + checkBoxBounds.width / 2
-    val clickY = fileTreePathLocation.y + checkBoxBounds.height / 2
+    // The checkbox is the leftmost part of the row. Its bounds are stale when the renderer did not lay out its nested panel.
+    val clickX = fileTreePathLocation.x + checkbox.preferredSize.width / 2
+    val clickY = fileTreePathLocation.y + fileTreePathLocation.height / 2
 
     return Point(clickX, clickY)
   }
@@ -57,7 +58,7 @@ class JChangesListViewFixture(private val robot: Robot, private val component: J
                                                                        component.isPathEditable(fileTreePath))
 
     val jpanel = renderer as? JPanel ?: error("Only JPanel is currently supported")
-    val checkbox = jpanel.components.singleOrNull { it is JCheckBox } as? JCheckBox ?: error("Only JCheckBox is currently supported")
-    return checkbox
+    // The renderer can keep the checkbox in a nested panel
+    return UIUtil.findComponentOfType(jpanel, JCheckBox::class.java) ?: error("Only JCheckBox is currently supported")
   }
 }
