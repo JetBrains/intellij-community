@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,6 +43,7 @@ public interface TypeEvalContextCache {
    *
    * @param delegating the context that delegates the types of library elements, not a library context to store
    */
+  @ApiStatus.Internal
   @NotNull
   TypeEvalContext getLibraryContext(@NotNull TypeEvalContext delegating);
 }
