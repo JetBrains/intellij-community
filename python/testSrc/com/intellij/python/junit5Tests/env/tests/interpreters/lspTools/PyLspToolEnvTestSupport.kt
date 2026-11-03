@@ -104,31 +104,42 @@ private suspend fun readLspErrorDiagnostics(
 }
 
 /**
- * Waits until [client] holds a diagnostic for [file] that matches [predicate], and returns every matching one.
+ * Waits until the client that [findClient] returns holds a diagnostic for [file] that matches [predicate], and returns
+ * every matching one.
  *
  * It waits for the events the way [awaitLspErrorDiagnostics] does. Use it when the project runs more than one
  * client of a tool, because [awaitLspErrorDiagnostics] reads only the first one.
+ *
+ * Each check calls [findClient] again. A server can restart while the test waits, and the client from before the
+ * restart publishes nothing more. A client of [providerClass] that shuts down unexpectedly fails the wait at once.
  */
-internal suspend fun awaitLspDiagnostics(client: LspClient, file: VirtualFile, predicate: (Diagnostic) -> Boolean): List<Diagnostic> {
-  val clientImpl = client as LspClientImpl
-  return withTimeout(2.minutes) {
-    var matching = clientImpl.diagnosticsOf(file).filter(predicate)
+internal suspend fun awaitLspDiagnostics(
+  project: Project,
+  file: VirtualFile,
+  providerClass: Class<out LspIntegrationProvider>,
+  findClient: () -> LspClient?,
+  predicate: (Diagnostic) -> Boolean,
+): List<Diagnostic> =
+  withTimeout(2.minutes) {
+    var matching = findClient().diagnosticsOf(file).filter(predicate)
     while (matching.isEmpty()) {
       try {
-        withTimeoutOrNull(LSP_EVENT_WAIT_LIMIT) { awaitDiagnosticsFromLspServer(client.descriptor.project, file) }
+        withTimeoutOrNull(LSP_EVENT_WAIT_LIMIT) { awaitDiagnosticsFromLspServer(project, file) }
       }
-      catch (_: AssertionError) {
-        // Another server of the project shut down. This client can still publish.
+      catch (e: AssertionError) {
+        // A server of the project shut down. Another client can still publish, or a new one can start.
+        assertNoUnexpectedShutdown(project, providerClass, e)
         delay(LSP_EVENT_WAIT_LIMIT)
       }
-      matching = clientImpl.diagnosticsOf(file).filter(predicate)
+      matching = findClient().diagnosticsOf(file).filter(predicate)
     }
     matching
   }
-}
 
-private suspend fun LspClientImpl.diagnosticsOf(file: VirtualFile): List<Diagnostic> =
-  readAction { getDiagnosticsAndQuickFixes(file) }.map { it.diagnostic }
+private suspend fun LspClient?.diagnosticsOf(file: VirtualFile): List<Diagnostic> {
+  val client = this as? LspClientImpl ?: return emptyList()
+  return readAction { client.getDiagnosticsAndQuickFixes(file) }.map { it.diagnostic }
+}
 
 /**
  * Assert that [errors] contains a diagnostic that is actually about the `int = "..."` type mismatch
@@ -152,11 +163,26 @@ internal fun assertReportsIntAssignmentError(errors: List<Diagnostic>, tool: Str
  * [awaitFileOpenedByLspServer] fails after [DEFAULT_TEST_TIMEOUT]. A cold tool start on CI can take longer.
  * So this function calls it again until the 90 seconds expire.
  * A repeated call is safe, because each call also sees the files that a server opened before the call.
+ *
+ * [awaitFileOpenedByLspServer] also fails when any LSP server of the project shuts down. A restart after a package
+ * install or after a new interpreter is normal, so this function then waits for the new server. A client of
+ * [providerClass] that shuts down unexpectedly fails the wait at once.
  */
-internal suspend fun awaitFileOpenedByLspTool(project: Project, file: VirtualFile): Unit =
+internal suspend fun awaitFileOpenedByLspTool(
+  project: Project,
+  file: VirtualFile,
+  providerClass: Class<out LspIntegrationProvider>,
+): Unit =
   withTimeout(90.seconds) {
     do {
-      val opened = withTimeoutOrNull(LSP_EVENT_WAIT_LIMIT) { awaitFileOpenedByLspServer(project, file) } != null
+      val opened = try {
+        withTimeoutOrNull(LSP_EVENT_WAIT_LIMIT) { awaitFileOpenedByLspServer(project, file) } != null
+      }
+      catch (e: AssertionError) {
+        assertNoUnexpectedShutdown(project, providerClass, e)
+        delay(LSP_EVENT_WAIT_LIMIT)
+        false
+      }
     }
     while (!opened)
   }

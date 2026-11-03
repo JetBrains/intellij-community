@@ -162,7 +162,7 @@ class ZubanMultiModuleLspToolEnvTest {
 
   /** Waits until the diagnostics of [client] for [file] hold the assignment error and satisfy [until]. */
   private suspend fun awaitZubanErrors(client: LspClient, file: VirtualFile, until: (List<Diagnostic>) -> Boolean) {
-    awaitFileOpenedByLspTool(project, file)
+    awaitFileOpenedByLspTool(project, file, ZubanLspIntegrationProvider::class.java)
     val reached = withTimeoutOrNull(2.minutes) {
       while (true) {
         val diagnostics = diagnosticsOf(client, file)

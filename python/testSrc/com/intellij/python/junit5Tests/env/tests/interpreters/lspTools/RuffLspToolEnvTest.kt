@@ -53,7 +53,7 @@ class RuffLspToolEnvTest {
   fun `reformat normalizes quotes via ruff`(): Unit = timeoutRunBlocking(timeout = 5.minutes) {
     enableRuffAndInstall()
     val file = codeInsightFixture.configureByText("quotes.py", "'a'\n")
-    awaitFileOpenedByLspTool(project, file.virtualFile)
+    awaitFileOpenedByLspTool(project, file.virtualFile, RuffLspIntegrationProvider::class.java)
     awaitFormatterOtherThanIde(project, file.virtualFile)
     codeInsightFixture.performEditorAction(IdeActions.ACTION_EDITOR_REFORMAT)
     codeInsightFixture.checkResult("\"a\"\n")

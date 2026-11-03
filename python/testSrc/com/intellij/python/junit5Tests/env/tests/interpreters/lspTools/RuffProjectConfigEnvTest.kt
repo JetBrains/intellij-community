@@ -148,7 +148,7 @@ class RuffProjectConfigEnvTest {
     path.writeText(text)
     val file = refreshed(path)
     withContext(Dispatchers.EDT) { editorFixture.configureFromExistingVirtualFile(file) }
-    awaitFileOpenedByLspTool(project, file)
+    awaitFileOpenedByLspTool(project, file, RuffLspIntegrationProvider::class.java)
     awaitFormatterOtherThanIde(project, file)
     editorFixture.performEditorAction(IdeActions.ACTION_EDITOR_REFORMAT)
     return withContext(Dispatchers.EDT) { editorFixture.editor.document.text }
