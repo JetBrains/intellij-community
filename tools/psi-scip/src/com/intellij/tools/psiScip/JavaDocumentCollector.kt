@@ -8,6 +8,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiEnumConstantInitializer
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiImportStatementBase
 import com.intellij.psi.PsiJavaCodeReferenceElement
@@ -123,13 +124,23 @@ internal class JavaDocumentCollector(private val file: PsiJavaFile, private val 
 
   // ---------------------------------------------------------------- definitions
 
+  /**
+   * An anonymous class is defined at the name of its base class, and its `new` expression is the enclosing range.
+   * The class of an enum constant with a body, such as `FieldNamingPolicy$1`, is defined at the constant name,
+   * and the constant is the enclosing range: the base class reference of such a class is a light element without a name.
+   */
   private fun defineClass(psiClass: PsiClass) {
     val symbol = JavaSymbols.classSymbol(psiClass) ?: return noSymbol(psiClass)
     val nameElement = when (psiClass) {
+      is PsiEnumConstantInitializer -> psiClass.enumConstant.nameIdentifier
       is PsiAnonymousClass -> psiClass.baseClassReference.referenceNameElement
       else -> psiClass.nameIdentifier
-    } ?: return
-    val enclosing = if (psiClass is PsiAnonymousClass) psiClass.parent.takeIf { it is PsiNewExpression } ?: psiClass else psiClass
+    } ?: return noSymbol(psiClass)
+    val enclosing = when (psiClass) {
+      is PsiEnumConstantInitializer -> psiClass.enumConstant
+      is PsiAnonymousClass -> psiClass.parent.takeIf { it is PsiNewExpression } ?: psiClass
+      else -> psiClass
+    }
     define(symbol, nameElement.textRange, enclosingRange(enclosing))
     val supers = when (psiClass) {
       is PsiAnonymousClass -> listOfNotNull(psiClass.baseClassType.resolve())
