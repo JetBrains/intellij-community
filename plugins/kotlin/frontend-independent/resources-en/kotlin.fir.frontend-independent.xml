@@ -64,10 +64,6 @@
             order="last"
             implementation="org.jetbrains.kotlin.idea.actions.KotlinDefaultTemplatePropertiesProvider"
     />
-    <defaultTemplatePropertiesProvider
-            order="last"
-            implementation="org.jetbrains.kotlin.idea.actions.KotlinDefaultTemplatePropertiesProvider"
-    />
     <referenceImporter
             id="KotlinReferenceImporter"
             implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
