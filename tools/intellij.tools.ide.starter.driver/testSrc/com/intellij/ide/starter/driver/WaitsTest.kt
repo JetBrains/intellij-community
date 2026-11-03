@@ -1,6 +1,7 @@
 package com.intellij.ide.starter.driver
 
 import com.intellij.driver.sdk.WaitForException
+import com.intellij.driver.sdk.waitAny
 import com.intellij.driver.sdk.waitFor
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
@@ -48,5 +49,24 @@ internal class WaitsTest {
 
     assertEquals(1, checks.get())
     assertEquals("Timeout(0s): Failed: connection starts. Actual: starting", failure.message)
+  }
+
+  @Test
+  fun `waitAny returns the elements that satisfied the checker in the successful observation`() {
+    // each element satisfies the checker only the first time it is asked, as a remote state that changes would
+    val checked = mutableSetOf<String>()
+
+    val result = waitAny(timeout = 5.seconds, getter = { listOf("a", "b") }, checker = { checked.add(it) })
+
+    assertEquals(listOf("a", "b"), result)
+  }
+
+  @Test
+  fun `waitAny fails with the full list of the last observation`() {
+    val failure = assertThrows<WaitForException> {
+      waitAny<String>(message = "a tab opens", timeout = Duration.ZERO, getter = { listOf("a", "b") }, checker = { false })
+    }
+
+    assertEquals("Timeout(0s): Failed: a tab opens. Actual: [a, b]", failure.message)
   }
 }

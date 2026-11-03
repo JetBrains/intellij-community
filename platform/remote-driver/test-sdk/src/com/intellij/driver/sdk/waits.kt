@@ -110,13 +110,19 @@ fun <T> waitAny(
 ): List<T> {
   return waitFor(message = message, timeout = timeout,
                  interval = interval,
-                 errorMessage = if (errorMessage == null) {
-                   null
-                 }
-                 else { it -> errorMessage.invoke(it) },
-                 getter = getter,
-                 checker = { it.any { checker(it) } }
-  ).filter { checker(it) }
+                 errorMessage = { (all) -> errorMessage?.invoke(all) ?: "Failed: $message. Actual: $all" },
+                 getter = { observe(getter(), checker) },
+                 checker = { it.suitable.isNotEmpty() }
+  ).suitable
+}
+
+private data class Observation<C, T>(val all: C, val suitable: List<T>, val notSuitable: List<T>) {
+  override fun toString(): String = "suitable: $suitable, not suitable: $notSuitable"
+}
+
+private fun <C : Collection<T>, T> observe(all: C, checker: (T) -> Boolean): Observation<C, T> {
+  val (suitable, notSuitable) = all.partition(checker)
+  return Observation(all, suitable, notSuitable)
 }
 
 private fun logAwaitStart(message: String?, timeout: Duration) {
