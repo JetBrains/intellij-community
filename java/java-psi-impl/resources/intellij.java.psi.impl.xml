@@ -114,6 +114,9 @@
     <filetype.decompiler id="classFileDecompiler" filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
     <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
     <psi.classFileDecompiler id="clsStubBuilder" implementation="com.intellij.psi.impl.compiled.ClsDecompilerImpl" order="last"/>
+    <!--suppress PluginXmlReferencesModuleReachability (JDK 1.8 module must not depend on intellij.platform.ide.impl per JavaVersionInIntelliJModulesTest; it is loaded in all products at runtime) -->
+    <fileType extensions="snippet" name="JSHELL" language="JShellLanguage" fieldName="INSTANCE"
+              implementationClass="com.intellij.ide.highlighter.JShellFileType"/>
 
     <!-- The defaults for a process without a Java backend, such as JetBrains Light. The Java plugin overrides each of them. -->
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleManager"
