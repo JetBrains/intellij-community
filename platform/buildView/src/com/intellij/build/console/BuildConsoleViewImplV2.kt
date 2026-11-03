@@ -279,8 +279,13 @@ internal class BuildConsoleViewImplV2(
         true -> BuildConsoleViewInlay.panel(editor.colorsScheme, inlayInfo.text, inlayInfo.kind, inlayInfo.hyperlinkListener)
         else -> BuildConsoleViewInlay.comment(editor.colorsScheme, inlayInfo.text, inlayInfo.hyperlinkListener)
       }
-      val inlayOffset = sortedOutputMarkers(nodeId).firstOrNull()?.startOffset ?: return@access
-      val inlay = editor.addComponentInlay(inlayOffset, inlayProperties, inlayComponent, ComponentInlayAlignment.FIT_VIEWPORT_WIDTH)
+      val inlayOffset = sortedOutputMarkers(nodeId).firstOrNull()?.startOffset ?: editor.document.textLength
+      val inlay = editor.addComponentInlay(
+        inlayOffset,
+        inlayProperties,
+        inlayComponent,
+        ComponentInlayAlignment.FIT_VIEWPORT_WIDTH
+      )
       if (inlay != null) {
         addNodeInlay(nodeId, inlay)
       }
