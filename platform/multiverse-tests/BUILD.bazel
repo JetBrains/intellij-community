@@ -52,6 +52,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/lang-core",
         "//platform/lang-impl",
+        "//platform/problemsView/ui",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-impl",
         "//platform/testFramework",

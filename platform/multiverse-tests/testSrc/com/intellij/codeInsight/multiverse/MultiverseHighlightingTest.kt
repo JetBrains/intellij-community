@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.multiverse
 
 import com.intellij.analysis.AnalysisScope
+import com.intellij.analysis.problemsView.toolWindow.ProblemsViewContextVisibility
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
@@ -53,6 +54,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.createGlobalContextForTool
@@ -324,6 +326,103 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
       myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
       assertTrue("the daemon analyzes the second context", fileStatusMap.allDirtyScopesAreNullFor(document, second))
     }
+  }
+
+  // The Problems View hides a context with stale highlighters that no editor shows, until the daemon analyzes that context again
+  fun testProblemsViewHidesStaleHiddenContext() {
+    enableInspectionTools(project, testRootDisposable, CommentInspection())
+    val (hidden, shown) = configureCommentInTwoModules()
+    val document = editor.document
+    val fileStatusMap = myDaemonCodeAnalyzer.fileStatusMap
+
+    context = hidden
+    doHighlighting()
+    context = shown
+    doHighlighting()
+    assertEmpty("the view shows both analyzed contexts", findHiddenContexts(hidden, shown))
+
+    editCommentAndAssertHiddenCommentIsInvalid(hidden)
+    doHighlighting()
+    assertFalse("precondition: the edit dirties the context that the editor left", fileStatusMap.allDirtyScopesAreNullFor(document, hidden))
+    assertTrue("precondition: the daemon analyzes the context of the editor", fileStatusMap.allDirtyScopesAreNullFor(document, shown))
+    assertEquals("the view hides the stale context that no editor shows", setOf(hidden), findHiddenContexts(hidden, shown))
+
+    context = hidden
+    assertEmpty("the view shows the context of the editor at once", findHiddenContexts(hidden, shown))
+    doHighlighting()
+    assertEmpty("the view shows the analyzed context", findHiddenContexts(hidden, shown))
+  }
+
+  // The daemon does not highlight an editor that is not active or selected, so the context of such an editor can be stale
+  fun testProblemsViewHidesStaleContextOfEditorThatDaemonDoesNotHighlight() {
+    enableInspectionTools(project, testRootDisposable, CommentInspection())
+    val (hidden, shown) = configureCommentInTwoModules()
+    val document = editor.document
+    context = hidden
+    doHighlighting()
+    context = shown
+    doHighlighting()
+    val notHighlightedEditor = createEditor(document)
+    EditorContextManager.getInstance(project).setEditorContext(notHighlightedEditor, SingleEditorContext(hidden))
+    assertFalse("precondition: the daemon does not highlight the second editor",
+                myDaemonCodeAnalyzer.selectedEditors.any { (it as? TextEditor)?.editor == notHighlightedEditor })
+
+    editCommentAndAssertHiddenCommentIsInvalid(hidden)
+    doHighlighting()
+    assertFalse("precondition: the edit dirties the context of the second editor",
+                myDaemonCodeAnalyzer.fileStatusMap.allDirtyScopesAreNullFor(document, hidden))
+
+    assertEquals("the view hides the stale context of an editor that the daemon does not highlight",
+                 setOf(hidden), findHiddenContexts(hidden, shown))
+  }
+
+  // The Problems View shows one context only when the owner of the file does not support simultaneous rendering.
+  // Both contexts are analyzed, so only the second rule hides a context.
+  fun testProblemsViewShowsOneContextOfProviderWithoutSimultaneousRendering() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    val first = FakeContext("first")
+    val second = FakeContext("second")
+    registerOwningProvider(virtualFile, Answer.Contexts(listOf(first, second)), supportsSimultaneousRendering = false)
+    markAnalyzed(first)
+    markAnalyzed(second)
+
+    fun findHiddenContexts() = findHiddenContexts(first, second, supportsSimultaneousRendering = false)
+
+    context = first
+    assertEquals("the view shows the context of the editor only", setOf(second), findHiddenContexts())
+    context = second
+    assertEquals("the view follows the context of the editor", setOf(first), findHiddenContexts())
+  }
+
+  /**
+   * @return the contexts of [contexts] that the Problems View hides for the document of the editor. The rule of the view root.
+   * [supportsSimultaneousRendering] is the answer of the owner of the file. The root reads it in a background read action,
+   * and `ProblemsViewHighlightingFileRootContextsTest` covers that read.
+   */
+  private fun findHiddenContexts(
+    vararg contexts: CodeInsightContext,
+    supportsSimultaneousRendering: Boolean = true,
+  ): Set<CodeInsightContext> {
+    val document = editor.document
+    val preferredContext = if (supportsSimultaneousRendering) null else getPreferredContext()
+    val visibility = ProblemsViewContextVisibility.compute(project, document, supportsSimultaneousRendering, preferredContext)
+    return contexts.filterTo(HashSet()) { context ->
+      !visibility.isVisible(context) { ProblemsViewContextVisibility.isAnalyzed(project, document, it) }
+    }
+  }
+
+  private fun markAnalyzed(context: CodeInsightContext) {
+    myDaemonCodeAnalyzer.fileStatusMap.markFileUpToDateForAllPasses(editor.document, context)
+  }
+
+  private fun editCommentAndAssertHiddenCommentIsInvalid(hidden: CodeInsightContext) {
+    val hiddenComment = PsiTreeUtil.findChildOfType(psiManager.findFile(virtualFile, hidden), PsiComment::class.java)!!
+    val document = editor.document
+    WriteCommandAction.runWriteCommandAction(project) {
+      document.insertString(document.text.indexOf("comment") + "comment".length, "x")
+    }
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assertFalse("precondition: the edit must invalidate the comment in the hidden context", hiddenComment.isValid)
   }
 
   private fun createEditor(document: Document): Editor {
@@ -611,8 +710,9 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     targetFile: VirtualFile,
     answer: Answer,
     preferred: CodeInsightContext? = null,
+    supportsSimultaneousRendering: Boolean = true,
   ): OwningTestContextProvider {
-    val provider = OwningTestContextProvider(targetFile, answer, preferred)
+    val provider = OwningTestContextProvider(targetFile, answer, preferred, supportsSimultaneousRendering)
     CodeInsightContextManager.getInstance(project).registerTestOnlyCodeInsightContextProvider(provider, testRootDisposable)
     return provider
   }
@@ -683,8 +783,11 @@ private class OwningTestContextProvider(
   private val targetFile: VirtualFile,
   var answer: Answer,
   var preferred: CodeInsightContext? = null,
+  private val supportsSimultaneousRendering: Boolean = true,
 ) : CodeInsightContextProvider {
   override fun isOwnerOf(context: CodeInsightContext): Boolean = context is FakeContext
+
+  override fun supportsSimultaneousRendering(): Boolean = supportsSimultaneousRendering
 
   override fun getContexts(file: VirtualFile, project: Project): Answer =
     if (file == targetFile) answer else Answer.NotOwned
