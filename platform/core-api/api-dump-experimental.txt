@@ -27,6 +27,7 @@
 - a:isOwnerOf(com.intellij.codeInsight.multiverse.CodeInsightContext):Z
 - onContextPicked(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,com.intellij.codeInsight.multiverse.CodeInsightContext):V
 - a:subscribeToChanges(com.intellij.openapi.project.Project,com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Invalidator):V
+- supportsSimultaneousRendering():Z
 *:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer
 - *sf:Companion:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer$Companion
 *f:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer$Companion

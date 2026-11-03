@@ -52,6 +52,12 @@ interface CodeInsightContextProvider {
   @RequiresBackgroundThread
   fun getContextResetAction(file: VirtualFile, project: Project): ContextResetAction? = null
 
+  /**
+   * `false` when the UI must not show the results of several contexts of this provider together.
+   * Then the Problems View shows the problems of one context only.
+   */
+  fun supportsSimultaneousRendering(): Boolean = true
+
   @ApiStatus.NonExtendable
   interface Invalidator {
     /** Drops the cached contexts of every file. */
