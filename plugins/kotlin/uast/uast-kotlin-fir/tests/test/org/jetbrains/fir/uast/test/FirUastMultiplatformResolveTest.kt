@@ -50,6 +50,17 @@ class FirUastMultiplatformResolveTest : KotlinLightMultiplatformCodeInsightFixtu
         )
     }
 
+    fun testReifiedTypeOfCall() {
+        doTest(
+            """
+                import kotlin.reflect.typeOf
+
+                inline fun <reified T> kType() = typeOf<T>()
+                """.trimIndent(),
+            "typeOf<T>()",
+        )
+    }
+
     private fun doTest(@Language("kotlin") fileText: String, @Language("kotlin") callText: String) {
         val sourceRoot = PlatformDescriptor.COMMON.sourceRoot() ?: error("No source root for ${PlatformDescriptor.COMMON}")
         val virtualFile = VfsTestUtil.createFile(sourceRoot, "main.kt", fileText)
