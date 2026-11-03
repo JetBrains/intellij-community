@@ -1014,8 +1014,6 @@
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ExcludeLoggerFromCompletionLookupActionProvider"
                            id="loggerExcludeFromCompletion"/>
     <lookup.actionProvider implementation="com.intellij.codeInsight.completion.ImportStaticLookupActionProvider" id="importStatic"/>
-    <fileType fileNames="module-info.java" name="Java module" fieldName="INSTANCE"
-              implementationClass="com.intellij.ide.highlighter.JavaModuleFileType"/>
     <fileType extensions="snippet" name="JSHELL" language="JShellLanguage" fieldName="INSTANCE"
               implementationClass="com.intellij.ide.highlighter.JShellFileType"/>
     <codeInsight.createFieldFromUsageHelper language="JAVA"
