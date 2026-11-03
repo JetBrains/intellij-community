@@ -29,7 +29,7 @@ import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 @ApiStatus.Internal
-class ProjectPaneModel(project: Project) : TreeStructureBasedProjectViewPaneModel(project) {
+open class ProjectPaneModel(project: Project) : TreeStructureBasedProjectViewPaneModel(project) {
   companion object {
     val ID: ProjectViewPaneId = projectViewPaneId(ProjectViewPane.ID)
   }
