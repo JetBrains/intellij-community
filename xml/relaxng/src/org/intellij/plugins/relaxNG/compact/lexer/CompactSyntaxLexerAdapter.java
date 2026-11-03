@@ -216,7 +216,7 @@ public final class CompactSyntaxLexerAdapter extends LexerBase {
     return resource != null ? resource.toExternalForm() : "<unknown>";
   }
 
-  public static void main(String[] args) throws IOException {
+  static void main(String[] args) throws IOException {
     final CompactSyntaxLexerAdapter lexer = new CompactSyntaxLexerAdapter();
     lexer.start(new CharArrayCharSequence(FileUtil.adaptiveLoadText(new FileReader(args[0]))));
     while (lexer.getTokenType() != null) {
