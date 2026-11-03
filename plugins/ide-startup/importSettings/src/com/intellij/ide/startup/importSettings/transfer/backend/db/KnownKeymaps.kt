@@ -7,6 +7,7 @@ import com.intellij.ide.startup.importSettings.models.BundledKeymap
 import com.intellij.ide.startup.importSettings.models.PluginKeymap
 import com.intellij.ide.startup.importSettings.models.SimpleActionDescriptor
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.ui.IdeUICustomization
 import javax.swing.KeyStroke
 
@@ -48,32 +49,32 @@ object KnownKeymaps {
     TransferableKeymapId.VsCode,
     IdeBundle.message("transfersettings.product.vscode"),
     "com.intellij.plugins.vscodekeymap",
-    "VSCode",
-    BundledKeymap.fromManager(TransferableKeymapId.Default, "\$default"),
+    KeymapManager.VSCODE,
+    BundledKeymap.fromManager(TransferableKeymapId.Default, KeymapManager.DEFAULT_IDEA_KEYMAP),
     VSCodeDemo
   )
   val VSCodeMac: PluginKeymap = PluginKeymap(
     TransferableKeymapId.VsCodeMac,
     IdeBundle.message("transfersettings.product.vscode"),
     "com.intellij.plugins.vscodekeymap",
-    "VSCode OSX",
-    BundledKeymap.fromManager(TransferableKeymapId.Default, "\$default"),
+    KeymapManager.VSCODE_OSX,
+    BundledKeymap.fromManager(TransferableKeymapId.Default, KeymapManager.DEFAULT_IDEA_KEYMAP),
     VSCodeMacDemo
   )
   val VSMac: PluginKeymap = PluginKeymap(
     TransferableKeymapId.VsForMac,
     IdeBundle.message("transfersettings.product.visual.studio.for.mac"),
     "com.intellij.plugins.visualstudioformackeymap",
-    "Visual Studio for Mac",
-    BundledKeymap.fromManager(TransferableKeymapId.Default, "\$default"),
+    KeymapManager.VISUAL_STUDIO_FOR_MAC,
+    BundledKeymap.fromManager(TransferableKeymapId.Default, KeymapManager.DEFAULT_IDEA_KEYMAP),
     VSMacDemo
   )
   val VisualStudio2022: PluginKeymap = PluginKeymap(
     TransferableKeymapId.VisualStudio2022,
     IdeBundle.message("transfersettings.product.visual.studio"),
     "com.intellij.plugins.visualstudio2022keymap",
-    "Visual Studio 2022",
-    BundledKeymap.fromManager(TransferableKeymapId.Default, "\$default"),
+    KeymapManager.VISUAL_STUDIO_2022,
+    BundledKeymap.fromManager(TransferableKeymapId.Default, KeymapManager.DEFAULT_IDEA_KEYMAP),
     VisualStudio2022Demo
   )
 }

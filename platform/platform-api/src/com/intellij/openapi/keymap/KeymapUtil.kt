@@ -314,7 +314,7 @@ object KeymapUtil {
   fun isEmacsKeymap(keymap: Keymap?): Boolean {
     var keymap = keymap
     while (keymap != null) {
-      if ("Emacs".equals(keymap.getName(), ignoreCase = true)) {
+      if (KeymapManager.EMACS.equals(keymap.getName(), ignoreCase = true)) {
         return true
       }
       keymap = keymap.getParent()

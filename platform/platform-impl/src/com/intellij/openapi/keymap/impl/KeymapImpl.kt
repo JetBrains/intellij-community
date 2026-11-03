@@ -32,6 +32,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.keymap.ex.KeymapManagerEx
@@ -898,32 +899,32 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
         {
           // TODO remove when PluginAdvertiser implements that
           val pluginId = when (keymapName) {
-            "Mac OS X",
-            "Mac OS X 10.5+" -> macOSKeymap
-            "Default for GNOME" -> gnomeKeymap
-            "Default for KDE" -> kdeKeymap
-            "Default for XWin" -> xwinKeymap
-            "Eclipse",
-            "Eclipse (Mac OS X)" -> eclipseKeymap
-            "Emacs" -> emacsKeymap
-            "NetBeans 6.5" -> netbeansKeymap
-            "QtCreator",
-            "QtCreator OSX" -> qtcreatorKeymap
-            "ReSharper",
-            "ReSharper OSX" -> resharperKeymap
-            "Sublime Text",
-            "Sublime Text (Mac OS X)" -> sublimeKeymap
-            "Visual Studio",
-            "Visual Studio OSX" -> visualStudioKeymap
-            "Visual Studio 2022" -> visualStudio2022Keymap
-            "Visual Assist",
-            "Visual Assist OSX" -> visualAssistKeymap
-            "Xcode" -> xcodeKeymap
-            "Visual Studio for Mac" -> vsForMacKeymap
+            KeymapManager.MAC_OS_X_KEYMAP,
+            KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> macOSKeymap
+            KeymapManager.GNOME_KEYMAP -> gnomeKeymap
+            KeymapManager.KDE_KEYMAP -> kdeKeymap
+            KeymapManager.X_WINDOW_KEYMAP -> xwinKeymap
+            KeymapManager.ECLIPSE,
+            KeymapManager.ECLIPSE_MAC_OS_X -> eclipseKeymap
+            KeymapManager.EMACS -> emacsKeymap
+            KeymapManager.NET_BEANS_6_5 -> netbeansKeymap
+            KeymapManager.QT_CREATOR,
+            KeymapManager.QT_CREATOR_MAC_OS_X -> qtcreatorKeymap
+            KeymapManager.RESHARPER,
+            KeymapManager.RESHARPER_OSX -> resharperKeymap
+            KeymapManager.SUBLIME_TEXT,
+            KeymapManager.SUBLIME_TEXT_MAC_OS_X -> sublimeKeymap
+            KeymapManager.VISUAL_STUDIO,
+            KeymapManager.VISUAL_STUDIO_OSX -> visualStudioKeymap
+            KeymapManager.VISUAL_STUDIO_2022 -> visualStudio2022Keymap
+            KeymapManager.VISUAL_ASSIST,
+            KeymapManager.VISUAL_ASSIST_OSX -> visualAssistKeymap
+            KeymapManager.XCODE -> xcodeKeymap
+            KeymapManager.VISUAL_STUDIO_FOR_MAC -> vsForMacKeymap
             "Rider",
             "Rider OSX" -> riderKeymap
-            "VSCode",
-            "VSCode OSX" -> vsCodeKeymap
+            KeymapManager.VSCODE,
+            KeymapManager.VSCODE_OSX -> vsCodeKeymap
             else -> null
           }
 

@@ -223,9 +223,18 @@ private fun isKnownLinuxKeymap(keymapName: String?): Boolean {
 
 private fun isKnownMacOSKeymap(keymapName: String?): Boolean {
   return when (keymapName) {
-    KeymapManager.MAC_OS_X_KEYMAP, KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP, "macOS System Shortcuts",
-    "Eclipse (Mac OS X)", "Sublime Text (Mac OS X)", "Xcode", "ReSharper OSX",
-    "Visual Studio OSX", "Visual Assist OSX", "Visual Studio for Mac", "VSCode OSX", "QtCreator (Mac OS X)" -> true
+    KeymapManager.MAC_OS_X_KEYMAP,
+    KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP,
+    KeymapManager.MAC_OS_SYSTEM_SHORTCUTS,
+    KeymapManager.ECLIPSE_MAC_OS_X,
+    KeymapManager.SUBLIME_TEXT_MAC_OS_X,
+    KeymapManager.XCODE,
+    KeymapManager.RESHARPER_OSX,
+    KeymapManager.VISUAL_STUDIO_OSX,
+    KeymapManager.VISUAL_ASSIST_OSX,
+    KeymapManager.VISUAL_STUDIO_FOR_MAC,
+    KeymapManager.VSCODE_OSX,
+    KeymapManager.QT_CREATOR_MAC_OS_X -> true
     else -> false
   }
 }

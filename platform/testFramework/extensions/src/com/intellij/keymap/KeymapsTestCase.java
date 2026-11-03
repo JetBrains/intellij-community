@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.keymap;
 
+import com.intellij.openapi.keymap.KeymapManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
    */
   // @formatter:off
   private static final Map<String, String[][]> DEFAULT_DUPLICATES = Map.ofEntries(
-    Map.entry("$default", new String[][]{
+    Map.entry(KeymapManager.DEFAULT_IDEA_KEYMAP, new String[][]{
       {"ADD",                      "ExpandTreeNode", "Graph.ZoomIn"},
       {"BACK_SPACE",               "EditorBackSpace", "FileChooser.GoToParent"},
       {"C",                        "Uml.CollapseNodes", "JupyterNotebookCopyCellCommandModeAction"},
@@ -184,7 +185,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"alt BACK_SLASH",           "CallInlineCompletionAction", "MainMenuButton.ShowMenu"},
       {"shift ctrl EQUALS",        "CompilationChartsZoomResetAction", "ExpandAllRegions"},
     }),
-    Map.entry("Mac OS X 10.5+", new String[][]{
+    Map.entry(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP, new String[][]{
       {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
       {"F1",                       "QuickJavaDoc", "org.jetbrains.r.actions.REditorHelpAction"},
       {"Force touch",              "GotoDeclaration", "RunToCursor"},
@@ -237,7 +238,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
                                    "Air.Prompt.SelectModel"},
       {"shift meta R",             "WebInspector.Browser.Refresh", "ReplaceInPath"},
     }),
-    Map.entry("Mac OS X", new String[][]{
+    Map.entry(KeymapManager.MAC_OS_X_KEYMAP, new String[][]{
       {"BACK_SPACE",               "$Delete", "EditorBackSpace"},
       {"Force touch",              "GotoDeclaration", "RunToCursor"},
       {"alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeRunTaskPopupAction"},
@@ -271,7 +272,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
       {"shift meta C",             "CopyPaths", "DatabaseView.CopyDdlAction", "WebInspector.Browser.Selection.Toggle", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
     }),
-    Map.entry("Emacs", new String[][]{
+    Map.entry(KeymapManager.EMACS, new String[][]{
       {"ESCAPE",                   SECOND_STROKE, "CloseGotItTooltip", "FocusEditor", "Terminal.SwitchFocusToEditor", "CloseDiffEditor"},
       {"TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
                                    "EmacsStyleIndent", "ExpandLiveTemplateByTab", "BraceOrQuoteOut", "SplitChooser.NextWindow", "InsertInlineCompletionAction",
@@ -312,7 +313,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift control X",          SECOND_STROKE, "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
       {"shift ctrl MINUS",         "$Undo", "NotebookSplitCellAction"},
     }),
-    Map.entry("Visual Studio", new String[][]{
+    Map.entry(KeymapManager.VISUAL_STUDIO, new String[][]{
       {"alt BACK_SLASH",           "CallInlineCompletionAction", "FileStructurePopup"},
       {"F5",                       "Graph.RouteEdges", "Resume", "WebInspector.Browser.Refresh"},
       {"F7",                       "CompileDirty", "NextDiff"},
@@ -364,7 +365,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"F8",                       "NextOccurence", "NextDiff"},
       {"shift F8",                 "PreviousOccurence", "PreviousDiff"},
     }),
-    Map.entry("Visual Studio OSX", new String[][]{
+    Map.entry(KeymapManager.VISUAL_STUDIO_OSX, new String[][]{
       {"F12",                      "GotoDeclaration", "WebInspector.Browser.Selection.Toggle"},
       {"meta CLOSE_BRACKET",       "AgentThreads.ShowPreviousChat", "EditorMatchBrace"},
       {"meta L",                   "$Cut", "Terminal.ClearBuffer", "UniversalFileChooser.FocusPath"},
@@ -408,7 +409,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta T",                   "SearchEverywhere", "Terminal.NewTab"},
       {"alt SLASH",                "CallInlineCompletionAction", "HippieCompletion"},
     }),
-    Map.entry("Default for XWin", new String[][]{
+    Map.entry(KeymapManager.X_WINDOW_KEYMAP, new String[][]{
       {"ctrl SLASH",               "CommentByLineComment", "FileChooser.GoToRoot", "Graph.ActualSize"},
       {"ctrl alt 8",               "AddLogpoint", "QuickEvaluateExpression"},
       {"shift ctrl C",             "CopyPaths", "DatabaseView.CopyDdlAction", "Terminal.CopySelectedText",
@@ -417,12 +418,12 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
       {"shift ctrl alt B",         "DatabaseView.OpenDdlInConsole", "SurroundWith"},
     }),
-    Map.entry("Default for GNOME", new String[][]{
+    Map.entry(KeymapManager.GNOME_KEYMAP, new String[][]{
       {"shift alt 7",              "IDEtalk.SearchUserHistory", "FindUsages"},
       {"shift alt LEFT",           "PreviousEditorTab", "Diff.PrevChange", "Back"},
       {"shift alt RIGHT",          "NextEditorTab", "Diff.NextChange", "Forward"},
     }),
-    Map.entry("Default for KDE", new String[][]{
+    Map.entry(KeymapManager.KDE_KEYMAP, new String[][]{
       {"control 1",                "FileChooser.GotoHome", "ShowErrorDescription", "DuplicatesForm.SendToLeft"},
       {"control 2",                "FileChooser.GotoProject", "Stop", "DuplicatesForm.SendToRight"},
       {"control 3",                "FindWordAtCaret", "FileChooser.GotoModule"},
@@ -430,7 +431,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift alt 7",              "IDEtalk.SearchUserHistory", "FindUsages"},
       {"shift alt L",              "ReformatCode", "context.load"},
     }),
-    Map.entry("Eclipse", new String[][]{
+    Map.entry(KeymapManager.ECLIPSE, new String[][]{
       {"F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue",
                                    "Table-startEditing", "Tree-startEditing", "Console.TableResult.GotoReferencedResult"},
       {"F5",                       "Graph.RouteEdges", "StepInto", "WebInspector.Browser.Refresh"},
@@ -476,7 +477,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"ctrl EQUALS",              "Air.Chat.IncreaseFontSize", "EditorIncreaseFontSizeGlobal"},
       {"ctrl MINUS",               "Air.Chat.DecreaseFontSize", "EditorDecreaseFontSizeGlobal"},
     }),
-    Map.entry("NetBeans 6.5", new String[][]{
+    Map.entry(KeymapManager.NET_BEANS_6_5, new String[][]{
       {"F4",                       "RunToCursor", "EditSource"},
       {"alt 2",                    "ActivateFindToolWindow", "Activateair.threadsToolWindow"},
       {"F5",                       "Resume", "Graph.RouteEdges", "WebInspector.Browser.Refresh"},
@@ -526,7 +527,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl C",             "CommentByLineComment", "DatabaseView.CopyDdlAction", "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction"},
       {"shift ctrl S",             "SaveAll", "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction"},
     }),
-    Map.entry("Eclipse (Mac OS X)", new String[][]{
+    Map.entry(KeymapManager.ECLIPSE_MAC_OS_X, new String[][]{
       {"F2",                       "Console.TableResult.EditValue", "QuickJavaDoc", "XDebugger.SetValue", "Git.Reword.Commit", "Git.Rename.Local.Branch",
                                    "ShelvedChanges.Rename", "ChangesView.Rename", "Table-startEditing", "Tree-startEditing", "Console.TableResult.GotoReferencedResult"},
       {"F3",                       "EditSource", "GotoDeclaration"},
@@ -560,7 +561,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"meta EQUALS",              "Air.Chat.IncreaseFontSize", "EditorIncreaseFontSizeGlobal"},
       {"meta MINUS",               "Air.Chat.DecreaseFontSize", "EditorDecreaseFontSizeGlobal"},
     }),
-    Map.entry("Sublime Text", new String[][]{
+    Map.entry(KeymapManager.SUBLIME_TEXT, new String[][]{
       {"F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch",
                                    "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename",
                                    "XDebugger.SetValue", "Table-startEditing", "Tree-startEditing", "Console.TableResult.GotoReferencedResult"},
@@ -601,7 +602,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift ctrl V",             "$Paste", "JupyterNotebookPasteCellAboveCommandModeAction"},
       {"shift ctrl EQUALS",        "CompilationChartsZoomResetAction", "EditorDecreaseFontSize"},
     }),
-    Map.entry("Sublime Text (Mac OS X)", new String[][]{
+    Map.entry(KeymapManager.SUBLIME_TEXT_MAC_OS_X, new String[][]{
       {"F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch",
                                    "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename",
                                    "XDebugger.SetValue", "Table-startEditing", "Tree-startEditing", "Console.TableResult.GotoReferencedResult"},
@@ -643,7 +644,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
       {"shift meta V",             "$Paste", "JupyterNotebookPasteCellAboveCommandModeAction"},
     }),
-    Map.entry("macOS System Shortcuts", new String[][]{
+    Map.entry(KeymapManager.MAC_OS_SYSTEM_SHORTCUTS, new String[][]{
       {"ctrl C",                   "Terminal.ClearPrompt", "Vcs.QuickListPopupAction", "org.jetbrains.r.console.RConsoleViewImpl.RInterruptAction"},
       {"ctrl ENTER",               "EditorSplitLine", "NotebookRunCellAction", "PyExecuteCellAction"},
       {"ctrl O",                   "ChangesView.ShowCommitOptions", "EditorSplitLine", "ExportToTextFile"},
