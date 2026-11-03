@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiEnumConstantInitializer
 import com.intellij.psi.PsiField
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JavaResolveResult
 import com.intellij.psi.PsiImportStatementBase
 import com.intellij.psi.PsiJavaCodeReferenceElement
@@ -44,6 +45,7 @@ import com.intellij.psi.util.PsiUtil
  * - A reference has the range of the reference name. A reference with more than one resolve candidate is never written.
  * - A call has [ROLE_CALL] on the callee name. A `new` expression writes the class without the bit and the constructor with it.
  *   When the class has no explicit constructor, the class alone carries the bit. See [constructorCallee].
+ *   An enum constant writes the constructor that it calls at the constant name, see [enumConstantCall].
  * - An occurrence inside a doc comment has [ROLE_DOC] and never [ROLE_CALL].
  * - A package reference is never written. [Counter.PACKAGE_REFS] counts it.
  */
@@ -102,6 +104,11 @@ internal class JavaDocumentCollector(private val file: PsiJavaFile, private val 
         is PsiLocalVariable, is PsiParameter -> defineLocal(variable, variable.nameIdentifier)
       }
       super.visitVariable(variable)
+    }
+
+    override fun visitEnumConstant(enumConstant: PsiEnumConstant) {
+      enumConstantCall(enumConstant)
+      super.visitEnumConstant(enumConstant)
     }
 
     override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement) {
@@ -303,6 +310,28 @@ internal class JavaDocumentCollector(private val file: PsiJavaFile, private val 
     }
     unresolved(site, results.size)
     return null
+  }
+
+  /**
+   * An enum constant, such as `RED("red", 1)`, calls a constructor of its enum: the constructor gets [ROLE_CALL] at the constant name.
+   * An enum without explicit constructors has only the implicit one, which has no definition.
+   * Unlike `new`, the constant name is no reference to the enum, so such a constant writes nothing.
+   */
+  private fun enumConstantCall(constant: PsiEnumConstant) {
+    val enumClass = constant.containingClass ?: return
+    if (enumClass.constructors.isEmpty()) return
+    stats.add(Counter.REFS)
+    val argumentList = constant.argumentList
+    val results = if (argumentList == null) {
+      constant.resolveMethodGenerics().takeIf { it.element != null }?.let { arrayOf(it) } ?: JavaResolveResult.EMPTY_ARRAY
+    }
+    else {
+      // resolveMethodGenerics() is empty for an ambiguous call as well, and the candidates tell it from an unresolved one
+      val facade = JavaPsiFacade.getInstance(constant.project)
+      facade.resolveHelper.multiResolveConstructor(facade.elementFactory.createType(enumClass), argumentList, constant)
+    }
+    val callee = constructorCallee(constant, results, enumClass) as? PsiMethod ?: return
+    emitReference(constant, callee, constant.nameIdentifier.textRange, ROLE_CALL)
   }
 
   /** A doc reference such as `#method` of `{@link Foo#method}`, or the attribute name of an annotation. */
