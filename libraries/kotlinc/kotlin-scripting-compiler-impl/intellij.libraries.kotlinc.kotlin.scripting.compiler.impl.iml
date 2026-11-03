@@ -24,13 +24,20 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.kotlin-scripting-compiler-impl">
+      <library name="kotlinc.kotlin-scripting-compiler-impl" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.5.20-dev-3282">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.20-dev-3282/kotlin-scripting-compiler-impl-2.5.20-dev-3282.jar">
+              <sha256sum>7933ca9300e163d8a7a8916387d5fcb4bf346cfbe8cbdf398dfef99ea82ddf3d</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.255-dev-255/kotlin-scripting-compiler-impl-2.5.255-dev-255.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.20-dev-3282/kotlin-scripting-compiler-impl-2.5.20-dev-3282.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.255-dev-255/kotlin-scripting-compiler-impl-2.5.255-dev-255-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.5.20-dev-3282/kotlin-scripting-compiler-impl-2.5.20-dev-3282-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -8,13 +8,20 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
-      <library name="kotlinc.noarg-compiler-plugin">
+      <library name="kotlinc.noarg-compiler-plugin" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:noarg-compiler-plugin-for-ide:2.5.20-dev-3282">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.20-dev-3282/noarg-compiler-plugin-for-ide-2.5.20-dev-3282.jar">
+              <sha256sum>0918334c7bd4cc7d4e7dcd4f9dcc4046bede360547880eea8b816617bcee626c</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.255-dev-255/noarg-compiler-plugin-for-ide-2.5.255-dev-255.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.20-dev-3282/noarg-compiler-plugin-for-ide-2.5.20-dev-3282.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MODULE_DIR$/../../../lib/kotlin-snapshot/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.255-dev-255/noarg-compiler-plugin-for-ide-2.5.255-dev-255-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/noarg-compiler-plugin-for-ide/2.5.20-dev-3282/noarg-compiler-plugin-for-ide-2.5.20-dev-3282-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
