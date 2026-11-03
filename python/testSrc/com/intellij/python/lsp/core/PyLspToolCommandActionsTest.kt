@@ -27,6 +27,9 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 private const val COMMAND = "py89555.printDebugInformation"
 
@@ -124,6 +127,34 @@ internal class PyLspToolCommandActionsTest {
     assertNull(commandAction())
   }
 
+  /** Two servers of one tool run for two groups of modules, and they can initialize at the same time. */
+  @Test
+  @TestFor(issues = ["PY-93375"])
+  fun `two servers that initialize at the same time take each command ID without a collision`() {
+    val commands = (1..50).map { "$COMMAND$it" }
+    val result = initializeResult(commands = commands)
+    val actionIds = commands.map { commandActionId(it) }
+    val executor = Executors.newFixedThreadPool(2)
+    try {
+      repeat(20) {
+        val descriptors = List(2) { TyLspClientDescriptor(moduleFixture.get()) }
+        val start = CyclicBarrier(descriptors.size)
+        descriptors
+          .map { descriptor -> executor.submit { start.await(); descriptor.lspServerListener.serverInitialized(result) } }
+          .forEach { it.get(30, TimeUnit.SECONDS) }
+        assertEquals(emptyList<String>(), actionIds.filter { ActionManager.getInstance().getAction(it) == null },
+                     "each command needs an action while the servers run")
+
+        descriptors.forEach { it.lspServerListener.serverStopped(true) }
+        assertEquals(emptyList<String>(), actionIds.filter { ActionManager.getInstance().getAction(it) != null },
+                     "the stop of both servers must remove each command action")
+      }
+    }
+    finally {
+      executor.shutdownNow()
+    }
+  }
+
   @Test
   fun `a server without server info names the command action after the tool`() {
     val descriptor = TyLspClientDescriptor(moduleFixture.get())
@@ -136,10 +167,14 @@ internal class PyLspToolCommandActionsTest {
     }
   }
 
-  private fun initializeResult(serverInfo: ServerInfo? = ServerInfo("ty")): InitializeResult =
-    InitializeResult(ServerCapabilities().apply { executeCommandProvider = ExecuteCommandOptions(listOf(COMMAND)) }, serverInfo)
+  private fun initializeResult(serverInfo: ServerInfo? = ServerInfo("ty"), commands: List<String> = listOf(COMMAND)): InitializeResult =
+    InitializeResult(ServerCapabilities().apply { executeCommandProvider = ExecuteCommandOptions(commands) }, serverInfo)
 
-  private val commandActionId by lazy { "LSP.Command.${TyLspClientDescriptor(moduleFixture.get()).presentableName}.$COMMAND" }
+  private val presentableName by lazy { TyLspClientDescriptor(moduleFixture.get()).presentableName }
+
+  private fun commandActionId(command: String): String = "LSP.Command.$presentableName.$command"
+
+  private val commandActionId by lazy { commandActionId(COMMAND) }
 
   private fun commandAction(): AnAction? = ActionManager.getInstance().getAction(commandActionId)
 }
