@@ -16,7 +16,7 @@ import org.jetbrains.intellij.build.productLayout.ProductModulesContentSpec
 import org.jetbrains.intellij.build.productLayout.productModules
 import java.nio.file.Path
 
-val MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListOf(
+val IDEA_COMMUNITY_MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = persistentListOf(
   "intellij.tools.jps.build.standalone",
   "intellij.devkit.jps",
   "intellij.idea.community.build.tasks",
@@ -77,7 +77,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     productLayout.skipUnresolvedContentModules = true
 
     mavenArtifacts.forIdeModules = true
-    mavenArtifacts.additionalModules += MAVEN_ARTIFACTS_ADDITIONAL_MODULES
+    mavenArtifacts.additionalModules += IDEA_COMMUNITY_MAVEN_ARTIFACTS_ADDITIONAL_MODULES
     mavenArtifacts.squashedModules += persistentListOf(
       "intellij.platform.util.base",
       "intellij.platform.util.base.multiplatform",
