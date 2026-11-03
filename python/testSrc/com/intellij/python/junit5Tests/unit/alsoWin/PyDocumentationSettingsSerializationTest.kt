@@ -35,7 +35,6 @@ internal class PyDocumentationSettingsSerializationTest {
 
     val state = XmlSerializer.deserialize(element, ServiceState::class.java)
 
-    // The removed value falls back to PLAIN via setFormatName(); the redundant "format" option is ignored.
     assertEquals(DocStringFormat.PLAIN, state.format)
     assertFalse(state.myAnalyzeDoctest)
     assertFalse(state.myInspectDocstring)
@@ -43,13 +42,26 @@ internal class PyDocumentationSettingsSerializationTest {
   }
 
   @Test
-  fun `format is no longer serialized redundantly`() {
-    val state = ServiceState(DocStringFormat.NUMPY)
-
-    val serialized = JDOMUtil.write(XmlSerializer.serialize(state))
-
-    // Only the legacy "myDocStringFormat" option persists the format; the fragile "format" option is gone.
-    assertTrue(serialized.contains("myDocStringFormat"), serialized)
-    assertFalse(serialized.contains("name=\"format\""), serialized)
+  @TestFor(issues = ["PY-92509"])
+  fun `state written by a build before PY-91090 keeps its format`() {
+    assertEquals(DocStringFormat.NUMPY, deserializeFormat("""<option name="format" value="NUMPY" /><option name="myDocStringFormat" value="NumPy" />"""))
   }
+
+  @Test
+  @TestFor(issues = ["PY-92509"])
+  fun `state written by a build after PY-91090 keeps its format`() {
+    assertEquals(DocStringFormat.GOOGLE, deserializeFormat("""<option name="format" value="GOOGLE" />"""))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-92509"])
+  fun `format survives a round trip`() {
+    for (format in DocStringFormat.entries) {
+      val element = XmlSerializer.serialize(ServiceState(format))
+      assertEquals(format, XmlSerializer.deserialize(element, ServiceState::class.java).format, JDOMUtil.write(element))
+    }
+  }
+
+  private fun deserializeFormat(options: String): DocStringFormat =
+    XmlSerializer.deserialize(JDOMUtil.load("""<component name="PyDocumentationSettings">$options</component>"""), ServiceState::class.java).format
 }
