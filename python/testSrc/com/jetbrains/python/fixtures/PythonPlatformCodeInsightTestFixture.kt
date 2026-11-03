@@ -137,9 +137,8 @@ class PythonPlatformCodeInsightTestFixture(languageLevel: LanguageLevel) : Pytho
 
   override fun getLookupElements(): Array<LookupElement>? = myDelegateFixture.lookupElements
 
-  override fun sdkRootsChanged(sdk: Sdk) {
-    PythonInterpreterSdks.sdkChangedInOpenProjects(sdk)
-    // Resolve reads the roots of the interpreter library, which copies the roots of the SDK.
+  override fun interpreterFactsChanged() {
+    // Resolve reads the roots of the interpreter library, which follows the facts of the interpreter.
     syncPythonInterpreterLibraries()
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }

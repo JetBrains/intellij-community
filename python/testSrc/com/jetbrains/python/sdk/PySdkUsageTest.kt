@@ -5,6 +5,8 @@ import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -23,7 +25,7 @@ import org.junit.jupiter.api.Test
 @TestApplication
 @Subsystems.Interpreters
 @Layers.Functional
-internal class PythonSdkUpdaterInUseTest {
+internal class PySdkUsageTest {
   private val projectFixture = projectFixture()
   private val pyProjectFixture = projectFixture.pyProjectFixture()
 
@@ -34,7 +36,7 @@ internal class PythonSdkUpdaterInUseTest {
     val registry = PythonInterpreterRegistry.getInstance(project)
     val interpreter = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
     try {
-      @Suppress("DEPRECATION") // The updater takes an SDK.
+      @Suppress("DEPRECATION") // The snapshot checks an SDK.
       val sdk = interpreter.getSdkAPI()
       assertThat(EvoPyProjectModel.getInstance(project).snapshot().usesSdk(sdk)).isFalse()
     }
@@ -51,7 +53,7 @@ internal class PythonSdkUpdaterInUseTest {
     val interpreter = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
     try {
       pyProject.setPythonInterpreter(interpreter)
-      @Suppress("DEPRECATION") // The updater takes an SDK.
+      @Suppress("DEPRECATION") // The snapshot checks an SDK.
       val sdk = interpreter.getSdkAPI()
       assertThat(EvoPyProjectModel.getInstance(project).snapshot().usesSdk(sdk)).isTrue()
     }
@@ -70,7 +72,7 @@ internal class PythonSdkUpdaterInUseTest {
     try {
       // The check reads the current snapshot, so it must hold the interpreter list first.
       EvoPyProjectModel.getInstance(project).snapshot()
-      assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(interpreter, project)).isFalse()
+      assertThat(PythonInterpreterUpdater.getInstance(project).request(interpreter, PythonInterpreterUpdateRequest(packages = true, background = true))).isFalse()
     }
     finally {
       registry.removePythonInterpreter(pyProject, interpreter)
@@ -85,8 +87,8 @@ internal class PythonSdkUpdaterInUseTest {
     val interpreter = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
     try {
       pyProject.setPythonInterpreter(interpreter)
-      // Accepted, and in a unit test it then does nothing, see `PythonSdkUpdater.setEnabledInTests`.
-      assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(interpreter, project)).isTrue()
+      // Accepted, and in a unit test it then does nothing, see `PythonInterpreterUpdater.setEnabledInTests`.
+      assertThat(PythonInterpreterUpdater.getInstance(project).request(interpreter, PythonInterpreterUpdateRequest(packages = true, background = true))).isTrue()
     }
     finally {
       pyProject.setPythonInterpreter(null)
@@ -105,9 +107,9 @@ internal class PythonSdkUpdaterInUseTest {
       pyProject.setPythonInterpreter(first)
       pyProject.setPythonInterpreter(second)
       val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
-      @Suppress("DEPRECATION") // The updater takes an SDK.
+      @Suppress("DEPRECATION") // The snapshot checks an SDK.
       assertThat(snapshot.usesSdk(first.getSdkAPI())).isFalse()
-      @Suppress("DEPRECATION") // The updater takes an SDK.
+      @Suppress("DEPRECATION") // The snapshot checks an SDK.
       assertThat(snapshot.usesSdk(second.getSdkAPI())).isTrue()
     }
     finally {

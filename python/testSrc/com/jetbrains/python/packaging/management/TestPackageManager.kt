@@ -25,9 +25,10 @@ import com.jetbrains.python.packaging.common.toPythonPackages
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.sdk.pipenv.PipEnvParser
-import java.nio.file.Path
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.toml.lang.psi.TomlFile
+import java.nio.file.Path
 
 @TestOnly
 internal class TestPythonPackageManager(project: Project, interpreter: PythonInterpreter) :
@@ -36,8 +37,11 @@ internal class TestPythonPackageManager(project: Project, interpreter: PythonInt
   private var packageDetails: PythonPackageDetails? = null
   private var packageVersions: Map<String, List<String>> = emptyMap()
 
+  /** What the environment holds, which [loadPackagesCommand] reads, see [withPackageInstalled]. */
+  private var environmentPackages: List<PythonPackage> = DEFAULT_PACKAGES
+
   init {
-    installedPackages = DEFAULT_PACKAGES.toMutableList()
+    installedPackages = environmentPackages
   }
 
   override val repositoryManager: TestPythonRepositoryManager
@@ -73,7 +77,7 @@ internal class TestPythonPackageManager(project: Project, interpreter: PythonInt
     val specification = installRequest.specifications.single()
     return if (repositoryManager.hasPackageSnapshot(specification.name)) {
       val version = specification.requirement.versionSpecs.firstOrNull()?.version.orEmpty()
-      installedPackages = installedPackages?.plus(PythonPackage(specification.name, version, false))
+      environmentPackages = environmentPackages + PythonPackage(specification.name, version, false)
       PyResult.success(Unit)
     }
     else {
@@ -89,14 +93,14 @@ internal class TestPythonPackageManager(project: Project, interpreter: PythonInt
     pythonPackages.forEach { pyPackage ->
       val packageToRemove = findPackageByName(pyPackage)
                             ?: return PyResult.localizedError(PACKAGE_UNINSTALL_FAILURE_MESSAGE)
-      installedPackages = installedPackages?.minus(packageToRemove)
+      environmentPackages = environmentPackages - packageToRemove
     }
 
     return PyResult.success(Unit)
   }
 
   override suspend fun loadPackagesCommand(): PyResult<List<PythonPackage>> {
-    return PyResult.success(listInstalledPackagesSnapshot())
+    return PyResult.success(environmentPackages)
   }
 
   override val dependenciesFilesRelativePaths: List<Path>
@@ -180,9 +184,20 @@ internal class TestPythonPackageManager(project: Project, interpreter: PythonInt
     return this
   }
 
+  /** Makes [packages] what the environment holds, for a manager that no one uses yet. It reloads nothing. */
   fun withPackageInstalled(packages: List<PythonPackage>): TestPythonPackageManager {
-    this.installedPackages = packages
+    environmentPackages = packages
+    installedPackages = packages
     return this
+  }
+
+  /**
+   * Makes [packages] what the environment holds, and reloads them as a real package manager does after an install: a
+   * change publishes `packagesChanged`, see [PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC], so the readers follow.
+   */
+  fun installPackages(packages: List<PythonPackage>) {
+    environmentPackages = packages
+    runBlocking { reloadPackages() }
   }
 
   fun withOutdatedPackages(packages: List<PythonOutdatedPackage>): TestPythonPackageManager {

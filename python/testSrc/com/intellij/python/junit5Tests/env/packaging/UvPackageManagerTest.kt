@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.packaging
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
+import com.intellij.python.junit5Tests.framework.pyProjectFixture
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.test.env.junit5.pyUvVenvFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.getOrThrow
@@ -18,7 +18,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.minutes
-import com.intellij.python.sdk.backend.PythonInterpreter
 
 @PyEnvTestCase
 class UvPackageManagerTest {
@@ -42,7 +41,7 @@ class UvPackageManagerTest {
     val manager = PythonPackageManager.forPythonInterpreter(projectFixture.get(), sdkFixture.get())
 
     val httpxOutdated = CompletableDeferred<Unit>()
-    val connection = ApplicationManager.getApplication().messageBus.connect()
+    val connection = projectFixture.get().messageBus.connect()
     connection.subscribe(PythonPackageManager.PACKAGE_MANAGEMENT_TOPIC, object : PythonPackageManagementListener {
       override fun outdatedPackagesChanged(interpreter: PythonInterpreter) {
         if (manager.listOutdatedPackagesSnapshot().values.any { it.name == "httpx" }) {

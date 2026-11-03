@@ -11,10 +11,10 @@ import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridg
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.pip.PyPiPackageCache
-import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.mockito.Mockito
+import java.util.concurrent.ConcurrentHashMap
 
 @TestOnly
 internal class TestPythonPackageManagerService(
@@ -41,6 +41,8 @@ internal class TestPythonPackageManagerService(
     runBlocking { manager.waitForInit() }
     return manager
   }
+
+  override fun cachedFor(interpreter: PythonInterpreter): PythonPackageManager? = cache[interpreter]
 
   private fun createManager(project: Project, interpreter: PythonInterpreter): TestPythonPackageManager {
     val repoPackageNames = (installedPackages.map { it.name } + availablePackageNames).distinct()

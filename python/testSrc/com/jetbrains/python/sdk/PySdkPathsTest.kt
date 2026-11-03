@@ -1,21 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
-import com.jetbrains.python.fixtures.awaitPythonInterpreters
-import com.jetbrains.python.fixtures.syncPythonInterpreterLibraries
-import com.intellij.python.pyproject.model.evolution.interpreterSourceRootUrls
-import com.intellij.openapi.project.Project
-import com.jetbrains.python.sdk.setPythonSdkForTests
-import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.allure.Subsystems
-
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
@@ -29,29 +21,39 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.pyproject.model.evolution.interpreterSourceRootUrls
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterDetails
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.RegistryKeyRule
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.RegistryKeyRule
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.rules.ProjectModelRule
-import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.PythonPluginDisposable
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.fixtures.awaitPythonInterpreters
+import com.jetbrains.python.fixtures.syncPythonInterpreterLibraries
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
+import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
+import com.jetbrains.python.tools.sdkTools.PythonMockSdkKeys
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
-import org.junit.rules.RuleChain
 import org.junit.Test
+import org.junit.rules.RuleChain
 
 @Subsystems.Interpreters
 @Layers.Functional
@@ -74,22 +76,15 @@ internal class PySdkPathsTest {
 
   @Test
   fun sysPathEntryIsExcludedPath() {
-    createModule()
-    val sdk = PythonMockSdk.create()
+    val (module, _) = createModule()
+    val sdk = PythonMockSdk.create().also { module.setPythonSdkForTests(it) }
 
     val excluded = createInSdkRoot(sdk, "my_excluded")
     val included = createInSdkRoot(sdk, "my_included")
 
-    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, excluded.path, included.path))
+    sdk.putUserData(PythonMockSdkKeys.SYS_PATH, listOf(sdk.homePath!!, excluded.path, included.path))
     mockPythonPluginDisposable()
-    runWriteActionAndWait {
-      sdk.pySdkAdditionalData
-
-      sdk.sdkModificator.apply {
-        (sdkAdditionalData as PythonSdkAdditionalData).setExcludedPathsFromVirtualFiles(setOf(excluded))
-        commitChanges()
-      }
-    }
+    setExcludedPaths(sdk, setOf(excluded))
 
     updateSdkPaths(sdk)
 
@@ -114,14 +109,7 @@ internal class PySdkPathsTest {
 
     // Associated like its sibling `sysPathEntryIsModuleRoot`, because `updateSdkPaths` classifies a path against the
     // roots of the module the SDK names, and a mock SDK names none.
-    // Committed through the modificator, so the next commit of this SDK keeps the path. Written in place it was
-    // dropped by whichever commit came first, and this test then passed because nothing was left to classify.
-    runWriteActionAndWait {
-      sdk.sdkModificator.apply {
-        (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(setOf(moduleRoot))
-        commitChanges()
-      }
-    }
+    setAddedPaths(sdk, setOf(moduleRoot))
 
     updateSdkPaths(sdk)
 
@@ -138,7 +126,7 @@ internal class PySdkPathsTest {
       it.associateWith(moduleRoot)
       module.setPythonSdkForTests(it)
     }
-    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, moduleRoot.path))
+    sdk.putUserData(PythonMockSdkKeys.SYS_PATH, listOf(sdk.homePath!!, moduleRoot.path))
 
     mockPythonPluginDisposable()
     updateSdkPaths(sdk)
@@ -157,20 +145,13 @@ internal class PySdkPathsTest {
 
     val pythonVersion = LanguageLevel.getLatest().toPythonVersion()
     val sdk = PythonMockSdk.create(sdkPath)
-    sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
+    sdk.putUserData(PythonMockSdkKeys.VERSION, pythonVersion)
     // The owner is part of the interpreter's key, so it is set before the module gets the interpreter.
     sdk.associateWith(moduleRoot)
     module.setPythonSdkForTests(sdk)
 
     mockPythonPluginDisposable()
-    runWriteActionAndWait {
-      sdk.pySdkAdditionalData
-
-      sdk.sdkModificator.apply {
-        (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(setOf(userAddedPath))
-        commitChanges()
-      }
-    }
+    setAddedPaths(sdk, setOf(userAddedPath))
 
     updateSdkPaths(sdk)
 
@@ -199,7 +180,7 @@ internal class PySdkPathsTest {
       it.associateWith(moduleRoot)
       module.setPythonSdkForTests(it)
     }
-    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
+    sdk.putUserData(PythonMockSdkKeys.SYS_PATH, listOf(sdk.homePath!!, entryPath.path))
 
     mockPythonPluginDisposable()
     updateSdkPaths(sdk)
@@ -231,17 +212,10 @@ internal class PySdkPathsTest {
     val sdk = venvMockSdk(sdkDir).also {
       module.setPythonSdkForTests(it)
     }
-    sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
+    sdk.putUserData(PythonMockSdkKeys.VERSION, pythonVersion)
     mockPythonPluginDisposable()
 
-    runWriteActionAndWait {
-      sdk.pySdkAdditionalData
-
-      sdk.sdkModificator.apply {
-        (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(setOf(userAddedPath))
-        commitChanges()
-      }
-    }
+    setAddedPaths(sdk, setOf(userAddedPath))
 
     updateSdkPaths(sdk)
 
@@ -259,7 +233,7 @@ internal class PySdkPathsTest {
     val sdk = venvMockSdk(sdkDir).also {
       module.setPythonSdkForTests(it)
     }
-    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
+    sdk.putUserData(PythonMockSdkKeys.SYS_PATH, listOf(sdk.homePath!!, entryPath.path))
 
     updateSdkPaths(sdk)
 
@@ -279,7 +253,7 @@ internal class PySdkPathsTest {
       it.associateWith(moduleRoot1)
       module1.setPythonSdkForTests(it)
     }
-    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath1.path, entryPath2.path))
+    sdk.putUserData(PythonMockSdkKeys.SYS_PATH, listOf(sdk.homePath!!, entryPath1.path, entryPath2.path))
 
     mockPythonPluginDisposable()
     updateSdkPaths(sdk)
@@ -308,7 +282,7 @@ internal class PySdkPathsTest {
       it.associateWith(outerRoot)
       outer.setPythonSdkForTests(it)
     }
-    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, nestedRoot.path, nestedRoot.path, entryPath.path))
+    sdk.putUserData(PythonMockSdkKeys.SYS_PATH, listOf(sdk.homePath!!, nestedRoot.path, nestedRoot.path, entryPath.path))
 
     mockPythonPluginDisposable()
     updateSdkPaths(sdk)
@@ -325,17 +299,12 @@ internal class PySdkPathsTest {
       it.associateWith(moduleRoot)
       module.setPythonSdkForTests(it)
     }
-    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
+    sdk.putUserData(PythonMockSdkKeys.SYS_PATH, listOf(sdk.homePath!!, entryPath.path))
     mockPythonPluginDisposable()
     updateSdkPaths(sdk)
     checkRoots(sdk, module, listOf(moduleRoot, entryPath), emptyList())
 
-    runWriteActionAndWait {
-      sdk.sdkModificator.apply {
-        (sdkAdditionalData as PythonSdkAdditionalData).setExcludedPathsFromVirtualFiles(setOf(entryPath))
-        commitChanges()
-      }
-    }
+    setExcludedPaths(sdk, setOf(entryPath))
     updateSdkPaths(sdk)
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
@@ -350,7 +319,7 @@ internal class PySdkPathsTest {
       it.associateWith(moduleRoot)
       module.setPythonSdkForTests(it)
     }
-    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
+    sdk.putUserData(PythonMockSdkKeys.SYS_PATH, listOf(sdk.homePath!!, entryPath.path))
 
     mockPythonPluginDisposable()
     updateSdkPaths(sdk)
@@ -382,14 +351,14 @@ internal class PySdkPathsTest {
     }
     mockPythonPluginDisposable()
 
-    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(moduleRoot2.path))
+    sdk.putUserData(PythonMockSdkKeys.SYS_PATH, listOf(moduleRoot2.path))
     updateSdkPaths(sdk)
     checkRoots(sdk, module1,
                moduleRoots = listOf(moduleRoot1),
                sdkRoots = listOf(),
                moduleDependencies = listOf(module2))
 
-    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf())
+    sdk.putUserData(PythonMockSdkKeys.SYS_PATH, listOf())
     updateSdkPaths(sdk)
     checkRoots(sdk, module1,
                moduleRoots = listOf(moduleRoot1),
@@ -507,35 +476,6 @@ internal class PySdkPathsTest {
       .contains(skeletonsDir)
   }
 
-  /**
-   * PY-86494: with the update triggered by a `null` project (the synchronous creation/headless path), the updater
-   * must classify the owner's project-local entry via the SDK's own `associatedModulePath` — not the triggering
-   * project — and, since the owning project is open, transfer it as a source root instead of committing it as an
-   * SDK CLASSES (library) root (which moved the library root off `.venv` onto the project folder). Mirrors
-   * [sysPathEntryInModuleAndSdkInModuleButEntryNotInSdk], but triggered with no project.
-   */
-  @Test
-  fun projectLocalSysPathEntryIsResolvedViaAssociationWithoutTriggeringProject() {
-    val (module, moduleRoot) = createModule()
-
-    val sdkPath = createVenvStructureInModule(moduleRoot).path
-    val entryPath = createSubdir(moduleRoot)
-
-    val sdk = PythonMockSdk.create(sdkPath).also {
-      // The owner is part of the interpreter's key, so it is set before the module gets the interpreter.
-      it.associateWith(moduleRoot)
-      module.setPythonSdkForTests(it)
-    }
-    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
-
-    mockPythonPluginDisposable()
-
-    updateSdkPaths(sdk, project = null)
-
-    checkRoots(sdk, module, moduleRoots = listOf(moduleRoot, entryPath), sdkRoots = emptyList())
-  }
-
-
   /** Associates the SDK with a module directory, as venv/uv SDK creation does; the updater keys project-local classification off it. */
   /**
    * A mock SDK of the venv in [venvDir], see [createVenvStructureInModule]. Its home is the binary the venv has, which is
@@ -612,13 +552,28 @@ internal class PySdkPathsTest {
     Disposer.register(projectModel.project, PythonPluginDisposable.getInstance())
   }
 
+  /** Writes [paths] as the paths that the user added to the interpreter of [sdk], see [PythonInterpreterDetails]. */
+  private fun setAddedPaths(sdk: Sdk, paths: Set<VirtualFile>) {
+    PythonInterpreterDetails.getInstance(projectModel.project).writeAddedPaths(interpreterOf(sdk), paths.map { it.toNioPath() })
+  }
+
+  /** Writes [paths] as the paths that the user excluded from the interpreter of [sdk], see [PythonInterpreterDetails]. */
+  private fun setExcludedPaths(sdk: Sdk, paths: Set<VirtualFile>) {
+    PythonInterpreterDetails.getInstance(projectModel.project).writeExcludedPaths(interpreterOf(sdk), paths.mapTo(HashSet()) { it.toNioPath() })
+  }
+
+  private fun interpreterOf(sdk: Sdk): PythonInterpreter {
+    awaitPythonInterpreters(projectModel.project)
+    return checkNotNull(runBlockingMaybeCancellable { sdk.pythonInterpreterResultAsync() }.successOrNull) { "$sdk names no interpreter" }
+  }
+
   /**
-   * Updates the paths of [sdk], see [PythonSdkUpdater], with [project] as the project that asks. In the interpreter
+   * Updates the facts of [sdk], see [updateInterpreterFacts], with [project] as the project that asks. In the interpreter
    * library flow a module gets the source roots of its interpreter from the library sync, so the sync runs next.
    */
-  private fun updateSdkPaths(sdk: @NotNull Sdk, project: Project? = projectModel.project) {
+  private fun updateSdkPaths(sdk: @NotNull Sdk, project: Project = projectModel.project) {
     awaitPythonInterpreters(projectModel.project)
-    PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
+    runBlockingMaybeCancellable { updateInterpreterFacts(interpreterOf(sdk), project) }.orThrow()
     ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
     syncPythonInterpreterLibraries(projectModel.project)
   }

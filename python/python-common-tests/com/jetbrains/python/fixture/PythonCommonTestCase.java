@@ -1,10 +1,6 @@
 package com.jetbrains.python.fixture;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -13,6 +9,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterDetails;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
@@ -30,17 +27,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
 
 public abstract class PythonCommonTestCase extends TestCase {
   protected PythonCommonCodeInsightTestFixture myFixture;
@@ -371,13 +369,26 @@ public abstract class PythonCommonTestCase extends TestCase {
     }
   }
 
+  /**
+   * Runs {@code runnable} while {@code directory} is a class root of the interpreter: the user added it, see
+   * {@link PythonInterpreterDetails#writeAddedPaths}.
+   */
   protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
     final PythonInterpreter interpreter = myFixture.getPythonInterpreter();
     assertNotNull(interpreter);
-    // A class root belongs to the SDK, so the test edits the SDK of the interpreter.
-    //noinspection deprecation
-    final Sdk sdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
-    runWithAdditionalRoot(sdk, directory, OrderRootType.CLASSES, (_) -> runnable.run());
+    final PythonInterpreterDetails details = PythonInterpreterDetails.getInstance(myFixture.getProject());
+    final List<Path> before = details.facts(interpreter).getAddedPaths();
+    final List<Path> added = new ArrayList<>(before);
+    if (!added.contains(directory.toNioPath())) added.add(directory.toNioPath());
+    details.writeAddedPaths(interpreter, added);
+    myFixture.interpreterFactsChanged();
+    try {
+      runnable.run();
+    }
+    finally {
+      details.writeAddedPaths(interpreter, before);
+      myFixture.interpreterFactsChanged();
+    }
   }
 
   protected void runWithAdditionalClassEntryInSdkRoots(@NotNull String relativeTestDataPath, @NotNull Runnable runnable) {
@@ -385,31 +396,6 @@ public abstract class PythonCommonTestCase extends TestCase {
     final VirtualFile testDataDir = StandardFileSystems.local().findFileByPath(absPath);
     assertNotNull("Additional class entry directory '" + absPath + "' not found", testDataDir);
     runWithAdditionalClassEntryInSdkRoots(testDataDir, runnable);
-  }
-
-  private void runWithAdditionalRoot(@NotNull Sdk sdk,
-                                     @NotNull VirtualFile root,
-                                     @NotNull OrderRootType rootType,
-                                     @NotNull Consumer<VirtualFile> rootConsumer) {
-    WriteAction.run(() -> {
-      final SdkModificator modificator = sdk.getSdkModificator();
-      assertNotNull(modificator);
-      modificator.addRoot(root, rootType);
-      modificator.commitChanges();
-    });
-    myFixture.sdkRootsChanged(sdk);
-    try {
-      rootConsumer.accept(root);
-    }
-    finally {
-      WriteAction.run(() -> {
-        final SdkModificator modificator = sdk.getSdkModificator();
-        assertNotNull(modificator);
-        modificator.removeRoot(root, rootType);
-        modificator.commitChanges();
-      });
-      myFixture.sdkRootsChanged(sdk);
-    }
   }
 
   protected @NotNull String getTestDataPath() {

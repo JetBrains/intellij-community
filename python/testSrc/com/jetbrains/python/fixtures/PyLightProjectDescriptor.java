@@ -9,6 +9,7 @@ import com.intellij.python.sdk.backend.PyInterpreterLibraryFlowKt;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
+import com.jetbrains.python.packaging.management.MockSdkPackageManagerProvider;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,6 +94,8 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
    */
   @Override
   public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
+    // Before any package manager is built: a mock SDK cannot run, so its packages come from a test package manager.
+    MockSdkPackageManagerProvider.register(project);
     super.setUpProject(project, handler);
     if (!PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled()) return;
     Module module = ModuleManager.getInstance(project).findModuleByName(TEST_MODULE_NAME);

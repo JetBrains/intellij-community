@@ -22,11 +22,11 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -42,8 +42,9 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.python.community.testFramework.PyFixmeKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterDetails;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.python.sdk.backend.PythonInterpreterSdks;
+import com.intellij.python.sdk.backend.PythonInterpreterRoots;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -70,7 +71,9 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
+import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.PythonPackageManager;
+import com.jetbrains.python.packaging.management.TestPythonPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -82,14 +85,16 @@ import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.sdk.SdkExtKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.lang.reflect.Method;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -108,6 +113,9 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected CodeInsightTestFixture myFixture;
 
+  /** The restores of the stubs that this test enabled, see {@link #enablePyiStubsForPackages(String...)}. */
+  private final List<Runnable> myStubRestores = new ArrayList<>();
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -119,6 +127,8 @@ public abstract class PyTestCase extends UsefulTestCase {
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
+    // The legacy flow gets a new SDK of the light project for each test, and the Python project owns it.
+    PyProjectStructureTestUtilKt.ownModuleSdkForTests(myFixture.getModule());
     // Resolve reads the interpreter from the snapshot, so a test starts only when the snapshot holds the fixture SDK.
     PyProjectStructureTestUtilKt.awaitPythonInterpreters(myFixture.getProject());
 
@@ -153,8 +163,9 @@ public abstract class PyTestCase extends UsefulTestCase {
         if (myFixture.getModule() != null) {
           PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
         }
-        // The light project keeps its interpreter, so a manager that this test built must not reach the next test.
-        PythonPackageManager.dropManagersForTests(myFixture.getProject());
+        // The light project keeps its interpreter, so the stubs of this test must not reach the next test.
+        for (int i = myStubRestores.size() - 1; i >= 0; i--) myStubRestores.get(i).run();
+        myStubRestores.clear();
         setLanguageLevel(null);
 
         myFixture.tearDown();
@@ -241,30 +252,37 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
     else {
       createAdditionalRootAndRunWithIt(
-        getSdkForRootEdits(),
+        myFixture.getModule(),
         "Lib",
-        OrderRootType.CLASSES,
         root -> runWithAdditionalFileIn(relativePath, text, root, fileConsumer)
       );
     }
   }
 
+  /**
+   * Runs {@code fileConsumer} with a file in the skeletons directory of the interpreter: the one directory that the roots
+   * give as the skeletons, see {@code PythonInterpreterRoots}. A missing directory is made first, and the roots follow.
+   */
   protected void runWithAdditionalFileInSkeletonDir(@NotNull String relativePath,
                                                     @NotNull String text,
                                                     @NotNull Consumer<VirtualFile> fileConsumer) {
     final PythonInterpreter interpreter = getPythonInterpreter();
-    final VirtualFile skeletonsDir = interpreter == null ? null : PythonInterpreterExtKt.skeletonsDirectory(interpreter, myFixture.getProject());
-    if (skeletonsDir != null) {
-      runWithAdditionalFileIn(relativePath, text, skeletonsDir, fileConsumer);
-    }
-    else {
-      createAdditionalRootAndRunWithIt(
-        getSdkForRootEdits(),
-        PythonSdkUtil.SKELETON_DIR_NAME,
-        PythonSdkUtil.BUILTIN_ROOT_TYPE,
-        root -> runWithAdditionalFileIn(relativePath, text, root, fileConsumer)
-      );
-    }
+    assertNotNull(interpreter);
+    final Path skeletonsPath = SdkExtKt.getSkeletonsPath(getSdkForRootEdits());
+    assertNotNull(skeletonsPath);
+    final VirtualFile skeletonsDir = WriteAction.computeAndWait(() -> {
+      try {
+        return VfsUtil.createDirectoryIfMissing(skeletonsPath.toString());
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+    });
+    assertNotNull(skeletonsDir);
+    PythonInterpreterRoots.getInstance(myFixture.getProject()).refresh(interpreter);
+    PyProjectStructureTestUtilKt.syncPythonInterpreterLibraries();
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    runWithAdditionalFileIn(relativePath, text, skeletonsDir, fileConsumer);
   }
 
   private static void runWithAdditionalFileIn(@NotNull String relativePath,
@@ -281,8 +299,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
-    final Sdk sdk = getSdkForRootEdits();
-    runWithAdditionalRoot(sdk, directory, OrderRootType.CLASSES, (_) -> runnable.run());
+    runWithAdditionalRoot(myFixture.getModule(), directory, (_) -> runnable.run());
   }
 
   protected void runWithAdditionalClassEntryInSdkRoots(@NotNull String relativeTestDataPath, @NotNull Runnable runnable) {
@@ -292,58 +309,69 @@ public abstract class PyTestCase extends UsefulTestCase {
     runWithAdditionalClassEntryInSdkRoots(testDataDir, runnable);
   }
 
-  private static void createAdditionalRootAndRunWithIt(@NotNull Sdk sdk,
+  /**
+   * Runs {@code rootConsumer} with a new root that the user added to the interpreter of {@code module}. The root is in a
+   * temporary directory: a path inside the owner directory of the interpreter is a source root of the module, and not a
+   * class root of the interpreter, see {@code PythonInterpreterRoots}.
+   */
+  private static void createAdditionalRootAndRunWithIt(@NotNull Module module,
                                                        @NotNull String rootRelativePath,
-                                                       @NotNull OrderRootType rootType,
                                                        @NotNull Consumer<VirtualFile> rootConsumer) {
-    final VirtualFile tempRoot = VfsTestUtil.createDir(sdk.getHomeDirectory().getParent().getParent(), rootRelativePath);
+    final Path parentDir;
     try {
-      runWithAdditionalRoot(sdk, tempRoot, rootType, rootConsumer);
+      parentDir = FileUtil.createTempDirectory("pyAdditionalRoot", null).toPath();
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(parentDir);
+    assertNotNull(parent);
+    final VirtualFile tempRoot = VfsTestUtil.createDir(parent, rootRelativePath);
+    try {
+      runWithAdditionalRoot(module, tempRoot, rootConsumer);
     }
     finally {
-      VfsTestUtil.deleteFile(tempRoot);
+      VfsTestUtil.deleteFile(parent);
     }
   }
 
-  private static void runWithAdditionalRoot(@NotNull Sdk sdk,
+  /**
+   * Runs {@code rootConsumer} while {@code root} is a class root of the interpreter of {@code module}: the user added it,
+   * see {@link PythonInterpreterDetails#writeAddedPaths}.
+   */
+  private static void runWithAdditionalRoot(@NotNull Module module,
                                             @NotNull VirtualFile root,
-                                            @NotNull OrderRootType rootType,
                                             @NotNull Consumer<VirtualFile> rootConsumer) {
-    addSdkRoots(sdk, List.of(root), rootType);
+    addInterpreterPaths(module, List.of(root));
     try {
       rootConsumer.accept(root);
     }
     finally {
-      removeSdkRoots(sdk, List.of(root), rootType);
+      removeInterpreterPaths(module, List.of(root));
     }
   }
 
-  private static void removeSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
-    WriteAction.run(() -> {
-      final SdkModificator modificator = sdk.getSdkModificator();
-      assertNotNull(modificator);
-      for (VirtualFile root : roots) {
-        modificator.removeRoot(root, rootType);
-      }
-      modificator.commitChanges();
-    });
-    PythonInterpreterSdks.sdkChangedInOpenProjects(sdk);
-    // Resolve reads the roots of the interpreter library, which copies the roots of the SDK.
-    PyProjectStructureTestUtilKt.syncPythonInterpreterLibraries();
-    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+  /** Adds {@code roots} to the paths that the user added to the interpreter of {@code module}. */
+  private static void addInterpreterPaths(@NotNull Module module, @NotNull List<VirtualFile> roots) {
+    editAddedPaths(module, paths -> roots.forEach(root -> {
+      final Path path = root.toNioPath();
+      if (!paths.contains(path)) paths.add(path);
+    }));
   }
 
-  private static void addSdkRoots(@NotNull Sdk sdk, @NotNull List<VirtualFile> roots, @NotNull OrderRootType rootType) {
-    WriteAction.run(() -> {
-      final SdkModificator modificator = sdk.getSdkModificator();
-      assertNotNull(modificator);
-      for (VirtualFile root : roots) {
-        modificator.addRoot(root, rootType);
-      }
-      modificator.commitChanges();
-    });
-    PythonInterpreterSdks.sdkChangedInOpenProjects(sdk);
-    // Resolve reads the roots of the interpreter library, which copies the roots of the SDK.
+  /** Removes {@code roots} from the paths that the user added to the interpreter of {@code module}. */
+  private static void removeInterpreterPaths(@NotNull Module module, @NotNull List<VirtualFile> roots) {
+    editAddedPaths(module, paths -> roots.forEach(root -> paths.remove(root.toNioPath())));
+  }
+
+  private static void editAddedPaths(@NotNull Module module, @NotNull Consumer<List<Path>> edit) {
+    final PythonInterpreter interpreter = PyProjectStructureTestUtilKt.findPythonInterpreterForTests(module);
+    assertNotNull(interpreter);
+    final PythonInterpreterDetails details = PythonInterpreterDetails.getInstance(module.getProject());
+    final List<Path> paths = new ArrayList<>(details.facts(interpreter).getAddedPaths());
+    edit.accept(paths);
+    details.writeAddedPaths(interpreter, paths);
+    // Resolve reads the roots of the interpreter library, which follows the facts of the interpreter.
     PyProjectStructureTestUtilKt.syncPythonInterpreterLibraries();
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
   }
@@ -378,8 +406,11 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void enablePyiStubsForPackages(String @NotNull ... packageNames) {
-    enablePyiStubsForPackages(myFixture.getModule(), getTestRootDisposable(), packageNames);
+    // Restored in tearDown while the light project is still open: the test disposable goes during the teardown of the
+    // light project, and a write of the stubs then makes the language levels follow a project that is closing.
+    myStubRestores.add(enablePyiStubs(myFixture.getModule(), packageNames));
   }
+
 
   /**
    * Adds the bundled stubs of {@code packageNames} to the SDK of {@code module}.
@@ -388,18 +419,48 @@ public abstract class PyTestCase extends UsefulTestCase {
   public static void enablePyiStubsForPackages(@NotNull Module module,
                                                @NotNull Disposable parentDisposable,
                                                String @NotNull ... packageNames) {
-    Sdk sdk = getSdkForRootEdits(module);
-    List<VirtualFile> stubPackageRoots = new ArrayList<>();
+    Disposer.register(parentDisposable, enablePyiStubs(module, packageNames)::run);
+  }
+
+  /** Adds the bundled stubs of {@code packageNames} to the interpreter of {@code module}, and returns the restore. */
+  private static @NotNull Runnable enablePyiStubs(@NotNull Module module, String @NotNull ... packageNames) {
     for (String packageName : packageNames) {
       VirtualFile stubPackageRoot = PyTypeShed.INSTANCE.getStubRootForPackage(packageName);
       if (stubPackageRoot == null) {
         stubPackageRoot = PyBundledStubs.INSTANCE.getStubRootForPackage(packageName);
       }
       assertNotNull("Stub package root for " + packageName + " not found", stubPackageRoot);
-      stubPackageRoots.add(stubPackageRoot);
     }
-    addSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES);
-    Disposer.register(parentDisposable, () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
+    final PythonInterpreter interpreter = PyProjectStructureTestUtilKt.findPythonInterpreterForTests(module);
+    assertNotNull(interpreter);
+    // The stub roots follow the installed packages, see PythonPackageStubRoots, so the test installs the packages.
+    final PythonPackageManager anyManager = PythonPackageManager.Companion.forPythonInterpreter(module.getProject(), interpreter);
+    assertTrue("The stubs follow the installed packages, which only the test manager of a mock SDK lets a test set: " + anyManager,
+               anyManager instanceof TestPythonPackageManager);
+    final TestPythonPackageManager manager = (TestPythonPackageManager)anyManager;
+    final List<PythonPackage> before = manager.listInstalledPackagesSnapshot();
+    final List<PythonPackage> installed = new ArrayList<>(before);
+    for (String name : packageNames) installed.add(new PythonPackage(name, "", false));
+    install(module, manager, installed);
+    return () -> {
+      if (!module.isDisposed()) install(module, manager, before);
+    };
+  }
+
+  /**
+   * Installs {@code packages} in the test manager of the interpreter of {@code module}. The install publishes
+   * {@code packagesChanged}, and the stub roots follow in the background, see {@code PythonPackageStubRoots}. The test goes
+   * on when the roots follow it, see {@link PyProjectStructureTestUtilKt#awaitDerivedRoots}.
+   */
+  private static void install(@NotNull Module module,
+                              @NotNull TestPythonPackageManager manager,
+                              @NotNull List<PythonPackage> packages) {
+    // First, so it follows the packages that the install publishes: a change that comes before it is there is lost.
+    PythonInterpreterRoots.getInstance(module.getProject());
+    manager.installPackages(packages);
+    PyProjectStructureTestUtilKt.awaitDerivedRoots(module.getProject());
+    PyProjectStructureTestUtilKt.syncPythonInterpreterLibraries();
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
   }
 
   /** The interpreter of the Python project of the fixture module, read from the snapshot. */

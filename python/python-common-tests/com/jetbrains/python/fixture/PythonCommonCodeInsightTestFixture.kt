@@ -92,10 +92,10 @@ interface PythonCommonCodeInsightTestFixture {
   fun getLookupElements(): Array<LookupElement>?
 
   /**
-   * Applies a change of the roots of [sdk], the SDK of [pythonInterpreter]. A test calls it after it edits the roots, so
-   * resolve sees the new roots.
+   * Applies a change of the facts of [pythonInterpreter], such as a path that the user added. A test calls it after it
+   * writes the facts, so resolve sees the roots that follow.
    */
-  fun sdkRootsChanged(sdk: Sdk) {
+  fun interpreterFactsChanged() {
   }
 
   // TODO: this belongs to test case not fixture [utikeev]

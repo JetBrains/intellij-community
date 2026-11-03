@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static com.jetbrains.python.sdk.PythonSdkType.MOCK_PY_MARKER_KEY;
 
 
 public final class PythonMockSdk {
@@ -95,7 +94,9 @@ public final class PythonMockSdk {
     } else {
       application.invokeAndWait(() -> application.runWriteAction(runnable));
     }
-    sdk.putUserData(MOCK_PY_MARKER_KEY, true);
+    sdk.putUserData(PythonMockSdkKeys.MARKER, true);
+    PythonMockInterpreterFactsStep.registerOnce();
+    PythonMockPackageManagerProvider.registerOnce();
     return sdk;
 
     // com.jetbrains.python.psi.resolve.PythonSdkPathCache.getInstance() corrupts SDK, so have to clone

@@ -92,7 +92,10 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
     // the initialization runs read actions, which a plain `runBlocking` on the EDT would deadlock against a
     // pending background write action
     runWithModalProgressBlocking(myFixture.project, "Initializing the test package manager") {
-      PythonPackageManager.forPythonInterpreter(myFixture.project, interpreter).waitForInit()
+      val manager = PythonPackageManager.forPythonInterpreter(myFixture.project, interpreter)
+      manager.waitForInit()
+      // The init does not wait for the declared packages, and the inspections read their snapshot.
+      manager.listDeclaredPackagesCached()
     }
   }
 }

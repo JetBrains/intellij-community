@@ -247,12 +247,12 @@ internal class DependenciesPsiProviderTest {
       val venvDir = tempPathFixture.get().resolve(".venv")
       val venvPython = withContext(Dispatchers.EDT) { createVenv(env.pythonPath, venvDir).getOrThrow() }
       val built = createSdk(ModuleOrProject.ModuleAndProject(module), PathHolder.Eel(venvPython), additionalData(module)).orThrow()
-      val interpreter = checkNotNull(pyProject.setPythonInterpreter(built).orThrow())
+      // The test package manager reads its provider from the SDK. The project starts the manager of an interpreter as soon
+      // as a module uses it, so the key is there before the interpreter is set.
+      @Suppress("DEPRECATION")
+      built.getSdkAPI().putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, requirementsProviderType)
       withContext(Dispatchers.EDT) { beforePackageManager() }
-
-      @Suppress("DEPRECATION") // The test package manager reads its provider from the SDK.
-      val sdk = interpreter.getSdkAPI()
-      sdk.putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, requirementsProviderType)
+      val interpreter = checkNotNull(pyProject.setPythonInterpreter(built).orThrow())
       PythonPackageManager.forPythonInterpreter(project, interpreter).waitForInit()
 
       fixture.configureFromTempProjectFile(requirementsProviderType.filename)

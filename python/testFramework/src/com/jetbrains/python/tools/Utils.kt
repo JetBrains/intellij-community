@@ -10,10 +10,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.packaging.PyPackagingSettings
-import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.tools.sdkTools.PySdkTools
@@ -46,9 +46,7 @@ fun createPythonSdkProducer(sdkHome: String): (Project, Module) -> Sdk {
   return { project: Project, module: Module ->
     run {
       val sdk = createSdkForPerformance(module, SdkCreationType.SDK_PACKAGES_AND_SKELETONS, sdkHome)
-      UIUtil.invokeAndWaitIfNeeded(Runnable {
-        PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
-      })
+      PythonInterpreterUpdater.getInstance(project).request(sdk, PythonInterpreterUpdateRequest(packages = true, background = false))
       sdk
     }
   }

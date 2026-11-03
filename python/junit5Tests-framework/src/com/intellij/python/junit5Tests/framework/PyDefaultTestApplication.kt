@@ -10,6 +10,7 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.jetbrains.python.packaging.management.awaitDerivedRootsForTests
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension.Companion.getTestClassInfo
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMetaInfoExtension.Companion.getTestMethodInfo
 import com.intellij.testFramework.EditorTestUtil
@@ -140,6 +141,8 @@ private class PyWithDefaultFixturesExtension : BeforeAllCallback, BeforeEachCall
       }
       // The Python project structure follows the module in the background. Its restart cancels a pass that is already running.
       EvoPyProjectModel.getInstance(project).awaitCurrentInterpreters()
+      // The derived roots follow the installed packages, as after the start of the project.
+      awaitDerivedRootsForTests(project)
     }
 
     IndexingTestUtil.waitUntilIndexesAreReady(project)

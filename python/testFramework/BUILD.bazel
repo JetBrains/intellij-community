@@ -53,6 +53,8 @@ jvm_library(
         "//platform/ide-core",
         "//platform/util:util-ui",
         "//python:python-community-impl",
+        "//python/python-pyproject:pyproject",
+        "//python/python-requirements/backend",
         "//python/impl.helperLocator:community-helpersLocator",
         "//platform/util/jdom",
         ":libraries_junit4_provided",

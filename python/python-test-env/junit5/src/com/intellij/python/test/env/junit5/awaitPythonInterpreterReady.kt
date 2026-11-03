@@ -2,15 +2,13 @@
 package com.intellij.python.test.env.junit5
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.testFramework.IndexingTestUtil
-import com.jetbrains.python.sdk.PythonSdkUpdater
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 
 /**
@@ -41,10 +39,9 @@ internal suspend fun awaitPythonInterpreterUpdateBeforeRemoval(interpreter: Pyth
   }
 }
 
+/** Waits until no open project runs or waits for an update of [interpreter]: an update runs in a project. */
 private suspend fun awaitSdkUpdate(interpreter: PythonInterpreter) {
-  @Suppress("DEPRECATION") // The SDK updater still takes an SDK.
-  val sdk = interpreter.getSdkAPI()
-  while (PythonSdkUpdater.isUpdateScheduled(sdk)) {
-    delay(100.milliseconds)
+  for (project in ProjectManager.getInstance().openProjects) {
+    if (!project.isDisposed) PythonInterpreterUpdater.getInstance(project).awaitUpdate(interpreter)
   }
 }

@@ -7,34 +7,59 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.python.pyproject.model.evolution.PyInterpreterLibrarySync
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.pyproject.model.evolution.PyInterpreterLibrarySync
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.interpreterRefOf
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
+import com.jetbrains.python.packaging.management.awaitDerivedRootsForTests
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.impl.awaitPythonLanguageLevelsForTests
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.asPromise
+import java.nio.file.Path
 
-/** Blocking [EvoPyProjectModel.awaitCurrentInterpreters]. Pumps the EDT, so a test on the EDT can call it. */
+/**
+ * Blocking [EvoPyProjectModel.awaitCurrentInterpreters], then [awaitDerivedRoots], then the push of the language levels
+ * and the indexes: the test starts as a project does after its start. Pumps the EDT, so a test on the EDT can call it.
+ */
 @TestOnly
 fun awaitPythonInterpreters(project: Project) {
   val job = PyPackageCoroutine.getScope(project).launch {
     withTimeout(DEFAULT_TEST_TIMEOUT) {
       EvoPyProjectModel.getInstance(project).awaitCurrentInterpreters()
+      awaitDerivedRootsForTests(project)
+      // A push of a new layout starts a dumb mode, so a test that starts before it can run in dumb mode.
+      awaitPythonLanguageLevelsForTests(project)
     }
+  }
+  job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
+  IndexingTestUtil.waitUntilIndexesAreReady(project)
+}
+
+/**
+ * Blocking [awaitDerivedRootsForTests]: the derived roots of each interpreter follow its installed packages, such as
+ * after an install of a test. Pumps the EDT, so a test on the EDT can call it.
+ */
+@TestOnly
+fun awaitDerivedRoots(project: Project) {
+  val job = PyPackageCoroutine.getScope(project).launch {
+    withTimeout(DEFAULT_TEST_TIMEOUT) { awaitDerivedRootsForTests(project) }
   }
   job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
 }
@@ -98,9 +123,11 @@ fun addMockPythonInterpreterForTests(module: Module, sdk: Sdk): PythonInterprete
 
 /**
  * Makes the Python project of [module] own the SDK of [module], for a light project of the legacy flow, whose platform
- * adds a new SDK for each test. The SDK then names the interpreter of the Python project, as the registry sets it for an
- * SDK that one module uses. Does nothing in the interpreter library flow, whose registry sets the owner, and for an SDK
- * that the Python project owns already. The caller waits for the interpreters, see [awaitPythonInterpreters].
+ * adds a new SDK for each test. The owner and the working directory of the SDK become the content root of [module], as in
+ * a real project. The SDK then names the interpreter of the Python project, as the registry sets it for an SDK that one
+ * module uses. Does nothing in the interpreter library flow, whose registry sets the owner, and for an SDK that the
+ * Python project owns already. It returns when the registry holds the SDK of [module] under the new owner, so a wait for
+ * the interpreters after it expects that interpreter, see [awaitPythonInterpreters].
  */
 @TestOnly
 fun ownModuleSdkForTests(module: Module) {
@@ -109,14 +136,26 @@ fun ownModuleSdkForTests(module: Module) {
   // The base directory of the Python project of a light module is its content root.
   val ownerDir = ModuleRootManager.getInstance(module).contentRoots.firstOrNull()?.path ?: return
   val data = sdk.sdkAdditionalData as? PythonSdkAdditionalData ?: return
-  if (data.associatedModulePath == ownerDir) return
+  if (data.associatedModulePath == ownerDir && data.workingDirectory == Path.of(ownerDir)) return
   ApplicationManager.getApplication().invokeAndWait {
     WriteAction.run<RuntimeException> {
       val modificator = sdk.sdkModificator
-      (modificator.sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath = ownerDir
+      (modificator.sdkAdditionalData as? PythonSdkAdditionalData)?.let {
+        it.associatedModulePath = ownerDir
+        it.workingDirectory = Path.of(ownerDir)
+      }
       modificator.commitChanges()
     }
   }
+  val ref = interpreterRefOf(sdk) ?: return
+  val key = PythonInterpreterKey(Path.of(ownerDir), ref)
+  val registry = PythonInterpreterRegistry.getInstance(module.project)
+  val job = PyPackageCoroutine.getScope(module.project).launch {
+    withTimeout(DEFAULT_TEST_TIMEOUT) {
+      registry.awaitSdkForTests(key, sdk)
+    }
+  }
+  job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
 }
 
 /**

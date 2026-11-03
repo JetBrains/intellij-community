@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
+import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.classRoots
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.IndexingTestUtil
@@ -287,6 +288,8 @@ abstract class PyCodeInsightTestCase {
     val fixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
     fixture.testDataPath = PythonTestUtil.getTestDataPath()
     fixture.setUp()
+    // The legacy flow gets a new SDK of the light project, and the Python project owns it.
+    ownModuleSdkForTests(fixture.module)
     return fixture
   }
 
@@ -397,26 +400,33 @@ abstract class PyCodeInsightTestCase {
 
   protected fun setAdditionalSdkRoots(additionalSdkRoots: Array<SdkRoot>, addElseRemove: Boolean) {
     if (additionalSdkRoots.isEmpty()) return
-    // A class root belongs to the SDK, so the test edits the SDK of the interpreter.
-    @Suppress("DEPRECATION")
-    val sdk = findPythonInterpreterForTests(myFixture.module)!!.getSdkAPI()
+    val interpreter = findPythonInterpreterForTests(myFixture.module)!!
+    val roots = additionalSdkRoots.map { sdkRoot ->
+      val absPath = PythonTestUtil.getTestDataPath() + "/" + sdkRoot.path
+      val testDataDir = StandardFileSystems.local().findFileByPath(absPath) ?: fail("Could not find additional SDK root at $absPath")
+      sdkRoot to testDataDir
+    }
+    // A class root is a path that the user added to the interpreter, as in the interpreter settings: the roots of the
+    // interpreter follow its facts, so a class root that the test wrote into the SDK goes with the next refresh.
+    val details = PythonInterpreterDetails.getInstance(myFixture.project)
+    val addedPaths = details.facts(interpreter).addedPaths.toMutableList()
+    for ([_, root] in roots.filter { it.first.type == OrderRootTypeEnum.CLASSES }) {
+      if (addElseRemove) addedPaths.add(root.toNioPath()) else addedPaths.remove(root.toNioPath())
+    }
+    details.writeAddedPaths(interpreter, addedPaths)
 
-    runWriteAction {
-      val modificator = sdk.getSdkModificator()
-      for (sdkRoot in additionalSdkRoots) {
-        val absPath = PythonTestUtil.getTestDataPath() + "/" + sdkRoot.path
-        val testDataDir = StandardFileSystems.local().findFileByPath(absPath)
-        if (testDataDir == null) {
-          fail("Could not find additional SDK root at $absPath")
+    val otherRoots = roots.filter { it.first.type != OrderRootTypeEnum.CLASSES }
+    if (otherRoots.isNotEmpty()) {
+      @Suppress("DEPRECATION")
+      val sdk = interpreter.getSdkAPI()
+      runWriteAction {
+        val modificator = sdk.getSdkModificator()
+        for ([sdkRoot, root] in otherRoots) {
+          if (addElseRemove) modificator.addRoot(root, sdkRoot.type.orderRootType)
+          else modificator.removeRoot(root, sdkRoot.type.orderRootType)
         }
-        if (addElseRemove) {
-          modificator.addRoot(testDataDir, sdkRoot.type.orderRootType)
-        }
-        else {
-          modificator.removeRoot(testDataDir, sdkRoot.type.orderRootType)
-        }
+        modificator.commitChanges()
       }
-      modificator.commitChanges()
     }
     // A module reads the roots of its interpreter from its interpreter library, which copies them from the SDK.
     syncPythonInterpreterLibraries()

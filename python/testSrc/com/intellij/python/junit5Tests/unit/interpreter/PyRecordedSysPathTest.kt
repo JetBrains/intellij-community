@@ -73,14 +73,6 @@ internal class PyRecordedSysPathTest {
     }
   }
 
-  @Test
-  fun `a sys path that the updater read wins over the roots`(): Unit = timeoutRunBlocking(30.seconds) {
-    val sdk = PythonMockSdk.create()
-    PythonInterpreterSdks.setSysPath(sdk, listOf("/read/by/updater"))
-
-    assertThat(PythonInterpreterSdks.recordedSysPathForTests(sdk)).containsExactly("/read/by/updater")
-  }
-
   private suspend fun directory(path: Path): VirtualFile {
     Files.createDirectories(path)
     return checkNotNull(edtWriteAction { VfsUtil.createDirectoryIfMissing(path.toString()) }) { "no directory $path" }
