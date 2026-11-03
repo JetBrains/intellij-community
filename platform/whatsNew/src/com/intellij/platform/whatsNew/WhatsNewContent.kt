@@ -5,7 +5,9 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettingsService
+import com.intellij.ide.whatsNew.AIR_PROMO_REQUEST
 import com.intellij.ide.whatsNew.DefaultWhatsNewQueryHandler
+import com.intellij.ide.whatsNew.WhatsNewAirPromoListener
 import com.intellij.ide.whatsNew.WhatsNewUtil
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.actionSystem.ActionManager
@@ -301,6 +303,10 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
       val disposable = Disposer.newDisposable(project)
       val startPageId = WhatsNewMultipageStartIdProvider.getInstance(project).getId()
       val request = getRequest(startPageId, dataContext, project, isChinaRegion)
+      if (myActionWhiteList.contains(AIR_PROMO_REQUEST)) {
+        application.messageBus.syncPublisher(WhatsNewAirPromoListener.TOPIC)
+          .blockShown(project, WelcomeScreenProjectProvider.isWelcomeScreenProject(project))
+      }
       val editor = openEditorAsync(project, title, request)
 
       editor?.let {
