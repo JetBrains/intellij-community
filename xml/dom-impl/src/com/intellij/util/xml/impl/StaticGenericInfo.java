@@ -48,6 +48,8 @@ public final class StaticGenericInfo extends DomGenericInfoEx {
   private final Map<JavaMethodSignature, Pair<CollectionChildDescriptionImpl, Set<CollectionChildDescriptionImpl>>> myCompositeCollectionAdditionMethods =
     new HashMap<>();
 
+  private final Map<String, DomImplUtil.TagAnchors> myWriteOrder = new HashMap<>();
+
   private @Nullable JavaMethod myNameValueGetter;
   private boolean myValueElement;
   private boolean myInitialized;
@@ -99,6 +101,12 @@ public final class StaticGenericInfo extends DomGenericInfoEx {
       }
       myNameValueGetter = builder.getNameValueGetter();
       myValueElement = builder.isValueElement();
+
+      List<AbstractDomChildDescriptionImpl> children = new ArrayList<>();
+      myFixed.dumpDescriptions(children);
+      myCollections.dumpDescriptions(children);
+      myWriteOrder.putAll(DomImplUtil.buildWriteOrder(children));
+
       myInitialized = true;
     }
     return true;
@@ -208,6 +216,12 @@ public final class StaticGenericInfo extends DomGenericInfoEx {
     buildMethodMaps();
     Object o = getNameObject(element);
     return o == null || o instanceof String ? (String)o : ((GenericValue<?>)o).getStringValue();
+  }
+
+  @Override
+  @NotNull Map<String, DomImplUtil.TagAnchors> getWriteOrder() {
+    buildMethodMaps();
+    return myWriteOrder;
   }
 
   @Override

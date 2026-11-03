@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.reference.SoftReference.dereference;
@@ -163,6 +164,12 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   @Override
   public String getElementName(DomElement element) {
     return myStaticGenericInfo.getElementName(element);
+  }
+
+  @Override
+  @NotNull Map<String, DomImplUtil.TagAnchors> getWriteOrder() {
+    // ponytail: the static type only; an order that a DomExtender declares is not supported
+    return myStaticGenericInfo.getWriteOrder();
   }
 
   @Override
