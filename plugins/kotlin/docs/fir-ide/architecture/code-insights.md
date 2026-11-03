@@ -353,7 +353,9 @@ internal object RemoveUnnamedPropertyFixFactory {
         override fun getFamilyName(): String = KotlinBundle.message("remove.unused.underscore.declaration")
         override fun invoke(context: ActionContext, element: KtProperty, updater: ModPsiUpdater) {
             val initializer = element.initializer ?: return
-            element.replace(initializer.copy())
+            val commentSaver = CommentSaver(element)
+            val result = element.replace(initializer.copy())
+            commentSaver.restore(result)
         }
     }
 }

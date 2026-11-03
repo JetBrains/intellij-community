@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
@@ -31,7 +32,9 @@ internal object RemoveUnnamedPropertyFixFactory {
       updater: ModPsiUpdater,
     ) {
       val initializer = element.initializer ?: return
-      element.replace(initializer.copy())
+      val commentSaver = CommentSaver(element)
+      val result = element.replace(initializer.copy())
+      commentSaver.restore(result)
     }
   }
 }
