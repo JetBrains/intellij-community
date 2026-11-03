@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -80,22 +79,10 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     levels.put(l2, l1);
   }
 
-  /**
-   * The layout that the pusher pushed last in a project, see {@link #push}. It is kept on the project, as the pusher is an
-   * application extension, and a layout holds the modules of its project.
-   */
-  private static final Key<PythonLanguageLevelLayout> PUSHED_LAYOUT = Key.create("python.language.level.pushed.layout");
-
-  private static @NotNull PythonLanguageLevelLayout pushedLayout(@NotNull Project project) {
-    final PythonLanguageLevelLayout layout = project.getUserData(PUSHED_LAYOUT);
-    return layout != null ? layout : PythonLanguageLevelLayout.EMPTY;
-  }
-
+  /** Pushes the layout of the current snapshot of [project] before its first scan, and then each new layout. */
   @Override
   public void initExtra(@NotNull Project project) {
-    final PythonLanguageLevels levels = PythonLanguageLevels.getInstance(project);
-    push(project, levels.refresh(), false);
-    levels.follow();
+    PythonLanguageLevels.getInstance(project).start();
   }
 
   @Override
@@ -193,32 +180,29 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
 
   @Override
   public void afterRootsChanged(final @NotNull Project project) {
-    // A roots change can add a root that has no level yet, so the pusher pushes the layout even when it is the same.
-    push(project, PythonLanguageLevels.layoutOf(project), true);
+    // A roots change can add a root that has no level yet, so the current layout is pushed again.
+    final PythonLanguageLevelLayout layout = PythonLanguageLevels.layoutOf(project);
+    doPush(project, layout, layout);
   }
 
   /**
-   * Pushes [layout] when it differs from the layout it pushed last. For a change that no roots change reports: a new
-   * snapshot, or a new version that the interpreter store saves. See {@link PythonLanguageLevels#follow}.
+   * Pushes [layout], which follows [previous], see {@link PythonLanguageLevels#start}. For a change that no roots change
+   * reports: a new snapshot, or a new version that the interpreter store saves.
    */
-  static void layoutChanged(@NotNull Project project, @NotNull PythonLanguageLevelLayout layout) {
+  static void push(@NotNull Project project, @NotNull PythonLanguageLevelLayout layout, @NotNull PythonLanguageLevelLayout previous) {
     if (project.isDisposed()) return;
     for (FilePropertyPusher<?> pusher : EP_NAME.getExtensionList()) {
       if (pusher instanceof PythonLanguageLevelPusher languageLevelPusher) {
-        languageLevelPusher.push(project, layout, false);
+        languageLevelPusher.doPush(project, layout, previous);
       }
     }
   }
 
   /**
    * Queues a task that pushes the levels of [layout] to the roots. Reparses the open files when the level of a module
-   * changed. With [always], it also pushes a layout that is equal to the pushed one.
+   * changed since [previous].
    */
-  private void push(@NotNull Project project, @NotNull PythonLanguageLevelLayout layout, boolean always) {
-    final PythonLanguageLevelLayout previous = pushedLayout(project);
-    project.putUserData(PUSHED_LAYOUT, layout);
-    if (!always && layout.equals(previous)) return;
-
+  private void doPush(@NotNull Project project, @NotNull PythonLanguageLevelLayout layout, @NotNull PythonLanguageLevelLayout previous) {
     final boolean levelOfModuleChanged = ContainerUtil.exists(layout.getModuleLevels().entrySet(), entry -> {
       final LanguageLevel before = previous.getModuleLevels().get(entry.getKey());
       return before != null && before != entry.getValue();

@@ -12,7 +12,7 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiManager
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreterDetails
+import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -48,7 +48,7 @@ class PyResolveCachesInvalidator(private val project: Project, private val corou
     }
     coroutineScope.launch {
       // The updater writes new roots of an interpreter, which no snapshot reports. The first value is the current state.
-      PythonInterpreterDetails.getInstance(project).changes.drop(1).collect {
+      PythonInterpreterRoots.getInstance(project).changes.drop(1).collect {
         PythonSdkPathCache.onInterpreterDetailsChanged(project)
         tracker.incModificationCount()
         backgroundWriteAction { PsiManager.getInstance(project).dropPsiCaches() }
