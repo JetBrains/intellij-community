@@ -166,7 +166,7 @@ public class HighlightInfo implements Segment {
    * Quick fix text range: the range within which the Alt-Enter should open the quick fix popup.
    * Might be bigger than (getStartOffset(), getEndOffset()) when it's deemed more usable,
    * e.g., when "import class" fix wanted to be Alt-Entered from everywhere at the same line.
-   * During the creation of this {@link HighlightInfo} the fix range is accumulated here, and then moved to {@link OffsetStore##fixMarker},
+   * During the creation of this {@link HighlightInfo} the fix range is accumulated here, and then moved to {@link OffsetStore#fixMarker},
    * when this {@link HighlightInfo} is associated with {@link Document}, to support updating its fix range along with the document changes.
    * After this point {@link OffsetStore#fixMarker} stores the actual fix range, and {@code fixRange} is not needed anymore.
    */
