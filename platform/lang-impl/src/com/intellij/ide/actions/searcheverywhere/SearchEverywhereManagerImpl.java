@@ -443,6 +443,19 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     }
   }
 
+  /**
+   * The manager that owns the classic popup of {@code project}: the project service, or the application service without a
+   * project. A factory of {@code SearchEverywhereManagerFactory.EP_NAME} can stand another manager in front of the service,
+   * so the popup does not read its manager through {@link SearchEverywhereManager#getInstance}.
+   */
+  @ApiStatus.Internal
+  static @NotNull SearchEverywhereManagerImpl getInstanceImpl(@Nullable Project project) {
+    SearchEverywhereManager manager = project == null
+                                      ? ApplicationManager.getApplication().getService(SearchEverywhereManager.class)
+                                      : project.getService(SearchEverywhereManager.class);
+    return (SearchEverywhereManagerImpl)manager;
+  }
+
   public @Nullable Object getPrevSelection(String contributorID) {
     return myPrevSelections.get(contributorID);
   }

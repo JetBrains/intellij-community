@@ -382,7 +382,7 @@ public final class SearchEverywhereHeader {
     }
 
     List<AnAction> actions = List.of(new CheckBoxSearchEverywhereToggleAction(actionText) {
-      final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
+      final SearchEverywhereManagerImpl seManager = SearchEverywhereManagerImpl.getInstanceImpl(myProject);
 
       @Override
       public boolean isEverywhere() {

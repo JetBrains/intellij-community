@@ -759,7 +759,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
   }
 
   private void showPopup(@NotNull RelativePoint relativePoint) {
-    List<String> items = ((SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject)).getHistoryItems();
+    List<String> items = SearchEverywhereManagerImpl.getInstanceImpl(myProject).getHistoryItems();
     if (items.isEmpty()) return;
 
     JBPopupFactory.getInstance().createPopupChooserBuilder(items)
@@ -1844,7 +1844,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
       mySelectionTracker.restoreSelection();
 
       if (myListModel.getSize() > 0 && myResultsList.getSelectedIndex() <= 0) {
-        SearchEverywhereManagerImpl manager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
+        SearchEverywhereManagerImpl manager = SearchEverywhereManagerImpl.getInstanceImpl(myProject);
         String contributorID = getSelectedTabID();
         Object prevSelection = manager.getPrevSelection(contributorID);
         if (prevSelection instanceof Integer) {
