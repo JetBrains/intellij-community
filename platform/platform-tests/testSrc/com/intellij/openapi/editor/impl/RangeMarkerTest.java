@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.FileASTNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -119,7 +120,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 @SuppressWarnings({"deprecation", "WeakerAccess"})
 public class RangeMarkerTest {
   private static final Logger LOG = Logger.getInstance(RangeMarkerTest.class);
-  private static final TestFixture<Project> PROJECT_FIXTURE = FixturesKt.projectFixture();
+  private static final TestFixture<Project> PROJECT_FIXTURE =
+    FixturesKt.projectFixture(FixturesKt.tempPathFixture(), OpenProjectTask.build(), true);
   private static final TestFixture<Module> MODULE_FIXTURE = FixturesKt.moduleFixture(PROJECT_FIXTURE, "range-marker", null);
 
   private final TestFixture<PsiDirectory> sourceRootFixture = FixturesKt.sourceRootFixture(MODULE_FIXTURE);
