@@ -350,14 +350,12 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
         })
       }
 
-      val diagEmittedCount = java.util.concurrent.atomic.AtomicInteger(0)
       when (provider) {
         is ChooseByNameInScopeItemProvider -> {
           val parameters = FindSymbolParameters.wrap(pattern, scope)
           if (limit <= 0) {
             provider.filterElementsWithWeights(viewModel, parameters, progressIndicator
             ) { item: FoundItemDescriptor<*> ->
-              diagEmittedCount.incrementAndGet()
               processElement(progressIndicator, consumer, model, item.item, item.weight)
             }
           }
@@ -370,7 +368,6 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
               provider.filterElementsWithWeights(viewModel, parameters.withLimit(runLimit, runs::markCut), progressIndicator
               ) { item: FoundItemDescriptor<*> ->
                 if (!runs.accept(item.item, item.weight)) return@filterElementsWithWeights true
-                diagEmittedCount.incrementAndGet()
                 processElement(progressIndicator, consumer, model, item.item, item.weight).also { accepted = it }
               }
               accepted
@@ -380,22 +377,14 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
         is ChooseByNameWeightedItemProvider -> {
           provider.filterElementsWithWeights(viewModel, pattern, everywhere, progressIndicator
           ) { item: FoundItemDescriptor<*> ->
-            diagEmittedCount.incrementAndGet()
             processElement(progressIndicator, consumer, model, item.item, item.weight)
           }
         }
         else -> {
           provider.filterElements(viewModel, pattern, everywhere, progressIndicator) { element: Any ->
-            diagEmittedCount.incrementAndGet()
             processElement(progressIndicator, consumer, model, element, getElementPriority(element, pattern))
           }
         }
-      }
-      if (LOG.isDebugEnabled) {
-        LOG.debug(
-          "[symbol-se-diag] $searchProviderId finished: pattern='$pattern'," +
-          " scope='${scope.displayName}', everywhere=$everywhere, elementsFromModel=${diagEmittedCount.get()}"
-        )
       }
     }
 
