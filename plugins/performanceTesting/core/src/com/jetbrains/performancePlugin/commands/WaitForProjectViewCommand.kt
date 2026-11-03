@@ -19,7 +19,7 @@ class WaitForProjectViewCommand(text: String, line: Int) : PlaybackCommandCorout
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val notifier = context.project.getService(ProjectViewInitNotifier::class.java)
+    val notifier = ProjectViewInitNotifier.getInstance(context.project)
     if (notifier.isInitCompleted()) return
 
     val connection = context.project.messageBus.connect()
