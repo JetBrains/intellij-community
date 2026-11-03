@@ -12,7 +12,7 @@ import java.util.stream.Stream;
 
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
 public final class LauncherGeneratorMain {
-  public static void main(String... args) {
+  static void main(String... args) {
     if (args.length != 5) {
       System.err.println(
         "Usage: LauncherGeneratorMain <template .exe file> <resource.h file> <properties file> <.ico file> <output .exe file>");
