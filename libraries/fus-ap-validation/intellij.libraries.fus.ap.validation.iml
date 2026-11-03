@@ -9,21 +9,21 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="com.jetbrains.fus.reporting.ap.validation.all" type="repository">
-        <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:ap-validation-all:2.0.250">
+        <properties include-transitive-deps="false" maven-id="com.jetbrains.fus.reporting:ap-validation-all:2.0.251">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.250/ap-validation-all-2.0.250.jar">
-              <sha256sum>41197884aabef34546195aaccc4fcd3e0f62baa3c12da05f8955555675db2199</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.251/ap-validation-all-2.0.251.jar">
+              <sha256sum>3fdc5c5556f2793f82d0a3a5a4d1a84d34e931cbac88bfab740c97e7c9f25762</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.250/ap-validation-all-2.0.250.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.251/ap-validation-all-2.0.251.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.250/ap-validation-all-2.0.250-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.251/ap-validation-all-2.0.251-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.250/ap-validation-all-2.0.250-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/fus/reporting/ap-validation-all/2.0.251/ap-validation-all-2.0.251-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
