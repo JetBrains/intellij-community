@@ -111,6 +111,7 @@
 
     <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
     <filetype.decompiler id="classFileDecompiler" filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
+    <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
 
     <!-- The defaults for a process without a Java backend, such as JetBrains Light. The Java plugin overrides each of them. -->
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleManager"
