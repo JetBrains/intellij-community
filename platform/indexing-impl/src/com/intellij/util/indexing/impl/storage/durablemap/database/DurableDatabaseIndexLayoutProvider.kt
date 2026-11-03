@@ -119,7 +119,7 @@ class DurableDatabaseIndexLayoutProvider @JvmOverloads constructor(
   }
 
   private val applicableIndexIds: Predicate<String> by lazy {
-    val applicableIds = System.getProperty(APPLICABLE_INDEX_IDS_PROPERTY, "")
+    val applicableIds = System.getProperty(APPLICABLE_INDEX_IDS_PROPERTY, "*")
       .split(",")
       .map { it.trim() }
       .filter { it.isNotEmpty() }
