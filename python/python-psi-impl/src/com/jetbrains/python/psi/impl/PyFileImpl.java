@@ -859,15 +859,16 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
    */
   private final class TopLevelStubChildren {
     private final long myModificationStamp;
+    private final @NotNull LanguageLevel myLanguageLevel;
     private final Map<Class<? extends PyElement>, List<PyElement>> myByType;
 
-    private TopLevelStubChildren(@NotNull StubElement<?> stub, long modificationStamp) {
+    private TopLevelStubChildren(@NotNull StubElement<?> stub, long modificationStamp, @NotNull LanguageLevel languageLevel) {
       myModificationStamp = modificationStamp;
+      myLanguageLevel = languageLevel;
       final Map<Class<? extends PyElement>, List<PyElement>> byType = new HashMap<>();
       for (Class<? extends PyElement> type : TOP_LEVEL_CHILD_TYPES) {
         byType.put(type, new ArrayList<>());
       }
-      final LanguageLevel languageLevel = getEffectiveLanguageLevel();
       for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
         final PsiElement childPsi = child.getPsi();
         for (Class<? extends PyElement> type : TOP_LEVEL_CHILD_TYPES) {
@@ -880,8 +881,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
       myByType = byType;
     }
 
-    private long getModificationStamp() {
-      return myModificationStamp;
+    private boolean isValidFor(long modificationStamp, @NotNull LanguageLevel languageLevel) {
+      return myModificationStamp == modificationStamp && myLanguageLevel == languageLevel;
     }
 
     private <T extends PyElement> @NotNull List<T> get(@NotNull Class<T> type) {
@@ -893,12 +894,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
   private @NotNull TopLevelStubChildren getTopLevelStubChildren(@NotNull StubElement<?> stub) {
     TopLevelStubChildren cache = myTopLevelStubChildren.get();
     final long modificationStamp = getModificationStamp();
-    if (cache != null && modificationStamp != cache.getModificationStamp()) {
+    // The modification stamp misses a level that changes without a PSI change
+    final LanguageLevel languageLevel = getEffectiveLanguageLevel();
+    if (cache != null && !cache.isValidFor(modificationStamp, languageLevel)) {
       myTopLevelStubChildren.clear();
       cache = null;
     }
     if (cache == null) {
-      cache = new TopLevelStubChildren(stub, modificationStamp);
+      cache = new TopLevelStubChildren(stub, modificationStamp, languageLevel);
       myTopLevelStubChildren = new SoftReference<>(cache);
     }
     return cache;
