@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiEnumConstantInitializer
 import com.intellij.psi.PsiField
+import com.intellij.psi.JavaResolveResult
 import com.intellij.psi.PsiImportStatementBase
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiJavaFile
@@ -28,6 +29,7 @@ import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.impl.light.LightDefaultConstructor
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.javadoc.PsiDocTagValue
@@ -41,7 +43,7 @@ import com.intellij.psi.util.PsiUtil
  * - A definition has the name range and an `enclosing_range` from the first child after the doc comment to the end of the declaration.
  * - A reference has the range of the reference name. A reference with more than one resolve candidate is never written.
  * - A call has [ROLE_CALL] on the callee name. A `new` expression writes the class without the bit and the constructor with it.
- *   When the class has no explicit constructor, the class alone carries the bit.
+ *   When the class has no explicit constructor, the class alone carries the bit. See [constructorCallee].
  * - An occurrence inside a doc comment has [ROLE_DOC] and never [ROLE_CALL].
  * - A package reference is never written. [Counter.PACKAGE_REFS] counts it.
  */
@@ -262,14 +264,45 @@ internal class JavaDocumentCollector(private val file: PsiJavaFile, private val 
       emitReference(reference, target, nameElement.textRange, roles)
       return
     }
-    val constructor = newExpression.resolveConstructor()
-    if (constructor == null) {
+    val callee = constructorCallee(newExpression, newExpression.multiResolve(false), target as? PsiClass)
+    if (callee == target) {
       emitReference(reference, target, nameElement.textRange, roles or ROLE_CALL)
     }
     else {
       emitReference(reference, target, nameElement.textRange, roles)
-      emitReference(reference, constructor, nameElement.textRange, roles or ROLE_CALL)
+      callee?.let { emitReference(reference, it, nameElement.textRange, roles or ROLE_CALL) }
     }
+  }
+
+  /**
+   * The callee of a constructor call of [psiClass] with the resolve [results] of the call.
+   *
+   * - Exactly one result is its constructor; an invalid one is counted as `invalid_single`.
+   * - The implicit default constructor ([LightDefaultConstructor]) has no definition, so [psiClass] stands for it.
+   * - No result for a class without explicit constructors, such as the interface of an anonymous class, is [psiClass].
+   *
+   * Otherwise the call is counted as `ambiguous` or `unresolved`, and the result is `null`.
+   * `resolveConstructor()` cannot tell these cases apart: it returns `null` for an ambiguous call too.
+   */
+  private fun constructorCallee(site: PsiElement, results: Array<out JavaResolveResult>, psiClass: PsiClass?): PsiElement? {
+    if (results.size == 1) {
+      val result = results[0]
+      when (val constructor = result.element) {
+        is LightDefaultConstructor -> return psiClass ?: constructor.containingClass
+        null -> {}
+        else -> {
+          if (!result.isValidResult) {
+            stats.site(Counter.INVALID_SINGLE, site(site))
+          }
+          return constructor
+        }
+      }
+    }
+    else if (results.isEmpty() && psiClass != null && psiClass.constructors.isEmpty()) {
+      return psiClass
+    }
+    unresolved(site, results.size)
+    return null
   }
 
   /** A doc reference such as `#method` of `{@link Foo#method}`, or the attribute name of an annotation. */
