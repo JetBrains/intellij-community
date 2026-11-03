@@ -9,9 +9,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 private val LOG get() = fileLogger()
 
@@ -149,12 +149,9 @@ fun <T> waitFor(
   checker: (T) -> Boolean,
 ): T {
   logAwaitStart(message, timeout)
-  // TODO It's NOT a monotonic timer, so it can be a reason of some sporadic incorrect test timeouts.
-  //  use System.nanoTime instead.
-  val startTime = System.currentTimeMillis()
-  val endTime = startTime + timeout.inWholeMilliseconds
+  val start = TimeSource.Monotonic.markNow()
   var result = getter()
-  while (endTime > System.currentTimeMillis() && checker(result).not()) {
+  while (start.elapsedNow() < timeout && checker(result).not()) {
     Thread.sleep(interval.inWholeMilliseconds)
     result = getter()
   }
@@ -165,7 +162,7 @@ fun <T> waitFor(
       .also { LOG.warn(it) }
   }
   else {
-    val passedTime = (System.currentTimeMillis() - startTime).milliseconds
+    val passedTime = start.elapsedNow()
     if (result !is Boolean || passedTime > 10.seconds) {
       logAwaitFinish(message, result, passedTime)
     }
@@ -228,9 +225,8 @@ fun <T> waitForOne(
   logAwaitStart(message, timeout)
   var resultList = getter()
   var filteredResultList = resultList.filter { checker(it) }
-  val startTime = System.currentTimeMillis()
-  val endTime = startTime + timeout.inWholeMilliseconds
-  while (endTime > System.currentTimeMillis() && filteredResultList.size != 1) {
+  val start = TimeSource.Monotonic.markNow()
+  while (start.elapsedNow() < timeout && filteredResultList.size != 1) {
     Thread.sleep(interval.inWholeMilliseconds)
     resultList = getter()
     filteredResultList = resultList.filter { checker(it) }
@@ -246,8 +242,7 @@ fun <T> waitForOne(
   }
   else {
     return filteredResultList.single().also {
-      val passedTime = (System.currentTimeMillis() - startTime).milliseconds
-      logAwaitFinish(message, it, passedTime)
+      logAwaitFinish(message, it, start.elapsedNow())
     }
   }
 }
