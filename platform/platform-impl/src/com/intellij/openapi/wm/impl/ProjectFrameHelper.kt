@@ -452,8 +452,7 @@ abstract class ProjectFrameHelper internal constructor(
     sink[IdeFrame.KEY] = this
     if (project == null || !project.isInitialized) return
     // a frame that shows guests gives the active one, see WindowManagerEx.getActiveProject
-    // a guest that still opens or closes is not initialized, and the frame then gives its own project
-    val active = activeProjectOf(project).takeIf { it.isInitialized } ?: project
+    val active = FrameGuests.activeProjectOf(project)
     sink[CommonDataKeys.PROJECT] = active
     // The tool windows belong to the project of the frame
     sink[PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS] =
@@ -474,7 +473,8 @@ abstract class ProjectFrameHelper internal constructor(
   internal open fun joinFrame(guest: Project) {
     if (isDisposed() || guest.getUserData(GUEST_STATUS_CONNECTION_KEY) != null) return
     val statusBar = statusBar ?: return
-    val connection = guest.messageBus.simpleConnect()
+    // the connection ends with the frame, see [dispose], or when the guest leaves
+    val connection = guest.messageBus.connect(coroutineScope)
     connection.subscribe(StatusBar.Info.TOPIC, statusBar)
     guest.putUserData(GUEST_STATUS_CONNECTION_KEY, connection)
   }
@@ -580,6 +580,7 @@ abstract class ProjectFrameHelper internal constructor(
   }
 
   open fun dispose() {
+    // the cancel also disconnects the status text relay of each frame guest, see [joinFrame]
     coroutineScope.cancel()
     MouseGestureManager.getInstance().remove(this)
     balloonLayout?.let {

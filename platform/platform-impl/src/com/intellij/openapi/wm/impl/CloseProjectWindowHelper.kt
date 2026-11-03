@@ -90,7 +90,7 @@ open class CloseProjectWindowHelper {
   }
 
   /** The open projects that have a frame of their own. A frame guest shows in the frame of another project. */
-  protected open fun getNumberOfOpenedProjects(): Int = openFrameOwners().size
+  protected open fun getNumberOfOpenedProjects(): Int = FrameGuests.openFrameOwners().size
 
   @RequiresEdt
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {

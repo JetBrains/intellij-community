@@ -44,13 +44,13 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.openapi.wm.impl.FrameGuests
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.openapi.wm.impl.IDE_FRAME_EVENT_LOG
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameBounds
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.checkForNonsenseBounds
-import com.intellij.openapi.wm.impl.isFrameGuest
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.EelUnavailableException
@@ -346,7 +346,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       }
 
       for (project in openProjects) {
-        if (isFrameGuest(project)) continue
+        if (FrameGuests.isFrameGuest(project)) continue
         val path = getProjectPath(project)?.invariantSeparatorsPathString ?: continue
         val info = state.additionalInfo.get(path) ?: continue
         info.opened = true
@@ -509,7 +509,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   override fun setActivationTimestamp(project: Project, timestamp: Long) {
     LOG.trace { "setActivationTimestamp: project=$project, timestamp=$timestamp" }
 
-    if (disableUpdatingRecentInfo.get() || isFrameGuest(project)) {
+    if (disableUpdatingRecentInfo.get() || FrameGuests.isFrameGuest(project)) {
       LOG.trace { "setActivationTimestamp: updating recent info is disabled" }
       return
     }
@@ -541,7 +541,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   internal fun projectOpened(project: Project, openTimestamp: Long) {
     LOG.trace { "projectOpened: project=$project, openTimestamp=$openTimestamp" }
 
-    if (disableUpdatingRecentInfo.get() || LightEdit.owns(project) || isFrameGuest(project)) {
+    if (disableUpdatingRecentInfo.get() || LightEdit.owns(project) || FrameGuests.isFrameGuest(project)) {
       LOG.trace { "projectOpened: updating recent info is disabled" }
       return
     }

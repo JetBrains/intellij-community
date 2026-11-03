@@ -37,7 +37,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
-import com.intellij.openapi.wm.impl.FrameGuestsKt;
+import com.intellij.openapi.wm.impl.FrameGuests;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.InternalDecoratorImpl;
@@ -779,7 +779,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     sink.set(PlatformDataKeys.TOOL_WINDOW_ID, window.getId());
     sink.set(PlatformCoreDataKeys.HELP_ID, window.getHelpId());
     // a frame that shows frame guests gives its active project, see WindowManagerEx.getActiveProject
-    sink.set(CommonDataKeys.PROJECT, FrameGuestsKt.activeProjectOf(window.toolWindowManager.getProject()));
+    sink.set(CommonDataKeys.PROJECT, FrameGuests.activeProjectOf(window.toolWindowManager.getProject()));
     sink.set(CloseAction.CloseTarget.KEY, computeCloseTarget(window));
     if (getCurrentLayout() instanceof MorePopupAware o) {
       sink.set(MorePopupAware.KEY_TOOLWINDOW_TITLE, o);

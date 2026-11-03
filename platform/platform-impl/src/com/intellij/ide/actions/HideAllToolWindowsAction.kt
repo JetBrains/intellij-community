@@ -5,16 +5,14 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
-import com.intellij.openapi.wm.impl.frameOwnerOf
+import com.intellij.openapi.wm.impl.getToolWindowManagerForEvent
 import com.intellij.toolWindow.ToolWindowEventSource
 
 internal class HideAllToolWindowsAction : DumbAwareAction() {
   override fun actionPerformed(event: AnActionEvent) {
-    // a frame guest shows no tool window of its own: the action acts on the manager of the frame that shows it
-    val toolWindowManager = ToolWindowManager.getInstance(frameOwnerOf(event.project ?: return)) as? ToolWindowManagerImpl ?: return
+    val toolWindowManager = getToolWindowManagerForEvent(event) as? ToolWindowManagerImpl ?: return
     val idsToHide = getIdsToHide(toolWindowManager)
     if (idsToHide.none()) {
       toolWindowManager.layoutToRestoreLater?.let {
@@ -36,7 +34,7 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
   override fun update(event: AnActionEvent) {
     val presentation = event.presentation
     presentation.isEnabled = false
-    val toolWindowManager = ToolWindowManager.getInstance(frameOwnerOf(event.project ?: return)) as ToolWindowManagerEx
+    val toolWindowManager = getToolWindowManagerForEvent(event) ?: return
     if (getIdsToHide(toolWindowManager).any()) {
       presentation.isEnabled = true
       presentation.putClientProperty(MaximizeEditorInSplitAction.CURRENT_STATE_IS_MAXIMIZED_KEY, false)

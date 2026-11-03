@@ -12,7 +12,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.impl.FrameGuestsKt;
+import com.intellij.openapi.wm.impl.FrameGuests;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,10 +38,9 @@ public final class ToolWindowsGroup extends ActionGroup implements DumbAware, Ac
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    Project project = getEventProject(e);
+    Project project = e == null ? null : FrameGuests.frameOwnerOf(e);
     if (project == null) return EMPTY_ARRAY;
-    // a frame guest shows no tool window of its own: the group lists the tool windows of the frame that shows it
-    List<ActivateToolWindowAction> result = getToolWindowActions(FrameGuestsKt.frameOwnerOf(project), false);
+    List<ActivateToolWindowAction> result = getToolWindowActions(project, false);
     return result.toArray(AnAction.EMPTY_ARRAY);
   }
 

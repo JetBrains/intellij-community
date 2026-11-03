@@ -53,7 +53,7 @@ internal class WindowDressingStartupActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     // a frame guest has no window of its own: the Window menu lists the owner of its frame
-    if (isFrameGuest(project)) return
+    if (FrameGuests.isFrameGuest(project)) return
     getWindowActionGroupAsync().addProject(project)
   }
 }

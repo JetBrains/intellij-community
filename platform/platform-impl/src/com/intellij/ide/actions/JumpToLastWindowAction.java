@@ -6,10 +6,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.FrameGuestsKt;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
+import com.intellij.openapi.wm.impl.ToolWindowManagerLifecycleKt;
 import com.intellij.toolWindow.ToolWindowEventSource;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -18,12 +17,9 @@ import org.jetbrains.annotations.NotNull;
 public final class JumpToLastWindowAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) {
+    if (!(ToolWindowManagerLifecycleKt.getToolWindowManagerForEvent(e) instanceof ToolWindowManagerImpl manager)) {
       return;
     }
-    // a frame guest shows no tool window of its own: the action acts on the manager of the frame that shows it
-    ToolWindowManagerImpl manager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(FrameGuestsKt.frameOwnerOf(project));
     String id = manager.getLastActiveToolWindowId();
     if (id == null || !manager.getToolWindow(id).isAvailable()) {
       return;
@@ -34,13 +30,12 @@ public final class JumpToLastWindowAction extends AnAction implements DumbAware 
   @Override
   public void update(@NotNull AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    Project project = event.getProject();
-    if (project == null) {
+    ToolWindowManagerEx manager = ToolWindowManagerLifecycleKt.getToolWindowManagerForEvent(event);
+    if (manager == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    ToolWindowManager manager = ToolWindowManager.getInstance(FrameGuestsKt.frameOwnerOf(project));
     String id = manager.getLastActiveToolWindowId();
     presentation.setEnabled(id != null && manager.getToolWindow(id).isAvailable());
   }

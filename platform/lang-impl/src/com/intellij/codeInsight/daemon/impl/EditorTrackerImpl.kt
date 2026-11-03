@@ -16,9 +16,9 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.FrameGuests
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.openapi.wm.impl.frameOwnerOf
 import com.intellij.util.application
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Window
@@ -46,7 +46,7 @@ open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorT
       val window = SwingUtilities.windowForComponent(editor.component)
       val frameHelper = ProjectFrameHelper.getFrameHelper(window) ?: return window
       // the frame shows its own project and its frame guests, see WindowManagerEx.getFrameOwner
-      return if (frameOwnerOf(project) === frameHelper.project) window else null
+      return if (FrameGuests.frameOwnerOf(project) === frameHelper.project) window else null
     }
   }
 

@@ -20,7 +20,9 @@ import com.intellij.openapi.wm.RegisterToolWindowTaskData
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -91,6 +93,24 @@ internal class ToolWindowManagerLifecycleTest {
       action.update(event)
       assertThat(event.presentation.isEnabled).isTrue()
       assertThat(action.isSelected(event)).isTrue()
+    }
+  }
+
+  @Test
+  fun `an event without a tool window resolves the manager of the frame owner of its project`(): Unit = timeoutRunBlocking {
+    val manager = createManager()
+    project.replaceService(ToolWindowManager::class.java, manager, disposable)
+    // the record of the test window manager: `otherProject` is a frame guest of `project`
+    val windowManager = WindowManagerEx.getInstanceEx()
+    windowManager.addFrameGuest(project, otherProject)
+    try {
+      val context = DataContext { dataId -> if (CommonDataKeys.PROJECT.`is`(dataId)) otherProject else null }
+      val event = AnActionEvent.createEvent(context, null, ActionPlaces.MAIN_MENU, ActionUiKind.NONE, null)
+
+      assertThat(getToolWindowManagerForEvent(event)).isSameAs(manager)
+    }
+    finally {
+      windowManager.removeFrameGuest(otherProject)
     }
   }
 

@@ -27,6 +27,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ToolWindowType
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.FocusUtil
@@ -144,16 +145,16 @@ private inline fun process(processor: (manager: ToolWindowManagerImpl) -> Unit) 
 }
 
 /**
- * The manager that shows the tool window of [event]: the manager of the `TOOL_WINDOW` in the context, else the manager of
- * the frame owner of the event project. A frame guest shows no tool window of its own, and the title data context of a
- * tool window gives the active project of the frame, so the event project alone can name the wrong manager.
+ * The manager that shows the tool windows of the frame of [event]: the manager of the `TOOL_WINDOW` in the context, else the
+ * manager of the frame owner of the event project. A frame guest shows no tool window of its own, and the title data context
+ * of a tool window gives the active project of the frame, so the event project alone can name the wrong manager.
  * The JVM name lets a Java action of this module call it as `ToolWindowManagerLifecycleKt.getToolWindowManagerForEvent`.
  */
 @JvmName("getToolWindowManagerForEvent")
-internal fun getToolWindowManagerForEvent(event: AnActionEvent): ToolWindowManagerImpl? {
+internal fun getToolWindowManagerForEvent(event: AnActionEvent): ToolWindowManagerEx? {
   (event.getData(PlatformDataKeys.TOOL_WINDOW) as? ToolWindowImpl)?.let { return it.toolWindowManager }
-  val project = event.project?.takeIf { !it.isDisposed } ?: return null
-  return ToolWindowManager.getInstance(frameOwnerOf(project)) as? ToolWindowManagerImpl
+  val project = FrameGuests.frameOwnerOf(event) ?: return null
+  return ToolWindowManager.getInstance(project) as? ToolWindowManagerEx
 }
 
 private class MyListener : AWTEventListener {
@@ -242,13 +243,13 @@ internal class ToolWindowManagerAppLevelHelper(coroutineScope: CoroutineScope) {
 
         if (ExperimentalUI.isNewUI()) {
           if (event.place == ActionPlaces.TOOLWINDOW_TITLE) {
-            val toolWindowManager = getToolWindowManagerForEvent(event) ?: return
+            val toolWindowManager = getToolWindowManagerForEvent(event) as? ToolWindowManagerImpl ?: return
             val toolWindowId = event.dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.id ?: return
             toolWindowManager.activateToolWindow(toolWindowId, null, true)
           }
 
           if (ActionPlaces.isToolWindowPopupPlace(event.place)) {
-            val toolWindowManager = getToolWindowManagerForEvent(event) ?: return
+            val toolWindowManager = getToolWindowManagerForEvent(event) as? ToolWindowManagerImpl ?: return
             val activeEntry = toolWindowManager.idToEntry.get(toolWindowManager.lastActiveToolWindowId ?: return) ?: return
             (activeEntry.toolWindow.decorator ?: return).headerToolbar.component.isVisible = true
           }
