@@ -287,7 +287,6 @@ private class ReasonHtmlBuilder(
       .appendRaw(DevKitBundle.message(
         "inlay.split.mode.reason.popup.evidence",
         HtmlChunk.text(getPresentableModuleKind(evidence.kind)).bold().toString(),
-        code(evidence.dependency.name).toString(),
       ))
       .toFragment()
     return HtmlBuilder().append(title).append(chain(buildChainRows(evidence))).toFragment()
@@ -315,7 +314,11 @@ private class ReasonHtmlBuilder(
               .toFragment()))
           }
           else {
-            rows.add(ChainRow.Edge(edgeLabel("inlay.split.mode.reason.popup.edge.depends.on", code(step.dependencyName))))
+            // The next node shows the name already when its descriptor is named after the dependency.
+            val nextStep = steps.getOrNull(index + 1)
+            val isNamedByNextNode = nextStep is DependencyTraceStep.Descriptor && nextStep.descriptorName == "${step.dependencyName}.xml"
+            val dependencyName = if (isNamedByNextNode) HtmlChunk.empty() else code(step.dependencyName)
+            rows.add(ChainRow.Edge(edgeLabel("inlay.split.mode.reason.popup.edge.depends.on", dependencyName)))
           }
         }
         is DependencyTraceStep.ContentModule -> rows.add(ChainRow.Edge(edgeLabel("inlay.split.mode.reason.popup.edge.content.module",
@@ -373,8 +376,13 @@ private class ReasonHtmlBuilder(
       return HtmlChunk.text(descriptorName)
     }
     links.add(DescriptorLink(descriptorName, moduleName))
+    val link = HtmlChunk.link("$DESCRIPTOR_LINK_PREFIX${links.lastIndex}", descriptorName)
+    // The module shows only when the file name does not give it, for example for `plugin.xml`.
+    if (descriptorName == "$moduleName.xml") {
+      return link
+    }
     return HtmlBuilder()
-      .append(HtmlChunk.link("$DESCRIPTOR_LINK_PREFIX${links.lastIndex}", descriptorName))
+      .append(link)
       .append(" ")
       .append(secondary(DevKitBundle.message("inlay.split.mode.reason.popup.module", moduleName)))
       .toFragment()

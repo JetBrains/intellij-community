@@ -214,10 +214,10 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     val reasonHtml = computeReasonHtml()
     assertEquals(
       "Backend plugin Can be installed into: backend IDE " +
-      "Backend dependency intellij.platform.backend: " +
+      "Backend dependency: " +
       "plugin.xml module root.plugin " +
-      "\u2193 depends on dependency.module " +
-      "dependency.module.xml module dependency.module " +
+      "\u2193 depends on " +
+      "dependency.module.xml " +
       "\u2193 depends on " +
       "intellij.platform.backend",
       toPlainText(reasonHtml.html),
@@ -255,8 +255,8 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
 
     assertEquals(
       "LiteFrontend content module Can be installed into: lite frontend IDE " +
-      "Frontend dependency intellij.platform.frontend: " +
-      "test.module.xml module test.module " +
+      "Frontend dependency: " +
+      "test.module.xml " +
       "\u2193 depends on " +
       "intellij.platform.frontend " +
       "No dependency on intellij.platform.rpc was found. The module can be installed only into a lite frontend.",
@@ -297,8 +297,8 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     val reasonHtml = computeReasonHtml()
     assertEquals(
       "LiteFrontend content module Can be installed into: lite frontend IDE " +
-      "Frontend dependency intellij.platform.frontend: " +
-      "test.module.xml module test.module " +
+      "Frontend dependency: " +
+      "test.module.xml " +
       "\u2193 depends on " +
       "intellij.platform.frontend predefined " +
       "No dependency on intellij.platform.rpc was found. The module can be installed only into a lite frontend.",
