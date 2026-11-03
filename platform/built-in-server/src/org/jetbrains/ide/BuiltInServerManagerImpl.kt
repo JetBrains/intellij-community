@@ -27,6 +27,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 import org.jetbrains.builtInWebServer.TOKEN_HEADER_NAME
@@ -46,7 +47,8 @@ private const val PROPERTY_DISABLED = "idea.builtin.server.disabled"
 
 private val LOG = logger<BuiltInServerManager>()
 
-internal class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : BuiltInServerManager() {
+@ApiStatus.Internal
+class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : BuiltInServerManager() {
   private var serverStartFuture: Job? = null
   private var server: BuiltInServer? = null
   private var portOverride: Int? = null
