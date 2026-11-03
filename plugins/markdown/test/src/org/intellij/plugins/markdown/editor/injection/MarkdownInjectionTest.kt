@@ -256,6 +256,21 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
     assertEquals("class C {\n    void test() {}\n}", decoded.toString())
   }
 
+  fun `test fence with one extra space in list strips indentation`() {
+    val text = "1. item\n\n    ```java\n    class C {}\n    ```"
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))
+    assertNotNull(injectedElement)
+    assertEquals("class C {}", injectedElement!!.containingFile.text)
+
+    val escaper = codeFence.createLiteralTextEscaper()
+    val decoded = StringBuilder()
+    assertTrue(escaper.decode(escaper.relevantTextRange, decoded))
+    assertEquals("class C {}", decoded.toString())
+  }
+
   fun `test indented fence in nested containers`() {
     val text = """
       > - item
