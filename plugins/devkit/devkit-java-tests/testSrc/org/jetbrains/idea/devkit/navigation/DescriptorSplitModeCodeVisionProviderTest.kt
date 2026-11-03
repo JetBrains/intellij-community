@@ -1,0 +1,252 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.devkit.navigation
+
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightProjectFixture
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.utils.codeVision.CodeVisionTestUtil
+import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.devkit.module.PluginModuleType
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+
+@TestApplication
+internal class DescriptorSplitModeCodeVisionProviderTest {
+  private val projectFixture = codeInsightProjectFixture()
+  private val myFixture by codeInsightFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
+    CodeVisionTestUtil.setUp(myFixture)
+  }
+
+  @Test
+  fun testFrontendContentModule() {
+    createDeclaringModule()
+
+    testCodeVision(
+      "test.module", "test.module.xml", """
+      <idea-plugin>/*<# [Frontend content module] #>*/
+        <dependencies>
+          <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent(),
+      expectedTooltip = expectedTooltip(
+        descriptorKind = "content module",
+        compatibilityTarget = "frontend IDE",
+        reason = "Frontend dependency 'intellij.platform.frontend' from descriptor 'test.module.xml' in module 'test.module'",
+      ),
+    )
+  }
+
+  @Test
+  fun testLiteFrontendContentModule() {
+    createDeclaringModule()
+
+    testCodeVision(
+      "test.module", "test.module.xml", """
+      <idea-plugin>/*<# [LiteFrontend content module] #>*/
+        <dependencies>
+          <module name="intellij.platform.frontend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent(),
+      expectedTooltip = expectedTooltip(
+        descriptorKind = "content module",
+        compatibilityTarget = "lite frontend IDE",
+        reason = """
+          Frontend dependency 'intellij.platform.frontend' from descriptor 'test.module.xml' in module 'test.module'
+          No dependency on 'intellij.platform.rpc' was found
+        """.trimIndent(),
+      ),
+    )
+  }
+
+  @Test
+  fun testSharedContentModule() {
+    createDeclaringModule()
+
+    testCodeVision(
+      "test.module", "test.module.xml", """
+      <idea-plugin>/*<# [Shared content module] #>*/
+        <!-- any -->
+      </idea-plugin>
+      """.trimIndent(),
+      expectedTooltip = expectedTooltip(
+        descriptorKind = "content module",
+        compatibilityTarget = "both frontend and backend IDE",
+        reason = "No frontend or backend dependencies were found for descriptor 'test.module.xml' in module 'test.module'",
+      ),
+    )
+  }
+
+  @Test
+  fun testBackendPlugin() {
+    testCodeVision(
+      "root.plugin", "plugin.xml", """
+      <idea-plugin>/*<# [Backend plugin] #>*/
+        <dependencies>
+          <module name="intellij.platform.backend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent(),
+      expectedTooltip = expectedTooltip(
+        descriptorKind = "plugin",
+        compatibilityTarget = "backend IDE",
+        reason = "Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in module 'root.plugin'",
+      ),
+    )
+  }
+
+  @Test
+  fun testMixedContentModuleUsesMonolithPresentation() {
+    createDeclaringModule()
+
+    testCodeVision(
+      "test.module", "test.module.xml", """
+      <idea-plugin>/*<# [Monolith content module] #>*/
+        <dependencies>
+          <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.backend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent(),
+      expectedTooltip = expectedTooltip(
+        descriptorKind = "content module",
+        compatibilityTarget = "monolith IDE",
+        reason = """
+          Frontend dependency 'intellij.platform.frontend' from descriptor 'test.module.xml' in module 'test.module'
+
+          Backend dependency 'intellij.platform.backend' from descriptor 'test.module.xml' in module 'test.module'
+        """.trimIndent(),
+      ),
+    )
+  }
+
+  @Test
+  fun testMonolithPlugin() {
+    testCodeVision(
+      "root.plugin", "plugin.xml", """
+      <idea-plugin>/*<# [Monolith plugin] #>*/
+        <dependencies>
+          <module name="intellij.platform.monolith"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent(),
+      expectedTooltip = expectedTooltip(
+        descriptorKind = "plugin",
+        compatibilityTarget = "monolith IDE",
+        reason = "Monolith dependency 'intellij.platform.monolith' from descriptor 'plugin.xml' in module 'root.plugin'",
+      ),
+    )
+  }
+
+  @Test
+  fun testNonPluginXmlDescriptor() {
+    testCodeVision(
+      "root.plugin", "root.plugin.optional.xml", """
+      <idea-plugin>/*<# [Backend XML descriptor] #>*/
+        <dependencies>
+          <module name="intellij.platform.backend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent(),
+      expectedTooltip = expectedTooltip(
+        descriptorKind = "XML descriptor",
+        compatibilityTarget = "backend IDE",
+        reason = "Backend dependency 'intellij.platform.backend' from descriptor 'root.plugin.optional.xml' in module 'root.plugin'",
+      ),
+    )
+  }
+
+  @Test
+  fun testSplitModeKindGoesBeforeIncludingDescriptors() {
+    createDeclaringModule()
+
+    testCodeVision(
+      "test.module", "test.module.xml", """
+      <idea-plugin>/*<# [Shared content module   Included in 1 descriptor] #>*/
+        <!-- any -->
+      </idea-plugin>
+      """.trimIndent(),
+      enabledProviderGroupIds = listOf(DescriptorSplitModeCodeVisionProvider.ID, DescriptorsIncludingContentModuleCodeVisionProvider.ID),
+    )
+  }
+
+  @Test
+  fun testPreview() {
+    val previewPath = "codeVisionProviders/${DescriptorSplitModeCodeVisionProvider.ID}/preview.xml"
+    val previewText = DescriptorSplitModeCodeVisionProvider::class.java.classLoader.getResource(previewPath)!!.readText()
+    myFixture.configureByText("preview.xml", previewText)
+
+    val provider = DescriptorSplitModeCodeVisionProvider()
+    provider.preparePreview(myFixture.editor, myFixture.file)
+    val (range, entry) = runReadActionBlocking { provider.computeForEditor(myFixture.editor, myFixture.file) }.single()
+
+    assertEquals(0, range.startOffset)
+    assertEquals("Backend plugin", (entry as TextCodeVisionEntry).text)
+  }
+
+  private fun testCodeVision(
+    moduleName: String,
+    descriptorName: String,
+    @Language("XML") expectedText: String,
+    expectedTooltip: String? = null,
+    enabledProviderGroupIds: List<String> = listOf(DescriptorSplitModeCodeVisionProvider.ID),
+  ) {
+    CodeVisionTestUtil.testProviders(
+      myFixture,
+      expectedText,
+      { sourceText ->
+        createModuleWithModuleDescriptor(moduleName, descriptorName, sourceText)
+        myFixture.configureFromTempProjectFile("$moduleName/$descriptorName")
+      },
+      false,
+      *enabledProviderGroupIds.toTypedArray(),
+    )
+    if (expectedTooltip != null) {
+      assertEquals(expectedTooltip, runReadActionBlocking { computeCodeVisionEntry() }.tooltip)
+    }
+  }
+
+  private fun computeCodeVisionEntry(): CodeVisionEntry {
+    return DescriptorSplitModeCodeVisionProvider().computeForEditor(myFixture.editor, myFixture.file).single().second
+  }
+
+  private fun expectedTooltip(descriptorKind: String, compatibilityTarget: String, reason: String): String {
+    val normalizedReason = reason.lineSequence().map(String::trim).filter(String::isNotEmpty).joinToString(" ")
+    return "Split mode compatibility: $descriptorKind can be installed into $compatibilityTarget. Reason: $normalizedReason"
+  }
+
+  private fun createDeclaringModule() {
+    createModuleWithModuleDescriptor("declaring.module", "declaring.module.xml", """
+      <idea-plugin>
+        <content>
+          <module name="test.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+  }
+
+  private fun createModuleWithModuleDescriptor(
+    moduleName: String,
+    moduleDescriptorName: String,
+    @Language("XML") moduleDescriptorText: String,
+  ) {
+    PsiTestUtil.addModule(
+      myFixture.project,
+      PluginModuleType.getInstance(),
+      moduleName,
+      myFixture.tempDirFixture.findOrCreateDir(moduleName)
+    )
+    myFixture.addFileToProject("$moduleName/$moduleDescriptorName", moduleDescriptorText)
+  }
+}

@@ -1,65 +1,83 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation
 
-import com.intellij.codeInsight.hints.declarative.HintFormat
-import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
-import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
-import com.intellij.codeInsight.hints.declarative.InlayTreeSink
-import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
-import com.intellij.codeInsight.hints.declarative.OwnBypassCollector
+import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
+import com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider
+import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
+import com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlFile
-import com.intellij.psi.xml.XmlToken
-import com.intellij.psi.xml.XmlTokenType
-import com.intellij.util.xml.DomUtil
-import com.intellij.xml.util.XmlUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.findDependingContentModuleEntriesInFile
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService.ModuleKind
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.recognizeSplitModeModuleKind
 import org.jetbrains.idea.devkit.module.PluginModuleType
+import org.jetbrains.idea.devkit.util.DescriptorUtil
 
-internal class DescriptorSplitModeInlayHintsProvider : InlayHintsProvider {
+private val PREVIEW_MODULE_KIND_KEY: Key<ModuleKind> = Key.create("preview.${DescriptorSplitModeCodeVisionProvider.ID}.kind")
 
-  override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector? {
-    if (!isDescriptorSplitModeInlayEnabled()) return null
-    val xmlFile = file as? XmlFile ?: return null
-    if (findIdeaPluginRootTagNameToken(xmlFile) == null) return null
-    return DescriptorSplitModeInlayHintsCollector()
+/**
+ * Shows the split-mode kind of a plugin descriptor above its root tag.
+ */
+internal class DescriptorSplitModeCodeVisionProvider : DaemonBoundCodeVisionProvider {
+  companion object {
+    const val ID: String = "devkit.plugin.descriptor.split.mode.kind"
   }
 
-  private class DescriptorSplitModeInlayHintsCollector : OwnBypassCollector {
-    override fun collectHintsForFile(file: PsiFile, sink: InlayTreeSink) {
-      val xmlFile = file as? XmlFile ?: return
-      val tagNameToken = findIdeaPluginRootTagNameToken(xmlFile) ?: return
-      val inlayInfo = getDescriptorSplitModeInlayInfo(xmlFile) ?: return
+  override val id: String get() = ID
+  override val name: String get() = DevKitBundle.message("inlay.split.mode.module.kind.name")
+  override val relativeOrderings: List<CodeVisionRelativeOrdering>
+    get() = listOf(CodeVisionRelativeOrdering.CodeVisionRelativeOrderingBefore(DescriptorsIncludingContentModuleCodeVisionProvider.ID))
+  override val defaultAnchor: CodeVisionAnchorKind get() = CodeVisionAnchorKind.Default
 
-      sink.addPresentation(
-        InlineInlayPosition(tagNameToken.textRange.endOffset, true),
-        tooltip = inlayInfo.tooltip,
-        hintFormat = HintFormat.default,
-      ) {
-        text(inlayInfo.text)
-      }
-    }
+  /**
+   * The settings preview file is not in a module, so the preview shows a fixed split-mode kind.
+   */
+  override fun preparePreview(editor: Editor, file: PsiFile) {
+    editor.putUserData(PREVIEW_MODULE_KIND_KEY, ModuleKind.BACKEND)
+  }
 
-    override fun shouldSuggestToggling(project: Project, editor: Editor, file: PsiFile): Boolean {
-      return isDescriptorSplitModeInlayEnabled() && file is XmlFile && findIdeaPluginRootTagNameToken(file) != null
-    }
+  override fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
+    val previewModuleKind = editor.getUserData(PREVIEW_MODULE_KIND_KEY)
+    if (previewModuleKind != null) return computePreview(file, previewModuleKind)
+
+    if (!DescriptorUtil.isPluginXml(file)) return emptyList()
+    val xmlFile = file as XmlFile
+    val rootTag = DescriptorUtil.getIdeaPlugin(xmlFile)?.xmlTag ?: return emptyList()
+    val (text, tooltip) = getDescriptorSplitModeInlayInfo(xmlFile) ?: return emptyList()
+    val entry = TextCodeVisionEntry(text = text, providerId = id, tooltip = tooltip)
+    return listOf(rootTag.textRange to entry)
+  }
+
+  private fun computePreview(file: PsiFile, moduleKind: ModuleKind): List<Pair<TextRange, CodeVisionEntry>> {
+    val rootTag = (file as? XmlFile)?.rootTag ?: return emptyList()
+    val text = DevKitBundle.message(
+      "inlay.split.mode.module.kind.presentation",
+      getPresentableModuleKind(moduleKind),
+      DevKitBundle.message("inlay.split.mode.module.kind.plugin"),
+    )
+    return listOf(rootTag.textRange to TextCodeVisionEntry(text = text, providerId = id))
   }
 }
 
+internal class DescriptorSplitModeCodeVisionGroupSettingProvider : CodeVisionGroupSettingProvider {
+  override val groupId: String get() = DescriptorSplitModeCodeVisionProvider.ID
+  override val groupName: String get() = DevKitBundle.message("inlay.split.mode.module.kind.name")
+  override val description: String get() = DevKitBundle.message("inlay.split.mode.module.kind.description")
+}
+
 internal data class DescriptorSplitModeInlayInfo(
-  val text: String,
-  val tooltip: String,
+  val text: @Nls String,
+  val tooltip: @NlsContexts.Tooltip String,
 )
 
 internal fun getDescriptorSplitModeInlayInfo(xmlFile: XmlFile): DescriptorSplitModeInlayInfo? {
@@ -83,10 +101,6 @@ internal fun getDescriptorSplitModeInlayInfo(xmlFile: XmlFile): DescriptorSplitM
 
 private fun normalizeTooltipReasoning(reasoning: String): String {
   return reasoning.lineSequence().map(String::trim).filter(String::isNotEmpty).joinToString(" ")
-}
-
-private fun isDescriptorSplitModeInlayEnabled(): Boolean {
-  return Registry.`is`("devkit.split.mode.inlay.plugin.descriptor.kind")
 }
 
 private fun getPresentableModuleKind(kind: ModuleKind): String {
@@ -144,19 +158,4 @@ private fun computePossibleContentModuleDescriptorNames(moduleName: String): Lis
     "${moduleName.replace(".main", "")}.xml",
     "${moduleName.replace("_", ".").replace(".main", "")}.xml",
   )
-}
-
-private fun findIdeaPluginRootTagNameToken(xmlFile: XmlFile): XmlToken? {
-  val rootTag = xmlFile.rootTag ?: return null
-  val tagNameToken = XmlUtil.getTokenOfType(rootTag, XmlTokenType.XML_NAME) ?: return null
-  return tagNameToken.takeIf(::isIdeaPluginElementNameLeaf)
-}
-
-private fun isIdeaPluginElementNameLeaf(leaf: PsiElement): Boolean {
-  if (leaf !is XmlToken) return false
-  if (leaf.getNode().elementType != XmlTokenType.XML_NAME) return false
-  val prev = PsiTreeUtil.getPrevSiblingOfType(leaf, XmlToken::class.java)
-  if (prev == null || prev.node.elementType !== XmlTokenType.XML_START_TAG_START) return false
-  if (!leaf.textMatches("idea-plugin")) return false
-  return DomUtil.getDomElement(leaf) is IdeaPlugin
 }

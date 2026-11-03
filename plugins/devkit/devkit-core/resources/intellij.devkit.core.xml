@@ -223,8 +223,6 @@
                  description="Enables reporting errors about modules that effectively work only on frontend or backend, but do not explicitly state that fact via platform dependency"/>
     <registryKey key="devkit.split.mode.custom.icons" defaultValue="false"
                  description="Enables deferred accurate split-mode icon resolution for DevKit descriptor and directory icons."/>
-    <registryKey key="devkit.split.mode.inlay.plugin.descriptor.kind" defaultValue="true"
-                 description="Shows inline split-mode compatibility hints for DevKit plugin descriptors."/>
     <registryKey key="devkit.split.mode.run.jps.to.bazel.in.quick.fix" defaultValue="false"
                  description="Automatically run JPS to Bazel conversion after applying a fix that touches runtime/compile dependencies"/>
 
@@ -942,15 +940,11 @@
                                     implementationClass="org.jetbrains.idea.devkit.navigation.PluginDescriptorDeclarationRelatedItemLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML"
                                     implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
-    <codeInsight.declarativeInlayProvider
-      providerId="devkit.plugin.descriptor.split.mode.kind"
-      bundle="messages.DevKitBundle"
-      nameKey="inlay.split.mode.module.kind.name"
-      descriptionKey="inlay.split.mode.module.kind.description"
-      group="OTHER_GROUP"
-      implementationClass="org.jetbrains.idea.devkit.navigation.DescriptorSplitModeInlayHintsProvider"
-      isEnabledByDefault="true"
-      language="XML"/>
+    <codeInsight.daemonBoundCodeVisionProvider
+      implementation="org.jetbrains.idea.devkit.navigation.DescriptorSplitModeCodeVisionProvider"/>
+    <config.codeVisionGroupSettingProvider
+      implementation="org.jetbrains.idea.devkit.navigation.DescriptorSplitModeCodeVisionGroupSettingProvider"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="devkit.plugin.descriptor.split.mode.kind" language="XML"/>
     <codeInsight.daemonBoundCodeVisionProvider
       implementation="org.jetbrains.idea.devkit.navigation.DescriptorsIncludingContentModuleCodeVisionProvider"/>
     <config.codeVisionGroupSettingProvider
