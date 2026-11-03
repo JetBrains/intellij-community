@@ -19,6 +19,7 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Timeout;
 import org.openjdk.jmh.annotations.Warmup;
@@ -29,11 +30,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * Compares legacy markers and snapshot markers through the document API.
  * Snapshot markers use {@link PMarkerDirectRoot}.
- * Measures the same fixed-size workloads as {@link SnapshotMarkerEngineBenchmark}.
+ * Measures the same workloads as {@link SnapshotMarkerEngineBenchmark} and edits with large marker populations.
  *
- * <p>Every benchmark invocation performs exactly the number of operations stated in its method name. Because the
- * class uses {@link Mode#SingleShotTime} and does not use {@code OperationsPerInvocation}, JMH reports the total time
- * for the complete batch in milliseconds.</p>
+ * <p>Each edit invocation changes the document once. Other invocations perform the operation count stated in their names.
+ * This class uses {@link Mode#SingleShotTime} without {@code OperationsPerInvocation}.
+ * JMH reports the total time for the complete batch in milliseconds.</p>
  *
  * <p>The native {@link RangeMarker} API does not expose a single operation that resolves both offsets. Therefore,
  * {@link #resolve4MMarkers(ResolveState)} calls both {@link RangeMarker#getStartOffset()} and
@@ -55,6 +56,30 @@ import java.util.concurrent.TimeUnit;
 @Threads(1)
 @Timeout(time = 10, timeUnit = TimeUnit.MINUTES)
 public class DocumentRangeMarkerBenchmark {
+  /** Replaces or deletes three quarters of a document, invalidating the markers in that range. */
+  @Benchmark
+  public DocumentEx invalidateManyMarkers(BulkEditState state) {
+    RangeMarkersImpl.usePMarkerImplementationIn(state.usesSnapshotMarkers(), () -> {
+      state.document.replaceString(state.editStart, state.editEnd, state.replacement);
+    });
+    return state.document;
+  }
+
+  /** Measures a small edit among many markers that overlap the edit. */
+  @Benchmark
+  public DocumentEx editOverlappingMarkers(SmallEditState state) {
+    RangeMarkersImpl.usePMarkerImplementationIn(state.usesSnapshotMarkers(), () -> {
+      switch (state.edit) {
+        case "type" -> state.document.insertString(SmallEditState.EDIT_OFFSET, "y");
+        case "backspace" -> state.document.deleteString(SmallEditState.EDIT_OFFSET - 1, SmallEditState.EDIT_OFFSET);
+        case "replaceSelection" -> state.document.replaceString(SmallEditState.EDIT_OFFSET - 1, SmallEditState.EDIT_OFFSET, "y");
+        case "move" -> state.document.moveText(SmallEditState.EDIT_OFFSET - 1, SmallEditState.EDIT_OFFSET, SmallEditState.MOVE_TARGET);
+        default -> throw new IllegalArgumentException("Unknown edit: " + state.edit);
+      }
+    });
+    return state.document;
+  }
+
   /**
    * Creates a fresh document outside the timed region, then measures creation of 50,000 range markers.
    *
@@ -202,6 +227,146 @@ public class DocumentRangeMarkerBenchmark {
   }
 
   @State(Scope.Thread)
+  public static class BulkEditState extends ImplementationState {
+    @Param({"20000", "40000", "80000"})
+    public int markerCount = 80_000;
+
+    @Param({"replaceMost", "trimPrefix"})
+    public String edit = "replaceMost";
+
+    DocumentEx document;
+    RangeMarker[] markers;
+    int editStart;
+    int editEnd;
+    String replacement;
+
+    /** Creates a fresh document and retains all markers outside the timed section. */
+    @Setup(Level.Invocation)
+    public void setUp() {
+      RangeMarkersImpl.usePMarkerImplementationIn(usesSnapshotMarkers(), () -> {
+        document = new DocumentImpl(BULK_EDIT_TEXT, true);
+        markers = new RangeMarker[markerCount];
+        for (var index = 0; index < markerCount; index++) {
+          var start = (int)((long)index * BULK_EDIT_TEXT.length() / markerCount);
+          markers[index] = document.createRangeMarker(start, start + MARKER_LENGTH);
+        }
+        switch (edit) {
+          case "replaceMost" -> {
+            editStart = BULK_EDIT_TEXT.length() / 4;
+            editEnd = BULK_EDIT_TEXT.length();
+            replacement = "y";
+          }
+          case "trimPrefix" -> {
+            editStart = 0;
+            editEnd = BULK_EDIT_TEXT.length() * 3 / 4;
+            replacement = "";
+          }
+          default -> throw new IllegalArgumentException("Unknown edit: " + edit);
+        }
+      });
+    }
+
+    /** Checks invalidation, survivor offsets, and overlap queries outside the timed section. */
+    @TearDown(Level.Invocation)
+    public void verify() {
+      RangeMarkersImpl.usePMarkerImplementationIn(usesSnapshotMarkers(), () -> {
+        var delta = replacement.length() - (editEnd - editStart);
+        if (document.getTextLength() != BULK_EDIT_TEXT.length() + delta) {
+          throw new IllegalStateException("The edit produced an unexpected document length");
+        }
+        for (var index = 0; index < markerCount; index++) {
+          var start = (int)((long)index * BULK_EDIT_TEXT.length() / markerCount);
+          var valid = start < editStart || start >= editEnd;
+          var marker = markers[index];
+          if (marker.isValid() != valid) {
+            throw new IllegalStateException("Unexpected validity for marker " + index);
+          }
+          if (valid) {
+            var expectedStart = start < editStart ? start : start + delta;
+            if (marker.getStartOffset() != expectedStart || marker.getEndOffset() != expectedStart + MARKER_LENGTH) {
+              throw new IllegalStateException("Unexpected offsets for marker " + index);
+            }
+          }
+        }
+        var accumulator = new RangeMarkerAccumulator();
+        if (!document.processRangeMarkersOverlappingWith(0, document.getTextLength(), accumulator) ||
+            accumulator.getCount() != markerCount / 4) {
+          throw new IllegalStateException("The overlap query returned an unexpected number of surviving markers");
+        }
+      });
+    }
+  }
+
+  @State(Scope.Thread)
+  public static class SmallEditState extends ImplementationState {
+    private static final int MARKER_COUNT = 80_000;
+    private static final int MARKER_STRIDE = BULK_EDIT_TEXT.length() / MARKER_COUNT;
+    private static final int EDIT_OFFSET = BULK_EDIT_TEXT.length() / 2 + MARKER_LENGTH + 2;
+    private static final int MOVE_TARGET = EDIT_OFFSET + 3 * MARKER_STRIDE;
+
+    @Param({"200", "400", "800"})
+    public int overlappingMarkerCount = 400;
+
+    @Param({"type", "backspace", "replaceSelection", "move"})
+    public String edit = "type";
+
+    DocumentEx document;
+    RangeMarker[] markers;
+
+    /** Creates distinct long markers across the edit among short markers throughout the document. */
+    @Setup(Level.Invocation)
+    public void setUp() {
+      RangeMarkersImpl.usePMarkerImplementationIn(usesSnapshotMarkers(), () -> {
+        document = new DocumentImpl(BULK_EDIT_TEXT, true);
+        markers = new RangeMarker[MARKER_COUNT];
+        for (var index = 0; index < MARKER_COUNT; index++) {
+          var start = index * MARKER_STRIDE;
+          var end = index < overlappingMarkerCount ? MOVE_TARGET + MARKER_STRIDE + index : start + MARKER_LENGTH;
+          markers[index] = document.createRangeMarker(start, end);
+        }
+      });
+    }
+
+    /** Checks all offsets and the overlap query outside the timed section. */
+    @TearDown(Level.Invocation)
+    public void verify() {
+      RangeMarkersImpl.usePMarkerImplementationIn(usesSnapshotMarkers(), () -> {
+        var delta = switch (edit) {
+          case "type" -> 1;
+          case "backspace" -> -1;
+          case "replaceSelection", "move" -> 0;
+          default -> throw new IllegalArgumentException("Unknown edit: " + edit);
+        };
+        if (document.getTextLength() != BULK_EDIT_TEXT.length() + delta) {
+          throw new IllegalStateException("The edit produced an unexpected document length");
+        }
+        for (var index = 0; index < MARKER_COUNT; index++) {
+          var start = index * MARKER_STRIDE;
+          int end;
+          if (index < overlappingMarkerCount) {
+            end = MOVE_TARGET + MARKER_STRIDE + index + delta;
+          }
+          else {
+            if (start > EDIT_OFFSET && (!"move".equals(edit) || start < MOVE_TARGET)) {
+              start += "move".equals(edit) ? -1 : delta;
+            }
+            end = start + MARKER_LENGTH;
+          }
+          var marker = markers[index];
+          if (!marker.isValid() || marker.getStartOffset() != start || marker.getEndOffset() != end) {
+            throw new IllegalStateException("Unexpected range for marker " + index);
+          }
+        }
+        var accumulator = new RangeMarkerAccumulator();
+        if (!document.processRangeMarkersOverlappingWith(0, document.getTextLength(), accumulator) ||
+            accumulator.getCount() != MARKER_COUNT) {
+          throw new IllegalStateException("The overlap query returned an unexpected number of markers");
+        }
+      });
+    }
+  }
+
+  @State(Scope.Thread)
   public static class ResolveState extends ImplementationState {
     Document document;
     RangeMarker[] markers;
@@ -325,6 +490,7 @@ public class DocumentRangeMarkerBenchmark {
   private static final int DOCUMENT_LENGTH = MARKER_COUNT * MARKER_STRIDE + MARKER_LENGTH;
 
   private static final String BENCHMARK_TEXT = createBenchmarkText();
+  private static final String BULK_EDIT_TEXT = "0123456789\n".repeat(80_000);
 
   /**
    * Runs this benchmark class through JMH. Command-line arguments are forwarded directly to the JMH runner. When no
