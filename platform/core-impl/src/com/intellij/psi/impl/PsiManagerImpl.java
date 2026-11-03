@@ -268,7 +268,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   @Override
   public void beforeChildAddition(@NotNull PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_ADDITION);
     if (LOG.isDebugEnabled()) {
       LOG.debug("beforeChildAddition: event = " + event);
@@ -278,7 +277,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   @Override
   public void beforeChildRemoval(@NotNull PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REMOVAL);
     if (LOG.isDebugEnabled()) {
       LOG.debug("beforeChildRemoval: child = " + logPsi(event.getChild()) + ", parent = " + logPsi(event.getParent()));
@@ -288,7 +286,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   @Override
   public void beforeChildReplacement(@NotNull PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_REPLACEMENT);
     if (LOG.isDebugEnabled()) {
       LOG.debug("beforeChildReplacement: oldChild = " + logPsi(event.getOldChild()));
@@ -298,7 +295,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   @Override
   public void beforeChildrenChange(@NotNull PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILDREN_CHANGE);
     if (LOG.isDebugEnabled()) {
       LOG.debug("beforeChildrenChange: parent = " + logPsi(event.getParent()));
@@ -308,7 +304,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   @Override
   public void beforeChildMovement(@NotNull PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_CHILD_MOVEMENT);
     if (LOG.isDebugEnabled()) {
       LOG.debug("beforeChildMovement: child = " + logPsi(event.getChild()) + ", oldParent = " + logPsi(event.getOldParent()) + ", newParent = " + logPsi(event.getNewParent()));
@@ -318,7 +313,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   @Override
   public void beforePropertyChange(@NotNull PsiTreeChangeEventImpl event) {
-    beforeChange(true);
     event.setCode(PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE);
     if (LOG.isDebugEnabled()) {
       LOG.debug("beforePropertyChange: element = " + logPsi(event.getElement()) + ", propertyName = " + event.getPropertyName() + ", oldValue = " +
@@ -338,7 +332,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       LOG.debug("childAdded: child = " + logPsi(event.getChild()) + ", parent = " + logPsi(event.getParent()));
     }
     fireEvent(event);
-    afterChange(true);
   }
 
   @Override
@@ -348,7 +341,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       LOG.debug("childRemoved: child = " + logPsi(event.getChild()) + ", parent = " + logPsi(event.getParent()));
     }
     fireEvent(event);
-    afterChange(true);
   }
 
   @Override
@@ -358,7 +350,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       LOG.debug("childReplaced: oldChild = " + logPsi(event.getOldChild()) + ", newChild = " + logPsi(event.getNewChild()) + ", parent = " + logPsi(event.getParent()));
     }
     fireEvent(event);
-    afterChange(true);
   }
 
   @Override
@@ -368,7 +359,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       LOG.debug("childMoved: child = " + logPsi(event.getChild()) + ", oldParent = " + logPsi(event.getOldParent()) + ", newParent = " + logPsi(event.getNewParent()));
     }
     fireEvent(event);
-    afterChange(true);
   }
 
   @Override
@@ -378,7 +368,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       LOG.debug("childrenChanged: parent = " + logPsi(event.getParent()));
     }
     fireEvent(event);
-    afterChange(true);
   }
 
   @Override
@@ -393,7 +382,6 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       );
     }
     fireEvent(event);
-    afterChange(true);
   }
 
   @ApiStatus.Internal
@@ -423,10 +411,28 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     Disposer.register(parentDisposable, () -> myTreeChangePreprocessorsBackgroundable.remove(preprocessor));
   }
 
+  private static boolean isBeforeEvent(@NotNull PsiTreeChangeEventImpl.PsiEventType code) {
+    switch (code) {
+      case BEFORE_CHILD_ADDITION:
+      case BEFORE_CHILD_REMOVAL:
+      case BEFORE_CHILD_REPLACEMENT:
+      case BEFORE_CHILD_MOVEMENT:
+      case BEFORE_CHILDREN_CHANGE:
+      case BEFORE_PROPERTY_CHANGE:
+        return true;
+      default:
+        return false;
+    }
+  }
+
   private void fireEvent(@NotNull PsiTreeChangeEventImpl event) {
     boolean isRealTreeChange = event.getCode() != PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED
                                && event.getCode() != PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE;
+    boolean isBeforeEvent = isBeforeEvent(event.getCode());
 
+    if (isBeforeEvent) {
+      beforeChange(true);
+    }
     PsiFile file = event.getFile();
     if (file == null || PomModelImpl.shouldFirePhysicalPsiEvents(file)) {
       ThreadingAssertions.assertWriteAccess();
@@ -481,6 +487,9 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       if (isRealTreeChange) {
         myTreeChangeEventIsFiring = false;
       }
+    }
+    if (!isBeforeEvent) {
+      afterChange(true);
     }
   }
 
