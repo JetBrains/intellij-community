@@ -276,30 +276,29 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
         return;
       }
 
-      var keyRecordRef = keyCatalog.findRecordRef(key);
-      var oldValueRecordRef = keyRecordRef == NO_VALUE ? NO_VALUE : keyCatalog.valueRecordRef(keyRecordRef);
-      var wasActive = keyRecordRef != NO_VALUE && isActiveValue(keyRecordRef, oldValueRecordRef);
-      if (wasActive && valueEquality != null) {
-        var oldValue = readValue(keyRecordRef, oldValueRecordRef);
-        if (oldValue != null && valueEquality.isEqual(value, oldValue)) {
-          return;
-        }
-      }
-
-      var writer = valueExternalizer.writerFor(value);
-      var mutationStarted = false;
+      // findOrAppend can start a mutation before it returns, so a failure during the call makes map invalid, and
+      // it must be closed
+      var mutationStarted = true;
       try {
-        if (keyRecordRef == NO_VALUE) {
-          mutationStarted = true;
-          keyRecordRef = keyCatalog.findOrAppend(key);
+        var findOrAppendResult = keyCatalog.findOrAppend(key);
+        mutationStarted = findOrAppendResult.appended();
+        long ownerKeyRecordRef = findOrAppendResult.recordRef();
+        var oldValueRecordRef = findOrAppendResult.appended() ? NO_VALUE : keyCatalog.valueRecordRef(ownerKeyRecordRef);
+        var wasActive = !findOrAppendResult.appended() && isActiveValue(ownerKeyRecordRef, oldValueRecordRef);
+        if (wasActive && valueEquality != null) {
+          var oldValue = readValue(ownerKeyRecordRef, oldValueRecordRef);
+          if (oldValue != null && valueEquality.isEqual(value, oldValue)) {
+            return;
+          }
         }
-        else {
+
+        var writer = valueExternalizer.writerFor(value);
+        if (!mutationStarted) {
           markDirty();
           mutationStarted = true;
         }
-        var ownerKeyRecordRef = keyRecordRef;
         var newValueRecordRef = appendValue(writer, record -> ValueRecordLayout.initialize(record, SNAPSHOT, ownerKeyRecordRef));
-        keyCatalog.updateValueRecordRef(keyRecordRef, newValueRecordRef);
+        keyCatalog.updateValueRecordRef(ownerKeyRecordRef, newValueRecordRef);
         if (!wasActive) {
           activeEntryCount++;
         }
@@ -355,20 +354,18 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
     var writer = externalizer.writerForPatch(patch);
     synchronized (lock) {
       ensureOpen();
-      var keyRecordRef = keyCatalog.findRecordRef(key);
-      var oldValueRecordRef = keyRecordRef == NO_VALUE ? NO_VALUE : keyCatalog.valueRecordRef(keyRecordRef);
-      var wasActive = keyRecordRef != NO_VALUE && isActiveValue(keyRecordRef, oldValueRecordRef);
-      var mutationStarted = false;
+      // findOrAppend can start a mutation before it returns, so a failure during the call must close this map.
+      var mutationStarted = true;
       try {
-        if (keyRecordRef == NO_VALUE) {
-          mutationStarted = true;
-          keyRecordRef = keyCatalog.findOrAppend(key);
-        }
-        else {
+        var keyResult = keyCatalog.findOrAppend(key);
+        mutationStarted = keyResult.appended();
+        var ownerKeyRecordRef = keyResult.recordRef();
+        var oldValueRecordRef = keyResult.appended() ? NO_VALUE : keyCatalog.valueRecordRef(ownerKeyRecordRef);
+        var wasActive = !keyResult.appended() && isActiveValue(ownerKeyRecordRef, oldValueRecordRef);
+        if (!mutationStarted) {
           markDirty();
           mutationStarted = true;
         }
-        var ownerKeyRecordRef = keyRecordRef;
         long newValueRecordRef;
         if (wasActive) {
           newValueRecordRef = appendValue(writer, record -> ValueRecordLayout.initialize(record, PATCH, oldValueRecordRef));
@@ -376,7 +373,7 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
         else {
           newValueRecordRef = appendValue(writer, record -> ValueRecordLayout.initialize(record, SNAPSHOT, ownerKeyRecordRef));
         }
-        keyCatalog.updateValueRecordRef(keyRecordRef, newValueRecordRef);
+        keyCatalog.updateValueRecordRef(ownerKeyRecordRef, newValueRecordRef);
         if (!wasActive) {
           activeEntryCount++;
         }

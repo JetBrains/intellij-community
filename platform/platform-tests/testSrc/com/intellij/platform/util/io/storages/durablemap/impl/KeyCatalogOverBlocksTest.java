@@ -38,10 +38,17 @@ public class KeyCatalogOverBlocksTest {
       var store = database.openStore("map", 1);
       var catalog = KeyCatalogOverBlocks.open(DurableMapBlockCatalog.open(store), BLOCK_SIZE, index, stringAsUTF8());
 
-      keyRecordRef = catalog.findOrAppend("key");
+      var appended = catalog.findOrAppend("key");
+      assertTrue(appended.appended());
+      keyRecordRef = appended.recordRef();
       catalog.updateValueRecordRef(keyRecordRef, 41);
 
-      assertEquals(keyRecordRef, catalog.findOrAppend("key"));
+      var found = catalog.findOrAppend("key");
+      assertFalse(found.appended());
+      assertEquals(keyRecordRef, found.recordRef());
+      assertEquals(2, index.lookupAndModifyCount, "findOrAppend must use one combined index lookup");
+      assertEquals(0, index.directLookupCount, "findOrAppend must not perform a separate lookup");
+      assertEquals(0, index.directPutCount, "findOrAppend must not perform a separate put");
       assertEquals(keyRecordRef, catalog.findRecordRef("key"));
       assertEquals(41, catalog.valueRecordRef(keyRecordRef));
       assertEquals(1, index.size());
@@ -52,7 +59,9 @@ public class KeyCatalogOverBlocksTest {
       var store = database.findStore("map");
       assertNotNull(store);
       var catalog = KeyCatalogOverBlocks.open(DurableMapBlockCatalog.open(store), BLOCK_SIZE, index, stringAsUTF8());
-      assertEquals(keyRecordRef, catalog.findOrAppend("key"));
+      var found = catalog.findOrAppend("key");
+      assertFalse(found.appended());
+      assertEquals(keyRecordRef, found.recordRef());
       assertEquals(41, catalog.valueRecordRef(keyRecordRef));
 
       var recordRefs = new ArrayList<Long>();
@@ -79,8 +88,8 @@ public class KeyCatalogOverBlocksTest {
         DurableMapBlockCatalog.open(database.openStore("map", 1)), BLOCK_SIZE, index, stringAsUTF8()
       );
 
-      var firstRef = catalog.findOrAppend("FB");
-      var secondRef = catalog.findOrAppend("Ea");
+      var firstRef = catalog.findOrAppend("FB").recordRef();
+      var secondRef = catalog.findOrAppend("Ea").recordRef();
 
       assertNotEquals(firstRef, secondRef);
       assertEquals(firstRef, catalog.findRecordRef("FB"));
@@ -99,7 +108,7 @@ public class KeyCatalogOverBlocksTest {
         DurableMapBlockCatalog.open(database.openStore("map", 1)), BLOCK_SIZE, index, stringAsUTF8()
       );
       catalog.findOrAppend("first");
-      var keyWithValueRef = catalog.findOrAppend("removed");
+      var keyWithValueRef = catalog.findOrAppend("removed").recordRef();
       catalog.updateValueRecordRef(keyWithValueRef, 73);
       catalog.findOrAppend("last");
 
@@ -122,10 +131,14 @@ public class KeyCatalogOverBlocksTest {
   private static final class TrackingRecordRefIndex implements RecordRefIndex {
     private final InMemoryIntToMultiLongMap delegate = new InMemoryIntToMultiLongMap();
     private int dirtyMarkCount;
+    private int lookupAndModifyCount;
+    private int directLookupCount;
+    private int directPutCount;
     private boolean rejectReads;
 
     @Override
     public boolean put(int key, long value) {
+      directPutCount++;
       return delegate.put(key, value);
     }
 
@@ -136,10 +149,17 @@ public class KeyCatalogOverBlocksTest {
 
     @Override
     public long lookup(int key, @NotNull ValueAcceptor valueAcceptor) throws IOException {
+      directLookupCount++;
       if (rejectReads) {
         throw new AssertionError("Sequential key processing must not read LOOKUP");
       }
       return delegate.lookup(key, valueAcceptor);
+    }
+
+    @Override
+    public boolean lookupAndModify(int key, @NotNull ValueProcessor processor) throws IOException {
+      lookupAndModifyCount++;
+      return delegate.lookupAndModify(key, processor);
     }
 
     @Override

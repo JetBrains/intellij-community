@@ -58,24 +58,30 @@ public final class KeyCatalogOverBlocks<K> {
   }
 
   /// Finds an existing key record or appends one stable record for a new key.
-  public long findOrAppend(@NotNull K key) throws IOException {
-    var keyHash = adjustedHash(key);
-    var existingRecordRef = findRecordRef(key, keyHash);
-    if (existingRecordRef != NO_VALUE) {
-      return existingRecordRef;
-    }
+  public @NotNull FindOrAppendResult findOrAppend(@NotNull K key) throws IOException {
+    int keyHash = adjustedHash(key);
+    var resultRef = new FindOrAppendResult[1];
+    keyHashToRecordRefIndex.lookupAndModify(keyHash, (candidateRef, newRecordRef) -> {
+      if (candidateRef != NO_VALUE) {
+        if (!keyMatchesRecordKey(key, keyHash, candidateRef)) {
+          return true;
+        }
+        resultRef[0] = new FindOrAppendResult(candidateRef, /*appended: */ false);
+        return false;
+      }
 
-    var keyWriter = keyDescriptor.writerFor(key);
-    var recordSize = KeyRecordLayout.recordSize(keyWriter.recordSize());
-    keyHashToRecordRefIndex.markDirty();
-    var keyRecordRef = keys.append(recordSize, record -> {
-      KeyRecordLayout.initialize(record, keyHash);
-      keyWriter.write(record, KeyRecordLayout.HEADER_SIZE);
+      var keyWriter = keyDescriptor.writerFor(key);
+      var recordSize = KeyRecordLayout.recordSize(keyWriter.recordSize());
+      keyHashToRecordRefIndex.markDirty();
+      var appendedRecordRef = keys.append(recordSize, record -> {
+        KeyRecordLayout.initialize(record, keyHash);
+        keyWriter.write(record, KeyRecordLayout.HEADER_SIZE);
+      });
+      newRecordRef.set(appendedRecordRef);
+      resultRef[0] = new FindOrAppendResult(appendedRecordRef, /*appended: */ true);
+      return false;
     });
-    if (!keyHashToRecordRefIndex.put(keyHash, keyRecordRef)) {
-      throw new CorruptedException("The key record reference is already in LOOKUP: " + keyRecordRef);
-    }
-    return keyRecordRef;
+    return resultRef[0];
   }
 
   public long findRecordRef(@NotNull K key) throws IOException {
@@ -164,17 +170,19 @@ public final class KeyCatalogOverBlocks<K> {
   }
 
   private long findRecordRef(@NotNull K key, int keyHash) throws IOException {
-    return keyHashToRecordRefIndex.lookup(keyHash, candidateRef -> {
-      var record = keys.read(candidateRef);
-      if (selfChecksEnabled()) {
-        var storedKeyHash = KeyRecordLayout.keyHash(record);
-        if (storedKeyHash != keyHash) {
-          throw new CorruptedException("LOOKUP hash " + keyHash + " does not match key record " + candidateRef + " hash " + storedKeyHash);
-        }
-      }
+    return keyHashToRecordRefIndex.lookup(keyHash, candidateRef -> keyMatchesRecordKey(key, keyHash, candidateRef));
+  }
 
-      return keyDescriptor.isEqual(key, readKey(record));
-    });
+  /// @return true if given key matches key from record pointed by candidateRef
+  private boolean keyMatchesRecordKey(@NotNull K key, int keyHash, long candidateRef) throws IOException {
+    var record = keys.read(candidateRef);
+    if (selfChecksEnabled()) {
+      var storedKeyHash = KeyRecordLayout.keyHash(record);
+      if (storedKeyHash != keyHash) {
+        throw new CorruptedException("LOOKUP hash " + keyHash + " does not match key record " + candidateRef + " hash " + storedKeyHash);
+      }
+    }
+    return keyDescriptor.isEqual(key, readKey(record));
   }
 
   private @NotNull K readKey(@NotNull MemorySegment record) throws IOException {
@@ -184,6 +192,12 @@ public final class KeyCatalogOverBlocks<K> {
   private int adjustedHash(@NotNull K key) {
     return HashUtils.adjustHash(keyDescriptor.getHashCode(key));
   }
+
+  /// Identifies the key record and reports whether this operation appended it.
+  /// TODO RC: recordRef has 2 unused bits -- both blockId and in-block ref are positive, so both sign-bits are unused.
+  ///          Those 2 bits could be used e.g. for `appended`, and even something else. It would be much better with
+  ///          `value class RecordRef`, but value objects are not yet here
+  public record FindOrAppendResult(long recordRef, boolean appended) { }
 
   @FunctionalInterface
   public interface KeyRecordProcessor<K> {
