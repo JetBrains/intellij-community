@@ -47,203 +47,208 @@ import java.awt.event.MouseEvent
 import javax.swing.Icon
 
 internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbAware {
-  override fun getInfo(element: PsiElement): Info? {
-    if (!CommandRunnerExtension.isExtensionEnabled() || !element.isValid) {
-      return null
-    }
+  override fun getInfo(element: PsiElement): Info? = Companion.getInfo(element)
 
-    if (element.hasType(MarkdownTokenTypes.FENCE_LANG)) {
-      val lang = element.text?.trim()
-      if (!lang.isNullOrEmpty()) {
-        return processBlock(lang, element)
+  @Suppress("CompanionObjectInExtension")
+  companion object {
+    fun getInfo(element: PsiElement): Info? {
+      if (!CommandRunnerExtension.isExtensionEnabled() || !element.isValid) {
+        return null
       }
-    }
 
-    val inCodeSpan = isOpeningCodeSpanBacktick(element)
-    if (!(element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)
-          || inCodeSpan)) {
-      return null
-    }
-
-    val text = getText(element)
-    if (inCodeSpan) {
-      val codeSpanInfo = processCodeSpan(element, text)
-      if (codeSpanInfo != null) return codeSpanInfo
-    }
-
-    val directories = getMarkdownCommandWorkingDirectories(element.project, element.containingFile.virtualFile)
-    if (!matches(element.project, directories, true, text, allowRunConfigurations = inCodeSpan)) {
-      return null
-    }
-
-    val runAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.command", text) },
-                                      AllIcons.RunConfigurations.TestState.Run) {
-      override fun actionPerformed(e: AnActionEvent) {
-        val inputEvent = e.inputEvent as? MouseEvent ?: return
-        withMarkdownCommandWorkingDirectory(e.project!!, element.containingFile.virtualFile, inputEvent.component, inputEvent.x, inputEvent.y) { workingDirectory ->
-          execute(e.project!!, workingDirectory, true, text, DefaultRunExecutor.getRunExecutorInstance(), RunnerPlace.EDITOR)
-        }
-      }
-    }
-    return Info(AllIcons.RunConfigurations.TestState.Run, arrayOf(runAction)) { MarkdownBundle.message("markdown.runner.launch.command", text) }
-  }
-
-  private fun collectFenceText(element: MarkdownCodeFence): String? {
-    val fenceElements = MarkdownCodeFence.obtainFenceContent(element, false) ?: return null
-    return fenceElements.joinToString(separator = "") { it.text }
-  }
-
-  private fun processBlock(lang: String, element: PsiElement): Info? {
-    val language = CodeFenceLanguageGuesser.guessLanguageForExecution(lang)
-    val runnerTitle = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) }?.title()
-                      ?: if (language?.id == "Shell Script" || language?.id == "PowerShell") {
-                        MarkdownBundle.message("markdown.runner.launch.shell")
-                      }
-                      else return null
-    val text = (element.parent as? MarkdownCodeFence)?.let(this::collectFenceText) ?: return null
-    val command = if (language?.id == "PowerShell") text else trimPrompt(text)
-    val runAction = object : AnAction({ runnerTitle }, AllIcons.RunConfigurations.TestState.Run_run) {
-      override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-
-      override fun update(event: AnActionEvent) {
-        event.presentation.text = if (event.place == ActionPlaces.EDITOR_GUTTER_POPUP) {
-          MarkdownBundle.message("markdown.runner.choose.terminal")
-        }
-        else {
-          runnerTitle
+      if (element.hasType(MarkdownTokenTypes.FENCE_LANG)) {
+        val lang = element.text?.trim()
+        if (!lang.isNullOrEmpty()) {
+          return processBlock(lang, element)
         }
       }
 
-      override fun actionPerformed(event: AnActionEvent) {
-        val project = event.getData(CommonDataKeys.PROJECT) ?: return
-        val sourceFile = element.containingFile.virtualFile
-        val workingDirectoryPaths = getMarkdownCommandWorkingDirectoryPaths(project, sourceFile) ?: return
-        val mouseEvent = event.inputEvent as? MouseEvent
-        val screenPoint = mouseEvent?.locationOnScreen?.let { MarkdownFrontendRunnerRequest.ScreenPoint(it.x, it.y) }
-        val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-        service<MarkdownFrontendRunnerRequestService>().request(
-          MarkdownFrontendRunnerRequest(
-            projectId = project.projectId(),
-            languageId = language?.id,
-            command = command,
-            sourceFileUrl = sourceFile.url,
-            showTargetChooser = event.place == ActionPlaces.EDITOR_GUTTER_POPUP,
-            offset = element.textOffset,
-            workingDirectoryPaths = workingDirectoryPaths,
-            screenPoint = screenPoint,
-            editorId = editor.editorId(),
+      val inCodeSpan = isOpeningCodeSpanBacktick(element)
+      if (!(element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)
+            || inCodeSpan)) {
+        return null
+      }
+
+      val text = getText(element)
+      if (inCodeSpan) {
+        val codeSpanInfo = processCodeSpan(element, text)
+        if (codeSpanInfo != null) return codeSpanInfo
+      }
+
+      val directories = getMarkdownCommandWorkingDirectories(element.project, element.containingFile.virtualFile)
+      if (!matches(element.project, directories, true, text, allowRunConfigurations = inCodeSpan)) {
+        return null
+      }
+
+      val runAction = object : AnAction({ MarkdownBundle.message("markdown.runner.launch.command", text) },
+                                        AllIcons.RunConfigurations.TestState.Run) {
+        override fun actionPerformed(e: AnActionEvent) {
+          val inputEvent = e.inputEvent as? MouseEvent ?: return
+          withMarkdownCommandWorkingDirectory(e.project!!, element.containingFile.virtualFile, inputEvent.component, inputEvent.x, inputEvent.y) { workingDirectory ->
+            execute(e.project!!, workingDirectory, true, text, DefaultRunExecutor.getRunExecutorInstance(), RunnerPlace.EDITOR)
+          }
+        }
+      }
+      return Info(AllIcons.RunConfigurations.TestState.Run, arrayOf(runAction)) { MarkdownBundle.message("markdown.runner.launch.command", text) }
+    }
+
+    private fun collectFenceText(element: MarkdownCodeFence): String? {
+      val fenceElements = MarkdownCodeFence.obtainFenceContent(element, false) ?: return null
+      return fenceElements.joinToString(separator = "") { it.text }
+    }
+
+    private fun processBlock(lang: String, element: PsiElement): Info? {
+      val language = CodeFenceLanguageGuesser.guessLanguageForExecution(lang)
+      val runnerTitle = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) }?.title()
+                        ?: if (language?.id == "Shell Script" || language?.id == "PowerShell") {
+                          MarkdownBundle.message("markdown.runner.launch.shell")
+                        }
+                        else return null
+      val text = (element.parent as? MarkdownCodeFence)?.let(this::collectFenceText) ?: return null
+      val command = if (language?.id == "PowerShell") text else trimPrompt(text)
+      val runAction = object : AnAction({ runnerTitle }, AllIcons.RunConfigurations.TestState.Run_run) {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+        override fun update(event: AnActionEvent) {
+          event.presentation.text = if (event.place == ActionPlaces.EDITOR_GUTTER_POPUP) {
+            MarkdownBundle.message("markdown.runner.choose.terminal")
+          }
+          else {
+            runnerTitle
+          }
+        }
+
+        override fun actionPerformed(event: AnActionEvent) {
+          val project = event.getData(CommonDataKeys.PROJECT) ?: return
+          val sourceFile = element.containingFile.virtualFile
+          val workingDirectoryPaths = getMarkdownCommandWorkingDirectoryPaths(project, sourceFile) ?: return
+          val mouseEvent = event.inputEvent as? MouseEvent
+          val screenPoint = mouseEvent?.locationOnScreen?.let { MarkdownFrontendRunnerRequest.ScreenPoint(it.x, it.y) }
+          val editor = event.getData(CommonDataKeys.EDITOR) ?: return
+          service<MarkdownFrontendRunnerRequestService>().request(
+            MarkdownFrontendRunnerRequest(
+              projectId = project.projectId(),
+              languageId = language?.id,
+              command = command,
+              sourceFileUrl = sourceFile.url,
+              showTargetChooser = event.place == ActionPlaces.EDITOR_GUTTER_POPUP,
+              offset = element.textOffset,
+              workingDirectoryPaths = workingDirectoryPaths,
+              screenPoint = screenPoint,
+              editorId = editor.editorId(),
+            )
           )
+        }
+      }
+      return Info(AllIcons.RunConfigurations.TestState.Run_run, arrayOf(runAction)) {
+        MarkdownBundle.message("markdown.runner.launch.block.tooltip", runnerTitle)
+      }
+    }
+
+    private fun processCodeSpan(element: PsiElement, elementText: String): Info? {
+      val text = elementText.trim()
+      if (text.isBlank()) return null
+
+      val configurations = CachedValuesManager.getCachedValue(element) {
+        CachedValueProvider.Result.create(
+          getConfigurations(element).map { ConfigurationInfo(it.uniqueID, it.name, it.configuration.icon) },
+          PsiModificationTracker.getInstance(element.project).forLanguages { !it.isKindOf(MarkdownLanguage.INSTANCE) }
         )
       }
-    }
-    return Info(AllIcons.RunConfigurations.TestState.Run_run, arrayOf(runAction)) {
-      MarkdownBundle.message("markdown.runner.launch.block.tooltip", runnerTitle)
-    }
-  }
+      if (configurations.isEmpty()) return null
 
-  private fun processCodeSpan(element: PsiElement, elementText: String): Info? {
-    val text = elementText.trim()
-    if (text.isBlank()) return null
-
-    val configurations = CachedValuesManager.getCachedValue(element) {
-      CachedValueProvider.Result.create(
-        getConfigurations(element).map { ConfigurationInfo(it.uniqueID, it.name, it.configuration.icon) },
-        PsiModificationTracker.getInstance(element.project).forLanguages { !it.isKindOf(MarkdownLanguage.INSTANCE) }
-      )
-    }
-    if (configurations.isEmpty()) return null
-
-    val actions = configurations.map { RunConfigurationAction(element, it) }.toTypedArray()
-    return Info(
-      AllIcons.RunConfigurations.TestState.Run_run,
-      actions
-    ) { MarkdownBundle.message("markdown.runner.launch.command", text) }
-  }
-
-  private fun getConfigurations(element: PsiElement): List<RunnerAndConfigurationSettings> {
-    val codeSpans = getAllCodeSpansOnLine(element)
-    if (codeSpans.firstOrNull() != element) return emptyList()
-
-    return codeSpans
-      .asSequence()
-      .map { getText(it).trim() to it }
-      .filter { it.first.isNotBlank() }
-      .distinctBy { it.first }
-      .flatMap { (text, host) ->
-        MarkdownCodeSpanConfigurationContextSearcher
-          .findAllConfigurations(text, host)
-          .mapNotNull { it.getConfiguration() }
-          .distinctBy { it.uniqueID }
-      }
-      .toList()
-  }
-
-  private fun findSettings(
-    runManager: RunManager,
-    element: PsiElement,
-    uniqueID: String,
-  ): RunnerAndConfigurationSettings? {
-    runManager.allSettings.firstOrNull { it.uniqueID == uniqueID }?.let { return it }
-    if (!element.isValid) return null
-    return getConfigurations(element).firstOrNull { it.uniqueID == uniqueID }
-  }
-
-  private fun getText(element: PsiElement): @NlsSafe String {
-    if (element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)) return element.text.trim()
-    if (element.hasType(MarkdownTokenTypes.BACKTICK)) {
-      val codeSpanText = element.parent.text
-      return codeSpanText.substring(1, codeSpanText.length - 1).trim()
-    }
-    return ""
-  }
-
-  private fun getAllCodeSpansOnLine(element: PsiElement): List<PsiElement> {
-    val file = element.containingFile ?: return emptyList()
-    val document = PsiDocumentManager.getInstance(element.project).getDocument(file) ?: return listOf(element)
-
-    val line = document.getLineNumber(element.textRange.startOffset)
-    val lineStart = document.getLineStartOffset(line)
-    val lineEnd = document.getLineEndOffset(line)
-
-    val result = mutableListOf<PsiElement>()
-    var leaf = file.findElementAt(lineStart)
-
-    while (leaf != null) {
-      val leafRange = leaf.textRange
-      if (leafRange.startOffset >= lineEnd) break
-      if (leafRange.endOffset > lineStart && isOpeningCodeSpanBacktick(leaf) && getText(leaf).isNotBlank()) {
-        result.add(leaf)
-      }
-      leaf = leaf.nextLeaf()
+      val actions = configurations.map { RunConfigurationAction(element, it) }.toTypedArray()
+      return Info(
+        AllIcons.RunConfigurations.TestState.Run_run,
+        actions
+      ) { MarkdownBundle.message("markdown.runner.launch.command", text) }
     }
 
-    return result
-  }
+    private fun getConfigurations(element: PsiElement): List<RunnerAndConfigurationSettings> {
+      val codeSpans = getAllCodeSpansOnLine(element)
+      if (codeSpans.firstOrNull() != element) return emptyList()
 
-  private fun isOpeningCodeSpanBacktick(element: PsiElement): Boolean =
-    element.hasType(MarkdownTokenTypes.BACKTICK)
-    && element.parent.hasType(MarkdownElementTypes.CODE_SPAN)
-    && element.parent.firstChild == element
-
-
-  private data class ConfigurationInfo(val uniqueID: String, val name: @NlsSafe String, val icon: Icon?)
-
-  private inner class RunConfigurationAction(
-    private val element: PsiElement,
-    private val configuration: ConfigurationInfo,
-  ) : AnAction({ configuration.name }, configuration.icon) {
-    override fun actionPerformed(event: AnActionEvent) {
-      val project = event.project ?: element.project
-      TrustedProjectUtil.executeIfTrusted(project) {
-        val runManager = RunManager.getInstance(project)
-        val settings = findSettings(runManager, element, configuration.uniqueID) ?: return@executeIfTrusted
-        if (!runManager.hasSettings(settings)) {
-          runManager.setTemporaryConfiguration(settings)
+      return codeSpans
+        .asSequence()
+        .map { getText(it).trim() to it }
+        .filter { it.first.isNotBlank() }
+        .distinctBy { it.first }
+        .flatMap { (text, host) ->
+          MarkdownCodeSpanConfigurationContextSearcher
+            .findAllConfigurations(text, host)
+            .mapNotNull { it.getConfiguration() }
+            .distinctBy { it.uniqueID }
         }
-        if (runManager.shouldSetRunConfigurationFromContext()) {
-          runManager.selectedConfiguration = settings
+        .toList()
+    }
+
+    private fun findSettings(
+      runManager: RunManager,
+      element: PsiElement,
+      uniqueID: String,
+    ): RunnerAndConfigurationSettings? {
+      runManager.allSettings.firstOrNull { it.uniqueID == uniqueID }?.let { return it }
+      if (!element.isValid) return null
+      return getConfigurations(element).firstOrNull { it.uniqueID == uniqueID }
+    }
+
+    private fun getText(element: PsiElement): @NlsSafe String {
+      if (element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)) return element.text.trim()
+      if (element.hasType(MarkdownTokenTypes.BACKTICK)) {
+        val codeSpanText = element.parent.text
+        return codeSpanText.substring(1, codeSpanText.length - 1).trim()
+      }
+      return ""
+    }
+
+    private fun getAllCodeSpansOnLine(element: PsiElement): List<PsiElement> {
+      val file = element.containingFile ?: return emptyList()
+      val document = PsiDocumentManager.getInstance(element.project).getDocument(file) ?: return listOf(element)
+
+      val line = document.getLineNumber(element.textRange.startOffset)
+      val lineStart = document.getLineStartOffset(line)
+      val lineEnd = document.getLineEndOffset(line)
+
+      val result = mutableListOf<PsiElement>()
+      var leaf = file.findElementAt(lineStart)
+
+      while (leaf != null) {
+        val leafRange = leaf.textRange
+        if (leafRange.startOffset >= lineEnd) break
+        if (leafRange.endOffset > lineStart && isOpeningCodeSpanBacktick(leaf) && getText(leaf).isNotBlank()) {
+          result.add(leaf)
         }
-        ExecutionUtil.runConfiguration(settings, DefaultRunExecutor.getRunExecutorInstance())
+        leaf = leaf.nextLeaf()
+      }
+
+      return result
+    }
+
+    private fun isOpeningCodeSpanBacktick(element: PsiElement): Boolean =
+      element.hasType(MarkdownTokenTypes.BACKTICK)
+      && element.parent.hasType(MarkdownElementTypes.CODE_SPAN)
+      && element.parent.firstChild == element
+
+
+    private data class ConfigurationInfo(val uniqueID: String, val name: @NlsSafe String, val icon: Icon?)
+
+    private class RunConfigurationAction(
+      private val element: PsiElement,
+      private val configuration: ConfigurationInfo,
+    ) : AnAction({ configuration.name }, configuration.icon) {
+      override fun actionPerformed(event: AnActionEvent) {
+        val project = event.project ?: element.project
+        TrustedProjectUtil.executeIfTrusted(project) {
+          val runManager = RunManager.getInstance(project)
+          val settings = findSettings(runManager, element, configuration.uniqueID) ?: return@executeIfTrusted
+          if (!runManager.hasSettings(settings)) {
+            runManager.setTemporaryConfiguration(settings)
+          }
+          if (runManager.shouldSetRunConfigurationFromContext()) {
+            runManager.selectedConfiguration = settings
+          }
+          ExecutionUtil.runConfiguration(settings, DefaultRunExecutor.getRunExecutorInstance())
+        }
       }
     }
   }

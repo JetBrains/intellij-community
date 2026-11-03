@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -23,6 +24,7 @@ import com.intellij.openapi.editor.impl.editorId
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -34,6 +36,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.fixtures.EditorTestFixture
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
@@ -49,6 +52,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.awt.Point
+import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -90,6 +94,22 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     myFixture.doHighlighting()
     val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
     assertNotNull(markers.firstOrNull { it.icon == AllIcons.RunConfigurations.TestState.Run_run })
+  }
+
+  @Test
+  fun `run context shortcut executes a shell code fence`() {
+    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
+    val editor = myFixture.editor
+    editor.caretModel.moveToOffset(editor.document.text.indexOf("pwd"))
+    val shortcut = KeymapUtil.getPrimaryShortcut("RunClass") as KeyboardShortcut
+    val stroke = shortcut.firstKeyStroke
+    val inputEvent = KeyEvent(
+      editor.contentComponent, KeyEvent.KEY_PRESSED, 0, stroke.modifiers, stroke.keyCode, KeyEvent.CHAR_UNDEFINED,
+    )
+
+    assertTrue(EditorTestFixture.performEditorShortcut(editor, project, shortcut, inputEvent, "run shortcut"))
+    awaitFrontendRunner()
+    assertEquals("pwd", capturingRunner.capturedCommand?.trim())
   }
 
   @Test

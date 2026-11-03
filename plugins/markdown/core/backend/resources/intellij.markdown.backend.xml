@@ -36,6 +36,10 @@
     <actions resource-bundle="messages.ActionsBundle">
       <action id="CopyReference" class="com.intellij.markdown.backend.reference.headers.MarkdownHeaderCopyAction" overrides="true"/>
     </actions>
+    <actions resource-bundle="messages.MarkdownBundle">
+      <action id="Markdown.RunCodeFence" class="com.intellij.markdown.backend.actions.MarkdownRunCodeFenceAction"
+              icon="AllIcons.RunConfigurations.TestState.Run_run" use-shortcut-of="RunClass"/>
+    </actions>
     <extensions defaultExtensionNs="com.intellij">
       <postStartupActivity implementation="org.intellij.plugins.markdown.settings.MarkdownSettingsMigration"/>
       <applicationService serviceImplementation="com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService" client="all"/>
