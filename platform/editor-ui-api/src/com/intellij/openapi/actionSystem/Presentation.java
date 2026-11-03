@@ -437,6 +437,15 @@ public final class Presentation implements Cloneable {
     fireObjectPropertyChange(PROP_SELECTED_ICON_DESCRIPTOR, old, this.selectedIconDescriptor);
   }
 
+  /**
+   * Sets the properties of {@code other} as the fallback of the properties that this presentation does not set.
+   * The icon and the icon descriptor are copied when this presentation has none.
+   * The text and the description are computed on read: the value of this presentation is returned when it is not empty,
+   * otherwise the value of {@code other} is returned when it is not empty.
+   * The user data of {@code other} is added to this presentation.
+   * Neither supplier is evaluated and listeners are not notified,
+   * so it is meant for a template presentation while an action stub becomes an action.
+   */
   @ApiStatus.Internal // do not expose
   public void copyUnsetTemplateProperties(@NotNull Presentation other) {
     if (icon == null) {
@@ -445,12 +454,26 @@ public final class Presentation implements Cloneable {
     if (iconDescriptor == null) {
       iconDescriptor = other.iconDescriptor;
     }
-    if (Strings.isEmpty(getText()) && Strings.isNotEmpty(other.getText())) {
-      textWithMnemonicSupplier = other.textWithMnemonicSupplier;
-    }
-    if (Strings.isEmpty(descriptionSupplier.get()) && Strings.isNotEmpty(other.descriptionSupplier.get())) {
-      descriptionSupplier = other.descriptionSupplier;
-    }
+    Supplier<TextWithMnemonic> ownText = textWithMnemonicSupplier;
+    Supplier<TextWithMnemonic> otherText = other.textWithMnemonicSupplier;
+    textWithMnemonicSupplier = () -> {
+      TextWithMnemonic result = ownText.get();
+      if (result != null && !result.getText().isEmpty()) {
+        return result;
+      }
+      TextWithMnemonic fallback = otherText.get();
+      return fallback != null && !fallback.getText().isEmpty() ? fallback : result;
+    };
+    Supplier<@ActionDescription String> ownDescription = descriptionSupplier;
+    Supplier<@ActionDescription String> otherDescription = other.descriptionSupplier;
+    descriptionSupplier = () -> {
+      String result = ownDescription.get();
+      if (Strings.isNotEmpty(result)) {
+        return result;
+      }
+      String fallback = otherDescription.get();
+      return Strings.isNotEmpty(fallback) ? fallback : result;
+    };
     myUserMap = myUserMap.plusAll(other.myUserMap);
   }
 
