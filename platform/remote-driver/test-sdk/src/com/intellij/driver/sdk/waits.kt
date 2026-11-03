@@ -65,10 +65,7 @@ fun <T> waitNotNull(
 ): T {
   return waitFor(message = message, timeout = timeout,
                  interval = interval,
-                 errorMessage = if (errorMessage == null) {
-                   null
-                 }
-                 else { it -> errorMessage.invoke(it) },
+                 errorMessage = errorMessage ?: { _ -> failure("Await not null", message, null) },
                  getter = getter,
                  checker = { it != null }
   )!!
@@ -86,10 +83,7 @@ suspend fun <T> waitNotNullAsync(
     message = message,
     timeout = timeout,
     interval = interval,
-    errorMessage = if (errorMessage == null) {
-      null
-    }
-    else { it -> errorMessage.invoke(it) },
+    errorMessage = errorMessage ?: { _ -> failure("Await not null", message, null) },
     getter = getter,
     checker = { it != null }
   )!!
@@ -110,7 +104,10 @@ fun <T> waitAny(
 ): List<T> {
   return waitFor(message = message, timeout = timeout,
                  interval = interval,
-                 errorMessage = { (all) -> errorMessage?.invoke(all) ?: "Failed: $message. Actual: $all" },
+                 errorMessage = { (all, _, notSuitable) ->
+                   errorMessage?.invoke(all)
+                   ?: (failure("Await any", message, null) + section("not suitable", notSuitable))
+                 },
                  getter = { observe(getter(), checker) },
                  checker = { it.suitable.isNotEmpty() }
   ).suitable
@@ -123,6 +120,15 @@ private data class Observation<C, T>(val all: C, val suitable: List<T>, val notS
 private fun <C : Collection<T>, T> observe(all: C, checker: (T) -> Boolean): Observation<C, T> {
   val (suitable, notSuitable) = all.partition(checker)
   return Observation(all, suitable, notSuitable)
+}
+
+private fun failure(await: String?, message: String?, details: String?): String {
+  val header = listOfNotNull(message, await).joinToString(": ").ifEmpty { null }
+  return listOfNotNull(header, details).joinToString(". ")
+}
+
+private fun section(label: String, elements: List<*>): String {
+  return "\n\t$label:\n\t\t" + if (elements.isEmpty()) "none" else elements.joinToString("\n\t\t")
 }
 
 private fun logAwaitStart(message: String?, timeout: Duration) {
@@ -168,7 +174,7 @@ fun <T> waitFor(
     if (start.elapsedNow() >= timeout) {
       throw WaitForException(timeout,
                              errorMessage = errorMessage?.invoke(result)
-                                            ?: ("Failed: $message" + if (result !is Boolean) ". Actual: $result" else ""))
+                                            ?: failure(null, message, if (result !is Boolean) "Actual: $result" else null))
         .also { LOG.warn(it) }
     }
     Thread.sleep(interval.inWholeMilliseconds)
@@ -209,7 +215,11 @@ suspend fun <T> waitForAsync(
     @Suppress("UNCHECKED_CAST")
     val errorMessage =
       if (errorMessage != null && observed) errorMessage.invoke(result as T)
-      else ("Failed: $message" + if (result !is Boolean) ". Actual: $result" else "")
+      else failure(null, message, when {
+        !observed -> "The getter returned no value"
+        result is Boolean -> null
+        else -> "Actual: $result"
+      })
     val exception = WaitForException(timeout, errorMessage)
     LOG.warn(exception)
     throw exception
@@ -233,12 +243,8 @@ fun <T> waitForOne(
   return waitFor(message = message, timeout = timeout,
                  interval = interval,
                  errorMessage = { (all, suitable, notSuitable) ->
-                   fun printable(elements: List<T>) = if (elements.isEmpty()) "none" else elements.joinToString("\n\t\t")
                    errorMessage?.invoke(all)
-                   ?: ("Failed: $message. " +
-                       "\n\tExpected one suitable instance, but got:" +
-                       "\n\tsuitable:\n\t\t${printable(suitable)}" +
-                       "\n\tnot suitable:\n\t\t${printable(notSuitable)}")
+                   ?: (failure("Await one", message, null) + section("suitable", suitable) + section("not suitable", notSuitable))
                  },
                  getter = { observe(getter(), checker) },
                  checker = { it.suitable.size == 1 }
@@ -269,7 +275,8 @@ fun <T> withRetries(message: String? = null, times: Int, onError: () -> Unit = {
   throw RetryException(lastException!!).also { LOG.warn(it) }
 }
 
-class WaitForException(val timeout: Duration, val errorMessage: String, cause: Throwable? = null) : IllegalStateException("Timeout($timeout): $errorMessage", cause)
+class WaitForException(val timeout: Duration, val errorMessage: String, cause: Throwable? = null)
+  : IllegalStateException(if (errorMessage.isEmpty()) "Timeout($timeout)" else "Timeout($timeout): $errorMessage", cause)
 class RetryException(cause: Exception) : RuntimeException(cause)
 
 fun <T : UiComponent> T.wait(timeout: Duration): T {

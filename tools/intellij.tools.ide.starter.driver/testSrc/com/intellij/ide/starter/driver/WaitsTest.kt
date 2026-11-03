@@ -4,6 +4,7 @@ import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.waitAny
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
+import com.intellij.driver.sdk.waitNotNull
 import com.intellij.driver.sdk.waitNotNullAsync
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -51,7 +52,7 @@ internal class WaitsTest {
     }
 
     assertEquals(1, checks.get())
-    assertEquals("Timeout(0s): Failed: connection starts. Actual: starting", failure.message)
+    assertEquals("Timeout(0s): connection starts. Actual: starting", failure.message)
   }
 
   @Test
@@ -65,12 +66,12 @@ internal class WaitsTest {
   }
 
   @Test
-  fun `waitAny fails with the full list of the last observation`() {
+  fun `waitAny fails with the not suitable elements of the last observation`() {
     val failure = assertThrows<WaitForException> {
       waitAny<String>(message = "a tab opens", timeout = Duration.ZERO, getter = { listOf("a", "b") }, checker = { false })
     }
 
-    assertEquals("Timeout(0s): Failed: a tab opens. Actual: [a, b]", failure.message)
+    assertEquals("Timeout(0s): a tab opens: Await any\n\tnot suitable:\n\t\ta\n\t\tb", failure.message)
   }
 
   @Test
@@ -88,7 +89,7 @@ internal class WaitsTest {
       waitForOne<String>(message = "one tab", timeout = Duration.ZERO, getter = { listOf("a", "b", "c") }, checker = { it != "b" })
     }
 
-    assertEquals("Timeout(0s): Failed: one tab. \n\tExpected one suitable instance, but got:" +
+    assertEquals("Timeout(0s): one tab: Await one" +
                  "\n\tsuitable:\n\t\ta\n\t\tc" +
                  "\n\tnot suitable:\n\t\tb", failure.message)
   }
@@ -103,5 +104,52 @@ internal class WaitsTest {
     }
 
     assertEquals("Timeout(50ms): no project, last value: null", failure.message)
+  }
+
+  @Test
+  fun `waitFor of a condition fails with the message only`() {
+    val failure = assertThrows<WaitForException> {
+      waitFor(message = "indexing ends", timeout = Duration.ZERO) { false }
+    }
+
+    assertEquals("Timeout(0s): indexing ends", failure.message)
+  }
+
+  @Test
+  fun `waitNotNull fails with the message only`() {
+    val failure = assertThrows<WaitForException> {
+      waitNotNull<String>(message = "project opens", timeout = Duration.ZERO) { null }
+    }
+
+    assertEquals("Timeout(0s): project opens: Await not null", failure.message)
+  }
+
+  @Test
+  fun `waitAny without a message fails without null in the error`() {
+    val failure = assertThrows<WaitForException> {
+      waitAny<String>(timeout = Duration.ZERO, getter = { emptyList() })
+    }
+
+    assertEquals("Timeout(0s): Await any\n\tnot suitable:\n\t\tnone", failure.message)
+  }
+
+  @Test
+  fun `waitNotNullAsync fails with the same text as waitNotNull`() {
+    val failure = assertThrows<WaitForException> {
+      runBlocking {
+        waitNotNullAsync<String>(message = "project opens", timeout = 50.milliseconds, interval = 10.milliseconds) { null }
+      }
+    }
+
+    assertEquals("Timeout(50ms): project opens: Await not null", failure.message)
+  }
+
+  @Test
+  fun `waitFor of a condition without a message fails with the timeout only`() {
+    val failure = assertThrows<WaitForException> {
+      waitFor(timeout = Duration.ZERO) { false }
+    }
+
+    assertEquals("Timeout(0s)", failure.message)
   }
 }
