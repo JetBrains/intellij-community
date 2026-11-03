@@ -2,9 +2,14 @@
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.DebuggerUtils
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.PositionUtil
+import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint
 import com.intellij.debugger.ui.breakpoints.MethodBreakpoint.MethodDescriptor
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -14,6 +19,12 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.sun.jdi.IntegerValue
+import com.sun.jdi.Location
+import com.sun.jdi.ObjectReference
+import com.sun.jdi.event.LocatableEvent
+import com.sun.jdi.event.MethodEntryEvent
+import com.sun.jdi.event.MethodExitEvent
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -23,15 +34,24 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
 import org.jetbrains.kotlin.idea.debugger.base.util.runSmartReadActionIfUnderProgressElseDumb
+import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade
+import org.jetbrains.kotlin.idea.debugger.core.isInSuspendMethod
 import org.jetbrains.kotlin.idea.debugger.core.methodName
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.getJvmSignature
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
+
+// This is an enum class containing singletons for the state of the coroutine.
+// Coroutines return `CoroutineSingletons.COROUTINE_SUSPENDED` from their state machine when they suspend.
+private const val COROUTINE_SINGLETONS_CLASS_NAME = "kotlin.coroutines.intrinsics.CoroutineSingletons"
+// The name of the field that holds the state of the state machine of a coroutine.
+private const val CONTINUATION_LABEL_FIELD_NAME = "label"
 
 interface SourcePositionRefiner {
     fun refineSourcePosition(sourcePosition: SourcePosition): SourcePosition
@@ -46,6 +66,77 @@ open class KotlinFunctionBreakpoint(
         return runSmartReadActionIfUnderProgressElseDumb(myProject, null) {
             declaration.toLightClass()
         }
+    }
+
+    override fun evaluateCondition(context: EvaluationContextImpl, event: LocatableEvent): Boolean {
+        if (!matchesEvent(event, context.debugProcess)) return false
+        if (resumesOrSuspendsCoroutine(context, event)) return false
+        return super.evaluateCondition(context, event)
+    }
+
+    /**
+     * Returns true iff the [event] suspends a running coroutine or resumes a previously suspended coroutine.
+     * Within the coroutine machinery these function calls count as method entries and exits, but we do
+     * not want them to trigger method breakpoints.
+     *
+     * Note: Tail call optimization by the Kotlin compiler can remove the state machine.
+     * In such a case, no exit event will be captured after suspension because the result goes directly to the caller.
+     * Note: When using emulated exit breakpoints, there is no return value when `debugger.emulated.method.return.values` is false.
+     * In that case each suspension will still show as an exit event.
+     */
+    private fun resumesOrSuspendsCoroutine(context: EvaluationContextImpl, event: LocatableEvent): Boolean {
+        val location = event.location()
+        if (!isInSuspendMethod(location)) return false
+
+        if (event is MethodExitEvent) {
+            if (!event.virtualMachine().canGetMethodReturnValues()) return false
+            val returnValue = event.returnValue() as? ObjectReference ?: return false
+            // The singleton is returned by the coroutines machinery whenever the coroutine suspends
+            return returnValue.referenceType().name() == COROUTINE_SINGLETONS_CLASS_NAME
+        }
+
+        val isEntry = event is MethodEntryEvent || event.request().getProperty(METHOD_ENTRY_KEY) == true
+        if (!isEntry) return false
+        return resumesCoroutine(context, location)
+    }
+
+    /**
+     * Returns whether the [location] resumes a coroutine after it was suspended before.
+     */
+    private fun resumesCoroutine(context: EvaluationContextImpl, location: Location): Boolean {
+        val frame = context.frameProxy ?: return false
+        // In case of any JDI failure/exception, we fall back to the default behavior.
+        try {
+            // Internally, the last parameter when calling/resuming a coroutine is the reference to the continuation
+            val continuation = frame.continuationArgument() ?: return false
+            val continuationType = continuation.referenceType()
+            // The continuation type is given a generated name with some structure we can check for
+            if (!continuationType.name().startsWith(location.declaringType().name() + "$")) return false
+
+            // When resuming the coroutine, the label field is used to decide which branch in the state machine to use.
+            // Additionally, the label also has the most significant bit set when the coroutine is being resumed rather than
+            // called for the first time.
+            val labelField = DebuggerUtils.findField(continuationType, CONTINUATION_LABEL_FIELD_NAME) ?: return false
+            val label = (continuation.getValue(labelField) as? IntegerValue)?.value() ?: return false
+            return label and Int.MIN_VALUE != 0
+        }
+        catch (e: Throwable) {
+            rethrowControlFlowException(e)
+            thisLogger().debug("Cannot check if the entry at $location resumes a coroutine", e)
+            return false
+        }
+    }
+
+    /**
+     * Returns the continuation argument of the coroutine in this frame.
+     * This is needed because it is different for Android than it is for the JVM.
+     */
+    private fun StackFrameProxyImpl.continuationArgument(): ObjectReference? {
+        if (DebuggerUtils.isAndroidVM(virtualMachine.virtualMachine)) {
+            val variable = safeVisibleVariableByName(SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME) ?: return null
+            return getValue(variable) as? ObjectReference
+        }
+        return argumentValues.lastOrNull() as? ObjectReference
     }
 
     override fun refineSourcePosition(sourcePosition: SourcePosition): SourcePosition {
