@@ -5,16 +5,18 @@ package com.intellij.openapi.wm.impl
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.RegisterToolWindowTaskData
+import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ClientProperty
-import com.intellij.openapi.ui.popup.Balloon
 import org.intellij.lang.annotations.MagicConstant
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -128,17 +130,28 @@ internal fun windowInfoChanges(oldInfo: WindowInfo, newInfo: WindowInfo): String
   return sb.toString()
 }
 
-internal fun isToolwindowOfBundledPlugin(task: RegisterToolWindowTaskData): Boolean {
+/** Returns whether the registration rules show a stripe button without a layout entry. */
+@ApiStatus.Internal
+fun shouldShowStripeButtonByDefault(
+  id: String,
+  contentFactory: ToolWindowFactory?,
+  pluginDescriptor: PluginDescriptor?,
+  isNewUi: Boolean,
+): Boolean {
+  return !isNewUi || !isToolwindowOfBundledPlugin(id, contentFactory, pluginDescriptor)
+}
+
+private fun isToolwindowOfBundledPlugin(id: String, contentFactory: ToolWindowFactory?, pluginDescriptor: PluginDescriptor?): Boolean {
   // platform toolwindow but registered dynamically
-  if (ToolWindowId.BUILD_DEPENDENCIES == task.id) {
+  if (ToolWindowId.BUILD_DEPENDENCIES == id) {
     return true
   }
 
-  task.pluginDescriptor?.let {
+  pluginDescriptor?.let {
     return it.isBundled
   }
 
   // check content factory, Service View, and Endpoints View goes here
-  val pluginDescriptor = PluginManager.getPluginByClass(task.contentFactory?.javaClass ?: return false)
-  return pluginDescriptor == null || pluginDescriptor.isBundled
+  val factoryPluginDescriptor = PluginManager.getPluginByClass(contentFactory?.javaClass ?: return false)
+  return factoryPluginDescriptor == null || factoryPluginDescriptor.isBundled
 }

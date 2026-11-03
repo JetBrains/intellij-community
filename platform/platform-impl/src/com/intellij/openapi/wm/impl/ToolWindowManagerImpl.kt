@@ -152,7 +152,7 @@ private typealias Mutation = ((WindowInfoImpl) -> Unit)
 @ApiStatus.Internal
 open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   val project: Project,
-  @field:JvmField internal val isNewUi: Boolean,
+  @ApiStatus.Internal @field:JvmField val isNewUi: Boolean,
   private val isEdtRequired: Boolean,
   @JvmField internal val coroutineScope: CoroutineScope,
 ) : ToolWindowManagerEx(), Disposable {
@@ -1236,6 +1236,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         task.id
       },
     )
+    toolWindow.stripeButtonDefault = shouldShowStripeButtonByDefault(task.id, task.contentFactory, task.pluginDescriptor, isNewUi)
     if (task.hideOnEmptyContent) {
       toolWindow.setToHideOnEmptyContent(true)
     }
@@ -1317,7 +1318,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
   internal fun isButtonNeeded(task: RegisterToolWindowTaskData, info: WindowInfoImpl?, stripeManager: ToolWindowStripeManager): Boolean {
     return (task.shouldBeAvailable
-            && (info?.isShowStripeButton ?: !(isNewUi && isToolwindowOfBundledPlugin(task)))
+            && (info?.isShowStripeButton ?: shouldShowStripeButtonByDefault(task.id, task.contentFactory, task.pluginDescriptor, isNewUi))
             && stripeManager.allowToShowOnStripe(task.id, info == null, isNewUi))
   }
 

@@ -141,6 +141,17 @@ private val LOG = logger<ToolWindowManagerImpl>()
   @JvmField
   var windowInfoDuringInit: WindowInfoImpl? = null
 
+  /**
+   * The stripe button default for a registration without a saved layout entry.
+   * Registration sets the plugin default. Each explicit [setShowStripeButton] call replaces this value.
+   * The frontend uses the value from the first model publication in the New UI.
+   * Publication can follow registration for a lazy host window. Later changes do not update an existing frontend window.
+   * The current layout state is stored in [windowInfo].
+   */
+  @Volatile
+  var stripeButtonDefault: Boolean = true
+    internal set
+
   private val focusTask by lazy { FocusTask(this) }
   val focusAlarm: SingleAlarm by lazy { SingleAlarm(focusTask, 0, parentDisposable) }
 
@@ -747,6 +758,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
   fun isToHideOnEmptyContent(): Boolean = hideOnEmptyContent
 
   override fun setShowStripeButton(value: Boolean) {
+    stripeButtonDefault = value
     val windowInfoDuringInit = windowInfoDuringInit
     if (windowInfoDuringInit == null) {
       toolWindowManager.setShowStripeButton(id, value)
