@@ -3,7 +3,7 @@ package com.intellij.platform.util.io.storages.database.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.platform.util.io.storages.database.DurableDatabaseFactory;
+import com.intellij.platform.util.io.storages.database.DurableDatabaseSafety;
 import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.IOUtil;
@@ -214,7 +214,7 @@ final class DatabaseChunks implements Closeable, Flushable {
 
   private void ensureChunkStateIsConsistentWithCatalog(@NotNull DatabaseChunk chunk) {
     //We checked the consistency once, on DB startup recovery, so this check is only needed if we really go paranoid
-    if (DurableDatabaseFactory.ENABLE_SELF_CHECKS) {
+    if (DurableDatabaseSafety.selfChecksEnabled()) {
       // Chunk state is duplicated: Catalog keeps it as a part of DB metadata -- while DatabaseChunk itself keeps it in its
       // header. Those states must be in sync, but they could diverge e.g. on crash: chunk header is changed first, DB catalog
       // after it, so there is a time-window for crash to leave chunk updated by DB catalog stale. So, lets re-check:
