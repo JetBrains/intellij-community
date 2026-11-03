@@ -49,6 +49,8 @@ jvm_library(
         "//platform/compose",
         "//plugins/devkit/devkit-core:core",
         "//platform/analysis-api:analysis",
+        "//platform/consoleView",
+        "//platform/consoleView/impl",
     ],
 )
 ### auto-generated section `build intellij.devkit.threading` end
