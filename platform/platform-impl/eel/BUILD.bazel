@@ -1,3 +1,4 @@
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
@@ -5,6 +6,13 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 ### auto-generated section `dev intellij.platform.ide.impl.wsl` start
 content_module_jar(module = ":ide-impl-wsl")
 ### auto-generated section `dev intellij.platform.ide.impl.wsl` end
+
+jps_test(
+    name = "ide-impl-wsl-tests_test",
+    tags = ["community-aggregator"],
+    runtime_deps = [":ide-impl-wsl-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.ide.impl.wsl.tests`
 
 ### auto-generated section `build intellij.platform.ide.impl.wsl` start
 create_kotlinc_options(
@@ -66,3 +74,43 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.ide.impl.wsl` end
+
+### auto-generated section `build intellij.platform.ide.impl.wsl.tests` start
+create_kotlinc_options(
+    name = "custom_ide-impl-wsl-tests",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "ide-impl-wsl-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//platform/platform-impl/eel:ide-impl-wsl"],
+    kotlinc_opts = ":custom_ide-impl-wsl-tests",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit6",
+        "//libraries/junit6-params",
+        "//platform/testFramework/junit5",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.impl.wsl.tests` end
+
+### auto-generated section `iml intellij.platform.ide.impl.wsl.tests` start
+exports_files(
+    [
+        "intellij.platform.ide.impl.wsl.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.impl.wsl.tests` end

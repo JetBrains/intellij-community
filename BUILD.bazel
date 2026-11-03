@@ -369,6 +369,7 @@ jvm_library(
         "//python:python-community-tests_test_lib",
         "//python/python-markdown:markdown-tests_test_lib",
         "//plugins/settings-repository:settingsRepository-tests_test_lib",
+        "//platform/platform-impl/eel:ide-impl-wsl-tests_test_lib",
     ],
     deps = [
         # do not sort,
