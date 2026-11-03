@@ -4,7 +4,7 @@ package org.jetbrains.eval4j.jdi.test;
 
 @SuppressWarnings("ResultOfMethodCallIgnored")
 public final class Debugee {
-    public static void main(String[] args) {
+    static void main() {
         // BREAKPOINT
         Runtime.getRuntime();
         System.out.println("hi");
