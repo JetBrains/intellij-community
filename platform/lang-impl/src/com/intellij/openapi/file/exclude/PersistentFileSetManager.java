@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -9,13 +8,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
-import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.SmartList;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
@@ -48,6 +47,12 @@ public abstract class PersistentFileSetManager implements PersistentStateCompone
   private final Map<VirtualFile, String> resolved = new ConcurrentHashMap<>();
   private final Map<String, String> pending = new HashMap<>();
   private volatile Set<String> pendingNames = Set.of();
+
+  private final CoroutineScope coroutineScope;
+
+  protected PersistentFileSetManager(@NotNull CoroutineScope coroutineScope) {
+    this.coroutineScope = coroutineScope;
+  }
 
   boolean addFile(@NotNull VirtualFile file, @NotNull FileType type) {
     return addFiles(Collections.singletonMap(file, type));
@@ -147,12 +152,16 @@ public abstract class PersistentFileSetManager implements PersistentStateCompone
     pendingNames = Set.copyOf(names);
   }
 
-  private static void onFileSettingsChanged(@NotNull Collection<? extends VirtualFile> files) {
-    // later because component load could be performed in background
-    ApplicationManager.getApplication().invokeLater(() -> {
-      CachedFileType.clearCache();
-      FileContentUtilCore.reparseFiles(files);
-    });
+  /**
+   * Waits until the reparse of the changed files ends.
+   */
+  @TestOnly
+  public void waitForReparse() {
+    PersistentFileSetReparse.waitForReparse(coroutineScope);
+  }
+
+  private void onFileSettingsChanged(@NotNull Collection<? extends VirtualFile> files) {
+    PersistentFileSetReparse.scheduleReparse(coroutineScope, List.copyOf(files));
   }
 
   /**

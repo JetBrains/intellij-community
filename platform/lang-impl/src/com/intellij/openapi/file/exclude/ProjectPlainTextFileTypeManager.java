@@ -6,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,10 @@ import java.util.LinkedHashMap;
 @Deprecated(forRemoval = true)
 @State(name = "ProjectPlainTextFileTypeManager")
 public final class ProjectPlainTextFileTypeManager extends PersistentFileSetManager {
+  public ProjectPlainTextFileTypeManager(@NotNull CoroutineScope coroutineScope) {
+    super(coroutineScope);
+  }
+
   public static ProjectPlainTextFileTypeManager getInstance(@NotNull Project project) {
     return project.getService(ProjectPlainTextFileTypeManager.class);
   }

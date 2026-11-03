@@ -23,9 +23,7 @@ import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -48,20 +46,20 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     FileType originalType = xml.getFileType();
     assertEquals(StdFileTypes.XML, originalType);
     manager.addFile(xml, PlainTextFileType.INSTANCE);
-    UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
+    manager.waitForReparse();
     assertEquals(PlainTextFileType.INSTANCE, xml.getFileType());
     assertTrue(FileTypeManager.getInstance().isFileOfType(xml, PlainTextFileType.INSTANCE));
     assertFalse(FileTypeManager.getInstance().isFileOfType(xml, StdFileTypes.XML));
     manager.removeFile(xml);
-    UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
+    manager.waitForReparse();
     FileType revertedType = xml.getFileType();
     assertEquals(originalType, revertedType);
 
     manager.addFile(xml, ArchiveFileType.INSTANCE);
-    UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
+    manager.waitForReparse();
     assertEquals(ArchiveFileType.INSTANCE, xml.getFileType());
     manager.removeFile(xml);
-    UIUtil.dispatchAllInvocationEvents(); // reparseFiles in invokeLater
+    manager.waitForReparse();
     assertEquals(originalType, xml.getFileType());
   }
 
@@ -69,7 +67,7 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     var manager = OverrideFileTypeManager.getInstance();
     var xml = myFixture.getTempDirFixture().createFile("test.xml");
     manager.addFile(xml, ArchiveFileType.INSTANCE);
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+    manager.waitForReparse();
     try {
       var lightFile = new LightVirtualFile("test.xml", PlainTextFileType.INSTANCE, "");
       assertEquals(PlainTextFileType.INSTANCE, lightFile.getFileType());
@@ -77,7 +75,7 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     }
     finally {
       manager.removeFile(xml);
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      manager.waitForReparse();
     }
   }
 
@@ -86,7 +84,7 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     var xml = myFixture.getTempDirFixture().createFile("test.xml");
     try {
       manager.loadState(state(xml.getUrl(), ArchiveFileType.INSTANCE.getName()));
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      manager.waitForReparse();
       assertEquals(ArchiveFileType.INSTANCE, xml.getFileType());
       assertEquals(ArchiveFileType.INSTANCE.getName(), manager.getFileValue(xml));
     }
@@ -100,7 +98,7 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     var dir = myFixture.getTempDirFixture().findOrCreateDir("dir");
     try {
       manager.loadState(state(dir.getUrl() + "/test.xml", ArchiveFileType.INSTANCE.getName()));
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      manager.waitForReparse();
       var xml = myFixture.getTempDirFixture().createFile("dir/test.xml");
       assertEquals(ArchiveFileType.INSTANCE, xml.getFileType());
       assertEquals(ArchiveFileType.INSTANCE.getName(), manager.getFileValue(xml));
@@ -115,7 +113,7 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     var url = myFixture.getTempDirFixture().findOrCreateDir("dir").getUrl() + "/missing/test.xml";
     try {
       manager.loadState(state(url, ArchiveFileType.INSTANCE.getName()));
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      manager.waitForReparse();
       var file = assertOneElement(manager.getState().getChildren("file"));
       assertEquals(url, file.getAttributeValue("url"));
       assertEquals(ArchiveFileType.INSTANCE.getName(), file.getAttributeValue("value"));
@@ -149,7 +147,7 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     var dir = myFixture.getTempDirFixture().findOrCreateDir("dir");
     try {
       manager.loadState(state(dir.getUrl() + "/test.xml", ArchiveFileType.INSTANCE.getName()));
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      manager.waitForReparse();
       var xml = myFixture.getTempDirFixture().createFile("dir/test.xml");
       assertTrue(manager.removeFile(xml));
       assertEmpty(manager.getState().getChildren("file"));
@@ -165,14 +163,14 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     var xml = myFixture.getTempDirFixture().createFile("test.xml");
     try {
       manager.addFile(xml, ArchiveFileType.INSTANCE);
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      manager.waitForReparse();
       assertEquals(ArchiveFileType.INSTANCE, xml.getFileType());
       var psiManager = PsiManager.getInstance(getProject());
       var binaryPsi = psiManager.findFile(xml);
       assertInstanceOf(binaryPsi, PsiBinaryFile.class);
 
       manager.loadState(state(xml.getUrl(), null));
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      manager.waitForReparse();
       assertEquals(PlainTextFileType.INSTANCE, xml.getFileType());
       var textPsi = psiManager.findFile(xml);
       assertNotNull(textPsi);
@@ -195,7 +193,7 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
     var manager = emptyManager();
     try {
       manager.loadState(state(VfsUtilCore.pathToUrl(xmlSystemPath), ArchiveFileType.INSTANCE.getName()));
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      manager.waitForReparse();
       assertNull(localFileSystem.findFileByPathIfCached(FileUtil.toSystemIndependentName(sub.toString())));
 
       var xml = localFileSystem.refreshAndFindFileByPath(xmlSystemPath);
@@ -228,7 +226,7 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
       assertNotNull(entry);
 
       manager.addFile(entry, PlainTextFileType.INSTANCE);
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+      manager.waitForReparse();
       var file = assertOneElement(manager.getState().getChildren("file"));
       assertEquals(entry.getUrl(), file.getAttributeValue("url"));
       assertTrue(entry.getUrl(), entry.getUrl().startsWith("jar://"));
@@ -256,7 +254,7 @@ public class OverrideFileTypeManagerTest extends BasePlatformTestCase {
 
   private static void reset(@NotNull OverrideFileTypeManager manager) {
     manager.loadState(new Element("root"));
-    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue(); // reparseFiles in invokeLater
+    manager.waitForReparse();
   }
 
   public void testMustNotBeAbleToOverrideNotOverridableFileType() throws IOException {

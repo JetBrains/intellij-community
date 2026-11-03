@@ -16,6 +16,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,6 +28,10 @@ import org.jetbrains.annotations.NotNull;
   exportable = true,
   storages = @Storage(value = "overrideFileTypes.xml", roamingType = RoamingType.DISABLED))
 public final class OverrideFileTypeManager extends PersistentFileSetManager {
+  public OverrideFileTypeManager(@NotNull CoroutineScope coroutineScope) {
+    super(coroutineScope);
+  }
+
   public boolean isMarkedPlainText(@NotNull VirtualFile file) {
     return PlainTextFileType.INSTANCE.getName().equals(getFileValue(file));
   }
