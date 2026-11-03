@@ -462,7 +462,7 @@ internal class SnapshotCustomFoldRegion(
   override fun update() {
     ThreadingAssertions.assertEventDispatchThread()
     if (editorImpl.isDisposed || !isValid) return
-    if (editorImpl.myDocumentChangeInProgress) {
+    if (editorImpl.isDocumentChangeInProgress) {
       throw IllegalStateException("A custom fold region cannot update during a document change")
     }
     val oldWidth = width

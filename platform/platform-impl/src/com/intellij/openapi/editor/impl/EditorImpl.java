@@ -535,7 +535,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myCharKeyPressed;
   private boolean myNeedToSelectPreviousChar;
 
-  boolean myDocumentChangeInProgress;
+  private boolean myDocumentChangeInProgress;
   /**
    * A text range of the current repaint request for {@link #myMarkupModel}.{@link EditorMarkupModelImpl#repaint(int, int)}.
    * Offsets are packed into a long for atomicity, because range highlighters can be changed in BGT.
@@ -2256,6 +2256,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean isDocumentInBulkUpdate() {
     return getElfDocument().isInBulkUpdate();
+  }
+
+  /**
+   * Whether the editor processes a document change.
+   * It is true from {@link #beforeChangedUpdate} to {@link #changedUpdate}.
+   */
+  boolean isDocumentChangeInProgress() {
+    return myDocumentChangeInProgress;
   }
 
   private boolean isShowing() {
