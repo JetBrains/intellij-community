@@ -104,7 +104,7 @@ public final class ConstantPoolParser {
     }
   }
 
-  public static void main(String[] args) {
+  static void main() {
     System.out.println("Is java id \uD83D\uDC69\u200D: " + StringUtil.isJavaIdentifier("\uD83D\uDC69\u200D"));
   }
 }

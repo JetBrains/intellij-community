@@ -31,7 +31,7 @@ import java.util.zip.ZipOutputStream;
 
 public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static void main(String[] args) {
+  static void main(String[] args) {
     if (args.length < 2) {
       System.out.println(
         "Usage: java -jar fernflower.jar [-<option>=<value>]* [<source>]+ <destination>\n" +
