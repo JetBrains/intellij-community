@@ -113,6 +113,8 @@ class NioFileSystemTree(
       }
 
       override fun treeCollapsed(event: TreeExpansionEvent) {
+        val nioPath = getNioPath(event.path) ?: return
+        fileTreeModel.cancelLoading(nioPath)
       }
     })
 
