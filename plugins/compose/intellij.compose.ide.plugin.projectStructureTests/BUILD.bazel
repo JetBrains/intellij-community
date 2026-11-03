@@ -1,6 +1,16 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "ide-plugin-projectStructureTests_test",
+    timeout = "moderate",
+    tags = [
+        "compose-ide-plugin-structure-tests",
+    ],
+    runtime_deps = [":ide-plugin-projectStructureTests_test_lib"],
+)
+### skip generation section `test intellij.compose.ide.plugin.projectStructureTests`
+
 ### auto-generated section `build intellij.compose.ide.plugin.projectStructureTests` start
 jvm_library(
     name = "ide-plugin-projectStructureTests_test_lib",
@@ -36,10 +46,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.compose.ide.plugin.projectStructureTests` end
-
-### auto-generated section `test intellij.compose.ide.plugin.projectStructureTests` start
-jps_test(
-    name = "ide-plugin-projectStructureTests_test",
-    runtime_deps = [":ide-plugin-projectStructureTests_test_lib"],
-)
-### auto-generated section `test intellij.compose.ide.plugin.projectStructureTests` end
