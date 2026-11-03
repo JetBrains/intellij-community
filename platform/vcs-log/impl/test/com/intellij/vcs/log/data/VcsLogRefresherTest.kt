@@ -2,7 +2,10 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ExceptionUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.TimedCommitParser
@@ -13,24 +16,33 @@ import com.intellij.vcs.log.impl.TestVcsLogProvider
 import com.intellij.vcs.log.impl.TimedVcsCommitImpl
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.impl.VcsRefImpl
-import com.intellij.vcs.test.VcsPlatformTest
-import junit.framework.TestCase
+import com.intellij.vcs.test.vcsPlatformContextFixture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.fail
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.function.Consumer
 import kotlin.concurrent.Volatile
 
 private const val RECENT_COMMITS_COUNT = 2
 
-class VcsLogRefresherTest : VcsPlatformTest() {
+private val LOG = Logger.getInstance(VcsLogRefresherTest::class.java)
+
+@TestApplication
+class VcsLogRefresherTest {
+  private val fixture = vcsPlatformContextFixture()
+  private val project get() = fixture.get().project
+  private val projectRoot get() = fixture.get().projectRoot
+
   private lateinit var logProvider: TestVcsLogProvider
   private lateinit var testCs: CoroutineScope
   private lateinit var logData: VcsLogData
@@ -41,16 +53,14 @@ class VcsLogRefresherTest : VcsPlatformTest() {
 
   private lateinit var commits: List<String>
 
-  @Throws(Exception::class)
-  public override fun setUp() {
-    super.setUp()
-
+  @BeforeEach
+  fun setUp() {
     logProvider = TestVcsLogProvider()
     val logProviders = mapOf(projectRoot to logProvider)
 
     commits = listOf("3|-a2|-a1", "2|-a1|-a", "1|-a|-")
     logProvider.appendHistory(TimedCommitParser.log(commits))
-    logProvider.addRef(createBranchRef("master", "a2"))
+    logProvider.addRef(createBranchRef("master", "a2", projectRoot))
     @Suppress("RAW_SCOPE_CREATION")
     testCs = CoroutineScope(SupervisorJob())
     logData = VcsLogData(project, testCs, logProviders, LoggingErrorHandler(LOG), VcsLogSharedSettings.isIndexSwitchedOn(project))
@@ -60,39 +70,31 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     loader = refresherTestHelper.loader
   }
 
-  public override fun tearDown() {
-    try {
-      refresherTestHelper.tearDown()
-      runBlocking {
-        testCs.coroutineContext.job.cancelAndJoin()
+  @AfterEach
+  fun tearDown() {
+    runAll(
+      { refresherTestHelper.tearDown() },
+      {
+        runBlocking {
+          testCs.coroutineContext.job.cancelAndJoin()
+        }
       }
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+    )
   }
 
-  override fun getDebugLogCategories(): Collection<String> {
-    return listOf("#" + SingleTaskController::class.java.getName(), "#" + VcsLogRefresherImpl::class.java.getName(),
-                  "#" + VcsLogRefresherTest::class.java.getName(), "#" + TestVcsLogProvider::class.java.getName())
-  }
-
-  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+  @Test
   fun test_initialize_shows_short_history() {
     logProvider.blockFullLog()
     loader.initialize()
     val result = dataWaiter.get()
     logProvider.unblockFullLog()
-    assertNotNull(result)
+    assertThat(result).isNotNull()
     assertDataPack(TimedCommitParser.log(commits.subList(0, RECENT_COMMITS_COUNT)), result.permanentGraph.allCommits)
     refresherTestHelper.waitForBackgroundTasksToComplete()
     dataWaiter.get()
   }
 
-  @Throws(InterruptedException::class)
+  @Test
   fun test_first_refresh_reports_full_history() {
     loader.initialize()
 
@@ -103,7 +105,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     assertDataPack(TimedCommitParser.log(commits), fullDataPack.permanentGraph.allCommits)
   }
 
-  @Throws(InterruptedException::class)
+  @Test
   fun test_first_refresh_waits_for_full_log() {
     logProvider.blockFullLog()
     loader.initialize()
@@ -115,7 +117,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     assertDataPack(TimedCommitParser.log(commits), result.permanentGraph.allCommits)
   }
 
-  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+  @Test
   fun test_refresh_captures_new_commits() {
     refresherTestHelper.initAndWaitForFirstRefresh()
 
@@ -130,17 +132,17 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     assertDataPack(TimedCommitParser.log(allCommits), result.permanentGraph.allCommits)
   }
 
-  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+  @Test
   fun test_single_refresh_causes_single_data_read() {
     refresherTestHelper.initAndWaitForFirstRefresh()
 
     logProvider.resetReadFirstBlockCounter()
     loader.refresh(listOf(projectRoot), false)
     dataWaiter.get()
-    TestCase.assertEquals("Unexpected first block read count", 1, logProvider.getReadFirstBlockCounter())
+    assertThat(logProvider.getReadFirstBlockCounter()).describedAs("Unexpected first block read count").isEqualTo(1)
   }
 
-  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+  @Test
   fun test_reinitialize_makes_refresh_cancelled() {
     refresherTestHelper.initAndWaitForFirstRefresh()
 
@@ -158,7 +160,7 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     refresherTestHelper.assertNoMoreResultsArrive()
   }
 
-  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
+  @Test
   fun test_two_immediately_consecutive_refreshes_causes_only_one_data_pack_update() {
     refresherTestHelper.initAndWaitForFirstRefresh()
     logProvider.blockRefresh()
@@ -177,59 +179,53 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     val loader = VcsLogRefresherImpl(cs, project, logData.storage, logData.logProviders, VcsLogProgress(project),
                                      null, dataWaiter, recentCommitsCount)
 
-    @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
     fun initAndWaitForFirstRefresh() {
       // wait for the first block and the whole log to complete
       loader.initialize()
 
       val firstDataPack = dataWaiter.get()
-      assertFalse(firstDataPack.isFull)
+      assertThat(firstDataPack.isFull).isFalse()
 
       val fullDataPack = dataWaiter.get()
-      assertTrue(fullDataPack.isFull)
+      assertThat(fullDataPack.isFull).isTrue()
       assertNoMoreResultsArrive()
     }
 
-    @Throws(ExecutionException::class, InterruptedException::class, TimeoutException::class)
     fun tearDown() {
       assertNoMoreResultsArrive()
       dataWaiter.tearDown()
       if (dataWaiter.failed()) {
-        fail("Only one refresh should have happened, an error happened instead: " + dataWaiter.exceptionText)
+        fail<Unit>("Only one refresh should have happened, an error happened instead: " + dataWaiter.exceptionText)
       }
     }
 
-    @Throws(InterruptedException::class)
     fun assertTimeout(message: String) {
-      assertNull(message, dataWaiter.queue.poll(500, TimeUnit.MILLISECONDS))
+      assertThat(dataWaiter.queue.poll(500, TimeUnit.MILLISECONDS)).describedAs(message).isNull()
     }
 
-    @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
     fun assertNoMoreResultsArrive() {
       waitForBackgroundTasksToComplete()
-      assertTrue(dataWaiter.queue.isEmpty())
+      assertThat(dataWaiter.queue).isEmpty()
     }
 
-    @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
     fun waitForBackgroundTasksToComplete() {
       runBlocking {
         loader.awaitNotBusy()
       }
     }
-
   }
 
   private fun assertDataPack(expectedLog: List<TimedVcsCommit>, actualLog: List<GraphCommit<Int>>) {
     fun getHash(commitIndex: Int): Hash = logData.getCommitId(commitIndex)!!.hash
 
-    val convertedActualLog = actualLog.map { commit ->
+    val convertedActualLog: List<TimedVcsCommit> = actualLog.map { commit ->
       TimedVcsCommitImpl(getHash(commit.getId()), commit.getParents().map(::getHash), commit.getTimestamp())
     }
-    assertOrderedEquals(convertedActualLog, expectedLog)
+    assertThat(convertedActualLog).containsExactlyElementsOf(expectedLog)
   }
 
-  private fun createBranchRef(name: String, commit: String): VcsRefImpl {
-    return VcsRefImpl(HashImpl.build(commit), name, TestVcsLogProvider.BRANCH_TYPE, projectRoot)
+  private fun createBranchRef(name: String, commit: String, root: VirtualFile): VcsRefImpl {
+    return VcsRefImpl(HashImpl.build(commit), name, TestVcsLogProvider.BRANCH_TYPE, root)
   }
 
   private class DataWaiter : Consumer<VcsLogGraphData> {
@@ -251,8 +247,6 @@ class VcsLogRefresherTest : VcsPlatformTest() {
       }
     }
 
-    @JvmOverloads
-    @Throws(InterruptedException::class)
     fun get(timeout: Long = 1, timeUnit: TimeUnit = TimeUnit.SECONDS): VcsLogGraphData {
       return queue.poll(timeout, timeUnit)!!
     }
@@ -267,9 +261,5 @@ class VcsLogRefresherTest : VcsPlatformTest() {
     fun tearDown() {
       _queue = null
     }
-  }
-
-  companion object {
-    private val LOG = Logger.getInstance(VcsLogRefresherTest::class.java)
   }
 }
