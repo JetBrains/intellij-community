@@ -1,8 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.folding
 
-
 class JavaFolding14Test : JavaFoldingTestCase() {
+
+  fun testTextBlock() {
+    val text = """
+      String x = ""${'"'}
+        @InProceedings{6055279,  Title                    = {Educational session 1},
+          Booktitle                = {Custom Integrated Circuits Conference (CICC), 2011 IEEE},
+          Year                     = {2011},
+          Month                    = {Sept},
+        ""${'"'};
+    """.trimIndent()
+    configure(text)
+
+    val regions = myFixture.editor.foldingModel.allFoldRegions
+    assertEquals(
+      "FoldRegion -(11:267), placeholder='\"\"${'"'}@InProceedings{6055279,  Title                    = {Educational session 1},...'",
+      regions.joinToString("\n"))
+  }
 
   fun testRecord() {
     val text = """
