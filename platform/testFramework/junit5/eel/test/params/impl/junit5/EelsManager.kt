@@ -85,12 +85,11 @@ internal class EelsManager private constructor(private val eelHolders: List<EelH
       for (eelHolder in eelHolders) {
         when (eelHolder) {
           is EelHolderImpl<*> -> {
-            val (eel, eelType, legacyTarget, closable) = eelHolder.startIjentProvider(scope)
+            val (eel, legacyTarget, closable) = eelHolder.startIjentProvider(scope)
             closable?.let {
               closeAfterTest.add(it)
             }
             eelHolder.eel = eel
-            eelHolder.type = eelType
             eelHolder.target = if (useLegacyTargets) legacyTarget() else EelTargetEnvironmentRequest.Configuration(eel)
             testContext.store.put(REMOTE_EEL_EXECUTED, true)
           }
@@ -125,10 +124,18 @@ internal class EelsManager private constructor(private val eelHolders: List<EelH
 }
 
 
+/**
+ * Starts the environment of this holder. [EelFixtureFilter] has a higher priority than a mandatory annotation:
+ * a disabled environment aborts the test and does not start.
+ */
 @TestOnly
-private suspend fun <T : Annotation> EelHolderImpl<T>.startIjentProvider(
+internal suspend fun <T : Annotation> EelHolderImpl<T>.startIjentProvider(
   scope: ParentOfIjentScopes,
 ): Started {
+  val filter = EelFixtureFilter.instance
+  if (!isEnabled(filter)) {
+    throw TestAbortedException("$this is disabled by -Deel.test.fixtures: $filter")
+  }
   val provider = this.eelTestProvider
   when (val r = provider.start(scope, annotation)) {
     is Started -> {

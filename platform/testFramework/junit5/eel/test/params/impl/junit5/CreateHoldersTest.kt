@@ -2,6 +2,7 @@
 package com.intellij.platform.testFramework.junit5.eel.params.impl.junit5
 
 import com.intellij.platform.ijent.ParentOfIjentScopes
+import com.intellij.platform.testFramework.junit5.eel.params.api.EelType
 import com.intellij.platform.testFramework.junit5.eel.params.api.WslTest
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelIjentTestProvider
 import com.intellij.platform.testFramework.junit5.eel.params.spi.EelIjentTestProvider.StartResult
@@ -59,8 +60,9 @@ private class NotAnnotatedClass {
   fun noAnnotation(): Unit = Unit
 }
 
-private object FakeWslProvider : EelIjentTestProvider<WslTest> {
+internal object FakeWslProvider : EelIjentTestProvider<WslTest> {
   override val name: String = "fake WSL"
+  override val eelType: EelType = EelType.Wsl
   override val mandatoryAnnotationClass = WslTest::class
 
   override suspend fun start(scope: ParentOfIjentScopes, annotation: WslTest?): StartResult =

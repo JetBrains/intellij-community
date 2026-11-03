@@ -16,6 +16,7 @@ import kotlin.reflect.KClass
 @TestOnly
 interface EelIjentTestProvider<T : Annotation> {
   val name: String
+  val eelType: EelType
   val mandatoryAnnotationClass: KClass<T>
 
   suspend fun start(scope: ParentOfIjentScopes, annotation: T?): StartResult
@@ -27,7 +28,6 @@ interface EelIjentTestProvider<T : Annotation> {
     data class Skipped(val skippedReason: String) : StartResult
     data class Started(
       val eel: IjentApi,
-      val eelType: EelType,
       val legacyTargetConfig: ()-> TargetEnvironmentConfiguration,
       val closeable: Closeable? = null,
     ) : StartResult

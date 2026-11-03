@@ -16,7 +16,7 @@ import org.jetbrains.annotations.TestOnly
 @TestOnly
 internal class EelHolderImpl<T : Annotation>(val eelTestProvider: EelIjentTestProvider<T>, val annotation: T?) : EelHolder {
   override lateinit var eel: IjentApi
-  override lateinit var type: EelType
+  override val type: EelType get() = eelTestProvider.eelType
   override lateinit var target: TargetEnvironmentConfiguration
 
   override fun toString(): String = buildString {
