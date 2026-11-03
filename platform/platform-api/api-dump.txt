@@ -7618,14 +7618,6 @@ c:com.intellij.ui.components.DropDownLink
 - p:performAction():V
 - p:popupPoint():java.awt.Point
 - f:setSelectedItem(java.lang.Object):V
-c:com.intellij.ui.components.FixedColumnsModel
-- com.intellij.ui.components.MultiColumnListModel
-- <init>(javax.swing.ListModel,I):V
-- getColumn(I):I
-- getColumnCount():I
-- getRow(I):I
-- getRowCount():I
-- toListIndex(I,I):I
 com.intellij.ui.components.Interpolable
 - a:getTargetValue():I
 - a:getValue():I
@@ -8214,27 +8206,6 @@ c:com.intellij.ui.components.JBViewport
 com.intellij.ui.components.Magnificator
 - sf:CLIENT_PROPERTY_KEY:com.intellij.openapi.util.Key
 - a:magnify(D,java.awt.Point):java.awt.Point
-c:com.intellij.ui.components.MultiColumnList
-- javax.swing.JTable
-- <init>(javax.swing.ListModel):V
-- <init>(java.lang.Object[]):V
-- getDelegate():javax.swing.JList
-- getModel():com.intellij.ui.components.MultiColumnListModel
-- getPreferredSize():java.awt.Dimension
-- s:main(java.lang.String[]):V
-- p:processKeyEvent(java.awt.event.KeyEvent):V
-- setCellRenderer(javax.swing.ListCellRenderer):V
-- setFixedColumnsMode(I):V
-- setFixedRowsMode(I):V
-a:com.intellij.ui.components.MultiColumnListModel
-- javax.swing.table.AbstractTableModel
-- javax.swing.table.TableModel
-- <init>(javax.swing.ListModel):V
-- a:getColumn(I):I
-- a:getRow(I):I
-- getSize():I
-- getValueAt(I,I):java.lang.Object
-- a:toListIndex(I,I):I
 c:com.intellij.ui.components.OnOffButton
 - javax.swing.JToggleButton
 - <init>():V
