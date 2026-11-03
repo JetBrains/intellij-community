@@ -299,6 +299,7 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
       when (info.bookmark) {
         allowed -> return
         is LineBookmark -> removeFromAllGroups(info.bookmark)
+        is InvalidBookmark if info.bookmark.line >= 0 -> removeFromAllGroups(info.bookmark)
         else -> info.changeType(BookmarkType.DEFAULT)
       }
       removeMemorialsOf(info.bookmark, except = allowed)

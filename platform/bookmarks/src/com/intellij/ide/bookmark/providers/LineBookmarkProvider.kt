@@ -197,7 +197,14 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
   private val TreePath.asVirtualFile
     get() = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this)?.virtualFile
 
+  private var lineTextsBeforeWholeTextReplace: Pair<Document, Map<LineBookmarkImpl, String>>? = null
+
   private inner class BookmarkDocumentListener : BulkAwareDocumentListener {
+    override fun beforeDocumentChange(event: DocumentEvent) {
+      if (event.isWholeTextReplaced) captureLineTexts(event.document)
+      super.beforeDocumentChange(event)
+    }
+
     override fun beforeDocumentChangeNonBulk(event: DocumentEvent): Unit = captureExpectedText(event.document)
     override fun bulkUpdateStarting(document: Document): Unit = captureExpectedText(document)
 
@@ -214,13 +221,27 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     }
   }
 
+  private fun captureLineTexts(document: Document) {
+    val file = FileDocumentManager.getInstance().getFile(document) ?: return
+    val manager = BookmarksManager.getInstance(project) ?: return
+    val lineTexts = hashMapOf<LineBookmarkImpl, String>()
+    for (bookmark in manager.bookmarks) {
+      if (bookmark is LineBookmarkImpl && bookmark.file == file) {
+        Util.readLineText(document, bookmark.line)?.let { lineTexts[bookmark] = it }
+      }
+    }
+    lineTextsBeforeWholeTextReplace = document to lineTexts
+  }
+
   private fun afterDocumentChange(document: Document, event: DocumentEvent?) {
+    val lineTextsBefore = lineTextsBeforeWholeTextReplace?.takeIf { it.first === document }?.second.orEmpty()
+    lineTextsBeforeWholeTextReplace = null
     val file = FileDocumentManager.getInstance().getFile(document) ?: return
     if (file is LightVirtualFile) return
     val manager = BookmarksManager.getInstance(project) ?: return
 
     if (event != null && event.isWholeTextReplaced) {
-      if (updateBookmarksUsingDiffMapping(file, document, event, manager)) {
+      if (updateBookmarksUsingDiffMapping(file, document, event, manager, lineTextsBefore)) {
         return
       }
     }
@@ -298,13 +319,15 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     file: VirtualFile,
     indexBuilder: LineTextIndexBuilder,
     processedLines: MutableSet<Int>,
-    updates: MutableMap<Bookmark, Bookmark?>
+    updates: MutableMap<Bookmark, Bookmark?>,
+    lineTextBefore: String?,
   ) {
     val mappedLine = event.translateLineViaDiffStrict(bookmark.line)
     val expectedText = bookmark.expectedText
+    val mappedLineText = Util.readLineText(document, mappedLine)
 
     when {
-      mappedLine >= 0 && mappedLine < document.lineCount && expectedText == Util.readLineText(document, mappedLine) -> {
+      mappedLineText != null && (mappedLineText == expectedText || mappedLineText == lineTextBefore) -> {
         if (processedLines.add(mappedLine)) {
           if (bookmark.line != mappedLine) {
             updates[bookmark] = bookmark.movedTo(mappedLine)
@@ -403,7 +426,8 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     file: VirtualFile,
     document: Document,
     event: DocumentEvent,
-    manager: BookmarksManager
+    manager: BookmarksManager,
+    lineTextsBefore: Map<LineBookmarkImpl, String>,
   ): Boolean {
     if (event !is DocumentEventImpl) {
       return false
@@ -418,7 +442,7 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
       val invalidBookmarks = manager.bookmarks.filterIsInstance<InvalidBookmark>().filter { it.url == file.url }
 
       for (bookmark in lineBookmarks) {
-        updateLineBookmark(bookmark, event, document, file, indexBuilder, processedLines, updates)
+        updateLineBookmark(bookmark, event, document, file, indexBuilder, processedLines, updates, lineTextsBefore[bookmark])
       }
       for (bookmark in invalidBookmarks) {
         tryRestoreInvalidBookmark(bookmark, file, document, event, indexBuilder, processedLines, updates)
