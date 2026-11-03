@@ -30,7 +30,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.gradle.java.plugin",
   "intellij.vcs.git",
   "intellij.vcs.git.commit.modal",
-  "intellij.vcs.github",
+  "intellij.vcs.github.plugin",
   "intellij.vcs.gitlab",
   "intellij.groovy.scripting",
   "intellij.groovy",
