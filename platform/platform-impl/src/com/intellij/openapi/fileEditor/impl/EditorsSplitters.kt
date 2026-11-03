@@ -926,11 +926,12 @@ open class EditorsSplitters internal constructor(
     val frame = getFrame() ?: return
     // the frame shows the editors of its active project; the editors of another project of the frame leave the title alone
     val frameOwner = frame.project
-    if (frameOwner != null && activeProjectOf(frameOwner) !== project) return
+    fun showsThisProject(): Boolean = frameOwner == null || FrameGuests.activeProjectOf(frameOwner) === project
+    if (!showsThisProject()) return
     val file = currentCompositeFlow.value?.file
     if (file == null) {
       withContext(Dispatchers.EDT) {
-        frame.setFileTitle(null, null)
+        if (showsThisProject()) frame.setFileTitle(null, null)
       }
     }
     else {
@@ -942,7 +943,8 @@ open class EditorsSplitters internal constructor(
         null
       }
       withContext(Dispatchers.EDT) {
-        frame.setFileTitle(title, ioFile)
+        // the active project can change while the title is computed; the title of the former active project stays out of the frame
+        if (showsThisProject()) frame.setFileTitle(title, ioFile)
       }
     }
   }
