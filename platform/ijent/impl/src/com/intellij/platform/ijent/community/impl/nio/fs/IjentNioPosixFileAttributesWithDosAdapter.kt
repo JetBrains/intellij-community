@@ -9,8 +9,6 @@ import com.intellij.platform.ijent.community.impl.nio.EelPosixUserPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPosixFileAttributes
 import com.intellij.platform.util.annotations.VisibleToClasses
-import com.intellij.util.system.LowLevelLocalMachineAccess
-import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.LinkOption
 import java.nio.file.Path
@@ -46,12 +44,11 @@ private fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapter():
   }
 }
 
-@OptIn(LowLevelLocalMachineAccess::class)
 @VisibleToClasses(
   "com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwarePath",
 )
-internal fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded(): BasicFileAttributes? =
-  if (OS.CURRENT == OS.Windows) getCachedFileAttributesAndWrapToDosAttributesAdapter()
+internal fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded(adaptToDos: Boolean): BasicFileAttributes? =
+  if (adaptToDos) getCachedFileAttributesAndWrapToDosAttributesAdapter()
   else get()
 
 @VisibleToClasses(

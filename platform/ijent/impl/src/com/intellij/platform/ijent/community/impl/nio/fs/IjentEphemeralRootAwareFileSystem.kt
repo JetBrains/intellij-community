@@ -10,6 +10,7 @@ import com.intellij.platform.core.nio.fs.MultiRoutingFsPath
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.provider.EelDescriptorOwner
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.WindowsPathUtils
@@ -97,7 +98,10 @@ class IjentEphemeralRootAwarePath(
   private val fileSystem: IjentEphemeralRootAwareFileSystem,
   val rootPath: Path,
   val originalPath: IjentNioPath,
-) : Path, BasicFileAttributesHolder2.Impl(originalPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded()) {
+) : Path,
+    BasicFileAttributesHolder2.Impl(
+      originalPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded(fileSystem.provider().adaptsPosixAttributesToDos)
+    ) {
   override fun getFileSystem(): FileSystem = fileSystem
 
   private class ActualPathInfo(val actualPath: Path, val diverges: Boolean)
@@ -344,6 +348,14 @@ class IjentEphemeralRootAwareFileSystemProvider(
     RoutingAwareFileSystemProvider, EelDescriptorOwner {
   private val originalFs = originalFsProvider.getFileSystem(URI("file:/"))
 
+  /**
+   * `true` when the original file system has the `dos` view and the environment is POSIX, as for WSL on a Windows host.
+   * Then [readAttributes], [getFileAttributeView] and the cached attributes of a directory entry adapt POSIX attributes to DOS attributes.
+   */
+  internal val adaptsPosixAttributesToDos: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    "dos" in originalFs.supportedFileAttributeViews() && eelDescriptor.osFamily.isPosix
+  }
+
   private val wrappedFileSystems = ConcurrentHashMap<FileSystem, IjentEphemeralRootAwareFileSystem>()
 
   override fun wrapDelegateFileSystem(delegateFs: FileSystem): IjentEphemeralRootAwareFileSystem {
@@ -365,7 +377,7 @@ class IjentEphemeralRootAwareFileSystemProvider(
   // Nullable as in `FileSystemProvider`: a Windows environment has no POSIX view, and `EelPathTransfer` expects null then.
   override fun <V : FileAttributeView> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V? {
     return when {
-      originalFs.supportedFileAttributeViews().contains("dos") && eelDescriptor.osFamily == EelOsFamily.Posix -> {
+      adaptsPosixAttributesToDos -> {
         ijentFsProvider.getFileAttributeViewUsingDosAttributesAdapter(path.toIjentPath(), type, *options)
       }
       else -> super.getFileAttributeView(path, type, *options)
@@ -386,7 +398,7 @@ class IjentEphemeralRootAwareFileSystemProvider(
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     return when {
-      originalFs.supportedFileAttributeViews().contains("dos") && eelDescriptor.osFamily == EelOsFamily.Posix -> {
+      adaptsPosixAttributesToDos -> {
         ijentFsProvider.readAttributesUsingDosAttributesAdapter(path, path.toIjentPath(), type, *options)
       }
       else -> super.readAttributes(path, type, *options)
