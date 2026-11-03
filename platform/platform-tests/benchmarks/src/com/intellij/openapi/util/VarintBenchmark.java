@@ -179,7 +179,7 @@ public class VarintBenchmark {
     }
   }
 
-  public static void main(String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     final Options opt = new OptionsBuilder()
       //.mode(Mode.SampleTime)
       .include(VarintBenchmark.class.getSimpleName() + ".*")

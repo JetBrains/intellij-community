@@ -53,6 +53,8 @@
     <orderEntry type="module" module-name="intellij.python.processOutput.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.execService" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.json.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.yaml.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />

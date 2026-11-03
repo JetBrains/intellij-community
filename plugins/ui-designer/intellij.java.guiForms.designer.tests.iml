@@ -51,6 +51,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.designer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.properties.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler.tests" scope="TEST" />

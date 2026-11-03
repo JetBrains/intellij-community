@@ -1,0 +1,49 @@
+<idea-plugin allow-bundled-update="true">
+  <id>org.intellij.plugins.markdown</id>
+  <name>Markdown</name>
+  <vendor>JetBrains</vendor>
+  <category>Languages</category>
+  <resource-bundle>messages.MarkdownBundle</resource-bundle>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.markdown" loading="embedded"/>
+    <module name="intellij.markdown.jcef" loading="optional"/>
+    <module name="intellij.markdown.fenceInjection"/>
+    <module name="intellij.markdown.frontmatter"/>
+    <module name="intellij.markdown.frontmatter.yaml"/>
+    <module name="intellij.markdown.frontmatter.toml"/>
+    <module name="intellij.markdown.images"/>
+    <module name="intellij.markdown.xml"/>
+    <module name="intellij.markdown.model"/>
+    <module name="intellij.markdown.spellchecker"/>
+    <module name="intellij.markdown.compose.preview"/>
+    <module name="intellij.markdown.frontend"/>
+    <module name="intellij.markdown.frontend.execution"/>
+    <module name="intellij.markdown.execution"/>
+    <module name="intellij.markdown.frontend.split"/>
+    <module name="intellij.markdown.backend"/>
+    <module name="intellij.markdown.java"/>
+    <module name="intellij.markdown.fenceInjector.textMate"/>
+    <module name="intellij.markdown.projectView"/>
+    <module name="intellij.markdown.figmaAdvertiser"/>
+    <module name="intellij.markdown.vcs"/>
+  </content>
+
+  <description><![CDATA[
+    <p>Provides editing assistance for Markdown files within the IDE.</p>
+    </br>
+    <ul>
+      <li>Full support for vanilla Markdown syntax: highlighting, completion, navigation, inspection, intentions, and much more.</li>
+      <li>Live HTML preview, customizable with CSS (except Android Studio, see <a href="https://issuetracker.google.com/issues/159933628?pli=1#comment7">issue and workaround</a>).</li>
+      <li>Assistance for editing tables and lists: automatic alignment and numbering.</li>
+      <li>Drag and drop to insert images.</li>
+      <li>Language injection in code blocks.</li>
+      <li>Pandoc Converter for HTML, Microsoft Word, and PDF formats.</li>
+      <li>Support for PlantUML diagram rendering (you can add support for Mermaid diagrams with a <a href="https://plugins.jetbrains.com/plugin/20146-mermaid">separate plugin</a>).</li>
+    </ul>
+  ]]></description>
+</idea-plugin>

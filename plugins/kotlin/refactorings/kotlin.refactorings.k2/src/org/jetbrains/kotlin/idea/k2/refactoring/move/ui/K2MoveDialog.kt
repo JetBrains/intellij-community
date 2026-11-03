@@ -29,6 +29,9 @@ class K2MoveDialog(project: Project, private val model: K2MoveModel) : Refactori
         return mainPanel
     }
 
+    override fun getPreferredFocusedComponent(): JComponent? =
+        model.target.preferredFocusedComponent ?: super.getPreferredFocusedComponent()
+
     private fun validateRefactorButton() {
         refactorAction.isEnabled = model.isValidRefactoring()
     }

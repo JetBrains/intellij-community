@@ -4,6 +4,7 @@ package com.intellij.ide.whatsNew;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -40,9 +41,10 @@ final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
     boolean includePlatformData,
     @Nullable HTMLEditorProvider.JsQueryHandler queryHandler
   ) {
+    var parameters = getRequestParameters(includePlatformData, project);
     var request = HTMLEditorProvider.Request.url(
       Urls.newFromEncoded(url)
-        .addParameters(getRequestParameters(includePlatformData, project))
+        .addParameters(parameters)
         .toExternalForm()
     );
 
@@ -62,6 +64,12 @@ final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
     }
 
     request.withQueryHandler(queryHandler);
+
+    // The page shows the IJ Air block only for the `code` parameter.
+    if (parameters.containsKey("code")) {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(WhatsNewAirPromoListener.TOPIC)
+        .blockShown(project, WelcomeScreenProjectProvider.isWelcomeScreenProject(project));
+    }
 
     var title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
     HTMLEditorProvider.openEditorWithoutBlocking(project, title, request);

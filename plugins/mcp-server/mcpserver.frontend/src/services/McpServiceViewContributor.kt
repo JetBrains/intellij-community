@@ -27,6 +27,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.application
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -43,7 +44,7 @@ internal class McpServiceViewContributor : ServiceViewContributor<McpSessionInfo
   }
 
   override fun getServiceDescriptor(project: Project, service: McpSessionInfo): ServiceViewDescriptor {
-    return McpSessionDescriptor(service)
+    return project.service<McpServiceViewHelperService>().getSessionDescriptor(service)
   }
 }
 
@@ -67,11 +68,9 @@ private class McpServerRootDescriptor(
   }
 
   private fun createContentComponent(): JComponent {
-    val diagnosticService = service<McpDiagnosticService>()
     val tabbedPane = JBTabbedPane()
-    val toolCallsPanel = McpToolCallsPanel(diagnosticService)
-    Disposer.register(project.service<McpServiceViewHelperService>(), toolCallsPanel)
-    tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.tool.calls"), toolCallsPanel)
+    tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.tool.calls"),
+                      project.service<McpServiceViewHelperService>().toolCallsPanel)
     tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.configuration"), McpConfigurationPanel(project))
     val panel = JPanel(BorderLayout())
     panel.add(tabbedPane, BorderLayout.CENTER)
@@ -79,8 +78,10 @@ private class McpServerRootDescriptor(
   }
 }
 
-private class McpSessionDescriptor(private val session: McpSessionInfo) : ServiceViewDescriptor {
+private class McpSessionDescriptor(val session: McpSessionInfo) : ServiceViewDescriptor {
   private var contentComponent: JComponent? = null
+
+  val contentDisposable: Disposable = Disposer.newDisposable("MCP session view content")
 
   override fun getPresentation(): ItemPresentation {
     val clientName = session.clientInfo?.name ?: "..." //NON-NLS
@@ -96,12 +97,13 @@ private class McpSessionDescriptor(private val session: McpSessionInfo) : Servic
   private fun createContentComponent(): JComponent {
     val diagnosticService = service<McpDiagnosticService>()
     val tabbedPane = JBTabbedPane()
+    Disposer.register(session, contentDisposable)
 
     val durationLabel = javax.swing.JLabel(StringUtil.formatDuration(System.currentTimeMillis() - session.startTimeMs))
     val timer = Timer(1000) {
       durationLabel.text = StringUtil.formatDuration(System.currentTimeMillis() - session.startTimeMs)
     }
-    Disposer.register(session) {
+    Disposer.register(contentDisposable) {
       timer.stop()
     }
     timer.start()
@@ -124,7 +126,7 @@ private class McpSessionDescriptor(private val session: McpSessionInfo) : Servic
     tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.session"), infoPanel)
 
     val toolCallsPanel = McpToolCallsPanel(diagnosticService, session.sessionId)
-    Disposer.register(session, toolCallsPanel)
+    Disposer.register(contentDisposable, toolCallsPanel)
     tabbedPane.addTab(McpServerBundle.message("mcp.toolwindow.tab.tool.calls"), toolCallsPanel)
 
     val panel = JPanel(BorderLayout())
@@ -141,12 +143,29 @@ private fun TransportType.displayName(): String = when (this) {
 
 @Service(Service.Level.PROJECT)
 private class McpServiceViewHelperService : Disposable {
+  // Every reset of the service view model asks the contributor for new descriptors.
+  val toolCallsPanel: McpToolCallsPanel by lazy {
+    McpToolCallsPanel(service<McpDiagnosticService>()).also { Disposer.register(this, it) }
+  }
+  private val sessionDescriptors = ConcurrentHashMap<String, McpSessionDescriptor>()
+
   init {
-    service<McpDiagnosticService>().observeSessions(this) {
+    service<McpDiagnosticService>().observeSessions(this) { sessions ->
+      sessionDescriptors.values.removeIf { it.session !in sessions }
       fireServiceViewReset()
     }
   }
-  override fun dispose() = Unit
+
+  // A restarted session keeps its id, but its old info disposed the content of the old descriptor.
+  fun getSessionDescriptor(session: McpSessionInfo): McpSessionDescriptor {
+    return sessionDescriptors.compute(session.sessionId) { _, cached ->
+      cached?.takeIf { it.session === session } ?: McpSessionDescriptor(session)
+    }!!
+  }
+
+  override fun dispose() {
+    sessionDescriptors.values.forEach { Disposer.dispose(it.contentDisposable) }
+  }
 
   private fun fireServiceViewReset() {
     application.messageBus

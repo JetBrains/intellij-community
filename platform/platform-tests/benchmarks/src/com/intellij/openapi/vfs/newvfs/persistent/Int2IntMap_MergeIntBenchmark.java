@@ -115,7 +115,7 @@ public class Int2IntMap_MergeIntBenchmark {
     return mapContext.map.mergeInt(key, mask, (prev, cur) -> prev | cur);
   }
 
-  public static void main(String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     final Options opt = new OptionsBuilder()
       .forks(1)
       .include(Int2IntMap_MergeIntBenchmark.class.getSimpleName() + ".*")

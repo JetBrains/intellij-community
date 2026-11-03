@@ -17,7 +17,7 @@ public final class Launcher {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-    public static void main(String[] args) throws InterruptedException {
+  static void main() throws InterruptedException {
         String javaVmExecutablePath = System.getProperty("java.home") + File.separator + "bin" + File.separator + "java";
         String classpath = System.getProperty("java.class.path");
         try {

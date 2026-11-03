@@ -73,7 +73,8 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler {
     getManager().runChange(() -> {
       try {
         final XmlTag parentTag = parent.getXmlTag();
-        newTag[0] = (XmlTag)parentTag.add(parent.createChildTag(getXmlName()));
+        if (parentTag == null) return;
+        newTag[0] = DomImplUtil.addOrdered(parent, parentTag, parent.createChildTag(getXmlName()));
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

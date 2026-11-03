@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.platform.rpc.lite" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
+    <orderEntry type="module" module-name="intellij.platform.project" />
   </component>
 </module>

@@ -48,6 +48,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/protobuf",
         "//platform/buildData",
         "//platform/devIdeConfig",
+        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.devBuildServer.legacy` end

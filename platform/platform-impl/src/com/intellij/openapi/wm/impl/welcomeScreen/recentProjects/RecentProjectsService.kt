@@ -61,7 +61,7 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
   private val loadMutex = Mutex()
 
   @GuardedBy("loadMutex")
-  private val heldProjects = HashMap<Path, HeldProject>()
+  private val heldProjects = HashMap<RecentProjectId, HeldProject>()
 
   // Runs each request until its project is held. [disposeHeldProjects] cancels the requests, so it does not wait for a load in progress.
   private val requestScope = coroutineScope.childScope("WelcomeScreenRecentProjectRequests")
@@ -73,15 +73,21 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
   private class HeldProject(val project: Project, val scope: CoroutineScope, val owned: Boolean)
 
   /**
-   * Loads and holds the recent project at [projectPath], then runs [operation] on the project scope. Confirms trust first, and does nothing
-   * when the user declines. The load runs on the request scope, so the caller does not manage a coroutine.
+   * Loads and holds the recent project of [item], then runs [operation] on the project scope. Confirms trust first, and does nothing
+   * when the user declines. The load runs on the request scope, so the caller does not manage a coroutine. The row of [item] shows the
+   * load.
    */
-  fun runOnRecentProject(projectPath: Path, operation: suspend (Project) -> Unit) {
+  fun runOnRecentProject(item: RecentProjectItem, operation: suspend (Project) -> Unit) {
+    val recentProjectId = item.getRecentProjectId()
+    if (recentProjectId == null) {
+      LOG.warn("Cannot run the operation: the recent project path '${item.projectPath}' is not valid")
+      return
+    }
     requestScope.launch {
-      val held = getOrLoad(projectPath) ?: return@launch
+      val held = getOrLoad(recentProjectId) ?: return@launch
       held.scope.launch {
         if (held.project.isDisposed) {
-          LOG.warn("Cannot run the operation: the recent project at $projectPath is already disposed")
+          LOG.warn("Cannot run the operation: the recent project at $recentProjectId is already disposed")
           return@launch
         }
         operation(held.project)
@@ -90,36 +96,43 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
   }
 
   /**
-   * Confirms trust, then loads the recent project at [projectPath] once and holds it with its own operation scope. Later calls return the same
-   * instance. Returns null when the user declines to trust the project.
+   * Confirms trust, then loads the recent project [recentProjectId] once and holds it with its own operation scope. Later calls return
+   * the same instance. Returns null when the user declines to trust the project.
    */
-  private suspend fun getOrLoad(projectPath: Path): HeldProject? {
-    loadMutex.withLock {
-      cachedHeldProject(projectPath)?.let { return it }
-      findOpenProject(projectPath)?.let { return hold(projectPath, it, owned = false) }
-    }
-    if (!confirmTrust(projectPath)) {
-      return null
-    }
-    loadMutex.withLock {
-      cachedHeldProject(projectPath)?.let { return it }
-      findOpenProject(projectPath)?.let { return hold(projectPath, it, owned = false) }
-      LOG.info("Recent project $projectPath: loading it without a frame")
-      // Marked before it initializes, because the load itself can ask whether the project is one of these, and the first answer is cached.
-      // A project without a workspace model cache asks: it reads its model files during the load, and the root change asks.
-      val project = projectManager.loadProject(projectPath, beforeInit = { it.putUserData(FRAMELESS_RECENT_PROJECT, true) })
-      val held = hold(projectPath, project, owned = true)
-      try {
-        initLoadedProject(project)
+  private suspend fun getOrLoad(recentProjectId: RecentProjectId): HeldProject? {
+    return taskTracker.reportLoad(recentProjectId) {
+      loadMutex.withLock {
+        cachedHeldProject(recentProjectId)?.let { return@reportLoad it }
+        findOpenProject(recentProjectId)?.let { return@reportLoad hold(recentProjectId, it, owned = false) }
       }
-      catch (e: Throwable) {
-        // The project is loaded by now, so a failed initialization has to close it: it is out of the map, and nothing else would.
-        heldProjects.remove(projectPath)
-        withContext(NonCancellable) { dispose(held) }
-        throw e
+      if (!confirmTrust(recentProjectId.path)) {
+        return@reportLoad null
       }
-      return held
+      loadMutex.withLock {
+        cachedHeldProject(recentProjectId)
+        ?: findOpenProject(recentProjectId)?.let { hold(recentProjectId, it, owned = false) }
+        ?: loadAndHold(recentProjectId)
+      }
     }
+  }
+
+  // Loads the recent project [recentProjectId] without a frame and holds it. Must run under [loadMutex].
+  private suspend fun loadAndHold(recentProjectId: RecentProjectId): HeldProject {
+    LOG.info("Recent project $recentProjectId: loading it without a frame")
+    // Marked before it initializes, because the load itself can ask whether the project is one of these, and the first answer is cached.
+    // A project without a workspace model cache asks: it reads its model files during the load, and the root change asks.
+    val project = projectManager.loadProjectAsync(recentProjectId.path, beforeInit = { it.putUserData(FRAMELESS_RECENT_PROJECT, true) })
+    val held = hold(recentProjectId, project, owned = true)
+    try {
+      initLoadedProject(project)
+    }
+    catch (e: Throwable) {
+      // The project is loaded by now, so a failed initialization has to close it: it is out of the map, and nothing else would.
+      heldProjects.remove(recentProjectId)
+      withContext(NonCancellable) { dispose(held) }
+      throw e
+    }
+    return held
   }
 
   /**
@@ -137,10 +150,10 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
   }
 
   // Returns the held project when it is still alive, and forgets a disposed one. Must run under [loadMutex].
-  private fun cachedHeldProject(projectPath: Path): HeldProject? {
-    val held = heldProjects[projectPath] ?: return null
+  private fun cachedHeldProject(recentProjectId: RecentProjectId): HeldProject? {
+    val held = heldProjects[recentProjectId] ?: return null
     if (held.project.isDisposed) {
-      heldProjects.remove(projectPath)
+      heldProjects.remove(recentProjectId)
       return null
     }
     return held
@@ -148,13 +161,13 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
 
   // Holds [project] with its own operation scope. Relays only a project the service loaded, because an already-open project shows its own
   // notifications on its frame. Must run under [loadMutex].
-  private fun hold(projectPath: Path, project: Project, owned: Boolean): HeldProject {
+  private fun hold(recentProjectId: RecentProjectId, project: Project, owned: Boolean): HeldProject {
     if (owned) {
       relayNotificationsToWelcomeScreen(project)
-      taskTracker.follow(projectPath, project)
+      taskTracker.follow(recentProjectId, project)
     }
     return HeldProject(project, coroutineScope.childScope("WelcomeScreenRecentProject"), owned).also {
-      heldProjects[projectPath] = it
+      heldProjects[recentProjectId] = it
     }
   }
 
@@ -164,8 +177,8 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
   // An already-open project for the same location. IntelliJ does not support two live projects for one location: loading a second instance
   // collides on the project storages (for example the VCS user storage), so the open one is reused instead. The recent-project path is not
   // always the base path: for an `.ipr` project it is the `.ipr` file. [ProjectUtil.isSameProject] matches it in each layout.
-  private fun findOpenProject(projectPath: Path): Project? =
-    projectManager.openProjects.firstOrNull { !it.isDisposed && ProjectUtil.isSameProject(projectPath, it) }
+  private fun findOpenProject(recentProjectId: RecentProjectId): Project? =
+    projectManager.openProjects.firstOrNull { !it.isDisposed && ProjectUtil.isSameProject(recentProjectId.path, it) }
 
   /**
    * Cancels the operations of [held] and closes its project, so an in-flight operation never runs on a disposed project. Closes only a project

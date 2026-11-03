@@ -2,18 +2,18 @@
 package com.intellij.compose.ide.plugin.codeInsight.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.compose.ide.plugin.codeInsight.composeCodeInsightTestDataRoot
 import com.intellij.compose.ide.plugin.codeInsight.enableComposeInTest
 import com.intellij.compose.ide.plugin.codeInsight.isComposeEnabled
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import java.io.File
 
 abstract class BaseComposableCallHighlightingTestCase : KotlinLightCodeInsightFixtureTestCase() {
 
+  @Suppress("IO_FILE_USAGE")
   override val testDataDirectory: File
-    get() = File(PlatformTestUtil.getCommunityPath())
-      .resolve("plugins/compose/intellij.compose.ide.plugin.codeInsight/testData/highlighting/$testDataSubdirectory")
+    get() = composeCodeInsightTestDataRoot().resolve("highlighting/$testDataSubdirectory").toFile()
 
   /**
    * Test data subdirectory in the 'testData/highlighting' test dir.

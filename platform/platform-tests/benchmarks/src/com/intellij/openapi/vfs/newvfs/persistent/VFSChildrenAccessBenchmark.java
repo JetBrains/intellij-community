@@ -153,7 +153,7 @@ public class VFSChildrenAccessBenchmark {
   }
 
 
-  public static void main(String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     Options opt = new OptionsBuilder()
       //.mode(Mode.SingleShotTime)
       //.warmupIterations(1000)

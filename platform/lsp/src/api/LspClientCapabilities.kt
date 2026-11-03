@@ -31,6 +31,7 @@ import org.eclipse.lsp4j.DocumentLinkCapabilities
 import org.eclipse.lsp4j.DocumentSymbolCapabilities
 import org.eclipse.lsp4j.ExecuteCommandCapabilities
 import org.eclipse.lsp4j.FailureHandlingKind
+import org.eclipse.lsp4j.FileOperationsWorkspaceCapabilities
 import org.eclipse.lsp4j.FoldingRangeCapabilities
 import org.eclipse.lsp4j.FoldingRangeKind
 import org.eclipse.lsp4j.FoldingRangeKindSupportCapabilities
@@ -104,6 +105,10 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       symbolKind = SymbolKindCapabilities().apply {
         valueSet = lspCustomization.symbolKindCustomizer.supportedKinds
       }
+    }
+    fileOperations = FileOperationsWorkspaceCapabilities().apply {
+      dynamicRegistration = true
+      willRename = true
     }
   }
 

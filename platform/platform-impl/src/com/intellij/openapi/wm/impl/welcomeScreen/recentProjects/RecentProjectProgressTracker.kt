@@ -34,46 +34,67 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import java.nio.file.Path
 
 /**
  * Tells the welcome screen which of its recent projects run a background task.
  *
  * [TaskStorage] holds the tasks of the whole IDE. This narrows them to the projects [RecentProjectsService] loaded without a frame, and
- * keys them the way the rows do. It keeps no task state of its own.
+ * keys them the way the rows do. It keeps no task state of its own. It keeps only the loads, because a load runs before its project has
+ * an id that a task could carry.
  */
 @Service(Service.Level.APP)
 internal class RecentProjectProgressTracker(coroutineScope: CoroutineScope) {
   private val taskStorage = TaskStorage.getInstance()
 
-  // The one thing this is told rather than works out: the recent projects the welcome screen holds, by the id their tasks carry.
-  private val followedProjects = MutableStateFlow<Map<ProjectId, Path>>(emptyMap())
+  // The tracker gets these from the callers and does not work them out. They are the recent projects that the welcome screen holds, by the
+  // id that their tasks carry, and the ones that it loads now. A project is in [loadingProjects] once for each request that reports its
+  // load.
+  private val followedProjects = MutableStateFlow<Map<ProjectId, RecentProjectId>>(emptyMap())
+  private val loadingProjects = MutableStateFlow<List<RecentProjectId>>(emptyList())
 
   // What [projectsProgress] is made of, which the live flow of one row reads to follow each task.
-  private val taskHandles: StateFlow<Map<Path, List<TaskHandle>>> =
+  private val taskHandles: StateFlow<Map<RecentProjectId, List<TaskHandle>>> =
     combine(taskStorage.tasks, followedProjects, ::tasksByProject).stateIn(coroutineScope, SharingStarted.Eagerly, emptyMap())
 
   /**
-   * What every recent project the welcome screen holds is running.
+   * What every recent project the welcome screen loads or holds is running.
    *
    * This reports again when an operation starts or ends, so a row knows whether to show its spinner and what to call it. The text and
    * the fraction are the ones reported then. A window takes [getProgressFor] instead, which reports on every report.
    */
-  val projectsProgress: StateFlow<ProjectsProgress> = taskHandles
-    .map { byProject -> ProjectsProgress(byProject.mapValues { (_, running) -> running.map { it.toProgress(it.progress.value) } }) }
-    .stateIn(coroutineScope, SharingStarted.Eagerly, ProjectsProgress.NONE)
+  val projectsProgress: StateFlow<ProjectsProgress> = combine(taskHandles, loadingProjects) { byProject, loading ->
+    ProjectsProgress((loading + byProject.keys).associateWith { recentProjectId ->
+      val load = if (recentProjectId in loading) listOf(loadingProgress(recentProjectId)) else emptyList()
+      load + byProject[recentProjectId].orEmpty().map { it.toProgress(it.progress.value) }
+    })
+  }.stateIn(coroutineScope, SharingStarted.Eagerly, ProjectsProgress.NONE)
 
   /**
-   * Follows the tasks of [project], held for the recent project at [projectPath], until the project is disposed.
+   * Follows the tasks of [project], held for the recent project [recentProjectId], until the project is disposed.
    *
    * Call it once, when the project is held: disposing the project stops the follow, so no caller has to remember to.
    */
-  fun follow(projectPath: Path, project: Project) {
+  fun follow(recentProjectId: RecentProjectId, project: Project) {
     if (project.isDisposed) return
     val projectId = project.projectIdOrNull() ?: return
-    followedProjects.update { it + (projectId to projectPath) }
+    followedProjects.update { it + (projectId to recentProjectId) }
     Disposer.register(project) {
       followedProjects.update { followed -> followed.filterKeys { it != projectId } }
+    }
+  }
+
+  /**
+   * Reports the load of the recent project [recentProjectId] while [load] runs.
+   *
+   * A load takes seconds on a big project. The project has no id yet, so no task of it can report the load.
+   */
+  suspend fun <T> reportLoad(recentProjectId: RecentProjectId, load: suspend () -> T): T {
+    loadingProjects.update { it + recentProjectId }
+    try {
+      return load()
+    }
+    finally {
+      loadingProjects.update { it - recentProjectId }
     }
   }
 
@@ -107,15 +128,21 @@ internal class RecentProjectProgressTracker(coroutineScope: CoroutineScope) {
         val clones = CloneableProjectsService.getInstance()
         clones.collectCloneableProjects()
           .map { it.cloneableProject }
-          .find { it.projectPath == id.projectPath }
+          .find { RecentProjectId(it.projectPath) == id.recentProjectId }
           ?.let(clones::cancelClone)
       }
+      // The window offers no cancel button for a load.
+      is ProgressId.Load -> {}
     }
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private fun getTaskProgress(item: RecentProjectItem): Flow<List<RecentProjectProgress>> =
-    taskHandles.map { byProject -> item.projectNioPath()?.let(byProject::get).orEmpty() }.distinctUntilChanged().flatMapLatest { tasks ->
+  private fun getTaskProgress(item: RecentProjectItem): Flow<List<RecentProjectProgress>> {
+    val recentProjectId = item.getRecentProjectId() ?: return flowOf(emptyList())
+    val load = loadingProjects.map { recentProjectId in it }.distinctUntilChanged().map { isLoading ->
+      if (isLoading) listOf(loadingProgress(recentProjectId)) else emptyList()
+    }
+    val tasks = taskHandles.map { byProject -> byProject[recentProjectId].orEmpty() }.distinctUntilChanged().flatMapLatest { tasks ->
       if (tasks.isEmpty()) {
         flowOf(emptyList())
       }
@@ -123,6 +150,8 @@ internal class RecentProjectProgressTracker(coroutineScope: CoroutineScope) {
         combine(tasks.map { task -> task.progress.map { task.toProgress(it) } }) { it.asList() }
       }
     }
+    return combine(load, tasks) { loading, running -> loading + running }
+  }
 
   /** A clone reports into an indicator of its own, and the service tells of its end on the UI thread. */
   private fun getCloneProgress(clone: CloneableProject): Flow<List<RecentProjectProgress>> = callbackFlow {
@@ -155,10 +184,13 @@ internal class RecentProjectProgressTracker(coroutineScope: CoroutineScope) {
     }
   }.conflate()
 
-  private fun tasksByProject(tasks: Map<TaskId, TaskHandle>, followed: Map<ProjectId, Path>): Map<Path, List<TaskHandle>> =
+  private fun tasksByProject(
+    tasks: Map<TaskId, TaskHandle>,
+    followed: Map<ProjectId, RecentProjectId>,
+  ): Map<RecentProjectId, List<TaskHandle>> =
     tasks.values
-      .mapNotNull { task -> followed[task.info.projectId]?.let { path -> path to task } }
-      .groupBy({ (path, _) -> path }) { (_, task) -> task }
+      .mapNotNull { task -> followed[task.info.projectId]?.let { recentProjectId -> recentProjectId to task } }
+      .groupBy({ (recentProjectId, _) -> recentProjectId }) { (_, task) -> task }
       .mapValues { (_, running) -> running.sortedWith(ROW_ORDER) }
 
   companion object {

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
-import com.intellij.ide.util.EditorHelper
+import com.intellij.ide.util.openInEditor
 import com.intellij.openapi.GitSilentFileAdderProvider
 import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
@@ -142,9 +142,7 @@ open class MavenModuleBuilderHelper(
           showError(project, RuntimeException("Project is not valid"))
           return@withContext
         }
-        writeIntentReadAction {
-          EditorHelper.openInEditor(getPsiFile(project, pom)!!)
-        }
+        openInEditor(getPsiFile(project, pom)!!, requestFocus = false)
         if (myArchetype != null) generateFromArchetype(project, pom)
       }
     }

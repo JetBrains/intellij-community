@@ -41,6 +41,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.properties.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.usageView" scope="TEST" />

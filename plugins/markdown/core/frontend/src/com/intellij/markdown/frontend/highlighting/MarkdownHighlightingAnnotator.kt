@@ -172,7 +172,7 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
     if (element.firstChild != null) return null
 
     // Infer ancestor style only when has no own highlight
-    val ownStyleKey = element.primaryNonTextAttributesKey()
+    val ownStyleKey = element.primaryNonTextAttributesKey().takeUnless { element.isHtmlInCodeSpan() }
     val keys = if (ownStyleKey != null) {
       setOf(ownStyleKey)
     }
@@ -201,7 +201,7 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
     val scheme = EditorColorsManager.getInstance().globalScheme
     val attributes = LayeredTextAttributes.create(scheme, keys.toTypedArray())
     // The code background pass paints a rounded background behind a code span and a code fence.
-    if (MarkdownHighlighterColors.CODE_SPAN in keys || MarkdownHighlighterColors.CODE_FENCE in keys) {
+    if (!element.isHtmlInCodeSpan() && (MarkdownHighlighterColors.CODE_SPAN in keys || MarkdownHighlighterColors.CODE_FENCE in keys)) {
       attributes.backgroundColor = null
     }
     holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
@@ -383,6 +383,9 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
     if (!linkLabel.hasType(MarkdownElementTypes.LINK_LABEL)) return false
     return isFootnoteLabelText(linkLabel.text)
   }
+
+  private fun PsiElement.isHtmlInCodeSpan(): Boolean =
+    elementType == MarkdownTokenTypes.HTML_TAG && parentOfType(MarkdownElementTypes.CODE_SPAN) != null
 
   private fun PsiElement.primaryNonTextAttributesKey(): TextAttributesKey? {
     return syntaxHighlighter

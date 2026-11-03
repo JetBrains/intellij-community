@@ -230,7 +230,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
             }
 
             if (targetData.openInEditor) {
-                EditorHelper.openInEditor(refactoringResult.targetFile)
+                EditorHelper.requestOpenInEditor(refactoringResult.targetFile)
             }
         } catch (e: IncorrectOperationException) {
             ApplicationManager.getApplication().invokeLater(

@@ -348,7 +348,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       VisibilityUtil.fixVisibility(UsageViewUtil.toElements(usages), method, myNewVisibility);
 
       if (myOpenInEditor) {
-        EditorHelper.openInEditor(method);
+        EditorHelper.requestOpenInEditor(method, false);
       }
     }
     catch (IncorrectOperationException e) {

@@ -164,7 +164,7 @@ public class VFSChildrenUpdateBenchmark {
   }
 
 
-  public static void main(String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     Options opt = new OptionsBuilder()
       .jvmArgs()
       //.mode(Mode.SingleShotTime)

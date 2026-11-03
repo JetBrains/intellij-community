@@ -774,7 +774,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
       XmlTag newTag = createChildTag(tagName);
       if (index == 0) {
         if (subTags.isEmpty()) {
-          return (XmlTag)tag.add(newTag);
+          return DomImplUtil.addOrdered(this, tag, newTag);
         }
 
         return (XmlTag)tag.addBefore(newTag, subTags.get(0));

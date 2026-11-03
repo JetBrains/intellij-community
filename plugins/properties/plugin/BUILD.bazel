@@ -1,0 +1,58 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.properties.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.properties.copyright",
+        "intellij.properties.backend.psi",
+        "intellij.properties.backend",
+        "intellij.properties.structuralSearch",
+        "intellij.properties",
+        "intellij.properties.psi",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/properties-plugin.jar": ["intellij.properties.plugin"],
+    },
+    main_module = "intellij.properties.plugin",
+    mode_refused_content_modules = {
+        "frontend": [
+            "intellij.properties.backend.psi",
+            "intellij.properties.backend",
+            "intellij.properties.structuralSearch",
+        ],
+    },
+    module_jar_paths = {
+        "intellij.properties": "lib/intellij.properties.jar",
+        "intellij.properties.psi": "lib/intellij.properties.psi.jar",
+    },
+)
+### auto-generated section `dev intellij.properties.plugin` end
+
+### auto-generated section `build intellij.properties.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.properties.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.properties.plugin` end
+
+### auto-generated section `iml intellij.properties.plugin` start
+exports_files(
+    [
+        "intellij.properties.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.properties.plugin` end

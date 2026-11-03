@@ -761,7 +761,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 }
                 logSuspendContext(suspendContext, () -> "Skip breakpoint because of filter " + filter);
 
-                markForInstrumentationThatBreakpointCheksAreDone(suspendContext, checkIsDoneFn);
+                markForInstrumentationThatBreakpointChecksAreDone(suspendContext, checkIsDoneFn);
                 suspendManager.voteResume(suspendContext);
                 return;
               } else {
@@ -871,7 +871,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
           }
         }
 
-        markForInstrumentationThatBreakpointCheksAreDone(suspendContext, checkIsDoneFn);
+        markForInstrumentationThatBreakpointChecksAreDone(suspendContext, checkIsDoneFn);
 
         if (!requestHit || resumePreferred) {
           if (!requestHit) {
@@ -905,7 +905,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     });
   }
 
-  private void markForInstrumentationThatBreakpointCheksAreDone(@NotNull SuspendContextImpl suspendContext, Method checkIsDoneFn) {
+  private void markForInstrumentationThatBreakpointChecksAreDone(@NotNull SuspendContextImpl suspendContext, Method checkIsDoneFn) {
     if (checkIsDoneFn == null) {
       return;
     }

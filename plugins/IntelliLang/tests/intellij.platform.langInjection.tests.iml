@@ -52,9 +52,11 @@
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.json.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.yaml.plugin" scope="RUNTIME" />
   </component>
 </module>

@@ -18,6 +18,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/kotlin:kotlin-plugin-community-main",
+        "//plugins/properties/plugin",
         "//xml/plugin",
         "//platform/structure-view-impl/plugin",
         "//aether-dependency-resolver/plugin",

@@ -36,7 +36,7 @@ public final class BuilderPreDefinedInnerClassMethodProcessor extends AbstractBu
                                                                  @NotNull PsiClass psiBuilderClass) {
     BuilderHandler builderHandler = getBuilderHandler();
     final List<BuilderInfo> builderInfos =
-      builderHandler.createBuilderInfos(psiAnnotation, psiParentClass, psiParentMethod, psiBuilderClass);
+      BuilderHandler.createBuilderInfos(psiAnnotation, psiParentClass, psiParentMethod, psiBuilderClass);
 
     //create constructor
     final Collection<PsiMethod> result = new ArrayList<>(BuilderHandler.createConstructors(psiBuilderClass, psiAnnotation));

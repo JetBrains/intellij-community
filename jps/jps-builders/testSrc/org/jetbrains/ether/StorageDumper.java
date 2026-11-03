@@ -97,7 +97,7 @@ public final class StorageDumper {
     }
   }
 
-  public static void main(final String[] args) {
+  static void main(final String[] args) {
     final Env env = new Env(args);
 
     env.report();

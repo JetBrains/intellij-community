@@ -178,7 +178,7 @@ public class TreeCollectorTest {
     };
 
     // manual performance test
-    public static void main(String[] args) {
+    static void main() {
       testPaths(FIND_COMMON_PATH, FAST, 10, 10);
       testPaths(FIND_COMMON_PATH, FAST, 1, 10);
       testPaths(FIND_COMMON_PATH, SLOW, 1, 1);

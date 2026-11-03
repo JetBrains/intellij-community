@@ -69,7 +69,7 @@ com.intellij.openapi.editor.ex.DocumentEx
 *f:com.intellij.openapi.editor.ex.DocumentText$Companion
 - f:createText(java.lang.CharSequence):com.intellij.openapi.editor.ex.DocumentText
 f:com.intellij.openapi.editor.impl.DocumentImpl
-- com.intellij.psi.impl.source.tree.mvcc.userData.VersionedUserDataHolderBase
+- com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.editor.ex.DocumentEx
 - *:getDocumentText():com.intellij.openapi.editor.ex.DocumentText
 *a:com.intellij.openapi.editor.impl.DocumentWriteAccessGuard

@@ -2,19 +2,27 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressed
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.useProjectAsync
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.writeText
 
 /**
@@ -25,8 +33,7 @@ import kotlin.io.path.writeText
 internal class RecentProjectsServiceTest {
   @Test
   fun `a directory-based recent project has indexing suppressed`(@TempDir tempDir: Path): Unit = timeoutRunBlocking {
-    val projectDir = createModule(tempDir.resolve("recent"))
-    projectDir.resolve(Project.DIRECTORY_STORE_FOLDER).createDirectories().resolve("modules.xml").writeText(modulesXml())
+    val projectDir = createDirectoryProject(tempDir.resolve("recent"))
 
     assertThat(onRecentProject(projectDir, action = { isIndexingActivitiesSuppressed(it) })).isTrue()
   }
@@ -54,18 +61,113 @@ internal class RecentProjectsServiceTest {
     }
   }
 
+  /** The service loads one project at a time. A request that waits for the load of another project shows its own load meanwhile. */
+  @Test
+  fun `a request that waits for another load shows its load`(@TempDir tempDir: Path, @TestDisposable disposable: Disposable): Unit =
+    timeoutRunBlocking {
+      val loadingDir = createDirectoryProject(tempDir.resolve("loading"))
+      val waitingDir = createDirectoryProject(tempDir.resolve("waiting"))
+      val initStarted = CompletableDeferred<Unit>()
+      val initReleased = CompletableDeferred<Unit>()
+      holdInit(projectDir = loadingDir, started = initStarted, released = initReleased, disposable = disposable)
+      val service = RecentProjectsService.getInstance()
+      try {
+        val loadingOperation = requestOperation(loadingDir)
+        initStarted.await()
+        val waitingOperation = requestOperation(waitingDir)
+
+        awaitLoad(waitingDir, isShown = true)
+
+        initReleased.complete(Unit)
+        loadingOperation.await()
+        waitingOperation.await()
+        awaitLoad(waitingDir, isShown = false)
+      }
+      finally {
+        service.disposeHeldProjects()
+      }
+    }
+
+  /** Disposing the held projects cancels a load in progress, and the load stops showing. */
+  @Test
+  fun `a load that the disposal cancels stops showing`(@TempDir tempDir: Path, @TestDisposable disposable: Disposable): Unit =
+    timeoutRunBlocking {
+      val projectDir = createDirectoryProject(tempDir.resolve("loading"))
+      val initStarted = CompletableDeferred<Unit>()
+      holdInit(projectDir = projectDir, started = initStarted, released = CompletableDeferred(), disposable = disposable)
+      val service = RecentProjectsService.getInstance()
+      try {
+        requestOperation(projectDir)
+        initStarted.await()
+        awaitLoad(projectDir, isShown = true)
+      }
+      finally {
+        service.disposeHeldProjects()
+      }
+
+      awaitLoad(projectDir, isShown = false)
+    }
+
   // Runs [action] on the project that the service gives the operations for [projectPath].
   private suspend fun <T> onRecentProject(projectPath: Path, action: suspend (Project) -> T): T {
     TrustedProjects.setProjectTrusted(projectPath, isTrusted = true)
     val service = RecentProjectsService.getInstance()
     val result = CompletableDeferred<T>()
     try {
-      service.runOnRecentProject(projectPath, operation = { project -> result.complete(action(project)) })
+      service.runOnRecentProject(itemOf(projectPath), operation = { project -> result.complete(action(project)) })
       return result.await()
     }
     finally {
       service.disposeHeldProjects()
     }
+  }
+
+  // Asks the service for an operation on the trusted project [projectPath]. Completes with the project that the operation gets.
+  private fun requestOperation(projectPath: Path): Deferred<Project> {
+    TrustedProjects.setProjectTrusted(projectPath, isTrusted = true)
+    val operationProject = CompletableDeferred<Project>()
+    RecentProjectsService.getInstance().runOnRecentProject(itemOf(projectPath), operation = { operationProject.complete(it) })
+    return operationProject
+  }
+
+  // The tracker reports from its own coroutine, so the test waits for the report that it expects.
+  private suspend fun awaitLoad(projectPath: Path, isShown: Boolean) {
+    val item = itemOf(projectPath)
+    val loadId = ProgressId.Load(checkNotNull(item.getRecentProjectId()))
+    RecentProjectProgressTracker.getInstance().projectsProgress.first { progress ->
+      progress.getProgressOf(item).any { it.id == loadId } == isShown
+    }
+  }
+
+  // Holds the load of the directory-based project [projectDir] in its init activities until [released] completes. The load holds the load
+  // mutex of the service meanwhile. The other init activities do not run until [disposable] ends.
+  private fun holdInit(projectDir: Path, started: CompletableDeferred<Unit>, released: Deferred<Unit>, disposable: Disposable) {
+    // A directory-based project takes the name of its directory.
+    val projectName = projectDir.fileName.toString()
+    val activity = object : InitProjectActivity {
+      override suspend fun run(project: Project) {
+        if (project.name == projectName) {
+          started.complete(Unit)
+          released.await()
+        }
+      }
+    }
+    val initProjectActivities = ExtensionPointName<InitProjectActivity>("com.intellij.initProjectActivity")
+    ExtensionTestUtil.maskExtensions(initProjectActivities, listOf(activity), disposable, fireEvents = false)
+  }
+
+  // The item the welcome screen shows for the project: the recent projects list stores the path in the system-independent form.
+  private fun itemOf(projectPath: Path): RecentProjectItem = RecentProjectItem(
+    projectPath = projectPath.invariantSeparatorsPathString,
+    projectName = projectPath.fileName.toString(),
+    displayName = projectPath.fileName.toString(),
+    projectGroup = null,
+    activationTimestamp = null,
+  )
+
+  private fun createDirectoryProject(projectDir: Path): Path {
+    createModule(projectDir).resolve(Project.DIRECTORY_STORE_FOLDER).createDirectories().resolve("modules.xml").writeText(modulesXml())
+    return projectDir
   }
 
   // A module with a source root, so the load has roots to read.

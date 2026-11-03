@@ -1,0 +1,65 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="488" viewBox="0 0 640 488">
+  <title>PMarker snapshot ownership</title>
+  <desc>PMarkerDirectRoot retains PMarkerNode trees and PMarkerInvalidNode states. Node copies share SnapshotMarkerReference handles. StrongSnapshotMarkerReference retains its SnapshotRangeMarkerImpl. WeakSnapshotMarkerReference allows its marker to be collected.</desc>
+  <defs>
+    <marker id="strong" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 0 0 L 8 4 L 0 8 Z" fill="#47637e"/>
+    </marker>
+    <marker id="weak" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M 0 0 L 8 4 L 0 8" fill="none" stroke="#ad6528" stroke-width="1.6"/>
+    </marker>
+  </defs>
+  <style>
+    text { font-family: 'Segoe UI', sans-serif; font-size: 13px; fill: #24354b; }
+    .title { font-size: 21px; font-weight: 600; }
+    .type { font-size: 14px; font-weight: 600; }
+    .small { font-size: 12px; }
+    .label { font-size: 12px; fill: #47637e; }
+  </style>
+  <rect width="640" height="488" fill="#ffffff"/>
+  <text x="16" y="27" class="title">PMarker snapshot ownership</text>
+  <polyline points="16,46 57,46" fill="none" stroke="#47637e" stroke-width="1.8" marker-end="url(#strong)"/>
+  <text x="65" y="50">strong</text>
+  <polyline points="143,46 184,46" fill="none" stroke="#ad6528" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#weak)"/>
+  <text x="192" y="50">weak</text>
+  <text x="298" y="50" class="small">Node copies share the marker handle.</text>
+
+  <rect x="16" y="68" width="226" height="62" rx="8" fill="#eaf3ff" stroke="#a8c0db"/>
+  <text x="28" y="93" class="type">PMarkerDirectRoot</text>
+  <text x="28" y="116" class="small">One document snapshot</text>
+  <rect x="382" y="68" width="242" height="62" rx="8" fill="#eaf3ff" stroke="#a8c0db"/>
+  <text x="394" y="93" class="type">PMarkerNode</text>
+  <text x="394" y="116" class="small">entry: PMarkerRoot.MarkerEntry</text>
+  <polyline points="242,92 382,92" fill="none" stroke="#47637e" stroke-width="1.8" marker-end="url(#strong)"/>
+  <text x="312" y="82" text-anchor="middle" class="label">root</text>
+
+  <rect x="16" y="184" width="226" height="74" rx="8" fill="#fff3e3" stroke="#d8bc93"/>
+  <text x="28" y="207" class="type">PMarkerInvalidNode</text>
+  <text x="28" y="228">range, reason</text>
+  <text x="28" y="247" class="small">Invalid state or removal tombstone</text>
+  <polyline points="129,130 129,184" fill="none" stroke="#47637e" stroke-width="1.8" marker-end="url(#strong)"/>
+  <text x="140" y="152" class="label">invalids</text>
+  <text x="140" y="169" class="label">PersistentLongMap</text>
+
+  <rect x="382" y="184" width="242" height="74" rx="8" fill="#eaf3ff" stroke="#a8c0db"/>
+  <text x="394" y="207" class="type">PMarkerNode</text>
+  <text x="394" y="228" class="small">entry: PMarkerRoot.MarkerEntry</text>
+  <text x="394" y="247" class="small">lazyDelta shifts both children</text>
+  <polyline points="540,130 540,184" fill="none" stroke="#47637e" stroke-width="1.8" marker-end="url(#strong)"/>
+  <text x="550" y="161" class="label">left / right</text>
+
+  <text x="16" y="282">PMarkerRoot.MarkerEntry.handle: SnapshotMarkerReference</text>
+  <rect x="16" y="302" width="272" height="62" rx="8" fill="#eaf7f1" stroke="#a4c8b8"/>
+  <text x="28" y="327" class="type">StrongSnapshotMarkerReference</text>
+  <text x="28" y="350" class="small">Retains the marker</text>
+  <rect x="352" y="302" width="272" height="62" rx="8" fill="#eaf7f1" stroke="#a4c8b8"/>
+  <text x="364" y="327" class="type">WeakSnapshotMarkerReference</text>
+  <text x="364" y="350" class="small">Allows marker collection</text>
+  <polyline points="152,364 152,386 260,386 260,408" fill="none" stroke="#47637e" stroke-width="1.8" marker-end="url(#strong)"/>
+  <polyline points="488,364 488,386 380,386 380,408" fill="none" stroke="#ad6528" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#weak)"/>
+  <rect x="198" y="408" width="244" height="52" rx="8" fill="#eaf7f1" stroke="#a4c8b8"/>
+  <text x="210" y="431" class="type">SnapshotRangeMarkerImpl</text>
+  <text x="210" y="450" class="small">markerHandle retains its handle</text>
+  <text x="16" y="478" class="small">Histories and caches are omitted to keep the ownership view simple.</text>
+</svg>

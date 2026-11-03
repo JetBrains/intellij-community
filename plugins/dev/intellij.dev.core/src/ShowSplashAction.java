@@ -20,11 +20,11 @@ import static com.intellij.platform.ide.bootstrap.SplashManagerKt.blockingCreate
 final class ShowSplashAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Window splash = blockingCreateSplash(ApplicationInfoImpl.getShadowInstance());
+    var splash = blockingCreateSplash(ApplicationInfoImpl.getShadowInstance());
     splash.setVisible(true);
     splash.toFront();
 
-    SplashListener listener = new SplashListener(splash);
+    var listener = new SplashListener(splash);
     splash.addFocusListener(listener);
     splash.addKeyListener(listener);
     splash.addMouseListener(listener);
@@ -49,8 +49,7 @@ final class ShowSplashAction extends DumbAwareAction {
     }
 
     @Override
-    public void focusGained(FocusEvent e) {
-    }
+    public void focusGained(FocusEvent e) { }
 
     @Override
     public void focusLost(FocusEvent e) {
@@ -88,11 +87,9 @@ final class ShowSplashAction extends DumbAwareAction {
     }
 
     @Override
-    public void mouseEntered(MouseEvent e) {
-    }
+    public void mouseEntered(MouseEvent e) { }
 
     @Override
-    public void mouseExited(MouseEvent e) {
-    }
+    public void mouseExited(MouseEvent e) { }
   }
 }

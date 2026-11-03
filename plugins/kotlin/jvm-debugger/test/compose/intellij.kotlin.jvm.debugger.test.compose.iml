@@ -40,11 +40,14 @@
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.json.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.yaml.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.navbar.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.properties.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
   </component>
 </module>

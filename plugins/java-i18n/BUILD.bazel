@@ -133,6 +133,7 @@ jvm_library(
     exports = ["//java/java-impl:impl"],
     runtime_deps = [
         # do not sort,
+        "//plugins/properties/plugin",
         "//platform/backend",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",

@@ -15,7 +15,7 @@ import java.util.Random;
 public final class TouchbarTest {
   private static final Icon ourTestIcon = IconLoader.getIcon("modules/edit.png", TouchbarTest.class.getClassLoader());
 
-  public static void main(String[] args) {
+  static void main() {
     SwingUtilities.invokeLater(() -> _createFrame());
   }
 

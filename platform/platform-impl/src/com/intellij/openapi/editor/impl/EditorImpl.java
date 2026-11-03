@@ -97,6 +97,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorModel;
@@ -119,7 +120,6 @@ import com.intellij.openapi.editor.impl.caret.EditorCaretMutator;
 import com.intellij.openapi.editor.impl.caret.model.CaretCursor;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
-import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesManager;
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesModel;
 import com.intellij.openapi.editor.impl.stickyLines.VisualStickyLines;
@@ -194,7 +194,6 @@ import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.SingleEdtTaskScheduler;
@@ -204,7 +203,6 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
-import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.FocusUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -300,7 +298,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.TooManyListenersException;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
@@ -422,7 +419,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final @NotNull SelectionModelImpl mySelectionModel;
   private final @NotNull EditorMarkupModelImpl myMarkupModel;
   private final @NotNull EditorFilteringMarkupModelEx myEditorFilteringMarkupModel;
-  private final @NotNull MarkupModelListener myMarkupModelListener;
+  private final @NotNull EditorMarkupRepainter myMarkupRepainter;
   private final @NotNull List<HighlighterListener> myHighlighterListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private final @NotNull FoldingModelImpl myFoldingModel;
@@ -535,7 +532,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private boolean myCharKeyPressed;
   private boolean myNeedToSelectPreviousChar;
 
-  boolean myDocumentChangeInProgress;
+  private boolean myDocumentChangeInProgress;
   /**
    * A text range of the current repaint request for {@link #myMarkupModel}.{@link EditorMarkupModelImpl#repaint(int, int)}.
    * Offsets are packed into a long for atomicity, because range highlighters can be changed in BGT.
@@ -619,30 +616,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myImmediatePainter = new ImmediatePainter(this);
 
-    myMarkupModelListener = new MarkupModelListener() {
-      @Override
-      public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
-        TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
-        onHighlighterChanged(highlighter,
-                             myGutterComponent.canImpactSize(highlighter),
-                             EditorUtil.attributesImpactFontStyle(attributes),
-                             EditorUtil.attributesImpactForegroundColor(attributes));
-      }
-
-      @Override
-      public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
-        TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
-        onHighlighterChanged(highlighter, myGutterComponent.canImpactSize(highlighter),
-                             EditorUtil.attributesImpactFontStyle(attributes),
-                             EditorUtil.attributesImpactForegroundColor(attributes));
-      }
-
-      @Override
-      public void attributesChanged(@NotNull RangeHighlighterEx highlighter,
-                                    boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
-        onHighlighterChanged(highlighter, renderersChanged, fontStyleChanged, foregroundColorChanged);
-      }
-    };
+    myMarkupRepainter = new EditorMarkupRepainter(this);
 
     myIndentsModel = new IndentsModelImpl(this);
 
@@ -731,8 +705,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }, myCaretModel);
 
-    myEditorFilteringMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
-    myMarkupModel.addMarkupModelListener(myCaretModel, myMarkupModelListener);
+    myEditorFilteringMarkupModel.addMarkupModelListener(myCaretModel, myMarkupRepainter);
+    myMarkupModel.addMarkupModelListener(myCaretModel, myMarkupRepainter);
+    getDocument().addDocumentListener(myMarkupRepainter, myCaretModel);
     getDocument().addDocumentListener(myFoldingModel, myCaretModel);
     getDocument().addDocumentListener(myCaretModel, myCaretModel);
 
@@ -1037,125 +1012,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int end = highlighter.getAffectedAreaEndOffset();
     queueErrorStipeRepaintRequest(start, end);
   }
-  /**
-   * The joined changes of the highlighters that the editor did not apply yet.
-   * A color change keeps the text widths, so the font style changes have their own range.
-   *
-   * @param fontStart the start of the font style changes, or {@link Integer#MAX_VALUE} when no font style changed
-   * @param fontEnd   the end of the font style changes, or {@link Integer#MIN_VALUE} when no font style changed
-   */
-  private record HighlighterChange(int affectedStart,
-                                   int affectedEnd,
-                                   int fontStart,
-                                   int fontEnd,
-                                   boolean canImpactGutterSize,
-                                   boolean foregroundColorChanged,
-                                   boolean isAccessibleGutterElement,
-                                   boolean needRestart) {
-    boolean fontStyleChanged() {
-      return fontStart <= fontEnd;
-    }
-
-    @NotNull HighlighterChange withNeedRestart() {
-      return new HighlighterChange(affectedStart, affectedEnd, fontStart, fontEnd, canImpactGutterSize, foregroundColorChanged,
-                                   isAccessibleGutterElement, true);
-    }
-  }
-  private final AtomicReference<HighlighterChange> myCompositeHighlighterChange = new AtomicReference<>();
-  private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter,
-                                    boolean canImpactGutterSize, boolean fontStyleChanged, boolean foregroundColorChanged) {
-    DocumentEx document = getElfDocument();
-    int textLength = document.getTextLength();
-    int hstart = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
-    int hend = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), hstart, textLength);
-    int fontStart = fontStyleChanged ? hstart : Integer.MAX_VALUE;
-    int fontEnd = fontStyleChanged ? hend : Integer.MIN_VALUE;
-    boolean isAccessibleGutterElement = AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer());
-    HighlighterChange change = new HighlighterChange(hstart, hend, fontStart, fontEnd, canImpactGutterSize, foregroundColorChanged,
-                                                     isAccessibleGutterElement, false);
-    HighlighterChange oldChange = myCompositeHighlighterChange.getAndAccumulate(change, (change1, change2) -> {
-      if (change1 == null) return change2;
-      if (change2 == null) return change1;
-      int start2 = MathUtil.clamp(Math.min(change1.affectedStart, change2.affectedStart), 0, textLength);
-      int end2 = MathUtil.clamp(Math.max(change1.affectedEnd, change2.affectedEnd), 0, textLength);
-      return new HighlighterChange(start2, end2,
-                                   Math.min(change1.fontStart(), change2.fontStart()),
-                                   Math.max(change1.fontEnd(), change2.fontEnd()),
-                                   change1.canImpactGutterSize() || change2.canImpactGutterSize(),
-                                   change1.foregroundColorChanged() || change2.foregroundColorChanged(),
-                                   change1.isAccessibleGutterElement() || change2.isAccessibleGutterElement(),
-                                   change1.needRestart() || change2.needRestart());
-    });
-    if (oldChange == null || oldChange.needRestart()) {
-      EdtInvocationManager.invokeLaterIfNeeded(this::processHighlighterChange);
-    }
-  }
-
-  /**
-   * Applies the composite highlighter change.
-   * During a document change, a bulk update or an inlay batch, it marks the change for a restart instead.
-   * {@link #processDeferredHighlighterChange} applies the marked change after them.
-   */
-  private void processHighlighterChange() {
-    DocumentEx document = getElfDocument();
-    if (isDisposed() || document.isInBulkUpdate() || myInlayModel.isInBatchMode() || myDocumentChangeInProgress) {
-      myCompositeHighlighterChange.getAndUpdate(old -> old == null ? null : old.withNeedRestart());
-      return; // will be repainted later
-    }
-
-    HighlighterChange newChange = myCompositeHighlighterChange.getAndSet(null);
-    if (newChange == null) return;
-
-    if (newChange.canImpactGutterSize()) {
-      updateGutterSize();
-    }
-
-    int docTextLength = document.getTextLength();
-    int start = MathUtil.clamp(newChange.affectedStart(), 0, docTextLength);
-    int end = MathUtil.clamp(newChange.affectedEnd(), start, docTextLength);
-
-    if (myGutterComponent.getCurrentAccessibleLine() != null && newChange.isAccessibleGutterElement()) {
-      escapeGutterAccessibleLine(start, end);
-    }
-    int startLine = document.getLineNumber(start);
-    int endLine = document.getLineNumber(end);
-    if (start != end && (newChange.fontStyleChanged() || newChange.foregroundColorChanged())) {
-      myView.invalidateRange(start, end, false);
-    }
-    boolean softWrapCountChanged = false;
-    if (newChange.fontStyleChanged()) {
-      int fontStart = MathUtil.clamp(newChange.fontStart(), 0, docTextLength);
-      int fontEnd = MathUtil.clamp(newChange.fontEnd(), fontStart, docTextLength);
-      if (fontStart != fontEnd) {
-        myView.invalidateRange(fontStart, fontEnd, true);
-        int softWrapCount = mySoftWrapModel.getRegisteredSoftWraps().size();
-        mySoftWrapModel.onFontStyleChanged(fontStart, fontEnd);
-        softWrapCountChanged = mySoftWrapModel.getRegisteredSoftWraps().size() != softWrapCount;
-      }
-    }
-    if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of the batch folding operation everything is repainted
-      if (softWrapCountChanged) {
-        // the visual lines below the range moved
-        validateSize();
-        repaintToScreenBottom(Math.max(0, startLine - 1));
-      }
-      else {
-        repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-      }
-    }
-    updateCaretCursor();
-  }
-
-  /**
-   * Applies the highlighter change that {@link #processHighlighterChange} marked for a restart.
-   * Without this call, the change waits for the next highlighter change.
-   */
-  private void processDeferredHighlighterChange() {
-    HighlighterChange change = myCompositeHighlighterChange.get();
-    if (change != null && change.needRestart()) {
-      processHighlighterChange();
-    }
-  }
 
   private void onInlayUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
     DocumentEx document = getElfDocument();
@@ -1190,7 +1046,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.repaint();
     myMarkupModel.repaint();
     updateCaretCursor();
-    processDeferredHighlighterChange();
+    myMarkupRepainter.applyBlockedRequest();
   }
 
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(@NotNull VisibleAreaEvent e) {
@@ -2228,10 +2084,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return;
     }
     assertIsDispatchThread();
-    int minEndOffset = Math.min(endOffset, getEditorModel().getDocument().getTextLength());
+    DocumentText documentText = getEditorModel().getDocument().getDocumentText();
+    int minEndOffset = Math.min(endOffset, documentText.length());
 
     if (invalidateTextLayout) {
-      myView.invalidateRange(startOffset, minEndOffset, true);
+      myView.invalidateRange(
+        documentText,
+        startOffset,
+        minEndOffset,
+        true
+      );
     }
 
     if (!isShowing()) {
@@ -2258,11 +2120,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return getElfDocument().isInBulkUpdate();
   }
 
+  /**
+   * Whether the editor processes a document change.
+   * It is true from {@link #beforeChangedUpdate} to {@link #changedUpdate}.
+   */
+  boolean isDocumentChangeInProgress() {
+    return myDocumentChangeInProgress;
+  }
+
   private boolean isShowing() {
     return myGutterComponent.isShowing();
   }
 
-  private void repaintToScreenBottom(int startLine) {
+  void repaintToScreenBottom(int startLine) {
     int yStartLine = logicalLineToY(startLine);
     repaintToScreenBottomStartingFrom(yStartLine);
   }
@@ -2340,7 +2210,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingPositionKeeper.restorePosition(true);
     }
 
-    processDeferredHighlighterChange();
+    myMarkupRepainter.applyBlockedRequest();
   }
 
   private void beforeChangedUpdate(@NotNull DocumentEvent e) {
@@ -2388,9 +2258,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     setMouseSelectionState(MOUSE_SELECTION_STATE_NONE);
 
-    if (myGutterComponent.getCurrentAccessibleLine() != null) {
-      escapeGutterAccessibleLine(e.getOffset(), e.getOffset() + e.getNewLength());
-    }
+    escapeGutterAccessibleLine(e.getOffset(), e.getOffset() + e.getNewLength());
 
     validateSize();
 
@@ -2423,10 +2291,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myScrollingPositionKeeper.restorePosition(true);
     }
 
-    processDeferredHighlighterChange();
+    myMarkupRepainter.applyBlockedRequest();
   }
 
-  private void escapeGutterAccessibleLine(int offsetStart, int offsetEnd) {
+  /**
+   * Leaves the current accessible gutter line when the primary caret is on a visual line of the range.
+   */
+  void escapeGutterAccessibleLine(int offsetStart, int offsetEnd) {
+    if (myGutterComponent.getCurrentAccessibleLine() == null) {
+      return;
+    }
     int startVisLine = offsetToVisualLine(offsetStart);
     int endVisLine = offsetToVisualLine(offsetEnd);
     int line = getCaretModel().getPrimaryCaret().getVisualPosition().line;
@@ -2469,7 +2343,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean updatingSize; // accessed from EDT only
 
-  private void updateGutterSize() {
+  /**
+   * Whether a change of the highlighter can change the gutter size.
+   */
+  boolean canImpactGutterSize(@NotNull RangeHighlighterEx highlighter) {
+    return myGutterComponent.canImpactSize(highlighter);
+  }
+
+  void updateGutterSize() {
     assertIsDispatchThread();
     if (!updatingSize) {
       updatingSize = true;
@@ -4308,10 +4189,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       boolean oldAvailable = oldFilter.shouldRender(highlighter);
       boolean newAvailable = myHighlightingFilter.shouldRender(highlighter);
       if (highlighter.isValid() && oldAvailable != newAvailable) {
-        TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
-        myMarkupModelListener.attributesChanged((RangeHighlighterEx)highlighter, true,
-                                                EditorUtil.attributesImpactFontStyle(attributes),
-                                                EditorUtil.attributesImpactForegroundColor(attributes));
+        myMarkupRepainter.renderingChanged((RangeHighlighterEx)highlighter);
         errorStripeMarkerChanged((RangeHighlighterEx)highlighter);
         HighlightInfo fileLevelInfo = HighlightInfo.fromRangeHighlighter(highlighter);
         if (fileLevelInfo != null && fileLevelInfo.isFileLevelAnnotation()) {

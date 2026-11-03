@@ -43,6 +43,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.starter" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.properties.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.ide.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.ide.customization" scope="RUNTIME" />
@@ -95,6 +96,7 @@
     <orderEntry type="module" module-name="intellij.java.i18n" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.tasks" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.tasks.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.github.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.github" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.hg" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
@@ -126,7 +128,6 @@
     <orderEntry type="module" module-name="intellij.sh.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.terminal.sh" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java.maven" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mermaid" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.webp" scope="RUNTIME" />
@@ -160,9 +161,9 @@
     <orderEntry type="module" module-name="intellij.kotlin.onboarding.promoter" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.execution.process.elevation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.gitlab.yaml" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.yaml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.yaml.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.compose.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.json" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.json.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.frontend" scope="RUNTIME" />

@@ -37,8 +37,11 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/kotlin:kotlin-plugin-community-main",
+        "//plugins/markdown/plugin",
         "//plugins/markdown/fenceInjection",
         "//plugins/markdown/core/frontend",
+        "//json/plugin",
+        "//plugins/yaml/plugin",
     ],
     deps = [
         # do not sort,

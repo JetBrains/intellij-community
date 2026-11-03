@@ -29,10 +29,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 object MarkdownCodeFenceUtils {
   /** Check if [node] is of CODE_FENCE type */
-  fun isCodeFence(node: ASTNode) = node.hasType(MarkdownTokenTypeSets.CODE_FENCE)
+  fun isCodeFence(node: ASTNode): Boolean = node.hasType(MarkdownTokenTypeSets.CODE_FENCE)
 
   /** Check if [node] inside CODE_FENCE */
-  fun inCodeFence(node: ASTNode) = node.parents(withSelf = false).any { it.hasType(MarkdownTokenTypeSets.CODE_FENCE) }
+  fun inCodeFence(node: ASTNode): Boolean = node.parents(withSelf = false).any { it.hasType(MarkdownTokenTypeSets.CODE_FENCE) }
 
   /**
    * Consider using [MarkdownCodeFence.obtainFenceContent], since it caches its result.
@@ -81,14 +81,10 @@ object MarkdownCodeFenceUtils {
    */
   @JvmStatic
   fun isAbleToAcceptInjections(host: MarkdownCodeFence): Boolean {
-    if (host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_END) }
-        || host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_START) }) {
-      return false
-    }
-
-    val newlines = host.children.count { MarkdownPsiUtil.WhiteSpaces.isNewLine(it) }
-
-    return newlines >= 2
+    val children = generateSequence(host.node.firstChildNode) { it.treeNext }
+    return children.any { it.elementType == MarkdownTokenTypes.CODE_FENCE_START } &&
+           children.any { it.elementType == MarkdownTokenTypes.CODE_FENCE_END } &&
+           children.count { it.elementType in MarkdownTokenTypeSets.WHITE_SPACES && it.textLength == 1 && it.chars[0] == '\n' } >= 2
   }
 
   /**
@@ -179,23 +175,23 @@ object MarkdownCodeFenceUtils {
   @JvmStatic
   fun getOpeningIndentationColumns(element: MarkdownCodeFence): Int {
     val opening = element.children.firstOrNull { it.elementType == MarkdownTokenTypes.CODE_FENCE_START } ?: return 0
-    val openingIndent = getIndentationInfo(opening.text)
-    if (openingIndent.columns >= 4) {
-      return openingIndent.columns
+    (val length, val columns) = getIndentationInfo(opening.text)
+    if (columns >= 4) {
+      return columns
     }
     val document = PsiDocumentManager.getInstance(element.project).getDocument(element.containingFile) ?: return 0
     val openingLineStart = document.getLineStartOffset(document.getLineNumber(opening.textOffset))
-    val openingStart = opening.textOffset + openingIndent.length
+    val openingStart = opening.textOffset + length
     val constraintsChars = findContainerConstraintsChars(element, document)
     val indentStart = openingLineStart + constraintsChars
     if (indentStart > openingStart) {
       return 0
     }
     val indentText = document.getText(TextRange.create(indentStart, openingStart))
-    return getIndentationInfo(indentText).columns.takeIf { it >= 4 } ?: 0
+    return getIndentationInfo(indentText).columns
   }
 
-  private fun findContainerConstraintsChars(element: MarkdownCodeFence, document: com.intellij.openapi.editor.Document): Int {
+  private fun findContainerConstraintsChars(element: MarkdownCodeFence, document: Document): Int {
     val anchor = element.children.firstOrNull { it.elementType == MarkdownTokenTypes.CODE_FENCE_CONTENT }
                  ?: element.children.firstOrNull { it.elementType == MarkdownTokenTypes.CODE_FENCE_END }
                  ?: return 0
@@ -203,10 +199,6 @@ object MarkdownCodeFenceUtils {
     return (anchor.textOffset - lineStart).coerceAtLeast(0)
   }
 
-
-  @Internal
-  @JvmStatic
-  fun hasIndent(element: MarkdownCodeFence): Boolean = !getIndent(element).isNullOrEmpty()
 
   @Internal
   @JvmStatic

@@ -118,6 +118,12 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     .register(CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
               MagicConstantInspection::getCalendarGetValues);
 
+  private static final CallMatcher MIN_MAX = CallMatcher.anyOf(
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_MATH, "min", "max").parameterTypes("int", "int"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_MATH, "min", "max").parameterTypes("long", "long"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRICT_MATH, "min", "max").parameterTypes("int", "int"),
+    CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRICT_MATH, "min", "max").parameterTypes("long", "long"));
+
   @Override
   public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.probable.bugs");
@@ -476,6 +482,13 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     }
 
     if (isOneOf(argument, allowedValues, manager)) return true;
+
+    if (!allowedValues.isFlagSet() && argument instanceof PsiMethodCallExpression call && MIN_MAX.test(call)) {
+      for (PsiExpression operand : call.getArgumentList().getExpressions()) {
+        if (!isAllowed(operand, scope, allowedValues, manager, visited, isOnTheFly)) return false;
+      }
+      return true;
+    }
 
     if (allowedValues.isFlagSet()) {
       PsiExpression zero = getLiteralExpression(argument, manager, "0");

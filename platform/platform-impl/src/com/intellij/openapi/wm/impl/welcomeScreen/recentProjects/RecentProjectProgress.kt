@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.CommonBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.NlsContexts.DialogTitle
@@ -14,7 +15,6 @@ import com.intellij.platform.ide.progress.TaskHandle
 import com.intellij.platform.ide.progress.TaskId
 import com.intellij.platform.util.progress.ProgressState
 import com.intellij.util.text.nullize
-import java.nio.file.Path
 
 /** Tells one operation of a welcome screen row from another. It stays the same while the operation runs. */
 internal sealed interface ProgressId {
@@ -22,7 +22,10 @@ internal sealed interface ProgressId {
   value class Task(val taskId: TaskId) : ProgressId
 
   @JvmInline
-  value class Clone(val projectPath: Path) : ProgressId
+  value class Clone(val recentProjectId: RecentProjectId) : ProgressId
+
+  @JvmInline
+  value class Load(val recentProjectId: RecentProjectId) : ProgressId
 }
 
 /**
@@ -57,11 +60,25 @@ internal fun TaskHandle.toProgress(state: ProgressState?): RecentProjectProgress
   )
 }
 
+/**
+ * What the load of the recent project [recentProjectId] shows.
+ *
+ * A load reports no text and no fraction, and the window offers no cancel button for it.
+ */
+internal fun loadingProgress(recentProjectId: RecentProjectId): RecentProjectProgress = RecentProjectProgress(
+  id = ProgressId.Load(recentProjectId),
+  title = IdeBundle.message("welcome.screen.recent.project.loading.title"),
+  text = null,
+  fraction = null,
+  isCancellable = false,
+  cancelTooltip = IdeBundle.message("welcome.screen.recent.project.cancel.task.tooltip"),
+)
+
 /** What the clone of this project shows now. It reports into an indicator of its own, which is read here. */
 internal fun CloneableProject.toProgress(): RecentProjectProgress {
   val info = cloneTaskInfo
   return RecentProjectProgress(
-    id = ProgressId.Clone(projectPath),
+    id = ProgressId.Clone(RecentProjectId(projectPath)),
     title = info.title,
     text = progressIndicator.text,
     fraction = progressIndicator.fraction.takeUnless { progressIndicator.isIndeterminate },
@@ -74,14 +91,14 @@ internal fun CloneableProject.toProgress(): RecentProjectProgress {
 }
 
 /**
- * What every recent project the welcome screen holds is running, in [ROW_ORDER].
+ * What every recent project the welcome screen loads or holds is running: its load first, then its tasks in [ROW_ORDER].
  *
- * It answers for an item rather than handing out its map, because a project is keyed by its path: a [RecentProjectItem] is a value the
- * tree rebuilds on every refresh, and its branch name and its activation time change under the same project.
+ * It answers for an item rather than handing out its map, because a project is keyed by its [RecentProjectId]: a [RecentProjectItem] is
+ * a value the tree rebuilds on every refresh, and its branch name and its activation time change under the same project.
  */
-internal class ProjectsProgress(private val byProject: Map<Path, List<RecentProjectProgress>>) {
+internal class ProjectsProgress(private val byProject: Map<RecentProjectId, List<RecentProjectProgress>>) {
   /** What the recent project of [item] is running, empty when it runs nothing. */
-  fun getProgressOf(item: RecentProjectItem): List<RecentProjectProgress> = item.projectNioPath()?.let(byProject::get).orEmpty()
+  fun getProgressOf(item: RecentProjectItem): List<RecentProjectProgress> = item.getRecentProjectId()?.let(byProject::get).orEmpty()
 
   companion object {
     val NONE: ProjectsProgress = ProjectsProgress(emptyMap())

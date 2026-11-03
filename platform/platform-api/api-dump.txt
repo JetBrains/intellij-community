@@ -6572,7 +6572,6 @@ c:com.intellij.ui.JBCardLayout
 - first(java.awt.Container):V
 - last(java.awt.Container):V
 - layoutContainer(java.awt.Container):V
-- s:main(java.lang.String[]):V
 - next(java.awt.Container):V
 - previous(java.awt.Container):V
 - removeLayoutComponent(java.awt.Component):V
@@ -8751,6 +8750,7 @@ com.intellij.ui.docking.DockContainer
 - getAcceptAreaFallback():com.intellij.ui.awt.RelativeRectangle
 - a:getContainerComponent():javax.swing.JComponent
 - a:getContentResponse(com.intellij.ui.docking.DockableContent,com.intellij.ui.awt.RelativePoint):com.intellij.ui.docking.DockContainer$ContentResponse
+- getDropPriority():I
 - a:isDisposeWhenEmpty():Z
 - a:isEmpty():Z
 - processDropOver(com.intellij.ui.docking.DockableContent,com.intellij.ui.awt.RelativePoint):java.awt.Image

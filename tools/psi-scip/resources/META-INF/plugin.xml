@@ -1,0 +1,35 @@
+<idea-plugin>
+  <id>com.intellij.tools.psiScip</id>
+  <name>PSI SCIP Export</name>
+  <category>Platform Development</category>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+    <p>Writes a SCIP index of the Java files of a project from PSI resolve. The index is a reference oracle for code
+    search benchmarks. Start it headless with the <code>psiScip</code> command.</p>
+  ]]></description>
+
+  <!-- the first content tag gives the plugin its namespace; the namespace makes the internal library modules visible -->
+  <content namespace="jetbrains"/>
+
+  <dependencies>
+    <module name="intellij.java.backend"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
+    <module name="intellij.libraries.protobuf"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend.observation"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <appStarter id="psiScip" implementation="com.intellij.tools.psiScip.PsiScipStarter" internal="true"/>
+  </extensions>
+</idea-plugin>

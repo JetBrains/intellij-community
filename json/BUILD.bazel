@@ -1,24 +1,8 @@
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.json` start
 content_module_jar(module = ":json")
-
-dev_dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.json.backend",
-        "intellij.json.networknt.wrapper",
-        "intellij.json.backend.regexp",
-        "intellij.json.spellchecker",
-        "intellij.json.structureView",
-        "intellij.json.syntax",
-        "intellij.libraries.jsonSchemaValidator",
-        "intellij.libraries.joni",
-    ],
-    main_module = "intellij.json",
-)
 ### auto-generated section `dev intellij.json` end
 
 ### auto-generated section `build intellij.json` start
@@ -70,7 +54,6 @@ jvm_library(
 exports_files(
     [
         "intellij.json.iml",
-        "resources/META-INF/plugin.xml",
         "resources/intellij.json.xml",
     ],
     visibility = ["//visibility:public"],

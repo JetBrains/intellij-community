@@ -140,7 +140,7 @@ public class LoadTextUtilBenchmark {
     return LoadTextUtil.convertLineSeparatorsToSlashN(buffer.charBuffer).text.length();
   }
 
-  public static void main(String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     Options options = new OptionsBuilder()
       .forks(1)
       .threads(1)

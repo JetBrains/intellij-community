@@ -127,6 +127,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//plugins/properties/plugin",
         "//plugins/gradle/codeInsight/groovy/backend",
         "//plugins/maven/plugin",
         "//plugins/junit",

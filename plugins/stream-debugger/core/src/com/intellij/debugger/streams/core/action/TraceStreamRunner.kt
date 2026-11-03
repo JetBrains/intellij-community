@@ -1,9 +1,9 @@
 package com.intellij.debugger.streams.core.action
 
+import com.intellij.debugger.streams.core.ChainDetectionStateManager
 import com.intellij.debugger.streams.core.ChainStatus
 import com.intellij.debugger.streams.core.StreamChainWithLibrary
 import com.intellij.debugger.streams.core.StreamDebuggerBundle
-import com.intellij.debugger.streams.core.ChainDetectionStateManager
 import com.intellij.debugger.streams.core.diagnostic.ex.TraceCompilationException
 import com.intellij.debugger.streams.core.diagnostic.ex.TraceEvaluationException
 import com.intellij.debugger.streams.core.lib.LibrarySupportProvider
@@ -20,11 +20,13 @@ import com.intellij.debugger.streams.shared.statistics.StreamDebuggerStatisticsC
 import com.intellij.debugger.streams.shared.statistics.StreamDebuggerStatisticsCollector.StreamTraceResult
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -81,13 +83,23 @@ class TraceStreamRunner(val cs: CoroutineScope) {
       runTrace(chains.first().chain, chains.first().provider, session)
     }
     else {
-      withContext(Dispatchers.EDT) {
-        val project = session.getProject()
-        val file = chains.first().chain.context.containingFile.virtualFile
-        val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), true)
-                     ?: error("Cannot open editor for file: ${file.getName()}")
+      val project = session.getProject()
+      val file = readAction { chains.first().chain.context.containingFile.virtualFile }
+      val fileEditorManager = FileEditorManager.getInstanceAsync(project)
+      val openDescriptor = OpenFileDescriptor(project, file)
+      val editor = fileEditorManager.openTextEditor(
+        openDescriptor,
+        FileEditorOpenRequest.fromDescriptor(openDescriptor)
+        .withRequestFocus(true)
+      ) ?: error("Cannot open editor for file: ${file.getName()}")
 
+      fileEditorManager.awaitLoaded(editor)
+
+      withContext(Dispatchers.EDT) {
         yield()
+        if (editor.isDisposed) {
+          return@withContext
+        }
 
         MyStreamChainChooser(editor).show(
           chains.map { StreamChainOption(it) },

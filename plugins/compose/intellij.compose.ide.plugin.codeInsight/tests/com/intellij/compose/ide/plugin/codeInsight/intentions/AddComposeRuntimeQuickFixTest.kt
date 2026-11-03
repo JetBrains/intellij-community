@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.codeInsight.intentions
 
+import com.intellij.compose.ide.plugin.codeInsight.composeCodeInsightTestDataRoot
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.codeInsight.gradle.AbstractGradleMultiFileQuickFixTest
 import org.jetbrains.kotlin.idea.fir.K2DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
@@ -13,6 +15,14 @@ import java.io.File
 @TestRoot("../compose/intellij.compose.ide.plugin.codeInsight/testData")
 @TestMetadata("gradle/fixes")
 internal class AddComposeRuntimeQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
+
+  @Suppress("IO_FILE_USAGE")
+  override fun testDataDirectory(): File {
+    val testDataFileName = requireNotNull(KotlinTestUtils.getTestDataFileName(javaClass, getName())) {
+      "Missing @TestMetadata for ${getName()}"
+    }
+    return composeCodeInsightTestDataRoot().resolve("gradle/fixes/$testDataFileName/before").toFile()
+  }
 
   override fun checkUnexpectedErrors(mainFile: File, ktFile: KtFile, fileText: String) {
     K2DirectiveBasedActionUtils.checkForUnexpectedErrors(mainFile, ktFile, fileText)

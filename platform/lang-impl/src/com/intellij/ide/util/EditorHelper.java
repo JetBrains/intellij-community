@@ -22,6 +22,11 @@ import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("deprecation")
 public final class EditorHelper {
+  /**
+   * @deprecated Prefer asynchronous {@link #requestOpenFilesInEditor(PsiElement[])}.
+   * The replacement completes asynchronously and does not block the caller thread.
+   */
+  @Deprecated
   public static <T extends PsiElement> void openFilesInEditor(T @NotNull [] elements) {
     final int limit = EditorWindow.Companion.getTabLimit();
     final int max = Math.min(limit, elements.length);
@@ -79,11 +84,21 @@ public final class EditorHelper {
     return EditorHelperKt.requestOpenInEditor(element, switchToText, requestFocus);
   }
 
+  /**
+   * @deprecated Prefer asynchronous {@link #requestOpenInEditor(PsiElement)}.
+   * The replacement completes asynchronously and does not block the caller thread.
+   */
+  @Deprecated
   public static Editor openInEditor(@NotNull PsiElement element) {
     FileEditor editor = openInEditor(element, true);
     return editor instanceof TextEditor te ? te.getEditor() : null;
   }
 
+  /**
+   * @deprecated Prefer asynchronous {@link #requestOpenInEditor(PsiElement)}.
+   * When the future completes, call {@link #getMaybeInjectedEditor(PsiElement)}.
+   */
+  @Deprecated
   public static @Nullable Editor openInMaybeInjectedEditor(@NotNull PsiElement element) {
     Editor editor = openInEditor(element);
     if (editor == null) return null;
@@ -113,10 +128,18 @@ public final class EditorHelper {
     }
   }
 
+  /**
+   * @deprecated Prefer asynchronous {@link #requestOpenInEditor(PsiElement, boolean, boolean)} with {@code requestFocus = false}.
+   */
+  @Deprecated
   public static @Nullable FileEditor openInEditor(@NotNull PsiElement element, boolean switchToText) {
     return openInEditor(element, switchToText, false);
   }
 
+  /**
+   * @deprecated Prefer asynchronous {@link #requestOpenInEditor(PsiElement, boolean, boolean)}.
+   */
+  @Deprecated
   public static @Nullable FileEditor openInEditor(@NotNull PsiElement element, boolean switchToText, boolean focusEditor) {
     PsiFile file;
     int offset;

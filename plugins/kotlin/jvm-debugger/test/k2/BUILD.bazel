@@ -57,6 +57,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle",
         "//java/java-impl/testFramework",
         "//xml/plugin",
+        "//plugins/properties/plugin",
         "//platform/structure-view-impl/plugin",
         "//aether-dependency-resolver/plugin",
         "//platform/testRunner/plugin",

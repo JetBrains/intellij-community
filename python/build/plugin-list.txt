@@ -7,10 +7,10 @@ intellij.copyright
 intellij.editorconfig.plugin
 intellij.featuresTrainer
 intellij.grazie
-intellij.markdown
+intellij.markdown.plugin
 intellij.mermaid
 intellij.minimap.plugin
-intellij.properties
+intellij.properties.plugin
 intellij.restructuredtext
 intellij.searchEverywhereMl
 intellij.sh.plugin
@@ -19,6 +19,6 @@ intellij.terminal
 intellij.textmate.plugin
 intellij.toml
 intellij.vcs.git
-intellij.json
-intellij.yaml
+intellij.json.plugin
+intellij.yaml.plugin
 intellij.performanceTesting

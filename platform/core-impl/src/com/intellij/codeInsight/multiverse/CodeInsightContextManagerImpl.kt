@@ -9,7 +9,6 @@ import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.readAndBackgroundWriteAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -107,7 +106,6 @@ class CodeInsightContextManagerImpl(
     project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged()
     val emitted = _changeFlow.tryEmit(Unit)
     log.assertTrue(emitted, "failed to emit a context invalidation event, subscribers are not notified")
-    log.debug { "[ctx-diag] all contexts invalidated" }
     log.trace { "all contexts are invalidated" }
   }
 
@@ -210,9 +208,7 @@ class CodeInsightContextManagerImpl(
     for (provider in EP_NAME.lazySequence()) {
       when (val answer = provider.getContextSafely(file)) {
         Answer.NotOwned -> continue
-        is Answer.Contexts -> return answer.contexts.asSequence().toContextOrArray().also {
-          log.debug { "[ctx-diag] computed contexts of ${file.path}: ${it.wrapToList()}" }
-        }
+        is Answer.Contexts -> return answer.contexts.asSequence().toContextOrArray()
       }
     }
 

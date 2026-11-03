@@ -8,7 +8,11 @@ import com.intellij.platform.buildScripts.devLaunch.customCommandSystemPropertie
 import com.intellij.platform.buildScripts.devLaunch.getIdeSystemProperties
 import com.intellij.platform.buildScripts.devLaunch.readCustomCommand
 import com.intellij.platform.buildScripts.devLaunch.resolveAdditionalJvmArguments
+import jetbrains.buildServer.messages.serviceMessages.BlockClosed
+import jetbrains.buildServer.messages.serviceMessages.BlockOpened
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import org.jetbrains.intellij.build.VmProperties
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.dev.BuildRequest
 import org.jetbrains.intellij.build.dev.buildProductInProcess
 import org.jetbrains.intellij.build.telemetry.withTracer
@@ -32,7 +36,7 @@ fun buildDevMain(): java.util.AbstractMap.SimpleImmutableEntry<String, Collectio
  */
 @Suppress("unused")
 fun buildDevMain(rawArgs: Array<String>): java.util.AbstractMap.SimpleImmutableEntry<String, Collection<Path>> {
-  val info = buildDevImpl(rawArgs)
+  val info = teamCityBlock("build ide") { buildDevImpl(rawArgs) }
 
   val systemProperties = System.getProperties()
   for ((name, value) in info.systemProperties) {
@@ -50,6 +54,27 @@ fun buildDevMain(rawArgs: Array<String>): java.util.AbstractMap.SimpleImmutableE
   }
 
   return java.util.AbstractMap.SimpleImmutableEntry(info.mainClassName, info.classPath)
+}
+
+private inline fun <T> teamCityBlock(name: String, block: () -> T): T {
+  if (!TeamCityHelper.isUnderTeamCity) {
+    return block()
+  }
+
+  printServiceMessage(BlockOpened(name))
+  try {
+    return block()
+  }
+  finally {
+    printServiceMessage(BlockClosed(name))
+  }
+}
+
+// print in several small statements to avoid a torn service message, which expands the fold
+private fun printServiceMessage(message: ServiceMessage) {
+  System.out.flush()
+  println(message)
+  System.out.flush()
 }
 
 private fun buildDevImpl(rawArgs: Array<String>): BuildDevInfo {

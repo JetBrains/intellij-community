@@ -26,6 +26,7 @@ jvm_library(
         ["testData/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/markdown/plugin"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

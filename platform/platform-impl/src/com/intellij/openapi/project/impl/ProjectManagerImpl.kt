@@ -18,9 +18,6 @@ import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
-import com.intellij.internal.statistic.collectors.fus.ProjectlessData
-import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.internal.statistic.collectors.fus.ProjectlessLifecycleCollector
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
@@ -43,6 +40,9 @@ import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject
 import com.intellij.ide.welcomeScreen.WelcomeUtils
+import com.intellij.internal.statistic.collectors.fus.ProjectlessData
+import com.intellij.internal.statistic.collectors.fus.ProjectlessLifecycleCollector
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
@@ -78,8 +78,8 @@ import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.project.ProjectCloseHandler
 import com.intellij.openapi.project.ProjectCloseConfirmationChecker
+import com.intellij.openapi.project.ProjectCloseHandler
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.ProjectManager
@@ -283,16 +283,26 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     @Suppress("DEPRECATION")
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     return runBlockingCancellable {
-      withContext(modalityState.asContextElement() + ClientId.localId.asContextElement()) {
-        prepareProject(
-          projectIdentityFile = path,
-          projectName = null,
-          beforeInit = beforeInit,
-          projectInitHelper = null,
-          runConversionBeforeOpen = false,
-          preloadServices = preloadServices,
-        )
+      // On the calling thread of `runBlockingCancellable`, the concurrent module loading would load one module at a time.
+      withContext(modalityState.asContextElement() + Dispatchers.Default) {
+        loadProjectAsync(path = path, preloadServices = preloadServices, beforeInit = beforeInit)
       }
+    }
+  }
+
+  final override suspend fun loadProjectAsync(path: Path, beforeInit: ((Project) -> Unit)?): Project =
+    loadProjectAsync(path = path, preloadServices = true, beforeInit = beforeInit)
+
+  private suspend fun loadProjectAsync(path: Path, preloadServices: Boolean, beforeInit: ((Project) -> Unit)?): Project {
+    return withContext(ClientId.localId.asContextElement()) {
+      prepareProject(
+        projectIdentityFile = path,
+        projectName = null,
+        beforeInit = beforeInit,
+        projectInitHelper = null,
+        runConversionBeforeOpen = false,
+        preloadServices = preloadServices,
+      )
     }
   }
 

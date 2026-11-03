@@ -26,7 +26,7 @@ public interface ValuesFilteredBackDependencyIndex extends BackDependencyIndex {
 
       @Override
       public Iterable<ReferenceID> getDependencies(@NotNull ReferenceID id) {
-        return filter(delegate.getDependencies(id), nodesFilter::test);
+        return filter(delegate.getDependencies(id), nodesFilter);
       }
 
       @Override

@@ -11,6 +11,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
@@ -28,7 +29,11 @@ import com.intellij.util.xml.Resolve;
 import com.intellij.util.xml.SubTag;
 import com.intellij.util.xml.SubTagList;
 import com.intellij.util.xml.TagValue;
+import com.intellij.util.xml.WriteAfter;
+import com.intellij.util.xml.WriteBefore;
 import com.intellij.util.xml.XmlName;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NonNls;
@@ -42,14 +47,107 @@ import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.lang.reflect.WildcardType;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public final class DomImplUtil {
   private static final Logger LOG = Logger.getInstance(DomImplUtil.class);
 
   private DomImplUtil() {
+  }
+
+  record TagAnchors(@NotNull Set<String> before, @NotNull Set<String> after) {
+  }
+
+  static @NotNull XmlTag addOrdered(@NotNull DomInvocationHandler parentHandler,
+                                    @NotNull XmlTag parentTag,
+                                    @NotNull XmlTag newTag) {
+    String ownName = newTag.getLocalName();
+    TagAnchors anchors = parentHandler.getGenericInfo().getWriteOrder().get(ownName);
+    if (anchors == null) {
+      return (XmlTag)parentTag.add(newTag);
+    }
+
+    XmlTag[] subTags = parentTag.getSubTags();
+    int beforeIndex = -1;
+    int afterIndex = -1;
+    for (int i = 0; i < subTags.length; i++) {
+      String name = subTags[i].getLocalName();
+      if (beforeIndex < 0 && anchors.before().contains(name)) {
+        beforeIndex = i;
+      }
+      // a tag of the same name is an anchor too, so that the tags of one name stay together
+      if (anchors.after().contains(name) || name.equals(ownName)) {
+        afterIndex = i;
+      }
+    }
+
+    if (beforeIndex >= 0 && afterIndex < beforeIndex) {
+      return (XmlTag)parentTag.addBefore(newTag, subTags[beforeIndex]);
+    }
+    if (afterIndex >= 0) {
+      return (XmlTag)parentTag.addAfter(newTag, subTags[afterIndex]);
+    }
+    return (XmlTag)parentTag.add(newTag);
+  }
+
+  static @NotNull Map<String, TagAnchors> buildWriteOrder(@NotNull Iterable<? extends AbstractDomChildrenDescription> descriptions) {
+    MultiMap<String, String> before = new MultiMap<>();
+    MultiMap<String, String> after = new MultiMap<>();
+    for (AbstractDomChildrenDescription description : descriptions) {
+      if (!(description instanceof DomChildrenDescription childDescription)) continue;
+      String name = childDescription.getXmlElementName();
+      for (String anchor : getWriteBeforeNames(description)) {
+        before.putValue(name, anchor);
+        after.putValue(anchor, name);
+      }
+      for (String anchor : getWriteAfterNames(description)) {
+        after.putValue(name, anchor);
+        before.putValue(anchor, name);
+      }
+    }
+    if (before.isEmpty() && after.isEmpty()) {
+      return Collections.emptyMap();
+    }
+
+    Map<String, TagAnchors> result = new HashMap<>();
+    for (String name : ContainerUtil.union(before.keySet(), after.keySet())) {
+      result.put(name, new TagAnchors(new HashSet<>(before.get(name)), new HashSet<>(after.get(name))));
+    }
+    return result;
+  }
+
+  private static @NotNull Set<String> getWriteBeforeNames(@NotNull AbstractDomChildrenDescription description) {
+    Set<String> names = new HashSet<>();
+    WriteBefore single = description.getAnnotation(WriteBefore.class);
+    if (single != null) {
+      names.add(single.value());
+    }
+    WriteBefore.List list = description.getAnnotation(WriteBefore.List.class);
+    if (list != null) {
+      for (WriteBefore annotation : list.value()) {
+        names.add(annotation.value());
+      }
+    }
+    return names;
+  }
+
+  private static @NotNull Set<String> getWriteAfterNames(@NotNull AbstractDomChildrenDescription description) {
+    Set<String> names = new HashSet<>();
+    WriteAfter single = description.getAnnotation(WriteAfter.class);
+    if (single != null) {
+      names.add(single.value());
+    }
+    WriteAfter.List list = description.getAnnotation(WriteAfter.List.class);
+    if (list != null) {
+      for (WriteAfter annotation : list.value()) {
+        names.add(annotation.value());
+      }
+    }
+    return names;
   }
 
   public static void assertValidity(DomElement element, String msg) {

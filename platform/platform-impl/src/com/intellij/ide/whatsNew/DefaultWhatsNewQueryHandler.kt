@@ -4,6 +4,7 @@ package com.intellij.ide.whatsNew
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
@@ -21,6 +22,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
@@ -33,10 +35,19 @@ import org.jetbrains.concurrency.await
 
 private val LOG = logger<DefaultWhatsNewQueryHandler>()
 
+/** Marks the project that opened from the welcome screen after the IJ Air block click. Air reads the key by this name. */
+private val AIR_PROMO_PROJECT_KEY: Key<Boolean> = Key.create("whats.new.air.promo.project")
+
+private const val AIR_PROMO_TOOLTIP_SHOWN_PROPERTY: String = "whats.new.air.promo.tooltip.shown"
+
+/** The page request of the IJ Air block button. */
+@ApiStatus.Internal
+const val AIR_PROMO_REQUEST: String = "promo-get-some-air"
+
 @ApiStatus.Internal
 class DefaultWhatsNewQueryHandler(private val project: Project) : HTMLEditorProvider.JsQueryHandler {
   override suspend fun query(id: Long, request: String): String = when (request) {
-    "promo-get-some-air" -> {
+    AIR_PROMO_REQUEST -> {
       doAirPromo()
       "true"
     }
@@ -48,13 +59,16 @@ class DefaultWhatsNewQueryHandler(private val project: Project) : HTMLEditorProv
 
   // 2026.3 Air promo
   private suspend fun doAirPromo() {
-    if (WelcomeScreenProjectProvider.isWelcomeScreenProject(project)) {
+    val welcomeScreenProject = WelcomeScreenProjectProvider.isWelcomeScreenProject(project)
+    ApplicationManager.getApplication().messageBus.syncPublisher(WhatsNewAirPromoListener.TOPIC).blockClicked(project, welcomeScreenProject)
+    if (welcomeScreenProject) {
       val connection = ApplicationManager.getApplication().messageBus.connect()
       connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
         @Suppress("OVERRIDE_DEPRECATION", "removal")
         override fun projectOpened(openedProject: Project) {
           if (WelcomeScreenProjectProvider.isWelcomeScreenProject(openedProject)) return
           connection.disconnect()
+          openedProject.putUserData(AIR_PROMO_PROJECT_KEY, true)
           service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
             showAgentSessionsTooltip(openedProject)
           }
@@ -100,7 +114,13 @@ class DefaultWhatsNewQueryHandler(private val project: Project) : HTMLEditorProv
         return@withContext
       }
 
+      val properties = PropertiesComponent.getInstance()
+      if (properties.isTrueValue(AIR_PROMO_TOOLTIP_SHOWN_PROPERTY)) {
+        return@withContext
+      }
+      properties.setValue(AIR_PROMO_TOOLTIP_SHOWN_PROPERTY, true)
       toolWindowManager.notifyByBalloon(toolWindow.id, MessageType.INFO, IdeBundle.message("whats.new.promo.air.tooltip"))
+      ApplicationManager.getApplication().messageBus.syncPublisher(WhatsNewAirPromoListener.TOPIC).tooltipShown(project)
     }
   }
 

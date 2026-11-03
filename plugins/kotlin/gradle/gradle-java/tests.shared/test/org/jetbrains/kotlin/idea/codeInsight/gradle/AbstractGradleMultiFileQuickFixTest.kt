@@ -52,7 +52,7 @@ import kotlin.time.Duration.Companion.minutes
 abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradleImportingCodeInsightTestCase(),
     QuickFixTest {
     override fun testDataDirName(): String = "fixes"
-    final override fun testDataDirectory(): File = super.testDataDirectory().resolve("before")
+    override fun testDataDirectory(): File = super.testDataDirectory().resolve("before")
 
     open val afterTestDataDirectory: File
         get() = testDataDirectory().parentFile.resolve("after")

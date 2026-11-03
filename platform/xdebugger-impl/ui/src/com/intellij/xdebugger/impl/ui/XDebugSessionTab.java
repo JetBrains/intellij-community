@@ -32,6 +32,7 @@ import com.intellij.openapi.actionSystem.ExecutionDataKeys;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
@@ -596,11 +597,16 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     });
 
     if (focus) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        boolean stealFocus = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
-        ProjectUtil.focusProjectWindow(myProject, stealFocus);
-      });
+      bringFrameToFront(myProject);
     }
+  }
+
+  @ApiStatus.Internal
+  public static void bringFrameToFront(@NotNull Project project) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      boolean stealFocus = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
+      ProjectUtil.focusProjectWindow(project, stealFocus);
+    });
   }
 
   protected void computeWatches() {

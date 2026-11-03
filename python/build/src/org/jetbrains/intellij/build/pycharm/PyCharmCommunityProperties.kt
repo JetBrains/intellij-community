@@ -45,7 +45,7 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
         "intellij.python.community.plugin", // Python language
         "intellij.pycharm.community.customization", // Convert Intellij to PyCharm
         "intellij.pycharm.community.customization.shared",
-        "intellij.vcs.github",
+        "intellij.vcs.github.plugin",
         "intellij.vcs.gitlab") +
       Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
 

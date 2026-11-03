@@ -494,19 +494,24 @@ public class CommanderPanel extends JPanel {
     @Override
     public void selectElement(@NotNull PsiElement element) {
       final boolean isDirectory = element instanceof PsiDirectory;
-      if (!isDirectory) {
-        EditorHelper.openInEditor(element);
-      }
-      ApplicationManager.getApplication().invokeLater(() -> {
+      Runnable selectElement = () -> ApplicationManager.getApplication().invokeLater(() -> {
+        if (myBuilder == null) return;
         myBuilder.selectElement(element, PsiUtilCore.getVirtualFile(element));
         if (!isDirectory) {
           ApplicationManager.getApplication().invokeLater(() -> {
+            if (myBuilder == null || myProject == null) return;
             if (myMoveFocus) {
               ToolWindowManager.getInstance(myProject).activateEditorComponent();
             }
           });
         }
       }, ModalityState.nonModal());
+      if (isDirectory) {
+        selectElement.run();
+      }
+      else {
+        EditorHelper.requestOpenInEditor(element, false).thenAccept(_ -> selectElement.run());
+      }
     }
 
     private PsiDirectory getDirectory() {

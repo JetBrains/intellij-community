@@ -32,6 +32,7 @@
     <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.properties.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties.backend" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />

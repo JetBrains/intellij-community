@@ -122,6 +122,22 @@ internal class PyreflyServerHeartbeatTest {
     assertEquals(1L, data.long("server_count"))
   }
 
+  /** A rare count identifies a project. The field reports five for any count above it, so no project stands out. */
+  @Test
+  fun `the server count is capped at five`(@TestDisposable disposable: Disposable) {
+    val events = FUCollectorTestCase.collectLogEvents(disposable) {
+      PyreflyUsageCollector.logServerHeartbeat(
+        project = projectFixture.get(),
+        residentSetSizeBytes = null,
+        cpuTime = null,
+        uptimeMs = 1_000,
+        serverCount = 12,
+      )
+    }
+    val data = events.single { it.isHeartbeat() }.event.data
+    assertEquals(5L, data.long("server_count"), "A count above five is reported as five: $data")
+  }
+
   /**
    * A project can run more than one server, because a module whose environment pins another Pyrefly version
    * gets a server of its own. Each heartbeat carries the number of servers running in the project, so a

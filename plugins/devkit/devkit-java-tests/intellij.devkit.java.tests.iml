@@ -51,6 +51,7 @@
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.dom.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.properties.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
@@ -77,6 +78,8 @@
     <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.json.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.yaml.plugin" scope="RUNTIME" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.core" />
 </module>

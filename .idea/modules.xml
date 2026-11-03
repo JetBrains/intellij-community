@@ -822,6 +822,7 @@
       <module fileurl="file://$PROJECT_DIR$/json/backend/regexp/intellij.json.backend.regexp.iml" filepath="$PROJECT_DIR$/json/backend/regexp/intellij.json.backend.regexp.iml" />
       <module fileurl="file://$PROJECT_DIR$/json/networknt.wrapper/intellij.json.networknt.wrapper.iml" filepath="$PROJECT_DIR$/json/networknt.wrapper/intellij.json.networknt.wrapper.iml" />
       <module fileurl="file://$PROJECT_DIR$/json/networknt.wrapper/tests/intellij.json.networknt.wrapper.tests.iml" filepath="$PROJECT_DIR$/json/networknt.wrapper/tests/intellij.json.networknt.wrapper.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/json/plugin/intellij.json.plugin.iml" filepath="$PROJECT_DIR$/json/plugin/intellij.json.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/json/spellchecker/intellij.json.spellchecker.iml" filepath="$PROJECT_DIR$/json/spellchecker/intellij.json.spellchecker.iml" />
       <module fileurl="file://$PROJECT_DIR$/json/structureView/intellij.json.structureView.iml" filepath="$PROJECT_DIR$/json/structureView/intellij.json.structureView.iml" />
       <module fileurl="file://$PROJECT_DIR$/json/syntax/intellij.json.syntax.iml" filepath="$PROJECT_DIR$/json/syntax/intellij.json.syntax.iml" />
@@ -1411,6 +1412,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/java/intellij.markdown.java.iml" filepath="$PROJECT_DIR$/plugins/markdown/java/intellij.markdown.java.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/jcef/intellij.markdown.jcef.iml" filepath="$PROJECT_DIR$/plugins/markdown/jcef/intellij.markdown.jcef.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/model/intellij.markdown.model.iml" filepath="$PROJECT_DIR$/plugins/markdown/model/intellij.markdown.model.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/markdown/plugin/intellij.markdown.plugin.iml" filepath="$PROJECT_DIR$/plugins/markdown/plugin/intellij.markdown.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/plugin/intellij.markdown.plugin.main.iml" filepath="$PROJECT_DIR$/plugins/markdown/plugin/intellij.markdown.plugin.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/projectView/intellij.markdown.projectView.iml" filepath="$PROJECT_DIR$/plugins/markdown/projectView/intellij.markdown.projectView.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/spellchecker/intellij.markdown.spellchecker.iml" filepath="$PROJECT_DIR$/plugins/markdown/spellchecker/intellij.markdown.spellchecker.iml" />
@@ -2117,6 +2119,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/intellij.properties.backend.iml" filepath="$PROJECT_DIR$/plugins/properties/intellij.properties.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-impl/intellij.properties.backend.psi.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-impl/intellij.properties.backend.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/copyright/intellij.properties.copyright.iml" filepath="$PROJECT_DIR$/plugins/properties/copyright/intellij.properties.copyright.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/properties/plugin/intellij.properties.plugin.iml" filepath="$PROJECT_DIR$/plugins/properties/plugin/intellij.properties.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/property-tests/intellij.properties.propertyBased.tests.iml" filepath="$PROJECT_DIR$/plugins/properties/property-tests/intellij.properties.propertyBased.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/properties-psi-api/intellij.properties.psi.iml" filepath="$PROJECT_DIR$/plugins/properties/properties-psi-api/intellij.properties.psi.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/properties/structuralsearch/intellij.properties.structuralSearch.iml" filepath="$PROJECT_DIR$/plugins/properties/structuralsearch/intellij.properties.structuralSearch.iml" />
@@ -2444,6 +2447,7 @@
       <module fileurl="file://$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" filepath="$PROJECT_DIR$/jps/antLayout/intellij.tools.jps.antTasks.iml" />
       <module fileurl="file://$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" filepath="$PROJECT_DIR$/jps/standalone-builder/intellij.tools.jps.build.standalone.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/launcher-generator/intellij.tools.launcherGenerator.iml" filepath="$PROJECT_DIR$/tools/launcher-generator/intellij.tools.launcherGenerator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/tools/psi-scip/intellij.tools.psiScip.iml" filepath="$PROJECT_DIR$/tools/psi-scip/intellij.tools.psiScip.iml" />
       <module fileurl="file://$PROJECT_DIR$/tools/reproducibleBuilds.diff/intellij.tools.reproducibleBuilds.diff.iml" filepath="$PROJECT_DIR$/tools/reproducibleBuilds.diff/intellij.tools.reproducibleBuilds.diff.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/testFramework/bootstrap/intellij.tools.testsBootstrap.iml" filepath="$PROJECT_DIR$/platform/testFramework/bootstrap/intellij.tools.testsBootstrap.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.iml" filepath="$PROJECT_DIR$/plugins/turboComplete/intellij.turboComplete.iml" />
@@ -2470,6 +2474,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-core/intellij.vcs.github.iml" filepath="$PROJECT_DIR$/plugins/github/github-core/intellij.vcs.github.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-git/intellij.vcs.github.git.iml" filepath="$PROJECT_DIR$/plugins/github/github-git/intellij.vcs.github.git.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-json/intellij.vcs.github.json.iml" filepath="$PROJECT_DIR$/plugins/github/github-json/intellij.vcs.github.json.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/github/plugin/intellij.vcs.github.plugin.iml" filepath="$PROJECT_DIR$/plugins/github/plugin/intellij.vcs.github.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-core/intellij.vcs.github.tests.iml" filepath="$PROJECT_DIR$/plugins/github/github-core/intellij.vcs.github.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-tracker/intellij.vcs.github.tracker.iml" filepath="$PROJECT_DIR$/plugins/github/github-tracker/intellij.vcs.github.tracker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/github/github-tracker/intellij.vcs.github.tracker.tests.iml" filepath="$PROJECT_DIR$/plugins/github/github-tracker/intellij.vcs.github.tracker.tests.iml" />
@@ -2520,6 +2525,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" filepath="$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/backend/intellij.yaml.backend.iml" filepath="$PROJECT_DIR$/plugins/yaml/backend/intellij.yaml.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/backend/intellij.yaml.backend.tests.iml" filepath="$PROJECT_DIR$/plugins/yaml/backend/intellij.yaml.backend.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/yaml/plugin/intellij.yaml.plugin.iml" filepath="$PROJECT_DIR$/plugins/yaml/plugin/intellij.yaml.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/spellchecker/intellij.yaml.spellchecker.iml" filepath="$PROJECT_DIR$/plugins/yaml/spellchecker/intellij.yaml.spellchecker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/syntax/intellij.yaml.syntax.iml" filepath="$PROJECT_DIR$/plugins/yaml/syntax/intellij.yaml.syntax.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/intellij.yaml.tests.iml" filepath="$PROJECT_DIR$/plugins/yaml/intellij.yaml.tests.iml" />

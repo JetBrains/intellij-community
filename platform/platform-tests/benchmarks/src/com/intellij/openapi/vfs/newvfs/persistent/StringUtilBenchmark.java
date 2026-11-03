@@ -155,7 +155,7 @@ public class StringUtilBenchmark {
     return impl.getLowerCase(chr);
   }
 
-  public static void main(String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     final Options opt = new OptionsBuilder()
       .forks(1)
       .include(StringUtilBenchmark.class.getSimpleName() + ".*")

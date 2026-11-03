@@ -20,6 +20,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/kotlin/fir",
         "//xml/plugin",
+        "//plugins/properties/plugin",
         "//platform/structure-view-impl/plugin",
         "//aether-dependency-resolver/plugin",
         "//platform/structuralsearch/plugin",

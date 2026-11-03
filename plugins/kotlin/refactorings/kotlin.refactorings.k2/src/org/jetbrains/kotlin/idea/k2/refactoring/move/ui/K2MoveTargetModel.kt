@@ -75,6 +75,12 @@ sealed class K2MoveTargetModel(
 
     abstract fun buildPanel(panel: Panel, onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit)
 
+    /**
+     * The component that gets the focus when the dialog opens.
+     * It's used by the main dialog to set focus on the target package when possible.
+     */
+    internal abstract val preferredFocusedComponent: JComponent?
+
     @ApiStatus.Internal
     abstract class SourceDirectoryChooser(
         override var pkgName: FqName,
@@ -89,6 +95,9 @@ sealed class K2MoveTargetModel(
         protected lateinit var destinationChooser: KotlinDestinationFolderComboBox
 
         private val isPkgWarningShown: MutableBooleanProperty = AtomicBooleanProperty(isMoveToExplicitPackage())
+
+        override val preferredFocusedComponent: JComponent?
+            get() = pkgChooser.takeIf { it.isEnabled }?.childComponent
 
         protected fun Panel.installPkgChooser(onError: (String?, JComponent) -> Unit, revalidateButtons: () -> Unit) {
             val project = directory.project

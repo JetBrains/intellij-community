@@ -195,7 +195,7 @@ public class JBCardLayout extends CardLayout {
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
-  public static void main(String[] args) throws IOException {
+  static void main() throws IOException {
     final JBCardLayout cardLayout = new JBCardLayout();
 
     JFrame f = new JFrame();

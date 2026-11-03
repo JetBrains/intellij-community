@@ -11,10 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 
 public abstract class DomGenericInfoEx implements DomGenericInfo {
 
   public abstract boolean checkInitialized();
+
+  abstract @NotNull Map<String, DomImplUtil.TagAnchors> getWriteOrder();
 
   @Override
   public abstract @NotNull List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions();

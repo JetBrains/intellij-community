@@ -244,7 +244,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
 
   @Override
   protected void performRefactoring(UsageInfo @NotNull [] usages) {
-    EditorHelper.openInEditor(doRefactoring(usages));
+    EditorHelper.requestOpenInEditor(doRefactoring(usages), false);
   }
 
   private @NotNull PsiMethod doRefactoring(UsageInfo[] usages) {

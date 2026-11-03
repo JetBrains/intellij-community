@@ -194,7 +194,7 @@ public class VFSAttributeAccessBenchmark {
   }
 
 
-  public static void main(final String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     final Options opt = new OptionsBuilder()
       .jvmArgs("--add-opens=java.base/java.lang=ALL-UNNAMED",
                "--add-opens=java.base/java.util=ALL-UNNAMED",

@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.vcs.git.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.featuresTrainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.github.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.github" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.terminal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.terminal.frontend" scope="RUNTIME" />
@@ -26,6 +27,7 @@
     <orderEntry type="module" module-name="intellij.platform.starter" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.tasks.jira" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.settingsRepository" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.properties.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mermaid" scope="RUNTIME" />

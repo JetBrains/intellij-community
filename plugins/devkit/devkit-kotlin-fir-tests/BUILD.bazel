@@ -24,6 +24,7 @@ jvm_library(
         "//platform/platform-resources:resources",
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/devkit/intellij.kotlin.devkit/k2",
+        "//plugins/properties/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
     deps = [

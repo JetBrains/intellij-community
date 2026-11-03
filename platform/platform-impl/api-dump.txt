@@ -4285,9 +4285,6 @@ com.intellij.platform.WebProjectGenerator$GeneratorPeer
 - a:validate():com.intellij.openapi.ui.ValidationInfo
 com.intellij.platform.WebProjectGenerator$SettingsStateListener
 - a:stateChanged(Z):V
-f:com.intellij.platform.ide.bootstrap.SplashManagerKt
-- sf:hideSplash():V
-- sf:hideSplashBeforeShow(java.awt.Window):V
 com.intellij.toolWindow.DefaultToolWindowDescriptorBuilder
 - a:getAnchor():com.intellij.toolWindow.ToolWindowDescriptor$ToolWindowAnchor
 - a:getContentUiType():com.intellij.toolWindow.ToolWindowDescriptor$ToolWindowContentUiType

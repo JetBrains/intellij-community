@@ -154,7 +154,7 @@ public class VFSInitializationBenchmark {
   }
 
 
-  public static void main(final String[] args) throws RunnerException {
+  static void main(final String[] args) throws RunnerException {
     System.out.println("Real VFS path to bench: " + args[0]);
     final Options opt = new OptionsBuilder()
       .jvmArgs("-Djava.awt.headless=true",

@@ -68,6 +68,7 @@ jvm_library(
         "//community-resources:customization",
         "//java/langInjection",
         "//xml/langInjection",
+        "//plugins/properties/plugin",
         "//plugins/groovy-scripting",
         "//java/manifest",
         "//java/structuralsearch-java:structuralSearch",

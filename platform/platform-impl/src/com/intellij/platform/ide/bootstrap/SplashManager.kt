@@ -1,5 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+@file:OptIn(LowLevelLocalMachineAccess::class)
 package com.intellij.platform.ide.bootstrap
 
 import com.dynatrace.hash4j.hashing.Hashing
@@ -9,11 +10,11 @@ import com.intellij.idea.AppMode
 import com.intellij.idea.WellKnownCommand
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
-import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.ModalTaskOwner.guess
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.icons.HiDPIImage
@@ -22,7 +23,8 @@ import com.intellij.ui.paint.use
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.lang.ByteBufferCleaner
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.RawSwingDispatcher
 import com.intellij.util.ui.StartupUiUtil
@@ -41,7 +43,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import sun.awt.image.SunWritableRaster
 import java.awt.AlphaComposite
 import java.awt.Color
@@ -57,7 +59,10 @@ import java.awt.image.ColorModel
 import java.awt.image.DataBufferInt
 import java.awt.image.DirectColorModel
 import java.awt.image.Raster
-import java.nio.ByteBuffer
+import java.io.IOException
+import java.lang.foreign.Arena
+import java.lang.foreign.MemorySegment
+import java.lang.foreign.ValueLayout
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.file.AtomicMoveNotSupportedException
@@ -66,8 +71,8 @@ import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
-import java.util.EnumSet
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.name
 
 @Volatile
 private var SPLASH_WINDOW: Splash? = null
@@ -77,7 +82,12 @@ private val splashJob = AtomicReference<Job>(CompletableDeferred<Unit>())
 
 private fun isTooLateToShowSplash(): Boolean = LoadingState.COMPONENTS_LOADED.isOccurred
 
-@Internal
+private val LE_INT: ValueLayout.OfInt = ValueLayout.JAVA_INT_UNALIGNED.withOrder(ByteOrder.LITTLE_ENDIAN)
+
+// don't use `error` on it, because it can crash the application
+private fun logger(): Logger = Logger.getInstance("com.intellij.platform.ide.bootstrap.SplashManager")
+
+@ApiStatus.Internal
 fun scheduleShowSplashIfNeeded(
   scope: CoroutineScope,
   lockSystemDirsJob: Job,
@@ -95,7 +105,7 @@ fun scheduleShowSplashIfNeeded(
         throw e
       }
       catch (e: Throwable) {
-        logger<Splash>().warn("Cannot show splash", e)
+        logger().warn("Cannot show splash", e)
       }
     }
   }
@@ -116,17 +126,11 @@ private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoD
 
     initUiScale.join()
 
-    //if (showLastProjectFrameIfAvailable(initUiDeferred)) {
-    //  return@launch
-    //}
-
-    /*
-    Wayland doesn't have the concept of splash screens at all, so they may not appear centered.
-    Avoid showing the splash screen at all in this case up until this is solved (as, for example,
-    in java.awt.SplashScreen that works around the issue using some tricks and the native API).
-    We check only here as isWaylandToolkit calls `Toolkit.getDefaultToolkit()` - it should be done only when initUiDeferred is completed
-    */
-    if (SystemInfoRt.isLinux && StartupUiUtil.isWaylandToolkit() && !CommandLineArgs.isSplashForced()) {
+    // Wayland doesn't have the concept of splash screens at all, so they may not appear centered.
+    // Avoid showing the splash screen at all in this case up until this is solved (as, for example,
+    // in java.awt.SplashScreen that works around the issue using some tricks and the native API).
+    // We check only here as isWaylandToolkit calls `Toolkit.getDefaultToolkit()` - it should be done only when initUiDeferred is completed
+    if (OS.CURRENT == OS.Linux && StartupUiUtil.isWaylandToolkit() && !CommandLineArgs.isSplashForced()) {
       return@launch
     }
 
@@ -138,7 +142,7 @@ private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoD
 
     val image = span("splash preparation") {
       assert(SPLASH_WINDOW == null)
-      loadSplashImage(appInfo = appInfo)
+      loadSplashImage(appInfo)
     } ?: return@launch
 
     if (isTooLateToShowSplash()) {
@@ -157,7 +161,7 @@ private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoD
         throw e
       }
       catch (e: Throwable) {
-        logger<Splash>().warn(e)
+        logger().warn(e)
         return@span
       }
 
@@ -209,6 +213,7 @@ private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoD
   }
 }
 
+@ApiStatus.Internal
 fun hideSplashBeforeShow(window: Window) {
   if (splashJob.get().isCompleted) {
     return
@@ -224,6 +229,7 @@ fun hideSplashBeforeShow(window: Window) {
 
 internal fun hasSplash(): Boolean = SPLASH_WINDOW != null
 
+@ApiStatus.Internal
 fun hideSplash() {
   splashJob.get().cancel("hideSplash")
 }
@@ -231,186 +237,168 @@ fun hideSplash() {
 /**
  * Creates a splash window with the splash image of [appInfo]. The window is not visible.
  */
-@Internal
+@ApiStatus.Internal
 @RequiresEdt
-fun blockingCreateSplash(appInfo: ApplicationInfo): Window = Splash(requireNotNull(blockingLoadSplashImage(appInfo)))
-
-@RequiresEdt
-internal fun blockingLoadSplashImage(appInfo: ApplicationInfo): BufferedImage? {
-  return runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+fun blockingCreateSplash(appInfo: ApplicationInfo): Window {
+  val splashImage = runWithModalProgressBlocking(guess(), title = "") {
     loadSplashImage(appInfo)
-  }
+  }!!
+  return Splash(splashImage)
 }
 
-@OptIn(DelicateCoroutinesApi::class)
-internal suspend fun loadSplashImage(appInfo: ApplicationInfo): BufferedImage? {
+private suspend fun loadSplashImage(appInfo: ApplicationInfo): BufferedImage? {
   val splashImagePath = appInfo.splashImageUrl?.let { if (it.startsWith('/')) it.substring(1) else it } ?: return null
 
   val isJreHiDPIEnabled = JreHiDpiUtil.isJreHiDPIEnabled()
   val scale = if (isJreHiDPIEnabled) JBUIScale.sysScale() * JBUIScale.scale(1f) else JBUIScale.scale(1f)
-  val file = try {
-    getCacheFile(scale = scale, path = splashImagePath, build = appInfo.build.asString())
+  val [cacheFile, prefixHash] = try {
+    getCacheFile(scale, splashImagePath, appInfo.build.asString())
   }
   catch (e: Throwable) {
-    logger<Splash>().warn(e)
-    null
+    logger().warn(e)
+    null to ""
   }
 
   currentCoroutineContext().ensureActive()
 
-  if (file != null) {
-    loadImageFromCache(file = file, scale = scale, isJreHiDPIEnabled = isJreHiDPIEnabled)?.let {
+  if (cacheFile != null) {
+    loadRaster(cacheFile, scale, isJreHiDPIEnabled)?.let {
       return it
     }
   }
 
   currentCoroutineContext().ensureActive()
 
-  val path = appInfo.splashImageUrl
-  val result = doLoadImage(path = splashImagePath, scale = scale, isJreHiDPIEnabled = isJreHiDPIEnabled)
-               ?: throw IllegalStateException("Cannot find image: $path")
-  if (file != null) {
+  val raster = rasterize(splashImagePath, scale, isJreHiDPIEnabled)
+               ?: throw IllegalStateException("Cannot find image: ${appInfo.splashImageUrl}")
+
+  if (cacheFile != null) {
+    @OptIn(DelicateCoroutinesApi::class)
     GlobalScope.launch(Dispatchers.IO) {
       try {
-        val rawImage = (if (result is JBHiDPIScaledImage) result.delegate else result) as BufferedImage
-        writeImage(file = file, image = rawImage)
+        val rawImage = (if (raster is JBHiDPIScaledImage) raster.delegate else raster) as BufferedImage
+        writeRaster(cacheFile, rawImage, prefixHash)
       }
       catch (e: Throwable) {
-        logger<Splash>().warn("Cannot save splash image", e)
+        logger().warn("Cannot save splash image", e)
       }
     }
   }
-  return result
+
+  return raster
 }
 
-private fun doLoadImage(path: String, scale: Float, isJreHiDPIEnabled: Boolean): BufferedImage? {
-  val originalImage = loadImageForStartUp(requestedPath = path, scale = scale, classLoader = Splash::class.java.classLoader) ?: return null
+private fun getCacheFile(scale: Float, path: String, build: String): Pair<Path, String> {
+  val hasher = Hashing.komihash5_0().hashStream()
+  hasher.putChars(build)
+  hasher.putInt(Splash::class.java.classLoader.getResourceAsStream(path)?.use { it.available() } ?: 0)
+  hasher.putChars(path)
+  val hashStr = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)
+  val scaleStr = Integer.toUnsignedString(scale.toBits(), Character.MAX_RADIX)
+  return PathManager.getSystemDir().resolve("splash", "${hashStr}_${scaleStr}.v3.ij") to hashStr
+}
+
+private suspend fun loadRaster(file: Path, scale: Float, isJreHiDPIEnabled: Boolean): BufferedImage? {
+  try {
+    Arena.ofShared().use { arena ->
+      val segment = try {
+        withContext(Dispatchers.IO) {
+          FileChannel.open(file).use { channel ->
+            channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size(), arena)
+          }
+        }
+      }
+      catch (_: NoSuchFileException) {
+        return null
+      }
+
+      currentCoroutineContext().ensureActive()
+
+      val w = segment.get(LE_INT, 0)
+      val h = segment.get(LE_INT, Int.SIZE_BYTES.toLong())
+      val dataBuffer = DataBufferInt(w * h)
+      MemorySegment.copy(segment, LE_INT, 2L * Int.SIZE_BYTES, SunWritableRaster.stealData(dataBuffer, 0), 0, w * h)
+      SunWritableRaster.makeTrackable(dataBuffer)
+      val colorModel = ColorModel.getRGBdefault() as DirectColorModel
+      val raster = Raster.createPackedRaster(dataBuffer, w, h, w, colorModel.masks, Point(0, 0))
+      val rawImage = BufferedImage(colorModel, raster, /*isRasterPremultiplied =*/ false, /*properties =*/ null)
+      return createHiDpiAwareImage(rawImage, scale, isJreHiDPIEnabled)
+    }
+  }
+  catch (e: CancellationException) { throw e }
+  catch (e: Throwable) {
+    logger().warn("Failed to load splash image", e)
+    return null
+  }
+}
+
+@Suppress("UndesirableClassUsage", "UseJBColor")
+private fun rasterize(path: String, scale: Float, isJreHiDPIEnabled: Boolean): BufferedImage? {
+  val originalImage = loadImageForStartUp(path, scale, Splash::class.java.classLoader) ?: return null
   val w = originalImage.width
   val h = originalImage.height
-  @Suppress("UndesirableClassUsage")
   val resultImage = BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
   resultImage.createGraphics().use { g2 ->
     g2.composite = AlphaComposite.Src
     ImageUtil.applyQualityRenderingHints(g2)
-    @Suppress("UseJBColor")
     g2.color = Color.WHITE
     val cornerRadius = 8 * scale
     g2.fill(RoundRectangle2D.Float(0f, 0f, w.toFloat(), h.toFloat(), cornerRadius, cornerRadius))
     g2.composite = AlphaComposite.SrcIn
     g2.drawImage(originalImage, 0, 0, null)
   }
-  return createHiDpiAwareImage(rawImage = resultImage, scale = scale, isJreHiDPIEnabled = isJreHiDPIEnabled)
+  return createHiDpiAwareImage(resultImage, scale, isJreHiDPIEnabled)
 }
 
-private suspend fun loadImageFromCache(file: Path, scale: Float, isJreHiDPIEnabled: Boolean): BufferedImage? {
+private fun createHiDpiAwareImage(rawImage: BufferedImage, scale: Float, isJreHiDPIEnabled: Boolean): BufferedImage = when {
+  isJreHiDPIEnabled -> {
+    val width = rawImage.width.toDouble() / scale
+    val height = rawImage.height.toDouble() / scale
+    HiDPIImage(rawImage, width, height, BufferedImage.TYPE_INT_ARGB)
+  }
+  else -> rawImage
+}
+
+private fun writeRaster(file: Path, image: BufferedImage, prefixHash: String) {
+  val cacheDir = NioFiles.createDirectories(file.parent)
+  val tempFile = Files.createTempFile(cacheDir, file.fileName.toString(), ".tmp")
   try {
-    return readImage(file = file, scale = scale, isJreHiDPIEnabled = isJreHiDPIEnabled)
-  }
-  catch (e: Throwable) {
-    // don't use `error`, because it can crash application
-    logger<Splash>().warn("Failed to load splash image", e)
-  }
-  return null
-}
-
-/** The key holds the build number, the image path, the image size and the scale. */
-private fun getCacheFile(scale: Float, path: String, build: String): Path {
-  val hasher = Hashing.komihash5_0().hashStream()
-  hasher.putChars(build)
-  try {
-    hasher.putInt(Splash::class.java.classLoader.getResourceAsStream(path)?.use { it.available() } ?: 0)
-  }
-  catch (e: Throwable) {
-    logger<Splash>().warn("Failed to read splash image", e)
-  }
-
-  hasher.putChars(path)
-
-  val fileName = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX) +
-                 Integer.toUnsignedString(scale.toBits(), Character.MAX_RADIX) +
-                 ".v2.ij"
-  return Path.of(PathManager.getSystemPath(), "splash", fileName)
-}
-
-private suspend fun readImage(file: Path, scale: Float, isJreHiDPIEnabled: Boolean): BufferedImage? {
-  val buffer = try {
-    withContext(Dispatchers.IO) {
-      FileChannel.open(file).use { channel ->
-        channel.map(FileChannel.MapMode.READ_ONLY, 0, channel.size()).order(ByteOrder.LITTLE_ENDIAN)
+    val imageData = (image.raster.dataBuffer as DataBufferInt).data
+    val size = (2L + imageData.size) * Int.SIZE_BYTES
+    FileChannel.open(tempFile, StandardOpenOption.READ, StandardOpenOption.WRITE).use { channel ->
+      Arena.ofConfined().use { arena ->
+        val segment = channel.map(FileChannel.MapMode.READ_WRITE, 0, size, arena)
+        segment.set(LE_INT, 0, image.width)
+        segment.set(LE_INT, Int.SIZE_BYTES.toLong(), image.height)
+        MemorySegment.copy(imageData, 0, segment, LE_INT, 2L * Int.SIZE_BYTES, imageData.size)
       }
     }
-  }
-  catch (_: NoSuchFileException) {
-    return null
-  }
 
-  currentCoroutineContext().ensureActive()
+    try {
+      Files.move(tempFile, file, StandardCopyOption.ATOMIC_MOVE)
+    }
+    catch (_: AtomicMoveNotSupportedException) {
+      Files.move(tempFile, file)
+    }
 
-  try {
-    val intBuffer = buffer.asIntBuffer()
-    val w = intBuffer.get()
-    val h = intBuffer.get()
-
-    val dataBuffer = DataBufferInt(w * h)
-    intBuffer.get(SunWritableRaster.stealData(dataBuffer, 0))
-    SunWritableRaster.makeTrackable(dataBuffer)
-    val colorModel = ColorModel.getRGBdefault() as DirectColorModel
-    val raster = Raster.createPackedRaster(dataBuffer, w, h, w, colorModel.masks, Point(0, 0))
-
-    @Suppress("UndesirableClassUsage")
-    val rawImage = BufferedImage(colorModel, raster, false, null)
-    return createHiDpiAwareImage(rawImage = rawImage, scale = scale, isJreHiDPIEnabled = isJreHiDPIEnabled)
+    deleteStaleRasterFiles(cacheDir, prefixHash + '_')
   }
   finally {
-    ByteBufferCleaner.unmapBuffer(buffer)
+    Files.deleteIfExists(tempFile)
   }
 }
 
-private fun createHiDpiAwareImage(rawImage: BufferedImage, scale: Float, isJreHiDPIEnabled: Boolean): BufferedImage {
-  if (isJreHiDPIEnabled) {
-    return HiDPIImage(image = rawImage,
-                      width = rawImage.width.toDouble() / scale,
-                      height = rawImage.height.toDouble() / scale,
-                      type = BufferedImage.TYPE_INT_ARGB)
-  }
-  return rawImage
-}
-
-private fun writeImage(file: Path, image: BufferedImage) {
-  val parent = file.parent
-  Files.createDirectories(parent)
-  val tempFile = Files.createTempFile(parent, file.fileName.toString(), ".ij")
-  FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE)).use { channel ->
-    val imageData = (image.raster.dataBuffer as DataBufferInt).data
-
-    val buffer = ByteBuffer.allocateDirect(imageData.size * Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN)
-    try {
-      buffer.putInt(image.width)
-      buffer.putInt(image.height)
-      buffer.flip()
-      do {
-        channel.write(buffer)
-      }
-      while (buffer.hasRemaining())
-
-      buffer.clear()
-
-      buffer.asIntBuffer().put(imageData)
-      buffer.position(0)
-      do {
-        channel.write(buffer)
-      }
-      while (buffer.hasRemaining())
-    }
-    finally {
-      ByteBufferCleaner.unmapBuffer(buffer)
-    }
-  }
-
+private fun deleteStaleRasterFiles(cacheDir: Path, prefix: String) {
   try {
-    Files.move(tempFile, file, StandardCopyOption.ATOMIC_MOVE)
+    Files.newDirectoryStream(cacheDir).use { dirStream ->
+      dirStream.forEach { file ->
+        if (!file.name.startsWith(prefix)) {
+          Files.deleteIfExists(file)
+        }
+      }
+    }
   }
-  catch (_: AtomicMoveNotSupportedException) {
-    Files.move(tempFile, file)
+  catch (e: IOException) {
+    logger().warn("A problem by cleaning splash cache directory ${cacheDir}", e)
   }
 }

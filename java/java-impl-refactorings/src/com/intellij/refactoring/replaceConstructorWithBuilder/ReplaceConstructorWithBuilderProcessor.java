@@ -181,7 +181,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     }
     
     if (myOpenInEditor) {
-      EditorHelper.openInEditor(builderClass);
+      EditorHelper.requestOpenInEditor(builderClass, false);
     }
   }
 

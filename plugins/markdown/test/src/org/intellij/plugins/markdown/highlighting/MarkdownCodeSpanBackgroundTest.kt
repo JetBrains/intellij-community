@@ -3,6 +3,8 @@ package org.intellij.plugins.markdown.highlighting
 
 import com.intellij.markdown.backend.editor.fence.collectCodeSpanBackground
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
@@ -33,6 +35,29 @@ class MarkdownCodeSpanBackgroundTest : BasePlatformTestCase() {
     assertEquals(editorBackground(editor), pixelAt(editor, image, 2))
   }
 
+  fun `test the background covers an inline HTML tag`() {
+    val text = "`test <a> hello`"
+    assertEquals(TextRange(1, 15), collect(text))
+    val codeSpanBackground = EditorColorsManager.getInstance().globalScheme
+      .getAttributes(MarkdownHighlighterColors.CODE_SPAN).backgroundColor
+    assertNotNull(codeSpanBackground)
+    val editor = configureEditor(text, codeSpanBackground!!)
+
+    val image = paint(editor)
+
+    assertEquals(codeSpanBackground, pixelAt(editor, image, 9))
+  }
+
+  fun `test the selection stays visible over the code span background`() {
+    val editor = configureEditor("`test <a> hello`")
+    editor.selectionModel.setSelection(6, 10)
+
+    val image = paint(editor)
+
+    assertEquals(editor.colorsScheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR), pixelAt(editor, image, 9))
+    assertEquals(Color.RED, pixelAt(editor, image, 5))
+  }
+
   fun `test the corner of the background is round`() {
     val editor = configureEditor("a `x    y` b")
 
@@ -61,11 +86,11 @@ class MarkdownCodeSpanBackgroundTest : BasePlatformTestCase() {
     return collectCodeSpanBackground(span!!)
   }
 
-  private fun configureEditor(text: String): Editor {
+  private fun configureEditor(text: String, codeSpanBackground: Color = Color.RED): Editor {
     myFixture.configureByText("test.md", text)
     val editor = myFixture.editor
     editor.settings.isCaretRowShown = false
-    editor.colorsScheme.setAttributes(MarkdownHighlighterColors.CODE_SPAN, TextAttributes(null, Color.RED, null, null, Font.PLAIN))
+    editor.colorsScheme.setAttributes(MarkdownHighlighterColors.CODE_SPAN, TextAttributes(null, codeSpanBackground, null, null, Font.PLAIN))
     EditorTestUtil.setEditorVisibleSize(editor, 80, 10)
     myFixture.doHighlighting()
     return editor

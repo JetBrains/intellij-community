@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiRecordHeader;
@@ -29,8 +30,8 @@ import java.util.List;
 
 public final class JavaFrontendFoldings {
   public static void buildFrontendFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
-                                       @NotNull PsiJavaFile file,
-                                       @NotNull Document document) {
+                                              @NotNull PsiJavaFile file,
+                                              @NotNull Document document) {
     JavaFoldingUtil.addFoldsForImports(descriptors, file);
 
     PsiJavaModule module = file.getModuleDeclaration();
@@ -38,8 +39,7 @@ public final class JavaFrontendFoldings {
       JavaFoldingUtil.addFoldsForModule(descriptors, module, document);
     }
 
-    PsiClass[] classes = file.getClasses();
-    for (PsiClass aClass : classes) {
+    for (PsiClass aClass : file.getClasses()) {
       ProgressManager.checkCanceled();
       addFrontendFoldsForClass(descriptors, aClass, document);
     }
@@ -111,8 +111,9 @@ public final class JavaFrontendFoldings {
     }
   }
 
-  static void addFrontendCodeBlockFolds(final @NotNull List<? super FoldingDescriptor> list, @NotNull PsiElement scope,
-                                        final @NotNull Document document) {
+  static void addFrontendCodeBlockFolds(@NotNull List<? super FoldingDescriptor> list,
+                                        @NotNull PsiElement scope,
+                                        @NotNull Document document) {
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
@@ -148,6 +149,19 @@ public final class JavaFrontendFoldings {
           }
         }
         super.visitCodeBlock(block);
+      }
+
+      @Override
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
+        if (!expression.isTextBlock()) return;
+        String value = (String)expression.getValue();
+        if (value != null) {
+          int index = value.indexOf("\n");
+          String placeholder = "\"\"\"" + (index >= 0 ? value.substring(0, index) : value) + "...";
+          JavaFoldingUtil.addToFold(list, expression, document, false, placeholder, expression.getTextRange(), false);
+        }
+
+        super.visitLiteralExpression(expression);
       }
     });
   }

@@ -119,6 +119,8 @@ jvm_library(
         # do not sort,
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
+        "//json/plugin",
+        "//plugins/yaml/plugin",
         "//xml/plugin",
     ],
     deps = [

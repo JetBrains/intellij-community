@@ -79,6 +79,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/groovy-scripting",
+        "//plugins/properties/plugin",
         "//aether-dependency-resolver/plugin",
         "//platform/testRunner/plugin",
         "//plugins/java-decompiler/plugin:java-decompiler",

@@ -121,7 +121,7 @@ public class MapIndexCacheBenchmark {
   }
 
 
-  public static void main(final String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     Options opt = new OptionsBuilder()
       .include(MapIndexCacheBenchmark.class.getSimpleName() + ".*")
       .jvmArgs("-Xmx4g")

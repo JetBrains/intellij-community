@@ -22,7 +22,7 @@ import java.util.List;
 
 public final class PinentryApp implements ExternalApp, ExternalCli {
 
-  public static void main(String[] args) throws IOException, URISyntaxException {
+  static void main(String[] args) throws IOException, URISyntaxException {
     var exitCode = new PinentryApp().entryPointInternal(ExternalAppEntry.fromMain(args, PinentryApp.class));
     System.exit(exitCode);
   }

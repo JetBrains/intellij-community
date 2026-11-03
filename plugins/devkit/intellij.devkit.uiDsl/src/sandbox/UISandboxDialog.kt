@@ -2,6 +2,8 @@
 package com.intellij.devkit.uiDsl.sandbox
 
 import com.intellij.devkit.uiDsl.DevkitUiDslBundle
+import com.intellij.devkit.uiDsl.sandbox.components.ActionButtonPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ActionToolbarPanel
 import com.intellij.devkit.uiDsl.sandbox.components.BadgePanel
 import com.intellij.devkit.uiDsl.sandbox.components.ComboBoxPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ComboBoxWithWidePopupPanel
@@ -18,11 +20,15 @@ import com.intellij.devkit.uiDsl.sandbox.components.JProgressBarPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JRadioButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JSpinnerPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JTextFieldPanel
+import com.intellij.devkit.uiDsl.sandbox.components.LinkPanel
 import com.intellij.devkit.uiDsl.sandbox.components.OnOffButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.PillButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.SearchTextFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ShimmerLabelPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ThreeStateCheckBoxPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ToolbarComboButtonPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ToolbarDecoratorPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ToolbarSplitButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.dsl.listCellRenderer.LcrExamplesPanel
 import com.intellij.devkit.uiDsl.sandbox.dsl.validation.CrossValidationPanel
 import com.intellij.devkit.uiDsl.sandbox.dsl.validation.ValidationPanel
@@ -143,6 +149,8 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
   )
 
   private fun createComponentsNode() = Group("Components", children = listOf(
+    ActionButtonPanel(),
+    ActionToolbarPanel(),
     BadgePanel(),
     ComboBoxPanel(),
     ComboBoxWithWidePopupPanel(),
@@ -159,11 +167,15 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     JRadioButtonPanel(),
     JSpinnerPanel(),
     JTextFieldPanel(),
+    LinkPanel(),
     OnOffButtonPanel(),
     PillButtonPanel(),
     SearchTextFieldPanel(),
     ShimmerLabelPanel(),
     ThreeStateCheckBoxPanel(),
+    ToolbarComboButtonPanel(),
+    ToolbarDecoratorPanel(),
+    ToolbarSplitButtonPanel(),
   ))
 
   private fun createKotlinUIDSLNode() = Group("Kotlin UI DSL", children = listOf(

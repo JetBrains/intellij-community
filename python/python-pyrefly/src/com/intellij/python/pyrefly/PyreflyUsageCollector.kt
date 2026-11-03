@@ -9,7 +9,7 @@ import com.intellij.python.sdk.backend.getPythonInfo
 import kotlin.time.Duration
 
 object PyreflyUsageCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("python.pyrefly.type.inference", 8)
+  private val GROUP = EventLogGroup("python.pyrefly.type.inference", 9)
   private val DURATION = EventFields.Int("duration_basket", "Duration of string type resolution, grouped into 100ms time buckets")
   private val SUCCESS = EventFields.Boolean("success")
   private val PYTHON_VERSION = EventFields.Version
@@ -17,7 +17,7 @@ object PyreflyUsageCollector : CounterUsagesCollector() {
   private val CPU_TIME_MS = EventFields.Long("cpu_time_ms", "CPU time in milliseconds the Pyrefly server process used since the previous heartbeat")
   private val TIME_SINCE_LAST_MEASUREMENT_MS = EventFields.Long("time_since_last_measurement_ms", "Time in milliseconds the CPU time delta covers. Reported together with cpu_time_ms")
   private val UPTIME_MS = EventFields.Long("uptime_ms", "Time in milliseconds since the Pyrefly server process started")
-  private val SERVER_COUNT = EventFields.Int("server_count", "Number of Pyrefly server processes running in the project, this one included. One server serves every module, and a module whose environment pins another Pyrefly version gets a server of its own")
+  private val SERVER_COUNT = EventFields.LimitedInt("server_count", 1..5, "Number of Pyrefly server processes running in the project, this one included. One server serves every module, and a module whose environment pins another Pyrefly version gets a server of its own. The value 5 means five or more")
 
   private val STRING_TYPE_RESOLUTION_TIME = GROUP.registerEvent("string.type.resolution.time", DURATION)
   private val PYREFLY_AUTO_INSTALLED = GROUP.registerEvent("pyrefly.auto.installed", SUCCESS)

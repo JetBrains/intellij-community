@@ -140,6 +140,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//xml/plugin",
+        "//plugins/properties/plugin",
         "//platform/structure-view-impl/plugin",
         "//aether-dependency-resolver/plugin",
         "//platform/testRunner/plugin",

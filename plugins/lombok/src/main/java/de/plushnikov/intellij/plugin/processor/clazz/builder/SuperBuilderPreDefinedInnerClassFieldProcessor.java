@@ -5,6 +5,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public final class SuperBuilderPreDefinedInnerClassFieldProcessor extends Abstra
       .map(PsiField::getName)
       .collect(Collectors.toSet());
 
-    final List<BuilderInfo> builderInfos = getBuilderHandler().createBuilderInfos(psiAnnotation, psiParentClass, null, psiBuilderClass);
+    final List<BuilderInfo> builderInfos = BuilderHandler.createBuilderInfos(psiAnnotation, psiParentClass, null, psiBuilderClass);
     return builderInfos.stream()
       .filter(info -> info.notAlreadyExistingField(existedFieldNames))
       .map(BuilderInfo::renderBuilderFields)

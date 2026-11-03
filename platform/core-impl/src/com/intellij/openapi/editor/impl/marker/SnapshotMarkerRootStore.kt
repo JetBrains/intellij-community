@@ -121,16 +121,8 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
   fun processAllRangeMarkers(
     snapshot: DocumentSnapshot,
     processor: Processor<in RangeMarkerEx>,
-  ): Boolean {
-    SnapshotMarkerReference.processQueue()
-    val root = root(snapshot) ?: return true
-    val markerProcessor = MarkerProcessor(processor)
-    try {
-      return root.processAllRangeMarkers(markerProcessor)
-    }
-    finally {
-      markerProcessor.purgeCollected(this, snapshot)
-    }
+  ): Boolean = processMarkers(snapshot, processor) { root, markerProcessor ->
+    root.processAllRangeMarkers(markerProcessor)
   }
 
   /**
@@ -144,12 +136,21 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
     endOffset: Int,
     tastePreference: Int,
     processor: Processor<in RangeMarkerEx>,
+  ): Boolean = processMarkers(snapshot, processor) { root, markerProcessor ->
+    root.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference, markerProcessor)
+  }
+
+  /** Captures a root and purges collected handles after [query], including when processing stops or throws. */
+  private inline fun processMarkers(
+    snapshot: DocumentSnapshot,
+    processor: Processor<in RangeMarkerEx>,
+    query: (PMarkerRoot, MarkerProcessor) -> Boolean,
   ): Boolean {
     SnapshotMarkerReference.processQueue()
     val root = root(snapshot) ?: return true
     val markerProcessor = MarkerProcessor(processor)
     try {
-      return root.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference, markerProcessor)
+      return query(root, markerProcessor)
     }
     finally {
       markerProcessor.purgeCollected(this, snapshot)

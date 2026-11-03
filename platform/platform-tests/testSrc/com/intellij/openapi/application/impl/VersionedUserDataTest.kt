@@ -2,27 +2,29 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Key
-import com.intellij.psi.impl.source.tree.mvcc.PsiVersioningGarbageCollector
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.IS_UNDER_TESTING
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.PsiVersionRegistry
 import com.intellij.psi.impl.source.tree.mvcc.InternalPsiVersioning.PsiVersioningLockingListener
+import com.intellij.psi.impl.source.tree.mvcc.PsiVersioningGarbageCollector
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiVersioningService
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.util.application
 import com.intellij.util.keyFMap.ArrayBackedFMap
 import com.intellij.util.keyFMap.KeyFMap
-import com.intellij.util.application
-import kotlinx.coroutines.async
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
@@ -532,6 +534,34 @@ internal class VersionedUserDataTest {
     assertEquals("VersionedUserDataFMap0", leaf.userMap.javaClass.simpleName)
     assertTrue(leaf.userMap.isEmpty)
     assertNotReferenced(leaf, initial)
+  }
+
+  @Test
+  fun `document user data is not versioned`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
+    installVersioningListeners(disposable)
+
+    val key = Key.create<UserDataPayload>("document user data test")
+    val initial = UserDataPayload("initial")
+    val replacement = UserDataPayload("replacement")
+    val document = DocumentImpl("text")
+    // the versioned leaf shows that the frozen version does not see the replacement in versioned user data
+    val leaf = createVersionedLeaf()
+    runVersionedWriteAction {
+      document.putUserData(key, initial)
+      leaf.putUserData(key, initial)
+    }
+
+    PsiVersioningService.freezePsiVersion {
+      ApplicationManager.getApplication().invokeAndWait {
+        runVersionedWriteAction {
+          document.putUserData(key, replacement)
+          leaf.putUserData(key, replacement)
+        }
+      }
+
+      assertSame(initial, leaf.getUserData(key))
+      assertSame(replacement, document.getUserData(key))
+    }
   }
 
   fun assertSetupCorrect() {

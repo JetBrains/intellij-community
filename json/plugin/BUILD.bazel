@@ -1,0 +1,46 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.json.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.json",
+        "intellij.json.backend",
+        "intellij.json.networknt.wrapper",
+        "intellij.json.backend.regexp",
+        "intellij.json.spellchecker",
+        "intellij.json.structureView",
+        "intellij.json.syntax",
+        "intellij.libraries.jsonSchemaValidator",
+        "intellij.libraries.joni",
+    ],
+    main_module = "intellij.json.plugin",
+)
+### auto-generated section `dev intellij.json.plugin` end
+
+### auto-generated section `build intellij.json.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.json.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.json.plugin` end
+
+### auto-generated section `iml intellij.json.plugin` start
+exports_files(
+    [
+        "intellij.json.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.json.plugin` end

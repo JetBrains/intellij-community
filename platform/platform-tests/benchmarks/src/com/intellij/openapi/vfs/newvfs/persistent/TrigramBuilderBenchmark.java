@@ -172,7 +172,7 @@ public class TrigramBuilderBenchmark {
     return TrigramBuilder.getTrigrams(text);
   }
 
-  public static void main(String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     final Options opt = new OptionsBuilder()
       //.forks(0)
       .include(TrigramBuilderBenchmark.class.getSimpleName() + ".*")

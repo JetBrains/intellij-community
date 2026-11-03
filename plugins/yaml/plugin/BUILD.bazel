@@ -1,0 +1,41 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.yaml.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.yaml.backend",
+        "intellij.yaml",
+        "intellij.yaml.spellchecker",
+        "intellij.yaml.syntax",
+    ],
+    main_module = "intellij.yaml.plugin",
+)
+### auto-generated section `dev intellij.yaml.plugin` end
+
+### auto-generated section `build intellij.yaml.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.yaml.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.yaml.plugin` end
+
+### auto-generated section `iml intellij.yaml.plugin` start
+exports_files(
+    [
+        "intellij.yaml.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.yaml.plugin` end

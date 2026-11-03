@@ -128,6 +128,9 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   fun addDragSessionListener(listener: DockDragSessionListener, parentDisposable: Disposable) {
     dragSessionListeners.add(listener)
     Disposer.register(parentDisposable) { dragSessionListeners.remove(listener) }
+    currentDragSession?.let { session ->
+      listener.sessionStarted(session.content)
+    }
   }
 
   override fun register(container: DockContainer, parentDisposable: Disposable) {
@@ -257,7 +260,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
     override fun getResponse(e: MouseEvent): ContentResponse {
       val point = DevicePoint(e)
-      for (each in getAllContainers()) {
+      for (each in getAllContainers().sortedByDescending { it.dropPriority }) {
         val rec = each.acceptArea
         if (rec.contains(point)) {
           val component = each.containerComponent
@@ -389,6 +392,9 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       containers.remove(startDragContainer)
       containers.add(0, startDragContainer)
     }
+    // A container that covers another one comes first, whatever the drag started from: the editor container takes
+    // every point inside its own bounds, so a container above the editor area is reached only by its priority.
+    containers.sortByDescending { it.dropPriority }
     for (each in containers) {
       val rec = each.acceptArea
       if (rec.contains(devicePoint) && each.getContentResponse(content, devicePoint.toRelativePoint(each.containerComponent)).canAccept()) {

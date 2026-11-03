@@ -9,9 +9,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 private val LOG get() = fileLogger()
 
@@ -65,10 +65,7 @@ fun <T> waitNotNull(
 ): T {
   return waitFor(message = message, timeout = timeout,
                  interval = interval,
-                 errorMessage = if (errorMessage == null) {
-                   null
-                 }
-                 else { it -> errorMessage.invoke(it) },
+                 errorMessage = errorMessage ?: { _ -> failure("Await not null", message, null) },
                  getter = getter,
                  checker = { it != null }
   )!!
@@ -86,10 +83,7 @@ suspend fun <T> waitNotNullAsync(
     message = message,
     timeout = timeout,
     interval = interval,
-    errorMessage = if (errorMessage == null) {
-      null
-    }
-    else { it -> errorMessage.invoke(it) },
+    errorMessage = errorMessage ?: { _ -> failure("Await not null", message, null) },
     getter = getter,
     checker = { it != null }
   )!!
@@ -110,13 +104,31 @@ fun <T> waitAny(
 ): List<T> {
   return waitFor(message = message, timeout = timeout,
                  interval = interval,
-                 errorMessage = if (errorMessage == null) {
-                   null
-                 }
-                 else { it -> errorMessage.invoke(it) },
-                 getter = getter,
-                 checker = { it.any { checker(it) } }
-  ).filter { checker(it) }
+                 errorMessage = { (all, _, notSuitable) ->
+                   errorMessage?.invoke(all)
+                   ?: (failure("Await any", message, null) + section("not suitable", notSuitable))
+                 },
+                 getter = { observe(getter(), checker) },
+                 checker = { it.suitable.isNotEmpty() }
+  ).suitable
+}
+
+private data class Observation<C, T>(val all: C, val suitable: List<T>, val notSuitable: List<T>) {
+  override fun toString(): String = "suitable: $suitable, not suitable: $notSuitable"
+}
+
+private fun <C : Collection<T>, T> observe(all: C, checker: (T) -> Boolean): Observation<C, T> {
+  val (suitable, notSuitable) = all.partition(checker)
+  return Observation(all, suitable, notSuitable)
+}
+
+private fun failure(await: String?, message: String?, details: String?): String {
+  val header = listOfNotNull(message, await).joinToString(": ").ifEmpty { null }
+  return listOfNotNull(header, details).joinToString(". ")
+}
+
+private fun section(label: String, elements: List<*>): String {
+  return "\n\t$label:\n\t\t" + if (elements.isEmpty()) "none" else printableString(elements.joinToString("\n\t\t"))
 }
 
 private fun logAwaitStart(message: String?, timeout: Duration) {
@@ -149,27 +161,23 @@ fun <T> waitFor(
   checker: (T) -> Boolean,
 ): T {
   logAwaitStart(message, timeout)
-  // TODO It's NOT a monotonic timer, so it can be a reason of some sporadic incorrect test timeouts.
-  //  use System.nanoTime instead.
-  val startTime = System.currentTimeMillis()
-  val endTime = startTime + timeout.inWholeMilliseconds
-  var result = getter()
-  while (endTime > System.currentTimeMillis() && checker(result).not()) {
-    Thread.sleep(interval.inWholeMilliseconds)
-    result = getter()
-  }
-  if (checker(result).not()) {
-    throw WaitForException(timeout,
-                           errorMessage = errorMessage?.invoke(result)
-                                          ?: ("Failed: $message" + if (result !is Boolean) ". Actual: $result" else ""))
-      .also { LOG.warn(it) }
-  }
-  else {
-    val passedTime = (System.currentTimeMillis() - startTime).milliseconds
-    if (result !is Boolean || passedTime > 10.seconds) {
-      logAwaitFinish(message, result, passedTime)
+  val start = TimeSource.Monotonic.markNow()
+  while (true) {
+    val result = getter()
+    if (checker(result)) {
+      val passedTime = start.elapsedNow()
+      if (result !is Boolean || passedTime > 10.seconds) {
+        logAwaitFinish(message, result, passedTime)
+      }
+      return result
     }
-    return result
+    if (start.elapsedNow() >= timeout) {
+      throw WaitForException(timeout,
+                             errorMessage = errorMessage?.invoke(result)
+                                            ?: failure(null, message, if (result !is Boolean) "Actual: $result" else null))
+        .also { LOG.warn(it) }
+    }
+    Thread.sleep(interval.inWholeMilliseconds)
   }
 }
 
@@ -183,11 +191,13 @@ suspend fun <T> waitForAsync(
   checker: suspend (T) -> Boolean,
 ): T {
   var result: T? = null
+  var observed = false
   return try {
     withTimeout(timeout) {
       val startTime = System.nanoTime()
       while (true) {
         result = getter()
+        observed = true
         if (checker(result)) {
           break
         }
@@ -202,9 +212,14 @@ suspend fun <T> waitForAsync(
   }
   catch (_: TimeoutCancellationException) {
     currentCoroutineContext().ensureActive()
+    @Suppress("UNCHECKED_CAST")
     val errorMessage =
-      if (errorMessage != null && result != null) errorMessage.invoke(result)
-      else ("Failed: $message" + if (result !is Boolean) ". Actual: $result" else "")
+      if (errorMessage != null && observed) errorMessage.invoke(result as T)
+      else failure(null, message, when {
+        !observed -> "The getter returned no value"
+        result is Boolean -> null
+        else -> "Actual: $result"
+      })
     val exception = WaitForException(timeout, errorMessage)
     LOG.warn(exception)
     throw exception
@@ -225,31 +240,15 @@ fun <T> waitForOne(
   getter: () -> Collection<T>,
   checker: (T) -> Boolean = { true },
 ): T {
-  logAwaitStart(message, timeout)
-  var resultList = getter()
-  var filteredResultList = resultList.filter { checker(it) }
-  val startTime = System.currentTimeMillis()
-  val endTime = startTime + timeout.inWholeMilliseconds
-  while (endTime > System.currentTimeMillis() && filteredResultList.size != 1) {
-    Thread.sleep(interval.inWholeMilliseconds)
-    resultList = getter()
-    filteredResultList = resultList.filter { checker(it) }
-  }
-  if (filteredResultList.size != 1) {
-    val resultListString = if (resultList.isEmpty()) "none" else resultList.joinToString("\n\t")
-    throw WaitForException(timeout,
-                           errorMessage = errorMessage?.invoke(resultList)
-                                          ?: ("Failed: $message. " +
-                                              "\n\tExpected one suitable instance, but got:" +
-                                              "\n\t$resultListString"))
-      .also { LOG.warn(it) }
-  }
-  else {
-    return filteredResultList.single().also {
-      val passedTime = (System.currentTimeMillis() - startTime).milliseconds
-      logAwaitFinish(message, it, passedTime)
-    }
-  }
+  return waitFor(message = message, timeout = timeout,
+                 interval = interval,
+                 errorMessage = { (all, suitable, notSuitable) ->
+                   errorMessage?.invoke(all)
+                   ?: (failure("Await one", message, null) + section("suitable", suitable) + section("not suitable", notSuitable))
+                 },
+                 getter = { observe(getter(), checker) },
+                 checker = { it.suitable.size == 1 }
+  ).suitable.single()
 }
 
 /**
@@ -276,7 +275,8 @@ fun <T> withRetries(message: String? = null, times: Int, onError: () -> Unit = {
   throw RetryException(lastException!!).also { LOG.warn(it) }
 }
 
-class WaitForException(val timeout: Duration, val errorMessage: String, cause: Throwable? = null) : IllegalStateException("Timeout($timeout): $errorMessage", cause)
+class WaitForException(val timeout: Duration, val errorMessage: String, cause: Throwable? = null)
+  : IllegalStateException(if (errorMessage.isEmpty()) "Timeout($timeout)" else "Timeout($timeout): $errorMessage", cause)
 class RetryException(cause: Exception) : RuntimeException(cause)
 
 fun <T : UiComponent> T.wait(timeout: Duration): T {

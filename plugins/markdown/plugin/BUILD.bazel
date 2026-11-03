@@ -1,4 +1,60 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.markdown.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.markdown",
+        "intellij.markdown.jcef",
+        "intellij.markdown.fenceInjection",
+        "intellij.markdown.frontmatter",
+        "intellij.markdown.frontmatter.yaml",
+        "intellij.markdown.frontmatter.toml",
+        "intellij.markdown.images",
+        "intellij.markdown.xml",
+        "intellij.markdown.model",
+        "intellij.markdown.spellchecker",
+        "intellij.markdown.compose.preview",
+        "intellij.markdown.frontend",
+        "intellij.markdown.frontend.execution",
+        "intellij.markdown.execution",
+        "intellij.markdown.backend",
+        "intellij.markdown.java",
+        "intellij.markdown.fenceInjector.textMate",
+        "intellij.markdown.projectView",
+        "intellij.markdown.figmaAdvertiser",
+        "intellij.markdown.vcs",
+    ],
+    main_module = "intellij.markdown.plugin",
+)
+### auto-generated section `dev intellij.markdown.plugin` end
+
+### auto-generated section `build intellij.markdown.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.markdown.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.markdown.plugin` end
+
+### auto-generated section `iml intellij.markdown.plugin` start
+exports_files(
+    [
+        "intellij.markdown.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.markdown.plugin` end
 
 ### auto-generated section `build intellij.markdown.plugin.main` start
 jvm_library(
@@ -22,6 +78,7 @@ jvm_library(
         "//plugins/markdown/compose:compose-preview",
         "//plugins/markdown/core/frontend",
         "//plugins/markdown/java",
+        "//plugins/markdown/plugin",
     ],
 )
 ### auto-generated section `build intellij.markdown.plugin.main` end

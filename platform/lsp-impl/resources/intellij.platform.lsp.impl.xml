@@ -164,6 +164,8 @@
   <projectListeners>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
               class="com.intellij.platform.lsp.impl.platformListeners.LspFileEditorManagerListener"/>
+    <listener topic="com.intellij.refactoring.listeners.RefactoringEventListener"
+              class="com.intellij.platform.lsp.impl.platformListeners.LspRefactoringEventListener"/>
   </projectListeners>
 
   <applicationListeners>

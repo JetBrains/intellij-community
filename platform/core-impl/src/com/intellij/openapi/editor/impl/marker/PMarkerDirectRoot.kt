@@ -22,6 +22,8 @@ import java.util.function.Consumer
  * Handles select states and parents through weak histories for [version].
  * Updates copy changed paths and publish histories after the new root retains the resulting tree.
  *
+ * ![Snapshot ownership diagram](pmarker-direct-structure.svg)
+ *
  * @property version the revision used for state and parent lookup.
  * @property root the valid subtree, or null when this snapshot has no valid markers.
  * @property invalids the invalid and removed states retained by this snapshot, keyed by handle ID.
@@ -191,15 +193,14 @@ class PMarkerDirectRoot private constructor(
    */
   override fun mergeValidMarkersFrom(other: PMarkerRoot): PMarkerDirectRoot = keepingRootAlive {
     require(other is PMarkerDirectRoot) { "The roots must use the same implementation" }
-    val entries = ArrayList<MarkerEntry>()
-    collect(other.root, 0, entries)
     val editor = Editor()
     var result = root
-    for (entry in entries) {
+    other.processAllRangeMarkers { entry, delta ->
       val handle = entry.handle
       if (invalids.getUnchecked(handle.id) == null && !isValid(handle)) {
-        result = editor.insert(result, handle, entry)
+        result = editor.insert(result, handle, entry.shifted(delta))
       }
+      true
     }
     if (result === root) this else editor.finish(result)
   }
@@ -234,17 +235,13 @@ class PMarkerDirectRoot private constructor(
     var result: PMarkerNode?
     val fullTraversal = root.persistentCount > 0 && PersistentMarkerPolicy.requiresFullTraversal(patch, beforeText, afterText)
     if (fullTraversal) {
-      val entries = ArrayList<MarkerEntry>()
-      collect(root, 0, entries)
-      result = editor.rebuild(entries, transform)
+      result = editor.rebuild(root, transform)
     }
     else {
       val [before, fromStart] = editor.split(root, start, false)
       val [middle, after] = editor.split(fromStart, end, true)
       val updatedBefore = editor.updateBefore(before, start, transform)
-      val entries = ArrayList<MarkerEntry>()
-      collect(middle, 0, entries)
-      val rebuilt = editor.rebuild(entries, transform)
+      val rebuilt = editor.rebuild(middle, transform)
       result = editor.join(editor.join(updatedBefore, rebuilt), editor.shift(after, length - (end - start)))
     }
     if (start == end && patch.moveOffset() != start) {
@@ -599,12 +596,14 @@ class PMarkerDirectRoot private constructor(
       return join(left, result.applyTo(node.entry), right)
     }
 
-    /** Transforms entries and builds a balanced tree from valid results, sorting them when their order changes. */
-    fun rebuild(entries: List<MarkerEntry>, transform: MarkerTransformer): PMarkerNode? {
-      val valid = ArrayList<MarkerEntry>(entries.size)
-      for (entry in entries) {
+    /** Transforms a subtree and builds a balanced tree from valid results, sorting them when their order changes. */
+    fun rebuild(node: PMarkerNode?, transform: MarkerTransformer): PMarkerNode? {
+      val valid = ArrayList<MarkerEntry>()
+      processAll(node, 0) { storedEntry, delta ->
+        val entry = storedEntry.shifted(delta)
         val result = transform.transform(entry)
         if (result.isValid) valid.add(result.applyTo(entry))
+        true
       }
       if ((1 until valid.size).any { compare(valid[it - 1], valid[it]) > 0 }) {
         valid.sortWith { first, second -> compare(first, second) }
@@ -737,14 +736,8 @@ class PMarkerDirectRoot private constructor(
       return processAll(node.right, childDelta, processor)
     }
 
-    /** Collects entries in tree order with [delta] and all descendant lazy shifts applied. */
-    private fun collect(node: PMarkerNode?, delta: Int, entries: MutableList<MarkerEntry>) {
-      if (node == null) return
-      val childDelta = delta + node.lazyDelta
-      collect(node.left, childDelta, entries)
-      entries.add(node.entry.copy(nodeStart = node.entry.nodeStart + delta, nodeEnd = node.entry.nodeEnd + delta))
-      collect(node.right, childDelta, entries)
-    }
+    private fun MarkerEntry.shifted(delta: Int): MarkerEntry =
+      if (delta == 0) this else copy(nodeStart = nodeStart + delta, nodeEnd = nodeEnd + delta)
 
     /** Collects entries fully inside the requested range, with accumulated lazy shifts applied. */
     private fun collectContained(node: PMarkerNode?, delta: Int, start: Int, end: Int, entries: MutableList<MarkerEntry>) {

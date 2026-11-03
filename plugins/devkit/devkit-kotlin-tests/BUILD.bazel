@@ -23,6 +23,7 @@ jvm_library(
         # do not sort,
         "//plugins/devkit",
         "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+        "//plugins/properties/plugin",
     ],
     deps = [
         # do not sort,

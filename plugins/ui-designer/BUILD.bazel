@@ -161,6 +161,7 @@ jvm_library(
     exports = ["//plugins/java-i18n"],
     runtime_deps = [
         # do not sort,
+        "//plugins/properties/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
     ],

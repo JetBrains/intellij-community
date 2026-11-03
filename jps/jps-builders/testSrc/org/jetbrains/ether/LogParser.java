@@ -12,7 +12,7 @@ public final class LogParser {
 
   private static final String COMPILING_START_STR = "incremental.java.JavaBuilder - Compiling";
 
-  public static void main(String[] args) throws IOException {
+  static void main(String[] args) throws IOException {
     final String logPath = args[0];
 
     long totalTime = 0L;

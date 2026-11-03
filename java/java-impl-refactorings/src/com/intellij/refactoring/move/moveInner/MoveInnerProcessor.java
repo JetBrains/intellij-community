@@ -335,7 +335,7 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
       }
 
       if (myOpenInEditor) {
-        EditorHelper.openInEditor(newClass);
+        EditorHelper.requestOpenInEditor(newClass, false);
       }
 
       if (myMoveCallback != null) {

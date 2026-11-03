@@ -317,7 +317,7 @@ fun filterChangesByFileName(targetCommit: VcsFullCommitDetails, fileNames: Colle
  */
 suspend fun <T> withLoadedProject(projectPath: Path, action: suspend (Project) -> T): T {
   val projectManager = ProjectManagerEx.getInstanceEx()
-  val project = projectManager.loadProject(projectPath)
+  val project = projectManager.loadProjectAsync(projectPath)
   try {
     return action(project)
   }

@@ -103,7 +103,7 @@ public class InvertedNameIndexBenchmark {
     }
   }
 
-  public static void main(String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     final Options opt = new OptionsBuilder()
       .mode(Mode.AverageTime)
       .include(InvertedNameIndexBenchmark.class.getSimpleName() + ".*")

@@ -1,5 +1,4 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -11,22 +10,14 @@ jps_test(
         ":yaml",
         ":yaml-tests_test_lib",
         "//json",
+        "//json/plugin",
+        "//plugins/yaml/plugin",
     ],
 )
 ### skip generation section `test intellij.yaml.tests`
 
 ### auto-generated section `dev intellij.yaml` start
 content_module_jar(module = ":yaml")
-
-dev_dist_plugin(
-    content_modules = [
-        # do not sort,
-        "intellij.yaml.backend",
-        "intellij.yaml.spellchecker",
-        "intellij.yaml.syntax",
-    ],
-    main_module = "intellij.yaml",
-)
 ### auto-generated section `dev intellij.yaml` end
 
 ### auto-generated section `build intellij.yaml` start
@@ -83,7 +74,6 @@ jvm_library(
 exports_files(
     [
         "intellij.yaml.iml",
-        "resources/META-INF/plugin.xml",
         "resources/intellij.yaml.xml",
     ],
     visibility = ["//visibility:public"],
@@ -104,7 +94,11 @@ jvm_library(
     ),
     module_name = "intellij.yaml.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/yaml"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/yaml",
+        "//plugins/yaml/plugin",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",

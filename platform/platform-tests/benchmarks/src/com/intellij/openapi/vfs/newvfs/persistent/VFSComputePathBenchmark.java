@@ -327,7 +327,7 @@ public class VFSComputePathBenchmark {
   }
 
 
-  public static void main(final String[] args) throws RunnerException {
+  static void main() throws RunnerException {
     final Options opt = new OptionsBuilder()
       .jvmArgs(
         "-Dvfs.name-cache.check-names=false",

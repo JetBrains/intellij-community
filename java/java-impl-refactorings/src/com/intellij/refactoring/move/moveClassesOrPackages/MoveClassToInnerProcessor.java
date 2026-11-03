@@ -176,7 +176,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       if (myOpenInEditor && !oldToNewElementsMapping.isEmpty()) {
         final PsiElement item = ContainerUtil.getFirstItem(oldToNewElementsMapping.values());
         if (item != null) {
-          EditorHelper.openInEditor(item);
+          EditorHelper.requestOpenInEditor(item, false);
         }
       }
     }

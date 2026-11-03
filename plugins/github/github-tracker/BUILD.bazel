@@ -73,6 +73,7 @@ jvm_library(
     ),
     module_name = "intellij.vcs.github.tracker.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/github/plugin"],
     deps = [
         # do not sort,
         "//platform/core-api:core",

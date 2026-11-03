@@ -39,6 +39,7 @@ jvm_library(
         "//xml/langInjection",
         "//xml/xml-psi-impl/regexp",
         "//libraries/lucene.common",
+        "//plugins/properties/plugin",
         "//plugins/properties/properties-common:properties",
         "//platform/structuralsearch:structuralSearch",
         "//platform/structuralsearch/plugin",

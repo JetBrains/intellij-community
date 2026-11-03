@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.openapi.projectRoots.impl
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.projectRoots.impl.AsdfReleaseData
 import com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationService
 import com.intellij.openapi.projectRoots.impl.ReleaseDataMatching
@@ -16,6 +17,7 @@ class ToolVersionsWatcherHeavyTests : ExternalJavaConfigurationTest() {
     "Eclipse Temurin 17.0.11",
   )
 
+  @IJIgnore(issue = "IDEA-395582")
   fun `test jdk suggestion after sdkmanrc change`() {
     runBlocking {
       val scope = childScope("")
