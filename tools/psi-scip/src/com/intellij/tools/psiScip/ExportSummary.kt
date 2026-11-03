@@ -22,14 +22,12 @@ internal enum class Counter(@JvmField val key: String) {
   PACKAGE_REFS("package_refs"),
   FOREIGN_LOCAL("foreign_local"),
   NO_SYMBOL("no_symbol"),
-  DUPLICATE_DEFINITIONS("duplicate_definitions"),
   EXCEPTIONS("exceptions"),
   MS("ms"),
 }
 
 private val SITE_COUNTERS = setOf(
-  Counter.INVALID_SINGLE, Counter.AMBIGUOUS, Counter.UNRESOLVED, Counter.FOREIGN_LOCAL, Counter.NO_SYMBOL,
-  Counter.DUPLICATE_DEFINITIONS, Counter.EXCEPTIONS,
+  Counter.INVALID_SINGLE, Counter.AMBIGUOUS, Counter.UNRESOLVED, Counter.FOREIGN_LOCAL, Counter.NO_SYMBOL, Counter.EXCEPTIONS,
 )
 
 /** The counters of one file or of a sum of files, with the first sites of each failure counter. */
@@ -79,7 +77,7 @@ internal class ExportStats {
       out.append(",\n").append(indent).append("  \"").append(counter.key).append("_sites\": [")
       list.forEachIndexed { index, site ->
         if (index > 0) out.append(", ")
-        out.append('"').append(site.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n")).append('"')
+        out.append(jsonString(site))
       }
       out.append("]")
     }
@@ -87,15 +85,42 @@ internal class ExportStats {
   }
 }
 
-/** The summary of an export: totals, per module counters, and the file categories that the exporter does not walk. */
+/**
+ * The summary of an export: totals, per module counters, the file categories that the exporter does not walk,
+ * and every duplicate symbol.
+ */
 internal class ExportSummary {
   val total: ExportStats = ExportStats()
   private val modules = TreeMap<String, ExportStats>()
   val skippedFiles: TreeMap<String, Int> = TreeMap()
+  private val duplicateSymbols = TreeMap<String, List<String>>()
 
   fun add(module: String, stats: ExportStats) {
     total.merge(stats)
     modules.getOrPut(module) { ExportStats() }.merge(stats)
+  }
+
+  /**
+   * Records every global symbol with more than one definition in [documents], with the `path:line` of each definition.
+   * Symbols carry no module, so same-named classes of two modules, such as two copies of one class, share a symbol.
+   * The oracle drops the definitions of such a symbol, so the summary names all of them.
+   * Returns the number of duplicate symbols.
+   */
+  fun findDuplicateSymbols(documents: List<ScipDocument>): Int {
+    val definitions = HashMap<String, MutableList<String>>()
+    for (document in documents) {
+      for (occurrence in document.occurrences) {
+        if (occurrence.roles and ROLE_DEFINITION != 0 && occurrence.symbol.startsWith(SYMBOL_PREFIX)) {
+          definitions.getOrPut(occurrence.symbol) { ArrayList(1) }.add("${document.relativePath}:${occurrence.range.startLine + 1}")
+        }
+      }
+    }
+    for ((symbol, sites) in definitions) {
+      if (sites.size > 1) {
+        duplicateSymbols[symbol] = sites
+      }
+    }
+    return duplicateSymbols.size
   }
 
   fun write(file: Path, extra: Map<String, String>) {
@@ -109,7 +134,15 @@ internal class ExportSummary {
         if (index > 0) out.append(", ")
         out.append('"').append(key).append("\": ").append(value.toString())
       }
-      out.append("},\n  \"total\": ")
+      out.append("},\n  \"duplicate_symbols\": ").append(duplicateSymbols.size.toString())
+      out.append(",\n  \"duplicate_symbol_sites\": {")
+      duplicateSymbols.entries.forEachIndexed { index, (symbol, sites) ->
+        out.append(if (index > 0) ",\n    " else "\n    ").append(jsonString(symbol)).append(": [")
+        sites.joinTo(out, ", ") { jsonString(it) }
+        out.append("]")
+      }
+      out.append(if (duplicateSymbols.isEmpty()) "}" else "\n  }")
+      out.append(",\n  \"total\": ")
       total.writeJson(out, "  ")
       out.append(",\n  \"modules\": {")
       modules.entries.forEachIndexed { index, (module, stats) ->
@@ -120,3 +153,5 @@ internal class ExportSummary {
     }
   }
 }
+
+private fun jsonString(value: String): String = '"' + value.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n") + '"'

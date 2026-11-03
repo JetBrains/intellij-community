@@ -201,9 +201,8 @@ internal class JavaDocumentCollector(private val file: PsiJavaFile, private val 
 
   private fun addSymbol(symbol: String, kind: ScipKind, displayName: String, supers: List<String>) {
     val relationships = supers.distinct().sorted().map { ScipRelationship(it, isReference = true, isImplementation = true) }
-    if (symbols.put(symbol, ScipSymbolInformation(symbol, kind, displayName, relationships)) != null) {
-      stats.site(Counter.DUPLICATE_DEFINITIONS, "$relativePath $symbol")
-    }
+    // a second definition in this file is reported with the other duplicates by ExportSummary.findDuplicateSymbols
+    symbols.put(symbol, ScipSymbolInformation(symbol, kind, displayName, relationships))
   }
 
   /**

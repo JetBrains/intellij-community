@@ -174,6 +174,10 @@ private suspend fun export(options: ExportOptions, arguments: List<String>) {
   files.forEachIndexed { index, file -> summary.add(file.module, fileStats[index]!!) }
   val collectMs = System.currentTimeMillis() - collectStartedAt
   log("collected ${files.size} files in $collectMs ms")
+  val duplicates = summary.findDuplicateSymbols(documents.filterNotNull())
+  if (duplicates > 0) {
+    log("$duplicates symbols have more than one definition; the summary lists them under duplicate_symbol_sites")
+  }
 
   val writeStartedAt = System.currentTimeMillis()
   Files.createDirectories(options.output.parent)
