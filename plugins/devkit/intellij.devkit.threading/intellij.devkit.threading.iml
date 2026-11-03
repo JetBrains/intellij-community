@@ -1,28 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="JAVA_MODULE" version="4">
-  <component name="FacetManager">
-    <facet type="kotlin-language" name="Kotlin">
-      <configuration version="5" platform="JVM 25" allPlatforms="JVM [25]" useProjectSettings="false">
-        <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -XXLanguage:-WrapContinuationForTailCallFunctions -progressive -opt-in=androidx.compose.foundation.ExperimentalFoundationApi -opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi -P plugin:androidx.compose.compiler.plugins.kotlin:generateFunctionKeyMetaAnnotations=true" />
-        </compilerSettings>
-        <compilerArguments>
-          <stringArguments>
-            <stringArg name="jvmTarget" arg="25" />
-            <stringArg name="apiVersion" arg="2.5" />
-            <stringArg name="languageVersion" arg="2.5" />
-          </stringArguments>
-          <arrayArguments>
-            <arrayArg name="pluginClasspaths">
-              <args>
-                <arg>$KOTLIN_COMPOSE_COMPILER_PLUGIN$</arg>
-              </args>
-            </arrayArg>
-          </arrayArguments>
-        </compilerArguments>
-      </configuration>
-    </facet>
-  </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
@@ -41,7 +18,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.java.psi" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.platform.compose" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.consoleView" />
