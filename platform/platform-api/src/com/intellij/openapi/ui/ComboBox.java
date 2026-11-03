@@ -13,6 +13,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
+import javax.accessibility.AccessibleState;
+import javax.accessibility.AccessibleStateSet;
 import javax.swing.AbstractAction;
 import javax.swing.CellEditor;
 import javax.swing.ComboBoxEditor;
@@ -27,6 +32,7 @@ import javax.swing.JRootPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
@@ -45,6 +51,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.im.InputMethodRequests;
+import java.util.Locale;
 
 /**
  * Due to many bugs and "features" of the default {@link JComboBox} we provide our own "patch".
@@ -421,6 +428,91 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
       return null;
     } else {
       return supply.getInputMethodRequests();
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleComboBox();
+    }
+    return accessibleContext;
+  }
+
+  private final class AccessibleComboBox extends AccessibleJComboBox {
+    private final PlaceholderAccessibleContext myPlaceholder = new PlaceholderAccessibleContext();
+
+    @Override
+    public int getAccessibleSelectionCount() {
+      if (hasSelectedItem()) return super.getAccessibleSelectionCount();
+      return myPlaceholder.getAccessibleName() == null ? 0 : 1;
+    }
+
+    @Override
+    public Accessible getAccessibleSelection(int i) {
+      if (hasSelectedItem()) return super.getAccessibleSelection(i);
+      return i == 0 && myPlaceholder.getAccessibleName() != null ? myPlaceholder : null;
+    }
+
+    private boolean hasSelectedItem() {
+      return getSelectedItem() != null || isEditable();
+    }
+  }
+
+  private final class PlaceholderAccessibleContext extends AccessibleContext implements Accessible {
+    PlaceholderAccessibleContext() {
+      setAccessibleParent(ComboBox.this);
+    }
+
+    @Override
+    public AccessibleContext getAccessibleContext() {
+      return this;
+    }
+
+    @Override
+    public String getAccessibleName() {
+      ComboPopup popup = getPopup();
+      if (popup == null) return null;
+      @SuppressWarnings("unchecked")
+      ListCellRenderer<Object> renderer = (ListCellRenderer<Object>)getRenderer();
+      Component component = renderer.getListCellRendererComponent(popup.getList(), null, -1, false, false);
+      return component instanceof Accessible accessible && accessible.getAccessibleContext() instanceof AccessibleContext context
+             ? context.getAccessibleName()
+             : null;
+    }
+
+    @Override
+    public AccessibleRole getAccessibleRole() {
+      return AccessibleRole.LABEL;
+    }
+
+    @Override
+    public AccessibleStateSet getAccessibleStateSet() {
+      AccessibleStateSet states = new AccessibleStateSet();
+      if (isEnabled()) states.add(AccessibleState.ENABLED);
+      if (isVisible()) states.add(AccessibleState.VISIBLE);
+      if (isShowing()) states.add(AccessibleState.SHOWING);
+      return states;
+    }
+
+    @Override
+    public int getAccessibleIndexInParent() {
+      return 0;
+    }
+
+    @Override
+    public int getAccessibleChildrenCount() {
+      return 0;
+    }
+
+    @Override
+    public Accessible getAccessibleChild(int i) {
+      return null;
+    }
+
+    @Override
+    public Locale getLocale() {
+      return ComboBox.this.getLocale();
     }
   }
 }
