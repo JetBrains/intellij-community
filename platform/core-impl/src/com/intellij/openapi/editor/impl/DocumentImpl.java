@@ -11,13 +11,13 @@ import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
-import com.intellij.openapi.editor.impl.marker.VirtualFileMarkerRoot;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores;
+import com.intellij.openapi.editor.impl.marker.VirtualFileMarkerRoot;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.impl.source.tree.mvcc.userData.VersionedUserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -37,7 +37,7 @@ import java.util.List;
  * All methods delegate to {@link #impl}.
  * Never add a new field or method implementation here but use {@link DocumentCore} to add new functionality.
  */
-public final class DocumentImpl extends VersionedUserDataHolderBase implements DocumentEx {
+public final class DocumentImpl extends UserDataHolderBase implements DocumentEx {
 
   /**
    * Actual document implementation hidden behind an interface
