@@ -171,7 +171,9 @@ public final class TrigramBuilder {
   public static @NotNull IntSet getTrigrams(@NotNull CharSequence text, @Nullable Runnable checkCanceled) {
     State state = new State(new AddonlyIntSet(1 + text.length() / 8));
     char[] array = CharArrayUtil.fromSequenceWithoutCopying(text);
-    return array != null ? state.processArray(array, checkCanceled) : state.processSequence(text, checkCanceled);
+    AddonlyIntSet trigrams = array != null ? state.processArray(array, checkCanceled) : state.processSequence(text, checkCanceled);
+    trigrams.trimToSize();
+    return trigrams;
   }
 
   private static class State {
@@ -248,9 +250,33 @@ public final class TrigramBuilder {
     }
 
     AddonlyIntSet(int expectedSize) {
-      int powerOfTwo = Integer.highestOneBit((3 * expectedSize) / 2) << 1;
+      int powerOfTwo = tableLength(expectedSize);
       mask = powerOfTwo - 1;
       data = new int[powerOfTwo];
+    }
+
+    private static int tableLength(int expectedSize) {
+      return Integer.highestOneBit((3 * expectedSize) / 2) << 1;
+    }
+
+    /**
+     * Shrinks the table when it is too large for its elements.
+     */
+    void trimToSize() {
+      int optimalTableLength = tableLength(Math.max(size, 1));
+      // the factor is chosen, not measured: a table that wastes less than three quarters of its slots is not worth copying
+      if (optimalTableLength * 4 > data.length) return;
+      int[] old = data;
+      data = new int[optimalTableLength];
+      mask = optimalTableLength - 1;
+      for (int key : old) {
+        if (key != 0) doPut(data, key);
+      }
+    }
+
+    @VisibleForTesting
+    int capacity() {
+      return data.length;
     }
 
     @Override
