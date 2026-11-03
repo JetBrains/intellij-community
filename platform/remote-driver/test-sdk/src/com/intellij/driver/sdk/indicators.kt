@@ -92,12 +92,16 @@ fun Driver.waitForIndicators(timeout: Duration, waitSmartLongEnough: Boolean = t
  * Method waits till a project is opened and there are no indicators for 10 seconds.
  *
  * The wait runs without the pause on the indicators. Its own driver calls must not start a nested wait.
+ *
+ * [stopWaitingInModalContext] stops the wait without a failure when the indicators or dumb mode are visible in a modal context.
+ * The wait also ends without a failure when the project is disposed, because a disposed project never opens again.
  */
 internal fun Driver.waitForIndicators(
   projectGet: () -> Project?,
   timeout: Duration,
   waitSmartLongEnough: Boolean = true,
   ignoreDumbMode: Boolean = false,
+  stopWaitingInModalContext: Boolean = false,
 ): Unit = withoutPauseOnIndicators {
   var smartLongEnoughStart: Instant? = null
 
@@ -111,10 +115,18 @@ internal fun Driver.waitForIndicators(
       indicatorsRunningOrDumbMode(project)
     }
     if (!projectReady) {
+      if (project != null && runCatching { project.isDisposed() }.getOrDefault(true)) {
+        logger<Driver>().info("The project is disposed. The wait for the indicators and dumb mode ends.")
+        return@waitFor true
+      }
       logger<Driver>().info("The project is not opened.")
     }
     if (indicatorsVisible) {
       logProgressIndicators(project)
+      if (stopWaitingInModalContext && isInModalContext()) {
+        logger<Driver>().info("The IDE is in a modal context. The wait for the indicators and dumb mode ends.")
+        return@waitFor true
+      }
     }
     if (!projectReady || indicatorsVisible) {
       smartLongEnoughStart = null

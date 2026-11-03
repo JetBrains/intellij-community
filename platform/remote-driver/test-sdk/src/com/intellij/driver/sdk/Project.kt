@@ -7,6 +7,7 @@ import com.intellij.driver.client.Remote
 interface Project : ProjectRef, ComponentManager {
   fun isOpen(): Boolean
   fun isInitialized(): Boolean
+  fun isDisposed(): Boolean
 
   fun getBasePath(): String
   fun getName(): String
