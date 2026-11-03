@@ -610,6 +610,11 @@ public final class Runner {
         }
       }
     }
+    if (Utils.IS_WINDOWS) {
+      ui.startProcess(UpdaterUI.message("running.after.patch"));
+      ui.setProgressIndeterminate();
+      PostUpdateTasks.runAfterPatch(targetDir);
+    }
   }
 
   private static String resolveJarFile() {

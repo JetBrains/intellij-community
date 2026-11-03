@@ -26,6 +26,7 @@ import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -374,5 +375,40 @@ final class PostUpdateTasks {
 
   private static String stripCeSuffixes(String line) {
     return line.replace(" CE", "").replace(" Community Edition", "");
+  }
+
+  static final String AFTER_INSTALL_EXE = "lib/ReSharperHost/JetBrains.Rider.AfterInstall.exe";
+  static final long AFTER_PATCH_TIMEOUT_MINUTES = 15;
+
+  static @Nullable List<String> afterPatchCommand(Path targetDir) {
+    var executable = targetDir.resolve(AFTER_INSTALL_EXE);
+    if (!Files.isRegularFile(executable)) {
+      LOG.info("after-patch: no " + executable);
+      return null;
+    }
+    return List.of(executable.toString(), "--installation-dir=" + targetDir, "--after-patch-update", "--need-elevation");
+  }
+
+  static void runAfterPatch(Path targetDir) {
+    var command = afterPatchCommand(targetDir);
+    if (command == null) return;
+    try {
+      LOG.info("after-patch: running " + command);
+      @SuppressWarnings("IO_FILE_USAGE")
+      var process = new ProcessBuilder(command)
+        .directory(targetDir.toFile())
+        .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+        .redirectError(ProcessBuilder.Redirect.DISCARD)
+        .start();
+      if (!process.waitFor(AFTER_PATCH_TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
+        LOG.warning("after-patch: timed out after " + AFTER_PATCH_TIMEOUT_MINUTES + " min; the process is left running");
+        return;
+      }
+      var exitCode = process.exitValue();
+      LOG.log(exitCode == 0 ? Level.INFO : Level.WARNING, "after-patch: ec=" + exitCode);
+    }
+    catch (Throwable t) {
+      LOG.log(Level.WARNING, "after-patch: failed", t);
+    }
   }
 }
