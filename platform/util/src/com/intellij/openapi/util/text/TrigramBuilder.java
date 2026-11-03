@@ -89,9 +89,9 @@ public final class TrigramBuilder {
   }
 
   public static @NotNull Map<Integer, Void> getTrigramsAsMap(@NotNull CharSequence text, @Nullable Runnable checkCanceled) {
+    // not a field initializer: that would capture the text in the map
+    IntSet trigrams = getTrigrams(text, checkCanceled);
     return new AbstractMap<Integer, Void>() {
-      final IntSet trigrams = getTrigrams(text, checkCanceled);
-
       @Override
       public int size() {
         return trigrams.size();

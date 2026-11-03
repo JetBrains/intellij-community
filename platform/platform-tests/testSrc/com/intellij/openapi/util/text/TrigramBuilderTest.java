@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
+import com.intellij.util.ref.GCWatcher;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
@@ -158,6 +160,17 @@ public class TrigramBuilderTest {
       "trigrams[" + text + "](=" + trigramsFromConcatenatedText + ") must contain all the trigrams from isolated components " +
       "(=" + trigramsFromIsolatedComponents + ")"
     );
+  }
+
+  @Test
+  public void trigramsMap_DoesNotRetainText() {
+    CharSequence text = new StringBuilder("String$CharData");
+    Map<Integer, Void> trigrams = TrigramBuilder.getTrigramsAsMap(text);
+    GCWatcher textWatcher = GCWatcher.tracking(text);
+    text = null;
+
+    textWatcher.ensureCollected();
+    assertEquals(13, trigrams.size());
   }
 
 
