@@ -21,7 +21,7 @@ import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.isTooLarge
-import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.psi.LanguageSubstitutors
 import com.intellij.psi.PsiLargeFile
@@ -67,29 +67,28 @@ internal class PsiVfsInitProjectActivity : InitProjectActivity {
       return
     }
 
-    ApplicationManager.getApplication().messageBus.simpleConnect()
-      .subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
-        override fun before(events: List<VFileEvent>) {
-          for (project in ProjectUtilCore.getOpenProjects()) {
-            if (!project.isDisposed) {
-              project.service<PsiVFSListener>().before(events)
-            }
+    ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun before(events: List<VFileEvent>) {
+        for (project in ProjectUtilCore.getOpenProjects()) {
+          if (!project.isDisposed) {
+            project.service<PsiVFSListener>().before(events)
           }
         }
+      }
 
-        override fun after(events: List<VFileEvent>) {
-          val projects = ProjectUtilCore.getOpenProjects()
-          // let PushedFilePropertiesUpdater process all pending VFS events and update file properties before we issue PSI events
-          for (project in projects) {
-            val updater = PushedFilePropertiesUpdater.getInstance(project)
-            if (updater is PushedFilePropertiesUpdaterImpl) {
-              updater.processAfterVfsChanges(events)
-            }
-          }
-          for (project in projects) {
-            project.service<PsiVFSListener>().after(events)
+      override fun after(events: List<VFileEvent>) {
+        val projects = ProjectUtilCore.getOpenProjects()
+        // let PushedFilePropertiesUpdater process all pending VFS events and update file properties before we issue PSI events
+        for (project in projects) {
+          val updater = PushedFilePropertiesUpdater.getInstance(project)
+          if (updater is PushedFilePropertiesUpdaterImpl) {
+            updater.processAfterVfsChanges(events)
           }
         }
+        for (project in projects) {
+          project.service<PsiVFSListener>().after(events)
+        }
+      }
     })
   }
 }
