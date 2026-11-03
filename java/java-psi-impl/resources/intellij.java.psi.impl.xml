@@ -17,6 +17,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.syntax.psi"/>
+    <module name="intellij.java.frontback.psi.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.libraries.asm"/>
@@ -112,6 +113,7 @@
     <filetype.stubBuilder filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
     <filetype.decompiler id="classFileDecompiler" filetype="CLASS" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
     <fileType.fileViewProviderFactory filetype="CLASS" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
+    <psi.classFileDecompiler id="clsStubBuilder" implementation="com.intellij.psi.impl.compiled.ClsDecompilerImpl" order="last"/>
 
     <!-- The defaults for a process without a Java backend, such as JetBrains Light. The Java plugin overrides each of them. -->
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleManager"

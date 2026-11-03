@@ -41,8 +41,6 @@
 
     <implicitToStringSearch implementation="com.intellij.psi.impl.search.ImplicitToStringSearcher"/>
 
-    <psi.classFileDecompiler id="clsStubBuilder" implementation="com.intellij.psi.impl.compiled.ClsDecompilerImpl" order="last"/>
-
     <notificationGroup id="jps configuration error"
                        toolWindowId="Build"
                        displayType="TOOL_WINDOW"
