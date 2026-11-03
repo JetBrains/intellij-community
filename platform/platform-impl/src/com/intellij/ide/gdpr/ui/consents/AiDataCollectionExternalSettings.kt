@@ -47,5 +47,8 @@ interface AiDataCollectionExternalSettings {
 
   fun isForciblyDisabled(): Boolean
 
+  /** Controls automatic TRACE notifications without changing consent or collection permissions. */
+  fun shouldShowTraceDataSharingNotification(): Boolean = true
+
   fun getForciblyDisabledDescription(): String?
 }
