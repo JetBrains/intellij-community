@@ -19,6 +19,7 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.HeavyTestHelper
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.replacedServiceFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -76,6 +77,14 @@ fun TestFixture<Path>.projectPathFixture(name: String = "project", createDirecto
  * Path of the project directory in a dedicated test root, mirroring the layout of [VcsPlatformTest].
  */
 fun vcsTestProjectPathFixture(): TestFixture<Path> = vcsTestRootFixture().projectPathFixture()
+
+/**
+ * A project opened in [projectPathFixture] with the VCS test infrastructure set up.
+ */
+fun vcsPlatformContextFixture(
+  projectPathFixture: TestFixture<Path> = vcsTestProjectPathFixture(),
+): TestFixture<VcsPlatformTestContext> =
+  projectFixture(projectPathFixture, openAfterCreation = true).vcsPlatformFixture()
 
 fun TestFixture<Project>.vcsPlatformFixture(): TestFixture<VcsPlatformTestContext> = testFixture {
   val project = init()

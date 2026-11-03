@@ -13,10 +13,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
-import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.vcs.test.VcsPlatformTestContext
-import com.intellij.vcs.test.vcsPlatformFixture
-import com.intellij.vcs.test.vcsTestProjectPathFixture
+import com.intellij.vcs.test.vcsPlatformContextFixture
 import com.intellij.vcsUtil.VcsUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
@@ -30,7 +28,7 @@ private const val TIMEOUT_SECONDS = 10L
 
 @TestApplication
 class VcsRepositoryManagerTest {
-  private val fixture = projectFixture(vcsTestProjectPathFixture(), openAfterCreation = true).vcsPlatformFixture()
+  private val fixture = vcsPlatformContextFixture()
   private val context: VcsPlatformTestContext get() = fixture.get()
 
   private lateinit var vcs: MockAbstractVcs

@@ -4,10 +4,9 @@ package com.intellij.dvcs
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.vcs.test.VcsPlatformTestContext
 import com.intellij.vcs.test.projectPathFixture
-import com.intellij.vcs.test.vcsPlatformFixture
+import com.intellij.vcs.test.vcsPlatformContextFixture
 import com.intellij.vcs.test.vcsTestRootFixture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -15,7 +14,7 @@ import java.io.File
 
 @TestApplication
 class MultiMessageTest {
-  private val fixture = projectFixture(vcsTestRootFixture().projectPathFixture("idea"), openAfterCreation = true).vcsPlatformFixture()
+  private val fixture = vcsPlatformContextFixture(vcsTestRootFixture().projectPathFixture("idea"))
   private val context: VcsPlatformTestContext get() = fixture.get()
 
   @Test
