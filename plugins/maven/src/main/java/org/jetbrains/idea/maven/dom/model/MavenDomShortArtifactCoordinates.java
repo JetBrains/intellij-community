@@ -21,6 +21,7 @@ import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
+import com.intellij.util.xml.WriteAfter;
 import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesArtifactIdConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesGroupIdConverter;
 import org.jetbrains.idea.maven.dom.model.presentation.MavenArtifactCoordinatesPresentationProvider;
@@ -36,5 +37,6 @@ public interface MavenDomShortArtifactCoordinates extends DomElement {
   @Required
   @NoSpellchecking
   @Convert(MavenArtifactCoordinatesArtifactIdConverter.class)
+  @WriteAfter("groupId")
   GenericDomValue<String> getArtifactId();
 }
