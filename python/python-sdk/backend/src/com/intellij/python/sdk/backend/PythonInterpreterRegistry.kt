@@ -141,4 +141,5 @@ class PythonInterpreterRegistry(project: Project, scope: CoroutineScope) {
 data class PythonInterpreterKey(val ownerDir: Path, val ref: PyInterpreterRef)
 
 /** The key of this interpreter, see [PythonInterpreterKey]. */
-internal val PythonInterpreter.key: PythonInterpreterKey get() = PythonInterpreterKey(ownerDir, ref)
+@get:ApiStatus.Internal
+val PythonInterpreter.key: PythonInterpreterKey get() = PythonInterpreterKey(ownerDir, ref)

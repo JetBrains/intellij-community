@@ -82,6 +82,8 @@ import com.intellij.python.pytools.backend.runtime.toolExecutableWithBaseArgsIfR
 import com.intellij.python.pytools.common.PY_EXTERNAL_TOOLS_SETTINGS_ID
 import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.intellij.python.sdk.backend.key
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -455,8 +457,11 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
      *
      * This listener fires for one interpreter at a time, and a project can hold several, so one shared entry
      * would let one interpreter without the tool stop a server that another interpreter needs.
+     *
+     * Each key holds only the owner directory and the ref of the interpreter, see [PythonInterpreterKey]. So the entry
+     * of a removed interpreter holds no SDK.
      */
-    private val versionByInterpreter: ConcurrentMap<PythonInterpreter, String> = ConcurrentHashMap()
+    private val versionByInterpreter: ConcurrentMap<PythonInterpreterKey, String> = ConcurrentHashMap()
 
     /** Whether a client of this provider serves a Python project whose interpreter is [interpreter]. */
     private suspend fun runsFor(interpreter: PythonInterpreter): Boolean {
@@ -478,7 +483,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       val version = pyLspToolVersionOf(interpreter, project, pyTool)
       // `put` answers `null` for an interpreter this listener never saw, which is not the same as an
       // interpreter that holds no copy of the tool. [NO_VERSION] keeps the two apart.
-      val previous = versionByInterpreter.put(interpreter, version ?: NO_VERSION)
+      val previous = versionByInterpreter.put(interpreter.key, version ?: NO_VERSION)
       val seenBefore = previous != null
       val action = lspPackageVersionAction(seenBefore, previous?.takeUnless { it == NO_VERSION }, version)
       if (action == LspPackageAction.NONE) return

@@ -4,13 +4,16 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.python.lsp.core.LspPackageAction
 import com.intellij.python.lsp.core.getInstalledToolPackage
 import com.intellij.python.lsp.core.listener.PyLspListener
+import com.intellij.python.lsp.core.lspPackageAction
 import com.intellij.python.lsp.core.pyLspServedProjects
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProjectSettings
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
@@ -21,6 +24,8 @@ import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.PyreflyUsageCollector
 import com.intellij.python.requirements.pyRequirement
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.intellij.python.sdk.backend.key
 import com.jetbrains.python.packaging.PythonVersionValue
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -31,6 +36,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 internal class RestartLspServersListener(val project: Project) : PyLspListener, PythonPackageManagementListener {
@@ -72,28 +79,39 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
     }
   }
 
+  /**
+   * Turns the Pyrefly engine off when the user removes the Pyrefly package from the last interpreter of the project
+   * that held it.
+   *
+   * The topic is application level, so this fires for the interpreters of every open project. An interpreter of
+   * another project is no reason to turn off the engine of this one (PY-91655). Only a removal counts. Pyrefly also
+   * runs from a custom path, from `PATH` or through `uvx`, and then no interpreter holds the package. The bundled
+   * Pyrefly is a file in the plugin, so it needs no package at all.
+   */
   override fun packagesChanged(interpreter: PythonInterpreter) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
     }
-    val typeEngineProjectSettings = PyTypeEngineProjectSettings.getInstance(project)
-
-    if (typeEngineProjectSettings.typeEngine != PyTypeEngineType.PYREFLY)
-      return
-
-    // The bundled binary is a file in the plugin, not a package of the interpreter, so it is never
-    // "removed" from an environment. Otherwise the package reload after an IDE restart resets the engine.
-    if (PyreflyPyTool.isBundledPyreflyEnabled())
-      return
-
     project.service<TypeInferenceCoroutine>().coroutineScope.launch {
+      val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
+      val servedInterpreters = pyLspServedProjects(snapshot).mapNotNull { snapshot.forPyProject(it)?.interpreter }.distinct()
+      if (interpreter !in servedInterpreters) return@launch
+
+      // The answer is recorded for every engine. A user can select pyrefly while it is a package already, and then
+      // no package event comes before the removal.
+      val pyrefly = PyreflyPyTool.getInstance()
+      val action = project.service<PyreflyPackageState>().record(interpreter) {
+        PythonPackageManager.forPythonInterpreter(project, interpreter).getInstalledToolPackage(pyrefly) != null
+      }
+      if (action != LspPackageAction.STOP) return@launch
+
+      val typeEngineProjectSettings = PyTypeEngineProjectSettings.getInstance(project)
+      if (typeEngineProjectSettings.typeEngine != PyTypeEngineType.PYREFLY || PyreflyPyTool.isBundledPyreflyEnabled()) return@launch
+
       // Ask every served interpreter, not only the one that changed. One module of a multi-module
       // project that loses pyrefly must not turn the engine off for the modules that still hold it.
-      val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
-      val isInstalledSomewhere = pyLspServedProjects(snapshot).any { served ->
-        val interpreter = snapshot.forPyProject(served)?.interpreter ?: return@any false
-        PythonPackageManager.forPythonInterpreter(project, interpreter)
-          .getInstalledToolPackage(PyreflyPyTool.getInstance()) != null
+      val isInstalledSomewhere = servedInterpreters.any { served ->
+        PythonPackageManager.forPythonInterpreter(project, served).getInstalledToolPackage(pyrefly) != null
       }
       if (isInstalledSomewhere) {
         return@launch
@@ -159,5 +177,32 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
         PsiDocumentManager.getInstance(project).reparseFiles(listOf(), true)
       }
     }
+  }
+}
+
+/**
+ * Whether Pyrefly was a package of each interpreter of the project at its last package event. An interpreter that is
+ * absent has no answer yet.
+ *
+ * Each key holds only the owner directory and the ref of the interpreter, see [PythonInterpreterKey]. So the entry of
+ * a removed interpreter holds no SDK.
+ */
+@Service(Service.Level.PROJECT)
+private class PyreflyPackageState {
+  private val mutex = Mutex()
+
+  /** Guarded by [mutex]. */
+  private val isPackageOf = HashMap<PythonInterpreterKey, Boolean>()
+
+  /**
+   * Records the answer of [isPackage] for [interpreter], and answers the move from the earlier answer, see
+   * [lspPackageAction].
+   *
+   * Each package event runs in its own coroutine, and the coroutines run in no fixed order. The read and the store
+   * happen under one lock, so the stored answer is always the one that was read last.
+   */
+  suspend fun record(interpreter: PythonInterpreter, isPackage: () -> Boolean): LspPackageAction = mutex.withLock {
+    val current = isPackage()
+    lspPackageAction(isPackageOf.put(interpreter.key, current), current)
   }
 }
