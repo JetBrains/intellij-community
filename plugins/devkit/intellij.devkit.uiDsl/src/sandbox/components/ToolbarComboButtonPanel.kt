@@ -7,8 +7,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.impl.DefaultToolbarComboButtonModel
 import com.intellij.openapi.wm.impl.ToolbarComboButton
@@ -21,17 +19,12 @@ internal class ToolbarComboButtonPanel : UISandboxPanel {
 
   override val isInternalApi: Boolean = true
 
-  override val description: String
-    get() = DevkitUiDslBundle.message("sandbox.toolbar.combo.button.description")
-
-  override val usageNotes: List<String>
-    get() = listOf(
-      DevkitUiDslBundle.message("sandbox.toolbar.combo.button.usage.when"),
-      DevkitUiDslBundle.message("sandbox.toolbar.combo.button.usage.not.when"),
-    )
-
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
+      row {
+        text(DevkitUiDslBundle.message("sandbox.toolbar.combo.button.description"))
+      }
+
       group(DevkitUiDslBundle.message("sandbox.toolbar.combo.button.group.default")) {
         row {
           text(DevkitUiDslBundle.message("sandbox.toolbar.combo.button.default.note"))
@@ -72,11 +65,7 @@ internal class ToolbarComboButtonPanel : UISandboxPanel {
         .createPopupChooserBuilder(projects)
         .setItemChosenCallback { button.text = it }
         .createPopup()
-      popup.addListener(object : JBPopupListener {
-        override fun onClosed(event: LightweightWindowEvent) {
-          model.setSelected(false)
-        }
-      })
+      popup.setFinalRunnable { model.setSelected(false) }
       popup.showUnderneathOf(button)
     }
     return button

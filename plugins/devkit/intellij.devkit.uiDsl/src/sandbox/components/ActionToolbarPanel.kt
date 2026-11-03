@@ -53,17 +53,12 @@ internal class ActionToolbarPanel : UISandboxPanel {
 
   override val title: String = "ActionToolbar"
 
-  override val description: String
-    get() = DevkitUiDslBundle.message("sandbox.action.toolbar.description")
-
-  override val usageNotes: List<String>
-    get() = listOf(
-      DevkitUiDslBundle.message("sandbox.action.toolbar.usage.when"),
-      DevkitUiDslBundle.message("sandbox.action.toolbar.usage.place"),
-    )
-
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
+      row {
+        text(DevkitUiDslBundle.message("sandbox.action.toolbar.description"))
+      }
+
       group(DevkitUiDslBundle.message("sandbox.action.toolbar.group.items")) {
         row {
           text(DevkitUiDslBundle.message("sandbox.action.toolbar.items.note"))
@@ -78,14 +73,11 @@ internal class ActionToolbarPanel : UISandboxPanel {
           text(DevkitUiDslBundle.message("sandbox.action.toolbar.layout.note"))
         }
         row(DevkitUiDslBundle.message("sandbox.action.toolbar.label.vertical")) {
-          @NlsSafe val code = "createActionToolbar(place, group, false)"
-          cell(createToolbar(createVerticalActions(), horizontal = false)).comment(code)
+          cell(createToolbar(createVerticalActions(), horizontal = false))
         }
         row(DevkitUiDslBundle.message("sandbox.action.toolbar.label.overflow")) {
-          @NlsSafe val code = "toolbar.layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY"
           cell(createToolbar(createOverflowActions(), layoutStrategy = ToolbarLayoutStrategy.AUTOLAYOUT_STRATEGY,
                              width = OVERFLOW_TOOLBAR_WIDTH))
-            .comment(code)
         }
       }
     }

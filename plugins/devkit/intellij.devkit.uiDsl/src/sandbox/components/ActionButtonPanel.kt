@@ -14,7 +14,6 @@ import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.dsl.builder.actionButton
 import com.intellij.ui.dsl.builder.actionsButton
 import com.intellij.ui.dsl.builder.panel
@@ -28,29 +27,23 @@ internal class ActionButtonPanel : UISandboxPanel {
 
   override val title: String = "ActionButton"
 
-  override val description: String
-    get() = DevkitUiDslBundle.message("sandbox.action.button.description")
-
-  override val usageNotes: List<String>
-    get() = listOf(
-      DevkitUiDslBundle.message("sandbox.action.button.usage.not.when"),
-      DevkitUiDslBundle.message("sandbox.action.button.usage.tooltip"),
-    )
-
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
+      row {
+        text(DevkitUiDslBundle.message("sandbox.action.button.description"))
+      }
+
       group(DevkitUiDslBundle.message("sandbox.action.button.group.toolbar")) {
         row {
           text(DevkitUiDslBundle.message("sandbox.action.button.toolbar.note"))
         }
         row {
-          @NlsSafe val code = "ActionManager.getInstance().createActionToolbar(place, group, true)"
           cell(createToolbar(
             SampleAction(DevkitUiDslBundle.message("sandbox.action.button.action.add"), AllIcons.General.Add),
             SampleAction(DevkitUiDslBundle.message("sandbox.action.button.action.edit"), AllIcons.Actions.Edit),
             Separator.getInstance(),
             SampleAction(DevkitUiDslBundle.message("sandbox.action.button.action.refresh"), AllIcons.Actions.Refresh),
-          )).comment(code)
+          ))
         }
       }
 
@@ -75,16 +68,13 @@ internal class ActionButtonPanel : UISandboxPanel {
           text(DevkitUiDslBundle.message("sandbox.action.button.ui.dsl.note"))
         }
         row(DevkitUiDslBundle.message("sandbox.action.button.label.one.action")) {
-          @NlsSafe val code = "actionButton(action)"
           actionButton(SampleAction(DevkitUiDslBundle.message("sandbox.action.button.action.refresh"), AllIcons.Actions.Refresh))
-            .comment(code)
         }
         row(DevkitUiDslBundle.message("sandbox.action.button.label.menu")) {
-          @NlsSafe val code = "actionsButton(action1, action2)"
           actionsButton(
             SampleAction(DevkitUiDslBundle.message("sandbox.action.button.action.add"), null),
             SampleAction(DevkitUiDslBundle.message("sandbox.action.button.action.edit"), null),
-          ).comment(code)
+          )
         }
       }
     }

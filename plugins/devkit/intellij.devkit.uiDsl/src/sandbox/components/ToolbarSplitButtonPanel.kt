@@ -7,8 +7,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.impl.DefaultToolbarSplitButtonModel
 import com.intellij.openapi.wm.impl.ToolbarSplitButton
@@ -21,17 +19,12 @@ internal class ToolbarSplitButtonPanel : UISandboxPanel {
 
   override val isInternalApi: Boolean = true
 
-  override val description: String
-    get() = DevkitUiDslBundle.message("sandbox.toolbar.split.button.description")
-
-  override val usageNotes: List<String>
-    get() = listOf(
-      DevkitUiDslBundle.message("sandbox.toolbar.split.button.usage.when"),
-      DevkitUiDslBundle.message("sandbox.toolbar.split.button.usage.not.when"),
-    )
-
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
+      row {
+        text(DevkitUiDslBundle.message("sandbox.toolbar.split.button.description"))
+      }
+
       group(DevkitUiDslBundle.message("sandbox.toolbar.split.button.group.default")) {
         row {
           text(DevkitUiDslBundle.message("sandbox.toolbar.split.button.default.note"))
@@ -71,11 +64,7 @@ internal class ToolbarSplitButtonPanel : UISandboxPanel {
         .createPopupChooserBuilder(configurations)
         .setItemChosenCallback { button.text = it }
         .createPopup()
-      popup.addListener(object : JBPopupListener {
-        override fun onClosed(event: LightweightWindowEvent) {
-          model.setExpandButtonSelected(false)
-        }
-      })
+      popup.setFinalRunnable { model.setExpandButtonSelected(false) }
       popup.showUnderneathOf(button)
     }
     return button

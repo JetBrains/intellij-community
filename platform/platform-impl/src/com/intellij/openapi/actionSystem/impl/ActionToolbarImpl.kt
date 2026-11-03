@@ -70,6 +70,8 @@ import com.intellij.ui.ToolbarActionTracker.Companion.followToolbarComponent
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativeRectangle
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.VerticalComponentGap
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.use
 import com.intellij.ui.paint.useCopy
@@ -282,6 +284,7 @@ open class ActionToolbarImpl @JvmOverloads constructor(
     UiInspectorUtil.registerProvider(this) {
       collectActionGroupInfo("Toolbar", myActionGroup, myPlace, presentationFactory)
     }
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH)
   }
 
   protected open fun createPresentationFactory(): PresentationFactory {

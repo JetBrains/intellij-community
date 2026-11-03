@@ -95,7 +95,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
@@ -110,7 +109,6 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Placeholder
-import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.scale.JBUIScale
@@ -499,7 +497,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
         }
       }
       is SandboxTreeLeaf -> {
-        val panel = createLeafContent(node)
+        val panel = node.createContent()
         panel.prepareContent()
         placeholder.component = if (node.sandboxPanel.isScrollbarNeeded) ScrollPaneFactory.createScrollPane(panel, true) else panel
       }
@@ -517,36 +515,6 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
   private fun JComponent.prepareContent() {
     border = JBUI.Borders.empty(6, 16, 16, 16)
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
-  }
-
-  private fun createLeafContent(leaf: SandboxTreeLeaf): JComponent {
-    val content = leaf.createContent()
-    val sandboxPanel = leaf.sandboxPanel
-    if (sandboxPanel.description.isEmpty() && sandboxPanel.usageNotes.isEmpty()) {
-      return content
-    }
-
-    content.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
-    return panel {
-      if (sandboxPanel.description.isNotEmpty()) {
-        row {
-          text(sandboxPanel.description)
-        }
-      }
-      if (sandboxPanel.usageNotes.isNotEmpty()) {
-        row {
-          val notes = HtmlChunk.ul()
-            .style("margin-top: 0; margin-bottom: 0")
-            .children(sandboxPanel.usageNotes.map { HtmlChunk.li().addText(it) })
-          comment(notes.toString())
-        }
-      }
-      row {
-        cell(content)
-          .align(Align.FILL)
-      }.resizableRow()
-        .topGap(TopGap.MEDIUM)
-    }
   }
 
   private fun createGroupContent(group: SandboxTreeGroup): JComponent {

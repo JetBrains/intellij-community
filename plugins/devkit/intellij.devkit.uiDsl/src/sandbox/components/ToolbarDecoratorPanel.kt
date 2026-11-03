@@ -4,7 +4,6 @@ package com.intellij.devkit.uiDsl.sandbox.components
 import com.intellij.devkit.uiDsl.DevkitUiDslBundle
 import com.intellij.devkit.uiDsl.sandbox.UISandboxPanel
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
@@ -25,25 +24,18 @@ internal class ToolbarDecoratorPanel : UISandboxPanel {
 
   override val title: String = "ToolbarDecorator"
 
-  override val description: String
-    get() = DevkitUiDslBundle.message("sandbox.toolbar.decorator.description")
-
-  override val usageNotes: List<String>
-    get() = listOf(
-      DevkitUiDslBundle.message("sandbox.toolbar.decorator.usage.when"),
-      DevkitUiDslBundle.message("sandbox.toolbar.decorator.usage.not.when"),
-    )
-
   override fun createContent(disposable: Disposable): JComponent {
     return panel {
+      row {
+        text(DevkitUiDslBundle.message("sandbox.toolbar.decorator.description"))
+      }
+
       group(DevkitUiDslBundle.message("sandbox.toolbar.decorator.group.list")) {
         row {
           text(DevkitUiDslBundle.message("sandbox.toolbar.decorator.list.note"))
         }
         row {
-          @NlsSafe val code = "ToolbarDecorator.createDecorator(list).setAddAction { }.setEditAction { }"
           cell(createListDecorator())
-            .comment(code)
         }
       }
 
@@ -52,9 +44,7 @@ internal class ToolbarDecoratorPanel : UISandboxPanel {
           text(DevkitUiDslBundle.message("sandbox.toolbar.decorator.table.note"))
         }
         row {
-          @NlsSafe val code = "ToolbarDecorator.createDecorator(table).setAddAction { }.setRemoveAction { }.disableUpDownActions()"
           cell(createTableDecorator())
-            .comment(code)
         }
       }
 
@@ -63,9 +53,7 @@ internal class ToolbarDecoratorPanel : UISandboxPanel {
           text(DevkitUiDslBundle.message("sandbox.toolbar.decorator.tree.note"))
         }
         row {
-          @NlsSafe val code = "ToolbarDecorator.createDecorator(tree).setAddAction { }.setRemoveAction { }"
           cell(createTreeDecorator())
-            .comment(code)
         }
       }
     }
