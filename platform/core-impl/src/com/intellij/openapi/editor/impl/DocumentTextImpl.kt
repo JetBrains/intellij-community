@@ -152,7 +152,7 @@ internal class DocumentTextImpl private constructor(
     if (lineSet != null) {
       return lineSet
     }
-    lineSet = LineSet.createLineSet(chars)
+    lineSet = LineSet.createLineSet(luckyChars())
     this.lineSet = lineSet
     return lineSet
   }
