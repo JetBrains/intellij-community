@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.logger
@@ -65,7 +64,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.properties.Delegates.observable
@@ -209,9 +208,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         }
         val updatedFiles = events.mapNotNull { it.file }
         if (areFilesAffectsCommitChecksResult(updatedFiles)) {
-          ApplicationManager.getApplication().invokeLater({
-            resetCommitChecksResult()
-          }) { project.isDisposed }
+          coroutineScope.launch { resetCommitChecksResult() }
         }
       }
     })
