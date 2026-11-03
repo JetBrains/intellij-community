@@ -19,9 +19,6 @@ object PMarkerResolution {
   private const val INVALID_FLAG: Long = 0x80000000L
   private const val STATE_MASK: Long = INVALID_FLAG or Long.MIN_VALUE
 
-  /** Returns a packed range for a valid marker with the half-open range `[startOffset, endOffset)`. */
-  fun valid(range:Long): Long = range
-
   /** Returns a packed range for an invalid marker with its offsets immediately before invalidation. */
   fun invalid(range: Long): Long = range or INVALID_FLAG
 
@@ -59,7 +56,7 @@ internal class PMarkerResolutionUpdate(
       endOffset < unchangedPrefixEnd -> resolution
       startOffset > editEnd -> {
         if (delta == 0) resolution
-        else PMarkerResolution.valid(TextRangeScalarUtil.shift(resolution, delta))
+        else TextRangeScalarUtil.shift(resolution, delta)
       }
       else -> PMarkerResolution.UNRESOLVED
     }

@@ -38,11 +38,11 @@ class SnapshotGuardedBlockTest {
 
     val insertedBefore = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "x\n"))
     Assertions.assertThat(snapshotGuard.resolve(rootStore.rootReference(insertedBefore).get()))
-      .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(6, 12)))
+      .isEqualTo(TextRangeScalarUtil.toScalarRange(6, 12))
 
     val replaced = markerStores.applyPatch(initialSnapshot, textPatch(0, initialSnapshot.text().length(), "prefix\none\ntarget\nlast"))
     Assertions.assertThat(snapshotGuard.resolve(rootStore.rootReference(replaced).get()))
-      .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(11, 17)))
+      .isEqualTo(TextRangeScalarUtil.toScalarRange(11, 17))
 
     val deleted = markerStores.applyPatch(initialSnapshot, textPatch(3, 11, ""))
     val deletedResolution = snapshotGuard.resolve(rootStore.rootReference(deleted).get())

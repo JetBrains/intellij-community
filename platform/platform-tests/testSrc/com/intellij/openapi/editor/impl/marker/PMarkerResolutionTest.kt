@@ -40,9 +40,8 @@ internal class PMarkerResolutionTest {
   @Test
   fun `states preserve empty and maximum offsets`() {
     for (range in listOf(TextRange.EMPTY_RANGE, TextRange(2, 4), TextRange(0, Int.MAX_VALUE), TextRange(Int.MAX_VALUE, Int.MAX_VALUE))) {
-      val valid = PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(range))
+      val valid = TextRangeScalarUtil.toScalarRange(range)
       val invalid = PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(range))
-      assertEquals(TextRangeScalarUtil.toScalarRange(range), valid)
       assertTrue(PMarkerResolution.isValid(valid))
       assertFalse(PMarkerResolution.isValid(invalid))
       for (resolution in longArrayOf(valid, invalid)) {
@@ -77,7 +76,6 @@ internal class PMarkerResolutionTest {
   @Test
   fun `invalid offsets are rejected`() {
     for ([start, end] in listOf(-1 to 0, 2 to 1)) {
-      assertThrows(IllegalArgumentException::class.java) { PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(start, end)) }
       assertThrows(IllegalArgumentException::class.java) { PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(start, end)) }
     }
   }
@@ -91,7 +89,7 @@ internal class PMarkerResolutionTest {
     assertTrue(root.isValid(handle(1)))
     assertFalse(removed.isValid(handle(1)))
     assertEquals(PMarkerResolution.ABSENT, removed.resolve(handle(1)))
-    assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), root.resolve(handle(1)))
+    assertEquals(TextRangeScalarUtil.toScalarRange(2, 4), root.resolve(handle(1)))
     assertSame(removed, removed.remove(handle(1)))
     assertEquals(PMarkerResolution.ABSENT, removed.mergeValidMarkersFrom(root).resolve(handle(1)))
     assertThrows(AssertionError::class.java) { removed.insert(handle(1), 3, 6, spec, flavorFlags = 0) }

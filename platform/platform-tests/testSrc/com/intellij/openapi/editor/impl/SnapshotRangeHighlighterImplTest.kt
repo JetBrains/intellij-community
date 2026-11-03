@@ -384,16 +384,16 @@ class SnapshotRangeHighlighterImplTest {
 
       val insertedBefore = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "x\n"))
       Assertions.assertThat(exactMarker.resolve(rootStore.rootReference(insertedBefore).get()))
-        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(6, 14)))
+        .isEqualTo(TextRangeScalarUtil.toScalarRange(6, 14))
       Assertions.assertThat(lineMarker.resolve(rootStore.rootReference(insertedBefore).get()))
-        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(8, 14)))
+        .isEqualTo(TextRangeScalarUtil.toScalarRange(8, 14))
 
       val replacedText = "prefix\none\n  target\nlast"
       val replaced = markerStores.applyPatch(initialSnapshot, textPatch(0, initialSnapshot.text().length(), replacedText))
       Assertions.assertThat(exactMarker.resolve(rootStore.rootReference(replaced).get()))
-        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(11, 19)))
+        .isEqualTo(TextRangeScalarUtil.toScalarRange(11, 19))
       Assertions.assertThat(lineMarker.resolve(rootStore.rootReference(replaced).get()))
-        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(13, 19)))
+        .isEqualTo(TextRangeScalarUtil.toScalarRange(13, 19))
 
       val deleted = markerStores.applyPatch(initialSnapshot, textPatch(4, 13, ""))
       val deletedExactResolution = exactMarker.resolve(rootStore.rootReference(deleted).get())
@@ -452,9 +452,9 @@ class SnapshotRangeHighlighterImplTest {
       Assertions.assertThat(highlighter.textRange).isEqualTo(TextRange(2, 4))
       Assertions.assertThat(highlighter.isValid).isTrue()
       Assertions.assertThat(highlighter.resolve(rootStore.rootReference(firstBranch).get()))
-        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(3, 5)))
+        .isEqualTo(TextRangeScalarUtil.toScalarRange(3, 5))
       Assertions.assertThat(highlighter.resolve(rootStore.rootReference(secondBranch).get()))
-        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(6, 8)))
+        .isEqualTo(TextRangeScalarUtil.toScalarRange(6, 8))
     }
     finally {
       model.dispose()

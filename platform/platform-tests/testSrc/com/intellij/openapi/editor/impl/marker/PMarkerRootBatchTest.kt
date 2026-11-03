@@ -61,7 +61,7 @@ class PMarkerRootBatchTest {
         for (id in ((1L..48L).toList() + (100L..102L).toList()).shuffled(Random(pass))) {
           val entry = expected[id]
           val resolution = if (entry == null) PMarkerResolution.ABSENT
-          else PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd))
+          else TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd)
           assertEquals(resolution, current.resolve(handle(id)), "Marker $id")
         }
       }
@@ -87,14 +87,14 @@ class PMarkerRootBatchTest {
           val entry = expected.getValue(id)
           val resolution = root.resolve(handle(id))
           assertTrue(PMarkerResolution.isValid(resolution))
-          assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd)), resolution)
+          assertEquals(TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd), resolution)
         }
       }
       val entry = expected.getValue(12)
       val removed = root.remove(handle(12))
       assertTrue(PMarkerResolution.isAbsent(removed.resolve(handle(12))))
       assertEquals(PMarkerResolution.ABSENT, removed.resolve(handle(12)))
-      assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd)), root.resolve(handle(12)))
+      assertEquals(TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd), root.resolve(handle(12)))
     }
   }
 
@@ -103,8 +103,8 @@ class PMarkerRootBatchTest {
     val root = PMarkerRoot.empty().insertMany(listOf(entry(1, 0, 0), entry(2, Int.MAX_VALUE - 1, Int.MAX_VALUE)))
 
     repeat(2) {
-      assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(0, 0)), root.resolve(handle(1)))
-      assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(Int.MAX_VALUE - 1, Int.MAX_VALUE)), root.resolve(handle(2)))
+      assertEquals(TextRangeScalarUtil.toScalarRange(0, 0), root.resolve(handle(1)))
+      assertEquals(TextRangeScalarUtil.toScalarRange(Int.MAX_VALUE - 1, Int.MAX_VALUE), root.resolve(handle(2)))
     }
   }
 

@@ -293,7 +293,7 @@ open class SnapshotRangeMarkerImpl private constructor(
         require(endOffset <= currentSnapshot.text().length()) { "Marker range exceeds snapshot length" }
         root.insert(marker.markerHandle, startOffset, endOffset, spec, marker.flavorFlags, policy = policy)
       })
-      marker.cacheResolution(insertedRoot, PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(startOffset, endOffset)))
+      marker.cacheResolution(insertedRoot, TextRangeScalarUtil.toScalarRange(startOffset, endOffset))
       return marker
     }
 
@@ -329,7 +329,7 @@ open class SnapshotRangeMarkerImpl private constructor(
       val insertedRoot = checkNotNull(fileRoot.updateCurrentRoot { it: PMarkerRoot ->
         it.insert(marker.markerHandle, startOffset, startOffset, spec, marker.flavorFlags, policy = policy)
       })
-      marker.cacheResolution(insertedRoot, PMarkerResolution.valid(initialRange))
+      marker.cacheResolution(insertedRoot, initialRange)
       return marker
     }
 

@@ -186,7 +186,7 @@ internal class SnapshotRangeMarkerImplTest {
       val policy = MarkerPolicy { _, _, _, _ -> error("Insertion must not transform the marker") }
       val root = PMarkerRoot.empty().insert(handle, 2, 4, spec, flavorFlags = 0, policy = policy)
 
-      assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), root.resolve(handle))
+      assertEquals(TextRangeScalarUtil.toScalarRange(2, 4), root.resolve(handle))
       assertSame(policy, root.overlappingIterator(2, 4, 0).next().policy)
     }
   }
@@ -220,7 +220,7 @@ internal class SnapshotRangeMarkerImplTest {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)
       val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
-      assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), marker.fallbackRange)
+      assertEquals(TextRangeScalarUtil.toScalarRange(2, 4), marker.fallbackRange)
       val reference = marker.currentRootReference()
       val before = document.core.snapshot().text()
       val patch = DocumentPatch.simple(0, 0, "xx", newModStamp = 1, clearLineFlags = false)
