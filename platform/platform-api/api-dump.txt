@@ -8750,6 +8750,7 @@ com.intellij.ui.docking.DockContainer
 - getAcceptAreaFallback():com.intellij.ui.awt.RelativeRectangle
 - a:getContainerComponent():javax.swing.JComponent
 - a:getContentResponse(com.intellij.ui.docking.DockableContent,com.intellij.ui.awt.RelativePoint):com.intellij.ui.docking.DockContainer$ContentResponse
+- getDropPriority():I
 - a:isDisposeWhenEmpty():Z
 - a:isEmpty():Z
 - processDropOver(com.intellij.ui.docking.DockableContent,com.intellij.ui.awt.RelativePoint):java.awt.Image

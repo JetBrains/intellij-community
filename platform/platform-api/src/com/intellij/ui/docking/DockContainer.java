@@ -34,6 +34,17 @@ public interface DockContainer {
     return getAcceptArea();
   }
 
+  /**
+   * The order in which the manager offers dragged content to the containers. It asks a container with a higher value
+   * first. The default value is {@code 0}.
+   * <p>
+   * A container that covers another one states a higher value. The editor container takes every point inside its own
+   * bounds, so a container painted above the editor area never gets the content with the default value.
+   */
+  default int getDropPriority() {
+    return 0;
+  }
+
   @NotNull
   ContentResponse getContentResponse(@NotNull DockableContent<?> content, RelativePoint point);
 
