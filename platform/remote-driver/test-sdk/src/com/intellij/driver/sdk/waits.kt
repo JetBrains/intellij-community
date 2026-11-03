@@ -150,23 +150,22 @@ fun <T> waitFor(
 ): T {
   logAwaitStart(message, timeout)
   val start = TimeSource.Monotonic.markNow()
-  var result = getter()
-  while (start.elapsedNow() < timeout && checker(result).not()) {
-    Thread.sleep(interval.inWholeMilliseconds)
-    result = getter()
-  }
-  if (checker(result).not()) {
-    throw WaitForException(timeout,
-                           errorMessage = errorMessage?.invoke(result)
-                                          ?: ("Failed: $message" + if (result !is Boolean) ". Actual: $result" else ""))
-      .also { LOG.warn(it) }
-  }
-  else {
-    val passedTime = start.elapsedNow()
-    if (result !is Boolean || passedTime > 10.seconds) {
-      logAwaitFinish(message, result, passedTime)
+  while (true) {
+    val result = getter()
+    if (checker(result)) {
+      val passedTime = start.elapsedNow()
+      if (result !is Boolean || passedTime > 10.seconds) {
+        logAwaitFinish(message, result, passedTime)
+      }
+      return result
     }
-    return result
+    if (start.elapsedNow() >= timeout) {
+      throw WaitForException(timeout,
+                             errorMessage = errorMessage?.invoke(result)
+                                            ?: ("Failed: $message" + if (result !is Boolean) ". Actual: $result" else ""))
+        .also { LOG.warn(it) }
+    }
+    Thread.sleep(interval.inWholeMilliseconds)
   }
 }
 
