@@ -7,8 +7,8 @@ import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
-import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.InlayHintSettingsKey
+import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
 import com.intellij.codeInsight.hints.settings.InlayGroupSettingProvider
@@ -42,6 +42,7 @@ import com.intellij.ui.components.JBSlider
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xray.api.InlayHintStage
 import com.intellij.xray.api.XRayBundle
@@ -65,7 +66,6 @@ import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
-import kotlin.collections.iterator
 
 val CASE_KEY: Key<ImmediateConfigurable.Case> = Key.create("inlay.case.key")
 
@@ -365,6 +365,17 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
     rightPanel.add(htmlLabel, "growy")
   }
 
+  private fun stageVisibilitySettingsSummary(stage: InlayHintStage): @Nls String = when (stage) {
+    InlayHintStage.ALWAYS -> XRayBundle.message("xray.inlay.stage.settings.summary.always")
+    InlayHintStage.ESSENTIAL -> XRayBundle.message("xray.inlay.stage.settings.summary.essential")
+    InlayHintStage.ADDITIONAL -> XRayBundle.message("xray.inlay.stage.settings.summary.additional")
+    InlayHintStage.DISABLED -> XRayBundle.message("xray.inlay.stage.settings.summary.disabled")
+  }
+
+  private fun updateXRayCommentLabel(label: JBLabel, stage: InlayHintStage) {
+    label.text = stageVisibilitySettingsSummary(stage)
+  }
+
   /**
    * Adds the 4-way [InlayHintStage] control as a slider, ordered left-to-right from disabled to enabled by
    * increasing visibility (DISABLED -> ADDITIONAL -> ESSENTIAL -> ALWAYS). The tree checkbox is kept in sync
@@ -380,6 +391,11 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
     val orderedStages = InlayHintStage.entries.reversed()
     val maxValue = orderedStages.size - 1
 
+    val commentLabel = JBLabel()
+    commentLabel.componentStyle = UIUtil.ComponentStyle.SMALL
+    commentLabel.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
+    updateXRayCommentLabel(commentLabel, loadStage())
+
     val slider = JBSlider(0, maxValue)
     slider.snapToTicks = true
     slider.minorTickSpacing = 1
@@ -389,8 +405,9 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
 
     val labelTable = Hashtable<Int, JBLabel>()
     for ((index, value) in orderedStages.withIndex()) {
-      labelTable.put(index, JBLabel(stageName(value)))
+      labelTable[index] = JBLabel(stageName(value))
     }
+
     slider.labelTable = labelTable as Hashtable<*, *>
     slider.updateUI()
     // Reserve vertical room for the tick labels by sizing the slider after the label table has been applied.
@@ -400,7 +417,7 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
     slider.addChangeListener {
       if (slider.valueIsAdjusting) return@addChangeListener
 
-      val selected = orderedStages.get(slider.value)
+      val selected = orderedStages[slider.value]
       if (selected == loadStage()) return@addChangeListener
 
       storeStage(selected)
@@ -410,6 +427,8 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
         treeNode.isChecked = checked
         (tree.model as DefaultTreeModel).nodeChanged(treeNode)
       }
+
+      updateXRayCommentLabel(commentLabel, selected)
       onChanged()
     }
 
@@ -425,6 +444,10 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
     c.gridy = 1
     c.insets = JBUI.insetsTop(6)
     col.add(slider, c)
+
+    c.gridy = 2
+    c.insets = JBUI.insets(10, 5, 0, 0)
+    col.add(commentLabel, c)
 
     rightPanel.add(col, "growx")
   }
