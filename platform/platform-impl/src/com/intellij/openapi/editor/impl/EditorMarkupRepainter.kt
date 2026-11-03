@@ -146,7 +146,8 @@ internal class EditorMarkupRepainter(
    *
    * On the EDT, the editor applies the change at once when no request is pending and [canApplyNow] is true.
    * This fast path makes no [RepaintRequest] and writes nothing to [repaintRequest].
-   * The coroutine applies a change from another thread.
+   * The coroutine applies a change from another thread, and also a change that recalculates the soft wraps.
+   * So the later changes of the same EDT event join the soft wrap change, and the editor recalculates the soft wraps once.
    * The coroutine runs in any modality and takes no lock.
    * A request that the EDT stores while [canApplyNow] is false is blocked.
    */
@@ -164,7 +165,7 @@ internal class EditorMarkupRepainter(
     }
     val hasAccessibleGutterElement = AccessibleGutterLine.isAccessibleGutterElement(highlighter.gutterIconRenderer)
     val onEdt = EDT.isCurrentThreadEdt()
-    val deferToCoroutine = !onEdt
+    val deferToCoroutine = !onEdt || recalculatesSoftWraps(fontStyleChanged)
     val canApply = onEdt && canApplyNow()
     var request: RepaintRequest? = null
     while (true) {
@@ -201,6 +202,10 @@ internal class EditorMarkupRepainter(
         return
       }
     }
+  }
+
+  private fun recalculatesSoftWraps(fontStyleChanged: Boolean): Boolean {
+    return fontStyleChanged && editor.softWrapModel.isSoftWrappingEnabled
   }
 
   /**

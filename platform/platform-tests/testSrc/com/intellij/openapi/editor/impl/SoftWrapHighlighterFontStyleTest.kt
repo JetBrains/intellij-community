@@ -54,6 +54,7 @@ private val TEXT_TOKEN = IElementType("SOFT_WRAP_TEST_TEXT", Language.ANY)
 /**
  * Checks that a font style change recalculates the soft wraps of its range and updates the editor height.
  * The change comes from a range highlighter, or from the editor highlighter when it lexes the text after an edit again.
+ * The highlighter changes of one EDT event recalculate the soft wraps once, in a later EDT event.
  *
  * [BoldWidthFontLayoutService] makes a bold character two times as wide as a plain character.
  * So [TEXT] fits in one line at [WRAP_COLUMN] in the plain style, and it does not fit in the bold style.
@@ -73,6 +74,7 @@ class SoftWrapHighlighterFontStyleTest {
     assertTrue(softWrapOffsets().isEmpty(), "The plain text must fit in one line")
 
     addHighlighter(boldAttributes())
+    applyPendingChanges()
 
     val offsets = softWrapOffsets()
     val expected = recalculatedSoftWrapOffsets()
@@ -88,6 +90,7 @@ class SoftWrapHighlighterFontStyleTest {
     assertFalse(softWrapOffsets().isEmpty(), "The bold text must not fit in one line")
 
     highlighter.dispose()
+    applyPendingChanges()
 
     val offsets = softWrapOffsets()
     assertEquals(recalculatedSoftWrapOffsets(), offsets, STALE_SOFT_WRAPS)
@@ -101,6 +104,7 @@ class SoftWrapHighlighterFontStyleTest {
     assertTrue(softWrapOffsets().isEmpty(), "The plain text must fit in one line")
 
     (highlighter as RangeHighlighterEx).setTextAttributes(boldAttributes())
+    applyPendingChanges()
 
     val offsets = softWrapOffsets()
     val expected = recalculatedSoftWrapOffsets()
@@ -117,6 +121,7 @@ class SoftWrapHighlighterFontStyleTest {
     assertEquals(contentComponent.preferredSize.height, oneLineHeight, "The editor height must match its preferred height")
 
     addHighlighter(boldAttributes())
+    applyPendingChanges()
 
     assertTrue(contentComponent.preferredSize.height > oneLineHeight, "The new soft wrap must add a visual line")
     assertEquals(contentComponent.preferredSize.height, contentComponent.height, "The editor height must follow the soft wraps")
@@ -234,6 +239,40 @@ class SoftWrapHighlighterFontStyleTest {
   }
 
   @Test
+  fun testInsertionBeforePendingRequestMovesItsArea(): Unit = fixture.runTest {
+    // The lexer of this editor lexes only the changed lines again, so the insertion does not recalculate the bold line
+    initPlainCommentText("a\nb\n$TEXT")
+    configureSoftWraps(WRAP_COLUMN)
+    val document = editor.document
+    addHighlighter(document.getLineStartOffset(2), document.textLength, boldAttributes())
+    val recalculationStarts = recordRecalculationStarts()
+
+    // The request of the bold highlighter is pending until its coroutine runs, and the insertion moves the bold line down
+    runWriteCommand { document.insertString(0, "x\n".repeat(10)) }
+    applyPendingChanges()
+
+    val boldLineStart = document.getLineStartOffset(12)
+    assertTrue(recalculationStarts.contains(boldLineStart)) {
+      "The pending request must recalculate the moved bold line, but the recalculations started at $recalculationStarts"
+    }
+    assertEquals(recalculatedSoftWrapOffsets(), softWrapOffsets(), STALE_SOFT_WRAPS)
+  }
+
+  @Test
+  fun testDeletionOfPendingRequestTextKeepsItsAreaInText(): Unit = fixture.runTest {
+    initBoldWidthText("x\n$TEXT")
+    configureSoftWraps(WRAP_COLUMN)
+    val document = editor.document
+    addHighlighter(document.getLineStartOffset(1), document.textLength, boldAttributes())
+
+    // The request of the bold highlighter is pending until its coroutine runs, and the deletion removes all text of its area
+    runWriteCommand { document.deleteString(0, document.textLength) }
+    applyPendingChanges()
+
+    assertEquals(recalculatedSoftWrapOffsets(), softWrapOffsets(), STALE_SOFT_WRAPS)
+  }
+
+  @Test
   fun testColorChangeDoesNotWidenSoftWrapRecalculation(): Unit = fixture.runTest {
     initBoldWidthText("ab\ncd\n$TEXT")
     configureSoftWraps(WRAP_COLUMN)
@@ -250,6 +289,60 @@ class SoftWrapHighlighterFontStyleTest {
     assertFalse(recalculationStarts.isEmpty(), "The bold highlighter must recalculate the soft wraps")
     assertTrue(recalculationStarts.all { it >= textStart }) {
       "Only the bold text needs new soft wraps, but the recalculations started at $recalculationStarts"
+    }
+    assertEquals(recalculatedSoftWrapOffsets(), softWrapOffsets(), STALE_SOFT_WRAPS)
+  }
+
+  @Test
+  fun testBoldHighlightersAddedInOneEventRecalculateSoftWrapsOnce(): Unit = fixture.runTest {
+    initBoldWidthText(MANY_LINES_TEXT)
+    configureSoftWraps(WRAP_COLUMN)
+    applyPendingChanges()
+    val recalculationStarts = recordRecalculationStarts()
+
+    addBoldHighlighterToEachLine()
+    applyPendingChanges()
+
+    assertEquals(1, recalculationStarts.size, "The bold highlighters of one EDT event must recalculate the soft wraps once")
+    assertEquals(recalculatedSoftWrapOffsets(), softWrapOffsets(), STALE_SOFT_WRAPS)
+  }
+
+  @Test
+  fun testBoldHighlightersReplacedInOneEventRecalculateSoftWrapsOnce(): Unit = fixture.runTest {
+    initBoldWidthText(MANY_LINES_TEXT)
+    configureSoftWraps(WRAP_COLUMN)
+    addBoldHighlighterToEachLine()
+    applyPendingChanges()
+    val recalculationStarts = recordRecalculationStarts()
+
+    // A markup update of the unified diff viewer removes all highlighters and adds them again in one EDT event
+    editor.markupModel.removeAllHighlighters()
+    addBoldHighlighterToEachLine()
+    applyPendingChanges()
+
+    assertEquals(1, recalculationStarts.size, "The replaced bold highlighters must recalculate the soft wraps once")
+    assertEquals(recalculatedSoftWrapOffsets(), softWrapOffsets(), STALE_SOFT_WRAPS)
+  }
+
+  @Test
+  fun testBoldHighlightersReplacedAroundTextChangeRecalculateSoftWrapsOnce(): Unit = fixture.runTest {
+    initBoldWidthText(MANY_LINES_TEXT)
+    configureSoftWraps(WRAP_COLUMN)
+    addBoldHighlighterToEachLine()
+    applyPendingChanges()
+    val document = editor.document
+    val lastLineStart = document.getLineStartOffset(document.lineCount - 1)
+    val recalculationStarts = recordRecalculationStarts()
+
+    // A rediff of the unified diff viewer removes all highlighters, changes the text, and adds the highlighters again
+    editor.markupModel.removeAllHighlighters()
+    runWriteCommand { document.replaceString(lastLineStart, document.textLength, TEXT.reversed()) }
+    addBoldHighlighterToEachLine()
+    applyPendingChanges()
+
+    // The text change recalculates only its line, so a recalculation from offset 0 comes from the bold highlighters
+    assertEquals(1, recalculationStarts.count { it == 0 }) {
+      "The replaced bold highlighters must recalculate the soft wraps once, but the recalculations started at $recalculationStarts"
     }
     assertEquals(recalculatedSoftWrapOffsets(), softWrapOffsets(), STALE_SOFT_WRAPS)
   }
@@ -401,6 +494,16 @@ private fun EditorModelFixture.addHighlighter(
     /* textAttributes = */ attributes,
     /* targetArea = */ HighlighterTargetArea.EXACT_RANGE,
   )
+}
+
+/**
+ * Adds a bold highlighter to each line of the editor, one highlighter after the other.
+ */
+private fun EditorModelFixture.addBoldHighlighterToEachLine() {
+  val document = editor.document
+  for (line in 0 until document.lineCount) {
+    addHighlighter(document.getLineStartOffset(line), document.getLineEndOffset(line), boldAttributes())
+  }
 }
 
 /**
