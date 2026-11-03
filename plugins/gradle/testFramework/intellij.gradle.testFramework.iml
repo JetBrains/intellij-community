@@ -63,6 +63,7 @@
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.groovy.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
   </component>
 </module>
