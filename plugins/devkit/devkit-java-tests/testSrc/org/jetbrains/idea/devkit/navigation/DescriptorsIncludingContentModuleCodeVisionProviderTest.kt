@@ -65,6 +65,78 @@ internal class DescriptorsIncludingContentModuleCodeVisionProviderTest {
   }
 
   @Test
+  fun testSingleIncludingPlugin() {
+    createModuleWithModuleDescriptor("declaring.module", "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.myplugin</id>
+        <content>
+          <module name="test.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    testCodeVision("""
+      <idea-plugin>/*<# [Included in 'com.example.myplugin' plugin] #>*/
+        <!-- any -->
+      </idea-plugin>
+      """.trimIndent(),
+      expectedTooltip = "Content module test.module is included in 1 plugin XML descriptor",
+    )
+  }
+
+  @Test
+  fun testSingleIncludingPluginWithoutId() {
+    createModuleWithModuleDescriptor("declaring.module", "META-INF/plugin.xml", """
+      <idea-plugin>
+        <name>My Example Plugin</name>
+        <content>
+          <module name="test.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    testCodeVision("""
+      <idea-plugin>/*<# [Included in 'My Example Plugin' plugin] #>*/
+        <!-- any -->
+      </idea-plugin>
+      """.trimIndent(),
+      expectedTooltip = "Content module test.module is included in 1 plugin XML descriptor",
+    )
+  }
+
+  @Test
+  fun testMultipleIncludingPlugins() {
+    createModuleWithModuleDescriptor("declaring.module.1", "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.myplugin.one</id>
+        <content>
+          <module name="test.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    createModuleWithModuleDescriptor("declaring.module.2", "META-INF/plugin.xml", """
+      <idea-plugin>
+        <id>com.example.myplugin.two</id>
+        <content>
+          <module name="test.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    testCodeVision("""
+      <idea-plugin>/*<# [Included in 2 descriptors] #>*/
+        <!-- any -->
+      </idea-plugin>
+      """.trimIndent(),
+      expectedTooltip = "Content module test.module is included in 2 plugin XML descriptors",
+    )
+  }
+
+  @Test
   fun testSingleIncludingDescriptorWhenMultipleContentExistInAFile() {
     createModuleWithModuleDescriptor("declaring.module", "declaring.module.xml", """
       <idea-plugin>

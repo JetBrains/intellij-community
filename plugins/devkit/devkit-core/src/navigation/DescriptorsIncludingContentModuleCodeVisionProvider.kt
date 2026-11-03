@@ -16,7 +16,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.xml.XmlFile
+import com.intellij.util.xml.DomUtil
+import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor
+import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.findDependingContentModuleEntriesInFile
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -56,17 +60,26 @@ internal class DescriptorsIncludingContentModuleCodeVisionProvider : DaemonBound
     val xmlFile = file as XmlFile
     val rootTag = DescriptorUtil.getIdeaPlugin(xmlFile)?.xmlTag ?: return emptyList()
     val moduleName = xmlFile.virtualFile?.nameWithoutExtension ?: return emptyList()
-    val includingEntries = findDependingContentModuleEntriesInFile(xmlFile).mapNotNull { it.xmlElement }.toList()
+    val includingDescriptors = findDependingContentModuleEntriesInFile(xmlFile).toList()
+    val includingEntries = includingDescriptors.mapNotNull { it.xmlElement }
     if (includingEntries.isEmpty()) return emptyList()
 
     val pointers = includingEntries.map { it.createSmartPointer() }
     val entry = ClickableTextCodeVisionEntry(
-      text = DevKitBundle.message("code.vision.descriptors.including.content.module.text", includingEntries.size),
+      text = getEntryText(includingDescriptors),
       providerId = id,
       onClick = { event, clickedEditor -> navigateToIncludingEntries(pointers, event, clickedEditor) },
       tooltip = DevKitBundle.message("code.vision.descriptors.including.content.module.tooltip", moduleName, includingEntries.size),
     )
     return listOf(rootTag.textRange to entry)
+  }
+
+  private fun getEntryText(includingDescriptors: List<ModuleDescriptor>): @Nls String {
+    val pluginId = includingDescriptors.singleOrNull()?.let { DomUtil.getParentOfType(it, IdeaPlugin::class.java, true) }?.pluginId
+    if (pluginId != null) {
+      return DevKitBundle.message("code.vision.descriptors.including.content.module.plugin.text", pluginId)
+    }
+    return DevKitBundle.message("code.vision.descriptors.including.content.module.text", includingDescriptors.size)
   }
 
   private fun computePreview(file: PsiFile, count: Int): List<Pair<TextRange, CodeVisionEntry>> {
