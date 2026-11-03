@@ -16,6 +16,7 @@ import com.intellij.psi.PsiImportStatementBase
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiLocalVariable
+import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiMethodReferenceExpression
@@ -48,6 +49,7 @@ import com.intellij.psi.util.PsiUtil
  *   An enum constant writes the constructor that it calls at the constant name, see [enumConstantCall].
  * - An occurrence inside a doc comment has [ROLE_DOC] and never [ROLE_CALL].
  * - A package reference is never written. [Counter.PACKAGE_REFS] counts it.
+ * - A reference to the synthetic array class or to its members, such as `length`, is never written. [Counter.ARRAY_REFS] counts it.
  */
 internal class JavaDocumentCollector(private val file: PsiJavaFile, private val relativePath: String) {
   val stats: ExportStats = ExportStats()
@@ -365,6 +367,10 @@ internal class JavaDocumentCollector(private val file: PsiJavaFile, private val 
   }
 
   private fun targetSymbol(site: PsiElement, target: PsiElement): String? {
+    if (target is PsiMember && JavaSymbols.isArrayMember(target)) {
+      stats.add(Counter.ARRAY_REFS)
+      return null
+    }
     val symbol = when (target) {
       is PsiPackage -> {
         stats.add(Counter.PACKAGE_REFS)

@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.psiScip
 
+import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiType
@@ -27,6 +29,7 @@ internal const val SYMBOL_PREFIX: String = "psi . . . "
  * - A local or anonymous class is a type named by its JVM binary name without the package: `Outer$1#`.
  * - A field is a term: `Gson#serializeNulls.`.
  * - A method is `name(<hash>).`, and a constructor is `` `<init>`(<hash>). ``.
+ * - The synthetic array class of `int[].length`, `array.clone()` and `Foo[]::new` has no symbol, and neither have its members.
  *
  * The method disambiguator is [methodDisambiguator], a hash of the JVM descriptor.
  * An overload that is added to a class does not rename the other overloads.
@@ -89,7 +92,7 @@ internal object JavaSymbols {
   }
 
   private fun classDescriptor(psiClass: PsiClass): String? {
-    if (psiClass is PsiTypeParameter) {
+    if (psiClass is PsiTypeParameter || isArrayClass(psiClass)) {
       return null
     }
     if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
@@ -103,13 +106,18 @@ internal object JavaSymbols {
     if (outer != null) {
       return classDescriptor(outer)?.let { it + escape(name) + "#" }
     }
-    // a top-level class: a class without a file, such as the array class of `int[].length`, has no symbol
+    // a top-level class: a class outside a class owner file, or without a qualified name, has no symbol
     val packageName = packageName(psiClass) ?: return null
     if (psiClass.qualifiedName == null) {
       return null
     }
     return packageDescriptor(packageName) + escape(name) + "#"
   }
+
+  /** The synthetic array class, whose outer class is `_Dummy_` of a non-physical file, or one of its members. */
+  fun isArrayMember(member: PsiMember): Boolean = isArrayClass(member as? PsiClass ?: member.containingClass ?: return false)
+
+  private fun isArrayClass(psiClass: PsiClass): Boolean = JavaPsiFacade.getElementFactory(psiClass.project).isArrayClass(psiClass)
 
   private fun packageName(psiClass: PsiClass): String? = (psiClass.containingFile as? PsiClassOwner)?.packageName
 

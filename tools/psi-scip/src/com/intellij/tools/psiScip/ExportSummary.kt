@@ -20,6 +20,7 @@ internal enum class Counter(@JvmField val key: String) {
   AMBIGUOUS("ambiguous"),
   UNRESOLVED("unresolved"),
   PACKAGE_REFS("package_refs"),
+  ARRAY_REFS("array_refs"),
   FOREIGN_LOCAL("foreign_local"),
   NO_SYMBOL("no_symbol"),
   EXCEPTIONS("exceptions"),
