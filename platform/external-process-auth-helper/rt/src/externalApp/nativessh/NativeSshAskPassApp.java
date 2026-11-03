@@ -14,7 +14,7 @@ import externalApp.ExternalCli;
  */
 public class NativeSshAskPassApp implements ExternalApp, ExternalCli {
 
-  public static void main(String[] args) {
+  static void main(String[] args) {
     var exitCode = new NativeSshAskPassApp().entryPoint(ExternalAppEntry.fromMain(args));
     System.exit(exitCode);
   }

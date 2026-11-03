@@ -169,7 +169,7 @@ public class BaseOutputReaderTest {
     private static final int SEND_TIMEOUT = 500;
     private static final int SLEEP_TIMEOUT = 60000;
 
-    public static void main(String[] args) throws InterruptedException {
+    static void main(String[] args) throws InterruptedException {
       if (args.length > 0 && "sleep".equals(args[0])) {
         Thread.sleep(SLEEP_TIMEOUT);
       }

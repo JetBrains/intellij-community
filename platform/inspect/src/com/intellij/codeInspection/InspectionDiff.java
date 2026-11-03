@@ -31,7 +31,7 @@ final class InspectionDiff {
   private static final @NonNls String PROBLEM_CLASS_ELEMENT = "problem_class";
   private static final @NonNls String DESCRIPTION_ELEMENT = "description";
 
-  public static void main(String[] args) {
+  static void main(String[] args) {
     if (args.length != 3 && args.length != 2) {
       System.out.println(InspectionsBundle.message("inspection.diff.format.error"));
     }

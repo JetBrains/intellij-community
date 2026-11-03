@@ -19,7 +19,6 @@ c:externalApp.nativessh.NativeSshAskPassApp
 - externalApp.ExternalCli
 - <init>():V
 - entryPoint(externalApp.ExternalAppEntry):I
-- s:main(java.lang.String[]):V
 externalApp.nativessh.NativeSshAskPassAppHandler
 - externalApp.ExternalAppHandler
 - sf:ENTRY_POINT_NAME:java.lang.String
@@ -28,7 +27,6 @@ externalApp.nativessh.NativeSshAskPassAppHandler
 - a:handleInput(java.lang.String):java.lang.String
 c:externalApp.sudoAskPass.SudoAskPassApp
 - externalApp.ExternalApp
-- s:main(java.lang.String[]):V
 externalApp.sudoAskPass.SudoExternalAppHandler
 - externalApp.ExternalAppHandler
 - sf:ENTRY_POINT_NAME:java.lang.String

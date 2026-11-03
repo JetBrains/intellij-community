@@ -44,7 +44,7 @@ public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecut
   }
 
   @SuppressWarnings("unchecked")
-  public static void main(String[] args) throws Exception {
+  static void main(String[] args) throws Exception {
     if (args.length < 1) {
       throw new IllegalArgumentException(
         "Can't create external system facade. Reason: given arguments don't contain information about external system resolver to use");

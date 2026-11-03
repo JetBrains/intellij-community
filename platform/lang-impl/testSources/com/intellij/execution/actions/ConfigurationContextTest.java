@@ -131,10 +131,6 @@ public class ConfigurationContextTest extends BasePlatformTestCase {
     assertEquals("Run 'world_'", event1.getPresentation().getText());
   }
 
-  public static void main(String[] args) {
-    
-  }
-  
   public void test2ApplicableConfigurationsInContextNestedScopes() {
     PsiFile file = myFixture.configureByText(FileTypes.PLAIN_TEXT, "hello,<caret>world");
     @SuppressWarnings("rawtypes") 
