@@ -21,7 +21,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
@@ -30,26 +29,26 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.psi.Property;
-import com.jetbrains.python.psi.PyCallable;
-import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.pyi.PyiFile;
-import com.jetbrains.python.pyi.PyiUtil;
-import com.jetbrains.python.sdk.skeleton.PySkeletonHeader;
-import com.jetbrains.python.toolbox.Maybe;
+import com.jetbrains.python.sdk.SdkExtKt;
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Set;
 
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -68,22 +67,15 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
     runTest(new SkeletonsTask() {
       @Override
       public void runTestOn(@NotNull Sdk sdk) {
-        // Check the builtin skeleton header
+        // The bundled typeshed stubs cover the standard library, so the generator skips the builtins
         final Project project = myFixture.getProject();
         ApplicationManager.getApplication().runReadAction(() -> {
-          PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
-          if (builtins instanceof PyiFile) {
-            builtins = (PyFile)PyiUtil.getOriginalElement(builtins);
-          }
-          assertNotNull(builtins);
-          final VirtualFile virtualFile = builtins.getVirtualFile();
-          assertNotNull(virtualFile);
-          assertTrue(virtualFile.isInLocalFileSystem());
-          final PySkeletonHeader header = PySkeletonHeader.readSkeletonHeader(virtualFile.toNioPath());
-          assertNotNull(header);
-          final int version = header.getVersion();
-          assertTrue("Header version must be > 0, currently it is " + version, version > 0);
-          assertEquals(PySkeletonHeader.BUILTIN_NAME, header.getBinaryFile());
+          final PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
+          assertInstanceOf(builtins, PyiFile.class);
+          assertTrue(PyTypeShed.INSTANCE.isInside(builtins.getVirtualFile()));
+          final Path skeletonsPath = SdkExtKt.getSkeletonsPath(sdk);
+          assertNotNull(skeletonsPath);
+          assertFalse(Files.exists(skeletonsPath.resolve(PySkeletonUtil.getBuiltinsFileName(sdk))));
         });
 
         // Run inspections on a file that uses builtins
@@ -114,37 +106,6 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
         EdtTestUtil.runInEdtAndWait((() -> myFixture.checkHighlighting(true, false, false)));
-      }
-    });
-  }
-
-  // PY-9797
-  @Test
-  public void testReadWriteDeletePropertyDefault() {
-    runTest(new SkeletonsTask() {
-      @Override
-      protected void runTestOn(@NotNull Sdk sdk) {
-        final Project project = myFixture.getProject();
-        ApplicationManager.getApplication().runReadAction(() -> {
-          PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
-          if (builtins instanceof PyiFile) {
-            builtins = (PyFile)PyiUtil.getOriginalElement(builtins);
-          }
-          assertNotNull(builtins);
-          final PyClass cls = builtins.findTopLevelClass("int");
-          assertNotNull(cls);
-          final Property prop = cls.findProperty("real", true, null);
-          assertNotNull(prop);
-          assertIsNotNull(prop.getGetter());
-          assertIsNotNull(prop.getSetter());
-          assertIsNotNull(prop.getDeleter());
-        });
-      }
-
-      private void assertIsNotNull(Maybe<PyCallable> accessor) {
-        if (accessor.isDefined()) {
-          assertNotNull(accessor.valueOrNull());
-        }
       }
     });
   }

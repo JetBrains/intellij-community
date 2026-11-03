@@ -558,6 +558,7 @@ f:com.jetbrains.python.codeInsight.typing.PyStubPackages
 f:com.jetbrains.python.codeInsight.typing.PyTypeShed
 - sf:INSTANCE:com.jetbrains.python.codeInsight.typing.PyTypeShed
 - f:findAllRootsForLanguageLevel(com.jetbrains.python.psi.LanguageLevel):java.util.List
+- f:findStdlibModuleNames(com.jetbrains.python.psi.LanguageLevel):java.util.List
 - f:findStdlibRootsForLanguageLevel(com.jetbrains.python.psi.LanguageLevel):java.util.List
 - f:findStdlibRootsForSdk(com.intellij.openapi.projectRoots.Sdk):java.util.List
 - f:getDirectory():com.intellij.openapi.vfs.VirtualFile

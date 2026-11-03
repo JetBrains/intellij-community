@@ -19,6 +19,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.QualifiedName
 import com.intellij.python.community.helpersLocator.PythonBundledPyiStubsLocator
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.LanguageLevel
 import org.toml.lang.psi.TomlFile
@@ -187,6 +188,23 @@ object PyTypeShed {
 
     val stdlib = stdlibRoot ?: return emptyList()
     return if (level.isPython2) listOfNotNull(stdlib.findChild("@python2"), stdlib) else listOf(stdlib)
+  }
+
+  /**
+   * Returns the names of the top-level stdlib modules that Typeshed has stubs for at the Python language [level].
+   */
+  fun findStdlibModuleNames(level: LanguageLevel): List<String> {
+    val stdlib = stdlibRoot ?: return emptyList()
+    return stdlib.children
+      .mapNotNull { child ->
+        when {
+          child.isDirectory -> child.name.takeIf { child.findChild(PyNames.INIT_DOT_PYI) != null }
+          child.extension == "pyi" -> child.nameWithoutExtension
+          else -> null
+        }
+      }
+      .filter { maySearchForStubInRoot(QualifiedName.fromComponents(it), stdlib, level) }
+      .sorted()
   }
 
   /**
