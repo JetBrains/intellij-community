@@ -117,6 +117,7 @@ import java.awt.event.MouseEvent
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -924,6 +925,7 @@ object UniversalFileChooser {
       val roots: MutableList<String> = mutableListOf()
       private val environmentRestricted: Boolean = restrictRootsToProjectEnvironment
       private val hasExtensionFilter: Boolean = descriptor.extensionFilter != null
+      private val pathFilter: Predicate<in Path>? = descriptor.pathFilter
       private val chooseFiles: Boolean = descriptor.isChooseFiles || descriptor.isChooseJarContents
       private val chooseFolders: Boolean = descriptor.isChooseFolders
 
@@ -1314,6 +1316,7 @@ object UniversalFileChooser {
           }
           else {
             if (!chooseFiles) return@all false
+            if (pathFilter?.test(file) == false) return@all false
           }
           true
         }
