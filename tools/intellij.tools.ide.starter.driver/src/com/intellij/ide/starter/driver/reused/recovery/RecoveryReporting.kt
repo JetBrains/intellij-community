@@ -12,11 +12,11 @@ internal fun BackgroundRun.formatForRecoveryLog(): String {
 }
 
 internal fun SettingsRecoveryPlan.formatForRecoveryLog(): String {
-  return "requiresRestart=$requiresRestart, changed=${changedFileSpecs.formatFileSpecsForRecoveryLog()}, " +
-         "deleted=${deletedFileSpecs.formatFileSpecsForRecoveryLog()}"
+  return "requiresRestart=$requiresRestart, changed=${changedFileSpecs.formatSortedForRecoveryLog()}, " +
+         "deleted=${deletedFileSpecs.formatSortedForRecoveryLog()}, cacheState=$cacheStateChanges"
 }
 
-private fun Set<String>.formatFileSpecsForRecoveryLog(): String {
+private fun Collection<String>.formatSortedForRecoveryLog(): String {
   return sorted().joinToString(prefix = "[", postfix = "]")
 }
 

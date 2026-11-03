@@ -47,8 +47,8 @@ Recovery tries the cheapest safe option first:
 
 1. It checks that the IDE responds, and closes each window that the previous test left.
 2. It saves the documents and the settings.
-3. When every changed setting can reload, it closes the projects, restores the baseline, reloads the settings, and
-   opens the projects again.
+3. When every changed setting can reload, it closes the projects, restores the baseline, reloads the settings, rolls
+   back the `$CACHE_FILE$` state, and opens the projects again.
 4. When a setting cannot reload, it closes the IDE and starts a new one from the baseline.
 5. When the IDE does not respond, it force-kills the IDE and starts a new one.
 
@@ -64,10 +64,15 @@ test of the class:
 
 - **The memory of the services.** A cache in memory stays across the tests of the class.
 - **The config databases.** The IDE keeps `app-internal-state.db` and `updatedBrokenPlugins.db` open, and writes them
-  at most every 2 minutes. Live recovery does not rewind them. A restart copies them from the cached context.
-  The plugin advertiser cache, the EditorConfig encoding cache, and the `$CACHE_FILE$` settings live there.
-- **The extracted plugin resources.** `ExtensionsRootType` extracts them into `config/extensions` on the first use and
-  records that in a config database. So live recovery keeps the files with the database.
+  at most every 2 minutes. A restart copies the databases from the cached context. The plugin advertiser cache, the
+  EditorConfig encoding cache, and the `$CACHE_FILE$` settings live there.
+  Live recovery rolls back the state of a `$CACHE_FILE$` component that a test changed, and reloads the component.
+  It restarts the IDE when the component cannot reload, when the rollback does not apply, or when it cannot list the
+  cache store. A change to data that its code tags `CacheTag` goes into the next test. Such code keeps a copy in
+  memory, as `EditorConfigEncodingCache` does, so live recovery treats that data as the memory of the services.
+  The recovery log names each changed `$CACHE_FILE$` key.
+- **The extracted plugin resources.** `ExtensionsRootType` extracts them into `config/extensions` on the first use.
+  Live recovery keeps the files. When it rolls back the record of an extraction, the IDE extracts the files again.
 - **The lock and the tokens of the process.** No restore touches `config/.lock`.
 - **The SDK table and the global libraries.** The IDE reads `jdk.table.xml` and `applicationLibraries.xml` only at
   its start. Recovery rewinds the files, but an SDK that a test adds stays in memory until a restart.

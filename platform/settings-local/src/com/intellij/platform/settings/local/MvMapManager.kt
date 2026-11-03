@@ -92,6 +92,9 @@ internal class MvMapManager(private val map: MVMap<String, ByteArray>) {
     })
   }
 
+  @TestOnly
+  fun snapshot(): Map<String, ByteArray> = HashMap(map)
+
   fun hasKeyStartsWith(key: String): Boolean {
     val ceilingKey = map.ceilingKey(key)
     return ceilingKey != null && ceilingKey.startsWith(key)

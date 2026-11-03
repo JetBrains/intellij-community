@@ -1,5 +1,6 @@
 package com.intellij.ide.starter.driver.reused.recovery
 
+import com.intellij.driver.model.RdTarget
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import java.nio.file.Path
@@ -14,18 +15,25 @@ import kotlin.io.path.invariantSeparatorsPathString
  *
  * @property changedFileSpecs the files that the restore rewrites, because the test changed or deleted them.
  * @property deletedFileSpecs the files that the restore deletes, because the test created them.
+ * @property fileChangeRequiresRestart whether a changed file cannot reload in a live IDE.
+ * @property cacheStateChanges the `$CACHE_FILE$` state that the test changed, for each settings target. Live recovery
+ * rolls it back after the reload of the files, see [rollBackCacheState].
  */
-data class SettingsRecoveryPlan(
+internal data class SettingsRecoveryPlan(
   val changedFileSpecs: Set<String> = emptySet(),
   val deletedFileSpecs: Set<String> = emptySet(),
-  val requiresRestart: Boolean = false,
-)
+  val fileChangeRequiresRestart: Boolean = false,
+  val cacheStateChanges: Map<RdTarget, CacheStateChanges> = emptyMap(),
+) {
+  val requiresRestart: Boolean
+    get() = fileChangeRequiresRestart || cacheStateChanges.values.any { it.restartReason != null }
+}
 
 /** Computes the plan from the changes under these baseline roots, as [testContext] sees them. */
 internal fun List<BaselineRoot>.settingsRecoveryPlan(testContext: IDETestContext): SettingsRecoveryPlan {
   val changedFileSpecs = LinkedHashSet<String>()
   val deletedFileSpecs = LinkedHashSet<String>()
-  var requiresRestart = false
+  var fileChangeRequiresRestart = false
 
   forEach { root ->
     val changes = root.changes(testContext)
@@ -34,7 +42,7 @@ internal fun List<BaselineRoot>.settingsRecoveryPlan(testContext: IDETestContext
     }
 
     if (!root.reloadable) {
-      requiresRestart = true
+      fileChangeRequiresRestart = true
       return@forEach
     }
 
@@ -43,14 +51,14 @@ internal fun List<BaselineRoot>.settingsRecoveryPlan(testContext: IDETestContext
     changedFileSpecs.addAll(changedSpecs)
     deletedFileSpecs.addAll(deletedSpecs)
     if ((changedSpecs + deletedSpecs).any { it in nonReloadableSettingsFileSpecs }) {
-      requiresRestart = true
+      fileChangeRequiresRestart = true
     }
   }
 
   return SettingsRecoveryPlan(
     changedFileSpecs = changedFileSpecs,
     deletedFileSpecs = deletedFileSpecs,
-    requiresRestart = requiresRestart,
+    fileChangeRequiresRestart = fileChangeRequiresRestart,
   )
 }
 

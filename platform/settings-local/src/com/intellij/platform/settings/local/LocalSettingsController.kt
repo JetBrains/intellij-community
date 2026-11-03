@@ -19,10 +19,37 @@ import com.intellij.platform.settings.SetResult
 import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import org.jetbrains.annotations.TestOnly
+import java.util.Base64
 
 @TestOnly
 fun clearCacheStore() {
   serviceIfCreated<InternalAndCacheStorageManager>()?.storeManager?.clear()
+}
+
+/**
+ * Lists each entry of the cache store as `<key>\t<Base64 of the value>`.
+ *
+ * The reused IDE recovery of IDE Starter compares two lists to find the `$CACHE_FILE$` state that a test changed.
+ * It rolls back that state from the first list with [restoreCacheStoreEntries].
+ */
+@TestOnly
+fun describeCacheStore(): List<String> {
+  val manager = serviceIfCreated<InternalAndCacheStorageManager>() ?: return emptyList()
+  return manager.cacheMap.map.snapshot().map { [key, value] -> "$key\t${Base64.getEncoder().encodeToString(value)}" }
+}
+
+/**
+ * Writes each of [entries], given as `<key>\t<Base64 of the value>`, into the cache store, and removes [removedKeys] from it.
+ *
+ * The reused IDE recovery of IDE Starter rolls back the `$CACHE_FILE$` state of a test with it.
+ */
+@TestOnly
+fun restoreCacheStoreEntries(entries: List<String>, removedKeys: List<String>) {
+  val map = service<InternalAndCacheStorageManager>().cacheMap.map
+  for (entry in entries) {
+    map.put(entry.substringBefore('\t'), Base64.getDecoder().decode(entry.substringAfter('\t')))
+  }
+  removedKeys.forEach(map::remove)
 }
 
 internal class LocalSettingsController : DelegatedSettingsController {

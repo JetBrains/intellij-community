@@ -41,6 +41,14 @@ internal class IdeStateRecovery(
   /** Every IDE run of this recovery that can still have a live process, newest last. */
   private val startedRuns: MutableList<BackgroundRun> = CopyOnWriteArrayList()
 
+  /**
+   * The cache store of the current IDE run before its first test, see [captureCacheState].
+   *
+   * Recovery takes it in the state that [saveAndStabilizeStateForReuse] gives, as after each test. Each run takes its own,
+   * because the IDE writes to the cache store at its start, as `ExtensionsRootType` does.
+   */
+  private var cacheStateAtStart: CacheStateSnapshot = emptyMap()
+
   /** Starts the reused IDE and captures its saved, stable baseline on the first call. */
   fun startIde(): BackgroundRun = startFromBaseline { strategy.startIde(extensionContext, testContext, runTimeout) }
 
@@ -92,9 +100,11 @@ internal class IdeStateRecovery(
     bgRun.driver.saveAndStabilizeStateForReuse()
 
     val settingsRecoveryPlan = baseline.settingsRecoveryPlan(testContext)
+      .copy(cacheStateChanges = bgRun.driver.compareCacheState(cacheStateAtStart))
     if (settingsRecoveryPlan.requiresRestart) {
       return settingsRecoveryPlan
     }
+    logOutput("[ReusedRecovery] Settings recover in place: ${settingsRecoveryPlan.formatForRecoveryLog()}")
 
     bgRun.driver.closeProjects()
 
@@ -107,6 +117,7 @@ internal class IdeStateRecovery(
       deletedFileSpecs = settingsRecoveryPlan.deletedFileSpecsWithRecentProjects(restoredRecentProjectsSettingsExists),
       rdTargets = bgRun.driver.settingsReloadTargets(),
     )
+    bgRun.driver.rollBackCacheState(settingsRecoveryPlan.cacheStateChanges, cacheStateAtStart)
 
     bgRun.driver.reopenProjects(baseline.openedProjectPaths)
     bgRun.driver.waitForProjectsWithNoPendingIndexingWork("starting the next reused IDE test")
@@ -233,7 +244,9 @@ internal class IdeStateRecovery(
       }
       else {
         bgRun.driver.waitForProjectsWithNoPendingIndexingWork("starting the first test on the reused IDE")
+        bgRun.driver.saveAndStabilizeStateForReuse()
       }
+      cacheStateAtStart = bgRun.driver.captureCacheState()
       bgRun
     }
     catch (failure: Throwable) {

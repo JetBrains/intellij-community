@@ -121,7 +121,7 @@ private val EVENT_LOG_METADATA_DIRECTORY: Path = Path.of("event-log-metadata")
 /**
  * The plugin resources that `ExtensionsRootType` extracts on the first use.
  *
- * `ResourceVersions` records each extraction in a config database, and live recovery does not rewind that database.
- * So live recovery keeps these files too. A restart rewinds the database, and the IDE extracts the files again.
+ * `ResourceVersions` records each extraction in its `$CACHE_FILE$` state. Live recovery keeps these files.
+ * When it rolls back that record, the IDE extracts the files again on the next use.
  */
 private val EXTENSIONS_DIRECTORY: Path = Path.of("extensions")

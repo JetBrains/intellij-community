@@ -112,7 +112,7 @@ class ReusedSessionBaseline internal constructor(private val cachedTestContext: 
   }
 
   /** Computes the cheapest safe settings recovery strategy after the project has been reopened and saved. */
-  fun settingsRecoveryPlan(testContext: IDETestContext): SettingsRecoveryPlan {
+  internal fun settingsRecoveryPlan(testContext: IDETestContext): SettingsRecoveryPlan {
     check(isCaptured) { "The reused session baseline is not captured yet" }
     return configAndPluginsRoots.settingsRecoveryPlan(testContext)
   }
