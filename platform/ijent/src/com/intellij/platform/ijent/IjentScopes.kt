@@ -241,7 +241,7 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
     "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemWindowsApi",
     "com.intellij.platform.ijent.impl.base.GrpcIjentHealthCheckInterceptor",
     "com.intellij.platform.ijent.impl.base.GrpcIjentHealthCheckInterceptorTest",
-    "com.intellij.platform.ijent.impl.base.GrpcIjentLostTcpConnectionInterceptor",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentLostConnectionInterceptor",
     "com.intellij.platform.ijent.impl.base.GrpcIjentOpenedFile",
     "com.intellij.platform.ijent.impl.base.GrpcIjentProcessManagementApiDelegate",
     "com.intellij.platform.ijent.impl.base.GrpcIjentReconnectingInterceptor",
