@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -38,6 +39,7 @@ import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -74,6 +76,8 @@ final class FindInProjectTask {
 
   private final Project project;
   private final ProjectFileIndex projectFileIndex;
+  /** The PSI manager of {@link #project}, see {@link #psiManagerFor}. */
+  private final PsiManager psiManager;
 
   /** See {@link #isExcludedFromSearch(VirtualFile)}. */
   private final boolean skipExcludedFiles;
@@ -98,7 +102,7 @@ final class FindInProjectTask {
 
     searchers = SearcherSet.create(findModel, project);
 
-    PsiManager psiManager = PsiManager.getInstance(project);
+    psiManager = PsiManager.getInstance(project);
     projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     String moduleName = findModel.getModuleName();
@@ -155,7 +159,7 @@ final class FindInProjectTask {
       searchers::isCoveredByReliable,
       locateClassSources,
       file -> {
-        var pair = FileScanner.findFile(psiManager, file);
+        var pair = FileScanner.findFile(psiManagerFor(file), file);
         return pair == null ? null : pair.second;
       }
     );
@@ -170,6 +174,24 @@ final class FindInProjectTask {
     if (tooManyUsagesStatus) {
       TooManyUsagesStatus.createFor(progressIndicator);
     }
+  }
+
+  /**
+   * The PSI manager that builds the PSI of {@code file}. A usage belongs to the project of its PSI file, and it opens there.
+   * A file in the content of {@link #project} keeps the project, also when another open project holds it too.
+   * A file that {@link #project} excludes goes to the open project whose content holds it, else it keeps the project:
+   * the user asked for the excluded directory. Any other file goes to the first open project that holds it, as content or
+   * excluded. A file no open project holds stays with the project of the search, as a library file or a file of a
+   * {@link com.intellij.find.FindModelExtension} does. Under a read action.
+   */
+  private @NotNull PsiManager psiManagerFor(@NotNull VirtualFile file) {
+    if (projectFileIndex.isInContent(file)) return psiManager;
+    Collection<Project> holders = ProjectLocator.getInstance().getProjectsForFile(file);
+    Project owner = ContainerUtil.find(holders, p -> p != project && !p.isDisposed() && ProjectFileIndex.getInstance(p).isInContent(file));
+    if (owner == null && !projectFileIndex.isExcluded(file)) {
+      owner = ContainerUtil.find(holders, p -> p != project && !p.isDisposed());
+    }
+    return owner == null ? psiManager : PsiManager.getInstance(owner);
   }
 
   /**
@@ -230,7 +252,7 @@ final class FindInProjectTask {
     FileScanner fileScanner = null;
     try {
       fileScanner = new FileScanner(findModel, project, searchers, progressIndicator, processPresentation, usageProcessor,
-                                    searchStartedAtNs);
+                                    searchStartedAtNs, this::psiManagerFor);
       FindSearchRun run = new FindSearchRun(project, filesToScanInitially, searchers, candidateFilter, scopeWalker, fileScanner,
                                             progressIndicator, searchStartedAtNs);
       try {

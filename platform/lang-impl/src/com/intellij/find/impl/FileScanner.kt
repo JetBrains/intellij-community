@@ -53,6 +53,7 @@ private val PROGRESS_TEXT_UPDATE_INTERVAL_NS = TimeUnit.MILLISECONDS.toNanos(100
  * A restarted work item (a write action interrupted its read action) scans its file again; the usages delivered before
  * are not delivered twice: they are recorded on the item ([WorkItem.Candidate.delivered]).
  * The disk-loaded text of a scanned file goes to [SearcherSet.fileScanned].
+ * The PSI of a file comes from the project that holds the file, see [psiManagerFor], so a usage belongs to that project.
  */
 internal class FileScanner(
   private val findModel: FindModel,
@@ -62,8 +63,9 @@ internal class FileScanner(
   private val processPresentation: FindUsagesProcessPresentation,
   private val usageConsumer: Processor<in UsageInfo>,
   private val searchStartedAtNs: Long,
+  /** The PSI manager of the project that holds a file, see `FindInProjectTask.psiManagerFor`. */
+  private val psiManagerFor: (VirtualFile) -> PsiManager,
 ) {
-  private val psiManager = PsiManager.getInstance(project)
   private val stringSearcher: StringSearcher? =
     if (findModel.isRegularExpressions || StringUtil.isEmpty(findModel.stringToFind)) null
     else StringSearcher(findModel.stringToFind, findModel.isCaseSensitive, true)
@@ -121,7 +123,7 @@ internal class FileScanner(
       return true
     }
 
-    val pair = findFile(psiManager, virtualFile) ?: return true
+    val pair = findFile(psiManagerFor(virtualFile), virtualFile) ?: return true
 
     val psiFile = pair.first
     val sourceVirtualFile = pair.second
