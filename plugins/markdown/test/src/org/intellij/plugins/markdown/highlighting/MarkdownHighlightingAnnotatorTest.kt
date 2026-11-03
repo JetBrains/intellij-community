@@ -154,7 +154,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     val highlights = myFixture.doHighlighting()
 
     var searchStart = 0
-    for ((citation, citationKeys) in citations) {
+    for ([citation, citationKeys] in citations) {
       val citationStart = text.indexOf(citation, searchStart)
       assertTrue("Citation '$citation' was not found", citationStart >= 0)
       for (citationKey in citationKeys) {
@@ -270,6 +270,13 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, "Code", MarkdownHighlighterColors.HEADER_LEVEL_4)
   }
 
+  fun testCodeSpansKeepCodeSpanHighlightingInsideInlineHtml() {
+    myFixture.configureByText("test.md", "`test <a> hello`")
+    val highlights = myFixture.doHighlighting()
+
+    assertElementHighlightedWithKey(highlights, "<a>", MarkdownHighlighterColors.CODE_SPAN)
+  }
+
   fun testCodeSpansKeepCodeSpanHighlightingForProjectClassesInHeader() {
     myFixture.addFileToProject("Z.java", "class Z {}")
     myFixture.addFileToProject("X.java", "class X {}")
@@ -297,7 +304,7 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
       "[Link](target.md) and `Code`" to MarkdownHighlighterColors.TEXT,
     )
 
-    for ((text, inheritedKey) in cases) {
+    for ([text, inheritedKey] in cases) {
       myFixture.configureByText("test.md", text)
       val highlights = myFixture.doHighlighting()
 
