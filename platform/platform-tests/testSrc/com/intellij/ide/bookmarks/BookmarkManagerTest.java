@@ -422,6 +422,212 @@ public class BookmarkManagerTest {
     });
   }
 
+  @Test
+  public void testRemovedBookmarkTakesItsMemorialWithIt() {
+    myFixture.runTest(() -> {
+      @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
+
+      addBookmark(2);
+      getManager().setType(getManager().getBookmarks().getFirst(), BookmarkType.DIGIT_1);
+      editLineTo(document, 2, "edited");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the memorial did not appear after the edit",
+        () -> memorialLineTexts().contains("original"),
+        15);
+
+      Bookmark live = ContainerUtil.find(getManager().getBookmarks(), LineBookmark.class::isInstance);
+      assertNotNull(live);
+      getManager().remove(live);
+      assertTrue(getManager().getBookmarks().isEmpty(), "the memorial must go with its bookmark, got: " + getManager().getBookmarks());
+
+      editLineTo(document, 2, "original");
+      waitForPendingUpdates();
+      List<Bookmark> afterRollback = getManager().getBookmarks();
+      assertTrue(afterRollback.isEmpty(), "a rollback must not restore a removed bookmark, got: " + afterRollback);
+    });
+  }
+
+  @Test
+  public void testRemovedRevivedMemorialKeepsTheDemotedBookmark() {
+    myFixture.runTest(() -> {
+      @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
+
+      addBookmark(2);
+      getManager().setType(getManager().getBookmarks().getFirst(), BookmarkType.DIGIT_1);
+      editLineTo(document, 2, "edited");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the memorial did not appear after the edit",
+        () -> memorialLineTexts().contains("original"),
+        15);
+
+      deleteLine(document, 2);
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(
+        () -> document.insertString(document.getLineStartOffset(2), "original\n"));
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the memorial did not come back on the pasted line",
+        () -> ContainerUtil.exists(getManager().getBookmarks(), LineBookmark.class::isInstance),
+        15);
+      Bookmark revived = ContainerUtil.find(getManager().getBookmarks(), LineBookmark.class::isInstance);
+      assertEquals(BookmarkType.DEFAULT, getManager().getType(revived));
+      Bookmark demoted = ContainerUtil.find(getManager().getBookmarks(), InvalidBookmark.class::isInstance);
+      assertNotNull(demoted, "the edited bookmark must stay as an invalid bookmark, got: " + getManager().getBookmarks());
+      assertEquals(BookmarkType.DIGIT_1, getManager().getType(demoted));
+
+      getManager().remove(revived);
+      assertEquals(List.of(demoted), getManager().getBookmarks());
+      assertEquals(BookmarkType.DIGIT_1, getManager().getType(demoted));
+    });
+  }
+
+  @Test
+  public void testRemovedDemotedBookmarkTakesItsMemorialWithIt() {
+    myFixture.runTest(() -> {
+      @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
+
+      addBookmark(2);
+      editLineTo(document, 2, "edited");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the memorial did not appear after the edit",
+        () -> memorialLineTexts().contains("original"),
+        15);
+      deleteLine(document, 2);
+      List<Bookmark> afterDelete = getManager().getBookmarks();
+      assertEquals(2, afterDelete.size(), "expected the demoted bookmark and its memorial, got: " + afterDelete);
+
+      Bookmark demoted = ContainerUtil.find(afterDelete, b -> "edited".equals(b.getAttributes().get("lineText")));
+      assertInstanceOf(InvalidBookmark.class, demoted);
+      assertTrue(getManager().getGroups(demoted).getFirst().remove(demoted));
+      assertTrue(getManager().getBookmarks().isEmpty(), "the memorial must go with its bookmark, got: " + getManager().getBookmarks());
+    });
+  }
+
+  @Test
+  public void testLoadedBookmarkKeepsItsMemorialLink() {
+    myFixture.runTest(() -> {
+      @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
+
+      addBookmark(2);
+      editLineTo(document, 2, "first edit");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the memorial did not appear after the first edit",
+        () -> memorialLineTexts().contains("original"),
+        15);
+
+      LineBookmarkProvider provider = LineBookmarkProvider.Util.find(myFixture.getProject());
+      Bookmark live = ContainerUtil.find(getManager().getBookmarks(), LineBookmark.class::isInstance);
+      Bookmark memorial = ContainerUtil.find(getManager().getBookmarks(), InvalidBookmark.class::isInstance);
+      assertNotNull(live);
+      assertNotNull(memorial);
+      Bookmark loadedLive = provider.createBookmark(live.getAttributes());
+      Bookmark loadedMemorial = provider.createBookmark(memorial.getAttributes());
+      assertEquals(live.getAttributes(), loadedLive.getAttributes());
+      assertEquals(memorial.getAttributes(), loadedMemorial.getAttributes());
+
+      getManager().update(new HashMap<>(Map.of(live, loadedLive, memorial, loadedMemorial)));
+      editLineTo(document, 2, "second edit");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the live bookmark did not pick up the second edit",
+        () -> ContainerUtil.exists(getManager().getBookmarks(),
+                                   b -> b instanceof LineBookmark && "second edit".equals(b.getAttributes().get("lineText"))),
+        15);
+      assertEquals(Set.of("original"), memorialLineTexts(), "a loaded bookmark must not add a second memorial");
+
+      getManager().remove(ContainerUtil.find(getManager().getBookmarks(), LineBookmark.class::isInstance));
+      List<Bookmark> afterRemove = getManager().getBookmarks();
+      assertTrue(afterRemove.isEmpty(), "the loaded memorial must go with its bookmark, got: " + afterRemove);
+    });
+  }
+
+  @Test
+  public void testTextSearchReanchorKeepsTheMemorialFlag() {
+    myFixture.runTest(() -> {
+      @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
+
+      addBookmark(2);
+      editLineTo(document, 2, "first edit");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the memorial did not appear after the first edit",
+        () -> memorialLineTexts().contains("original"),
+        15);
+
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(
+        () -> document.setText("first edit\nline 0\nline 1\nline 3\n"));
+      Bookmark moved = ContainerUtil.find(getManager().getBookmarks(), LineBookmark.class::isInstance);
+      assertNotNull(moved, "the bookmark did not follow its text, got: " + getManager().getBookmarks());
+      assertEquals(0, ((LineBookmark)moved).getLine());
+
+      editLineTo(document, 0, "second edit");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the live bookmark did not pick up the second edit",
+        () -> ContainerUtil.exists(getManager().getBookmarks(),
+                                   b -> b instanceof LineBookmark && "second edit".equals(b.getAttributes().get("lineText"))),
+        15);
+      assertEquals(Set.of("original"), memorialLineTexts());
+    });
+  }
+
+  @Test
+  public void testMemorialOfOtherBookmarkSurvivesRemoval() {
+    myFixture.runTest(() -> {
+      @NonNls String text = "line 0\nfirst\nline 2\nsecond\nline 4\n";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
+
+      addBookmark(1);
+      addBookmark(3);
+      editLineTo(document, 1, "first edited");
+      editLineTo(document, 3, "second edited");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the memorials did not appear after the edits",
+        () -> memorialLineTexts().containsAll(Set.of("first", "second")),
+        15);
+
+      Bookmark first = ContainerUtil.find(getManager().getBookmarks(), b -> b instanceof LineBookmark lb && lb.getLine() == 1);
+      assertNotNull(first);
+      getManager().remove(first);
+
+      assertEquals(Set.of("second"), memorialLineTexts());
+      assertEquals(1, getManager().getBookmarks().stream().filter(LineBookmark.class::isInstance).count());
+    });
+  }
+
+  @Test
+  public void testLineShiftKeepsTheMemorialFlag() {
+    myFixture.runTest(() -> {
+      @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
+
+      addBookmark(2);
+      editLineTo(document, 2, "first edit");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the memorial did not appear after the first edit",
+        () -> memorialLineTexts().contains("original"),
+        15);
+
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> document.insertString(0, "inserted\n"));
+      editLineTo(document, 3, "second edit");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the live bookmark did not pick up the second edit",
+        () -> ContainerUtil.exists(getManager().getBookmarks(),
+                                   b -> b instanceof LineBookmark && "second edit".equals(b.getAttributes().get("lineText"))),
+        15);
+      assertEquals(Set.of("original"), memorialLineTexts());
+      List<Bookmark> bookmarks = getManager().getBookmarks();
+      assertEquals(2, bookmarks.size(), "expected the live bookmark and one memorial, got: " + bookmarks);
+    });
+  }
+
   private void editLineTo(Document document, int line, @NonNls String newText) {
     int start = document.getLineStartOffset(line);
     int end = document.getLineEndOffset(line);
@@ -433,6 +639,16 @@ public class BookmarkManagerTest {
       .filter(InvalidBookmark.class::isInstance)
       .map(b -> b.getAttributes().get("lineText"))
       .collect(Collectors.toSet());
+  }
+
+  private void deleteLine(Document document, int line) {
+    WriteCommandAction.writeCommandAction(myFixture.getProject()).run(
+      () -> document.deleteString(document.getLineStartOffset(line) - 1, document.getLineEndOffset(line)));
+  }
+
+  private void waitForPendingUpdates() {
+    LineBookmarkProvider provider = LineBookmarkProvider.Util.find(myFixture.getProject());
+    PlatformTestUtil.waitWithEventsDispatching("the bookmark updates did not finish", () -> !provider.hasPendingUpdates(), 15);
   }
 
   @Test

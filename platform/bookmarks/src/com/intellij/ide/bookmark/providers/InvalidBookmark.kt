@@ -8,14 +8,21 @@ internal class InvalidBookmark(
   override val provider: LineBookmarkProvider,
   val url: String,
   val line: Int,
-  val expectedText: String? = null
+  val expectedText: String? = null,
+  val memorialKey: String? = null,
+  val isMemorial: Boolean = false,
 ) : Bookmark {
+
+  internal val restoredMemorialKey: String?
+    get() = memorialKey.takeUnless { isMemorial }
 
   override val attributes: Map<String, String>
     get() = buildMap {
       put("url", url)
       put("line", line.toString())
       expectedText?.let { put("lineText", it) }
+      memorialKey?.let { put("memorialKey", it) }
+      if (isMemorial) put("memorial", "true")
     }
 
   override fun createNode(): UrlNode = UrlNode(provider.project, this)

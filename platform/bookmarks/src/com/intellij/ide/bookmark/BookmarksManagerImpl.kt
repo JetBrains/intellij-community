@@ -232,7 +232,7 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
     if (groups.isNullOrEmpty()) return
 
     if (groups.size == 1) {
-      removeFromGroup(groups[0], bookmark)
+      removeFromGroup(groups[0], bookmark)?.let { removeMemorialsOf(it.first.bookmark) }
     }
     else if (groups.isNotEmpty()) { //TODO:choose
     }
@@ -244,6 +244,19 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
 
   private fun removeFromAllGroups(bookmark: Bookmark) = synchronized(notifier) {
     findGroupsToRemove(bookmark)?.forEach { removeFromGroup(it, bookmark) }
+  }
+
+  private fun removeMemorialsOf(bookmark: Bookmark, except: Bookmark? = null) {
+    val key = when (bookmark) {
+      is LineBookmarkImpl -> bookmark.memorialKey
+      is InvalidBookmark -> bookmark.restoredMemorialKey
+      else -> null
+    } ?: return
+    synchronized(notifier) {
+      if (allBookmarks.containsKey(bookmark)) return
+      val memorials = allBookmarks.keys.filter { it is InvalidBookmark && it.isMemorial && it.memorialKey == key && it != except }
+      memorials.forEach { removeFromAllGroups(it) }
+    }
   }
 
   private fun removeFromGroup(group: Group, bookmark: Bookmark): Pair<InManagerInfo, InGroupInfo?>? = synchronized(notifier) {
@@ -288,6 +301,7 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
         is LineBookmark -> removeFromAllGroups(info.bookmark)
         else -> info.changeType(BookmarkType.DEFAULT)
       }
+      removeMemorialsOf(info.bookmark, except = allowed)
     }
   }
 
@@ -633,7 +647,11 @@ class BookmarksManagerImpl @ApiStatus.Internal constructor(private val project: 
       allBookmarks[bookmark]?.groups?.contains(this) ?: false
     }
 
-    override fun remove(bookmark: Bookmark): Boolean = removeFromGroup(this, bookmark) != null
+    override fun remove(bookmark: Bookmark): Boolean {
+      val (info, _) = removeFromGroup(this, bookmark) ?: return false
+      removeMemorialsOf(info.bookmark)
+      return true
+    }
 
     override fun remove(): Unit = synchronized(notifier) {
       val index = allGroups.indexOf(this)
