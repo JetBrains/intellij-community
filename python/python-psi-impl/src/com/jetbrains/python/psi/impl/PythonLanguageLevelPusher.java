@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -77,6 +78,21 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   private static void addCompatiblePair(Map<LanguageLevel, LanguageLevel> levels, LanguageLevel l1, LanguageLevel l2) {
     levels.put(l1, l2);
     levels.put(l2, l1);
+  }
+
+  private static final SimpleModificationTracker LEVEL_MODIFICATIONS = new SimpleModificationTracker();
+
+  /**
+   * Counts the changes of a level that no PSI change reports: a pushed or a specified level, a forced level, and a new
+   * layout. A file keeps its level until this count or the PSI modification count changes, see
+   * {@link PyFileImpl#getEffectiveLanguageLevel()}.
+   */
+  static long getLevelModificationCount() {
+    return LEVEL_MODIFICATIONS.getModificationCount();
+  }
+
+  static void levelsChanged() {
+    LEVEL_MODIFICATIONS.incModificationCount();
   }
 
   /** Pushes the layout of the current snapshot of [project] before its first scan, and then each new layout. */
@@ -145,6 +161,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     LanguageLevel oldLanguageLevel = KEY.getPersistentValue(fileOrDir);
     boolean changed = KEY.setPersistentValue(fileOrDir, level);
     if (!changed) return;
+    levelsChanged();
 
     if (!areLanguageLevelsCompatible(oldLanguageLevel, level) || !ProjectFileIndex.getInstance(project).isInContent(fileOrDir)) {
       PushedFilePropertiesUpdater.getInstance(project).filePropertiesChanged(fileOrDir, PythonLanguageLevelPusher::isPythonFile);
@@ -400,11 +417,13 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   @TestOnly
   public static void setForcedLanguageLevel(@NotNull Project project, @Nullable LanguageLevel languageLevel) {
     LanguageLevel.FORCE_LANGUAGE_LEVEL = languageLevel;
+    levelsChanged();
     PushedFilePropertiesUpdater.getInstance(project).pushAll(new PythonLanguageLevelPusher());
   }
 
   public static void specifyFileLanguageLevel(@NotNull VirtualFile file, @Nullable LanguageLevel languageLevel) {
     KEY.setPersistentValue(file, languageLevel);
+    levelsChanged();
   }
 
   private static @Nullable LanguageLevel specifiedFileLanguageLevel(@Nullable VirtualFile file) {

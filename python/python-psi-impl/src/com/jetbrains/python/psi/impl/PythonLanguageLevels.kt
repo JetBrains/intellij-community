@@ -58,7 +58,10 @@ internal class PythonLanguageLevels(private val project: Project, private val co
     if (!started.compareAndSet(false, true)) return
     // No collector runs yet, so this thread is the only writer.
     val first = EvoPyProjectModel.getInstance(project).snapshotOrNull()?.let { PythonLanguageLevelLayout.of(project, it) }
-    if (first != null) PythonLanguageLevelPusher.push(project, first, layoutState.getAndUpdate { first })
+    if (first != null) {
+      PythonLanguageLevelPusher.levelsChanged()
+      PythonLanguageLevelPusher.push(project, first, layoutState.getAndUpdate { first })
+    }
     coroutineScope.launch {
       combine(
         EvoPyProjectModel.getInstance(project).snapshotFlow(),
@@ -73,7 +76,10 @@ internal class PythonLanguageLevels(private val project: Project, private val co
         .collect { layout ->
           withContext(Dispatchers.EDT) {
             val previous = layoutState.getAndUpdate { layout }
-            if (layout != previous) PythonLanguageLevelPusher.push(project, layout, previous)
+            if (layout != previous) {
+              PythonLanguageLevelPusher.levelsChanged()
+              PythonLanguageLevelPusher.push(project, layout, previous)
+            }
           }
         }
     }
