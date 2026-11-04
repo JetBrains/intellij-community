@@ -776,6 +776,15 @@ public class CopyPasteTest {
   }
 
   @Test
+  public void testCopyFromJavaLiteralToJava() {
+    myFixture.configureByText(JavaFileType.INSTANCE, "class A { String s = '<selection>\"</selection>';");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
+    myFixture.configureByText(JavaFileType.INSTANCE, "class C { String s = \"<caret>\"; }");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
+    myFixture.checkResult("class C { String s = \"\\\"<caret>\"; }");
+  }
+
+  @Test
   public void testCopyPasteFromEmptySelectionTwiceDuplicatesLineModeLineAbove() {
     onEdt(() -> {
       setPasteMode(CopiedFromEmptySelectionPasteMode.ENTIRE_LINE_ABOVE_CARET);
