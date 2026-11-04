@@ -137,9 +137,12 @@ def _dev_plugin_test_impl(ctx):
     fragment = target[IntellijDevFragmentInfo]
     groups = target[OutputGroupInfo]
     actions = analysistest.target_actions(env)
+
+    # Only the jar of the main module holds the descriptor, so only that jar packs in the component. The inputs target
+    # packs the two other jars in the neutral configuration, see `_dev_plugin_inputs_test`.
     packs = [action for action in actions if action.mnemonic == "PackDevPluginJar"]
     collects = [action for action in actions if action.mnemonic == "CollectDevPluginComponent"]
-    asserts.equals(env, 3, len(packs))
+    asserts.equals(env, ["dev-plugin.jar"], [file.basename for action in packs for file in action.outputs.to_list() if file.extension == "jar"])
     asserts.equals(env, 1, len(collects))
 
     # The component is neutral and states no product.
@@ -189,20 +192,11 @@ def _dev_plugin_test_impl(ctx):
     expected = ["module=" + jar.short_path for jar in module_jars] + ["library=" + jar.short_path for jar in library_jars]
     asserts.equals(env, expected, rest)
 
-    # A jar that merges a test-only module takes its test jar and the writer flags of every other jar. Its one source
-    # is a module output, whose manifest survives without a flag. It has no directory entries.
-    tests_pack = _pack_action(packs, "tests.jar")
-    tests_argv = [_with_short_path(argument, tests_pack.inputs.to_list()) for argument in tests_pack.argv[1:]]
-    tests_flags = [argument for argument in tests_argv if not argument.startswith(("output=", "metadata-file=", "trace-file=", "module="))]
-    asserts.equals(env, ["merge-entities=true"], tests_flags)
-    asserts.equals(env, ["module=" + ctx.file.test_jar.short_path], [argument for argument in tests_argv if argument.startswith("module=")])
-
-    # A jar file token is one archive: the jar takes that file and nothing else.
-    single = _pack_action(packs, "foo.jar")
-    single_libraries = [argument for argument in single.argv if argument.startswith("library=")]
-    asserts.equals(env, 1, len(single_libraries))
-    asserts.true(env, single_libraries[0].endswith("/foo-1.2.3.jar"), single_libraries[0])
-    asserts.equals(env, [], [argument for argument in single.argv if argument.startswith("module=") or argument.startswith("patch=")])
+    # The two other jars are payload of the component, at the path the component would give them.
+    for basename in ["tests.jar", "foo.jar"]:
+        placed = [file for file in payload if file.basename == basename]
+        asserts.equals(env, 1, len(placed), basename)
+        asserts.true(env, placed[0].short_path.endswith("/" + target.label.name + "/lib/" + basename), placed[0].short_path)
 
     # The component has no stamp class, so its incoming transition drops the product that the test sets. Its compiled
     # inputs, its descriptor and the component itself then share the neutral configuration, and no product packs it
@@ -283,6 +277,44 @@ def _dev_plugin_test_impl(ctx):
     for file in raw_content.module_jars.to_list():
         asserts.equals(env, component_root, file.root.path, file.path)
     return analysistest.end(env)
+
+def _dev_plugin_inputs_test_impl(ctx):
+    """The inputs target packs every jar without the main module, in the neutral configuration.
+
+    It declares each jar below the name of the component, so a jar keeps the path the component gave it before.
+    """
+    env = analysistest.begin(ctx)
+    packs = [action for action in analysistest.target_actions(env) if action.mnemonic == "PackDevPluginJar"]
+    asserts.equals(env, ["foo.jar", "tests.jar"], sorted([file.basename for action in packs for file in action.outputs.to_list() if file.extension == "jar"]))
+    for action in packs:
+        jar = [file for file in action.outputs.to_list() if file.extension == "jar"][0]
+        asserts.true(env, jar.short_path.endswith("/" + ctx.attr.component_name + "/lib/" + jar.basename), jar.short_path)
+
+    # A jar that merges a test-only module takes its test jar and the writer flags of every other jar. Its one source
+    # is a module output, whose manifest survives without a flag. It has no directory entries.
+    tests_pack = _pack_action(packs, "tests.jar")
+    tests_argv = [_with_short_path(argument, tests_pack.inputs.to_list()) for argument in tests_pack.argv[1:]]
+    tests_flags = [argument for argument in tests_argv if not argument.startswith(("output=", "metadata-file=", "trace-file=", "module="))]
+    asserts.equals(env, ["merge-entities=true"], tests_flags)
+    asserts.equals(env, ["module=" + ctx.file.test_jar.short_path], [argument for argument in tests_argv if argument.startswith("module=")])
+
+    # A jar file token is one archive: the jar takes that file and nothing else.
+    single = _pack_action(packs, "foo.jar")
+    single_libraries = [argument for argument in single.argv if argument.startswith("library=")]
+    asserts.equals(env, 1, len(single_libraries))
+    asserts.true(env, single_libraries[0].endswith("/foo-1.2.3.jar"), single_libraries[0])
+    asserts.equals(env, [], [argument for argument in single.argv if argument.startswith("module=") or argument.startswith("patch=")])
+
+    return analysistest.end(env)
+
+_dev_plugin_inputs_test = analysistest.make(
+    _dev_plugin_inputs_test_impl,
+    attrs = {
+        "component_name": attr.string(mandatory = True),
+        "test_jar": attr.label(mandatory = True, allow_single_file = [".jar"]),
+    },
+    config_settings = {_PRODUCT_INFO_FLAG: _PRODUCT_INFO},
+)
 
 _DEV_PLUGIN_ATTRS = {
     "content_jar": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
@@ -562,6 +594,13 @@ def dev_plugin_test_suite(name):
             spans = spans,
             test_jar = ":" + tests_lib + ".jar",
         )
+    tests.append(component + "_inputs_test")
+    _dev_plugin_inputs_test(
+        name = tests[-1],
+        target_under_test = ":" + component + "_inputs",
+        component_name = component,
+        test_jar = ":" + tests_lib + ".jar",
+    )
 
     for case, jars, classpath_jars, message, test_rule in [
         ("no_main", {"lib/x.jar": [_SPLIT_MODULE]}, [], "is merged into no jar", _failure_test),
