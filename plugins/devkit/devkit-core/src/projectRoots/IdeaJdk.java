@@ -197,8 +197,11 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
     String plugins = home + File.separator + PLUGINS_DIR + File.separator;
     appendIdeaLibrary(plugins + "java", result);
-    appendIdeaLibrary(plugins + "JavaEE", result, "javaee-impl.jar", "jpa-javax-console.jar", "jpa-jakarta-console.jar",
-                      "jpa-console-common.jar");
+    // "JavaEE" is the directory of the JavaEE plugin in older IDEs
+    for (String javaeeDirName : List.of("javaee-platform", "JavaEE")) {
+      appendIdeaLibrary(plugins + javaeeDirName, result, "javaee-impl.jar", "jpa-javax-console.jar", "jpa-jakarta-console.jar",
+                        "jpa-console-common.jar");
+    }
     appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
     appendIdeaLibrary(plugins + "DatabaseTools", result, "grid.jar", "grid-core.jar", "database-impl.jar", "jdbc-console.jar");
     appendIdeaLibrary(plugins + "css", result, "css.jar");

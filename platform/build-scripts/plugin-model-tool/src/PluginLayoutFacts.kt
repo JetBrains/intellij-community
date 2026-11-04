@@ -64,7 +64,7 @@ class LayoutModuleLibrary(
  * Where a plugin's own jars go: its directory under `plugins/` and its main jar under `lib/`.
  *
  * Two tokens, because `PluginLayout` decides the two independently. A plugin that renames its directory usually
- * renames its main jar with it, and `JavaEE` renames only the jar.
+ * renames its main jar with it.
  */
 @ApiStatus.Internal
 class PluginJarPlacement(
