@@ -2,7 +2,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.ide.projectView.ProjectView
-import com.intellij.ide.projectView.impl.ProjectViewState
+import com.intellij.ide.projectView.impl.ProjectViewFrontendState
 import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.wm.ToolWindowEP
@@ -40,7 +40,7 @@ class ProjectToolWindowTest : ToolWindowManagerTestCase() {
         manager!!.showToolWindow(ToolWindowId.PROJECT_VIEW)
         assertThat(window.isVisible).isTrue
         ProjectView.getInstance(project)
-        ProjectViewState.getInstance(project).autoscrollFromSource = true
+        ProjectViewFrontendState.getInstance(project).autoscrollFromSource = true
         try {
           window.activate(null)
         }

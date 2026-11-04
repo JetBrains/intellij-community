@@ -4,6 +4,7 @@ package com.intellij.platform.projectView.settings
 import com.intellij.application.options.OptionId
 import com.intellij.application.options.OptionsApplicabilityFilter
 import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
+import com.intellij.ide.projectView.impl.ProjectViewFrontendState
 import com.intellij.ide.projectView.impl.ProjectViewSharedSettings
 import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
@@ -24,15 +25,16 @@ class ProjectViewPaneSettingsService(private val project: Project) {
   }
 
   private val state = ProjectViewState.getInstance(project)
+  private val frontendState = ProjectViewFrontendState.getInstance(project)
 
   fun isOptionSelected(option: ProjectViewPaneOption): Boolean {
     // The DTO is an enum, so we can use an exhaustive when with it.
     val dto = option.toDTO()
     return when (dto) {
       ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB -> UISettings.getInstance().openInPreviewTabIfPossible
-      ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> state.autoscrollToSource
-      ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> state.openDirectoriesWithSingleClick
-      ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE -> state.autoscrollFromSource
+      ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> frontendState.autoscrollToSource
+      ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> frontendState.openDirectoriesWithSingleClick
+      ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE -> frontendState.autoscrollFromSource
       ProjectViewPaneOptionDTO.SHOW_MODULES -> state.showModules
       ProjectViewPaneOptionDTO.SHOW_MEMBERS -> state.showMembers
       ProjectViewPaneOptionDTO.SHOW_EXCLUDED_FILES -> state.showExcludedFiles
@@ -62,16 +64,19 @@ class ProjectViewPaneSettingsService(private val project: Project) {
         UISettings.getInstance().openInPreviewTabIfPossible = isSelected
       }
       ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> {
+        frontendState.autoscrollToSource = isSelected
         state.autoscrollToSource = isSelected
         defaultState.autoscrollToSource = isSelected
         shared.autoscrollToSource = isSelected
       }
       ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> {
+        frontendState.openDirectoriesWithSingleClick = isSelected
         state.openDirectoriesWithSingleClick = isSelected
         defaultState.openDirectoriesWithSingleClick = isSelected
         shared.openDirectoriesWithSingleClick = isSelected
       }
       ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE -> {
+        frontendState.autoscrollFromSource = isSelected
         state.autoscrollFromSource = isSelected
         defaultState.autoscrollFromSource = isSelected
         shared.autoscrollFromSource = isSelected

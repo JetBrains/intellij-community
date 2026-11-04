@@ -1281,6 +1281,7 @@
                     serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
     <pathMacroFilter implementation="com.intellij.ide.projectView.impl.ProjectViewPathMacroFilter"/>
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewState"/>
+    <projectService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewFrontendState"/>
     <applicationService serviceInterface="com.intellij.codeInsight.documentation.render.DocRenderItemManager"
                         serviceImplementation="com.intellij.codeInsight.documentation.render.DocRenderItemManagerImpl" />
     <codeInsight.documentation.render.itemUpdateProvider implementation="com.intellij.codeInsight.documentation.render.DefaultDocRenderItemUpdateProvider"/>
@@ -1730,6 +1731,7 @@
     <projectSettings service="com.intellij.ide.projectView.impl.ProjectViewImpl"/>
     <applicationSettings service="com.intellij.lang.LocalizationStateServiceImpl"/>
     <projectSettings service="com.intellij.ide.projectView.impl.ProjectViewState"/>
+    <projectSettings service="com.intellij.ide.projectView.impl.ProjectViewFrontendState"/>
     <applicationSettings service="com.intellij.ide.projectView.impl.ProjectViewSharedSettings"/>
     <projectSettings service="com.intellij.ide.fileTemplates.impl.FileTemplateSettings"/>
     <applicationSettings service="com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings"/>

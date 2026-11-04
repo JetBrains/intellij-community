@@ -11,7 +11,6 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
-import com.intellij.platform.projectView.settings.MigratedFrontendSettingsDTO
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -35,8 +34,6 @@ interface ProjectViewRpc : RemoteApi<Unit> {
   suspend fun findNodeForSelectIn(projectId: ProjectId, selectInRequest: SelectInRequestDTO): ProjectViewNodePathImpl?
 
   suspend fun getFileUpdateRequestChannel(projectId: ProjectId): SendChannel<FileUpdateDTO>
-
-  suspend fun migrateFrontendSettingsToBackend(projectId: ProjectId, settings: MigratedFrontendSettingsDTO)
 
   /**
    * Exists solely to support RD test API hacks.
