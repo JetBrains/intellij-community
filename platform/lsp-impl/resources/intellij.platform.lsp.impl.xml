@@ -41,6 +41,15 @@
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="100" description="LSP server connect timeout" key="lsp.server.connect.timeout"/>
     <registryKey defaultValue="5" description="Maximum log files count per LSP server" key="lsp.server.logging.maxLogFiles"/>
+    <registryKey defaultValue="4"
+                 description="Maximum number of automatic restarts of an LSP server in the time window, for all descriptors. A descriptor sets its own maximum with maxUnexpectedTerminationRestarts, and the lower value applies. 0 turns off the automatic restart for all descriptors"
+                 key="lsp.server.auto.restart.max.count"/>
+    <registryKey defaultValue="180"
+                 description="Time window for the automatic restarts of an LSP server, in seconds, 0 to turn off the automatic restart"
+                 key="lsp.server.auto.restart.window.seconds"/>
+    <registryKey defaultValue="1000"
+                 description="Delay before the first automatic restart of an LSP server, in milliseconds, doubled for each later restart in the window"
+                 key="lsp.server.auto.restart.delay.ms"/>
     <registryKey defaultValue="200" description="Maximum symbol count per file for the LSP inheritance gutter markers"
                  key="lsp.inheritance.markers.max.symbols"/>
     <registryKey defaultValue="1000" description="How long the document must stay stable before an LSP inheritance markers pull, in milliseconds"
