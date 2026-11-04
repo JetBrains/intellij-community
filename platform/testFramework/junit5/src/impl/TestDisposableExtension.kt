@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.computeIfAbsent
 import com.intellij.testFramework.junit5.impl.TypedStoreKey.Companion.get
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.extension.AfterEachCallback
@@ -18,7 +19,8 @@ import org.junit.platform.commons.util.AnnotationUtils.findAnnotatedFields
 import org.junit.platform.commons.util.ReflectionUtils
 
 @TestOnly
-internal class TestDisposableExtension
+@ApiStatus.Internal
+class TestDisposableExtension
   : BeforeEachCallback,
     AfterEachCallback,
     ParameterResolver {
@@ -47,7 +49,10 @@ internal class TestDisposableExtension
 
 private val testDisposableKey = TypedStoreKey.createKey<CheckedDisposable>()
 
-private fun ExtensionContext.testDisposable(): CheckedDisposable {
+// The disposable that TestDisposable injects. TestDisposableExtension disposes it after the test.
+@TestOnly
+@ApiStatus.Internal
+fun ExtensionContext.testDisposable(): CheckedDisposable {
   return computeIfAbsent(testDisposableKey) {
       Disposer.newCheckedDisposable(uniqueId)
     }
