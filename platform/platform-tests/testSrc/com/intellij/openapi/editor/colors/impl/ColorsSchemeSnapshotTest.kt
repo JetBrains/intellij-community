@@ -3,8 +3,8 @@ package com.intellij.openapi.editor.colors.impl
 
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.TextAttributes
+import kotlinx.collections.immutable.ImmutableMap
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.awt.Font
@@ -64,13 +64,12 @@ internal class ColorsSchemeSnapshotTest {
   }
 
   @Test
-  fun `the maps of a snapshot are unmodifiable`() {
-    val current = newSnapshot().withColor(FIRST, Color.RED)
-    @Suppress("UNCHECKED_CAST")
-    val colors = current.colors() as MutableMap<ColorKey, Color>
-    assertThatThrownBy {
-      colors[SECOND] = Color.BLUE
-    }.isInstanceOf(UnsupportedOperationException::class.java)
+  fun `the maps of a snapshot are immutable`() {
+    val current = newSnapshot()
+      .withColor(FIRST, Color.RED)
+      .withAttributes(FIRST_NAME, BOLD)
+    assertThat(current.colors()).isInstanceOf(ImmutableMap::class.java)
+    assertThat(current.attributes()).isInstanceOf(ImmutableMap::class.java)
   }
 
   @Test

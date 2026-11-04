@@ -4,9 +4,10 @@ package com.intellij.openapi.editor.colors.impl
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.TextAttributes
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentHashMapOf
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
-import java.util.Collections
 import java.util.function.BiPredicate
 
 /**
@@ -30,9 +31,9 @@ class ColorsSchemeSnapshot private constructor(
   private val useAppFontPreferencesInEditor: Boolean,
   private val consoleFontPreferences: FontPreferencesSnapshot, // the own console font, unused while the console uses the editor font
   private val useEditorFontPreferencesInConsole: Boolean,
-  private val colors: Map<ColorKey, Color>,
-  private val attributes: Map<String, TextAttributes>, // the text attributes by the external name of their key
-  private val tempAttributes: Map<String, TextAttributes>, // the text attributes of temporary keys, see TextAttributesKey.isTemp
+  private val colors: PersistentMap<ColorKey, Color>,
+  private val attributes: PersistentMap<String, TextAttributes>, // the text attributes by the external name of their key
+  private val tempAttributes: PersistentMap<String, TextAttributes>, // the text attributes of temporary keys, see TextAttributesKey.isTemp
 ) {
   fun schemeName(): String? = schemeName
 
@@ -188,9 +189,9 @@ class ColorsSchemeSnapshot private constructor(
     useAppFontPreferencesInEditor: Boolean = this.useAppFontPreferencesInEditor,
     consoleFontPreferences: FontPreferencesSnapshot = this.consoleFontPreferences,
     useEditorFontPreferencesInConsole: Boolean = this.useEditorFontPreferencesInConsole,
-    colors: Map<ColorKey, Color> = this.colors,
-    attributes: Map<String, TextAttributes> = this.attributes,
-    tempAttributes: Map<String, TextAttributes> = if (attributes === this.attributes) this.tempAttributes else emptyMap(),
+    colors: PersistentMap<ColorKey, Color> = this.colors,
+    attributes: PersistentMap<String, TextAttributes> = this.attributes,
+    tempAttributes: PersistentMap<String, TextAttributes> = if (attributes === this.attributes) this.tempAttributes else persistentHashMapOf(),
   ): ColorsSchemeSnapshot {
     if (schemeName == this.schemeName &&
         parentScheme === this.parentScheme &&
@@ -234,9 +235,9 @@ class ColorsSchemeSnapshot private constructor(
         useAppFontPreferencesInEditor = true,
         consoleFontPreferences = FontPreferencesSnapshot.EMPTY,
         useEditorFontPreferencesInConsole = true,
-        colors = emptyMap(),
-        attributes = emptyMap(),
-        tempAttributes = emptyMap(),
+        colors = persistentHashMapOf(),
+        attributes = persistentHashMapOf(),
+        tempAttributes = persistentHashMapOf(),
       )
     }
   }
@@ -246,41 +247,37 @@ class ColorsSchemeSnapshot private constructor(
  * Returns [map] with [value] for [key].
  * Returns [map] itself when it already has this value object for the key.
  */
-private fun <K, V : Any> putValue(map: Map<K, V>, key: K, value: V): Map<K, V> {
+private fun <K, V : Any> putValue(map: PersistentMap<K, V>, key: K, value: V): PersistentMap<K, V> {
   if (map[key] === value) {
     return map
   }
-  val result = HashMap(map)
-  result[key] = value
-  return Collections.unmodifiableMap(result)
+  return map.putting(key, value)
 }
 
 /**
  * Returns [map] with all [entries].
  * Returns [map] itself when it already has the value object of each entry.
  */
-private fun <K, V : Any> putAllValues(map: Map<K, V>, entries: Map<K, V>): Map<K, V> {
+private fun <K, V : Any> putAllValues(map: PersistentMap<K, V>, entries: Map<K, V>): PersistentMap<K, V> {
   if (entries.all { (key, value) -> map[key] === value }) {
     return map
   }
-  val result = HashMap(map)
-  result.putAll(entries)
-  return Collections.unmodifiableMap(result)
+  return map.puttingAll(entries)
 }
 
 /**
  * Returns [map] with the [entries] whose keys [map] does not have.
  * Returns [map] itself when it has all the keys.
  */
-private fun <K, V : Any> putMissingValues(map: Map<K, V>, entries: Map<K, V>): Map<K, V> {
+private fun <K, V : Any> putMissingValues(map: PersistentMap<K, V>, entries: Map<K, V>): PersistentMap<K, V> {
   if (map.keys.containsAll(entries.keys)) {
     return map
   }
-  val result = HashMap(map)
+  val result = map.builder()
   for ((key, value) in entries) {
     result.putIfAbsent(key, value)
   }
-  return Collections.unmodifiableMap(result)
+  return result.build()
 }
 
 /**
@@ -288,12 +285,12 @@ private fun <K, V : Any> putMissingValues(map: Map<K, V>, entries: Map<K, V>): M
  * Returns [map] itself when no entry matches.
  * The predicate runs once for each entry.
  */
-private fun <K, V : Any> removeValues(map: Map<K, V>, predicate: BiPredicate<in K, in V>): Map<K, V> {
-  var result: HashMap<K, V>? = null
+private fun <K, V : Any> removeValues(map: PersistentMap<K, V>, predicate: BiPredicate<in K, in V>): PersistentMap<K, V> {
+  var result: PersistentMap.Builder<K, V>? = null
   for ((key, value) in map) {
     if (predicate.test(key, value)) {
       if (result == null) {
-        result = HashMap(map)
+        result = map.builder()
       }
       result.remove(key)
     }
@@ -301,5 +298,5 @@ private fun <K, V : Any> removeValues(map: Map<K, V>, predicate: BiPredicate<in 
   if (result == null) {
     return map
   }
-  return Collections.unmodifiableMap(result)
+  return result.build()
 }
