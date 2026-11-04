@@ -16,7 +16,6 @@ import com.jetbrains.python.inspections.quickfix.SyncProjectQuickFix
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.listDeclaredPackagesAsync
 import com.jetbrains.python.packaging.utils.PyPackageManagerModuleHelpers
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFromImportStatement
@@ -64,7 +63,7 @@ internal class PyRequirementVisitor(
 
     val interpreter = evoPyProject.interpreter ?: return
     val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
-    val declared = manager.listDeclaredPackagesAsync() ?: return
+    val declared = manager.listDeclaredPackagesSnapshot() ?: return
 
     val installedNotDeclaredChecker = InstalledButNotDeclaredChecker(ignoredPackages, declared)
     val packageName = installedNotDeclaredChecker.getUndeclaredPackageName(importedPyModule = importedPyModule) ?: return

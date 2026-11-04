@@ -49,6 +49,13 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     PyProjectStructureTestUtilKt.awaitPythonInterpreters(myFixture.getProject());
   }
 
+  /** The inspection reads the declared packages of the last load, so the files that the test copied are loaded first. */
+  @Override
+  protected void configureInspection() {
+    PyProjectStructureTestUtilKt.loadDeclaredPackagesForTests(myFixture.getModule());
+    super.configureInspection();
+  }
+
   public void testPartiallySatisfiedRequirementsTxt() {
     setRequirementsProvider(RequirementsProviderType.REQUIREMENTS_TXT);
     doMultiFileTest("test1.py");

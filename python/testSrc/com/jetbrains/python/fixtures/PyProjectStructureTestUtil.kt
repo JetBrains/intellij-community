@@ -20,6 +20,7 @@ import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.awaitDerivedRootsForTests
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
@@ -58,6 +59,22 @@ fun awaitPythonInterpreters(project: Project) {
 fun awaitDerivedRoots(project: Project) {
   val job = PyPackageCoroutine.getScope(project).launch {
     withTimeout(DEFAULT_TEST_TIMEOUT) { awaitDerivedRootsForTests(project) }
+  }
+  job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
+}
+
+/**
+ * Loads the declared packages of the interpreter of [module] again, and waits for the load. A dependency file that a test
+ * adds after the first load is tracked by no load, so no file change loads it. The inspections read the snapshot of the
+ * last load. Pumps the EDT.
+ */
+@TestOnly
+fun loadDeclaredPackagesForTests(module: Module) {
+  val interpreter = checkNotNull(findPythonInterpreterForTests(module)) { "No interpreter for ${module.name}" }
+  val job = PyPackageCoroutine.getScope(module.project).launch {
+    withTimeout(DEFAULT_TEST_TIMEOUT) {
+      PythonPackageManager.forPythonInterpreter(module.project, interpreter).listDeclaredPackagesCached()
+    }
   }
   job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
 }

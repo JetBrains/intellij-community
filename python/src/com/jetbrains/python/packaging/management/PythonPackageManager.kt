@@ -3,7 +3,6 @@
 
 package com.jetbrains.python.packaging.management
 
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -16,6 +15,9 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiFile
@@ -59,6 +61,11 @@ import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.readOnlyErrorMessage
 import com.jetbrains.python.sdk.refreshPaths
+import java.net.URI
+import java.nio.file.Path
+import java.util.SequencedMap
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -68,9 +75,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -79,11 +88,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
-import java.net.URI
-import java.nio.file.Path
-import java.util.SequencedMap
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.cancellation.CancellationException
 
 
 /**
@@ -361,9 +365,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   }
 
   /**
-   * Non-blocking view of the most recently computed declared dependencies. `null` until the
-   * cache has been seeded by [initInstalledPackages] or refreshed by
-   * [listDeclaredPackagesCached]. Use the suspending variant when freshness matters.
+   * The declared dependencies of the last load. `null` before the first load ends. The init loads them, and so does each
+   * change of a dependency file, so a reader that must not wait, such as an inspection, reads this. A load that changes
+   * them publishes [PythonPackageManagementListener.declaredPackagesChanged].
    */
   @ApiStatus.Experimental
   fun listDeclaredPackagesSnapshot(): List<PythonPackage>? = dependencyCache.snapshot.value
@@ -614,10 +618,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       val cached = cachedInstalledPackages()
       if (cached != null) packageReloadMutex.withLock { publishInstalledPackages(cached, fromCache = true) }
       else loadPackagesImpl(isInit = true)
-      // Populate the declared-packages snapshot so non-suspend readers (e.g. inspection visitors) observe it without
-      // waiting for an explicit suspend caller. The init does not wait for it: the declared packages can need a process,
-      // such as `uv tree`, and the derived roots need only the installed packages. A reader that must have them awaits
-      // [listDeclaredPackagesCached].
+      // The first load of the declared packages, which also starts the watch of their files, see [DependencyCache]. The
+      // init does not wait for it: the declared packages can need a process, such as `uv tree`, and the derived roots need
+      // only the installed packages. A reader that must have them awaits [listDeclaredPackagesCached].
       managerScope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) { loadDeclaredPackages() }
     }
     catch (t: CancellationException) {
@@ -659,18 +662,27 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     @Volatile
     private var trackedFiles: List<PyDependenciesFile> = emptyList()
 
+    /** A value for each change of a tracked dependency file, see [watchDependencyFiles]. */
+    private val fileChanges = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
     init {
-      // Drive [DaemonCodeAnalyzer.restart] off the cache's call chain so the restart never
-      // runs synchronously on the thread that completed the underlying deferred. `drop(1)`
-      // skips the StateFlow's initial replay so manager construction doesn't trigger a
-      // spurious restart for the still-empty snapshot.
+      // A reader only reads [snapshot]. A change of a dependency file starts the next load, so a reader, such as an
+      // inspection during highlighting, never starts one. A burst of changes gives one load.
       managerScope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-        snapshot.drop(1).collect {
-          if (!project.isDisposed) {
-            DaemonCodeAnalyzer.getInstance(project).restart("PythonPackageManager.declaredPackagesChanged")
-          }
-        }
+        fileChanges.conflate().collect { loadDeclaredPackages() }
       }
+      watchDependencyFiles()
+    }
+
+    /** Asks for a load after each change of a tracked dependency file. A load that finds the same stamps runs nothing. */
+    private fun watchDependencyFiles() {
+      project.messageBus.connect(managerScope).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+        override fun after(events: List<VFileEvent>) {
+          val tracked = trackedFiles.mapTo(HashSet()) { it.virtualFile }
+          val relevant = events.any { it.file in tracked }
+          if (relevant) fileChanges.tryEmit(Unit)
+        }
+      })
     }
 
     /**
@@ -706,8 +718,11 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
       deferred.invokeOnCompletion { cause ->
         // Stale completion (a newer entry replaced this one) — leave the snapshot alone.
         if (entry !== newEntry) return@invokeOnCompletion
+        // A load that did not complete was cancelled with the manager or its project, so there is nothing to publish. A
+        // load that fails completes with its failure.
+        if (cause != null) return@invokeOnCompletion
         // StateFlow deduplicates by .equals — assigning the same list is a no-op.
-        val declared = if (cause == null) deferred.getCompleted()?.getOrNull() else null
+        val declared = deferred.getCompleted()?.getOrNull()
         if (snapshot.value != declared) {
           snapshot.value = declared
           // The init does not wait for this read, so a reader that ran before it reads again.
@@ -759,16 +774,6 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   }
 }
 
-
-/**
- * Lists declared project top-level dependencies (blocking version for Java interop).
- * Returns null by default — this manager doesn't support dependency extraction.
- */
-@ApiStatus.Internal
-@RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-fun PythonPackageManager.listDeclaredPackagesAsync(): List<PythonPackage>? = runBlockingMaybeCancellable {
-  listDeclaredPackagesCached()
-}?.getOrNull()
 
 /**
  * Lists installed packages, awaiting initial loading if necessary.
