@@ -230,8 +230,8 @@ pub struct Resolution {
 
 /// Splits an explicit `--filter` value into the field that can express it: `(filter, include_package)`.
 ///
-/// `--test_filter` understands a class FQN or `FQN#method` only, so an all-lowercase dotted value is a package and
-/// has to go through `JB_TEST_JUNIT5_FILTERS=include-package=` instead; otherwise it would match no class and the
+/// `--test_filter` understands a class FQN or `FQN#method` only, so a dotted value whose segments start with a
+/// lower-case letter is a package and has to go through `JB_TEST_JUNIT5_FILTERS=include-package=` instead; otherwise it would match no class and the
 /// run would land on the "filter matched nothing" exit.
 pub fn as_filter_or_package(value: Option<&str>) -> (Option<String>, Option<String>) {
     match value {

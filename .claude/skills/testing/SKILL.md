@@ -15,7 +15,7 @@ Run the tests of a module with bt first:
 ```
 
 - `--module`: the JPS module that holds the test classes. Always use the module of the test itself. The module name is the name of the `.iml` file in the test directory, without the extension.
-- `--filter`: an FQN, `FQN#method`, or an all-lowercase package. A package value runs all the test classes in that package.
+- `--filter`: an FQN, `FQN#method`, or a package. A package is a dotted name whose segments start with a lower-case letter. A package value runs all the test classes in that package.
 
 In a community checkout, the wrapper is `./tools/bt.cmd`.
 
@@ -34,6 +34,22 @@ In a community checkout, the wrapper is `./tools/bt.cmd`.
 ```
 
 bt runs a module when the migrated list names it, or when a `bt.json` area owns its directory. The [bt README](../../../tools/bt/README.md#modules) gives the resolution rules.
+
+### The rules of a bt run
+
+bt prints a short summary of the run, the digest. The rules:
+
+- **Read the whole digest. Do not filter or cut it.** Do not pipe it to `grep`, `rg`, `head`, `tail`, `sed`, `awk`, `cut` or a similar tool. The first line of a test run gives the status: `PASS`, `FAIL`, `NO TESTS`, `BUILD FAILED` or `INFRA`. A pipe that drops the first line hides the result. The exit code gives the same status. A refusal prints no digest. It prints its message on stderr and exits 2, or 6 for a broken repository or host.
+- **One selector and one `--filter` for each run.** bt refuses a second class name, a second directory and a second `--filter`. To run several classes, run each class in its own call, or give their package. `--filter` needs one target: one `--module`, one label, or a lane of one target.
+- **`--module` is the test module.** Its name usually ends with `.tests`. For a module without a test target, bt refuses and prints the `tests.cmd` command.
+- **`--filter` takes no wildcard (`pkg.*`), no regex (`pkg.(A|B)`) and no list.** bt starts the build, and the run gives `NO TESTS`. Then the `hint` line of the digest names the form that works, for example the package for `pkg.*`. The method of `Class#method` is the exact name. A `*` in it is no wildcard. A `Class#method` needs the FQN of the class.
+- **A `--filter` class is a prefix.** It also runs the classes whose names start with it. A `Class#method` runs only the named method. The runner names a nested class `pkg.Outer$Inner`, so `pkg.Outer.Inner` matches no class. A `pkg.Outer$Inner` filter runs no `@Nested` class. For a `@Nested` class, give the outer class, or `'pkg.Outer$Inner#method'`. Write a `$` in single quotes, because the shell expands `$Inner`.
+- **The `env` of a rule can change the filter.** A target that sets `JB_TEST_FILTER` in the `env` of its rule runs only the classes of its rule. A target that sets `JB_TEST_JUNIT5_FILTERS` in its rule drops a package filter.
+- **Read the package from the `package` line of the file, not from its directory.** A class or a package that does not exist gives `NO TESTS`. A method that does not exist gives `NO TESTS`, and the cause names the `#method` filter.
+- **`--lane <name>` alone runs the lane.** Beside a selector, `--lane` works only with a flow or a suite selector. These two are Air selectors.
+- **A cached result is not a new run.** For one target, the PASS line marks it `cached`. For several targets, the `cost` line of the digest counts the cached targets. Use `--no-cache` to run a passed test again.
+- **The digest names the log of a failed run on its `log` line.** The logs of the last run are in `out/bazel-testlogs/<package>/<target>/`. A community target of the ultimate root is under `external/community+/`, and a sharded run adds `shard_<n>_of_<m>/`. The directory has `test.log`, `test.xml`, and `test.outputs/logs/idea.log` when the test writes one. The next run of the target writes over them. For a failed shard, bt keeps a copy in `out/bt-runs/<run>/`, and the digest names it on its `kept` line.
+- **A compile error gives `BUILD FAILED`** with the first six errors of the compiler. The digest leaves out the warnings. An error in a `BUILD.bazel` file gives `BUILD FAILED` with no error. Then run again with `--verbose`.
 
 ### bt options
 
@@ -70,11 +86,11 @@ Check the last tree with bt, not with a raw `./bazel.cmd build`. `bazel.cmd` giv
 ./community/tools/bt.cmd build //plugins/air/... --host studio
 ```
 
-`bt build` exits 0 for a green build, 5 for a build failure, and 6 for an infrastructure failure. A `--host` run records the tree of the commit that ran on the host. The [bt README](../../../tools/bt/README.md#the-check-record) gives the record format.
+`bt build` exits 0 for a green build, 4 for `BUILD EMPTY`, 5 for a build failure, and 6 for an infrastructure failure. A `--host` run records the tree of the commit that ran on the host. The [bt README](../../../tools/bt/README.md#the-check-record) gives the record format.
 
 ### When bt refuses the module
 
-bt refuses a module whose tests do not run under Bazel yet. It exits with code 2 and prints the `tests.cmd` command. Run that command:
+bt refuses a module whose tests do not run under Bazel yet, and a module without a test target. It exits with code 2 and prints the commands to run. Run the first command. For a module whose tests do not run under Bazel, it is the `tests.cmd` command:
 
 ```bash
 ./tests.cmd --module <module> --test <pattern>

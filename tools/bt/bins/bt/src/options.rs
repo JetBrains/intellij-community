@@ -25,7 +25,8 @@ Selectors (at most one):
   ClassName                  bare simple name; resolves the label and the FQN
   ClassName#method           bare simple name plus a single test method
   a.b.c.ClassName[#method]   fully-qualified name; resolves the label only
-  a.b.c                      all-lowercase dotted package; runs the whole package
+  a.b.c                      dotted package, each segment starts with a lower-case letter;
+                             runs the whole package
   plugins/air/backend/vcs    directory; every test target under it, as //<dir>/..., or as
                              @community//<rest>/... for community/<rest> in the ultimate root
   //pkg:target               explicit label, no resolution (works outside every area); in the
@@ -55,7 +56,8 @@ asks for --lane, which is then accepted beside the selector.
 Options:
   --filter <FQN[#method]|pkg>
                            filter for an explicit label or --module (not valid with a wildcard pattern);
-                           an all-lowercase dotted value runs that whole package
+                           a dotted value whose segments start with a lower-case letter runs that
+                           whole package; no wildcard, no regex, no list
   --shards <n>             shard count per target (default 2 for a run covering many targets,
                            6 for a single one; ignored when a filter pins one class, which
                            always runs unsharded)
