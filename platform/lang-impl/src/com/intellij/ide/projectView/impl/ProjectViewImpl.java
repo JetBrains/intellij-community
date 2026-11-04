@@ -176,6 +176,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private boolean firstShow = true;
 
   private final ProjectViewState currentState;
+  private final ProjectViewFrontendState frontendState;
   // + options
   private final Option abbreviatePackageNames = new Option() {
     @Override
@@ -213,7 +214,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Option myAutoscrollFromSource = new Option() {
     @Override
     public boolean isSelected() {
-      return currentState.getAutoscrollFromSource();
+      return frontendState.getAutoscrollFromSource();
     }
 
     @Override
@@ -222,6 +223,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return;
       }
 
+      frontendState.setAutoscrollFromSource(selected);
       currentState.setAutoscrollFromSource(selected);
       getDefaultState().setAutoscrollFromSource(selected);
       getGlobalOptions().setAutoscrollFromSource(selected);
@@ -235,7 +237,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Option myAutoscrollToSource = new Option() {
     @Override
     public boolean isSelected() {
-      return currentState.getAutoscrollToSource();
+      return frontendState.getAutoscrollToSource();
     }
 
     @Override
@@ -244,6 +246,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return;
       }
 
+      frontendState.setAutoscrollToSource(selected);
       currentState.setAutoscrollToSource(selected);
       getDefaultState().setAutoscrollToSource(selected);
       getGlobalOptions().setAutoscrollToSource(selected);
@@ -253,12 +256,13 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final Option myOpenDirectoriesWithSingleClick = new Option() {
     @Override
     public boolean isSelected() {
-      return currentState.getOpenDirectoriesWithSingleClick();
+      return frontendState.getOpenDirectoriesWithSingleClick();
     }
 
     @Override
     public void setSelected(boolean selected) {
       if (project.isDisposed()) return;
+      frontendState.setOpenDirectoriesWithSingleClick(selected);
       currentState.setOpenDirectoriesWithSingleClick(selected);
       getDefaultState().setOpenDirectoriesWithSingleClick(selected);
       getGlobalOptions().setOpenDirectoriesWithSingleClick(selected);
@@ -615,6 +619,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   public ProjectViewImpl(@NotNull Project project) {
     this.project = project;
     currentState = ProjectViewState.getInstance(project);
+    frontendState = ProjectViewFrontendState.getInstance(project);
 
     constructUi();
 

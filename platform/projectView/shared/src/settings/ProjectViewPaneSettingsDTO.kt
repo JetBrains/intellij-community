@@ -71,11 +71,3 @@ data class NestingRuleDTO(
 
 @ApiStatus.Internal
 fun ProjectViewFileNestingService.NestingRule.toDTO(): NestingRuleDTO = NestingRuleDTO(parentFileSuffix, childFileSuffix)
-
-@ApiStatus.Internal
-@Serializable
-data class MigratedFrontendSettingsDTO(
-  val autoscrollToSource: Boolean,
-  val openDirectoriesWithSingleClick: Boolean,
-  val autoscrollFromSource: Boolean,
-)

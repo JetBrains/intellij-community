@@ -227,7 +227,8 @@ internal fun ProjectViewPaneOption.toDTO(): ProjectViewPaneOptionDTO {
   }
 }
 
-internal fun ProjectViewPaneOptionDTO.fromDTO(): ProjectViewPaneOption {
+@ApiStatus.Internal
+fun ProjectViewPaneOptionDTO.fromDTO(): ProjectViewPaneOption {
   return when (this) {
     ProjectViewPaneOptionDTO.OPEN_IN_PREVIEW_TAB -> ProjectViewPaneOption.OpenInPreviewTab
     ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> ProjectViewPaneOption.AutoscrollToSource

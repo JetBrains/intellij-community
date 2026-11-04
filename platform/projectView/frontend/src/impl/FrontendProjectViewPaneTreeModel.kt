@@ -4,13 +4,16 @@ package com.intellij.platform.projectView.frontend.impl
 import com.intellij.ide.SelectInTarget
 import com.intellij.ide.dnd.DnDAction
 import com.intellij.ide.projectView.NodeSortKey
+import com.intellij.ide.projectView.impl.ProjectViewFrontendState
 import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.actions.ProjectViewOptionMenuUpdater
+import com.intellij.platform.projectView.actions.fromDTO
 import com.intellij.platform.projectView.frontend.actions.SplitProjectViewSelectInTarget
 import com.intellij.platform.projectView.pane.ProjectViewActivateStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
@@ -42,6 +45,7 @@ import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SuperRootModel
 import com.intellij.platform.projectView.settings.NestingRuleDTO
 import com.intellij.platform.projectView.settings.ProjectViewPaneOptionDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsStateDTO
 import com.intellij.pom.Navigatable
 import com.intellij.ui.LoadingNode
@@ -57,6 +61,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
@@ -79,9 +84,6 @@ internal class FrontendProjectViewPaneTreeModel(
   internal val treeModel = DefaultTreeModelWithCachedPresentation()
   internal val rootChildren: StateFlow<List<TreePath>>
     field = MutableStateFlow(emptyList())
-  
-  internal val hasCachedPresentation: Boolean
-    get() = treeModel.cachedPresentation != null
 
   private val optionSupport = ActionSupport()
 
@@ -419,14 +421,33 @@ internal class FrontendProjectViewPaneTreeModel(
     override fun canNavigateToSource(): Boolean = model.canNavigateToSource()
   }
 
+  /**
+   * Gives the actions the option states of the pane and sends the option changes to the pane.
+   *
+   * On the frontend, this class takes the values of the [ProjectViewFrontendState] options from that component, not from the pane.
+   * It also changes these options in that component, without a request to the pane.
+   */
   private inner class ActionSupport : ProjectViewActionSupport {
     private val actionState = MutableStateFlow<ProjectViewPaneSettingsStateDTO?>(null)
+    private val frontendState = ProjectViewFrontendState.getInstance(project)
 
-    override fun getActionState(): ProjectViewPaneSettingsStateDTO? = actionState.value
+    override fun getActionState(): ProjectViewPaneSettingsStateDTO? {
+      val actionState = actionState.value
+      if (!IdeProductMode.isFrontend) return actionState
+      return actionState?.withFrontendOptions(frontendState.options.value)
+    }
 
-    override fun getActionStateFlow(): Flow<ProjectViewPaneSettingsStateDTO?> = actionState.asStateFlow()
+    override fun getActionStateFlow(): Flow<ProjectViewPaneSettingsStateDTO?> {
+      if (!IdeProductMode.isFrontend) return actionState.asStateFlow()
+      return combine(actionState, frontendState.options) { actionState, options -> actionState?.withFrontendOptions(options) }
+    }
 
     override fun requestOptionValueChange(option: ProjectViewPaneOptionDTO, newValue: Boolean) {
+      if (IdeProductMode.isFrontend && frontendState.options.value.getFrontendOwnedValue(option) != null) {
+        ProjectViewPaneSettingsService.getInstance(project).setOptionSelected(option.fromDTO(), newValue)
+        ProjectViewOptionMenuUpdater.getInstance(project).updateMenu()
+        return
+      }
       sendRequest(ProjectViewPaneChangeOptionValueRequest(option, newValue))
     }
 
@@ -472,5 +493,24 @@ internal class Node(
 
 internal val Node.treePath: TreePath
   get() = CachingTreePath(path)
+
+private fun ProjectViewPaneSettingsStateDTO.withFrontendOptions(options: ProjectViewFrontendState.Options): ProjectViewPaneSettingsStateDTO {
+  return copy(optionStates = optionStates.mapValues { (option, optionState) ->
+    val frontendValue = options.getFrontendOwnedValue(option)
+    if (frontendValue == null) optionState else optionState.copy(isSelected = frontendValue)
+  })
+}
+
+/**
+ * Returns the value of an option that [ProjectViewFrontendState] owns, or `null` if the pane owns the option.
+ */
+private fun ProjectViewFrontendState.Options.getFrontendOwnedValue(option: ProjectViewPaneOptionDTO): Boolean? {
+  return when (option) {
+    ProjectViewPaneOptionDTO.AUTOSCROLL_TO_SOURCE -> autoscrollToSource
+    ProjectViewPaneOptionDTO.OPEN_DIRECTORIES_WITH_SINGLE_CLICK -> openDirectoriesWithSingleClick
+    ProjectViewPaneOptionDTO.AUTOSCROLL_FROM_SOURCE -> autoscrollFromSource
+    else -> null
+  }
+}
 
 private val LOG = logger<FrontendProjectViewPaneTreeModel>()
