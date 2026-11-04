@@ -9,6 +9,7 @@ import com.intellij.util.ui.FontInfo;
 import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
@@ -34,7 +35,7 @@ public class FontFamilyService {
   /**
    * Returns typographic family names (in alphabetical order) for fonts available to the runtime environment.
    */
-  public static @NotNull List<String> getAvailableFamilies() {
+  public static @Unmodifiable @NotNull List<String> getAvailableFamilies() {
     return getInstance().getAvailableFamiliesImpl();
   }
 
@@ -50,7 +51,7 @@ public class FontFamilyService {
    * Returns subfamilies available in the given typographic family. This doesn't include italic faces (unless there are no 'normal' faces in
    * the family). The results are sorted by font weight (ascending, light to bold).
    */
-  public static @NotNull List<@NotNull String> getSubFamilies(@NotNull String family) {
+  public static @Unmodifiable @NotNull List<@NotNull String> getSubFamilies(@NotNull String family) {
     return getInstance().getSubFamiliesImpl(family);
   }
 

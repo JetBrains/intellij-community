@@ -5964,7 +5964,8 @@ java.util.stream.SortedOps$SizedRefSortingSink
 com.intellij.ide.ui.laf.darcula.ui.DarculaOnOffButtonUI
 javax.swing.plaf.basic.BasicToggleButtonUI
 com.intellij.icons.AllIcons$FileTypes
-com.intellij.openapi.editor.impl.FontFamilyServiceImpl$FontFamily
+com.intellij.openapi.editor.impl.FontFamilyServiceImpl$TypographicName
+com.intellij.openapi.editor.impl.FontFamily
 com.intellij.icons.AllIcons
 com.intellij.util.net.ssl.ConfirmingTrustManager$MutableTrustManager
 com.intellij.ui.icons.RasterizedImageDataLoaderKt
@@ -5980,12 +5981,13 @@ java.net.HttpURLConnection
 com.intellij.ui.icons.RasterizedImageDataLoader
 javax.net.ssl.HttpsURLConnection$DefaultHostnameVerifier
 javax.net.ssl.HostnameVerifier
-com.intellij.openapi.editor.impl.FontFamilyServiceImpl$OurWeightMap
+com.intellij.openapi.editor.impl.FontFamily$WeightedSubFamily
 com.intellij.ui.icons.IconAttributes
 com.intellij.ui.icons.ScaledIconCache
 it.unimi.dsi.fastutil.doubles.Double2ObjectOpenHashMap
 it.unimi.dsi.fastutil.doubles.AbstractDouble2ObjectMap
-com.intellij.openapi.editor.impl.FontFamilyServiceImpl$FontFamily$1Candidate
+com.intellij.openapi.editor.impl.FontFamily$BaseSubFamily
+com.intellij.openapi.editor.impl.FontFamily$RecommendedSubFamilies
 it.unimi.dsi.fastutil.doubles.Double2ObjectMap
 it.unimi.dsi.fastutil.doubles.Double2ObjectFunction
 it.unimi.dsi.fastutil.doubles.AbstractDouble2ObjectFunction

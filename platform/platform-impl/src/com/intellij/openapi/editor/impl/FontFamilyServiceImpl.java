@@ -1,65 +1,42 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.MethodHandleUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.font.Font2D;
 
 import java.awt.Font;
-import java.awt.FontMetrics;
 import java.awt.GraphicsEnvironment;
-import java.awt.geom.AffineTransform;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.function.BiConsumer;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
 final class FontFamilyServiceImpl extends FontFamilyService {
   private static final Logger LOG = Logger.getInstance(FontFamilyServiceImpl.class);
-  // DebugLogManager might be initialized after this class, so using the standard way to enable debug logging
-  // might have no effect on logging performed in constructor
-  private static final boolean VERBOSE_LOGGING = Boolean.getBoolean("font.family.service.verbose");
 
-  private static final MethodHandle GET_FONT_2D_METHOD;
-
-  static {
-    MethodHandle getFont2d;
-    try {
-      getFont2d = MethodHandleUtil.getPrivateMethod(Font.class, "getFont2D", MethodType.methodType(Font2D.class));
-    }
-    catch (Throwable e) {
-      LOG.warn(e);
-      getFont2d = null;
-    }
-    GET_FONT_2D_METHOD = getFont2d;
-  }
-
+  private static final MethodHandle GET_FONT_2D_METHOD = getFont2DGetter();
   private static final MethodHandle GET_TYPO_FAMILY_METHOD = getFont2dMethod("getTypographicFamilyName", String.class);
   private static final MethodHandle GET_TYPO_SUBFAMILY_METHOD = getFont2dMethod("getTypographicSubfamilyName", String.class);
   private static final MethodHandle GET_WEIGHT_METHOD = getFont2dMethod("getWeight", Integer.TYPE);
 
-  private static final AffineTransform SYNTHETIC_ITALICS_TRANSFORM = AffineTransform.getShearInstance(-0.2, 0);
-  private static final int PREFERRED_MAIN_WEIGHT = 400;
-  private static final int PREFERRED_BOLD_WEIGHT_DIFF = 300;
-
-  private static final String[] ITALIC_NAMES = {"italic", "oblique", "inclined"};
+  /**
+   * Whether the runtime gives the typographic names and the weights of the fonts.
+   */
+  static final boolean RUNTIME_API_AVAILABLE = GET_FONT_2D_METHOD != null &&
+                                               GET_TYPO_FAMILY_METHOD != null &&
+                                               GET_TYPO_SUBFAMILY_METHOD != null &&
+                                               GET_WEIGHT_METHOD != null;
 
   // Fira Code requires specific migration due to naming workaround in JBR used earlier
   private static final Map<String, String[]> FIRA_CODE_MIGRATION_MAP = Map.of(
@@ -68,47 +45,59 @@ final class FontFamilyServiceImpl extends FontFamilyService {
     "Fira Code Retina", new String[]{"Fira Code", "Retina", "Retina"}
   );
 
-  private final SortedMap<String, FontFamily> myFamilies = new TreeMap<>();
+  /**
+   * The typographic families by name. The map is empty when the service works in the fallback mode of {@link FontFamilyService}.
+   */
+  private final Map<String, FontFamily> myFamilies;
+
+  /**
+   * The names of {@link #myFamilies} in alphabetical order.
+   */
+  private final List<String> myFamilyNames;
 
   private FontFamilyServiceImpl() {
-    Application app = ApplicationManager.getApplication();
-    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      return;
-    }
-
-    if (GET_FONT_2D_METHOD == null || GET_TYPO_FAMILY_METHOD == null || GET_TYPO_SUBFAMILY_METHOD == null || GET_WEIGHT_METHOD == null) {
-      LOG.warn("Couldn't access required runtime API, will fall back to basic logic of font selection");
-      return;
-    }
-
-    try {
-      Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
-      for (Font font : fonts) {
-        Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
-        String fontName = font.getName();
-        String font2DName = font2D.getFontName(null);
-        if (isUnsupportedFont(fontName, font2DName)) {
-          // skip fonts that are declared as available, but cannot be used due to some reason,
-          // with JDK substituting them with Dialog logical font (on Windows)
-          if (VERBOSE_LOGGING) {
-            LOG.info("Skipping '" + fontName + "' as it's mapped to '" + font2DName + "' by the runtime");
-          }
-          continue;
-        }
-        String family = (String)GET_TYPO_FAMILY_METHOD.invoke(font2D);
-        String subfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(font2D);
-        FontFamily fontFamily = myFamilies.computeIfAbsent(family, FontFamily::new);
-        fontFamily.addFont(subfamily, font);
-      }
-    }
-    catch (Throwable e) {
-      LOG.error(e);
-      myFamilies.clear(); // fallback to old behavior in case of any errors
-    }
+    myFamilies = scanInstalledFonts();
+    myFamilyNames = myFamilies.keySet().stream().sorted().toList();
   }
 
-  private static boolean isUnsupportedFont(@NotNull String fontName, @NotNull String font2DName) {
-    return font2DName.startsWith(Font.DIALOG) && !fontName.startsWith(Font.DIALOG);
+  /**
+   * Groups the fonts by their typographic family names.
+   * Skips a font that the runtime replaces with the Dialog font.
+   * The runtime must give the typographic names, see {@link #RUNTIME_API_AVAILABLE}.
+   *
+   * @return an immutable map of the families by name
+   */
+  static Map<String, FontFamily> loadFamilies(Font[] fonts) throws Throwable {
+    Map<String, Map<String, Font>> membersByFamily = new HashMap<>();
+    for (Font font : fonts) {
+      Font2D font2D = getFont2D(font);
+      String fontName = font.getName();
+      String font2DName = font2D.getFontName(null);
+      if (isUnsupportedFont(fontName, font2DName)) {
+        // skip fonts that are declared as available, but cannot be used due to some reason,
+        // with JDK substituting them with Dialog logical font (on Windows)
+        if (FontFamily.VERBOSE_LOGGING) {
+          LOG.info("Skipping '" + fontName + "' as it's mapped to '" + font2DName + "' by the runtime");
+        }
+        continue;
+      }
+      TypographicName name = getTypographicName(font2D);
+      if (FontFamily.VERBOSE_LOGGING) {
+        LOG.info("Adding " + fontName + " as " + name.subfamily() + " variant to " + name.family() + " family");
+      }
+      membersByFamily.computeIfAbsent(
+        name.family(),
+        _ -> new LinkedHashMap<>()
+      ).put(name.subfamily(), font);
+    }
+    Map<String, FontFamily> families = new HashMap<>();
+    for (var entry : membersByFamily.entrySet()) {
+      String family = entry.getKey();
+      Map<String, Font> members = entry.getValue();
+      FontFamily newFontFamily = new FontFamily(family, members, FontFamilyServiceImpl::getWeight);
+      families.put(family, newFontFamily);
+    }
+    return Map.copyOf(families);
   }
 
   @Override
@@ -118,7 +107,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
 
   @Override
   protected @NotNull List<String> getAvailableFamiliesImpl() {
-    return myFamilies.isEmpty() ? super.getAvailableFamiliesImpl() : new ArrayList<>(myFamilies.keySet());
+    return myFamilies.isEmpty() ? super.getAvailableFamiliesImpl() : myFamilyNames;
   }
 
   @Override
@@ -142,44 +131,42 @@ final class FontFamilyServiceImpl extends FontFamilyService {
   @Override
   protected @NotNull String getRecommendedBoldSubFamilyImpl(@NotNull String family, @NotNull String mainSubFamily) {
     FontFamily fontFamily = myFamilies.get(family);
-    return fontFamily == null ? super.getRecommendedBoldSubFamilyImpl(family, mainSubFamily)
-                              : fontFamily.getRecommendedBoldSubFamily(mainSubFamily);
+    return fontFamily == null
+           ? super.getRecommendedBoldSubFamilyImpl(family, mainSubFamily)
+           : fontFamily.getRecommendedBoldSubFamily(mainSubFamily);
   }
 
   @Override
-  protected @NotNull Font getFontImpl(@NotNull String family,
-                                      @Nullable String regularSubFamily,
-                                      @Nullable String boldSubFamily,
-                                      @JdkConstants.FontStyle int style) {
+  protected @NotNull Font getFontImpl(
+    @NotNull String family,
+    @Nullable String regularSubFamily,
+    @Nullable String boldSubFamily,
+    @JdkConstants.FontStyle int style
+  ) {
     FontFamily fontFamily = myFamilies.get(family);
-    if (fontFamily == null) {
-      return super.getFontImpl(family, regularSubFamily, boldSubFamily, style);
-    }
-    return fontFamily.getFont(regularSubFamily, boldSubFamily, style);
+    return fontFamily == null
+           ? super.getFontImpl(family, regularSubFamily, boldSubFamily, style)
+           : fontFamily.getFont(regularSubFamily, boldSubFamily, style);
   }
 
   @Override
   protected @Nullable FontFamilyDescriptor getDescriptorByFontImpl(@NotNull Font font) {
-    if (!isSupportedImpl()) return null;
-    if (GET_FONT_2D_METHOD == null || GET_TYPO_FAMILY_METHOD == null || GET_TYPO_SUBFAMILY_METHOD == null || GET_WEIGHT_METHOD == null) {
+    if (myFamilies.isEmpty()) {
       return null;
     }
-
     try {
-      Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
-      String fontName = font.getName();
-      String font2DName = font2D.getFontName(null);
-      if (isUnsupportedFont(fontName, font2DName)) return null;
-
-      String family = (String)GET_TYPO_FAMILY_METHOD.invoke(font2D);
-      String subfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(font2D);
-
-      FontFamilyDescriptor descriptor = new FontFamilyDescriptor(family, subfamily);
-      if (getFontByDescriptorImpl(descriptor) == null) return null;
-
+      Font2D font2D = getFont2D(font);
+      if (isUnsupportedFont(font.getName(), font2D.getFontName(null))) {
+        return null;
+      }
+      TypographicName name = getTypographicName(font2D);
+      FontFamilyDescriptor descriptor = new FontFamilyDescriptor(name.family(), name.subfamily());
+      if (getFontByDescriptorImpl(descriptor) == null) {
+        return null;
+      }
       return descriptor;
-    }
-    catch (Throwable e) {
+    } catch (Throwable e) {
+      rethrowControlFlowException(e);
       LOG.warn(e);
       return null;
     }
@@ -187,271 +174,145 @@ final class FontFamilyServiceImpl extends FontFamilyService {
 
   @Override
   protected @Nullable Font getFontByDescriptorImpl(@NotNull FontFamilyDescriptor descriptor) {
-    if (!isSupportedImpl()) return null;
     FontFamily fontFamily = myFamilies.get(descriptor.getFamily());
-    if (fontFamily == null) return null;
-    return fontFamily.members.get(descriptor.getSubfamily());
+    return fontFamily == null ? null : fontFamily.getMember(descriptor.getSubfamily());
   }
 
   @Override
   protected String @NotNull [] migrateFontSettingImpl(@NotNull String family) {
-    if (!myFamilies.isEmpty()) {
-      if (FIRA_CODE_MIGRATION_MAP.containsKey(family)) {
-        if (!myFamilies.containsKey(family)) { // check for new enough JBR
-          return FIRA_CODE_MIGRATION_MAP.get(family);
-        }
+    if (myFamilies.isEmpty()) {
+      return super.migrateFontSettingImpl(family);
+    }
+    String[] firaCodeSetting = FIRA_CODE_MIGRATION_MAP.get(family);
+    if (firaCodeSetting != null) {
+      // check for new enough JBR
+      if (myFamilies.containsKey(family)) {
+        return super.migrateFontSettingImpl(family);
       }
-      else {
-        try {
-          assert GET_FONT_2D_METHOD != null;
-          assert GET_TYPO_FAMILY_METHOD != null;
-          assert GET_TYPO_SUBFAMILY_METHOD != null;
-
-          Font baseFont = new Font(family, Font.PLAIN, 1);
-          String baseFamily = baseFont.getFamily();
-          Font2D baseFont2D = (Font2D)GET_FONT_2D_METHOD.invoke(baseFont);
-          String baseTypoFamily = (String)GET_TYPO_FAMILY_METHOD.invoke(baseFont2D);
-          String baseTypoSubfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(baseFont2D);
-
-          Font boldFont = new Font(family, Font.BOLD, 1);
-          String boldFamily = boldFont.getFamily();
-          Font2D boldFont2D = (Font2D)GET_FONT_2D_METHOD.invoke(boldFont);
-          String boldTypoFamily = (String)GET_TYPO_FAMILY_METHOD.invoke(boldFont2D);
-          String boldTypoSubfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(boldFont2D);
-
-          if (!family.equals(baseFamily) || !family.equals(boldFamily)) {
-            LOG.info("Cannot migrate " + family + ": unexpected resolved families - " + baseFamily + ", " + boldFamily);
-          }
-          else if (!Objects.equals(baseTypoFamily, boldTypoFamily)) {
-            LOG.info("Cannot migrate " + family + ": normal and bold variations resolve to different typographic families - "
-                     + baseTypoFamily + ", " + boldTypoFamily);
-          }
-          else {
-            FontFamily fontFamily = myFamilies.get(baseTypoFamily);
-            if (fontFamily == null) {
-              LOG.info("Cannot migrate " + family + ": typographic font family not found - " + baseTypoFamily);
-            }
-            else if (!fontFamily.hasSubFamily(baseTypoSubfamily)) {
-              LOG.info("Cannot migrate " + family + ": subfamily " + baseTypoSubfamily
-                       + " not found in typographic font family " + baseTypoFamily);
-            }
-            else if (!fontFamily.hasSubFamily(boldTypoSubfamily)) {
-              LOG.info("Cannot migrate " + family + ": subfamily " + boldTypoSubfamily
-                       + " not found in typographic font family " + baseTypoFamily);
-            }
-            else {
-              return new String[]{baseTypoFamily, baseTypoSubfamily,
-                Objects.equals(baseTypoSubfamily, boldTypoSubfamily) ? null : boldTypoSubfamily};
-            }
-          }
-        }
-        catch (Throwable e) {
-          LOG.error(e);
-        }
+      return firaCodeSetting.clone();
+    }
+    try {
+      String[] setting = migrateToTypographicSetting(family);
+      if (setting != null) {
+        return setting;
       }
+    } catch (Throwable e) {
+      rethrowControlFlowException(e);
+      LOG.error(e);
     }
     return super.migrateFontSettingImpl(family);
+  }
+
+  /**
+   * Returns the typographic family, the regular subfamily and the bold subfamily for an old font setting,
+   * or {@code null} when the setting cannot migrate. The bold subfamily is {@code null} when it is the regular one.
+   */
+  private String @Nullable [] migrateToTypographicSetting(String family) throws Throwable {
+    Font regularFont = new Font(family, Font.PLAIN, 1);
+    TypographicName regular = getTypographicName(getFont2D(regularFont));
+    Font boldFont = new Font(family, Font.BOLD, 1);
+    TypographicName bold = getTypographicName(getFont2D(boldFont));
+    if (!family.equals(regularFont.getFamily()) || !family.equals(boldFont.getFamily())) {
+      return cannotMigrate(family, "unexpected resolved families - " + regularFont.getFamily() + ", " + boldFont.getFamily());
+    }
+    if (!Objects.equals(regular.family(), bold.family())) {
+      return cannotMigrate(
+        family,
+        "normal and bold variations resolve to different typographic families - " + regular.family() + ", " + bold.family()
+      );
+    }
+    FontFamily fontFamily = myFamilies.get(regular.family());
+    if (fontFamily == null) {
+      return cannotMigrate(family, "typographic font family not found - " + regular.family());
+    }
+    if (!fontFamily.hasBaseSubFamily(regular.subfamily())) {
+      return cannotMigrate(family, "subfamily " + regular.subfamily() + " not found in typographic font family " + regular.family());
+    }
+    if (!fontFamily.hasBaseSubFamily(bold.subfamily())) {
+      return cannotMigrate(family, "subfamily " + bold.subfamily() + " not found in typographic font family " + regular.family());
+    }
+    String boldSubfamily = Objects.equals(regular.subfamily(), bold.subfamily()) ? null : bold.subfamily();
+    return new String[]{regular.family(), regular.subfamily(), boldSubfamily};
+  }
+
+  private static String @Nullable [] cannotMigrate(String family, String reason) {
+    LOG.info("Cannot migrate " + family + ": " + reason);
+    return null;
+  }
+
+  /**
+   * Reads the typographic families of the installed fonts.
+   * Returns an empty map for the fallback mode: in a unit test, in a headless environment, without the runtime API, or after an error.
+   */
+  private static Map<String, FontFamily> scanInstalledFonts() {
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+      return Map.of();
+    }
+    if (!RUNTIME_API_AVAILABLE) {
+      LOG.warn("Couldn't access required runtime API, will fall back to basic logic of font selection");
+      return Map.of();
+    }
+    try {
+      return loadFamilies(GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts());
+    } catch (Throwable e) {
+      rethrowControlFlowException(e);
+      LOG.error(e);
+      return Map.of(); // fallback to old behavior in case of any errors
+    }
+  }
+
+  private static boolean isUnsupportedFont(@NotNull String fontName, @NotNull String font2DName) {
+    return font2DName.startsWith(Font.DIALOG) && !fontName.startsWith(Font.DIALOG);
+  }
+
+  private static Font2D getFont2D(Font font) throws Throwable {
+    assert GET_FONT_2D_METHOD != null;
+    return (Font2D)GET_FONT_2D_METHOD.invoke(font);
+  }
+
+  private static @NotNull TypographicName getTypographicName(Font2D font2D) throws Throwable {
+    assert GET_TYPO_FAMILY_METHOD != null;
+    assert GET_TYPO_SUBFAMILY_METHOD != null;
+    String family = (String)GET_TYPO_FAMILY_METHOD.invoke(font2D);
+    String subfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(font2D);
+    return new TypographicName(family, subfamily);
+  }
+
+  private static int getWeight(Font font) {
+    assert GET_WEIGHT_METHOD != null;
+    try {
+      return (Integer)GET_WEIGHT_METHOD.invoke(getFont2D(font));
+    } catch (Throwable e) {
+      rethrowControlFlowException(e);
+      LOG.error(e);
+      return Font2D.FWEIGHT_NORMAL;
+    }
+  }
+
+  private static @Nullable MethodHandle getFont2DGetter() {
+    try {
+      return MethodHandleUtil.getPrivateMethod(Font.class, "getFont2D", MethodType.methodType(Font2D.class));
+    } catch (Throwable e) {
+      rethrowControlFlowException(e);
+      LOG.warn(e);
+      return null;
+    }
   }
 
   private static @Nullable MethodHandle getFont2dMethod(@NotNull String methodName, @NotNull Class<?> type) {
     try {
       return MethodHandleUtil.getPublicMethod(Font2D.class, methodName, MethodType.methodType(type));
-    }
-    catch (Throwable e) {
+    } catch (Throwable e) {
+      rethrowControlFlowException(e);
       LOG.debug(e);
       return null;
     }
   }
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private static final class FontFamily {
-    private final String family;
-    private final Map<String, Font> members = new LinkedHashMap<>();
-
-    private String recommendedSubFamily;
-    private Map<String, String> recommendedBoldSubFamilies;
-    private Map<String, String> recommendedPlainSubFamilies;
-    private Map<String, Font> italics;
-
-    private FontFamily(@NotNull String family) { this.family = family; }
-
-    private void addFont(@NotNull String subFamily, @NotNull Font font) {
-      if (VERBOSE_LOGGING) {
-        LOG.info("Adding " + font.getName() + " as " + subFamily + " variant to " + family + " family");
-      }
-      members.put(subFamily, font);
-    }
-
-    private synchronized void initIfNeeded() {
-      if (recommendedSubFamily == null) {
-        recommendedPlainSubFamilies = new HashMap<>();
-        recommendedBoldSubFamilies = new HashMap<>();
-        italics = new LinkedHashMap<>();
-        OurWeightMap nonItalicsByWeight = new OurWeightMap();
-        OurWeightMap italicsByWeight = new OurWeightMap();
-        for (Map.Entry<String, Font> e : members.entrySet()) {
-          String subFamily = e.getKey();
-          Font font = e.getValue();
-          int weight = getWeight(font);
-          boolean isItalic = isItalic(subFamily);
-          if (VERBOSE_LOGGING) {
-            LOG.info(family + "(" + subFamily + "): weight=" + weight + (isItalic ? ", italic" : ""));
-          }
-          (isItalic ? italicsByWeight : nonItalicsByWeight).putValue(weight, subFamily);
-        }
-        OurWeightMap baseSet = nonItalicsByWeight.isEmpty() ? italicsByWeight : nonItalicsByWeight;
-
-        final class Candidate {
-          final int desiredWeight;
-          String bestSubFamily;
-          int bestDistance = Integer.MAX_VALUE;
-
-          private Candidate(String defaultSubFamily, int desiredWeight) {
-            bestSubFamily = defaultSubFamily;
-            this.desiredWeight = desiredWeight;
-          }
-
-          private void updateIfBetterMatch(int weight, String subFamily) {
-            int newMetric = Math.abs(desiredWeight - weight);
-            if (newMetric < bestDistance) {
-              bestDistance = newMetric;
-              bestSubFamily = subFamily;
-            }
-          }
-        }
-
-        Candidate preferred = new Candidate(null, PREFERRED_MAIN_WEIGHT);
-        Map<String, Candidate> candidates = new HashMap<>();
-        baseSet.forEach((weight, subFamily) -> {
-          preferred.updateIfBetterMatch(weight, subFamily);
-
-          String italicSubFamily = null;
-          if (baseSet == italicsByWeight) {
-            italicSubFamily = subFamily;
-          }
-          else {
-            Collection<String> italicSubFamilyCandidates = italicsByWeight.get(weight);
-            for (String italicCandidate : italicSubFamilyCandidates) {
-              if (italicSubFamily == null || isMatchingItalic(subFamily, italicCandidate)) {
-                italicSubFamily = italicCandidate;
-              }
-            }
-          }
-          italics.put(subFamily, italicSubFamily == null ? members.get(subFamily).deriveFont(SYNTHETIC_ITALICS_TRANSFORM)
-                                                         : members.get(italicSubFamily));
-
-          candidates.forEach((_, candidate) -> candidate.updateIfBetterMatch(weight, subFamily));
-          candidates.put(subFamily, new Candidate(subFamily, weight + PREFERRED_BOLD_WEIGHT_DIFF));
-        });
-        recommendedSubFamily = preferred.bestSubFamily;
-        candidates.forEach((original, boldCandidate) -> recommendedBoldSubFamilies.put(original, boldCandidate.bestSubFamily));
-
-        candidates.clear();
-        baseSet.forEachDescending((weight, subFamily) -> {
-          candidates.forEach((_, candidate) -> candidate.updateIfBetterMatch(weight, subFamily));
-          candidates.put(subFamily, new Candidate(subFamily, weight - PREFERRED_BOLD_WEIGHT_DIFF));
-        });
-        candidates.forEach((original, plainCandidate) -> recommendedPlainSubFamilies.put(original, plainCandidate.bestSubFamily));
-      }
-    }
-
-    private static boolean isItalic(String subFamily) {
-      String name = subFamily.toLowerCase(Locale.ENGLISH);
-      return ContainerUtil.exists(ITALIC_NAMES, name::contains);
-    }
-
-    private static boolean isMatchingItalic(String mainSubFamily, String italicSubFamily) {
-      String main = mainSubFamily.toLowerCase(Locale.ENGLISH);
-      String candidate = italicSubFamily.toLowerCase(Locale.ENGLISH);
-      // assuming italic variant is named by adding a suffix to the base variant
-      for (String suffix : ITALIC_NAMES) {
-        if (candidate.endsWith(suffix)) {
-          candidate = candidate.substring(0, candidate.length() - suffix.length()).trim();
-          break;
-        }
-      }
-      return candidate.equals(main) ||
-             // 'Regular' is a special case,
-             // corresponding italic variant is usually called 'Italic', not 'Regular Italic'
-             "regular".equals(main) && candidate.isEmpty();
-    }
-
-    private static int getWeight(Font font) {
-      assert GET_FONT_2D_METHOD != null;
-      assert GET_WEIGHT_METHOD != null;
-      try {
-        Font2D font2d = (Font2D)GET_FONT_2D_METHOD.invoke(font);
-        return (Integer)GET_WEIGHT_METHOD.invoke(font2d);
-      }
-      catch (Throwable t) {
-        LOG.error(t);
-      }
-      return Font2D.FWEIGHT_NORMAL;
-    }
-
-    private boolean isMonospaced() {
-      Font font = members.entrySet().iterator().next().getValue();
-      if (!font.canDisplay(' ') || !font.canDisplay('M')) {
-        return false;
-      }
-      FontMetrics metrics = FontInfo.getFontMetrics(font.deriveFont((float)EditorFontsConstants.getDefaultEditorFontSize()),
-                                                    FontInfo.DEFAULT_CONTEXT);
-      return metrics.charWidth(' ') == metrics.charWidth('M');
-    }
-
-    private List<String> getBaseSubFamilies() {
-      initIfNeeded();
-      return new ArrayList<>(italics.keySet());
-    }
-
-    private String getRecommendedSubFamily() {
-      initIfNeeded();
-      return recommendedSubFamily;
-    }
-
-    private String getRecommendedBoldSubFamily(String mainSubFamily) {
-      initIfNeeded();
-      String result = recommendedBoldSubFamilies.get(mainSubFamily);
-      return result == null ? recommendedBoldSubFamilies.get(recommendedSubFamily) : result;
-    }
-
-    private Font getFont(String regularSubFamily, String boldSubFamily, int style) {
-      initIfNeeded();
-      if (!italics.containsKey(regularSubFamily)) {
-        regularSubFamily = null;
-      }
-      if (!italics.containsKey(boldSubFamily)) {
-        boldSubFamily = null;
-      }
-      if (regularSubFamily == null) {
-        regularSubFamily = boldSubFamily == null ? recommendedSubFamily : recommendedPlainSubFamilies.get(boldSubFamily);
-      }
-      if (boldSubFamily == null) {
-        boldSubFamily = recommendedBoldSubFamilies.get(regularSubFamily);
-      }
-      String target = (style & Font.BOLD) == 0 ? regularSubFamily : boldSubFamily;
-      return (style & Font.ITALIC) == 0 ? members.get(target) : italics.get(target);
-    }
-
-    private boolean hasSubFamily(String subFamily) {
-      initIfNeeded();
-      return italics.containsKey(subFamily);
-    }
-  }
-
-  private static final class OurWeightMap extends MultiMap<Integer, String> {
-    private OurWeightMap() {
-      super(new TreeMap<>());
-    }
-
-    private void forEach(BiConsumer<? super Integer, ? super String> action) {
-      myMap.forEach((weight, list) -> list.forEach(subFamily -> action.accept(weight, subFamily)));
-    }
-
-    private void forEachDescending(BiConsumer<? super Integer, ? super String> action) {
-      ((TreeMap<Integer, Collection<String>>)myMap).descendingMap().forEach((weight, list) -> {
-        list.forEach(subFamily -> action.accept(weight, subFamily));
-      });
-    }
+  /**
+   * The typographic family and subfamily names of a font.
+   */
+  private record TypographicName(String family, String subfamily) {
   }
 }
