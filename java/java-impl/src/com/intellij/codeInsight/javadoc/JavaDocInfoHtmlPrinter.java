@@ -5,7 +5,6 @@ import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.codeInsight.javadoc.markdown.JavaDocMarkdownFlavourDescriptor;
 import com.intellij.help.impl.HelpManagerImpl;
-import com.intellij.ide.BrowserUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationMarkup;
@@ -376,13 +375,9 @@ public class JavaDocInfoHtmlPrinter implements JavaDocInfoPrinter {
           String reference = "";
           try {
             reference = JavaDocInfoGenerator.createReferenceForRelativeLink(href, context);
-            if (reference == null && baseUrl != null && !href.isEmpty() && !href.startsWith("#") && !BrowserUtil.isAbsoluteURL(href)) {
-              //noinspection deprecation
-              reference = new URL(baseUrl, href).toExternalForm();
+            if (reference == null) {
+              reference = JavaDocInfoGenerator.resolveRelativeFileLink(href, baseUrl);
             }
-          }
-          catch (MalformedURLException e) {
-            LOG.debug(e);
           }
           catch (IndexNotReadyException e) {
             LOG.debug(e);

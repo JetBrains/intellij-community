@@ -66,7 +66,7 @@ implements java.io.Serializable, Comparable<String>, CharSequence
  A `String` represents a string in the UTF-16 format
  in which _supplementary characters_ are represented by _surrogate
  pairs_ (see the section [Unicode
- Character Representations](Character.html#unicode) in the `Character` class for
+ Character Representations](java.lang.Character) in the `Character` class for
  more information).
  Index values refer to `char` code units, so a supplementary
  character uses two positions in a `String`.

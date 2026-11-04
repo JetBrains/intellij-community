@@ -6,6 +6,7 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.javadoc.JavadocGeneratorRunProfile;
@@ -164,6 +165,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -569,6 +571,20 @@ public class JavaDocInfoGenerator {
       builder.append(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL_REF_SEPARATOR).append(pair.second);
     }
     return builder.toString();
+  }
+
+  static @Nullable String resolveRelativeFileLink(@NotNull String relativeLink, @Nullable URL baseUrl) {
+    if (baseUrl == null || relativeLink.isEmpty() || relativeLink.startsWith("#") || BrowserUtil.isAbsoluteURL(relativeLink)) {
+      return null;
+    }
+    try {
+      //noinspection deprecation
+      return new URL(baseUrl, relativeLink).toExternalForm();
+    }
+    catch (MalformedURLException e) {
+      LOG.debug(e);
+      return null;
+    }
   }
 
   /**

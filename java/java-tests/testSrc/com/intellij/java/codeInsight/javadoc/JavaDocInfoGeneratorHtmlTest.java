@@ -9,9 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,7 +17,6 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import java.io.StringReader;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /// HTML variant of the javadoc info generator
@@ -68,6 +65,7 @@ public final class JavaDocInfoGeneratorHtmlTest extends JavaDocInfoGeneratorTest
     var html = new StringBuilder("""
       <html><head><base href="file:/project/src/p/C.java"></head><body>
       <a href="doc-files/diagram.png">Image</a>
+      <a href="../guide">No extension</a>
       <a href='../guide.html?x=1&amp;y=2#part'>Guide</a>
       <a href="doc-files/guide.html?url=https://example.com">Guide URL</a>
       <a href="https://example.com/guide.html">External</a>
@@ -77,14 +75,18 @@ public final class JavaDocInfoGeneratorHtmlTest extends JavaDocInfoGeneratorTest
       </body></html>
       """);
     var result = new JavaDocInfoHtmlPrinter().postProcess(html, getProject(), context);
-    assertNotNull(result);
-    assertTrue(result, result.contains("href=\"file:/project/src/p/doc-files/diagram.png\""));
-    assertTrue(result, result.contains("href='file:/project/src/guide.html?x=1&amp;y=2#part'"));
-    assertTrue(result, result.contains("href=\"file:/project/src/p/doc-files/guide.html?url=https://example.com\""));
-    assertTrue(result, result.contains("href=\"https://example.com/guide.html\""));
-    assertTrue(result, result.contains("href=\"mailto:docs@example.com\""));
-    assertTrue(result, result.contains("href=\"psi_element://C\""));
-    assertTrue(result, result.contains("href=\"psi_element://java.lang.String\""));
+    assertEquals("""
+      <html><head><base href="file:/project/src/p/C.java"></head><body>
+      <a href="file:/project/src/p/doc-files/diagram.png">Image</a>
+      <a href="file:/project/src/guide">No extension</a>
+      <a href='file:/project/src/guide.html?x=1&amp;y=2#part'>Guide</a>
+      <a href="file:/project/src/p/doc-files/guide.html?url=https://example.com">Guide URL</a>
+      <a href="https://example.com/guide.html">External</a>
+      <a href="mailto:docs@example.com">Mail</a>
+      <a href="psi_element://C">Class</a>
+      <a href="psi_element://java.lang.String">String</a>
+      </body></html>
+      """, result);
   }
 
   public void testRelativeFileLinkInSourceArchive() {
@@ -95,11 +97,14 @@ public final class JavaDocInfoGeneratorHtmlTest extends JavaDocInfoGeneratorTest
       </body></html>
       """);
     var result = new JavaDocInfoHtmlPrinter().postProcess(html, getProject(), context);
-    assertNotNull(result);
-    assertTrue(result, result.contains("href=\"jar:file:/project/sources.jar!/p/doc-files/diagram.png\""));
+    assertEquals("""
+      <html><head><base href="jar:file:/project/sources.jar!/p/C.java"></head><body>
+      <a href="jar:file:/project/sources.jar!/p/doc-files/diagram.png">Diagram</a>
+      </body></html>
+      """, result);
   }
 
-  public void testPackageRelativeFiles() throws Exception {
+  public void testPackageRelativeImage() throws Exception {
     var root = createTestProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "packageRelativeFiles");
     var packageInfo = root.findFileByRelativePath("p/package-info.java");
     assertNotNull(packageInfo);
@@ -109,9 +114,6 @@ public final class JavaDocInfoGeneratorHtmlTest extends JavaDocInfoGeneratorTest
     assertNotNull(html);
     var baseUrl = VfsUtilCore.convertToURL(packageInfo.getUrl());
     assertNotNull(baseUrl);
-    assertTrue(html, html.contains("<base href=\"" + baseUrl + "\">"));
-    assertTrue(html, html.contains("href=\"" + baseUrl.toExternalForm().replace("package-info.java", "doc-files/diagram.png") + "\""));
-
     var kit = new HTMLEditorKit();
     var htmlDocument = (HTMLDocument)kit.createDefaultDocument();
     kit.read(new StringReader(decorate(html)), htmlDocument, 0);
@@ -119,28 +121,5 @@ public final class JavaDocInfoGeneratorHtmlTest extends JavaDocInfoGeneratorTest
     var image = htmlDocument.getIterator(HTML.Tag.IMG);
     assertTrue(image.isValid());
     assertEquals("doc-files/diagram.png", image.getAttributes().getAttribute(HTML.Attribute.SRC));
-
-    var directory = PsiManager.getInstance(getProject()).findDirectory(packageInfo.getParent());
-    assertNotNull(directory);
-    var directoryHtml = JavaDocInfoGeneratorFactory.create(getProject(), directory).generateDocInfo(null);
-    assertNotNull(directoryHtml);
-    assertTrue(directoryHtml, directoryHtml.contains("<base href=\"" + baseUrl + "\">"));
-  }
-
-  public void testClassAndMemberRelativeFiles() {
-    var root = createTestProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "packageRelativeFiles");
-    var source = root.findFileByRelativePath("p/C.java");
-    assertNotNull(source);
-    var psiClass = myJavaFacade.findClass("p.C", GlobalSearchScope.projectScope(getProject()));
-    assertNotNull(psiClass);
-    var baseUrl = VfsUtilCore.convertToURL(source.getUrl());
-    assertNotNull(baseUrl);
-    var imageUrl = baseUrl.toExternalForm().replace("C.java", "doc-files/diagram.png");
-    for (var element : List.of(psiClass, psiClass.getMethods()[0])) {
-      var html = JavaDocInfoGeneratorFactory.create(getProject(), element).generateDocInfo(null);
-      assertNotNull(html);
-      assertTrue(html, html.contains("<base href=\"" + baseUrl + "\">"));
-      assertTrue(html, html.contains("href=\"" + imageUrl + "\""));
-    }
   }
 }

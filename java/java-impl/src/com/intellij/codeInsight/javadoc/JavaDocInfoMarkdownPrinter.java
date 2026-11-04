@@ -1,14 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.codeInsight.javadoc.markdown.JavaDocMarkdownFlavourDescriptor;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -19,6 +20,9 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.migration.MarkdownDocumentationCommentsMigrationInspection;
 import kotlin.text.StringsKt;
+import org.intellij.markdown.MarkdownElementTypes;
+import org.intellij.markdown.ast.ASTNode;
+import org.intellij.markdown.parser.MarkdownParser;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
@@ -26,7 +30,6 @@ import org.jspecify.annotations.NullMarked;
 
 import java.net.URL;
 import java.util.Locale;
-import java.util.regex.Pattern;
 
 import static com.intellij.codeInsight.javadoc.JavaDocInfoGenerator.BLOCKQUOTE_PRE_PREFIX;
 import static com.intellij.codeInsight.javadoc.JavaDocInfoGenerator.BLOCKQUOTE_PRE_SUFFIX;
@@ -36,10 +39,9 @@ import static com.siyeh.ig.migration.MarkdownDocumentationCommentsMigrationInspe
 /// Since the intended use of this is the LSP clients, the [#printLinkURI(StringBuilder, PsiElement)] method is left abstract.
 @NullMarked
 public abstract class JavaDocInfoMarkdownPrinter implements JavaDocInfoPrinter {
-  /// Detect relative links for patching
-  private static final Pattern RELATIVE_LINK_PATTERN = Pattern.compile("\\[(.+?)]\\((.+?\\.html?.*?)\\)");
   private boolean myInCodeBlock;
   private boolean noBreakAfterSectionHeader;
+  private @Nullable URL myBaseUrl;
 
   @Override
   public PsiDocComment preProcess(PsiDocComment docComment) {
@@ -68,17 +70,45 @@ public abstract class JavaDocInfoMarkdownPrinter implements JavaDocInfoPrinter {
       .replace(BLOCKQUOTE_PRE_SUFFIX, "\n```\n")
       .trim();
 
-    // Patch relative links to real links
-    if (context != null) {
-      postProcessedDoc = RELATIVE_LINK_PATTERN.matcher(postProcessedDoc).replaceAll(result -> {
-        Pair<PsiElement, @Nullable String> pair = JavaDocInfoGenerator.getElementForRelativeLink(result.group(2), context);
-        if (pair == null) return result.group(0);
+    if (context == null && myBaseUrl == null) return postProcessedDoc;
 
-        return "[" + result.group(1) + "](" + printLinkURI(new StringBuilder(), pair.first) + ")";
-      });
+    var parser = new MarkdownParser(new JavaDocMarkdownFlavourDescriptor(), true, ProgressManager::checkCanceled);
+    var tree = parser.buildMarkdownTreeFromString((CharSequence)postProcessedDoc);
+    var result = new StringBuilder(postProcessedDoc);
+    resolveRelativeLinks(tree, result, context);
+    return result.toString();
+  }
+
+  private void resolveRelativeLinks(ASTNode node, StringBuilder document, @Nullable PsiElement context) {
+    if (node.getType() == MarkdownElementTypes.LINK_DESTINATION) {
+      int start = node.getStartOffset();
+      int end = node.getEndOffset();
+      if (start < end && document.charAt(start) == '<' && document.charAt(end - 1) == '>') {
+        start++;
+        end--;
+      }
+      var link = document.substring(start, end);
+      String reference = null;
+      if (context != null && !link.isEmpty() && !link.startsWith("#")) {
+        var target = JavaDocInfoGenerator.getElementForRelativeLink(link, context);
+        if (target != null) {
+          reference = printLinkURI(new StringBuilder(), target.first).toString();
+        }
+      }
+      if (reference == null) {
+        reference = JavaDocInfoGenerator.resolveRelativeFileLink(link, myBaseUrl);
+      }
+      if (reference != null) {
+        document.replace(start, end, reference);
+      }
+      return;
     }
-
-    return postProcessedDoc;
+    if (node.getType() == MarkdownElementTypes.IMAGE) {
+      context = null;
+    }
+    for (var child : node.getChildren().reversed()) {
+      resolveRelativeLinks(child, document, context);
+    }
   }
 
   @Override
@@ -113,7 +143,7 @@ public abstract class JavaDocInfoMarkdownPrinter implements JavaDocInfoPrinter {
                                  boolean plainLink) {
     StringBuilder target = new StringBuilder();
     printLinkURI(target, targetElement);
-    if (!target.isEmpty()) {
+    if (!target.isEmpty() || label != null) {
       printLink(builder, target.toString(), label, plainLink);
     }
     return builder;
@@ -135,14 +165,18 @@ public abstract class JavaDocInfoMarkdownPrinter implements JavaDocInfoPrinter {
       label = label.replaceAll("\\[`?(.*?)`?]\\(.*?\\)", "$1");
     }
     
-    builder.append('[');
+    if (!target.isEmpty()) {
+      builder.append('[');
+    }
     if (!plainLink) {
       appendCodeSpan(builder, label == null ? "" : label);
     }
     else if (label != null) {
       builder.append(label);
     }
-    builder.append("](").append(target).append(')');
+    if (!target.isEmpty()) {
+      builder.append("](").append(target).append(')');
+    }
     return builder;
   }
 
@@ -222,6 +256,7 @@ public abstract class JavaDocInfoMarkdownPrinter implements JavaDocInfoPrinter {
 
   @Override
   public StringBuilder printPrologue(StringBuilder builder, @Nullable URL baseUrl) {
+    myBaseUrl = baseUrl;
     return builder;
   }
 

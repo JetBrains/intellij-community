@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.pom.java.LanguageLevel;
@@ -178,6 +179,47 @@ abstract class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testSuperJavadocExactResolve() { doTestAtCaret(); }
   public void testSuperJavadocErasureResolve() { doTestAtCaret(); }
   public void testPackageInfo() { doTestPackageInfo(); }
+  public void testPackageRelativeFiles() {
+    var root = createTestProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "packageRelativeFiles");
+    var source = root.findFileByRelativePath("p/package-info.java");
+    assertNotNull(source);
+    var psiPackage = myJavaFacade.findPackage("p");
+    assertNotNull(psiPackage);
+    assertRelativeFilesDoc(psiPackage, source, "packageInfo");
+    var directory = PsiManager.getInstance(getProject()).findDirectory(source.getParent());
+    assertNotNull(directory);
+    assertRelativeFilesDoc(directory, source, "packageDirectory");
+  }
+
+  public void testClassAndMemberRelativeFiles() {
+    var root = createTestProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "packageRelativeFiles");
+    var source = root.findFileByRelativePath("p/C.java");
+    assertNotNull(source);
+    var psiClass = myJavaFacade.findClass("p.C");
+    assertNotNull(psiClass);
+    assertRelativeFilesDoc(psiClass, source, "C");
+    assertRelativeFilesDoc(psiClass.getMethods()[0], source, "m");
+  }
+
+  public void testMarkdownRelativeFiles() {
+    var root = createTestProjectStructure(getTestDataPath() + TEST_DATA_FOLDER + "packageRelativeFiles");
+    var source = root.findFileByRelativePath("p/Markdown.java");
+    assertNotNull(source);
+    var psiClass = myJavaFacade.findClass("p.Markdown");
+    assertNotNull(psiClass);
+    assertRelativeFilesDoc(psiClass, source, "Markdown");
+  }
+
+  private void assertRelativeFilesDoc(PsiElement element, VirtualFile source, String expectedFile) {
+    var docInfo = generateDocInfo(element);
+    assertNotNull(docInfo);
+    var baseUrl = VfsUtilCore.convertToURL(source.getUrl());
+    assertNotNull(baseUrl);
+    var directoryUrl = baseUrl.toExternalForm().substring(0, baseUrl.toExternalForm().lastIndexOf('/') + 1);
+    var expectedPath = getTestDataPath() + TEST_DATA_FOLDER + "packageRelativeFiles/" + expectedFile + getExpectedFileExtension();
+    assertEqualsFileText(expectedPath, docInfo.replace(directoryUrl, "file:///placeholder/"));
+  }
+
   public void testPackageWithoutPackageInfo() { doTestPackageInfo(); }
   public void testEmptyPackage() { doTestPackageInfo(); }
   public void testPackageHtml() { doTestPackageInfo(); }
