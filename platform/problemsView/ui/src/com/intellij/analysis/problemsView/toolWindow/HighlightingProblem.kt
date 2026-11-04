@@ -88,10 +88,9 @@ open class HighlightingProblem(
       return HighlightDisplayKey.getDisplayNameByKey(HighlightDisplayKey.find(id))
     }
 
+  // not info: it starts the load of an async description, and a scan of the contexts reads every problem
   override val contextGroup: CodeInsightContext?
-    get() {
-      return info?.highlighter?.codeInsightContext
-    }
+    get() = HighlightInfo.fromRangeHighlighter(highlighter)?.let { highlighter.codeInsightContext }
 
   override val description: String?
     get() {
