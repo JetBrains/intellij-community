@@ -2,16 +2,23 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 @TestApplication
 @RegistryKey(key = "ide.optimize.inspection.visitors", value = "true")
 internal class InspectionVisitorOptimizerTest {
+  @Test
+  fun `empty visitor accepts no elements`() {
+    assertTrue(InspectionVisitorOptimizer.getAcceptingPsiTypes(PsiElementVisitor.EMPTY_VISITOR).isEmpty())
+  }
+
   @Test
   fun `accepts an interface inherited by a class without direct interfaces`() {
     assertAccepts(ElementWithoutInterfaces(), PsiNamedElement::class.java)

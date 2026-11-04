@@ -70,8 +70,12 @@ public final class InspectionVisitorOptimizer {
 
   @ApiStatus.Internal
   public static @NotNull @Unmodifiable List<? extends Class<?>> getAcceptingPsiTypes(@NotNull PsiElementVisitor visitor) {
-    if (!useOptimizedVisitors) return ALL_ELEMENTS_VISIT_LIST;
-
+    if (PsiElementVisitor.EMPTY_VISITOR == visitor) {
+      return List.of();
+    }
+    if (!useOptimizedVisitors) {
+      return ALL_ELEMENTS_VISIT_LIST;
+    }
     List<? extends Class<?>> acceptingPsiTypes;
     if (visitor instanceof HintedPsiElementVisitor hinted) {
       acceptingPsiTypes = hinted.getHintPsiElements();
