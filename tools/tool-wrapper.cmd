@@ -57,7 +57,8 @@ REM Download and verify using PowerShell script
 set "POWERSHELL=%SystemRoot%\system32\WindowsPowerShell\v1.0\powershell.exe"
 set "PS_SCRIPT=%~dp0tool-wrapper.ps1"
 
-"%POWERSHELL%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%PS_SCRIPT%"
+REM The progress goes to stderr, as in tool-wrapper.sh.
+"%POWERSHELL%" -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%PS_SCRIPT%" 1>&2
 if errorlevel 1 (
   echo ERROR: Download or verification failed >&2
   exit /B 1

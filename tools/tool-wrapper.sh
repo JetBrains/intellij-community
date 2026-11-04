@@ -205,28 +205,37 @@ release_lock() {
   fi
 }
 
-# Get archive structure type: "nested:<dir_name>" if single top-level directory, "flat" if multiple entries
+# Get archive structure type: "nested:<dir_name>" if single top-level directory, "flat" otherwise.
+# A single top-level file, such as the one binary of an archive, is flat.
 get_archive_structure() {
   local archive="$1"
   local url="$2"
 
-  local top_level_entries
+  local entries
   case "$url" in
     *.tar.gz|*.tgz)
-      top_level_entries=$(tar -tzf "$archive" | cut -d'/' -f1 | sort -u | grep -v '^$')
+      entries=$(tar -tzf "$archive")
       ;;
     *.zip)
-      top_level_entries=$(unzip -Z1 "$archive" | cut -d'/' -f1 | sort -u | grep -v '^$')
+      entries=$(unzip -Z1 "$archive")
       ;;
     *)
       die "Unknown archive format from URL: $url"
       ;;
   esac
 
+  local top_level_entries
+  top_level_entries=$(echo "$entries" | cut -d'/' -f1 | sort -u | grep -v '^$')
+
   local entry_count
   entry_count=$(echo "$top_level_entries" | wc -l | tr -d ' ')
 
-  if [ "$entry_count" -eq 1 ]; then
+  local has_subpath=false
+  case "$entries" in
+    */*) has_subpath=true ;;
+  esac
+
+  if [ "$entry_count" -eq 1 ] && [ "$has_subpath" = true ]; then
     echo "nested:$top_level_entries"
   else
     echo "flat"
