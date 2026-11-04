@@ -39,20 +39,12 @@ class KotlinDebuggerSettings : XDebuggerSettings<KotlinDebuggerSettings>("kotlin
                     this
                 )
             )
-        DebuggerSettingsCategory.GENERAL ->
-            listOf(
-                SimpleConfigurable.create(
-                    "reference.idesettings.debugger.kotlin.data.view",
-                    KotlinDebuggerCoreBundle.message("configurable.name.kotlin"),
-                    KotlinDelegatedPropertyRendererConfigurableUi::class.java,
-                    this
-                )
-            )
+        DebuggerSettingsCategory.GENERAL -> listOf(KotlinDelegatedPropertyRendererConfigurableUi(this))
         else -> listOf()
     }
 
-    override fun getState() = this
-    override fun get() = this
+    override fun getState(): KotlinDebuggerSettings = this
+    override fun get(): KotlinDebuggerSettings = this
 
     override fun loadState(state: KotlinDebuggerSettings) {
         XmlSerializerUtil.copyBean<KotlinDebuggerSettings>(state, this)
