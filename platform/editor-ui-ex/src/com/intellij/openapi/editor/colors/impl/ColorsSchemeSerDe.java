@@ -244,7 +244,7 @@ final class ColorsSchemeSerDe {
     for (Element childNode : node.getChildren()) {
       String childName = childNode.getName();
       switch (childName) {
-        case OPTION_ELEMENT -> readSettings(scheme, fonts, childNode, isDefault, fontScale, valueReader);
+        case OPTION_ELEMENT -> readSettings(fonts, childNode, isDefault, fontScale, valueReader);
         case EDITOR_FONT -> {
           Float scale = fontScale.get();
           boolean clearFonts = clearEditorFonts;
@@ -346,7 +346,6 @@ final class ColorsSchemeSerDe {
   }
 
   private static void readSettings(
-    @NotNull AbstractColorsScheme scheme,
     @NotNull ColorsSchemeFontDraft fonts,
     @NotNull Element childNode,
     boolean isDefault,
@@ -365,7 +364,6 @@ final class ColorsSchemeSerDe {
         float value = readFontSize(childNode, isDefault, fontScale.get(), valueReader);
         if (value > 0) {
           fonts.setEditorFontSize(value);
-          scheme.setSaveNeeded(true);
         }
       }
       case EDITOR_FONT_NAME -> {

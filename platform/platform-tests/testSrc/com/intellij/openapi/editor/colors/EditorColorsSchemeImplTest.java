@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeManager;
+import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
@@ -1242,6 +1243,18 @@ public class EditorColorsSchemeImplTest {
     }
     assertNull(readerFailure.get());
     assertEquals(0, halfDone.get());
+  }
+
+  @Test
+  public void testReadDoesNotMarkSchemeForSave() throws Exception {
+    myScheme.readExternal(JDOMUtil.load(fontOptionsScheme(14, "1.2")));
+    assertEquals(SchemeState.UNCHANGED, myScheme.getSchemeState());
+  }
+
+  @Test
+  public void testSetEditorFontSizeMarksSchemeForSave() {
+    myScheme.setEditorFontSize(15);
+    assertEquals(SchemeState.POSSIBLY_CHANGED, myScheme.getSchemeState());
   }
 
   @Test

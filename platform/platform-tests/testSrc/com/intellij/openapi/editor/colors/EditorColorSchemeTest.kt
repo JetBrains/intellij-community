@@ -79,6 +79,27 @@ class EditorColorSchemeTest {
   }
 
   @Test
+  fun `a save after a load keeps the scheme file`() {
+    val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
+    val schemeData = """
+    <scheme name="Foo" version="142" parent_scheme="Default">
+      <option name="EDITOR_FONT_SIZE" value="12" />
+      <option name="EDITOR_FONT_NAME" value="Menlo" />
+      <option name="JAVA_NUMBER" baseAttributes="DEFAULT_NUMBER" />
+    </scheme>""".trimIndent()
+    schemeFile.write(schemeData)
+    val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
+    val manager = EditorColorsManagerImpl(schemeManagerFactory)
+    assertThat(manager.getScheme("Foo")).isNotNull()
+
+    runBlocking {
+      schemeManagerFactory.save()
+    }
+
+    assertThat(schemeFile.readText()).isEqualTo(schemeData)
+  }
+
+  @Test
   fun optimizeBundledSchemes() {
     val key = TextAttributesKey.createTextAttributesKey("TEST_BUNDLED_SCHEME_ATTRIBUTES", DefaultLanguageHighlighterColors.CLASS_NAME)
     val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
