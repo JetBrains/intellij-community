@@ -3,7 +3,6 @@ package git4idea.index
 
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
-import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -13,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.vcsUtil.VcsUtil
@@ -20,10 +20,14 @@ import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 import org.apache.commons.lang3.RandomStringUtils
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class GitStageTrackerTest : GitSingleRepoTest() {
   private var _tracker: GitStageTracker? = null
@@ -127,7 +131,6 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     }
   }
 
-  @IgnoreJUnit3
   fun `test untracked`() {
     val fileName = "file.txt"
     val file = runWithTrackerUpdate("createChildData") {
@@ -135,7 +138,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
         .also { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() }
     }
     TestCase.assertEquals(GitFileStatus('?', '?', VcsUtil.getFilePath(file)),
-                          trackerState().statuses.getValue(VcsUtil.getFilePath(projectRoot, fileName)))
+                          awaitTrackerStatus(VcsUtil.getFilePath(projectRoot, fileName)))
 
     val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!! }
 
@@ -157,6 +160,17 @@ class GitStageTrackerTest : GitSingleRepoTest() {
   }
 
   private fun trackerState() = tracker.state.rootStates.getValue(projectRoot)
+
+  private fun awaitTrackerStatus(filePath: FilePath): GitFileStatus = runBlocking {
+    withTimeout(2.seconds) {
+      var status = trackerState().statuses[filePath]
+      while (status == null) {
+        delay(10.milliseconds)
+        status = trackerState().statuses[filePath]
+      }
+      status
+    }
+  }
 
   private fun <T> runWithTrackerUpdate(name: String, function: () -> T): T {
     return tracker.futureUpdate(name).let { futureUpdate ->
