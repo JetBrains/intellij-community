@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.JavaClassNameCompletionContributor;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -66,7 +65,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessorImpl;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
 
 import javax.swing.Icon;
 import java.util.ArrayList;
@@ -84,8 +82,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtilKt.initialSta
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
 
 public final class CompleteReferenceExpression {
-  private static final Logger LOG = Logger.getInstance(CompleteReferenceExpression.class);
-
   private final PrefixMatcher myMatcher;
   private final Consumer<LookupElement> myConsumer;
   private final GrReferenceExpressionImpl myRefExpr;
@@ -158,19 +154,19 @@ public final class CompleteReferenceExpression {
       if (!(parent instanceof GrAnnotation)) {
         parent = parent.getParent();
       }
-      if (parent instanceof GrAnnotation) {
-        new AnnotationAttributeCompletionResultProcessor((GrAnnotation)parent).process(myConsumer, myMatcher);
+      if (parent instanceof GrAnnotation annotation) {
+        new AnnotationAttributeCompletionResultProcessor(annotation).process(myConsumer, myMatcher);
       }
     }
   }
 
   private void processIfJavaLangClass(@Nullable PsiType type) {
-    if (!(type instanceof PsiClassType)) return;
+    if (!(type instanceof PsiClassType classType)) return;
 
-    final PsiClass psiClass = ((PsiClassType)type).resolve();
+    final PsiClass psiClass = classType.resolve();
     if (psiClass == null || !CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) return;
 
-    final PsiType[] params = ((PsiClassType)type).getParameters();
+    final PsiType[] params = classType.getParameters();
     if (params.length != 1) return;
 
     getVariantsFromQualifierType(params[0], myRefExpr.getProject());
@@ -187,10 +183,10 @@ public final class CompleteReferenceExpression {
     }
     else {
       if (myRefExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
-        if (qualifier instanceof GrReferenceExpression && (
-          "class".equals(((GrReferenceExpression)qualifier).getReferenceName()) ||
+        if (qualifier instanceof GrReferenceExpression expression && (
+          "class".equals(expression.getReferenceName()) ||
           PsiUtil.isThisReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier)
-          || ((GrReferenceExpression)qualifier).resolve() instanceof PsiClass
+          || expression.resolve() instanceof PsiClass
         )) {
           processIfJavaLangClass(qualifier.getType());
         }
@@ -208,20 +204,20 @@ public final class CompleteReferenceExpression {
     if (containingClass != null) return;
 
     final PsiFile file = FileContextUtil.getContextFile(myRefExpr);
-    if (file instanceof GroovyFile) {
-      ((GroovyFile)file).accept(new GroovyRecursiveElementVisitor() {
+    if (file instanceof GroovyFile groovyFile) {
+      groovyFile.accept(new GroovyRecursiveElementVisitor() {
         @Override
         public void visitAssignmentExpression(@NotNull GrAssignmentExpression expression) {
           super.visitAssignmentExpression(expression);
 
           final GrExpression value = expression.getLValue();
-          if (value instanceof GrReferenceExpression && !((GrReferenceExpression)value).isQualified()) {
-            final PsiElement resolved = ((GrReferenceExpression)value).resolve();
+          if (value instanceof GrReferenceExpression referenceExpression && !referenceExpression.isQualified()) {
+            final PsiElement resolved = referenceExpression.resolve();
             if (resolved instanceof GrBindingVariable) {
               myProcessor.execute(resolved, ResolveState.initial());
             }
             else if (resolved == null) {
-              myProcessor.execute(new GrBindingVariable((GroovyFile)file, ((GrReferenceExpression)value).getReferenceName()),
+              myProcessor.execute(new GrBindingVariable(groovyFile, referenceExpression.getReferenceName()),
                                 ResolveState.initial());
             }
           }
@@ -301,13 +297,13 @@ public final class CompleteReferenceExpression {
     final PsiType qualifierType = TypesUtil.boxPrimitiveType(qualifier.getType(), qualifier.getManager(), qualifier.getResolveScope());
     final ResolveState state = ResolveState.initial();
     if (qualifierType == null || PsiTypes.voidType().equals(qualifierType)) {
-      if (qualifier instanceof GrReferenceExpression) {
+      if (qualifier instanceof GrReferenceExpression expression) {
         PsiPackage aPackage = resolvePackageFqn((GrReferenceElement<?>)qualifier);
         if (aPackage != null) {
           aPackage.processDeclarations(myProcessor, state, null, myRefExpr);
           return;
         }
-        PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+        PsiElement resolved = expression.resolve();
         if (resolved instanceof PsiVariable) {
           resolved.processDeclarations(myProcessor, state, null, myRefExpr);
           return;
@@ -315,23 +311,23 @@ public final class CompleteReferenceExpression {
       }
       getVariantsFromQualifierType(TypesUtil.getJavaLangObject(qualifier), project);
     }
-    else if (qualifierType instanceof PsiIntersectionType) {
-      for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
+    else if (qualifierType instanceof PsiIntersectionType intersectionType) {
+      for (PsiType conjunct : intersectionType.getConjuncts()) {
         getVariantsFromQualifierType(conjunct, project);
       }
     }
-    else if (qualifierType instanceof GrTraitType) {
+    else if (qualifierType instanceof GrTraitType type) {
       // Process trait type conjuncts in reversed order because last applied trait matters.
-      PsiType[] conjuncts = ((GrTraitType)qualifierType).getConjuncts();
+      PsiType[] conjuncts = type.getConjuncts();
       for (int i = conjuncts.length - 1; i >= 0; i--) {
         getVariantsFromQualifierType(conjuncts[i], project);
       }
     }
     else {
       getVariantsFromQualifierType(qualifierType, project);
-      if (qualifier instanceof GrReferenceExpression && !PsiUtil.isSuperReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier)) {
-        PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
-        if (resolved instanceof PsiClass) { ////omitted .class
+      if (qualifier instanceof GrReferenceExpression expression && !PsiUtil.isSuperReference(qualifier) && !PsiUtil.isInstanceThisRef(qualifier)) {
+        PsiElement resolved = expression.resolve();
+        if (resolved instanceof PsiClass) { //omitted .class
           GlobalSearchScope scope = myRefExpr.getResolveScope();
           PsiClass javaLangClass = PsiUtil.getJavaLangClass(resolved, scope);
           if (javaLangClass != null) {
@@ -352,22 +348,22 @@ public final class CompleteReferenceExpression {
   private void getVariantsFromQualifierType(@NotNull PsiType qualifierType,
                                             @NotNull Project project) {
     final ResolveState state = ResolveState.initial();
-    if (qualifierType instanceof PsiClassType) {
-      PsiClassType.ClassResolveResult result = ((PsiClassType)qualifierType).resolveGenerics();
+    if (qualifierType instanceof PsiClassType classType) {
+      PsiClassType.ClassResolveResult result = classType.resolveGenerics();
       PsiClass qualifierClass = result.getElement();
       if (qualifierClass != null) {
         qualifierClass.processDeclarations(myProcessor, state.put(PsiSubstitutor.KEY, result.getSubstitutor()), null, myRefExpr);
       }
     }
-    else if (qualifierType instanceof PsiArrayType) {
+    else if (qualifierType instanceof PsiArrayType arrayType) {
       final GrTypeDefinition arrayClass =
-        GroovyPsiManager.getInstance(project).getArrayClass(((PsiArrayType)qualifierType).getComponentType());
+        GroovyPsiManager.getInstance(project).getArrayClass(arrayType.getComponentType());
       if (arrayClass != null) {
         if (!arrayClass.processDeclarations(myProcessor, state, null, myRefExpr)) return;
       }
     }
-    else if (qualifierType instanceof PsiIntersectionType) {
-      for (PsiType conjunct : ((PsiIntersectionType)qualifierType).getConjuncts()) {
+    else if (qualifierType instanceof PsiIntersectionType type) {
+      for (PsiType conjunct : type.getConjuncts()) {
         getVariantsFromQualifierType(conjunct, project);
       }
       return;
@@ -406,8 +402,6 @@ public final class CompleteReferenceExpression {
     private final boolean myFieldPointerOperator;
     private final boolean myIsMap;
 
-    private final SubstitutorComputer mySubstitutorComputer;
-
     private final Collection<String> myPreferredFieldNames; //Reference is inside classes with such fields so don't suggest properties with such names.
     private final Set<String> myPropertyNames = new HashSet<>();
     private final Set<String> myLocalVars = new HashSet<>();
@@ -431,8 +425,6 @@ public final class CompleteReferenceExpression {
       myFieldPointerOperator = myRefExpr.hasAt();
       myMethodPointerOperator = myRefExpr.getDotTokenType() == GroovyTokenTypes.mMEMBER_POINTER;
       myIsMap = isMap();
-      final PsiType thisType = PsiImplUtil.getQualifierType(myRefExpr);
-      mySubstitutorComputer = new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, PsiType.EMPTY_ARRAY, myRefExpr, myRefExpr.getParent());
     }
 
     public boolean isEmpty() {
@@ -450,7 +442,7 @@ public final class CompleteReferenceExpression {
 
     @Override
     public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-      if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor() && !(element instanceof NewifiedConstructor)) {
+      if (element instanceof PsiMethod psiMethod && psiMethod.isConstructor() && !(element instanceof NewifiedConstructor)) {
         return true;
       }
       if (element instanceof PsiNamedElement namedElement) {
@@ -462,8 +454,8 @@ public final class CompleteReferenceExpression {
 
         PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
         if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
-        if (element instanceof PsiMethod) {
-          for (PsiTypeParameter typeParameter : ((PsiMethod)element).getTypeParameters()) {
+        if (element instanceof PsiMethod method) {
+          for (PsiTypeParameter typeParameter : method.getTypeParameters()) {
             substitutor = substitutor.put(typeParameter, null);
           }
         }
@@ -484,15 +476,15 @@ public final class CompleteReferenceExpression {
       if (mySkipPackages && result.getElement() instanceof PsiPackage) return;
 
       PsiElement element = result.getElement();
-      if (element instanceof PsiVariable && !myMatcher.prefixMatches(((PsiVariable)element).getName())) {
+      if (element instanceof PsiVariable psiVariable && !myMatcher.prefixMatches(psiVariable.getName())) {
         return;
       }
 
-      if (element instanceof GrReflectedMethod) {
-        GrMethod base = ((GrReflectedMethod)element).getBaseMethod();
+      if (element instanceof GrReflectedMethod reflectedMethod) {
+        GrMethod base = reflectedMethod.getBaseMethod();
         if (!myProcessedMethodWithOptionalParams.add(base)) return;
 
-        result = PsiImplUtil.reflectedToBase(result, base, (GrReflectedMethod)element);
+        result = PsiImplUtil.reflectedToBase(result, base, reflectedMethod);
         element = base;
       }
 
@@ -505,17 +497,17 @@ public final class CompleteReferenceExpression {
       addCandidate(result);
 
       if (!myFieldPointerOperator && !myMethodPointerOperator) {
-        if (element instanceof PsiMethod) {
-          processProperty((PsiMethod)element, result);
+        if (element instanceof PsiMethod method) {
+          processProperty(method, result);
         }
-        else if (element instanceof GrField) {
-          if (((GrField)element).isProperty()) {
-            processPropertyFromField((GrField)element, result);
+        else if (element instanceof GrField field) {
+          if (field.isProperty()) {
+            processPropertyFromField(field, result);
           }
         }
       }
-      if (element instanceof GrVariable && !(element instanceof GrField)) {
-        myLocalVars.add(((GrVariable)element).getName());
+      if (element instanceof GrVariable variable && !(element instanceof GrField)) {
+        myLocalVars.add(variable.getName());
       }
     }
 
@@ -579,8 +571,8 @@ public final class CompleteReferenceExpression {
       Set<String> usedFields = new HashSet<>();
       for (GroovyResolveResult result : results) {
         final PsiElement element = result.getElement();
-        if (element instanceof PsiField) {
-          final String name = ((PsiField)element).getName();
+        if (element instanceof PsiField field) {
+          final String name = field.getName();
           if (myPropertyNames.contains(name) ||
               myLocalVars.contains(name) ||
               usedFields.contains(name)) {
