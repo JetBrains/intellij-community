@@ -126,6 +126,37 @@ internal class ComplementaryFontsRegistryImplTest {
   }
 
   @Test
+  fun `the same family face gives the same font info`() {
+    val info = registry.getFamilyFontInfo(Font.SERIF, Font.BOLD, 13f, false, null)
+    assertThat(info.size2D).isEqualTo(13f)
+    assertThat(info.font.isBold).isTrue()
+    assertThat(info.font.family).isEqualTo(FontFamilyService.getFont(Font.SERIF, null, null, Font.BOLD).family)
+    assertThat(registry.getFamilyFontInfo(Font.SERIF, Font.BOLD, 13f, false, null)).isSameAs(info)
+  }
+
+  @Test
+  fun `another size, ligatures setting or render context gives another family font info`() {
+    val info = registry.getFamilyFontInfo(Font.SERIF, Font.PLAIN, 13f, false, null)
+    assertThat(registry.getFamilyFontInfo(Font.SERIF, Font.PLAIN, 14f, false, null)).isNotSameAs(info)
+    assertThat(registry.getFamilyFontInfo(Font.SERIF, Font.PLAIN, 13f, true, null)).isNotSameAs(info)
+    assertThat(registry.getFamilyFontInfo(Font.SERIF, Font.PLAIN, 13f, false, FontRenderContext(null, true, true))).isNotSameAs(info)
+  }
+
+  @Test
+  fun `the search and the family face share one font info`() {
+    val searched = fontFor('a'.code)
+    val family = registry.getFamilyFontInfo(Font.MONOSPACED, Font.PLAIN, 13f, preferences.useLigatures(), null)
+    assertThat(family).isSameAs(searched)
+    assertThat(fontFor('a'.code)).isSameAs(searched)
+  }
+
+  @Test
+  fun `a family face style out of range gives the plain style`() {
+    val plain = registry.getFamilyFontInfo(Font.SERIF, Font.PLAIN, 13f, false, null)
+    assertThat(registry.getFamilyFontInfo(Font.SERIF, 42, 13f, false, null)).isSameAs(plain)
+  }
+
+  @Test
   fun `text with one character gives the font of its code point`() {
     val info = fontFor('a'.code)
     assertThat(registry.getFontAbleToDisplay("xa", 1, 2, Font.PLAIN, preferences, null)).isSameAs(info)

@@ -141,6 +141,24 @@ final class ComplementaryFontsRegistryImpl {
     return findInFallbackFonts(codePoint, null, 0, 0, size, style, false, Set.of(), context);
   }
 
+  /**
+   * Returns the font of the typographic font family in the style, at the size, without character variants.
+   * It checks no code point and keeps the last fallbacks of the search.
+   */
+  @NotNull FontInfo getFamilyFontInfo(
+    String family,
+    @FontStyle int style,
+    float size,
+    boolean useLigatures,
+    @Nullable FontRenderContext context
+  ) {
+    Font font = FontFamilyService.getFont(family, null, null, validStyle(style));
+    synchronized (this) {
+      FontFallback fallback = preferredFamilyFonts.computeIfAbsent(font, FontFallback::new);
+      return fallback.getFontInfo(size, useLigatures, Set.of(), context);
+    }
+  }
+
   void preloadGlyph(int codePoint, @FontStyle int style, @NotNull FontPreferences preferences) {
     style = validStyle(style);
     // One version for all the reads below

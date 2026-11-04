@@ -85,6 +85,23 @@ public final class ComplementaryFontsRegistry {
   }
 
   /**
+   * Returns the font of the typographic font family in the style, at the size, without character variants.
+   * The search methods use the same font for the same family, so they share the returned object.
+   * The family must be available, see {@link FontFamilyService#isAvailable}.
+   * For another name, {@link FontFamilyService} gives its default font.
+   */
+  @ApiStatus.Internal
+  public static @NotNull FontInfo getFamilyFontInfo(
+    String family,
+    @FontStyle int style,
+    float size,
+    boolean useLigatures,
+    @Nullable FontRenderContext context
+  ) {
+    return INSTANCE.getFamilyFontInfo(family, style, size, useLigatures, context);
+  }
+
+  /**
    * Checks the code point in the preferred font families without the registry lock, the same way as
    * {@link #getFontAbleToDisplay(int, int, FontPreferences, FontRenderContext)} does under the lock.
    * The first check of a glyph can be slow, for example on macOS. After this call, the check under the lock is fast,
