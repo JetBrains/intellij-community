@@ -32,6 +32,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.seconds
 
@@ -49,13 +50,15 @@ internal class GitFsMonitorProjectCloseListener : ProjectCloseListener, AppLifec
 
   override fun beforeAppWillBeClosed(isRestart: Boolean) {
     if (!isStopEnabled() || isRestart) return
-    val roots = ProjectManager.getInstance().openProjects.flatMap { it.gitRoots() }.distinct()
+    val stopper = serviceIfCreated<GitFsMonitorDaemonStopper>()
+    val openProjectRoots = ProjectManager.getInstance().openProjects.flatMap { it.gitRoots() }
+    val roots = (openProjectRoots + stopper?.getFramelessProjectRoots().orEmpty()).distinct()
     try {
       runWithModalProgressBlocking(ModalTaskOwner.guess(),
                                    GitBundle.message("git.fsmonitor.stop.progress"),
                                    TaskCancellation.cancellable()) {
         if (roots.isNotEmpty()) stopDaemons(roots)
-        serviceIfCreated<GitFsMonitorDaemonStopper>()?.awaitBackgroundStops()
+        stopper?.awaitBackgroundStops()
       }
     }
     catch (_: CancellationException) {
@@ -72,7 +75,20 @@ private fun Project.gitRoots(): List<VirtualFile> =
   serviceIfCreated<GitRepositoryManager>()?.repositories?.map { it.root } ?: emptyList()
 
 @Service(Service.Level.APP)
-private class GitFsMonitorDaemonStopper(private val cs: CoroutineScope) {
+internal class GitFsMonitorDaemonStopper(private val cs: CoroutineScope) {
+  private val framelessProjectRoots: MutableSet<VirtualFile> = ConcurrentHashMap.newKeySet()
+
+  /**
+   * Records the Git [roots] of a frameless recent project, so [GitFsMonitorProjectCloseListener] stops their daemons at exit.
+   *
+   * The welcome screen loads such a project without opening it, so the listener does not find it among the open projects.
+   */
+  fun registerFramelessProjectRoots(roots: Collection<VirtualFile>) {
+    framelessProjectRoots += roots
+  }
+
+  fun getFramelessProjectRoots(): Set<VirtualFile> = framelessProjectRoots.toSet()
+
   fun launchStopDaemons(roots: List<VirtualFile>) {
     cs.launch {
       withBackgroundProgress(BackgroundTaskOwner.allFrames(), GitBundle.message("git.fsmonitor.stop.progress")) {
