@@ -1,24 +1,22 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.fixtures
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.PyInterpreterLibrarySync
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreterKey
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.interpreterRefOf
-import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
@@ -122,40 +120,22 @@ fun addMockPythonInterpreterForTests(module: Module, sdk: Sdk): PythonInterprete
 }
 
 /**
- * Makes the Python project of [module] own the SDK of [module], for a light project of the legacy flow, whose platform
- * adds a new SDK for each test. The owner and the working directory of the SDK become the content root of [module], as in
- * a real project. The SDK then names the interpreter of the Python project, as the registry sets it for an SDK that one
- * module uses. Does nothing in the interpreter library flow, whose registry sets the owner, and for an SDK that the
- * Python project owns already. It returns when the registry holds the SDK of [module] under the new owner, so a wait for
- * the interpreters after it expects that interpreter, see [awaitPythonInterpreters].
+ * Adds the mock [sdk] to the SDK table until the project of [module] closes, and sets it on [module]. The content root of
+ * [module] owns the SDK and is its working directory, as in a real project of the legacy flow. Call it on the EDT.
  */
 @TestOnly
-fun ownModuleSdkForTests(module: Module) {
-  if (isInterpreterLibraryFlowEnabled()) return
-  val sdk = ModuleRootManager.getInstance(module).sdk ?: return
-  // The base directory of the Python project of a light module is its content root.
-  val ownerDir = ModuleRootManager.getInstance(module).contentRoots.firstOrNull()?.path ?: return
-  val data = sdk.sdkAdditionalData as? PythonSdkAdditionalData ?: return
-  if (data.associatedModulePath == ownerDir && data.workingDirectory == Path.of(ownerDir)) return
-  ApplicationManager.getApplication().invokeAndWait {
-    WriteAction.run<RuntimeException> {
-      val modificator = sdk.sdkModificator
-      (modificator.sdkAdditionalData as? PythonSdkAdditionalData)?.let {
-        it.associatedModulePath = ownerDir
-        it.workingDirectory = Path.of(ownerDir)
-      }
-      modificator.commitChanges()
+fun addOwnedMockSdkForTests(module: Module, sdk: Sdk) {
+  val ownerDir = checkNotNull(ModuleRootManager.getInstance(module).contentRoots.firstOrNull()) { "No content root of ${module.name}" }.path
+  WriteAction.run<RuntimeException> {
+    val modificator = sdk.sdkModificator
+    (modificator.sdkAdditionalData as? PythonSdkAdditionalData)?.let {
+      it.associatedModulePath = ownerDir
+      it.workingDirectory = Path.of(ownerDir)
     }
+    modificator.commitChanges()
+    ProjectJdkTable.getInstance().addJdk(sdk, module.project)
   }
-  val ref = interpreterRefOf(sdk) ?: return
-  val key = PythonInterpreterKey(Path.of(ownerDir), ref)
-  val registry = PythonInterpreterRegistry.getInstance(module.project)
-  val job = PyPackageCoroutine.getScope(module.project).launch {
-    withTimeout(DEFAULT_TEST_TIMEOUT) {
-      registry.awaitSdkForTests(key, sdk)
-    }
-  }
-  job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
+  ModuleRootModificationUtil.setModuleSdk(module, sdk)
 }
 
 /**

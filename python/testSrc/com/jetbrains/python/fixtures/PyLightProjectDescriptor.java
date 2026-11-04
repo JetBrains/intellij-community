@@ -70,16 +70,6 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
     return PySdkNamesKt.PYTHON_MODULE_ID;
   }
 
-  /**
-   * The SDK of the module in the legacy flow: the platform adds it to the SDK table, writes it to the module, and removes
-   * it with the light project, as in older builds. The interpreter library flow gives the module an interpreter instead,
-   * see {@link #setUpProject}, so the platform gets no SDK.
-   */
-  @Override
-  public final Sdk getSdk() {
-    return PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled() ? null : createMockSdk();
-  }
-
   /** The mock SDK of the interpreter of the module, see {@link #setUpProject}. */
   protected @NotNull Sdk createMockSdk() {
     return myName == null
@@ -88,19 +78,24 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
   }
 
   /**
-   * In the interpreter library flow, gives the Python project of the module an interpreter of {@link #createMockSdk()}.
-   * The registry holds it, owned by the Python project, and the SDK is in no SDK table. The interpreter lives as long as
-   * the light project. The legacy flow gets its SDK from {@link #getSdk()}.
+   * Gives the Python project of the module an interpreter of {@link #createMockSdk()}, which lives as long as the light
+   * project. So each test of the light project reads the same interpreter, and nothing changes between two tests.
+   * <p>
+   * The interpreter library flow adds the interpreter to the registry, and the SDK is in no SDK table. The legacy flow adds
+   * the SDK to the SDK table until the project closes, owned by the content root of the module, and sets it on the module.
    */
   @Override
   public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
     // Before any package manager is built: a mock SDK cannot run, so its packages come from a test package manager.
     MockSdkPackageManagerProvider.register(project);
     super.setUpProject(project, handler);
-    if (!PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled()) return;
     Module module = ModuleManager.getInstance(project).findModuleByName(TEST_MODULE_NAME);
-    if (module != null) {
+    if (module == null) return;
+    if (PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled()) {
       PyProjectStructureTestUtilKt.addMockPythonInterpreterForTests(module, createMockSdk());
+    }
+    else {
+      PyProjectStructureTestUtilKt.addOwnedMockSdkForTests(module, createMockSdk());
     }
   }
 

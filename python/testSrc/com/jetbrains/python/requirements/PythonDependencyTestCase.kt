@@ -11,7 +11,6 @@ import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.fixtures.PyLightProjectDescriptor
 import com.jetbrains.python.fixtures.awaitPythonInterpreters
 import com.jetbrains.python.fixtures.findPythonInterpreterForTests
-import com.jetbrains.python.fixtures.ownModuleSdkForTests
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
@@ -64,9 +63,7 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    // The legacy flow gets a new SDK of the light project for each test, and the Python project owns it.
-    ownModuleSdkForTests(myFixture.module)
-    // The inspections read the interpreter from the Python project structure, which follows the new SDK in the background.
+    // The inspections read the interpreter from the Python project structure, which follows the SDK in the background.
     awaitPythonInterpreters(myFixture.project)
   }
 

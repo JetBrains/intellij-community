@@ -503,15 +503,6 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
   /** [resolve] without the wait: `null` also before the first computation. For code that cannot suspend. */
   fun resolveIfReady(key: PythonInterpreterKey): PythonInterpreter? = state.value?.interpreters?.firstOrNull { it.key == key }
 
-  /**
-   * For tests: suspends until a computation holds [sdk] under [key]. The SDK of an earlier test can have the same key, and
-   * [interpreterKeysFlow] reports no change for that SDK.
-   */
-  @TestOnly
-  suspend fun awaitSdkForTests(key: PythonInterpreterKey, sdk: Sdk) {
-    state.filterNotNull().first { computed -> computed.interpreters.any { it.key == key && it.isFor(sdk) } }
-  }
-
   /** The key of each interpreter the registry holds, each time they change. See [resolve]. */
   val interpreterKeysFlow: Flow<Set<PythonInterpreterKey>>
     get() = tableFlow.map { list -> list.mapTo(mutableSetOf()) { it.key } }.distinctUntilChanged()

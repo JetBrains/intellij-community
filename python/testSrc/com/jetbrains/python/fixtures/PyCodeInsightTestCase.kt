@@ -6,7 +6,9 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.thisLogger
@@ -33,6 +35,7 @@ import com.intellij.python.sdk.backend.classRoots
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
+import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -288,8 +291,6 @@ abstract class PyCodeInsightTestCase {
     val fixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
     fixture.testDataPath = PythonTestUtil.getTestDataPath()
     fixture.setUp()
-    // The legacy flow gets a new SDK of the light project, and the Python project owns it.
-    ownModuleSdkForTests(fixture.module)
     return fixture
   }
 
@@ -326,8 +327,7 @@ abstract class PyCodeInsightTestCase {
     private fun ensureFixture(testCase: PyCodeInsightTestCase, testCaseOptions: TestCaseOptions) {
       if (!isAffectingFixture(testCaseOptions)) return
 
-      cachedFixture?.dispose?.invoke()
-      cachedFixture = null
+      disposeCachedFixture()
       val fixture = testCase.createFixture(testCaseOptions)
       cachedFixture = CachedFixture(testCaseOptions, fixture) { testCase.disposeFixture(fixture) }
       // The setup registers a new SDK, and the Python project structure follows it in the background. A test that
@@ -352,8 +352,22 @@ abstract class PyCodeInsightTestCase {
         { IntentionalUnstubbing.resetForciblyUnstubbedFileSet() },
         { Registry.get(PyAnyType.REGISTRY_KEY).resetToDefault() },
         { InspectionProfileImpl.INIT_INSPECTIONS = false },
-        { cachedFixture?.dispose?.invoke() },
-        { cachedFixture = null },
+        { disposeCachedFixture() },
+      )
+    }
+
+    /**
+     * Disposes the cached fixture and closes its light project. The platform keeps a light project open for the next
+     * fixture of an equal descriptor, but it disposes the module of that project. A new fixture gets a new project, so
+     * the project and its module start and end together.
+     */
+    private fun disposeCachedFixture() {
+      val cached = cachedFixture ?: return
+      cachedFixture = null
+      RunAll.runAll(
+        { cached.dispose() },
+        // The teardown of a class does not run on the EDT, and a project closes there.
+        { ApplicationManager.getApplication().invokeAndWait { WriteIntentReadAction.run { LightPlatformTestCase.closeAndDeleteProject() } } },
       )
     }
   }

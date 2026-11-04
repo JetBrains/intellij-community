@@ -3,7 +3,6 @@ package com.jetbrains.env;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
@@ -13,12 +12,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
@@ -37,7 +36,6 @@ import com.jetbrains.python.fixtures.PyProjectStructureTestUtilKt;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
-import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.internal.PySdkNamesKt;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -138,6 +136,8 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
   @Override
   public void setUp(final String testName) throws Exception {
+    // The light project of an earlier test closes, so the next light test gets a new one.
+    EdtTestUtil.runInEdtAndWait(() -> LightPlatformTestCase.closeAndDeleteProject());
     final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
     fixtureFactory.registerFixtureBuilder(MyModuleFixtureBuilder.class, MyModuleFixtureBuilderImpl.class);
     final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder =
@@ -202,13 +202,6 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
         UIUtil.dispatchAllInvocationEvents();
         while (RefreshQueueImpl.isRefreshInProgress()) {
           UIUtil.dispatchAllInvocationEvents();
-        }
-        for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance())) {
-          WriteAction.run(() -> {
-            if (sdk instanceof Disposable && !Disposer.isDisposed((Disposable)sdk)) {
-              ProjectJdkTable.getInstance().removeJdk(sdk);
-            }
-          });
         }
       });
       // Teardown should be called on main thread because fixture teardown checks for

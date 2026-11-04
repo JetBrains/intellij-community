@@ -127,8 +127,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
-    // The legacy flow gets a new SDK of the light project for each test, and the Python project owns it.
-    PyProjectStructureTestUtilKt.ownModuleSdkForTests(myFixture.getModule());
     // Resolve reads the interpreter from the snapshot, so a test starts only when the snapshot holds the fixture SDK.
     PyProjectStructureTestUtilKt.awaitPythonInterpreters(myFixture.getProject());
 

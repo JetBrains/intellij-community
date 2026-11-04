@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
@@ -204,9 +205,17 @@ private fun sdkFacts(sdk: Sdk): PythonInterpreterFacts {
  */
 private fun writeSdkFacts(sdk: Sdk, facts: PythonInterpreterFacts): Boolean {
   val userPathsChanged = sdkFacts(sdk).let { it.addedPaths != facts.addedPaths || it.excludedPaths != facts.excludedPaths }
-  if (userPathsChanged) commitUserPaths(sdk, facts)
   val roots = sdkFactRoots(facts) + PythonSdkUtil.getPythonClassRoots(sdk).filter(::isDerivedRoot)
-  return commitSdk(sdk, facts.version, roots) || userPathsChanged
+  val versionChanged = facts.version != sdk.versionString
+  val rootsChanged = roots != PythonSdkUtil.getPythonClassRoots(sdk).toList()
+  if (!userPathsChanged && !versionChanged && !rootsChanged) return false
+  // One commit: a reader of the SDK between two commits reads a root of a removed user path as a path of `sys.path`.
+  commit(sdk) { modificator ->
+    if (userPathsChanged) setUserPaths(modificator, facts)
+    if (versionChanged) modificator.versionString = facts.version
+    if (rootsChanged) setClassRoots(modificator, roots)
+  }
+  return true
 }
 
 /**
@@ -235,16 +244,18 @@ internal fun commitSdk(sdk: Sdk, version: String?, roots: List<VirtualFile>): Bo
   if (!versionChanged && !rootsChanged) return false
   commit(sdk) { modificator ->
     if (versionChanged) modificator.versionString = version
-    if (rootsChanged) {
-      modificator.removeRoots(OrderRootType.CLASSES)
-      roots.forEach { modificator.addRoot(it, OrderRootType.CLASSES) }
-    }
+    if (rootsChanged) setClassRoots(modificator, roots)
   }
   return true
 }
 
+private fun setClassRoots(modificator: SdkModificator, roots: List<VirtualFile>) {
+  modificator.removeRoots(OrderRootType.CLASSES)
+  roots.forEach { modificator.addRoot(it, OrderRootType.CLASSES) }
+}
+
 /** Applies [change] to [sdk] and commits it. */
-private fun commit(sdk: Sdk, change: (com.intellij.openapi.projectRoots.SdkModificator) -> Unit) {
+private fun commit(sdk: Sdk, change: (SdkModificator) -> Unit) {
   WriteAction.runAndWait<RuntimeException> {
     val modificator = sdk.sdkModificator
     change(modificator)
@@ -288,13 +299,15 @@ private fun PythonSdkAdditionalData?.excludedPaths(): Set<Path> = this?.excluded
  */
 internal fun commitUserPaths(sdk: Sdk, facts: PythonInterpreterFacts) {
   if (sdkFacts(sdk).let { it.addedPaths == facts.addedPaths && it.excludedPaths == facts.excludedPaths }) return
+  commit(sdk) { modificator -> setUserPaths(modificator, facts) }
+}
+
+private fun setUserPaths(modificator: SdkModificator, facts: PythonInterpreterFacts) {
+  val data = modificator.sdkAdditionalData as? PythonSdkAdditionalData ?: return
   val files = LocalFileSystem.getInstance()
-  commit(sdk) { modificator ->
-    val data = modificator.sdkAdditionalData as? PythonSdkAdditionalData ?: return@commit
-    data.setAddedPathsFromVirtualFiles(facts.addedPaths.mapNotNullTo(LinkedHashSet()) { files.findFileByNioFile(it) })
-    data.setExcludedPathsFromVirtualFiles(facts.excludedPaths.mapNotNullTo(LinkedHashSet()) { files.findFileByNioFile(it) })
-    modificator.sdkAdditionalData = data
-  }
+  data.setAddedPathsFromVirtualFiles(facts.addedPaths.mapNotNullTo(LinkedHashSet()) { files.findFileByNioFile(it) })
+  data.setExcludedPathsFromVirtualFiles(facts.excludedPaths.mapNotNullTo(LinkedHashSet()) { files.findFileByNioFile(it) })
+  modificator.sdkAdditionalData = data
 }
 
 private fun pathToUrl(path: Path): String = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path.toString()))
