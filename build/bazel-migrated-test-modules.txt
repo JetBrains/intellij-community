@@ -37,6 +37,7 @@ intellij.configurationScript.tests
 intellij.copyright.tests
 intellij.debugger.jvm.advanced.java.tests
 intellij.debugger.jvm.advanced.mcpServer.tests
+intellij.debuggerMcp.tests
 intellij.dev.leakDetection.tests
 intellij.dev.pluginLoading.tests
 intellij.devkit.apiDump.lang.tests
