@@ -12,14 +12,13 @@ const SNAPSHOT_VERSION_SEGMENT: &str = "99999999";
 
 /// `CompatibleBuildRange` (`community/platform/build-scripts/src/org/jetbrains/intellij/build/CompatibleBuildRange.kt`).
 ///
-/// `ANY_WITH_SAME_BASELINE` is deprecated in the platform, and no plugin of this population states it. So it is absent
-/// here and not ported as an unreachable value.
+/// `ANY_WITH_SAME_BASELINE` is deprecated in the platform, and no plugin of this population states it. A dev
+/// distribution stamps no `RESTRICTED_TO_SAME_RELEASE`, because the rule states the range of every plugin. So both are
+/// absent here and not ported as unreachable values.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum CompatibleBuildRange {
     /// The plugin is compatible with this build number alone.
     Exact,
-    /// The plugin is compatible with the builds that differ only in the last component.
-    RestrictedToSameRelease,
     /// The plugin is compatible with the newer builds of the same baseline.
     NewerWithSameBaseline,
 }
@@ -98,15 +97,7 @@ pub(crate) fn compatible_platform_version_range(compatible_build_range: Compatib
     } else {
         &build_number[..last_dot]
     };
-    let end = if compatible_build_range == CompatibleBuildRange::RestrictedToSameRelease {
-        if digit_dot_digit_shape(build_number) {
-            build_number.len()
-        } else {
-            last_dot
-        }
-    } else {
-        build_number.find('.').unwrap_or(build_number.len())
-    };
+    let end = build_number.find('.').unwrap_or(build_number.len());
     (since_build.to_owned(), format!("{}.*", &build_number[..end]))
 }
 

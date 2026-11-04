@@ -166,26 +166,16 @@ fn take_mode(options: &mut cli::Options) -> Result<Option<Mode>> {
 /// Every field is a string, a boolean, a path or a list of those. Nothing here can reach a layout or a build context.
 /// `dev_dist_plugin_descriptor` states the request, and [`parse_plugin_request`] is its one reader.
 #[derive(Debug, PartialEq, Eq)]
-#[expect(
-    clippy::struct_excessive_bools,
-    reason = "each field is one switch of the request that the rule states"
-)]
 struct PluginRequest {
     output: PathBuf,
     main_module: String,
     source: DescriptorSource,
     build_number_file: PathBuf,
-    /// The application info of the product. The stamps take the EAP flag, the release date and the release version
-    /// from it.
-    application_info: PathBuf,
-    /// The application info of the host product, for a frontend.
-    host_application_info: Option<PathBuf>,
-    /// The markers of the application info, in the order that the writer replaces them.
-    replacements: Vec<Replacement>,
-    /// The pinned build date. An EAP product without a release date takes its date.
-    build_date_seconds: i64,
-    exact_version: bool,
-    retain_product: bool,
+    /// The since and until range of the descriptor. The rule states it, so no product fact selects it.
+    compatible_build_range: CompatibleBuildRange,
+    /// The product facts of a retained `product-descriptor`. `None` for a plugin that drops the element, and then the
+    /// request names no application info.
+    retained_product: Option<RetainedProduct>,
     embeds_content: bool,
     /// Finishes the ordinary XML normalization before the embedded descriptors add CDATA.
     reserialize_before_content_embedding: bool,
@@ -205,11 +195,23 @@ struct PluginRequest {
     markers: Vec<String>,
     /// What the layout appends to the IDE build version. Empty for a layout that stamps the version unchanged.
     version_suffix: String,
-    /// Replaces the since and until constraint that the flags give.
-    compatible_build_range: Option<CompatibleBuildRange>,
     /// When set, receives the final descriptor after one more [`descriptorxml`] round trip. That is the form that the
     /// plugin classpath record embeds (`generatePluginClassPathFromOrderedAssets` of `orderedAssets.kt`).
     reserialized_output: Option<PathBuf>,
+}
+
+/// The application info that the stamps of a retained `product-descriptor` read: the EAP flag, the release date and the
+/// release version. Only `--retain-product-descriptor=true` states it.
+#[derive(Debug, PartialEq, Eq)]
+struct RetainedProduct {
+    /// The application info of the product.
+    application_info: PathBuf,
+    /// The application info of the host product, for a frontend.
+    host_application_info: Option<PathBuf>,
+    /// The markers of the application info, in the order that the writer replaces them.
+    replacements: Vec<Replacement>,
+    /// The pinned build date. An EAP product without a release date takes its date.
+    build_date_seconds: i64,
 }
 
 /// The source of the plugin descriptor: a declared file, or an entry of a declared jar.
@@ -258,16 +260,12 @@ fn reserialize(content: &str) -> Result<String> {
 /// instead of the product layout.
 fn patch(parsed: &PluginRequest) -> Result<String> {
     let build_number = read_text(&parsed.build_number_file)?.trim().to_owned();
-    let application_info = read_application_info(parsed)?;
     let plugin_version = stamps::plugin_build_number(&build_number)? + &parsed.version_suffix;
-    let compatible_build_range = parsed.compatible_build_range.unwrap_or(if parsed.exact_version {
-        CompatibleBuildRange::Exact
-    } else if application_info.is_eap {
-        CompatibleBuildRange::RestrictedToSameRelease
-    } else {
-        CompatibleBuildRange::NewerWithSameBaseline
-    });
-    let (since_build, until_build) = stamps::compatible_platform_version_range(compatible_build_range, &build_number);
+    let (since_build, until_build) = stamps::compatible_platform_version_range(parsed.compatible_build_range, &build_number);
+    let product_stamps = match &parsed.retained_product {
+        Some(product) => Some(read_application_info(product)?),
+        None => None,
+    };
 
     let mut jars = Jars::default();
     let (source, source_name) = match &parsed.source {
@@ -285,10 +283,11 @@ fn patch(parsed: &PluginRequest) -> Result<String> {
             version: plugin_version,
             since_build,
             until_build,
-            release_date: application_info.major_release_date.clone(),
-            release_version: application_info.release_version_for_licensing(),
-            retain_product_descriptor_for_bundled_plugin: parsed.retain_product,
-            is_eap: application_info.is_eap,
+            product_descriptor: product_stamps.map(|application_info| stamps::ProductDescriptorStamps {
+                release_date: application_info.major_release_date.clone(),
+                release_version: application_info.release_version_for_licensing(),
+                is_eap: application_info.is_eap,
+            }),
         },
     );
     structural::resolve_includes(&mut element, &cache)?;
@@ -312,12 +311,12 @@ fn patch(parsed: &PluginRequest) -> Result<String> {
 }
 
 /// Reads the facts of the application info. A frontend reads its host too, as the product files tool does.
-fn read_application_info(parsed: &PluginRequest) -> Result<ApplicationInfo> {
+fn read_application_info(product: &RetainedProduct) -> Result<ApplicationInfo> {
     ApplicationInfo::load(
-        &parsed.application_info,
-        &parsed.replacements,
-        parsed.host_application_info.as_deref(),
-        parsed.build_date_seconds,
+        &product.application_info,
+        &product.replacements,
+        product.host_application_info.as_deref(),
+        product.build_date_seconds,
     )
 }
 
@@ -340,14 +339,14 @@ fn parse_plugin_request(mut options: cli::Options) -> Result<PluginRequest> {
         (Some(source), None) if !source.is_empty() => DescriptorSource::File(source.into()),
         (_, None) => bail!("--source is required"),
     };
-    // The rule states the application info of every product, so a request without it is one that the rule cannot state.
     let build_number_file = options.require("--build-number-file")?.into();
-    let application_info = options.require("--application-info-source")?.into();
-    let host_application_info = non_empty_path(&mut options, "--host-application-info-source")?;
-    let replacements = Replacement::parse_all(&options.take_all("--replacement")?)?;
-    let build_date_seconds = options.require("--build-date-seconds")?;
-    let Ok(build_date_seconds) = build_date_seconds.parse::<i64>() else {
-        bail!("--build-date-seconds is not a number of seconds: '{build_date_seconds}'");
+    let compatible_build_range = parse_compatible_build_range(&options.require("--compatible-build-range")?)?;
+    // Only a retained `product-descriptor` reads the application info. The rule states it for no other plugin, so the
+    // application info options of another request stay unknown and fail at `finish`.
+    let retained_product = if boolean_option(&mut options, "--retain-product-descriptor", false)? {
+        Some(parse_retained_product(&mut options)?)
+    } else {
+        None
     };
     let mut plugin_descriptors = BTreeMap::new();
     for value in options.take_all("--plugin-descriptor")? {
@@ -357,23 +356,13 @@ fn parse_plugin_request(mut options: cli::Options) -> Result<PluginRequest> {
     for value in options.take_all("--plugin-descriptor-in-jar")? {
         append_descriptor_jar(&mut plugin_descriptors_in_jar, &value)?;
     }
-    // The layouts state one range. `EXACT` and `RESTRICTED_TO_SAME_RELEASE` still come from the two flags.
-    let compatible_build_range = match options.take("--compatible-build-range")?.as_deref() {
-        None => None,
-        Some("NEWER_WITH_SAME_BASELINE") => Some(CompatibleBuildRange::NewerWithSameBaseline),
-        Some(other) => bail!("the compatible build range '{other}' is not supported, only NEWER_WITH_SAME_BASELINE is"),
-    };
     let request = PluginRequest {
         output,
         main_module,
         source,
         build_number_file,
-        application_info,
-        host_application_info,
-        replacements,
-        build_date_seconds,
-        exact_version: boolean_option(&mut options, "--exact-version", false)?,
-        retain_product: boolean_option(&mut options, "--retain-product-descriptor", false)?,
+        compatible_build_range,
+        retained_product,
         embeds_content: boolean_option(&mut options, "--embed-content-modules", true)?,
         reserialize_before_content_embedding: boolean_option(&mut options, "--reserialize-before-content-embedding", false)?,
         refused_content_modules: options.take_all("--refused-content-module")?,
@@ -383,11 +372,38 @@ fn parse_plugin_request(mut options: cli::Options) -> Result<PluginRequest> {
         plugin_descriptors_in_jar,
         markers: options.take_all("--marker")?,
         version_suffix: options.take("--version-suffix")?.unwrap_or_default(),
-        compatible_build_range,
         reserialized_output: non_empty_path(&mut options, "--reserialized-output")?,
     };
     options.finish()?;
     Ok(request)
+}
+
+/// Reads the range that the rule states. A dev distribution stamps `NEWER_WITH_SAME_BASELINE`, and a layout with an
+/// exact version stamps `EXACT`. No rule states `RESTRICTED_TO_SAME_RELEASE`, so it is refused like an unknown name.
+fn parse_compatible_build_range(value: &str) -> Result<CompatibleBuildRange> {
+    match value {
+        "EXACT" => Ok(CompatibleBuildRange::Exact),
+        "NEWER_WITH_SAME_BASELINE" => Ok(CompatibleBuildRange::NewerWithSameBaseline),
+        other => bail!("the compatible build range '{other}' is not supported, only EXACT and NEWER_WITH_SAME_BASELINE are"),
+    }
+}
+
+/// Reads the application info options of a retained `product-descriptor`. The rule states the application info of the
+/// product and the pinned build date, so a request without them is one that the rule cannot state.
+fn parse_retained_product(options: &mut cli::Options) -> Result<RetainedProduct> {
+    let application_info = options.require("--application-info-source")?.into();
+    let host_application_info = non_empty_path(options, "--host-application-info-source")?;
+    let replacements = Replacement::parse_all(&options.take_all("--replacement")?)?;
+    let build_date_seconds = options.require("--build-date-seconds")?;
+    let Ok(build_date_seconds) = build_date_seconds.parse::<i64>() else {
+        bail!("--build-date-seconds is not a number of seconds: '{build_date_seconds}'");
+    };
+    Ok(RetainedProduct {
+        application_info,
+        host_application_info,
+        replacements,
+        build_date_seconds,
+    })
 }
 
 /// Reads an optional path option. The rules never write an empty value, so this function refuses one.

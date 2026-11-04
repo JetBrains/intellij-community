@@ -7,7 +7,7 @@
 //! `version` second, and both go **after the anchor**. So the second one pushes the first one along, and the bytes
 //! state `version` before `idea-version` every time.
 
-use super::{Request, apply};
+use super::{ProductDescriptorStamps, Request, apply};
 use crate::descriptorxml::{read, write};
 
 fn stamp(source: &str, request: &Request) -> String {
@@ -21,16 +21,17 @@ fn base() -> Request {
         version: "1.0.0".into(),
         since_build: "263".into(),
         until_build: "263.*".into(),
-        release_date: "20260101".into(),
-        release_version: "2026300".into(),
-        is_eap: true,
         ..Request::default()
     }
 }
 
 fn retained() -> Request {
     Request {
-        retain_product_descriptor_for_bundled_plugin: true,
+        product_descriptor: Some(ProductDescriptorStamps {
+            release_date: "20260101".into(),
+            release_version: "2026300".into(),
+            is_eap: true,
+        }),
         ..base()
     }
 }

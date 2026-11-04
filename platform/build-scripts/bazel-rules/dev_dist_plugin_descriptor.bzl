@@ -243,14 +243,20 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
     parameters = [
         ("--main-module", module_name, "formatted"),
         ("--build-number-file", ctx.file._build_number_file, "formatted"),
-        ("--application-info-source", product.application_info, "formatted"),
+        ("--compatible-build-range", _compatible_build_range(ctx), "literal"),
     ]
-    if product.host_application_info != None:
-        parameters.append(("--host-application-info-source", product.host_application_info, "formatted"))
+
+    # Only a retained `product-descriptor` reads the application info. Every other leaf names none, so an edit of an
+    # application info re-keys no other descriptor.
+    if ctx.attr.retain_product_descriptor:
+        parameters.append(("--application-info-source", product.application_info, "formatted"))
+        if product.host_application_info != None:
+            parameters.append(("--host-application-info-source", product.host_application_info, "formatted"))
+        parameters.extend([
+            ("--replacement", list(product.replacements), "repeated"),
+            ("--build-date-seconds", DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS, "literal"),
+        ])
     parameters.extend([
-        ("--replacement", list(product.replacements), "repeated"),
-        ("--build-date-seconds", DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS, "literal"),
-        ("--exact-version", str(ctx.attr.exact_version).lower(), "literal"),
         ("--retain-product-descriptor", str(ctx.attr.retain_product_descriptor).lower(), "literal"),
         ("--embed-content-modules", str(embed_content_modules).lower(), "literal"),
         ("--reserialize-before-content-embedding", str(reserialize_before_content_embedding).lower(), "literal"),
@@ -267,8 +273,6 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
     stamps = _os_arch_stamps(ctx, product)
     if stamps.version_suffix:
         parameters.append(("--version-suffix", stamps.version_suffix, "formatted"))
-    if ctx.attr.compatible_build_range:
-        parameters.append(("--compatible-build-range", ctx.attr.compatible_build_range, "formatted"))
     parameters.extend([
         ("--marker", stamps.markers, "repeated"),
         ("--refused-content-module", ctx.attr.refused_content_modules, "repeated"),
@@ -277,15 +281,17 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
 
     source_file = source if source != None else source_jar
     source_label = ctx.attr.descriptor.label if source != None else jars.descriptor_jar_label
-    inputs = [source_file, ctx.file._build_number_file, product.application_info]
+    inputs = [source_file, ctx.file._build_number_file]
     sources = [
         _descriptor_source_binding("descriptor" if source != None else "descriptor_jar", source_label, ctx.attr.descriptor_entry if source_jar != None else None, [source_file]),
         _descriptor_source_binding("build_number", ctx.attr._build_number_file.label, None, [ctx.file._build_number_file]),
-        _descriptor_source_binding("application_info", product.application_info.owner, None, [product.application_info]),
     ]
-    if product.host_application_info != None:
-        inputs.append(product.host_application_info)
-        sources.append(_descriptor_source_binding("host_application_info", product.host_application_info.owner, None, [product.host_application_info]))
+    if ctx.attr.retain_product_descriptor:
+        inputs.append(product.application_info)
+        sources.append(_descriptor_source_binding("application_info", product.application_info.owner, None, [product.application_info]))
+        if product.host_application_info != None:
+            inputs.append(product.host_application_info)
+            sources.append(_descriptor_source_binding("host_application_info", product.host_application_info.owner, None, [product.host_application_info]))
 
     # One answer per load path. The writer seeds the files first and puts a jar entry in only when the path is
     # absent. So a load path two declarations answer is refused here, where every declaration is visible.
@@ -321,6 +327,16 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
                 parameters.append(("--plugin-descriptor-in-jar", load_path + "=" + jar.path, "literal"))
         inputs.extend(library.jars)
     return struct(parameters = tuple(parameters), inputs = tuple(inputs), sources = tuple(sources), stamps = stamps)
+
+def _compatible_build_range(ctx):
+    """The since and until range of the leaf: the stated one, `EXACT` for an exact version, else `NEWER_WITH_SAME_BASELINE`.
+
+    A dev distribution bundles every plugin, and the run time checks no range of a bundled plugin. So the EAP flag of
+    the product selects no range here, and one leaf serves an EAP and a release product.
+    """
+    if ctx.attr.compatible_build_range:
+        return ctx.attr.compatible_build_range
+    return "EXACT" if ctx.attr.exact_version else "NEWER_WITH_SAME_BASELINE"
 
 def _descriptor_source_binding(attribute, label, load_path, files):
     return struct(attribute = attribute, label = label, load_path = load_path, files = tuple(files))
@@ -500,11 +516,11 @@ def _dev_dist_plugin_descriptor_impl(ctx):
     if not module_name:
         fail("The plugin must state its main module", attr = "main_module")
 
-    # Fail closed. The flag's default states no product, and a descriptor stamped from it would have no application
-    # info to read. The consumer of a plugin component sets the flag on the way down. A leaf built on its own has to set
-    # the flag itself, and the failure below says which flag that is.
+    # Fail closed. The flag's default states no product, and a retained `product-descriptor` stamped from it would have
+    # no application info to read. The consumer of a plugin component sets the flag on the way down. A leaf built on its
+    # own has to set the flag itself, and the failure below says which flag that is.
     product = ctx.attr._product_info[DevDistProductInfo]
-    if product.application_info == None:
+    if ctx.attr.retain_product_descriptor and product.application_info == None:
         fail("%s states no application info, so no product asked for this descriptor. Point %s at one" % (
             ctx.attr._product_info.label,
             _PRODUCT_INFO_FLAG,

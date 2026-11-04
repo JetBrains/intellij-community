@@ -44,18 +44,11 @@ fn the_compatible_platform_version_range() {
             "263.100.5",
         ),
         (
-            "restricted to the same release keeps every segment but the last",
-            CompatibleBuildRange::RestrictedToSameRelease,
-            "263.100.5",
-            "263.100",
-            "263.100.*",
-        ),
-        (
-            "restricted over two segments keeps both",
-            CompatibleBuildRange::RestrictedToSameRelease,
+            "newer over two segments keeps both in since",
+            CompatibleBuildRange::NewerWithSameBaseline,
             "263.100",
             "263.100",
-            "263.100.*",
+            "263.*",
         ),
         (
             "newer with the same baseline stars the baseline",

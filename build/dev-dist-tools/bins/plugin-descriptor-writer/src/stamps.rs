@@ -39,14 +39,18 @@ pub(crate) struct Request {
     pub since_build: String,
     /// The `until-build` of the pair that `getCompatiblePlatformVersionRange` returns.
     pub until_build: String,
-    /// Reaches `product-descriptor` only.
+    /// The stamps of a retained `product-descriptor`, or `None` to detach the element. A dev distribution publishes no
+    /// plugin, so `pluginsToPublish` of the platform is empty and `retainProductDescriptorForBundledPlugin` alone
+    /// decides.
+    pub product_descriptor: Option<ProductDescriptorStamps>,
+}
+
+/// The three product facts that a retained `product-descriptor` takes from the application info.
+#[derive(Clone, Debug, Default)]
+pub(crate) struct ProductDescriptorStamps {
     pub release_date: String,
-    /// Reaches `product-descriptor` only.
     pub release_version: String,
-    /// Decides whether `product-descriptor` survives. A dev distribution publishes no plugin, so `pluginsToPublish` of
-    /// the platform is empty and this flag alone decides.
-    pub retain_product_descriptor_for_bundled_plugin: bool,
-    /// Sets or clears the `eap` attribute of `product-descriptor`.
+    /// Sets or clears the `eap` attribute.
     pub is_eap: bool,
 }
 
@@ -66,10 +70,12 @@ pub(crate) fn apply(root: &mut Element, request: &Request) {
     get_or_create_top_element(root, "version", &ANCHORS).set_text(&request.version);
 
     if let Some(index) = root.child_index("product-descriptor") {
-        if !request.retain_product_descriptor_for_bundled_plugin {
+        let Some(stamps) = &request.product_descriptor else {
             root.children.remove(index);
-        } else if let Node::Element(product_descriptor) = &mut root.children[index] {
-            if request.is_eap {
+            return cdata(root);
+        };
+        if let Node::Element(product_descriptor) = &mut root.children[index] {
+            if stamps.is_eap {
                 product_descriptor.set_attribute("eap", "true");
             } else {
                 product_descriptor.remove_attribute("eap");
@@ -80,12 +86,16 @@ pub(crate) fn apply(root: &mut Element, request: &Request) {
                 .attribute("release-date")
                 .is_none_or(|stated| stated.starts_with("__"))
             {
-                product_descriptor.set_attribute("release-date", &request.release_date);
+                product_descriptor.set_attribute("release-date", &stamps.release_date);
             }
-            product_descriptor.set_attribute("release-version", &request.release_version);
+            product_descriptor.set_attribute("release-version", &stamps.release_version);
         }
     }
+    cdata(root);
+}
 
+/// The last step of the stage: the prose of `description` and `change-notes` goes back into a CDATA section.
+fn cdata(root: &mut Element) {
     // The round trip escaped this prose as element text, so the frame has to go back on. An empty element keeps its
     // text content, because `CDATA("")` is not what the platform writes there (`PluginXmlPatcher.kt:286-293`).
     for name in CDATA_ELEMENTS {

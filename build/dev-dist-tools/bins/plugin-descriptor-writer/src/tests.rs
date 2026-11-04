@@ -21,6 +21,9 @@ fn path(dir: &Path, name: &str) -> String {
 /// `DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS`: 2026-01-01T00:00:00Z.
 const PINNED_BUILD_DATE: &str = "--build-date-seconds=1767225600";
 
+/// The range that the rule states for every plugin without an exact version.
+const DEV_RANGE: &str = "--compatible-build-range=NEWER_WITH_SAME_BASELINE";
+
 /// The option that names an application info of `testdata/plugin_descriptor`.
 fn application_info(name: &str) -> String {
     format!("--application-info-source={}", testdata(&format!("plugin_descriptor/{name}.xml")))
@@ -47,9 +50,7 @@ fn the_whole_request_is_patched() {
         "--main-module=intellij.example".to_owned(),
         format!("--source={}", path_string(&source)),
         format!("--build-number-file={}", build_number_file(dir, "263.SNAPSHOT")),
-        application_info("eap"),
-        PINNED_BUILD_DATE.to_owned(),
-        "--exact-version=false".to_owned(),
+        DEV_RANGE.to_owned(),
         "--retain-product-descriptor=false".to_owned(),
         "--embed-content-modules=true".to_owned(),
         "--refused-content-module=dropped".to_owned(),
@@ -152,14 +153,21 @@ impl Plugin {
         self.dir.path()
     }
 
-    /// The request of a release product with the build number `263.100.5`.
+    /// The request with the build number `263.100.5`.
     fn request(&self) -> Vec<String> {
         minimal_request(self.dir(), &self.source, &self.output, "263.100.5")
     }
 
-    /// The request with the build number `263.100.5` and the application info `testdata/plugin_descriptor/<name>.xml`.
-    fn request_of(&self, application_info_name: &str) -> Vec<String> {
-        minimal_request_of(self.dir(), &self.source, &self.output, "263.100.5", application_info_name)
+    /// The request with the build number `263.100.5` that retains `product-descriptor` and stamps it from the
+    /// application info `testdata/plugin_descriptor/<name>.xml`.
+    fn retained_request(&self, application_info_name: &str) -> Vec<String> {
+        let mut request = self.request();
+        request.extend([
+            "--retain-product-descriptor=true".to_owned(),
+            application_info(application_info_name),
+            PINNED_BUILD_DATE.to_owned(),
+        ]);
+        request
     }
 
     /// The request that embeds the content module `a.b`, whose descriptor holds `descriptor`.
@@ -184,26 +192,19 @@ impl Plugin {
     }
 }
 
-/// The request of a release product. The range of a release product is `NEWER_WITH_SAME_BASELINE`.
+/// The request of a plugin that drops `product-descriptor`. It names no application info.
 fn minimal_request(dir: &Path, source: &Path, output: &Path, build_number: &str) -> Vec<String> {
-    minimal_request_of(dir, source, output, build_number, "release")
-}
-
-/// The request with the application info `testdata/plugin_descriptor/<application_info>.xml`.
-fn minimal_request_of(dir: &Path, source: &Path, output: &Path, build_number: &str, application_info_name: &str) -> Vec<String> {
     vec![
         format!("--out={}", path_string(output)),
         "--main-module=intellij.example".to_owned(),
         format!("--source={}", path_string(source)),
         format!("--build-number-file={}", build_number_file(dir, build_number)),
-        application_info(application_info_name),
-        PINNED_BUILD_DATE.to_owned(),
+        DEV_RANGE.to_owned(),
     ]
 }
 
 /// Without `--reserialized-output`, no second file is written. No `.SNAPSHOT`, so the version is the build number.
-/// The product is a release, so the range is `NEWER_WITH_SAME_BASELINE`: the number without its last segment, and the
-/// baseline with a star.
+/// The range is `NEWER_WITH_SAME_BASELINE`: the number without its last segment, and the baseline with a star.
 #[test]
 fn a_minimal_request_writes_one_descriptor() {
     let plugin = Plugin::new(PLUGIN_A);
@@ -243,52 +244,61 @@ fn a_missing_flag_file_is_refused() {
     assert_eq!(run_arguments(&[flagfile]), 2);
 }
 
-/// `--exact-version` pins both ends to the build number (`CompatibleBuildRange.EXACT` of `PluginXmlPatcher.kt`).
+/// `EXACT` pins both ends to the build number (`CompatibleBuildRange.EXACT` of `PluginXmlPatcher.kt`). The rule states it
+/// for a layout with `pluginCompatibilityExactVersion`.
 #[test]
-fn an_exact_version_pins_both_ends() {
+fn an_exact_range_pins_both_ends() {
     let plugin = Plugin::new(PLUGIN_A);
-    let mut request = plugin.request_of("eap");
-    request.extend(lines(&["--exact-version=true"]));
-    assert_eq!(plugin.run(&request), 0);
-    let got = plugin.output_text();
-    assert!(got.contains("since-build=\"263.100.5\" until-build=\"263.100.5\""), "{got}");
-}
-
-/// `--compatible-build-range` is the range that the layout states (`DataPluginVersionEvaluator.compatibleBuildRange`).
-/// It replaces the EAP fallback, so an EAP build keeps `NEWER_WITH_SAME_BASELINE` when the layout states it.
-#[test]
-fn a_stated_compatible_build_range_replaces_the_eap_fallback() {
-    let plugin = Plugin::new(PLUGIN_A);
-    let mut request = plugin.request_of("eap");
-    request.extend(lines(&[
-        "--version-suffix=-IJ",
-        "--compatible-build-range=NEWER_WITH_SAME_BASELINE",
-    ]));
+    let mut request = plugin.request();
+    request.retain(|line| line != DEV_RANGE);
+    request.extend(lines(&["--compatible-build-range=EXACT", "--version-suffix=-IJ"]));
     assert_eq!(plugin.run(&request), 0);
     let got = plugin.output_text();
     assert!(got.contains("<version>263.100.5-IJ</version>"), "{got}");
-    assert!(got.contains("since-build=\"263.100\" until-build=\"263.*\""), "{got}");
+    assert!(got.contains("since-build=\"263.100.5\" until-build=\"263.100.5\""), "{got}");
 }
 
-/// An EAP application info without a stated range restricts the range to the same release.
+/// A numeric build number gives one range for an EAP and a release application info. The EAP flag reaches only the
+/// stamps of a retained `product-descriptor`, so a release flip changes no other byte of the descriptor.
 #[test]
-fn an_eap_build_restricts_the_range_to_the_same_release() {
-    let plugin = Plugin::new(PLUGIN_A);
-    let request = plugin.request_of("eap");
-    assert_eq!(plugin.run(&request), 0);
-    let got = plugin.output_text();
-    assert!(got.contains("since-build=\"263.100\" until-build=\"263.100.*\""), "{got}");
+fn one_range_serves_both_eap_values() {
+    let mut outputs = Vec::new();
+    for name in ["eap", "release"] {
+        let plugin = Plugin::new(r#"<idea-plugin><id>a</id><product-descriptor code="X" release-date="20200101"/></idea-plugin>"#);
+        assert_eq!(plugin.run(&plugin.retained_request(name)), 0, "{name}");
+        let got = plugin.output_text();
+        assert!(got.contains(r#"since-build="263.100" until-build="263.*""#), "{name}:\n{got}");
+        outputs.push(got);
+    }
+    let without_product_descriptor: Vec<String> = outputs
+        .iter()
+        .map(|text| {
+            text.lines()
+                .filter(|line| !line.contains("<product-descriptor"))
+                .collect::<Vec<_>>()
+                .join("\n")
+        })
+        .collect();
+    assert_eq!(without_product_descriptor[0], without_product_descriptor[1]);
+    assert_ne!(outputs[0], outputs[1]);
 }
 
-/// The layouts state one range. The two other names of `CompatibleBuildRange` reach the stamps through the two flags,
-/// so a stated one is refused like an unknown one.
+/// The rule states `EXACT` or `NEWER_WITH_SAME_BASELINE`. Every other name of `CompatibleBuildRange` is refused like an
+/// unknown one, and so is a request without a range.
 #[test]
-fn a_compatible_build_range_other_than_the_stated_one_is_refused() {
-    for range in ["EXACT", "RESTRICTED_TO_SAME_RELEASE", "SAME_RELEASE"] {
+fn a_compatible_build_range_other_than_the_stated_ones_is_refused() {
+    for range in [
+        Some("RESTRICTED_TO_SAME_RELEASE"),
+        Some("ANY_WITH_SAME_BASELINE"),
+        Some("SAME_RELEASE"),
+        Some(""),
+        None,
+    ] {
         let plugin = Plugin::new(PLUGIN_A);
         let mut request = plugin.request();
-        request.push(format!("--compatible-build-range={range}"));
-        assert_eq!(plugin.run(&request), 2, "{range}");
+        request.retain(|line| line != DEV_RANGE);
+        request.extend(range.map(|range| format!("--compatible-build-range={range}")));
+        assert_eq!(plugin.run(&request), 2, "{range:?}");
         require_absent(&plugin.output);
     }
 }
@@ -323,12 +333,12 @@ fn an_unknown_option_is_refused() {
 fn a_valueless_or_repeated_option_is_refused() {
     for request in [
         &["--out"][..],
-        &["--exact-version"][..],
-        &["--application-info-source"][..],
+        &["--compatible-build-range"][..],
+        &["--retain-product-descriptor"][..],
         &["--refused-content-module"][..],
         &["--out=a", "--out=b"][..],
-        &["--exact-version=true", "--exact-version=false"][..],
-        &["--build-date-seconds=1", "--build-date-seconds=2"][..],
+        &["--compatible-build-range=EXACT", "--compatible-build-range=EXACT"][..],
+        &["--retain-product-descriptor=true", "--retain-product-descriptor=false"][..],
         &["--source=a.xml", "--source=b.xml"][..],
     ] {
         let plugin = Plugin::new(PLUGIN_A);
@@ -344,8 +354,26 @@ fn a_valueless_or_repeated_option_is_refused() {
 /// A boolean is strict, the way Kotlin's `toBooleanStrict` is.
 #[test]
 fn a_loose_boolean_is_refused() {
-    let dir = TempDir::new();
-    assert_eq!(run_request(dir.path(), &lines(&["--exact-version=yes"])), 2);
+    let plugin = Plugin::new(PLUGIN_A);
+    let mut request = plugin.request();
+    request.push("--retain-product-descriptor=yes".to_owned());
+    assert_eq!(plugin.run(&request), 2);
+    require_absent(&plugin.output);
+}
+
+/// Only a retained `product-descriptor` reads the application info. The rule states no application info option for
+/// another plugin, so the writer refuses each one as unknown.
+#[test]
+fn an_application_info_option_without_a_retained_product_descriptor_is_refused() {
+    let host = format!("--host-application-info-source={}", testdata("plugin_descriptor/release.xml"));
+    let info = application_info("release");
+    for option in [info.as_str(), host.as_str(), PINNED_BUILD_DATE, "--replacement=RELEASE_DATE="] {
+        let plugin = Plugin::new(PLUGIN_A);
+        let mut request = plugin.request();
+        request.push(option.to_owned());
+        assert_eq!(plugin.run(&request), 2, "{option}");
+        require_absent(&plugin.output);
+    }
 }
 
 #[test]
@@ -356,14 +384,25 @@ fn a_missing_required_option_is_refused() {
     write_file(dir.join("plugin.xml"), "<idea-plugin/>");
     let source_option = format!("--source={source}");
     let info = application_info("release");
-    let complete = [
-        "--out=o",
-        "--main-module=m",
-        &source_option,
-        "--build-number-file=b",
-        &info,
-        PINNED_BUILD_DATE,
-    ];
+    for complete in [
+        &["--out=o", "--main-module=m", &source_option, "--build-number-file=b", DEV_RANGE][..],
+        &[
+            "--out=o",
+            "--main-module=m",
+            &source_option,
+            "--build-number-file=b",
+            DEV_RANGE,
+            "--retain-product-descriptor=true",
+            &info,
+            PINNED_BUILD_DATE,
+        ][..],
+    ] {
+        require_each_option(dir, complete);
+    }
+}
+
+/// Fails unless the request without any one line of `complete` exits with 2. The retain switch itself is optional.
+fn require_each_option(dir: &Path, complete: &[&str]) {
     for (index, name) in complete.iter().enumerate() {
         let request: Vec<&str> = complete
             .iter()
@@ -418,8 +457,7 @@ fn a_source_in_a_jar_is_read() {
         "--main-module=intellij.example".to_owned(),
         format!("--source-in-jar=META-INF/plugin.xml={jar}"),
         format!("--build-number-file={}", build_number_file(dir, "263.100.5")),
-        application_info("release"),
-        PINNED_BUILD_DATE.to_owned(),
+        DEV_RANGE.to_owned(),
     ];
     assert_eq!(run_request(dir, &request), 0);
     assert!(read_text(&output).contains("<id>from.jar</id>"));
@@ -562,7 +600,8 @@ fn invalid_modes_are_refused() {
 }
 
 /// The stamps of a retained `product-descriptor` come from the application info: the EAP flag, the release date and the
-/// release version. A frontend takes them from its host, and a language server applies its markers first.
+/// release version. A frontend takes them from its host, and a language server applies its markers first. The range is
+/// the stated one for each of them.
 #[test]
 fn the_stamps_come_from_the_application_info() {
     let host = format!("--host-application-info-source={}", testdata("plugin_descriptor/release.xml"));
@@ -571,7 +610,7 @@ fn the_stamps_come_from_the_application_info() {
             "eap",
             &[],
             r#"<product-descriptor code="X" release-date="20260101" release-version="2026300" eap="true" />"#,
-            r#"since-build="263.100" until-build="263.100.*""#,
+            r#"since-build="263.100" until-build="263.*""#,
         ),
         (
             "release",
@@ -593,15 +632,14 @@ fn the_stamps_come_from_the_application_info() {
                 "--replacement=BUNDLE_NAME=server",
             ],
             r#"<product-descriptor code="X" release-date="20260101" release-version="2026300" eap="true" />"#,
-            r#"since-build="263.100" until-build="263.100.*""#,
+            r#"since-build="263.100" until-build="263.*""#,
         ),
     ];
     for (name, options, descriptor, range) in cases {
         let plugin = Plugin::new(
             r#"<idea-plugin><id>a</id><product-descriptor code="X" release-date="__DATE__" release-version="__VERSION__"/></idea-plugin>"#,
         );
-        let mut request = plugin.request_of(name);
-        request.push("--retain-product-descriptor=true".to_owned());
+        let mut request = plugin.retained_request(name);
         request.extend(lines(options));
         assert_eq!(plugin.run(&request), 0, "{name}");
         let got = plugin.output_text();
@@ -635,7 +673,7 @@ fn a_bad_application_info_is_refused() {
         (&["--application-info-source=absent.xml"][..], 1),
     ] {
         let plugin = Plugin::new(PLUGIN_A);
-        let mut request = plugin.request();
+        let mut request = plugin.retained_request("release");
         let replaced: Vec<&str> = options.iter().map(|option| option.split('=').next().unwrap()).collect();
         request.retain(|line| {
             !replaced
@@ -658,10 +696,9 @@ fn a_release_without_a_release_date_takes_the_build_date() {
     let info = plugin.dir().join("dateless.xml");
     let release = read_text(Path::new(&testdata("plugin_descriptor/release.xml")));
     write_file(&info, release.replace(r#" majorReleaseDate="20261201""#, ""));
-    let mut request = plugin.request();
+    let mut request = plugin.retained_request("release");
     request.retain(|line| !line.starts_with("--application-info-source="));
     request.push(format!("--application-info-source={}", path_string(&info)));
-    request.push("--retain-product-descriptor=true".to_owned());
     assert_eq!(plugin.run(&request), 0);
     let got = plugin.output_text();
     assert!(
