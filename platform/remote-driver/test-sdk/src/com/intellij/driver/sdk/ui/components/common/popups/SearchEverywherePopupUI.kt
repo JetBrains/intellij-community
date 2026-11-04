@@ -44,7 +44,7 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
   val previewButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Preview") })
   val typeFilterButton: ActionButtonUi = actionButtonByXpath(xQuery { byAccessibleName("Filter") })
   val openInRightSplitActionLink: UiComponent = x { byAccessibleName("Open In Right Split") }
-  private val tabbedPane: JBTabbedPaneUiComponent = tabbedPane()
+  protected val tabbedPane: JBTabbedPaneUiComponent = tabbedPane()
 
   fun invokeSelectAction() {
     keyboard { enter() }
@@ -93,7 +93,7 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
     }
   }
 
-  fun selectTab(tab: String) {
+  open fun selectTab(tab: String) {
     x { byVisibleText(tab) }.click()
   }
 
@@ -108,6 +108,11 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
 
 class SearchEverywhereSplitPopupUI(data: ComponentData) : SearchEverywherePopupUI(data) {
   override val searchField: JTextFieldUI = textField { byClass("SeTextField") }
+
+  /** Clicks the [tab] header through the tabbed pane, see [JBTabbedPaneUiComponent.clickTab]. */
+  override fun selectTab(tab: String) {
+    tabbedPane.clickTab(tab)
+  }
 }
 
 
