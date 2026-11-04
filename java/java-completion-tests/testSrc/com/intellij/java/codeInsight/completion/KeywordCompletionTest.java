@@ -5,6 +5,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.LightCompletionTestCase;
 import com.intellij.codeInsight.lookup.Lookup;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.pom.java.JavaFeature;
@@ -12,6 +13,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -144,6 +146,40 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
       }
       """);
   }
+  public void testIfParen() {
+    doTestKeywordWithParen("if", "if (<caret>)");
+  }
+
+  public void testForParen() {
+    doTestKeywordWithParen("for", "for (<caret>)");
+  }
+
+  public void testIfParenNoSpace() {
+    CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_BEFORE_IF_PARENTHESES = false;
+    doTestKeywordWithParen("if", "if(<caret>)");
+  }
+
+  private void doTestKeywordWithParen(String keyword, String expected) {
+    configureFromFileText("Test.java", """
+      class X {
+        void test() {
+          %s<caret>
+        }
+      }
+      """.formatted(keyword.charAt(0)));
+    complete();
+    LookupElement item = ContainerUtil.find(myItems, e -> e.getLookupString().equals(keyword));
+    assertNotNull(item);
+    selectItem(item, '(');
+    checkResultByText("""
+      class X {
+        void test() {
+          %s
+        }
+      }
+      """.formatted(expected));
+  }
+
   public void testSuper1() { doTest(1, "super"); }
   public void testSuper2() { doTest(0, "super"); }
   public void testSuper3() { doTest(); }

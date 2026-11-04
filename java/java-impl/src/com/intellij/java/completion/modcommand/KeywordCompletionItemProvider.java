@@ -19,6 +19,7 @@ import com.intellij.codeInsight.completion.ModifierChooser;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor;
 import com.intellij.codeInsight.completion.StartOnlyMatcher;
+import com.intellij.codeInsight.completion.simple.ParenthesesTailType;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -1451,11 +1452,13 @@ final class KeywordCompletionItemProvider extends JavaModCompletionItemProvider 
 
     @Contract(pure = true)
     private CommonCompletionItem createKeyword(@NlsSafe String keyword, ModNavigatorTailType tailType) {
-      return new CommonCompletionItem(keyword)
+      CommonCompletionItem item = new CommonCompletionItem(keyword)
         .withObject(JavaPsiFacade.getElementFactory(myFile.getProject()).createKeyword(keyword, myPosition))
         .withPresentation(MarkupText.builder().append(keyword, STRONG).build())
         .withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE)
         .withTail(tailType);
+      // The tail inserts the parentheses, so the typed '(' must not be inserted again
+      return tailType instanceof ParenthesesTailType ? item.withInsertCharacterSuppressed('(') : item;
     }
   }
 
