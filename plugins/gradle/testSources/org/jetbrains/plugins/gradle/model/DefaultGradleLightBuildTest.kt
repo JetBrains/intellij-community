@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.model
 
+import com.intellij.gradle.testFramework.GradleTestVersions.BASE_GRADLE_VERSION
 import com.intellij.gradle.testFramework.annotations.GradleTestSource
-import com.intellij.gradle.testFramework.junit4.VersionMatcherRule.Companion.BASE_GRADLE_VERSION
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcAddedInEditableBuilds
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable

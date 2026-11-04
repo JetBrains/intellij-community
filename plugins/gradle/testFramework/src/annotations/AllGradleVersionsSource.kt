@@ -6,7 +6,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 
 /**
  * Alias for [GradleTestSource] where [GradleTestSource.value] are predefined with
- * [com.intellij.gradle.testFramework.junit4.VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS]
+ * [com.intellij.gradle.testFramework.GradleTestVersions.SUPPORTED_GRADLE_VERSIONS]
  * and respects `gradle.versions.to.run` system property.
  */
 @Retention(AnnotationRetention.RUNTIME)

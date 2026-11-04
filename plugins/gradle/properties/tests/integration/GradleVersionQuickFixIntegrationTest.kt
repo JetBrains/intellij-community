@@ -2,10 +2,10 @@
 package com.intellij.gradle.properties.tests.integration
 
 import com.intellij.gradle.properties.GradleVersionQuickFix
+import com.intellij.gradle.testFramework.GradleTestVersions.SUPPORTED_GRADLE_VERSIONS
 import com.intellij.gradle.testFramework.fixtures.gradleFixture
 import com.intellij.gradle.testFramework.fixtures.gradleProjectRootFixture
 import com.intellij.gradle.testFramework.fixtures.projectFixture
-import com.intellij.gradle.testFramework.junit4.VersionMatcherRule.Companion.SUPPORTED_GRADLE_VERSIONS
 import com.intellij.gradle.testFramework.projectInfo.gradleProjectInfo
 import com.intellij.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
 import com.intellij.gradle.testFramework.projectInfo.simpleSettingsFile

@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
+import com.intellij.gradle.testFramework.GradleTestVersions
 import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.importing.GradleImportingTestCase
-import com.intellij.gradle.testFramework.junit4.VersionMatcherRule
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion.version
@@ -62,7 +62,7 @@ class GradleInstallationManagerImportingTest : GradleImportingTestCase() {
   }
 
   @Test
-  @TargetVersions(VersionMatcherRule.BASE_GRADLE_VERSION)
+  @TargetVersions(GradleTestVersions.BASE_GRADLE_VERSION)
   fun testGetClassRoots(): Unit = runBlocking {
     importProject(
       createBuildScriptBuilder()

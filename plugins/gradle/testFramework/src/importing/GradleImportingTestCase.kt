@@ -4,6 +4,7 @@ package com.intellij.gradle.testFramework.importing
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.gradle.testFramework.GradleTestVersions
 import com.intellij.gradle.testFramework.junit4.TargetJavaVersionWatcher
 import com.intellij.gradle.testFramework.junit4.VersionMatcherRule
 import com.intellij.gradle.testFramework.jvm.GradleJvmResolver
@@ -510,7 +511,7 @@ abstract class GradleImportingTestCase : JavaExternalSystemImportingTestCase() {
   }
 
   companion object {
-    const val BASE_GRADLE_VERSION: String = VersionMatcherRule.BASE_GRADLE_VERSION
+    const val BASE_GRADLE_VERSION: String = GradleTestVersions.BASE_GRADLE_VERSION
 
     private const val GRADLE_JDK_NAME: String = "Gradle JDK"
     private const val GRADLE_DAEMON_TTL_MS = 10000

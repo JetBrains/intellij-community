@@ -3,11 +3,11 @@ package com.intellij.gradle.codeInsight.properties.backend.tests.integration.ins
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleLatestMinorVersionInspection
 import com.intellij.gradle.testFramework.GradleCodeInsightBaseTestCase
+import com.intellij.gradle.testFramework.GradleTestVersions.BASE_GRADLE_VERSION
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.gradle.testFramework.annotations.GradleTestSource
 import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
-import com.intellij.gradle.testFramework.junit4.VersionMatcherRule.Companion.BASE_GRADLE_VERSION
 import com.intellij.gradle.testFramework.util.DEPRECATED_BY_IDEA_VERSIONS
 import com.intellij.gradle.testFramework.util.NON_DEPRECATED_BY_IDEA_VERSIONS
 import com.intellij.testFramework.runInEdtAndWait

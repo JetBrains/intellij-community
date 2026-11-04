@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.gradle.testFramework.junit4.VersionMatcherRule
+import com.intellij.gradle.testFramework.GradleTestVersions.SUPPORTED_GRADLE_VERSIONS
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.junit.Assume
@@ -33,11 +33,11 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
     val gradleVersionsToRunProp = System.getProperty("gradle.versions.to.run")
 
     val gradleVersionsToRun = if (gradleVersionsToRunProp == "FIRST_LAST") {
-      setOf(OLD_GRADLE_VERSIONS.first(), VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS.last())
+      setOf(OLD_GRADLE_VERSIONS.first(), SUPPORTED_GRADLE_VERSIONS.last())
     }
     else if (gradleVersionsToRunProp.startsWith("LAST:")) {
       val numberOfLastVersions = gradleVersionsToRunProp.removePrefix("LAST:").toInt()
-      VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS.takeLast(numberOfLastVersions)
+      SUPPORTED_GRADLE_VERSIONS.takeLast(numberOfLastVersions)
     }
     else {
       return
@@ -61,7 +61,7 @@ class UnsupportedGradleImportingTest : BuildViewMessagesImportingTestCase() {
     @Parameterized.Parameters(name = "with Gradle-{0}")
     @JvmStatic
     fun tests(): Iterable<Any> {
-      return (OLD_GRADLE_VERSIONS + VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS).toList()
+      return (OLD_GRADLE_VERSIONS + SUPPORTED_GRADLE_VERSIONS).toList()
     }
   }
 }

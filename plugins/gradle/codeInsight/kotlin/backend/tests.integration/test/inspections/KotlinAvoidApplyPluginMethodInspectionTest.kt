@@ -2,9 +2,9 @@
 package com.intellij.gradle.codeInsight.kotlin.backend.tests.integration.inspections
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAvoidApplyPluginMethodInspection
+import com.intellij.gradle.testFramework.GradleTestVersions.BASE_GRADLE_VERSION
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.gradle.testFramework.annotations.TargetVersions
-import com.intellij.gradle.testFramework.junit4.VersionMatcherRule
 import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
 import org.gradle.util.GradleVersion
@@ -961,7 +961,7 @@ class KotlinAvoidApplyPluginMethodInspectionTest : K2GradleCodeInsightTestCase()
     @JvmStatic
     @Suppress("unused") // used by testAllCorePlugins test
     private fun corePluginNamesFactory(): ArgumentSets =
-      ArgumentSets.argumentsForFirstParameter(GradleVersion.version(VersionMatcherRule.BASE_GRADLE_VERSION))
+      ArgumentSets.argumentsForFirstParameter(GradleVersion.version(BASE_GRADLE_VERSION))
         .argumentsForNextParameter(GRADLE_CORE_PLUGIN_SHORT_NAMES)
   }
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport
 
-import com.intellij.gradle.testFramework.junit4.VersionMatcherRule
+import com.intellij.gradle.testFramework.GradleTestVersions.SUPPORTED_GRADLE_VERSIONS
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.junit.jupiter.api.Assertions
@@ -12,7 +12,7 @@ abstract class GradleBuildScriptBuilderTestCase {
     vararg cases: Pair<GradleVersion, Pair<String, String>>,
     configure: GradleBuildScriptBuilder<*>.() -> Unit
   ) {
-    val casesForSupportedGradleVersions = VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS
+    val casesForSupportedGradleVersions = SUPPORTED_GRADLE_VERSIONS
       .mapNotNull {
         val gradleVersion = GradleVersion.version(it)
         cases.asSequence()
@@ -38,7 +38,7 @@ abstract class GradleBuildScriptBuilderTestCase {
     kotlinScript: String,
     configure: GradleBuildScriptBuilder<*>.() -> Unit
   ) {
-    val gradleVersion = GradleVersion.version(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS.first())
+    val gradleVersion = GradleVersion.version(SUPPORTED_GRADLE_VERSIONS.first())
     assertBuildScript(gradleVersion to (groovyScript to kotlinScript), configure = configure)
   }
 }
