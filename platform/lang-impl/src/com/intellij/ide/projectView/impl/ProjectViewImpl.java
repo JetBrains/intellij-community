@@ -55,6 +55,7 @@ import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.TechnologyAwareProjectExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -162,6 +163,9 @@ import static com.intellij.ui.treeStructure.Tree.AUTO_SCROLL_FROM_SOURCE_BLOCKED
 @State(name = "ProjectView", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), getStateRequiresEdt = true)
 public class ProjectViewImpl extends ProjectView implements PersistentStateComponent<Element>, QuickActionProvider, BusyObject {
   private static final Logger LOG = Logger.getInstance(ProjectViewImpl.class);
+  /** The panes applicable to a project: the ones whose techs the project has enabled. */
+  private static final TechnologyAwareProjectExtensionPointName<AbstractProjectViewPane> TECH_AWARE_PANES =
+    new TechnologyAwareProjectExtensionPointName<>(AbstractProjectViewPane.EP);
   private static final Key<String> ID_KEY = Key.create("pane-id");
   private static final Key<String> SUB_ID_KEY = Key.create("pane-sub-id");
   public static final @NonNls String ANDROID_VIEW_ID = "AndroidView";
@@ -672,20 +676,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
     AbstractProjectViewPane.EP.addExtensionPointListener(project, new ExtensionPointListener<>() {
       @Override
-      public void extensionAdded(@NotNull AbstractProjectViewPane extension, @NotNull PluginDescriptor pluginDescriptor) {
-        reloadPanes();
-      }
-
-      @Override
       public void extensionRemoved(@NotNull AbstractProjectViewPane extension, @NotNull PluginDescriptor pluginDescriptor) {
         if (idToPane.containsKey(extension.getId()) || uninitializedPanes.contains(extension)) {
-          reloadPanes();
+          reloadPanes(); // detaches the pane: the point does not give it anymore
         }
-        else {
-          Disposer.dispose(extension);
-        }
+        // the view disposes a pane when it stops being an extension, attached or not; this is the only place that does
+        Disposer.dispose(extension);
       }
     }, project);
+    // the attached panes follow the techs of the project and the loaded plugins alike: one reload for both causes
+    TECH_AWARE_PANES.addChangeListener(project, project, _ -> reloadPanes());
   }
 
   static final class MyToolWindowManagerListener implements ToolWindowManagerListener {
@@ -1283,8 +1283,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     idToPane.forEach((id, pane) -> oldPanes.put(pane, pane == newPanes.get(id)));
     oldPanes.forEach((pane, exists) -> {
       if (Boolean.FALSE.equals(exists)) {
+        // detached, not disposed: a pane of a disabled tech is given back by the point when the tech is enabled again,
+        // and a pane that left the point is disposed by the extension point listener
         removeProjectPane(pane);
-        Disposer.dispose(pane);
       }
     });
     for (AbstractProjectViewPane pane : newPanes.values()) {
@@ -1345,7 +1346,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return false;
     }
 
-    AbstractProjectViewPane defaultPane = AbstractProjectViewPane.EP.findFirstSafe(project, pane -> pane.isDefaultPane(project));
+    AbstractProjectViewPane defaultPane = TECH_AWARE_PANES.findFirstSafe(project, pane -> pane.isDefaultPane(project));
     if (defaultPane == null || !defaultPane.isInitiallyVisible()) {
       return false;
     }
@@ -1369,7 +1370,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   private @NotNull Map<String, AbstractProjectViewPane> loadPanes() {
     Map<String, AbstractProjectViewPane> map = new LinkedHashMap<>();
-    List<AbstractProjectViewPane> toSort = new ArrayList<>(AbstractProjectViewPane.EP.getExtensions(project));
+    // the panes applicable to the project: the ones whose techs the project has enabled
+    List<AbstractProjectViewPane> toSort = new ArrayList<>(TECH_AWARE_PANES.extensionList(project));
     toSort.sort(PANE_WEIGHT_COMPARATOR);
     isExtensionsLoaded = true; // safe code starts here, must not throw exceptions or the project view will be empty forever
     for (AbstractProjectViewPane pane : toSort) {
@@ -1750,7 +1752,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @Override
   public @NotNull String getDefaultViewId() {
     // instantiates the panes only up to the default one
-    AbstractProjectViewPane defaultPane = AbstractProjectViewPane.EP.findFirstSafe(project, pane -> pane.isDefaultPane(project));
+    AbstractProjectViewPane defaultPane = TECH_AWARE_PANES.findFirstSafe(project, pane -> pane.isDefaultPane(project));
     return defaultPane == null ? ProjectViewPane.ID : defaultPane.getId();
   }
 
