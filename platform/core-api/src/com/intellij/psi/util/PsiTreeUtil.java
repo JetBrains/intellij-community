@@ -1464,19 +1464,20 @@ public class PsiTreeUtil {
     IntArrayList offsets = new IntArrayList();
     PsiElement cur = element;
     while (!cur.getClass().equals(copy.getClass())) {
-      int pos = 0;
-      for (PsiElement sibling = cur.getPrevSibling(); sibling != null; sibling = sibling.getPrevSibling()) {
-        pos++;
-      }
-      offsets.add(pos);
       PsiElement parent = cur.getParent();
-      if (parent == null) {
+      // A directory never has the class of the copy.
+      if (parent == null || parent instanceof PsiDirectory) {
         throw new IllegalStateException("Cannot find parent file; element class: " + element.getClass() +
                                         "; element language: " + element.getLanguage() +
                                         "; element valid: " + element.isValid() +
                                         "; topmost parent class: " + cur.getClass() +
                                         copyInfo(copy));
       }
+      int pos = 0;
+      for (PsiElement sibling = cur.getPrevSibling(); sibling != null; sibling = sibling.getPrevSibling()) {
+        pos++;
+      }
+      offsets.add(pos);
       cur = parent;
     }
 
