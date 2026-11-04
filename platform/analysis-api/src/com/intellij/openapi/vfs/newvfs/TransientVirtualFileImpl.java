@@ -86,7 +86,7 @@ public final class TransientVirtualFileImpl extends VirtualFile implements Cache
                            @NotNull String path,
                            @NotNull NewVirtualFileSystem fileSystem,
                            @NotNull VirtualFile parent,
-                           @NotNull FileAttributes attributes) {
+                           @Nullable FileAttributes attributes) {
     this(name, path, fileSystem, parent);
     this.cachedAttributes = attributes;
   }

@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.ProjectBulkFileListener
 import com.intellij.openapi.vfs.VfsUtil.findFileByUrlIfCached
 import com.intellij.openapi.vfs.VirtualFile
@@ -137,8 +138,8 @@ class ProjectVfsEventBatch @RequiresReadLock constructor(private val project: Pr
           }
           appendCachedDeletes(event.requestor, event.file, initialTraverseState(event.file))
         }
-        is VFileCreateEvent -> prepareCreateOrCopy(event, event.parent, event.childName, event.children)
-        is VFileCopyEvent -> prepareCreateOrCopy(event, event.newParent, event.newChildName, event.children)
+        is VFileCreateEvent -> prepareCreateOrCopy(event, event.parent, event.childName, event.attributes, event.children)
+        is VFileCopyEvent -> prepareCreateOrCopy(event, event.newParent, event.newChildName, event.attributes, event.children)
         is VFileMoveEvent -> prepareMoveOrRename(event)
         is VFilePropertyChangeEvent -> when {
           event.isRename -> prepareMoveOrRename(event)
@@ -163,8 +164,8 @@ class ProjectVfsEventBatch @RequiresReadLock constructor(private val project: Pr
     checkNotNull(file) { "File must be not null. event: $event" }
     val wasInWorkspace = workspaceFileIndex.isInWorkspace(file)
     val futureFile = when (event) {
-      is VFileMoveEvent -> createTransientChild(event.newParent, file.name)
-      else -> createTransientChild(file.parent, (event as VFilePropertyChangeEvent).newValue as String)
+      is VFileMoveEvent -> createTransientChild(event.newParent, file.name, null)
+      else -> createTransientChild(file.parent, (event as VFilePropertyChangeEvent).newValue as String, null)
     }
     val state = initialTraverseState(futureFile.parent)?.goDown(futureFile)
     val willBeInWorkspace = state?.included == true
@@ -195,7 +196,7 @@ class ProjectVfsEventBatch @RequiresReadLock constructor(private val project: Pr
     for (child in file.cachedChildren) {
       ProgressManager.checkCanceled()
       if (!child.isValid) continue
-      val futureChild = createTransientChild(futureParent, child.name)
+      val futureChild = createTransientChild(futureParent, child.name, null)
       val childState = state.goDown(futureChild) ?: continue
       if (childState.included) {
         eventTemplates.add(CreateEvent(event.requestor, child))
@@ -245,9 +246,15 @@ class ProjectVfsEventBatch @RequiresReadLock constructor(private val project: Pr
     }
   }
 
-  private fun prepareCreateOrCopy(event: VFileEvent, parent: VirtualFile, name: String, children: Array<ChildInfo>?) {
+  private fun prepareCreateOrCopy(
+    event: VFileEvent,
+    parent: VirtualFile,
+    name: String,
+    attributes: FileAttributes?,
+    children: Array<ChildInfo>?,
+  ) {
     val parentState = initialTraverseState(parent) ?: return
-    val child = createTransientChild(parent, name)
+    val child = createTransientChild(parent, name, attributes)
     val childState = parentState.goDown(child) ?: return
 
     val childEvents = children?.mapNotNullTo(ArrayList(children.size)) { childInfo ->
@@ -261,7 +268,7 @@ class ProjectVfsEventBatch @RequiresReadLock constructor(private val project: Pr
 
   private fun prepareChildEvent(parent: /*Transient*/VirtualFile, state: State, info: ChildInfo): ChildEvent? {
     ProgressManager.checkCanceled()
-    val child = createTransientChild(parent, info.name.toString())
+    val child = createTransientChild(parent, info.name.toString(), info.fileAttributes)
     val childState = state.goDown(child) ?: return null
 
     val descendants = info.children?.mapNotNullTo(ArrayList(info.children!!.size)) { childInfo ->
@@ -291,8 +298,8 @@ class ProjectVfsEventBatch @RequiresReadLock constructor(private val project: Pr
   }
 }
 
-private fun createTransientChild(parent: VirtualFile, name: String): VirtualFile =
-  createTransientChild(parent, name, parent.fileSystem as NewVirtualFileSystem)
+private fun createTransientChild(parent: VirtualFile, name: String, attributes: FileAttributes?): VirtualFile =
+  createTransientChild(parent, name, parent.fileSystem as NewVirtualFileSystem, attributes)
 
 private fun VFileCreateEvent.findCreatedFileWithCacheIfCached(): VirtualFile? {
   val parent = this.parent.validOrNull() ?: return null
