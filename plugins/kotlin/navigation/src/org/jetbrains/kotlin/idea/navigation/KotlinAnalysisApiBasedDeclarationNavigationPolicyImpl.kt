@@ -84,6 +84,7 @@ open class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDeclara
         })
 
     override fun getOriginalElement(declaration: KtDeclaration): KtElement {
+        if (!declaration.isValid) return declaration
         val ktFile = declaration.containingKtFile
         if (ktFile.isCompiled) return declaration
         val project = ktFile.project
