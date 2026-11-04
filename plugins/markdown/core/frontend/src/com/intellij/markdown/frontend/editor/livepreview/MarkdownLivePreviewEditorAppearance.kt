@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.limits.FileSizeLimit.Companion.getIntellisenseLi
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 
 /**
@@ -39,7 +39,9 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect(this)
-    connection.subscribe(MarkdownPreviewSettings.ChangeListener.TOPIC, MarkdownPreviewSettings.ChangeListener { onFontSettingsChanged() })
+    connection.subscribe(MarkdownSettings.ChangeListener.TOPIC, object : MarkdownSettings.ChangeListener {
+      override fun settingsChanged(settings: MarkdownSettings) = onFontSettingsChanged()
+    })
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener { onFontSettingsChanged() })
     connection.subscribe(LafManagerListener.TOPIC, LafManagerListener { onFontSettingsChanged() })
     editor.softWrapModel.addSoftWrapChangeListener(object : SoftWrapChangeListener {
