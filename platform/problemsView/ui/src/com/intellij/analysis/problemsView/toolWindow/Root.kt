@@ -88,6 +88,18 @@ abstract class Root(
     }
   }
 
+  /**
+   * Refreshes the tree after the visible problems of [file] change without a problem callback.
+   * The file node appears, refreshes or disappears as it does after a problem callback.
+   */
+  internal fun fileProblemsChanged(file: VirtualFile) {
+    when {
+      getFileProblemCount(file) == 0 -> fileDisappeared(file)
+      synchronized(nodes) { nodes[file] } == null -> fileAppeared(file)
+      else -> fileUpdated(file)
+    }
+  }
+
   private fun fileAppeared(file: VirtualFile) {
     structureChanged()
     TreeUtil.promiseExpand(panel.tree, FileNodeFinder(file))

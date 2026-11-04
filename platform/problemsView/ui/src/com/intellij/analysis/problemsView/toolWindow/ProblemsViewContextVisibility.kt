@@ -13,6 +13,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContextProvider
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.multiverse.anyContext
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.Project
@@ -81,6 +82,18 @@ data class ProblemsViewContextVisibility(
         oneContextOnly = !supportsSimultaneousRendering,
         onlyContext = onlyContext,
       )
+    }
+
+    /**
+     * The visibility of a new root before the first [compute]. Any thread.
+     * It shows the contexts of every editor of [document], and another context only when the daemon analyzed it.
+     */
+    fun provisional(project: Project, document: Document): ProblemsViewContextVisibility {
+      val contextManager = EditorContextManager.getInstance(project)
+      val editorContexts = EditorFactory.getInstance().editors(document, project).toList()
+        .flatMap { contextManager.getCachedEditorContexts(it)?.allContexts.orEmpty() }
+        .distinct()
+      return ProblemsViewContextVisibility(editorContexts, oneContextOnly = false, onlyContext = null)
     }
 
     /** `false` when the [CodeInsightContextProvider] that owns [file] does not support simultaneous rendering. */

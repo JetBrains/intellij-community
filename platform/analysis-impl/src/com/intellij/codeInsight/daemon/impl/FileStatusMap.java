@@ -314,6 +314,19 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
+  /**
+   * Marks every pass of {@code document} in {@code context} finished, as the daemon does at the end of each pass.
+   * Then {@link #allDirtyScopesAreNullFor} returns {@code true}.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public void markFileUpToDateForAllPasses(@NotNull Document document, @NotNull CodeInsightContext context) {
+    for (int passId : FileStatus.getAllKnownPassIds(myProject)) {
+      markFileUpToDate(document, context, passId, null);
+    }
+    markFileUpToDate(document, context, Pass.WOLF, null);
+  }
+
   @Override
   public String toString() {
     synchronized (myFileStatusMapState) {
