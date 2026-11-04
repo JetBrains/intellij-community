@@ -54,6 +54,7 @@ import kotlin.io.path.invariantSeparatorsPathString
 open class ProjectModelRule : TestRule {
   val baseProjectDir: TempDirectory = TempDirectory()
   val disposableRule: DisposableRule = DisposableRule()
+  protected var testClass: Class<*>? = null
 
   private var _project: Project? = null
   val project: Project
@@ -83,6 +84,7 @@ open class ProjectModelRule : TestRule {
   private val ruleChain = RuleChain(baseProjectDir, projectResource, disposableRule)
 
   override fun apply(base: Statement, description: Description): Statement {
+    testClass = description.testClass
     return ruleChain.apply(base, description)
   }
 
@@ -279,6 +281,7 @@ open class ProjectModelRule : TestRule {
 
 class ProjectModelExtension : ProjectModelRule(), BeforeEachCallback, AfterEachCallback {
   override fun beforeEach(context: ExtensionContext) {
+    testClass = context.testClass.orElse(null)
     setUp(context.displayName)
   }
 
@@ -289,6 +292,7 @@ class ProjectModelExtension : ProjectModelRule(), BeforeEachCallback, AfterEachC
 
 class ClassLevelProjectModelExtension : ProjectModelRule(), BeforeAllCallback, AfterAllCallback {
   override fun beforeAll(context: ExtensionContext) {
+    testClass = context.testClass.orElse(null)
     setUp(context.displayName)
   }
 

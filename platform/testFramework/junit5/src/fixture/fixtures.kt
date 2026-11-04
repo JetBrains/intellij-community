@@ -226,7 +226,8 @@ fun projectFixture(
   openProjectTask: OpenProjectTask = OpenProjectTask.build(),
   openAfterCreation: Boolean = false,
   blueprintResourcePath: Path? = null,
-): TestFixture<Project> = testFixture {
+): TestFixture<Project> = testFixture { context ->
+  val testClass = context.extensionContext.testClass.orElse(null)
   // Background service preloading might trigger service loading after a project gets disposed leading to a test failure.
   val path = pathFixture.init()
   blueprintResourcePath?.let {
