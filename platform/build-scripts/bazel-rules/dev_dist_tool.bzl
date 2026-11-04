@@ -11,16 +11,18 @@ def _dev_dist_tool_impl(ctx):
     executable = ctx.actions.declare_file(ctx.label.name + "/" + tool.basename)
     ctx.actions.symlink(output = executable, target_file = tool, is_executable = True)
 
+    # The identity has one path on every host, so its name drops the `.exe` of a Windows binary.
+    name = tool.basename.removesuffix(".exe")
     inputs = rust_tool_identity_inputs(ctx, ctx.attr.tool)
     files = inputs.files + ctx.files._manifests
     entries = ctx.actions.args()
     entries.set_param_file_format("multiline")
     entries.add_all(inputs.facts, format_each = "fact=%s")
     entries.add_all(files, map_each = _identity_file_entry)
-    flag_file = ctx.actions.declare_file(ctx.label.name + "/" + tool.basename + ".identity-entries")
+    flag_file = ctx.actions.declare_file(ctx.label.name + "/" + name + ".identity-entries")
     ctx.actions.write(flag_file, entries)
 
-    identity = ctx.actions.declare_file(ctx.label.name + "/" + tool.basename + ".identity")
+    identity = ctx.actions.declare_file(ctx.label.name + "/" + name + ".identity")
     ctx.actions.run(
         executable = ctx.executable._identity_writer,
         arguments = ["--flagfile=" + flag_file.path, "--output=" + identity.path],
