@@ -6,19 +6,22 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationProvider
 import com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationService
 import com.intellij.openapi.projectRoots.impl.JdkReleaseData
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.VfsTestUtil.createFile
-import kotlinx.coroutines.runBlocking
+import com.intellij.testFramework.common.timeoutRunBlocking
 
 abstract class ExternalJavaConfigurationTest: HeavyPlatformTestCase() {
+  override fun runInDispatchThread(): Boolean = false
+
   override fun setUp() {
     super.setUp()
 
     for (versionString in mockJdkVersions) {
       val jdk = IdeaTestUtil.createMockJdk(versionString, "")
-      SdkConfigurationUtil.addSdk(jdk)
+      runWriteActionAndWait {
+        ProjectJdkTable.getInstance(project).addJdk(jdk)
+      }
     }
   }
 
@@ -32,7 +35,7 @@ abstract class ExternalJavaConfigurationTest: HeavyPlatformTestCase() {
   ) {
     val file = configProvider.getConfigurationFilePath(project)
     createFile(getOrCreateProjectBaseDir(), file.fileName.toString(), configFileContent)
-    val suggestion = runBlocking { watcher.getReleaseData(configProvider) }
+    val suggestion = timeoutRunBlocking { watcher.getReleaseData(configProvider) }
     assert(suggestion != null)
 
     val jdk = watcher.findCandidate<T>(suggestion!!, configProvider)

@@ -1,15 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.openapi.projectRoots.impl
 
-import com.intellij.idea.IJIgnore
 import com.intellij.openapi.projectRoots.impl.AsdfReleaseData
 import com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationService
 import com.intellij.openapi.projectRoots.impl.ReleaseDataMatching
 import com.intellij.openapi.projectRoots.impl.ToolVersionsConfigurationProvider
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.runBlocking
 
 class ToolVersionsWatcherHeavyTests : ExternalJavaConfigurationTest() {
   override val mockJdkVersions: List<String> = listOf(
@@ -17,9 +16,8 @@ class ToolVersionsWatcherHeavyTests : ExternalJavaConfigurationTest() {
     "Eclipse Temurin 17.0.11",
   )
 
-  @IJIgnore(issue = "IDEA-395582")
   fun `test jdk suggestion after sdkmanrc change`() {
-    runBlocking {
+    timeoutRunBlocking {
       val scope = childScope("")
       try {
         val watcher = ExternalJavaConfigurationService(project, scope)

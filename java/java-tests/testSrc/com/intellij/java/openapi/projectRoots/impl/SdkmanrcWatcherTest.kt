@@ -7,8 +7,8 @@ import com.intellij.openapi.projectRoots.impl.SdkmanReleaseData
 import com.intellij.openapi.projectRoots.impl.SdkmanrcConfigurationProvider
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.junit.Ignore
 
@@ -21,7 +21,7 @@ class SdkmanrcWatcherHeavyTests : ExternalJavaConfigurationTest() {
   )
 
   fun `test jdk suggestion after sdkmanrc change`() {
-    runBlocking {
+    timeoutRunBlocking {
       val scope = childScope("")
       try {
         val watcher = ExternalJavaConfigurationService(project, scope)
