@@ -719,6 +719,7 @@ notebooks/visualization/testFramework
 platform/analysis-api
 platform/analysis-impl
 platform/backend
+platform/backend/baseline
 platform/backend/observation
 platform/backend/workspace
 platform/backend/workspace.impl

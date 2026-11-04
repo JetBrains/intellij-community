@@ -28,6 +28,7 @@ public final class ProductModeLoadingRules {
   public static @NotNull List<RuntimeModuleId> getIncompatibleRootModules(@NotNull ProductMode mode) {
     if (mode.equals(FRONTEND)) {
       return List.of(RuntimeModuleId.contentModule("intellij.platform.backend", "jetbrains"),
+                     RuntimeModuleId.contentModule("intellij.platform.backend.baseline", "jetbrains"),
                      RuntimeModuleId.contentModule("intellij.platform.jps.build", "jetbrains"),
                      RuntimeModuleId.contentModule("intellij.platform.jps.build.dependencyGraph", "jetbrains"));
     }

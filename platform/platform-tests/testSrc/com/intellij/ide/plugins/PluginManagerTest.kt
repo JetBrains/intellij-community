@@ -161,6 +161,7 @@ class PluginManagerTest {
     val modes = listOf(
       ProductMode.MONOLITH to listOf(
         "+ intellij.platform.backend",
+        "+ intellij.platform.backend.baseline",
         "- intellij.platform.backend.split",
         "+ intellij.platform.frontend",
         "- intellij.platform.frontend.split",
@@ -170,6 +171,7 @@ class PluginManagerTest {
       ),
       ProductMode.BACKEND to listOf(
         "+ intellij.platform.backend",
+        "+ intellij.platform.backend.baseline",
         "+ intellij.platform.backend.split",
         "- intellij.platform.frontend",
         "- intellij.platform.frontend.split",
@@ -179,6 +181,7 @@ class PluginManagerTest {
       ),
       ProductMode.FRONTEND to listOf(
         "- intellij.platform.backend",
+        "- intellij.platform.backend.baseline",
         "- intellij.platform.backend.split",
         "+ intellij.platform.frontend",
         "+ intellij.platform.frontend.split",
@@ -188,6 +191,7 @@ class PluginManagerTest {
       ),
       ProductMode.LIGHT_REMOTE to listOf(
         "- intellij.platform.backend",
+        "- intellij.platform.backend.baseline",
         "- intellij.platform.backend.split",
         "- intellij.platform.debugger",
         "- intellij.platform.execution",
@@ -202,6 +206,7 @@ class PluginManagerTest {
       ),
       ProductMode.LIGHT_MONOLITH to listOf(
         "- intellij.platform.backend",
+        "+ intellij.platform.backend.baseline",
         "- intellij.platform.backend.split",
         "- intellij.platform.debugger",
         "- intellij.platform.execution",
@@ -216,6 +221,7 @@ class PluginManagerTest {
       ),
       ProductMode.LIGHT_WITH_RD_CONNECTION to listOf(
         "- intellij.platform.backend",
+        "- intellij.platform.backend.baseline",
         "- intellij.platform.backend.split",
         "- intellij.platform.debugger",
         "- intellij.platform.execution",
@@ -230,6 +236,7 @@ class PluginManagerTest {
       ),
       ProductMode.LANGUAGE_SERVER to listOf(
         "+ intellij.platform.backend",
+        "+ intellij.platform.backend.baseline",
         "- intellij.platform.backend.split",
         "- intellij.platform.frontend",
         "- intellij.platform.frontend.split",
