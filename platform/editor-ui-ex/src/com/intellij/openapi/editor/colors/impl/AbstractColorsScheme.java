@@ -180,9 +180,6 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public @NotNull Font getFont(@Nullable EditorFontType key) {
-    if (snapshot.useAppFontPreferencesInEditor()) {
-      return getInstance().getFont(key);
-    }
     return fontCache.getFont(key);
   }
 

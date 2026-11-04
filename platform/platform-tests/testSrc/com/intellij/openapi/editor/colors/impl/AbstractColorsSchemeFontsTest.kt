@@ -2,6 +2,8 @@
 package com.intellij.openapi.editor.colors.impl
 
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences
 import com.intellij.testFramework.junit5.TestApplication
@@ -82,6 +84,15 @@ internal class AbstractColorsSchemeFontsTest {
     assertThat(consoleFontSizeOption(scheme.writeScheme())).isNull()
     consolePreferences.register(CONSOLE_FAMILY, 20f)
     assertThat(consoleFontSizeOption(scheme.writeScheme())).isEqualTo("20")
+  }
+
+  @Test
+  fun `a scheme that is not global gives its own console font`() {
+    val scheme = EditorColorsSchemeImpl(null)
+    scheme.setConsoleFontSize(29f)
+    assertThat(scheme.isUseAppFontPreferencesInEditor).isTrue()
+    assertThat(EditorColorsManager.getInstance().globalScheme).isNotSameAs(scheme)
+    assertThat(scheme.getFont(EditorFontType.CONSOLE_PLAIN).size2D).isEqualTo(29f)
   }
 
   /**
