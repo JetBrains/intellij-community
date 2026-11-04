@@ -96,9 +96,12 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
     override fun findElementForParameterInfo(context: CreateParameterInfoContext): TArgumentList? {
         val file = context.file as? KtFile ?: return null
 
-        val parameterListStart = context.parameterListStart
-        if (parameterListStart >= 0 && PsiTreeUtil.getNonStrictParentOfType(file.findElementAt(parameterListStart), PsiComment::class.java) != null) {
-            // Do not show parameter when typing in comments
+        // Do not auto-popup the parameter info when the typed character is in a comment.
+        // A non-negative parameter list start marks an auto-popup.
+        val offset = context.offset
+        if (context.parameterListStart >= 0 && offset > 0 &&
+            PsiTreeUtil.getNonStrictParentOfType(file.findElementAt(offset - 1), PsiComment::class.java) != null
+        ) {
             return null
         }
 

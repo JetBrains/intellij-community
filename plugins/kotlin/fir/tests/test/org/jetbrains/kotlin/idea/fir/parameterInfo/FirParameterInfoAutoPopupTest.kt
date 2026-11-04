@@ -2,9 +2,14 @@
 package org.jetbrains.kotlin.idea.fir.parameterInfo
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.hint.ShowParameterInfoHandler
 import com.intellij.java.codeInsight.AbstractParameterInfoTestCase
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.EditorModificationUtilEx
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.AutoPopupParameterInfoTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.EditorHintFixture
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.runAll
@@ -140,6 +145,24 @@ class FirParameterInfoAutoPopupTest : KotlinLightCodeInsightFixtureTestCase() {
         isHintExpected = true,
     )
 
+    fun testCommaAfterBlockCommentInArgumentListWithStaleParameterListStart() = doTestWithStaleParameterListStart(
+        """
+            fun foo(a: Int, b: Int) {}
+            fun test() {
+                foo(1 /* first */<caret>)
+            }
+        """,
+    )
+
+    fun testCommaAfterKDocInArgumentListWithStaleParameterListStart() = doTestWithStaleParameterListStart(
+        """
+            fun foo(a: Int, b: Int) {}
+            fun test() {
+                foo(1 /** first */<caret>)
+            }
+        """,
+    )
+
     fun testExplicitParameterInfoInCommentInsideLambda() {
         myFixture.configureByText(
             "a.kt",
@@ -191,11 +214,32 @@ class FirParameterInfoAutoPopupTest : KotlinLightCodeInsightFixtureTestCase() {
         AutoPopupParameterInfoTestUtil.waitForParameterInfoUpdate(editor)
         AbstractParameterInfoTestCase.waitForParameterInfo()
 
-        val hintText = hintFixture.currentHintText
         if (isHintExpected) {
-            assertNotNull("The parameter info is expected to pop up", hintText)
+            PlatformTestUtil.waitWithEventsDispatching(
+                "The parameter info is expected to pop up",
+                { hintFixture.currentHintText != null },
+                10,
+            )
         } else {
-            assertNull("The parameter info is not expected to pop up", hintText)
+            assertNull("The parameter info is not expected to pop up", hintFixture.currentHintText)
         }
+    }
+
+    /**
+     * Inserts `,` without the typed handler and shows the parameter info with a stale parameter list start.
+     * The auto-popup gets this value when it reads the caret offset before the typed character is inserted.
+     */
+    private fun doTestWithStaleParameterListStart(text: String) {
+        myFixture.configureByText("a.kt", text.trimIndent())
+        val staleParameterListStart = editor.caretModel.offset - 1
+        WriteCommandAction.runWriteCommandAction(project) {
+            EditorModificationUtilEx.insertStringAtCaret(editor, ",")
+        }
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+
+        ShowParameterInfoHandler.invoke(project, editor, file, staleParameterListStart, null, false)
+        AbstractParameterInfoTestCase.waitForParameterInfo()
+
+        assertNotNull("The parameter info is expected to pop up", hintFixture.currentHintText)
     }
 }
