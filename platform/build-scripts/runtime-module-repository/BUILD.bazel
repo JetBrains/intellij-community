@@ -11,7 +11,7 @@ jps_test(
 
 ### skip generation section `test intellij.platform.buildScripts.runtimeModuleRepository.tests`
 
-# The generator of `modules/module-descriptors.dat` and `modules/module-descriptors.jar`. It reads the project model tree, a layout file and the plugin
+# The generator of `modules/module-descriptors.dat` and `modules/module-descriptors.jar`. It reads the module facts, a layout file and the plugin
 # descriptors, and needs no build context. See `RuntimeModuleRepositoryMain.kt` for the options.
 java_binary(
     name = "runtime_module_repository_generator",
@@ -21,7 +21,7 @@ java_binary(
     runtime_deps = [":runtime-module-repository"],
 )
 
-# The writer of the module facts that the generator reads instead of the project model tree. See `RuntimeModuleFactsMain.kt`.
+# The writer of the module facts of a project model tree, which the generator reads. See `RuntimeModuleFactsMain.kt`.
 java_binary(
     name = "runtime_module_facts_writer",
     jvm_flags = ["-Djava.awt.headless=true"],

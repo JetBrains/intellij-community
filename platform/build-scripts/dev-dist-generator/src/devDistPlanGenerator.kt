@@ -86,7 +86,7 @@ import kotlin.io.path.invariantSeparatorsPathString
  * The file of `DEV_DIST_EXTRA_DESCRIPTOR_FILES`, the descriptors that a module reaches only through an `xi:include`.
  *
  * The shared project model tree carries every content module descriptor and every bundled plugin descriptor. Only
- * the runtime module repository action and the references read the tree. Bazel finds most descriptors by convention,
+ * the runtime module facts action and the references read the tree. Bazel finds most descriptors by convention,
  * as `<moduleName>.xml` or `META-INF/plugin.xml` at a production resource root. The convention cannot predict the
  * name of an included file, so the generator lists those files here. The generator walks and validates the
  * `xi:include` closure, so an unresolvable include is a generation error.
@@ -3207,7 +3207,7 @@ private fun renderDescriptors(files: List<DescriptorFile>, half: DevDistHalf): S
   append(half.generatedByHeader)
   append("#\n")
   append("# The shared project model tree carries every content module descriptor and every bundled plugin descriptor,\n")
-  append("# so a reader of the tree reads files instead of opening module jars. Only the runtime module repository action\n")
+  append("# so a reader of the tree reads files instead of opening module jars. Only the runtime module facts action\n")
   append("# and the references read the tree - see `intellij_project_model_tree`.\n")
   append("#\n")
   append("# Bazel finds most of them by convention: `<moduleName>.xml` and `META-INF/plugin.xml` at a production\n")

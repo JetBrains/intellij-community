@@ -515,7 +515,7 @@ def _platform_set(tables, product, name, target_platform, visibility):
             last_jars = order.last,
             plugins = ":" + repository + "_parts",
             ide_properties = [":%s_product_files/idea.properties" % name],
-            project_model_tree = tables.project_model_tree,
+            runtime_module_facts = tables.runtime_module_facts,
             bazel_targets_json = tables.bazel_targets_json,
             tags = ["manual"],
             **frontend_attrs
@@ -1072,7 +1072,8 @@ def intellij_dev_dist_declarations(tables):
     - `platform_lib_fragment`, `runtime_module_repository_fragment`: the payload names of the input tables.
     - `platform_lib_payload(product)`: the `struct(packed, module_system_loaded)` of the packing targets of the `lib/`
       jars, as `dev_dist_packed_labels` returns it.
-    - `bazel_targets_json`, `project_model_tree`, `collector`, `composer`: the labels of the shared inputs and tools.
+    - `bazel_targets_json`, `project_model_tree`, `runtime_module_facts`, `collector`, `composer`: the labels of the
+      shared inputs and tools.
     - `build_package`: the package that declares the platform sets, for example `//build`.
     - `product_info_label(product)`: the label of the product info of `product`.
     - `product_mode(product)`: the mode of `product`, its stamp class.

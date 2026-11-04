@@ -28,7 +28,7 @@ COMMUNITY_EXTRA_PROJECT_FILES = [
 ]
 
 # The project model tree of the community half, declared by `intellij_dev_project_model_tree_community`. Only the
-# runtime module repository component reads it, and no community row asks for that component yet.
+# runtime module facts action reads it, and no community row asks for the runtime module repository component yet.
 _DEV_PROJECT_MODEL_TREE = "//build:dev_project_model_tree"
 
 # The runtime module facts of that tree, declared next to it. The runtime module repository actions read them.
@@ -67,6 +67,7 @@ _DECLARATIONS = intellij_dev_dist_declarations(struct(
     platform_lib_payload = _platform_lib_payload,
     bazel_targets_json = BAZEL_TARGETS_JSON_COMMUNITY,
     project_model_tree = _DEV_PROJECT_MODEL_TREE,
+    runtime_module_facts = _DEV_RUNTIME_MODULE_FACTS,
     collector = "//build:dev_dist_packed_jars",
     composer = "//build:dev_dist_composer",
     build_package = "//build",
@@ -102,7 +103,7 @@ def intellij_dev_project_model_tree_community():
     """Declares `//build:dev_project_model_tree`, the checkout-shaped tree of the community half.
 
     It carries the community project model, the product files, and the union of the `extra_project_files` of every
-    `DEV_DIST_PRODUCTS` entry. Only the runtime module repository component reads the tree. Call the macro in
+    `DEV_DIST_PRODUCTS` entry. Only the runtime module facts action reads the tree. Call the macro in
     `//build` when the first community row asks for that component.
 
     It also declares `//build:dev_runtime_module_facts`, the runtime module facts of the tree.

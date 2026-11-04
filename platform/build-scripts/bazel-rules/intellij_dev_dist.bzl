@@ -382,7 +382,7 @@ def _project_model_tree_impl(ctx):
         # Hermetic. It reads its manifest and the execroot-relative sources that manifest names, writes only under its
         # output directory, and consults no environment variable, no home directory and no network, so it may be
         # sandboxed and the disk cache may keep it. The remote cache may not. The output is tens of thousands of small
-        # files, and every model edit re-keys it. Its consumers are the runtime module repository action and the
+        # files, and every model edit re-keys it. Its consumers are the runtime module facts action and the
         # references, and both run locally. A remote hit would download the whole tree to save a few seconds of local
         # copying.
         execution_requirements = {"no-remote-cache": "1"},
@@ -401,7 +401,7 @@ def _project_model_tree_impl(ctx):
 intellij_project_model_tree = rule(
     doc = """The checkout-shaped JPS project model tree.
 
-    Only the runtime module repository action and the references read the tree. No other action of a distribution
+    Only the runtime module facts action and the references read the tree. No other action of a distribution
     reads it. A consuming repository can declare one tree for many products and share it with every consumer of those
     products. One tree per consumer would repeat about 7 400 file copies for each one.
 

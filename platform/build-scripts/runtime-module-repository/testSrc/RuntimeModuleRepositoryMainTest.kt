@@ -66,37 +66,22 @@ class RuntimeModuleRepositoryMainTest {
   }
 
   @Test
-  fun `module facts give the same bytes as the project model`() {
+  fun `the facts mark a dependency that has a module descriptor`() {
     writeProject()
-    val args = writeInputs()
-    generateRuntimeModuleRepositoryFromLayout(args)
-    val fromProject = listOf(MODULE_DESCRIPTORS_COMPACT_PATH, MODULE_DESCRIPTORS_JAR_PATH).map { Files.readAllBytes(outputDir.resolve(it)) }
+    writeInputs()
 
-    val factsFile = tempDirectory.resolve("module-facts.json")
-    writeRuntimeModuleFacts(JpsRuntimeModuleModel(loadProject(projectDir)).toFactsTable(), factsFile)
-    val factsOutputDir = tempDirectory.resolve("facts-out")
-    generateRuntimeModuleRepositoryFromLayout(args.map {
-      when {
-        it.startsWith("--project-dir=") -> "--module-facts=$factsFile"
-        it.startsWith("--output-dir=") -> "--output-dir=$factsOutputDir"
-        else -> it
-      }
-    })
-
-    val fromFacts = listOf(MODULE_DESCRIPTORS_COMPACT_PATH, MODULE_DESCRIPTORS_JAR_PATH).map { Files.readAllBytes(factsOutputDir.resolve(it)) }
-    assertThat(fromFacts[0]).isEqualTo(fromProject[0])
-    assertThat(fromFacts[1]).isEqualTo(fromProject[1])
-    val facts = readRuntimeModuleFacts(factsFile)
+    val facts = readRuntimeModuleFacts(tempDirectory.resolve("module-facts.json"))
     assertThat(facts.findModule("foo.util")!!.dependencies.map { it.module to it.contentModule }).containsExactly("bar" to true, "baz" to false)
+    assertThat(facts.findModule("unknown")).isNull()
   }
 
   @Test
-  fun `the project model and module facts together are an error`() {
+  fun `the module facts are required`() {
     writeProject()
-    val args = writeInputs() + "--module-facts=${tempDirectory.resolve("module-facts.json")}"
+    val args = writeInputs().filterNot { it.startsWith("--module-facts=") }
 
     assertThatThrownBy { generateRuntimeModuleRepositoryFromLayout(args) }
-      .hasMessageContaining("Give exactly one of --project-dir and --module-facts")
+      .hasMessageContaining("--module-facts is required")
   }
 
   @Test
@@ -223,8 +208,10 @@ class RuntimeModuleRepositoryMainTest {
     // one option comes from an argument file, as a Bazel action passes them
     val argumentFile = tempDirectory.resolve("arguments.txt")
     Files.write(argumentFile, listOf("--descriptor=suppressed.plugin=$suppressedDescriptor", "--ide-properties=$ideProperties"))
+    val factsFile = tempDirectory.resolve("module-facts.json")
+    writeRuntimeModuleFacts(JpsRuntimeModuleModel(loadProject(projectDir)).toFactsTable(), factsFile)
     return listOf(
-      "--project-dir=$projectDir",
+      "--module-facts=$factsFile",
       "--layout=$layoutFile",
       "--descriptor=foo.plugin=$fooDescriptor",
       "@$argumentFile",
