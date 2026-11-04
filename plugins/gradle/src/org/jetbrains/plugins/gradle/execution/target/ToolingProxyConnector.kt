@@ -66,7 +66,7 @@ internal class ToolingProxyConnector(
     val inetAddress = InetAddress.getByName(hostPort.host)
     val connectCompletion = connectRetrying(5000) {
       ProgressManager.checkCanceled()
-      TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostPort.port))
+      TcpOutgoingConnector().connect(SocketInetAddress(inetAddress, hostPort.port), ByteArray(0))
     }
     val serializer = DaemonMessageSerializer.create(BuildActionSerializer.create())
     val connection = connectCompletion.create(Serializers.stateful(serializer))

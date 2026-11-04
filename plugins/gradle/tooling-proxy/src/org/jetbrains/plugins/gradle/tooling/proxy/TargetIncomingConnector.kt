@@ -31,7 +31,8 @@ class TargetIncomingConnector : IncomingConnector {
   private val addressFactory: InetAddressFactory = InetAddressFactory()
 
   private val executorFactory = DefaultExecutorFactory()
-  override fun accept(action: Action<ConnectCompletion>, allowRemote: Boolean): ConnectionAcceptor {
+
+  override fun accept(action: Action<ConnectCompletion>, allowRemote: Boolean, connectionToken: ByteArray?): ConnectionAcceptor {
     val serverSocketChannel: ServerSocketChannel
     try {
       val bindingPort = getBindingPort()

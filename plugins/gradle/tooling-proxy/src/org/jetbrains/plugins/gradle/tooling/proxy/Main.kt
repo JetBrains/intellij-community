@@ -47,10 +47,16 @@ object Main {
     }
   }
 
+  private object LoggingConnectionErrorHandler : Runnable {
+    override fun run() {
+      LOG.error("connection error")
+    }
+  }
+
   private fun doMain() {
     serverConnector = TargetTcpServerConnector(DaemonMessageSerializer.create(BuildActionSerializer.create()))
     incomingConnectionHandler = TargetIncomingConnectionHandler()
-    val address = serverConnector.start(incomingConnectionHandler) { LOG.error("connection error") } as InetEndpoint
+    val address = serverConnector.start(incomingConnectionHandler, LoggingConnectionErrorHandler, ByteArray(0)) as InetEndpoint
     println("Gradle target server hostAddress: ${address.candidates.first().hostAddress} port: ${address.port}")
     waitForIncomingConnection()
     waitForBuildParameters()

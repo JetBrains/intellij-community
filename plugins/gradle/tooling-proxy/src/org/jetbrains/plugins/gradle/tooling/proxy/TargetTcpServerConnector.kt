@@ -27,7 +27,7 @@ class TargetTcpServerConnector(private val serializer: Serializer<Message>) : Da
   private val lifecycleLock: Lock = ReentrantLock()
   private var acceptor: ConnectionAcceptor? = null
 
-  override fun start(handler: IncomingConnectionHandler, connectionErrorHandler: Runnable): Address {
+  override fun start(handler: IncomingConnectionHandler, connectionErrorHandler: Runnable, connectionToken: ByteArray): Address {
     lifecycleLock.lock()
     try {
       check(!stopped) { "server connector cannot be started as it is either stopping or has been stopped" }
@@ -46,7 +46,7 @@ class TargetTcpServerConnector(private val serializer: Serializer<Message>) : Da
 
       val allowRemote = !System.getProperty(LOCAL_BUILD_PROPERTY, "false").toBoolean()
       LOG.debug("Allow remote $allowRemote")
-      val connectionAcceptor = incomingConnector.accept(connectEvent, allowRemote)
+      val connectionAcceptor = incomingConnector.accept(connectEvent, allowRemote, connectionToken)
       acceptor = connectionAcceptor
       started = true
       return connectionAcceptor.address
