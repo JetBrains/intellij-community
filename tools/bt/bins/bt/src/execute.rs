@@ -27,8 +27,8 @@ use bt_core::result::{FlakyRun, RunResult, RunStatus, ShardTimeout, TargetResult
 use bt_core::runtime::{Runtime, SpawnResult, repo_file};
 use bt_core::scan::{ResolutionInputs, derive_package, read_text};
 use bt_core::selector::{
-    Resolution, Selector, SelectorKind, as_filter_or_package, checkout_label, directory_pattern, resolve_selector, suggest_names,
-    wanted_simple_name,
+    Resolution, Selector, SelectorKind, as_filter_or_package, checkout_label, directory_pattern, no_tests_hint, resolve_selector,
+    suggest_names, wanted_simple_name,
 };
 use bt_core::shard_plan::{HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, ShardPlan};
 use bt_core::suites::{named_suites, resolve_suite_run};
@@ -306,6 +306,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         path: PathBuf::from(&bep_path),
     });
     let method_filtered = resolution.filter.as_deref().is_some_and(|filter| filter.contains('#'));
+    let no_tests_hint = no_tests_hint(explicit_filter);
     // A BEP path of the caller would take the events of both invocations, so such a run keeps one invocation.
     let heavy_targets = if planned && owns_bep_file {
         let recorded = runtime
@@ -421,6 +422,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             max_failures: usize::try_from(args.max_failures).unwrap_or(usize::MAX),
             rerun_hint,
             method_filtered,
+            no_tests_hint,
             kept_run,
         },
     );

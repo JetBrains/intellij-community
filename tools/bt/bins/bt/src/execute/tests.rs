@@ -1054,6 +1054,24 @@ fn fake_module_tree() -> FakeRuntime {
 
 const UTIL_LABEL: &str = "@community//platform/util:util-tests_test";
 
+/// bt gives a filter that the runner cannot read to bazel as before. Only the NO TESTS digest names the form that
+/// works, see `no_tests_hint`.
+#[test]
+fn a_wildcard_filter_still_goes_to_bazel() {
+    let fake = fake_module_tree();
+    let wildcard = run(
+        &[
+            "--module",
+            "intellij.platform.util.tests",
+            "--filter",
+            "com.intellij.openapi.util.io.*",
+            "--dry-run",
+        ],
+        &fake,
+    );
+    assert_mentions(&wildcard.text, &["--test_filter=com.intellij.openapi.util.io.*"]);
+}
+
 #[test]
 fn a_module_runs_its_jps_test_with_the_filter() {
     let fake = fake_module_tree();
@@ -1173,5 +1191,31 @@ fn a_red_run_keeps_the_logs_of_its_failed_shard_and_names_the_run_directory() {
             format!("/repo/{run_dir}/pkg/target/test.log"),
             format!("/repo/{run_dir}/pkg/target/test.xml")
         ]
+    );
+}
+
+/// bt takes the FQN of a class selector from the `package` line itself, so the agent gave no filter to correct. The
+/// NO TESTS digest must not tell it to fix the form of a filter.
+#[test]
+fn a_class_selector_that_runs_no_test_gets_no_filter_hint() {
+    let fake = fake_air_tree();
+    one_attempt(&fake, "FAILED", &suite_xml(&suite("AgentThreadIdentityTest", Vec::new())));
+    spawn_answers(&fake, 3, "");
+    let outcome = run(&["AgentThreadIdentityTest"], &fake);
+    assert_eq!(outcome.exit_code, exit::NO_TESTS, "{}", outcome.text);
+    assert!(!outcome.text.contains("\nhint "), "{}", outcome.text);
+}
+
+/// The agents gave `--filter 'pkg.*'`. The run found no test, and the digest named no fix.
+#[test]
+fn a_wildcard_filter_that_runs_no_test_gets_the_hint_of_its_form() {
+    let fake = fake_air_tree();
+    one_attempt(&fake, "FAILED", &suite_xml(&suite("AgentThreadIdentityTest", Vec::new())));
+    spawn_answers(&fake, 3, "");
+    let outcome = run(&[CORE_LABEL, "--filter", "com.intellij.air.core.*"], &fake);
+    assert_eq!(outcome.exit_code, exit::NO_TESTS, "{}", outcome.text);
+    assert_mentions(
+        &outcome.text,
+        &["\nhint      --filter takes no wildcard. To run every class of the package, pass --filter com.intellij.air.core"],
     );
 }

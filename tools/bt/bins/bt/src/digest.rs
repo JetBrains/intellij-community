@@ -222,6 +222,8 @@ pub(crate) struct RenderOptions {
     /// The run narrowed to one method with `#`. A NO_TESTS run then has a known cause, so the digest names it
     /// instead of listing the three it cannot choose between.
     pub(crate) method_filtered: bool,
+    /// The hint of a NO_TESTS run about the form of its filter, see [`bt_core::selector::no_tests_hint`].
+    pub(crate) no_tests_hint: Option<String>,
     /// The repo-relative run directory that holds the logs of the failed attempts, which the next run of the
     /// target cannot overwrite.
     pub(crate) kept_run: Option<String>,
@@ -233,6 +235,7 @@ impl Default for RenderOptions {
             max_failures: 3,
             rerun_hint: None,
             method_filtered: false,
+            no_tests_hint: None,
             kept_run: None,
         }
     }
@@ -393,6 +396,13 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
                 }
                 .to_owned(),
             );
+            // A skipped test or a test of a different target was matched, so the filter did its job.
+            if sum.skipped == 0
+                && sum.tests == 0
+                && let Some(hint) = &options.no_tests_hint
+            {
+                out.push(format!("hint      {hint}"));
+            }
         }
         RunStatus::Infra => {
             out.push(format!("INFRA  the bazel run did not produce usable results{single}"));

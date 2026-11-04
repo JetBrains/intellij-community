@@ -531,6 +531,26 @@ fn a_method_filtered_no_tests_run_blames_the_method_filter() {
     assert!(!skipped.contains("#method filter"), "{skipped}");
 }
 
+/// A wildcard filter ran no test, and the digest named no fix. The hint names the form of the filter that works.
+#[test]
+fn a_no_tests_run_gives_the_hint_of_its_filter() {
+    let hinted = RenderOptions {
+        no_tests_hint: Some("--filter takes no wildcard. To run every class of the package, pass --filter a.b".to_owned()),
+        ..RenderOptions::default()
+    };
+    let named = no_tests(|_| {}, &hinted);
+    assert!(
+        named.contains("\nhint      --filter takes no wildcard. To run every class of the package, pass --filter a.b"),
+        "{named}"
+    );
+    // A skipped test was matched, so the filter did its job.
+    let skipped = no_tests(|target| target.skipped = 1, &hinted);
+    assert!(!skipped.contains("hint "), "{skipped}");
+    // A passing run gives no hint.
+    let passed = render_digest(&digest_result(|_| {}), &hinted);
+    assert!(!passed.contains("hint "), "{passed}");
+}
+
 // --- the rerun selector ------------------------------------------------------------------------------------------
 
 /// [`test_case_id`] prints what test.xml carries and [`rerun_selector`] answers what `bt` can run. The two differ
@@ -717,4 +737,28 @@ fn a_run_with_mixed_shard_plans_names_the_target_and_the_rerun() {
         text.contains("the shards of //p:t read different shard plans") && text.contains("--no-cache"),
         "{text}"
     );
+}
+
+/// `//pkg:all --filter a.b.FooTest` is a label, so bt takes the filter. The target without the class exits 42 and
+/// makes the run NO TESTS, but the filter matched in the other target. The hint must not blame the filter.
+#[test]
+fn a_no_tests_run_where_a_target_ran_tests_gives_no_filter_hint() {
+    let hinted = RenderOptions {
+        no_tests_hint: Some("H".to_owned()),
+        ..RenderOptions::default()
+    };
+    let result = digest_result(|result| {
+        result.status = RunStatus::NoTests;
+        result.exit_code = exit::NO_TESTS;
+        result.targets = vec![
+            digest_target(|_| {}),
+            digest_target(|target| {
+                target.label = "//a:other_test".to_owned();
+                target.tests = 0;
+                target.wrapper_exit_code = Some(42);
+            }),
+        ];
+    });
+    let digest = render_digest(&result, &hinted);
+    assert!(!digest.contains("hint      H"), "{digest}");
 }

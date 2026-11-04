@@ -72,7 +72,13 @@ checkout. `tests.cmd` reads the same list. bt refuses every other module with ex
 `module_not_migrated`. The message gives the `./tests.cmd --module <module> --test <FQN>` command, and it gives the
 label for an explicit run. A module without a target of its own gets the code `module_without_test_target` and the same
 `tests.cmd` command. When the `BUILD.bazel` declares exactly one unfiltered `jps_test`, this refusal also gives the
-label of that target for an explicit run. `--filter` takes an FQN, `FQN#method` or a package, as for a label.
+label of that target for an explicit run.
+
+`--filter` takes an FQN, `FQN#method` or a package, as for a label. A package is a dotted name whose segments start
+with a lower-case letter. bt gives every other value to bazel too. The JUnit runner reads `--test_filter` as one class
+name prefix or one `Class#method`, so a wildcard, a regex and a list run no test. For a NO TESTS run with `--filter`,
+the `hint` line of the digest names the form that works, see `no_tests_hint` in `bt-core`. The hint does not change the
+status or the exit code.
 
 ## Builds
 
