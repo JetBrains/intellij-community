@@ -62,7 +62,10 @@ class DisableInspectionToolModCommandActionTest {
         projectCreator = { Path.of(it.path).also(setUp) },
         task = { project ->
           project.putUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE, true)
-          ProjectInspectionProfileManager.getInstance(project).forceLoadSchemes()
+          val profileManager = ProjectInspectionProfileManager.getInstance(project)
+          profileManager.forceLoadSchemes()
+          // A write action can cancel a read action, and a canceled initialization leaves the profile without tools
+          profileManager.currentProfile.initInspectionTools(project)
           task(project)
         },
         runPostStartUpActivities = true,
