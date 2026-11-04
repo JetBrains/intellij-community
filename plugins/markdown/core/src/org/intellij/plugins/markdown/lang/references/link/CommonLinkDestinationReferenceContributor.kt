@@ -5,6 +5,8 @@ import com.intellij.openapi.paths.PathReferenceManager
 import com.intellij.openapi.paths.PathReferenceProviderBase
 import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
+import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiReference
@@ -43,13 +45,20 @@ internal class CommonLinkDestinationReferenceContributor: PsiReferenceContributo
       val referenceSet = object: FileReferenceSet(text, psiElement, offset, null, true, false, null) {
         override fun isUrlEncoded(): Boolean = true
         override fun isSoft(): Boolean = soft
+        override fun isAbsolutePathReference(): Boolean = OSAgnosticPathUtil.isAbsolute(pathString)
+
         override fun computeDefaultContexts(): Collection<PsiFileSystemItem> {
-          val contexts = super.computeDefaultContexts()
+          val contexts = super.computeDefaultContexts().toMutableList()
           val file = containingFile ?: return contexts
-          val document = file.virtualFile ?: return contexts
-          val projectRoot = BaseProjectDirectories.getInstance(file.project).getBaseDirectoryFor(document) ?: return contexts
-          val directory = file.manager.findDirectory(projectRoot) ?: return contexts
-          return (contexts + directory).distinct()
+          val projectRoot = file.virtualFile?.let { BaseProjectDirectories.getInstance(file.project).getBaseDirectoryFor(it) }
+          val directory = projectRoot?.let { file.manager.findDirectory(it) }
+          if (directory != null) {
+            contexts.add(directory)
+          }
+          if (isAbsolutePathReference()) {
+            contexts.addAll(toFileSystemItems(*ManagingFS.getInstance().localRoots))
+          }
+          return contexts.distinct()
         }
 
         override fun createFileReference(range: TextRange, index: Int, text: String): FileReference {
@@ -67,6 +76,14 @@ internal class CommonLinkDestinationReferenceContributor: PsiReferenceContributo
     FileReference(referenceSet, range, index, text) {
     override fun resolve(): PsiFileSystemItem? {
       return multiResolve(false).firstOrNull { it.isValidResult }?.element as? PsiFileSystemItem
+    }
+
+    override fun bindToElement(element: PsiElement, absolute: Boolean): PsiElement {
+      val target = (element as? PsiFileSystemItem)?.virtualFile
+      if (absolute && target != null) {
+        return rename(encode(target.path, element))
+      }
+      return super.bindToElement(element, absolute)
     }
   }
 }

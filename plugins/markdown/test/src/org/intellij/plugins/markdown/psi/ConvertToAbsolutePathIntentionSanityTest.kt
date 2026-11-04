@@ -20,4 +20,12 @@ class ConvertToAbsolutePathIntentionSanityTest : LightPlatformCodeInsightFixture
     myFixture.checkPreviewAndLaunchAction(ConvertRelativePathToAbsoluteIntentionAction())
     myFixture.checkResult(expected)
   }
+
+  @Test
+  fun `test image path is absolute`() {
+    val image = myFixture.addFileToProject("images/image.jpg", "")
+    myFixture.configureByText("main.md", "![](<caret>images/image.jpg)")
+    myFixture.checkPreviewAndLaunchAction(ConvertRelativePathToAbsoluteIntentionAction())
+    myFixture.checkResult("![](${image.virtualFile.path})")
+  }
 }
