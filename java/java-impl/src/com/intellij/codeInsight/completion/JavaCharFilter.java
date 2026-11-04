@@ -11,11 +11,13 @@ import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.JavaFeature;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiStatement;
@@ -28,12 +30,21 @@ import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class JavaCharFilter extends CharFilter {
 
   private static boolean isWithinLiteral(final Lookup lookup) {
     PsiElement psiElement = lookup.getPsiElement();
     return psiElement != null && psiElement.getParent() instanceof PsiLiteralExpression;
+  }
+
+  private static boolean isInAnnotationName(@Nullable PsiElement element) {
+    PsiElement parent = element == null ? null : element.getParent();
+    while (parent instanceof PsiJavaCodeReferenceElement) {
+      parent = parent.getParent();
+    }
+    return parent instanceof PsiAnnotation;
   }
 
   @Override
@@ -99,7 +110,8 @@ public final class JavaCharFilter extends CharFilter {
     if (c == '<' && o instanceof PsiClass) return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
     if (c == '(') {
       if (o instanceof PsiClass) {
-        if (PsiJavaPatterns.psiElement().afterLeaf(JavaKeywords.NEW).accepts(lookup.getPsiElement())) {
+        PsiElement element = lookup.getPsiElement();
+        if (PsiJavaPatterns.psiElement().afterLeaf(JavaKeywords.NEW).accepts(element) || isInAnnotationName(element)) {
           return Result.SELECT_ITEM_AND_FINISH_LOOKUP;
         }
         return Result.HIDE_LOOKUP;

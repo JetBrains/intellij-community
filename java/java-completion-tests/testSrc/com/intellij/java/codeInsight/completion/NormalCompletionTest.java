@@ -927,6 +927,13 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     assertStringItems("bar", "foo");
   }
 
+  public void testAnnotationWithLeftParen() {
+    configureByTestName();
+    assertStringItems("MyAnno", "MyAnnoOther");
+    type('(');
+    checkResult();
+  }
+
   public void testAddExplicitValueInAnnotation() {
     configureByTestName();
     assertStringItems("bar", "goo");
