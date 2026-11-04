@@ -60,6 +60,6 @@ class QodanaProductProperties(val productCode: String, val productName: String, 
 }
 
 private fun isEap(productCode: String): Boolean = when (productCode) {
-  "QDRST", "QDRUBY", "QDPOLY" -> true
+  "QDRST", "QDRUBY" -> true
   else -> IS_EAP
 }
