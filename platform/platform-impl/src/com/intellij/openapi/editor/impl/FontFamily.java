@@ -47,6 +47,8 @@ final class FontFamily {
   private final ToIntFunction<? super Font> weightReader;
   private final Object recommendedSubFamiliesLock = new Object();
   private volatile @Nullable RecommendedSubFamilies recommendedSubFamilies;
+  private final Object monospacedLock = new Object();
+  private volatile @Nullable Boolean monospaced;
 
   /**
    * @param members      the fonts of the family by subfamily name, in the order of the fonts of the runtime.
@@ -129,6 +131,20 @@ final class FontFamily {
   }
 
   boolean isMonospaced() {
+    Boolean result = monospaced;
+    if (result == null) {
+      synchronized (monospacedLock) {
+        result = monospaced;
+        if (result == null) {
+          result = measureMonospaced();
+          monospaced = result;
+        }
+      }
+    }
+    return result;
+  }
+
+  private boolean measureMonospaced() {
     Font font = members.firstEntry().getValue();
     if (!font.canDisplay(' ') || !font.canDisplay('M')) {
       return false;

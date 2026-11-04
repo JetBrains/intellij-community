@@ -111,6 +111,11 @@ final class FontFamilyServiceImpl extends FontFamilyService {
   }
 
   @Override
+  protected boolean isAvailableImpl(String family) {
+    return myFamilies.isEmpty() ? super.isAvailableImpl(family) : myFamilies.containsKey(family);
+  }
+
+  @Override
   protected boolean isMonospacedImpl(@NotNull String family) {
     FontFamily fontFamily = myFamilies.get(family);
     return fontFamily == null ? super.isMonospacedImpl(family) : fontFamily.isMonospaced();

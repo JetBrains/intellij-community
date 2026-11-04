@@ -189,6 +189,23 @@ internal class FontFamilyTest {
     assertThat(family.isMonospaced).isFalse()
   }
 
+  @Test
+  fun `the family measures its monospacing once`() {
+    val canDisplayCalls = AtomicInteger()
+    val font = object : Font(MONOSPACED, PLAIN, 1) {
+      override fun canDisplay(c: Char): Boolean {
+        canDisplayCalls.incrementAndGet()
+        return super.canDisplay(c)
+      }
+    }
+    val family = FontFamily("Monospaced", mapOf("Regular" to font)) { 400 }
+    assertThat(family.isMonospaced).isTrue()
+    val callsOfOneMeasurement = canDisplayCalls.get()
+    assertThat(callsOfOneMeasurement).isPositive()
+    assertThat(family.isMonospaced).isTrue()
+    assertThat(canDisplayCalls.get()).isEqualTo(callsOfOneMeasurement)
+  }
+
   /**
    * A family of test fonts. Each font has a unique name, so the tests can tell the fonts apart.
    */
