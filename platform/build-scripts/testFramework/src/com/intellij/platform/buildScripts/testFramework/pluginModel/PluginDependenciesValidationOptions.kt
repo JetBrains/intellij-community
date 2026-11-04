@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.DependsSubDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.shortLogDescription
-import com.intellij.openapi.extensions.PluginId
 
 /**
  * Options for [PluginDependenciesValidator].
@@ -53,13 +52,6 @@ data class PluginDependenciesValidationOptions(
   val compileOnlyDependencies: List<Pair<String, String>> = compileOnlyDependenciesInCommunity,
 
   /**
-   * Specifies variants of plugins enabled via a system property.
-   * Such variants won't be checked, but this information will be used to determine modules which are loaded by separate classloaders in such a variant, and therefore shouldn't be
-   * treated as loaded by the plugin descriptor's classloader.
-   */
-  val pluginVariantsWithDynamicIncludes: List<PluginVariantWithDynamicIncludes> = emptyList(),
-
-  /**
    * Specifies plugin ids which should be excluded from the validation.
    */
   val pluginsToIgnore: Set<String> = emptySet(),
@@ -89,15 +81,6 @@ data class PluginDependenciesValidationOptions(
    * Please don't add new suppressions without a good reason
    */
   val extensionPointDependencyViolationsToIgnore: Set<ExtensionPointDependencyViolation> = emptySet(),
-)
-
-/**
- * Defines a variant of a plugin with a custom value of system property used in `includeUnless`/`includeIf` directives.
- */
-class PluginVariantWithDynamicIncludes(
-  val pluginId: PluginId,
-  val systemPropertyKey: String,
-  val systemPropertyValue: Boolean,
 )
 
 /**

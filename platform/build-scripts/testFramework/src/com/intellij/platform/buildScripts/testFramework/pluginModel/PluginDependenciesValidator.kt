@@ -52,9 +52,7 @@ import com.intellij.platform.pluginSystem.testFramework.loadXIncludeReferenceFro
 import com.intellij.platform.pluginSystem.testFramework.resolveModuleSetPath
 import com.intellij.platform.productMode.ProductMode
 import com.intellij.util.SmartList
-import com.intellij.util.SystemProperties
 import com.intellij.util.lang.UrlClassLoader
-import java.util.concurrent.locks.ReentrantLock
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.impl.moduleBased.JpsProductModeMatcher
 import org.jetbrains.intellij.build.productLayout.util.getProductionModuleDependencies
@@ -68,6 +66,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.BitSet
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
 import kotlin.io.path.pathString
@@ -596,16 +595,7 @@ class PluginDependenciesValidator private constructor(
     }
 
     val nonEmbeddedContentModules = (
-      descriptor.content.modules.filter { it.defaultLoadingRule != ModuleLoadingRule.EMBEDDED }.map { it.moduleId.name } +
-      options.pluginVariantsWithDynamicIncludes.filter { it.pluginId == descriptor.pluginId }.flatMap { pluginVariant ->
-        val oldValue = System.setProperty(pluginVariant.systemPropertyKey, pluginVariant.systemPropertyValue.toString())
-        try {
-          loadRawPluginDescriptorInTest(pluginDescriptorPath, xIncludeLoader).contentModules.filter { it.loadingRule != ModuleLoadingRuleValue.EMBEDDED }.map { it.name }
-        }
-        finally {
-          SystemProperties.setProperty(pluginVariant.systemPropertyKey, oldValue)
-        }
-      }
+      descriptor.content.modules.filter { it.defaultLoadingRule != ModuleLoadingRule.EMBEDDED }.map { it.moduleId.name }
     ).toSet()
 
     //non-embedded content modules with `package` attribute are included in the main plugin JAR, but they are loaded by different classloaders
