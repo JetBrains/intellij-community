@@ -52,9 +52,14 @@ internal class EditorFontCacheImplTest {
     consoleFontOptions.isUseEditorFont = false
     try {
       val appConsoleFont = consoleFontOptions.fontPreferences as ModifiableFontPreferences
-      scheme.getFont(EditorFontType.CONSOLE_PLAIN)
-      appConsoleFont.register(appConsoleFont.fontFamily, 23f)
-      assertThat(scheme.getFont(EditorFontType.CONSOLE_PLAIN).size2D).isEqualTo(23f)
+      val appConsoleFontBefore = appConsoleFont.snapshot
+      try {
+        scheme.getFont(EditorFontType.CONSOLE_PLAIN)
+        appConsoleFont.register(appConsoleFont.fontFamily, 23f)
+        assertThat(scheme.getFont(EditorFontType.CONSOLE_PLAIN).size2D).isEqualTo(23f)
+      } finally {
+        appConsoleFontBefore.copyTo(appConsoleFont)
+      }
     } finally {
       consoleFontOptions.isUseEditorFont = useEditorFont
     }

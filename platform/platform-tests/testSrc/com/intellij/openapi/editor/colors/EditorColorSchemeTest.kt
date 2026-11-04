@@ -18,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.awt.Color
 import kotlin.io.path.readText
 
 class EditorColorSchemeTest {
@@ -76,6 +77,27 @@ class EditorColorSchemeTest {
     assertThat(manager.schemeManager.allSchemes
       .map { it.name })
       .isEqualTo(schemeNamesBeforeReload)
+  }
+
+  @Test
+  fun `a parent that is not loaded yet keeps its additional text attributes`() {
+    val key = TextAttributesKey.createTextAttributesKey("TEST_ADDITIONAL_ATTRIBUTES", DefaultLanguageHighlighterColors.CLASS_NAME)
+    val ep = AdditionalTextAttributesEP(DefaultPluginDescriptor(PluginId.getId("parentNotLoadedYet"),
+                                                                EditorColorSchemeTest::class.java.classLoader))
+    ep.scheme = "Base"
+    ep.file = "com/intellij/openapi/editor/colors/additionalTextAttributes.xml"
+    EditorColorsManagerImpl.ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME.point.registerExtension(ep, disposableRule.disposable)
+    fsRule.fs.getPath("colors/Base.icls").write("""<scheme name="Base" version="142" parent_scheme="Default" />""")
+    fsRule.fs.getPath("colors/Child.icls").write("""
+    <scheme name="Child" version="142" parent_scheme="Base">
+      <metaInfo>
+        <property name="forceOptimize">true</property>
+      </metaInfo>
+    </scheme>""".trimIndent())
+    val manager = EditorColorsManagerImpl(SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath("")))
+
+    val base = manager.getScheme("Base") as AbstractColorsScheme
+    assertThat(base.getDirectlyDefinedAttributes(key)?.foregroundColor).isEqualTo(Color(0xc7773e))
   }
 
   @Test

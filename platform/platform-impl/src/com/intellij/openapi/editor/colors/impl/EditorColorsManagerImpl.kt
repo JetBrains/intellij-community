@@ -547,7 +547,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       if (isBundled ||
           (ApplicationManager.getApplication().isUnitTestMode() && scheme.metaProperties.getProperty("forceOptimize").toBoolean())) {
         val parentScheme = scheme.getParentScheme()
-        if (parentScheme is AbstractColorsScheme) {
+        if (parentScheme is AbstractColorsScheme && parentScheme.isReadOnly) {
           val attributesEPs = additionalTextAttributes.remove(parentScheme.name)
           if (!attributesEPs.isNullOrEmpty()) {
             loadAdditionalTextAttributesForScheme(scheme = parentScheme, attributesProviders = attributesEPs)
@@ -869,7 +869,7 @@ private fun createBundledEditorColorScheme(
   // 1) it can be computed on demand later (because a bundled scheme is not mutable)
   // 2) in the future, user copies of bundled schemes will use a bundled scheme as parent (not as full copy)
   val parentScheme = scheme.getParentScheme()
-  if (parentScheme is AbstractColorsScheme) {
+  if (parentScheme is AbstractColorsScheme && parentScheme.isReadOnly) {
     val attributesEPs = additionalTextAttributesProviders.remove(parentScheme.name)
     if (!attributesEPs.isNullOrEmpty()) {
       loadAdditionalTextAttributesForScheme(parentScheme, attributesEPs)

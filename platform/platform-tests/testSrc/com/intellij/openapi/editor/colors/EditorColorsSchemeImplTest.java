@@ -1474,6 +1474,11 @@ public class EditorColorsSchemeImplTest {
   }
 
   @Test
+  public void testEditableCopyNameOfEmptySchemeUsesItsName() {
+    assertEquals(Scheme.EDITABLE_COPY_PREFIX + EmptyColorScheme.getSchemeName(), EmptyColorScheme.getEmptyScheme().getEditableCopyName());
+  }
+
+  @Test
   public void testToStringOfSchemeWithoutName() {
     assertEquals("<unnamed scheme>", myScheme.toString());
     myScheme.setName("Named");

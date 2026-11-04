@@ -102,7 +102,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
   }
 
   public @NonNls @NotNull String getEditableCopyName() {
-    return EDITABLE_COPY_PREFIX + super.getName();
+    return EDITABLE_COPY_PREFIX + getName();
   }
 
   @Override
