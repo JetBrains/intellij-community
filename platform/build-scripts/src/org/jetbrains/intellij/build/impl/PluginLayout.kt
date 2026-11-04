@@ -13,12 +13,12 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.CompatibleBuildRange
 import org.jetbrains.intellij.build.CustomAssetDescriptor
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
-import org.jetbrains.intellij.build.CompatibleBuildRange
 import org.jetbrains.intellij.build.dev.LayoutAssetOwner
 import org.jetbrains.intellij.build.dev.LayoutAssetSource
 import org.jetbrains.intellij.build.dev.LayoutAssetSpec
@@ -292,15 +292,13 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       return layout
     }
 
-    // we cannot break compatibility / risk to change the existing plugin dir name
-    @Deprecated("A new plugin takes the directory name of its main module. Use `pluginAuto`.")
+    @Deprecated("Use `pluginAuto` instead")
     @Suppress("DEPRECATION")
     fun pluginAutoWithCustomDirName(mainModuleName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
       return plugin(mainModuleName = mainModuleName, auto = true, body = body)
     }
 
-    // we cannot break compatibility / risk to change the existing plugin dir name
-    @Deprecated("A new plugin takes the directory name of its main module. Use `pluginAuto`.")
+    @Deprecated("Use `pluginAuto` instead")
     @Suppress("DEPRECATION")
     fun pluginAutoWithCustomDirName(mainModuleName: String, dirName: String, body: (PluginLayoutSpec) -> Unit): PluginLayout {
       return plugin(mainModuleName, auto = true) { spec ->
@@ -548,7 +546,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
        * (with stripped `intellij` prefix and `plugin` suffix, and dots replaced by dashes).
        * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
        */
-      @Deprecated("A new plugin takes the directory name of its main module.")
+      @Deprecated("Plugins shouldn't specify custom directory names to simplify build scripts and migration to Bazel")
       set(value) {
         field = value
         directoryNameSetExplicitly = true
@@ -578,6 +576,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
        * prefix and dots replaced by dashes).
        * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
        */
+      @Deprecated("Plugins shouldn't specify custom JAR names to simplify build scripts and migration to Bazel")
       set(value) {
         layout.mainJarName = value
       }
