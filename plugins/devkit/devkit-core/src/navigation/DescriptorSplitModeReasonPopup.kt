@@ -143,8 +143,9 @@ internal fun showDescriptorSplitModeReasonPopup(
     popup.showInBestPositionFor(editor)
   }
 
-  val links = reasonHtml.links.distinct()
-  ReadAction.nonBlocking<Map<DescriptorLink, ResolvedDescriptor>> { resolveDescriptors(project, links) }
+  // The current file has no link, but it needs its file icon too.
+  val descriptors = (reasonHtml.links + reason.analyzedDescriptor).distinct()
+  ReadAction.nonBlocking<Map<DescriptorLink, ResolvedDescriptor>> { resolveDescriptors(project, descriptors) }
     .inSmartMode(project)
     .expireWhen { popup.isDisposed }
     .expireWith(project)
@@ -374,6 +375,14 @@ private class ReasonHtmlBuilder(
   private fun descriptorNode(descriptorName: String, moduleName: String?): HtmlChunk {
     if (moduleName == null) {
       return HtmlChunk.text(descriptorName)
+    }
+    // The current descriptor needs no link and no module.
+    if (DescriptorLink(descriptorName, moduleName) == analyzedDescriptor) {
+      return HtmlBuilder()
+        .append(descriptorName)
+        .append(" ")
+        .append(secondary(DevKitBundle.message("inlay.split.mode.reason.popup.current")))
+        .toFragment()
     }
     links.add(DescriptorLink(descriptorName, moduleName))
     val link = HtmlChunk.link("$DESCRIPTOR_LINK_PREFIX${links.lastIndex}", descriptorName)

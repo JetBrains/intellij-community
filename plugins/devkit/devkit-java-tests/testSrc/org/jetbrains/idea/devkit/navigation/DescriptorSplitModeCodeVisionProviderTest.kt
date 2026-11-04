@@ -215,7 +215,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     assertEquals(
       "Backend plugin Can be installed into: backend IDE " +
       "Backend dependency: " +
-      "plugin.xml module root.plugin " +
+      "plugin.xml (current) " +
       "\u2193 depends on " +
       "dependency.module.xml " +
       "\u2193 depends on " +
@@ -223,14 +223,15 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
       toPlainText(reasonHtml.html),
     )
     assertEquals(
-      listOf(DescriptorLink("plugin.xml", "root.plugin"), DescriptorLink("dependency.module.xml", "dependency.module")),
+      listOf(DescriptorLink("dependency.module.xml", "dependency.module")),
       reasonHtml.links,
     )
     assertEquals(setOf("plugin", "descriptor", "backend"), reasonHtml.icons.keys)
 
-    val resolvedDescriptors = runReadActionBlocking { resolveDescriptors(myFixture.project, reasonHtml.links) }
+    val currentFile = DescriptorLink("plugin.xml", "root.plugin")
+    val resolvedDescriptors = runReadActionBlocking { resolveDescriptors(myFixture.project, reasonHtml.links + currentFile) }
     assertEquals(
-      mapOf(reasonHtml.links[0] to "root.plugin/plugin.xml", reasonHtml.links[1] to "dependency.module/dependency.module.xml"),
+      mapOf(reasonHtml.links[0] to "dependency.module/dependency.module.xml", currentFile to "root.plugin/plugin.xml"),
       resolvedDescriptors.mapValues { (_, resolved) -> "${resolved.file.parent.name}/${resolved.file.name}" },
     )
     val reasonHtmlWithFileIcons = computeReason().toHtml(resolvedDescriptors.mapValues { it.value.icon })
@@ -256,7 +257,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     assertEquals(
       "LiteFrontend content module Can be installed into: lite frontend IDE " +
       "Frontend dependency: " +
-      "test.module.xml " +
+      "test.module (current) " +
       "\u2193 depends on " +
       "intellij.platform.frontend " +
       "No dependency on intellij.platform.rpc was found. The module can be installed only into a lite frontend.",
@@ -298,7 +299,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     assertEquals(
       "LiteFrontend content module Can be installed into: lite frontend IDE " +
       "Frontend dependency: " +
-      "test.module.xml " +
+      "test.module.xml (current file) " +
       "\u2193 depends on " +
       "intellij.platform.frontend predefined " +
       "No dependency on intellij.platform.rpc was found. The module can be installed only into a lite frontend.",
