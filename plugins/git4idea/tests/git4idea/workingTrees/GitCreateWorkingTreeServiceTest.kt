@@ -4,7 +4,6 @@ package git4idea.workingTrees
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -30,6 +29,7 @@ import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitLocalBranch
 import git4idea.GitNotificationIdsHolder
@@ -43,11 +43,9 @@ import git4idea.test.gitSingleRepoContextFixture
 import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
 import git4idea.workingTrees.dialog.WorktreeBranchSpec
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -220,6 +218,30 @@ internal class GitCreateWorkingTreeServiceTest {
 
   @Test
   @RegistryKey("git.enable.working.trees.feature", "true")
+  fun `test createOrOpenWorktreeForBranch copies worktreeinclude matches`(): Unit = with(context) {
+    touch(".worktreeinclude", "notes/*.md\n")
+    touch("notes/todo.md", "buy milk")
+    val branch = createBranch(repo, "feature")
+    val parentDir = testNioRoot.resolve("worktree-parent")
+    val openedProjectDeferred = CompletableDeferred<Project>()
+
+    val openedProject = timeoutRunBlocking(timeout = 120.seconds) {
+      GitCreateWorkingTreeService.getInstance().createOrOpenWorktreeForBranch(
+        repo, branch, parentDir, "featureWorktree", "Test",
+        onProjectOpened = { openedProjectDeferred.complete(it) },
+      )
+      openedProjectDeferred.await()
+    }
+    try {
+      assertThat(Files.readString(parentDir.resolve("featureWorktree/notes/todo.md"))).isEqualTo("buy milk")
+    }
+    finally {
+      closeOpenedProject(openedProject)
+    }
+  }
+
+  @Test
+  @RegistryKey("git.enable.working.trees.feature", "true")
   fun `test config copy failure still opens the worktree and posts an error notification`(@TestDisposable disposable: Disposable): Unit = with(context) {
     val branch = createBranch(repo, "feature")
     val configService = Mockito.mock(GitWorktreeProjectConfigService::class.java)
@@ -240,31 +262,34 @@ internal class GitCreateWorkingTreeServiceTest {
     LoggedErrorProcessor.executeWith<RuntimeException>(object : LoggedErrorProcessor() {
       override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> = setOf(Action.LOG)
     }) {
-      timeoutRunBlocking(timeout = 120.seconds) {
+      val openedProject = timeoutRunBlocking(timeout = 120.seconds) {
         GitCreateWorkingTreeService.getInstance().doCreateWorkingTree(
           ideActivity, request,
           onProjectOpened = { openedProjectDeferred.complete(it) },
         )
-
-        val openedProject = openedProjectDeferred.await()
-        try {
-          assertThat(worktreeDir).exists()
-          assertThat(vcsNotifier.notifications.map { it.displayId })
-            .contains(GitNotificationIdsHolder.WORKTREE_CONFIG_COPY_FAILED)
-        }
-        finally {
-          // Mockito records every mock invocation, including this one with the real project's
-          // VirtualFile and Path, in a ThreadLocal that outlives the test; clear it here.
-          Mockito.reset(configService)
-          ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(openedProject)
-          // The open path's StartupManager.runAfterOpened schedules an invokeLater that can still hold
-          // openedProject when the leak check runs; flush the EDT queue to release it.
-          withContext(Dispatchers.EDT) {
-            PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-          }
-        }
+        openedProjectDeferred.await()
+      }
+      try {
+        assertThat(worktreeDir).exists()
+        assertThat(vcsNotifier.notifications.map { it.displayId })
+          .contains(GitNotificationIdsHolder.WORKTREE_CONFIG_COPY_FAILED)
+      }
+      finally {
+        // Mockito records every mock invocation, including this one with the real project's
+        // VirtualFile and Path, in a ThreadLocal that outlives the test; clear it here.
+        Mockito.reset(configService)
+        closeOpenedProject(openedProject)
       }
     }
+  }
+
+  /**
+   * Closes [openedProject], then drains the EDT queue. The open path's StartupManager.runAfterOpened schedules an
+   * invokeLater that can still hold [openedProject] when the leak check runs. The drain releases it.
+   */
+  private fun closeOpenedProject(openedProject: Project) {
+    timeoutRunBlocking { ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(openedProject) }
+    runInEdtAndWait { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
   }
 
   @ParameterizedTest
