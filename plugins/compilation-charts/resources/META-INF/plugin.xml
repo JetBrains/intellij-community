@@ -48,7 +48,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.compilation.charts.jps.CompilationChartsProjectActivity"/>
-    <compileServer.plugin classpath="jps/compilation-charts-jps.jar"/>
+    <compileServer.plugin classpath="compilation-charts-jps.jar"/>
     <buildProcess.parametersProvider implementation="com.intellij.compilation.charts.jps.CompilationChartsBuildParametersProvider"/>
 
     <registryKey key="compilation.charts" defaultValue="false"
