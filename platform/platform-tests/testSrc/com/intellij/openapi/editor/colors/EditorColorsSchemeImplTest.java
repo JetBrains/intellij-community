@@ -1168,6 +1168,44 @@ public class EditorColorsSchemeImplTest {
   }
 
   @Test
+  public void testReaderOnOtherThreadSeesAllFontOptionsOfOneRead() throws Exception {
+    Element smallFont = JDOMUtil.load(fontOptionsScheme(14, "1.2"));
+    Element largeFont = JDOMUtil.load(fontOptionsScheme(20, "1.8"));
+    myScheme.readExternal(smallFont);
+    FontPreferences small = myScheme.getFontPreferences().getSnapshot();
+    myScheme.readExternal(largeFont);
+    FontPreferences large = myScheme.getFontPreferences().getSnapshot();
+    AtomicBoolean stop = new AtomicBoolean();
+    AtomicInteger halfDone = new AtomicInteger();
+    AtomicReference<Throwable> readerFailure = new AtomicReference<>();
+    Thread reader = new Thread(() -> {
+      try {
+        while (!stop.get()) {
+          FontPreferences current = myScheme.getFontPreferences().getSnapshot();
+          if (!sameSizeAndLineSpacing(current, small) && !sameSizeAndLineSpacing(current, large)) {
+            halfDone.incrementAndGet();
+          }
+        }
+      }
+      catch (Throwable e) {
+        readerFailure.set(e);
+      }
+    }, "EditorColorsSchemeImplTest font reader");
+    reader.start();
+    try {
+      for (int i = 0; i < 20_000; i++) {
+        myScheme.readExternal(i % 2 == 0 ? smallFont : largeFont);
+      }
+    }
+    finally {
+      stop.set(true);
+      reader.join();
+    }
+    assertNull(readerFailure.get());
+    assertEquals(0, halfDone.get());
+  }
+
+  @Test
   public void testToStringOfSchemeWithoutName() {
     assertEquals("<unnamed scheme>", myScheme.toString());
     myScheme.setName("Named");
@@ -1320,6 +1358,21 @@ public class EditorColorsSchemeImplTest {
     } finally {
       settings.setPresentationMode(presentationMode);
     }
+  }
+
+  private static @NotNull String fontOptionsScheme(int fontSize, @NotNull String lineSpacing) {
+    return """
+      <scheme name="FontOptions" version="142">
+        <option name="FONT_SCALE" value="1.0" />
+        <option name="LINE_SPACING" value="%s" />
+        <option name="EDITOR_FONT_SIZE" value="%d" />
+      </scheme>
+      """.formatted(lineSpacing, fontSize);
+  }
+
+  private static boolean sameSizeAndLineSpacing(@NotNull FontPreferences preferences1, @NotNull FontPreferences preferences2) {
+    return preferences1.getSize2D(preferences1.getFontFamily()) == preferences2.getSize2D(preferences2.getFontFamily()) &&
+           preferences1.getLineSpacing() == preferences2.getLineSpacing();
   }
 
   private static @Nullable String optionValue(@NotNull Element root, @NotNull String optionName) {

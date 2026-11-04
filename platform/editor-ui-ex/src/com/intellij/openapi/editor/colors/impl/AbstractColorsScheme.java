@@ -43,6 +43,7 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
@@ -92,14 +93,13 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
   private static final AtomicReferenceFieldUpdater<AbstractColorsScheme, ColorsSchemeSnapshot> SNAPSHOT_UPDATER =
     AtomicReferenceFieldUpdater.newUpdater(AbstractColorsScheme.class, ColorsSchemeSnapshot.class, "snapshot");
 
-  private final Properties metaInfo = new Properties();
-  private final EditorFontCache fontCache = new EditorFontCacheImpl(this::getFontCacheScheme);
   private volatile @NotNull ColorsSchemeSnapshot snapshot;
-  private final FontPreferences appFontDelegate =
-    new DelegatingFontPreferences(() -> AppEditorFontOptions.getInstance().getFontPreferences());
+  private final FontPreferences appFontDelegate = new DelegatingFontPreferences(() -> AppEditorFontOptions.getInstance().getFontPreferences());
   private final FontPreferences editorFontDelegate = new DelegatingFontPreferences(() -> fontPreferencesOf(snapshot));
   private final FontPreferencesImpl editorFontView = new FontPreferencesImpl(new EditorFontStorage());
   private final FontPreferencesImpl consoleFontView = new FontPreferencesImpl(new ConsoleFontStorage());
+  private final EditorFontCache fontCache = new EditorFontCacheImpl(this::getFontCacheScheme);
+  private final Properties metaInfo = new Properties();
 
   protected AbstractColorsScheme(@Nullable EditorColorsScheme parentScheme) {
     snapshot = ColorsSchemeSnapshot.initial().withParentScheme(parentScheme);
@@ -174,7 +174,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public void setUseLigatures(boolean useLigatures) {
-    ensureEditableFontPreferences().setUseLigatures(useLigatures);
+    changeFonts(draft -> draft.setUseLigatures(useLigatures));
   }
 
   @Override
@@ -210,24 +210,18 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public void setEditorFontName(String fontName) {
-    ModifiableFontPreferences currPreferences = ensureEditableFontPreferences();
-    float editorFontSize = getEditorFontSize2D();
     if (LOG.isDebugEnabled()) {
+      FontPreferences preferences = fontPreferencesOf(snapshot);
       String message = "setEditorFontName=%s for %s. Current name/size: %s:%.2f".formatted(
         fontName,
         debugSchemeName(),
-        currPreferences.getFontFamily(),
-        editorFontSize
+        preferences.getFontFamily(),
+        preferences.getSize2D(preferences.getFontFamily())
       );
       Throwable stack = new Throwable(message);
       LOG.debug(message, stack);
     }
-    currPreferences.runBatchUpdate(draft -> {
-      boolean useLigatures = draft.useLigatures();
-      draft.clear();
-      draft.register(fontName, editorFontSize);
-      draft.setUseLigatures(useLigatures);
-    });
+    changeFonts(draft -> draft.setEditorFontName(fontName));
   }
 
   @Override
@@ -243,16 +237,15 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public void setEditorFontSize(float fontSize) {
-    float fixedFontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
     if (LOG.isDebugEnabled()) {
+      float fixedFontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
       String message = "setEditorFontSize for %s. %.2f (original: %.2f)".formatted(
         debugSchemeName(), fixedFontSize, fontSize
       );
       Throwable stack = new Throwable(message);
       LOG.debug(message, stack);
     }
-    ModifiableFontPreferences preferences = ensureEditableFontPreferences();
-    preferences.register(preferences.getFontFamily(), fixedFontSize);
+    changeFonts(draft -> draft.setEditorFontSize(fontSize));
     setSaveNeeded(true);
   }
 
@@ -269,7 +262,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public void setLineSpacing(float lineSpacing) {
-    ensureEditableFontPreferences().setLineSpacing(lineSpacing);
+    changeFonts(draft -> draft.setLineSpacing(lineSpacing));
   }
 
   @Override
@@ -321,12 +314,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public void setConsoleFontName(String fontName) {
-    ModifiableFontPreferences consolePreferences = ensureEditableConsoleFontPreferences();
-    float consoleFontSize = consoleFontSize2D(snapshot);
-    consolePreferences.runBatchUpdate(draft -> {
-      draft.clear();
-      draft.register(fontName, consoleFontSize);
-    });
+    changeFonts(draft -> draft.setConsoleFontName(fontName));
   }
 
   @Override
@@ -341,9 +329,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public void setConsoleFontSize(float fontSize) {
-    ModifiableFontPreferences consolePreferences = ensureEditableConsoleFontPreferences();
-    float fixedFontSize = EditorFontsConstants.checkAndFixEditorFontSize(fontSize);
-    consolePreferences.register(consolePreferences.getFontFamily(), fixedFontSize);
+    changeFonts(draft -> draft.setConsoleFontSize(fontSize));
   }
 
   @Override
@@ -364,7 +350,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public void setConsoleLineSpacing(float lineSpacing) {
-    ensureEditableConsoleFontPreferences().setLineSpacing(lineSpacing);
+    changeFonts(draft -> draft.setConsoleLineSpacing(lineSpacing));
   }
 
   @Override
@@ -742,48 +728,58 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
    * Returns the editor font preferences of this scheme as a modifiable object.
    * A scheme that uses the application font gets a copy of it as its own editor font first.
    */
-  @NotNull ModifiableFontPreferences ensureEditableFontPreferences() {
-    while (true) {
-      ColorsSchemeSnapshot prev = snapshot;
-      if (!prev.useAppFontPreferencesInEditor()) {
-        return editorFontView;
-      }
-      FontPreferencesSnapshot editableFontPreferences = createEditableCopy(appFontDelegate);
-      ColorsSchemeSnapshot next = prev
-        .withFontPreferences(editableFontPreferences)
-        .withUseAppFontPreferencesInEditor(false);
-      if (SNAPSHOT_UPDATER.compareAndSet(this, prev, next)) {
-        if (LOG.isDebugEnabled()) {
-          String message = "ensureEditableFontPreferences in %s. %s, size: %d".formatted(
-            debugSchemeName(),
-            editableFontPreferences,
-            editableFontPreferences.getSize(editableFontPreferences.getFontFamily())
-          );
-          Throwable stack = new Throwable(message);
-          LOG.debug(message, stack);
-        }
-        return editorFontView;
-      }
-    }
+  private @NotNull ModifiableFontPreferences ensureEditableFontPreferences() {
+    changeFonts(ColorsSchemeFontDraft::ensureOwnFont);
+    return editorFontView;
   }
 
   /**
    * Returns the console font preferences of this scheme as a modifiable object.
    * A console that uses the editor font gets a copy of it as its own console font first.
    */
-  @NotNull ModifiableFontPreferences ensureEditableConsoleFontPreferences() {
+  private @NotNull ModifiableFontPreferences ensureEditableConsoleFontPreferences() {
+    changeFonts(ColorsSchemeFontDraft::ensureOwnConsoleFont);
+    return consoleFontView;
+  }
+
+  /**
+   * Returns a draft that changes the fonts of {@code current}.
+   */
+  @NotNull ColorsSchemeFontDraft createFontDraft(@NotNull ColorsSchemeSnapshot current) {
+    return new ColorsSchemeFontDraft(current, appFontDelegate);
+  }
+
+  /**
+   * Runs {@code changes} on a font draft of the snapshot and replaces the snapshot with the result.
+   * The changes can run more than once, so they must have no side effects.
+   */
+  private void changeFonts(@NotNull Consumer<? super ColorsSchemeFontDraft> changes) {
     while (true) {
       ColorsSchemeSnapshot prev = snapshot;
-      if (!prev.useEditorFontPreferencesInConsole()) {
-        return consoleFontView;
+      ColorsSchemeFontDraft draft = createFontDraft(prev);
+      changes.accept(draft);
+      ColorsSchemeSnapshot next = draft.snapshot();
+      if (next == prev) {
+        return;
       }
-      FontPreferencesSnapshot editableFontPreferences = createEditableCopy(fontPreferencesOf(prev));
-      ColorsSchemeSnapshot next = prev
-        .withConsoleFontPreferences(editableFontPreferences)
-        .withUseEditorFontPreferencesInConsole(false);
       if (SNAPSHOT_UPDATER.compareAndSet(this, prev, next)) {
-        return consoleFontView;
+        if (prev.useAppFontPreferencesInEditor() && !next.useAppFontPreferencesInEditor()) {
+          logOwnFont(next.fontPreferences());
+        }
+        return;
       }
+    }
+  }
+
+  private void logOwnFont(@NotNull FontPreferences preferences) {
+    if (LOG.isDebugEnabled()) {
+      String message = "ensureEditableFontPreferences in %s. %s, size: %d".formatted(
+        debugSchemeName(),
+        preferences,
+        preferences.getSize(preferences.getFontFamily())
+      );
+      Throwable stack = new Throwable(message);
+      LOG.debug(message, stack);
     }
   }
 
@@ -807,26 +803,6 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
       return editorFontDelegate;
     }
     return current.consoleFontPreferences();
-  }
-
-  /**
-   * Returns the console font size that {@code current} gives.
-   * Unlike {@link #getConsoleFontSize2D()}, it ignores the application console options and presentation mode.
-   */
-  float consoleFontSize2D(@NotNull ColorsSchemeSnapshot current) {
-    FontPreferences consolePreferences = consoleFontPreferencesOf(current);
-    String consoleFontFamily = consolePreferences.getFontFamily();
-    if (consolePreferences.hasSize(consoleFontFamily)) {
-      return consolePreferences.getSize2D(consoleFontFamily);
-    }
-    FontPreferences preferences = fontPreferencesOf(current);
-    return preferences.getSize2D(preferences.getFontFamily());
-  }
-
-  private static @NotNull FontPreferencesSnapshot createEditableCopy(@NotNull FontPreferences preferences) {
-    FontPreferencesImpl editableFontPreferences = new FontPreferencesImpl();
-    preferences.copyTo(editableFontPreferences);
-    return (FontPreferencesSnapshot)editableFontPreferences.getSnapshot();
   }
 
   private @Nullable String debugSchemeName() {

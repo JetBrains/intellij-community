@@ -114,12 +114,15 @@ final class ColorsSchemeSerDe {
 
   /**
    * Writes {@code scheme} into {@code parentNode}.
-   * The colors and the text attributes come from one snapshot of the scheme.
+   * The fonts, the colors and the text attributes come from one snapshot of the scheme.
    */
   static void writeExternal(@NotNull AbstractColorsScheme scheme, @NotNull Element parentNode) {
     ColorsSchemeSnapshot current = scheme.getSnapshot();
     FontPreferences fontPreferences = current.fontPreferences();
     FontPreferences consoleFontPreferences = current.consoleFontPreferences();
+    FontPreferences editorFontPreferences = scheme.fontPreferencesOf(current);
+    int editorFontSize = editorFontPreferences.getSize(editorFontPreferences.getFontFamily());
+    float lineSpacing = editorFontPreferences.getLineSpacing();
     boolean editorDelegating = current.useAppFontPreferencesInEditor();
     boolean consoleDelegating = current.useEditorFontPreferencesInConsole();
     Properties metaInfo = scheme.getMetaProperties();
@@ -156,9 +159,9 @@ final class ColorsSchemeSerDe {
     // That's why we want to use an old format when zero or one font is selected and 'extended' format otherwise.
     boolean useOldFontFormat = fontPreferences.getEffectiveFontFamilies().size() <= 1;
     if (!editorDelegating) {
-      JdomKt.addOptionTag(parentNode, LINE_SPACING, String.valueOf(scheme.getLineSpacing()));
+      JdomKt.addOptionTag(parentNode, LINE_SPACING, String.valueOf(lineSpacing));
       if (useOldFontFormat) {
-        JdomKt.addOptionTag(parentNode, EDITOR_FONT_SIZE, String.valueOf(scheme.getEditorFontSize()));
+        JdomKt.addOptionTag(parentNode, EDITOR_FONT_SIZE, String.valueOf(editorFontSize));
         JdomKt.addOptionTag(parentNode, EDITOR_FONT_NAME, fontPreferences.getFontFamily());
       } else {
         writeFontPreferences(EDITOR_FONT, parentNode, fontPreferences);
@@ -169,8 +172,9 @@ final class ColorsSchemeSerDe {
       if (consoleFontPreferences.getEffectiveFontFamilies().size() <= 1) {
         JdomKt.addOptionTag(parentNode, CONSOLE_FONT_NAME, consoleFontPreferences.getFontFamily());
         // Write font size as integer for compatibility
-        int consoleFontSize = (int)(scheme.consoleFontSize2D(current) + 0.5);
-        if (consoleFontSize != scheme.getEditorFontSize()) {
+        float consoleFontSize2D = ColorsSchemeFontDraft.consoleFontSize2D(consoleFontPreferences, editorFontPreferences);
+        int consoleFontSize = (int)(consoleFontSize2D + 0.5);
+        if (consoleFontSize != editorFontSize) {
           JdomKt.addOptionTag(parentNode, CONSOLE_FONT_SIZE, Integer.toString(consoleFontSize));
         }
       } else {
@@ -178,7 +182,7 @@ final class ColorsSchemeSerDe {
       }
       writeLigaturesPreferences(parentNode, consoleFontPreferences, CONSOLE_LIGATURES);
       float consoleLineSpacing = consoleFontPreferences.getLineSpacing();
-      if (editorDelegating || consoleLineSpacing != scheme.getLineSpacing()) {
+      if (editorDelegating || consoleLineSpacing != lineSpacing) {
         JdomKt.addOptionTag(parentNode, CONSOLE_LINE_SPACING, Float.toString(consoleLineSpacing));
       }
     }
@@ -230,6 +234,7 @@ final class ColorsSchemeSerDe {
                                    : getDefaultScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, EmptyColorScheme.getSchemeName()));
     Properties metaInfo = scheme.getMetaProperties();
     metaInfo.clear();
+    ColorsSchemeFontDraft fonts = scheme.createFontDraft(scheme.getSnapshot());
     Ref<Float> fontScale = new Ref<>();
     boolean clearEditorFonts = true;
     boolean clearConsoleFonts = true;
@@ -239,15 +244,17 @@ final class ColorsSchemeSerDe {
     for (Element childNode : node.getChildren()) {
       String childName = childNode.getName();
       switch (childName) {
-        case OPTION_ELEMENT -> readSettings(scheme, childNode, isDefault, fontScale, valueReader);
+        case OPTION_ELEMENT -> readSettings(scheme, fonts, childNode, isDefault, fontScale, valueReader);
         case EDITOR_FONT -> {
-          ModifiableFontPreferences preferences = scheme.ensureEditableFontPreferences();
-          readFontSettings(preferences, childNode, isDefault, fontScale.get(), clearEditorFonts, valueReader);
+          Float scale = fontScale.get();
+          boolean clearFonts = clearEditorFonts;
+          fonts.changeFont(draft -> readFontSettings(draft, childNode, isDefault, scale, clearFonts, valueReader));
           clearEditorFonts = false;
         }
         case CONSOLE_FONT -> {
-          ModifiableFontPreferences preferences = scheme.ensureEditableConsoleFontPreferences();
-          readFontSettings(preferences, childNode, isDefault, fontScale.get(), clearConsoleFonts, valueReader);
+          Float scale = fontScale.get();
+          boolean clearFonts = clearConsoleFonts;
+          fonts.changeConsoleFont(draft -> readFontSettings(draft, childNode, isDefault, scale, clearFonts, valueReader));
           clearConsoleFonts = false;
         }
         case COLORS_ELEMENT -> readColors(childNode, colors, backgroundColor, valueReader);
@@ -255,9 +262,12 @@ final class ColorsSchemeSerDe {
         case META_INFO_ELEMENT -> readMetaInfo(childNode, metaInfo);
       }
     }
+    fillEmptyConsoleFont(fonts);
+    ColorsSchemeSnapshot readFonts = fonts.snapshot();
     Color deprecatedBackgroundColor = backgroundColor.get();
     scheme.updateSnapshot(current -> {
       ColorsSchemeSnapshot loaded = current
+        .withFontsOf(readFonts)
         .withVersion(readVersion)
         .withAllColors(colors)
         .withAllAttributes(attributes);
@@ -266,10 +276,17 @@ final class ColorsSchemeSerDe {
       }
       return withDeprecatedBackgroundColor(loaded, deprecatedBackgroundColor);
     });
-    ColorsSchemeSnapshot loaded = scheme.getSnapshot();
-    if (!loaded.useEditorFontPreferencesInConsole() &&
-        loaded.consoleFontPreferences().getEffectiveFontFamilies().isEmpty()) {
-      scheme.fontPreferencesOf(loaded).copyTo(scheme.ensureEditableConsoleFontPreferences());
+  }
+
+  /**
+   * Gives the editor font to an own console font without font families.
+   */
+  private static void fillEmptyConsoleFont(@NotNull ColorsSchemeFontDraft fonts) {
+    ColorsSchemeSnapshot current = fonts.snapshot();
+    if (!current.useEditorFontPreferencesInConsole() &&
+        current.consoleFontPreferences().getEffectiveFontFamilies().isEmpty()) {
+      FontPreferences editorFontPreferences = fonts.editorFontPreferences();
+      fonts.changeConsoleFont(editorFontPreferences::copyTo);
     }
   }
 
@@ -330,6 +347,7 @@ final class ColorsSchemeSerDe {
 
   private static void readSettings(
     @NotNull AbstractColorsScheme scheme,
+    @NotNull ColorsSchemeFontDraft fonts,
     @NotNull Element childNode,
     boolean isDefault,
     @NotNull Ref<Float> fontScale,
@@ -340,49 +358,50 @@ final class ColorsSchemeSerDe {
       case LINE_SPACING -> {
         Float value = valueReader.read(Float.class, childNode);
         if (value != null) {
-          scheme.setLineSpacing(value);
+          fonts.setLineSpacing(value);
         }
       }
       case EDITOR_FONT_SIZE -> {
         float value = readFontSize(childNode, isDefault, fontScale.get(), valueReader);
         if (value > 0) {
-          scheme.setEditorFontSize(value);
+          fonts.setEditorFontSize(value);
+          scheme.setSaveNeeded(true);
         }
       }
       case EDITOR_FONT_NAME -> {
         String value = valueReader.read(String.class, childNode);
         if (value != null) {
-          scheme.setEditorFontName(value);
+          fonts.setEditorFontName(value);
         }
       }
       case CONSOLE_LINE_SPACING -> {
         Float value = valueReader.read(Float.class, childNode);
         if (value != null) {
-          scheme.setConsoleLineSpacing(value);
+          fonts.setConsoleLineSpacing(value);
         }
       }
       case CONSOLE_FONT_SIZE -> {
         float value = readFontSize(childNode, isDefault, fontScale.get(), valueReader);
         if (value > 0) {
-          scheme.setConsoleFontSize(value);
+          fonts.setConsoleFontSize(value);
         }
       }
       case CONSOLE_FONT_NAME -> {
         String value = valueReader.read(String.class, childNode);
         if (value != null) {
-          scheme.setConsoleFontName(value);
+          fonts.setConsoleFontName(value);
         }
       }
       case EDITOR_LIGATURES -> {
         Boolean value = valueReader.read(Boolean.class, childNode);
         if (value != null) {
-          scheme.ensureEditableFontPreferences().setUseLigatures(value);
+          fonts.setUseLigatures(value);
         }
       }
       case CONSOLE_LIGATURES -> {
         Boolean value = valueReader.read(Boolean.class, childNode);
         if (value != null) {
-          scheme.ensureEditableConsoleFontPreferences().setUseLigatures(value);
+          fonts.setConsoleUseLigatures(value);
         }
       }
     }

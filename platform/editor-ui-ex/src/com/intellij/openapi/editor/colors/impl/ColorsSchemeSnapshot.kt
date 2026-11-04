@@ -133,6 +133,19 @@ class ColorsSchemeSnapshot private constructor(
   }
 
   /**
+   * Returns this snapshot with the font preferences of [other] and the flags that tell if the scheme uses them.
+   * The other values of this snapshot do not change.
+   */
+  fun withFontsOf(other: ColorsSchemeSnapshot): ColorsSchemeSnapshot {
+    return copy(
+      fontPreferences = other.fontPreferences,
+      useAppFontPreferencesInEditor = other.useAppFontPreferencesInEditor,
+      consoleFontPreferences = other.consoleFontPreferences,
+      useEditorFontPreferencesInConsole = other.useEditorFontPreferencesInConsole,
+    )
+  }
+
+  /**
    * Returns this snapshot with the colors and the text attributes of [other] whose keys this snapshot does not have.
    */
   fun withMissing(other: ColorsSchemeSnapshot): ColorsSchemeSnapshot {

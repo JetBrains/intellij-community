@@ -123,6 +123,28 @@ internal class ColorsSchemeSnapshotTest {
     assertThat(current.consoleFontPreferences()).isSameAs(FontPreferencesSnapshot.EMPTY)
   }
 
+  @Test
+  fun `withFontsOf takes only the fonts and their flags`() {
+    val fonts = FontPreferencesSnapshot.EMPTY.withLineSpacing(2f)
+    val consoleFonts = FontPreferencesSnapshot.EMPTY.withLineSpacing(1.5f)
+    val source = newSnapshot()
+      .withSchemeName("Source")
+      .withColor(FIRST, Color.RED)
+      .withFontPreferences(fonts)
+      .withUseAppFontPreferencesInEditor(false)
+      .withConsoleFontPreferences(consoleFonts)
+      .withUseEditorFontPreferencesInConsole(false)
+    val target = newSnapshot().withSchemeName("Target")
+    val result = target.withFontsOf(source)
+    assertThat(result.schemeName()).isEqualTo("Target")
+    assertThat(result.colors()).isEmpty()
+    assertThat(result.fontPreferences()).isSameAs(fonts)
+    assertThat(result.useAppFontPreferencesInEditor()).isFalse()
+    assertThat(result.consoleFontPreferences()).isSameAs(consoleFonts)
+    assertThat(result.useEditorFontPreferencesInConsole()).isFalse()
+    assertThat(target.withFontsOf(target)).isSameAs(target)
+  }
+
   private fun newSnapshot(): ColorsSchemeSnapshot {
     return ColorsSchemeSnapshot.initial()
   }
