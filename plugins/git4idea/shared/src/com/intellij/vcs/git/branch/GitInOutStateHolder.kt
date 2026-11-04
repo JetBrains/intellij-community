@@ -11,18 +11,22 @@ import com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi
 import fleet.rpc.client.durable
 import git4idea.GitStandardLocalBranch
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
 internal class GitInOutStateHolder(private val project: Project, cs: CoroutineScope) {
-  private var state: GitInOutProjectState = GitInOutProjectState.EMPTY
+  /** The state the backend sent last. It starts empty, because the first state arrives with a delay. */
+  val stateFlow: StateFlow<GitInOutProjectState>
+    field = MutableStateFlow(GitInOutProjectState.EMPTY)
 
   init {
     cs.launch {
       durable {
         GitIncomingOutgoingStateApi.getInstance().syncState(project.projectId()).collect {
           LOG.debug("Received new state - in ${it.incoming.size} repos, out ${it.outgoing.size} repos, lastFetchTime ${it.lastFetchTime}")
-          state = it
+          stateFlow.value = it
         }
       }
     }
@@ -36,6 +40,7 @@ internal class GitInOutStateHolder(private val project: Project, cs: CoroutineSc
   fun getState(branch: GitStandardLocalBranch, repositories: Collection<RepositoryId>): GitInOutCountersInProject {
     if (repositories.isEmpty()) return GitInOutCountersInProject.EMPTY
 
+    val state = stateFlow.value
     val reposState = repositories.mapNotNull {
       val incoming = state.incoming[it]?.get(branch.name)
       val outgoing = state.outgoing[it]?.get(branch.name)
@@ -50,7 +55,7 @@ internal class GitInOutStateHolder(private val project: Project, cs: CoroutineSc
    * @return the timestamp of the last successful fetch, or null if no fetch has been performed yet
    */
   val lastFetchTime: java.time.Instant?
-    get() = state.lastFetchTime
+    get() = stateFlow.value.lastFetchTime
 
   companion object {
     private val LOG = Logger.getInstance(GitInOutStateHolder::class.java)

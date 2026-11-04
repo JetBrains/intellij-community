@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.vcs.impl.shared.VcsUpdatesDebouncer
+import com.intellij.vcs.git.branch.GitInOutStateHolder
 import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -47,6 +48,12 @@ internal class GitBranchesTreeUpdatesService(project: Project, cs: CoroutineScop
         }
 
         updatesDebouncer.tryEmit(update)
+      }
+    }
+    // The renderer reads the incoming and outgoing counters from the holder, so each new state needs a repaint.
+    cs.launch {
+      GitInOutStateHolder.getInstance(project).stateFlow.collect {
+        updatesDebouncer.tryEmit(GitBranchesTreeUpdate.REPAINT)
       }
     }
   }
