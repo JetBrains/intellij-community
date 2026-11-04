@@ -257,9 +257,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     pluginAuto(listOf("intellij.findUsagesMl")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
-    pluginAutoWithCustomDirName("intellij.lombok.plugin") { spec ->
-      spec.directoryName = "lombok"
-    },
+    pluginAuto(listOf("intellij.lombok.plugin")),
     pluginAuto(listOf("intellij.compilation.charts")) { spec ->
       spec.withModule("intellij.compilation.charts.jps")
     },
