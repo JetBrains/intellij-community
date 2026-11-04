@@ -10,6 +10,7 @@ import com.intellij.platform.util.io.storages.database.impl.housekeeping.Databas
 import com.intellij.platform.util.io.storages.database.impl.housekeeping.DatabaseHousekeepingScheduler
 import com.intellij.platform.util.io.storages.database.spi.housekeeping.Housekeeper
 import com.intellij.platform.util.io.storages.database.impl.housekeeping.HousekeepingRegistration
+import com.intellij.platform.util.io.storages.database.impl.housekeeping.OnDemandHousekeepingScheduler
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState.ACTIVE
@@ -246,6 +247,46 @@ class DatabaseHousekeepingCoordinatorTest {
     }
 
     assertTrue(scheduler.registrations.isEmpty(), "Closing the coordinator must unregister all housekeepers")
+  }
+
+  @Test
+  fun `on-demand scheduler runs all registered housekeepers and ignores their delays`() {
+    lateinit var scheduler: OnDemandHousekeepingScheduler
+    DatabaseHousekeepingCoordinator { coordinator ->
+      OnDemandHousekeepingScheduler(coordinator).also { scheduler = it }
+    }.use { coordinator ->
+      val runs = mutableSetOf<String>()
+      coordinator.register(Housekeeper {
+        runs.add("fast")
+        Duration.ofMillis(1)
+      })
+      coordinator.register(Housekeeper {
+        runs.add("slow")
+        TEST_DELAY
+      })
+
+      assertTrue(scheduler.runHousekeepingRound { false }, "A complete on-demand round must report completion")
+      assertEquals(setOf("fast", "slow"), runs, "An on-demand round must run every registered housekeeper")
+    }
+  }
+
+  @Test
+  fun `on-demand scheduler passes external cancellation to a housekeeper`() {
+    lateinit var scheduler: OnDemandHousekeepingScheduler
+    DatabaseHousekeepingCoordinator { coordinator ->
+      OnDemandHousekeepingScheduler(coordinator).also { scheduler = it }
+    }.use { coordinator ->
+      var cancellationChecks = 0
+      var cancellationObserved = false
+      coordinator.register(Housekeeper { cancellationRequested ->
+        cancellationObserved = cancellationRequested.asBoolean
+        TEST_DELAY
+      })
+
+      val completed = scheduler.runHousekeepingRound { cancellationChecks++ > 0 }
+      assertFalse(completed, "An externally cancelled on-demand round must not report completion")
+      assertTrue(cancellationObserved, "The active housekeeper must observe external cancellation")
+    }
   }
 
   @Test

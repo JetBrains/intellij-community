@@ -57,8 +57,15 @@ public final class HousekeepingRegistration implements AutoCloseable {
 
   /// @return a positive _logical_ delay hint for a later housekeeping round
   @NotNull Duration runHousekeeping(@NotNull HousekeepingRegistration.RunningRoundInfo running) throws IOException {
+    return runHousekeeping(running, () -> false);
+  }
+
+  /// @return a positive _logical_ delay hint for a later housekeeping round
+  @NotNull Duration runHousekeeping(@NotNull HousekeepingRegistration.RunningRoundInfo running,
+                                    @NotNull BooleanSupplier externalCancellationRequested) throws IOException {
     try {
-      BooleanSupplier cancellationRequested = () -> running.cancelled;
+      //combine (housekeeping-round cancellation + housekeeping-registration cancellation):
+      BooleanSupplier cancellationRequested = () -> running.cancelled || externalCancellationRequested.getAsBoolean();
       var nextRunLogicalDelay = housekeeper.runHousekeeping(cancellationRequested);
       if (nextRunLogicalDelay.isZero() || nextRunLogicalDelay.isNegative()) {
         throw new IllegalArgumentException("The next logical housekeeping delay must be positive: " + nextRunLogicalDelay);

@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 
 import static java.util.Objects.requireNonNull;
@@ -91,12 +92,17 @@ public final class DatabaseHousekeepingCoordinator implements AutoCloseable {
   }
 
   @Nullable Duration runHousekeepingIfOpen(@NotNull HousekeepingRegistration registration) throws IOException {
+    return runHousekeepingIfOpen(registration, () -> false);
+  }
+
+  @Nullable Duration runHousekeepingIfOpen(@NotNull HousekeepingRegistration registration,
+                                           @NotNull BooleanSupplier cancellationRequested) throws IOException {
     var running = registration.reserveRunIfOpen();
     if (running == null) {
       return null;
     }
     synchronized (housekeepingExecutionLock) {
-      return registration.runHousekeeping(running);
+      return registration.runHousekeeping(running, cancellationRequested);
     }
   }
 
