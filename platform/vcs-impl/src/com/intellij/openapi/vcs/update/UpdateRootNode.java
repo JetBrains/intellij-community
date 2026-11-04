@@ -1,8 +1,7 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -17,7 +16,7 @@ public class UpdateRootNode extends GroupTreeNode {
   private final Project myProject;
 
   public UpdateRootNode(UpdatedFiles updatedFiles, Project project, @Nls String rootName, ActionInfo actionInfo) {
-    super(rootName, false, SimpleTextAttributes.ERROR_ATTRIBUTES, project, Collections.emptyMap(), null);
+    super(rootName, false, SimpleTextAttributes.ERROR_ATTRIBUTES, false, project, Collections.emptyMap(), null);
     myProject = project;
 
     addGroupsToNode(updatedFiles.getTopLevelGroups(), this, actionInfo);
@@ -37,8 +36,8 @@ public class UpdateRootNode extends GroupTreeNode {
       return null;
     }
     GroupTreeNode group = new GroupTreeNode(actionInfo.getGroupName(fileGroup), fileGroup.getSupportsDeletion(),
-                                            fileGroup.getInvalidAttributes(), myProject, fileGroup.getErrorsMap(), fileGroup.getId());
-    Disposer.register(this, group);
+                                            fileGroup.getInvalidAttributes(), fileGroup.myCanBeAbsent, myProject,
+                                            fileGroup.getErrorsMap(), fileGroup.getId());
     parent.add(group);
     for (final String s : fileGroup.getFiles()) {
       group.addFilePath(s);

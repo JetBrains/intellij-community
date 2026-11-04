@@ -1,12 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
@@ -18,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
-import javax.swing.tree.TreeNode;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -31,24 +27,27 @@ import java.util.Map;
  * author: lesya
  */
 @ApiStatus.Internal
-public class GroupTreeNode extends AbstractTreeNode implements Disposable {
+public class GroupTreeNode extends AbstractTreeNode {
   private final @Nls String myName;
   private final boolean mySupportsDeletion;
   private final List<String> myFilePaths = new ArrayList<>();
   private final Map<@NonNls String, @Nls String> myErrorsMap;
   private final SimpleTextAttributes myInvalidAttributes;
+  private final boolean myCanBeAbsent;
   private final Project myProject;
   private final String myFileGroupId;
 
   public GroupTreeNode(@Nls @NotNull String name,
                        boolean supportsDeletion,
                        @NotNull SimpleTextAttributes invalidAttributes,
+                       boolean canBeAbsent,
                        @NotNull Project project,
                        @NotNull Map<@NonNls String, @Nls String> errorsMap,
                        @NonNls String id) {
     myName = name;
     mySupportsDeletion = supportsDeletion;
     myInvalidAttributes = invalidAttributes;
+    myCanBeAbsent = canBeAbsent;
     myProject = project;
     myErrorsMap = errorsMap;
     myFileGroupId = id;
@@ -66,24 +65,6 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   @Override
   public Icon getIcon(boolean expanded) {
     return AllIcons.Nodes.Folder;
-  }
-
-  @Override
-  public @NotNull Collection<VirtualFile> getVirtualFiles() {
-    ArrayList<VirtualFile> result = new ArrayList<>();
-    for (int i = 0; i < getChildCount(); i++) {
-      result.addAll(((AbstractTreeNode)getChildAt(i)).getVirtualFiles());
-    }
-    return result;
-  }
-
-  @Override
-  public @NotNull Collection<File> getFiles() {
-    ArrayList<File> result = new ArrayList<>();
-    for (int i = 0; i < getChildCount(); i++) {
-      result.addAll(((AbstractTreeNode)getChildAt(i)).getFiles());
-    }
-    return result;
   }
 
   @Override
@@ -141,12 +122,6 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
   private void rebuildFiles(boolean groupByPackages,
                             @Nullable Pair<PackageSetBase, NamedScopesHolder> filter,
                             boolean showOnlyFilteredItems) {
-    for (int i = getChildCount() - 1; i >= 0; i--) {
-      final TreeNode node = getChildAt(i);
-      if (node instanceof Disposable) {
-        Disposer.dispose((Disposable)node);
-      }
-    }
     removeAllChildren();
 
     if (groupByPackages) {
@@ -193,11 +168,10 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
     for (final File root : roots) {
       FileOrDirectoryTreeNode child = files.contains(root)
-                                      ? new FileTreeNode(root.getAbsolutePath(), myInvalidAttributes, myProject, parentPath)
+                                      ? new FileTreeNode(root.getAbsolutePath(), myInvalidAttributes, myCanBeAbsent, myProject, parentPath)
                                       : new DirectoryTreeNode(root.getAbsolutePath(), myProject, parentPath);
-      Disposer.register((Disposable)parentNode, child);
       parentNode.add(child);
-      addFiles(child, new ArrayList<>(groupByPackages.getChildren(root)), files, groupByPackages, child.getFilePath());
+      addFiles(child, new ArrayList<>(groupByPackages.getChildren(root)), files, groupByPackages, child.getFilePath().getPath());
     }
   }
 
@@ -207,13 +181,12 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
     boolean apply = false;
 
     for (final String filePath : myFilePaths) {
-      final FileTreeNode child = new FileTreeNode(filePath, myInvalidAttributes, myProject, null);
+      final FileTreeNode child = new FileTreeNode(filePath, myInvalidAttributes, myCanBeAbsent, myProject, null);
       if (filter != null) {
         if (child.acceptFilter(filter, showOnlyFilteredItems)) {
           apply = true;
         }
         else if (showOnlyFilteredItems) {
-          Disposer.dispose(child);
           continue;
         }
       }
@@ -222,7 +195,6 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
         child.setErrorText(error);
       }
       add(child);
-      Disposer.register(this, child);
     }
 
     applyFilter(apply);
@@ -230,9 +202,5 @@ public class GroupTreeNode extends AbstractTreeNode implements Disposable {
 
   private boolean containsGroups() {
     return myFilePaths.isEmpty();
-  }
-
-  @Override
-  public void dispose() {
   }
 }

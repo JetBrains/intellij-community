@@ -1,56 +1,48 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 
 /**
  * author: lesya
  */
 @ApiStatus.Internal
 public class FileTreeNode extends FileOrDirectoryTreeNode {
-  private static final Collection<VirtualFile> EMPTY_VIRTUAL_FILE_ARRAY = new ArrayList<>();
-
-
   public FileTreeNode(@NotNull String path,
                       @NotNull SimpleTextAttributes invalidAttributes,
+                      boolean canBeAbsent,
                       @NotNull Project project,
-                      String parentPath) {
-    super(path, invalidAttributes, project, parentPath);
+                      @Nullable String parentPath) {
+    super(path, false, invalidAttributes, canBeAbsent, project, parentPath);
   }
 
   @Override
   public Icon getIcon(boolean expanded) {
-    if (myFile.isDirectory()) {
-      return PlatformIcons.FOLDER_ICON;
-    }
-    return FileTypeManager.getInstance().getFileTypeByFileName(myFile.getName()).getIcon();
+    return FileTypeManager.getInstance().getFileTypeByFileName(myPath.getName()).getIcon();
   }
 
+  /**
+   * The scope filter needs a {@link VirtualFile}; a file that is not in the VFS cache is not matched (it is never resolved here).
+   */
   @Override
   protected boolean acceptFilter(@Nullable Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
     try {
-      VirtualFilePointer filePointer = getFilePointer();
-      if (!filePointer.isValid()) {
+      if (isDeleted()) {
         return false;
       }
-      VirtualFile file = filePointer.getFile();
+      VirtualFile file = LocalFileSystem.getInstance().findFileByPathIfCached(myPath.getPath());
       if (file != null && file.isValid() && filter != null && filter.first.contains(file, getProject(), filter.second)) {
         applyFilter(true);
         return true;
@@ -61,21 +53,6 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
       // sometimes for new file DirectoryFileIndex.getContentRootForFile() return random path
     }
     return false;
-  }
-
-  @Override
-  public @NotNull Collection<VirtualFile> getVirtualFiles() {
-    VirtualFile virtualFile = getFilePointer().getFile();
-    if (virtualFile == null) return EMPTY_VIRTUAL_FILE_ARRAY;
-    return Collections.singleton(virtualFile);
-  }
-
-  @Override
-  public @NotNull Collection<File> getFiles() {
-    if (getFilePointer().getFile() == null) {
-      return Collections.singleton(myFile);
-    }
-    return EMPTY_FILE_ARRAY;
   }
 
   @Override

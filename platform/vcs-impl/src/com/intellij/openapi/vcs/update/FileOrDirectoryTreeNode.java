@@ -1,52 +1,51 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
-import com.intellij.openapi.vfs.StandardFileSystems;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * author: lesya
+ * A row for a path reported by an update. The node holds only the path: it never creates VFS pointers and never resolves
+ * the path through VFS when the tree is built or painted (IJPL-257565). VFS is consulted from its cache when painting,
+ * and fully only for the selected rows, see {@link UpdateInfoTree#uiDataSnapshot}.
+ * Deletion, moves and renames are tracked by {@link UpdateInfoTree} from VFS events, see {@link #setDeleted} and {@link #retarget}.
  */
 @ApiStatus.Internal
-public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implements VirtualFilePointerListener, Disposable {
+public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode {
   private static final Map<FileStatus, SimpleTextAttributes> myFileStatusToAttributeMap = new HashMap<>();
   private final SimpleTextAttributes myInvalidAttributes;
+  private final boolean myCanBeAbsent;
   private final @NotNull Project myProject;
-  protected final File myFile;
+  protected @NotNull FilePath myPath;
   private final @NlsSafe String myName;
+  private boolean myDeleted;
 
   FileOrDirectoryTreeNode(@NotNull String path,
+                          boolean isDirectory,
                           @NotNull SimpleTextAttributes invalidAttributes,
+                          boolean canBeAbsent,
                           @NotNull Project project,
                           @Nullable String parentPath) {
-    String preparedPath = path.replace(File.separatorChar, '/');
-    String url = VirtualFileManager.constructUrl(StandardFileSystems.FILE_PROTOCOL, preparedPath);
-    setUserObject(VirtualFilePointerManager.getInstance().create(url, this, this));
-    myFile = new File(getFilePath());
+    myPath = VcsUtil.getFilePath(path, isDirectory);
     myInvalidAttributes = invalidAttributes;
+    myCanBeAbsent = canBeAbsent;
     myProject = project;
-    myName = parentPath == null ? myFile.getAbsolutePath() : myFile.getName();
+    myName = parentPath == null ? myPath.getPresentableUrl() : myPath.getName();
   }
 
   @Override
@@ -54,53 +53,47 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
     return myName;
   }
 
-  protected String getFilePath() {
-    return getFilePointer().getPresentableUrl();
+  public @NotNull FilePath getFilePath() {
+    return myPath;
   }
 
-  @Override
-  public void validityChanged(VirtualFilePointer @NotNull [] pointers) {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (!getFilePointer().isValid()) {
-        AbstractTreeNode parent = (AbstractTreeNode)getParent();
-        if (parent != null && parent.getSupportsDeletion()) {
-          getTreeModel().removeNodeFromParent(this);
-        }
-        else {
-          if (getTree() != null) {
-            getTree().repaint();
-          }
-        }
-      }
-    });
+  boolean isDeleted() {
+    return myDeleted;
   }
 
-  @Override
-  public void setUserObject(final Object userObject) {
-    final Object oldObject = getUserObject();
-    try {
-      super.setUserObject(userObject);
-    }
-    finally {
-      if (oldObject instanceof VirtualFilePointer pointer) {
-        Disposer.dispose((Disposable)pointer);
-      }
-    }
+  /**
+   * Called by {@link UpdateInfoTree} on EDT when VFS reports the path deleted ({@code true}) or created again ({@code false}).
+   */
+  void setDeleted(boolean deleted) {
+    myDeleted = deleted;
   }
 
-  public VirtualFilePointer getFilePointer() {
-    return (VirtualFilePointer)getUserObject();
+  /**
+   * Called by {@link UpdateInfoTree} on EDT when VFS reports the file (or a directory above it) moved or renamed to {@code newPath}.
+   * The row follows the file as its VFS pointer used to; the displayed name stays the reported one.
+   */
+  void retarget(@NotNull FilePath newPath) {
+    myPath = newPath;
+    myDeleted = false;
   }
 
   @Override
   public @NotNull SimpleTextAttributes getAttributes() {
-    if (!getFilePointer().isValid()) {
+    if (myDeleted) {
       return myInvalidAttributes;
     }
-    VirtualFile file = getFilePointer().getFile();
-    FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
-    FileStatus status = fileStatusManager.getStatus(file);
-    SimpleTextAttributes attributes = getAttributesFor(status);
+    SimpleTextAttributes attributes;
+    VirtualFile cached = LocalFileSystem.getInstance().findFileByPathIfCached(myPath.getPath());
+    if (cached != null) {
+      attributes = getAttributesFor(FileStatusManager.getInstance(myProject).getStatus(cached));
+    }
+    else if (myCanBeAbsent) {
+      return myInvalidAttributes;
+    }
+    else {
+      // not in the VFS cache: may exist on disk under a never-loaded directory; never resolve it here
+      attributes = getAttributesFor(FileStatus.NOT_CHANGED);
+    }
     return myFilterAttributes == null ? attributes : SimpleTextAttributes.merge(myFilterAttributes, attributes);
   }
 
@@ -118,10 +111,6 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode implement
   public boolean getSupportsDeletion() {
     AbstractTreeNode parent = (AbstractTreeNode)getParent();
     return parent != null && parent.getSupportsDeletion();
-  }
-
-  @Override
-  public void dispose() {
   }
 
   public @NotNull Project getProject() {

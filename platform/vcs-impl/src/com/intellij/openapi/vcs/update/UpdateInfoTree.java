@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.history.Label;
@@ -17,13 +17,13 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -36,10 +36,16 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -77,12 +83,16 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   public static final DataKey<FilePath> UPDATE_VIEW_SELECTED_PATH =
@@ -112,6 +122,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private CommittedChangesTreeBrowser myTreeBrowser;
   private final TreeExpander myTreeExpander;
   private final MyTreeIterable myTreeIterable;
+  /** {@link FilePath#getPath()} of every file and directory row; rebuilt with the tree, used on EDT only. */
+  private final Map<String, List<FileOrDirectoryTreeNode>> myNodesByPath = new HashMap<>();
 
   private Label myBefore;
   private Label myAfter;
@@ -143,6 +155,12 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
     myFileStatusManager = FileStatusManager.getInstance(myProject);
     myFileStatusManager.addFileStatusListener(myFileStatusListener, this);
+    myProject.getMessageBus().connect(this).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+        onVfsEvents(events);
+      }
+    });
     createTree();
     init();
     myTreeExpander = new DefaultTreeExpander(myTree);
@@ -151,7 +169,6 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
 
   @Override
   public void dispose() {
-    Disposer.dispose(myRoot);
   }
 
   public void setCanGroupByChangeList(final boolean canGroupByChangeList) {
@@ -223,6 +240,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private void updateTreeModel() {
     if (Disposer.isDisposed(this)) return;
     myRoot.rebuild(myVcsConfiguration.UPDATE_GROUP_BY_PACKAGES, getScopeFilter(), myVcsConfiguration.UPDATE_FILTER_BY_SCOPE);
+    rebuildPathIndex();
     if (myTreeModel != null) {
       myTreeModel.reload();
     }
@@ -234,24 +252,187 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     if (myTreeBrowser != null && myTreeBrowser.isVisible()) {
       return;
     }
-    VirtualFilePointer pointer = getSelectedFilePointer();
-    sink.set(VcsDataKeys.FILE_PATHS, getFilePathIterable());
+    FilePath selectedPath = getSelectedFilePath();
+    List<FilePath> selectedFilePaths = getSelectedFilePaths();
     sink.set(PlatformDataKeys.TREE_EXPANDER,
              myGroupByChangeList ? myTreeBrowser != null ? myTreeBrowser.getTreeExpander() : null : myTreeExpander);
-    sink.set(UPDATE_VIEW_SELECTED_PATH,
-             pointer != null ? getFilePath(pointer) : null);
+    sink.set(UPDATE_VIEW_SELECTED_PATH, selectedPath);
     sink.set(UPDATE_VIEW_FILES_ITERABLE, myTreeIterable);
     sink.set(LABEL_BEFORE, myBefore);
     sink.set(LABEL_AFTER, myAfter);
 
+    // the paths are taken here on EDT, where the tree changes; the lazies resolve them through VFS (disk on a cache miss) off EDT
+    sink.lazy(VcsDataKeys.FILE_PATHS, () -> {
+      List<FilePath> result = ContainerUtil.filter(selectedFilePaths, path -> path.getVirtualFile() == null);
+      return result.isEmpty() ? null : result;
+    });
     sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
-      if (pointer == null || !pointer.isValid()) return null;
-      VirtualFile selectedFile = pointer.getFile();
+      VirtualFile selectedFile = selectedPath != null ? selectedPath.getVirtualFile() : null;
       return selectedFile != null ? new OpenFileDescriptor(myProject, selectedFile) : null;
     });
     sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
-      return getVirtualFileArray();
+      return VfsUtil.toVirtualFileArray(ContainerUtil.mapNotNull(selectedFilePaths, FilePath::getVirtualFile));
     });
+  }
+
+  private void rebuildPathIndex() {
+    Set<String> deletedPaths = new HashSet<>();
+    for (Map.Entry<String, List<FileOrDirectoryTreeNode>> entry : myNodesByPath.entrySet()) {
+      if (ContainerUtil.exists(entry.getValue(), FileOrDirectoryTreeNode::isDeleted)) {
+        deletedPaths.add(entry.getKey());
+      }
+    }
+    myNodesByPath.clear();
+    Enumeration<TreeNode> nodes = myRoot.depthFirstEnumeration();
+    while (nodes.hasMoreElements()) {
+      if (nodes.nextElement() instanceof FileOrDirectoryTreeNode node) {
+        String path = node.getFilePath().getPath();
+        if (deletedPaths.contains(path)) {
+          node.setDeleted(true);
+        }
+        myNodesByPath.computeIfAbsent(path, __ -> new ArrayList<>(1)).add(node);
+      }
+    }
+  }
+
+  /**
+   * Runs on the thread of the VFS write action (EDT or background): only copies the paths and hands them to EDT.
+   * <ul>
+   *   <li>A deletion marks the rows of the path, or of any path under a deleted directory, deleted; a creation clears the mark.</li>
+   *   <li>A move or a rename retargets the rows of the old path, and of any path under a moved directory, to the new path with the
+   *   same suffix, and clears their deleted mark: a row follows its file, as its VFS pointer used to. The displayed name stays.</li>
+   * </ul>
+   * The steps apply on EDT in the order of the events. A rebuild of the tree (group by packages, scope filter) starts again from the
+   * reported paths and keeps only the deleted marks.
+   */
+  private void onVfsEvents(@NotNull List<? extends VFileEvent> events) {
+    List<BooleanSupplier> steps = new ArrayList<>();
+    Map<String, Boolean> deletedByPath = new HashMap<>();
+    Map<String, Boolean> deletedByDirectory = new HashMap<>();
+    for (VFileEvent event : events) {
+      if (!(event.getFileSystem() instanceof LocalFileSystem)) continue;
+      if (event instanceof VFileDeleteEvent deleteEvent) {
+        addVfsChange(deletedByPath, deletedByDirectory, deleteEvent.getPath(), deleteEvent.getFile().isDirectory(), true);
+      }
+      else if (event instanceof VFileCreateEvent createEvent) {
+        addVfsChange(deletedByPath, deletedByDirectory, createEvent.getPath(), createEvent.isDirectory(), false);
+      }
+      else if (event instanceof VFileMoveEvent moveEvent) {
+        addDeletedStep(steps, deletedByPath, deletedByDirectory);
+        addRetargetStep(steps, moveEvent.getOldPath(), moveEvent.getNewPath(), moveEvent.getFile().isDirectory());
+        deletedByPath = new HashMap<>();
+        deletedByDirectory = new HashMap<>();
+      }
+      else if (event instanceof VFilePropertyChangeEvent propertyEvent && propertyEvent.isRename()) {
+        addDeletedStep(steps, deletedByPath, deletedByDirectory);
+        addRetargetStep(steps, propertyEvent.getOldPath(), propertyEvent.getNewPath(), propertyEvent.getFile().isDirectory());
+        deletedByPath = new HashMap<>();
+        deletedByDirectory = new HashMap<>();
+      }
+    }
+    addDeletedStep(steps, deletedByPath, deletedByDirectory);
+    if (steps.isEmpty()) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      boolean repaint = false;
+      for (BooleanSupplier step : steps) {
+        repaint |= step.getAsBoolean();
+      }
+      if (repaint) {
+        myTree.repaint();
+      }
+    }, ModalityState.any(), __ -> Disposer.isDisposed(this));
+  }
+
+  private void addDeletedStep(@NotNull List<BooleanSupplier> steps,
+                              @NotNull Map<String, Boolean> deletedByPath,
+                              @NotNull Map<String, Boolean> deletedByDirectory) {
+    if (!deletedByPath.isEmpty()) {
+      steps.add(() -> applyVfsChanges(deletedByPath, deletedByDirectory));
+    }
+  }
+
+  private void addRetargetStep(@NotNull List<BooleanSupplier> steps, @NotNull String oldPath, @NotNull String newPath, boolean isDirectory) {
+    if (!oldPath.equals(newPath)) {
+      steps.add(() -> retarget(oldPath, newPath, isDirectory));
+    }
+  }
+
+  /** The last change of a path in the batch wins. */
+  private static void addVfsChange(@NotNull Map<String, Boolean> deletedByPath,
+                                   @NotNull Map<String, Boolean> deletedByDirectory,
+                                   @NotNull String path,
+                                   boolean isDirectory,
+                                   boolean deleted) {
+    deletedByPath.put(path, deleted);
+    if (isDirectory) {
+      deletedByDirectory.put(path, deleted);
+    }
+  }
+
+  private boolean applyVfsChanges(@NotNull Map<String, Boolean> deletedByPath, @NotNull Map<String, Boolean> deletedByDirectory) {
+    boolean repaint = false;
+    for (Map.Entry<String, Boolean> change : deletedByPath.entrySet()) {
+      List<FileOrDirectoryTreeNode> nodes = myNodesByPath.get(change.getKey());
+      if (nodes != null) {
+        repaint |= setDeleted(nodes, change.getValue());
+      }
+    }
+    if (!deletedByDirectory.isEmpty()) {
+      for (Map.Entry<String, List<FileOrDirectoryTreeNode>> entry : myNodesByPath.entrySet()) {
+        Boolean deleted = findNearestAncestorChange(entry.getKey(), deletedByDirectory);
+        if (deleted != null) {
+          repaint |= setDeleted(entry.getValue(), deleted);
+        }
+      }
+    }
+    return repaint;
+  }
+
+  /** Moves the rows of {@code oldPath}, and of the paths under it if it is a directory, to {@code newPath} with the same suffix. */
+  private boolean retarget(@NotNull String oldPath, @NotNull String newPath, boolean isDirectory) {
+    List<String> movedPaths = new ArrayList<>();
+    String oldPrefix = oldPath + "/";
+    for (String path : myNodesByPath.keySet()) {
+      if (path.equals(oldPath) || isDirectory && path.startsWith(oldPrefix)) {
+        movedPaths.add(path);
+      }
+    }
+    for (String path : movedPaths) {
+      String target = newPath + path.substring(oldPath.length());
+      List<FileOrDirectoryTreeNode> nodes = myNodesByPath.remove(path);
+      for (FileOrDirectoryTreeNode node : nodes) {
+        node.retarget(VcsUtil.getFilePath(target, node.getFilePath().isDirectory()));
+      }
+      myNodesByPath.computeIfAbsent(target, __ -> new ArrayList<>(nodes.size())).addAll(nodes);
+    }
+    return !movedPaths.isEmpty();
+  }
+
+  private static @Nullable Boolean findNearestAncestorChange(@NotNull String path, @NotNull Map<String, Boolean> deletedByDirectory) {
+    for (int slash = path.lastIndexOf('/'); slash > 0; slash = path.lastIndexOf('/', slash - 1)) {
+      Boolean deleted = deletedByDirectory.get(path.substring(0, slash));
+      if (deleted != null) return deleted;
+    }
+    return null;
+  }
+
+  /**
+   * A deleted row is removed from a group that supports deletion, otherwise it is painted as invalid until the path is created again.
+   */
+  private boolean setDeleted(@NotNull List<FileOrDirectoryTreeNode> nodes, boolean deleted) {
+    boolean repaint = false;
+    for (FileOrDirectoryTreeNode node : nodes) {
+      if (!node.isNodeAncestor(myRoot)) continue; // already removed from the tree
+      if (deleted && node.getSupportsDeletion()) {
+        node.setDeleted(true); // a rebuild of the tree brings the row back, painted as deleted
+        myTreeModel.removeNodeFromParent(node);
+      }
+      else if (node.isDeleted() != deleted) {
+        node.setDeleted(deleted);
+        repaint = true;
+      }
+    }
+    return repaint;
   }
 
   private final class MyTreeIterator implements Iterator<Pair<FilePath, FileStatus>> {
@@ -282,12 +463,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       while (myEnum.hasMoreElements()) {
         final Object o = myEnum.nextElement();
         if (o instanceof FileTreeNode treeNode) {
-          VirtualFilePointer filePointer = treeNode.getFilePointer();
-
-          FilePath filePath = getFilePath(filePointer);
-          if (filePath == null) continue;
-
-          myNext = filePath;
+          myNext = treeNode.getFilePath();
           myStatus = FileStatus.MODIFIED;
 
           final GroupTreeNode parent = findParentGroupTreeNode(treeNode.getParent());
@@ -326,36 +502,32 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
   }
 
-  private @Nullable VirtualFilePointer getSelectedFilePointer() {
+  private @Nullable FilePath getSelectedFilePath() {
     TreePath path = myTree.getSelectionPath();
     if (path == null) return null;
     AbstractTreeNode treeNode = (AbstractTreeNode)path.getLastPathComponent();
-    return treeNode instanceof FileTreeNode ? ((FileTreeNode)treeNode).getFilePointer() : null;
+    return treeNode instanceof FileTreeNode ? ((FileTreeNode)treeNode).getFilePath() : null;
   }
 
-  private VirtualFile[] getVirtualFileArray() {
-    ArrayList<VirtualFile> result = new ArrayList<>();
+  /** The paths of the file rows under the selected rows, in tree order. A tree walk with no VFS access: EDT only. */
+  private @NotNull List<FilePath> getSelectedFilePaths() {
     TreePath[] selectionPaths = myTree.getSelectionPaths();
-    if (selectionPaths != null) {
-      for (TreePath selectionPath : selectionPaths) {
-        AbstractTreeNode treeNode = (AbstractTreeNode)selectionPath.getLastPathComponent();
-        result.addAll(treeNode.getVirtualFiles());
-      }
-    }
-    return VfsUtil.toVirtualFileArray(result);
-  }
-
-  private @Nullable Iterable<FilePath> getFilePathIterable() {
-    TreePath[] selectionPaths = myTree.getSelectionPaths();
-    if (selectionPaths == null) return null;
-
-    List<File> result = new ArrayList<>();
+    if (selectionPaths == null) return Collections.emptyList();
+    List<FilePath> result = new ArrayList<>();
     for (TreePath selectionPath : selectionPaths) {
-      AbstractTreeNode treeNode = (AbstractTreeNode)selectionPath.getLastPathComponent();
-      result.addAll(treeNode.getFiles());
+      collectFilePaths((TreeNode)selectionPath.getLastPathComponent(), result);
     }
-    if (result.isEmpty()) return null;
-    return ContainerUtil.map(result, ioFile -> VcsUtil.getFilePath(ioFile));
+    return result;
+  }
+
+  private static void collectFilePaths(@NotNull TreeNode node, @NotNull List<FilePath> result) {
+    if (node instanceof FileTreeNode fileNode) {
+      result.add(fileNode.getFilePath());
+      return;
+    }
+    for (int i = 0; i < node.getChildCount(); i++) {
+      collectFilePaths(node.getChildAt(i), result);
+    }
   }
 
   int getFilteredFilesCount() {
@@ -531,11 +703,5 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       super.update(e);
       e.getPresentation().setEnabled(!myGroupByChangeList && getFilterScopeName() != null);
     }
-  }
-
-  private static @Nullable FilePath getFilePath(@NotNull VirtualFilePointer filePointer) {
-    String path = VirtualFileManager.extractPath(filePointer.getUrl());
-    if (StringUtil.isEmpty(path)) return null; // pointer disposed
-    return VcsUtil.getFilePath(path, false);
   }
 }
