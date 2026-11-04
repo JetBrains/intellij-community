@@ -1,13 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.floating
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorCustomizer
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.editor.isMarkdownScratchFile
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 
@@ -16,20 +18,13 @@ internal class AddFloatingToolbarTextEditorCustomizer : TextEditorCustomizer {
     if (!shouldAcceptEditor(textEditor) || AdvancedSettings.getBoolean("markdown.hide.floating.toolbar")) {
       return
     }
-    // See FloatingCodeToolbarEditorCustomizer: the toolbar holds its scope until disposed.
-    val toolbarScope = coroutineScope.childScope("MarkdownFloatingToolbar")
-    var registered = false
-    try {
+    coroutineScope.launch(Dispatchers.EDT) {
+      if (textEditor.editor.isDisposed) {
+        return@launch
+      }
+      val toolbarScope = coroutineScope.childScope("MarkdownFloatingToolbar")
       val toolbar = MarkdownFloatingToolbar(editor = textEditor.editor, coroutineScope = toolbarScope)
-      registered = Disposer.tryRegister(textEditor, toolbar)
-      if (!registered) {
-        Disposer.dispose(toolbar)
-      }
-    }
-    finally {
-      if (!registered) {
-        toolbarScope.cancel()
-      }
+      Disposer.register(textEditor, toolbar)
     }
   }
 
