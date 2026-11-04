@@ -114,6 +114,7 @@ internal fun getDescriptorSplitModeInlayInfo(xmlFile: XmlFile): DescriptorSplitM
       presentation = text,
       compatibilityTarget = compatibilityTarget,
       analyzedDescriptor = DescriptorLink(xmlFile.name, module.name),
+      analyzedPluginId = DescriptorUtil.getIdeaPlugin(xmlFile)?.pluginId,
       reason = resolvedModuleKind.reason,
     ),
   )

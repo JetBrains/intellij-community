@@ -252,6 +252,7 @@ internal object SplitModeModuleKindResolver {
           ContainingPlugin(
             descriptorPath = pluginXml.virtualFile.path,
             descriptorName = pluginXml.name,
+            pluginId = ideaPlugin.pluginId,
             moduleName = containingModule.name,
             moduleKind = resolvedModuleKind,
             dependencyFacts = asContainingPluginFacts(ownDependencyFacts),
@@ -276,6 +277,7 @@ internal object SplitModeModuleKindResolver {
 private data class ContainingPlugin(
   val descriptorPath: String,
   val descriptorName: String,
+  val pluginId: String?,
   val moduleName: String,
   val moduleKind: ResolvedModuleKind,
   val dependencyFacts: DependencyFacts,
@@ -370,7 +372,7 @@ private class DependencyAnalysis(
 
   fun buildContainingPluginsReasoning(): ModuleKindReason {
     return ModuleKindReason.ContainingPlugins(
-      containingPlugins.sortedBy { it.moduleName }.map { ContainingPluginKind(it.moduleName, it.descriptorName, it.moduleKind.kind) }
+      containingPlugins.sortedBy { it.moduleName }.map { ContainingPluginKind(it.moduleName, it.descriptorName, it.pluginId, it.moduleKind.kind) }
     )
   }
 

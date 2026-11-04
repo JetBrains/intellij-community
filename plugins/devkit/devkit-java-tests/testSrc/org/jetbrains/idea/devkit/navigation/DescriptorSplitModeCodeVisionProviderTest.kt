@@ -217,7 +217,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
       "Backend dependency: " +
       "plugin.xml (current) " +
       "\u2193 depends on " +
-      "dependency.module.xml " +
+      "dependency.module " +
       "\u2193 depends on " +
       "intellij.platform.backend",
       toPlainText(html),
@@ -242,6 +242,42 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
   }
 
   @Test
+  fun testReasonPopupShowsPluginIdOfPluginDescriptor() {
+    createModuleWithModuleDescriptor("other.plugin", "plugin.xml", """
+      <idea-plugin>
+        <id>com.example.other</id>
+        <dependencies>
+          <module name="intellij.platform.backend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    createModuleWithModuleDescriptor("root.plugin", "plugin.xml", """
+      <idea-plugin>
+        <id>com.example.root</id>
+        <dependencies>
+          <plugin id="com.example.other"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromTempProjectFile("root.plugin/plugin.xml")
+
+    val reasonHtml = computeReasonHtml()
+    assertEquals(
+      "Backend plugin Can be installed into: backend IDE " +
+      "Backend dependency: " +
+      "plugin.xml plugin com.example.root (current) " +
+      "\u2193 depends on " +
+      "plugin.xml plugin com.example.other " +
+      "\u2193 depends on " +
+      "intellij.platform.backend",
+      toPlainText(reasonHtml.html),
+    )
+    assertEquals(listOf(DescriptorLink("plugin.xml", "other.plugin")), reasonHtml.links)
+  }
+
+  @Test
   fun testReasonPopupShowsMissingRpcDependency() {
     createDeclaringModule()
     createModuleWithModuleDescriptor("test.module", "test.module.xml", """
@@ -257,7 +293,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     assertEquals(
       "LiteFrontend content module Can be installed into: lite frontend IDE " +
       "Frontend dependency: " +
-      "test.module.xml (current) " +
+      "test.module (current) " +
       "\u2193 depends on " +
       "intellij.platform.frontend " +
       "No dependency on intellij.platform.rpc was found. The module can be installed only into a lite frontend.",
@@ -284,9 +320,9 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     assertEquals(
       "LiteFrontend content module Can be installed into: lite frontend IDE " +
       "Frontend dependency: " +
-      "test.module.xml (current) " +
+      "test.module (current) " +
       "\u2193 depends on " +
-      "intellij.platform.frontend.xml predefined " +
+      "intellij.platform.frontend (predefined) " +
       "No dependency on intellij.platform.rpc was found. The module can be installed only into a lite frontend.",
       toPlainText(html),
     )
@@ -317,9 +353,9 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     assertEquals(
       "Backend content module Can be installed into: backend IDE " +
       "Backend dependency: " +
-      "test.module.xml (current) " +
+      "test.module (current) " +
       "\u2193 depends on test.backend.alias " +
-      "intellij.platform.backend.xml predefined",
+      "intellij.platform.backend (predefined)",
       toPlainText(html),
     )
     val predefinedDescriptor = DescriptorLink("intellij.platform.backend.xml", "intellij.platform.backend")

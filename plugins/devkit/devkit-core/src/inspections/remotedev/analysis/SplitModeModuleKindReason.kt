@@ -49,9 +49,13 @@ internal data class KindEvidence(
   val dependency: DependencyInfo,
 )
 
+/**
+ * @property pluginId the plugin id of the containing plugin descriptor, or its plugin name.
+ */
 internal data class ContainingPluginKind(
   val moduleName: String,
   val descriptorName: String,
+  val pluginId: String?,
   val kind: ModuleKind,
 )
 
@@ -65,8 +69,13 @@ internal data class AnalysisTarget(
  * The steps go from the analyzed descriptor to the dependency.
  */
 internal sealed interface DependencyTraceStep {
-  /** The path goes through this descriptor. */
-  data class Descriptor(val descriptorName: String, val moduleName: String?) : DependencyTraceStep
+  /**
+   * The path goes through this descriptor.
+   *
+   * @property moduleName the IntelliJ module that holds the descriptor file. The plain text gives it to locate the file.
+   * @property pluginId the plugin id of the descriptor, or its plugin name. It is null for a content module descriptor.
+   */
+  data class Descriptor(val descriptorName: String, val moduleName: String?, val pluginId: String? = null) : DependencyTraceStep
 
   /** The previous descriptor depends on [dependencyName]. The next step is in the descriptor of this dependency. */
   data class ViaDependency(val dependencyName: String) : DependencyTraceStep
@@ -82,8 +91,14 @@ internal sealed interface DependencyTraceStep {
    * This module ends the path.
    *
    * @property descriptorName the descriptor of [moduleName] that the analysis resolved.
+   * @property pluginId the plugin id of this descriptor, or its plugin name. It is null for a content module descriptor.
    */
-  data class Predefined(val reasoning: @NlsSafe String, val moduleName: String, val descriptorName: String) : DependencyTraceStep
+  data class Predefined(
+    val reasoning: @NlsSafe String,
+    val moduleName: String,
+    val descriptorName: String,
+    val pluginId: String? = null,
+  ) : DependencyTraceStep
 
   /** The predefined [kind] dependency [dependencyName] implies the dependency on `intellij.platform.rpc`. */
   data class ImpliedRpc(val kind: ModuleKind, val dependencyName: String) : DependencyTraceStep

@@ -75,11 +75,13 @@ internal data class DescriptorSplitModeReasonHtml(
  * @property presentation the text of the inlay, for example "Backend plugin".
  * @property compatibilityTarget the IDE that the descriptor can be installed into.
  * @property analyzedDescriptor the descriptor of the inlay. A dependency path that does not name its start starts here.
+ * @property analyzedPluginId the plugin id of [analyzedDescriptor], or its plugin name.
  */
 internal data class DescriptorSplitModeReason(
   val presentation: @Nls String,
   val compatibilityTarget: @Nls String,
   val analyzedDescriptor: DescriptorLink,
+  val analyzedPluginId: String?,
   val reason: ModuleKindReason,
 ) {
   /**
@@ -88,7 +90,7 @@ internal data class DescriptorSplitModeReason(
    * @param descriptorIcons the file icons of the descriptors. A descriptor without an icon here gets a generic icon.
    */
   fun toHtml(descriptorIcons: Map<DescriptorLink, Icon> = emptyMap()): DescriptorSplitModeReasonHtml {
-    return ReasonHtmlBuilder(analyzedDescriptor, descriptorIcons).build(presentation, compatibilityTarget, reason)
+    return ReasonHtmlBuilder(analyzedDescriptor, analyzedPluginId, descriptorIcons).build(presentation, compatibilityTarget, reason)
   }
 }
 
@@ -210,6 +212,7 @@ private fun findDescriptorFile(project: Project, link: DescriptorLink): VirtualF
 
 private class ReasonHtmlBuilder(
   private val analyzedDescriptor: DescriptorLink,
+  private val analyzedPluginId: String?,
   private val descriptorIcons: Map<DescriptorLink, Icon>,
 ) {
   private val links = mutableListOf<DescriptorLink>()
@@ -263,7 +266,7 @@ private class ReasonHtmlBuilder(
             chain(reason.plugins.map { plugin ->
               ChainRow.Node(descriptorIcon(plugin.descriptorName, plugin.moduleName),
                             HtmlBuilder()
-                              .append(descriptorNode(plugin.descriptorName, plugin.moduleName))
+                              .append(descriptorNode(plugin.descriptorName, plugin.moduleName, plugin.pluginId))
                               .append(" → ")
                               .append(kindIcon(plugin.kind))
                               .append(" ")
@@ -298,18 +301,18 @@ private class ReasonHtmlBuilder(
     val rows = mutableListOf<ChainRow>()
     if (steps.firstOrNull() !is DependencyTraceStep.Descriptor) {
       rows.add(ChainRow.Node(descriptorIcon(analyzedDescriptor.descriptorName, analyzedDescriptor.moduleName),
-                             descriptorNode(analyzedDescriptor.descriptorName, analyzedDescriptor.moduleName)))
+                             descriptorNode(analyzedDescriptor.descriptorName, analyzedDescriptor.moduleName, analyzedPluginId)))
     }
     for ((index, step) in steps.withIndex()) {
       when (step) {
         is DependencyTraceStep.Descriptor -> rows.add(ChainRow.Node(descriptorIcon(step.descriptorName, step.moduleName),
-                                                                    descriptorNode(step.descriptorName, step.moduleName)))
+                                                                    descriptorNode(step.descriptorName, step.moduleName, step.pluginId)))
         is DependencyTraceStep.ViaDependency -> {
           // The next node shows the name already when it is the dependency itself.
           // An alias or a plugin id differs from the name of the next node, so the edge keeps it.
           val isNamedByNextNode = when (val nextStep = steps.getOrNull(index + 1)) {
-            is DependencyTraceStep.Descriptor -> nextStep.descriptorName == "${step.dependencyName}.xml"
-            is DependencyTraceStep.Predefined -> nextStep.descriptorName == "${step.dependencyName}.xml"
+            is DependencyTraceStep.Descriptor -> nextStep.descriptorName == "${step.dependencyName}.xml" || nextStep.pluginId == step.dependencyName
+            is DependencyTraceStep.Predefined -> nextStep.moduleName == step.dependencyName
             is DependencyTraceStep.ViaDependency,
             is DependencyTraceStep.ContentModule,
             DependencyTraceStep.ContainingPlugin,
@@ -325,7 +328,7 @@ private class ReasonHtmlBuilder(
         DependencyTraceStep.ContainingPlugin -> rows.add(ChainRow.Edge(edgeLabel("inlay.split.mode.reason.popup.edge.containing.plugin")))
         // The kind icon shows the kind that the configuration predefines, so the node does not use the file icon.
         is DependencyTraceStep.Predefined -> rows.add(ChainRow.Node(kindIcon(evidence.kind), HtmlBuilder()
-          .append(descriptorNode(step.descriptorName, step.moduleName))
+          .append(descriptorNode(step.descriptorName, step.moduleName, step.pluginId))
           .append(" ")
           .append(secondary(DevKitBundle.message("inlay.split.mode.reason.popup.predefined.dependency")))
           .toFragment()))
@@ -367,29 +370,34 @@ private class ReasonHtmlBuilder(
     })
   }
 
-  private fun descriptorNode(descriptorName: String, moduleName: String?): HtmlChunk {
+  /**
+   * A content module descriptor, named `<module>.xml`, shows as its module, because a dependency names the module.
+   * Another descriptor, for example `plugin.xml`, shows its file name and its [pluginId].
+   * The popup does not show the IntelliJ module of such a descriptor, because the plugin model does not use it.
+   * The current descriptor has no link.
+   */
+  private fun descriptorNode(descriptorName: String, moduleName: String?, pluginId: String? = null): HtmlChunk {
     if (moduleName == null) {
       return HtmlChunk.text(descriptorName)
     }
-    // The current descriptor needs no link and no module.
-    if (DescriptorLink(descriptorName, moduleName) == analyzedDescriptor) {
-      return HtmlBuilder()
-        .append(descriptorName)
-        .append(" ")
-        .append(secondary(DevKitBundle.message("inlay.split.mode.reason.popup.current")))
-        .toFragment()
+    val isModuleDescriptor = descriptorName == "$moduleName.xml"
+    val name = if (isModuleDescriptor) moduleName else descriptorName
+    val isCurrent = DescriptorLink(descriptorName, moduleName) == analyzedDescriptor
+    val builder = HtmlBuilder()
+    if (isCurrent) {
+      builder.append(name)
     }
-    links.add(DescriptorLink(descriptorName, moduleName))
-    val link = HtmlChunk.link("$DESCRIPTOR_LINK_PREFIX${links.lastIndex}", descriptorName)
-    // The module shows only when the file name does not give it, for example for `plugin.xml`.
-    if (descriptorName == "$moduleName.xml") {
-      return link
+    else {
+      links.add(DescriptorLink(descriptorName, moduleName))
+      builder.append(HtmlChunk.link("$DESCRIPTOR_LINK_PREFIX${links.lastIndex}", name))
     }
-    return HtmlBuilder()
-      .append(link)
-      .append(" ")
-      .append(secondary(DevKitBundle.message("inlay.split.mode.reason.popup.module", moduleName)))
-      .toFragment()
+    if (!isModuleDescriptor && pluginId != null) {
+      builder.append(" ").append(secondary(DevKitBundle.message("inlay.split.mode.reason.popup.plugin", pluginId)))
+    }
+    if (isCurrent) {
+      builder.append(" ").append(secondary(DevKitBundle.message("inlay.split.mode.reason.popup.current")))
+    }
+    return builder.toFragment()
   }
 
   private fun descriptorIcon(descriptorName: String, moduleName: String?): HtmlChunk {
