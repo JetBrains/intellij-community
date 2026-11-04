@@ -1,10 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 
-internal enum class ProjectViewPreloadMode {
+@ApiStatus.Internal
+enum class ProjectViewPreloadMode {
   OFF,
   REMDEV,
   ON;

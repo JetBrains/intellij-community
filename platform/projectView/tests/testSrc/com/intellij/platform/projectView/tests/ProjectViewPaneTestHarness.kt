@@ -6,8 +6,10 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.intellij.platform.projectView.frontend.impl.FrontendProjectViewPaneTreeModel
 import com.intellij.platform.projectView.frontend.impl.Node
+import com.intellij.platform.projectView.frontend.impl.treePath
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -19,6 +21,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.exists
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -37,6 +40,7 @@ import kotlin.time.Duration.Companion.seconds
  * It deliberately stops short of `TreeBasedFrontendProjectViewPane` (the Swing pane): it constructs a
  * [FrontendProjectViewPaneTreeModel] directly and replicates the two pump loops that
  * `ProjectViewToolWindowServiceImpl.managePane` runs (state events in, requests out), minus Swing.
+ * It also runs [FrontendProjectViewPaneTreeModel.manage], which the Swing pane runs in production.
  *
  * All access to the tree model is confined to [Dispatchers.EDT] (production confines it to
  * `Dispatchers.UI`) because the model's node index is not thread-safe; suspending inside the tester
@@ -68,17 +72,25 @@ internal suspend fun <T> withProjectViewPane(
       applied.update { it + 1 }
     }
   }
+  // Load request loop (EDT-confined): turn the queued load requests (expand, preload) into outbound requests.
+  pumps.launch(Dispatchers.EDT) {
+    model.manage()
+  }
   // Request loop (off-EDT): forward outbound requests (load-children/navigate/...) to the backend.
+  val loadChildrenRequestCounts = ConcurrentHashMap<Long, Int>()
   pumps.launch {
     val out = aggregator.getPaneRequestChannel(descriptor)
     for (request in model.requestChannel) {
+      if (request is ProjectViewPaneLoadChildrenRequest) {
+        loadChildrenRequestCounts.merge(request.nodeId, 1) { old, new -> old + new }
+      }
       out?.send(request)
     }
   }
 
   try {
     withContext(Dispatchers.EDT) {
-      block(ProjectViewPaneTester(model, applied))
+      block(ProjectViewPaneTester(model, applied, loadChildrenRequestCounts))
     }
   }
   finally {
@@ -93,6 +105,7 @@ internal suspend fun <T> withProjectViewPane(
 internal class ProjectViewPaneTester internal constructor(
   private val model: FrontendProjectViewPaneTreeModel,
   private val applied: MutableStateFlow<Long>,
+  private val loadChildrenRequestCounts: Map<Long, Int>,
 ) {
   /** Suspends until the (single) real root node exists. */
   suspend fun awaitRoot(): Node {
@@ -157,6 +170,12 @@ internal class ProjectViewPaneTester internal constructor(
 
   /** Sends the request that the frontend sends when this pane becomes the selected one. */
   fun select(): Unit = model.setCurrent(true)
+
+  /** Asks the tree model to load the children of [node], as the children preloader does. Does not wait for the children. */
+  fun preloadChildren(node: Node): Unit = model.treeModel.loadChildren(node.treePath)
+
+  /** Returns the number of the load requests that the frontend sent for the children of [node]. */
+  fun loadChildrenRequestCount(node: Node): Int = loadChildrenRequestCounts[node.id] ?: 0
 
   suspend fun assertTree(expected: String, maxDepth: Int = Int.MAX_VALUE) {
     Assertions.assertEquals(expected.trimIndent().trimEnd(), dumpTree(maxDepth))

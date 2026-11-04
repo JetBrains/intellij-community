@@ -969,6 +969,33 @@ internal class DefaultTreeModelWithCachedPresentationTest {
     assertThat(loadedNodes()).`as`("loaded nodes, the loading node is not a cached node").isEqualTo(3)
   }
 
+  @Test
+  fun `load children with the loader`() {
+    sut.setRoot(parse("""
+      |root
+      | a
+      """.trimMargin()))
+    val requestedNodes = mutableListOf<DefaultMutableTreeNode>()
+    sut.childrenLoader = { requestedNodes += it }
+    sut.loadChildren(path("root/a"))
+    assertThat(requestedNodes).containsExactly(node("root/a"))
+  }
+
+  @Test
+  fun `load children without the loader`() {
+    sut.setRoot(parse("""
+      |root
+      | a
+      """.trimMargin()))
+    eventCount = 0
+    sut.loadChildren(path("root/a"))
+    assertModel("""
+      |root
+      | a
+      """.trimMargin())
+    assertThat(eventCount).isZero()
+  }
+
   @Nested
   inner class TreeLevel {
     private lateinit var tree: Tree

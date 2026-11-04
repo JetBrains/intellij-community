@@ -81,7 +81,9 @@ internal class FrontendProjectViewPaneTreeModel(
   private val project: Project,
   internal val descriptor: ProjectViewPaneDescriptorImpl,
 ) {
-  internal val treeModel = DefaultTreeModelWithCachedPresentation()
+  internal val treeModel = DefaultTreeModelWithCachedPresentation().apply {
+    childrenLoader = { node -> if (node is Node) preloadChildren(node) }
+  }
   internal val rootChildren: StateFlow<List<TreePath>>
     field = MutableStateFlow(emptyList())
 
@@ -141,10 +143,16 @@ internal class FrontendProjectViewPaneTreeModel(
     // but we don't want to flash the loading node every time that happens (e.g., when visiting the tree).
     // 2. If the children are not loaded, but there are still some children already (cached nodes),
     // we definitely don't want to add a loading node into the mix.
-    // So only when loading the children for the first time (!isChildrenLoaded) and there are no nodes, we add a loading node.
-    if (!parent.isChildrenLoaded && parent.childCount == 0) {
-      LOG.debug { "Inserting a temporary loading node into $parent" }
-      treeModel.insertChild(parent, 0, LoadingNode())
+    // So only when loading the children for the first time (not LOADED) and there are no nodes, we add a loading node.
+    when (parent.childrenState) {
+      ChildrenState.NOT_LOADED, ChildrenState.LOADING -> {
+        parent.childrenState = ChildrenState.LOADING
+        if (parent.childCount == 0) {
+          LOG.debug { "Inserting a temporary loading node into $parent" }
+          treeModel.insertChild(parent, 0, LoadingNode())
+        }
+      }
+      ChildrenState.LOADED -> { }
     }
     sendRequest(ProjectViewPaneLoadChildrenRequest(nodeId))
   }
@@ -169,6 +177,21 @@ internal class FrontendProjectViewPaneTreeModel(
   internal fun requestLoadChildren(nodeId: Long) {
     val result = loadRequests.trySend(nodeId)
     check(result.isSuccess)
+  }
+
+  /**
+   * Requests the backend to load the children of the given node once. Called by the children preloader through the [treeModel].
+   *
+   * Unlike [requestLoadChildren], it does nothing if the children are loaded or loading.
+   */
+  private fun preloadChildren(node: Node) {
+    when (node.childrenState) {
+      ChildrenState.NOT_LOADED -> {
+        node.childrenState = ChildrenState.LOADING
+        requestLoadChildren(node.id)
+      }
+      ChildrenState.LOADING, ChildrenState.LOADED -> { }
+    }
   }
 
   /**
@@ -219,7 +242,7 @@ internal class FrontendProjectViewPaneTreeModel(
             rootChildren.value = parent.children().toList().mapNotNull { (it as? Node)?.treePath }
           }
         }
-        parent.isChildrenLoaded = true
+        parent.childrenState = ChildrenState.LOADED
       }
       is ProjectViewNodeAdded -> {
         val parent = getNodeById(event.parentId) ?: return
@@ -391,14 +414,17 @@ internal class FrontendProjectViewPaneTreeModel(
 
   internal suspend fun awaitNodeChildren(node: Node, condition: () -> Boolean): List<Node>? {
     if (!condition()) return null
-    if (!node.isChildrenLoaded) { // request in the case it wasn't requested before
-      loadChildren(node.id)
+    when (node.childrenState) {
+      // Request also when loading, because the backend drops a request between two sessions.
+      ChildrenState.NOT_LOADED, ChildrenState.LOADING -> loadChildren(node.id)
+      ChildrenState.LOADED -> { }
     }
     var epoch = 0L
     while (condition()) {
-      if (node.isChildrenLoaded) {
-        // The cast to Node should be safe now, as isChildrenLoaded implies no cached children.
-        return node.children().asSequence().map { it as Node }.toList()
+      when (node.childrenState) {
+        ChildrenState.NOT_LOADED, ChildrenState.LOADING -> { }
+        // The cast to Node should be safe now, as LOADED implies no cached children.
+        ChildrenState.LOADED -> return node.children().asSequence().map { it as Node }.toList()
       }
       epoch = updateEpoch.first { it > epoch }
     }
@@ -476,7 +502,7 @@ internal class Node(
   val projectViewNode: ProjectViewNodeModelImpl<*>
     get() = userObject as ProjectViewNodeModelImpl<*>
 
-  var isChildrenLoaded: Boolean = false
+  var childrenState: ChildrenState = ChildrenState.NOT_LOADED
 
   val id: Long
     get() = projectViewNode.id
@@ -489,6 +515,12 @@ internal class Node(
   }
 
   override fun toString(): String = "{${if (isLeaf) "-" else "+"}[${projectViewNode.id}] ${projectViewNode.presentation.mainText}}"
+}
+
+internal enum class ChildrenState {
+  NOT_LOADED,
+  LOADING,
+  LOADED,
 }
 
 internal val Node.treePath: TreePath

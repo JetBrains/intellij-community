@@ -6,9 +6,11 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.SelectInTarget
 import com.intellij.ide.actions.OpenInRightSplitActionProvider
 import com.intellij.ide.projectView.impl.ProjectViewInitNotifier
+import com.intellij.ide.projectView.impl.ProjectViewPreloadMode
 import com.intellij.ide.util.treeView.CachedTreePresentationData
 import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
 import com.intellij.ide.util.treeView.TreeState
+import com.intellij.ide.util.treeView.isChildrenPreloadingEnabled
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataSink
@@ -167,6 +169,7 @@ internal class TreeBasedFrontendProjectViewPane(
     EditSourceOnDoubleClickHandler.install(tree)
     EditSourceOnEnterKeyHandler.install(tree)
     autoscrollToSourceHandler.install(tree)
+    tree.isChildrenPreloadingEnabled = ProjectViewPreloadMode.isEnabled()
     tree.launchOnShow("expand requests") {
       expandRequests.collectLatest { expandRequest ->
         expand(expandRequest)
