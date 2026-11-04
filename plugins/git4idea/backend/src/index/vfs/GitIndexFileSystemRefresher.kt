@@ -78,9 +78,7 @@ internal class GitIndexFileSystemRefresher(private val project: Project) : Dispo
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosing(p: Project) {
         if (project == p) {
-          isShutDown = true
-          Disposer.dispose(disposable)
-          executor.shutdown()
+          shutDown()
           ProgressManager.getInstance().runProcessWithProgressSynchronously({ executor.awaitTermination(100, TimeUnit.MILLISECONDS) },
                                                                             GitBundle.message("stage.vfs.shutdown.process"),
                                                                             false, project)
@@ -302,7 +300,14 @@ internal class GitIndexFileSystemRefresher(private val project: Project) : Dispo
     }
   }
 
+  private fun shutDown() {
+    isShutDown = true
+    Disposer.dispose(disposable)
+    executor.shutdown()
+  }
+
   override fun dispose() {
+    shutDown()
     cache.invalidateAll()
   }
 
