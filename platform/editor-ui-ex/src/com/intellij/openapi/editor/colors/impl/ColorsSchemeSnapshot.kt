@@ -14,6 +14,8 @@ import java.util.function.BiPredicate
  * It has the name and the parent scheme of the scheme, and it tells if a user can delete the scheme.
  * It has the own font preferences of the editor and of the console, and it tells if the scheme uses them.
  * It also has the colors and the text attributes that the scheme defines itself, without the values of the parent scheme.
+ * The text attributes of temporary keys are values that a caller derives from the other text attributes.
+ * So a change of the text attributes removes them in the same snapshot.
  * The scheme keeps its current snapshot in one volatile field and replaces the snapshot on each change.
  * A `with` function returns a new snapshot, or this snapshot when no value changes.
  * The snapshots are safe to use on any thread.
@@ -30,6 +32,7 @@ class ColorsSchemeSnapshot private constructor(
   private val useEditorFontPreferencesInConsole: Boolean,
   private val colors: Map<ColorKey, Color>,
   private val attributes: Map<String, TextAttributes>, // the text attributes by the external name of their key
+  private val tempAttributes: Map<String, TextAttributes>, // the text attributes of temporary keys, see TextAttributesKey.isTemp
 ) {
   fun schemeName(): String? = schemeName
 
@@ -63,6 +66,13 @@ class ColorsSchemeSnapshot private constructor(
 
   fun getAttributes(keyName: String): TextAttributes? {
     return attributes[keyName]
+  }
+
+  /**
+   * Returns the text attributes of the temporary key with [keyName], or `null` if the snapshot has none.
+   */
+  fun getTempAttributes(keyName: String): TextAttributes? {
+    return tempAttributes[keyName]
   }
 
   fun withSchemeName(schemeName: String): ColorsSchemeSnapshot {
@@ -99,6 +109,14 @@ class ColorsSchemeSnapshot private constructor(
 
   fun withAttributes(keyName: String, textAttributes: TextAttributes): ColorsSchemeSnapshot {
     return copy(attributes = putValue(attributes, keyName, textAttributes))
+  }
+
+  /**
+   * Returns this snapshot with [textAttributes] for the temporary key with [keyName].
+   * The other text attributes do not change.
+   */
+  fun withTempAttributes(keyName: String, textAttributes: TextAttributes): ColorsSchemeSnapshot {
+    return copy(tempAttributes = putValue(tempAttributes, keyName, textAttributes))
   }
 
   /**
@@ -172,6 +190,7 @@ class ColorsSchemeSnapshot private constructor(
     useEditorFontPreferencesInConsole: Boolean = this.useEditorFontPreferencesInConsole,
     colors: Map<ColorKey, Color> = this.colors,
     attributes: Map<String, TextAttributes> = this.attributes,
+    tempAttributes: Map<String, TextAttributes> = if (attributes === this.attributes) this.tempAttributes else emptyMap(),
   ): ColorsSchemeSnapshot {
     if (schemeName == this.schemeName &&
         parentScheme === this.parentScheme &&
@@ -181,7 +200,8 @@ class ColorsSchemeSnapshot private constructor(
         consoleFontPreferences === this.consoleFontPreferences &&
         useEditorFontPreferencesInConsole == this.useEditorFontPreferencesInConsole &&
         colors === this.colors &&
-        attributes === this.attributes) {
+        attributes === this.attributes &&
+        tempAttributes === this.tempAttributes) {
       return this
     }
     return ColorsSchemeSnapshot(
@@ -194,6 +214,7 @@ class ColorsSchemeSnapshot private constructor(
       useEditorFontPreferencesInConsole,
       colors,
       attributes,
+      tempAttributes,
     )
   }
 
@@ -215,6 +236,7 @@ class ColorsSchemeSnapshot private constructor(
         useEditorFontPreferencesInConsole = true,
         colors = emptyMap(),
         attributes = emptyMap(),
+        tempAttributes = emptyMap(),
       )
     }
   }

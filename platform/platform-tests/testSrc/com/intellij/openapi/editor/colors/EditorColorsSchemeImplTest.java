@@ -63,6 +63,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static com.intellij.editor.EditorColorSchemeTestUtil.assertXmlOutputEquals;
@@ -1423,6 +1424,56 @@ public class EditorColorsSchemeImplTest {
   }
 
   @Test
+  public void testAttributeChangeResetsTempAttributes() {
+    withTempKey("EditorColorsSchemeImplTest.attributeChangeTemp", tempKey -> {
+      myScheme.setAttributes(tempKey, plainAttributes(new Color(4, 5, 6)));
+      myScheme.setAttributes(HighlighterColors.TEXT, plainAttributes(new Color(1, 2, 3)));
+      assertNull(myScheme.getAttributes(tempKey));
+    });
+  }
+
+  @Test
+  public void testCopyToResetsTempAttributesOfTarget() {
+    withTempKey("EditorColorsSchemeImplTest.copyTemp", tempKey -> {
+      EditorColorsSchemeImpl source = new EditorColorsSchemeImpl(null);
+      source.setAttributes(HighlighterColors.TEXT, plainAttributes(new Color(1, 2, 3)));
+      myScheme.setAttributes(tempKey, plainAttributes(new Color(4, 5, 6)));
+      source.copyTo(myScheme);
+      assertNull(myScheme.getAttributes(tempKey));
+    });
+  }
+
+  @Test
+  public void testReadResetsTempAttributes() throws Exception {
+    Element read = JDOMUtil.load("""
+      <scheme name="ReadTemp" version="142">
+        <attributes>
+          <option name="TEXT">
+            <value>
+              <option name="FOREGROUND" value="ff0000" />
+            </value>
+          </option>
+        </attributes>
+      </scheme>
+      """);
+    withTempKey("EditorColorsSchemeImplTest.readTemp", tempKey -> {
+      myScheme.setAttributes(tempKey, plainAttributes(new Color(4, 5, 6)));
+      myScheme.readExternal(read);
+      assertNull(myScheme.getAttributes(tempKey));
+    });
+  }
+
+  @Test
+  public void testFontChangeKeepsTempAttributes() {
+    withTempKey("EditorColorsSchemeImplTest.fontChangeTemp", tempKey -> {
+      TextAttributes generated = plainAttributes(new Color(4, 5, 6));
+      myScheme.setAttributes(tempKey, generated);
+      myScheme.setEditorFontSize(20);
+      assertSame(generated, myScheme.getAttributes(tempKey));
+    });
+  }
+
+  @Test
   public void testToStringOfSchemeWithoutName() {
     assertEquals("<unnamed scheme>", myScheme.toString());
     myScheme.setName("Named");
@@ -1578,6 +1629,23 @@ public class EditorColorsSchemeImplTest {
   }
 
   private static final String META_PROPERTY = "EditorColorsSchemeImplTest.meta";
+
+  /**
+   * Runs {@code action} with a new temporary key and removes the key after the action.
+   */
+  private static void withTempKey(@NotNull String externalName, @NotNull Consumer<? super TextAttributesKey> action) {
+    TextAttributesKey tempKey = TextAttributesKey.createTempTextAttributesKey(externalName, null);
+    try {
+      action.accept(tempKey);
+    }
+    finally {
+      TextAttributesKey.removeTextAttributesKey(tempKey.getExternalName());
+    }
+  }
+
+  private static @NotNull TextAttributes plainAttributes(@NotNull Color foreground) {
+    return new TextAttributes(foreground, null, null, null, Font.PLAIN);
+  }
 
   private static @NotNull String metaInfoScheme(@NotNull String value) {
     return """

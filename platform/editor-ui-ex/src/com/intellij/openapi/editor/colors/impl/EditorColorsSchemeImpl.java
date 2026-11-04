@@ -17,11 +17,9 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
-  private final Map<String, TextAttributes> attributesTempMap = new ConcurrentHashMap<>();
   private volatile boolean isVisible = true;
   private volatile boolean isSaveNeeded;
 
@@ -51,12 +49,11 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public void setAttributes(@NotNull TextAttributesKey key, @NotNull TextAttributes attributes) {
+    String keyName = key.getExternalName();
     if (TextAttributesKey.isTemp(key)) {
-      attributesTempMap.put(key.getExternalName(), attributes);
+      updateSnapshot(current -> current.withTempAttributes(keyName, attributes));
     } else if (attributes == INHERITED_ATTRS_MARKER || !Comparing.equal(attributes, getDirectlyDefinedAttributes(key))) {
-      String keyName = key.getExternalName();
       updateSnapshot(current -> current.withAttributes(keyName, attributes));
-      attributesTempMap.clear();
     }
   }
 
@@ -84,7 +81,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
   public TextAttributes getAttributes(@Nullable TextAttributesKey key, boolean useDefaults) {
     if (key != null) {
       if (TextAttributesKey.isTemp(key)) {
-        return attributesTempMap.get(key.getExternalName());
+        return getSnapshot().getTempAttributes(key.getExternalName());
       }
       TextAttributes attributes = getDirectlyDefinedAttributes(key);
       if (attributes != null && attributes != INHERITED_ATTRS_MARKER) {

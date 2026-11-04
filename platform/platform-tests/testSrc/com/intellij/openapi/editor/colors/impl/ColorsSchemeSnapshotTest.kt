@@ -141,6 +141,28 @@ internal class ColorsSchemeSnapshotTest {
     assertThat(target.withFontsOf(target)).isSameAs(target)
   }
 
+  @Test
+  fun `a change of the text attributes removes the temporary attributes`() {
+    val current = newSnapshot().withTempAttributes(TEMP_NAME, BOLD)
+    assertThat(current.getTempAttributes(TEMP_NAME)).isSameAs(BOLD)
+    assertThat(current.withAttributes(FIRST_NAME, ITALIC).getTempAttributes(TEMP_NAME)).isNull()
+    val source = newSnapshot().withAttributes(FIRST_NAME, ITALIC)
+    assertThat(current.withColorsAndAttributesOf(source).getTempAttributes(TEMP_NAME)).isNull()
+  }
+
+  @Test
+  fun `a change of other values keeps the temporary attributes`() {
+    val current = newSnapshot()
+      .withAttributes(FIRST_NAME, ITALIC)
+      .withTempAttributes(TEMP_NAME, BOLD)
+    assertThat(current.withColor(FIRST, Color.RED).getTempAttributes(TEMP_NAME)).isSameAs(BOLD)
+    assertThat(current.withSchemeName("Renamed").getTempAttributes(TEMP_NAME)).isSameAs(BOLD)
+    val fonts = FontPreferencesSnapshot.EMPTY.withLineSpacing(2f)
+    assertThat(current.withFontPreferences(fonts).getTempAttributes(TEMP_NAME)).isSameAs(BOLD)
+    assertThat(current.withAttributes(FIRST_NAME, ITALIC)).isSameAs(current)
+    assertThat(current.withTempAttributes(TEMP_NAME, BOLD)).isSameAs(current)
+  }
+
   private fun newSnapshot(): ColorsSchemeSnapshot {
     return ColorsSchemeSnapshot.initial()
   }
@@ -150,6 +172,7 @@ internal class ColorsSchemeSnapshotTest {
     val SECOND: ColorKey = ColorKey.createColorKey("ColorsSchemeSnapshotTest.second")
     const val FIRST_NAME = "ColorsSchemeSnapshotTest.firstAttributes"
     const val SECOND_NAME = "ColorsSchemeSnapshotTest.secondAttributes"
+    const val TEMP_NAME = "ColorsSchemeSnapshotTest.tempAttributes"
     val BOLD = TextAttributes(null, null, null, null, Font.BOLD)
     val ITALIC = TextAttributes(null, null, null, null, Font.ITALIC)
   }
