@@ -2,7 +2,9 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.PositionManager
+import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.NamedMethodFilter
 import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
@@ -12,6 +14,8 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.Range
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
@@ -48,15 +52,15 @@ open class KotlinMethodFilter(
 
     override fun getSkipCount(): Int = methodInfo.ordinal
 
+    @RequiresReadLockAbsence
     override fun locationMatches(process: DebugProcessImpl, location: Location, frameProxy: StackFrameProxyImpl?): Boolean {
+        DebuggerManagerThreadImpl.assertIsManagerThread()
         if (isIntrinsicEqualsMatch(location)) return true
         if (!nameMatches(location, frameProxy)) {
             return false
         }
 
-        return ReadAction.nonBlocking<Boolean> {
-            declarationMatches(process, location)
-        }.executeSynchronously()
+        return declarationMatches(process, location)
     }
 
     override fun onReached(context: SuspendContextImpl, hint: RequestHint): Int {
@@ -68,6 +72,7 @@ open class KotlinMethodFilter(
         return super.onReached(context, hint)
     }
 
+    @RequiresReadLockAbsence
     override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
         return locationMatches(process, location, null)
     }
@@ -75,20 +80,27 @@ open class KotlinMethodFilter(
     private fun isIntrinsicEqualsMatch(location: Location): Boolean =
         methodInfo.name == "equals" && location.safeMethod()?.isIntrinsicEquals() == true
 
+    @RequiresReadLockAbsence
     fun declarationMatches(process: DebugProcessImpl, location: Location): Boolean {
-        val currentDeclaration = getCurrentDeclaration(process.positionManager, location) ?: return false
-        // Stops at first location in dumb mode
-        return runDumbAnalyze(currentDeclaration, fallback = true) {
-            innerDeclarationMatches(currentDeclaration)
-        }
+        DebuggerManagerThreadImpl.assertIsManagerThread()
+        val sourcePosition = process.positionManager.getSourcePosition(location) ?: return false
+        val currentLine = DebuggerUtilsEx.getLineNumber(location, true)
+        val methodName = location.safeMethod()?.name()
+        return ReadAction.nonBlocking<Boolean> {
+            if (!sourcePosition.file.isValid) return@nonBlocking false
+            val currentDeclaration = getCurrentDeclaration(sourcePosition, currentLine, methodName) ?: return@nonBlocking false
+            declarationMatches(currentDeclaration)
+        }.executeSynchronously()
     }
 
     fun declarationMatches(declaration: KtDeclaration): Boolean {
+        // Stops at first location in dumb mode
         return runDumbAnalyze(declaration, fallback = true) {
             innerDeclarationMatches(declaration)
         }
     }
 
+    @RequiresReadLock
     context(session: KaSession)
     private fun innerDeclarationMatches(currentDeclaration: KtDeclaration): Boolean {
         val currentSymbol = currentDeclaration.symbol
@@ -145,8 +157,15 @@ open class KotlinMethodFilter(
 private fun Method.isIntrinsicEquals(): Boolean =
     isIntrinsicEquals(declaringType().name().fqnToInternalName(), name(), signature())
 
+@RequiresReadLock
 fun getCurrentDeclaration(positionManager: PositionManager, location: Location): KtDeclaration? {
-    val elementAt = positionManager.getSourcePosition(location)?.elementAt
+    val sourcePosition = positionManager.getSourcePosition(location) ?: return null
+    return getCurrentDeclaration(sourcePosition, DebuggerUtilsEx.getLineNumber(location, true), location.safeMethod()?.name())
+}
+
+@RequiresReadLock
+private fun getCurrentDeclaration(sourcePosition: SourcePosition, currentLine: Int, methodName: String?): KtDeclaration? {
+    val elementAt = sourcePosition.elementAt
     // This filtering is a bit complicated, we already skip local properties and destructuring.
     // Consider restricting a parent type instead (e.g., only function, class, property, ...).
     // See IDEA-373171.
@@ -156,11 +175,9 @@ fun getCurrentDeclaration(positionManager: PositionManager, location: Location):
     } ?: return null
     if (declaration is KtProperty) {
         // Smart step into visitor provides accessor element as a declaration
-        val currentLine = DebuggerUtilsEx.getLineNumber(location, true)
         val accessorsOnLine = declaration.accessors.filter { it.getLineNumber() == currentLine }
         if (accessorsOnLine.isNotEmpty()) {
             if (accessorsOnLine.size == 1) return accessorsOnLine.single()
-            val methodName = location.safeMethod()?.name()
             if (methodName != null) {
                 return if (JvmAbi.isSetterName(methodName)) {
                     accessorsOnLine.firstOrNull { it.isSetter }
