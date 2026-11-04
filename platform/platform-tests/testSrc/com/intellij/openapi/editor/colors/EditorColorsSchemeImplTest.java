@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
+import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
@@ -1409,6 +1410,16 @@ public class EditorColorsSchemeImplTest {
     );
     Element written = serialize(scheme);
     assertEquals(Integer.toString(AbstractColorsScheme.CURR_VERSION), written.getAttributeValue("version"));
+  }
+
+  @Test
+  public void testDefaultSchemeTakesItsNameFromEachRead() throws Exception {
+    DefaultColorsScheme scheme = new DefaultColorsScheme();
+    scheme.readExternal(JDOMUtil.load("<scheme name=\"FirstDefault\" version=\"142\" />"));
+    assertEquals("FirstDefault", scheme.getName());
+    assertEquals(Scheme.EDITABLE_COPY_PREFIX + "FirstDefault", scheme.getEditableCopyName());
+    scheme.readExternal(JDOMUtil.load("<scheme name=\"SecondDefault\" version=\"142\" />"));
+    assertEquals("SecondDefault", scheme.getName());
   }
 
   @Test

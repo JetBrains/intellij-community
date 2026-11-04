@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeState;
-import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,8 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.Color;
 
 public class DefaultColorsScheme extends AbstractColorsScheme {
-  private String myName;
-
   public DefaultColorsScheme() {
     super(null);
   }
@@ -79,17 +76,6 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
   }
 
   @Override
-  public void readExternal(@NotNull Element parentNode) {
-    super.readExternal(parentNode);
-    myName = parentNode.getAttributeValue(NAME_ATTR);
-  }
-
-  @Override
-  public @NotNull String getName() {
-    return myName;
-  }
-
-  @Override
   public void setAttributes(@NotNull TextAttributesKey key, TextAttributes attributes) {
   }
 
@@ -116,7 +102,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
   }
 
   public @NonNls @NotNull String getEditableCopyName() {
-    return EDITABLE_COPY_PREFIX + myName;
+    return EDITABLE_COPY_PREFIX + super.getName();
   }
 
   @Override
