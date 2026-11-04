@@ -38,6 +38,11 @@ import java.util.Objects;
 
 public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx {
   private static final Logger LOG = Logger.getInstance(MarkupModelImpl.class);
+  static final byte CHANGED_MASK = 1 << 4;
+  static final byte RENDERERS_CHANGED_MASK = 1 << 5;
+  static final byte FONT_STYLE_CHANGED_MASK = 1 << 6;
+  static final byte FOREGROUND_COLOR_CHANGED_MASK = -128;
+
   private final DocumentEx myDocument;
 
   private volatile RangeHighlighter[] myCachedHighlighters;
@@ -211,11 +216,11 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   public void changeAttributesInBatch(@NotNull RangeHighlighterEx highlighter,
                                       @NotNull Consumer<? super RangeHighlighterEx> changeAttributesAction) {
     byte changeStatus = changeAttributesNoEvents(highlighter, changeAttributesAction);
-    if (BitUtil.isSet(changeStatus, RangeHighlighterImpl.CHANGED_MASK)) {
+    if (BitUtil.isSet(changeStatus, CHANGED_MASK)) {
       fireAttributesChanged(highlighter, 
-                            BitUtil.isSet(changeStatus, RangeHighlighterImpl.RENDERERS_CHANGED_MASK),
-                            BitUtil.isSet(changeStatus, RangeHighlighterImpl.FONT_STYLE_CHANGED_MASK),
-                            BitUtil.isSet(changeStatus, RangeHighlighterImpl.FOREGROUND_COLOR_CHANGED_MASK));
+                            BitUtil.isSet(changeStatus, RENDERERS_CHANGED_MASK),
+                            BitUtil.isSet(changeStatus, FONT_STYLE_CHANGED_MASK),
+                            BitUtil.isSet(changeStatus, FOREGROUND_COLOR_CHANGED_MASK));
     }
   }
 

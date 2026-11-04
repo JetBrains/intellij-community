@@ -37,6 +37,11 @@ import java.awt.Color;
 import java.awt.Font;
 import java.util.Objects;
 
+import static com.intellij.openapi.editor.impl.MarkupModelImpl.CHANGED_MASK;
+import static com.intellij.openapi.editor.impl.MarkupModelImpl.FONT_STYLE_CHANGED_MASK;
+import static com.intellij.openapi.editor.impl.MarkupModelImpl.FOREGROUND_COLOR_CHANGED_MASK;
+import static com.intellij.openapi.editor.impl.MarkupModelImpl.RENDERERS_CHANGED_MASK;
+
 /**
  * Implementation of the markup element for the editor and document.
  */
@@ -68,10 +73,6 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
   private static final byte ERROR_STRIPE_IS_THIN_MASK = 1<<1;
   private static final byte TARGET_AREA_IS_EXACT_MASK = 1<<2;
   private static final byte IN_BATCH_CHANGE_MASK = 1<<3;
-  static final byte CHANGED_MASK = 1<<4;
-  static final byte RENDERERS_CHANGED_MASK = 1<<5;
-  static final byte FONT_STYLE_CHANGED_MASK = 1<<6;
-  static final byte FOREGROUND_COLOR_CHANGED_MASK = -128;
 
   @MagicConstant(intValues = {AFTER_END_OF_LINE_MASK, ERROR_STRIPE_IS_THIN_MASK, TARGET_AREA_IS_EXACT_MASK, IN_BATCH_CHANGE_MASK,
     CHANGED_MASK, RENDERERS_CHANGED_MASK, FONT_STYLE_CHANGED_MASK, FOREGROUND_COLOR_CHANGED_MASK})

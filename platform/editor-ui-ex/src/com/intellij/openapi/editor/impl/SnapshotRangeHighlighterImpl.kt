@@ -260,10 +260,10 @@ internal class SnapshotRangeHighlighterImpl private constructor(
   override fun fireChanged(renderersChanged: Boolean, fontStyleChanged: Boolean, foregroundColorChanged: Boolean) {
     storage.assertMayChange()
     if (inBatchChange) {
-      batchChangeStatus = batchChangeStatus or RangeHighlighterImpl.CHANGED_MASK.toInt()
-      if (renderersChanged) batchChangeStatus = batchChangeStatus or RangeHighlighterImpl.RENDERERS_CHANGED_MASK.toInt()
-      if (fontStyleChanged) batchChangeStatus = batchChangeStatus or RangeHighlighterImpl.FONT_STYLE_CHANGED_MASK.toInt()
-      if (foregroundColorChanged) batchChangeStatus = batchChangeStatus or RangeHighlighterImpl.FOREGROUND_COLOR_CHANGED_MASK.toInt()
+      batchChangeStatus = batchChangeStatus or MarkupModelImpl.CHANGED_MASK.toInt()
+      if (renderersChanged) batchChangeStatus = batchChangeStatus or MarkupModelImpl.RENDERERS_CHANGED_MASK.toInt()
+      if (fontStyleChanged) batchChangeStatus = batchChangeStatus or MarkupModelImpl.FONT_STYLE_CHANGED_MASK.toInt()
+      if (foregroundColorChanged) batchChangeStatus = batchChangeStatus or MarkupModelImpl.FOREGROUND_COLOR_CHANGED_MASK.toInt()
     }
     else {
       storage.fireAttributesChanged(this, renderersChanged, fontStyleChanged, foregroundColorChanged)
