@@ -164,7 +164,7 @@ abstract class FileBasedStorage internal constructor(
 
     val app = ApplicationManager.getApplication()
     if (EDT.isCurrentThreadEdt() && app != null && !app.isHeadlessEnvironment && !app.isUnitTestMode) {
-      LOG.warnWithDebug(Throwable("Loading persistent state ${fileSpec} on UI Thread (EDT)"))
+      LOG.warnWithDebug("Loading persistent state ${fileSpec} on UI Thread (EDT)", Throwable())
     }
 
     try {
