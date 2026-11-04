@@ -2,6 +2,7 @@
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.actions.WelcomeFilesRootType;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -75,9 +76,14 @@ public final class ScratchLanguageUtil {
     file.rename(ScratchLanguageUtil.class, newName);
   }
 
+  /**
+   * Returns true when the extension of {@code file} matches its language.
+   * Then a language change also changes the extension.
+   * A file without an extension matches only when it is a Home file.
+   */
   public static boolean hasMatchingExtension(@NotNull Project project, @NotNull VirtualFile file) {
     String fileName = file.getName();
-    if (PathUtilRt.getFileExtension(fileName) == null) return false;
+    if (PathUtilRt.getFileExtension(fileName) == null) return WelcomeFilesRootType.Util.INSTANCE.isWelcomeFile(project, file);
     boolean caseSensitive = file.isCaseSensitive();
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType expected = ScratchFileCreator.getFileTypeFromName(fileName, fileTypeManager);

@@ -76,7 +76,7 @@ internal class WelcomeNewEmptyFileAction : DumbAwareAction(), FusAwareAction {
     context.filePrefix = "Untitled"
     context.language = CommonDataKeys.LANGUAGE.getData(e.dataContext)
     if (context.language == null) {
-      context.fileExtension = WELCOME_NEW_FILE_EXTENSION.getData(e.dataContext) ?: "txt"
+      context.fileExtension = WELCOME_NEW_FILE_EXTENSION.getData(e.dataContext)
     }
     else {
       context.prepareText = false

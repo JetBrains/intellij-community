@@ -20,6 +20,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -117,11 +118,17 @@ internal class BackendWelcomeFilesApi : WelcomeFilesApi {
 
 /**
  * Returns the language of the Home [file], as the "Change Language" action of the editor menu shows it.
+ * A file without an extension and without a language shows plain text, as a `txt` file does.
  */
 private fun getFileLanguage(project: Project, file: VirtualFile): WelcomeFileLanguage {
-  // A file type without a language gets no language substitution.
-  val language = if (LanguageUtil.getFileLanguage(file) == null) null
-  else ScratchFileService.getInstance().scratchesMapping.getMapping(file) ?: LanguageUtil.getLanguageForPsi(project, file)
+  val language = when {
+    // A file type without a language gets no language substitution.
+    LanguageUtil.getFileLanguage(file) != null -> {
+      ScratchFileService.getInstance().scratchesMapping.getMapping(file) ?: LanguageUtil.getLanguageForPsi(project, file)
+    }
+    file.extension == null -> FileTypes.PLAIN_TEXT.language
+    else -> null
+  }
   val fileType = language?.associatedFileType ?: FileTypeManager.getInstance().getFileTypeByFileName(file.name)
   val icon = fileType.icon ?: AllIcons.FileTypes.Any_type
   return WelcomeFileLanguage(language?.displayName ?: fileType.displayName, icon.rpcIdOrNull())

@@ -16,6 +16,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.junit.jupiter.api.AfterEach
@@ -71,15 +72,39 @@ internal class WelcomeFileLanguageTest {
   }
 
   @Test
+  fun `file without an extension has the language of a txt file`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project, disposable)
+    val api = WelcomeFilesApi.getInstance()
+    val txtFile = createWelcomeFile()
+    val file = createWelcomeFile("Untitled")
+
+    val expected = api.fileLanguage(project.projectId(), txtFile.rpcId()).first().displayName
+    assertEquals(expected, api.fileLanguage(project.projectId(), file.rpcId()).first().displayName)
+  }
+
+  @Test
+  fun `language change adds the extension to a file without an extension`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project, disposable)
+    val file = createWelcomeFile("Untitled")
+    val api = WelcomeFilesApi.getInstance()
+    // A file type without a language gives the same result with and without the language plugins.
+    val item = api.getLanguages().first { Language.findLanguageByID(it.id) == null }
+
+    api.changeLanguage(project.projectId(), file.rpcId(), item.id)
+
+    assertEquals(item.extension, file.extension)
+  }
+
+  @Test
   fun `file outside the welcome project has no language`(): Unit = timeoutRunBlocking {
     val file = createWelcomeFile()
 
     assertNull(WelcomeFilesApi.getInstance().fileLanguage(project.projectId(), file.rpcId()).firstOrNull())
   }
 
-  private suspend fun createWelcomeFile(): VirtualFile {
+  private suspend fun createWelcomeFile(name: String = "Untitled.txt"): VirtualFile {
     val file = edtWriteAction {
-      WelcomeFilesRootType.Util.instance.findFile(project, "Untitled.txt", ScratchFileService.Option.create_new_always)
+      WelcomeFilesRootType.Util.instance.findFile(project, name, ScratchFileService.Option.create_new_always)
     }
     createdFiles.add(file)
     return file
