@@ -78,6 +78,7 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
     // With non-trivial IdFilter filtering via ForwardIndex is usually faster (if ForwardIndex exists & supports iteration)
     if (idFilter == null || idFilter == IdFilter.ACCEPT_ALL
         || !USE_FORWARD_INDEX_FOR_KEYS_FILTERING
+        || !canFilterKeysByFileIdWithForwardIndex()
         || !(getForwardIndex() instanceof IterableForwardIndex forwardIndex)
         || !(getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor)) {
       return ((VfsAwareIndexStorage<Key, Value>)getStorage()).processKeys(processor, scope, idFilter);
@@ -100,6 +101,11 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
     catch (IOException e) {
       throw new StorageException(e);
     }
+  }
+
+  /** @return capability: true if forward index data could be used for [IdFilter] filtering */
+  protected boolean canFilterKeysByFileIdWithForwardIndex() {
+    return true;
   }
 
   @Override
