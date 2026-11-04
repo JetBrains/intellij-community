@@ -231,7 +231,15 @@ internal class PluginDescriptorEntry(
    * of a refused module, and the run time excludes the module.
    */
   @JvmField val modeRefusedContentModules: Map<String, List<String>> = emptyMap(),
-)
+) {
+  /**
+   * The modes that change the bytes of the plugin component: each mode of [modeRefusedContentModules] with a refusal,
+   * sorted. With [retainProductDescriptor], they form the stamp class of the component. A component call states both,
+   * and `dev_dist_stamp_class_transition` keeps only these parts of the configuration.
+   */
+  val stampClassModes: List<String>
+    get() = modeRefusedContentModules.filterValues { it.isNotEmpty() }.keys.sorted()
+}
 
 /** The declared inputs and model facts for one embedded product descriptor action. */
 internal data class EmbeddedProductDescriptorPlan(
@@ -1342,12 +1350,14 @@ internal fun descriptorLabel(descriptor: ReachedDescriptor, index: DevDistBazelI
 }
 
 /**
- * Renders `dev_dist_product_info.bzl`: the product mode and the marketplace names of every product, and nothing about a
- * plugin.
+ * Renders `dev_dist_product_info.bzl`: the product mode of every product, and nothing about a plugin.
  *
  * It states no value of the application info. The descriptor writer reads the EAP flag, the release date and the
  * release version from the sources of `DEV_DIST_APPLICATION_INFOS`, so an edit of an application info changes no
  * generated file.
+ *
+ * The community half also states [MARKETPLACE_NAMES] as `DEV_DIST_MARKETPLACE_NAMES`. The descriptor rule of both halves
+ * loads that one constant, so the names are no product fact.
  *
  * Products with equal values share one private struct, named after the first of them in [plans] order, the way
  * `dev_dist_plan.bzl` shares `_PLAN_<first product>`.
@@ -1355,23 +1365,26 @@ internal fun descriptorLabel(descriptor: ReachedDescriptor, index: DevDistBazelI
 internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DevDistHalf): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
-  append("# The descriptor stamps of every product. `build/dev-dist-descriptors/BUILD.bazel` declares one\n")
-  append("# `<product>_product_info` target per key. A consumer sets `@community//build:dev_dist_product_info` to it, and\n")
-  append("# every plugin descriptor below that consumer reads its stamps there.\n")
+  append("# The product mode of every product. `build/dev-dist-descriptors/BUILD.bazel` declares one `<product>_product_info`\n")
+  append("# target per key. A consumer of a plugin component sets `@community//build:dev_dist_product_info` to it and\n")
+  append("# `@community//build:dev_dist_stamp_class` to its mode. Only a plugin that retains its `product-descriptor` keeps\n")
+  append("# the product in its configuration.\n")
   append("#\n")
-  append("# A struct states the product mode and the marketplace names. The target also names the application info sources\n")
-  append("# of `DEV_DIST_APPLICATION_INFOS`, and the descriptor writer reads the EAP flag, the release date and the release\n")
-  append("# version from them. So an edit of an application info changes no generated file.\n")
+  append("# The target also names the application info sources of `DEV_DIST_APPLICATION_INFOS`, and the descriptor writer\n")
+  append("# reads the EAP flag, the release date and the release version from them. So an edit of an application info\n")
+  append("# changes no generated file.\n")
   append("#\n")
   append("# Products with equal values share one private struct, named after the first of them.\n")
-  append("\n")
-  append("# `OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by the token `HOST_PLATFORMS` spells. A leaf builds\n")
-  append("# the marker row and the version suffix of a one-platform variant from these, and no rule can read an enum.\n")
-  append("_MARKETPLACE_NAMES = {\n")
-  for ((token, name) in MARKETPLACE_NAMES.toList().sortedBy { it.first }) {
-    append("    \"").append(token).append("\": \"").append(name).append("\",\n")
+  if (half.rootDirectory == COMMUNITY_ROOT_DIRECTORY) {
+    append("\n")
+    append("# `OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by the token `HOST_PLATFORMS` spells. A leaf builds\n")
+    append("# the marker row and the version suffix of a one-platform variant from these, and no rule can read an enum.\n")
+    append("DEV_DIST_MARKETPLACE_NAMES = {\n")
+    for ((token, name) in MARKETPLACE_NAMES.toList().sortedBy { it.first }) {
+      append("    \"").append(token).append("\": \"").append(name).append("\",\n")
+    }
+    append("}\n")
   }
-  append("}\n")
   val structNames = LinkedHashMap<ProductInfoValues, String>()
   for (plan in plans) {
     structNames.computeIfAbsent(ProductInfoValues(plan)) { "_STAMPS_${plan.platformPrefix}" }
@@ -1379,7 +1392,6 @@ internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DevDistH
   for ((stamps, structName) in structNames) {
     append("\n")
     append(structName).append(" = struct(\n")
-    append("    marketplace_names = _MARKETPLACE_NAMES,\n")
     append("    # The product mode. A rule places no jar of a module the leaf refuses for this mode.\n")
     append("    mode = \"").append(stamps.mode).append("\",\n")
     append(")\n")

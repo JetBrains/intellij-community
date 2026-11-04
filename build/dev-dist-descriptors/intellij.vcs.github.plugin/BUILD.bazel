@@ -65,4 +65,7 @@ dev_plugin(
         "//plugins/github/plugin": "intellij.vcs.github.plugin",
     },
     plugin_directory = "plugins/vcs-github",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

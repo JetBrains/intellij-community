@@ -236,4 +236,7 @@ dev_plugin(
         "//plugins/gradle:gradle-common": "intellij.gradle.common",
     },
     plugin_directory = "plugins/gradle",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

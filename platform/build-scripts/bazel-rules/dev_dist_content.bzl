@@ -7,7 +7,7 @@ one product, as the plugin components publish it.
 """
 
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "DevDistPlatformJarInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_PRODUCT_INFO_ATTR", "dev_dist_product_info_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_PRODUCT_INFO_ATTR", "dev_dist_check_product_stamp_class", "dev_dist_product_info_transition")
 
 DevDistContentInfo = provider(
     doc = "The module and library jars one slice of a dev distribution is made of.",
@@ -165,6 +165,7 @@ dev_dist_platform_payload = rule(
 )
 
 def _dev_dist_plugin_content_impl(ctx):
+    dev_dist_check_product_stamp_class(ctx)
     module_jars = []
     library_jars = []
     for target in ctx.attr.plugins + ctx.attr.deps:
@@ -218,6 +219,7 @@ dev_dist_plugin_content = rule(
 )
 
 def _dev_dist_plugin_components_impl(ctx):
+    dev_dist_check_product_stamp_class(ctx)
     return [DefaultInfo(files = depset(transitive = [target[OutputGroupInfo].dev_dist_plugin_outputs for target in ctx.attr.plugins]))]
 
 dev_dist_plugin_components = rule(
@@ -237,7 +239,7 @@ dev_dist_plugin_components = rule(
     } | DEV_DIST_PRODUCT_INFO_ATTR,
 )
 
-def dev_dist_plugin_component_builds(components, product_info, community_products = [], community_product_info = None):
+def dev_dist_plugin_component_builds(components, product_info, modes, community_products = [], community_product_info = None):
     """Declares one `<product>_plugin_components` target per product, so that each component builds once.
 
     A component serves every product that states it alike, so the first product that names a component builds it.
@@ -246,6 +248,7 @@ def dev_dist_plugin_component_builds(components, product_info, community_product
     Args:
         components: The component map, `{product: {tier: {main module: label or {platform: label}}}}`.
         product_info: The label pattern of a product's `dev_dist_product_info`, with `%s` for the product key.
+        modes: The mode of each product of the map, keyed by the product key. It is the stamp class of the product.
         community_products: The community products of the map. The other half declares their product info.
         community_product_info: The label pattern of a community product's `dev_dist_product_info`, with `%s` for the
             product key. Required when `community_products` is not empty.
@@ -266,4 +269,5 @@ def dev_dist_plugin_component_builds(components, product_info, community_product
                 name = product + "_plugin_components",
                 plugins = plugins,
                 product_info = (community_product_info if product in community_products else product_info) % product,
+                stamp_class = modes[product],
             )

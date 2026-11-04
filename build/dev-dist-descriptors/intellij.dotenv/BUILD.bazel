@@ -56,4 +56,7 @@ dev_plugin(
         "//plugins/env-files-support:dotenv": "intellij.dotenv",
     },
     plugin_directory = "plugins/dotenv",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

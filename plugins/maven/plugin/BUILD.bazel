@@ -115,6 +115,7 @@ dev_dist_complex_plugin(
         "layout-source:resource-generator:1:1": "@bundled_maven_telemetry_libraries//:files",
         "layout-source:resource-generator:2:0": "@bundled_maven_telemetry_libraries//:files",
     },
+    stamp_class_modes = ["frontend"],
 )
 ### auto-generated section `dev intellij.maven.plugin` end
 

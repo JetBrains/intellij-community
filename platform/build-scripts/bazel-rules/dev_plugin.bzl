@@ -22,7 +22,7 @@ load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "declare_spans", "library_entries", "merge_order_jars", "module_output_jar", "pack_jar")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "dev_dist_neutral_product_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_ATTRS", "DevDistPluginDescriptorInfo", "dev_dist_check_stamp_class", "dev_dist_neutral_product_transition", "dev_dist_stamp_class_transition")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
 
@@ -287,6 +287,7 @@ def _copies(ctx, inputs, destinations):
 def _dev_plugin_impl(ctx):
     inputs = ctx.attr.inputs[DevPluginInputsInfo]
     descriptor_info = ctx.attr.descriptor[DevDistPluginDescriptorInfo]
+    dev_dist_check_stamp_class(ctx, descriptor_info)
     main_module = ctx.attr.main_module
     if descriptor_info.plugin_main_module != main_module:
         fail("%s describes '%s', not '%s'" % (ctx.attr.descriptor.label, descriptor_info.plugin_main_module, main_module), attr = "descriptor")
@@ -497,7 +498,10 @@ def _dev_plugin_impl(ctx):
 _dev_plugin = rule(
     doc = """One simple plugin, packed and collected as a platform-neutral component.
 
-Not transitioned. The consumer reaches it in the product configuration, and the descriptor reads the product there.""",
+The consumer reaches it in the configuration of its product. The incoming `dev_dist_stamp_class_transition` keeps only
+the stamp class that `stamp_class_modes` and `retain_product_descriptor` state, so one component serves every product
+of one stamp class.""",
+    cfg = dev_dist_stamp_class_transition,
     implementation = _dev_plugin_impl,
     attrs = {
         "inputs": attr.label(mandatory = True, providers = [DevPluginInputsInfo]),
@@ -545,7 +549,7 @@ directory with 0755. A link is refused.""",
         "_collector": attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_collector", executable = True, cfg = "exec"),
         "_packer": attr.label(default = "//platform/build-scripts/bazel-rules:content_module_packer", executable = True, cfg = "exec"),
         "_trace_spans": attr.label(default = "//platform/build-scripts/bazel-rules:trace_spans", providers = [BuildSettingInfo]),
-    },
+    } | DEV_DIST_STAMP_CLASS_ATTRS,
 )
 
 def dev_plugin(

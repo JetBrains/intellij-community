@@ -126,4 +126,7 @@ dev_plugin(
         "//libraries/plexus-utils": "intellij.libraries.plexus.utils",
     },
     plugin_directory = "plugins/java-aetherDependencyResolver",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

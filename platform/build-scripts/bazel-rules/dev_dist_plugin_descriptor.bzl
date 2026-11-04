@@ -13,7 +13,9 @@ directly rather than pushed in through a flag.
 that both caches keep is the property ADR 0006 asks for.
 """
 
+load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
+load("//build:dev_dist_product_info.bzl", "DEV_DIST_MARKETPLACE_NAMES")
 load("//build:host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "library_entries")
 load(":dev_dist_build_date.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
@@ -32,19 +34,23 @@ DevDistPluginDescriptorInfo = provider(
         "mode_refused_content_modules": """The content modules the product's mode refuses at run time. The descriptor keeps them.
 
         `dev_plugin` and the chain place no jar whose every module is in this list, and no reused jar of such a module.""",
+        "stamp_class_modes": """The modes whose refusal list of this leaf is not empty, sorted.
+
+        A component of the plugin states the same list, so its stamp class matches the class of this leaf.""",
+        "retain_product_descriptor": "Whether the leaf retains `product-descriptor`, so its stamp class keeps the product.",
         "_declaration": "Private versioned metadata with the declared File objects and action parameters.",
         "_declaration_file": "The private metadata file. It is not a default output or an action input.",
     },
 )
 
 DevDistProductInfo = provider(
-    doc = """The product facts every plugin's descriptor stamp needs.
+    doc = """The product facts that a retained `product-descriptor` reads, and the mode of the product.
 
-    A configuration and not attributes on the leaf rule. One plugin's patched descriptor differs between two
-    products only in these values, so a leaf that stated them would be a leaf per (plugin, product). Read through
-    a `label_flag` that the consumer of a plugin component sets, so one leaf per plugin answers every product that
-    bundles the plugin. The exception is a plugin two products state differently. The later product gets a leaf of
-    its own, and that leaf still reads its stamps here.
+    A configuration and not attributes on the leaf rule, read through the `label_flag` `dev_dist_product_info`. The
+    consumer of a plugin component sets the flag and `dev_dist_stamp_class` for its product. Only a leaf with
+    `retain_product_descriptor` keeps the product, see `dev_dist_stamp_class_transition`. So one leaf serves every
+    product of one stamp class. The exception is a plugin two products state differently. The later product gets a
+    leaf of its own.
 
     The stamps name the application info source and never its values. The descriptor writer reads the EAP flag, the
     release date and the release version from it, so an edit of that file changes no generated file.""",
@@ -52,8 +58,7 @@ DevDistProductInfo = provider(
         "application_info": "The product's application info source as a `File`, or None in the flag's default.",
         "host_application_info": "The application info of the host product as a `File`, for a frontend. None for every other product.",
         "replacements": "The markers of the application info as `KEY=VALUE`, in the order that the writer replaces them.",
-        "marketplace_names": "`OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by the token `HOST_PLATFORMS` spells.",
-        "mode": "The product mode in lower case, `monolith` or `frontend` for example. Empty in the flag's default.",
+        "mode": "The product mode in lower case, `monolith` or `frontend` for example. The consumer states it as `stamp_class`.",
         "_producer": "The actual provider declaration, not the forwarding label flag or a consumer label.",
     },
 )
@@ -63,7 +68,6 @@ def _dev_dist_product_info_impl(ctx):
         application_info = ctx.file.application_info,
         host_application_info = ctx.file.host_application_info,
         replacements = tuple(ctx.attr.replacements),
-        marketplace_names = ctx.attr.marketplace_names,
         mode = ctx.attr.mode,
         _producer = _descriptor_producer_identity(ctx),
     )]
@@ -87,72 +91,156 @@ dev_dist_product_info = rule(
         "replacements": attr.string_list(
             doc = "The markers of the application info as `KEY=VALUE`, the `replacements` of that entry.",
         ),
-        "marketplace_names": attr.string_dict(
-            doc = """`OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by the token `HOST_PLATFORMS` spells.
-
-Generated, because no rule can read an enum. Here and not on the leaf, so a leaf beside a plugin derives the stamps of
-a one-platform layout variant without stating the table - see `dev_dist_plugin_descriptor_os_arch_stamps`.""",
-        ),
         "mode": attr.string(
             doc = """The product mode in lower case, such as `monolith` or `frontend`. Empty in the flag's default.
 
-A leaf adds the refusals `mode_refused_content_modules` states for this mode, so one leaf serves a frontend product too.""",
+A consumer of a plugin component states the same mode as `stamp_class`, and the rule checks that the two agree.""",
         ),
     },
 )
 
-# The flag a descriptor action reads the product scalars through. Canonical, because a transition resolves neither an
-# apparent repository name nor a relative label.
+# The two flags of the stamp class. Canonical, because a transition resolves neither an apparent repository name nor a
+# relative label.
 _PRODUCT_INFO_FLAG = str(Label("//build:dev_dist_product_info"))
+_STAMP_CLASS_FLAG = str(Label("//build:dev_dist_stamp_class"))
 
-# The flag's default. A rule that must not depend on a product resets the flag to it, see
-# `dev_dist_neutral_product_transition`. A `Label` and not its string: Bazel trims a flag that equals its default from
-# the configuration only when the two values compare equal, and the default is a `Label`.
+# The default of the product flag. A `Label` and not its string: Bazel trims a flag that equals its default from the
+# configuration only when the two values compare equal, and the default is a `Label`.
 _NO_PRODUCT_INFO = Label("//build:no_dev_dist_product_info")
+
+# The default of the stamp class flag: no mode.
+_NO_STAMP_CLASS = ""
 
 def _dev_dist_product_info_transition_impl(settings, attr):
     product_info = getattr(attr, "product_info", None)
     if product_info == None:
         # The consumer names no product, so the leaf keeps the configuration it is reached in.
-        return {_PRODUCT_INFO_FLAG: settings[_PRODUCT_INFO_FLAG]}
-    return {_PRODUCT_INFO_FLAG: str(product_info)}
+        return {_PRODUCT_INFO_FLAG: settings[_PRODUCT_INFO_FLAG], _STAMP_CLASS_FLAG: settings[_STAMP_CLASS_FLAG]}
+    return {_PRODUCT_INFO_FLAG: str(product_info), _STAMP_CLASS_FLAG: getattr(attr, "stamp_class", _NO_STAMP_CLASS)}
 
-# What names the product on the way down to a leaf. The leaf declares no product, so the target that collects leaves
-# per product is the one that states it.
+# What names the product on the way down to a plugin component. The component declares no product, so the target that
+# collects components per product states it. The component then keeps only its stamp class, see
+# `dev_dist_stamp_class_transition`.
 dev_dist_product_info_transition = transition(
     implementation = _dev_dist_product_info_transition_impl,
-    inputs = [_PRODUCT_INFO_FLAG],
-    outputs = [_PRODUCT_INFO_FLAG],
+    inputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
+    outputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
+)
+
+def _stamp_class_modes(attr):
+    stated = getattr(attr, "stamp_class_modes", None)
+    if stated != None:
+        return stated
+    return [mode for mode, modules in attr.mode_refused_content_modules.items() if modules]
+
+def _dev_dist_stamp_class_transition_impl(settings, attr):
+    mode = settings[_STAMP_CLASS_FLAG]
+    return {
+        _STAMP_CLASS_FLAG: mode if mode in _stamp_class_modes(attr) else _NO_STAMP_CLASS,
+        _PRODUCT_INFO_FLAG: settings[_PRODUCT_INFO_FLAG] if attr.retain_product_descriptor else _NO_PRODUCT_INFO,
+    }
+
+# The incoming transition of a plugin component and of a descriptor leaf. It keeps the mode only when the plugin refuses
+# content modules for that mode, and the product only when the plugin retains its `product-descriptor`. Every other
+# value goes back to its default, which Bazel trims. So the components of products with equal stamps share one
+# configuration, and one action packs them for all.
+dev_dist_stamp_class_transition = transition(
+    implementation = _dev_dist_stamp_class_transition_impl,
+    inputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
+    outputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
 )
 
 def _dev_dist_neutral_product_transition_impl(_settings, _attr):
-    return {_PRODUCT_INFO_FLAG: _NO_PRODUCT_INFO}
+    return {_PRODUCT_INFO_FLAG: _NO_PRODUCT_INFO, _STAMP_CLASS_FLAG: _NO_STAMP_CLASS}
 
 # The reset. A compiled module jar is the same file for every product, so a rule that collects module jars under a
-# product configuration resets the flag to its default. The default value is trimmed from the configuration, so the
-# jars come from the default configuration and no product recompiles them.
+# stamp class resets both flags to their defaults. The defaults are trimmed from the configuration, so the jars come
+# from the default configuration and no product recompiles them.
 dev_dist_neutral_product_transition = transition(
     implementation = _dev_dist_neutral_product_transition_impl,
     inputs = [],
-    outputs = [_PRODUCT_INFO_FLAG],
+    outputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
 )
 
-# The attribute a rule that collects per-product leaves declares, with the allowlist the transition needs. Public,
-# because `dev_dist_plugin_content` of `dev_dist_content.bzl` collects plugin components the same way.
-DEV_DIST_PRODUCT_INFO_ATTR = {
-    "product_info": attr.label(
-        doc = """This product's `dev_dist_product_info`, which every leaf below is configured with.
+# The attributes of a plugin component rule: the facts its incoming transition reads, and the allowlist. The descriptor
+# leaf states the same facts, and the component checks both against it, see `dev_dist_check_stamp_class`.
+DEV_DIST_STAMP_CLASS_ATTRS = {
+    "stamp_class_modes": attr.string_list(
+        doc = """The modes whose refusal list of the descriptor is not empty, sorted. Empty for most plugins.
 
-The transition on the leaf attribute reads this label, so a leaf serves the product that asked for it.""",
-        mandatory = True,
-        providers = [DevDistProductInfo],
+The incoming transition keeps the mode of the consumer only when this list names it.""",
+    ),
+    "retain_product_descriptor": attr.bool(
+        doc = "Whether the descriptor retains `product-descriptor`. Only then the incoming transition keeps the product.",
     ),
     "_allowlist_function_transition": attr.label(
         default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist"),
     ),
 }
 
+def dev_dist_check_stamp_class(ctx, descriptor):
+    """Fails unless the stamp class facts of a component equal the ones of its descriptor leaf.
+
+    A component whose facts lack a mode would build under no mode, so its descriptor would embed no refused module.
+
+    Args:
+        ctx: the rule context of the component.
+        descriptor: the `DevDistPluginDescriptorInfo` of the component.
+    """
+    if sorted(ctx.attr.stamp_class_modes) != descriptor.stamp_class_modes:
+        fail("%s states the stamp class modes %s, and its descriptor states %s" % (
+            ctx.label,
+            sorted(ctx.attr.stamp_class_modes),
+            descriptor.stamp_class_modes,
+        ), attr = "stamp_class_modes")
+    if ctx.attr.retain_product_descriptor != descriptor.retain_product_descriptor:
+        fail("%s states retain_product_descriptor = %s, and its descriptor states %s" % (
+            ctx.label,
+            ctx.attr.retain_product_descriptor,
+            descriptor.retain_product_descriptor,
+        ), attr = "retain_product_descriptor")
+
+# The attributes a rule that collects per-product components declares, with the allowlist the transition needs.
+# Public, because `dev_dist_plugin_content` of `dev_dist_content.bzl` collects plugin components the same way.
+DEV_DIST_PRODUCT_INFO_ATTR = {
+    "product_info": attr.label(
+        doc = """This product's `dev_dist_product_info`, which every component below is configured with.
+
+The transition on the component attribute reads this label, so a component serves the product that asked for it.""",
+        mandatory = True,
+        providers = [DevDistProductInfo],
+    ),
+    "stamp_class": attr.string(
+        doc = """The mode of the product, the value of `dev_dist_stamp_class` below this target.
+
+It must equal the `mode` of `product_info`. A transition cannot read a provider, so the consumer states it.""",
+        mandatory = True,
+    ),
+    "_allowlist_function_transition": attr.label(
+        default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist"),
+    ),
+}
+
+def dev_dist_check_product_stamp_class(ctx):
+    """Fails unless `stamp_class` of a consumer equals the mode of its `product_info`.
+
+    Args:
+        ctx: the rule context of a consumer with `DEV_DIST_PRODUCT_INFO_ATTR`.
+    """
+    product_info = ctx.attr.product_info
+    if product_info == None:
+        return
+    mode = product_info[DevDistProductInfo].mode
+    if ctx.attr.stamp_class != mode:
+        fail("%s states the stamp class '%s', and the mode of %s is '%s'" % (
+            ctx.label,
+            ctx.attr.stamp_class,
+            product_info.label,
+            mode,
+        ), attr = "stamp_class")
+
 def _dev_dist_plugin_descriptor_group_impl(ctx):
+    dev_dist_check_product_stamp_class(ctx)
     return [
         DefaultInfo(files = depset(transitive = [
             target[DefaultInfo].files
@@ -184,21 +272,19 @@ dev_dist_plugin_descriptor_group = rule(
     } | DEV_DIST_PRODUCT_INFO_ATTR,
 )
 
-def _os_arch_stamps(ctx, product):
+def _os_arch_stamps(ctx):
     """The marker rows and the version suffix this leaf stamps: the stated ones, or the ones its variant gives.
 
-    Derived here and not in a macro, because every leaf now sits in the package of its own plugin and the table the
-    derivation reads is a product fact. The product arrives through the configuration, so a leaf states neither the
-    table nor the pair.
+    Derived here and not in a macro, because every leaf sits in the package of its own plugin. The table the
+    derivation reads is `DEV_DIST_MARKETPLACE_NAMES`, so a leaf states neither the table nor the pair.
 
     Args:
         ctx: the rule context.
-        product: the `DevDistProductInfo` this leaf is configured with.
 
     Returns:
         `struct(markers, version_suffix)`.
     """
-    stamps = dev_dist_plugin_descriptor_os_arch_stamps(product.marketplace_names, ctx.attr.variant)
+    stamps = dev_dist_plugin_descriptor_os_arch_stamps(ctx.attr.variant)
     if stamps == None:
         return struct(markers = ctx.attr.markers, version_suffix = ctx.attr.version_suffix)
 
@@ -224,6 +310,7 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
         The parameters, declared inputs, source bindings, and resolved stamps.
     """
     product = ctx.attr._product_info[DevDistProductInfo]
+    stamp_class = ctx.attr._stamp_class[BuildSettingInfo].value
     jars = ctx.attr.jar_inputs[_DevDistDescriptorJarsInfo] if ctx.attr.jar_inputs != None else _NO_DESCRIPTOR_JARS
     source = ctx.file.descriptor
     source_jar = jars.descriptor_jar
@@ -260,12 +347,12 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
     # The distribution places no jar of a module the product's mode refuses, so a descriptor that embeds no body
     # still embeds the body of such a module. The run time reads it there and excludes the module.
     if not embed_content_modules:
-        parameters.append(("--embed-content-module", ctx.attr.mode_refused_content_modules.get(product.mode, []), "repeated"))
+        parameters.append(("--embed-content-module", ctx.attr.mode_refused_content_modules.get(stamp_class, []), "repeated"))
     if source != None:
         parameters.insert(1, ("--source", source, "formatted"))
     else:
         parameters.insert(1, ("--source-in-jar", ctx.attr.descriptor_entry + "=" + source_jar.path, "literal"))
-    stamps = _os_arch_stamps(ctx, product)
+    stamps = _os_arch_stamps(ctx)
     if stamps.version_suffix:
         parameters.append(("--version-suffix", stamps.version_suffix, "formatted"))
     parameters.extend([
@@ -480,7 +567,6 @@ def _descriptor_declaration_json(declaration):
             "producer": declaration.product._producer,
             "dependency_label": str(declaration.product_dependency_label),
             "replacements": list(declaration.product.replacements),
-            "marketplace_names": declaration.product.marketplace_names,
         },
         "scope": declaration.scope,
         "sources": [{
@@ -520,6 +606,9 @@ def _dev_dist_plugin_descriptor_impl(ctx):
             ctx.attr._product_info.label,
             _PRODUCT_INFO_FLAG,
         ))
+
+    # The mode of the stamp class. The incoming transition keeps it only when this leaf refuses modules for it.
+    stamp_class = ctx.attr._stamp_class[BuildSettingInfo].value
 
     # The variant's own directory, so two variants of one plugin never collide and the file's own name stays the main
     # module.
@@ -568,6 +657,7 @@ def _dev_dist_plugin_descriptor_impl(ctx):
         product_dependency_label = ctx.attr._product_info.label,
         scope = {
             "main_module": module_name,
+            "stamp_class": stamp_class,
             "variant": ctx.attr.variant,
             "declared_platforms": ctx.attr.platforms,
             "platforms": platforms,
@@ -591,7 +681,9 @@ def _dev_dist_plugin_descriptor_impl(ctx):
             descriptor = descriptor,
             classpath_descriptor = classpath_descriptor,
             platforms = platforms,
-            mode_refused_content_modules = ctx.attr.mode_refused_content_modules.get(product.mode, []),
+            mode_refused_content_modules = ctx.attr.mode_refused_content_modules.get(stamp_class, []),
+            stamp_class_modes = sorted(_stamp_class_modes(ctx.attr)),
+            retain_product_descriptor = ctx.attr.retain_product_descriptor,
             _declaration = declaration,
             _declaration_file = metadata,
         ),
@@ -617,8 +709,12 @@ def _resolved_platforms(ctx):
     return ctx.attr.platforms
 
 _dev_dist_plugin_descriptor = rule(
-    doc = "Patches one plugin's `META-INF/plugin.xml` the way a dev-distribution assembly does.",
+    doc = """Patches one plugin's `META-INF/plugin.xml` the way a dev-distribution assembly does.
+
+The incoming `dev_dist_stamp_class_transition` keeps only the stamp class of the leaf, so a group and a component
+reach one configured leaf per stamp class.""",
     implementation = _dev_dist_plugin_descriptor_impl,
+    cfg = dev_dist_stamp_class_transition,
     fragments = ["platform"],
     attrs = {
         "main_module": attr.string(
@@ -715,12 +811,19 @@ critical path of the build.""",
             cfg = "exec",
         ),
         "_product_info": attr.label(
-            doc = """The product the stamps come from, as a flag rather than attributes.
+            doc = """The product the stamps of a retained `product-descriptor` come from, as a flag rather than attributes.
 
-The default states nothing, so a leaf reached by no product's consumer fails at analysis. See `DevDistProductInfo`.""",
+The default states nothing, so a leaf that retains `product-descriptor` and that no product's consumer reached fails at
+analysis. See `DevDistProductInfo`.""",
             default = Label("//build:dev_dist_product_info"),
             providers = [DevDistProductInfo],
         ),
+        "_stamp_class": attr.label(
+            doc = "The mode of the stamp class, the flag `dev_dist_stamp_class`. The leaf embeds the refusals of that mode.",
+            default = Label("//build:dev_dist_stamp_class"),
+            providers = [BuildSettingInfo],
+        ),
+        "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
     },
 )
 
@@ -765,7 +868,7 @@ def dev_dist_plugin_descriptor_platforms(variant):
         HOST_PLATFORMS,
     ))
 
-def dev_dist_plugin_descriptor_os_arch_stamps(marketplace_names, variant):
+def dev_dist_plugin_descriptor_os_arch_stamps(variant):
     """The marker row and the version suffix a one-platform layout variant takes.
 
     Both are mechanical. The row states the `<!-- OS/ARCH-DEPENDENCY-PLACEHOLDER -->` replacement, whose text
@@ -773,9 +876,10 @@ def dev_dist_plugin_descriptor_os_arch_stamps(marketplace_names, variant):
     plan states neither, and `osArchStamps` of `devDistPluginDescriptorPlan.kt` verifies the layout against the same
     pair. A layout that disagrees is held out by name, which is why deriving both here is safe.
 
+    The spellings come from `DEV_DIST_MARKETPLACE_NAMES`: `OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed
+    by the token `HOST_PLATFORMS` spells. Generated, because no rule can read an enum.
+
     Args:
-        marketplace_names: `product.marketplace_names`. `OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by
-            the token `HOST_PLATFORMS` spells. Generated, because no rule can read an enum.
         variant: the layout variant.
 
     Returns:
@@ -784,10 +888,10 @@ def dev_dist_plugin_descriptor_os_arch_stamps(marketplace_names, variant):
     if variant not in HOST_PLATFORMS:
         return None
     parts = platform_parts(variant)
-    os = marketplace_names.get(parts.os)
-    arch = marketplace_names.get(parts.arch)
+    os = DEV_DIST_MARKETPLACE_NAMES.get(parts.os)
+    arch = DEV_DIST_MARKETPLACE_NAMES.get(parts.arch)
     if os == None or arch == None:
-        fail("dev_dist_plugin_descriptor: marketplace_names does not answer both '%s' and '%s' of variant '%s'" % (
+        fail("dev_dist_plugin_descriptor: DEV_DIST_MARKETPLACE_NAMES does not answer both '%s' and '%s' of variant '%s'" % (
             parts.os,
             parts.arch,
             variant,

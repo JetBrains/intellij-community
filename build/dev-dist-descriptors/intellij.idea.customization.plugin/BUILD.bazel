@@ -61,4 +61,7 @@ dev_plugin(
         "//platform/non-modal-welcome-screen": "intellij.platform.ide.nonModalWelcomeScreen",
     },
     plugin_directory = "plugins/idea-customization",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

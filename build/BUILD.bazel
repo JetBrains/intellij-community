@@ -1,4 +1,4 @@
-load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag", "string_flag")
 load("@intellij_add_opens//:intellij_add_opens.bzl", "INTELLIJ_ADD_OPENS")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", "ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
 load("@rules_java//java:defs.bzl", "java_binary")
@@ -73,16 +73,26 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-# Which product a `dev_dist_plugin_descriptor` action stamps for. One plugin's patched descriptor differs between two
-# products in the product facts only, so the facts are a configuration and one descriptor target serves every product.
+# The two flags of the stamp class of a plugin component. The consumer of a component sets both for its product. A
+# component keeps only what changes its bytes, so one component serves every product of one stamp class.
 #
-# The default states no product, and the leaf rule fails on it. A product's own set target transitions its descriptors
-# onto the product's own `dev_dist_product_info`, so nothing a distribution reads ever sees this default.
+# `dev_dist_stamp_class` is the product mode, such as `frontend`. A component keeps it only when its descriptor refuses
+# content modules for that mode. `dev_dist_product_info` names the product whose application info a retained
+# `product-descriptor` reads. Only a plugin with `retain_product_descriptor` keeps it. Every other component resets both
+# flags to their defaults, which Bazel trims from the configuration.
+#
+# The default states no product, and a leaf that retains `product-descriptor` fails on it.
 dev_dist_product_info(name = "no_dev_dist_product_info")
 
 label_flag(
     name = "dev_dist_product_info",
     build_setting_default = ":no_dev_dist_product_info",
+    visibility = ["//visibility:public"],
+)
+
+string_flag(
+    name = "dev_dist_stamp_class",
+    build_setting_default = "",
     visibility = ["//visibility:public"],
 )
 

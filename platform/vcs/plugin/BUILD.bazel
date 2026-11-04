@@ -65,6 +65,7 @@ dev_dist_complex_plugin(
     remainder_files = {
         "lib/platform-vcs-plugin.jar": ["intellij.platform.vcs.plugin"],
     },
+    stamp_class_modes = ["frontend"],
 )
 ### auto-generated section `dev intellij.platform.vcs.plugin` end
 

@@ -124,4 +124,7 @@ dev_plugin(
         "//plugins/groovy/spock-rt": "intellij.groovy.spock.rt",
     },
     plugin_directory = "plugins/Groovy",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

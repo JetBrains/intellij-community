@@ -98,4 +98,7 @@ dev_plugin(
         "//plugins/markdown/plugin": "intellij.markdown.plugin",
     },
     plugin_directory = "plugins/markdown",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

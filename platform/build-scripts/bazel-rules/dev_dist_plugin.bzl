@@ -209,6 +209,13 @@ def dev_dist_plugin(
             file_prefixes = file_prefixes,
             executable_files = executable_files,
             tree_files = tree_files,
+            # The stamp class of the component follows from the facts of its descriptor, so the call states them once.
+            stamp_class_modes = sorted([
+                mode
+                for mode, modules in descriptor_attrs.get("mode_refused_content_modules", {}).items()
+                if modules
+            ]),
+            retain_product_descriptor = descriptor_attrs.get("retain_product_descriptor", False),
             visibility = ["//visibility:public"],
         )
     if frontend_application_info:

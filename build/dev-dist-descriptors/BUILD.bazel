@@ -20,7 +20,6 @@ load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev
             "host",
             None,
         ),
-        marketplace_names = stamps.marketplace_names,
         mode = stamps.mode,
         replacements = getattr(
             DEV_DIST_APPLICATION_INFOS[product],

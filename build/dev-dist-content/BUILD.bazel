@@ -7,10 +7,12 @@
 # Hand-written. It holds one `<product>_plugin_components` target per product, so `bazel build //...` builds every
 # component once under a product, on every platform.
 
+load("//build:dev_dist_product_info.bzl", "DEV_DIST_PRODUCT_INFO")
 load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plugin_component_builds")
 load(":dev_dist_content_sets.bzl", "DEV_DIST_PLUGIN_COMPONENTS")
 
 dev_dist_plugin_component_builds(
     components = DEV_DIST_PLUGIN_COMPONENTS,
+    modes = {product: info.mode for product, info in DEV_DIST_PRODUCT_INFO.items()},
     product_info = "//build/dev-dist-descriptors:%s_product_info",
 )

@@ -5,7 +5,7 @@ through the manifest that the `context_plugin_manifest` output group holds, so a
 with no distribution compose. The Air lane daemon and the UI agent of ide-starter both read this rule.
 """
 
-load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_PRODUCT_INFO_ATTR", "dev_dist_product_info_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_PRODUCT_INFO_ATTR", "dev_dist_check_product_stamp_class", "dev_dist_product_info_transition")
 load(":intellij_dev_dist.bzl", "DevDistPlacementInfo")
 
 ContextPluginInfo = provider(
@@ -42,6 +42,7 @@ def _placed_directory(plugin):
     return directories.keys()[0]
 
 def _context_plugin_dir_impl(ctx):
+    dev_dist_check_product_stamp_class(ctx)
     owners = {}
     for plugin in ctx.attr.plugins:
         directory = _placed_directory(plugin)

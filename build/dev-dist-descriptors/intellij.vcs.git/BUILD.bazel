@@ -70,4 +70,7 @@ dev_plugin(
         "//plugins/git4idea:vcs-git": "intellij.vcs.git",
     },
     plugin_directory = "plugins/vcs-git",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

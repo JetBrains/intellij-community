@@ -337,6 +337,7 @@ dev_dist_complex_plugin(
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
+    stamp_class_modes = ["frontend"],
 )
 
 dev_dist_complex_plugin(
@@ -489,6 +490,7 @@ dev_dist_complex_plugin(
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
+    stamp_class_modes = ["frontend"],
 )
 
 dev_dist_complex_plugin(
@@ -641,6 +643,7 @@ dev_dist_complex_plugin(
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
+    stamp_class_modes = ["frontend"],
 )
 
 dev_dist_complex_plugin(
@@ -793,6 +796,7 @@ dev_dist_complex_plugin(
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
+    stamp_class_modes = ["frontend"],
 )
 
 dev_dist_complex_plugin(
@@ -945,6 +949,7 @@ dev_dist_complex_plugin(
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
+    stamp_class_modes = ["frontend"],
 )
 
 dev_dist_complex_plugin(
@@ -1097,6 +1102,7 @@ dev_dist_complex_plugin(
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
         "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
+    stamp_class_modes = ["frontend"],
 )
 ### auto-generated section `dev intellij.python.community.plugin` end
 

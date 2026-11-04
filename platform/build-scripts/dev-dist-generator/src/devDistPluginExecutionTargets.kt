@@ -41,6 +41,10 @@ internal class DevDistPluginExecutionConfiguration(
   @JvmField val graph: DevDistPluginExecutionGraphLabels,
   @JvmField val descriptorLabel: String,
   @JvmField val descriptorVariant: String,
+  /** The stamp class modes of the descriptor, see [PluginDescriptorEntry.stampClassModes]. */
+  @JvmField val stampClassModes: List<String> = emptyList(),
+  /** Whether the descriptor retains its `product-descriptor`, which keeps the product in the stamp class. */
+  @JvmField val retainProductDescriptor: Boolean = false,
 )
 
 /**
@@ -266,7 +270,8 @@ internal fun renderDevDistPluginExecutionTargets(
     "remainder_trees" to executionStrings(outputs.trees),
     "remainder_executables" to executionStrings(outputs.executables),
     "independent_destinations" to executionDictionary(outputs.independentDestinations.map { (key, destination) -> key to executionQuote(destination) }),
-  )
+    "stamp_class_modes" to executionStrings(configuration.stampClassModes),
+  ) + (if (configuration.retainProductDescriptor) listOf("retain_product_descriptor" to "True") else emptyList())
   return DevDistPluginExecutionVariant(platform, arguments, "${configuration.packageLabel}:${names.getValue("component")}", platformValues, folded)
 }
 

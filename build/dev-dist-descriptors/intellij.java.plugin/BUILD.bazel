@@ -375,4 +375,7 @@ dev_plugin(
         "//libraries/test-discovery": "intellij.libraries.test.discovery",
     },
     plugin_directory = "plugins/java",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

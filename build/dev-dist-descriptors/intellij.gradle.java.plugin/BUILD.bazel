@@ -89,4 +89,7 @@ dev_plugin(
         "//plugins/gradle/jps-plugin:jps": "intellij.gradle.jps",
     },
     plugin_directory = "plugins/gradle-java",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

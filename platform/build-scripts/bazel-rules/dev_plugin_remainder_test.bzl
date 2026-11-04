@@ -80,19 +80,19 @@ _file = rule(
     attrs = {"content": attr.string(default = "{}\n")},
 )
 
-def _product_scoped_file_impl(ctx):
+def _stamp_class_scoped_file_impl(ctx):
     product = ctx.attr._product_info[DevDistProductInfo]
-    application_info = str(product.application_info.owner) if product.application_info != None else None
-    if application_info != ctx.attr.application_info:
-        fail("expected product info, got the application info %s" % application_info)
+    if product.application_info != None:
+        fail("expected the default product info, got the application info %s" % product.application_info.owner)
     output = ctx.actions.declare_file(ctx.label.name + ".xml")
-    ctx.actions.write(output, application_info + "\n")
+    ctx.actions.write(output, "<idea-plugin/>\n")
     return [DefaultInfo(files = depset([output]))]
 
-_product_scoped_file = rule(
-    implementation = _product_scoped_file_impl,
+# A descriptor source that fails unless the default product info reaches it. No descriptor of this suite retains its
+# `product-descriptor`, so its stamp class drops the product that a test or a consumer sets.
+_stamp_class_scoped_file = rule(
+    implementation = _stamp_class_scoped_file_impl,
     attrs = {
-        "application_info": attr.string(mandatory = True, doc = "The label of the application info that the product states."),
         "_product_info": attr.label(
             default = Label("//build:dev_dist_product_info"),
             providers = [DevDistProductInfo],
@@ -768,7 +768,10 @@ _REMAINDER_OUTPUTS_ATTRS = {
 _remainder_outputs_test = analysistest.make(_remainder_outputs_test_impl, config_settings = _PRODUCT_CONFIG, attrs = _REMAINDER_OUTPUTS_ATTRS)
 
 # The product of the refusal case: its mode is `frontend`, so a descriptor that refuses a module for that mode omits it.
-_FRONTEND_PRODUCT_CONFIG = {str(Label("//build:dev_dist_product_info")): str(Label(_PACKAGE + ":" + _SUITE + "_frontend_product_info"))}
+_FRONTEND_PRODUCT_CONFIG = {
+    str(Label("//build:dev_dist_product_info")): str(Label(_PACKAGE + ":" + _SUITE + "_frontend_product_info")),
+    str(Label("//build:dev_dist_stamp_class")): "frontend",
+}
 
 _refused_remainder_outputs_test = analysistest.make(_remainder_outputs_test_impl, config_settings = _FRONTEND_PRODUCT_CONFIG, attrs = _REMAINDER_OUTPUTS_ATTRS)
 
@@ -813,9 +816,8 @@ def dev_plugin_remainder_test_suite(name):
         name = product_info,
         application_info = _FIXTURE_APPLICATION_INFO,
     )
-    _product_scoped_file(
+    _stamp_class_scoped_file(
         name = descriptor_source,
-        application_info = str(_FIXTURE_APPLICATION_INFO),
         tags = ["manual"],
     )
     normal_main_module = "test.%s.normal" % name

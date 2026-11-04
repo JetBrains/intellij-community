@@ -84,4 +84,7 @@ dev_plugin(
         "//libraries/json-schema-validator": "intellij.libraries.jsonSchemaValidator",
     },
     plugin_directory = "plugins/json",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

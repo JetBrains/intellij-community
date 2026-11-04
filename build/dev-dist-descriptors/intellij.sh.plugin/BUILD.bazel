@@ -71,4 +71,7 @@ dev_plugin(
         "//plugins/sh/plugin": "intellij.sh.plugin",
     },
     plugin_directory = "plugins/sh",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

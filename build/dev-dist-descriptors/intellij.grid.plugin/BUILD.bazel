@@ -65,4 +65,7 @@ dev_plugin(
         "//grid/plugin": "intellij.grid.plugin",
     },
     plugin_directory = "plugins/grid",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

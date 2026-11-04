@@ -19,6 +19,7 @@ _SUITE = "dev_plugin_tests"
 _PRODUCT_INFO = str(Label(_PACKAGE + ":" + _SUITE + "_product_info"))
 _FRONTEND_PRODUCT_INFO = str(Label(_PACKAGE + ":" + _SUITE + "_frontend_product_info"))
 _PRODUCT_INFO_FLAG = str(Label("//build:dev_dist_product_info"))
+_STAMP_CLASS_FLAG = str(Label("//build:dev_dist_stamp_class"))
 _TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
 _MAIN_MODULE = "test.dev.plugin"
@@ -203,22 +204,22 @@ def _dev_plugin_test_impl(ctx):
     asserts.true(env, single_libraries[0].endswith("/foo-1.2.3.jar"), single_libraries[0])
     asserts.equals(env, [], [argument for argument in single.argv if argument.startswith("module=") or argument.startswith("patch=")])
 
-    # Every compiled input comes from the neutral configuration, not from the component's product configuration. Only
-    # the descriptor is product specific. The roots are compared, and not tested for `-ST-`: under an analysis test the
-    # neutral configuration still carries the analysis-test marker and therefore a hash of its own.
+    # The component has no stamp class, so its incoming transition drops the product that the test sets. Its compiled
+    # inputs, its descriptor and the component itself then share the neutral configuration, and no product packs it
+    # again. The roots are compared, and not tested for `-ST-`: under an analysis test the neutral configuration still
+    # carries the analysis-test marker and therefore a hash of its own.
     component_root = fragment.manifest.root.path
     for action in packs:
         for file in action.inputs.to_list():
-            if file.basename.endswith(".plugin.xml"):
+            # The packer itself is a tool of the exec configuration.
+            if not file.is_source and "-exec/" not in file.root.path + "/":
                 asserts.equals(env, component_root, file.root.path, file.path)
-            elif not file.is_source:
-                asserts.false(env, component_root == file.root.path, file.path)
     reused = [jar for jar in payload if jar.short_path == content.jar.short_path]
     asserts.equals(env, 1, len(reused))
-    asserts.false(env, component_root == reused[0].root.path, reused[0].path)
+    asserts.equals(env, component_root, reused[0].root.path, reused[0].path)
     copied_helper = [file for file in payload if file.short_path == helper.short_path]
     asserts.equals(env, 1, len(copied_helper))
-    asserts.false(env, component_root == copied_helper[0].root.path, copied_helper[0].path)
+    asserts.equals(env, component_root, copied_helper[0].root.path, copied_helper[0].path)
 
     # The collector spec names every jar with its destination and the ready classpath descriptor. The jars come in
     # `classpath_jars` order, which puts the reused jar first here.
@@ -268,7 +269,7 @@ def _dev_plugin_test_impl(ctx):
     asserts.equals(env, [{"module": module} for module in content.member_modules], part["jars"][0]["members"])
 
     # The raw content: every merged module jar, the members of the reused content module jar, and every library the
-    # plugin names, the jar file token included. Neutral, like the packed inputs, so compared by short path.
+    # plugin names, the jar file token included. Neutral, like the packed inputs and the component itself.
     raw_content = target[DevDistContentInfo]
     asserts.equals(
         env,
@@ -280,7 +281,7 @@ def _dev_plugin_test_impl(ctx):
     asserts.equals(env, [jar.short_path for jar in library_jars], raw_libraries[str(ctx.attr.library.label)])
     asserts.equals(env, [ctx.file.single_jar.short_path], raw_libraries[str(ctx.attr.single_jar.label)])
     for file in raw_content.module_jars.to_list():
-        asserts.false(env, component_root == file.root.path, file.path)
+        asserts.equals(env, component_root, file.root.path, file.path)
     return analysistest.end(env)
 
 _DEV_PLUGIN_ATTRS = {
@@ -364,7 +365,7 @@ _mode_test = analysistest.make(
         "expected_packed": attr.string_list(mandatory = True),
         "expected_destinations": attr.string_list(mandatory = True),
     },
-    config_settings = {_PRODUCT_INFO_FLAG: _FRONTEND_PRODUCT_INFO},
+    config_settings = {_PRODUCT_INFO_FLAG: _FRONTEND_PRODUCT_INFO, _STAMP_CLASS_FLAG: "frontend"},
 )
 
 def _expected_failure_test_impl(ctx):
@@ -696,6 +697,7 @@ def dev_plugin_test_suite(name):
             "lib/mode.jar": [_MODE_MODULE, _SPLIT_MODULE],
             "lib/split.jar": [_SPLIT_MODULE, library_token],
         },
+        stamp_class_modes = ["frontend"],
     )
     tests.append(mode_component + "_test")
     _mode_test(
@@ -704,5 +706,25 @@ def dev_plugin_test_suite(name):
         expected_packed = ["mode.jar"],
         expected_destinations = ["lib/mode.jar"],
     )
+
+    # A component must state the stamp class of its descriptor. Without the mode, the component would build under no
+    # mode, and its descriptor would embed no refused module.
+    for case, modes, retain, message in [
+        ("no_modes", [], False, "states the stamp class modes [], and its descriptor states [\"frontend\"]"),
+        ("retain", ["frontend"], True, "states retain_product_descriptor = True, and its descriptor states False"),
+    ]:
+        mismatch = name + "_stamp_class_" + case
+        dev_plugin(
+            name = mismatch,
+            main_module = _MODE_MODULE,
+            descriptor = ":" + dev_dist_plugin_descriptor_target_name(_MODE_MODULE),
+            plugin_directory = "plugins/mode",
+            modules = {":" + mode_owner: _MODE_MODULE},
+            jars = {"lib/mode.jar": [_MODE_MODULE]},
+            stamp_class_modes = modes,
+            retain_product_descriptor = retain,
+        )
+        tests.append(mismatch + "_test")
+        _failure_test(name = tests[-1], target_under_test = ":" + mismatch, expected_message = message)
 
     native.test_suite(name = name, tests = tests)

@@ -601,7 +601,14 @@ private fun renderCrossHalfDevPluginTargets(sections: DevDistBuildSections): Map
     val descriptorPlan = plans.getValue(entry.product)
     val descriptorEntry = descriptorPlan.plugins.single { it.mainModule == entry.mainModule && it.variant.isEmpty() }
     val descriptorLabel = sections.descriptorDeclaration(descriptorPlan, descriptorEntry).label
-    result.put(path, renderCrossHalfDevPluginTarget(packaging, descriptorLabel, sections.index, sections::contentModuleJarLabel))
+    result.put(path, renderCrossHalfDevPluginTarget(
+      packaging = packaging,
+      descriptorLabel = descriptorLabel,
+      index = sections.index,
+      stampClassModes = descriptorEntry.stampClassModes,
+      retainProductDescriptor = descriptorEntry.retainProductDescriptor,
+      contentModuleJarLabel = sections::contentModuleJarLabel,
+    ))
   }
   return result
 }

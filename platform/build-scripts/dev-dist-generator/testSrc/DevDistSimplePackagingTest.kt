@@ -380,6 +380,30 @@ class DevDistSimplePackagingTest {
   }
 
   @Test
+  fun `the cross-half dev_plugin target states the stamp class of its descriptor`() {
+    val packaging: DevDistSimplePackaging = requireSimple(planEntry(assets = listOf(mainJar(communityPlugin)), inputs = emptyList(), plugin = communityPlugin))
+
+    val target = renderCrossHalfDevPluginTarget(
+      packaging = packaging,
+      descriptorLabel = "//build/dev-dist-descriptors/intellij.c:intellij.c_dev_descriptor",
+      index = index,
+      stampClassModes = listOf("frontend"),
+      retainProductDescriptor = true,
+    )
+
+    assertThat(target).contains(
+      """
+          plugin_directory = "plugins/c",
+          retain_product_descriptor = True,
+          stamp_class_modes = [
+              "frontend",
+          ],
+      )
+      """.trimIndent(),
+    )
+  }
+
+  @Test
   fun `the cross-half dev_plugin target states the copies in alphabetical position, sorted`() {
     val script: DevDistPluginRawInput = fileInput("module-resource:0:source", "@community//plugins/c:helper.sh")
     val archive: DevDistPluginRawInput = fileInput("layout-source:custom-asset:0:0", "@dev_launch_air_openui_renderer//:files", kind = "archive")

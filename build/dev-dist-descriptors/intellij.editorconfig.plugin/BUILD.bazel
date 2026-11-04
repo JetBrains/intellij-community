@@ -65,4 +65,7 @@ dev_plugin(
         "//plugins/editorconfig:editorconfig-plugin": "intellij.editorconfig.plugin",
     },
     plugin_directory = "plugins/editorconfig",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

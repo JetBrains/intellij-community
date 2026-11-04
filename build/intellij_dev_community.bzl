@@ -45,6 +45,9 @@ def _platform_lib_payload(product):
 def _product_info_label(product):
     return "//build/dev-dist-descriptors:%s_product_info" % product
 
+def _product_mode(product):
+    return DEV_DIST_PRODUCT_INFO[product].mode
+
 # The generated tables of the community half, which the shared declarations read. The community half has no hook:
 # no community launcher changes its flags, and none has a before-run step.
 _DECLARATIONS = intellij_dev_dist_declarations(struct(
@@ -64,6 +67,7 @@ _DECLARATIONS = intellij_dev_dist_declarations(struct(
     composer = "//build:dev_dist_composer",
     build_package = "//build",
     product_info_label = _product_info_label,
+    product_mode = _product_mode,
     launcher_jvm_flags = None,
     check_before_run = None,
     community = None,

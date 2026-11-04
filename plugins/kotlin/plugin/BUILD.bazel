@@ -430,6 +430,7 @@ dev_dist_complex_plugin(
         "lib/vavr.jar": [],
     },
     remainder_trees = ["kotlinc"],
+    stamp_class_modes = ["frontend"],
 )
 ### auto-generated section `dev intellij.kotlin.plugin` end
 

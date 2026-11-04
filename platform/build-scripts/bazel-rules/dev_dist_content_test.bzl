@@ -874,6 +874,7 @@ def dev_dist_content_test_suite(name):
         plugins = [":" + plugin_contents[0], ":" + plugin_contents[1]],
         deps = [":" + plugin_contents[2]],
         product_info = ":" + product_info,
+        stamp_class = "",
     )
     tests.append(plugin_content + "_test")
     _plugin_content_test(
@@ -886,6 +887,7 @@ def dev_dist_content_test_suite(name):
         name = refused_plugin_content,
         plugins = [":" + raw_owner],
         product_info = ":" + product_info,
+        stamp_class = "",
         tags = ["manual"],
     )
     tests.append(refused_plugin_content + "_test")

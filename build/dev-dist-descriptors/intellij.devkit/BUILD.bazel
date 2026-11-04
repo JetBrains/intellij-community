@@ -124,4 +124,7 @@ dev_plugin(
         "//plugins/devkit/jps-plugin:jps": "intellij.devkit.jps",
     },
     plugin_directory = "plugins/devkit",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

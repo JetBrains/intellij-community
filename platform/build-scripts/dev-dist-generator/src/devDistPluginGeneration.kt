@@ -1073,6 +1073,8 @@ private fun renderPluginCall(
       graph = files.executionGraphLabels(key, record),
       descriptorLabel = declaration.label,
       descriptorVariant = descriptorEntry.variant,
+      stampClassModes = descriptorEntry.stampClassModes,
+      retainProductDescriptor = descriptorEntry.retainProductDescriptor,
     )
     val rendered = renderDevDistPluginExecutionTargets(owner, entry, record, files, configuration)
     variants.add(rendered)

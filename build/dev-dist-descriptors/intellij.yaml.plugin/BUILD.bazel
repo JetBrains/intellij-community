@@ -58,4 +58,7 @@ dev_plugin(
         "//plugins/yaml/plugin": "intellij.yaml.plugin",
     },
     plugin_directory = "plugins/yaml",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

@@ -109,6 +109,7 @@ dev_dist_complex_plugin(
     source_tree_targets = {
         "module-resource:0:source": "//plugins/terminal:dev_dist_resources",
     },
+    stamp_class_modes = ["frontend"],
 )
 ### auto-generated section `dev intellij.terminal` end
 

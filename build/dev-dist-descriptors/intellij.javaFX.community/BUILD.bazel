@@ -65,4 +65,7 @@ dev_plugin(
         "//plugins/javaFX/sceneBuilder": "intellij.javaFX.sceneBuilder",
     },
     plugin_directory = "plugins/javaFX",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

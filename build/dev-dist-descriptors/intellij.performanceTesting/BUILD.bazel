@@ -116,4 +116,7 @@ dev_plugin(
         "//plugins/performanceTesting/core:performanceTesting": "intellij.performanceTesting",
     },
     plugin_directory = "plugins/performanceTesting",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

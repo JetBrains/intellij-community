@@ -9,7 +9,7 @@ from it, the project model and the plugin descriptors.
 
 load(":dev_dist_content.bzl", "DevDistPlatformPayloadInfo")
 load(":dev_dist_platform_jar_order.bzl", "platform_jar_order")
-load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_PRODUCT_INFO_ATTR", "dev_dist_product_info_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_PRODUCT_INFO_ATTR", "dev_dist_check_product_stamp_class", "dev_dist_product_info_transition")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo")
 load(":intellij_dev_dist.bzl", "IntellijProjectModelTreeInfo")
 
@@ -19,6 +19,7 @@ DevDistRuntimeLayoutPartsInfo = provider(
 )
 
 def _dev_dist_runtime_layout_parts_impl(ctx):
+    dev_dist_check_product_stamp_class(ctx)
     plugins = [target[DevDistRuntimeLayoutInfo] for target in ctx.attr.plugins]
     return [
         DefaultInfo(files = depset([info.part for info in plugins] + [info.descriptor for info in plugins])),

@@ -63,4 +63,7 @@ dev_plugin(
         "//plugins/gitlab": "intellij.vcs.gitlab",
     },
     plugin_directory = "plugins/vcs-gitlab",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

@@ -78,4 +78,7 @@ dev_plugin(
         "//plugins/dev/intellij.kotlin.dev:kotlin-dev": "intellij.kotlin.dev",
     },
     plugin_directory = "plugins/dev",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

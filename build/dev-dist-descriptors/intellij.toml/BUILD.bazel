@@ -62,4 +62,7 @@ dev_plugin(
         "//plugins/toml": "intellij.toml",
     },
     plugin_directory = "plugins/toml",
+    stamp_class_modes = [
+        "frontend",
+    ],
 )

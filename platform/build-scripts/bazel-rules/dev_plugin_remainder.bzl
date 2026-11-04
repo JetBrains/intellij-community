@@ -6,7 +6,7 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//build:host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "library_entries", "module_output_jar")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "dev_dist_neutral_product_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_ATTRS", "DevDistPluginDescriptorInfo", "dev_dist_check_stamp_class", "dev_dist_neutral_product_transition", "dev_dist_stamp_class_transition")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_dist_plugin_directory")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
@@ -43,6 +43,7 @@ DevPluginRemainderInfo, _new_remainder_info = provider(
         "classpath": "File containing the plugin classpath record.",
         "independent_artifacts": "Independent artifact references, excluded from the packing action.",
         "refused_modules": "The content modules the product's mode refuses. No jar of them is placed, see `--refused-module`.",
+        "descriptor": "The `DevDistPluginDescriptorInfo` of the chain. The component checks its stamp class against it.",
     },
     init = _remainder_info_init,
 )
@@ -628,7 +629,7 @@ def _catalogue_binding(ctx, artifact_catalogue, reused_jars):
                 fail("catalogue artifact %s overlaps independent artifact %s" % (identifier, independent.path))
     return binding
 
-def _remainder_providers(ctx, graph, execution_version, packed, metadata, assets, classpath, independent_artifacts, content, refused_modules):
+def _remainder_providers(ctx, graph, execution_version, packed, metadata, assets, classpath, independent_artifacts, content, refused_modules, descriptor):
     """The providers of a packed remainder. The component reads this one contract."""
     files = packed.outputs.values()
     return [
@@ -648,6 +649,7 @@ def _remainder_providers(ctx, graph, execution_version, packed, metadata, assets
             classpath = classpath,
             independent_artifacts = independent_artifacts,
             refused_modules = refused_modules,
+            descriptor = descriptor,
         ),
         OutputGroupInfo(
             file_metadata = depset([metadata]),
@@ -808,7 +810,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
         arguments = [layout_arguments],
         progress_message = "Deriving the runtime layout part of %{label} from its plan file",
     )
-    return _remainder_providers(ctx, ctx.attr.graph, execution_version, packed, metadata, assets, classpath, independent_artifacts, content, refused_modules) + [
+    return _remainder_providers(ctx, ctx.attr.graph, execution_version, packed, metadata, assets, classpath, independent_artifacts, content, refused_modules, descriptor_target[DevDistPluginDescriptorInfo]) + [
         DevDistRuntimeLayoutInfo(
             part = runtime_layout,
             descriptor = classpath_descriptor,
@@ -896,6 +898,7 @@ def _component_placement(ctx, files, trees, reused, executables):
 
 def _dev_plugin_component_impl(ctx):
     remainder = ctx.attr.remainder[DevPluginRemainderInfo]
+    dev_dist_check_stamp_class(ctx, remainder.descriptor)
     execution_version = _execution_version(remainder, "DevPluginRemainderInfo")
     plugin_directory = ctx.attr.plugin_directory
 
@@ -1037,6 +1040,12 @@ def _dev_plugin_component_impl(ctx):
 
 dev_plugin_component = rule(
     implementation = _dev_plugin_component_impl,
+    doc = """The component of one complex plugin chain.
+
+The consumer reaches it in the configuration of its product. The incoming `dev_dist_stamp_class_transition` keeps only
+the stamp class that `stamp_class_modes` and `retain_product_descriptor` state, so the whole chain below serves every
+product of one stamp class.""",
+    cfg = dev_dist_stamp_class_transition,
     attrs = {
         "remainder": attr.label(mandatory = True, providers = [DevPluginRemainderInfo, DevDistRuntimeLayoutInfo]),
         "independent_artifacts": attr.label_list(
@@ -1056,8 +1065,7 @@ keyed by the module. A native tree states its destination under `native-tree:<mo
         "target_platform": attr.string(doc = "A `HOST_PLATFORMS` entry, or empty for a component that serves every platform."),
         "_trace_spans": attr.label(default = "//platform/build-scripts/bazel-rules:trace_spans", providers = [BuildSettingInfo]),
         "_collector": attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_collector", executable = True, cfg = "exec"),
-        "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
-    },
+    } | DEV_DIST_STAMP_CLASS_ATTRS,
 )
 
 def _for_platform(value, platform):
@@ -1165,13 +1173,15 @@ def dev_dist_complex_plugin(
         remainder_trees = [],
         remainder_executables = [],
         independent_destinations = {},
+        stamp_class_modes = [],
+        retain_product_descriptor = False,
         tags = [],
         visibility = ["//visibility:public"]):
     """Declares the execution chains of one complex plugin: one chain per platform it is bundled on, or one for all.
 
     One call serves every product whose rendered call is the same. The call states no product. The consumer of the
-    component sets the product through `dev_dist_product_info_transition`, and the descriptor and the collector read it
-    there.
+    component sets the product and the mode through `dev_dist_product_info_transition`. The component keeps only its
+    stamp class, which `stamp_class_modes` and `retain_product_descriptor` state.
 
     The generator states the facts that vary per plugin. The macro derives everything that follows from them: the chain
     stem `<main module>[.<chain class>][_<platform>]`, the component name, the plan file label
@@ -1218,6 +1228,8 @@ def dev_dist_complex_plugin(
         remainder_executables: The destinations of `remainder_files` with the executable mode.
         independent_destinations: The destination of a reused jar outside `lib/modules/<module>.jar`, keyed by the
             module, and the destination of each native tree, keyed by `native-tree:<module>`.
+        stamp_class_modes: The modes whose refusal list of the descriptor is not empty, sorted.
+        retain_product_descriptor: Whether the descriptor retains `product-descriptor`.
         tags: Tags for every target of every chain. `manual` is added.
         visibility: The visibility of every component. Public by default, because the product's dist is in another
             package. The other targets of a chain keep the package default.
@@ -1261,6 +1273,8 @@ def dev_dist_complex_plugin(
             remainder_trees = [_resolve_slot(main_module, destination, values) for destination in remainder_trees],
             remainder_executables = [_resolve_slot(main_module, destination, values) for destination in remainder_executables],
             independent_destinations = {key: _resolve_slot(main_module, value, values) for key, value in independent_destinations.items()},
+            stamp_class_modes = stamp_class_modes,
+            retain_product_descriptor = retain_product_descriptor,
             tags = tags,
             visibility = visibility,
         )
@@ -1285,13 +1299,15 @@ def dev_dist_complex_plugin_variant(
         remainder_trees = [],
         remainder_executables = [],
         independent_destinations = {},
+        stamp_class_modes = [],
+        retain_product_descriptor = False,
         tags = [],
         visibility = ["//visibility:public"]):
     """Declares the execution chain of one complex plugin variant, every argument stated.
 
     `dev_dist_complex_plugin` derives these arguments; this form is for a test that pins one of them. A chain is four
     `manual` targets: `<name>_graph`, `<name>_catalogue`, `<name>_remainder` and `<name>_component`. Only the consumer
-    of the component states the product, so no target of the chain builds on its own. The `<name>_remainder` is a
+    of the component states the product and the mode, and the component keeps its stamp class. The `<name>_remainder` is a
     `dev_plugin_remainder_from_plan`. Its action executes the operations from the plan file.
     `DEV_DIST_PLUGIN_COMPONENTS` names the component. The macro merges the declarations only. The actions and their
     cache policies stay separate.
@@ -1322,6 +1338,8 @@ def dev_dist_complex_plugin_variant(
         remainder_executables: The destinations of `remainder_files` with the executable mode.
         independent_destinations: The destination of a reused jar outside `lib/modules/<module>.jar`, keyed by the
             module, and the destination of each native tree, keyed by `native-tree:<module>`.
+        stamp_class_modes: The modes whose refusal list of the descriptor is not empty, sorted.
+        retain_product_descriptor: Whether the descriptor retains `product-descriptor`.
         tags: Tags for every target of the chain. `manual` is added.
         visibility: The visibility of `<name>_component`. The graph, the catalogue and the remainder keep the package
             default.
@@ -1371,6 +1389,8 @@ def dev_dist_complex_plugin_variant(
         plugin_directory = plugin_directory,
         component_name = component_name,
         target_platform = target_platform,
+        stamp_class_modes = stamp_class_modes,
+        retain_product_descriptor = retain_product_descriptor,
         tags = tags,
         visibility = visibility,
     )
