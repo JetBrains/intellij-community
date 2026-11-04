@@ -328,3 +328,122 @@ fn gzip_resources_mode_refuses_bad_arguments_and_non_xml_entries() {
     assert_eq!(code, 1);
     assert!(errors.contains(r#"unexpected file "notes.txt""#), "{errors}");
 }
+
+/// The plan of [`PROJECTION_PLAN`] with the produced descriptor patched into the main jar.
+fn descriptor_plan() -> String {
+    PROJECTION_PLAN.replacen(
+        r#"[{"input": "example.main", "kind": "module", "filter": "module-v1"}]"#,
+        r#"[{"input": "descriptor:example", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]}, {"input": "example.main", "kind": "module", "filter": "module-v1"}]"#,
+        1,
+    )
+}
+
+/// Writes the descriptor of the plan and adds it to the catalogue of the fixture.
+fn write_descriptor_fixture(root: &Path) -> Vec<String> {
+    let values = write_projection_fixture(root, &descriptor_plan());
+    fs::write(root.join("plugin.xml"), b"<idea-plugin><id>example</id></idea-plugin>").unwrap();
+    let mut catalogue: serde_json::Value = serde_json::from_slice(&fs::read(root.join("catalogue.json")).unwrap()).unwrap();
+    catalogue["artifacts"]
+        .as_array_mut()
+        .unwrap()
+        .push(serde_json::json!({"id": "descriptor:example", "kind": "file", "root": root.join("plugin.xml")}));
+    fs::write(root.join("catalogue.json"), serde_json::to_vec(&catalogue).unwrap()).unwrap();
+    values
+}
+
+/// The two parts of a split remainder write together the bytes that one action writes. The neutral part packs every
+/// asset that reads no descriptor from a catalogue without the descriptor, and it writes no rows and no record. The
+/// descriptor part packs only the main jar, and it writes the rows and the record of the whole plugin.
+#[test]
+fn the_two_parts_write_the_assets_of_one_action() {
+    let whole = tempfile::tempdir().unwrap();
+    assert_projected(&run_captured(&write_descriptor_fixture(whole.path())));
+
+    let neutral = tempfile::tempdir().unwrap();
+    let mut values = write_descriptor_fixture(neutral.path());
+    let catalogue = serde_json::json!({"version": 1, "artifacts": [
+        {"id": "example.main", "kind": "file", "root": neutral.path().join("main.jar")},
+        {"id": "tool", "kind": "file", "root": neutral.path().join("tool")},
+    ]});
+    fs::write(neutral.path().join("catalogue.json"), serde_json::to_vec(&catalogue).unwrap()).unwrap();
+    values.retain(|value| {
+        !value.starts_with("--classpath-descriptor=") && !value.starts_with("--assets=") && !value.starts_with("--classpath=")
+    });
+    values.extend(["--part=neutral".to_owned(), "--descriptor-asset=lib/example.jar".to_owned()]);
+    assert_projected(&run_captured(&values));
+    assert!(
+        fs::symlink_metadata(neutral.path().join("payload/lib/example.jar")).is_err(),
+        "the neutral part packed the main jar"
+    );
+    assert!(
+        fs::symlink_metadata(neutral.path().join("assets.json")).is_err(),
+        "the neutral part wrote the rows"
+    );
+    assert_eq!(
+        fs::read(neutral.path().join("payload/bin/tool")).unwrap(),
+        fs::read(whole.path().join("payload/bin/tool")).unwrap()
+    );
+
+    let descriptor = tempfile::tempdir().unwrap();
+    let mut values = write_descriptor_fixture(descriptor.path());
+    values.extend(["--part=descriptor".to_owned(), "--descriptor-asset=lib/example.jar".to_owned()]);
+    assert_projected(&run_captured(&values));
+    assert!(
+        fs::symlink_metadata(descriptor.path().join("payload/bin/tool")).is_err(),
+        "the descriptor part packed the tool"
+    );
+    for file in ["payload/lib/example.jar", "assets.json", "plugin-classpath.txt"] {
+        assert_eq!(
+            fs::read(descriptor.path().join(file)).unwrap(),
+            fs::read(whole.path().join(file)).unwrap(),
+            "{file}"
+        );
+    }
+}
+
+/// A part needs the descriptor assets of the plan file, and the neutral part takes no option of the rows, the record or
+/// the mode.
+#[test]
+fn a_part_is_refused_with_other_descriptor_assets_or_options() {
+    for (name, extra, code, message) in [
+        (
+            "another descriptor asset",
+            &["--part=descriptor", "--descriptor-asset=bin/tool"][..],
+            1,
+            r#"the rule states the descriptor assets ["bin/tool"], and the plan file has ["lib/example.jar"]"#,
+        ),
+        (
+            "a part without a descriptor asset",
+            &["--part=descriptor"][..],
+            2,
+            "--part and --descriptor-asset are stated together",
+        ),
+        (
+            "a descriptor asset without a part",
+            &["--descriptor-asset=lib/example.jar"][..],
+            2,
+            "--part and --descriptor-asset are stated together",
+        ),
+        (
+            "an unknown part",
+            &["--part=both", "--descriptor-asset=lib/example.jar"][..],
+            2,
+            "--part must be neutral or descriptor",
+        ),
+        (
+            "a refused module of the neutral part",
+            &[
+                "--part=neutral",
+                "--descriptor-asset=lib/example.jar",
+                "--refused-module=example.main",
+            ][..],
+            2,
+            "the neutral part packs every asset, so it takes no --refused-module",
+        ),
+    ] {
+        let root = tempfile::tempdir().unwrap();
+        let mut values = write_descriptor_fixture(root.path());
+        values.extend(extra.iter().map(|value| (*value).to_owned()));
+        assert_refused_before_any_write(name, root.path(), &run_captured(&values), code, message);
+    }
+}

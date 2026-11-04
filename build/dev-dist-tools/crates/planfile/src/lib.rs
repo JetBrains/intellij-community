@@ -20,7 +20,7 @@ pub mod json;
 mod plan;
 pub mod validate;
 
-pub use compile::{Derivation, derive, omitted_assets};
+pub use compile::{DESCRIPTOR_INPUT_PREFIX, Derivation, derive, descriptor_assets, omitted_assets, without_assets};
 pub use plan::{
     Asset, DEFAULT_MODE, EXECUTABLE_MODE, JarRecipe, JarSource, JarWriter, LayoutAssetPreparation, LayoutFormat, ManifestPolicy, Operation,
     OperationKind, PlanFile, SourceKind, from_slice, module_jar_asset, module_jar_recipe, read,

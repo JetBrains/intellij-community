@@ -1218,3 +1218,58 @@ fn derive_omits_an_asset_whose_every_module_is_refused() {
         |refused| derive_refusing(&text, &inputs, 1, &["demo.content", "demo.shared"], refused),
     );
 }
+
+/// A plan whose main jar patches the produced descriptor, beside a program and a library jar.
+const DESCRIPTOR_PLAN: &str = r#"{
+  "version": 1, "plugin": "example", "variant": "",
+  "assets": [
+    {"destination": "lib/example.jar", "recipe": {"sources": [
+      {"input": "descriptor:example", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]},
+      {"input": "example.main", "kind": "module", "filter": "module-v1"}
+    ], "writer": {"mergeEntities": true}}},
+    {"destination": "lib/util.jar", "recipe": {"sources": [{"input": "util", "kind": "library", "filter": "library-v1"}], "writer": {"mergeEntities": true}}},
+    {"destination": "bin/tool", "inputs": ["tool"], "mode": 493, "classPath": false}
+  ]
+}"#;
+
+#[test]
+fn the_descriptor_assets_are_the_assets_with_a_descriptor_input() {
+    let plan = must_read_plan(DESCRIPTOR_PLAN);
+    assert_eq!(crate::descriptor_assets(&plan), ["lib/example.jar"]);
+    let without = must_read_plan(&DESCRIPTOR_PLAN.replace("descriptor:example", "example.resources"));
+    assert_eq!(crate::descriptor_assets(&without), Vec::<&str>::new());
+}
+
+/// The plan without an asset keeps every other asset, and its catalogue keeps only the inputs that they read. A library
+/// that a kept asset reads keeps its member files.
+#[test]
+fn a_plan_without_assets_keeps_the_inputs_of_the_other_assets() {
+    let plan = must_read_plan(DESCRIPTOR_PLAN);
+    let catalogue = Catalogue {
+        version: 1,
+        artifacts: ["example.main", "util-1.jar", "tool"].map(file_artifact).to_vec(),
+        libraries: vec![Library {
+            id: "util".to_owned(),
+            files: vec![Reference::artifact("util-1.jar")],
+        }],
+    };
+    let (kept, kept_catalogue) = crate::without_assets(&plan, &catalogue, &["lib/example.jar".to_owned()]).unwrap();
+    assert_eq!(
+        kept.assets.iter().map(|asset| asset.destination.as_str()).collect::<Vec<_>>(),
+        ["lib/util.jar", "bin/tool"]
+    );
+    assert_eq!(
+        kept_catalogue
+            .artifacts
+            .iter()
+            .map(|artifact| artifact.id.as_str())
+            .collect::<Vec<_>>(),
+        ["util-1.jar", "tool"]
+    );
+    assert_eq!(kept_catalogue.libraries.len(), 1);
+    let error = crate::without_assets(&plan, &catalogue, &["lib/absent.jar".to_owned()]).unwrap_err();
+    assert_eq!(
+        format!("{error:#}"),
+        r#"plugin "example": the excluded asset "lib/absent.jar" is no asset of the plan"#
+    );
+}

@@ -609,6 +609,46 @@ def _check_chain_shape(chain, component_visibility = ["//visibility:public"]):
     if visibility != component_visibility:
         fail("chain %s declares %s_component with the visibility %s; expected %s" % (chain, chain, visibility, component_visibility))
 
+def _split_part_test_impl(ctx):
+    """One part of a split remainder: its packer action names the part and the descriptor assets, and writes only its
+    own file assets. The neutral part reads no descriptor and writes no asset rows."""
+    env = analysistest.begin(ctx)
+    packs = [action for action in analysistest.target_actions(env) if action.mnemonic == "PackDevPluginRemainder"]
+    asserts.equals(env, 1, len(packs))
+    argv = packs[0].argv
+    asserts.true(env, "--part=" + ctx.attr.part in argv, str(argv))
+    asserts.true(env, "--descriptor-asset=lib/test.jar" in argv, str(argv))
+    written = sorted([file.path.split(".plugin/", 1)[1] for file in packs[0].outputs.to_list() if ".plugin/" in file.path])
+    asserts.equals(env, ctx.attr.files, written)
+    asserts.equals(env, ctx.attr.part == "descriptor", len([argument for argument in argv if argument.startswith("--classpath-descriptor=")]) == 1)
+    asserts.equals(env, ctx.attr.part == "descriptor", len([argument for argument in argv if argument.startswith("--assets=")]) == 1)
+    return analysistest.end(env)
+
+_split_part_test = analysistest.make(
+    _split_part_test_impl,
+    config_settings = _PRODUCT_CONFIG,
+    attrs = {
+        "part": attr.string(mandatory = True),
+        "files": attr.string_list(mandatory = True, doc = "The file assets the part writes, below the plugin directory."),
+    },
+)
+
+def _split_component_test_impl(ctx):
+    """The component of a split remainder names the neutral part as `remainder` and the other part as
+    `descriptorRemainder`, and places the files of both."""
+    env = analysistest.begin(ctx)
+    target = analysistest.target_under_test(env)
+    specs = [action for action in analysistest.target_actions(env) if [file for file in action.outputs.to_list() if file.basename.endswith(".collection.json")]]
+    asserts.equals(env, 1, len(specs))
+    spec = json.decode(specs[0].content)
+    asserts.true(env, spec["remainder"]["directory"].endswith("_neutral_remainder.plugin"), spec["remainder"]["directory"])
+    asserts.true(env, spec["descriptorRemainder"]["directory"].endswith("_remainder.plugin"), spec["descriptorRemainder"]["directory"])
+    placed = sorted([file.path.split(".plugin/", 1)[1] for file in target[IntellijDevFragmentInfo].payload.to_list() if ".plugin/" in file.path])
+    asserts.equals(env, ["lib/other.jar", "lib/test.jar"], placed)
+    return analysistest.end(env)
+
+_split_component_test = analysistest.make(_split_component_test_impl, config_settings = _PRODUCT_CONFIG)
+
 def _plan(variant, destination):
     """The plan file of a fixture: one jar packed from a layout-assets operation over the raw input. An analysis test
     runs no action, so the packer never reads it. The content states what the chain would pack."""
@@ -1392,6 +1432,29 @@ def dev_plugin_remainder_test_suite(name):
         remainder = ":" + plan_chain + "_remainder",
     )
 
+    # A split remainder: the jar of the main module reads the descriptor, so the chain packs every other asset in a
+    # neutral part. The descriptor part packs the main jar and writes the rows and the record.
+    split_chain = name + "_split_chain"
+    dev_dist_complex_plugin_variant(
+        name = split_chain,
+        projection = ":" + plan_file,
+        execution_version = 1,
+        descriptor = ":" + normal_descriptor,
+        plugin_directory = "plugins/test",
+        component_name = "plugin-test",
+        target_platform = "linux_x64",
+        resource_inputs = {
+            ":" + normal_descriptor: "descriptor",
+            ":" + raw: "raw",
+        },
+        remainder_files = {"lib/test.jar": ["plugin-test"], "lib/other.jar": []},
+        tags = ["manual"],
+    )
+    split_tests = [split_chain + "_neutral_test", split_chain + "_descriptor_test", split_chain + "_component_test"]
+    _split_part_test(name = split_tests[0], target_under_test = ":" + split_chain + "_neutral_remainder", part = "neutral", files = ["lib/other.jar"])
+    _split_part_test(name = split_tests[1], target_under_test = ":" + split_chain + "_remainder", part = "descriptor", files = ["lib/test.jar"])
+    _split_component_test(name = split_tests[2], target_under_test = ":" + split_chain + "_component")
+
     # The derived form: one call, one chain per platform, the plan label `<main module>.<platform>.dev-plan.json` in
     # the package of the call and the descriptor entry derived, and the platform token substituted in a label.
     # `platform_plans` states that the call keeps a plan file per platform.
@@ -1689,6 +1752,7 @@ def dev_plugin_remainder_test_suite(name):
             plan_chain_graph_test,
             plan_chain_remainder_test,
             plan_chain_component_test,
+        ] + split_tests + [
             plan_home_test,
             archive_chain_test,
         ] + derived_tests + folded_tests + class_tests + refused_graph_tests,

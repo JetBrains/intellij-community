@@ -9,7 +9,8 @@ The crate depends on `anyhow`, `distpath`, `serde` and `serde_json` only. Every 
 `plan` and `Execution` are not here. They belong to the `pluginpack` crate. `validate_assets` and `validate_link_graph`
 are in `planfile::validate`, because the packer and the collector both apply them.
 
-Rustdoc states each public item: the plan file types, `read`, `derive` and `omitted_assets` at the crate root, and the
+Rustdoc states each public item: the plan file types, `read`, `derive`, `omitted_assets`, `descriptor_assets` and
+`without_assets` at the crate root, and the
 modules `contract`, `validate`, `json` and `classpath`.
 
 ## The subset rule

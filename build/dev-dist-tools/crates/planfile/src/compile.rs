@@ -90,6 +90,96 @@ pub fn derive(
     })
 }
 
+/// The plan file without the assets of `excluded`, by their destinations, and without the operations that only they
+/// consume, with the catalogue of its remaining inputs. The neutral part of a split remainder derives this plan for
+/// [`descriptor_assets`], so its catalogue needs no descriptor. The asset rows and the classpath record of such a plan are
+/// not the ones of the plugin.
+pub fn without_assets(file: &PlanFile, catalogue: &Catalogue, excluded: &[String]) -> Result<(PlanFile, Catalogue)> {
+    for destination in excluded {
+        if !file.assets.iter().any(|asset| asset.destination == *destination) {
+            bail!(
+                "plugin {:?}: the excluded asset {destination:?} is no asset of the plan",
+                file.plugin
+            );
+        }
+    }
+    let assets: Vec<Asset> = file
+        .assets
+        .iter()
+        .filter(|asset| !excluded.contains(&asset.destination))
+        .cloned()
+        .collect();
+    let operations: Vec<Operation> = file
+        .operations
+        .iter()
+        .filter(|operation| assets.iter().any(|asset| asset.inputs.contains(&operation.output)))
+        .cloned()
+        .collect();
+    let mut inputs: HashSet<&str> = assets.iter().flat_map(|asset| asset.inputs.iter().map(String::as_str)).collect();
+    inputs.extend(
+        operations
+            .iter()
+            .flat_map(|operation| operation.inputs.iter().map(|reference| reference.artifact.as_str())),
+    );
+    let libraries: Vec<Library> = catalogue
+        .libraries
+        .iter()
+        .filter(|library| inputs.contains(library.id.as_str()))
+        .cloned()
+        .collect();
+    let mut kept: HashSet<&str> = inputs.clone();
+    kept.extend(
+        libraries
+            .iter()
+            .flat_map(|library| library.files.iter().map(|reference| reference.artifact.as_str())),
+    );
+    let artifacts = catalogue
+        .artifacts
+        .iter()
+        .filter(|artifact| kept.contains(artifact.id.as_str()))
+        .cloned()
+        .collect();
+    let plan = PlanFile {
+        assets,
+        operations,
+        ..file.clone()
+    };
+    Ok((
+        plan,
+        Catalogue {
+            version: catalogue.version,
+            artifacts,
+            libraries,
+        },
+    ))
+}
+
+/// The prefix of the catalogue artifact of a produced descriptor: `descriptor:<main module>`.
+pub const DESCRIPTOR_INPUT_PREFIX: &str = "descriptor:";
+
+/// The destinations of the assets that read a produced descriptor, in plan order: an asset with a `descriptor:` input,
+/// directly or through a preparation operation. Only these assets depend on the stamp class of the chain.
+pub fn descriptor_assets(file: &PlanFile) -> Vec<&str> {
+    let reads_descriptor = |input: &str| {
+        input.starts_with(DESCRIPTOR_INPUT_PREFIX)
+            || file
+                .operations
+                .iter()
+                .find(|operation| operation.id == input)
+                .is_some_and(|operation| {
+                    operation
+                        .inputs
+                        .iter()
+                        .any(|reference| reference.artifact.starts_with(DESCRIPTOR_INPUT_PREFIX))
+                })
+    };
+    file.assets
+        .iter()
+        .filter(|asset| asset.inputs.iter().any(|input| reads_descriptor(input)))
+        .map(|asset| asset.destination.as_str())
+        .collect()
+}
+
 /// The modules of one asset: the `module` sources of its recipe and the module of a reused native tree. A library jar,
 /// a file copy, a layout tree and a prepared source have none.
 fn asset_modules(asset: &Asset) -> Vec<&str> {
