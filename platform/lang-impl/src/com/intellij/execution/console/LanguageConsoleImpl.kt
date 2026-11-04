@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
@@ -116,20 +117,14 @@ open class LanguageConsoleImpl(private val myHelper: Helper) : ConsoleViewImpl(
         text = inputEditor.document.getText(textRange)
         highlighter = inputEditor.highlighter
       }
-      val syntax =
-        if (highlighter is LexerEditorHighlighter) highlighter.syntaxHighlighter else null
+      val syntax = (highlighter as? LexerEditorHighlighter)?.syntaxHighlighter ?: PlainSyntaxHighlighter()
       val consoleImpl = console as LanguageConsoleImpl
       consoleImpl.doAddPromptToHistory()
-      if (syntax != null) {
-        ConsoleViewUtil.printWithHighlighting(console, text, syntax) {
-          val identPrompt = consoleImpl.consoleExecutionEditor.consolePromptDecorator.indentPrompt
-          if (StringUtil.isNotEmpty(identPrompt)) {
-            consoleImpl.addPromptToHistoryImpl(identPrompt)
-          }
+      ConsoleViewUtil.printWithHighlighting(console, text, syntax) {
+        val identPrompt = consoleImpl.consoleExecutionEditor.consolePromptDecorator.indentPrompt
+        if (StringUtil.isNotEmpty(identPrompt)) {
+          consoleImpl.addPromptToHistoryImpl(identPrompt)
         }
-      }
-      else {
-        console.print(text, ConsoleViewContentType.USER_INPUT)
       }
       console.print("\n", ConsoleViewContentType.NORMAL_OUTPUT)
       return text
