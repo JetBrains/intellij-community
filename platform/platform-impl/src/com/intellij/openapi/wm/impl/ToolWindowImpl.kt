@@ -132,7 +132,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
   private val parentDisposable: Disposable,
   windowInfo: WindowInfo,
   contentFactory: ToolWindowFactory?,
-  private var isAvailable: Boolean = true,
+  isAvailable: Boolean = true,
   private var stripeTitleProvider: Supplier<@NlsContexts.TabTitle String>,
   /**
    * The tool window belongs to a frame guest, and the tool window of the frame owner with the same id presents it.
@@ -142,6 +142,16 @@ private val LOG = logger<ToolWindowManagerImpl>()
   /** The factory of the tool window has the marker `MultiProjectToolWindowFactory`: the tool window presents every project itself. */
   internal val isMultiProject: Boolean = false,
 ) : ToolWindowEx {
+  /** The availability the owner asked for, see [setAvailable]; the tool window is available when nothing vetoes it, see [isDisabledByTech]. */
+  private var isAvailableRequested: Boolean = isAvailable
+
+  /**
+   * Whether the project disabled a tech the tool window needs, see [com.intellij.openapi.extensions.TechnologyFilter].
+   *
+   * The instance and the content of the ToolWindow is preserved when its tech is disabled, because many toolwindow factories are
+   * initialized once and break when they are asked a second time for the content for the same Project.
+   */
+  private var isDisabledByTech = false
   private val toolWindowClientId = ClientId.current
   private val contentFactory: AtomicReference<ToolWindowFactory?> = AtomicReference(contentFactory)
 
@@ -199,9 +209,12 @@ private val LOG = logger<ToolWindowManagerImpl>()
   internal var hasFrameGuestEntry: Boolean = false
     private set
 
-  /** The available state that the code of the project of this tool window asked for, see [setAvailable]. */
+  /**
+   * The available state that the code of the project of this tool window asked for, see [setAvailable], minus the tech veto,
+   * see [isDisabledByTech]. An entry of a frame guest does not count, see [hasFrameGuestEntry].
+   */
   internal val isOwnAvailable: Boolean
-    get() = isAvailable
+    get() = isAvailableRequested && !isDisabledByTech
 
   /**
    * The project of the data context of this tool window, or `null`.
@@ -676,7 +689,7 @@ private val LOG = logger<ToolWindowManagerImpl>()
   }
 
   override fun setAvailable(value: Boolean) {
-    if (isAvailable == value) {
+    if (isAvailableRequested == value) {
       return
     }
 
@@ -688,10 +701,29 @@ private val LOG = logger<ToolWindowManagerImpl>()
     toolWindowManager.assertIsEdt()
 
     val wasAvailable = isAvailable()
-    isAvailable = value
+    isAvailableRequested = value
     availabilityChanged(wasAvailable)
+
     if (!isPresented) {
       // the frame owner has an entry in the project selector while it makes its tool window available
+      toolWindowManager.presentation.availabilityChanged(this)
+    }
+  }
+
+  /**
+   * Vetoes or restores the availability because the project disabled or enabled a tech the tool window needs, see [isDisabledByTech].
+   * The owner's own [setAvailable] calls are remembered while the veto lasts and take effect when it is lifted.
+   */
+  internal fun setDisabledByTech(disabled: Boolean) {
+    if (isDisabledByTech == disabled) {
+      return
+    }
+    val wasAvailable = isAvailable()
+    isDisabledByTech = disabled
+    availabilityChanged(wasAvailable)
+
+    if (!isPresented) {
+      // the frame owner has an entry in the project selector only while its tech is enabled
       toolWindowManager.presentation.availabilityChanged(this)
     }
   }
@@ -750,8 +782,8 @@ private val LOG = logger<ToolWindowManagerImpl>()
     ContentManagerWatcher.watchContentManager(this, contentManager)
   }
 
-  /** The code of the project made the tool window available, or a frame guest has an entry in its project selector. */
-  override fun isAvailable(): Boolean = isAvailable || hasFrameGuestEntry
+  /** The availability the owner asked for, minus the tech veto, see [isDisabledByTech]. */
+  override fun isAvailable(): Boolean = isOwnAvailable || hasFrameGuestEntry
 
   override fun getComponent(): JComponent {
     if (toolWindowManager.project.isDisposed) {

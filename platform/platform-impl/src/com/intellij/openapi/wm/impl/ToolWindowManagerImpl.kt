@@ -30,6 +30,7 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.TechnologyFilter
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
@@ -724,6 +725,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     withContext(Dispatchers.EDT) {
+      if (idToEntry.containsKey(bean.id) || !TechnologyFilter.getInstance().isApplicable(bean.pluginDescriptor, project)) {
+        return@withContext
+      }
+
       // always add to the default tool window pane
       @Suppress("DEPRECATION")
       val task = RegisterToolWindowTaskData(

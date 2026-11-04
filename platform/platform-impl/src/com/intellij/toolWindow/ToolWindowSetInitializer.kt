@@ -18,6 +18,8 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.TechnologyAwareExtensionPointName
+import com.intellij.openapi.extensions.TechnologyFilter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.project.DumbService
@@ -36,6 +38,7 @@ import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.IdeFrameGuests
+import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerAppLevelHelper
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.openapi.wm.impl.ToolWindowManagerPresentation
@@ -69,6 +72,9 @@ import kotlin.time.Duration.Companion.seconds
 private val LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.ToolWindowManagerImpl")
 
 private val DEFERRED_REGISTRATION_TIMEOUT = 2.seconds
+
+/** The tool window extensions applicable to a project: the ones whose techs the project has enabled. */
+private val TECH_AWARE_TOOL_WINDOW_EP = TechnologyAwareExtensionPointName(ToolWindowEP.EP_NAME)
 
 private inline fun Logger.debug(project: Project, lazyMessage: (project: String) -> @NonNls String) {
   if (isDebugEnabled) {
@@ -467,15 +473,7 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
 
 private fun registerEpListeners(manager: ToolWindowManagerImpl) {
   ToolWindowEP.EP_NAME.addExtensionPointListener(manager.coroutineScope, object : ExtensionPointListener<ToolWindowEP> {
-    override fun extensionAdded(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
-      if (manager.isToolWindowRegistrationSuppressed(extension.id)) {
-        return
-      }
-      manager.coroutineScope.launch {
-        manager.initToolWindow(extension, pluginDescriptor)
-      }
-    }
-
+    // a removed extension unregisters its tool window right away, while its plugin is still loaded
     override fun extensionRemoved(extension: ToolWindowEP, pluginDescriptor: PluginDescriptor) {
       if (manager.isToolWindowRegistrationSuppressed(extension.id)) {
         return
@@ -483,6 +481,25 @@ private fun registerEpListeners(manager: ToolWindowManagerImpl) {
       manager.doUnregisterToolWindow(extension.id)
     }
   })
+
+  TECH_AWARE_TOOL_WINDOW_EP.addChangeListener(manager.coroutineScope) { _ ->
+    for (item in ToolWindowEP.EP_NAME.filterableLazySequence()) {
+      val bean = item.instance ?: continue
+      if (manager.isToolWindowRegistrationSuppressed(bean.id)) {
+        continue
+      }
+      val isApplicable = TechnologyFilter.getInstance().isApplicable(bean.pluginDescriptor, manager.project)
+      val registered = manager.getToolWindow(bean.id) as? ToolWindowImpl
+      if (registered != null) {
+        registered.setDisabledByTech(!isApplicable)
+      }
+      else if (isApplicable) {
+        manager.coroutineScope.launch {
+          manager.initToolWindow(bean, item.pluginDescriptor)
+        }
+      }
+    }
+  }
 }
 
 
@@ -686,7 +703,7 @@ internal suspend fun computeToolWindowBeans(
   val suppressedToolWindowIds = serviceAsync<ProjectFrameToolWindowLayoutService>().getSuppressedToolWindowIds(profileId)
   val factoryScope = ToolWindowFactoryScope.of(project)
   return coroutineScope {
-    ToolWindowEP.EP_NAME.filterableLazySequence().map { item ->
+    TECH_AWARE_TOOL_WINDOW_EP.filterableLazySequence(project).map { item ->
       async {
         try {
           val bean = item.instance ?: return@async null

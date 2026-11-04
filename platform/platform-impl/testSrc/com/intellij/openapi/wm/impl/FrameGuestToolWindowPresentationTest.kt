@@ -458,6 +458,41 @@ internal class FrameGuestToolWindowPresentationTest {
   }
 
   @Test
+  fun `a tool window of a frame guest whose tech is disabled has no entry`() = onEdt {
+    val managers = createManagers()
+    val firstToolWindow = managers.register(first)
+    managers.register(second)
+
+    firstToolWindow.setDisabledByTech(true)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(second)
+
+    firstToolWindow.setDisabledByTech(false)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first, second)
+  }
+
+  @Test
+  fun `the frame owner whose tech is disabled has no entry while a frame guest keeps the tool window`() = onEdt {
+    val managers = createManagers()
+    val firstToolWindow = managers.registerFromCode(first)
+    addContent(firstToolWindow)
+    firstToolWindow.show()
+    val presenting = managers.owner.getToolWindow(ID) as ToolWindowImpl
+    addContent(presenting)
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(owner, first)
+
+    presenting.setDisabledByTech(true)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(first)
+    assertThat(presenting.isAvailable).describedAs("the entry of the frame guest keeps the tool window").isTrue()
+
+    presenting.setDisabledByTech(false)
+
+    assertThat(managers.owner.presentation.entriesOf(ID)).containsExactly(owner, first)
+  }
+
+  @Test
   fun `the entries follow the order that the frame gives its projects`() = onEdt {
     // as a workspace that lists its projects in an order of its own: the frame guests joined as first, second
     var order = listOf(second, owner, first)
