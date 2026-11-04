@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.livepreview
 
+import com.intellij.ide.rpc.awaitWithLocalFallback
 import com.intellij.openapi.editor.impl.EditorId
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -23,7 +24,9 @@ interface MarkdownLivePreviewRemoteApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): MarkdownLivePreviewRemoteApi {
-      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<MarkdownLivePreviewRemoteApi>())
+      return LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<MarkdownLivePreviewRemoteApi>()) {
+        MarkdownLivePreviewRemoteApiImpl()
+      }
     }
   }
 }

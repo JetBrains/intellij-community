@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.markdown.backend.editor.livepreview
+package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
@@ -18,10 +18,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.livepreview.LoadedImage
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownImageLoader
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
 import org.intellij.plugins.markdown.ui.preview.MarkdownImageWatcher
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
 import java.util.concurrent.ConcurrentHashMap
@@ -112,7 +108,7 @@ private fun MarkdownLivePreviewSpecSet.imageDestinations(): Set<String> {
 }
 
 private fun LoadedImage.toImageSource(): MarkdownLivePreviewSpec.ImageSource? {
-  val (width, height) = size ?: return null
+  val [width, height] = size ?: return null
   return MarkdownLivePreviewSpec.ImageSource(file.modificationStamp, width, height)
 }
 

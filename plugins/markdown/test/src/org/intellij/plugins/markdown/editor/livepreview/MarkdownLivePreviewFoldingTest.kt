@@ -3,14 +3,13 @@ package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
+import com.intellij.markdown.frontend.editor.livepreview.CodeFenceRenderingService
+import com.intellij.markdown.frontend.editor.livepreview.CodeFenceView
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownBlockQuotePainter
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewCheckboxInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewImageInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewListIndentInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
-import com.intellij.markdown.frontend.editor.livepreview.CodeFenceRenderingService
-import com.intellij.markdown.frontend.editor.livepreview.CodeFenceView
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction

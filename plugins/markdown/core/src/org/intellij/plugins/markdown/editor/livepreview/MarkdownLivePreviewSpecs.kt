@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.markdown.backend.editor.livepreview
+package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -13,12 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewDocumentVersion
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRange
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewUtils
-import org.intellij.plugins.markdown.editor.livepreview.toMarkdownLivePreviewRange
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
@@ -470,7 +464,7 @@ private fun String.isLocalDestination(): Boolean {
   if (isBlank() || startsWith("//")) return false
   val colon = indexOf(':')
   if (colon <= 0) return true
-  val hasScheme = take(colon).withIndex().all { (index, char) ->
+  val hasScheme = take(colon).withIndex().all { [index, char] ->
     if (index == 0) char.isLetter() else char.isLetterOrDigit() || char == '+' || char == '.' || char == '-'
   }
   return !hasScheme || startsWith("file:", ignoreCase = true)

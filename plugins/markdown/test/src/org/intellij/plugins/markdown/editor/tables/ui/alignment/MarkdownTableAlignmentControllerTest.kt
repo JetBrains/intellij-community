@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.tables.ui.alignment
 
-import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.impl.view.FontLayoutService
@@ -9,6 +8,7 @@ import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertNothingLogged
+import org.intellij.plugins.markdown.editor.livepreview.computeLivePreviewSpecs
 import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
 import org.intellij.plugins.markdown.publishSpecsAndWait
 

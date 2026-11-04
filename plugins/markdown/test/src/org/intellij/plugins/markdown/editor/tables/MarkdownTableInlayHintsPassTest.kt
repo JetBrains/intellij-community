@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.tables
 
-import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Inlay
@@ -15,6 +14,7 @@ import com.intellij.testFramework.assertNothingLogged
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil.paintInlay
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import org.intellij.plugins.markdown.editor.livepreview.computeLivePreviewSpecs
 import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable

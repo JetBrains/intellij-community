@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.markdown.backend.editor.fence
+package org.intellij.plugins.markdown.editor.fence
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeHighlighting.Pass
@@ -17,11 +17,10 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
-import org.intellij.plugins.markdown.editor.fence.MarkdownCodeFenceBackgroundRenderer
-import org.intellij.plugins.markdown.editor.fence.MarkdownCodeSpanBackgroundRenderer
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
@@ -49,6 +48,7 @@ private val CODE_FENCE_BACKGROUND_HIGHLIGHTERS = Key.create<List<RangeHighlighte
  * color of [MarkdownHighlighterColors.CODE_SPAN]. The text attributes of a fence and of a code span carry
  * no background, so only the rounded rectangle paints one.
  */
+@Suppress("SplitModeApiUsage")
 internal class CodeFenceBackgroundHighlightingPassFactory :
   TextEditorHighlightingPassFactoryRegistrar, TextEditorHighlightingPassFactory, DumbAware {
   override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
@@ -59,10 +59,12 @@ internal class CodeFenceBackgroundHighlightingPassFactory :
 
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (!file.language.isMarkdownLanguage()) return null
+    // A split-mode frontend gets these highlighters from the backend.
+    if (IdeProductMode.isFrontend && !IdeProductMode.isLight) return null
     return CodeFenceBackgroundPass(editor, file)
   }
 
-  private class CodeFenceBackgroundPass(editor: Editor, file: PsiFile) : EditorBoundHighlightingPass(editor, file, false) {
+  private class CodeFenceBackgroundPass(editor: Editor, file: PsiFile) : EditorBoundHighlightingPass(editor, file, false), DumbAware {
     private var elements = emptyList<Pair<TextAttributesKey, TextRange>>()
 
     override fun doCollectInformation(progress: ProgressIndicator) {

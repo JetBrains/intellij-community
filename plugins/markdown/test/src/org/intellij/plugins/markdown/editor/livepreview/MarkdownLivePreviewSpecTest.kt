@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.ide.rpc.DocumentPatchVersion
-import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownBundle

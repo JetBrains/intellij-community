@@ -107,6 +107,10 @@
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.LineNumberPathReferenceProvider"/>
     <!--suppress SplitModeXmlApiUsage -->
     <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.headers.HeaderAnchorPathReferenceProvider"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <highlightingPassFactory implementation="org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewPassFactory"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <highlightingPassFactory implementation="org.intellij.plugins.markdown.editor.fence.CodeFenceBackgroundHighlightingPassFactory"/>
     <registryKey key="markdown.live.preview.enabled"
                  defaultValue="true"
                  description="Shows the Markdown live preview layout."/>

@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.markdown.backend.editor.livepreview
+package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeHighlighting.Pass
@@ -13,16 +13,16 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
-import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
-import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 
 /** Recomputes live-preview specs when the Markdown PSI changes. */
+@Suppress("SplitModeApiUsage")
 internal class MarkdownLivePreviewPassFactory:
   TextEditorHighlightingPassFactoryRegistrar,
   TextEditorHighlightingPassFactory,
@@ -33,6 +33,8 @@ internal class MarkdownLivePreviewPassFactory:
   }
 
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+    // A split-mode frontend gets the specs from the backend.
+    if (IdeProductMode.isFrontend && !IdeProductMode.isLight) return null
     if (!psiFile.language.isMarkdownLanguage()) return null
     val shouldNotCreate = when {
       editor.computesLivePreview() -> editor.hasCurrentLivePreviewSpecs(psiFile.project)
