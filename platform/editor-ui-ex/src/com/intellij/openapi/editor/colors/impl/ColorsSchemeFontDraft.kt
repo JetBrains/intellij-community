@@ -40,7 +40,7 @@ class ColorsSchemeFontDraft(
   /**
    * Gives the scheme its own editor font, a copy of [appFontPreferences], if the scheme uses the application font.
    */
-  fun ensureOwnFont() {
+  private fun ensureOwnFont() {
     if (current.useAppFontPreferencesInEditor()) {
       current = current
         .withFontPreferences(copyOf(appFontPreferences))
@@ -51,7 +51,7 @@ class ColorsSchemeFontDraft(
   /**
    * Gives the scheme its own console font, a copy of the editor font, if the console uses the editor font.
    */
-  fun ensureOwnConsoleFont() {
+  private fun ensureOwnConsoleFont() {
     if (current.useEditorFontPreferencesInConsole()) {
       current = current
         .withConsoleFontPreferences(copyOf(editorFontPreferences()))
@@ -73,6 +73,13 @@ class ColorsSchemeFontDraft(
   fun changeConsoleFont(changes: Consumer<in ModifiableFontPreferences>) {
     ensureOwnConsoleFont()
     current = current.withConsoleFontPreferences(current.consoleFontPreferences().withChanges(changes))
+  }
+
+  /**
+   * Copies [preferences] into the own editor font of the scheme.
+   */
+  fun setFontPreferences(preferences: FontPreferences) {
+    changeFont { draft -> preferences.copyTo(draft) }
   }
 
   /**
@@ -99,6 +106,13 @@ class ColorsSchemeFontDraft(
 
   fun setUseLigatures(useLigatures: Boolean) {
     changeFont { draft -> draft.setUseLigatures(useLigatures) }
+  }
+
+  /**
+   * Copies [preferences] into the own console font of the scheme.
+   */
+  fun setConsoleFontPreferences(preferences: FontPreferences) {
+    changeConsoleFont { draft -> preferences.copyTo(draft) }
   }
 
   /**

@@ -1206,6 +1206,45 @@ public class EditorColorsSchemeImplTest {
   }
 
   @Test
+  public void testReaderOnOtherThreadSeesOnlyTheSetFontPreferences() throws InterruptedException {
+    FontPreferencesImpl ownFont = new FontPreferencesImpl();
+    ownFont.register(FontPreferences.DEFAULT_FONT_NAME, 25);
+    AtomicBoolean stop = new AtomicBoolean();
+    AtomicInteger halfDone = new AtomicInteger();
+    AtomicReference<Throwable> readerFailure = new AtomicReference<>();
+    Thread reader = new Thread(() -> {
+      try {
+        while (!stop.get()) {
+          FontPreferences preferences = myScheme.getFontPreferences();
+          if (preferences instanceof DelegatingFontPreferences) {
+            continue;
+          }
+          FontPreferences current = preferences.getSnapshot();
+          if (current.getSize2D(current.getFontFamily()) != 25f) {
+            halfDone.incrementAndGet();
+          }
+        }
+      }
+      catch (Throwable e) {
+        readerFailure.set(e);
+      }
+    }, "EditorColorsSchemeImplTest font preferences reader");
+    reader.start();
+    try {
+      for (int i = 0; i < 20_000; i++) {
+        myScheme.setFontPreferences(ownFont);
+        myScheme.setUseAppFontPreferencesInEditor();
+      }
+    }
+    finally {
+      stop.set(true);
+      reader.join();
+    }
+    assertNull(readerFailure.get());
+    assertEquals(0, halfDone.get());
+  }
+
+  @Test
   public void testToStringOfSchemeWithoutName() {
     assertEquals("<unnamed scheme>", myScheme.toString());
     myScheme.setName("Named");

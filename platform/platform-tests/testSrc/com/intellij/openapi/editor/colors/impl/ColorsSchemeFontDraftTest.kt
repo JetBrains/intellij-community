@@ -60,14 +60,29 @@ internal class ColorsSchemeFontDraftTest {
 
   @Test
   fun `a draft without changes gives the start snapshot`() {
-    val start = ColorsSchemeSnapshot.initial()
-    val draft = ColorsSchemeFontDraft(start, appFont())
+    val draft = ColorsSchemeFontDraft(ColorsSchemeSnapshot.initial(), appFont())
     draft.setUseLigatures(false)
     val own = draft.snapshot()
     val again = ColorsSchemeFontDraft(own, appFont())
     again.setUseLigatures(false)
-    again.ensureOwnFont()
+    again.setFontPreferences(own.fontPreferences())
     assertThat(again.snapshot()).isSameAs(own)
+  }
+
+  @Test
+  fun `setFontPreferences copies the values into the own editor font`() {
+    val source = FontPreferencesImpl()
+    source.register(OTHER_FAMILY, 18f)
+    source.lineSpacing = 1.6f
+    source.setUseLigatures(true)
+    val draft = ColorsSchemeFontDraft(ColorsSchemeSnapshot.initial(), appFont())
+    draft.setFontPreferences(source)
+    draft.setConsoleFontPreferences(source)
+    val result = draft.snapshot()
+    assertThat(result.useAppFontPreferencesInEditor()).isFalse()
+    assertThat(result.fontPreferences()).isEqualTo(source.snapshot)
+    assertThat(result.useEditorFontPreferencesInConsole()).isFalse()
+    assertThat(result.consoleFontPreferences()).isEqualTo(source.snapshot)
   }
 
   /**

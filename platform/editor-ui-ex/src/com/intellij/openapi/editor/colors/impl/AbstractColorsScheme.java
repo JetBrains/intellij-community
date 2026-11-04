@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Scheme;
@@ -200,7 +199,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public void setFontPreferences(@NotNull FontPreferences preferences) {
-    preferences.copyTo(ensureEditableFontPreferences());
+    changeFonts(draft -> draft.setFontPreferences(preferences));
   }
 
   @Override
@@ -294,7 +293,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public void setConsoleFontPreferences(@NotNull FontPreferences preferences) {
-    preferences.copyTo(ensureEditableConsoleFontPreferences());
+    changeFonts(draft -> draft.setConsoleFontPreferences(preferences));
   }
 
   @Override
@@ -725,24 +724,6 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
   }
 
   /**
-   * Returns the editor font preferences of this scheme as a modifiable object.
-   * A scheme that uses the application font gets a copy of it as its own editor font first.
-   */
-  private @NotNull ModifiableFontPreferences ensureEditableFontPreferences() {
-    changeFonts(ColorsSchemeFontDraft::ensureOwnFont);
-    return editorFontView;
-  }
-
-  /**
-   * Returns the console font preferences of this scheme as a modifiable object.
-   * A console that uses the editor font gets a copy of it as its own console font first.
-   */
-  private @NotNull ModifiableFontPreferences ensureEditableConsoleFontPreferences() {
-    changeFonts(ColorsSchemeFontDraft::ensureOwnConsoleFont);
-    return consoleFontView;
-  }
-
-  /**
    * Returns a draft that changes the fonts of {@code current}.
    */
   @NotNull ColorsSchemeFontDraft createFontDraft(@NotNull ColorsSchemeSnapshot current) {
@@ -766,6 +747,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
         if (prev.useAppFontPreferencesInEditor() && !next.useAppFontPreferencesInEditor()) {
           logOwnFont(next.fontPreferences());
         }
+        editorFontView.logSizeChangeIfNeeded(fontPreferencesOf(prev), fontPreferencesOf(next));
         return;
       }
     }
@@ -773,7 +755,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   private void logOwnFont(@NotNull FontPreferences preferences) {
     if (LOG.isDebugEnabled()) {
-      String message = "ensureEditableFontPreferences in %s. %s, size: %d".formatted(
+      String message = "The scheme %s gets its own editor font. %s, size: %d".formatted(
         debugSchemeName(),
         preferences,
         preferences.getSize(preferences.getFontFamily())

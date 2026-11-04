@@ -345,7 +345,11 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     dispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
   }
 
-  private void logSizeChangeIfNeeded(@NotNull FontPreferencesSnapshot prev, @NotNull FontPreferencesSnapshot next) {
+  /**
+   * Logs a change of the font size from {@code prev} to {@code next} when these are the font preferences of the global scheme.
+   * The owner of a {@link Storage} calls it for the changes that it makes without these preferences.
+   */
+  void logSizeChangeIfNeeded(@NotNull FontPreferences prev, @NotNull FontPreferences next) {
     if (!LOG.isDebugEnabled()) {
       return;
     }
