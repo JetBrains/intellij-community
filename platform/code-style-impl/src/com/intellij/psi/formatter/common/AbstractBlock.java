@@ -16,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -101,13 +102,26 @@ public abstract class AbstractBlock implements ASTBlock, ExtraRangesProvider {
         PsiFile injected = PsiDocumentManager.getInstance(psi.getProject()).getCachedPsiFile(documentWindow);
         if (injected != null) {
           List<Block> result = new ArrayList<>();
-          DefaultInjectedLanguageBlockBuilder builder = new DefaultInjectedLanguageBlockBuilder(((SettingsAwareBlock)this).getSettings());
+          InjectedLanguageBlockBuilder builder = createInjectedLanguageBlockBuilder(((SettingsAwareBlock)this).getSettings());
           builder.addInjectedBlocks(result, myNode, getWrap(), getAlignment(), getIndent());
           return result;
         }
       }
     }
     return EMPTY;
+  }
+
+  /**
+   * Creates the builder that makes the blocks of an injection inside this block.
+   * <p>
+   * The default builder is {@link MultiFragmentInjectedLanguageBlockBuilder}.
+   * It supports an injection with one or more fragments in the host,
+   * for example, a code fence inside a Markdown blockquote.
+   *
+   * @param settings the code style settings of this block
+   */
+  protected @NotNull InjectedLanguageBlockBuilder createInjectedLanguageBlockBuilder(@NotNull CodeStyleSettings settings) {
+    return new MultiFragmentInjectedLanguageBlockBuilder(settings);
   }
 
   protected abstract List<Block> buildChildren();

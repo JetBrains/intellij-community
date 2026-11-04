@@ -119,6 +119,14 @@ public class DependantSpacingImpl extends SpacingImpl {
   }
 
   /**
+   * Creates a copy of this spacing with other dependent region ranges.
+   * The copy keeps the {@link DependentSpacingRule} of this spacing.
+   */
+  public @NotNull DependantSpacingImpl withDependentRegionRanges(@NotNull List<TextRange> dependencyRanges) {
+    return new DependantSpacingImpl(getMinSpaces(), getMaxSpaces(), dependencyRanges, shouldKeepLineFeeds(), super.getKeepBlankLines(), myRule);
+  }
+
+  /**
    * Allows to answer whether 'contains line feed' status has been changed for the target dependent region during formatting.
    *
    * @return    {@code true} if target 'contains line feed' status has been changed for the target dependent region during formatting;

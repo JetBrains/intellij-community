@@ -24,9 +24,7 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings
  * * Top-level code fences with support of formatting and correct alignment on Enter.
  *
  * * Blockquote/in-list code fences with a formatting model.
- *   But in that case indentation is disabled via [MarkdownEnterHandler]
- *   and formatting is disabled via [MarkdownFormattingBlock].
- *   The reason for it is many problems with injection-based formatting.
+ *   These fences use multiple injection fragments to preserve their container indentation.
  */
 internal open class CodeFenceInjector : MultiHostInjector, DumbAware {
   private val toInject = listOf(MarkdownCodeFence::class.java)

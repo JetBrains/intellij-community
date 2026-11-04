@@ -12,6 +12,8 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
+import com.intellij.psi.formatter.common.InjectedLanguageBlockBuilder
+import com.intellij.psi.formatter.common.MultiFragmentInjectedLanguageBlockBuilder
 import com.intellij.psi.formatter.common.SettingsAwareBlock
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.text.CharArrayUtil
@@ -24,7 +26,6 @@ import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeS
 import org.intellij.plugins.markdown.lang.psi.util.children
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.parents
-import org.intellij.plugins.markdown.util.MarkdownPsiStructureUtil.isTopLevel
 
 private fun ASTNode.isBlockQuoteContinuationMarker(): Boolean = elementType == MarkdownTokenTypes.BLOCK_QUOTE
 
@@ -138,11 +139,13 @@ internal open class MarkdownFormattingBlock(
     return MarkdownEditingAligner.calculateChildAttributes(subBlocks.getOrNull(newChildIndex - 1))
   }
 
-  override fun getSubBlocks(): List<Block?> {
-    //Non top-level codefences cannot be formatted correctly even with correct inject, so -- just ignore it
-    if (MarkdownCodeFenceUtils.isCodeFence(node) && !node.isTopLevel()) return EMPTY
-
-    return super.getSubBlocks()
+  override fun createInjectedLanguageBlockBuilder(settings: CodeStyleSettings): InjectedLanguageBlockBuilder {
+    return if (MarkdownCodeFenceUtils.isCodeFence(node)) {
+      MarkdownInjectedLanguageBlockBuilder(settings)
+    }
+    else {
+      super.createInjectedLanguageBlockBuilder(settings)
+    }
   }
 
   override fun buildChildren(): List<Block> {
@@ -175,5 +178,27 @@ internal open class MarkdownFormattingBlock(
 
   private fun ASTNode.canBeFormatted(): Boolean {
     return parents(withSelf = true).none { it.hasType(MarkdownElementTypes.TABLE_CELL) }
+  }
+}
+
+private class MarkdownInjectedLanguageBlockBuilder(settings: CodeStyleSettings) : MultiFragmentInjectedLanguageBlockBuilder(settings) {
+  override fun createBlockBeforeInjection(
+    node: ASTNode,
+    wrap: Wrap?,
+    alignment: Alignment?,
+    indent: Indent?,
+    range: TextRange
+  ): Block? {
+    return super.createBlockBeforeInjection(node, null, null, indent, range)
+  }
+
+  override fun createBlockAfterInjection(
+    node: ASTNode,
+    wrap: Wrap?,
+    alignment: Alignment?,
+    indent: Indent?,
+    range: TextRange
+  ): Block {
+    return super.createBlockAfterInjection(node, null, null, indent, range)
   }
 }

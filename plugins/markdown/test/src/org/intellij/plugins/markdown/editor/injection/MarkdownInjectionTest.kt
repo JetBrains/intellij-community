@@ -6,8 +6,12 @@ import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.formatting.Block
+import com.intellij.formatting.DependantSpacingImpl
+import com.intellij.formatting.FormattingContext
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.Language
+import com.intellij.lang.LanguageFormatting
 import com.intellij.lang.html.HTMLLanguage
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.command.WriteCommandAction
@@ -384,6 +388,174 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
       """.trimIndent(),
       file.text,
     )
+  }
+
+  fun `test nested fence uses injected formatter`() {
+    val text = """
+      - item
+
+            ```java
+            class C {
+            void test() {
+            int value=1;
+            }
+            }
+            ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+    }
+
+    assertEquals(
+      """
+        - item
+
+              ```java
+              class C {
+                  void test() {
+                      int value = 1;
+                  }
+              }
+              ```
+      """.trimIndent(),
+      file.text,
+    )
+  }
+
+  fun `test dependent spacing in nested fence uses host ranges`() {
+    val text = """
+      - item
+
+            ```java
+            class C {
+            void test() { int value=1; }
+            }
+            ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    val injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, text.indexOf("class C"))!!
+    val injectedFile = injectedElement.containingFile
+    CodeStyle.doWithTemporarySettings(project, CodeStyle.getSettings(project)) { settings ->
+      val javaSettings = settings.getCommonSettings(Language.findLanguageByID("JAVA")!!)
+      javaSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+      javaSettings.KEEP_LINE_BREAKS = true
+
+      val injectedModel = LanguageFormatting.INSTANCE.forContext(injectedFile)
+        ?.createModel(FormattingContext.create(injectedFile, settings))
+        ?: error("Java formatter is not available")
+      val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
+      val expectedHostRanges = injectedModel.rootBlock.getDependentSpacings()
+        .flatMap { it.dependentRegionRanges }
+        .map { injectedLanguageManager.injectedToHost(injectedFile, it) }
+        .toSet()
+      assertTrue(expectedHostRanges.isNotEmpty())
+
+      val model = LanguageFormatting.INSTANCE.forContext(file)
+        ?.createModel(FormattingContext.create(file, settings))
+        ?: error("Markdown formatter is not available")
+      val actualHostRanges = model.rootBlock.getDependentSpacings()
+        .flatMap { it.dependentRegionRanges }
+        .toSet()
+      assertEquals(expectedHostRanges, actualHostRanges)
+      assertTrue(actualHostRanges.all { codeFence.textRange.contains(it) })
+    }
+  }
+
+  fun `test nested fence in blockquote partially formats content`() {
+    val text = """
+      > ```java
+      > class C {
+      >
+      > void test() {
+      > int value=1;
+      > }
+      > }
+      > ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+    }
+
+    assertEquals(
+      """
+        > ```java
+        > class C {
+        >
+        > void test() {
+        > int value = 1;
+        > }
+        > }
+        > ```
+      """.trimIndent(),
+      file.text,
+    )
+  }
+
+  fun `test top-level indented fence with blank line formats content with multiple fragments`() {
+    val text = """
+      |    ```java
+      |    class C {
+      |
+      |    void test() {
+      |    int value=1;
+      |    }
+      |    }
+      |    ```
+    """.trimMargin()
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    assertSame(file, codeFence.parent)
+    val injectedFiles = InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(codeFence)
+    assertNotNull(injectedFiles)
+    val injectedFile = injectedFiles!!.first().first.containingFile
+    val injectedDocument = PsiDocumentManager.getInstance(project).getDocument(injectedFile) as DocumentWindow
+    assertTrue(injectedDocument.hostRanges.size > 1)
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+    }
+
+    assertEquals(
+      """
+        |    ```java
+        |    class C {
+        |
+        |        void test() {
+        |            int value = 1;
+        |        }
+        |    }
+        |    ```
+      """.trimMargin(),
+      file.text,
+    )
+  }
+
+  fun `test nested fence without injection remains unformatted`() {
+    val text = """
+      - item
+
+            ```
+            class C{
+            }
+            ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    val codeFence = PsiTreeUtil.findChildOfType(file, MarkdownCodeFence::class.java)!!
+    assertNull(InjectedLanguageManager.getInstance(project).getInjectedPsiFiles(codeFence))
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+    }
+
+    assertEquals(text, file.text)
   }
 
   fun `test fence does not ignore line separators`() {
@@ -1397,5 +1569,15 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
     assertEquals(
       shouldHaveInjection, !file.findElementAt(editor.caretModel.offset)!!.language.isKindOf(MarkdownLanguage.INSTANCE)
     )
+  }
+
+  private fun Block.getDependentSpacings(): List<DependantSpacingImpl> {
+    val children = subBlocks
+    val directSpacings = children.zipWithNext().mapNotNull { (child1, child2) ->
+      val spacing = getSpacing(child1, child2)
+      if (spacing !is DependantSpacingImpl) return@mapNotNull null
+      spacing
+    }
+    return directSpacings + children.flatMap { it.getDependentSpacings() }
   }
 }

@@ -271,6 +271,7 @@ a:com.intellij.psi.formatter.common.AbstractBlock
 - pf:myWrap:com.intellij.formatting.Wrap
 - p:<init>(com.intellij.lang.ASTNode,com.intellij.formatting.Wrap,com.intellij.formatting.Alignment):V
 - pa:buildChildren():java.util.List
+- p:createInjectedLanguageBlockBuilder(com.intellij.psi.codeStyle.CodeStyleSettings):com.intellij.psi.formatter.common.InjectedLanguageBlockBuilder
 - getAlignment():com.intellij.formatting.Alignment
 - getChildAttributes(I):com.intellij.formatting.ChildAttributes
 - p:getChildIndent():com.intellij.formatting.Indent

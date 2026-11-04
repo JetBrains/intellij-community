@@ -6,7 +6,6 @@ import com.intellij.formatting.Block;
 import com.intellij.formatting.BlockEx;
 import com.intellij.formatting.ChildAttributes;
 import com.intellij.formatting.DependantSpacingImpl;
-import com.intellij.formatting.DependentSpacingRule;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Spacing;
 import com.intellij.formatting.Wrap;
@@ -141,10 +140,7 @@ public class InjectedLanguageBlockWrapper implements BlockEx {
     if (spacing instanceof DependantSpacingImpl hostSpacing && shift != 0) {
       final int finalShift = shift;
       List<TextRange> shiftedRanges = ContainerUtil.map(hostSpacing.getDependentRegionRanges(), range -> range.shiftRight(finalShift));
-      return new DependantSpacingImpl(
-        hostSpacing.getMinSpaces(), hostSpacing.getMaxSpaces(), shiftedRanges,
-        hostSpacing.shouldKeepLineFeeds(), hostSpacing.getKeepBlankLines(), DependentSpacingRule.DEFAULT
-      );
+      return hostSpacing.withDependentRegionRanges(shiftedRanges);
     }
     return spacing;
   }
