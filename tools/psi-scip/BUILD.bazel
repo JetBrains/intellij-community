@@ -48,6 +48,12 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/lang-core",
         "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/lang-impl",
+        "//uast/uast-common:uast",
+        "//java/java-analysis-api:analysis",
+        "//java/java-analysis-impl:analysis-impl",
+        "//java/java-impl:impl",
     ],
 )
 ### auto-generated section `build intellij.tools.psiScip` end

@@ -4,21 +4,26 @@
   <category>Platform Development</category>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
-    <p>Writes a SCIP index of the Java files of a project from PSI resolve. The index is a reference oracle for code
-    search benchmarks. Start it headless with the <code>psiScip</code> command.</p>
+    <p>Writes a SCIP index of the Java files of a project from PSI resolve, and the answer of the unused-declaration
+    analysis for the Java and Kotlin declarations of a project. Both are reference oracles for code search benchmarks.
+    Start them headless with the <code>psiScip</code> and <code>psiUnused</code> commands.</p>
   ]]></description>
 
   <!-- the first content tag gives the plugin its namespace; the namespace makes the internal library modules visible -->
   <content namespace="jetbrains"/>
 
   <dependencies>
+    <module name="intellij.java.analysis"/>
+    <module name="intellij.java.analysis.impl"/>
     <module name="intellij.java.backend"/>
     <module name="intellij.java"/>
     <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
     <module name="intellij.libraries.protobuf"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
     <module name="intellij.platform.backend.observation"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
@@ -26,10 +31,13 @@
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.uast"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <appStarter id="psiScip" implementation="com.intellij.tools.psiScip.PsiScipStarter" internal="true"/>
+    <appStarter id="psiUnused" implementation="com.intellij.tools.psiScip.PsiUnusedStarter" internal="true"/>
   </extensions>
 </idea-plugin>
