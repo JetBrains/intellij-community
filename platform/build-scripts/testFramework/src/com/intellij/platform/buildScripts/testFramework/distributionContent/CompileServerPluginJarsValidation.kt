@@ -16,9 +16,16 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
  *
  * The jar names come from the plugin layout, and regular tests do not see them. This validation reads them from the
  * content report of the packed plugin.
+ *
+ * The validation reads the descriptors from the module output, not from the packed plugin. A layout that patches the
+ * extension out of the packed descriptor thus gets a false failure. [ignoredPlugins] maps the main module of such a
+ * plugin to the reason.
  */
 @Internal
-fun createCompileServerPluginJarsValidation(targetId: String): PackagingTargetValidationSpec = PackagingTargetValidationSpec(
+fun createCompileServerPluginJarsValidation(
+  targetId: String,
+  ignoredPlugins: Map<String, String> = emptyMap(),
+): PackagingTargetValidationSpec = PackagingTargetValidationSpec(
   targetId = targetId,
   name = "compile-server-plugin-jars",
   problemMessage = "a plugin does not contain a jar that its compileServer.plugin extension names",
@@ -27,6 +34,7 @@ fun createCompileServerPluginJarsValidation(targetId: String): PackagingTargetVa
     collectCompileServerPluginJarFailures(
       reports = bundled + nonBundled,
       readDescriptors = { moduleName, isMainModule -> readModuleDescriptors(context.outputProvider, moduleName, isMainModule) },
+      ignoredPlugins = ignoredPlugins,
     )
   },
 )
@@ -36,16 +44,23 @@ fun createCompileServerPluginJarsValidation(targetId: String): PackagingTargetVa
  *
  * [readDescriptors] returns the descriptor files of one module that the plugin packs. The plugins come in main module
  * order. The variants of one plugin for each operating system are checked as one plugin.
+ *
+ * A plugin of [ignoredPlugins] is not reported. An ignored plugin that has no missing jar gives one more failure, so
+ * that the list does not go stale.
  */
 @Internal
 fun collectCompileServerPluginJarFailures(
   reports: List<PluginContentReport>,
   readDescriptors: (moduleName: String, isMainModule: Boolean) -> List<ByteArray>,
+  ignoredPlugins: Map<String, String> = emptyMap(),
 ): List<PackagingCheckFailure> {
-  return reports.groupBy { it.mainModule }.toSortedMap()
-    .map { entry -> checkPlugin(entry.key, entry.value, readDescriptors) }
-    .filter { it.missingJars.isNotEmpty() }
-    .map { it.toFailure() }
+  val checks = reports.groupBy { it.mainModule }.toSortedMap().map { entry -> checkPlugin(entry.key, entry.value, readDescriptors) }
+  val [ignoredChecks, activeChecks] = checks.partition { ignoredPlugins.containsKey(it.mainModule) }
+  val failures = activeChecks.filter { it.missingJars.isNotEmpty() }.map { it.toFailure() }
+  val staleIgnoredPlugins = ignoredChecks
+    .filter { it.missingJars.isEmpty() }
+    .map { "${it.mainModule} (${ignoredPlugins.get(it.mainModule)})" }
+  return if (staleIgnoredPlugins.isEmpty()) failures else failures + staleIgnoredPluginsFailure(staleIgnoredPlugins)
 }
 
 private const val LIB_PREFIX = "lib/"
@@ -89,6 +104,15 @@ private fun checkPlugin(
   }.toList()
   return PluginCheck(mainModule = mainModule, packedFiles = packedFiles, missingJars = missingJars)
 }
+
+private fun staleIgnoredPluginsFailure(staleIgnoredPlugins: List<String>): PackagingCheckFailure = PackagingCheckFailure(
+  name = "compile-server-plugin-jars: stale ignored plugins",
+  error = AssertionError(
+    "These ignored plugins contain every jar that their compileServer.plugin extensions name:\n" +
+    staleIgnoredPlugins.joinToString(separator = "\n") { "  $it" } +
+    "\nRemove them from the ignored plugins of the validation."
+  ),
+)
 
 private fun compileServerClasspath(root: XmlElement): Sequence<String> {
   return root.children("extensions")

@@ -22,10 +22,11 @@ class CompileServerPluginJarsValidationTest {
 
   private fun module(name: String): ModuleEntry = ModuleEntry(name = name)
 
-  private fun collect(report: PluginContentReport, descriptors: Map<String, String>) =
+  private fun collect(report: PluginContentReport, descriptors: Map<String, String>, ignoredPlugins: Map<String, String> = emptyMap()) =
     collectCompileServerPluginJarFailures(
       reports = listOf(report),
       readDescriptors = { moduleName, _ -> listOfNotNull(descriptors[moduleName]?.toByteArray()) },
+      ignoredPlugins = ignoredPlugins,
     )
 
   @Test
@@ -104,6 +105,27 @@ class CompileServerPluginJarsValidationTest {
     assertThat(collect(report, mapOf("intellij.sample" to descriptor)).single().error.message)
       .contains(" sample-rt.jar (declared in intellij.sample)")
       .doesNotContain("  sample-jps.jar (declared")
+  }
+
+  // The Draft layout of DevKit drops the extension from the packed descriptor, and the validation reads the module output.
+  @Test
+  fun `an ignored plugin with missing jars reports nothing`() {
+    val report = PluginContentReport(mainModule = groovy, content = listOf(
+      FileEntry(name = "lib/groovy.jar", modules = listOf(module(groovy), module("intellij.groovy.jps"))),
+    ))
+    assertThat(collect(report, mapOf(groovy to groovyPluginXml), ignoredPlugins = mapOf(groovy to "the layout drops the extension"))).isEmpty()
+  }
+
+  @Test
+  fun `an ignored plugin without missing jars is reported as stale`() {
+    val report = PluginContentReport(mainModule = groovy, content = listOf(
+      FileEntry(name = "lib/Groovy.jar", modules = listOf(module(groovy))),
+      FileEntry(name = "lib/groovy-jps.jar", modules = listOf(module("intellij.groovy.jps"))),
+      FileEntry(name = "lib/groovy-constants-rt.jar", modules = listOf(module("intellij.groovy.constants.rt"))),
+    ))
+    (val name, val error) = collect(report, mapOf(groovy to groovyPluginXml), ignoredPlugins = mapOf(groovy to "the layout drops the extension")).single()
+    assertThat(name).isEqualTo("compile-server-plugin-jars: stale ignored plugins")
+    assertThat(error.message).contains("$groovy (the layout drops the extension)")
   }
 
   @Test
