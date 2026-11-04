@@ -48,11 +48,17 @@ their contracts.
 A transform without mappings reads the archive once. With mappings, a first visit selects the mapping. A single visit
 that meets a hard link scans the archive once more for every target, and reads it again up to the link.
 
-## Layout modes
+## Modes
 
-- A plain copy of a file gets the declared mode of its asset. Mode zero keeps the source mode.
-- A plain copy of a directory gives the declared mode to its regular files. The root and every directory get 0755.
-  Mode zero keeps the source modes.
+The packer reads no mode from the disk. It writes 0755 for each directory, 0755 for an executable file and 0644 for
+every other file. The executable bit comes from declared data only:
+
+- A jar or a copy gets the declared mode of its asset.
+- A plain copy of a file or a directory takes the executable bit of the declared mode of its asset. Mode zero marks no
+  file executable.
+- An `archive-tree` transform takes the executable bit of the mode of the asset, or of the archive header when the
+  asset states mode zero. A file that an `executables` pattern matches is executable too.
+- A copy-tree operation marks no file executable.
 
 ## Tests
 

@@ -16,10 +16,11 @@ pub(crate) enum Content {
     File(PathBuf),
 }
 
-/// Receives the entries of one layout payload in write order.
+/// Receives the entries of one layout payload in write order. A directory has the mode [`filemeta::DIRECTORY_MODE`],
+/// and a file has [`filemeta::file_mode`] of its declared executable flag.
 pub(crate) trait LayoutWriter {
-    fn directory(&mut self, name: &str, mode: u32) -> Result<()>;
-    fn file(&mut self, name: &str, content: Content, mode: u32) -> Result<()>;
+    fn directory(&mut self, name: &str) -> Result<()>;
+    fn file(&mut self, name: &str, content: Content, executable: bool) -> Result<()>;
     fn symlink(&mut self, name: &str, target: &str) -> Result<()>;
 }
 
@@ -40,12 +41,14 @@ impl Claim {
     }
 }
 
-/// Writes one tree. The first claim of a path wins, and a claim of another kind fails. An implicit parent gets mode
-/// 0755. Mode zero means 0755 for a directory and 0644 for a file.
+/// Writes one tree. The first claim of a path wins, and a claim of another kind fails. Each directory, an implicit parent
+/// included, gets the mode 0755. A file gets 0755 when it is executable and 0644 when it is not.
 pub(crate) struct TreeWriter {
     root: PathBuf,
     claimed: HashMap<String, Claim>,
     links: Vec<(String, String)>,
+    /// The executable files. The resolution of the tree takes the modes from this set, not from the disk.
+    executables: HashSet<String>,
 }
 
 impl TreeWriter {
@@ -54,7 +57,13 @@ impl TreeWriter {
             root,
             claimed: HashMap::new(),
             links: Vec::new(),
+            executables: HashSet::new(),
         }
+    }
+
+    /// The names of the executable files that the writer wrote.
+    pub(crate) const fn executables(&self) -> &HashSet<String> {
+        &self.executables
     }
 
     fn path(&self, name: &str) -> PathBuf {
@@ -111,15 +120,15 @@ impl TreeWriter {
         for directory in missing.iter().rev() {
             let target = self.path(directory);
             paths::create_directory(&target).with_context(|| target.display().to_string())?;
-            fscopy::set_mode(&target, 0o755)?;
+            fscopy::set_mode(&target, filemeta::DIRECTORY_MODE)?;
         }
         Ok(())
     }
 }
 
 impl LayoutWriter for TreeWriter {
-    fn directory(&mut self, name: &str, mode: u32) -> Result<()> {
-        let mode = if mode == 0 { 0o755 } else { mode };
+    fn directory(&mut self, name: &str) -> Result<()> {
+        let mode = filemeta::DIRECTORY_MODE;
         if name.is_empty() {
             return Ok(fscopy::set_mode(&self.root, mode)?);
         }
@@ -143,7 +152,7 @@ impl LayoutWriter for TreeWriter {
         Ok(fscopy::set_mode(&target, mode)?)
     }
 
-    fn file(&mut self, name: &str, content: Content, mode: u32) -> Result<()> {
+    fn file(&mut self, name: &str, content: Content, executable: bool) -> Result<()> {
         if !self.claim(name, Claim::File)? {
             return Ok(());
         }
@@ -156,7 +165,10 @@ impl LayoutWriter for TreeWriter {
             }
             Content::File(source) => fscopy::clone_or_copy(&source, &target)?,
         }
-        Ok(fscopy::set_mode(&target, if mode == 0 { 0o644 } else { mode })?)
+        if executable {
+            self.executables.insert(name.to_owned());
+        }
+        Ok(fscopy::set_mode(&target, filemeta::file_mode(executable))?)
     }
 
     fn symlink(&mut self, name: &str, target: &str) -> Result<()> {
@@ -230,11 +242,11 @@ impl EntriesWriter {
 }
 
 impl LayoutWriter for EntriesWriter {
-    fn directory(&mut self, _name: &str, _mode: u32) -> Result<()> {
+    fn directory(&mut self, _name: &str) -> Result<()> {
         Ok(())
     }
 
-    fn file(&mut self, name: &str, content: Content, _mode: u32) -> Result<()> {
+    fn file(&mut self, name: &str, content: Content, _executable: bool) -> Result<()> {
         distpath::validate_relative_path(name)?;
         if !self.names.insert(name.to_owned()) {
             return Ok(());

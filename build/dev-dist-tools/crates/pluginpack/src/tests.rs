@@ -49,7 +49,7 @@ pub(crate) fn symlink(target: impl AsRef<Path>, link: &Path) {
 }
 
 pub(crate) fn mode_of(path: &Path) -> u32 {
-    filemeta::permissions(&fs::symlink_metadata(path).unwrap())
+    testkit::permission_bits(&fs::symlink_metadata(path).unwrap())
 }
 
 pub(crate) fn exists(path: &Path) -> bool {
@@ -555,7 +555,7 @@ pub(crate) fn materialization_record(root: &Path) -> Vec<String> {
             .collect::<Vec<_>>()
             .join("/");
         let metadata = entry.metadata().unwrap();
-        let mode = filemeta::permissions(&metadata);
+        let mode = testkit::permission_bits(&metadata);
         if metadata.is_file() {
             record.push(format!("{relative}\tfile\t{mode:04o}\t{}", sha256_hex(&read_bytes(entry.path()))));
         } else if metadata.file_type().is_symlink() {
@@ -579,11 +579,16 @@ pub(crate) fn require_equal_records(what: &str, first: &[String], second: &[Stri
     panic!("{what} differs\nonly in the first:\n{only_first:#?}\nonly in the second:\n{only_second:#?}");
 }
 
-/// Pins every inventory row to the file it describes.
+/// Pins every inventory row to the file it describes. `filemeta::inspect` reads no mode, so the check takes the mode
+/// that the packer set on disk.
 pub(crate) fn require_inventory_matches_tree(output: &Path, inventory: &[filemeta::Entry]) {
     for entry in inventory {
-        let actual = filemeta::inspect(&crate::paths::host(output, &entry.relative_path), &entry.relative_path)
-            .unwrap_or_else(|error| panic!("{}: {error}", entry.relative_path));
+        let path = crate::paths::host(output, &entry.relative_path);
+        let mut actual = filemeta::inspect(&path, &entry.relative_path).unwrap_or_else(|error| panic!("{}: {error}", entry.relative_path));
+        if actual.entry_type == filemeta::EntryType::File {
+            actual.mode = mode_of(&path);
+            actual.executable = actual.mode & 0o111 != 0;
+        }
         assert_eq!(&actual, entry, "the inventory differs from the tree");
     }
 }
@@ -610,6 +615,21 @@ pub(crate) fn jar_entry_record(jar: &Path) -> Vec<String> {
         .collect();
     record.sort();
     record
+}
+
+/// Returns a line of a materialization record with the mode that the packer writes for the mode of the line: 0755 for a
+/// directory, 0755 for a file with an executable bit, and 0644 for every other file.
+fn declared_record_mode(line: &str) -> String {
+    let fields: Vec<&str> = line.split('\t').collect();
+    let mode = match fields.as_slice() {
+        [_, "directory", _, _] => "0755".to_owned(),
+        [_, "file", mode, _] => {
+            let mode = u32::from_str_radix(mode, 8).unwrap_or_else(|error| panic!("{line:?}: {error}"));
+            format!("{:04o}", filemeta::file_mode(mode & 0o111 != 0))
+        }
+        _ => return line.to_owned(),
+    };
+    [fields[0], fields[1], &mode, fields[3]].join("\t")
 }
 
 /// The record of the Kotlin materialization of every fixture, frozen under `testdata/<name>-<label>.txt`. The label
@@ -653,11 +673,26 @@ impl Golden {
         }
     }
 
-    pub(crate) fn check(&self, fixture: &str, record: &[String]) {
+    /// Compares the record with the golden of the fixture. The Kotlin preparer kept the full mode of a source, and the
+    /// packer keeps only the executable bit, so the check reads each golden mode through [`declared_record_mode`].
+    /// The Kotlin preparer read the mode of a source file on disk where the plan declares none. The packer writes 0644
+    /// there, so each path of `undeclared` expects the mode 0644.
+    pub(crate) fn check(&self, fixture: &str, record: &[String], undeclared: &[&str]) {
         let Some(want) = self.fixtures.get(fixture) else {
             panic!("fixture {fixture:?} has no golden in testdata/{}-{}.txt", self.name, self.label);
         };
-        require_equal_records(&format!("{fixture} against the golden"), want, record);
+        let want: Vec<String> = want
+            .iter()
+            .map(|line| {
+                let line = declared_record_mode(line);
+                let fields: Vec<&str> = line.split('\t').collect();
+                match fields.as_slice() {
+                    [path, "file", _, digest] if undeclared.contains(path) => [path, "file", "0644", digest].join("\t"),
+                    _ => line,
+                }
+            })
+            .collect();
+        require_equal_records(&format!("{fixture} against the golden"), &want, record);
     }
 
     pub(crate) fn fixture_names(&self) -> Vec<&str> {

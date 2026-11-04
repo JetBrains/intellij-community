@@ -27,7 +27,8 @@ pub(crate) enum Action {
 /// One operation with its inputs resolved. A tree operation resolves into one operation per tree entry.
 pub(crate) struct Resolved {
     pub(crate) destination: String,
-    /// The mode to set: the declared mode of a jar or a copy, and the source mode of a tree entry.
+    /// The mode to set: the declared mode of a jar or a copy, and the mode that [`resolve_directory_tree`] gives a tree
+    /// entry.
     pub(crate) mode: u32,
     pub(crate) action: Action,
 }
@@ -206,7 +207,8 @@ impl Execution {
             match operation {
                 Operation::CopyTree { destination, input } => {
                     let root = PathBuf::from(&self.artifacts[&input.artifact].root);
-                    let (tree, backing_root) = resolve_directory_tree(destination, &root).with_context(|| destination.clone())?;
+                    let (tree, backing_root) =
+                        resolve_directory_tree(destination, &root, &HashSet::new()).with_context(|| destination.clone())?;
                     operations.extend(tree);
                     backing_roots.extend(backing_root);
                 }
@@ -397,7 +399,8 @@ impl Resolver<'_> {
 }
 
 /// Creates every destination: a directory for a directory, and an empty file for all others. `O_EXCL` and `mkdir`
-/// refuse a second name that the file system folds onto an earlier one.
+/// refuse a second name that the file system folds onto an earlier one. Each directory gets the mode 0755 under any
+/// umask, also a parent that no operation declares.
 fn reserve_outputs(root: &Path, destinations: &[(String, bool)]) -> Result<()> {
     let mut directories: HashSet<String> = HashSet::from([".".to_owned()]);
     for (destination, directory) in destinations {
@@ -412,7 +415,9 @@ fn reserve_outputs(root: &Path, destinations: &[(String, bool)]) -> Result<()> {
             if directories.contains(&parent) {
                 continue;
             }
-            paths::create_directory(&paths::host(root, &parent)).with_context(|| format!("conflicting output directory {parent:?}"))?;
+            let directory = paths::host(root, &parent);
+            paths::create_directory(&directory).with_context(|| format!("conflicting output directory {parent:?}"))?;
+            fscopy::set_mode(&directory, filemeta::DIRECTORY_MODE)?;
             directories.insert(parent.clone());
         }
         if *directory {
@@ -424,10 +429,16 @@ fn reserve_outputs(root: &Path, destinations: &[(String, bool)]) -> Result<()> {
 }
 
 /// Walks one raw directory in lexical order and turns every entry into a copy, directory, or symlink operation. An
-/// absolute link is a Bazel transport file, which the operation copies from its backing root. It rejects setuid,
-/// setgid, and sticky bits, aliased entries, conflicting spellings, and unsafe links. The second result is the
-/// transport backing root.
-pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Result<(Vec<Resolved>, Option<PathBuf>)> {
+/// absolute link is a Bazel transport file, which the operation copies from its backing root. It rejects aliased
+/// entries, conflicting spellings, and unsafe links. The second result is the transport backing root.
+///
+/// The walk reads no mode. A directory gets [`filemeta::DIRECTORY_MODE`]. A file gets [`filemeta::file_mode`] of
+/// `true` when `executables` holds its slash path below the root, and of `false` in the other case.
+pub(crate) fn resolve_directory_tree(
+    destination: &str,
+    tree_root: &Path,
+    executables: &HashSet<String>,
+) -> Result<(Vec<Resolved>, Option<PathBuf>)> {
     if !fs::symlink_metadata(tree_root).is_ok_and(|metadata| metadata.is_dir()) {
         bail!("tree root is not a directory: {}", tree_root.display());
     }
@@ -475,9 +486,6 @@ pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Res
         } else {
             bail!("unsupported tree entry: {}", source.display());
         }
-        if fscopy::has_special_bits(&metadata) {
-            bail!("unsupported tree mode: {}", source.display());
-        }
         if !matches!(action, Action::Symlink(_))
             && !identities.insert(paths::entry_id(&source, &metadata).with_context(|| source.display().to_string())?)
         {
@@ -503,7 +511,8 @@ pub(crate) fn resolve_directory_tree(destination: &str, tree_root: &Path) -> Res
         }
         let mode = match action {
             Action::Symlink(_) => 0,
-            _ => filemeta::permissions(&metadata),
+            Action::Directory => filemeta::DIRECTORY_MODE,
+            _ => filemeta::file_mode(executables.contains(&name)),
         };
         operations.push(Resolved {
             destination: distpath::join(destination, &name),
@@ -558,14 +567,14 @@ fn resolve_transport_root_entry(
     Ok((source, metadata, root))
 }
 
-/// Resolves an absolute Bazel transport link to its backing file, which must be a regular file without special bits.
+/// Resolves an absolute Bazel transport link to its backing file, which must be a regular file.
 pub(crate) fn resolve_transport_file(
     target: &str,
     relative_path: &str,
     previous_root: Option<&Path>,
 ) -> Result<(PathBuf, fs::Metadata, PathBuf)> {
     let (source, metadata, root) = resolve_transport_entry(target, relative_path, previous_root)?;
-    if !metadata.is_file() || fscopy::has_special_bits(&metadata) {
+    if !metadata.is_file() {
         bail!("transport member is not a regular file: {}", source.display());
     }
     Ok((source, metadata, root))

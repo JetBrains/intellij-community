@@ -29,8 +29,8 @@ pub(crate) struct InventoryReport {
 /// jar is not read again. The files of the tree are read again and hashed.
 ///
 /// The collector places the files of the tree from this inventory alone, so it holds the hash, the size and the mode of
-/// each. The mode of a tree file is [`jarpack::NativeTree::file_mode`], not the mode a stat returns: POSIX reads the
-/// same bits back, and NTFS stores none.
+/// each. The mode of a tree file is [`jarpack::NativeTree::file_mode`], and each directory has
+/// [`filemeta::DIRECTORY_MODE`]. No mode comes from a stat, so the umask and the file system change no byte.
 pub(crate) fn write_inventory(spec: &MergeSpec, merged: &MergeReport) -> anyhow::Result<InventoryReport> {
     let Some(metadata_file) = &spec.metadata_file else {
         bail!("{}: the spec names no metadata file", spec.output.display());
@@ -69,21 +69,21 @@ pub(crate) fn write_inventory(spec: &MergeSpec, merged: &MergeReport) -> anyhow:
     })
 }
 
-/// Returns the entry of the jar at `output` from the report of its merge. Only the mode comes from the file, through one
-/// stat that does not follow a link. The result equals `filemeta::inspect` of the jar.
+/// Returns the entry of the jar at `output` from the report of its merge. One stat that does not follow a link checks
+/// that the jar is a regular file. A jar is never executable, so its mode is [`filemeta::file_mode`] of `false`, not
+/// the mode that the umask gave the file. The result equals `filemeta::inspect` of the jar.
 fn jar_entry(output: &Path, merged: &MergeReport) -> anyhow::Result<Entry> {
     let metadata = fs::symlink_metadata(output).with_context(|| output.display().to_string())?;
     if !metadata.is_file() {
         bail!("the packed jar is not a regular file: {}", output.display());
     }
-    let mode = filemeta::permissions(&metadata);
     Ok(Entry {
         relative_path: file_name(output),
         entry_type: EntryType::File,
         hash: merged.content_hash,
         size: merged.bytes_written,
-        mode,
-        executable: mode & 0o111 != 0,
+        mode: filemeta::file_mode(false),
+        executable: false,
         symlink_target: String::new(),
     })
 }

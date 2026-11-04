@@ -49,8 +49,8 @@ internal class DevDistPluginPlanEntry(
  *
  * [files] maps the destination of each verbatim copy to the label of its source, in the ultimate spelling. A destination
  * in [filePrefixes] is a directory copy, and the value is the repository-relative prefix of the source tree. A destination
- * in [treeFiles] copies the one directory artifact of its label with the source modes. Every other destination is a
- * single file, and [executableFiles] names the ones of mode 493.
+ * in [treeFiles] copies the one directory artifact of its label, and each file of it gets mode 420. Every other
+ * destination is a single file, and [executableFiles] names the ones of mode 493.
  */
 internal class DevDistSimplePackaging(
   @JvmField val mainModule: String,

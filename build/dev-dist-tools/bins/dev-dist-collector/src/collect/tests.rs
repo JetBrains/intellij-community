@@ -351,18 +351,20 @@ fn packed_collector_does_not_read_or_stat_the_payload() {
 }
 
 /// Writes a native tree as the packer does, inventories it below the key prefix `native`, and removes the tree: the
-/// collector places its files from the inventory alone.
+/// collector places its files from the inventory alone. The inventory records the declared mode of each file, as the
+/// packer does, and not the mode on disk.
 #[cfg(unix)]
 fn write_native_tree(tree: &str, files: &[(&str, u32)]) -> Vec<filemeta::Entry> {
-    use std::os::unix::fs::PermissionsExt;
     std::fs::create_dir_all(tree).unwrap();
-    for (name, mode) in files {
-        let target = Path::new(tree).join(name);
-        write_file(&target, format!("native {name}"));
-        std::fs::set_permissions(&target, std::fs::Permissions::from_mode(*mode)).unwrap();
+    for (name, _) in files {
+        write_file(Path::new(tree).join(name), format!("native {name}"));
     }
     let mut inventory = vec![filemeta::inspect(Path::new(tree), "native").unwrap()];
     for mut entry in filemeta::inventory(Path::new(tree)).unwrap() {
+        if let Some((_, mode)) = files.iter().find(|(name, _)| *name == entry.relative_path) {
+            entry.mode = *mode;
+            entry.executable = mode & 0o111 != 0;
+        }
         entry.relative_path = format!("native/{}", entry.relative_path);
         inventory.push(entry);
     }

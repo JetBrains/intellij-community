@@ -701,3 +701,52 @@ fn a_component_without_bindings_needs_none_for_links_and_directories() {
     compose(&[DevBuildComponent::new(manifest)], &target).unwrap();
     require_link(target.join("lib/current"), "../resources");
 }
+
+/// The composed tree does not depend on the umask or on the mode of a source. A child run composes under each umask,
+/// once with sources of mode 0555, as Bazel stages them, and once with sources of mode 0644. The record holds the
+/// path, the kind, the mode and the bytes of each entry, so an implicit parent directory shows its mode too.
+#[cfg(unix)]
+#[test]
+fn the_composed_tree_does_not_depend_on_the_umask_or_the_source_modes() {
+    let Some(setup) = testkit::rerun_under_shell_with_equal_output(
+        "merge::tests::the_composed_tree_does_not_depend_on_the_umask_or_the_source_modes",
+        &["umask 022", "umask 077"],
+    ) else {
+        return;
+    };
+    let mut outputs = Vec::new();
+    for input_mode in [0o555, 0o644] {
+        let directory = TempDir::new();
+        let (tool, data) = (directory.join("source/tool"), directory.join("source/data.txt"));
+        write_file(&tool, "tool");
+        write_file(&data, "data");
+        set_mode(&tool, input_mode);
+        set_mode(&data, input_mode);
+        let manifest = with_entries(
+            test_manifest("plugin"),
+            vec![
+                file_with_mode("plugins/x/bin/tool", &tool, true, None),
+                sourced_entry("plugins/x/lib/nested/data.txt", &data),
+            ],
+        );
+        let target = directory.path().join("target");
+        compose(&[bound(&directory, manifest)], &target).unwrap();
+        let mut record = Vec::new();
+        for relative in [
+            "plugins",
+            "plugins/x",
+            "plugins/x/bin",
+            "plugins/x/bin/tool",
+            "plugins/x/lib",
+            "plugins/x/lib/nested",
+            "plugins/x/lib/nested/data.txt",
+        ] {
+            let path = target.join(relative);
+            let content = if path.is_file() { read_text(&path) } else { String::new() };
+            record.push(format!("{relative} {:o} {content}", mode_of(&path)));
+        }
+        outputs.push(record.join("\n").into_bytes());
+    }
+    assert!(outputs[0] == outputs[1], "the source mode changed the tree under `{setup}`");
+    testkit::report_child_output(&outputs[0]);
+}

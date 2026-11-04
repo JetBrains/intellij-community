@@ -382,7 +382,8 @@ fn copy_tree_materializes_bazel_transport_files_and_keeps_payload_links() {
     let written = write_execution(&recipe, &catalogue);
     let materialized = written.output.join("kotlinc/adoc/LICENSE");
     assert_content(&materialized, "license text");
-    assert_mode(&materialized, 0o751);
+    // A copied tree declares no executable file, so the mode of the backing file changes nothing.
+    assert_mode(&materialized, 0o644);
     assert_link(&written.output.join("kotlinc/current"), "adoc/LICENSE");
     for entry in &written.inventory {
         if entry.relative_path == "kotlinc/adoc/LICENSE" {

@@ -479,17 +479,20 @@ fn metadata_catalogue_rejects_conflicts_and_stale_ownership() {
 }
 
 /// Writes a native tree as the packer does and inventories it under the key prefix `native`. The tree is removed
-/// afterwards, because the collector must place its files from the inventory alone.
+/// afterwards, because the collector must place its files from the inventory alone. The inventory records the stated
+/// mode of each file, as the packer records its declared mode, and not the mode on disk.
 #[cfg(unix)]
 fn write_native_tree(tree: &Path, files: &[(&str, u32)]) -> Vec<Entry> {
     fs::create_dir_all(tree).unwrap();
-    for (name, mode) in files {
-        let target = tree.join(name);
-        write_file(&target, format!("native {name}"));
-        testkit::set_mode(&target, *mode);
+    for (name, _) in files {
+        write_file(tree.join(name), format!("native {name}"));
     }
     let mut inventory = vec![filemeta::inspect(tree, "native").unwrap()];
     for mut entry in filemeta::inventory(tree).unwrap() {
+        if let Some((_, mode)) = files.iter().find(|(name, _)| *name == entry.relative_path) {
+            entry.mode = *mode;
+            entry.executable = mode & 0o111 != 0;
+        }
         entry.relative_path = format!("native/{}", entry.relative_path);
         inventory.push(entry);
     }

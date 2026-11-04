@@ -529,7 +529,12 @@ fn kotlin_layout_materialization_matches_the_transforms() {
         } else {
             record
         };
-        golden.check(name, &golden_record);
+        let undeclared: &[&str] = if name == "plain file copies inside a tree" {
+            &["jbr/bin/launcher"]
+        } else {
+            &[]
+        };
+        golden.check(name, &golden_record, undeclared);
     }
     let dropped = "strip and mapping selection with normalized tree modes";
     for name in [

@@ -45,7 +45,7 @@ fn snapshot(root: &Path) -> Vec<String> {
         let entry = entry.unwrap();
         let relative = entry.path().strip_prefix(root).unwrap().display().to_string();
         let metadata = entry.metadata().unwrap();
-        let mode = filemeta::permissions(&metadata);
+        let mode = testkit::permission_bits(&metadata);
         if metadata.is_file() {
             record.push(format!("{relative} file {mode:o} {:?}", fs::read(entry.path()).unwrap()));
         } else if metadata.is_dir() {
@@ -103,7 +103,7 @@ fn outputs(output: &str, inventory: &str, root: &Path) -> Vec<String> {
 }
 
 /// Runs the packer on a plan whose raw tree is missing. The packer must refuse the plan before any write, and copy the
-/// tree with its bytes, modes, directories and links once it exists.
+/// tree with its bytes, directories and links once it exists. The modes of the raw tree do not reach the copy.
 #[test]
 fn raw_tree_is_absent_until_execution() {
     let Some(packer) = packer() else { return };
@@ -136,7 +136,7 @@ fn raw_tree_is_absent_until_execution() {
     assert_eq!(
         filemeta::inventory(&root.path().join("plugin/resources")).unwrap(),
         before,
-        "the bytes, modes, directories or links of the raw tree differ"
+        "the bytes, directories or links of the raw tree differ"
     );
 }
 
@@ -314,4 +314,58 @@ fn projection_mode_matches_the_in_process_derivation() {
         serde_json::to_vec(&derivation.assets).unwrap()
     );
     assert_eq!(fs::read(packed.join("plugin-classpath.txt")).unwrap(), derivation.class_path);
+}
+
+/// The payload, the inventory, the asset rows and the classpath of a tree copy and of a file copy do not depend on the
+/// umask or on the mode of an input. A child run packs under each umask, once with inputs of mode 0555, as Bazel stages
+/// them, and once with files of mode 0644.
+#[cfg(unix)]
+#[test]
+fn the_output_does_not_depend_on_the_umask_or_the_input_modes() {
+    let Some(packer) = packer() else { return };
+    let Some(setup) = testkit::rerun_under_shell_with_equal_output(
+        "the_output_does_not_depend_on_the_umask_or_the_input_modes",
+        &["umask 022", "umask 077"],
+    ) else {
+        return;
+    };
+    let mut results = Vec::new();
+    for input_mode in [0o555, 0o644] {
+        let mut output = Vec::new();
+        for tree in [true, false] {
+            let root = tempfile::tempdir().unwrap();
+            let source = root.path().join("raw");
+            if tree {
+                write_file(source.join("bin/tool"), b"tool");
+                write_file(source.join("data.txt"), b"data");
+                for name in ["bin/tool", "data.txt"] {
+                    set_mode(source.join(name), input_mode);
+                }
+                // A directory keeps its search bits, so the walk can enter it.
+                for name in ["bin", ""] {
+                    set_mode(source.join(name), input_mode | 0o111);
+                }
+            } else {
+                write_file(&source, jar(&[("a.txt", "a")]));
+                set_mode(&source, input_mode);
+            }
+            let mut arguments = projection_contracts(&root.path().join("contracts"), tree, &source);
+            arguments.extend(outputs("plugin", "inventory.json", root.path()));
+            let result = run(&packer, &arguments, root.path());
+            assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
+            for name in ["inventory.json", "assets.json", "plugin-classpath.txt"] {
+                output.extend(fs::read(root.path().join(name)).unwrap());
+            }
+            output.extend(snapshot(&root.path().join("plugin")).join("\n").into_bytes());
+            // The test directory must stay removable.
+            if tree {
+                for name in ["", "bin"] {
+                    set_mode(source.join(name), 0o755);
+                }
+            }
+        }
+        results.push(output);
+    }
+    assert!(results[0] == results[1], "the input mode changed the output under `{setup}`");
+    testkit::report_child_output(&results[0]);
 }

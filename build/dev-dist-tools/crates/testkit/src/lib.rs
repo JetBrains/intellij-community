@@ -172,6 +172,21 @@ pub fn set_mode(path: impl AsRef<Path>, mode: u32) {
     let _ = (path, mode);
 }
 
+/// Returns the permission bits of an entry, as the disk holds them. A test reads them to check what a tool wrote. On
+/// Windows, which stores no POSIX mode, the function returns 0o755 for a directory and 0o644 for all other entries.
+pub fn permission_bits(metadata: &fs::Metadata) -> u32 {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+
+        metadata.permissions().mode() & 0o777
+    }
+    #[cfg(not(unix))]
+    {
+        if metadata.is_dir() { 0o755 } else { 0o644 }
+    }
+}
+
 /// Creates a symbolic link to a file.
 pub fn file_symlink(target: impl AsRef<Path>, link: impl AsRef<Path>) {
     fscopy::symlink(target.as_ref(), link.as_ref(), false).unwrap_or_else(|error| panic!("{error}"));
@@ -259,15 +274,66 @@ pub fn run_tool(run: impl FnOnce(Vec<OsString>, &mut dyn Write, &mut dyn Write) 
 /// The variable that holds the setup command of a child test run.
 const CHILD_SETUP: &str = "TESTKIT_CHILD_SETUP";
 
+/// The prefix of the line that [`report_child_output`] prints.
+const CHILD_OUTPUT: &str = "testkit child output: ";
+
 /// Runs the test `name` again in a child process for each shell command of `setups`, such as `umask 002`, and fails
 /// unless each child run passes. `name` is the path of the test in its crate, as `--exact` takes it.
 ///
 /// The parent gets `None`, and its test stops. A child gets its setup command, and its test runs the body under it.
 #[track_caller]
 pub fn rerun_under_shell(name: &str, setups: &[&str]) -> Option<String> {
-    if let Some(setup) = std::env::var_os(CHILD_SETUP) {
-        return Some(setup.into_string().expect("a UTF-8 setup command"));
+    if let Some(setup) = child_setup() {
+        return Some(setup);
     }
+    run_children(name, setups);
+    None
+}
+
+/// Runs the test `name` again in a child process for each shell command of `setups`, as [`rerun_under_shell`] does.
+/// It also fails unless every child reports the same bytes with [`report_child_output`], so a test compares the output
+/// of a tool under two umasks.
+#[track_caller]
+pub fn rerun_under_shell_with_equal_output(name: &str, setups: &[&str]) -> Option<String> {
+    if let Some(setup) = child_setup() {
+        return Some(setup);
+    }
+    let outputs = run_children(name, setups);
+    for (setup, output) in setups.iter().zip(&outputs).skip(1) {
+        assert!(
+            output == &outputs[0],
+            "the output under `{setup}` differs from the output under `{}`:\n{output}\n{}",
+            setups[0],
+            outputs[0]
+        );
+    }
+    assert!(
+        outputs.iter().all(|output| !output.is_empty()),
+        "a child reported no output: {outputs:?}"
+    );
+    None
+}
+
+/// Prints the bytes that a child run of [`rerun_under_shell_with_equal_output`] produced, with each byte outside
+/// printable ASCII escaped. The text is exact, and the parent compares the text of every child.
+pub fn report_child_output(bytes: &[u8]) {
+    println!("{CHILD_OUTPUT}{}", bytes.escape_ascii());
+}
+
+/// The setup command of a child run, or `None` in the parent.
+fn child_setup() -> Option<String> {
+    std::env::var_os(CHILD_SETUP).map(|setup| setup.into_string().expect("a UTF-8 setup command"))
+}
+
+/// Runs the test `name` in a child process for each setup command, and returns the reported output of each child, one
+/// line per report.
+///
+/// The parent holds the lock of [`WorkingDirectory`], so each child starts in the working directory of the process and
+/// not in the directory of another test. A caller must not hold a [`WorkingDirectory`].
+#[track_caller]
+fn run_children(name: &str, setups: &[&str]) -> Vec<String> {
+    let _lock = WORKING_DIRECTORY_LOCK.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut outputs = Vec::with_capacity(setups.len());
     for setup in setups {
         let output = std::process::Command::new("/bin/sh")
             .arg("-c")
@@ -283,8 +349,10 @@ pub fn rerun_under_shell(name: &str, setups: &[&str]) -> Option<String> {
             "the run under `{setup}` failed:\n{stdout}\n{}",
             String::from_utf8_lossy(&output.stderr)
         );
+        let reported: Vec<&str> = stdout.lines().filter_map(|line| line.strip_prefix(CHILD_OUTPUT)).collect();
+        outputs.push(reported.join("\n"));
     }
-    None
+    outputs
 }
 
 #[cfg(test)]

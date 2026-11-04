@@ -36,7 +36,7 @@ pub fn write_gzip_resources(archives: &[PathBuf], output: &Path) -> Result<()> {
                 bail!("unexpected file {:?} in {}", entry.name, file.display());
             }
             let stream = entry.deflate().with_context(|| format!("{}: {}", file.display(), entry.name))?;
-            writer.file(&format!("{}.gzip", entry.name), Content::Bytes(gzip_member(&stream)), 0o644)
+            writer.file(&format!("{}.gzip", entry.name), Content::Bytes(gzip_member(&stream)), false)
         })?;
     }
     writer.finish()

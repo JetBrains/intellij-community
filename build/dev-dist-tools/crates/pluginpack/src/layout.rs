@@ -17,14 +17,10 @@ use crate::layout_writer::{Content, EntriesWriter, LayoutWriter, TreeWriter};
 use crate::paths;
 use crate::plan::{compile_globs, compile_includes, includes_entry, mapping_pattern};
 
-const fn mode_or(mode: u32, fallback: u32) -> u32 {
-    if mode == 0 { fallback } else { mode }
-}
-
-/// The mode that a directory of a plain copy takes from the declared mode of its asset. A declared mode sets the files,
-/// so each directory then gets 0755. Mode zero keeps the source mode.
-const fn copy_directory_mode(mode: u32) -> u32 {
-    if mode == 0 { 0 } else { 0o755 }
+/// Reports whether a declared mode has an executable bit. The mode of an asset and the mode of an archive header are
+/// declared. Mode zero has no executable bit.
+const fn has_executable_bit(mode: u32) -> bool {
+    mode & 0o111 != 0
 }
 
 /// Removes the leading components. A path with too few components is dropped.
@@ -162,21 +158,18 @@ fn layout_directory(root: &str) -> Result<PathBuf> {
     Ok(resolved)
 }
 
-/// Writes one file, link, or directory. Mode zero keeps the source mode.
+/// Writes one file, link, or directory. The declared mode of the asset gives the executable bit of a file. The mode of
+/// the source on disk gives nothing, so mode zero writes a file that is not executable.
 fn copy_layout_entry(source: &Path, metadata: &fs::Metadata, destination: &str, mode: u32, writer: &mut dyn LayoutWriter) -> Result<()> {
     let file_type = metadata.file_type();
     if file_type.is_file() {
         // The writer gets the file itself, so it can clone the file.
-        writer.file(
-            destination,
-            Content::File(source.to_path_buf()),
-            mode_or(mode, filemeta::permissions(metadata)),
-        )
+        writer.file(destination, Content::File(source.to_path_buf()), has_executable_bit(mode))
     } else if file_type.is_symlink() {
         let target = filemeta::read_link_target(source).with_context(|| source.display().to_string())?;
         writer.symlink(destination, &target)
     } else if file_type.is_dir() {
-        writer.directory(destination, mode_or(mode, filemeta::permissions(metadata)))
+        writer.directory(destination)
     } else {
         bail!("unsupported layout source: {}", source.display())
     }
@@ -189,7 +182,7 @@ impl Resolver<'_> {
         let mut writer = TreeWriter::new(root.clone());
         self.execute_layout(layout, &mut writer)?;
         writer.finish()?;
-        resolve_directory_tree(destination, &root)
+        resolve_directory_tree(destination, &root, writer.executables())
     }
 
     /// Writes the file entries of a layout source and returns one single-file jar source per entry.
@@ -263,7 +256,7 @@ impl Resolver<'_> {
         }))
     }
 
-    /// Writes a plain copy. A directory is copied with every descendant in byte-sorted path order. A declared mode sets
+    /// Writes a plain copy. A directory is copied with every descendant in byte-sorted path order. The declared mode sets
     /// the regular files of a directory copy, and its directories get 0755.
     fn copy_asset(input: &LayoutInput, asset: &LayoutAsset, writer: &mut dyn LayoutWriter) -> Result<()> {
         let root = match input {
@@ -271,23 +264,14 @@ impl Resolver<'_> {
             LayoutInput::File { path, metadata } => return copy_layout_entry(path, metadata, &asset.destination, asset.mode, writer),
             LayoutInput::Directory(root) => root,
         };
-        let metadata = fs::symlink_metadata(root).with_context(|| root.display().to_string())?;
-        writer.directory(
-            &asset.destination,
-            mode_or(copy_directory_mode(asset.mode), filemeta::permissions(&metadata)),
-        )?;
+        writer.directory(&asset.destination)?;
         let mut entries = walk_layout_tree(root)?;
         entries.sort_by(|first, second| first.relative.cmp(&second.relative));
         let mut transport_root = None;
         for entry in &entries {
             let (source, metadata) = transport_entry(entry, &mut transport_root)?;
             let destination = distpath::join(&asset.destination, &entry.relative);
-            let mode = if metadata.is_dir() {
-                copy_directory_mode(asset.mode)
-            } else {
-                asset.mode
-            };
-            copy_layout_entry(&source, &metadata, &destination, mode, writer)?;
+            copy_layout_entry(&source, &metadata, &destination, asset.mode, writer)?;
         }
         Ok(())
     }
@@ -357,18 +341,14 @@ impl Resolver<'_> {
             if rejects_duplicates && !written.insert(target.clone()) {
                 bail!("duplicate archive destination {target:?} in {}", file.display());
             }
-            let mode = mode_or(asset.mode, entry.mode & 0o755);
+            // A declared asset mode replaces the mode of the archive header.
+            let mode = if asset.mode == 0 { entry.mode } else { asset.mode };
             match entry.kind {
-                EntryKind::Directory => writer.directory(&target, mode_or(mode, 0o755)),
+                EntryKind::Directory => writer.directory(&target),
                 EntryKind::File => {
                     let content = entry.content().with_context(|| format!("{}: {}", file.display(), entry.name))?;
-                    let mode = mode_or(mode, 0o644);
-                    let mode = if executables.iter().any(|matcher| matcher.matches(&stripped)) {
-                        mode | 0o111
-                    } else {
-                        mode
-                    };
-                    writer.file(&target, Content::Bytes(content), mode)
+                    let executable = has_executable_bit(mode) || executables.iter().any(|matcher| matcher.matches(&stripped));
+                    writer.file(&target, Content::Bytes(content), executable)
                 }
                 EntryKind::Symlink => writer.symlink(&target, &entry.target),
             }

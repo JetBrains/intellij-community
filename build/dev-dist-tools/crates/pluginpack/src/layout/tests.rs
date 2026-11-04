@@ -133,12 +133,12 @@ fn archive_mappings_select_the_first_matching_candidate_and_preserve_the_file_mo
     let layout = one_archive(archive_tree(0, vec![mapping("candidate/**", 1, ""), mapping("", 0, "")]));
     let written = write_execution(&layout_tree_recipe("payload", layout), &archive_catalogue(&archive));
     assert_content(&written.output.join("payload/bin/tool"), "selected");
-    assert_mode(&written.output.join("payload/bin/tool"), 0o751);
+    assert_mode(&written.output.join("payload/bin/tool"), 0o755);
     require_absent(written.output.join("payload/fallback"));
 }
 
 #[test]
-fn archive_modes_remove_group_write_and_keep_executable_bits() {
+fn archive_modes_keep_only_the_executable_bit() {
     let root = temp();
     let archive = root.path().join("assets.tar.gz");
     write_tar_gz(
@@ -150,7 +150,7 @@ fn archive_modes_remove_group_write_and_keep_executable_bits() {
         &archive_catalogue(&archive),
     );
     assert_mode(&written.output.join("payload/data.txt"), 0o644);
-    assert_mode(&written.output.join("payload/bin/tool"), 0o751);
+    assert_mode(&written.output.join("payload/bin/tool"), 0o755);
 }
 
 #[test]
@@ -701,7 +701,7 @@ fn the_first_claim_wins_across_assets_and_a_kind_conflict_fails() {
 }
 
 #[test]
-fn a_layout_tree_keeps_the_source_modes() {
+fn a_layout_tree_reads_no_source_mode() {
     let root = temp();
     let source = root.path().join("source");
     write_file(source.join("bin/tool"), b"tool");
@@ -712,8 +712,9 @@ fn a_layout_tree_keeps_the_source_modes() {
         &layout_tree_recipe("payload", layout),
         &catalogue(vec![directory_artifact("tree", &source)]),
     );
-    assert_mode(&written.output.join("payload/bin"), 0o775);
-    assert_mode(&written.output.join("payload/bin/tool"), 0o775);
+    // Mode zero declares no executable bit, so the modes of the source change nothing.
+    assert_mode(&written.output.join("payload/bin"), 0o755);
+    assert_mode(&written.output.join("payload/bin/tool"), 0o644);
 }
 
 /// The shape of the Kotlin plugin plans: one archive extracted into jar entries.
@@ -901,7 +902,7 @@ fn archive_entries_that_match_get_the_executable_bits() {
     let written = write_execution(&layout_tree_recipe("payload", one_archive(transform)), &archive_catalogue(&archive));
     assert_mode(&written.output.join("payload/bin/ninja"), 0o755);
     assert_mode(&written.output.join("payload/bin/readme.txt"), 0o644);
-    assert_mode(&written.output.join("payload/LLDB.framework/Resources/lldb"), 0o711);
+    assert_mode(&written.output.join("payload/LLDB.framework/Resources/lldb"), 0o755);
     assert_link(&written.output.join("payload/bin/current"), "ninja");
 }
 

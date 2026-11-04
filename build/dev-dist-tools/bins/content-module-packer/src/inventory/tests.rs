@@ -249,3 +249,29 @@ fn metadata_failure_fails_packing() {
     )
     .unwrap_err();
 }
+
+/// The metadata and the jar of a natives pack do not depend on the umask or on the mode of an input. A child run packs
+/// under each umask, once with an input of mode 0555, as Bazel stages it, and once with an input of mode 0644.
+#[cfg(unix)]
+#[test]
+fn the_pack_output_does_not_depend_on_the_umask_or_the_input_modes() {
+    let Some(setup) = testkit::rerun_under_shell_with_equal_output(
+        "inventory::tests::the_pack_output_does_not_depend_on_the_umask_or_the_input_modes",
+        &["umask 022", "umask 077"],
+    ) else {
+        return;
+    };
+    let mut outputs = Vec::new();
+    for input_mode in [0o555, 0o644] {
+        let scratch = scratch();
+        let layout = layout(scratch.path());
+        let spec = natives_spec(scratch.path(), &layout, Family::MacOS, Arch::AArch64);
+        testkit::set_mode(scratch.path().join("jna-5.14.0.jar"), input_mode);
+        pack(&spec).unwrap();
+        let mut bytes = fs::read(&layout.metadata).unwrap();
+        bytes.extend(fs::read(&layout.output).unwrap());
+        outputs.push(bytes);
+    }
+    assert!(outputs[0] == outputs[1], "the input mode changed the output under `{setup}`");
+    testkit::report_child_output(&outputs[0]);
+}

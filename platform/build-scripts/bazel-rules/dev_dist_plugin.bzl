@@ -94,8 +94,8 @@ def dev_dist_plugin(
         file_prefixes: The repository-relative prefix of each source tree copy in `files`, keyed by destination.
         executable_files: The single-file destinations of `files` the distribution marks executable. This is the mode
             `withResource*` gives a file.
-        tree_files: The destinations of `files` whose label produces one directory artifact. Each copied file keeps the
-            mode it has in the directory.
+        tree_files: The destinations of `files` whose label produces one directory artifact. Each copied file gets the
+            mode 0644.
         frontend_application_info: The application info template of the embedded frontend. Stated together with the other
             `frontend_` label by the plugin that packs the JetBrains Client, and empty for every other plugin. A
             standalone `dev_dist_embedded_product_descriptor` call declares the embedded descriptor of that plugin.

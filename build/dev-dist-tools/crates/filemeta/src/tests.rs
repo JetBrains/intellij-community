@@ -86,8 +86,10 @@ fn inventory_and_merge_without_payload() {
     assert_eq!(entries[0].entry_type, EntryType::Directory, "{entries:?}");
     assert_eq!(entries[1].entry_type, EntryType::Symlink, "{entries:?}");
     assert_eq!(entries[1].symlink_target, "../tool", "{entries:?}");
-    assert!(entries[2].executable, "{entries:?}");
-    assert_eq!(entries[2].mode, 0o755, "{entries:?}");
+    // The inventory reads no mode: the executable file on disk is a file of mode 0644, and the directory has 0755.
+    assert!(!entries[2].executable, "{entries:?}");
+    assert_eq!(entries[2].mode, 0o644, "{entries:?}");
+    assert_eq!(entries[0].mode, 0o755, "{entries:?}");
 
     let metadata = temporary.path().join("files.json");
     write(&metadata, &entries).unwrap();

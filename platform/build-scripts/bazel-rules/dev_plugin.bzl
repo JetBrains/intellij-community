@@ -424,7 +424,7 @@ def _dev_plugin_impl(ctx):
     }
 
     # Absent, and not empty, for a plugin without a copy: the spec of every jar-only plugin stays byte-identical. A tree
-    # states no mode: the collector keeps the mode of each file it finds.
+    # states no mode: the collector gives each file of it the mode 0644.
     if copies:
         spec_content["files"] = [
             {"destination": copy.destination, "source": copy.file.path, "tree": True} if copy.tree else {"destination": copy.destination, "source": copy.file.path, "executable": copy.executable}
@@ -546,8 +546,8 @@ at `<prefix>/<entry>` lands at `<destination>/<entry>`.""",
         ),
         "tree_files": attr.string_list(
             doc = """The destinations of `files` whose label produces one directory artifact. The collector walks the directory
-when it runs. Each directory and regular file keeps its mode and lands at `<destination>/<relative path>`. A link is
-refused.""",
+when it runs. Each directory and regular file lands at `<destination>/<relative path>`, a file with the mode 0644 and a
+directory with 0755. A link is refused.""",
         ),
         "_collector": attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_collector", executable = True, cfg = "exec"),
         "_packer": attr.label(default = "//platform/build-scripts/bazel-rules:content_module_packer", executable = True, cfg = "exec"),

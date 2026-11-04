@@ -174,8 +174,9 @@ fn create_link(link: &Path, target: &str) -> Result<()> {
     Ok(fscopy::symlink(Path::new(target), link, target_is_directory)?)
 }
 
+/// Creates the directory and its missing parents. Each new directory gets the mode 0755 under any umask.
 fn create_directories(directory: &Path) -> Result<()> {
-    fs::create_dir_all(directory).with_context(|| directory.display().to_string())
+    Ok(filemeta::create_dir_all_0755(directory)?)
 }
 
 /// Creates the directory of a directory entry, or accepts the directory that is there.

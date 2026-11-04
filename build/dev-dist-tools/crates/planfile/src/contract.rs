@@ -192,9 +192,9 @@ pub enum Operation {
     },
     /// Copies one declared file.
     Copy { destination: String, mode: u32, input: Reference },
-    /// Copies one declared directory with its source modes.
+    /// Copies one declared directory. Each file gets the mode 0644 and each directory 0755.
     CopyTree { destination: String, input: Reference },
-    /// Writes the layout assets under the destination, with their source modes.
+    /// Writes the layout assets under the destination, with the modes that the assets declare.
     LayoutTree { destination: String, layout: LayoutAssets },
 }
 
@@ -251,8 +251,9 @@ pub struct LayoutAssets {
 }
 
 /// Writes one file or one tree under the destination. The sources index [`LayoutAssets::inputs`]. No transform is a
-/// plain copy of one file, link or directory. An empty destination is the output root. Mode zero keeps the source mode.
-/// A declared mode of a directory copy sets its regular files, and its directories get 0755.
+/// plain copy of one file, link or directory. An empty destination is the output root. The executable bit of the mode
+/// marks a file executable. Mode zero marks no file executable, and an archive header then gives the bit. Each
+/// directory gets 0755.
 #[derive(Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 #[serde(default, deny_unknown_fields)]
 pub struct LayoutAsset {

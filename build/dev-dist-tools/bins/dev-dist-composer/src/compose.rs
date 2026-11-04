@@ -225,7 +225,7 @@ where
         Err(error) if error.kind() == io::ErrorKind::NotFound => {}
         Err(error) => return Err(error).with_context(|| target.display().to_string()),
     }
-    fs::create_dir_all(target).with_context(|| target.display().to_string())?;
+    filemeta::create_dir_all_0755(target)?;
     if options.source_runfiles.is_none() {
         merge(components, target)?;
     }
@@ -388,7 +388,7 @@ pub(crate) fn write_plugin_classpath(components: &[DevBuildComponent], target: &
     };
     let file = target.join(paths::from_slash(PLUGIN_CLASSPATH).as_ref());
     let parent = file.parent().expect("the file is below the target");
-    fs::create_dir_all(parent).with_context(|| parent.display().to_string())?;
+    filemeta::create_dir_all_0755(parent)?;
     let prefix = fs::read(prefix).with_context(|| prefix.display().to_string())?;
     let mut parts = Vec::with_capacity(kinds.len());
     for part in components.iter().filter_map(|component| component.plugin_classpath_part.as_deref()) {

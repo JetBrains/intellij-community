@@ -12,20 +12,15 @@ pub fn hash_symlink_target(target: &str) -> i64 {
     xxh3::hash_bytes(target.as_bytes())
 }
 
-/// Returns the permission bits of an entry.
-///
-/// NTFS stores no POSIX mode. On Windows the function returns 0o755 for a directory and 0o644 for all other entries.
-pub fn permissions(metadata: &fs::Metadata) -> u32 {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
+/// The mode of every directory entry. No tool reads a mode from the disk, so the mode does not depend on the umask, on
+/// the file system or on the Bazel output mode 0555.
+pub const DIRECTORY_MODE: u32 = 0o755;
 
-        metadata.permissions().mode() & 0o777
-    }
-    #[cfg(not(unix))]
-    {
-        if metadata.is_dir() { 0o755 } else { 0o644 }
-    }
+/// Returns the mode of a file entry: 0o755 for an executable file and 0o644 for all other files.
+///
+/// The executable bit comes from declared data, never from the disk.
+pub const fn file_mode(executable: bool) -> u32 {
+    if executable { 0o755 } else { 0o644 }
 }
 
 /// Returns the target of the link at `source`.
@@ -49,6 +44,8 @@ pub fn read_link_target(source: &Path) -> io::Result<String> {
 /// Returns the entry of the file, directory or link at `source`, with the path `relative_path`.
 ///
 /// The function does not follow a link. It hashes a file with [`xxh3::hash_file`] and rejects all other file types.
+/// It reads no mode: a directory gets [`DIRECTORY_MODE`], and a file gets [`file_mode`] of `false`. A caller that
+/// declares an executable file sets the mode and the flag of the entry.
 pub fn inspect(source: &Path, relative_path: &str) -> Result<Entry> {
     distpath::validate_path(relative_path)?;
     let metadata = fs::symlink_metadata(source).with_context(|| source.display().to_string())?;
@@ -59,11 +56,10 @@ pub fn inspect(source: &Path, relative_path: &str) -> Result<Entry> {
     };
     if file_type.is_dir() {
         entry.entry_type = EntryType::Directory;
-        entry.mode = permissions(&metadata);
+        entry.mode = DIRECTORY_MODE;
     } else if file_type.is_file() {
-        entry.mode = permissions(&metadata);
+        entry.mode = file_mode(false);
         entry.size = metadata.len();
-        entry.executable = entry.mode & 0o111 != 0;
         entry.hash = xxh3::hash_file(source).with_context(|| source.display().to_string())?;
     } else if file_type.is_symlink() {
         entry.entry_type = EntryType::Symlink;

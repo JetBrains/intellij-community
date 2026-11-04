@@ -134,7 +134,7 @@ fn write_projection_fixture(root: &Path, plan: &str) -> Vec<String> {
 }
 
 fn mode_of(path: &Path) -> u32 {
-    filemeta::permissions(&fs::metadata(path).unwrap())
+    testkit::permission_bits(&fs::metadata(path).unwrap())
 }
 
 #[test]

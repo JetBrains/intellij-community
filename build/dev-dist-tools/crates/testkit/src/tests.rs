@@ -97,3 +97,17 @@ fn a_rerun_passes_the_setup_to_the_child() {
     assert_eq!(setup, "export TESTKIT_PROBE=1");
     assert_eq!(std::env::var("TESTKIT_PROBE").as_deref(), Ok("1"));
 }
+
+#[cfg(unix)]
+#[test]
+fn a_rerun_with_equal_output_compares_the_reports_of_the_children() {
+    let Some(setup) = rerun_under_shell_with_equal_output(
+        "tests::a_rerun_with_equal_output_compares_the_reports_of_the_children",
+        &["umask 022", "umask 077"],
+    ) else {
+        return;
+    };
+    assert!(setup.starts_with("umask "), "{setup}");
+    // The bytes do not depend on the setup, so both children report the same text.
+    report_child_output(b"equal bytes");
+}
