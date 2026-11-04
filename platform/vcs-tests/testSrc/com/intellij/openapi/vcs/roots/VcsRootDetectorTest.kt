@@ -1,37 +1,49 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.VcsTestUtil.assertEqualCollections
 import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
+import com.intellij.vcs.test.testRoot
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import java.util.Collections.emptyList
+import org.junit.jupiter.api.Test
 import kotlin.io.path.createSymbolicLinkPointingTo
 
-class VcsRootDetectorTest : VcsRootBaseTest() {
-  fun `test no roots`() {
+@TestApplication
+class VcsRootDetectorTest {
+  private val fixture = vcsRootContextFixture()
+  private val context: VcsRootTestContext get() = fixture.get()
+
+  @Test
+  fun `test no roots`(): Unit = with(context) {
     expect(emptyList())
   }
 
-  fun `test project dir is the only root`() {
+  @Test
+  fun `test project dir is the only root`(): Unit = with(context) {
     initRepository(projectRoot)
     expect(projectRoot)
   }
 
-  fun `test root under project`() {
+  @Test
+  fun `test root under project`(): Unit = with(context) {
     val roots = createVcsRoots(listOf("src"))
     expect(roots)
   }
 
-  fun `test root policy restricts repository scanning`() {
+  @Test
+  fun `test root policy restricts repository scanning`(@TestDisposable disposable: Disposable): Unit = with(context) {
     val roots = createVcsRoots("src", "generated/nested", registerContentRoot = false)
     PsiTestUtil.addContentRoot(rootModule, projectRoot)
     val originalPolicy = DefaultVcsRootPolicy.getInstance(project)
@@ -41,76 +53,87 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
       override fun shouldScanDirectory(directory: VirtualFile): Boolean {
         return super.shouldScanDirectory(directory) && directory.name != "generated"
       }
-    }, testRootDisposable)
+    }, disposable)
 
     expect(roots[0])
   }
 
-  fun `test root policy permits scanning outside module content`() {
+  @Test
+  fun `test root policy permits scanning outside module content`(@TestDisposable disposable: Disposable): Unit = with(context) {
     val roots = createVcsRoots("src", registerContentRoot = false)
     project.replaceService(DefaultVcsRootPolicy::class.java, object : DefaultVcsRootPolicy(project) {
       override fun getDefaultVcsRoots(): Collection<VirtualFile> = listOf(projectRoot)
 
       override fun shouldScanDirectory(directory: VirtualFile): Boolean = true
-    }, testRootDisposable)
+    }, disposable)
 
     expect(roots)
   }
 
-  fun `test 3 roots under project`() {
+  @Test
+  fun `test 3 roots under project`(): Unit = with(context) {
     val vcsRoots = createVcsRoots(listOf(PathMacroUtil.DIRECTORY_STORE_NAME, "src", "community", "test"))
     expect(vcsRoots.subList(1, 4))
   }
 
-  fun `test vcs root above project`() {
+  @Test
+  fun `test vcs root above project`(): Unit = with(context) {
     initRepository(testRoot)
     expect(testRoot)
   }
 
-  fun `test one main and two nested sibling roots`() {
+  @Test
+  fun `test one main and two nested sibling roots`(): Unit = with(context) {
     initRepository(projectRoot)
     val roots = createVcsRoots("community", "contrib")
     expect(roots + projectRoot)
   }
 
-  fun `test one above and one under`() {
+  @Test
+  fun `test one above and one under`(): Unit = with(context) {
     VfsTestUtil.createDir(testRoot, DOT_MOCK)
     val roots = createVcsRoots("subroot")
     expect(roots + testRoot)
   }
 
-  fun `test one above and one for project should show only project root`() {
+  @Test
+  fun `test one above and one for project should show only project root`(): Unit = with(context) {
     initRepository(testRoot)
     initRepository(projectRoot)
     expect(projectRoot)
   }
 
-  fun `test dont detect above if project is ignored there`() {
+  @Test
+  fun `test dont detect above if project is ignored there`(): Unit = with(context) {
     rootChecker.setIgnored(projectRoot)
     initRepository(testRoot)
     expect(emptyList())
   }
 
-  fun `test one above and several under project`() {
+  @Test
+  fun `test one above and several under project`(): Unit = with(context) {
     initRepository(testRoot)
     initRepository(projectRoot)
     val roots = createVcsRoots("community", "contrib")
     expect(roots + projectRoot)
   }
 
-  fun `test unrelated root should not be detected`() {
+  @Test
+  fun `test unrelated root should not be detected`(): Unit = with(context) {
     initRepository(VfsTestUtil.createDir(testRoot, "another"))
     expect(emptyList())
   }
 
-  fun `test linked source root alone should be detected`() {
+  @Test
+  fun `test linked source root alone should be detected`(): Unit = with(context) {
     val linkedRoot = VfsTestUtil.createDir(testRoot, "linked_root")
     initRepository(linkedRoot)
     PsiTestUtil.addContentRoot(rootModule, linkedRoot)
     expect(linkedRoot)
   }
 
-  fun `test linked source root and project root should be detected`() {
+  @Test
+  fun `test linked source root and project root should be detected`(): Unit = with(context) {
     val linkedRoot = VfsTestUtil.createDir(testRoot, "linked_root")
     initRepository(linkedRoot)
     PsiTestUtil.addContentRoot(rootModule, linkedRoot)
@@ -120,15 +143,17 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     expect(listOf(linkedRoot, projectRoot))
   }
 
-  fun `test two nested roots`() {
+  @Test
+  fun `test two nested roots`(): Unit = with(context) {
     val roots = createVcsRoots("community", "content_root/subroot")
     PsiTestUtil.addContentRoot(rootModule, projectRoot.findChild("content_root")!!)
 
     expect(roots)
   }
 
-  fun `test dont scan deeper than2LevelsBelowAContentRoot`() {
-    Registry.get("vcs.root.detector.folder.depth").setValue(2, testRootDisposable)
+  @Test
+  fun `test dont scan deeper than2LevelsBelowAContentRoot`(@TestDisposable disposable: Disposable): Unit = with(context) {
+    Registry.get("vcs.root.detector.folder.depth").setValue(2, disposable)
 
     val roots = createVcsRoots("community", "content_root/lev1", "content_root2/lev1/lev2/lev3", registerContentRoot = false)
     PsiTestUtil.addContentRoot(rootModule, projectRoot.findChild("community")!!)
@@ -138,13 +163,15 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     expect(roots.subList(0, 2))
   }
 
-  fun `test dont scan excluded dirs 1`() {
+  @Test
+  fun `test dont scan excluded dirs 1`(): Unit = with(context) {
     val roots = createVcsRoots("community", "excluded/lev1", registerContentRoot = false)
     PsiTestUtil.addContentRoot(rootModule, projectRoot)
     expect(roots)
   }
 
-  fun `test dont scan excluded dirs 2`() {
+  @Test
+  fun `test dont scan excluded dirs 2`(): Unit = with(context) {
     val roots = createVcsRoots("community", "excluded/lev1", registerContentRoot = false)
 
     PsiTestUtil.addContentRoot(rootModule, projectRoot)
@@ -155,7 +182,8 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     expect(roots[0])
   }
 
-  fun `test dont scan excluded dirs 3`() {
+  @Test
+  fun `test dont scan excluded dirs 3`(): Unit = with(context) {
     val roots = createVcsRoots("community", "excluded/lev1")
 
     PsiTestUtil.addContentRoot(rootModule, projectRoot)
@@ -166,29 +194,34 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     expect(roots)
   }
 
-  fun `test scan inner content roots 1`() {
+  @Test
+  fun `test scan inner content roots 1`(): Unit = with(context) {
     val roots = createVcsRoots("excluded/lev1", "excluded/lev2")
     expect(roots)
   }
 
-  fun `test scan inner content roots 2`() {
+  @Test
+  fun `test scan inner content roots 2`(): Unit = with(context) {
     val roots = createVcsRoots("excluded/lev1", "excluded/lev2")
     PsiTestUtil.addContentRoot(rootModule, projectRoot)
     expect(roots)
   }
 
-  fun `test scan inner content roots 3`() {
+  @Test
+  fun `test scan inner content roots 3`(): Unit = with(context) {
     val roots = createVcsRoots("excluded/lev1", "excluded/lev2", "excluded/lev2/innter/root")
     expect(roots)
   }
 
-  fun `test scan inner content roots 4`() {
+  @Test
+  fun `test scan inner content roots 4`(): Unit = with(context) {
     val roots = createVcsRoots("excluded/lev1", "excluded/lev2", "excluded/lev2/innter/root", registerContentRoot = false)
     PsiTestUtil.addContentRoot(rootModule, projectRoot)
     expect(roots)
   }
 
-  fun `test dont scan inside vendor folder`() {
+  @Test
+  fun `test dont scan inside vendor folder`(): Unit = with(context) {
     initRepository(projectRoot)
     createVcsRoots("vendor", "vendor/child/child")
 
@@ -196,7 +229,8 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
   }
 
   // IJPL-172487
-  fun `test root referenced via child symlink should not be duplicated`() {
+  @Test
+  fun `test root referenced via child symlink should not be duplicated`(): Unit = with(context) {
     initRepository(projectRoot)
 
     // Created layout:
@@ -216,7 +250,8 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
   }
 
   // IJPL-181017
-  fun `test root has symlink parent`() {
+  @Test
+  fun `test root has symlink parent`(): Unit = with(context) {
     val symlink = projectNioRoot.resolve("symlink")
     val projectSibling = testNioRoot.createDirectory("project-sibling")
     symlink.createSymbolicLinkPointingTo(projectSibling)
@@ -227,8 +262,8 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     expect(vcsRoot)
   }
 
-
-  fun `test multiple roots under symlink`() {
+  @Test
+  fun `test multiple roots under symlink`(): Unit = with(context) {
     val symlink = projectNioRoot.resolve("symlink")
     val projectSibling = testNioRoot.createDirectory("project-sibling")
     symlink.createSymbolicLinkPointingTo(projectSibling)
@@ -245,7 +280,8 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     expect(roots)
   }
 
-  fun `test multiple roots with symlink target outside project`() {
+  @Test
+  fun `test multiple roots with symlink target outside project`(): Unit = with(context) {
     initRepository(projectRoot)
 
     val symlink = projectNioRoot.resolve("symlink")
@@ -258,7 +294,8 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
   }
 
   // Combined scenario for IJPL-172487 and IJPL-181017
-  fun `test symlinks under symlinks`() {
+  @Test
+  fun `test symlinks under symlinks`(): Unit = with(context) {
     val symlink = projectNioRoot.resolve("symlink")
     val projectSibling = testNioRoot.createDirectory("project-sibling")
     symlink.createSymbolicLinkPointingTo(projectSibling)
@@ -284,11 +321,11 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     expect(vcsRoot)
   }
 
-  private fun createVcsRoots(vararg relativePaths: String, registerContentRoot: Boolean = true): List<VirtualFile> {
+  private fun VcsRootTestContext.createVcsRoots(vararg relativePaths: String, registerContentRoot: Boolean = true): List<VirtualFile> {
     return createVcsRoots(listOf(*relativePaths), registerContentRoot)
   }
 
-  private fun createVcsRoots(relativePaths: Collection<String>, registerContentRoot: Boolean = true): List<VirtualFile> {
+  private fun VcsRootTestContext.createVcsRoots(relativePaths: Collection<String>, registerContentRoot: Boolean = true): List<VirtualFile> {
     val projectDir = projectRoot
     return relativePaths.map {
       val childDir = VfsTestUtil.createDir(projectDir, it)
@@ -300,11 +337,11 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
     }
   }
 
-  private fun expect(vararg expectedRoots: VirtualFile) = expect(listOf(*expectedRoots))
+  private fun VcsRootTestContext.expect(vararg expectedRoots: VirtualFile) = expect(listOf(*expectedRoots))
 
-  private fun expect(expectedRoots: Collection<VirtualFile>) {
+  private fun VcsRootTestContext.expect(expectedRoots: Collection<VirtualFile>) {
     val detectedRoots = project.service<VcsRootDetector>().detect().map { it.path }
-    assertEqualCollections(detectedRoots, expectedRoots)
+    assertThat(detectedRoots).containsExactlyInAnyOrderElementsOf(expectedRoots)
   }
 }
 
