@@ -39,6 +39,8 @@ jvm_library(
         "//aether-dependency-resolver/plugin",
         "//platform/testRunner/plugin",
         "//platform/vcs/plugin",
+        "//community-resources:customization",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
     deps = [
         # do not sort,
