@@ -68,14 +68,15 @@ class KotlinJpsPluginSettingsTest : BasePlatformTestCase() {
         }
     }
 
-    fun `test the Build Tools API implementation is required from Kotlin 2_6_0`() {
+    fun `test the bundled Kotlin JPS builder needs the registry key and Kotlin 2_5_20 or later`() {
         setBuildToolsApiEnabled(false)
-        assertFalse(KotlinArtifactsDownloader.isBuildToolsImplRequired("2.6.0"))
+        assertFalse(KotlinArtifactsDownloader.isBuildToolsApiEnabled("2.6.0"))
 
         setBuildToolsApiEnabled(true)
-        assertFalse(KotlinArtifactsDownloader.isBuildToolsImplRequired("2.5.20"))
-        assertTrue(KotlinArtifactsDownloader.isBuildToolsImplRequired("2.6.0-Beta1"))
-        assertTrue(KotlinArtifactsDownloader.isBuildToolsImplRequired("2.6.0"))
+        assertFalse(KotlinArtifactsDownloader.isBuildToolsApiEnabled("2.5.10"))
+        assertTrue(KotlinArtifactsDownloader.isBuildToolsApiEnabled("2.5.20"))
+        assertTrue(KotlinArtifactsDownloader.isBuildToolsApiEnabled("2.6.0-Beta1"))
+        assertTrue(KotlinArtifactsDownloader.isBuildToolsApiEnabled("2.6.0"))
     }
 
     private fun setBuildToolsApiEnabled(enabled: Boolean) {

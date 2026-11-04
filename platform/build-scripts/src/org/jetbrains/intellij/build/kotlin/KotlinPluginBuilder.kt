@@ -74,6 +74,9 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
 
       basePluginsAndLibraries(spec)
 
+      // The legacy Kotlin JPS plugin of the bundled Kotlin version, which a project of that version builds with, see
+      // KotlinPluginLayout.jpsPluginClasspath. `jps/` is not on the plugin classpath: the IDE hands the jar over to the
+      // build process itself.
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
       withKotlincInPluginDirectory(spec = spec)
       for (script in listOf("kotlin", "kotlinc", "kotlinc-js", "kotlinc-jvm")) {

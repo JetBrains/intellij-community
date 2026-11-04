@@ -98,7 +98,7 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             version in jpsMinimumSupportedVersion..jpsMaximumSupportedVersion && isCompilerAvailable(version)
 
         private fun isCompilerAvailable(version: KotlinVersion): Boolean =
-            KotlinArtifactsDownloader.isBuildToolsApiEnabled() || KotlinArtifactsDownloader.isLegacyCompilerSupported(version)
+            KotlinArtifactsDownloader.isBuildToolsApiEnabled(version) || KotlinArtifactsDownloader.isLegacyCompilerSupported(version)
 
         fun validateSettings(project: Project) {
             val jpsPluginSettings = getInstance(project)

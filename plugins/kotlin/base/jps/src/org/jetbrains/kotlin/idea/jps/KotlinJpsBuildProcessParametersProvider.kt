@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.jps
 
 import com.intellij.compiler.server.BuildProcessParametersProvider
@@ -14,6 +14,7 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.compiler.configuration.LazyKotlinJpsPluginClasspathDownloader
 import java.nio.file.Path
 import java.util.concurrent.CancellationException
@@ -28,15 +29,22 @@ private const val BTA_IMPL_HOME_PROPERTY = "kotlin.jps.build.tools.impl.home"
 private val LOG = logger<KotlinJpsBuildProcessParametersProvider>()
 
 /**
- * Provide a correct JPS plugin classpath and home for JPS plugin specified in options.
- * Fails the build if it's not possible to download a correct version.
- * JPS plugin is usually downloaded in [org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask],
- * but before compile tasks do not work for "Build Project Automatically" +
- * we'd really like to fail the build if it's not possible to download the correct version of JPS plugin
+ * Provides the Kotlin JPS builder and its home to the build process.
+ *
+ * With the `kotlin.jps.use.build.tools.api` registry key, the build process gets the builder that the IDE bundles, see
+ * [KotlinJpsBuilderClasspath], and the Build Tools API implementation of the project's Kotlin version. Without the
+ * key, it gets the legacy JPS plugin of the project's Kotlin version.
+ *
+ * The provider fails the build if it cannot download what the version needs. The download usually happens in
+ * [SetupKotlinJpsPluginBeforeCompileTask], but before-compile tasks do not run for "Build Project Automatically".
  */
 class KotlinJpsBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
     override fun getClassPath(): List<String> {
         val version = KotlinJpsPluginSettings.jpsVersion(project)
+
+        if (KotlinArtifactsDownloader.isBuildToolsApiEnabled(version)) {
+            return KotlinJpsBuilderClasspath.get()
+        }
 
         val existingJpsPluginClasspath = LazyKotlinJpsPluginClasspathDownloader(version).getDownloadedIfUpToDateOrEmpty()
         val jpsPluginClassPath = existingJpsPluginClasspath.ifEmpty {
@@ -52,11 +60,29 @@ class KotlinJpsBuildProcessParametersProvider(private val project: Project) : Bu
             jpsPluginClasspathAfterDownloading
         }
 
-        return jpsPluginClassPath.map { it.canonicalPath } + listOf(PathUtil.getJarPathForClass(com.intellij.util.PathUtil::class.java))
+        return jpsPluginClassPath.map { it.canonicalPath } + listOf(PathUtil.getJarPathForClass(PathUtil::class.java))
     }
 
     override fun getPathParameters(): List<Pair<String, Path>> {
         val version = KotlinJpsPluginSettings.jpsVersion(project)
+
+        if (KotlinArtifactsDownloader.isBuildToolsApiEnabled(version)) {
+            val implementation = KotlinArtifactsDownloader.getBuildToolsImplDirectory(version)
+            if (!implementation.isDirectory()) {
+                downloadOrThrow(version)
+
+                if (!implementation.isDirectory()) {
+                    error("Unable to download the Kotlin Build Tools API implementation $version: it is not available after downloading at $implementation")
+                }
+            }
+            LOG.debug { "Kotlin JPS gets the Build Tools API implementation from $implementation" }
+
+            return listOf(
+                // Only the `KOTLIN_BUNDLED` path macro needs a Kotlin dist. The builder compiles through the implementation.
+                Pair("-Djps.kotlin.home=", KotlinPluginLayout.kotlincPath),
+                Pair("-D$BTA_IMPL_HOME_PROPERTY=", implementation),
+            )
+        }
 
         @Suppress("IO_FILE_USAGE")
         val kotlinDist = KotlinArtifactsDownloader.getUnpackedKotlinDistPath(project).toPath()
@@ -70,24 +96,7 @@ class KotlinJpsBuildProcessParametersProvider(private val project: Project) : Bu
             }
         }
 
-        if (KotlinArtifactsDownloader.isBuildToolsImplRequired(version)) {
-            val buildToolsImpl = KotlinArtifactsDownloader.getBuildToolsImplDirectory(version)
-            if (!buildToolsImpl.isDirectory()) {
-                downloadOrThrow(version)
-            }
-        }
-
-        return buildList {
-            add(Pair("-Djps.kotlin.home=", kotlinDist))
-            // The Kotlin dist does not contain the implementation, so the BTA impl is passed via [BTA_IMPL_HOME_PROPERTY]
-            // It's downloaded by the before-compile task
-            if (KotlinArtifactsDownloader.isBuildToolsApiEnabled()) {
-                KotlinArtifactsDownloader.getBuildToolsImplDirectory(version).takeIf { it.isDirectory() }?.let {
-                    LOG.debug { "Kotlin JPS gets the Build Tools API implementation from $it" }
-                    add(Pair("-D$BTA_IMPL_HOME_PROPERTY=", it))
-                }
-            }
-        }
+        return listOf(Pair("-Djps.kotlin.home=", kotlinDist))
     }
 
     override fun getVMArguments(): List<String> =
