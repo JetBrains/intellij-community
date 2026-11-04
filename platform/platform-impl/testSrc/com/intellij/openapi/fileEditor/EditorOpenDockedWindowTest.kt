@@ -78,7 +78,7 @@ class EditorOpenDockedWindowTest {
         windows.single().getAttributeValue("withNorthPanel")
       }
       finally {
-        manager.closeFile(file)
+        manager.closeFile(file, moveFocus = false, closeAllCopies = true)
       }
     }
   }

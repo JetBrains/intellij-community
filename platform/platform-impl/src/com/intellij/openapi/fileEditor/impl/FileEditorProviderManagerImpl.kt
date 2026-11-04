@@ -18,6 +18,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.TechnologyFilter
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
@@ -73,9 +74,14 @@ class FileEditorProviderManagerImpl
     }
 
     val untrustedFile = !TrustedFiles.isTrusted(file, project)
+    val technologyFilter = TechnologyFilter.getInstance()
 
     val fileType = file.fileType
     for (bean in FileEditorProviderBean.EP_NAME.extensionList) {
+      // a provider of a tech the project has disabled is skipped before it is created, like one that the file type rules out
+      if (!technologyFilter.isApplicable(bean.pluginDescriptor, project)) {
+        continue
+      }
       // untrusted files are restricted to explicitly opted-in providers (plain text and large-file editors);
       // checked before instantiation, so suppressed provider classes are never loaded
       if (untrustedFile && !bean.allowedInUntrustedFiles) {
@@ -145,6 +151,9 @@ class FileEditorProviderManagerImpl
 
       FileEditorProviderBean.EP_NAME.extensionList.mapNotNull { bean ->
         if (excludeIds.contains(bean.id)) {
+          return@mapNotNull null
+        }
+        if (!TechnologyFilter.getInstance().isApplicable(bean.pluginDescriptor, project)) {
           return@mapNotNull null
         }
         // untrusted files are restricted to explicitly opted-in providers (plain text and large-file editors);

@@ -22,6 +22,7 @@ import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
@@ -30,8 +31,12 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.FileDropManager
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.FoldingModel
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.extensions.TechnologyFilter
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
@@ -115,6 +120,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.testFramework.replaceService
 import com.intellij.util.io.write
 import kotlinx.coroutines.CancellationException
@@ -1539,6 +1545,29 @@ class FileEditorManagerTest {
   }
 
   @Test
+  fun testEditorsOfOpenFilesFollowTheTechsOfTheProject(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val filter = installTechnologyFilter()
+    // both dumb-aware: the dumb mode of a previous test must not decide which editors open
+    registerProvider(MyDumbAwareProvider())
+    registerProvider(MyDumbAwareProvider("ofTech", "of tech", FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR), module = filter.module)
+    val file = createTempFooBar()
+    assertThat(manager.openFile(file, false)).hasSize(2)
+
+    // the module of the provider stops to apply: its editor is removed, the file stays open with the other one
+    filter.setBlocked(true)
+    manager.waitForAsyncUpdateOnProvidersChanged()
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+    assertThat(manager.isFileOpen(file)).isTrue()
+    assertThat(manager.getAllEditorList(file).map { it.name }).containsExactly(MockFileEditorProvider.DEFAULT_FILE_EDITOR_NAME)
+
+    // the module applies again: the editor of its provider is added back
+    filter.setBlocked(false)
+    manager.waitForAsyncUpdateOnProvidersChanged()
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+    assertThat(manager.getAllEditorList(file).map { it.name }).containsExactlyInAnyOrder(MockFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, "of tech")
+  }
+
+  @Test
   fun testOpenSpecificTextEditor(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
     registerProvider(MyTextEditorProvider("one", 1))
     registerProvider(MyTextEditorProvider("two", 2))
@@ -2673,11 +2702,23 @@ class FileEditorManagerTest {
     )
   }
 
-  private fun registerProvider(provider: FileEditorProvider) {
+  /** Registers [provider] as an extension; [module] is the module that declares it, see [TechnologyFilter.isApplicable]. */
+  private fun registerProvider(provider: FileEditorProvider, module: PluginDescriptor? = null) {
     val providerDisposable = Disposer.newDisposable()
     Disposer.register(disposable, providerDisposable)
     providerDisposables.add(providerDisposable)
-    FileEditorProviderBean.EP_NAME.point.registerExtension(FileEditorProviderBean(provider), providerDisposable)
+    val bean = FileEditorProviderBean(provider)
+    if (module != null) {
+      bean.pluginDescriptor = module
+    }
+    FileEditorProviderBean.EP_NAME.point.registerExtension(bean, providerDisposable)
+  }
+
+  /** Replaces the technology filter until the end of the test, see [TechnologyFilterForTest]. */
+  private fun installTechnologyFilter(): TechnologyFilterForTest {
+    val filter = TechnologyFilterForTest(project)
+    ApplicationManager.getApplication().registerOrReplaceServiceInstance(TechnologyFilter::class.java, filter, disposable)
+    return filter
   }
 
   private fun registerPreCloseCheck(check: VirtualFilePreCloseCheck) {
@@ -2979,5 +3020,28 @@ internal fun dispatchOpenInRightSplitGesture(disposable: Disposable, action: () 
   }
   finally {
     Disposer.dispose(dispatcherDisposable)
+  }
+}
+
+/**
+ * A [TechnologyFilter] that keeps [module] from [project] while it is blocked, see [setBlocked].
+ * A change publishes [TechnologyFilter.TOPIC] in a write action on the EDT, as the product filter does.
+ */
+private class TechnologyFilterForTest(private val project: Project) : TechnologyFilter {
+  val module: PluginDescriptor = DefaultPluginDescriptor(PluginId.getId("test.file.editor.tech"), FileEditorManagerTest::class.java.classLoader)
+
+  @Volatile
+  private var isBlocked = false
+
+  override fun isRestricted(project: Project): Boolean = isBlocked && project === this.project
+
+  override fun isApplicable(module: PluginDescriptor, project: Project): Boolean = !isRestricted(project) || module !== this.module
+
+  fun setBlocked(blocked: Boolean) {
+    isBlocked = blocked
+    val publisher = ApplicationManager.getApplication().messageBus.syncPublisher(TechnologyFilter.TOPIC)
+    runWriteAction {
+      publisher.applicabilityChanged(project)
+    }
   }
 }
