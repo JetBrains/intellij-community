@@ -284,7 +284,6 @@ private class SquareStripeButtonLookHorizontalText(button: SquareStripeButton): 
     var y = iconPosition.y + iconLabelGap
     val totalWidth = button.width - insets.left - insets.right - JBUI.scale(textPadding * 2)
     val textHeight = fm.height
-    var firstX: Int? = null
 
     for (text in texts) {
       val textWidth = UIUtil.computeStringWidth(button, fm, text)
@@ -293,13 +292,7 @@ private class SquareStripeButtonLookHorizontalText(button: SquareStripeButton): 
         g2d.color = getForegroundColor()
         g2d.font = f
         UISettings.setupAntialiasing(g2d)
-        if (firstX == null || texts[0].length != texts[1].length) {
-          UIUtil.drawCenteredString(g2d, Rectangle(x, y, totalWidth, textHeight), text)
-          firstX = x.coerceAtLeast(x + (totalWidth - fm.stringWidth(text) - 1) / 2)
-        }
-        else {
-          g2d.drawString(text, firstX, y.coerceAtLeast(y + textHeight / 2 + fm.ascent * 2 / 5))
-        }
+        UIUtil.drawCenteredString(g2d, Rectangle(x, y, totalWidth, textHeight), text)
 
         if (textWidth > totalWidth) {
           val gradientWidth = JBUI.scale(3)
