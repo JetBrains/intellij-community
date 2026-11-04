@@ -75,8 +75,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   private var disposalState: Int = ACTIVE
 
   @Volatile
-  internal var fallbackRange: Long = initialRange
-    private set
+  private var fallbackRange: Long = initialRange
 
   fun isDisposed(): Boolean = disposalState == DISPOSED
 

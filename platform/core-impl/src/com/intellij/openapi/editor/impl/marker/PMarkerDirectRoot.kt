@@ -107,7 +107,7 @@ class PMarkerDirectRoot private constructor(
   ): PMarkerDirectRoot = keepingRootAlive {
     val entry = MarkerEntry(handle, startOffset, endOffset, spec, flavorFlags, measure, policy)
     val editor = Editor()
-    editor.finish(editor.insert(root, handle, entry))
+    editor.finish(editor.insert(root, entry))
   }
 
   override fun insertMany(entries: List<MarkerEntry>): PMarkerDirectRoot = keepingRootAlive {
@@ -117,7 +117,7 @@ class PMarkerDirectRoot private constructor(
     val inserted = HashSet<SnapshotMarkerReference<*>>()
     for (entry in entries) {
       require(inserted.add(entry.handle)) { "The marker already exists" }
-      result = editor.insert(result, entry.handle, entry)
+      result = editor.insert(result, entry)
     }
     editor.finish(result)
   }
@@ -228,7 +228,7 @@ class PMarkerDirectRoot private constructor(
     other.processAllRangeMarkers { entry, delta ->
       val handle = entry.handle
       if (invalids.getUnchecked(handle.id) == null && !isValid(handle)) {
-        result = editor.insert(result, handle, entry.shifted(delta))
+        result = editor.insert(result, entry.shifted(delta))
       }
       true
     }
@@ -247,13 +247,10 @@ class PMarkerDirectRoot private constructor(
     invalidatedMarkerConsumer: Consumer<in SnapshotMarkerReference<*>>,
     affectedMarkerConsumer: Consumer<in SnapshotMarkerReference<*>>,
   ): PMarkerDirectRoot = keepingRootAlive {
+    validateMarkerPatch(patch, beforeText, afterText)
     val start = patch.startOffset()
     val end = patch.endOffset()
     val length = patch.newFragment().length
-    require(start >= 0 && end in start..beforeText.length()) { "The patch range is outside the source text" }
-    require(afterText.length().toLong() == beforeText.length().toLong() - (end - start) + length) {
-      "The patch does not match the target text length"
-    }
     require(start <= Int.MAX_VALUE - length && patch.moveOffset() in 0..Int.MAX_VALUE - length) { "The patch range overflows Int" }
     if (root == null || start == end && length == 0) return@keepingRootAlive this
     val fullTraversal = root.persistentCount > 0 && PersistentMarkerPolicy.requiresFullTraversal(patch, beforeText, afterText)
@@ -285,7 +282,7 @@ class PMarkerDirectRoot private constructor(
         val entry = movedEntry.copy(nodeStart = movedEntry.nodeStart + start - moveStart, nodeEnd = movedEntry.nodeEnd + start - moveStart)
         val update = entry.policy.afterRetarget(entry, afterText)
         editor.transformed(entry, update, invalidatedMarkerConsumer, affectedMarkerConsumer)
-        if (update.isValid) result = editor.insertNode(result, handle, update.applyTo(entry))
+        if (update.isValid) result = editor.insertNode(result, update.applyTo(entry))
       }
     }
     val resolutionUpdate = if (!fullTraversal && patch.moveOffset() == start) {
@@ -471,31 +468,31 @@ class PMarkerDirectRoot private constructor(
      * Checks the handle and range before inserting a new marker.
      * The caller rejects duplicate handles within a batch.
      */
-    fun insert(root: PMarkerNode?, handle: SnapshotMarkerReference<*>, entry: MarkerEntry): PMarkerNode {
+    fun insert(root: PMarkerNode?, entry: MarkerEntry): PMarkerNode {
       require(entry.nodeStart >= 0 && entry.nodeEnd >= entry.nodeStart) { "The marker range is invalid" }
+      val handle = entry.handle
       var existing = state(handle)
       if (existing is PMarkerValidNode && !isValid(handle)) existing = null
       require(existing == null || existing is PMarkerInvalidNode && existing.reason == 0) { "The marker already exists" }
       assert(existing == null) { "The marker handle must not be reused" }
-      invalidsBuilder.remove(handle.id)
-      return insertNode(root, handle, entry)
+      return insertNode(root, entry)
     }
 
     /**
      * Inserts by start offset and handle ID, copying and balancing the search path.
      * The caller must check whether the handle already exists.
      */
-    fun insertNode(initial: PMarkerNode?, handle: SnapshotMarkerReference<*>, entry: MarkerEntry): PMarkerNode {
+    fun insertNode(initial: PMarkerNode?, entry: MarkerEntry): PMarkerNode {
       if (initial == null) {
-        invalidsBuilder.remove(handle.id)
+        invalidsBuilder.remove(entry.handle.id)
         return make(entry)
       }
       val node = push(initial)
-      val inserted = if (compare(entry.nodeStart, handle, node.entry.nodeStart, node.handle) < 0) {
-        make(node.entry, insertNode(node.left, handle, entry), node.right, source = node)
+      val inserted = if (compare(entry, node.entry) < 0) {
+        make(node.entry, insertNode(node.left, entry), node.right, source = node)
       }
       else {
-        make(node.entry, node.left, insertNode(node.right, handle, entry), source = node)
+        make(node.entry, node.left, insertNode(node.right, entry), source = node)
       }
       return balance(inserted)
     }
@@ -658,17 +655,12 @@ class PMarkerDirectRoot private constructor(
       invalidsBuilder.put(handle.id, state)
     }
 
-    /**
-     * Creates a root that retains the final tree and invalid and removed states, then publishes their weak histories.
-     * Pass the current [cacheIdentity] to share cached resolutions when marker offsets and validity remain unchanged.
-     */
+    /** Creates a root that retains the final tree and invalid and removed states, then publishes their weak histories. */
     fun finish(
       node: PMarkerNode?,
-      cacheIdentity: Any = Any(),
       resolutionUpdate: PMarkerResolutionUpdate? = null,
     ): PMarkerDirectRoot {
-      val resolutions = if (cacheIdentity === resolutionCacheIdentity) cachedResolutions else null
-      val result = PMarkerDirectRoot(version, node, invalidsBuilder.build(), cacheIdentity, resolutions, resolutionUpdate)
+      val result = PMarkerDirectRoot(version, node, invalidsBuilder.build(), resolutionUpdate = resolutionUpdate)
       for ([handle, state] in pendingInvalids) handle.states.put(version, state)
       publish(node)
       return result
@@ -699,12 +691,11 @@ class PMarkerDirectRoot private constructor(
       AtomicReferenceFieldUpdater.newUpdater(
         PMarkerDirectRoot::class.java, ConcurrentLongLongMap::class.java, "cachedResolutions")
 
-    /** Creates an empty root without inherited marker states. */
-    fun empty(): PMarkerDirectRoot {
-      return PMarkerDirectRoot(
-        PMarkerNodeHistory.initialVersion, null, PersistentLongMap.empty(),
-      )
-    }
+    private val EMPTY: PMarkerDirectRoot =
+      PMarkerDirectRoot(PMarkerNodeHistory.initialVersion, null, PersistentLongMap.empty())
+
+    /** Returns an empty root without inherited marker states. */
+    fun empty(): PMarkerDirectRoot = EMPTY
 
     private fun compare(first: MarkerEntry, second: MarkerEntry): Int =
       compare(first.nodeStart, first.handle, second.nodeStart, second.handle)

@@ -233,8 +233,17 @@ interface PMarkerRoot {
     @JvmField
     val EMPTY_HANDLE_CONSUMER: Consumer<SnapshotMarkerReference<*>> = Consumer { }
 
-    /** Creates an empty root with direct links. */
+    /** Returns an empty root with direct links. */
     @JvmStatic
     fun empty(): PMarkerRoot = PMarkerDirectRoot.empty()
   }
+}
+
+/** Checks a patch's source range and resulting text length before a marker update. */
+internal fun validateMarkerPatch(patch: DocumentPatch, beforeText: DocumentText, afterText: DocumentText) {
+  val start = patch.startOffset()
+  val end = patch.endOffset()
+  require(start >= 0 && end in start..beforeText.length()) { "The patch range is outside the source text" }
+  val expectedLength = beforeText.length().toLong() - (end - start) + patch.newFragment().length
+  require(expectedLength == afterText.length().toLong()) { "The patch does not match the target text length" }
 }

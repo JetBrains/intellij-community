@@ -255,7 +255,6 @@ internal class SnapshotRangeMarkerImplTest {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)
       val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
-      assertEquals(TextRangeScalarUtil.toScalarRange(2, 4), marker.fallbackRange)
       val reference = marker.currentRootReference()
       val before = document.core.snapshot().text()
       val patch = DocumentPatch.simple(0, 0, "xx", newModStamp = 1, clearLineFlags = false)

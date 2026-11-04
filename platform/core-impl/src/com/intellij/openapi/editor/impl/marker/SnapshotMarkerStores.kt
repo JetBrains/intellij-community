@@ -109,7 +109,7 @@ class SnapshotMarkerStores {
       }
     }
     if (patch != null) {
-      validatePatch(beforeSnapshot, afterSnapshot, patch)
+      validateMarkerPatch(patch, beforeSnapshot.text(), afterSnapshot.text())
       for (i in capturedRoots.indices) {
         val it = capturedRoots[i]
         val root = it.root ?: continue
@@ -176,24 +176,5 @@ class SnapshotMarkerStores {
     val mergedSnapshot = metadataSnapshot.newInstance()
     relevantRegistrations.forEach { it.store.merge(markerSnapshot, metadataSnapshot, mergedSnapshot) }
     return mergedSnapshot
-  }
-
-  /**
-   * Checks the range of [patch] against [beforeSnapshot] and the resulting text length against [afterSnapshot].
-   *
-   * @throws IllegalArgumentException if the range is invalid or the resulting length differs
-   */
-  private fun validatePatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentPatch) {
-    val beforeLength = beforeSnapshot.text().length()
-    val afterLength = afterSnapshot.text().length()
-    val startOffset = patch.startOffset()
-    val endOffset = patch.endOffset()
-    require(startOffset >= 0) { "DocumentTextPatch startOffset must be non-negative" }
-    require(endOffset >= startOffset) { "DocumentTextPatch endOffset must not precede startOffset" }
-    require(endOffset <= beforeLength) { "DocumentTextPatch range exceeds before snapshot length" }
-    val expectedLength = beforeLength.toLong() - (endOffset - startOffset) + patch.newFragment().length
-    require(expectedLength == afterLength.toLong()) {
-      "After snapshot length is inconsistent with DocumentTextPatch"
-    }
   }
 }
