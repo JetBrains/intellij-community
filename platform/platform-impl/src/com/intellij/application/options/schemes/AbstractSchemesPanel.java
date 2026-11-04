@@ -6,11 +6,13 @@ import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.NonTrivialActionGroup;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.Groups;
@@ -23,12 +25,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
@@ -62,9 +62,8 @@ import java.util.function.Consumer;
 public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent extends JComponent> extends JPanel {
 
   private EditableSchemesCombo<T> mySchemesCombo;
-  private final HelpTooltip mySchemeDescriptionTooltip = new HelpTooltip();
-  private final ContextHelpLabel mySchemeDescriptionLabel = createSchemeDescriptionLabel(mySchemeDescriptionTooltip);
   private AbstractSchemeActions<T> myActions;
+  private ActionToolbar myActionToolbar;
   private JComponent myToolbar;
   InfoComponent myInfoComponent;
   private JPanel myActionLinkContainer;
@@ -134,10 +133,9 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo = new EditableSchemesCombo<>(this);
     mySchemesCombo.setComboBoxAccessibleName(label != null ? label : getSchemeTypeName());
     controlsPanel.add(mySchemesCombo.getComponent());
-    controlsPanel.add(mySchemeDescriptionLabel);
-    ActionToolbar toolbar = createToolbar();
-    toolbar.setTargetComponent(mySchemesCombo.getComponent());
-    myToolbar = toolbar.getComponent();
+    myActionToolbar = createToolbar();
+    myActionToolbar.setTargetComponent(mySchemesCombo.getComponent());
+    myToolbar = myActionToolbar.getComponent();
     myToolbar.setOpaque(false);
     controlsPanel.add(Box.createRigidArea(new JBDimension(4, 0)));
     controlsPanel.add(myToolbar);
@@ -180,7 +178,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
       container.setMaximumSize(new Dimension(container.getMaximumSize().width,
                                              preferredSize.height));
     }
-    myToolbar.setMaximumSize(new Dimension(JBUIScale.scale(22), preferredSize.height));
   }
 
   private void updateActionLinkContainer() {
@@ -201,8 +198,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   private @NotNull ActionToolbar createToolbar() {
     DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new SchemeDescriptionAction());
     group.add(new ShowSchemesActionsListAction(myActions));
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("SchemesPanelToolbar", group, true);
+    ActionToolbar toolbar = new ActionToolbarImpl("SchemesPanelToolbar", group, true) {
+      @Override
+      public Dimension getMaximumSize() {
+        return getPreferredSize();
+      }
+    };
     toolbar.setReservePlaceAutoPopupIcon(false);
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setBorder(JBUI.Borders.empty());
@@ -228,27 +231,11 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.selectScheme(scheme);
   }
 
-  private static @NotNull ContextHelpLabel createSchemeDescriptionLabel(@NotNull HelpTooltip tooltip) {
-    tooltip.setNeverHideOnTimeout(true).setLocation(HelpTooltip.Alignment.HELP_BUTTON);
-    ContextHelpLabel label = ContextHelpLabel.createFromTooltip(tooltip);
-    label.setBorder(JBUI.Borders.emptyLeft(6));
-    label.setVisible(false);
-    return label;
-  }
-
   /**
-   * Shows the description of the selected scheme in the context help after the combo box.
+   * Updates the description of the selected scheme.
    */
   final void updateSchemeDescription() {
-    T scheme = getSelectedScheme();
-    String description = scheme == null ? null : getSchemeDescription(scheme);
-    mySchemeDescriptionTooltip.setDescription(description == null ? null : HtmlChunk.text(description));
-    mySchemeDescriptionLabel.getAccessibleContext().setAccessibleDescription(description);
-    boolean visible = description != null;
-    if (mySchemeDescriptionLabel.isVisible() != visible) {
-      mySchemeDescriptionLabel.setVisible(visible);
-      mySchemeDescriptionLabel.revalidate();
-    }
+    myActionToolbar.updateActionsAsync();
   }
 
   private @Nullable ContextHelpLabel createContextHelpLabel() {
@@ -393,6 +380,29 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     Point pointOnComponent = new Point(myToolbar.getWidth() / 4, myToolbar.getHeight() / 4);
     balloon.show(new RelativePoint(myToolbar, pointOnComponent), Balloon.Position.above);
     Disposer.register(ApplicationManager.getApplication(), balloon);
+  }
+
+  /**
+   * Shows the description of the selected scheme as the tooltip of a toolbar label. The label is hidden when the scheme has no description.
+   */
+  private final class SchemeDescriptionAction extends ToolbarLabelAction {
+    SchemeDescriptionAction() {
+      getTemplatePresentation().setIcon(AllIcons.General.Note);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      T scheme = getSelectedScheme();
+      String description = scheme == null ? null : getSchemeDescription(scheme);
+      e.getPresentation().setDescription(description);
+      e.getPresentation().setVisible(description != null);
+    }
   }
 
   private static final class ShowSchemesActionsListAction extends NonTrivialActionGroup implements DumbAware {
