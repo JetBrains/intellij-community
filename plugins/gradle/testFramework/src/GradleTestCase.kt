@@ -5,6 +5,7 @@ import com.intellij.gradle.testFramework.fixtures.gradleFixture
 import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfo
 import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfoAssertions
 import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfoBuilder
+import com.intellij.gradle.testFramework.projectInfo.complexJavaProjectInfo
 import com.intellij.gradle.testFramework.projectInfo.deleteProject
 import com.intellij.gradle.testFramework.projectInfo.gradleProjectInfo
 import com.intellij.gradle.testFramework.projectInfo.initProject
@@ -65,5 +66,5 @@ abstract class GradleTestCase {
       simpleJavaProjectInfo(gradleVersion, relativePath, gradleDsl)
 
   fun complexJavaProjectInfo(relativePath: String, gradleDsl: GradleDsl = GradleDsl.KOTLIN): GradleProjectInfo =
-      com.intellij.gradle.testFramework.projectInfo.complexJavaProjectInfo(gradleVersion, relativePath, gradleDsl)
+      complexJavaProjectInfo(gradleVersion, relativePath, gradleDsl)
 }
