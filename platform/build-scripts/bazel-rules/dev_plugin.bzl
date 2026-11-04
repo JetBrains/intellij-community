@@ -23,7 +23,7 @@ load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "declare_spans", "library_entries", "merge_order_jars", "module_output_jar", "pack_jar")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_ATTRS", "DevDistPluginDescriptorInfo", "dev_dist_check_stamp_class", "dev_dist_neutral_product_transition", "dev_dist_stamp_class_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_ATTRS", "DEV_DIST_STAMP_CLASS_FLAG_ATTR", "DevDistPluginDescriptorInfo", "dev_dist_check_stamp_class", "dev_dist_mode_refusals", "dev_dist_neutral_product_transition", "dev_dist_stamp_class_transition")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
 
@@ -221,6 +221,62 @@ the component.""",
     },
 )
 
+DevPluginDescriptorJarsInfo = provider(
+    doc = "The jars of one simple plugin that merge the main module, packed with the descriptor in the class of the leaf.",
+    fields = {
+        "packed_jars": "dict of destination to `struct(jar, metadata, spans)`, as `DevPluginInputsInfo.packed_jars` states it.",
+    },
+)
+
+def _dev_plugin_descriptor_jars_impl(ctx):
+    descriptor_info = ctx.attr.descriptor[DevDistPluginDescriptorInfo]
+    dev_dist_check_stamp_class(ctx, descriptor_info)
+    if ctx.attr.embed_content_modules != descriptor_info.embeds_content_modules:
+        fail("%s states embed_content_modules = %s, and its descriptor states %s" % (
+            ctx.label,
+            ctx.attr.embed_content_modules,
+            descriptor_info.embeds_content_modules,
+        ), attr = "embed_content_modules")
+    inputs = ctx.attr.inputs[DevPluginInputsInfo]
+    packed_jars = {}
+    for destination, tokens in ctx.attr.jars.items():
+        if ctx.attr.main_module not in tokens or not destination.endswith(".jar"):
+            continue
+        resolved = _resolved_jar_inputs(tokens, inputs.module_jars, inputs.libraries)
+        if resolved != None:
+            packed_jars[destination] = _pack_plugin_jar(
+                ctx,
+                ctx.attr.output_stem,
+                destination,
+                resolved,
+                descriptor = descriptor_info.descriptor,
+                descriptor_module = ctx.attr.main_module,
+            )
+    return [DefaultInfo(files = depset()), DevPluginDescriptorJarsInfo(packed_jars = packed_jars)]
+
+_dev_plugin_descriptor_jars = rule(
+    doc = """The jars of one simple plugin that hold the descriptor, packed in the stamp class of the descriptor leaf.
+
+The incoming transition keeps only what changes the bytes of the descriptor. A leaf that embeds every content module
+reads no mode, so its jar packs once for a monolith and a frontend product. A jar that names an undeclared token is left
+out, and the component refuses it.""",
+    implementation = _dev_plugin_descriptor_jars_impl,
+    cfg = dev_dist_stamp_class_transition,
+    attrs = {
+        "inputs": attr.label(mandatory = True, providers = [DevPluginInputsInfo]),
+        "descriptor": attr.label(mandatory = True, providers = [DevDistPluginDescriptorInfo]),
+        "jars": attr.string_list_dict(doc = "The `jars` of the component. The rule packs each jar that merges `main_module`."),
+        "main_module": attr.string(mandatory = True),
+        "output_stem": attr.string(mandatory = True, doc = "The name of the component. Each jar is declared below it."),
+        "embed_content_modules": attr.bool(
+            default = True,
+            doc = "Whether the descriptor embeds every content module. Then the incoming transition keeps no mode.",
+        ),
+        "_packer": attr.label(default = "//platform/build-scripts/bazel-rules:content_module_packer", executable = True, cfg = "exec"),
+        "_trace_spans": attr.label(default = "//platform/build-scripts/bazel-rules:trace_spans", providers = [BuildSettingInfo]),
+    } | DEV_DIST_STAMP_CLASS_ATTRS,
+)
+
 def is_library_token(token):
     """A label token names a library container or a jar file. `isLabelToken` of the generator spells the same rule.
 
@@ -373,7 +429,7 @@ def _dev_plugin_impl(ctx):
     # whose every module is refused is not packed, and a reused jar of a refused module is not placed. A jar that merges
     # a refused module with a kept one is packed whole, with the same bytes for every product, and the run time fences
     # the refused packages.
-    refused = {name: True for name in descriptor_info.mode_refused_content_modules}
+    refused = {name: True for name in dev_dist_mode_refusals(ctx, descriptor_info)}
     for destination, tokens in ctx.attr.jars.items():
         _check_destination(destination)
         if not tokens:
@@ -407,17 +463,10 @@ def _dev_plugin_impl(ctx):
                 module_names.append(token)
                 module_jars.append(jar)
 
-        # Only a jar of the main module holds the descriptor, so only that jar packs in the stamp class. The inputs
-        # target packed every other jar in the neutral configuration.
+        # Only a jar of the main module holds the descriptor, so only that jar packs in the stamp class of the leaf. The
+        # inputs target packed every other jar in the neutral configuration.
         if main_module in module_names:
-            jar = _pack_plugin_jar(
-                ctx,
-                ctx.label.name,
-                destination,
-                struct(module_jars = module_jars, module_names = module_names, library_entries = library_entries),
-                descriptor = descriptor_info.descriptor,
-                descriptor_module = main_module,
-            )
+            jar = ctx.attr.descriptor_jars[DevPluginDescriptorJarsInfo].packed_jars[destination]
         else:
             jar = inputs.packed_jars[destination]
         packed.append(struct(destination = destination, jar = jar.jar, metadata = jar.metadata))
@@ -603,9 +652,13 @@ when it runs. Each directory and regular file lands at `<destination>/<relative 
 directory with 0755. A link is refused.""",
         ),
         "_collector": attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_collector", executable = True, cfg = "exec"),
-        "_packer": attr.label(default = "//platform/build-scripts/bazel-rules:content_module_packer", executable = True, cfg = "exec"),
         "_trace_spans": attr.label(default = "//platform/build-scripts/bazel-rules:trace_spans", providers = [BuildSettingInfo]),
-    } | DEV_DIST_STAMP_CLASS_ATTRS,
+        "descriptor_jars": attr.label(
+            doc = "The `_dev_plugin_descriptor_jars` target, which packs the jars that hold the descriptor.",
+            mandatory = True,
+            providers = [DevPluginDescriptorJarsInfo],
+        ),
+    } | DEV_DIST_STAMP_CLASS_ATTRS | DEV_DIST_STAMP_CLASS_FLAG_ATTR,
 )
 
 def dev_plugin(
@@ -624,10 +677,11 @@ def dev_plugin(
         file_prefixes = {},
         executable_files = [],
         tree_files = [],
+        embed_content_modules = True,
         tags = [],
         visibility = ["//visibility:public"],
         **kwargs):
-    """Declares one simple plugin component and its compiled inputs, both `manual`.
+    """Declares one simple plugin component, its compiled inputs and its descriptor jars, all `manual`.
 
     Args:
         name: the component target. `<name>_inputs` holds the compiled inputs.
@@ -648,6 +702,8 @@ def dev_plugin(
         file_prefixes: destination to repository-relative prefix, for every entry of `files` that copies a source tree.
         executable_files: the single-file destinations of `files` that are executable.
         tree_files: the destinations of `files` that copy one directory artifact.
+        embed_content_modules: the `embed_content_modules` of the descriptor. The jar of the main module then packs in
+            the class of the descriptor leaf, see `_dev_plugin_descriptor_jars`.
         tags: extra tags. `manual` is added.
         visibility: the component's visibility, public by default because the product's dist is in another package.
             The inputs target is private.
@@ -669,10 +725,26 @@ def dev_plugin(
         visibility = ["//visibility:private"],
         **inputs_attrs
     )
+    descriptor_jars = name + "_descriptor_jars"
+    _dev_plugin_descriptor_jars(
+        name = descriptor_jars,
+        inputs = ":" + inputs,
+        descriptor = descriptor,
+        jars = jars,
+        main_module = main_module,
+        output_stem = name,
+        embed_content_modules = embed_content_modules,
+        stamp_class_modes = kwargs.get("stamp_class_modes", []),
+        retain_product_descriptor = kwargs.get("retain_product_descriptor", False),
+        tags = ["manual"],
+        visibility = ["//visibility:private"],
+        **inputs_attrs
+    )
     _dev_plugin(
         name = name,
         visibility = visibility,
         inputs = ":" + inputs,
+        descriptor_jars = ":" + descriptor_jars,
         descriptor = descriptor,
         main_module = main_module,
         plugin_directory = plugin_directory,

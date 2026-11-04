@@ -216,6 +216,7 @@ def dev_dist_plugin(
                 if modules
             ]),
             retain_product_descriptor = descriptor_attrs.get("retain_product_descriptor", False),
+            embed_content_modules = descriptor_attrs.get("embed_content_modules", True),
             visibility = ["//visibility:public"],
         )
     if frontend_application_info:

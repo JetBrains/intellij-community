@@ -607,6 +607,7 @@ private fun renderCrossHalfDevPluginTargets(sections: DevDistBuildSections): Map
       index = sections.index,
       stampClassModes = descriptorEntry.stampClassModes,
       retainProductDescriptor = descriptorEntry.retainProductDescriptor,
+      embedContentModules = descriptorEntry.embedsContentModules,
       contentModuleJarLabel = sections::contentModuleJarLabel,
     ))
   }

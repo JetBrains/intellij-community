@@ -380,7 +380,7 @@ class DevDistSimplePackagingTest {
   }
 
   @Test
-  fun `the cross-half dev_plugin target states the stamp class of its descriptor`() {
+  fun `the cross-half dev_plugin target states the stamp class and the embedding of its descriptor`() {
     val packaging: DevDistSimplePackaging = requireSimple(planEntry(assets = listOf(mainJar(communityPlugin)), inputs = emptyList(), plugin = communityPlugin))
 
     val target = renderCrossHalfDevPluginTarget(
@@ -389,8 +389,10 @@ class DevDistSimplePackagingTest {
       index = index,
       stampClassModes = listOf("frontend"),
       retainProductDescriptor = true,
+      embedContentModules = false,
     )
 
+    assertThat(target).contains("    embed_content_modules = False,\n")
     assertThat(target).contains(
       """
           plugin_directory = "plugins/c",

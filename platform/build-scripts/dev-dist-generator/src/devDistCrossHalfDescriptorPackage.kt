@@ -363,6 +363,7 @@ internal fun renderCrossHalfDevPluginTarget(
   index: DevDistBazelIndex,
   stampClassModes: List<String> = emptyList(),
   retainProductDescriptor: Boolean = false,
+  embedContentModules: Boolean = true,
   contentModuleJarLabel: (String) -> String? = { index.contentModuleJarLabel(it, dependentIsCommunity = index.planPackageIsCommunity) },
 ): String = buildString {
   val mainModule = packaging.mainModule
@@ -378,6 +379,9 @@ internal fun renderCrossHalfDevPluginTarget(
     values = packaging.reusedModules.map { contentModuleJarLabel(it) ?: error("Module '$it' has no content_module_jar label") }.sorted(),
   )
   appendStarlarkString(name = "descriptor", value = index.planLabel(descriptorLabel))
+  if (!embedContentModules) {
+    append("    embed_content_modules = False,\n")
+  }
   appendStarlarkStringList(name = "executable_files", values = packaging.executableFiles.sorted())
   appendStarlarkStringDict(name = "file_prefixes", rows = packaging.filePrefixes)
   appendStarlarkStringDict(name = "files", rows = packaging.files.mapValues { index.planLabel(it.value) })

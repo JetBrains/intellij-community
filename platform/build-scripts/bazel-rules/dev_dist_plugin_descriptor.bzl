@@ -31,9 +31,11 @@ DevDistPluginDescriptorInfo = provider(
 
         Always in its final byte form: a classpath writer copies the bytes and applies no XML rewrite.""",
         "platforms": "The `HOST_PLATFORMS` entries this layout variant serves.",
-        "mode_refused_content_modules": """The content modules the product's mode refuses at run time. The descriptor keeps them.
+        "mode_refusals": """The content modules each mode refuses at run time, keyed by the mode. The descriptor keeps them.
 
-        `dev_plugin` and the chain place no jar whose every module is in this list, and no reused jar of such a module.""",
+        A component reads the list of its own mode, see `dev_dist_mode_refusals`. `dev_plugin` and the chain place no jar
+        whose every module is in that list, and no reused jar of such a module.""",
+        "embeds_content_modules": "Whether the leaf embeds the body of every content module. Then its bytes read no mode.",
         "stamp_class_modes": """The modes whose refusal list of this leaf is not empty, sorted.
 
         A component of the plugin states the same list, so its stamp class matches the class of this leaf.""",
@@ -127,11 +129,18 @@ dev_dist_product_info_transition = transition(
     outputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
 )
 
-def _stamp_class_modes(attr):
+def _refusing_modes(attr):
     stated = getattr(attr, "stamp_class_modes", None)
     if stated != None:
         return stated
     return [mode for mode, modules in attr.mode_refused_content_modules.items() if modules]
+
+def _stamp_class_modes(attr):
+    # A descriptor that embeds every content module reads no mode, so the leaf and the target that packs its jar keep
+    # none. A component states no `embed_content_modules`, because it places the jars of its mode.
+    if getattr(attr, "embed_content_modules", False):
+        return []
+    return _refusing_modes(attr)
 
 def _dev_dist_stamp_class_transition_impl(settings, attr):
     mode = settings[_STAMP_CLASS_FLAG]
@@ -140,8 +149,9 @@ def _dev_dist_stamp_class_transition_impl(settings, attr):
         _PRODUCT_INFO_FLAG: settings[_PRODUCT_INFO_FLAG] if attr.retain_product_descriptor else _NO_PRODUCT_INFO,
     }
 
-# The incoming transition of a plugin component and of a descriptor leaf. It keeps the mode only when the plugin refuses
-# content modules for that mode, and the product only when the plugin retains its `product-descriptor`. Every other
+# The incoming transition of a plugin component, of a descriptor leaf and of the target that packs the descriptor jar. It
+# keeps the mode only when the plugin refuses content modules for that mode, and the product only when the plugin
+# retains its `product-descriptor`. A leaf that embeds every content module keeps no mode. Every other
 # value goes back to its default, which Bazel trims. So the components of products with equal stamps share one
 # configuration, and one action packs them for all.
 dev_dist_stamp_class_transition = transition(
@@ -177,6 +187,23 @@ The incoming transition keeps the mode of the consumer only when this list names
         default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist"),
     ),
 }
+
+# The flag of the mode, for a rule that places the jars of its mode.
+DEV_DIST_STAMP_CLASS_FLAG_ATTR = {
+    "_stamp_class": attr.label(
+        doc = "The mode of the stamp class, the flag `dev_dist_stamp_class`.",
+        default = Label("//build:dev_dist_stamp_class"),
+        providers = [BuildSettingInfo],
+    ),
+}
+
+def dev_dist_mode_refusals(ctx, descriptor):
+    """The content modules that the mode of this rule refuses, from the leaf `descriptor`.
+
+    The rule declares `DEV_DIST_STAMP_CLASS_FLAG_ATTR`. A leaf that embeds every content module is configured with no
+    mode, so the rule reads its own mode and not the one of the leaf.
+    """
+    return descriptor.mode_refusals.get(ctx.attr._stamp_class[BuildSettingInfo].value, [])
 
 def dev_dist_check_stamp_class(ctx, descriptor):
     """Fails unless the stamp class facts of a component equal the ones of its descriptor leaf.
@@ -681,8 +708,9 @@ def _dev_dist_plugin_descriptor_impl(ctx):
             descriptor = descriptor,
             classpath_descriptor = classpath_descriptor,
             platforms = platforms,
-            mode_refused_content_modules = ctx.attr.mode_refused_content_modules.get(stamp_class, []),
-            stamp_class_modes = sorted(_stamp_class_modes(ctx.attr)),
+            mode_refusals = {mode: list(modules) for mode, modules in ctx.attr.mode_refused_content_modules.items()},
+            embeds_content_modules = ctx.attr.embed_content_modules,
+            stamp_class_modes = sorted(_refusing_modes(ctx.attr)),
             retain_product_descriptor = ctx.attr.retain_product_descriptor,
             _declaration = declaration,
             _declaration_file = metadata,

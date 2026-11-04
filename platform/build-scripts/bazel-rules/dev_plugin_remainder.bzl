@@ -6,7 +6,7 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//build:host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "library_entries", "module_output_jar")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_ATTRS", "DevDistPluginDescriptorInfo", "dev_dist_check_stamp_class", "dev_dist_neutral_product_transition", "dev_dist_stamp_class_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_ATTRS", "DEV_DIST_STAMP_CLASS_FLAG_ATTR", "DevDistPluginDescriptorInfo", "dev_dist_check_stamp_class", "dev_dist_mode_refusals", "dev_dist_neutral_product_transition", "dev_dist_stamp_class_transition")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_dist_plugin_directory")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
@@ -732,7 +732,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
 
     # The content modules the product's mode refuses. The packer omits an asset whose every module is refused, the
     # runtime layout part omits the same assets, and a reused jar of a refused module is not placed.
-    refused_modules = descriptor_target[DevDistPluginDescriptorInfo].mode_refused_content_modules
+    refused_modules = dev_dist_mode_refusals(ctx, descriptor_target[DevDistPluginDescriptorInfo])
     independent_artifacts = depset([jar for module, jar in reused_jars.items() if module not in refused_modules])
 
     # The raw content of the whole plugin: the catalogue's compiled modules and libraries, plus what each reused content
@@ -867,7 +867,7 @@ reaches each jar's module and compiles it a second time. No input of the action 
             cfg = "exec",
         ),
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
-    },
+    } | DEV_DIST_STAMP_CLASS_FLAG_ATTR,
 )
 
 # The key of a native tree in `independent_destinations`. The plan file names the input of the tree the same way.
