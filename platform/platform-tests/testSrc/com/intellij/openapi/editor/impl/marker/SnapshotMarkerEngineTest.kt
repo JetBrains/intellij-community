@@ -233,12 +233,14 @@ class SnapshotMarkerEngineTest {
   fun `advancing cached offsets does not retain the previous root`() {
     val document = DocumentImpl("abcdefgh", true)
     val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
+    val shiftedMarker = document.createRangeMarker(7, 8)
     fun replaceRoot(): WeakReference<PMarkerRoot> {
       val reference = marker.currentRootReference()
       val root = reference.get()
       marker.textRange
       reference.set(applyPatch(root, "abcdefgh", textPatch(6, 6, "X")))
       assertEquals(TextRange(2, 4), marker.textRange)
+      assertEquals(TextRange(8, 9), shiftedMarker.textRange)
       return WeakReference(root)
     }
 
@@ -248,6 +250,7 @@ class SnapshotMarkerEngineTest {
 
     assertNull(previousRoot.get())
     Reference.reachabilityFence(marker)
+    Reference.reachabilityFence(shiftedMarker)
   }
 
   @Test

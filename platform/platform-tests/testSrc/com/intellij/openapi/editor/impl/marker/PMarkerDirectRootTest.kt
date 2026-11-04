@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentPatch
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -43,6 +45,80 @@ internal class PMarkerDirectRootTest {
   @Test
   fun `factory creates a root with direct marker links`() {
     assertTrue(PMarkerRoot.empty() is PMarkerDirectRoot)
+  }
+
+  @Test
+  fun `edits after all markers retain the root and cached offsets`() {
+    val entries = List(24) { entry(it * 2 + 1, it * 2 + 2) }
+    val spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true)
+    val root = insertText(empty.insertMany(entries), "xx").updateSpec(entries[5].handle, spec)
+    val before = DocumentImpl("x".repeat(102), true).core.snapshot().text()
+    val cache = checkNotNull(resolutionCache(root))
+    val notifications = ArrayList<SnapshotMarkerReference<*>>()
+
+    for (patch in listOf(
+      DocumentPatch.simple(80, 80, "x", 1, false),
+      DocumentPatch.simple(80, 90, "", 1, false),
+      DocumentPatch.simple(80, 90, "y".repeat(10), 1, false),
+    )) {
+      val after = before.replace(patch.startOffset(), patch.endOffset(), patch.newFragment())
+      val edited = root.applyPatch(patch, before, after, { notifications.add(it) }, { notifications.add(it) })
+      assertSame(root, edited)
+      assertSame(cache, resolutionCache(edited))
+      assertSpec(edited, entries[5].handle, spec)
+    }
+    assertTrue(notifications.isEmpty())
+
+    val boundaryRoot = root.updateSpec(entries.last().handle, spec)
+    val boundary = entries.last().nodeEnd + 2
+    val edited = applyPatch(boundaryRoot, DocumentPatch.simple(boundary, boundary, "x", 1, false), "x".repeat(102))
+    assertEquals(TextRangeScalarUtil.toScalarRange(boundary - 1, boundary + 1), edited.resolve(entries.last().handle))
+    assertEquals(TextRangeScalarUtil.toScalarRange(boundary - 1, boundary), boundaryRoot.resolve(entries.last().handle))
+  }
+
+  @Test
+  fun `full traversals and moves still process markers before the edit`() {
+    var transformed = 0
+    val marker = entry(1, 3).copy(policy = object : MarkerPolicy {
+      override val isPersistent: Boolean = true
+
+      override fun transform(
+        entry: MarkerEntry,
+        patch: DocumentPatch,
+        beforeText: DocumentText,
+        afterText: DocumentText,
+      ): MarkerTransformResult {
+        transformed++
+        return MarkerTransformResult(entry)
+      }
+    })
+    val root = empty.insertMany(listOf(marker))
+    val rebuilt = applyPatch(root, DocumentPatch.simple(50, 100, "", 1, false))
+    assertEquals(1, transformed)
+    assertEquals(root.resolve(marker.handle), rebuilt.resolve(marker.handle))
+
+    val moved = applyPatch(root, DocumentPatch.complex(90, 90, "xx", 1, false, 1, 3, 1))
+    assertEquals(TextRangeScalarUtil.toScalarRange(90, 92), moved.resolve(marker.handle))
+    assertEquals(TextRangeScalarUtil.toScalarRange(1, 3), root.resolve(marker.handle))
+  }
+
+  @Test
+  fun `metadata updates fill the shared offset cache`() {
+    val range = entry(1, 3)
+    val point = entry(8, 8)
+    val root = empty.insertMany(listOf(range, point))
+    assertNull(resolutionCache(root))
+
+    val flavored = root.updateFlavor(range.handle, 2)
+    val cache = checkNotNull(resolutionCache(root))
+    val measured = flavored.updateMeasure(point.handle, 7)
+    for (updated in listOf(root, flavored, measured)) {
+      assertSame(cache, resolutionCache(updated))
+      assertEquals(TextRangeScalarUtil.toScalarRange(1, 3), cache[range.handle.id])
+      assertEquals(TextRangeScalarUtil.toScalarRange(8, 8), cache[point.handle.id])
+    }
+    assertEquals(0, root.getPrefixAggregate(8))
+    assertEquals(7, measured.getPrefixAggregate(8))
   }
 
   @Test
@@ -235,6 +311,111 @@ internal class PMarkerDirectRootTest {
   }
 
   @Test
+  fun `specification branches preserve queries and boundary edits`() {
+    val entries = List(24) { entry(it * 2 + 2, it * 2 + 3) }
+    val marker = entries[5]
+    val initial = insertText(empty.insertMany(entries), "xx")
+    val leftSpec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = false)
+    val rightSpec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = true)
+    val left = initial.updateSpec(marker.handle, leftSpec)
+    val right = initial.updateSpec(marker.handle, rightSpec)
+    val reset = left.updateSpec(marker.handle, marker.spec)
+    val roots = listOf(initial to marker.spec, left to leftSpec, right to rightSpec, reset to marker.spec)
+
+    for ([root, spec] in roots) {
+      assertSame(initial.resolutionCacheIdentity, root.resolutionCacheIdentity)
+      assertSame(root, root.updateSpec(marker.handle, spec))
+      assertSame(root, root.mergeValidMarkersFrom(initial))
+      assertSame(root, root.mergeValidMarkersFrom(empty))
+      val atStart = applyPatch(root, DocumentPatch.simple(14, 14, "x", 1, false), "x".repeat(102))
+      val atEnd = applyPatch(root, DocumentPatch.simple(15, 15, "x", 1, false), "x".repeat(102))
+      assertEquals(TextRangeScalarUtil.toScalarRange(if (root === left) 14 else 15, 16), atStart.resolve(marker.handle))
+      assertEquals(TextRangeScalarUtil.toScalarRange(14, if (root === right) 16 else 15), atEnd.resolve(marker.handle))
+      assertSpec(atStart, marker.handle, spec)
+      assertSpec(atEnd, marker.handle, spec)
+    }
+    for ([root, spec] in roots.reversed()) {
+      assertSpec(root, marker.handle, spec)
+      assertEquals(TextRangeScalarUtil.toScalarRange(14, 15), root.resolve(marker.handle))
+    }
+  }
+
+  @Test
+  fun `metadata survives collection of copied ancestors`() {
+    val entries = List(48) { entry(it * 2 + 1, it * 2 + 2) }
+    val spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true)
+    fun updatedRoot(): Pair<PMarkerDirectRoot, WeakReference<PMarkerDirectRoot>> {
+      var current = empty.insertMany(entries)
+      for (entry in entries) current = current.updateSpec(entry.handle, spec)
+      return insertText(current, "xx") to WeakReference(current)
+    }
+    val [updated, previous] = updatedRoot()
+
+    GCWatcher.tracking(Any()).ensureCollected()
+
+    assertNull(previous.get())
+    assertNull(resolutionCache(updated))
+    for (entry in entries) {
+      assertTrue(updated.isValid(entry.handle))
+      assertSame(updated, updated.updateSpec(entry.handle, spec))
+      assertEquals(TextRangeScalarUtil.toScalarRange(entry.nodeStart + 2, entry.nodeEnd + 2), updated.resolve(entry.handle))
+      assertSpec(updated, entry.handle, spec)
+    }
+  }
+
+  @Test
+  fun `specifications survive structural changes and follow restored entries`() {
+    val marker = entry(2, 4)
+    val point = entry(8, 8)
+    val spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true)
+    val stickySpec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false, isStickingToRight = true)
+    val initial = empty.insertMany(listOf(marker, point))
+    val updated = initial.updateSpec(marker.handle, spec).updateSpec(point.handle, stickySpec)
+    val inserted = updated.insertMany(List(24) { entry(it * 2 + 12, it * 2 + 13) })
+    val metadata = inserted.updateFlavor(marker.handle, 2).updateMeasure(point.handle, 7)
+    val shifted = insertText(metadata, "xx")
+    val merged = empty.mergeValidMarkersFrom(shifted)
+    val restored = shifted.restoreEntries(listOf(marker.copy(nodeStart = 30, nodeEnd = 32)))
+
+    for (root in listOf(updated, inserted, metadata, shifted, merged)) {
+      assertSpec(root, marker.handle, spec)
+      assertSpec(root, point.handle, stickySpec)
+    }
+    assertSpec(restored, marker.handle, marker.spec)
+    assertSpec(restored, point.handle, stickySpec)
+    assertSpec(initial, marker.handle, marker.spec)
+    assertSpec(initial, point.handle, point.spec)
+    for (root in listOf(shifted, merged)) {
+      val edited = applyPatch(root, DocumentPatch.simple(10, 10, "x", 1, false), "x".repeat(102))
+      assertEquals(TextRangeScalarUtil.toScalarRange(11, 11), edited.resolve(point.handle))
+      assertSpec(edited, point.handle, stickySpec)
+    }
+
+    val invalid = applyPatch(updated, DocumentPatch.simple(0, 10, "", 1, false))
+    for (root in listOf(shifted.remove(marker.handle), shifted.purgeMany(listOf(marker.handle)), invalid, empty)) {
+      assertSame(root, root.updateSpec(marker.handle, marker.spec))
+      assertFalse(root.isValid(marker.handle))
+    }
+  }
+
+  @Test
+  fun `retargeted markers retain changed specifications`() {
+    val marker = entry(5, 7)
+    val spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true)
+    val original = empty.insertMany(listOf(marker))
+    val root = original.updateSpec(marker.handle, spec)
+    val inserted = applyPatch(root, DocumentPatch.complex(1, 1, "456", 1, false, 4, 7, 7), "01234567890")
+    val moved = applyPatch(inserted, DocumentPatch.simple(7, 10, "", 2, false), "04561234567890")
+    val edited = applyPatch(moved, DocumentPatch.simple(2, 2, "x", 3, false), "04561237890")
+
+    assertEquals(TextRangeScalarUtil.toScalarRange(2, 4), moved.resolve(marker.handle))
+    assertEquals(TextRangeScalarUtil.toScalarRange(2, 5), edited.resolve(marker.handle))
+    assertSpec(moved, marker.handle, spec)
+    assertSpec(edited, marker.handle, spec)
+    assertSpec(original, marker.handle, marker.spec)
+  }
+
+  @Test
   fun `restored offsets and text changes use separate caches`() {
     val first = entry(2, 4)
     val second = entry(8, 8)
@@ -347,6 +528,17 @@ internal class PMarkerDirectRootTest {
 
   private fun resolutionCache(root: PMarkerDirectRoot): ConcurrentLongLongMap? = PMarkerDirectRoot::class.java
     .getDeclaredField("cachedResolutions").apply { isAccessible = true }.get(root) as ConcurrentLongLongMap?
+
+  private fun assertSpec(root: PMarkerRoot, handle: SnapshotMarkerReference<*>, spec: Byte) {
+    assertEquals(spec, resolvedEntries(root).single { it.handle === handle }.spec)
+    assertEquals(spec, root.overlappingIterator(0, 100, 0).asSequence().single { it.handle === handle }.spec)
+    val entries = ArrayList<MarkerEntry>()
+    assertTrue(root.processRangeMarkersOverlappingWith(0, 100, 0) {
+      entries.add(it)
+      true
+    })
+    assertEquals(spec, entries.single { it.handle === handle }.spec)
+  }
 
   private fun resolvedEntries(root: PMarkerRoot): List<MarkerEntry> {
     val entries = ArrayList<MarkerEntry>()

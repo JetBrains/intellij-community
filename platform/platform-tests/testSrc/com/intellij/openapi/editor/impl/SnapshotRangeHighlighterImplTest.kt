@@ -49,6 +49,39 @@ import javax.swing.Icon
 @UsePMarkerImplementation
 class SnapshotRangeHighlighterImplTest {
   @Test
+  fun `compound metadata changes retain the offset cache identity`() {
+    val document = DocumentImpl("one\ntwo", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val exact = model.addRangeHighlighter(1, 1, 1, null, HighlighterTargetArea.EXACT_RANGE) as SnapshotRangeMarkerImpl
+      val line = model.addRangeHighlighter(5, 6, 1, null, HighlighterTargetArea.LINES_IN_RANGE) as SnapshotRangeMarkerImpl
+      val root = exact.currentRootReference().get()
+      val spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true)
+      var metadata = root
+      for (marker in listOf(exact, line)) {
+        metadata = metadata.updateSpec(marker.markerHandle, spec).updateFlavor(marker.markerHandle, 0x40)
+        Assertions.assertThat(metadata.resolutionCacheIdentity).isSameAs(root.resolutionCacheIdentity)
+        Assertions.assertThat(metadata.resolve(exact.markerHandle)).isEqualTo(root.resolve(exact.markerHandle))
+        Assertions.assertThat(metadata.resolve(line.markerHandle)).isEqualTo(root.resolve(line.markerHandle))
+      }
+      metadata = metadata.updateMeasure(exact.markerHandle, 7)
+      Assertions.assertThat(metadata.resolutionCacheIdentity).isSameAs(root.resolutionCacheIdentity)
+      Assertions.assertThat(metadata.getPrefixAggregate(1)).isEqualTo(7)
+      Assertions.assertThat(root.getPrefixAggregate(1)).isZero()
+
+      val before = document.core.snapshot().text()
+      val patch = textPatch(0, 0, "x")
+      val shifted = metadata.applyPatch(patch, before, before.replace(0, 0, "x"))
+      Assertions.assertThat(shifted.resolutionCacheIdentity).isNotSameAs(metadata.resolutionCacheIdentity)
+      Assertions.assertThat(shifted.resolve(exact.markerHandle)).isEqualTo(TextRangeScalarUtil.toScalarRange(2, 2))
+      Assertions.assertThat(metadata.remove(line.markerHandle).resolutionCacheIdentity).isNotSameAs(metadata.resolutionCacheIdentity)
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
   fun `compound batches preserve both highlighter trees`() {
     val document = DocumentImpl("one\ntwo", true)
     val model = MarkupModelImpl(document)

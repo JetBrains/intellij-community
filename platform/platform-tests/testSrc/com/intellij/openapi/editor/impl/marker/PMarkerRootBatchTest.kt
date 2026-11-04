@@ -191,7 +191,7 @@ class PMarkerRootBatchTest {
     val root = PMarkerRoot.empty().insertMany(entries())
     val before = resolvedEntries(root)
     val valid = entry(100, 1, 2)
-    val invalidEntries = listOf(entry(1, 1, 2), entry(100, 1, 2), entry(101, -1, 2), entry(102, 2, 1))
+    val invalidEntries = listOf(entry(1, 1, 2), entry(100, 1, 2), entry(100, 30, 31), entry(101, -1, 2), entry(102, 2, 1))
 
     for (invalid in invalidEntries) {
       assertThrows(IllegalArgumentException::class.java) { root.insertMany(listOf(valid, invalid)) }

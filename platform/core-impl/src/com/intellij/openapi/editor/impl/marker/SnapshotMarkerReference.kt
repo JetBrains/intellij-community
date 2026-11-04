@@ -54,7 +54,7 @@ sealed interface SnapshotMarkerReference<out T : SnapshotRangeMarkerImpl> : Comp
   }
 }
 
-/** Selects a marker state for a snapshot version without retaining that state. */
+/** Selects a marker position or invalid state without retaining it. */
 internal val SnapshotMarkerReference<*>.states: PMarkerNodeHistory<PMarkerNodeState>
   get() = when (this) {
     is StrongSnapshotMarkerReference<*> -> states

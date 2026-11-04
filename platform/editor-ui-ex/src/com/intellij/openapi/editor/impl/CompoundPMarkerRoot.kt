@@ -20,9 +20,8 @@ import java.util.function.Consumer
 open class CompoundPMarkerRoot private constructor(
   val exactRangeRoot: PMarkerRoot,
   val linesInRangeRoot: PMarkerRoot,
+  override val resolutionCacheIdentity: Any = Any(),
 ) : PMarkerRoot {
-  override val resolutionCacheIdentity: Any = Any()
-
   override fun restoreEntries(entries: List<MarkerEntry>): PMarkerRoot {
     return withRoots(exactRangeRoot.restoreEntries(entries.filter { exactRangeRoot.isValid(it.handle) }),
                      linesInRangeRoot.restoreEntries(entries.filter { linesInRangeRoot.isValid(it.handle) }))
@@ -172,7 +171,12 @@ open class CompoundPMarkerRoot private constructor(
       this
     }
     else {
-      CompoundPMarkerRoot(exactRangeRoot, linesInRangeRoot)
+      val identity = if (exactRangeRoot.resolutionCacheIdentity === this.exactRangeRoot.resolutionCacheIdentity &&
+                         linesInRangeRoot.resolutionCacheIdentity === this.linesInRangeRoot.resolutionCacheIdentity) {
+        resolutionCacheIdentity
+      }
+      else Any()
+      CompoundPMarkerRoot(exactRangeRoot, linesInRangeRoot, identity)
     }
   }
 

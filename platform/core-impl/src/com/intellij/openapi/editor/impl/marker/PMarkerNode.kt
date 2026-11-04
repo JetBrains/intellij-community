@@ -10,44 +10,94 @@ import java.util.concurrent.atomic.AtomicLong
 import kotlin.experimental.or
 
 /**
- * Stores a persistent AVL subtree with strong child references and weak parent history.
- * Copies share the marker handle. A snapshot version selects the applicable node and parent through their histories.
+ * Stores a persistent AVL subtree with strong child references.
+ * Metadata updates preserve the positions and parent histories of all entries.
  *
- * @property entry the marker state before shifts from ancestors.
- * @property lazyDelta the offset shift still pending for both children. [entry] already includes this shift.
+ * @property state the position before shifts from ancestors.
+ * @property entry the current marker metadata and stored offsets.
+ * @property subtreeFlavorFlags the combined flavor flags used for query pruning.
+ * @property aggregate the sum of marker measures within this subtree.
  */
-internal class PMarkerNode(
-  val version: PMarkerNodeVersion,
+internal class PMarkerNode private constructor(
+  val state: PMarkerValidNode,
   val entry: MarkerEntry,
   val left: PMarkerNode?,
   val right: PMarkerNode?,
-  val lazyDelta: Int = 0,
-) : PMarkerNodeState {
+  val subtreeFlavorFlags: Byte,
+  val aggregate: Int,
+) {
+  constructor(
+    version: PMarkerNodeVersion,
+    entry: MarkerEntry,
+    left: PMarkerNode?,
+    right: PMarkerNode?,
+    lazyDelta: Int = 0,
+  ) : this(
+    PMarkerValidNode(
+      version, entry.handle, entry.nodeStart, entry.nodeEnd, lazyDelta,
+      maxOf(left?.height ?: 0, right?.height ?: 0) + 1,
+      maxOf(entry.nodeEnd, shiftedEnd(left, lazyDelta), shiftedEnd(right, lazyDelta)),
+      (if (entry.policy.isPersistent) 1 else 0) + (left?.persistentCount ?: 0) + (right?.persistentCount ?: 0),
+    ), entry, left, right,
+    entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0),
+    entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0),
+  )
+
+  val version: PMarkerNodeVersion
+    get() = state.version
   val handle: SnapshotMarkerReference<*>
     get() = entry.handle
+  val lazyDelta: Int
+    get() = state.lazyDelta
+  val height: Int
+    get() = state.height
+  val maximumEnd: Int
+    get() = state.maximumEnd
+  val persistentCount: Int
+    get() = state.persistentCount
 
-  /** Finds a parent for a snapshot version without retaining that parent. */
-  val parents: PMarkerNodeHistory<PMarkerNode> = PMarkerNodeHistory()
-  val height: Int = maxOf(left?.height ?: 0, right?.height ?: 0) + 1
+  /** Copies metadata and preserves the shape, offsets, and policies of this subtree. */
+  fun withMetadata(
+    entry: MarkerEntry = this.entry,
+    left: PMarkerNode? = this.left,
+    right: PMarkerNode? = this.right,
+    updateAggregates: Boolean = true,
+  ): PMarkerNode = PMarkerNode(
+    state, entry, left, right,
+    if (updateAggregates) entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0) else subtreeFlavorFlags,
+    if (updateAggregates) entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0) else aggregate,
+  )
 
-  /** Gives the largest end offset in this subtree, including [lazyDelta] but excluding shifts from ancestors. */
-  val maximumEnd: Int = maxOf(entry.nodeEnd, shiftedEnd(left), shiftedEnd(right))
-
-  /** Combines the flavor flags of all subtree entries for query pruning. */
-  val flavorFlags: Byte = entry.flavorFlags or (left?.flavorFlags ?: 0) or (right?.flavorFlags ?: 0)
-
-  /** Sums the measures of all subtree entries for prefix queries. */
-  val aggregate: Int = entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0)
-
-  /** Counts entries whose persistent policies can require a full traversal after an edit. */
-  val persistentCount: Int = (if (entry.policy.isPersistent) 1 else 0) +
-                             (left?.persistentCount ?: 0) + (right?.persistentCount ?: 0)
-
-  private fun shiftedEnd(child: PMarkerNode?): Int = if (child == null) Int.MIN_VALUE else child.maximumEnd + lazyDelta
+  companion object {
+    private fun shiftedEnd(child: PMarkerNode?, delta: Int): Int = if (child == null) Int.MIN_VALUE else child.maximumEnd + delta
+  }
 }
 
 /** Represents a valid, invalid, or removed marker state in a handle's history. */
 internal sealed interface PMarkerNodeState
+
+/**
+ * Stores a valid position without retaining child nodes or marker metadata.
+ * Metadata updates share this position and its parent history.
+ *
+ * @property version the revision that publishes this position.
+ * @property lazyDelta the shift deferred to children.
+ * @property height the height used for AVL balancing.
+ * @property maximumEnd the largest end offset, including lazy shifts within this subtree.
+ * @property persistentCount the number of entries whose policies can require a full traversal.
+ */
+internal class PMarkerValidNode(
+  val version: PMarkerNodeVersion,
+  val handle: SnapshotMarkerReference<*>,
+  val nodeStart: Int,
+  val nodeEnd: Int,
+  val lazyDelta: Int,
+  val height: Int,
+  val maximumEnd: Int,
+  val persistentCount: Int,
+) : PMarkerNodeState {
+  val parents: PMarkerNodeHistory<PMarkerValidNode> = PMarkerNodeHistory()
+}
 
 /**
  * Stores an invalid or removed marker state outside the valid subtree.
