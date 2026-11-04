@@ -26,6 +26,12 @@ internal const val ROLE_DOC: Int = 1 shl 21
 /** A private bit of `symbol_roles`: the range of the occurrence is not the name of the symbol. */
 internal const val ROLE_NON_NAME: Int = 1 shl 22
 
+/**
+ * A private bit of `symbol_roles`: the occurrence is the name of a method reference, such as `bar` of `Foo::bar`.
+ * It never carries [ROLE_CALL]: the method is passed as a value, and the reader decides whether that is a call.
+ */
+internal const val ROLE_METHOD_REF: Int = 1 shl 23
+
 /** The values of the SCIP `SymbolInformation.Kind` enum that the exporter writes, with their protobuf numbers. */
 internal enum class ScipKind(val number: Int) {
   Class(7),

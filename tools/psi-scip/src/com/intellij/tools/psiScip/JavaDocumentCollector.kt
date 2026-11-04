@@ -47,7 +47,8 @@ import com.intellij.psi.util.PsiUtil
  * - A call has [ROLE_CALL] on the callee name. A `new` expression writes the class without the bit and the constructor with it.
  *   When the class has no explicit constructor, the class alone carries the bit. See [constructorCallee].
  *   An enum constant writes the constructor that it calls at the constant name, see [enumConstantCall].
- * - An occurrence inside a doc comment has [ROLE_DOC] and never [ROLE_CALL].
+ * - A method reference, such as `bar` of `Foo::bar`, has [ROLE_METHOD_REF] and never [ROLE_CALL].
+ * - An occurrence inside a doc comment has [ROLE_DOC] and never [ROLE_CALL] or [ROLE_METHOD_REF].
  * - A package reference is never written. [Counter.PACKAGE_REFS] counts it.
  * - A reference to the synthetic array class or to its members, such as `length`, is never written. [Counter.ARRAY_REFS] counts it.
  */
@@ -260,7 +261,10 @@ internal class JavaDocumentCollector(private val file: PsiJavaFile, private val 
     if (docDepth > 0) {
       roles = roles or ROLE_DOC
     }
-    else if (reference is PsiMethodReferenceExpression || isCallee(reference)) {
+    else if (reference is PsiMethodReferenceExpression) {
+      roles = roles or ROLE_METHOD_REF
+    }
+    else if (isCallee(reference)) {
       roles = roles or ROLE_CALL
     }
     if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase::class.java, true, PsiClass::class.java) != null) {
