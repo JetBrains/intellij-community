@@ -1,13 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.readText
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.sun.jdi.InvocationException
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.evaluate.LOG
@@ -15,6 +19,7 @@ import org.jetbrains.kotlin.psi.KtCodeFragment
 
 class CodeFragmentCodegenException(val reason: Throwable) : Exception()
 
+@RequiresReadLockAbsence
 fun reportErrorWithAttachments(
     executionContext: ExecutionContext,
     codeFragment: KtCodeFragment,
@@ -22,6 +27,19 @@ fun reportErrorWithAttachments(
     additionalAttachments: List<Pair<String, String>> = emptyList(),
     headerMessage: @NlsSafe String = "Error when compiling code fragment with IR evaluator"
 ) {
+    val codeFragmentText = runReadActionBlocking { codeFragment.text }
+    reportErrorWithAttachments(executionContext, codeFragmentText, reason, additionalAttachments, headerMessage)
+}
+
+@RequiresReadLockAbsence
+internal fun reportErrorWithAttachments(
+    executionContext: ExecutionContext,
+    codeFragmentText: String,
+    reason: Throwable,
+    additionalAttachments: List<Pair<String, String>> = emptyList(),
+    headerMessage: @NlsSafe String
+) {
+    DebuggerManagerThreadImpl.assertIsManagerThread()
     val evaluationContext = executionContext.evaluationContext
     val projectName = evaluationContext.project.name
     val suspendContext = evaluationContext.suspendContext
@@ -42,6 +60,7 @@ fun reportErrorWithAttachments(
             DebuggerUtils.tryExtractExceptionMessage(it)
         }
     } catch (e: Throwable) {
+        rethrowControlFlowException(e)
         e2 = e
         null
     }
@@ -68,7 +87,7 @@ fun reportErrorWithAttachments(
 
     val attachments = buildList {
         add(Attachment("debugger_context.txt", debuggerContext).apply { isIncluded = true })
-        add(Attachment("code_fragment.txt", codeFragment.text).apply { isIncluded = true })
+        add(Attachment("code_fragment.txt", codeFragmentText).apply { isIncluded = true })
         suspendStackTrace?.let {
             add(Attachment("suspend_stack_trace.txt", it).apply { isIncluded = true })
         }

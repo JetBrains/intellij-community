@@ -4,15 +4,19 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.IncorrectCodeFragmentException
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.util.Range
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.compilation.KaCompilationOptions
@@ -70,6 +74,7 @@ val KOTLIN_CODE_FRAGMENT_CLASS_AND_FUNCTION_NAMES: Key<Pair<String, String>> = K
 class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     override val compilerType: CompilerType = CompilerType.K2
 
+    @RequiresReadLockAbsence
     override fun compileCodeFragment(
         context: ExecutionContext,
         codeFragment: KtCodeFragment
@@ -81,14 +86,22 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         try {
             patchCodeFragment(context, codeFragment, stats)
 
+            val errors = mutableListOf<CompilationError>()
             val result = stats.startAndMeasureAnalysisUnderReadAction {
-                compiledCodeFragmentDataK2Impl(context, codeFragment)
-            }.getOrThrow()
+                errors.clear()
+                compiledCodeFragmentDataK2Impl(context, codeFragment, errors)
+            }
+            result.exceptionOrNull()?.let { rethrowControlFlowException(unwrapEvaluationException(it)) }
+            for (error in errors) {
+                reportErrorWithAttachments(context, error.codeFragmentText, error.reason, headerMessage = error.headerMessage)
+            }
+            val compiledData = result.getOrThrow()
             onFinish(EvaluationCompilerResult.SUCCESS)
-            return result
+            return compiledData
         } catch(e: ProcessCanceledException) {
             throw e
         } catch (e: Throwable) {
+            rethrowControlFlowException(e)
             val cause = unwrapEvaluationException(e)
 
             stats.compilerFailExceptionClass = extractExceptionCauseClass(cause)
@@ -166,7 +179,14 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         }
     }
 
-    private fun compiledCodeFragmentDataK2Impl(context: ExecutionContext, codeFragment: KtCodeFragment): CompiledCodeFragmentData {
+    private class CompilationError(val codeFragmentText: String, val reason: Throwable, val headerMessage: @NlsSafe String)
+
+    @RequiresReadLock
+    private fun compiledCodeFragmentDataK2Impl(
+        context: ExecutionContext,
+        codeFragment: KtCodeFragment,
+        errors: MutableList<CompilationError>
+    ): CompiledCodeFragmentData {
         val module = codeFragment.module
 
         val (generatedClassName, generatedEntryFunctionName) =
@@ -189,9 +209,16 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                     allowedErrorFilter(KotlinCompilerIdeAllowedErrorFilter.getInstance())
                 }
 
-                when (val result = compile(codeFragment, options)) {
+                val result = compile(codeFragment, options)
+                for (throwable in result.mutedExceptions) {
+                    errors.add(CompilationError(
+                        codeFragment.text,
+                        throwable,
+                        "Muted exception in evaluator compiler: ${throwable.message}"
+                    ))
+                }
+                when (result) {
                     is KaCompilationResult.Success -> {
-                        reportMutedExceptions(result, context, codeFragment)
                         logCompilation(codeFragment)
 
                         val compiledFiles = result.output.filter { it.isClassFile && isCodeFragmentClassPath(it.path, generatedClassName) }
@@ -207,7 +234,6 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                         createCompiledDataDescriptor(ideCompilationResult, result.canBeCached)
                     }
                     is KaCompilationResult.Failure -> {
-                        reportMutedExceptions(result, context, codeFragment)
                         val firstError = result.errors.first()
                         throw IncorrectCodeFragmentException(firstError.defaultMessage)
                     }
@@ -219,7 +245,8 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
             } catch (e: EvaluateException) {
                 throw e
             } catch (e: Throwable) {
-                reportErrorWithAttachments(context, codeFragment, e, headerMessage = "K2 compiler internal error")
+                rethrowControlFlowException(e)
+                errors.add(CompilationError(codeFragment.text, e, "K2 compiler internal error"))
                 throw EvaluateExceptionUtil.createEvaluateException(e)
             }
         }
@@ -271,21 +298,6 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
 
         is KaCodeFragmentCapturedValue.CoroutineContext ->
             CodeFragmentParameter.Dumb(CodeFragmentParameter.Kind.COROUTINE_CONTEXT, "", depthRelativeToCurrentFrame)
-    }
-}
-
-private fun reportMutedExceptions(
-    result: KaCompilationResult,
-    context: ExecutionContext,
-    codeFragment: KtCodeFragment
-) {
-    for (throwable in result.mutedExceptions) {
-        reportErrorWithAttachments(
-            context,
-            codeFragment,
-            throwable,
-            headerMessage = "Muted exception in evaluator compiler: ${throwable.message}"
-        )
     }
 }
 
