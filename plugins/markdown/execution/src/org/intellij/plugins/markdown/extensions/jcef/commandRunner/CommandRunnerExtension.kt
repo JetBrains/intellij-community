@@ -53,10 +53,11 @@ class CommandRunnerExtension(
   val panel: MarkdownHtmlPanel,
   private val provider: Provider
 ): MarkdownCommandRunnerPreviewExtension {
-  private val sessionKey = UUID.randomUUID().toString()
+  private val commands = provider.getPanelCommands(panel)
+  private val sessionKey get() = commands.sessionKey
+  private val hash2Cmd get() = commands.hash2Cmd
   override val scripts: List<String> = listOf("commandRunner/commandRunner.js")
   override val styles: List<String> = listOf("commandRunner/commandRunner.css")
-  private val hash2Cmd = ConcurrentHashMap<String, String>()
 
   override fun resetCommands() {
     hash2Cmd.clear()
@@ -292,8 +293,24 @@ class CommandRunnerExtension(
     provider.extensions.remove(panel.virtualFile)
   }
 
+  internal class PanelCommands {
+    val sessionKey: String = UUID.randomUUID().toString()
+    val hash2Cmd = ConcurrentHashMap<String, String>()
+  }
+
   class Provider: MarkdownCommandRunnerPreviewExtension.Provider {
     val extensions = ConcurrentHashMap<VirtualFile, CommandRunnerExtension>()
+    private val panelCommands = ConcurrentHashMap<MarkdownHtmlPanel, PanelCommands>()
+
+    /** Keeps the commands until the [panel] is disposed. */
+    internal fun getPanelCommands(panel: MarkdownHtmlPanel): PanelCommands {
+      panelCommands[panel]?.let { return it }
+      val commands = PanelCommands()
+      if (!Disposer.tryRegister(panel) { panelCommands.remove(panel) }) {
+        return commands
+      }
+      return panelCommands.putIfAbsent(panel, commands) ?: commands
+    }
 
     override fun getExtension(file: VirtualFile): CommandRunnerExtension? = extensions[file]
 

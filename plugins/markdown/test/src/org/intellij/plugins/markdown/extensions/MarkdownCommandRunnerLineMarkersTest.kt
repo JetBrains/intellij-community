@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
 import com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService
 import com.intellij.markdown.frontend.execution.MarkdownFrontendRunnerFlowService
+import com.intellij.markdown.jcef.preview.HtmlSourceTextPreprocessor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -15,6 +16,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -37,17 +39,20 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.EditorTestFixture
+import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunnerContext
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.PreviewCommandRunnability
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.getMarkdownCommandWorkingDirectoryPaths
 import org.intellij.plugins.markdown.service.MarkdownFrontendRunnerRequest
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
+import org.intellij.plugins.markdown.ui.preview.PreviewClickConfirmation
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -164,6 +169,41 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     PlatformTestUtil.waitWithEventsDispatching("The shell command did not execute", { capturingRunner.capturedCommand != null }, 10)
 
     assertEquals("value = 'hello'", capturingRunner.capturedCommand)
+  }
+
+  @Test
+  fun `preview line icon of a fence runs after the second render`() {
+    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
+    // A fence line gets a run-line icon only when it has a colored token, such as the quoted string.
+    val command = "echo \"second-render-${System.nanoTime()}\""
+    val runnability = replacePreviewCommandRunnability(command)
+    val file = myFixture.addFileToProject("foo/second-render.md", "```shell\n$command\n```").virtualFile
+    val pipe = TestBrowserPipe()
+    createRegisteredPreviewExtension(createPreviewPanel(file, pipe))
+
+    renderPreview(file)
+    val html = renderPreview(file)
+
+    clickPreviewLine(pipe, html)
+    assertEquals(command, runnability.executedCommand?.trim())
+  }
+
+  @Test
+  fun `preview block icon runs after the preview extensions reload`() {
+    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
+    val command = "echo reload-${System.nanoTime()}"
+    replacePreviewCommandRunnability(command)
+    val file = myFixture.addFileToProject("foo/reload.md", "```shell\n$command\n```").virtualFile
+    val panel = createPreviewPanel(file, TestBrowserPipe())
+    val extension = createRegisteredPreviewExtension(panel)
+    val html = renderPreview(file)
+
+    Disposer.dispose(extension)
+    createRegisteredPreviewExtension(panel)
+
+    clickPreviewBlock(panel.browserPipe as TestBrowserPipe, html)
+    PlatformTestUtil.waitWithEventsDispatching("The block runner did not execute", { capturingRunner.capturedCommand != null }, 10)
+    assertEquals(command, capturingRunner.capturedCommand?.trim())
   }
 
   @Test
@@ -426,7 +466,29 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
   }
 
   private fun createPreviewExtension(pipe: BrowserPipe? = null): CommandRunnerExtension {
-    val virtualFile = myFixture.file.virtualFile
+    val panel = createPreviewPanel(myFixture.file.virtualFile, pipe)
+    return CommandRunnerExtension(panel, CommandRunnerExtension.Provider()).also { Disposer.register(testRootDisposable, it) }
+  }
+
+  private fun createRegisteredPreviewExtension(panel: MarkdownHtmlPanel): CommandRunnerExtension {
+    val provider = requireNotNull(MarkdownExtensionsUtil.findBrowserExtensionProvider<CommandRunnerExtension.Provider>())
+    val extension = provider.createBrowserExtension(panel) as CommandRunnerExtension
+    Disposer.register(testRootDisposable, extension)
+    return extension
+  }
+
+  private fun renderPreview(file: VirtualFile): String {
+    val document = requireNotNull(FileDocumentManager.getInstance().getDocument(file))
+    return runReadAction { HtmlSourceTextPreprocessor().preprocessText(project, document, file) }
+  }
+
+  private fun replacePreviewCommandRunnability(runnableCommand: String): RecordingPreviewCommandRunnability {
+    val runnability = RecordingPreviewCommandRunnability(runnableCommand)
+    ApplicationManager.getApplication().replaceService(PreviewCommandRunnability::class.java, runnability, testRootDisposable)
+    return runnability
+  }
+
+  private fun createPreviewPanel(virtualFile: VirtualFile, pipe: BrowserPipe?): MarkdownHtmlPanel {
     val component = myFixture.editor.component
     val project = project
     val panel = object : MarkdownHtmlPanel {
@@ -440,12 +502,34 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
       override fun removeScrollListener(listener: MarkdownHtmlPanel.ScrollListener) = Unit
       override fun dispose() = Unit
     }
-    return CommandRunnerExtension(panel, CommandRunnerExtension.Provider()).also { Disposer.register(testRootDisposable, it) }
+    Disposer.register(testRootDisposable, panel)
+    return panel
   }
 
   private fun clickPreviewBlock(pipe: TestBrowserPipe, html: String) {
     val command = requireNotNull(Regex("data-command='([^']+)'").find(html)).groupValues[1]
     pipe.receive("runBlock", "$command::0:0:0")
+  }
+
+  private fun clickPreviewLine(pipe: TestBrowserPipe, html: String) {
+    val command = requireNotNull(Regex("class='run-icon-line[^']*'[^>]*data-command='([^']+)'").find(html)) {
+      "The preview has no run-line icon: $html"
+    }.groupValues[1]
+    pipe.receive("runLine", "$command:0:0:${PreviewClickConfirmation.GENUINE_CLICK}")
+  }
+
+  private class RecordingPreviewCommandRunnability(private val runnableCommand: String) : PreviewCommandRunnability {
+    var executedCommand: String? = null
+
+    override fun isRunnable(project: Project, file: VirtualFile?, command: String, allowRunConfigurations: Boolean): Boolean {
+      return command == runnableCommand
+    }
+
+    override fun execute(project: Project, file: VirtualFile?, command: String, executorId: String, workingDirectory: String) {
+      executedCommand = command
+    }
+
+    override suspend fun resolvePending(): Boolean = false
   }
 
   private fun fireBlockMarkerAction(

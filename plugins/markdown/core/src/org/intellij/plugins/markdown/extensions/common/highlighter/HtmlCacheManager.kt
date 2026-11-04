@@ -13,34 +13,28 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.APP)
 internal class HtmlCacheManager {
-  private data class CachedHtmlResult(val html: SoftReference<String>, var expires: Long) {
-    data class HtmlResult(val html: String, val expires: Long)
+  private class CachedRanges(val ranges: SoftReference<List<HighlightedRange>>, var expires: Long)
 
-    fun resolve(): HtmlResult? {
-      return html.get()?.let { HtmlResult(it, expires) }
-    }
-  }
-
-  private val values = ConcurrentHashMap<String, CachedHtmlResult>()
+  private val values = ConcurrentHashMap<String, CachedRanges>()
 
   fun obtainCacheKey(content: String, language: String): String {
     return MarkdownUtil.md5(content, language)
   }
 
-  fun obtainCachedHtml(key: String): String? {
+  fun obtainCachedRanges(key: String): List<HighlightedRange>? {
     val entry = values[key]
-    val resolved = entry?.resolve()
-    if (resolved != null) {
+    val ranges = entry?.ranges?.get()
+    if (ranges != null) {
       entry.expires += expiration
-      return resolved.html
+      return ranges
     }
     cleanup()
     return null
   }
 
-  fun cacheHtml(key: String, html: String) {
+  fun cacheRanges(key: String, ranges: List<HighlightedRange>) {
     val expires = System.currentTimeMillis() + expiration
-    values[key] = CachedHtmlResult(SoftReference(html), expires)
+    values[key] = CachedRanges(SoftReference(ranges), expires)
   }
 
   fun cleanup() {
