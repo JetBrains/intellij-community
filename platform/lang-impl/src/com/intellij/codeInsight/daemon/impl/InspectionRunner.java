@@ -38,6 +38,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -253,15 +254,17 @@ final class InspectionRunner {
       // but only for visible elements, because we don't care about the order in 'outside', and spending CPU on their rearrangement would be counterproductive
       InspectionProfilerDataHolder.sortByLatencies(myPsiFile, init);
 
-      Processor<? super InspectionContext> contextProcessor = (context) -> {
+      NotNullLazyValue<InspectionVisitorOptimizer> optimizer = NotNullLazyValue.atomicLazy(() -> new InspectionVisitorOptimizer(
+        hasWholeFileTools ? ContainerUtil.concat(wholeInside, wholeOutside) : ContainerUtil.concat(restrictedInside, restrictedOutside)));
+      Processor<? super InspectionContext> contextProcessor = context -> {
         executeInImpatientReadAction(()-> {
           if (DumbService.isDumb(project) != myDumbMode) {
             // Dumb state change has sneaked between our read actions. Aborting.
             return;
           }
           // sequentially to avoid inspection visitor reentrancy
-          processContext(context, context.elementsInside(), new InspectionVisitorOptimizer(context.elementsInside()));
-          processContext(context, context.elementsOutside(), new InspectionVisitorOptimizer(context.elementsOutside()));
+          processContext(context, context.elementsInside(), optimizer.getValue());
+          processContext(context, context.elementsOutside(), optimizer.getValue());
           contextCompleted(context, session, contextFinishedCallback);
         });
         return true;

@@ -108,7 +108,7 @@ public final class InspectionVisitorOptimizer {
     Set<Class<?>> uniqueElementClasses = CollectionFactory.createSmallMemoryFootprintSet(100);
     for (int i = 0; i < elements.size(); i++) {
       PsiElement element = elements.get(i);
-      Class<? extends PsiElement> elementClass = element.getClass();
+      Class<?> elementClass = getElementClass(element);
 
       // this check guarantees that items are unique in value collections, so we can use simple lists inside
       if (uniqueElementClasses.add(elementClass)) {
@@ -122,10 +122,18 @@ public final class InspectionVisitorOptimizer {
     return targetPsiClasses;
   }
 
+  /**
+   * Keep the parameter typed as {@code Object} so javac emits {@code invokevirtual Object.getClass}.
+   * Calling through {@code PsiElement} emits {@code invokeinterface} and can contend on JVM locks during method resolution.
+   */
+  private static @NotNull Class<?> getElementClass(@NotNull Object element) {
+    return element.getClass();
+  }
+
   private Set<Class<?>> getVisitorAcceptClasses(@NotNull List<? extends Class<?>> acceptingPsiTypes) {
     Map<Class<?>, Collection<Class<?>>> targetPsiClasses = myTargetPsiClasses;
     if (acceptingPsiTypes.size() == 1) {
-      return Set.copyOf(targetPsiClasses.getOrDefault(acceptingPsiTypes.get(0), Collections.emptyList()));
+      return Set.copyOf(targetPsiClasses.getOrDefault(acceptingPsiTypes.getFirst(), Collections.emptyList()));
     }
 
     Set<Class<?>> accepts = null;
@@ -225,7 +233,7 @@ public final class InspectionVisitorOptimizer {
         //noinspection ForLoopReplaceableByForEach
         for (int i = 0; i < elements.size(); i++) {
           PsiElement element = elements.get(i);
-          if (accepts.contains(element.getClass())) {
+          if (accepts.contains(getElementClass(element))) {
             ProgressManager.checkCanceled();
             consumer.accept(element);
           }

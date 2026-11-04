@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.RequiredElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -10,8 +11,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Set;
-
-import static java.util.stream.Collectors.toSet;
 
 /**
  * Declares a base visitor class for language to speed up inspection runs.
@@ -48,9 +47,7 @@ public final class BasicInspectionVisitorBean {
     Set<String> set = ourClasses;
     if (set != null) return set;
 
-    set = EP_NAME.getExtensionList().stream()
-      .map(x -> x.clazz)
-      .collect(toSet());
+    set = ContainerUtil.map2Set(EP_NAME.getExtensionList(), x -> x.clazz);
     ourClasses = set;
 
     return set;
