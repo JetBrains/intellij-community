@@ -922,6 +922,7 @@ platform/ml-impl
 platform/ml-logs
 platform/monolith
 platform/multiplatformSupport
+platform/multiverse-tests
 platform/navbar/backend
 platform/navbar/frontend
 platform/navbar/monolith

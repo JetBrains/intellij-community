@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.java.codeInsight.daemon.impl
+package com.intellij.codeInsight.multiverse
 
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
@@ -10,19 +10,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.multiverse.CodeInsightContext
-import com.intellij.codeInsight.multiverse.CodeInsightContextChangeListener
-import com.intellij.codeInsight.multiverse.CodeInsightContextManager
-import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
-import com.intellij.codeInsight.multiverse.CodeInsightContextProvider
 import com.intellij.codeInsight.multiverse.CodeInsightContextProvider.Answer
-import com.intellij.codeInsight.multiverse.EditorContextManager
-import com.intellij.codeInsight.multiverse.ModuleContext
-import com.intellij.codeInsight.multiverse.SingleEditorContext
-import com.intellij.codeInsight.multiverse.anyContext
-import com.intellij.codeInsight.multiverse.codeInsightContext
-import com.intellij.codeInsight.multiverse.defaultContext
-import com.intellij.codeInsight.multiverse.isSharedSourceSupportEnabled
 import com.intellij.codeInspection.DefaultInspectionToolResultExporter
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionToolSession

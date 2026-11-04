@@ -701,6 +701,7 @@ jvm_library(
         "//plugins/devkit/devkit-java-tests:java-tests_test_lib",
         "//plugins/devkit/devkit-kotlin-tests:kotlin-tests_test_lib",
         "//platform/platform-impl/file-chooser-universal:ide-fileChooser-universal-tests_test_lib",
+        "//platform/multiverse-tests:multiverse-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.idea.community.main.tests` end

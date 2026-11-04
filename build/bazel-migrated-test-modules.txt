@@ -170,6 +170,7 @@ intellij.platform.lsp.impl.tests
 intellij.platform.lvcs.impl.tests
 intellij.platform.markdown.utils.tests
 intellij.platform.ml.impl.tests
+intellij.platform.multiverse.tests
 intellij.platform.navbar.frontend.tests
 intellij.platform.objectSerializer.tests
 intellij.platform.pluginGraph.tests

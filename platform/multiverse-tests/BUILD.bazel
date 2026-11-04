@@ -1,0 +1,75 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "multiverse-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":multiverse-tests_test_lib"],
+)
+
+### skip generation section `test intellij.platform.multiverse.tests`
+
+### auto-generated section `build intellij.platform.multiverse.tests` start
+jvm_library(
+    name = "multiverse-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.multiverse.tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//aether-dependency-resolver/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//platform/testRunner/plugin",
+        "//platform/todo/plugin",
+        "//platform/vcs/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//xml/plugin",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/junit4",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-impl",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/lang-api:lang",
+        "//platform/lang-core",
+        "//platform/lang-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-impl",
+        "//platform/testFramework",
+        "//platform/util",
+        "//platform/workspace/jps",
+        "//platform/workspace/storage",
+        "//java/java-frontback-psi-impl:frontback-psi-impl",
+        "//java/testFramework",
+        "//java/plugin",
+    ],
+)
+### auto-generated section `build intellij.platform.multiverse.tests` end
+
+### auto-generated section `iml intellij.platform.multiverse.tests` start
+exports_files(
+    [
+        "intellij.platform.multiverse.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.multiverse.tests` end
