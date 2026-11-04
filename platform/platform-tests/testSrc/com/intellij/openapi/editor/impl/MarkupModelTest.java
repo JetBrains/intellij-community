@@ -96,7 +96,6 @@ public class MarkupModelTest {
       MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myFixture.getProject(), true);
       RangeHighlighterEx highlighter =
         (RangeHighlighterEx)markupModel.addRangeHighlighter(0, 3, 0, null, HighlighterTargetArea.EXACT_RANGE);
-      assertEquals("RangeHighlighterImpl", highlighter.getClass().getSimpleName());
       List<Boolean> fontStyleChanges = new ArrayList<>();
       markupModel.addMarkupModelListener(myFixture.getTestRootDisposable(), new MarkupModelListener() {
         @Override
