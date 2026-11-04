@@ -25,6 +25,11 @@ fn must_read_plan(text: &str) -> PlanFile {
     read_plan(text).unwrap_or_else(|error| panic!("{error}"))
 }
 
+/// The IDs of the catalogue artifacts, in their order.
+fn artifact_ids(catalogue: &Catalogue) -> Vec<&str> {
+    catalogue.artifacts.iter().map(|artifact| artifact.id.as_str()).collect()
+}
+
 fn file_artifact(id: &str) -> Artifact {
     Artifact {
         id: id.to_owned(),
@@ -1184,12 +1189,7 @@ fn derive_omits_an_asset_whose_every_module_is_refused() {
         ["lib/demo.jar", "lib/demo-lib.jar", "lib/main.jar"]
     );
     assert_eq!(
-        derivation
-            .catalogue
-            .artifacts
-            .iter()
-            .map(|artifact| artifact.id.as_str())
-            .collect::<Vec<_>>(),
+        artifact_ids(&derivation.catalogue),
         ["demo.backend", "demo.main", "@lib//:demo-lib/a.jar", "raw"],
         "the module input that only the omitted jar reads left the catalogue, and the merged input stayed"
     );
@@ -1258,14 +1258,7 @@ fn a_plan_without_assets_keeps_the_inputs_of_the_other_assets() {
         kept.assets.iter().map(|asset| asset.destination.as_str()).collect::<Vec<_>>(),
         ["lib/util.jar", "bin/tool"]
     );
-    assert_eq!(
-        kept_catalogue
-            .artifacts
-            .iter()
-            .map(|artifact| artifact.id.as_str())
-            .collect::<Vec<_>>(),
-        ["util-1.jar", "tool"]
-    );
+    assert_eq!(artifact_ids(&kept_catalogue), ["util-1.jar", "tool"]);
     assert_eq!(kept_catalogue.libraries.len(), 1);
     let error = crate::without_assets(&plan, &catalogue, &["lib/absent.jar".to_owned()]).unwrap_err();
     assert_eq!(

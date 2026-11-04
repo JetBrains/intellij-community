@@ -147,3 +147,26 @@ pub(crate) fn span_tag<'a>(span: &'a Value, name: &str) -> Option<&'a str> {
 pub(crate) fn exists(name: &str) -> bool {
     std::fs::symlink_metadata(name).is_ok()
 }
+
+/// Writes a native tree as the packer does, inventories it below the key prefix `native`, and removes the tree: the
+/// collector places its files from the inventory alone. The inventory records the declared mode of each file, as the
+/// packer does, and not the mode on disk.
+#[cfg(unix)]
+pub(crate) fn write_native_tree(tree: impl AsRef<Path>, files: &[(&str, u32)]) -> Vec<Entry> {
+    let tree = tree.as_ref();
+    std::fs::create_dir_all(tree).unwrap();
+    for (name, _) in files {
+        write_file(tree.join(name), format!("native {name}"));
+    }
+    let mut inventory = vec![filemeta::inspect(tree, "native").unwrap()];
+    for mut entry in filemeta::inventory(tree).unwrap() {
+        if let Some((_, mode)) = files.iter().find(|(name, _)| *name == entry.relative_path) {
+            entry.mode = *mode;
+            entry.executable = mode & 0o111 != 0;
+        }
+        entry.relative_path = format!("native/{}", entry.relative_path);
+        inventory.push(entry);
+    }
+    std::fs::remove_dir_all(tree).unwrap();
+    inventory
+}

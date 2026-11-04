@@ -6,6 +6,8 @@ use std::path::PathBuf;
 use testkit::{REFERENCE_CONTENT_HASHES, TempDir, WorkingDirectory, read_bytes, reference_bytes, require_error, write_file};
 
 use super::*;
+#[cfg(unix)]
+use crate::test_support::write_native_tree;
 
 fn decode_component_manifest(data: &[u8]) -> serde_json::Result<ComponentManifest> {
     serde_json::from_slice(data)
@@ -474,28 +476,6 @@ fn metadata_catalogue_rejects_conflicts_and_stale_ownership() {
         attach_metadata(&files, &directory.path().join("catalogue.json")),
         "unknown field `Metadata`",
     );
-}
-
-/// Writes a native tree as the packer does and inventories it under the key prefix `native`. The tree is removed
-/// afterwards, because the collector must place its files from the inventory alone. The inventory records the stated
-/// mode of each file, as the packer records its declared mode, and not the mode on disk.
-#[cfg(unix)]
-fn write_native_tree(tree: &Path, files: &[(&str, u32)]) -> Vec<Entry> {
-    fs::create_dir_all(tree).unwrap();
-    for (name, _) in files {
-        write_file(tree.join(name), format!("native {name}"));
-    }
-    let mut inventory = vec![filemeta::inspect(tree, "native").unwrap()];
-    for mut entry in filemeta::inventory(tree).unwrap() {
-        if let Some((_, mode)) = files.iter().find(|(name, _)| *name == entry.relative_path) {
-            entry.mode = *mode;
-            entry.executable = mode & 0o111 != 0;
-        }
-        entry.relative_path = format!("native/{}", entry.relative_path);
-        inventory.push(entry);
-    }
-    fs::remove_dir_all(tree).unwrap();
-    inventory
 }
 
 #[cfg(unix)]
