@@ -799,6 +799,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (EditorGutterComponentImpl.needsRepaint(oldSnapshot, newSnapshot)) {
           myGutterComponent.repaint();
         }
+        if (oldSnapshot.isFontFamiliesEnabled() != newSnapshot.isFontFamiliesEnabled()) {
+          ApplicationManager.getApplication().invokeLater(
+            () -> reinitSettings(true, true, true),
+            ModalityState.stateForComponent(myEditorComponent),
+            _ -> isDisposed()
+          );
+        }
       }
     );
 
@@ -1391,8 +1398,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   /**
-   * @param highlightingChanged true when the editor highlighter or the colors scheme changed.
-   *                            The text can then get other font styles, so all soft wraps are recalculated.
+   * @param highlightingChanged true when the editor highlighter, the colors scheme or the font families registry key changed.
+   *                            The text can then get other fonts, so all soft wraps are recalculated.
    */
   @RequiresEdt
   private void reinitSettings(boolean updateGutterSize, boolean reinitSettings, boolean highlightingChanged) {

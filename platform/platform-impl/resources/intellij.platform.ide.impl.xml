@@ -537,6 +537,12 @@
       restartRequired="true"
     />
     <registryKey
+      key="editor.font.families"
+      defaultValue="true"
+      description="Shows the font families of text attributes in the editor. When this is off, the editor shows all text in the editor fonts."
+      restartRequired="false"
+    />
+    <registryKey
       key="ea.diagnostic.endpoint"
       defaultValue=""
       description="Custom ITN error reporting endpoint. Only HTTPS URLs whose host ends with .jetbrains.com are accepted"

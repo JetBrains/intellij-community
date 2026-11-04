@@ -61,6 +61,7 @@ class EditorRegistry private constructor(
   private val animationCacheDebug: Boolean,
   private val virtualLines: Int,
   private val rtlDisabled: Boolean,
+  private val fontFamilies: Boolean,
 
   private val stickyLinesShadow: Boolean,
   private val stickyLinesShadowDebug: Boolean,
@@ -117,6 +118,7 @@ class EditorRegistry private constructor(
   fun isAnimationCacheDebugEnabled(): Boolean = animationCacheDebug
   fun virtualLines(): Int = virtualLines
   fun isRtlDisabled(): Boolean = rtlDisabled
+  fun isFontFamiliesEnabled(): Boolean = fontFamilies
 
   fun isStickyLinesShadowShown(): Boolean = stickyLinesShadow
   fun isStickyLinesShadowDebugEnabled(): Boolean = stickyLinesShadowDebug
@@ -184,6 +186,7 @@ class EditorRegistry private constructor(
       animationCacheDebug = false,
       virtualLines = 5,
       rtlDisabled = false,
+      fontFamilies = true,
 
       stickyLinesShadow = true,
       stickyLinesShadowDebug = false,
@@ -246,6 +249,7 @@ class EditorRegistry private constructor(
       val animationCacheDebug = r.`is`("editor.animation.cache.debug.enabled", DEFAULT.animationCacheDebug)
       val virtualLines = r.intValue("editor.virtual.lines", DEFAULT.virtualLines)
       val rtlDisabled = r.`is`("editor.disable.rtl", DEFAULT.rtlDisabled)
+      val fontFamilies = r.`is`("editor.font.families", DEFAULT.fontFamilies)
 
       val stickyLinesShadow = r.`is`("editor.show.sticky.lines.shadow", DEFAULT.stickyLinesShadow)
       val stickyLinesShadowDebug = r.`is`("editor.show.sticky.lines.shadow.debug", DEFAULT.stickyLinesShadowDebug)
@@ -303,6 +307,7 @@ class EditorRegistry private constructor(
         animationCacheDebug = animationCacheDebug,
         virtualLines = virtualLines,
         rtlDisabled = rtlDisabled,
+        fontFamilies = fontFamilies,
 
         stickyLinesShadow = stickyLinesShadow,
         stickyLinesShadowDebug = stickyLinesShadowDebug,

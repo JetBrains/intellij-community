@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.openapi.util.Disposer;
@@ -67,6 +68,7 @@ import java.awt.font.LineMetrics;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.text.Bidi;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
@@ -418,7 +420,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       return snapshot
         .withFontRenderContext(newFontRenderContext)
         .withMetrics(EditorViewMetrics.UNINITIALIZED)
-        .withFontResolver(EditorFontResolver.UNINITIALIZED)
+        .withFontResolver(createFontResolver(newFontRenderContext, snapshot.fontResolver().publishedFontFamilies()))
         .withTabSize(newTabSize)
         .withBidiFlags(newBidiFlags)
         .withRtlEnabled(myEditor.getSettings().isRtlEnabled())
@@ -648,7 +650,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   /**
-   * Returns the font resolver of the current font settings, and creates it on the first use.
+   * Returns the font resolver of the current font settings.
+   * {@link #reinitSettings} and a render context change build the resolver at once.
+   * A reader before the first {@link #reinitSettings} creates a resolver without font families.
    */
   @NotNull EditorFontResolver getFontResolver() {
     while (true) {
@@ -657,7 +661,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       if (resolver != EditorFontResolver.UNINITIALIZED) {
         return resolver;
       }
-      EditorFontResolver newResolver = createFontResolver(snapshot);
+      EditorFontResolver newResolver = createFontResolver(snapshot.fontRenderContext(), List.of());
       if (SNAPSHOT_UPDATER.compareAndSet(this, snapshot, snapshot.withFontResolver(newResolver))) {
         return newResolver;
       }
@@ -665,13 +669,46 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   /**
-   * Creates the font resolver of the current font settings, with the render context of {@code snapshot}.
+   * Publishes font families values: the resolver creates their fonts now, so that the layout and the paint only read them.
+   * The caller then lays out the text with these values again.
+   * It is safe to call on any thread.
+   *
+   * @return whether a value was new
+   * @see EditorFontResolver#withFontFamilies
+   */
+  boolean publishFontFamilies(Collection<FontFamilies> values) {
+    while (true) {
+      EditorViewSnapshot snapshot = mySnapshot;
+      EditorFontResolver resolver = snapshot.fontResolver();
+      if (resolver == EditorFontResolver.UNINITIALIZED) {
+        getFontResolver();
+        continue;
+      }
+      EditorFontResolver newResolver = resolver.withFontFamilies(values);
+      if (newResolver == resolver) {
+        return false;
+      }
+      if (SNAPSHOT_UPDATER.compareAndSet(this, snapshot, snapshot.withFontResolver(newResolver))) {
+        return true;
+      }
+    }
+  }
+
+  /**
+   * Creates the font resolver of the current font settings for the render context, with the fonts of the font families.
    * Like {@link #createNewMetrics}, it can run on any thread.
    */
-  private @NotNull EditorFontResolver createFontResolver(@NotNull EditorViewSnapshot snapshot) {
+  private @NotNull EditorFontResolver createFontResolver(FontRenderContext context, Collection<FontFamilies> fontFamilies) {
     EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
     Font specialCharacterFont = myEditor.getSettings().isShowingSpecialChars() ? colorsScheme.getFont(EditorFontType.PLAIN) : null;
-    return new EditorFontResolver(colorsScheme.getFontPreferences(), snapshot.fontRenderContext(), specialCharacterFont);
+    boolean fontFamiliesEnabled = EditorRegistry.current().isFontFamiliesEnabled();
+    return EditorFontResolver.create(
+      colorsScheme.getFontPreferences(),
+      context,
+      specialCharacterFont,
+      fontFamiliesEnabled,
+      fontFamilies
+    );
   }
 
   Insets getInsets() {
@@ -988,7 +1025,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       EditorViewSnapshot newSnapshot = snapshot
         .withFontRenderContext(newContext)
         .withMetrics(EditorViewMetrics.UNINITIALIZED)
-        .withFontResolver(EditorFontResolver.UNINITIALIZED)
+        .withFontResolver(createFontResolver(newContext, snapshot.fontResolver().publishedFontFamilies()))
         .withPrefixLayout(NOT_INITIALIZED_PREFIX);
       if (SNAPSHOT_UPDATER.compareAndSet(this, snapshot, newSnapshot)) {
         return true;
