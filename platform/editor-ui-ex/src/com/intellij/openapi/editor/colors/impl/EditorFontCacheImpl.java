@@ -23,6 +23,7 @@ import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlow
 /**
  * Builds and keeps the editor and console fonts of one scheme.
  * The fonts follow the font preferences of the scheme: a call that finds other preference snapshots builds the fonts again.
+ * A call for an editor font type checks only the editor preferences, because the editor fonts do not depend on the console preferences.
  * A {@link #reset()} makes the next call build the fonts again, for a change outside the font preferences.
  * The application service {@link GlobalSchemeFontCache} and each {@link AbstractColorsScheme} hold an instance.
  */
@@ -41,18 +42,21 @@ public final class EditorFontCacheImpl extends EditorFontCache {
 
   @Override
   public @NotNull Font getFont(@Nullable EditorFontType key) {
+    EditorFontType fontType = Objects.requireNonNullElse(key, EditorFontType.PLAIN);
     EditorFonts fonts = this.fonts;
     EditorColorsScheme scheme = schemeSupplier.get();
     FontPreferences schemePreferences = scheme.getFontPreferences();
     FontPreferences preferences = schemePreferences.getSnapshot();
-    FontPreferences consolePreferences = scheme.getConsoleFontPreferences().getSnapshot();
-    if (!fonts.isBuiltFrom(preferences, consolePreferences)) {
+    boolean builtFromPreferences = isConsoleType(fontType)
+                                   ? fonts.isBuiltFrom(preferences, scheme.getConsoleFontPreferences().getSnapshot())
+                                   : fonts.isBuiltFromEditorFont(preferences);
+    if (!builtFromPreferences) {
+      FontPreferences consolePreferences = scheme.getConsoleFontPreferences().getSnapshot();
       boolean delegating = schemePreferences instanceof DelegatingFontPreferences;
       EditorFonts newFonts = buildFonts(scheme, delegating, preferences, consolePreferences);
       FONTS_UPDATER.compareAndSet(this, fonts, newFonts);
       fonts = newFonts;
     }
-    EditorFontType fontType = Objects.requireNonNullElse(key, EditorFontType.PLAIN);
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getPresentationMode()) {
       float size = UISettingsUtils.with(uiSettings).getPresentationModeFontSize();
@@ -69,6 +73,7 @@ public final class EditorFontCacheImpl extends EditorFontCache {
   /**
    * Builds the fonts from two snapshots, so the editor fonts come from one version of their preferences.
    * The console fonts also come from one version of their preferences.
+   * The build ignores presentation mode, because {@link #getFont(EditorFontType)} sets the presentation size in that mode.
    */
   private static @NotNull EditorFonts buildFonts(
     @NotNull EditorColorsScheme scheme,
@@ -79,7 +84,7 @@ public final class EditorFontCacheImpl extends EditorFontCache {
     String editorFontName = getEditorFontName(preferences);
     String consoleFontName = consolePreferences.getFontFamily();
     float editorFontSize = preferences.getSize2D(preferences.getFontFamily());
-    float consoleFontSize = getConsoleFontSize(consolePreferences, consoleFontName, editorFontSize);
+    float consoleFontSize = AbstractColorsScheme.consoleFontSize2D(consolePreferences, editorFontSize);
     if (LOG.isDebugEnabled()) {
       logDebug(scheme, delegating, editorFontName, editorFontSize);
     }
@@ -94,6 +99,13 @@ public final class EditorFontCacheImpl extends EditorFontCache {
     );
   }
 
+  private static boolean isConsoleType(@NotNull EditorFontType fontType) {
+    return fontType == EditorFontType.CONSOLE_PLAIN ||
+           fontType == EditorFontType.CONSOLE_BOLD ||
+           fontType == EditorFontType.CONSOLE_ITALIC ||
+           fontType == EditorFontType.CONSOLE_BOLD_ITALIC;
+  }
+
   private static @NotNull String getEditorFontName(@NotNull FontPreferences preferences) {
     String editorFontName = preferences.getFontFamily();
     String fallbackName = getFallbackName(editorFontName);
@@ -101,17 +113,6 @@ public final class EditorFontCacheImpl extends EditorFontCache {
       return fallbackName;
     }
     return editorFontName;
-  }
-
-  /**
-   * Returns the console font size like {@link AbstractColorsScheme#getConsoleFontSize2D()} outside presentation mode.
-   * The build ignores presentation mode, because {@link #getFont(EditorFontType)} sets the presentation size in that mode.
-   */
-  private static float getConsoleFontSize(@NotNull FontPreferences consolePreferences, @NotNull String consoleFontName, float editorFontSize) {
-    if (consolePreferences.hasSize(consoleFontName)) {
-      return consolePreferences.getSize2D(consoleFontName);
-    }
-    return editorFontSize;
   }
 
   private static @Nullable String getFallbackName(@NotNull String fontName) {

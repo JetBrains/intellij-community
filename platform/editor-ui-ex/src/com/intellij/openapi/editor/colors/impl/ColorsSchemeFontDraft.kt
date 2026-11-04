@@ -120,7 +120,9 @@ class ColorsSchemeFontDraft(
    */
   fun setConsoleFontName(fontName: String) {
     ensureOwnConsoleFont()
-    val fontSize = consoleFontSize2D(current.consoleFontPreferences(), editorFontPreferences())
+    val editorPreferences = editorFontPreferences()
+    val editorFontSize = editorPreferences.getSize2D(editorPreferences.fontFamily)
+    val fontSize = AbstractColorsScheme.consoleFontSize2D(current.consoleFontPreferences(), editorFontSize)
     changeConsoleFont { draft ->
       draft.clear()
       draft.register(fontName, fontSize)
@@ -141,18 +143,6 @@ class ColorsSchemeFontDraft(
   }
 
   companion object {
-    /**
-     * Returns the size of the console font family, or the size of the editor font when the console font family has no size.
-     */
-    @JvmStatic
-    fun consoleFontSize2D(consolePreferences: FontPreferences, editorPreferences: FontPreferences): Float {
-      val consoleFontFamily = consolePreferences.fontFamily
-      if (consolePreferences.hasSize(consoleFontFamily)) {
-        return consolePreferences.getSize2D(consoleFontFamily)
-      }
-      return editorPreferences.getSize2D(editorPreferences.fontFamily)
-    }
-
     private fun copyOf(preferences: FontPreferences): FontPreferencesSnapshot {
       val copy = FontPreferencesImpl()
       preferences.copyTo(copy)

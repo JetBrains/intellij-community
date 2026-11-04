@@ -139,6 +139,7 @@ final class ColorsSchemeSerDe {
     FontPreferences consoleFontPreferences = current.consoleFontPreferences();
     FontPreferences editorFontPreferences = scheme.fontPreferencesOf(current);
     int editorFontSize = editorFontPreferences.getSize(editorFontPreferences.getFontFamily());
+    float editorFontSize2D = editorFontPreferences.getSize2D(editorFontPreferences.getFontFamily());
     float lineSpacing = editorFontPreferences.getLineSpacing();
     boolean editorDelegating = current.useAppFontPreferencesInEditor();
     boolean consoleDelegating = current.useEditorFontPreferencesInConsole();
@@ -189,7 +190,7 @@ final class ColorsSchemeSerDe {
       if (consoleFontPreferences.getEffectiveFontFamilies().size() <= 1) {
         JdomKt.addOptionTag(parentNode, CONSOLE_FONT_NAME, consoleFontPreferences.getFontFamily());
         // Write font size as integer for compatibility
-        float consoleFontSize2D = ColorsSchemeFontDraft.consoleFontSize2D(consoleFontPreferences, editorFontPreferences);
+        float consoleFontSize2D = AbstractColorsScheme.consoleFontSize2D(consoleFontPreferences, editorFontSize2D);
         int consoleFontSize = (int)(consoleFontSize2D + 0.5);
         if (consoleFontSize != editorFontSize) {
           JdomKt.addOptionTag(parentNode, CONSOLE_FONT_SIZE, Integer.toString(consoleFontSize));

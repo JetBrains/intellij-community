@@ -44,6 +44,17 @@ internal class EditorFontCacheImplTest {
   }
 
   @Test
+  fun `a console font change keeps the editor fonts`() {
+    val scheme = EditorColorsSchemeImpl(null)
+    scheme.setEditorFontSize(13f)
+    scheme.setConsoleFontSize(15f)
+    val plain = scheme.getFont(EditorFontType.PLAIN)
+    scheme.setConsoleFontSize(17f)
+    assertThat(scheme.getFont(EditorFontType.PLAIN)).isSameAs(plain)
+    assertThat(scheme.getFont(EditorFontType.CONSOLE_PLAIN).size2D).isEqualTo(17f)
+  }
+
+  @Test
   fun `a change of the application console font reaches the console fonts of a scheme`() {
     val scheme = EditorColorsSchemeImpl(null)
     scheme.setEditorFontSize(13f)

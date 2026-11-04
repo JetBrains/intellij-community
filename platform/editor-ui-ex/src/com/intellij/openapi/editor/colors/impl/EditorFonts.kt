@@ -49,6 +49,14 @@ class EditorFonts private constructor(
   }
 
   /**
+   * Returns `true` when the editor fonts come from [editorPreferences], see [isBuiltFrom].
+   * The editor fonts do not depend on the console preferences.
+   */
+  fun isBuiltFromEditorFont(editorPreferences: FontPreferences): Boolean {
+    return !isEmpty() && editorPreferences === this.editorPreferences
+  }
+
+  /**
    * Returns the font of [fontType]. A set from [empty] has no fonts.
    */
   fun get(fontType: EditorFontType): Font {

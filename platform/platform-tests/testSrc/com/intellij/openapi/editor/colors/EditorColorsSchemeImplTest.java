@@ -1479,6 +1479,14 @@ public class EditorColorsSchemeImplTest {
   }
 
   @Test
+  public void testConsoleFontSizeIsEditorFontSizeInPresentationMode() {
+    myScheme.setEditorFontSize(13);
+    myScheme.setConsoleFontSize(20);
+    assertEquals(20f, myScheme.getConsoleFontSize2D());
+    inPresentationMode(() -> assertEquals(myScheme.getEditorFontSize2D(), myScheme.getConsoleFontSize2D()));
+  }
+
+  @Test
   public void testToStringOfSchemeWithoutName() {
     assertEquals("<unnamed scheme>", myScheme.toString());
     myScheme.setName("Named");

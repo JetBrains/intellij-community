@@ -42,6 +42,7 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -97,8 +98,14 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
   private volatile @NotNull ColorsSchemeSnapshot snapshot;
   private final FontPreferences appFontDelegate = new DelegatingFontPreferences(() -> AppEditorFontOptions.getInstance().getFontPreferences());
   private final FontPreferences editorFontDelegate = new DelegatingFontPreferences(() -> fontPreferencesOf(snapshot));
-  private final FontPreferencesImpl editorFontView = new FontPreferencesImpl(new EditorFontStorage());
-  private final FontPreferencesImpl consoleFontView = new FontPreferencesImpl(new ConsoleFontStorage());
+  private final FontPreferencesImpl editorFontView = new FontPreferencesImpl(new FontStorage(
+    ColorsSchemeSnapshot::fontPreferences,
+    ColorsSchemeSnapshot::withFontPreferences
+  ));
+  private final FontPreferencesImpl consoleFontView = new FontPreferencesImpl(new FontStorage(
+    ColorsSchemeSnapshot::consoleFontPreferences,
+    ColorsSchemeSnapshot::withConsoleFontPreferences
+  ));
   private final EditorFontCache fontCache = new EditorFontCacheImpl(this::getFontCacheScheme);
   private final Properties metaInfo = new Properties();
 
@@ -332,14 +339,11 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public float getConsoleFontSize2D() {
-    FontPreferences consolePreferences = getConsoleFontPreferences().getSnapshot();
-    String fontFamily = consolePreferences.getFontFamily();
     UISettings uiSettings = UISettings.getInstanceOrNull();
-    if ((uiSettings == null || !uiSettings.getPresentationMode()) &&
-        consolePreferences.hasSize(fontFamily)) {
-      return consolePreferences.getSize2D(fontFamily);
+    if (uiSettings != null && uiSettings.getPresentationMode()) {
+      return getEditorFontSize2D();
     }
-    return getEditorFontSize2D();
+    return consoleFontSize2D(getConsoleFontPreferences().getSnapshot(), getEditorFontSize2D());
   }
 
   @Override
@@ -740,14 +744,19 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
    * The operation can run more than once, so it must have no side effects.
    */
   void updateSnapshot(@NotNull UnaryOperator<ColorsSchemeSnapshot> operation) {
+    replaceSnapshot(operation);
+  }
+
+  /**
+   * Replaces the snapshot like {@link #updateSnapshot} and returns the replaced snapshot and its replacement.
+   * They are the same snapshot when the operation changes nothing.
+   */
+  private @NotNull SnapshotChange replaceSnapshot(@NotNull UnaryOperator<ColorsSchemeSnapshot> operation) {
     while (true) {
       ColorsSchemeSnapshot prev = snapshot;
       ColorsSchemeSnapshot next = operation.apply(prev);
-      if (next == prev) {
-        return;
-      }
-      if (SNAPSHOT_UPDATER.compareAndSet(this, prev, next)) {
-        return;
+      if (next == prev || SNAPSHOT_UPDATER.compareAndSet(this, prev, next)) {
+        return new SnapshotChange(prev, next);
       }
     }
   }
@@ -764,22 +773,17 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
    * The changes can run more than once, so they must have no side effects.
    */
   private void changeFonts(@NotNull Consumer<? super ColorsSchemeFontDraft> changes) {
-    while (true) {
-      ColorsSchemeSnapshot prev = snapshot;
-      ColorsSchemeFontDraft draft = createFontDraft(prev);
+    SnapshotChange change = replaceSnapshot(current -> {
+      ColorsSchemeFontDraft draft = createFontDraft(current);
       changes.accept(draft);
-      ColorsSchemeSnapshot next = draft.snapshot();
-      if (next == prev) {
-        return;
-      }
-      if (SNAPSHOT_UPDATER.compareAndSet(this, prev, next)) {
-        if (prev.useAppFontPreferencesInEditor() && !next.useAppFontPreferencesInEditor()) {
-          logOwnFont(next.fontPreferences());
-        }
-        editorFontView.logSizeChangeIfNeeded(fontPreferencesOf(prev), fontPreferencesOf(next));
-        return;
-      }
+      return draft.snapshot();
+    });
+    ColorsSchemeSnapshot prev = change.prev();
+    ColorsSchemeSnapshot next = change.next();
+    if (prev.useAppFontPreferencesInEditor() && !next.useAppFontPreferencesInEditor()) {
+      logOwnFont(next.fontPreferences());
     }
+    editorFontView.logSizeChangeIfNeeded(fontPreferencesOf(prev), fontPreferencesOf(next));
   }
 
   private void logOwnFont(@NotNull FontPreferences preferences) {
@@ -833,6 +837,18 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
       LOG.warn("An exception occurred while trying to get scheme name", e);
       return "null(e)";
     }
+  }
+
+  /**
+   * Returns the size of the console font family, or {@code editorFontSize} when the console font family has no size.
+   * The font cache, the font draft, the save and {@link #getConsoleFontSize2D()} share this rule.
+   */
+  static float consoleFontSize2D(@NotNull FontPreferences consolePreferences, float editorFontSize) {
+    String consoleFontFamily = consolePreferences.getFontFamily();
+    if (consolePreferences.hasSize(consoleFontFamily)) {
+      return consolePreferences.getSize2D(consoleFontFamily);
+    }
+    return editorFontSize;
   }
 
   protected static boolean colorsEqual(@Nullable Color c1, @Nullable Color c2) {
@@ -918,36 +934,40 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
   }
 
   /**
-   * Keeps the own editor font of the scheme in the snapshot of the scheme.
+   * Keeps one own font of the scheme in the snapshot of the scheme: the editor font or the console font.
    */
-  private final class EditorFontStorage implements FontPreferencesImpl.Storage {
+  private final class FontStorage implements FontPreferencesImpl.Storage {
+    private final Function<ColorsSchemeSnapshot, FontPreferencesSnapshot> fontOf;
+    private final BiFunction<ColorsSchemeSnapshot, FontPreferencesSnapshot, ColorsSchemeSnapshot> withFont;
+
+    /**
+     * @param fontOf returns the font of a snapshot
+     * @param withFont returns a snapshot with another font
+     */
+    private FontStorage(
+      @NotNull Function<ColorsSchemeSnapshot, FontPreferencesSnapshot> fontOf,
+      @NotNull BiFunction<ColorsSchemeSnapshot, FontPreferencesSnapshot, ColorsSchemeSnapshot> withFont
+    ) {
+      this.fontOf = fontOf;
+      this.withFont = withFont;
+    }
+
     @Override
     public @NotNull FontPreferencesSnapshot get() {
-      return snapshot.fontPreferences();
+      return fontOf.apply(snapshot);
     }
 
     @Override
     public boolean compareAndSet(@NotNull FontPreferencesSnapshot prev, @NotNull FontPreferencesSnapshot next) {
       ColorsSchemeSnapshot current = snapshot;
-      return current.fontPreferences() == prev &&
-             SNAPSHOT_UPDATER.compareAndSet(AbstractColorsScheme.this, current, current.withFontPreferences(next));
+      return fontOf.apply(current) == prev &&
+             SNAPSHOT_UPDATER.compareAndSet(AbstractColorsScheme.this, current, withFont.apply(current, next));
     }
   }
 
   /**
-   * Keeps the own console font of the scheme in the snapshot of the scheme.
+   * A replaced snapshot and the snapshot that replaced it.
    */
-  private final class ConsoleFontStorage implements FontPreferencesImpl.Storage {
-    @Override
-    public @NotNull FontPreferencesSnapshot get() {
-      return snapshot.consoleFontPreferences();
-    }
-
-    @Override
-    public boolean compareAndSet(@NotNull FontPreferencesSnapshot prev, @NotNull FontPreferencesSnapshot next) {
-      ColorsSchemeSnapshot current = snapshot;
-      return current.consoleFontPreferences() == prev &&
-             SNAPSHOT_UPDATER.compareAndSet(AbstractColorsScheme.this, current, current.withConsoleFontPreferences(next));
-    }
+  private record SnapshotChange(@NotNull ColorsSchemeSnapshot prev, @NotNull ColorsSchemeSnapshot next) {
   }
 }
