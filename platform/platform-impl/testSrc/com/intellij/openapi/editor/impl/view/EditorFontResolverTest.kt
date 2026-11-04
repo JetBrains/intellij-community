@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl.view
 
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.MockFontLayoutService
@@ -10,6 +11,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.awt.Font
 import java.awt.image.BufferedImage
 
 private const val CHAR_WIDTH = 10
@@ -42,9 +44,14 @@ internal class EditorFontResolverTest {
   }
 
   @Test
-  fun `the resolver measures with the font preferences of the editor`(): Unit = withEditor { editor ->
-    val preferences = editor.view.fontResolver.editorFonts().preferences()
-    assertThat(preferences).isSameAs(editor.colorsScheme.fontPreferences.snapshot)
+  fun `the editor fonts are the fonts of the font preferences of the editor`(): Unit = withEditor { editor ->
+    val resolver = editor.view.fontResolver
+    val context = resolver.fontRenderContext()
+    for (text in listOf("a", "\u0436", "\u6211")) {
+      val chars = text.toCharArray()
+      val expected = ComplementaryFontsRegistry.getFontAbleToDisplay(chars, 0, chars.size, Font.BOLD, editor.colorsScheme.fontPreferences, context)
+      assertThat(resolver.editorFonts().fontAbleToDisplay(chars, 0, chars.size, Font.BOLD, context)).describedAs(text).isSameAs(expected)
+    }
   }
 
   @Test

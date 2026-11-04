@@ -47,6 +47,18 @@ public final class FontFallbackIterator {
     impl = new FontFallbackIteratorImpl(preferences, context, style);
   }
 
+  /**
+   * Creates an iterator that finds the fonts through the lookup.
+   */
+  @ApiStatus.Internal
+  public FontFallbackIterator(
+    FontLookup lookup,
+    @Nullable FontRenderContext context,
+    @FontStyle int style
+  ) {
+    impl = new FontFallbackIteratorImpl(lookup, context, style);
+  }
+
   public FontFallbackIterator setPreferredFonts(@NotNull FontPreferences fontPreferences) {
     impl = impl.withFontPreferences(fontPreferences);
     return this;

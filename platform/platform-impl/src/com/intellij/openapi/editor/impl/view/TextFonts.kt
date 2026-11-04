@@ -2,7 +2,9 @@
 package com.intellij.openapi.editor.impl.view
 
 import com.intellij.openapi.editor.colors.FontPreferences
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry
+import com.intellij.openapi.editor.impl.FontInfo
+import com.intellij.openapi.editor.impl.FontLookup
+import com.intellij.openapi.editor.impl.RegistryFontLookup
 import com.intellij.util.ui.JdkConstants.FontStyle
 import java.awt.Font
 import java.awt.font.FontRenderContext
@@ -11,30 +13,46 @@ import java.util.concurrent.atomic.AtomicLongArray
 /**
  * The fonts of text that an editor shows with one font setting, and the widths of its characters.
  * [EditorFontResolver] creates the instances.
+ * As a [FontLookup], the instance finds the fonts for [com.intellij.openapi.editor.impl.FontFallbackIterator].
  *
  * The instances are safe to use on any thread.
  * The width caches have no lock: each thread that misses a width measures it again, and all threads store the same value.
  *
- * @param preferences the font preferences for the fallback search. They are a snapshot, see [FontPreferences.getSnapshot].
+ * @param preferences the font preferences of the editor fonts
  * @param specialCharacterFont the font of the special character codes, or `null` when the editor does not show special characters.
  *                             See [SpecialCharacterFragment].
  */
 internal class TextFonts(
-  private val preferences: FontPreferences,
+  preferences: FontPreferences,
   private val fontRenderContext: FontRenderContext,
   private val specialCharacterFont: Font?,
-) {
+) : FontLookup {
+  /** Finds the editor fonts. */
+  private val editorFontLookup = RegistryFontLookup(preferences)
+
   /** Only the soft wraps measure widths, so the caches exist only after the first measurement. */
   private val widthCaches by lazy { WidthCaches() }
 
-  @Volatile
-  private var maxPrintableAsciiWidth = -1f
+  @Volatile private var maxPrintableAsciiWidth = -1f
 
-  /**
-   * Returns the font preferences for [com.intellij.openapi.editor.impl.FontFallbackIterator].
-   */
-  fun preferences(): FontPreferences {
-    return preferences
+  override fun fontAbleToDisplay(
+    text: CharArray,
+    start: Int,
+    end: Int,
+    @FontStyle style: Int,
+    context: FontRenderContext?,
+  ): FontInfo {
+    return editorFontLookup.fontAbleToDisplay(text, start, end, style, context)
+  }
+
+  override fun fontAbleToDisplay(
+    text: CharSequence,
+    start: Int,
+    end: Int,
+    @FontStyle style: Int,
+    context: FontRenderContext?,
+  ): FontInfo {
+    return editorFontLookup.fontAbleToDisplay(text, start, end, style, context)
   }
 
   /**
@@ -62,7 +80,8 @@ internal class TextFonts(
       return Float.fromBits(entry.toInt())
     }
     val width = measure(codePoint, style)
-    otherWidths.setOpaque(index, USED_ENTRY or (key.toLong() shl 32) or (width.toRawBits().toLong() and 0xFFFFFFFFL))
+    val newValue = USED_ENTRY or (key.toLong() shl 32) or (width.toRawBits().toLong() and 0xFFFFFFFFL)
+    otherWidths.setOpaque(index, newValue)
     return width
   }
 
@@ -95,11 +114,11 @@ internal class TextFonts(
         return width
       }
     }
-    return ComplementaryFontsRegistry.getFontAbleToDisplay(codePoint, fontStyle, preferences, fontRenderContext).charWidth2D(codePoint)
+    return editorFontLookup.fontAbleToDisplay(codePoint, fontStyle, fontRenderContext).charWidth2D(codePoint)
   }
 
   /**
-   * Maps a style that is not plain, bold, italic or bold italic to plain, as [ComplementaryFontsRegistry] does.
+   * Maps a style that is not plain, bold, italic or bold italic to plain, as [com.intellij.openapi.editor.impl.ComplementaryFontsRegistry] does.
    */
   @FontStyle
   private fun validStyle(@FontStyle fontStyle: Int): Int {

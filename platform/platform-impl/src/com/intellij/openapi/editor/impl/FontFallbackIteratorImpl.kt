@@ -13,7 +13,7 @@ import java.text.CharacterIterator
 private const val COMPLEX_CHAR_START: Char = '\u0300' // start of Combining Diacritical Marks block
 
 internal class FontFallbackIteratorImpl private constructor(
-  private val fontPreferences: FontPreferences, // a snapshot, see FontPreferences.getSnapshot
+  private val fontLookup: FontLookup,
   private val fontRenderContext: FontRenderContext?,
   @FontStyle private val fontStyle: Int,
   private val trivialBreaker: BreakAtEveryCharacterIterator,
@@ -31,32 +31,45 @@ internal class FontFallbackIteratorImpl private constructor(
     context: FontRenderContext?,
     @FontStyle style: Int,
   ) : this(
-    preferences.snapshot,
+    RegistryFontLookup(preferences),
+    context,
+    style,
+  )
+
+  constructor(
+    lookup: FontLookup,
+    context: FontRenderContext?,
+    @FontStyle style: Int,
+  ) : this(
+    lookup,
     context,
     style,
     BreakAtEveryCharacterIterator(),
   )
 
   fun withFontPreferences(preferences: FontPreferences): FontFallbackIteratorImpl {
-    val newFontPreferences = preferences.snapshot
-    if (fontPreferences === newFontPreferences) {
+    return withFontLookup(RegistryFontLookup(preferences))
+  }
+
+  fun withFontLookup(lookup: FontLookup): FontFallbackIteratorImpl {
+    if (fontLookup == lookup) {
       return this
     }
-    return copyWith(newFontPreferences, fontRenderContext, fontStyle)
+    return copyWith(lookup, fontRenderContext, fontStyle)
   }
 
   fun withFontRenderContext(context: FontRenderContext?): FontFallbackIteratorImpl {
     if (fontRenderContext === context) {
       return this
     }
-    return copyWith(fontPreferences, context, fontStyle)
+    return copyWith(fontLookup, context, fontStyle)
   }
 
   fun withFontStyle(@FontStyle style: Int): FontFallbackIteratorImpl {
     if (fontStyle == style) {
       return this
     }
-    return copyWith(fontPreferences, fontRenderContext, style)
+    return copyWith(fontLookup, fontRenderContext, style)
   }
 
   fun start(text: CharSequence, rangeStart: Int, rangeEnd: Int) {
@@ -137,11 +150,11 @@ internal class FontFallbackIteratorImpl private constructor(
   }
 
   private fun copyWith(
-    preferences: FontPreferences,
+    lookup: FontLookup,
     context: FontRenderContext?,
     @FontStyle style: Int,
   ): FontFallbackIteratorImpl {
-    val copy = FontFallbackIteratorImpl(preferences, context, style, trivialBreaker)
+    val copy = FontFallbackIteratorImpl(lookup, context, style, trivialBreaker)
     copy.textAsArray = textAsArray
     copy.textAsCharSequence = textAsCharSequence
     copy.breakIterator = breakIterator
@@ -210,23 +223,9 @@ internal class FontFallbackIteratorImpl private constructor(
   private fun getFontAbleToDisplay(breakStart: Int, breakEnd: Int): FontInfo {
     val chars = textAsCharSequence
     return if (chars == null) {
-      ComplementaryFontsRegistry.getFontAbleToDisplay(
-        textAsArray!!,
-        breakStart,
-        breakEnd,
-        fontStyle,
-        fontPreferences,
-        fontRenderContext,
-      )
+      fontLookup.fontAbleToDisplay(textAsArray!!, breakStart, breakEnd, fontStyle, fontRenderContext)
     } else {
-      ComplementaryFontsRegistry.getFontAbleToDisplay(
-        chars,
-        breakStart,
-        breakEnd,
-        fontStyle,
-        fontPreferences,
-        fontRenderContext,
-      )
+      fontLookup.fontAbleToDisplay(chars, breakStart, breakEnd, fontStyle, fontRenderContext)
     }
   }
 }

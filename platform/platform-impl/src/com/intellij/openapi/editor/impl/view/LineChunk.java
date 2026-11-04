@@ -97,7 +97,7 @@ class LineChunk {
     );
     EditorFontResolver fontResolver = view.getFontResolver();
     FontFallbackIterator ffi = new FontFallbackIterator(
-      fontResolver.editorFonts().preferences(),
+      fontResolver.editorFonts(),
       fontResolver.fontRenderContext(),
       Font.PLAIN
     );

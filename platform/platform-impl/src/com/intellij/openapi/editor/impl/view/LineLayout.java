@@ -135,7 +135,7 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     }
     EditorFontResolver fontResolver = view.getFontResolver();
     FontFallbackIterator ffi = new FontFallbackIterator(
-      fontResolver.editorFonts().preferences(),
+      fontResolver.editorFonts(),
       fontResolver.fontRenderContext(),
       fontStyle
     );
