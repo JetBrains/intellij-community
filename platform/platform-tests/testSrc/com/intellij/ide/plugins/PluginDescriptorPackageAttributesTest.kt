@@ -25,10 +25,11 @@ class PluginDescriptorPackageAttributesTest {
 
   @Test
   fun `rejects attributes in main content slash and product descriptors`(): Unit = timeoutRunBlocking {
-    val module = createModule()
-    writeXml(module, "META-INF/plugin.xml", """<idea-plugin package="main"><id>plugin</id></idea-plugin>""")
-    writeXml(module, "intellij.plugin.xml", """<idea-plugin package="content"/>""")
-    writeXml(module, "intellij.plugin.optional.xml", """<idea-plugin package="slash"/>""")
+    val descriptorModule = createModule("intellij.plugin.descriptor")
+    writeXml(descriptorModule, "META-INF/plugin.xml", """<idea-plugin package="main"><id>plugin</id></idea-plugin>""")
+    val contentModule = createModule("intellij.plugin")
+    writeXml(contentModule, "intellij.plugin.xml", """<idea-plugin package="content"/>""")
+    writeXml(contentModule, "intellij.plugin.optional.xml", """<idea-plugin package="slash"/>""")
     val productModule = createModule("intellij.product")
     writeXml(productModule, "META-INF/IdeaPlugin.xml", """<idea-plugin package="product"><id>com.intellij</id></idea-plugin>""")
     val options = PluginValidationOptions(pluginModelBuilderOptions = SourceCodeBasedPluginModelBuilderOptions(
@@ -148,12 +149,17 @@ class PluginDescriptorPackageAttributesTest {
 
   @Test
   fun `ignores plugin and content descriptors in test roots`(): Unit = timeoutRunBlocking {
-    val module = createModule()
-    val testRoot = (root / "testResources").createDirectories()
-    module.addSourceRoot(JpsPathUtil.pathToUrl(testRoot.toString()), JavaResourceRootType.TEST_RESOURCE)
-    (testRoot / "META-INF/plugin.xml").write("""<idea-plugin package="test"><id>test.plugin</id></idea-plugin>""")
-    (testRoot / "${module.name}.xml").write("""<idea-plugin package="test.content"/>""")
-    (testRoot / "${module.name}.optional.xml").write("""<idea-plugin package="test.optional"/>""")
+    val descriptorModule = createModule()
+    val descriptorTestRoot = (root / "descriptorTestResources").createDirectories()
+    descriptorModule.addSourceRoot(JpsPathUtil.pathToUrl(descriptorTestRoot.toString()), JavaResourceRootType.TEST_RESOURCE)
+    (descriptorTestRoot / "META-INF/plugin.xml").write("""<idea-plugin package="test"><id>test.plugin</id></idea-plugin>""")
+
+    val contentModule = createModule("intellij.content")
+    val contentTestRoot = (root / "contentTestResources").createDirectories()
+    descriptorModule.addSourceRoot(JpsPathUtil.pathToUrl(contentTestRoot.toString()), JavaResourceRootType.TEST_RESOURCE)
+
+    (contentTestRoot / "${contentModule.name}.xml").write("""<idea-plugin package="test.content"/>""")
+    (contentTestRoot / "${contentModule.name}.optional.xml").write("""<idea-plugin package="test.optional"/>""")
 
     assertThat(validatePluginModel(project, root).errors).isEmpty()
   }

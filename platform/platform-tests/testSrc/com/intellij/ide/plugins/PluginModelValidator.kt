@@ -109,6 +109,12 @@ data class PluginValidationOptions(
    * to be registered as `open`.
    */
   val externallyOverriddenServices: Set<String> = emptySet(),
+
+  /**
+   * A single module shouldn't contain both a plugin descriptor and a content module descriptor.
+   * This set is temporarily introduced to avoid reporting errors for a few existing cases.
+   */
+  val modulesContainingBothPluginDescriptorAndModuleDescriptorToIgnore: Set<String> = emptySet(),
 )
 
 /**
@@ -222,6 +228,15 @@ internal class PluginModelValidator(
       .associateBy { it.sourceModule.name }
     for (pluginInfo in allMainModulesOfPlugins) {
       checkPluginMainDescriptor(pluginInfo.descriptor, pluginInfo.sourceModule, pluginInfo)
+      val contentModuleInMainModule = contentModuleNameToFileInfo[pluginInfo.sourceModule.name]
+      if (contentModuleInMainModule != null && pluginInfo.sourceModule.name !in validationOptions.modulesContainingBothPluginDescriptorAndModuleDescriptorToIgnore) {
+        reportError("""
+            |Module '${pluginInfo.sourceModule.name}' contains `META-INF/plugin.xml` and also is registered as a content module.
+            |Such cases complicate build scripts and should be avoided. Extract `plugin.xml` to a separate `.plugin` module to fix this.
+            """.trimMargin(),
+            sourceModule = pluginInfo.sourceModule,
+        )
+      }
       checkContent(
         contentElements = pluginInfo.descriptor.contentModules,
         referencingModuleInfo = pluginInfo,
