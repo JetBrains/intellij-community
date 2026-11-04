@@ -2,7 +2,8 @@
 package com.intellij.ide.plugins
 
 import com.intellij.platform.pluginSystem.parser.impl.RawPluginDescriptor
-import com.intellij.platform.pluginSystem.testFramework.LoadFromSourceXIncludeLoader
+import com.intellij.platform.pluginSystem.testFramework.LoadFromSourceXIncludeLoaderFactory
+import com.intellij.platform.pluginSystem.testFramework.ResolvedXIncludeDirective
 import com.intellij.platform.pluginSystem.testFramework.loadRawPluginDescriptorInTest
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.jps.model.JpsProject
@@ -82,7 +83,7 @@ data class SourceCodeBasedPluginModel(
   val allMainModulesOfPlugins: ArrayList<ModuleInfo>,
   val pluginIdToInfo: HashMap<String, ModuleInfo>,
   val pluginAliases: HashSet<String>,
-  val contentModuleDescriptorsIncludedViaXiInclude: List<Path>,
+  val resolvedXIncludeDirectives: List<ResolvedXIncludeDirective>,
   val errors: List<SourceCodeBasedPluginModelBuilderError>,
 )
 
@@ -104,7 +105,7 @@ class SourceCodeBasedPluginModelBuilder(
 ) {
   private val errors = mutableListOf<SourceCodeBasedPluginModelBuilderError>()
 
-  private val xIncludeLoader = LoadFromSourceXIncludeLoader(
+  private val xIncludeLoaderFactory = LoadFromSourceXIncludeLoaderFactory(
     xiIncludeTargetsResidingInLibraries = builderOptions.xiIncludeTargetsResidingInLibraries,
     project = project,
     parentDirectoriesPatterns = listOf("META-INF", "idea", "") + builderOptions.additionalPatternsOfDirectoriesContainingIncludedXmlFiles,
@@ -242,24 +243,23 @@ class SourceCodeBasedPluginModelBuilder(
         ))
       }
     }
-    val contentModuleDescriptorsIncludedViaXiInclude = xIncludeLoader.includedContentModuleDescriptors
     return SourceCodeBasedPluginModel(
       descriptorFileInfos,
       moduleNameToInfo,
       allMainModulesOfPlugins,
       pluginIdToInfo,
       pluginAliases,
-      contentModuleDescriptorsIncludedViaXiInclude,
+      xIncludeLoaderFactory.resolvedXIncludeDirectives,
       errors,
     )
   }
 
-  private fun loadRawPluginDescriptor(file: Path): RawPluginDescriptor? {
+  private fun loadRawPluginDescriptor(file: Path, sourceModule: JpsModule): RawPluginDescriptor? {
     if (Files.notExists(file)) {
       return null
     }
 
-    return loadRawPluginDescriptorInTest(file, xIncludeLoader)
+    return loadRawPluginDescriptorInTest(file, xIncludeLoaderFactory.createLoader(file, sourceModule))
   }
 
   private fun findPluginAndModuleDescriptors(module: JpsModule): List<DescriptorFileInfo> {
@@ -285,7 +285,7 @@ class SourceCodeBasedPluginModelBuilder(
     val (productionPluginDescriptors, testPluginDescriptors) =
       module.sourceRoots.mapNotNull { sourceRoot ->
         val pluginDescriptorFile = findFile(sourceRoot, "META-INF/$pluginFileName") ?: return@mapNotNull null
-        val descriptor = loadRawPluginDescriptor(pluginDescriptorFile) ?: return@mapNotNull null
+        val descriptor = loadRawPluginDescriptor(pluginDescriptorFile, module) ?: return@mapNotNull null
         PluginDescriptorFileInfo(
           sourceModule = module,
           descriptorFile = pluginDescriptorFile,
@@ -306,7 +306,7 @@ class SourceCodeBasedPluginModelBuilder(
       sourceRoot.path.listDirectoryEntries("*.xml")
         .filter { it.nameWithoutExtension == module.name || it.nameWithoutExtension.startsWith("${module.name}.") }
         .mapNotNull { moduleDescriptorFile ->
-          val descriptor = loadRawPluginDescriptor(moduleDescriptorFile) ?: return@mapNotNull null
+          val descriptor = loadRawPluginDescriptor(moduleDescriptorFile, module) ?: return@mapNotNull null
           val contentModuleName = when {
             moduleDescriptorFile.nameWithoutExtension == module.name -> module.name
             else -> "${module.name}/${moduleDescriptorFile.nameWithoutExtension.removePrefix("${module.name}.")}"

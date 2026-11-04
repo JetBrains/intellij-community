@@ -60,6 +60,10 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "intellij.vcs.git.testFramework",
     "intellij.python.community.services.systemPython.tests",
   ),
+  modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore = setOf(
+    "intellij.android.design-plugin.descriptor",
+    "intellij.android.plugin.descriptor",
+  )
 )
 
 class CommunityPluginModelTest {

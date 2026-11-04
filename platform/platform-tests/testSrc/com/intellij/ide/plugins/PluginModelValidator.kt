@@ -21,6 +21,7 @@ import com.intellij.util.io.jackson.writeStringField
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.junit.jupiter.api.DynamicContainer
 import org.junit.jupiter.api.DynamicTest
@@ -115,6 +116,12 @@ data class PluginValidationOptions(
    * This set is temporarily introduced to avoid reporting errors for a few existing cases.
    */
   val modulesContainingBothPluginDescriptorAndModuleDescriptorToIgnore: Set<String> = emptySet(),
+
+  /**
+   * xi:include directives should not refer to files located in other modules.
+   * This set is temporarily introduced to avoid reporting errors for existing cases.
+   */
+  val modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore: Set<String> = emptySet(),
 )
 
 /**
@@ -321,34 +328,46 @@ internal class PluginModelValidator(
       checkDepends(pluginInfo, descriptor)
     }
 
-    for (contentModuleDescriptor in sourceCodeBasedPluginModel.contentModuleDescriptorsIncludedViaXiInclude) {
-      val moduleName = contentModuleDescriptor.nameWithoutExtension
-      val moduleInfo = moduleNameToInfo[moduleName] ?: continue
-      val pluginInfo = contentModuleToContainingPlugins[moduleName]?.firstOrNull()
-      if (pluginInfo != null) {
-        reportError(
-          """
-            |Module '$moduleName' is registered as a content module in '${pluginInfo.pluginId}', but its descriptor ${contentModuleDescriptor.name}
-            |is also included via xi:include tag. 
-            |It is not allowed, because it means that the classloader for the module is configured differently in different cases, and it's
-            |not possible to automatically determine the dependencies for the module.
-          """.trimMargin(),
-          moduleInfo.sourceModule,
-          mapOf("descriptorFile" to moduleInfo.descriptorFile),
-        )
-      }
-      else {
+    val corePluginModuleNames = validationOptions.pluginModelBuilderOptions.corePluginDescriptions.mapTo(HashSet()) { it.mainModuleName }
+    val obsoleteModulesWithXIncludeReferencingFilesFromOtherModules = validationOptions.modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore.toMutableSet()
+    for ((val sourceModule, val targetModule, val sourceFile, val targetFile) in sourceCodeBasedPluginModel.resolvedXIncludeDirectives) {
+      if (targetModule.name == targetFile.nameWithoutExtension
+          && JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(targetModule, targetFile.name) != null) {
         reportError(
           message = """
-                    |File '${contentModuleDescriptor.name}' is named as a content module descriptor, but actually it's included via xi:include tag.
-                    |Such configuration causes confusion, and it's better to avoid it.
+                    |File '${targetFile.name}' is named as a content module descriptor, but actually it's included via xi:include tag.
+                    |Such configurations cause confusion and would require special handling, so they must be avoided.
                     |If it's really hard to register it as a real plugin content module (even with loading=embedded), rename the file and 
                     |move it to META-INF directory to avoid confusion.
                   """.trimMargin(),
-          moduleInfo.sourceModule,
-          params = mapOf("descriptorFile" to moduleInfo.descriptorFile)
+          sourceModule,
+          params = mapOf("descriptorFile" to targetFile)
         )
+        continue
       }
+
+      if (sourceModule != targetModule
+          && sourceModule.name !in corePluginModuleNames // core plugins include a lot of *.moduleSets.* files, so ignore them for now
+      ) {
+        if (sourceModule.name in validationOptions.modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore) {
+          obsoleteModulesWithXIncludeReferencingFilesFromOtherModules.remove(sourceModule.name)
+        }
+        else {
+          reportError(
+            message = """
+                    |File '${sourceFile.name}' from module '${sourceModule.name}' includes a file
+                    |'${targetFile.name}' located in a different module '${targetModule.name}'.
+                    |Such inclusion creates an implicit dependency between modules, it complicates static validation and build scripts.
+                    |Most probably, this can be resolved by converting '${targetFile.name}' to a content module.
+                    """.trimMargin(),
+            sourceModule = sourceModule,
+            params = mapOf("sourceFile" to sourceFile, "targetFile" to targetFile)
+          )
+        }
+      }
+    }
+    for (module in obsoleteModulesWithXIncludeReferencingFilesFromOtherModules) {
+      println("Obsolete entry for module $module in modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore")
     }
 
     for ((pluginId, moduleNames) in validationOptions.pluginsToContentModulesWithoutDedicatedJpsModules) {

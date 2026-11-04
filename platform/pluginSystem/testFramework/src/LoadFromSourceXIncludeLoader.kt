@@ -5,27 +5,26 @@ import com.intellij.platform.pluginSystem.parser.impl.LoadedXIncludeReference
 import com.intellij.platform.pluginSystem.parser.impl.XIncludeLoader
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
-import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.pathString
 
-class LoadFromSourceXIncludeLoader(
+class LoadFromSourceXIncludeLoaderFactory(
   private val xiIncludeTargetsResidingInLibraries: List<String>,
   private val project: JpsProject,
   private val parentDirectoriesPatterns: List<String>,
-) : XIncludeLoader {
-  private val shortXmlPathToFullPaths = collectXmlFiles()
-  private val includedContentModuleDescriptorsSet = LinkedHashSet<Path>()
-  val includedContentModuleDescriptors: List<Path>
-    get() = includedContentModuleDescriptorsSet.toList()
+) {
+  private val shortXmlPathToLocation = collectXmlFiles()
+  private val resolvedXIncludeDirectivesSet = LinkedHashSet<ResolvedXIncludeDirective>()
+  val resolvedXIncludeDirectives: List<ResolvedXIncludeDirective>
+    get() = resolvedXIncludeDirectivesSet.toList()
 
-  private fun collectXmlFiles(): Map<String, List<Path>> {
-    val shortNameToPaths = LinkedHashMap<String, MutableList<Path>>()
+  private fun collectXmlFiles(): Map<String, List<XmlFileLocationInModule>> {
+    val shortNameToLocations = LinkedHashMap<String, MutableList<XmlFileLocationInModule>>()
     for (module in project.modules) {
       for (sourceRoot in module.getSourceRoots(JavaResourceRootType.RESOURCE)) {
         for (directoryPattern in parentDirectoriesPatterns) {
@@ -50,34 +49,39 @@ class LoadFromSourceXIncludeLoader(
                 if (shortPath == "META-INF/plugin.xml") {
                   continue
                 }
-                shortNameToPaths.computeIfAbsent(shortPath) { ArrayList() }.add(xmlFile)
+                shortNameToLocations.computeIfAbsent(shortPath) { ArrayList() }.add(XmlFileLocationInModule(module, xmlFile))
               }
             }
           }
         }
       }
     }
-    return shortNameToPaths
+    return shortNameToLocations
   }
 
-  override fun loadXIncludeReference(path: String): LoadedXIncludeReference? {
-    if (isLibraryXiIncludeTarget(path, xiIncludeTargetsResidingInLibraries)) {
-      return LoadedXIncludeReference("<idea-plugin/>".encodeToByteArray(), "dummy tag for external $path")
-    }
-    val directoryName = path.substringBeforeLast(delimiter = '/', missingDelimiterValue = "")
-    val parentDirectoryName = directoryName.substringBeforeLast('/', missingDelimiterValue = "")
-    if (parentDirectoriesPatterns.none { it == directoryName || it.removeSuffix("/*") == parentDirectoryName }) {
-      error("Path $path is referenced in xi:include, but its parent directory is not specified in the list of directories where files are resolved: $parentDirectoriesPatterns")
-    }
-    val files = shortXmlPathToFullPaths[path] ?: emptyList()
-    val file = files.firstOrNull()
-    if (file != null) {
-      val module = project.findModuleByName(file.nameWithoutExtension)
-      if (module != null && JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(module, file.name) == file) {
-        includedContentModuleDescriptorsSet.add(file)
+  fun createLoader(sourceFile: Path, sourceModule: JpsModule): XIncludeLoader {
+    return LoadFromSourceXIncludeLoader(sourceFile, sourceModule)
+  }
+
+  inner class LoadFromSourceXIncludeLoader(private val sourceFile: Path, private val sourceModule: JpsModule) : XIncludeLoader {
+    override fun loadXIncludeReference(path: String): LoadedXIncludeReference? {
+      if (isLibraryXiIncludeTarget(path, xiIncludeTargetsResidingInLibraries)) {
+        return LoadedXIncludeReference("<idea-plugin/>".encodeToByteArray(), "dummy tag for external $path")
       }
-      return LoadedXIncludeReference(Files.readAllBytes(file), file.pathString)
+      val directoryName = path.substringBeforeLast(delimiter = '/', missingDelimiterValue = "")
+      val parentDirectoryName = directoryName.substringBeforeLast('/', missingDelimiterValue = "")
+      if (parentDirectoriesPatterns.none { it == directoryName || it.removeSuffix("/*") == parentDirectoryName }) {
+        error("Path $path is referenced in xi:include, but its parent directory is not specified in the list of directories where files are resolved: $parentDirectoriesPatterns")
+      }
+      val locations = shortXmlPathToLocation[path] ?: emptyList()
+      val location = locations.firstOrNull()
+      if (location != null) {
+        resolvedXIncludeDirectivesSet.add(ResolvedXIncludeDirective(sourceModule, location.module, sourceFile, location.path))
+        return LoadedXIncludeReference(Files.readAllBytes(location.path), location.path.pathString)
+      }
+      return null
     }
-    return null
   }
 }
+
+private data class XmlFileLocationInModule(val module: JpsModule, val path: Path)
