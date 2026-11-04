@@ -118,10 +118,11 @@ pub(crate) fn launch_metadata_hash<S: AsRef<str>>(
 
 /// The IDE fingerprint of the components.
 ///
-/// The main class comes from the first component that declares one, and the platform from the first component
-/// that names one. `modules` are the additional modules of the composition spec. `plugin_classpath` holds the bytes of
+/// `platform_prefix` is the product of the composition spec. The main class comes from the first component that
+/// declares one, and the platform from the first component that names one. `modules` are the additional modules of the composition spec. `plugin_classpath` holds the bytes of
 /// `plugins/plugin-classpath.txt`. The source of an entry does not enter the fingerprint.
 pub(crate) fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
+    platform_prefix: &str,
     components: &[&ComponentManifest],
     plugin_classpath: Option<&[u8]>,
     modules: &[S],
@@ -171,7 +172,7 @@ pub(crate) fn compute_ide_fingerprint_from_components<S: AsRef<str>>(
     entries.push(FingerprintEntry::new(
         "<dev-ide-config>",
         "launch-metadata",
-        launch_metadata_hash(&first.platform_prefix, &platform.os, &platform.arch, main_class, modules),
+        launch_metadata_hash(platform_prefix, &platform.os, &platform.arch, main_class, modules),
         false,
     ));
     let core_classpath = classpath::core_classpath_text(&classpath::order_core_classpath_entries(&core_class_path));

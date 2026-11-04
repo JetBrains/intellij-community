@@ -142,6 +142,7 @@ fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Re
 
     remove_output(&output_dir)?;
     let compose_options = ComposeOptions {
+        platform_prefix: spec.platform_prefix,
         plugin_classpath_prefix: match &spec.plugin_classpath_prefix {
             Some(prefix) => Some(paths::absolute_path(prefix)?),
             None => None,

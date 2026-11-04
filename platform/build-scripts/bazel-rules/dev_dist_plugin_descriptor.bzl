@@ -53,7 +53,6 @@ DevDistProductInfo = provider(
         "host_application_info": "The application info of the host product as a `File`, for a frontend. None for every other product.",
         "replacements": "The markers of the application info as `KEY=VALUE`, in the order that the writer replaces them.",
         "marketplace_names": "`OsFamily.osId` and `JvmArchitecture.marketplaceName`, keyed by the token `HOST_PLATFORMS` spells.",
-        "platform_prefix": "The product's platform prefix, `idea` for example. Empty in the flag's default.",
         "mode": "The product mode in lower case, `monolith` or `frontend` for example. Empty in the flag's default.",
         "_producer": "The actual provider declaration, not the forwarding label flag or a consumer label.",
     },
@@ -65,7 +64,6 @@ def _dev_dist_product_info_impl(ctx):
         host_application_info = ctx.file.host_application_info,
         replacements = tuple(ctx.attr.replacements),
         marketplace_names = ctx.attr.marketplace_names,
-        platform_prefix = ctx.attr.platform_prefix,
         mode = ctx.attr.mode,
         _producer = _descriptor_producer_identity(ctx),
     )]
@@ -94,9 +92,6 @@ dev_dist_product_info = rule(
 
 Generated, because no rule can read an enum. Here and not on the leaf, so a leaf beside a plugin derives the stamps of
 a one-platform layout variant without stating the table - see `dev_dist_plugin_descriptor_os_arch_stamps`.""",
-        ),
-        "platform_prefix": attr.string(
-            doc = "The product's platform prefix. A packed plugin component states it to the collector. Empty in the flag's default.",
         ),
         "mode": attr.string(
             doc = """The product mode in lower case, such as `monolith` or `frontend`. Empty in the flag's default.

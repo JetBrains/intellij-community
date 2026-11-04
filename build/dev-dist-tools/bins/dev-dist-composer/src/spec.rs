@@ -31,6 +31,9 @@ pub(crate) struct CompositionComponent {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(crate) struct CompositionSpec {
     pub(crate) version: i32,
+    /// The `build/dev-build.json` key of the product. The IDE config states it as `platform.prefix`, and the fingerprint
+    /// hashes it. No component manifest states a product.
+    pub(crate) platform_prefix: String,
     pub(crate) expected_fragments: Vec<String>,
     pub(crate) additional_modules: Vec<String>,
     /// The main modules of the bundled plugin components. The IDE config states them as `bundled.modules`.

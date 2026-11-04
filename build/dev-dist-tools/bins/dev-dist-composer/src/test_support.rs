@@ -17,7 +17,6 @@ pub(crate) fn test_manifest(kind: &str) -> ComponentManifest {
     ComponentManifest {
         version: MANIFEST_VERSION,
         kind: kind.to_owned(),
-        platform_prefix: "idea".to_owned(),
         os: "linux".to_owned(),
         arch: "x64".to_owned(),
         main_class: Some("com.intellij.idea.Main".to_owned()),

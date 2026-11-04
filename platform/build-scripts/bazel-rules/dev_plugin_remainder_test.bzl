@@ -390,7 +390,7 @@ def _component_test_impl(ctx):
     for input_file in [remainder.metadata, remainder.assets, remainder.classpath]:
         asserts.true(env, input_file.short_path in _short_paths(action.inputs.to_list()))
     asserts.true(env, "--kind=" + ctx.attr.kind in action.argv)
-    asserts.true(env, "--platform-prefix=" + ctx.attr.platform_prefix in action.argv)
+    asserts.false(env, [argument for argument in action.argv if argument.startswith("--platform-prefix")])
     platform_arguments = [argument for argument in action.argv if argument.startswith("--os=") or argument.startswith("--arch=")]
     if ctx.attr.neutral:
         asserts.true(env, "--platform-neutral" in action.argv)
@@ -413,7 +413,6 @@ _component_test = analysistest.make(
         "remainder": attr.label(mandatory = True, cfg = dev_dist_product_info_transition, providers = [DevPluginRemainderInfo]),
         "neutral": attr.bool(doc = "Whether the component states no target platform."),
         "kind": attr.string(default = "plugin-test", doc = "The component name the collector receives as `--kind`."),
-        "platform_prefix": attr.string(default = "idea", doc = "The product's platform prefix the collector receives as `--platform-prefix`."),
     } | _PRODUCT_ATTRS,
 )
 
@@ -813,7 +812,6 @@ def dev_plugin_remainder_test_suite(name):
     dev_dist_product_info(
         name = product_info,
         application_info = _FIXTURE_APPLICATION_INFO,
-        platform_prefix = "idea",
     )
     _product_scoped_file(
         name = descriptor_source,
@@ -1108,7 +1106,6 @@ def dev_plugin_remainder_test_suite(name):
     dev_dist_product_info(
         name = frontend_product_info,
         application_info = _FIXTURE_APPLICATION_INFO,
-        platform_prefix = "idea",
         mode = "frontend",
     )
     refusing_main_module = "test.%s.refusing" % name
@@ -1605,8 +1602,7 @@ def dev_plugin_remainder_test_suite(name):
         class_tests.append(class_folded_test)
 
     # The chain class: `chain_class` keeps the chain stems of a second call of one plugin apart,
-    # `<main module>.<chain_class>[_<platform>]`. The call still reads the baseline plan file, and the collector stamps
-    # the platform prefix of the configured product.
+    # `<main module>.<chain_class>[_<platform>]`. The call still reads the baseline plan file.
     chain_class_module = "test.%s.chain_class" % name
     chain_class_platforms = ["linux_x64"]
     for platform in chain_class_platforms:

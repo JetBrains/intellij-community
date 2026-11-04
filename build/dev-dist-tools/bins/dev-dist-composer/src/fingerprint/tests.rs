@@ -20,7 +20,7 @@ use crate::test_support::test_manifest;
 /// order of `str::cmp` for them. Every real path is ASCII, so this manifest leaves them out. The three expected values
 /// with this manifest come from the UTF-16 order of the earlier code on this manifest.
 const GOLDEN_NEUTRAL_MANIFEST: &str = concat!(
-    r#"{"version":10,"kind":"plugins_json","platformPrefix":"idea","os":"","arch":"","plugin":true,"mainClass":null,"#,
+    r#"{"version":11,"kind":"plugins_json","os":"","arch":"","plugin":true,"mainClass":null,"#,
     r#""coreClassPath":["plugins/json/lib/json.jar"],"entries":["#,
     r#"{"type":"component-file","relativePath":"plugins/json/lib/json.jar","hash":-5,"source":"inputs/json.jar"},"#,
     r#"{"type":"component-file","relativePath":"plugins/json/lib/ünïcode.jar","hash":1234567890123,"source":"inputs/unicode.jar"},"#,
@@ -33,7 +33,7 @@ const GOLDEN_NEUTRAL_MANIFEST: &str = concat!(
 
 /// The platform manifest repeats a path with other hashes and executable flags, so the sort needs every key.
 const GOLDEN_PLATFORM_MANIFEST: &str = concat!(
-    r#"{"version":10,"kind":"platform_core","platformPrefix":"idea","os":"mac","arch":"aarch64","plugin":false,"#,
+    r#"{"version":11,"kind":"platform_core","os":"mac","arch":"aarch64","plugin":false,"#,
     r#""mainClass":"com.intellij.idea.Main","coreClassPath":["lib/app-backend.jar","lib/util.jar","lib/a/b.jar","lib/a-b.jar","#,
     r#""lib/platform-loader.jar","lib/product-backend.jar","lib/util-8.jar","lib/Z.jar","lib/é.jar","lib/util.jar"],"entries":["#,
     r#"{"type":"component-file","relativePath":"lib/app-backend.jar","hash":-9223372036854775808,"source":"inputs/app-backend.jar"},"#,
@@ -64,7 +64,7 @@ fn golden_plugin_classpath() -> Vec<u8> {
 const NO_MODULES: &[&str] = &[];
 
 fn must_fingerprint(components: &[&ComponentManifest]) -> String {
-    compute_ide_fingerprint_from_components(components, None, NO_MODULES).unwrap()
+    compute_ide_fingerprint_from_components("idea", components, None, NO_MODULES).unwrap()
 }
 
 #[test]
@@ -98,7 +98,7 @@ fn kotlin_fingerprint_golden() {
         ),
     ];
     for (name, components, plugin_classpath, declared, expected) in cases {
-        let actual = compute_ide_fingerprint_from_components(&components, plugin_classpath, declared).unwrap();
+        let actual = compute_ide_fingerprint_from_components("idea", &components, plugin_classpath, declared).unwrap();
         assert_eq!(actual, expected, "{name}");
     }
 }
@@ -149,7 +149,7 @@ fn sourced_manifest_hashes_and_source_independence() {
         write_file(&content, reference_bytes(size));
         assert_eq!(xxh3::hash_file(&content).unwrap(), hash, "hash of {size} bytes");
         let sourced = read_golden_manifest(&format!(
-            r#"{{"version": 10, "kind": "files", "platformPrefix": "idea", "os": "linux", "arch": "x64", "plugin": false,
+            r#"{{"version": 11, "kind": "files", "os": "linux", "arch": "x64", "plugin": false,
             "mainClass": null, "coreClassPath": [],
             "entries": [{{"type": "component-file", "relativePath": "lib/content.jar", "hash": {hash}, "source": "inputs/content.jar"}}]}}"#
         ));
@@ -204,7 +204,7 @@ fn component_fingerprint_covers_generated_launch_and_classpath_data() {
     let mut changed_main_class = base.clone();
     changed_main_class.main_class = Some("com.intellij.idea.OtherMain".to_owned());
     let fingerprint = |manifest: &ComponentManifest, plugin_classpath: &[u8]| {
-        compute_ide_fingerprint_from_components(&[manifest], Some(plugin_classpath), NO_MODULES).unwrap()
+        compute_ide_fingerprint_from_components("idea", &[manifest], Some(plugin_classpath), NO_MODULES).unwrap()
     };
     let expected = fingerprint(&base, &[1, 2, 3]);
     assert_ne!(
@@ -251,8 +251,8 @@ fn fingerprint_of_exact_modes() {
 fn fingerprint_requires_a_main_class() {
     let mut jars = test_manifest("platform_jars");
     jars.main_class = None;
-    compute_ide_fingerprint_from_components(&[&jars], None, NO_MODULES).unwrap_err();
-    compute_ide_fingerprint_from_components(&[], None, NO_MODULES).unwrap_err();
+    compute_ide_fingerprint_from_components("idea", &[&jars], None, NO_MODULES).unwrap_err();
+    compute_ide_fingerprint_from_components("idea", &[], None, NO_MODULES).unwrap_err();
 }
 
 #[test]

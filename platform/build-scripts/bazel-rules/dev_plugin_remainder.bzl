@@ -6,7 +6,7 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//build:host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "library_entries", "module_output_jar")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "dev_dist_neutral_product_transition")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_dist_plugin_directory")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
@@ -895,12 +895,6 @@ def _component_placement(ctx, files, trees, reused, executables):
     return dev_dist_placement(ctx, placed_files, placed_trees, executables)
 
 def _dev_plugin_component_impl(ctx):
-    product = ctx.attr._product_info[DevDistProductInfo]
-    if not product.platform_prefix:
-        fail("dev_plugin_component requires a product configuration: %s states no platform prefix, so no product asked for %s" % (
-            ctx.attr._product_info.label,
-            ctx.label,
-        ))
     remainder = ctx.attr.remainder[DevPluginRemainderInfo]
     execution_version = _execution_version(remainder, "DevPluginRemainderInfo")
     plugin_directory = ctx.attr.plugin_directory
@@ -995,7 +989,6 @@ def _dev_plugin_component_impl(ctx):
     arguments.add(manifest, format = "--component-manifest=%s")
     arguments.add(classpath, format = "--plugin-classpath-part=%s")
     arguments.add(ctx.attr.component_name, format = "--kind=%s")
-    arguments.add(product.platform_prefix, format = "--platform-prefix=%s")
     if ctx.attr.target_platform:
         platform = platform_parts(ctx.attr.target_platform)
         arguments.add("macos" if platform.os == "darwin" else platform.os, format = "--os=%s")
@@ -1061,11 +1054,6 @@ keyed by the module. A native tree states its destination under `native-tree:<mo
         ),
         "component_name": attr.string(mandatory = True),
         "target_platform": attr.string(doc = "A `HOST_PLATFORMS` entry, or empty for a component that serves every platform."),
-        "_product_info": attr.label(
-            doc = "The product, read through the flag the consumer's transition sets. The default states no product, and the rule fails on it.",
-            default = Label("//build:dev_dist_product_info"),
-            providers = [DevDistProductInfo],
-        ),
         "_trace_spans": attr.label(default = "//platform/build-scripts/bazel-rules:trace_spans", providers = [BuildSettingInfo]),
         "_collector": attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_collector", executable = True, cfg = "exec"),
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),

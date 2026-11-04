@@ -46,6 +46,8 @@ impl DevBuildComponent {
 /// map requests launch metadata only. The keys of both maps are absolute paths, as [`absolute_keys`] gives them.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct ComposeOptions {
+    /// The product of the composition, from the composition spec.
+    pub(crate) platform_prefix: String,
     pub(crate) plugin_classpath_prefix: Option<PathBuf>,
     pub(crate) expected_fragments: Vec<String>,
     pub(crate) additional_modules: Vec<String>,
@@ -77,20 +79,12 @@ pub(crate) fn validate_components(components: &[DevBuildComponent], expected_fra
     }
     let manifests: Vec<&ComponentManifest> = components.iter().map(|component| &component.manifest).collect();
     let kinds: Vec<&str> = manifests.iter().map(|manifest| manifest.kind.as_str()).collect();
-    let first = manifests[0];
     let main_class = manifests.iter().find_map(|manifest| manifest.main_class.as_deref());
     let platform = manifests.iter().find(|manifest| !manifest.platform_neutral());
     let Some(main_class) = main_class else {
         bail!("No dev-build component declares an IDE main class: {}", kinds.join(", "));
     };
     for manifest in &manifests[1..] {
-        if manifest.platform_prefix != first.platform_prefix {
-            bail!(
-                "Dev-build components have different products: '{}' and '{}'",
-                first.platform_prefix,
-                manifest.platform_prefix
-            );
-        }
         if let Some(platform) = platform.filter(|_| !manifest.platform_neutral())
             && (manifest.os != platform.os || manifest.arch != platform.arch)
         {
@@ -210,7 +204,6 @@ where
     let manifests: Vec<&ComponentManifest> = components.iter().map(|component| &component.manifest).collect();
     validate_destinations(&manifests)?;
     let bundled_modules = bundled_modules(&manifests, &options.bundled_modules)?;
-    let first = manifests[0];
     let main_class = manifests
         .iter()
         .find_map(|manifest| manifest.main_class.clone())
@@ -249,9 +242,14 @@ where
             options.source_directory_runfiles.as_ref(),
         )?;
     }
-    let fingerprint = fingerprint::compute_ide_fingerprint_from_components(&manifests, plugin_classpath.as_deref(), &additional_modules)?;
+    let fingerprint = fingerprint::compute_ide_fingerprint_from_components(
+        &options.platform_prefix,
+        &manifests,
+        plugin_classpath.as_deref(),
+        &additional_modules,
+    )?;
     Ok(ComposedBuild {
-        platform_prefix: first.platform_prefix.clone(),
+        platform_prefix: options.platform_prefix.clone(),
         main_class,
         additional_modules,
         bundled_modules,

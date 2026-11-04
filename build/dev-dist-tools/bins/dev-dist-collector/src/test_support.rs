@@ -104,7 +104,6 @@ pub(crate) fn base_args(mode: &str) -> Vec<String> {
     [
         "--component-manifest=component.json",
         "--kind=files",
-        "--platform-prefix=idea",
         "--os=linux",
         "--arch=x64",
         mode,

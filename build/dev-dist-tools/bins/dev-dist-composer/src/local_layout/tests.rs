@@ -58,7 +58,7 @@ fn directory_components_preserve_modes_in_the_local_layout_without_payload_trees
     require_absent(metadata.join("resources"));
     let mut conventional = plugin.manifest.clone();
     conventional.entries = entries.iter().map(|entry| directory_entry(entry.relative_path(), 0o755)).collect();
-    let fingerprint = |manifest| compute_ide_fingerprint_from_components(&[manifest], None, NO_MODULES).unwrap();
+    let fingerprint = |manifest| compute_ide_fingerprint_from_components("", &[manifest], None, NO_MODULES).unwrap();
     assert_ne!(
         fingerprint(&plugin.manifest),
         fingerprint(&conventional),

@@ -80,7 +80,7 @@ fn composer_accepts_ordered_platform_layers_and_plugins() {
     );
     assert_eq!(result.additional_modules, ["intellij.sample", "intellij.shared", "intellij.extra"]);
     let manifests: Vec<&ComponentManifest> = components.iter().map(|component| &component.manifest).collect();
-    let expected = fingerprint::compute_ide_fingerprint_from_components(&manifests, None, &result.additional_modules).unwrap();
+    let expected = fingerprint::compute_ide_fingerprint_from_components("", &manifests, None, &result.additional_modules).unwrap();
     assert_eq!(result.fingerprint, expected);
 }
 
@@ -194,8 +194,6 @@ fn composer_rejects_inconsistent_compositions_before_writing_output() {
     let directory = TempDir::new();
     let mut jars = test_manifest("platform_jars");
     jars.main_class = None;
-    let mut rider = test_manifest("platform_resources");
-    rider.platform_prefix = "Rider".into();
     let mut other_main = test_manifest("platform_resources");
     other_main.main_class = Some("com.intellij.idea.OtherMain".into());
     let mut neutral = test_manifest("plugins_json");
@@ -233,11 +231,6 @@ fn composer_rejects_inconsistent_compositions_before_writing_output() {
             "Dev-build fragment kinds must be unique, but these occur more than once: platform_core",
         ),
         (
-            vec![test_manifest("platform_lib"), rider],
-            vec![],
-            "Dev-build components have different products: 'idea' and 'Rider'",
-        ),
-        (
             vec![test_manifest("platform_lib"), other_main],
             vec![],
             "different IDE main classes: 'com.intellij.idea.Main' and 'com.intellij.idea.OtherMain'",
@@ -267,9 +260,15 @@ fn composer_accepts_a_composition_of_neutral_components_only() {
     let mut neutral = test_manifest("plugins_json");
     neutral.os.clear();
     neutral.arch.clear();
-    let composed = compose(
+    let options = ComposeOptions {
+        platform_prefix: "idea".into(),
+        ..ComposeOptions::default()
+    };
+    let composed = compose_with_merge(
         &[sourced_component(&directory, "json", "plugins/json/lib/json.jar", neutral)],
         &directory.path().join("target"),
+        &options,
+        skip_merge,
     )
     .unwrap();
     assert_eq!(composed.platform_prefix, "idea");
@@ -299,7 +298,7 @@ fn composer_declares_the_modules_of_the_spec() {
     let manifests: Vec<&ComponentManifest> = components.iter().map(|component| &component.manifest).collect();
     assert_ne!(
         result.fingerprint,
-        fingerprint::compute_ide_fingerprint_from_components(&manifests, None, NO_MODULES).unwrap()
+        fingerprint::compute_ide_fingerprint_from_components("", &manifests, None, NO_MODULES).unwrap()
     );
 }
 
@@ -431,7 +430,7 @@ fn the_fingerprint_follows_the_declared_executable_flag() {
     let composed = compose(&[DevBuildComponent::new(manifest.clone())], &directory.path().join("target")).unwrap();
     let non_executable = with_entries(test_manifest("ijent"), vec![sourced_entry("bin/ijent", &source)]);
     let fingerprint =
-        |manifest: &ComponentManifest| fingerprint::compute_ide_fingerprint_from_components(&[manifest], None, NO_MODULES).unwrap();
+        |manifest: &ComponentManifest| fingerprint::compute_ide_fingerprint_from_components("", &[manifest], None, NO_MODULES).unwrap();
     assert_eq!(composed.fingerprint, fingerprint(&manifest));
     assert_ne!(composed.fingerprint, fingerprint(&non_executable));
 }

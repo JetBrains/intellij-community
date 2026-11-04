@@ -573,7 +573,7 @@ intellij_dev_fragment = rule(
 _COLLECTOR_ATTRS = {
     "collector": attr.label(executable = True, cfg = "exec", mandatory = True),
     "component_name": attr.string(mandatory = True, doc = "Identifies the component in its manifest and completeness check."),
-    "platform_prefix": attr.string(mandatory = True),
+    "platform_prefix": attr.string(mandatory = True, doc = "The `build/dev-build.json` key of the product. Only the progress message names it."),
     "target_platform": attr.string(default = ""),
 } | _TRACE_SPANS_ATTR
 
@@ -582,7 +582,6 @@ def _collect_component(ctx, files, collection_args, inputs, mnemonic, progress_m
     args = ctx.actions.args()
     args.add("--component-manifest=" + component_manifest.path)
     args.add("--kind=" + ctx.attr.component_name)
-    args.add("--platform-prefix=" + ctx.attr.platform_prefix)
     _add_target_platform_args(args, ctx.attr.target_platform)
     if main_class:
         args.add("--main-class=" + main_class)
@@ -986,6 +985,7 @@ def _compose(ctx, fragment_targets):
         composition_spec,
         json.encode({
             "version": 1,
+            "platformPrefix": ctx.attr.platform_prefix,
             "expectedFragments": ctx.attr.expect_fragments,
             "additionalModules": ctx.attr.additional_modules,
             "bundledModules": ctx.attr.bundled_modules,
@@ -1083,6 +1083,11 @@ intellij_dev_fragments_dist = rule(
     attrs = {
         "composer": attr.label(executable = True, cfg = "exec", mandatory = True),
         "fragments": attr.label_list(providers = [IntellijDevFragmentInfo], mandatory = True),
+        "platform_prefix": attr.string(
+            mandatory = True,
+            doc = """The `build/dev-build.json` key of the product. The composer writes it as `platform.prefix` of `DevIdeConfig`,
+and the fingerprint hashes it. No component manifest states a product, so a plugin component serves every product.""",
+        ),
         "plugin_components": attr.label_list(
             providers = [IntellijDevFragmentInfo],
             cfg = dev_dist_product_info_transition,

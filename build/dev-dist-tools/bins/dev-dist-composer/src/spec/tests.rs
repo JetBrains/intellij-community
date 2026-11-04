@@ -12,7 +12,8 @@ fn write_spec(directory: &TempDir, content: &str) -> PathBuf {
 
 /// The shape of `json.encode` in `intellij_dev_dist.bzl`: every key, with `null` for an absent file or map.
 const STARLARK_SPEC: &str = concat!(
-    r#"{"version":1,"expectedFragments":["platform_core","intellij.java.plugin"],"additionalModules":["intellij.air.plugin"],"#,
+    r#"{"version":1,"platformPrefix":"idea","expectedFragments":["platform_core","intellij.java.plugin"],"#,
+    r#""additionalModules":["intellij.air.plugin"],"#,
     r#""bundledModules":["intellij.java.plugin"],"#,
     r#""components":[{"manifest":"core.json","pluginClasspathPart":null},{"manifest":"plugins.json","pluginClasspathPart":"plugins.part"}],"#,
     r#""pluginClasspathPrefix":"prefix.bin","sourceRunfiles":null,"sourceDirectoryRunfiles":{},"sourceBindings":null}"#
@@ -22,6 +23,7 @@ const STARLARK_SPEC: &str = concat!(
 fn composition_spec_decodes_the_starlark_shape() {
     let directory = TempDir::new();
     let spec = read_composition_spec(&write_spec(&directory, STARLARK_SPEC)).unwrap();
+    assert_eq!(spec.platform_prefix, "idea");
     assert_eq!(spec.expected_fragments, ["platform_core", "intellij.java.plugin"]);
     assert_eq!(spec.additional_modules, ["intellij.air.plugin"]);
     assert_eq!(spec.bundled_modules, ["intellij.java.plugin"]);
@@ -60,6 +62,7 @@ fn composition_spec_rejects_invalid_content() {
         (r#""version":1"#, r#""version":"1""#, "invalid type: string \"1\", expected i32"),
         (r#""version":1"#, r#""version":1,"version":1"#, "duplicate field `version`"),
         (r#""version":1,"#, "", "missing field `version`"),
+        (r#""platformPrefix":"idea","#, "", "missing field `platformPrefix`"),
         (
             r#""additionalModules":["intellij.air.plugin"],"#,
             "",

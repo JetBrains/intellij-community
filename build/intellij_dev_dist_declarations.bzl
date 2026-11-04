@@ -752,6 +752,7 @@ def _declare_fragments_dist(
             tags = ["manual"],
             composer = tables.composer,
             fragments = fragments,
+            platform_prefix = product,
             plugin_components = plugin_components,
             product_info = _product_info_label(tables, product),
             expect_fragments = expect_fragments,

@@ -1,7 +1,6 @@
 {
-  "version": 10,
+  "version": 11,
   "kind": "platform",
-  "platformPrefix": "idea",
   "os": "linux",
   "arch": "x64",
   "plugin": false,

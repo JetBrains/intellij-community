@@ -17,7 +17,6 @@ _FIXTURE_APPLICATION_INFO = Label("//platform/build-scripts/bazel-rules:testdata
 _PACKAGE = "//platform/build-scripts/bazel-rules/dev-plugin-tests"
 _SUITE = "dev_plugin_tests"
 _PRODUCT_INFO = str(Label(_PACKAGE + ":" + _SUITE + "_product_info"))
-_NO_PREFIX_PRODUCT_INFO = str(Label(_PACKAGE + ":" + _SUITE + "_no_prefix_product_info"))
 _FRONTEND_PRODUCT_INFO = str(Label(_PACKAGE + ":" + _SUITE + "_frontend_product_info"))
 _PRODUCT_INFO_FLAG = str(Label("//build:dev_dist_product_info"))
 _TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
@@ -142,10 +141,10 @@ def _dev_plugin_test_impl(ctx):
     asserts.equals(env, 3, len(packs))
     asserts.equals(env, 1, len(collects))
 
-    # The component is neutral and states the product's platform prefix.
+    # The component is neutral and states no product.
     collect = collects[0]
     asserts.true(env, "--platform-neutral" in collect.argv)
-    asserts.true(env, "--platform-prefix=idea" in collect.argv)
+    asserts.false(env, [argument for argument in collect.argv if argument.startswith("--platform-prefix")])
     asserts.true(env, "--kind=" + _MAIN_MODULE in collect.argv)
     asserts.equals(env, [], [argument for argument in collect.argv if argument.startswith("--os=") or argument.startswith("--arch=")])
     asserts.equals(env, _MAIN_MODULE, fragment.name)
@@ -382,13 +381,6 @@ _failure_test = analysistest.make(
     config_settings = {_PRODUCT_INFO_FLAG: _PRODUCT_INFO},
 )
 
-_no_prefix_failure_test = analysistest.make(
-    _expected_failure_test_impl,
-    expect_failure = True,
-    attrs = _FAILURE_ATTRS,
-    config_settings = {_PRODUCT_INFO_FLAG: _NO_PREFIX_PRODUCT_INFO},
-)
-
 def _declaration_test_impl(ctx):
     env = unittest.begin(ctx)
     asserts.equals(env, json.decode(ctx.attr.expected), json.decode(ctx.attr.actual))
@@ -470,16 +462,10 @@ def dev_plugin_test_suite(name):
     dev_dist_product_info(
         name = name + "_product_info",
         application_info = _FIXTURE_APPLICATION_INFO,
-        platform_prefix = "idea",
-    )
-    dev_dist_product_info(
-        name = name + "_no_prefix_product_info",
-        application_info = _FIXTURE_APPLICATION_INFO,
     )
     dev_dist_product_info(
         name = name + "_frontend_product_info",
         application_info = _FIXTURE_APPLICATION_INFO,
-        platform_prefix = "client",
         mode = "frontend",
     )
 
@@ -582,7 +568,6 @@ def dev_plugin_test_suite(name):
         ("unknown_library", {"lib/x.jar": [_MAIN_MODULE, "//nowhere:lib"]}, [], "which `libraries` does not declare", _failure_test),
         ("twice", {"lib/x.jar": [_MAIN_MODULE, _MAIN_MODULE]}, [], "names module 'test.dev.plugin' twice", _failure_test),
         ("classpath", {"lib/x.jar": [_MAIN_MODULE], "lib/y.jar": [_SPLIT_MODULE]}, ["lib/y.jar"], "must name every jar once", _failure_test),
-        ("no_prefix", {"lib/x.jar": [_MAIN_MODULE]}, [], "requires a product configuration", _no_prefix_failure_test),
     ]:
         failing = name + "_failing_" + case
         dev_plugin(

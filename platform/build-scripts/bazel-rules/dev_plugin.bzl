@@ -22,7 +22,7 @@ load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "declare_spans", "library_entries", "merge_order_jars", "module_output_jar", "pack_jar")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "dev_dist_neutral_product_transition")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
 
@@ -287,13 +287,7 @@ def _copies(ctx, inputs, destinations):
 def _dev_plugin_impl(ctx):
     inputs = ctx.attr.inputs[DevPluginInputsInfo]
     descriptor_info = ctx.attr.descriptor[DevDistPluginDescriptorInfo]
-    product = ctx.attr._product_info[DevDistProductInfo]
     main_module = ctx.attr.main_module
-    if not product.platform_prefix:
-        fail("dev_plugin requires a product configuration: %s states no platform prefix, so no product asked for %s" % (
-            ctx.attr._product_info.label,
-            ctx.label,
-        ))
     if descriptor_info.plugin_main_module != main_module:
         fail("%s describes '%s', not '%s'" % (ctx.attr.descriptor.label, descriptor_info.plugin_main_module, main_module), attr = "descriptor")
     if not ctx.attr.jars:
@@ -440,7 +434,6 @@ def _dev_plugin_impl(ctx):
     arguments.add(manifest, format = "--component-manifest=%s")
     arguments.add(classpath, format = "--plugin-classpath-part=%s")
     arguments.add(main_module, format = "--kind=%s")
-    arguments.add(product.platform_prefix, format = "--platform-prefix=%s")
     arguments.add("--platform-neutral")
     if ctx.attr._trace_spans[BuildSettingInfo].value:
         trace = ctx.actions.declare_file(ctx.label.name + ".component.spans.json")
@@ -504,7 +497,7 @@ def _dev_plugin_impl(ctx):
 _dev_plugin = rule(
     doc = """One simple plugin, packed and collected as a platform-neutral component.
 
-Not transitioned. The consumer reaches it in the product configuration, and `_product_info` reads the product there.""",
+Not transitioned. The consumer reaches it in the product configuration, and the descriptor reads the product there.""",
     implementation = _dev_plugin_impl,
     attrs = {
         "inputs": attr.label(mandatory = True, providers = [DevPluginInputsInfo]),
@@ -552,11 +545,6 @@ directory with 0755. A link is refused.""",
         "_collector": attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_collector", executable = True, cfg = "exec"),
         "_packer": attr.label(default = "//platform/build-scripts/bazel-rules:content_module_packer", executable = True, cfg = "exec"),
         "_trace_spans": attr.label(default = "//platform/build-scripts/bazel-rules:trace_spans", providers = [BuildSettingInfo]),
-        "_product_info": attr.label(
-            doc = "The product, read through the flag the consumer's transition sets. The default states no product, and the rule fails on it.",
-            default = Label("//build:dev_dist_product_info"),
-            providers = [DevDistProductInfo],
-        ),
     },
 )
 

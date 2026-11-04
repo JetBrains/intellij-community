@@ -22,10 +22,9 @@ fn require_error(result: anyhow::Result<crate::Options<String>>, message: &str) 
     }
 }
 
-const NEUTRAL_PLUGIN: [&str; 5] = [
+const NEUTRAL_PLUGIN: [&str; 4] = [
     "--component-manifest=component.json",
     "--kind=plugins_json",
-    "--platform-prefix=idea",
     "--plugin-component=spec.json",
     "--plugin-classpath-part=component.plugin-classpath-part",
 ];
@@ -35,20 +34,14 @@ fn options_take_the_platform_that_the_rules_pass() {
     for (os, expected_os) in [("windows", "windows"), ("macos", "mac"), ("linux", "linux")] {
         for arch in ["x64", "aarch64"] {
             let mut args = base_args("--jars-file=jars.json");
-            args[3] = format!("--os={os}");
-            args[4] = format!("--arch={arch}");
+            args[2] = format!("--os={os}");
+            args[3] = format!("--arch={arch}");
             let options = parse_with(&args, &["--metadata-catalogue=catalogue.json", "--trace-file="]).unwrap();
             assert_eq!((options.os.as_str(), options.arch.as_str()), (expected_os, arch));
             assert_eq!(options.trace_file, None, "an empty value is an absent option");
         }
     }
-    let options = parse(&[
-        "--component-manifest=component.json",
-        "--kind=files",
-        "--platform-prefix=idea",
-        "--files-file=files.json",
-    ])
-    .unwrap();
+    let options = parse(&["--component-manifest=component.json", "--kind=files", "--files-file=files.json"]).unwrap();
     assert!(!options.os.is_empty() && !options.arch.is_empty(), "no host platform: {options:?}");
 }
 
@@ -56,12 +49,12 @@ fn options_take_the_platform_that_the_rules_pass() {
 fn options_refuse_a_platform_spelling_that_no_rule_passes() {
     for os in ["WINDOWS", "win", "mac", "MAC", "Linux", "darwin"] {
         let mut args = base_args("--files-file=files.json");
-        args[3] = format!("--os={os}");
+        args[2] = format!("--os={os}");
         require_error(parse_with(&args, &[]), "unknown --os value");
     }
     for arch in ["X86_64", "amd64", "AArch64", "arm64"] {
         let mut args = base_args("--files-file=files.json");
-        args[4] = format!("--arch={arch}");
+        args[3] = format!("--arch={arch}");
         require_error(parse_with(&args, &[]), "unknown --arch value");
     }
 }
@@ -81,10 +74,10 @@ fn invalid_options() {
     ] {
         require_error(parse_with(&base, extra), message);
     }
-    for index in 0..6 {
+    for index in 0..5 {
         let mut args = base.clone();
         let name = args[index].split('=').next().unwrap().to_owned();
-        args[index] = if index < 3 || index == 5 {
+        args[index] = if index < 2 || index == 4 {
             format!("{name}=")
         } else {
             format!("{name}=unknown")
@@ -132,7 +125,6 @@ fn platform_neutral_options() {
     let files = [
         "--component-manifest=component.json",
         "--kind=files",
-        "--platform-prefix=idea",
         "--files-file=files.json",
         "--platform-neutral",
     ];
@@ -143,12 +135,7 @@ fn platform_neutral_options() {
 /// backslashes on Windows, so the parser keeps the declared value in every mode.
 #[test]
 fn options_keep_the_declared_manifest_path() {
-    let base = [
-        "--component-manifest=out/component.json",
-        "--kind=files",
-        "--platform-prefix=idea",
-        "--files-file=files.json",
-    ];
+    let base = ["--component-manifest=out/component.json", "--kind=files", "--files-file=files.json"];
     for extra in [&["--os=linux", "--arch=x64"][..], &[]] {
         let options = parse(&[base.as_slice(), extra].concat()).unwrap();
         assert_eq!(options.manifest, "out/component.json");

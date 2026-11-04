@@ -40,13 +40,13 @@ the field order. No producer writes such an array.
 - `paths::absolute_path(value: impl AsRef<Path>) -> Result<PathBuf>`: the absolute path of a `host_path`. A relative
   path starts at the working directory. A path that is not UTF-8 fails.
 
-## Component manifest v10 (`manifest`)
+## Component manifest v11 (`manifest`)
 
 Only the composer reads a manifest. Every path of a manifest is ASCII after `distpath::validate_path`, so `str::cmp`
 gives the order of Java `String.compareTo` for the entries and the fingerprint.
 
-- `manifest::MANIFEST_VERSION: i32`: 10.
-- `ComponentManifest { version, kind, platform_prefix, os, arch, plugin, main_class, core_class_path, entries }`: one
+- `manifest::MANIFEST_VERSION: i32`: 11.
+- `ComponentManifest { version, kind, os, arch, plugin, main_class, core_class_path, entries }`: one
   manifest. JSON states every key. `main_class` is an `Option<String>`. `plugin: bool` is true for a plugin
   component.
 - `ComponentEntry`: one entry, with the JSON `type` first. `ComponentFile { relative_path, hash, executable, source,

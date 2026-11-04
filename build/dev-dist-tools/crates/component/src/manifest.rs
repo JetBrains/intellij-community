@@ -1,4 +1,4 @@
-//! Component manifest v10: the collector writes it, and the composer reads it.
+//! Component manifest v11: the collector writes it, and the composer reads it.
 //!
 //! Only the composer reads a manifest, so the format has no reader outside this workspace. Each entry states its type
 //! in the JSON key `type`, and each type has only the keys that it needs.
@@ -11,7 +11,7 @@ use anyhow::{Context as _, Result, bail};
 use serde::{Deserialize, Serialize};
 
 /// The only manifest version. The collector writes it in every manifest, and the composer refuses every other version.
-pub const MANIFEST_VERSION: i32 = 10;
+pub const MANIFEST_VERSION: i32 = 11;
 
 /// The manifest of one component. A `None` main class is a component that contributes files and nothing else.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -19,7 +19,6 @@ pub const MANIFEST_VERSION: i32 = 10;
 pub struct ComponentManifest {
     pub version: i32,
     pub kind: String,
-    pub platform_prefix: String,
     pub os: String,
     pub arch: String,
     /// A plugin component holds one plugin and gives a plugin classpath record. Every other component holds none.

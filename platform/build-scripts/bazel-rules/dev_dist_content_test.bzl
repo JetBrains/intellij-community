@@ -861,7 +861,6 @@ def dev_dist_content_test_suite(name):
     dev_dist_product_info(
         name = product_info,
         application_info = _FIXTURE_APPLICATION_INFO,
-        platform_prefix = "idea",
     )
     second_library = name + "_second_library"
     _fake_library(name = second_library)
@@ -987,6 +986,7 @@ def dev_dist_content_test_suite(name):
         name = distribution,
         composer = ":" + fixture,
         fragments = [":" + component for component in production],
+        platform_prefix = "idea",
         expect_fragments = production,
         tags = ["manual"],
     )
@@ -1005,6 +1005,7 @@ def dev_dist_content_test_suite(name):
             name = sibling,
             composer = ":" + fixture,
             fragments = [":" + component for component in production],
+            platform_prefix = "idea",
             expect_fragments = production,
             sibling_vm_options = ["-Da=1", "-Dexport=${EXPORT}/x"],
             output_base = "/output-base",
@@ -1024,6 +1025,7 @@ def dev_dist_content_test_suite(name):
             name = refused,
             composer = ":" + fixture,
             fragments = [":" + component for component in production],
+            platform_prefix = "idea",
             expect_fragments = production,
             local_launch = local_launch,
             sibling_vm_options = lines,

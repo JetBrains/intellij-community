@@ -45,7 +45,6 @@ impl<Spec> Mode<Spec> {
 struct Options<Spec> {
     manifest: String,
     kind: String,
-    platform_prefix: String,
     /// Empty for a platform-neutral component, with `arch`.
     os: String,
     arch: String,
@@ -75,7 +74,6 @@ impl Options<String> {
         Ok(Options {
             manifest: self.manifest,
             kind: self.kind,
-            platform_prefix: self.platform_prefix,
             os: self.os,
             arch: self.arch,
             mode,
@@ -89,7 +87,6 @@ impl<Spec> Options<Spec> {
     fn header(&self) -> ManifestHeader {
         ManifestHeader {
             kind: self.kind.clone(),
-            platform_prefix: self.platform_prefix.clone(),
             os: self.os.clone(),
             arch: self.arch.clone(),
             main_class: self.main_class.clone(),
@@ -213,7 +210,6 @@ fn parse_options(args: Vec<OsString>) -> anyhow::Result<Options<String>> {
     let mut options = cli::parse(args)?;
     let manifest = options.require("--component-manifest")?;
     let kind = options.require("--kind")?;
-    let platform_prefix = options.require("--platform-prefix")?;
     let os = value(&mut options, "--os")?;
     let arch = value(&mut options, "--arch")?;
     let platform_neutral = options.flag("--platform-neutral")?;
@@ -269,7 +265,6 @@ fn parse_options(args: Vec<OsString>) -> anyhow::Result<Options<String>> {
     Ok(Options {
         manifest,
         kind,
-        platform_prefix,
         os,
         arch,
         mode,

@@ -3,7 +3,8 @@ use testkit::{TempDir, require_error, write_file};
 use super::*;
 use crate::test_support::{directory_entry, file_entry, file_with_mode};
 
-const VALID: &str = r#"{"version":10,"kind":"a","platformPrefix":"idea","os":"linux","arch":"x64","plugin":false,"mainClass":null,"coreClassPath":[],"entries":[]}"#;
+const VALID: &str =
+    r#"{"version":11,"kind":"a","os":"linux","arch":"x64","plugin":false,"mainClass":null,"coreClassPath":[],"entries":[]}"#;
 
 const FILE: &str = r#"{"type":"component-file","relativePath":"a","hash":1,"source":"inputs/a"}"#;
 
@@ -25,9 +26,14 @@ fn decode(content: &str) -> serde_json::Result<ComponentManifest> {
 #[test]
 fn a_manifest_states_every_header_key() {
     let manifest = read(VALID).unwrap();
-    assert_eq!(manifest.version, 10);
+    assert_eq!(manifest.version, 11);
     assert_eq!(manifest.main_class, None);
     assert!(!manifest.plugin);
+    // The composition spec states the product, so a manifest that states one is refused.
+    require_error(
+        read(&VALID.replace(r#""kind":"a","#, r#""kind":"a","platformPrefix":"idea","#)),
+        "unknown field `platformPrefix`",
+    );
     let manifest = read(&with_entries(FILE)).unwrap();
     assert_eq!(
         manifest.entries,
@@ -54,9 +60,9 @@ fn the_reader_refuses_another_version_by_its_number() {
         read(&version_9.replace(r#""version":9,"#, "").replace(r#","pluginCount":1"#, "")),
         "Unsupported dev-build component manifest version 9",
     );
-    for version in ["8", "11"] {
+    for version in ["8", "10", "12"] {
         require_error(
-            read(&VALID.replace(r#""version":10"#, &format!(r#""version":{version}"#))),
+            read(&VALID.replace(r#""version":11"#, &format!(r#""version":{version}"#))),
             &format!("Unsupported dev-build component manifest version {version}"),
         );
     }
@@ -70,7 +76,7 @@ fn the_reader_refuses_another_version_by_its_number() {
 #[test]
 fn quoted_numbers_and_booleans_are_refused() {
     for (from, to, message) in [
-        (r#""version":10"#, r#""version":"10""#, "invalid type: string \"10\", expected i32"),
+        (r#""version":11"#, r#""version":"11""#, "invalid type: string \"11\", expected i32"),
         (
             r#""plugin":false"#,
             r#""plugin":"false""#,
@@ -134,7 +140,7 @@ fn a_required_key_must_be_present() {
     for (key, removed) in [
         ("coreClassPath", r#""coreClassPath":[],"#),
         ("plugin", r#""plugin":false,"#),
-        ("version", r#""version":10,"#),
+        ("version", r#""version":11,"#),
     ] {
         let message = if key == "version" {
             "Unsupported dev-build component manifest version 9".to_owned()
@@ -350,8 +356,7 @@ fn the_entry_order_is_the_java_string_order_for_ascii() {
 #[test]
 fn the_writer_writes_indented_json() {
     let mut manifest = decode(VALID).unwrap();
-    manifest.kind = "files".into();
-    manifest.platform_prefix = "idea<test>&".into();
+    manifest.kind = "files<test>&".into();
     let executable = ComponentEntry::ComponentFile {
         relative_path: "bin/tool".into(),
         hash: 1,
@@ -367,9 +372,8 @@ fn the_writer_writes_indented_json() {
     manifest.entries = vec![directory_entry("lib", 0o755), executable, link, file_entry("lib/a.jar")];
     let expected = concat!(
         "{\n",
-        "  \"version\": 10,\n",
-        "  \"kind\": \"files\",\n",
-        "  \"platformPrefix\": \"idea<test>&\",\n",
+        "  \"version\": 11,\n",
+        "  \"kind\": \"files<test>&\",\n",
         "  \"os\": \"linux\",\n",
         "  \"arch\": \"x64\",\n",
         "  \"plugin\": false,\n",

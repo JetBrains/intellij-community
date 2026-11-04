@@ -77,7 +77,6 @@ pub(crate) struct InventoryStats {
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub(crate) struct ManifestHeader {
     pub(crate) kind: String,
-    pub(crate) platform_prefix: String,
     pub(crate) os: String,
     pub(crate) arch: String,
     /// The IDE main class, or `None` for a component that declares none.
@@ -184,7 +183,6 @@ pub(crate) fn build_manifest(header: &ManifestHeader, files: &[SourcedFile]) -> 
     let manifest = ComponentManifest {
         version: MANIFEST_VERSION,
         kind: header.kind.clone(),
-        platform_prefix: header.platform_prefix.clone(),
         os: header.os.clone(),
         arch: header.arch.clone(),
         plugin: header.plugin_component,

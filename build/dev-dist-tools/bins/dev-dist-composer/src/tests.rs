@@ -35,7 +35,7 @@ fn write_cli_fixture(local_launch: bool) {
     write_file(
         "fragments/core.json",
         concat!(
-            r#"{"version":10,"kind":"platform_core","platformPrefix":"idea","os":"linux","arch":"x64","plugin":false,"#,
+            r#"{"version":11,"kind":"platform_core","os":"linux","arch":"x64","plugin":false,"#,
             r#""mainClass":"com.intellij.idea.Main","coreClassPath":["lib/util.jar","lib/app.jar"],"entries":["#,
             r#"{"type":"component-file","relativePath":"bin/idea.properties","hash":1,"source":"fragments/core/bin/idea.properties"},"#,
             r#"{"type":"component-file","relativePath":"lib/app.jar","hash":4,"source":"fragments/core/lib/app.jar"},"#,
@@ -45,7 +45,7 @@ fn write_cli_fixture(local_launch: bool) {
     write_file(
         "fragments/plugins.json",
         concat!(
-            r#"{"version":10,"kind":"plugins","platformPrefix":"idea","os":"","arch":"","plugin":true,"#,
+            r#"{"version":11,"kind":"plugins","os":"","arch":"","plugin":true,"#,
             r#""mainClass":null,"coreClassPath":[],"entries":["#,
             r#"{"type":"component-file","relativePath":"plugins/packed/lib/packed.jar","hash":3,"source":"inputs/packed.jar"}]}"#
         ),
@@ -75,7 +75,7 @@ fn write_cli_fixture(local_launch: bool) {
         "composition.json",
         format!(
             concat!(
-                r#"{{"version":1,"expectedFragments":["platform_core","plugins"],"#,
+                r#"{{"version":1,"platformPrefix":"idea","expectedFragments":["platform_core","plugins"],"#,
                 r#""additionalModules":["intellij.packed","intellij.bundled"],"bundledModules":["plugins"],"components":["#,
                 r#"{{"manifest":"fragments/core.json","pluginClasspathPart":null}},"#,
                 r#"{{"manifest":"fragments/plugins.json","pluginClasspathPart":"fragments/plugins.part"}}],"#,

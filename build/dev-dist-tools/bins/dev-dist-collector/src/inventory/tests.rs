@@ -33,7 +33,6 @@ fn packed_jar(source: &str, relative_path: &str) -> JarRecord {
 fn header(kind: &str) -> ManifestHeader {
     ManifestHeader {
         kind: kind.into(),
-        platform_prefix: "idea".into(),
         os: "linux".into(),
         arch: "x64".into(),
         ..ManifestHeader::default()
@@ -324,12 +323,11 @@ fn manifest_ordering_and_escaping() {
         SourcedFile::new(&source, "lib/Z.jar"),
         SourcedFile::new(&source, "lib/a-b.jar"),
     ];
-    let mut header = header("files");
-    header.platform_prefix = "idea<test>".into();
+    let header = header("files<test>");
     write_manifest(&manifest_file, &header, &files).unwrap();
     let text = fs::read_to_string(&manifest_file).unwrap();
     assert!(
-        text.contains("inputs/a&b.jar") && text.contains("idea<test>"),
+        text.contains("inputs/a&b.jar") && text.contains("files<test>"),
         "wrong escaping: {text}"
     );
     let manifest = decode_component_manifest(text.as_bytes()).unwrap();
@@ -399,9 +397,9 @@ fn every_manifest_states_the_version_and_a_plugin_component_states_its_plugin() 
         &[],
     )
     .unwrap();
-    assert_eq!((manifest.version, manifest.plugin), (10, true));
+    assert_eq!((manifest.version, manifest.plugin), (11, true));
     let (manifest, _) = build_manifest(&header("files"), &[]).unwrap();
-    assert_eq!((manifest.version, manifest.plugin), (10, false));
+    assert_eq!((manifest.version, manifest.plugin), (11, false));
 }
 
 #[cfg(unix)]
