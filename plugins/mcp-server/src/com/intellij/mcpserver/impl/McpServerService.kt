@@ -66,13 +66,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = logger<McpServerService>()
 internal val IJ_MCP_AUTH_TOKEN: String = ::IJ_MCP_AUTH_TOKEN.name
@@ -341,10 +339,7 @@ open class McpServerService(private val cs: CoroutineScope) {
             // DO NOT merge `withContext(NonCancellable)` and `withContext(Dispatchers.IO)`, otherwise it throws cancellation
             withContext(NonCancellable) {
               withContext(Dispatchers.IO) {
-                // timeout exception will be reported in the catch below
-                withTimeout(2000.milliseconds) {
-                  server.stopSuspend(gracePeriodMillis = 500, timeoutMillis = 1000)
-                }
+                server.stopSuspend(gracePeriodMillis = 500, timeoutMillis = 1000)
               }
             }
           }
