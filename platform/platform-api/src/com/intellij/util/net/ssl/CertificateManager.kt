@@ -101,6 +101,7 @@ class CertificateManager(coroutineScope: CoroutineScope) : PersistentStateCompon
       // Don't do this: protocol created this way will ignore SSL tunnels. See IDEA-115708.
       // Protocol.registerProtocol("https", CertificateManager.createDefault().createProtocol());
       SSLContext.setDefault(sslContext)
+      HttpsURLConnection.setDefaultSSLSocketFactory(sslContext.socketFactory) // in case a previous value was already cached
       LOG.info("Default SSL context initialized")
     }
   }
