@@ -44,7 +44,7 @@ internal fun KtClassOrObject.getSealedSuperTypes(): Set<KtClass> {
 
 // Makes sure the list is sorted to ensure consistent results
 private fun List<KtClassOrObject>.toListOfNames() = map {
-    it.fqName?.asString() ?: it.nameAsSafeName.asString()
+    it.getClassId()?.relativeClassName?.asString() ?: it.nameAsSafeName.asString()
 }.sorted()
 
 /**
