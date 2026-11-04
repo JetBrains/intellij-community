@@ -7,6 +7,7 @@ import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.ThreadDumpService
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ProhibitAWTEvents
 import com.intellij.internal.DebugAttachDetector
@@ -24,6 +25,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionResult
 import com.intellij.openapi.actionSystem.AnActionWrapper
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Separator
@@ -39,7 +41,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IndexNotReadyException
@@ -67,7 +68,6 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -594,8 +594,10 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
     // clone the presentation to avoid partially changing the cached one if the update is interrupted
     val presentation = presentationFactory.getPresentation(action).clone()
-    if (actionFilter?.invoke(action) == true) {
+    if (actionFilter?.invoke(action) == true ||
+        ActionUtil.isDisabledByTech(action, CommonDataKeys.PROJECT.getData(dataContext))) {
       presentation.isEnabledAndVisible = false
+      presentation.putClientProperty(ActionUtil.WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false)
       updatedPresentations[action] = presentation
       if (action is ActionGroup) {
         groupChildren[action] = emptyList()

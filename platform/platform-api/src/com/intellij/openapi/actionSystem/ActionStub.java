@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -96,6 +97,7 @@ public final class ActionStub extends AnAction implements ActionStubBase {
   @ApiStatus.Internal
   public void initAction(@NotNull AnAction targetAction) {
     copyTemplatePresentation(getTemplatePresentation(), targetAction.getTemplatePresentation());
+    targetAction.getTemplatePresentation().putClientProperty(ActionUtil.ACTION_PLUGIN_DESCRIPTOR, plugin);
     targetAction.setShortcutSet(getShortcutSet());
     copyActionTextOverrides(targetAction);
     for (Supplier<String> synonym : synonyms) {

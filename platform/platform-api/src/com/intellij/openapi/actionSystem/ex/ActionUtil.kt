@@ -28,6 +28,8 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.TechnologyFilter
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -210,6 +212,10 @@ object ActionUtil {
   val ACTION_GROUP_POPUP_CAPTION: Key<ActionGroupPopupCaption> = Key.create("ACTION_GROUP_POPUP_CAPTION")
 
   @ApiStatus.Internal
+  @JvmField
+  val ACTION_PLUGIN_DESCRIPTOR: Key<PluginDescriptor> = Key.create("ACTION_PLUGIN_DESCRIPTOR")
+
+  @ApiStatus.Internal
   enum class ActionGroupPopupCaption {
     /** No popup caption */
     NONE,
@@ -327,6 +333,12 @@ object ActionUtil {
       return AnActionResult.ignored("action is not compatible with LightEdit")
     }
     if (IdeProductMode.isLight && !action.isDumbAware) {
+      presentation.isEnabledAndVisible = false
+      presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false)
+      presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false)
+      return AnActionResult.PERFORMED
+    }
+    if (isDisabledByTech(action, e.project)) {
       presentation.isEnabledAndVisible = false
       presentation.putClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE, false)
       presentation.putClientProperty(WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE, false)
@@ -741,6 +753,20 @@ object ActionUtil {
       delegate = delegate.delegate
     }
     return delegate
+  }
+
+  /**
+   * Tells if the module that declares [action] does not apply to [project], see [TechnologyFilter.isApplicable].
+   * An action that code registers has no module, and it always applies.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isDisabledByTech(action: AnAction, project: Project?): Boolean {
+    if (project == null) return false
+    val technologyFilter = TechnologyFilter.getInstance()
+    if (!technologyFilter.isRestricted(project)) return false
+    val pluginDescriptor = getDelegateChainRootAction(action).templatePresentation.getClientProperty(ACTION_PLUGIN_DESCRIPTOR) ?: return false
+    return !technologyFilter.isApplicable(pluginDescriptor, project)
   }
 
   @JvmStatic

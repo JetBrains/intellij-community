@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.ActionStubBase
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Constraints
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.extensions.PluginDescriptor
 import java.util.function.Function
 
 internal class ActionGroupStub(override val id: String,
@@ -22,6 +24,8 @@ internal class ActionGroupStub(override val id: String,
 
   fun initGroup(target: ActionGroup, actionToId: Function<AnAction, String?>) {
     ActionStub.copyTemplatePresentation(templatePresentation, target.templatePresentation)
+    target.templatePresentation.putClientProperty(ActionUtil.ACTION_PLUGIN_DESCRIPTOR, plugin)
+
     if (popupDefinedInXml) target.isPopup = isPopup
 
     copyActionTextOverrides(target)
