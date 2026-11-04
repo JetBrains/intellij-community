@@ -15,7 +15,8 @@ import javax.swing.event.TableColumnModelListener
 
 class MoveColumnListener internal constructor(
   private val grid: DataGrid,
-  private val gridTable: GridTable,
+  /** The view's block on column reordering, which both tables' headers read. */
+  private val reorderingBlock: ColumnReorderingBlock,
   /** The view's columns, whose column model holds the grid's columns in grid order. */
   private val columns: GridColumns,
   private val rowOrder: TableRowOrder,
@@ -48,14 +49,14 @@ class MoveColumnListener internal constructor(
         {
           object : AutoCloseable {
             init {
-              gridTable.isColumnReorderingBlocked = true
+              reorderingBlock.block()
               grid.getPanel().getComponent().setLoadingText(DataGridBundle.message("DataView.updatingFile"))
               grid.getPanel().getComponent().startLoading()
             }
 
             override fun close() {
               grid.getPanel().getComponent().stopLoading()
-              gridTable.isColumnReorderingBlocked = false
+              reorderingBlock.unblock()
             }
           }
         },

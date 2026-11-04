@@ -36,13 +36,13 @@ import kotlin.math.max
 internal class GridColumns(
   private val grid: DataGrid,
   private val host: GridColumnsHost,
-  /** The view's data model, which creates the columns; the view gives it a new one on a transpose. */
+  /**
+   * The view's data model: it gives the column count and refreshes the tables when rows show or hide. The view gives a new one on a
+   * transpose.
+   */
   private var dataModel: GridTableModel,
 ) : Disposable, ColumnPins {
   val columnModel: ViewColumnModel = ViewColumnModel()
-
-  /** Whether the view shows the grid transposed, when the columns of [columnModel] are the grid's rows. */
-  private var transposed = false
 
   /** The pinned columns, hidden ones too, as the view was last given them. */
   private var pinnedColumns: Set<ModelIndex<GridColumn>> = emptySet()
@@ -53,7 +53,10 @@ internal class GridColumns(
    */
   private var pinnedColumnsNotToLock: Set<ModelIndex<GridColumn>> = emptySet()
 
-  val columnCache: ViewColumnCache = ViewColumnCache(grid, dataModel, this)
+  val columnCache: ViewColumnCache = ViewColumnCache(grid, this)
+
+  /** Whether the view shows the grid transposed, when the columns of [columnModel] are the grid's rows. */
+  private val transposed: Boolean get() = dataModel is TransposedGridTableModel
 
   /** True once the view is disposed, after which it stops driving the column order of the grid. */
   private var disposed = false
@@ -266,11 +269,10 @@ internal class GridColumns(
    * Takes the data model of a transpose or of the way back. Drops the cached columns of the old model; on the way in, keeps the
    * untransposed widths for [restoreUntransposedColumnWidths].
    */
-  fun setDataModel(model: GridTableModel, transposed: Boolean) {
-    if (transposed) rememberUntransposedColumnWidths()
-    this.transposed = transposed
+  fun setDataModel(model: GridTableModel) {
+    if (model is TransposedGridTableModel) rememberUntransposedColumnWidths()
     dataModel = model
-    columnCache.setDataModel(model)
+    columnCache.transposed = transposed
     columnCache.retainColumns(emptyList())
   }
 

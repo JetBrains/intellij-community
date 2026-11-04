@@ -9,14 +9,12 @@ import com.intellij.openapi.util.Comparing
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 /**
- * A column object for each model column, hidden ones too, so a column keeps its width while hidden. The view's data model creates a
- * column when it is first asked for, and the cache gives the column the view's pins. A column is reused only while the grid still has the
- * same column at its model index. A transposed view's columns are grid rows, and a row with at most one changed value counts as the same.
+ * A column object for each model column, hidden ones too, so a column keeps its width while hidden. The cache creates a column when it
+ * is first asked for and gives it the view's pins. A column is reused only while the grid still has the same column at its model index.
+ * A transposed view's columns are grid rows, and a row with at most one changed value counts as the same.
  */
 internal class ViewColumnCache(
   private val grid: DataGrid,
-  /** The view's data model, which creates the columns; [GridColumns] gives the cache a new one on a transpose. */
-  private var dataModel: GridTableModel,
   /** Where each column asks whether it is pinned. */
   private val pins: ColumnPins,
 ) : Iterable<TableResultViewColumn> {
@@ -28,9 +26,11 @@ internal class ViewColumnCache(
 
   private val entriesByModelIndex = Int2ObjectOpenHashMap<Entry>()
 
-  fun setDataModel(model: GridTableModel) {
-    dataModel = model
-  }
+  /**
+   * Whether the columns are grid rows. [GridColumns] copies it from its data model's type on a transpose, since callers ask for a column
+   * by model index alone.
+   */
+  var transposed: Boolean = false
 
   /** Whether a column is cached at [modelIndex] and still matches the grid's column or row there. A stale entry is dropped. */
   fun hasCachedColumn(modelIndex: Int): Boolean {
@@ -49,7 +49,8 @@ internal class ViewColumnCache(
   }
 
   private fun createEntry(modelIndex: Int): Entry {
-    val tableColumn = dataModel.createColumn(modelIndex)
+    val tableColumn =
+      if (transposed) TransposedTableColumn(grid, modelIndex) else RegularTableColumn(grid, gridColumnAt(modelIndex), modelIndex)
     tableColumn.setPins(pins)
     return Entry(getColumnData(modelIndex)!!, tableColumn)
   }
@@ -75,7 +76,8 @@ internal class ViewColumnCache(
     //TODO try using primary keys and ROWID columns for it
     if (cachedSource is GridRow && currentSource is GridRow &&
         cachedSource.rowNum == currentSource.rowNum && cachedSource.size == currentSource.size) {
-      val mismatchedValuesCount = (0 until cachedSource.size).count { !Comparing.equal(cachedSource.getValue(it), currentSource.getValue(it)) }
+      val mismatchedValuesCount = (0 until cachedSource.size)
+        .count { !Comparing.equal(cachedSource.getValue(it), currentSource.getValue(it)) }
       if (mismatchedValuesCount < 2) return true
     }
     return false
@@ -83,7 +85,10 @@ internal class ViewColumnCache(
 
   private fun getColumnData(modelIndex: Int): Any? {
     val model = grid.getDataModel(DATA_WITH_MUTATIONS)
-    return if (dataModel is TransposedGridTableModel) model.getRow(ModelIndex.forRow(grid, modelIndex))
+    return if (transposed) model.getRow(ModelIndex.forRow(grid, modelIndex))
     else model.getColumn(ModelIndex.forColumn(grid, modelIndex))
   }
+
+  private fun gridColumnAt(modelIndex: Int): GridColumn =
+    grid.getDataModel(DATA_WITH_MUTATIONS).getColumn(ModelIndex.forColumn(grid, modelIndex))!!
 }

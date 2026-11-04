@@ -26,6 +26,7 @@ import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.database.run.ui.FloatingPagingManager;
 import com.intellij.database.run.ui.HierarchicalTableResultPanel;
+import com.intellij.database.run.ui.ResultViewWithCells;
 import com.intellij.database.run.ui.TableResultPanel;
 import com.intellij.database.run.ui.grid.CellAttributesKey;
 import com.intellij.database.run.ui.grid.GridPasteProvider.TableDataParseResult;
@@ -248,7 +249,7 @@ public class GridUtil extends GridUtilCore {
   }
 
   public static boolean isFailedToLoad(Object value) {
-    return value instanceof String && StringUtil.startsWith((String)value, FAILED_TO_LOAD_PREFIX);
+    return value instanceof String string && StringUtil.startsWith(string, FAILED_TO_LOAD_PREFIX);
   }
 
   public static boolean showIgnoreUnsubmittedChangesYesNoDialog(@NotNull DataGrid grid) {
@@ -575,11 +576,11 @@ public class GridUtil extends GridUtilCore {
 
   public static @NlsContexts.ColumnName @NotNull String getRowName(@NotNull DataGrid grid, int relativeIndex) {
     GridDataHookUp<GridRow, GridColumn> dataHookup = grid.getDataHookup();
-    boolean trueRows = dataHookup instanceof CsvDocumentDataHookUp && ((CsvDocumentDataHookUp)dataHookup).getFormat().rowNumbers;
+    boolean trueRows = dataHookup instanceof CsvDocumentDataHookUp csvHookup && csvHookup.getFormat().rowNumbers;
     ModelIndex<GridRow> rowIndex = trueRows ? ViewIndex.forRow(grid, relativeIndex).toModel(grid) : ModelIndex.forRow(grid, relativeIndex);
     GridRow row = grid.getDataModel(DATA_WITH_MUTATIONS).getRow(rowIndex);
-    if (row instanceof NamedRow) {
-      return ((NamedRow)row).name;
+    if (row instanceof NamedRow namedRow) {
+      return namedRow.name;
     }
     if (row == null) return DataGridBundle.message("column.name.not.applicable");
     if (isInsertedRow(grid, rowIndex)) return String.valueOf(getInsertedRowIdx(grid, relativeIndex));
@@ -800,7 +801,7 @@ public class GridUtil extends GridUtilCore {
   }
 
   public static @Nullable VirtualFile getVirtualFile(@Nullable GridDataHookUp<?, ?> hookup) {
-    return hookup instanceof HookUpVirtualFileProvider ? ((HookUpVirtualFileProvider)hookup).getVirtualFile() : null;
+    return hookup instanceof HookUpVirtualFileProvider fileProvider ? fileProvider.getVirtualFile() : null;
   }
 
   public static @NotNull PsiElement getPsiElementForSelection(@NotNull DataGrid grid) {
@@ -992,8 +993,11 @@ public class GridUtil extends GridUtilCore {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         KeyEvent keyEvent = (KeyEvent)e.getInputEvent();
+        if (keyEvent == null) return;
         boolean isUp = up.getFirstKeyStroke().getKeyCode() == keyEvent.getKeyCode();
-        grid.getResultView().moveLead(isUp ? ResultView.LeadMove.PREVIOUS_ROW : ResultView.LeadMove.NEXT_ROW);
+        // Cell editors open only in a view with cells.
+        ResultViewWithCells view = (ResultViewWithCells)grid.getResultView();
+        view.moveLead(isUp ? ResultViewWithCells.LeadMove.PREVIOUS_ROW : ResultViewWithCells.LeadMove.NEXT_ROW);
       }
     };
     registerAction(editor, action, new CustomShortcutSet(up, down));

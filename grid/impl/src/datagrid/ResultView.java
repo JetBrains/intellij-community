@@ -22,7 +22,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Font;
+import java.awt.Container;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
@@ -135,20 +135,6 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
     return rowHeader != null && SwingUtilities.isDescendingFrom(component, rowHeader);
   }
 
-  /** A one-step move of the lead cell: down or up a row, or to the next or previous cell as Tab and Shift+Tab do. */
-  enum LeadMove { NEXT_ROW, PREVIOUS_ROW, NEXT_CELL, PREVIOUS_CELL }
-
-  /**
-   * Moves the lead cell one step, as the key bound to {@code move} does in the view's cells. A cell editor that consumed the key calls
-   * this. The default does nothing: only a view with cell editors gets this call.
-   */
-  default void moveLead(@NotNull LeadMove move) { }
-
-  /** The font of the view's cells; the text cell renderer takes its size. */
-  default @NotNull Font getCellFont() {
-    return getPreferredFocusedComponent().getFont();
-  }
-
   /** The foreground of the view's cells and headers. */
   default @NotNull Color getForeground() {
     return getComponent().getForeground();
@@ -159,8 +145,14 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
     return getComponent().getBackground();
   }
 
-  /** Lets the view's cells fill the space they get while the grid's data has no columns, and take their own size otherwise. */
-  void updateCellsPreferredSize();
+  /**
+   * Lets the view's cells fill the space they get while {@code noColumns}, and take their own size otherwise. The default sizes
+   * {@link #getComponent()}.
+   */
+  default void updateCellsPreferredSize(boolean noColumns) {
+    Container parent = getComponent().getParent();
+    if (parent != null) getComponent().setPreferredSize(noColumns ? parent.getSize() : null);
+  }
 
   /**
    * Adds a mouse listener to the components that show the view's cells, without the empty space around them. The default adds it to

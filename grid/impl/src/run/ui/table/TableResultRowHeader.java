@@ -517,9 +517,9 @@ public class TableResultRowHeader extends GridRowHeader {
       mySortLabel.setText("");
       mySortLabel.setIcon(null);
       if (myGrid.isSortViaOrderBy() && myGrid.getComparator(modelColumnIdx) != null) {
-        int sortOrder = myGrid.getSortOrder(column);
-        mySortLabel.setIcon(GridTable.getSortOrderIcon(sortOrder));
-        mySortLabel.setText(myGrid.countSortedColumns() > 1 ? GridTable.getSortOrderText(sortOrder) : "");
+        ColumnSortMark sortMark = ColumnSortMark.fromGridSortOrder(myGrid.getSortOrder(column), myGrid.countSortedColumns() > 1);
+        mySortLabel.setIcon(GridTable.getSortOrderIcon(sortMark.getDirection()));
+        mySortLabel.setText(GridTable.getSortOrderText(sortMark));
       }
     }
 

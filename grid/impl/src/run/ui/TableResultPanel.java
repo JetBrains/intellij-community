@@ -575,8 +575,7 @@ public class TableResultPanel extends UserDataHolderBase
       private void doRepaint(@NotNull GridRequestSource source) {
         if (!source.isMutatedDataLocally()) return;
         myResultView.getComponent().repaint(50);
-        JViewport header =
-          myMainResultViewComponent instanceof JScrollPane ? ((JScrollPane)myMainResultViewComponent).getRowHeader() : null;
+        JViewport header = myMainResultViewComponent instanceof JScrollPane scrollPane ? scrollPane.getRowHeader() : null;
         Component rowHeader = header == null ? null : header.getView();
         if (rowHeader != null) rowHeader.repaint(50);
       }
@@ -1122,7 +1121,7 @@ public class TableResultPanel extends UserDataHolderBase
 
   @Override
   public boolean isCellEditingAllowed() {
-    return myResultView instanceof ResultViewWithCells && ((ResultViewWithCells)myResultView).isCellEditingAllowed();
+    return myResultView instanceof ResultViewWithCells cellsView && cellsView.isCellEditingAllowed();
   }
 
   @Override
@@ -1237,15 +1236,15 @@ public class TableResultPanel extends UserDataHolderBase
 
   @Override
   public void editSelectedCell() {
-    if (myResultView instanceof ResultViewWithCells) {
-      ((ResultViewWithCells)myResultView).editSelectedCell();
+    if (myResultView instanceof ResultViewWithCells cellsView) {
+      cellsView.editSelectedCell();
     }
   }
 
   @Override
   public void editSelectedCellWithValue(@Nullable Object value) {
-    if (myResultView instanceof ResultViewWithCells) {
-      ((ResultViewWithCells)myResultView).editSelectedCellWithValue(value);
+    if (myResultView instanceof ResultViewWithCells cellsView) {
+      cellsView.editSelectedCellWithValue(value);
     }
   }
 
@@ -1650,16 +1649,16 @@ public class TableResultPanel extends UserDataHolderBase
       if (row == null) return false;
       Object value = column.getValue(row);
       if (value == null) continue;
-      if (value instanceof byte[]) {
-        isViewAllowed &= valueViewCheck.apply((byte[])value);
+      if (value instanceof byte[] bytes) {
+        isViewAllowed &= valueViewCheck.apply(bytes);
         continue;
       }
-      if (value instanceof LobInfo.BlobInfo) {
-        isViewAllowed &= valueViewCheck.apply(((LobInfo.BlobInfo)value).data);
+      if (value instanceof LobInfo.BlobInfo blobInfo) {
+        isViewAllowed &= valueViewCheck.apply(blobInfo.data);
         continue;
       }
-      if (value instanceof TextInfo) {
-        isViewAllowed &= valueViewCheck.apply(((TextInfo)value).bytes);
+      if (value instanceof TextInfo textInfo) {
+        isViewAllowed &= valueViewCheck.apply(textInfo.bytes);
         continue;
       }
       isViewAllowed = false;
@@ -2372,10 +2371,10 @@ public class TableResultPanel extends UserDataHolderBase
     myHiddenColumnSelectionHolder.reset();
     GridSelection<GridRow, GridColumn> selection = getSelectionModel().store();
     resetOrderingAndVisibility();
-    if (myResultView instanceof ResultViewWithRows) ((ResultViewWithRows)myResultView).resetRowHeights();
-    if (myResultView instanceof ResultViewWithColumns) {
-      ((ResultViewWithColumns)myResultView).resetColumnWidths();
-      ((ResultViewWithColumns)myResultView).createDefaultColumnsFromModel();
+    if (myResultView instanceof ResultViewWithRows rowsView) rowsView.resetRowHeights();
+    if (myResultView instanceof ResultViewWithColumns columnsView) {
+      columnsView.resetColumnWidths();
+      columnsView.createDefaultColumnsFromModel();
     }
     myResultView.resetLayout();
     int[] modelIndices = copy.selectedModelIndices(this);
@@ -2412,7 +2411,7 @@ public class TableResultPanel extends UserDataHolderBase
   @Override
   public void trueLayout() {
     if (myResultView == null) return;
-    myResultView.updateCellsPreferredSize();
+    myResultView.updateCellsPreferredSize(getDataModel(DATA_WITH_MUTATIONS).getColumnCount() == 0);
     myMainResultViewComponent.revalidate();
     myMainResultViewComponent.repaint(50);
   }

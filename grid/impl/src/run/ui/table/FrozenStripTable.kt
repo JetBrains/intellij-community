@@ -1,32 +1,26 @@
 package com.intellij.database.run.ui.table
 
-import com.intellij.database.datagrid.DataGrid
 import com.intellij.ui.TableCell
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import java.awt.Graphics
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
-import javax.swing.ListSelectionModel
 import javax.swing.table.TableColumnModel
 import kotlin.math.max
 import kotlin.math.min
 
 /**
- * The pinned table. It shows the pinned columns at the leading edge, where they stay while the main table scrolls sideways. It shares the
- * main table's data model, row order and row selection, and draws the divider between the two tables.
+ * The pinned table. It shows the pinned columns at the leading edge, where they stay while the main table scrolls sideways. Like the main
+ * table, it shows the view's data model, row order and row selection. It draws the divider between the two tables.
  *
- * @param viewDataModel the view's data model, the same instance the main table shows; the pinned table has no model of its own
- * @param rowSelection a placeholder; the view's setup of the table clears the selection, so the view sets the shared row selection after it
- * @param columnModel a placeholder for the same reason; the view then sets the table's slice of the view's columns
+ * @param sharedParts what the view shares with each table; the data model is the view's, since the pinned table has none of its own
+ * @param columnModel a placeholder, since JTable's constructor clears its selection; after its setup, the view sets the table's slice
  */
 internal class FrozenStripTable(
-  private val grid: DataGrid,
-  viewDataModel: GridTableModel,
-  rowSelection: ListSelectionModel,
+  sharedParts: SharedTableParts,
   columnModel: TableColumnModel,
-  columnCache: ViewColumnCache,
-) : GridTable(grid, viewDataModel, rowSelection, columnModel, columnCache) {
+) : GridTable(sharedParts, columnModel) {
   /**
    * Draws the divider to the main table on this table's trailing edge. The table paints it itself, so a partial repaint that starts inside
    * the table paints it again. An overlay in an ancestor would be erased or ghosted. The line follows the visible rect, so the hosting
@@ -44,7 +38,7 @@ internal class FrozenStripTable(
 
   /** A press or a release in the pinned table must not scroll the main table's viewport through the selection it changes. */
   override fun processSwingMouseEvent(e: MouseEvent) {
-    runWithAutoscrollLocked(grid) {
+    runWithAutoscrollLocked(autoscrollLocker) {
       super.processSwingMouseEvent(e)
       // The column selection is the view's, through the slice: a release ends the adjusting change of a drag.
       if (e.id == MouseEvent.MOUSE_RELEASED) columnModel.selectionModel.valueIsAdjusting = false

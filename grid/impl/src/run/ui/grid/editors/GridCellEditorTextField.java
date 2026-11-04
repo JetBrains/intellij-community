@@ -10,8 +10,8 @@ import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.GridUtilCore;
 import com.intellij.database.datagrid.ModelIndex;
-import com.intellij.database.datagrid.ResultView;
 import com.intellij.database.run.ui.GridEditGuard;
+import com.intellij.database.run.ui.ResultViewWithCells;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorFactory.ValueFormatterResult;
 import com.intellij.database.run.ui.grid.renderers.DefaultTextRendererFactory;
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -126,8 +126,8 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
   public Dimension getPreferredSize() {
     Dimension size = super.getPreferredSize();
     Editor editor = getEditor();
-    if (editor instanceof EditorEx && !editor.isOneLineMode()) {
-      JScrollPane scrollPane = ((EditorEx)editor).getScrollPane();
+    if (editor instanceof EditorEx editorEx && !editor.isOneLineMode()) {
+      JScrollPane scrollPane = editorEx.getScrollPane();
       JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
       if (verticalScrollBar != null) {
         size.width += verticalScrollBar.getWidth();
@@ -215,7 +215,10 @@ public class GridCellEditorTextField extends EditorTextField implements Disposab
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         KeyEvent keyEvent = (KeyEvent)e.getInputEvent();
-        myGrid.getResultView().moveLead(keyEvent.isShiftDown() ? ResultView.LeadMove.PREVIOUS_CELL : ResultView.LeadMove.NEXT_CELL);
+        if (keyEvent == null) return;
+        // Cell editors open only in a view with cells.
+        ResultViewWithCells view = (ResultViewWithCells)myGrid.getResultView();
+        view.moveLead(keyEvent.isShiftDown() ? ResultViewWithCells.LeadMove.PREVIOUS_CELL : ResultViewWithCells.LeadMove.NEXT_CELL);
       }
     };
     GridUtil.registerAction(editor, action, tabAndShiftTab);

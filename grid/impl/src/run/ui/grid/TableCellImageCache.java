@@ -154,10 +154,6 @@ public final class TableCellImageCache {
       myImageCache.clear();
     }
 
-    public @NotNull TableCellRenderer getDelegate() {
-      return myWrappee;
-    }
-
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       myValue = value;
@@ -266,7 +262,7 @@ public final class TableCellImageCache {
       RepaintManager.currentManager(c).setDoubleBufferingEnabled(false);
       c.setOpaque(true);
       c.setBackground(myIsSelected || !hasAlpha ? c.getBackground() : Gray.TRANSPARENT);
-      if (c instanceof CellRendererPanel) ((CellRendererPanel)c).setSelected(myIsSelected || !hasAlpha);
+      if (c instanceof CellRendererPanel rendererPanel) rendererPanel.setSelected(myIsSelected || !hasAlpha);
 
       Graphics2D g = image.createGraphics();
       try {

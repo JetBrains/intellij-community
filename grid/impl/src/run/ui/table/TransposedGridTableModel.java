@@ -1,22 +1,15 @@
 package com.intellij.database.run.ui.table;
 
-import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridModel;
 import com.intellij.database.datagrid.GridRow;
-import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.ModelIndexSet;
-import com.intellij.database.run.ui.DataAccessType;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.Icon;
-import java.util.List;
 
 public class TransposedGridTableModel extends GridTableModel {
-  public TransposedGridTableModel(@NotNull DataGrid grid) {
-    super(grid);
+  public TransposedGridTableModel(@NotNull GridModel<GridRow, GridColumn> gridModel) {
+    super(gridModel);
   }
 
   @Override
@@ -36,12 +29,12 @@ public class TransposedGridTableModel extends GridTableModel {
 
   @Override
   public int getRowCount() {
-    return myGrid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumnCount();
+    return myGridModel.getColumnCount();
   }
 
   @Override
   public int getColumnCount() {
-    return myGrid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getRowCount();
+    return myGridModel.getRowCount();
   }
 
   @Override
@@ -64,36 +57,5 @@ public class TransposedGridTableModel extends GridTableModel {
   @Override
   public void rowsRemoved(ModelIndexSet<GridRow> rows) {
     fireTableStructureChanged();
-  }
-
-  @Override
-  public @NotNull TableResultViewColumn createColumn(int columnDataIdx) {
-    return new TransposedTableResultViewColumn(columnDataIdx);
-  }
-
-  protected class TransposedTableResultViewColumn extends TableResultViewColumn {
-    public TransposedTableResultViewColumn(int modelIndex) {
-      super(modelIndex);
-    }
-
-    @Override
-    public Icon getIcon(boolean forDisplay) {
-      return null;
-    }
-
-    @Override
-    public @NlsContexts.ColumnName @NotNull String getHeaderValue() {
-      return GridUtil.getRowName(myGrid, getModelIndex());
-    }
-
-    @Override
-    public @NlsContexts.ColumnName @NotNull List<String> getMultilineHeaderValues() {
-      return List.of(getHeaderValue());
-    }
-
-    @Override
-    public @NlsContexts.Tooltip @Nullable String getTooltipText() {
-      return null;
-    }
   }
 }

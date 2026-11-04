@@ -18,6 +18,7 @@ import com.intellij.database.extractors.ImageInfo;
 import com.intellij.database.remote.jdbc.LobInfo;
 import com.intellij.database.run.ReservedCellValue;
 import com.intellij.database.run.ResultReference;
+import com.intellij.database.run.ui.ResultViewWithCells;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -232,7 +233,7 @@ public final class DefaultTextRendererFactory implements GridCellRendererFactory
     }
 
     static boolean hasInlay(@Nullable Object value) {
-      return value instanceof LobInfo && ((LobInfo<?>)value).isTruncated();
+      return value instanceof LobInfo<?> lobInfo && lobInfo.isTruncated();
     }
 
     private static @Nullable String getInlayMessage(@Nullable Object value,
@@ -240,8 +241,8 @@ public final class DefaultTextRendererFactory implements GridCellRendererFactory
                                                     DataGrid grid) {
       if (!hasInlay(value)) return null;
       LobInfo<?> info = (LobInfo<?>)value;
-      if (info instanceof LobInfo.ClobInfo && ((LobInfo.ClobInfo)info).data == null ||
-          info instanceof LobInfo.BlobInfo && ((LobInfo.BlobInfo)info).data == null) {
+      if (info instanceof LobInfo.ClobInfo clobInfo && clobInfo.data == null ||
+          info instanceof LobInfo.BlobInfo blobInfo && blobInfo.data == null) {
         GridColumn column = getColumn(modelColumn, grid);
         return (column == null ? "" : "(" + StringUtil.toUpperCase(column.getTypeName()) + ") ") +
                StringUtil.formatFileSize(info.length, "");
@@ -265,13 +266,15 @@ public final class DefaultTextRendererFactory implements GridCellRendererFactory
     }
 
     public static void configureEditor(@NotNull EditorEx editor, @NotNull DataGrid grid) {
+      // Grid cell renderers run only in a view with cells.
+      int cellFontSize = ((ResultViewWithCells)grid.getResultView()).getCellFont().getSize();
       EditorColorsScheme scheme = editor.getColorsScheme();
-      boolean schemeAlreadySet = scheme instanceof DelegateColorScheme &&
-                                 ((DelegateColorScheme)scheme).getDelegate() == grid.getColorsScheme() &&
-                                 scheme.getEditorFontSize() == grid.getResultView().getCellFont().getSize();
+      boolean schemeAlreadySet = scheme instanceof DelegateColorScheme delegateScheme &&
+                                 delegateScheme.getDelegate() == grid.getColorsScheme() &&
+                                 scheme.getEditorFontSize() == cellFontSize;
       if (schemeAlreadySet) return;
       EditorColorsScheme bounded = editor.createBoundColorSchemeDelegate(grid.getColorsScheme());
-      bounded.setEditorFontSize(grid.getResultView().getCellFont().getSize());
+      bounded.setEditorFontSize(cellFontSize);
       editor.setColorsScheme(bounded);
     }
 

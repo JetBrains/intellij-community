@@ -1,9 +1,5 @@
 package com.intellij.database.run.ui.table
 
-import com.intellij.database.datagrid.GridColumn
-import com.intellij.database.datagrid.GridRequestSource
-import com.intellij.database.datagrid.GridRow
-import com.intellij.database.datagrid.ModelIndex
 import com.intellij.openapi.actionSystem.DataSink
 import java.awt.event.MouseEvent
 import java.util.EventObject
@@ -17,11 +13,10 @@ import java.util.EventObject
  */
 internal interface GridTableHost {
   /**
-   * With a pinned table, commits an editor open in either table unless it edits the target cell at [row] and [column]. False when an
-   * editor refuses; the selection then stays. A target outside the table has index -1, which matches no editor, so every open editor
-   * commits.
+   * With a pinned table, commits an editor open in either table unless it edits [target]. False when an editor refuses; the selection
+   * then stays. A [target] outside the table is null, so every open editor commits.
    */
-  fun stopEditingBeforeSelectionChange(row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): Boolean
+  fun stopEditingBeforeSelectionChange(target: ModelCell?): Boolean
   /**
    * Whether the table goes on with [event]. A non-left press, or a Ctrl+click on macOS, first commits an open editor and is dropped if it
    * refuses. A listener would be too late: JBTable's own runs first, moves the row selection on a right press and ignores consumed events.
@@ -30,7 +25,7 @@ internal interface GridTableHost {
   /**
    * The table handled [event]; a left drag may carry the selection across the divider. A listener would miss it: during such a drag,
    * Swing's autoscroller passes real drags to no listener. The pinned table keeps Swing's autoscroller: `JBAutoScroller`, which turns it
-   * off, is installed only on the main table, its header and the row header.
+   * off, is installed only on the main table and its header.
    */
   fun processMouseMotionEvent(event: MouseEvent)
   /** The width [column] gets for [requestedWidth]. A pinned column may shrink freely, but grows only while the pinned columns still fit. */
@@ -38,18 +33,25 @@ internal interface GridTableHost {
   /** A column of the table changed width, so the view lays out the pinned table's viewport again. */
   fun columnMarginChanged()
   /** The table is about to paint, so the view sizes its cell image cache to what all its tables show now. */
-  fun cellImageCacheSizeChanged()
+  fun aboutToPaint()
   /** Adds the grid's action state, and where an open header popup for this table opened. */
   fun uiDataSnapshot(sink: DataSink)
-  /** Writes a value committed by a cell editor of the table, to that cell or to every selected cell. */
-  fun setValueAt(value: Any?, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, allowImmediateUpdate: Boolean,
-                 source: GridRequestSource, metadata: Any?)
-  /** Commits an editor open in the view's other table. False when it refuses, and no edit starts in this table. */
-  fun stopEditingBeforeEdit(): Boolean
+  /** Writes [value], which a cell editor of the table committed, to [cell], or to every selected cell. */
+  fun commitEditedValue(value: Any?, cell: ModelCell)
   /**
-   * Whether the view takes the edit of the cell at [row] and [column]; [startingEvent] starts it, and is null for an action with no event.
-   * When true, the view opens the value editor for a double click, a typed key, or any other start. The table then opens no cell editor.
-   * The table has to ask: Swing's input handler and the edit actions start an edit by calling `editCellAt`, which no listener can veto.
+   * The table starts an edit of [cell], null outside the table; [startingEvent] starts it, and is null for an action with no event. The
+   * view commits an editor open in its other table, then decides who edits the cell, and the table follows the answer. The table has to
+   * ask: Swing's input handler and the edit actions start an edit by calling `editCellAt`, which no listener can veto.
    */
-  fun editsInValueEditor(row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, startingEvent: EventObject?): Boolean
+  fun startEdit(cell: ModelCell?, startingEvent: EventObject?): EditStart
+}
+
+/** Who edits a cell whose edit a table starts, as its view decides. */
+internal enum class EditStart {
+  /** An editor open in the view's other table refused to commit, so no edit starts. */
+  REFUSED,
+  /** The cell edits in the value editor, which the view opens for a double click, a typed key, or any other start. */
+  IN_VALUE_EDITOR,
+  /** The table opens its cell editor. */
+  IN_CELL_EDITOR,
 }

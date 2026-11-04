@@ -35,7 +35,7 @@ The view owns everything the two tables share:
 - the data model, the row selection, and one sorter, which only [TableRowOrder](src/run/ui/table/TableRowOrder.kt) notifies;
 - the per-row heights in [RowHeightModel](src/run/ui/table/RowHeightModel.kt);
 - the columns in [GridColumns](src/run/ui/table/GridColumns.kt): the visible columns in grid order with their selection, and a cache with every column;
-- the cell image cache and the value of an open multi-cell edit.
+- the cell image cache, the value of an open multi-cell edit, and the rest of [SharedTableParts](src/run/ui/table/SharedTableParts.kt).
 
 Each table shows a [GridColumnSlice](src/run/ui/table/GridColumnSlice.kt) of that column model: the main table the unpinned columns, the pinned table the pinned ones.
 A slice copies no column, and a column asks the view's columns whether it is pinned.

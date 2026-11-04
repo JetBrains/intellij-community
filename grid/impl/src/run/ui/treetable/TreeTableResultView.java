@@ -32,7 +32,7 @@ import javax.swing.KeyStroke;
 import javax.swing.table.TableCellEditor;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
+import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.util.Map;
@@ -103,13 +103,6 @@ public class TreeTableResultView implements ResultView, ResultViewWithCells {
   }
 
   @Override
-  public void updateCellsPreferredSize() {
-    Container parent = getComponent().getParent();
-    boolean noColumns = myResultPanel.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumnCount() == 0;
-    if (parent != null) getComponent().setPreferredSize(noColumns ? parent.getSize() : null);
-  }
-
-  @Override
   public @NotNull JComponent getPreferredFocusedComponent() {
     return myTreeTable.getTree();
   }
@@ -145,6 +138,12 @@ public class TreeTableResultView implements ResultView, ResultViewWithCells {
     if (findModel != null) newFindModel.copyFrom(findModel);
     DataGridSearchSession.configureFindModel(myResultPanel, newFindModel);
     return new DataGridSearchSession(myResultPanel.getProject(), myResultPanel, newFindModel, previousFilterComponent);
+  }
+
+  /** The font of the tree, the view's focus component; the text renderer matches its size in the tree and in the table. */
+  @Override
+  public @NotNull Font getCellFont() {
+    return myTreeTable.getTree().getFont();
   }
 
   @Override
@@ -236,6 +235,10 @@ public class TreeTableResultView implements ResultView, ResultViewWithCells {
   public void editSelectedCell() {
 
   }
+
+  /** The tree view opens no cell editors, which are the only callers. */
+  @Override
+  public void moveLead(@NotNull LeadMove move) { }
 
   @Override
   public void editSelectedCellWithValue(Object value) {

@@ -68,7 +68,6 @@ import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
 import java.util.List;
@@ -178,13 +177,6 @@ public class TextResultView implements ResultView {
   @Override
   public @NotNull JComponent getComponent() {
     return myComponent;
-  }
-
-  @Override
-  public void updateCellsPreferredSize() {
-    Container parent = getComponent().getParent();
-    boolean noColumns = myResultPanel.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumnCount() == 0;
-    if (parent != null) getComponent().setPreferredSize(noColumns ? parent.getSize() : null);
   }
 
   public @NotNull EditorEx getViewer() {

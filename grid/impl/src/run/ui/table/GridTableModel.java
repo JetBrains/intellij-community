@@ -1,14 +1,11 @@
 package com.intellij.database.run.ui.table;
 
-import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridModel;
 import com.intellij.database.datagrid.GridRequestSource;
 import com.intellij.database.datagrid.GridRow;
-import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ModelIndexSet;
-import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.util.Range;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,15 +16,11 @@ import javax.swing.table.TableModel;
 import java.util.Arrays;
 
 public abstract class GridTableModel extends AbstractTableModel implements GridModel.Listener<GridRow, GridColumn> {
-  protected final DataGrid myGrid;
+  /** The grid's data with the user's unsubmitted changes, which this model shows. */
+  protected final GridModel<GridRow, GridColumn> myGridModel;
 
-  public GridTableModel(@NotNull DataGrid grid) {
-    myGrid = grid;
-  }
-
-  @Override
-  public boolean isCellEditable(int rowIndex, int columnIndex) {
-    return myGrid.isEditable() && !GridUtil.isFailedToLoad(getValueAt(rowIndex, columnIndex));
+  public GridTableModel(@NotNull GridModel<GridRow, GridColumn> gridModel) {
+    myGridModel = gridModel;
   }
 
   @Override
@@ -37,9 +30,9 @@ public abstract class GridTableModel extends AbstractTableModel implements GridM
 
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
-    ModelIndex<GridRow> row = ModelIndex.forRow(myGrid, row(rowIndex, columnIndex));
-    ModelIndex<GridColumn> column = ModelIndex.forColumn(myGrid, col(rowIndex, columnIndex));
-    return myGrid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getValueAt(row, column);
+    ModelIndex<GridRow> row = ModelIndex.forRow(myGridModel, row(rowIndex, columnIndex));
+    ModelIndex<GridColumn> column = ModelIndex.forColumn(myGridModel, col(rowIndex, columnIndex));
+    return myGridModel.getValueAt(row, column);
   }
 
   @Override
@@ -66,8 +59,6 @@ public abstract class GridTableModel extends AbstractTableModel implements GridM
   protected abstract int col(int rowIndex, int columnIndex);
 
   protected abstract Range<Integer> rowRange(ModelIndexSet<GridRow> rows, ModelIndexSet<GridColumn> columns);
-
-  public abstract @NotNull TableResultViewColumn createColumn(int columnDataIdx);
 
   static Range<Integer> getSmallestCoveringRange(ModelIndexSet<?> indexSet) {
     assert indexSet.size() > 0;

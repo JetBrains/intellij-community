@@ -2,7 +2,6 @@ package com.intellij.database.run.ui.table
 
 import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridColumn
-import com.intellij.database.datagrid.GridRow
 import com.intellij.database.datagrid.GridUtil
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ViewIndex
@@ -106,7 +105,7 @@ internal class FrozenColumnsController(
   /**
    * Runs a row action in the table that shows the grid's lead column, when [table] doesn't show it, and moves the focus there.
    * Swing's row actions keep the lead column of their own table, which would be its first column for a lead it doesn't show.
-   * This stays: keys typed before the view's delayed focus check runs, such as Down right after F3, reach the table without the lead.
+   * Keys typed before the view's delayed focus check runs, such as Down right after F3, reach the table without the lead.
    */
   private fun runInLeadColumnTable(table: GridTable, name: String): Boolean {
     if (pinnedTable == null || (table !== pinnedTable && table !== mainTable)) return false
@@ -243,8 +242,14 @@ internal class FrozenColumnsController(
     mainTable.scrollRectToVisible(Rectangle(mainTable.visibleRect.x, cell.y, 0, cell.height))
   }
 
-  /** Whether [table] goes on with [event]: a non-left press or a macOS Ctrl+click commits an open editor, and is dropped if it refuses. */
-  fun beforeMouseEvent(table: GridTable, event: MouseEvent): Boolean = stopEditingBeforeNonLeftPress(table, event)
+  /**
+   * Whether [table] goes on with [event]. A non-left press first commits an open editor, and is dropped if the editor refuses. So does a
+   * left press that is the popup trigger, a Ctrl+click on macOS: JBTable turns it into a right press only after this check. Swing handles
+   * other left presses itself.
+   */
+  fun beforeMouseEvent(table: GridTable, event: MouseEvent): Boolean =
+    event.id != MouseEvent.MOUSE_PRESSED || (SwingUtilities.isLeftMouseButton(event) && !event.isPopupTrigger) || !isViewTable(table) ||
+    stopEditingUnlessAt(table.modelCellAt(table.rowAtPoint(event.point), table.columnAtPoint(event.point)))
 
   /** A left press starts a drag that may go on across the divider, from the cell it was on. */
   private val dragAnchorListener = object : MouseAdapter() {
@@ -261,16 +266,6 @@ internal class FrozenColumnsController(
   fun addDragAnchorListener(table: GridTable): Unit = table.addMouseListener(dragAnchorListener)
 
   fun removeDragAnchorListener(table: GridTable): Unit = table.removeMouseListener(dragAnchorListener)
-
-  /**
-   * Commits before a non-left press can change the selection. Swing handles left presses itself. A left press that is the popup trigger,
-   * a Ctrl+click on macOS, counts as a right press: JBTable turns it into one after this check.
-   *
-   * @return false when the press has to be dropped, because an editor refused to commit.
-   */
-  private fun stopEditingBeforeNonLeftPress(table: GridTable, event: MouseEvent): Boolean =
-    event.id != MouseEvent.MOUSE_PRESSED || (SwingUtilities.isLeftMouseButton(event) && !event.isPopupTrigger) || !isViewTable(table) ||
-    stopEditingUnlessAt(modelCell(table, table.rowAtPoint(event.point), table.columnAtPoint(event.point)))
 
   fun processMouseMotionEvent(table: GridTable, event: MouseEvent) {
     if (event.id == MouseEvent.MOUSE_DRAGGED && !event.isConsumed && SwingUtilities.isLeftMouseButton(event)) {
@@ -391,7 +386,7 @@ internal class FrozenColumnsController(
       columnSelection.addSelectionInterval(target.asInteger(), target.asInteger())
     }
     if (inPinnedTable) {
-      runWithAutoscrollLocked(grid, moveLead)
+      runWithAutoscrollLocked(grid.autoscrollLocker, moveLead)
       strip?.layout?.scrollPinnedColumnToVisible(tables.localIndexOf(pinned, target))
       revealRow(nextRow)
     }
@@ -469,7 +464,7 @@ internal class FrozenColumnsController(
       if (focusTarget === mainTable) mainTable.scrollRectToVisible(mainTable.getCellRect(row, localIndex, true))
     }
     else if (focusTarget === mainTable) mainTable.changeSelection(row, localIndex, false, false)
-    else runWithAutoscrollLocked(grid) {
+    else runWithAutoscrollLocked(grid.autoscrollLocker) {
       // The pinned cell is in the pinned strip already, so it must not move the main viewport.
       focusTarget.changeSelection(row, localIndex, false, false)
     }
@@ -488,8 +483,8 @@ internal class FrozenColumnsController(
    *
    * @return false when an editor refused to commit, in which case the selection has to stay where it is.
    */
-  fun stopEditingBeforeSelectionChange(table: GridTable, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): Boolean =
-    pinnedTable == null || !isViewTable(table) || stopEditingUnlessAt(modelCell(row, column))
+  fun stopEditingBeforeSelectionChange(table: GridTable, target: ModelCell?): Boolean =
+    pinnedTable == null || !isViewTable(table) || stopEditingUnlessAt(target)
 
   /** [stopEditingBeforeSelectionChange] for a cell given by its grid column. */
   private fun stopEditingBeforeGridSelectionChange(row: Int, column: ViewIndex<GridColumn>): Boolean =
@@ -505,30 +500,18 @@ internal class FrozenColumnsController(
 
   private fun stopEditingUnlessAt(table: GridTable, target: ModelCell?): Boolean {
     val editor = table.cellEditor ?: return true
-    val editing = modelCell(table, table.editingRow, table.editingColumn)
-    // Match Swing's commit path without the prompt added by GridTable.stopEditing().
+    val editing = table.modelCellAt(table.editingRow, table.editingColumn)
+    // Match Swing's commit path without the prompt added by TableResultView.stopEditing().
     return (editing != null && editing == target) || editor.stopCellEditing()
   }
 
-  /**
-   * The cell at [row] and [localIndex] of [table] in model indices, as the table converts its cells, or null outside [table]. Only model
-   * indices name one cell in both tables.
-   */
-  private fun modelCell(table: GridTable, row: Int, localIndex: Int): ModelCell? =
-    modelCell(table.modelRowAt(row, localIndex), table.modelColumnAt(row, localIndex))
-
   /** The cell at [row] of the tables, which share their rows, and at grid column [column], in model indices. */
-  private fun gridCell(row: Int, column: ViewIndex<GridColumn>): ModelCell? =
-    if (row in 0 until mainTable.rowCount && column.asInteger() in 0 until gridColumns.columnCount)
-      modelCell(ModelIndex.forRow(grid, mainTable.convertRowIndexToModel(row)),
-                ModelIndex.forColumn(grid, gridColumns.getColumn(column.asInteger()).modelIndex))
-    else null
-
-  /** The cell at [row] and [column], or null when either index is -1, which a table gives for a cell outside it. */
-  private fun modelCell(row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>): ModelCell? =
-    if (row.asInteger() >= 0 && column.asInteger() >= 0) ModelCell(row, column) else null
-
-  private data class ModelCell(val row: ModelIndex<GridRow>, val column: ModelIndex<GridColumn>)
+  private fun gridCell(row: Int, column: ViewIndex<GridColumn>): ModelCell? {
+    if (row !in 0 until mainTable.rowCount || column.asInteger() !in 0 until gridColumns.columnCount) return null
+    val modelRow = ModelIndex.forRow(grid, mainTable.convertRowIndexToModel(row))
+    val modelColumn = ModelIndex.forColumn(grid, gridColumns.getColumn(column.asInteger()).modelIndex)
+    return if (modelRow.asInteger() >= 0 && modelColumn.asInteger() >= 0) ModelCell(modelRow, modelColumn) else null
+  }
 
   /** The grid column at [localIndex] of [table], one of the two tables, or null. */
   private fun gridColumnOfTable(table: GridTable, localIndex: Int): ViewIndex<GridColumn>? =
@@ -543,11 +526,10 @@ internal class FrozenColumnsController(
 }
 
 /**
- * Runs [action] with the grid's autoscroll locked, joining a lock a caller already holds. [JBAutoScroller.AutoscrollLocker] is not
- * reentrant, so an inner lock would release the outer one.
+ * Runs [action] with the grid's autoscroll [locker] locked, joining a lock a caller already holds. [JBAutoScroller.AutoscrollLocker] is
+ * not reentrant, so an inner lock would release the outer one.
  */
-internal fun runWithAutoscrollLocked(grid: DataGrid, action: () -> Unit) {
-  val locker = grid.autoscrollLocker
+internal fun runWithAutoscrollLocked(locker: JBAutoScroller.AutoscrollLocker, action: () -> Unit) {
   if (locker.locked()) action()
   else locker.runWithLock { action() }
 }

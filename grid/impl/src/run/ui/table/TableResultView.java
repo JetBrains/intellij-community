@@ -8,6 +8,7 @@ import com.intellij.database.datagrid.DataGridWithNestedTables;
 import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridColumnLayout;
 import com.intellij.database.datagrid.GridHelper;
+import com.intellij.database.datagrid.GridModel;
 import com.intellij.database.datagrid.GridRequestSource;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.GridUtil;
@@ -20,11 +21,11 @@ import com.intellij.database.datagrid.ResultViewSelectionListener;
 import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.datagrid.ViewIndex;
-import com.intellij.database.datagrid.ViewIndexSet;
 import com.intellij.database.extractors.DisplayType;
 import com.intellij.database.run.ui.ColumnMove;
 import com.intellij.database.run.ui.ColumnOrderRestorer;
 import com.intellij.database.run.ui.DataAccessType;
+import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.database.run.ui.GridTableCellEditor;
 import com.intellij.database.run.ui.ResultViewWithCells;
 import com.intellij.database.run.ui.ResultViewWithColumns;
@@ -71,6 +72,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.Magnificator;
@@ -97,6 +99,7 @@ import javax.swing.JTable;
 import javax.swing.JViewport;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableColumnModel;
@@ -130,18 +133,20 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.IntUnaryOperator;
 
 /**
  * The grid's table presentation: the main table and, while a visible column is pinned, the pinned table beside it.
  * <p>
  * The view owns the models both tables show: the data model, the view's column model, the row selection, the row order and the row heights.
- * It also owns the grid's selection model and scroll position manager, and the cell image cache. It hosts the statistics header it is
- * given. It keeps the value of an open multi-cell edit, which both tables show. It sets up every table the same way, writes what cell
- * editors commit, and gives grid actions their data. Each table shows its columns through a {@link GridColumnSlice}: the main table the
- * unpinned ones, the pinned table the pinned ones.
+ * It also owns the grid's selection model, scroll position manager, renderer adapters, header appearance and cell image cache. It hosts
+ * the statistics header it is given. It keeps the value of an open multi-cell edit, which both tables show. It sets up every table the same
+ * way, writes what cell editors commit, and gives grid actions their data. Each table shows its columns through a {@link GridColumnSlice}:
+ * the main table the unpinned ones, the pinned table the pinned ones.
  * <p>
  * A call that reaches only the main table is still right in two cases. Either the pinned table follows the change through a shared model.
- * Or the call reads what both tables have alike: rows, row geometry or appearance.
+ * Or the call reads what both tables have alike: rows, row geometry or appearance. Any other main-only call says why it leaves out the
+ * pinned table.
  * <p>
  * The view's component is the scroll pane that holds both tables, the row numbers and the headers. The preferred focused component is the
  * table that shows the lead cell. Ask for it at the moment of focus: the lead moves between the tables, and an unpin removes one.
@@ -151,6 +156,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   private static final Logger LOG = Logger.getInstance(TableResultView.class);
 
   private final DataGrid myGrid;
+  /** The grid's data with its unsaved changes, which every data model of the view reads. */
+  private final GridModel<GridRow, GridColumn> myGridModel;
   private final GridColumns myColumns;
   /** The grid's selection listeners, which hear of a change of the row or column selection once, after both tables took it. */
   private final GridSelectionEvents myGridSelectionEvents;
@@ -188,7 +195,15 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   private final GridSelectionGrower myGrower;
   private boolean myWasAutomaticallyTransposed;
   private final TableCellImageCache myCellImageCache;
+  /** The adapters of the grid's cell renderers and the cell colors, which every table of the view shares. */
+  private final ViewCellRenderers myCellRenderers;
+  /** The grid's cell editors and what the grid allows an edit, which every table of the view shares. */
+  private final ViewCellEditors myCellEditors;
+  /** What the column headers of every table of the view show of the grid's state. */
+  private final ColumnHeaderAppearance myHeaderAppearance;
   private final RowHeightModel myRowHeights = new RowHeightModel();
+  /** Blocks a column drag in the header of every table of the view while the grid writes a column move. */
+  private final ColumnReorderingBlock myColumnReorderingBlock = new ColumnReorderingBlock();
   /** The data model both tables show, which the view replaces on a transpose. */
   private GridTableModel myDataModel;
   /** The row selection both tables share. */
@@ -211,14 +226,21 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   public TableResultView(@NotNull DataGrid grid, @NotNull ActionGroup columnHeaderActions, @NotNull ActionGroup rowHeaderActions) {
     myGrid = grid;
+    myGridModel = grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS);
     myHeaderPopups = new TableHeaderPopups(grid, columnHeaderActions, rowHeaderActions);
-    myDataModel = new RegularGridTableModel(grid);
+    myDataModel = new RegularGridTableModel(myGridModel);
     // Before any table listens: Swing tells the first listener last, so the grid hears of a new structure after every table took it.
     myDataModel.addTableModelListener(myDataStructureListener);
     myColumns = new GridColumns(grid, new ColumnsHost(), myDataModel);
+    // Every table selects through these two models, so their mode is set here once.
+    myRowSelection.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    myColumns.getColumnModel().getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myDisplayedColumns = new DisplayedColumns(myColumns.getColumnModel(), myColumns);
     myMainSlice = new GridColumnSlice(myColumns.getColumnModel(), myColumns, ColumnsToShow.UNPINNED, myDisplayedColumns);
-    myMainTable = new GridTable(grid, myDataModel, myRowSelection, myMainSlice, myColumns.getColumnCache());
+    myCellRenderers = new ViewCellRenderers(grid);
+    myCellEditors = new ViewCellEditors(grid, myEditedValue);
+    myHeaderAppearance = new ColumnHeaderAppearance(grid);
+    myMainTable = new GridTable(sharedTableParts(), myMainSlice);
     myRawIndexConverter = new TableRawIndexConverter(myMainTable, myColumns.getColumnModel());
     myTables = new MutableViewTables(grid, myMainTable, myMainSlice);
     myGridSelectionEvents = new GridSelectionEvents(myRowSelection, myColumns.getColumnModel());
@@ -238,6 +260,10 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myMainTable.getTableHeader().addMouseListener(mainMoveColumnListener);
     myMainSlice.addColumnModelListener(mainMoveColumnListener);
     myScrollPane = TableResultViewFactory.createScrollPane(grid, myMainTable, mySelectionModel, this);
+    // Every table selects through these two models, so one listener repaints the scroll pane for a change in either table.
+    ListSelectionListener scrollPaneRepaint = ignored -> myScrollPane.repaint();
+    myRowSelection.addListSelectionListener(scrollPaneRepaint);
+    myColumns.getColumnModel().getSelectionModel().addListSelectionListener(scrollPaneRepaint);
     // The grid looks for both on the view's component.
     getComponent().putClientProperty(SelectionModelUtil.SELECTION_MODEL_KEY, mySelectionModel);
     getComponent().putClientProperty(GridScrollPositionManager.SCROLL_POSITION_MANAGER_KEY,
@@ -251,7 +277,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     });
     // A lead that moves into the other table, as with Find Next or a header click there, takes the focus along.
     // A column move or hide shifts the lead before the slices follow, so the lead's table is known only afterwards.
-    // This stays: such a move requests no focus, so nothing asks getPreferredFocusedComponent for the lead's table.
+    // Such a move requests no focus, so nothing asks getPreferredFocusedComponent for the lead's table.
     myColumns.getColumnModel().getSelectionModel().addListSelectionListener(e -> {
       if (e.getValueIsAdjusting() || myFocusCheckQueued) return;
       myFocusCheckQueued = true;
@@ -289,6 +315,15 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     initializeColumnLayout();
   }
 
+  /** What a new table shares with the view's other tables, built for each table: a transpose replaces the data model. */
+  private @NotNull SharedTableParts sharedTableParts() {
+    // Named as its parameter, since the grid model next to it has the same type.
+    GridModel<GridRow, GridColumn> databaseModel = myGrid.getDataModel(DataAccessType.DATABASE_DATA);
+    return new SharedTableParts(myDataModel, myGridModel, databaseModel, myRowSelection, myColumns.getColumnCache(), myCellRenderers,
+                                myCellEditors, myHeaderAppearance, myGrid.getColorsScheme(), myGrid.getAutoscrollLocker(),
+                                myColumnReorderingBlock);
+  }
+
   /** Sets up a table of this view, the main or the pinned one, and creates the host it reports to. */
   private GridTableHost adoptTable(GridTable table) {
     // First, before the view's other mouse listeners, so they get the click after it may have consumed it.
@@ -312,7 +347,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myFloatingToolbar.attach(table);
     if (myEscapeAction != null) table.registerEscapeAction(myEscapeAction);
     table.getEmptyText().setText(""); //DatabaseMessages.message("table.result.data.loading"));
-    table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     table.setCellSelectionEnabled(true);
     table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
     table.setBackground(myGrid.getColorsScheme().getDefaultBackground());
@@ -352,7 +386,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   /** A header listener that applies a column drag in either table to the grid's data, in the order of the view's column model. */
   private @NotNull MoveColumnListener createMoveColumnListener() {
-    return new MoveColumnListener(myGrid, myMainTable, myColumns, myRowOrder);
+    return new MoveColumnListener(myGrid, myColumnReorderingBlock, myColumns, myRowOrder);
   }
 
   private List<GridTable> tables() {
@@ -454,16 +488,14 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   }
 
   /**
-   * Creates the pinned table, with a slice of its own. The setup clears the selection, so the table is set up on an empty row selection and
-   * column model. Then it gets the view's row selection and its slice. Both tables share the data model, the row order, the row selection
-   * and, through their slices, the view's column model.
+   * Creates the pinned table, with a slice of its own. JTable's constructor clears the selection of the column model a table starts on.
+   * So the table starts on an empty one and gets its slice after the setup. Both tables share the data model, the row order, the row
+   * selection and, through their slices, the view's column model.
    */
   private @NotNull GridTable addPinnedTable() {
     GridColumnSlice pinnedSlice = new GridColumnSlice(myColumns.getColumnModel(), myColumns, ColumnsToShow.PINNED, myDisplayedColumns);
-    FrozenStripTable table = new FrozenStripTable(myGrid, myDataModel, new DefaultListSelectionModel(),
-                                                  new DefaultTableColumnModel(), myColumns.getColumnCache());
+    FrozenStripTable table = new FrozenStripTable(sharedTableParts(), new DefaultTableColumnModel());
     table.installHost(adoptTable(table), myRowHeights, myCellImageCache, myEditedValue, myRowOrder.getSorter());
-    table.setSelectionModel(myRowSelection);
     table.setColumnModel(pinnedSlice);
     for (MouseListener listener : myCellMouseListeners) table.addMouseListener(listener);
     for (MouseMotionListener listener : myCellMotionListeners) table.addMouseMotionListener(listener);
@@ -479,8 +511,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   /**
    * Removes the pinned table and its slice. It removes what {@link #adoptTable} shared with the view: the header, cell and focus listeners
-   * and the controller's drag-anchor listener. Then it detaches the table and drops it. The cell image cache holds the removed table's
-   * renderers, so it starts over.
+   * and the controller's drag-anchor listener. Then it detaches the table and drops it. The cell image cache starts over, so it keeps no
+   * images of cells that no table shows.
    */
   private void removePinnedTable() {
     GridTable table = myTables.getPinned();
@@ -499,7 +531,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     for (FocusListener listener : myCellFocusListeners) table.removeFocusListener(listener);
     myFrozenColumnsController.removeDragAnchorListener(table);
     table.removePropertyChangeListener(GridTableCellEditor.TABLE_CELL_EDITOR_PROPERTY, myCellEditorListener);
-    // JTable and TableExpandableItemsHandler both listen to the row selection; a model of its own lets each of them unregister.
+    // JTable and TableExpandableItemsHandler follow the row selection; a model of its own unregisters them.
     table.setSelectionModel(new DefaultListSelectionModel());
     // The same for the slice; both swaps also keep detachModel, which clears the table's selection, from clearing the view's.
     table.setColumnModel(new DefaultTableColumnModel());
@@ -646,9 +678,9 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
                           @Nullable GridTableCellEditor committingEditor) {
     SelectionModel<GridRow, GridColumn> selection = myGrid.getSelectionModel();
     boolean multi = isMultiEditingAllowed();
-    ModelIndexSet<GridRow> rows = multi ? selection.getSelectedRows() : ModelIndexSet.forRows(myGrid, row.asInteger());
+    ModelIndexSet<GridRow> rows = multi ? selection.getSelectedRows() : ModelIndexSet.forRows(myGrid, List.of(row));
     ModelIndexSet<GridColumn> columns =
-      multi ? selection.getSelectedColumns() : ModelIndexSet.forColumns(myGrid, column.asInteger());
+      multi ? selection.getSelectedColumns() : ModelIndexSet.forColumns(myGrid, List.of(column));
     ViewIndex<GridRow> lastRow = rows.toView(myGrid).last();
     ViewIndex<GridColumn> lastColumn = columns.toView(myGrid).last();
     Runnable moveToNextCell =
@@ -700,10 +732,10 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     // The transpose replaces the data model, which a pinned table would go on showing.
     LOG.assertTrue(myTables.getPinned() == null, "A transposed grid has no pinned table");
     myDataModel.removeTableModelListener(myDataStructureListener);
-    myDataModel = transposed ? new TransposedGridTableModel(myGrid) : new RegularGridTableModel(myGrid);
+    myDataModel = transposed ? new TransposedGridTableModel(myGridModel) : new RegularGridTableModel(myGridModel);
     myDataModel.addTableModelListener(myDataStructureListener);
     GridUtil.saveAndRestoreSelection(myGrid, () -> {
-      myColumns.setDataModel(myDataModel, transposed);
+      myColumns.setDataModel(myDataModel);
       mySelectionModel.setDataModel(myDataModel);
       myMainTable.setDataModel(myDataModel);
       myGrid.updateSortKeysFromColumnAttributes();
@@ -785,19 +817,24 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myColumns.restoreColumnsOrder(expectedToModel);
   }
 
-  /** The model column at 1-based {@code columnNumber}, as the user types it in Go to Row; -1 when out of range. */
+  /**
+   * The model column at 1-based {@code columnNumber} among the visible columns, as the user types it in Go to Row; -1 when out of range.
+   */
   @NotNull ModelIndex<GridColumn> modelColumnOfNumber(int columnNumber) {
-    return myMainTable.modelColumnOfNumber(columnNumber);
+    int modelIndex = columnNumber < 1 || columnNumber >= getViewColumnCount() + 1
+                     ? -1
+                     : myRawIndexConverter.column2Model().applyAsInt(columnNumber - 1);
+    return ModelIndex.forColumn(myGrid, modelIndex);
   }
 
   /** The 0-based row index of 1-based {@code rowNumber}, as the user types it in Go to Row, or -1. The row may sit on another page. */
   int rowIndexOfNumber(int rowNumber) {
-    return myMainTable.rowIndexOfNumber(rowNumber);
+    return rowNumber < 1 ? -1 : rowNumber - 1;
   }
 
   /**
    * Selects and shows the row's cell in the first column the user sees, which is the first pinned one while columns are pinned. The caller
-   * can be a data request's thread, so the tables are read on the EDT.
+   * can be a data request's thread, so the view's displayed column order is read on the EDT.
    */
   @Override
   public void showFirstCell(int rowNumOnCurrentPage) {
@@ -963,12 +1000,29 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void contentLanguageUpdated(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull Language language) {
-    forEachTable(table -> table.clearCache(columnIdx));
+    columnRenderingChanged(columnIdx);
   }
 
   @Override
   public void displayTypeUpdated(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull DisplayType displayType) {
-    forEachTable(table -> table.clearCache(columnIdx));
+    columnRenderingChanged(columnIdx);
+  }
+
+  /**
+   * Drops the renderer cache of the column's first displayed cell and the whole cell image cache. Then lays out and repaints the table
+   * that shows the column. A column that no table shows changes nothing.
+   */
+  private void columnRenderingChanged(@NotNull ModelIndex<GridColumn> column) {
+    // While transposed, the column is a table row, and the first cell is in the first table column.
+    int position = myRawIndexConverter.column2View().applyAsInt(column.value);
+    int firstRow = myRawIndexConverter.row2Model().applyAsInt(0);
+    // -1 without rows, or while createDefaultColumnsFromModel sets a binary display type before creating the column (DBE-16996).
+    if (position < 0 || firstRow < 0) return;
+    myCellRenderers.clearRendererCache(ModelIndex.forRow(myGrid, firstRow), column);
+    myCellImageCache.reset();
+    GridTable table = myTables.tableOf(ViewIndex.forColumn(myGrid, position));
+    table.revalidate();
+    table.repaint();
   }
 
   /** Takes a row of the main table; both tables show the same rows. */
@@ -1001,6 +1055,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
       // The pinned table gets the model event from the shared data model, and the new columns through its slice.
       myColumns.columnAttributesUpdated();
       myMainTable.columnsAdded(columnIndices);
+      myCellImageCache.reset();
       updatePinnedTable();
     }
     finally {
@@ -1159,17 +1214,13 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myRowHeights.clear();
   }
 
-  public @NotNull LocalFilterState getLocalFilterState() {
-    return myMainTable.getLocalFilterState();
-  }
-
   public void updateRowFilter() {
     myRowOrder.updateRowFilter();
   }
 
   @Override
   public @Nullable Color getCellBackground(@NotNull ViewIndex<GridRow> row, @NotNull ViewIndex<GridColumn> column, boolean selected) {
-    return myMainTable.getCellBackground(row, column.toModel(myGrid), selected);
+    return selected ? myMainTable.getSelectionBackground() : myCellRenderers.cellBackground(row.toModel(myGrid), column.toModel(myGrid));
   }
 
   @Override
@@ -1179,8 +1230,9 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void reinitSettings() {
-    // Once for every table, which share the grid's renderer factories.
+    // Once for every table, which share the grid's renderer factories and the cell image cache.
     GridCellRendererFactories.get(myGrid).reinitSettings();
+    myCellImageCache.reset();
     forEachTable(table -> table.reinitSettings());
     myGrid.trueLayout();
   }
@@ -1256,9 +1308,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   /** The main table fills its viewport while there are no columns, so the empty grid paints its background there. */
   @Override
-  public void updateCellsPreferredSize() {
+  public void updateCellsPreferredSize(boolean noColumns) {
     Container viewport = myMainTable.getParent();
-    boolean noColumns = myGrid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumnCount() == 0;
     if (viewport != null) myMainTable.setPreferredSize(noColumns ? viewport.getSize() : null);
   }
 
@@ -1279,7 +1330,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void onColumnHierarchyChanged() {
-    GridColumnHeaderState.updateColumnHierarchyDepth(myGrid);
+    GridColumnHeaderActions.updateColumnHierarchyDepth(myGrid);
   }
 
   /**
@@ -1312,26 +1363,38 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     return isTransposed() ? null : myColumns.shownColumn(column);
   }
 
+  /** The model rows the view shows. A view index past the shown rows, as a row filter leaves, converts to no valid model row. */
   @Override
   public @NotNull ModelIndexSet<GridRow> getVisibleRows() {
-    return myMainTable.getVisibleRows();
+    int rowCount = isTransposed() ? myDataModel.getColumnCount() : myDataModel.getRowCount();
+    IntUnaryOperator toModel = myRawIndexConverter.row2Model();
+    int[] modelIndices = new int[rowCount];
+    for (int i = 0; i < rowCount; i++) {
+      modelIndices[i] = toModel.applyAsInt(i);
+    }
+    return ModelIndexSet.forRows(myGrid, validIndices(ModelIndexSet.forRows(myGrid, modelIndices)));
   }
 
   @Override
   public @NotNull ModelIndexSet<GridColumn> getVisibleColumns() {
     int columnCount = getViewColumnCount();
-    int[] viewIndices = new int[columnCount];
+    IntUnaryOperator toModel = myRawIndexConverter.column2Model();
+    int[] modelIndices = new int[columnCount];
     for (int i = 0; i < columnCount; i++) {
-      viewIndices[i] = i;
+      modelIndices[i] = toModel.applyAsInt(i);
     }
-    ModelIndexSet<GridColumn> columnIndices = ViewIndexSet.forColumns(myGrid, viewIndices).toModel(myGrid);
-    IntList validIndices = new IntArrayList(columnIndices.size());
-    for (ModelIndex<GridColumn> idx : columnIndices.asIterable()) {
+    return ModelIndexSet.forColumns(myGrid, validIndices(ModelIndexSet.forColumns(myGrid, modelIndices)));
+  }
+
+  /** The indices of {@code indices} that are valid in the grid's data. */
+  private int @NotNull [] validIndices(@NotNull ModelIndexSet<?> indices) {
+    IntList validIndices = new IntArrayList(indices.size());
+    for (ModelIndex<?> idx : indices.asIterable()) {
       if (idx.isValid(myGrid)) {
         validIndices.add(idx.asInteger());
       }
     }
-    return ModelIndexSet.forColumns(myGrid, validIndices.toIntArray());
+    return validIndices.toIntArray();
   }
 
   @Override
@@ -1344,10 +1407,32 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     return myMainTable.getViewRowCount();
   }
 
+  /**
+   * Commits the open cell editor. The grid first checks the write and may ask the user to drop unsubmitted changes. A refusal keeps the
+   * editor open.
+   */
   @Override
   public boolean stopEditing() {
     GridTable editing = editingTable();
-    return editing == null || editing.stopEditing();
+    TableCellEditor editor = editing == null ? null : editing.getCellEditor();
+    if (editor == null) return true;
+
+    ModelIndexSet<GridRow> editedRows;
+    ModelIndexSet<GridColumn> editedColumns;
+    if (myCellEditors.allowsMultiEdit(editor)) {
+      // The grid's selection covers both tables of the view, in model indices.
+      editedRows = myGrid.getSelectionModel().getSelectedRows();
+      editedColumns = myGrid.getSelectionModel().getSelectedColumns();
+    }
+    else {
+      int row = editing.getEditingRow();
+      int localIndex = editing.getEditingColumn();
+      editedRows = ModelIndexSet.forRows(myGrid, List.of(editing.modelRowAt(row, localIndex)));
+      editedColumns = ModelIndexSet.forColumns(myGrid, List.of(editing.modelColumnAt(row, localIndex)));
+    }
+
+    // Only asks the grid; the commit itself writes through the table's host.
+    return myGrid.isSafeToUpdate(editedRows, editedColumns, editor.getCellEditorValue()) && editor.stopCellEditing();
   }
 
   @Override
@@ -1413,14 +1498,23 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   public void editSelectedCellWithValue(Object value, boolean shouldMoveFocus) {
     int position = myColumns.getColumnModel().getSelectionModel().getLeadSelectionIndex();
     if (position < 0) return;
-    tableAt(position).withCurrentValue(value, shouldMoveFocus, this::editSelectedCell);
+    // A cell editor opened in the table starts with value rather than the cell's value, and moves the focus on commit only if asked.
+    GridTable table = tableAt(position);
+    ClientProperty.put(table, GridTableCellEditor.CURRENT_VALUE_CLIENT_PROPERTY_KEY, value);
+    ClientProperty.put(table, GridTableCellEditor.SUPPRESS_MOVE_FOCUS_CLIENT_PROPERTY_KEY, !shouldMoveFocus);
+    try {
+      editSelectedCell();
+    }
+    finally {
+      ClientProperty.remove(table, GridTableCellEditor.CURRENT_VALUE_CLIENT_PROPERTY_KEY);
+      ClientProperty.remove(table, GridTableCellEditor.SUPPRESS_MOVE_FOCUS_CLIENT_PROPERTY_KEY);
+    }
   }
 
   @Override
   public boolean isMultiEditingAllowed() {
-    // The tables share the selection; only the table that holds the editor knows whether it may write a unique column.
     GridTable editing = editingTable();
-    return (editing != null ? editing : myMainTable).isMultiEditingAllowed();
+    return myCellEditors.allowsMultiEdit(editing == null ? null : editing.getCellEditor());
   }
 
   /** Takes view indices of the main table. */
@@ -1486,7 +1580,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   @NotNull TableColumnModel getViewColumnModel() { return myColumns.getColumnModel(); }
 
   void toggleSortOrder(@NotNull ModelIndex<GridColumn> column, boolean additive) {
-    GridColumnHeaderState.toggleSortOrder(myGrid, column, additive);
+    GridColumnHeaderActions.toggleSortOrder(myGrid, column, additive);
   }
 
   /** Opens the column popup of a transposed gutter, whose actions get the main table's data. */
@@ -1532,8 +1626,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     private TableHost(GridTable table) { myTable = table; }
 
     @Override
-    public boolean stopEditingBeforeSelectionChange(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
-      return myFrozenColumnsController.stopEditingBeforeSelectionChange(myTable, row, column);
+    public boolean stopEditingBeforeSelectionChange(@Nullable ModelCell target) {
+      return myFrozenColumnsController.stopEditingBeforeSelectionChange(myTable, target);
     }
 
     @Override
@@ -1555,7 +1649,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     public void columnMarginChanged() { myFrozenColumnsController.columnMarginChanged(myTable); }
 
     @Override
-    public void cellImageCacheSizeChanged() { updateCellImageCacheSize(); }
+    public void aboutToPaint() { updateCellImageCacheSize(); }
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
@@ -1565,28 +1659,22 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     }
 
     @Override
-    public void setValueAt(@Nullable Object value, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column,
-                           boolean allowImmediateUpdate, @NotNull GridRequestSource source, @Nullable Object metadata) {
+    public void commitEditedValue(@Nullable Object value, @NotNull ModelCell cell) {
       // The table still holds its editor here: Swing writes the committed value before it removes the editor.
       GridTableCellEditor editor = ObjectUtils.tryCast(myTable.getCellEditor(), GridTableCellEditor.class);
-      writeValue(value, row, column, allowImmediateUpdate, source, metadata, editor);
+      writeValue(value, cell.getRow(), cell.getColumn(), true, new GridRequestSource(new DataGridRequestPlace(myGrid)), null, editor);
     }
 
     @Override
-    public boolean stopEditingBeforeEdit() {
+    public @NotNull EditStart startEdit(@Nullable ModelCell cell, @Nullable EventObject startingEvent) {
+      // JTable finishes only its own editor.
       for (GridTable other : tables()) {
         TableCellEditor editor = other == myTable ? null : other.getCellEditor();
-        if (editor != null && !editor.stopCellEditing()) return false;
+        if (editor != null && !editor.stopCellEditing()) return EditStart.REFUSED;
       }
-      return true;
-    }
-
-    @Override
-    public boolean editsInValueEditor(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column,
-                                      @Nullable EventObject startingEvent) {
-      if (!myValueEditorCells.isValueEditorCell(row, column)) return false;
+      if (cell == null || !myValueEditorCells.isValueEditorCell(cell.getRow(), cell.getColumn())) return EditStart.IN_CELL_EDITOR;
       if (myValueEditorCells.opensValueEditor(startingEvent)) openValueEditor();
-      return true;
+      return EditStart.IN_VALUE_EDITOR;
     }
 
     private void openValueEditor() {
@@ -1688,8 +1776,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   }
 
   /*
-   * The JTable-like getters from here on answer for the main table. Rows, colors and the data model are the same in both tables. Column
-   * counts, widths and the header drag leave out the pinned columns.
+   * The JTable-like getters from here on answer for the main table, unless one says otherwise. Rows, colors and the data model are the same
+   * in both tables. Column counts, widths and the header drag leave out the pinned columns.
    */
 
   public int getColumnHeaderHeight() { return myMainTable.getTableHeader().getHeight(); }

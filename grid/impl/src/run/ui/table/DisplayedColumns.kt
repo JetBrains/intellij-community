@@ -1,36 +1,7 @@
 package com.intellij.database.run.ui.table
 
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.ListSelectionModel
 import javax.swing.table.TableColumnModel
-
-/**
- * How an extended range changes a selection. By JTable's rule, Shift sets the range; Ctrl+Shift adds it when the anchor cell is selected,
- * and removes it otherwise.
- */
-@ApiStatus.Internal
-enum class RangeChange {
-  REPLACE, ADD, REMOVE;
-
-  /** Applies the range from [anchor] to [lead] to [selection], which then has that anchor and lead, as JTable leaves them. */
-  fun applyTo(selection: ListSelectionModel, anchor: Int, lead: Int) {
-    when (this) {
-      REPLACE -> selection.setSelectionInterval(anchor, lead)
-      ADD -> selection.addSelectionInterval(anchor, lead)
-      REMOVE -> selection.removeSelectionInterval(anchor, lead)
-    }
-  }
-
-  companion object {
-    /** The change an extend makes by the rule above; [toggle] says whether Ctrl is held. */
-    @JvmStatic
-    fun forExtend(toggle: Boolean, anchorSelected: Boolean): RangeChange = when {
-      !toggle -> REPLACE
-      anchorSelected -> ADD
-      else -> REMOVE
-    }
-  }
-}
 
 /**
  * The view's columns in the order the user sees them: the pinned ones first, then the rest, both in master order. It selects column ranges
@@ -83,6 +54,42 @@ class DisplayedColumns(
 
   private fun orderWith(pinnedColumns: List<Int>): DisplayedColumnOrder<Int> =
     DisplayedColumnOrder(gridOrder = (0 until masterColumns.columnCount).toList(), pinnedOrder = pinnedColumns)
+}
+
+/**
+ * The order in which the user sees the grid's columns: the pinned ones first, in the given pinned order, then the rest in grid order.
+ * [Column] identifies a grid column, such as its `ViewIndex<GridColumn>`. A pinned column that the grid order lacks is left out.
+ */
+@ApiStatus.Internal
+class DisplayedColumnOrder<Column> private constructor(val displayedColumns: List<Column>) {
+  constructor(gridOrder: List<Column>, pinnedOrder: List<Column>) : this(buildList(gridOrder.size) {
+    val inGrid = gridOrder.toHashSet()
+    pinnedOrder.filterTo(this) { it in inGrid }
+    val pinned = pinnedOrder.toHashSet()
+    gridOrder.filterTo(this) { it !in pinned }
+  })
+
+  /** The same order, with each column identified by [transform] of it. */
+  fun <Other> map(transform: (Column) -> Other): DisplayedColumnOrder<Other> = DisplayedColumnOrder(displayedColumns.map(transform))
+
+  fun adjacent(column: Column, forward: Boolean): Column? {
+    val position = displayedColumns.indexOf(column)
+    if (position < 0) return null
+    return displayedColumns.getOrNull(position + if (forward) 1 else -1)
+  }
+
+  fun first(): Column? = displayedColumns.firstOrNull()
+
+  fun last(): Column? = displayedColumns.lastOrNull()
+
+  fun range(anchor: Column, target: Column): List<Column>? {
+    val anchorPosition = displayedColumns.indexOf(anchor)
+    val targetPosition = displayedColumns.indexOf(target)
+    if (anchorPosition < 0 || targetPosition < 0) return null
+    return displayedColumns.subList(minOf(anchorPosition, targetPosition), maxOf(anchorPosition, targetPosition) + 1)
+  }
+
+  fun contains(column: Column): Boolean = column in displayedColumns
 }
 
 /** [columns] as runs of adjacent master indices, in the order the runs start. */

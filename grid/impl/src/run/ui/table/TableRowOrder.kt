@@ -1,9 +1,17 @@
 package com.intellij.database.run.ui.table
 
 import com.intellij.database.datagrid.DataGrid
+import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridRow
+import com.intellij.database.datagrid.ModelIndex
+import com.intellij.database.run.ui.DataAccessType
+import com.intellij.database.run.ui.grid.GridSearchSession
 import java.awt.Rectangle
 import javax.swing.DefaultListSelectionModel
 import javax.swing.ListSelectionModel
+import javax.swing.RowFilter
+import javax.swing.RowSorter
+import javax.swing.SortOrder
 import javax.swing.SwingUtilities
 import javax.swing.event.RowSorterEvent
 import javax.swing.event.RowSorterListener
@@ -15,9 +23,9 @@ import javax.swing.table.TableRowSorter
 import kotlin.math.max
 
 /**
- * Owns the row sorter that both tables share. A JTable tells its own sorter of data changes; with one shared sorter, only this class does.
- * After each data change, sort or filter, it puts the row selection and open editors back on their records. Then it applies the row
- * heights again and repaints both tables.
+ * Owns the row sorter that both tables share, which follows the grid's sort order and filters. A JTable tells its own sorter of data
+ * changes; with one shared sorter, only this class does. After each data change, sort or filter, it puts the row selection and open
+ * editors back on their records. Then it applies the row heights again and repaints both tables.
  */
 internal class TableRowOrder(
   private val grid: DataGrid,
@@ -61,11 +69,19 @@ internal class TableRowOrder(
   }
 
   fun updateSortKeys() {
-    sorter.setSortKeys(main.sortKeysFromColumnAttributes())
+    sorter.setSortKeys(sortKeys())
   }
 
   fun updateRowFilter() {
-    sorter.setRowFilter(main.createFilter())
+    sorter.setRowFilter(if (main.isTransposed) TransposedColumnFilter(grid) else RecordFilter(grid, grid.localFilterState))
+  }
+
+  /** The keys the sorter sorts by, or null when the grid doesn't sort locally. */
+  private fun sortKeys(): List<RowSorter.SortKey>? {
+    if (main.isTransposed || grid.isSortViaOrderBy) return null
+    return grid.sortOrderMap.values.map { column ->
+      RowSorter.SortKey(column.columnNumber, if (grid.getSortOrder(column) < 0) SortOrder.ASCENDING else SortOrder.DESCENDING)
+    }
   }
 
   /** The model's structure changed. Forgets the kept selection, the row heights and the sorter's order, as a table's own sorter would. */
@@ -76,7 +92,7 @@ internal class TableRowOrder(
   }
 
   private fun createSorter(): TableRowSorter<TableModel> {
-    val created = main.createGridRowSorter()
+    val created = GridRowSorter(main.model, grid)
     created.addRowSorterListener(sorterListener)
     for (table in tables.all()) table.setSharedRowSorter(created)
     gridSelectionModel.setRowSorter(created)
@@ -131,12 +147,6 @@ internal class TableRowOrder(
   }
 
   private fun rowsChanged(change: RowsChange) {
-    if (change.eventType == TableModelEvent.UPDATE && !change.allRows && !sorter.sortsOnUpdates) {
-      // The sorter doesn't sort again on an update, so the rows keep their order.
-      notifySorter { notifyUpdate(change) }
-      repaintUpdatedRows(change)
-      return
-    }
     val toModel = { viewRow: Int -> if (viewRow < 0 || viewRow >= sorter.viewRowCount) -1 else sorter.convertRowIndexToModel(viewRow) }
     var snapshot: SelectionSnapshot? = null
     when {
@@ -264,6 +274,68 @@ internal class TableRowOrder(
     setLeadAndAnchor(columnSelection, -1)
     rowSelection.valueIsAdjusting = false
     columnSelection.valueIsAdjusting = false
+  }
+
+  /**
+   * Sorts the records of [dataModel] with the grid's comparators, which compare whole records. While [dataModel] is transposed, its rows
+   * are grid columns, so it sorts nothing; a transpose replaces the model and the sorter at once. It holds the grid for the records and
+   * the comparators: [TableRowOrder] creates and replaces it, and the tables see only a Swing `RowSorter`.
+   */
+  private class GridRowSorter(
+    private val dataModel: GridTableModel,
+    private val grid: DataGrid,
+  ) : TableRowSorter<TableModel>(dataModel) {
+    private val transposed = dataModel is TransposedGridTableModel
+
+    init {
+      setModelWrapper(object : ModelWrapper<TableModel, Int>() {
+        override fun getModel(): TableModel = dataModel
+        override fun getColumnCount(): Int = dataModel.columnCount
+        override fun getRowCount(): Int = dataModel.rowCount
+        override fun getValueAt(modelRow: Int, modelColumn: Int): GridRow? =
+          grid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getRow(ModelIndex.forRow(grid, modelRow))
+        override fun getIdentifier(modelRow: Int): Int = modelRow
+      })
+      maxSortKeys = 1
+      // A changed value moves its record, as with a JBTable's own sorter.
+      sortsOnUpdates = true
+    }
+
+    override fun toggleSortOrder(modelColumn: Int) {
+      // Does nothing: Swing calls this only once for a double click, so the view's TableHeaderClicks sorts on header clicks.
+    }
+
+    override fun useToString(modelColumn: Int): Boolean = false
+
+    override fun getComparator(modelColumn: Int): Comparator<*>? = gridComparator(modelColumn) ?: super.getComparator(modelColumn)
+
+    override fun isSortable(modelColumn: Int): Boolean = gridComparator(modelColumn) != null
+
+    private fun gridComparator(modelColumn: Int): Comparator<*>? =
+      if (transposed) null else grid.getComparator(ModelIndex.forColumn(grid, modelColumn))
+  }
+
+  /** Shows the records that the local filter, a search that filters rows, and the grid let through. */
+  private class RecordFilter(private val grid: DataGrid, private val localFilterState: LocalFilterState) : RowFilter<TableModel, Int>() {
+    override fun include(entry: Entry<out TableModel, out Int>): Boolean {
+      val row = ModelIndex.forRow(grid, entry.identifier)
+      return localFilterState.include(grid, row) && matchesSearch(row) && !grid.isRowFilteredOut(row)
+    }
+
+    private fun matchesSearch(row: ModelIndex<GridRow>): Boolean {
+      @Suppress("UNCHECKED_CAST")
+      val search = grid.searchSession as? GridSearchSession<GridRow, GridColumn> ?: return true
+      if (!search.isFilteringEnabled || search.findModel.stringToFind.isEmpty() || search.isSearchInProgress) return true
+      return grid.visibleColumns.asIterable().any { search.isMatchedCell(row, it) }
+    }
+  }
+
+  /** Shows, as the rows of a transposed table, the grid columns that the grid shows and doesn't filter out. */
+  private class TransposedColumnFilter(private val grid: DataGrid) : RowFilter<TableModel, Int>() {
+    override fun include(entry: Entry<out TableModel, out Int>): Boolean {
+      val column = ModelIndex.forColumn(grid, entry.identifier)
+      return column.isValid(grid) && grid.isColumnEnabled(column) && !grid.isRowFilteredOut(column)
+    }
   }
 
   /** The selected model rows and the lead model row, taken before a change of the row order. */
