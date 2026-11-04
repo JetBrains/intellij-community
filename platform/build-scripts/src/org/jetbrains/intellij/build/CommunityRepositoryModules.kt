@@ -89,8 +89,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     pluginAuto(listOf("intellij.xpath")) { spec ->
       spec.withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
     },
-    pluginAutoWithCustomDirName("intellij.tasks.core") { spec ->
-      spec.directoryName = "tasks"
+    pluginAuto("intellij.tasks.core") { spec ->
       spec.withModule("intellij.tasks")
       spec.withModule("intellij.tasks.compatibility")
       spec.withModule("intellij.tasks.java")

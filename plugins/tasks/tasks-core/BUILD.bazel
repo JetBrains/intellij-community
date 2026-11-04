@@ -15,7 +15,6 @@ dev_dist_plugin(
         "intellij.tasks.compatibility",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    directory_name = "tasks",
     jars = {
         "lib/intellij.tasks.core.libraries.commonsDiscovery.jar": [
             "intellij.tasks.core.libraries.commonsDiscovery",
@@ -26,8 +25,8 @@ dev_dist_plugin(
             "intellij.tasks",
             "intellij.tasks.compatibility",
         ],
-        "lib/http-client.jar": ["@lib//:tasks-compatibility-http-client-3-1"],
         "lib/axis.jar": ["//plugins/tasks/tasks-core/lib:tasks-core-axis-1-4"],
+        "lib/http-client.jar": ["@lib//:tasks-compatibility-http-client-3-1"],
     },
     main_module = "intellij.tasks.core",
     mode_refused_content_modules = {
