@@ -377,16 +377,17 @@ final class PostUpdateTasks {
     return line.replace(" CE", "").replace(" Community Edition", "");
   }
 
-  static final String AFTER_INSTALL_EXE = "lib/ReSharperHost/JetBrains.Rider.AfterInstall.exe";
-  static final long AFTER_PATCH_TIMEOUT_MINUTES = 15;
+  static final String AFTER_INSTALL_SCRIPT = "bin/afterInstall.cmd";
+  static final long AFTER_PATCH_TIMEOUT_MINUTES = 30;
 
   static @Nullable List<String> afterPatchCommand(Path targetDir) {
-    var executable = targetDir.resolve(AFTER_INSTALL_EXE);
-    if (!Files.isRegularFile(executable)) {
-      LOG.info("after-patch: no " + executable);
+    var script = targetDir.resolve(AFTER_INSTALL_SCRIPT);
+    if (!Files.isRegularFile(script)) {
+      LOG.info("after-patch: no " + script);
       return null;
     }
-    return List.of(executable.toString(), "--installation-dir=" + targetDir, "--after-patch-update", "--need-elevation");
+    var comSpec = requireNonNullElse(System.getenv("ComSpec"), "cmd.exe");
+    return List.of(comSpec, "/c", script.toString());
   }
 
   static void runAfterPatch(Path targetDir) {
