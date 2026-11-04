@@ -220,8 +220,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withModuleLibrary(libraryName = "JaCoCo", moduleName = "intellij.java.coverage", relativeOutputPath = "jacoco.jar")
     },
     plugin("intellij.java.decompiler") { spec ->
-      spec.directoryName = "java-decompiler"
-      spec.mainJarName = "java-decompiler.jar"
       spec.withModule("intellij.java.decompiler.engine", spec.mainJarName)
     },
     pluginAutoWithCustomDirName("intellij.javaFX.community", "javaFX") { spec ->
