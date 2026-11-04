@@ -272,8 +272,8 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
     ctx.actions.run(
         # The mnemonic selects a strategy or an execution-info override for every pack action that carries it. Three
         # producers share `PackContentModuleJar`: the content-module jar, the platform jar and the native tree. So one
-        # override reaches all three. `common.bazelrc` adds `no-remote-cache` to `PackContentModuleJar` alone, so their
-        # outputs stay in the disk cache only. `PackDevPluginJar` keeps both caches. `cache.spec.md` states the policy.
+        # override reaches all three. `common.bazelrc` adds `no-remote-cache` to `PackContentModuleJar` and to
+        # `PackDevPluginJar`, so their outputs stay in the disk cache only. `cache.spec.md` states the policy.
         mnemonic = mnemonic,
         inputs = depset(library_jars + module_jars + [patch.file for patch in patch_files]),
         outputs = outputs,
@@ -281,7 +281,7 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
         tools = dev_dist_tool_inputs(ctx.attr._packer),
         # One process per action, not a persistent worker: the memory of each action is freed when it exits, and
         # `resource_set` states it to the scheduler. See ADR 0019. The action reads only its declared inputs and writes
-        # only its declared outputs, so the sandbox adds cost and no check.
+        # only its declared outputs, so a local build skips the sandbox. `--config=ci` removes `no-sandbox` and checks it.
         execution_requirements = {"no-sandbox": "1"},
         resource_set = _packer_resources,
         arguments = [args],
