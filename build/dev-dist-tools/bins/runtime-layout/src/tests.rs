@@ -559,6 +559,57 @@ fn assemble_command() {
     assert_eq!(std::fs::read_to_string(&output).unwrap(), expected);
 }
 
+/// With `--module-facts`, the assembly writes the facts of the modules and the project libraries of the layout.
+#[test]
+fn assemble_command_selects_the_module_facts() {
+    let files = Files::new();
+    let platform = files.write(
+        "platform.json",
+        r#"{"version":1,"descriptorModule":"intellij.idea.customization","directory":"","order":"layout","jars":[{"destination":"lib/app.jar","members":[{"module":"intellij.idea.customization"},{"library":"@@lib+//:alpha","jars":["external/lib+/alpha.jar"]}]}]}"#,
+    );
+    let targets = files.write("bazel-targets.json", TEST_TARGETS);
+    let module_facts = files.write(
+        "module-facts.json",
+        r#"{"version":1,"modules":{"intellij.idea.customization":{"dependencies":[{"module":"b","contentModule":true},{"library":"alpha"}]},"unrelated":{}},"projectLibraries":["alpha","zeta"]}"#,
+    );
+    let output = files.path("layout.json").display().to_string();
+    let selected = files.path("selected.json").display().to_string();
+    let args = [
+        format!("--part={platform}"),
+        format!("--bazel-targets={targets}"),
+        format!("--output={output}"),
+        format!("--module-facts={module_facts}"),
+        format!("--selected-facts={selected}"),
+    ];
+    let result = run_tool(&args);
+    assert_eq!(result.code, 0, "{}", result.errors);
+    let expected = r#"{
+  "version": 1,
+  "modules": {
+    "intellij.idea.customization": {
+      "dependencies": [
+        {
+          "module": "b",
+          "contentModule": true
+        },
+        {
+          "library": "alpha"
+        }
+      ]
+    }
+  },
+  "projectLibraries": [
+    "alpha"
+  ]
+}
+"#;
+    assert_eq!(std::fs::read_to_string(&selected).unwrap(), expected);
+
+    let result = run_tool(&args[..4]);
+    assert_eq!(result.code, 1);
+    assert_eq!(result.errors, "ERROR: --module-facts and --selected-facts go together\n");
+}
+
 #[test]
 fn invalid_input() {
     let files = Files::new();

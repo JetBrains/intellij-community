@@ -8,7 +8,8 @@ use serde::Deserialize;
 
 use crate::part::Member;
 
-// The kinds of a library entry, as `PluginDistributionEntry.Kind` spells them.
+// The kinds of a layout entry, as `PluginDistributionEntry.Kind` spells them.
+pub(crate) const MODULE_KIND: &str = "module";
 pub(crate) const PROJECT_LIBRARY_KIND: &str = "projectLibrary";
 pub(crate) const MODULE_LIBRARY_KIND: &str = "moduleLibrary";
 

@@ -8,8 +8,11 @@
 //! library container to its library in the project model, and derives the order of the entries:
 //!
 //! ```text
-//! runtime-layout --part=<file>... [--frontend-only-part=<file>...] --bazel-targets=<file> --output=<file>
+//! runtime-layout --part=<file>... [--frontend-only-part=<file>...] --bazel-targets=<file> --output=<file> \
+//!   [--module-facts=<file> --selected-facts=<file>]
 //! ```
+//!
+//! With `--module-facts`, the assembly also writes the module facts of the layout to `--selected-facts`, see `facts`.
 //!
 //! A complex plugin states no jar at analysis time. Its part is derived from the resolved plan file and the input
 //! catalogue of its chain:
@@ -25,6 +28,7 @@
 
 mod assemble;
 mod descriptor;
+mod facts;
 mod part;
 mod plan;
 mod targets;
@@ -71,9 +75,14 @@ fn run_assemble(args: Vec<OsString>) -> anyhow::Result<String> {
     let frontend_only_files = values(&mut options, "--frontend-only-part")?;
     let bazel_targets = options.require("--bazel-targets")?;
     let output = options.require("--output")?;
+    let module_facts = options.take("--module-facts")?;
+    let selected_facts = options.take("--selected-facts")?;
     options.finish()?;
     if part_files.is_empty() {
         bail!("--part is required");
+    }
+    if module_facts.is_some() != selected_facts.is_some() {
+        bail!("--module-facts and --selected-facts go together");
     }
     let libraries = targets::read_library_index(Path::new(&bazel_targets))?;
     let mut parts = Vec::with_capacity(part_files.len() + frontend_only_files.len());
@@ -93,6 +102,10 @@ fn run_assemble(args: Vec<OsString>) -> anyhow::Result<String> {
     }
     let result = assemble(&parts, &libraries)?;
     write_json(Path::new(&output), &result, true)?;
+    if let (Some(module_facts), Some(selected_facts)) = (module_facts, selected_facts) {
+        let table = facts::read_facts(Path::new(&module_facts))?;
+        write_json(Path::new(&selected_facts), &facts::select_facts(&table, &result)?, true)?;
+    }
     Ok(format!(
         "Wrote the runtime module repository layout of {} plugins to {output}",
         result.plugins.len()

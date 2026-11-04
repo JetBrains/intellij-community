@@ -7,7 +7,7 @@ use serde::Serialize;
 
 use crate::descriptor::ContentModule;
 use crate::part::{LAYOUT_ORDER, PLUGIN_ORDER, Part, PartJar};
-use crate::targets::{JpsLibrary, LibraryIndex, MODULE_LIBRARY_KIND};
+use crate::targets::{JpsLibrary, LibraryIndex, MODULE_KIND, MODULE_LIBRARY_KIND};
 
 pub(crate) const LAYOUT_VERSION: i64 = 1;
 
@@ -98,7 +98,7 @@ pub(crate) fn assemble(parts: &[AssembledPart], libraries: &LibraryIndex) -> any
                 relative_output_file: Some(relative_output_file.clone()),
             };
             for module in &asset.modules {
-                plugin.entries.push(entry("module", module));
+                plugin.entries.push(entry(MODULE_KIND, module));
             }
             for library in asset.libraries {
                 for _ in 0..library.files.max(1) {
