@@ -33,7 +33,7 @@ import java.util.function.UnaryOperator;
  * When none of them can, it uses a fallback font.
  * The real font families are the families from the settings, and usually the effective font families are the same list.
  * <p/>
- * The instance keeps its current snapshot in a {@link FontPreferencesSnapshot}.
+ * The instance keeps its current snapshot in a {@link FontPreferencesSnapshot}, in its own field or in a {@link Storage} of its owner.
  * Each change replaces the snapshot with a compare-and-set, so each method is atomic.
  * A sequence of calls is not atomic.
  * To apply several changes as one change, use {@link #runBatchUpdate}.
@@ -45,6 +45,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     AtomicReferenceFieldUpdater.newUpdater(FontPreferencesImpl.class, FontPreferencesSnapshot.class, "mySnapshot");
 
   private volatile @NotNull FontPreferencesSnapshot mySnapshot;
+  private final @Nullable Storage myStorage;
   private volatile @Nullable EventDispatcher<ChangeListener> myEventDispatcher;
 
   public FontPreferencesImpl() {
@@ -53,6 +54,16 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   private FontPreferencesImpl(@NotNull FontPreferencesSnapshot initial) {
     mySnapshot = initial;
+    myStorage = null;
+  }
+
+  /**
+   * Creates preferences that read and write their snapshot in {@code storage}.
+   * An owner, such as a colors scheme, then keeps the snapshot together with its other state.
+   */
+  FontPreferencesImpl(@NotNull Storage storage) {
+    mySnapshot = FontPreferencesSnapshot.EMPTY;
+    myStorage = storage;
   }
 
   /**
@@ -65,17 +76,17 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   @Override
   @ApiStatus.Experimental
   public @NotNull FontPreferences getSnapshot() {
-    return mySnapshot;
+    return current();
   }
 
   @Override
   public boolean hasSize(@NotNull String fontName) {
-    return mySnapshot.hasSize(fontName);
+    return current().hasSize(fontName);
   }
 
   @Override
   public float getLineSpacing() {
-    return mySnapshot.getLineSpacing();
+    return current().getLineSpacing();
   }
 
   @Override
@@ -85,17 +96,17 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public float getSize2D(@NotNull String fontFamily) {
-    return mySnapshot.getSize2D(fontFamily);
+    return current().getSize2D(fontFamily);
   }
 
   @Override
   public @NotNull List<@NlsSafe String> getEffectiveFontFamilies() {
-    return mySnapshot.getEffectiveFontFamilies();
+    return current().getEffectiveFontFamilies();
   }
 
   @Override
   public @NotNull List<@NlsSafe String> getRealFontFamilies() {
-    return mySnapshot.getRealFontFamilies();
+    return current().getRealFontFamilies();
   }
 
   /**
@@ -104,32 +115,32 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
    */
   @Override
   public @NotNull @NlsSafe String getFontFamily() {
-    return mySnapshot.getFontFamily();
+    return current().getFontFamily();
   }
 
   @Override
   public boolean useLigatures() {
-    return mySnapshot.useLigatures();
+    return current().useLigatures();
   }
 
   @Override
   public @Nullable String getRegularSubFamily() {
-    return mySnapshot.getRegularSubFamily();
+    return current().getRegularSubFamily();
   }
 
   @Override
   public @Nullable String getBoldSubFamily() {
-    return mySnapshot.getBoldSubFamily();
+    return current().getBoldSubFamily();
   }
 
   @Override
   public @Unmodifiable @NotNull Set<@NotNull String> getCharacterVariants() {
-    return mySnapshot.getCharacterVariants();
+    return current().getCharacterVariants();
   }
 
   @Override
   public void copyTo(@NotNull FontPreferences preferences) {
-    mySnapshot.copyTo(preferences);
+    current().copyTo(preferences);
   }
 
   @Override
@@ -254,7 +265,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public int hashCode() {
-    return mySnapshot.hashCode();
+    return current().hashCode();
   }
 
   /**
@@ -267,12 +278,12 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     FontPreferencesImpl that = (FontPreferencesImpl)o;
-    return mySnapshot.equals(that.mySnapshot);
+    return current().equals(that.current());
   }
 
   @Override
   public @NonNls String toString() {
-    return mySnapshot.toString();
+    return current().toString();
   }
 
   /**
@@ -282,17 +293,33 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
    */
   void updateSnapshot(@NotNull UnaryOperator<FontPreferencesSnapshot> operation) {
     while (true) {
-      var prev = mySnapshot;
+      var prev = current();
       var next = operation.apply(prev);
       if (next == prev) {
         return;
       }
-      if (SNAPSHOT_UPDATER.compareAndSet(this, prev, next)) {
+      if (compareAndSet(prev, next)) {
         logSizeChangeIfNeeded(prev, next);
         notifyStateChanged();
         return;
       }
     }
+  }
+
+  private @NotNull FontPreferencesSnapshot current() {
+    Storage storage = myStorage;
+    if (storage == null) {
+      return mySnapshot;
+    }
+    return storage.get();
+  }
+
+  private boolean compareAndSet(@NotNull FontPreferencesSnapshot prev, @NotNull FontPreferencesSnapshot next) {
+    Storage storage = myStorage;
+    if (storage == null) {
+      return SNAPSHOT_UPDATER.compareAndSet(this, prev, next);
+    }
+    return storage.compareAndSet(prev, next);
   }
 
   private @NotNull EventDispatcher<ChangeListener> getOrCreateEventDispatcher() {
@@ -342,5 +369,18 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     }
     LOG.debug("Will set size %s to global font (presentationMode=%b)".formatted(size, UISettings.getInstance().getPresentationMode()));
     LOG.debug(ExceptionUtil.currentStackTrace());
+  }
+
+  /**
+   * Keeps the snapshot of preferences that another object owns.
+   */
+  interface Storage {
+    @NotNull FontPreferencesSnapshot get();
+
+    /**
+     * Replaces {@code prev} with {@code next}.
+     * Returns {@code false} and changes nothing when the stored snapshot is no longer {@code prev}.
+     */
+    boolean compareAndSet(@NotNull FontPreferencesSnapshot prev, @NotNull FontPreferencesSnapshot next);
   }
 }

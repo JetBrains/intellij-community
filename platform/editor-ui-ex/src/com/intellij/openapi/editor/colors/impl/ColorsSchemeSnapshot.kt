@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.colors.impl
 
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -13,7 +12,7 @@ import java.util.function.BiPredicate
 /**
  * An immutable snapshot of the state of one [AbstractColorsScheme].
  * It has the name, the version and the parent scheme of the scheme, and it tells if a user can delete the scheme.
- * It has the font preferences of the editor and of the console.
+ * It has the own font preferences of the editor and of the console, and it tells if the scheme uses them.
  * It also has the colors and the text attributes that the scheme defines itself, without the values of the parent scheme.
  * The scheme keeps its current snapshot in one volatile field and replaces the snapshot on each change.
  * A `with` function returns a new snapshot, or this snapshot when no value changes.
@@ -26,8 +25,10 @@ class ColorsSchemeSnapshot private constructor(
   private val version: Int, // the version of the XML format
   private val parentScheme: EditorColorsScheme?,
   private val canBeDeleted: Boolean,
-  private val fontPreferences: FontPreferences, // the own preferences of the scheme, or a delegate to the application font
-  private val consoleFontPreferences: FontPreferences, // the own preferences of the scheme, or a delegate to the editor font
+  private val fontPreferences: FontPreferencesSnapshot, // the own editor font, unused while the scheme uses the application font
+  private val useAppFontPreferencesInEditor: Boolean,
+  private val consoleFontPreferences: FontPreferencesSnapshot, // the own console font, unused while the console uses the editor font
+  private val useEditorFontPreferencesInConsole: Boolean,
   private val colors: Map<ColorKey, Color>,
   private val attributes: Map<String, TextAttributes>, // the text attributes by the external name of their key
 ) {
@@ -39,21 +40,13 @@ class ColorsSchemeSnapshot private constructor(
 
   fun canBeDeleted(): Boolean = canBeDeleted
 
-  fun fontPreferences(): FontPreferences = fontPreferences
+  fun fontPreferences(): FontPreferencesSnapshot = fontPreferences
 
-  fun consoleFontPreferences(): FontPreferences = consoleFontPreferences
+  fun useAppFontPreferencesInEditor(): Boolean = useAppFontPreferencesInEditor
 
-  /**
-   * Returns the console font size that the scheme keeps.
-   * Unlike [AbstractColorsScheme.getConsoleFontSize2D], it ignores the application console options and presentation mode.
-   */
-  fun consoleFontSize2D(): Float {
-    val consoleFontFamily = consoleFontPreferences.fontFamily
-    if (consoleFontPreferences.hasSize(consoleFontFamily)) {
-      return consoleFontPreferences.getSize2D(consoleFontFamily)
-    }
-    return fontPreferences.getSize2D(fontPreferences.fontFamily)
-  }
+  fun consoleFontPreferences(): FontPreferencesSnapshot = consoleFontPreferences
+
+  fun useEditorFontPreferencesInConsole(): Boolean = useEditorFontPreferencesInConsole
 
   /**
    * Returns the colors by their keys.
@@ -91,12 +84,20 @@ class ColorsSchemeSnapshot private constructor(
     return copy(canBeDeleted = canBeDeleted)
   }
 
-  fun withFontPreferences(fontPreferences: FontPreferences): ColorsSchemeSnapshot {
+  fun withFontPreferences(fontPreferences: FontPreferencesSnapshot): ColorsSchemeSnapshot {
     return copy(fontPreferences = fontPreferences)
   }
 
-  fun withConsoleFontPreferences(consoleFontPreferences: FontPreferences): ColorsSchemeSnapshot {
+  fun withUseAppFontPreferencesInEditor(useAppFontPreferencesInEditor: Boolean): ColorsSchemeSnapshot {
+    return copy(useAppFontPreferencesInEditor = useAppFontPreferencesInEditor)
+  }
+
+  fun withConsoleFontPreferences(consoleFontPreferences: FontPreferencesSnapshot): ColorsSchemeSnapshot {
     return copy(consoleFontPreferences = consoleFontPreferences)
+  }
+
+  fun withUseEditorFontPreferencesInConsole(useEditorFontPreferencesInConsole: Boolean): ColorsSchemeSnapshot {
+    return copy(useEditorFontPreferencesInConsole = useEditorFontPreferencesInConsole)
   }
 
   fun withColor(key: ColorKey, color: Color): ColorsSchemeSnapshot {
@@ -160,8 +161,10 @@ class ColorsSchemeSnapshot private constructor(
     version: Int = this.version,
     parentScheme: EditorColorsScheme? = this.parentScheme,
     canBeDeleted: Boolean = this.canBeDeleted,
-    fontPreferences: FontPreferences = this.fontPreferences,
-    consoleFontPreferences: FontPreferences = this.consoleFontPreferences,
+    fontPreferences: FontPreferencesSnapshot = this.fontPreferences,
+    useAppFontPreferencesInEditor: Boolean = this.useAppFontPreferencesInEditor,
+    consoleFontPreferences: FontPreferencesSnapshot = this.consoleFontPreferences,
+    useEditorFontPreferencesInConsole: Boolean = this.useEditorFontPreferencesInConsole,
     colors: Map<ColorKey, Color> = this.colors,
     attributes: Map<String, TextAttributes> = this.attributes,
   ): ColorsSchemeSnapshot {
@@ -170,7 +173,9 @@ class ColorsSchemeSnapshot private constructor(
         parentScheme === this.parentScheme &&
         canBeDeleted == this.canBeDeleted &&
         fontPreferences === this.fontPreferences &&
+        useAppFontPreferencesInEditor == this.useAppFontPreferencesInEditor &&
         consoleFontPreferences === this.consoleFontPreferences &&
+        useEditorFontPreferencesInConsole == this.useEditorFontPreferencesInConsole &&
         colors === this.colors &&
         attributes === this.attributes) {
       return this
@@ -181,7 +186,9 @@ class ColorsSchemeSnapshot private constructor(
       parentScheme,
       canBeDeleted,
       fontPreferences,
+      useAppFontPreferencesInEditor,
       consoleFontPreferences,
+      useEditorFontPreferencesInConsole,
       colors,
       attributes,
     )
@@ -189,19 +196,22 @@ class ColorsSchemeSnapshot private constructor(
 
   companion object {
     /**
-     * Returns the snapshot of a new scheme with [fontPreferences] and [consoleFontPreferences].
-     * The scheme has no name, no parent scheme, no colors and no text attributes, and a user can delete it.
+     * Returns the snapshot of a new scheme.
+     * The scheme uses the application font in the editor and the editor font in the console.
+     * It has no name, no parent scheme, no colors and no text attributes, and a user can delete it.
      * Its version is [AbstractColorsScheme.CURR_VERSION].
      */
     @JvmStatic
-    fun initial(fontPreferences: FontPreferences, consoleFontPreferences: FontPreferences): ColorsSchemeSnapshot {
+    fun initial(): ColorsSchemeSnapshot {
       return ColorsSchemeSnapshot(
         schemeName = null,
         version = AbstractColorsScheme.CURR_VERSION,
         parentScheme = null,
         canBeDeleted = true,
-        fontPreferences = fontPreferences,
-        consoleFontPreferences = consoleFontPreferences,
+        fontPreferences = FontPreferencesSnapshot.EMPTY,
+        useAppFontPreferencesInEditor = true,
+        consoleFontPreferences = FontPreferencesSnapshot.EMPTY,
+        useEditorFontPreferencesInConsole = true,
         colors = emptyMap(),
         attributes = emptyMap(),
       )

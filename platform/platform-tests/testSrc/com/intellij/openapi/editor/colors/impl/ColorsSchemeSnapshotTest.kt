@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.colors.impl
 
 import com.intellij.openapi.editor.colors.ColorKey
-import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.editor.markup.TextAttributes
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
@@ -105,33 +104,30 @@ internal class ColorsSchemeSnapshotTest {
   }
 
   @Test
-  fun `a font with function returns the same snapshot for the same object`() {
+  fun `a font with function returns the same snapshot for the same value`() {
     val current = newSnapshot()
     assertThat(current.withFontPreferences(current.fontPreferences())).isSameAs(current)
     assertThat(current.withConsoleFontPreferences(current.consoleFontPreferences())).isSameAs(current)
-    assertThat(current.withFontPreferences(FontPreferences())).isNotSameAs(current)
+    assertThat(current.withUseAppFontPreferencesInEditor(true)).isSameAs(current)
+    assertThat(current.withUseEditorFontPreferencesInConsole(true)).isSameAs(current)
+    assertThat(current.withFontPreferences(FontPreferencesSnapshot.EMPTY.withLineSpacing(2f))).isNotSameAs(current)
+    assertThat(current.withUseAppFontPreferencesInEditor(false)).isNotSameAs(current)
   }
 
   @Test
-  fun `the console font size falls back to the editor font size`() {
-    val editorFont = FontPreferencesImpl()
-    editorFont.register(EDITOR_FAMILY, 13f)
-    val consoleFont = FontPreferencesImpl()
-    consoleFont.addFontFamily(CONSOLE_FAMILY)
-    val current = ColorsSchemeSnapshot.initial(editorFont, consoleFont)
-    assertThat(current.consoleFontSize2D()).isEqualTo(13f)
-    consoleFont.register(CONSOLE_FAMILY, 20f)
-    assertThat(current.consoleFontSize2D()).isEqualTo(20f)
+  fun `a new scheme uses the application font in the editor and the editor font in the console`() {
+    val current = newSnapshot()
+    assertThat(current.useAppFontPreferencesInEditor()).isTrue()
+    assertThat(current.useEditorFontPreferencesInConsole()).isTrue()
+    assertThat(current.fontPreferences()).isSameAs(FontPreferencesSnapshot.EMPTY)
+    assertThat(current.consoleFontPreferences()).isSameAs(FontPreferencesSnapshot.EMPTY)
   }
 
   private fun newSnapshot(): ColorsSchemeSnapshot {
-    return ColorsSchemeSnapshot.initial(FontPreferences(), FontPreferences())
+    return ColorsSchemeSnapshot.initial()
   }
 
   private companion object {
-    const val EDITOR_FAMILY = "ColorsSchemeSnapshotTest.editorFamily"
-    const val CONSOLE_FAMILY = "ColorsSchemeSnapshotTest.consoleFamily"
-
     val FIRST: ColorKey = ColorKey.createColorKey("ColorsSchemeSnapshotTest.first")
     val SECOND: ColorKey = ColorKey.createColorKey("ColorsSchemeSnapshotTest.second")
     const val FIRST_NAME = "ColorsSchemeSnapshotTest.firstAttributes"

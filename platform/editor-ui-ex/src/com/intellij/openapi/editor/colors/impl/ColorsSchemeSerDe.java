@@ -5,7 +5,6 @@ import com.intellij.ide.ui.ColorBlindness;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
@@ -121,8 +120,8 @@ final class ColorsSchemeSerDe {
     ColorsSchemeSnapshot current = scheme.getSnapshot();
     FontPreferences fontPreferences = current.fontPreferences();
     FontPreferences consoleFontPreferences = current.consoleFontPreferences();
-    boolean editorDelegating = fontPreferences instanceof DelegatingFontPreferences;
-    boolean consoleDelegating = consoleFontPreferences instanceof DelegatingFontPreferences;
+    boolean editorDelegating = current.useAppFontPreferencesInEditor();
+    boolean consoleDelegating = current.useEditorFontPreferencesInConsole();
     Properties metaInfo = scheme.getMetaProperties();
     parentNode.setAttribute(NAME_ATTR, scheme.getName());
     parentNode.setAttribute(VERSION_ATTR, Integer.toString(current.version()));
@@ -170,7 +169,7 @@ final class ColorsSchemeSerDe {
       if (consoleFontPreferences.getEffectiveFontFamilies().size() <= 1) {
         JdomKt.addOptionTag(parentNode, CONSOLE_FONT_NAME, consoleFontPreferences.getFontFamily());
         // Write font size as integer for compatibility
-        int consoleFontSize = (int)(current.consoleFontSize2D() + 0.5);
+        int consoleFontSize = (int)(scheme.consoleFontSize2D(current) + 0.5);
         if (consoleFontSize != scheme.getEditorFontSize()) {
           JdomKt.addOptionTag(parentNode, CONSOLE_FONT_SIZE, Integer.toString(consoleFontSize));
         }
@@ -268,9 +267,9 @@ final class ColorsSchemeSerDe {
       return withDeprecatedBackgroundColor(loaded, deprecatedBackgroundColor);
     });
     ColorsSchemeSnapshot loaded = scheme.getSnapshot();
-    FontPreferences consoleFontPreferences = loaded.consoleFontPreferences();
-    if (consoleFontPreferences.getEffectiveFontFamilies().isEmpty()) {
-      loaded.fontPreferences().copyTo(consoleFontPreferences);
+    if (!loaded.useEditorFontPreferencesInConsole() &&
+        loaded.consoleFontPreferences().getEffectiveFontFamilies().isEmpty()) {
+      scheme.fontPreferencesOf(loaded).copyTo(scheme.ensureEditableConsoleFontPreferences());
     }
   }
 
