@@ -16,6 +16,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.TechnologyAwareExtensionPointName
+import com.intellij.openapi.extensions.TechnologyFilter
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
@@ -122,9 +124,14 @@ class StatusBarWidgetsManager(
 
   @JvmOverloads
   fun updateWidget(factory: StatusBarWidgetFactory, coroutineContext: CoroutineContext = Dispatchers.EDT) {
-    if ((factory.isConfigurable && !StatusBarWidgetSettings.getInstance().isEnabled(factory)) ||
-        !factory.isAvailable(project) ||
-        !factory.isAllowedByInternalMode()) {
+    // the declaration of the factory gives the module that decides the applicability, and the order of the widget
+    val extension = StatusBarWidgetFactory.EP_NAME.filterableLazySequence().firstOrNull { it.id == factory.id }
+    if (extension == null) {
+      updateUnregisteredWidget(factory)
+      return
+    }
+
+    if (!TechnologyFilter.getInstance().isApplicable(extension.pluginDescriptor, project) || !isEnabled(factory)) {
       disableWidget(factory)
       return
     }
@@ -140,12 +147,7 @@ class StatusBarWidgetsManager(
         return
       }
 
-      val order = StatusBarWidgetFactory.EP_NAME.filterableLazySequence().firstOrNull { it.id == factory.id }?.order
-      if (order == null) {
-        LOG.warn("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: ${factory.id} [2]")
-        return
-      }
-
+      val order = extension.order
       val widget = createWidget(factory, dataContext, parentScope)
       widgetFactories.put(factory, widget)
       widgetIdMap.put(widget.ID(), factory)
@@ -164,6 +166,38 @@ class StatusBarWidgetsManager(
     }
   }
 
+  /**
+   * Updates the widget of a factory that is not an extension of `com.intellij.statusBarWidgetFactory`: the adapter of a deprecated
+   * `StatusBarWidgetProvider` that [init] created, or a factory nobody registered. Such a factory has no declaration to take the module
+   * and the loading order from: its widget is disabled when the factory stopped being available, and it cannot be added here.
+   */
+  private fun updateUnregisteredWidget(factory: StatusBarWidgetFactory) {
+    if (!isEnabled(factory)) {
+      disableWidget(factory)
+      return
+    }
+
+    synchronized(widgetFactories) {
+      if (wasInitialized && !widgetFactories.containsKey(factory)) {
+        LOG.warn("Factory is not registered as `com.intellij.statusBarWidgetFactory` extension: ${factory.id} [2]")
+      }
+    }
+  }
+
+  /** Whether the settings, the availability in the project and the mode of the application allow the widget of the factory. */
+  private fun isEnabled(factory: StatusBarWidgetFactory): Boolean {
+    return (!factory.isConfigurable || StatusBarWidgetSettings.getInstance().isEnabled(factory)) &&
+           factory.isAvailable(project) &&
+           factory.isAllowedByInternalMode()
+  }
+
+  /** The factory whose widget exists, by the id of its declaration; `null` when the widget does not exist. */
+  private fun findExtensionWidgetFactory(factoryId: String?): StatusBarWidgetFactory? {
+    synchronized(widgetFactories) {
+      return widgetFactories.keys.firstOrNull { it.id == factoryId }
+    }
+  }
+
   fun wasWidgetCreated(factoryId: String): Boolean {
     return synchronized(widgetFactories) {
       widgetFactories.keys.any { it.id.equals(factoryId, ignoreCase = true) }
@@ -179,7 +213,7 @@ class StatusBarWidgetsManager(
   fun getWidgetFactories(): Set<StatusBarWidgetFactory> {
     val isLightEditProject = LightEdit.owns(project)
     val result = LinkedHashSet<StatusBarWidgetFactory>()
-    StatusBarWidgetFactory.EP_NAME.lazySequence().filterTo(result) {
+    TECH_AWARE_FACTORIES.lazySequence(project).filterTo(result) {
       (!isLightEditProject || it is LightEditCompatible) && it.isAllowedByInternalMode()
     }
     synchronized(widgetFactories) {
@@ -211,7 +245,7 @@ class StatusBarWidgetsManager(
   internal fun init(frame: IdeFrame): List<Pair<StatusBarWidget, LoadingOrder>> {
     val isLightEditProject = LightEdit.owns(project)
     val statusBarWidgetSettings = StatusBarWidgetSettings.getInstance()
-    val availableFactories: List<Pair<StatusBarWidgetFactory, LoadingOrder>> = StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
+    val availableFactories: List<Pair<StatusBarWidgetFactory, LoadingOrder>> = TECH_AWARE_FACTORIES.filterableLazySequence(project)
       .filter {
         val id = it.id
         if (id == null) {
@@ -236,11 +270,7 @@ class StatusBarWidgetsManager(
       StatusBarWidgetProviderToFactoryAdapter(project, frame, it) to LoadingOrder.anchorToOrder(it.anchor)
     }
 
-    pendingFactories.removeAll { (factory, _) ->
-      (factory.isConfigurable && !statusBarWidgetSettings.isEnabled(factory)) ||
-      !factory.isAvailable(project) ||
-      !factory.isAllowedByInternalMode()
-    }
+    pendingFactories.removeAll { (factory, _) -> !isEnabled(factory) }
 
     val widgets = synchronized(widgetFactories) {
       wasInitialized = true
@@ -265,24 +295,7 @@ class StatusBarWidgetsManager(
     incModificationCount()
 
     StatusBarWidgetFactory.EP_NAME.addExtensionPointListener(parentScope, object : ExtensionPointListener<StatusBarWidgetFactory> {
-      override fun extensionAdded(extension: StatusBarWidgetFactory, pluginDescriptor: PluginDescriptor) {
-        if (LightEdit.owns(project) && extension !is LightEditCompatible) {
-          return
-        }
-
-        synchronized(widgetFactories) {
-          if (widgetFactories.containsKey(extension)) {
-            PluginException.logPluginError(LOG, "Factory has been added already: ${extension.id}", null, extension.javaClass)
-            return
-          }
-
-          ApplicationManager.getApplication().invokeLater({
-                                                            updateWidget(extension)
-                                                            incModificationCount()
-                                                          }, project.disposed)
-        }
-      }
-
+      // a removed factory loses its widget right away, while its plugin is still loaded; the recompute below has no instance for that
       override fun extensionRemoved(extension: StatusBarWidgetFactory, pluginDescriptor: PluginDescriptor) {
         synchronized(widgetFactories) {
           disableWidget(extension)
@@ -292,9 +305,35 @@ class StatusBarWidgetsManager(
       }
     })
 
+    // the widgets follow the techs of the project and the loaded plugins alike: the widget of a factory that stopped being applicable
+    // is disabled and the one of a factory that became applicable (its tech got enabled, or its plugin got loaded) is enabled, by the
+    // per-factory update that also decides on the settings and the availability. A factory of a disabled tech is not created for that:
+    // only the one whose widget exists is touched
+    TECH_AWARE_FACTORIES.addChangeListener(parentScope) { _ ->
+      ApplicationManager.getApplication().invokeLater(
+        {
+          val isLightEditProject = LightEdit.owns(project)
+          for (item in StatusBarWidgetFactory.EP_NAME.filterableLazySequence()) {
+            if (TechnologyFilter.getInstance().isApplicable(item.pluginDescriptor, project)) {
+              val factory = item.instance ?: continue
+              if (!isLightEditProject || factory is LightEditCompatible) {
+                updateWidget(factory)
+              }
+            }
+            else {
+              findExtensionWidgetFactory(item.id)?.let { disableWidget(it) }
+            }
+          }
+          incModificationCount()
+        }, project.disposed)
+    }
+
     return widgets
   }
 }
+
+/** The widget factories applicable to a project: the ones whose techs the project has enabled. */
+private val TECH_AWARE_FACTORIES = TechnologyAwareExtensionPointName(StatusBarWidgetFactory.EP_NAME)
 
 /**
  * Tells if the current mode of the application allows the widget of the factory.
