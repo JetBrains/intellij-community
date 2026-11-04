@@ -8,12 +8,15 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -25,8 +28,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-final class VcsGroupsWrapper extends ActionGroup implements DumbAware {
+final class VcsGroupsWrapper extends ActionGroup implements DumbAware, ActionRemoteBehaviorSpecification {
   private static final Logger LOG = Logger.getInstance(VcsGroupsWrapper.class);
+
+  @Override
+  public @Nullable ActionRemoteBehavior getBehavior() {
+    return IdeProductMode.isFrontend() && !IdeProductMode.isLight() ? ActionRemoteBehavior.BackendOnly : null;
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
