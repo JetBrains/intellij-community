@@ -137,24 +137,28 @@ class MarkdownStylingActionsConsistencyTest {
       checkResultByText(content)
     }
 
-    //fun `test whole line selected by action`() {
-    //  // language=Markdown
-    //  val content = """
-    //  Some arbitrary<caret> text
-    //  Some other line
-    //  """.trimIndent()
-    //  // language=Markdown
-    //  val applied = """
-    //  $wrapPrefix<selection>Some arbitrary text$wrapSuffix
-    //  <caret></selection>Some other line
-    //  """.trimIndent()
-    //  configureFromFileText("some.md", content)
-    //  executeAction("EditorSelectLine")
-    //  executeAction(actionId)
-    //  checkResultByText(applied)
-    //  executeAction(actionId)
-    //  checkResultByText(content)
-    //}
+    fun `test whole line selected by action`() {
+      // language=Markdown
+      val content = """
+      Some arbitrary<caret> text
+      Some other line
+      """.trimIndent()
+      // language=Markdown
+      val applied = """
+      $wrapPrefix<selection>Some arbitrary text$wrapSuffix
+      <caret></selection>Some other line
+      """.trimIndent()
+      val removed = """
+      <selection>Some arbitrary text
+      <caret></selection>Some other line
+      """.trimIndent()
+      configureFromFileText("some.md", content)
+      executeAction("EditorSelectLine")
+      executeAction(actionId)
+      checkResultByText(applied)
+      executeAction(actionId)
+      checkResultByText(removed)
+    }
   }
 
   class BoldActionConsistency: BaseTest(MarkdownStylingActionIds.TOGGLE_BOLD, "**")

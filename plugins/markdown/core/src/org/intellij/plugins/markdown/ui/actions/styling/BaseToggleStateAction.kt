@@ -185,24 +185,12 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
     caret: Caret,
     selectionRange: TextRange = TextRange(caret.selectionStart, caret.selectionEnd),
   ) {
-    var from = selectionRange.startOffset
-    var to = selectionRange.endOffset
     val text = document.charsSequence
-    if (shouldMoveToWordBounds()) {
-      while (from < to && Character.isWhitespace(text[from])) {
-        from++
-      }
-      while (to > from && Character.isWhitespace(text[to - 1])) {
-        to--
-      }
-      if (from == to) {
-        from = selectionRange.startOffset
-        to = selectionRange.endOffset
-      }
-    }
-    val boundString = getBoundString(text, from, to)
-    document.insertString(to, boundString)
-    document.insertString(from, boundString)
+    val formattingRange = getFormattingRange(text, selectionRange)
+    val range = if (formattingRange.isEmpty) selectionRange else formattingRange
+    val boundString = getBoundString(text, range.startOffset, range.endOffset)
+    document.insertString(range.endOffset, boundString)
+    document.insertString(range.startOffset, boundString)
     if (selectionRange.isEmpty) {
       caret.moveCaretRelatively(boundString.length, 0, false, false)
     }
@@ -241,14 +229,15 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
   }
 
   private fun findFormattingParent(file: PsiFile, range: TextRange): PsiElement? {
-    val (first, second) = if (range.isEmpty) {
-      getElementsUnderCaretOrSelection(file, range.startOffset, range.endOffset)
+    val formattingRange = getFormattingRange(file.text, range)
+    val (first, second) = if (formattingRange.isEmpty) {
+      getElementsUnderCaretOrSelection(file, formattingRange.startOffset, formattingRange.endOffset)
     }
     else {
-      getElementsUnderCaretOrSelection(file, range.startOffset, range.endOffset - 1)
+      getElementsUnderCaretOrSelection(file, formattingRange.startOffset, formattingRange.endOffset - 1)
     }
     getCommonParentOfType(first, second, targetNodeType)?.let { return it }
-    if (range.isEmpty) {
+    if (formattingRange.isEmpty) {
       return null
     }
 
@@ -257,10 +246,10 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
       return null
     }
     val elements = mutableListOf<PsiElement>()
-    collectElementsIntersectingRange(commonParent, range, elements)
+    collectElementsIntersectingRange(commonParent, formattingRange, elements)
     val content = elements.filter { element ->
       isFormattingContentElement(element)
-      && range.containsRange(element.textRange.startOffset, element.textRange.endOffset)
+      && formattingRange.containsRange(element.textRange.startOffset, element.textRange.endOffset)
     }
     if (content.isEmpty()) {
       return null
@@ -269,6 +258,21 @@ abstract class BaseToggleStateAction: ToggleAction(), DumbAware {
       element.node?.elementType == targetNodeType
       && content.all { PsiTreeUtil.isAncestor(element, it, false) }
     }
+  }
+
+  private fun getFormattingRange(text: CharSequence, range: TextRange): TextRange {
+    if (!shouldMoveToWordBounds()) {
+      return range
+    }
+    var startOffset = range.startOffset
+    var endOffset = range.endOffset
+    while (startOffset < endOffset && Character.isWhitespace(text[startOffset])) {
+      startOffset++
+    }
+    while (startOffset < endOffset && Character.isWhitespace(text[endOffset - 1])) {
+      endOffset--
+    }
+    return TextRange(startOffset, endOffset)
   }
 
   private fun collectElementsIntersectingRange(
