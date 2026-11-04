@@ -5,6 +5,7 @@ package com.intellij.ide.util.treeView
 import com.intellij.openapi.util.Key
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
+import com.intellij.ui.treeStructure.BgtAwareTreeModel
 import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
@@ -88,7 +89,12 @@ private class TreeChildrenPreloader(private val tree: JTree) {
       val path = tree.getPathForRow(row) ?: continue
       val value = path.lastPathComponent
       if (!model.isLeaf(value)) {
-        model.getChildCount(value)
+        if (model is BgtAwareTreeModel) {
+          model.loadChildren(path)
+        }
+        else {
+          model.getChildCount(value)
+        }
       }
     }
   }

@@ -41,6 +41,14 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
       }
     }
 
+  /**
+   * Loads the children of a node when [loadChildren] asks for them.
+   *
+   * The model itself loads nothing, so [loadChildren] does nothing without a loader.
+   * The loader must follow the contract of [loadChildren].
+   */
+  var childrenLoader: ((DefaultMutableTreeNode) -> Unit)? = null
+
   @ApiStatus.Internal
   override fun applyAlreadyLoadedNodesTo(cachedPresentation: CachedTreePresentation) {
     LOG.debug("Applying the already loaded nodes to the cached presentation before using it")
@@ -101,6 +109,11 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
 
   override fun valueForPathChanged(path: TreePath, newValue: Any) {
     throw UnsupportedOperationException("Not supported unless overridden")
+  }
+
+  override fun loadChildren(path: TreePath) {
+    val node = path.lastPathComponent as? DefaultMutableTreeNode ?: return
+    childrenLoader?.invoke(node)
   }
 
   fun setRoot(newRoot: DefaultMutableTreeNode?) {
