@@ -44,6 +44,9 @@ dev_plugin(
     ],
     descriptor = "//build/dev-dist-descriptors/intellij.javaFX.community:intellij.javaFX.community_dev_descriptor",
     jars = {
+        "lib/javaFX-community.jar": [
+            "intellij.javaFX.community",
+        ],
         "lib/javaFX-jps.jar": [
             "intellij.javaFX.jps",
         ],
@@ -53,9 +56,6 @@ dev_plugin(
         "lib/rt/sceneBuilderBridge.jar": [
             "intellij.javaFX.sceneBuilder",
         ],
-        "lib/javaFX.jar": [
-            "intellij.javaFX.community",
-        ],
     },
     main_module = "intellij.javaFX.community",
     modules = {
@@ -64,7 +64,7 @@ dev_plugin(
         "//plugins/javaFX/jps": "intellij.javaFX.jps",
         "//plugins/javaFX/sceneBuilder": "intellij.javaFX.sceneBuilder",
     },
-    plugin_directory = "plugins/javaFX",
+    plugin_directory = "plugins/javaFX-community",
     stamp_class_modes = [
         "frontend",
     ],
