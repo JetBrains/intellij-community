@@ -22,6 +22,8 @@ import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlow
 
 /**
  * Builds and keeps the editor and console fonts of one scheme.
+ * The fonts follow the font preferences of the scheme: a call that finds other preference snapshots builds the fonts again.
+ * A {@link #reset()} makes the next call build the fonts again, for a change outside the font preferences.
  * The application service {@link GlobalSchemeFontCache} and each {@link AbstractColorsScheme} hold an instance.
  */
 @ApiStatus.Internal
@@ -40,8 +42,13 @@ public final class EditorFontCacheImpl extends EditorFontCache {
   @Override
   public @NotNull Font getFont(@Nullable EditorFontType key) {
     EditorFonts fonts = this.fonts;
-    if (fonts.isEmpty()) {
-      EditorFonts newFonts = buildFonts();
+    EditorColorsScheme scheme = schemeSupplier.get();
+    FontPreferences schemePreferences = scheme.getFontPreferences();
+    FontPreferences preferences = schemePreferences.getSnapshot();
+    FontPreferences consolePreferences = scheme.getConsoleFontPreferences().getSnapshot();
+    if (!fonts.isBuiltFrom(preferences, consolePreferences)) {
+      boolean delegating = schemePreferences instanceof DelegatingFontPreferences;
+      EditorFonts newFonts = buildFonts(scheme, delegating, preferences, consolePreferences);
       FONTS_UPDATER.compareAndSet(this, fonts, newFonts);
       fonts = newFonts;
     }
@@ -63,17 +70,18 @@ public final class EditorFontCacheImpl extends EditorFontCache {
    * Builds the fonts from two snapshots, so the editor fonts come from one version of their preferences.
    * The console fonts also come from one version of their preferences.
    */
-  private @NotNull EditorFonts buildFonts() {
-    EditorColorsScheme scheme = schemeSupplier.get();
-    FontPreferences schemePreferences = scheme.getFontPreferences();
-    FontPreferences preferences = schemePreferences.getSnapshot();
-    FontPreferences consolePreferences = scheme.getConsoleFontPreferences().getSnapshot();
+  private static @NotNull EditorFonts buildFonts(
+    @NotNull EditorColorsScheme scheme,
+    boolean delegating,
+    @NotNull FontPreferences preferences,
+    @NotNull FontPreferences consolePreferences
+  ) {
     String editorFontName = getEditorFontName(preferences);
     String consoleFontName = consolePreferences.getFontFamily();
     float editorFontSize = preferences.getSize2D(preferences.getFontFamily());
     float consoleFontSize = getConsoleFontSize(consolePreferences, consoleFontName, editorFontSize);
     if (LOG.isDebugEnabled()) {
-      logDebug(scheme, schemePreferences instanceof DelegatingFontPreferences, editorFontName, editorFontSize);
+      logDebug(scheme, delegating, editorFontName, editorFontSize);
     }
     return EditorFonts.empty().with(
       editorFontName,

@@ -74,7 +74,6 @@ a:com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 - sf:NAME_KEY_PROPERTY:java.lang.String
 - sf:NULL_COLOR_MARKER:java.awt.Color
 - s:getSchemeById:java.util.function.Function
-- p:parentScheme:com.intellij.openapi.editor.colors.EditorColorsScheme
 - <init>():V
 - p:<init>(com.intellij.openapi.editor.colors.EditorColorsScheme):V
 - ps:areDelegatingOrEqual(com.intellij.openapi.editor.colors.FontPreferences,com.intellij.openapi.editor.colors.FontPreferences):Z

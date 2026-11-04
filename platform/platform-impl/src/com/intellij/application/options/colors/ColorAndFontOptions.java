@@ -1446,7 +1446,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public @Nullable AbstractColorsScheme getOriginal() {
-      return parentScheme instanceof AbstractColorsScheme scheme ? scheme.getOriginal() : null;
+      return getParentScheme() instanceof AbstractColorsScheme scheme ? scheme.getOriginal() : null;
     }
 
     @Override
@@ -1476,7 +1476,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public boolean isReadOnly() {
-      return parentScheme.isReadOnly();
+      return getParentScheme().isReadOnly();
     }
 
     public boolean isModified() {
@@ -1496,18 +1496,19 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     @Override
     public boolean canBeDeleted() {
-      return (parentScheme instanceof AbstractColorsScheme scheme) && scheme.canBeDeleted();
+      return (getParentScheme() instanceof AbstractColorsScheme scheme) && scheme.canBeDeleted();
     }
 
     private boolean isFontModified() {
-      return !areDelegatingOrEqual(getFontPreferences(), parentScheme.getFontPreferences());
+      return !areDelegatingOrEqual(getFontPreferences(), getParentScheme().getFontPreferences());
     }
 
     private boolean isConsoleFontModified() {
-      return !areDelegatingOrEqual(getConsoleFontPreferences(), parentScheme.getConsoleFontPreferences());
+      return !areDelegatingOrEqual(getConsoleFontPreferences(), getParentScheme().getConsoleFontPreferences());
     }
 
     protected boolean apply() {
+      EditorColorsScheme parentScheme = getParentScheme();
       return !parentScheme.isReadOnly() && apply(parentScheme);
     }
 
@@ -1565,7 +1566,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     public boolean isInherited(@NotNull TextAttributesKey key) {
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       if (fallbackKey != null) {
-        if (parentScheme instanceof AbstractColorsScheme scheme) {
+        if (getParentScheme() instanceof AbstractColorsScheme scheme) {
           TextAttributes ownAttrs = scheme.getDirectlyDefinedAttributes(key);
           if (ownAttrs != null) {
             return ownAttrs == INHERITED_ATTRS_MARKER;
@@ -1583,7 +1584,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     public boolean isInherited(ColorKey key) {
       ColorKey fallbackKey = key.getFallbackColorKey();
       if (fallbackKey != null) {
-        if (parentScheme instanceof AbstractColorsScheme scheme) {
+        if (getParentScheme() instanceof AbstractColorsScheme scheme) {
           Color ownAttrs = scheme.getDirectlyDefinedColor(key);
           if (ownAttrs != null) {
             return ownAttrs == INHERITED_COLOR_MARKER;
@@ -1599,7 +1600,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     }
 
     public void resetToOriginal() {
-      if (parentScheme instanceof AbstractColorsScheme scheme) {
+      if (getParentScheme() instanceof AbstractColorsScheme scheme) {
         AbstractColorsScheme originalScheme = scheme.getOriginal();
         if (originalScheme != null) {
           copyPreservingFileStatusColors(originalScheme, scheme);

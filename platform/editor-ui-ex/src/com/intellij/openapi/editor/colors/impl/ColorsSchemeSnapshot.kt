@@ -1,0 +1,272 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.colors.impl
+
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.FontPreferences
+import com.intellij.openapi.editor.markup.TextAttributes
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
+import java.util.Collections
+import java.util.function.BiPredicate
+
+/**
+ * An immutable snapshot of the state of one [AbstractColorsScheme].
+ * It has the name, the version and the parent scheme of the scheme, and it tells if a user can delete the scheme.
+ * It has the font preferences of the editor and of the console.
+ * It also has the colors and the text attributes that the scheme defines itself, without the values of the parent scheme.
+ * The scheme keeps its current snapshot in one volatile field and replaces the snapshot on each change.
+ * A `with` function returns a new snapshot, or this snapshot when no value changes.
+ * The snapshots are safe to use on any thread.
+ * A [TextAttributes] object is mutable, so a caller must not change the text attributes of a snapshot.
+ */
+@ApiStatus.Internal
+class ColorsSchemeSnapshot private constructor(
+  private val schemeName: String?, // null until the scheme gets a name
+  private val version: Int, // the version of the XML format
+  private val parentScheme: EditorColorsScheme?,
+  private val canBeDeleted: Boolean,
+  private val fontPreferences: FontPreferences, // the own preferences of the scheme, or a delegate to the application font
+  private val consoleFontPreferences: FontPreferences, // the own preferences of the scheme, or a delegate to the editor font
+  private val colors: Map<ColorKey, Color>,
+  private val attributes: Map<String, TextAttributes>, // the text attributes by the external name of their key
+) {
+  fun schemeName(): String? = schemeName
+
+  fun version(): Int = version
+
+  fun parentScheme(): EditorColorsScheme? = parentScheme
+
+  fun canBeDeleted(): Boolean = canBeDeleted
+
+  fun fontPreferences(): FontPreferences = fontPreferences
+
+  fun consoleFontPreferences(): FontPreferences = consoleFontPreferences
+
+  /**
+   * Returns the console font size that the scheme keeps.
+   * Unlike [AbstractColorsScheme.getConsoleFontSize2D], it ignores the application console options and presentation mode.
+   */
+  fun consoleFontSize2D(): Float {
+    val consoleFontFamily = consoleFontPreferences.fontFamily
+    if (consoleFontPreferences.hasSize(consoleFontFamily)) {
+      return consoleFontPreferences.getSize2D(consoleFontFamily)
+    }
+    return fontPreferences.getSize2D(fontPreferences.fontFamily)
+  }
+
+  /**
+   * Returns the colors by their keys.
+   * The map is unmodifiable.
+   */
+  fun colors(): Map<ColorKey, Color> = colors
+
+  /**
+   * Returns the text attributes by the external names of their keys.
+   * The map is unmodifiable.
+   */
+  fun attributes(): Map<String, TextAttributes> = attributes
+
+  fun getColor(key: ColorKey): Color? {
+    return colors[key]
+  }
+
+  fun getAttributes(keyName: String): TextAttributes? {
+    return attributes[keyName]
+  }
+
+  fun withSchemeName(schemeName: String): ColorsSchemeSnapshot {
+    return copy(schemeName = schemeName)
+  }
+
+  fun withVersion(version: Int): ColorsSchemeSnapshot {
+    return copy(version = version)
+  }
+
+  fun withParentScheme(parentScheme: EditorColorsScheme?): ColorsSchemeSnapshot {
+    return copy(parentScheme = parentScheme)
+  }
+
+  fun withCanBeDeleted(canBeDeleted: Boolean): ColorsSchemeSnapshot {
+    return copy(canBeDeleted = canBeDeleted)
+  }
+
+  fun withFontPreferences(fontPreferences: FontPreferences): ColorsSchemeSnapshot {
+    return copy(fontPreferences = fontPreferences)
+  }
+
+  fun withConsoleFontPreferences(consoleFontPreferences: FontPreferences): ColorsSchemeSnapshot {
+    return copy(consoleFontPreferences = consoleFontPreferences)
+  }
+
+  fun withColor(key: ColorKey, color: Color): ColorsSchemeSnapshot {
+    return copy(colors = putValue(colors, key, color))
+  }
+
+  fun withAttributes(keyName: String, textAttributes: TextAttributes): ColorsSchemeSnapshot {
+    return copy(attributes = putValue(attributes, keyName, textAttributes))
+  }
+
+  /**
+   * Returns this snapshot with all [newColors].
+   * A new color replaces the color of the same key.
+   */
+  fun withAllColors(newColors: Map<ColorKey, Color>): ColorsSchemeSnapshot {
+    return copy(colors = putAllValues(colors, newColors))
+  }
+
+  /**
+   * Returns this snapshot with all [newAttributes].
+   * New text attributes replace the text attributes of the same key name.
+   */
+  fun withAllAttributes(newAttributes: Map<String, TextAttributes>): ColorsSchemeSnapshot {
+    return copy(attributes = putAllValues(attributes, newAttributes))
+  }
+
+  /**
+   * Returns this snapshot with the colors and the text attributes of [other] instead of its own.
+   * The other values of this snapshot do not change.
+   */
+  fun withColorsAndAttributesOf(other: ColorsSchemeSnapshot): ColorsSchemeSnapshot {
+    return copy(colors = other.colors, attributes = other.attributes)
+  }
+
+  /**
+   * Returns this snapshot with the colors and the text attributes of [other] whose keys this snapshot does not have.
+   */
+  fun withMissing(other: ColorsSchemeSnapshot): ColorsSchemeSnapshot {
+    return copy(
+      colors = putMissingValues(colors, other.colors),
+      attributes = putMissingValues(attributes, other.attributes),
+    )
+  }
+
+  /**
+   * Returns this snapshot without the colors that match [predicate].
+   */
+  fun withoutColors(predicate: BiPredicate<in ColorKey, in Color>): ColorsSchemeSnapshot {
+    return copy(colors = removeValues(colors, predicate))
+  }
+
+  /**
+   * Returns this snapshot without the text attributes that match [predicate].
+   */
+  fun withoutAttributes(predicate: BiPredicate<in String, in TextAttributes>): ColorsSchemeSnapshot {
+    return copy(attributes = removeValues(attributes, predicate))
+  }
+
+  private fun copy(
+    schemeName: String? = this.schemeName,
+    version: Int = this.version,
+    parentScheme: EditorColorsScheme? = this.parentScheme,
+    canBeDeleted: Boolean = this.canBeDeleted,
+    fontPreferences: FontPreferences = this.fontPreferences,
+    consoleFontPreferences: FontPreferences = this.consoleFontPreferences,
+    colors: Map<ColorKey, Color> = this.colors,
+    attributes: Map<String, TextAttributes> = this.attributes,
+  ): ColorsSchemeSnapshot {
+    if (schemeName == this.schemeName &&
+        version == this.version &&
+        parentScheme === this.parentScheme &&
+        canBeDeleted == this.canBeDeleted &&
+        fontPreferences === this.fontPreferences &&
+        consoleFontPreferences === this.consoleFontPreferences &&
+        colors === this.colors &&
+        attributes === this.attributes) {
+      return this
+    }
+    return ColorsSchemeSnapshot(
+      schemeName,
+      version,
+      parentScheme,
+      canBeDeleted,
+      fontPreferences,
+      consoleFontPreferences,
+      colors,
+      attributes,
+    )
+  }
+
+  companion object {
+    /**
+     * Returns the snapshot of a new scheme with [fontPreferences] and [consoleFontPreferences].
+     * The scheme has no name, no parent scheme, no colors and no text attributes, and a user can delete it.
+     * Its version is [AbstractColorsScheme.CURR_VERSION].
+     */
+    @JvmStatic
+    fun initial(fontPreferences: FontPreferences, consoleFontPreferences: FontPreferences): ColorsSchemeSnapshot {
+      return ColorsSchemeSnapshot(
+        schemeName = null,
+        version = AbstractColorsScheme.CURR_VERSION,
+        parentScheme = null,
+        canBeDeleted = true,
+        fontPreferences = fontPreferences,
+        consoleFontPreferences = consoleFontPreferences,
+        colors = emptyMap(),
+        attributes = emptyMap(),
+      )
+    }
+  }
+}
+
+/**
+ * Returns [map] with [value] for [key].
+ * Returns [map] itself when it already has this value object for the key.
+ */
+private fun <K, V : Any> putValue(map: Map<K, V>, key: K, value: V): Map<K, V> {
+  if (map[key] === value) {
+    return map
+  }
+  val result = HashMap(map)
+  result[key] = value
+  return Collections.unmodifiableMap(result)
+}
+
+/**
+ * Returns [map] with all [entries].
+ * Returns [map] itself when it already has the value object of each entry.
+ */
+private fun <K, V : Any> putAllValues(map: Map<K, V>, entries: Map<K, V>): Map<K, V> {
+  if (entries.all { (key, value) -> map[key] === value }) {
+    return map
+  }
+  val result = HashMap(map)
+  result.putAll(entries)
+  return Collections.unmodifiableMap(result)
+}
+
+/**
+ * Returns [map] with the [entries] whose keys [map] does not have.
+ * Returns [map] itself when it has all the keys.
+ */
+private fun <K, V : Any> putMissingValues(map: Map<K, V>, entries: Map<K, V>): Map<K, V> {
+  if (map.keys.containsAll(entries.keys)) {
+    return map
+  }
+  val result = HashMap(map)
+  for ((key, value) in entries) {
+    result.putIfAbsent(key, value)
+  }
+  return Collections.unmodifiableMap(result)
+}
+
+/**
+ * Returns [map] without the entries that match [predicate].
+ * Returns [map] itself when no entry matches.
+ * The predicate runs once for each entry.
+ */
+private fun <K, V : Any> removeValues(map: Map<K, V>, predicate: BiPredicate<in K, in V>): Map<K, V> {
+  var result: HashMap<K, V>? = null
+  for ((key, value) in map) {
+    if (predicate.test(key, value)) {
+      if (result == null) {
+        result = HashMap(map)
+      }
+      result.remove(key)
+    }
+  }
+  if (result == null) {
+    return map
+  }
+  return Collections.unmodifiableMap(result)
+}

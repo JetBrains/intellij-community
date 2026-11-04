@@ -1,0 +1,142 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.colors.impl
+
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.FontPreferences
+import com.intellij.openapi.editor.markup.TextAttributes
+import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.junit.jupiter.api.Test
+import java.awt.Color
+import java.awt.Font
+
+internal class ColorsSchemeSnapshotTest {
+  @Test
+  fun `a with function returns the same snapshot for the same value object`() {
+    val current = newSnapshot()
+      .withColor(FIRST, Color.RED)
+      .withAttributes(FIRST_NAME, BOLD)
+    assertThat(current.withColor(FIRST, Color.RED)).isSameAs(current)
+    assertThat(current.withAttributes(FIRST_NAME, BOLD)).isSameAs(current)
+    assertThat(current.withAllColors(mapOf(FIRST to Color.RED))).isSameAs(current)
+    assertThat(current.withAllAttributes(emptyMap())).isSameAs(current)
+  }
+
+  @Test
+  fun `a change makes a new snapshot and keeps the old one`() {
+    val before = newSnapshot().withColor(FIRST, Color.RED)
+    val after = before.withColor(FIRST, Color.BLUE)
+    assertThat(before.getColor(FIRST)).isEqualTo(Color.RED)
+    assertThat(after.getColor(FIRST)).isEqualTo(Color.BLUE)
+  }
+
+  @Test
+  fun `withAllAttributes replaces the text attributes of the same key name`() {
+    val before = newSnapshot().withAttributes(FIRST_NAME, BOLD)
+    val after = before.withAllAttributes(mapOf(FIRST_NAME to ITALIC, SECOND_NAME to BOLD))
+    assertThat(after.attributes()).containsExactlyInAnyOrderEntriesOf(mapOf(FIRST_NAME to ITALIC, SECOND_NAME to BOLD))
+  }
+
+  @Test
+  fun `withMissing keeps the own values and adds the missing ones`() {
+    val own = newSnapshot().withColor(FIRST, Color.RED)
+    val other = newSnapshot()
+      .withColor(FIRST, Color.BLUE)
+      .withColor(SECOND, Color.GREEN)
+      .withAttributes(FIRST_NAME, BOLD)
+    val result = own.withMissing(other)
+    assertThat(result.colors()).containsExactlyInAnyOrderEntriesOf(mapOf(FIRST to Color.RED, SECOND to Color.GREEN))
+    assertThat(result.getAttributes(FIRST_NAME)).isSameAs(BOLD)
+    assertThat(result.withMissing(other)).isSameAs(result)
+  }
+
+  @Test
+  fun `a without function removes only the matching values`() {
+    val before = newSnapshot()
+      .withColor(FIRST, Color.RED)
+      .withColor(SECOND, Color.BLUE)
+      .withAttributes(FIRST_NAME, BOLD)
+    val after = before
+      .withoutColors { _, color -> color == Color.BLUE }
+      .withoutAttributes { keyName, _ -> keyName == FIRST_NAME }
+    assertThat(after.colors()).containsExactlyEntriesOf(mapOf(FIRST to Color.RED))
+    assertThat(after.attributes()).isEmpty()
+    assertThat(after.withoutColors { _, _ -> false }).isSameAs(after)
+  }
+
+  @Test
+  fun `the maps of a snapshot are unmodifiable`() {
+    val current = newSnapshot().withColor(FIRST, Color.RED)
+    @Suppress("UNCHECKED_CAST")
+    val colors = current.colors() as MutableMap<ColorKey, Color>
+    assertThatThrownBy {
+      colors[SECOND] = Color.BLUE
+    }.isInstanceOf(UnsupportedOperationException::class.java)
+  }
+
+  @Test
+  fun `a state with function returns the same snapshot for the same value`() {
+    val current = newSnapshot()
+      .withSchemeName("Scheme")
+      .withVersion(1)
+      .withCanBeDeleted(false)
+    assertThat(current.withSchemeName("Scheme")).isSameAs(current)
+    assertThat(current.withVersion(1)).isSameAs(current)
+    assertThat(current.withCanBeDeleted(false)).isSameAs(current)
+    assertThat(current.withParentScheme(null)).isSameAs(current)
+  }
+
+  @Test
+  fun `withColorsAndAttributesOf takes only the colors and the text attributes`() {
+    val source = newSnapshot()
+      .withSchemeName("Source")
+      .withVersion(1)
+      .withCanBeDeleted(false)
+      .withColor(FIRST, Color.RED)
+      .withAttributes(FIRST_NAME, BOLD)
+    val target = newSnapshot().withSchemeName("Target")
+    val result = target.withColorsAndAttributesOf(source)
+    assertThat(result.schemeName()).isEqualTo("Target")
+    assertThat(result.version()).isEqualTo(AbstractColorsScheme.CURR_VERSION)
+    assertThat(result.canBeDeleted()).isTrue()
+    assertThat(result.fontPreferences()).isSameAs(target.fontPreferences())
+    assertThat(result.colors()).isSameAs(source.colors())
+    assertThat(result.attributes()).isSameAs(source.attributes())
+  }
+
+  @Test
+  fun `a font with function returns the same snapshot for the same object`() {
+    val current = newSnapshot()
+    assertThat(current.withFontPreferences(current.fontPreferences())).isSameAs(current)
+    assertThat(current.withConsoleFontPreferences(current.consoleFontPreferences())).isSameAs(current)
+    assertThat(current.withFontPreferences(FontPreferences())).isNotSameAs(current)
+  }
+
+  @Test
+  fun `the console font size falls back to the editor font size`() {
+    val editorFont = FontPreferencesImpl()
+    editorFont.register(EDITOR_FAMILY, 13f)
+    val consoleFont = FontPreferencesImpl()
+    consoleFont.addFontFamily(CONSOLE_FAMILY)
+    val current = ColorsSchemeSnapshot.initial(editorFont, consoleFont)
+    assertThat(current.consoleFontSize2D()).isEqualTo(13f)
+    consoleFont.register(CONSOLE_FAMILY, 20f)
+    assertThat(current.consoleFontSize2D()).isEqualTo(20f)
+  }
+
+  private fun newSnapshot(): ColorsSchemeSnapshot {
+    return ColorsSchemeSnapshot.initial(FontPreferences(), FontPreferences())
+  }
+
+  private companion object {
+    const val EDITOR_FAMILY = "ColorsSchemeSnapshotTest.editorFamily"
+    const val CONSOLE_FAMILY = "ColorsSchemeSnapshotTest.consoleFamily"
+
+    val FIRST: ColorKey = ColorKey.createColorKey("ColorsSchemeSnapshotTest.first")
+    val SECOND: ColorKey = ColorKey.createColorKey("ColorsSchemeSnapshotTest.second")
+    const val FIRST_NAME = "ColorsSchemeSnapshotTest.firstAttributes"
+    const val SECOND_NAME = "ColorsSchemeSnapshotTest.secondAttributes"
+    val BOLD = TextAttributes(null, null, null, null, Font.BOLD)
+    val ITALIC = TextAttributes(null, null, null, null, Font.ITALIC)
+  }
+}

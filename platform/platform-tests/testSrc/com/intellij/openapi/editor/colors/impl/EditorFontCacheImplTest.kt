@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.EditorFontCache
 import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.colors.ModifiableFontPreferences
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -16,20 +17,47 @@ import java.util.function.Supplier
 @TestApplication
 internal class EditorFontCacheImplTest {
   @Test
-  fun `the cache builds the fonts once without a reset`() {
-    val counter = BuildCounter()
-    counter.cache.getFont(EditorFontType.PLAIN)
-    counter.cache.getFont(EditorFontType.BOLD)
-    assertThat(counter.builds).isEqualTo(1)
+  fun `the cache builds the fonts once without a change`() {
+    val cache = EditorFontCacheImpl { EditorColorsManager.getInstance().globalScheme }
+    val plain = cache.getFont(EditorFontType.PLAIN)
+    assertThat(cache.getFont(EditorFontType.PLAIN)).isSameAs(plain)
   }
 
   @Test
   fun `a reset during a build makes the next call build again`() {
-    val counter = BuildCounter()
-    counter.resetDuringNextBuild = true
-    counter.cache.getFont(EditorFontType.PLAIN)
-    counter.cache.getFont(EditorFontType.PLAIN)
-    assertThat(counter.builds).isEqualTo(2)
+    val supplier = ResettingSupplier()
+    supplier.resetDuringNextCall = true
+    val first = supplier.cache.getFont(EditorFontType.PLAIN)
+    val second = supplier.cache.getFont(EditorFontType.PLAIN)
+    assertThat(second).isNotSameAs(first)
+    assertThat(supplier.cache.getFont(EditorFontType.PLAIN)).isSameAs(second)
+  }
+
+  @Test
+  fun `a change of the font preferences in place gives new fonts`() {
+    val scheme = EditorColorsSchemeImpl(null)
+    scheme.setEditorFontSize(13f)
+    scheme.getFont(EditorFontType.PLAIN)
+    val preferences = scheme.fontPreferences as ModifiableFontPreferences
+    preferences.register(preferences.fontFamily, 17f)
+    assertThat(scheme.getFont(EditorFontType.PLAIN).size2D).isEqualTo(17f)
+  }
+
+  @Test
+  fun `a change of the application console font reaches the console fonts of a scheme`() {
+    val scheme = EditorColorsSchemeImpl(null)
+    scheme.setEditorFontSize(13f)
+    val consoleFontOptions = AppConsoleFontOptions.getInstance()
+    val useEditorFont = consoleFontOptions.isUseEditorFont
+    consoleFontOptions.isUseEditorFont = false
+    try {
+      val appConsoleFont = consoleFontOptions.fontPreferences as ModifiableFontPreferences
+      scheme.getFont(EditorFontType.CONSOLE_PLAIN)
+      appConsoleFont.register(appConsoleFont.fontFamily, 23f)
+      assertThat(scheme.getFont(EditorFontType.CONSOLE_PLAIN).size2D).isEqualTo(23f)
+    } finally {
+      consoleFontOptions.isUseEditorFont = useEditorFont
+    }
   }
 
   @Test
@@ -93,18 +121,16 @@ internal class EditorFontCacheImplTest {
   }
 
   /**
-   * Counts the font builds of [cache], because each build starts with a call of this supplier.
-   * A reset in this call acts like a font change on another thread during the build.
+   * Gives the global scheme to [cache], and resets the cache in the next call when [resetDuringNextCall] is set.
+   * The cache calls the supplier after it reads its fonts, so the reset acts like a reset on another thread during a build.
    */
-  private class BuildCounter : Supplier<EditorColorsScheme> {
+  private class ResettingSupplier : Supplier<EditorColorsScheme> {
     val cache = EditorFontCacheImpl(this)
-    var builds = 0
-    var resetDuringNextBuild = false
+    var resetDuringNextCall = false
 
     override fun get(): EditorColorsScheme {
-      builds++
-      if (resetDuringNextBuild) {
-        resetDuringNextBuild = false
+      if (resetDuringNextCall) {
+        resetDuringNextCall = false
         cache.reset()
       }
       return EditorColorsManager.getInstance().globalScheme
