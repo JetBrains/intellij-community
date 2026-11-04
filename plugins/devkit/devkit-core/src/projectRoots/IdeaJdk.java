@@ -205,7 +205,10 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
     appendIdeaLibrary(plugins + "DatabaseTools", result, "grid.jar", "grid-core.jar", "database-impl.jar", "jdbc-console.jar");
     appendIdeaLibrary(plugins + "css", result, "css.jar");
-    appendIdeaLibrary(plugins + "uml", result, "uml-support.jar");
+    // "uml" is the directory of the Diagrams plugin in older IDEs
+    for (String diagramDirName : List.of("diagram", "uml")) {
+      appendIdeaLibrary(plugins + diagramDirName, result, "diagram-plugin.jar", "uml-support.jar");
+    }
     appendIdeaLibrary(plugins + "Spring", result,
                       "spring.jar", "spring-el.jar", "spring-jsf.jar", "spring-persistence-integration.jar");
     return VfsUtilCore.toVirtualFileArray(result);
