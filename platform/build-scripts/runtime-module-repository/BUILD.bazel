@@ -21,6 +21,15 @@ java_binary(
     runtime_deps = [":runtime-module-repository"],
 )
 
+# The writer of the module facts that the generator reads instead of the project model tree. See `RuntimeModuleFactsMain.kt`.
+java_binary(
+    name = "runtime_module_facts_writer",
+    jvm_flags = ["-Djava.awt.headless=true"],
+    main_class = "com.intellij.platform.buildScripts.runtimeModuleRepository.RuntimeModuleFactsMain",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":runtime-module-repository"],
+)
+
 ### auto-generated section `build intellij.platform.buildScripts.runtimeModuleRepository` start
 jvm_library(
     name = "runtime-module-repository",

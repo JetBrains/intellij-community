@@ -144,6 +144,45 @@ def _dev_dist_runtime_module_repository_impl(ctx):
         OutputGroupInfo(runtime_module_repository_layout = depset([layout])),
     ]
 
+def _jvm_tool_resources(_os, _inputs):
+    """A JVM tool that loads the project model. It peaks at about 840 MiB."""
+    return {"cpu": 1, "memory": 1024}
+
+def _dev_dist_runtime_module_facts_impl(ctx):
+    output = ctx.actions.declare_file(ctx.label.name + ".json")
+    project_tree = ctx.attr.project_model_tree[IntellijProjectModelTreeInfo].tree
+    args = ctx.actions.args()
+    args.add("--project-dir=" + project_tree.path)
+    args.add(output, format = "--output=%s")
+    ctx.actions.run(
+        mnemonic = "DevDistRuntimeModuleFacts",
+        executable = ctx.executable._writer,
+        inputs = [project_tree],
+        outputs = [output],
+        arguments = [args],
+        # It reads the shared project model tree, as the references do, so it uses the local disk cache only.
+        execution_requirements = {"block-network": "1", "no-remote-cache": "1", "no-remote-exec": "1"},
+        resource_set = _jvm_tool_resources,
+        progress_message = "Writing the runtime module facts of %{label}",
+    )
+    return [DefaultInfo(files = depset([output]))]
+
+dev_dist_runtime_module_facts = rule(
+    doc = """Writes the runtime module facts of every module of a project model tree, see `RuntimeModuleFactsTable`.
+
+One target serves every product. The runtime layout of a product selects the facts of its modules, so an edit of the
+project model re-runs the repository action of a product only when a fact of one of its modules changes.""",
+    implementation = _dev_dist_runtime_module_facts_impl,
+    attrs = {
+        "project_model_tree": attr.label(mandatory = True, providers = [IntellijProjectModelTreeInfo]),
+        "_writer": attr.label(
+            default = "//platform/build-scripts/runtime-module-repository:runtime_module_facts_writer",
+            executable = True,
+            cfg = "exec",
+        ),
+    },
+)
+
 dev_dist_runtime_module_repository = rule(
     doc = """Writes `modules/module-descriptors.dat` and `modules/module-descriptors.jar` of a dev distribution.
 
