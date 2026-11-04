@@ -461,7 +461,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
               !(testModule.name == "intellij.idea.ultimate.codeInsight.tests" && options.testGroups?.split(';')?.any { it == GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED || it == "IdeaSmokeTests" } == true) &&
               !(testModule.name == "intellij.gradle.java.tests" && options.testGroups?.split(';')?.contains("GRADLE_ON_EEL_INTEGRATION_TESTS") == true) &&
               !(testModule.name == "intellij.gradle.tests" && options.testGroups?.split(';')?.contains("GRADLE_ON_EEL_INTEGRATION_TESTS") == true) &&
-              !(testModule.name == "intellij.maven.tests" && options.testGroups?.split(';')?.contains("MAVEN_IN_DOCKER_INTEGRATION_TESTS") == true)
+              !(testModule.name == "intellij.maven.integration.tests" && options.testGroups?.split(';')?.contains("MAVEN_IN_DOCKER_INTEGRATION_TESTS") == true)
             } ?: mainModule,
             testGroups = options.testGroups,
             testPatterns = options.testPatterns,
