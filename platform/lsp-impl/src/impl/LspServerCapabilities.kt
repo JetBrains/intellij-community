@@ -112,6 +112,10 @@ internal fun LspClientImpl.supportsInlayHints(file: VirtualFile): Boolean =
   serverCapabilities?.inlayHintProvider?.let { it.left ?: true }
   ?: hasDynamicCapabilityToHandleThisFile(file, LspDynamicCapabilities.inlayHint)
 
+internal fun LspClientImpl.supportsInlayHintResolve(file: VirtualFile): Boolean =
+  serverCapabilities?.inlayHintProvider?.right?.let { it.resolveProvider == true && documentSelectorMatches(it, file) } == true ||
+  getDynamicCapabilityOptionsListForFile(file, LspDynamicCapabilities.inlayHint).any { it.resolveProvider == true }
+
 internal fun LspClientImpl.supportsDocumentHighlights(file: VirtualFile): Boolean =
   serverCapabilities?.documentHighlightProvider?.let { it.left ?: true }
   ?: hasDynamicCapabilityToHandleThisFile(file, LspDynamicCapabilities.documentHighlight)
