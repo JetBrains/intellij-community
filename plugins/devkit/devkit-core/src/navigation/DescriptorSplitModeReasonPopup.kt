@@ -305,35 +305,29 @@ private class ReasonHtmlBuilder(
         is DependencyTraceStep.Descriptor -> rows.add(ChainRow.Node(descriptorIcon(step.descriptorName, step.moduleName),
                                                                     descriptorNode(step.descriptorName, step.moduleName)))
         is DependencyTraceStep.ViaDependency -> {
-          if (steps.getOrNull(index + 1) is DependencyTraceStep.Predefined) {
-            // The predefined dependency ends the path, so one node shows its name and its kind.
-            rows.add(ChainRow.Edge(edgeLabel("inlay.split.mode.reason.popup.edge.depends.on", HtmlChunk.empty())))
-            rows.add(ChainRow.Node(kindIcon(evidence.kind), HtmlBuilder()
-              .append(code(step.dependencyName))
-              .append(" ")
-              .append(secondary(DevKitBundle.message("inlay.split.mode.reason.popup.predefined.dependency")))
-              .toFragment()))
+          // The next node shows the name already when it is the dependency itself.
+          // An alias or a plugin id differs from the name of the next node, so the edge keeps it.
+          val isNamedByNextNode = when (val nextStep = steps.getOrNull(index + 1)) {
+            is DependencyTraceStep.Descriptor -> nextStep.descriptorName == "${step.dependencyName}.xml"
+            is DependencyTraceStep.Predefined -> nextStep.moduleName == step.dependencyName
+            is DependencyTraceStep.ViaDependency,
+            is DependencyTraceStep.ContentModule,
+            DependencyTraceStep.ContainingPlugin,
+            is DependencyTraceStep.ImpliedRpc,
+            null,
+              -> false
           }
-          else {
-            // The next node shows the name already when its descriptor is named after the dependency.
-            val nextStep = steps.getOrNull(index + 1)
-            val isNamedByNextNode = nextStep is DependencyTraceStep.Descriptor && nextStep.descriptorName == "${step.dependencyName}.xml"
-            val dependencyName = if (isNamedByNextNode) HtmlChunk.empty() else code(step.dependencyName)
-            rows.add(ChainRow.Edge(edgeLabel("inlay.split.mode.reason.popup.edge.depends.on", dependencyName)))
-          }
+          val dependencyName = if (isNamedByNextNode) HtmlChunk.empty() else code(step.dependencyName)
+          rows.add(ChainRow.Edge(edgeLabel("inlay.split.mode.reason.popup.edge.depends.on", dependencyName)))
         }
         is DependencyTraceStep.ContentModule -> rows.add(ChainRow.Edge(edgeLabel("inlay.split.mode.reason.popup.edge.content.module",
                                                                                  text(step.loadingRule.value))))
         DependencyTraceStep.ContainingPlugin -> rows.add(ChainRow.Edge(edgeLabel("inlay.split.mode.reason.popup.edge.containing.plugin")))
-        is DependencyTraceStep.Predefined -> {
-          if (steps.getOrNull(index - 1) !is DependencyTraceStep.ViaDependency) {
-            rows.add(ChainRow.Node(kindIcon(evidence.kind), HtmlBuilder()
-              .append(text(DevKitBundle.message("inlay.split.mode.reason.popup.predefined.node")))
-              .append(" ")
-              .append(secondary(step.reasoning))
-              .toFragment()))
-          }
-        }
+        is DependencyTraceStep.Predefined -> rows.add(ChainRow.Node(kindIcon(evidence.kind), HtmlBuilder()
+          .append(code(step.moduleName))
+          .append(" ")
+          .append(secondary(DevKitBundle.message("inlay.split.mode.reason.popup.predefined.dependency")))
+          .toFragment()))
         is DependencyTraceStep.ImpliedRpc -> rows.add(ChainRow.Edge(edgeLabel(
           "inlay.split.mode.reason.popup.edge.implied.rpc",
           code(step.dependencyName),

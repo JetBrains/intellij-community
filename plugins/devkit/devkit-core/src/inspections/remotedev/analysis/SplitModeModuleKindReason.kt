@@ -77,8 +77,11 @@ internal sealed interface DependencyTraceStep {
   /** The next step is in a plugin descriptor that includes the analyzed content module. */
   data object ContainingPlugin : DependencyTraceStep
 
-  /** The split-mode configuration predefines the kind of the previous descriptor. */
-  data class Predefined(val reasoning: @NlsSafe String) : DependencyTraceStep
+  /**
+   * The split-mode configuration predefines the kind of the module [moduleName].
+   * This module ends the path.
+   */
+  data class Predefined(val reasoning: @NlsSafe String, val moduleName: String) : DependencyTraceStep
 
   /** The predefined [kind] dependency [dependencyName] implies the dependency on `intellij.platform.rpc`. */
   data class ImpliedRpc(val kind: ModuleKind, val dependencyName: String) : DependencyTraceStep

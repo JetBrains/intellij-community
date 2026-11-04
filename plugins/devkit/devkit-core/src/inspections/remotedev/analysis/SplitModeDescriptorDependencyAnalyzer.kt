@@ -313,7 +313,7 @@ private fun createPredefinedDependencyInfo(
     name = getExplicitPlatformDependencyName(moduleKind),
     trace = DependencyTrace(
       cacheKey = "predefined|${predefinedModuleKind.cacheKey}",
-      steps = listOf(DependencyTraceStep.Predefined(predefinedModuleKind.reasoning)),
+      steps = listOf(DependencyTraceStep.Predefined(predefinedModuleKind.reasoning, predefinedModuleKind.moduleName)),
     ),
   )
 }

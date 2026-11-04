@@ -216,6 +216,7 @@ class SplitModeApiRestrictionsService(
           apiUsagePolicy = moduleInfo.apiUsagePolicy,
           cacheKey = "descriptor|${module.name}|$descriptorRelativePath",
           reasoning = "Predefined module kind for descriptor '$descriptorRelativePath' in module '${module.name}'",
+          moduleName = module.name,
         )
       }
     }
@@ -230,6 +231,7 @@ class SplitModeApiRestrictionsService(
             apiUsagePolicy = moduleInfo.apiUsagePolicy,
             cacheKey = "plugin|$pluginSelectorId",
             reasoning = "Predefined module kind for plugin/module id '$pluginSelectorId'",
+            moduleName = module.name,
           )
         }
       }
@@ -241,6 +243,7 @@ class SplitModeApiRestrictionsService(
       apiUsagePolicy = moduleInfo.apiUsagePolicy,
       cacheKey = "module|${module.name}",
       reasoning = "Predefined module kind for module '${module.name}'",
+      moduleName = module.name,
     )
   }
 
@@ -541,11 +544,15 @@ class SplitModeApiRestrictionsService(
     val predefinedModuleKinds: PredefinedModuleKindsLookup = PredefinedModuleKindsLookup(),
   )
 
+  /**
+   * @property moduleName the module that the match is for. A match by a plugin id or an alias also gives the module of the descriptor.
+   */
   internal data class PredefinedModuleKindMatch(
     val moduleKind: ModuleKind,
     val apiUsagePolicy: ApiUsagePolicy,
     val cacheKey: String,
     val reasoning: @NlsSafe String,
+    val moduleName: String,
   )
 
   internal data class ApiRestrictionMatch(

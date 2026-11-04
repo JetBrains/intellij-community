@@ -257,7 +257,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     assertEquals(
       "LiteFrontend content module Can be installed into: lite frontend IDE " +
       "Frontend dependency: " +
-      "test.module (current) " +
+      "test.module.xml (current) " +
       "\u2193 depends on " +
       "intellij.platform.frontend " +
       "No dependency on intellij.platform.rpc was found. The module can be installed only into a lite frontend.",
@@ -267,24 +267,9 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
 
   @Test
   fun testReasonPopupShowsPredefinedDependencyAsOneNode() {
-    val service = SplitModeApiRestrictionsService.getInstance(myFixture.project)
-    service.scheduleLoadRestrictions()
-    timeoutRunBlocking {
-      waitUntil("API restrictions failed to load", 2.seconds) { service.isLoaded() }
-    }
+    loadSplitModeRestrictions()
     createDeclaringModule()
-    val frontendModule = PsiTestUtil.addModule(
-      myFixture.project,
-      PluginModuleType.getInstance(),
-      "intellij.platform.frontend",
-      myFixture.tempDirFixture.findOrCreateDir("intellij.platform.frontend"),
-    )
-    PsiTestUtil.addSourceRoot(
-      frontendModule,
-      myFixture.tempDirFixture.findOrCreateDir("intellij.platform.frontend/resources"),
-      JavaResourceRootType.RESOURCE,
-    )
-    myFixture.addFileToProject("intellij.platform.frontend/resources/intellij.platform.frontend.xml", "<idea-plugin/>")
+    createPredefinedModule("intellij.platform.frontend", "<idea-plugin/>")
     createModuleWithModuleDescriptor("test.module", "test.module.xml", """
       <idea-plugin>
         <dependencies>
@@ -299,13 +284,43 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     assertEquals(
       "LiteFrontend content module Can be installed into: lite frontend IDE " +
       "Frontend dependency: " +
-      "test.module.xml (current file) " +
+      "test.module.xml (current) " +
       "\u2193 depends on " +
       "intellij.platform.frontend predefined " +
       "No dependency on intellij.platform.rpc was found. The module can be installed only into a lite frontend.",
       toPlainText(reasonHtml.html),
     )
     assertEquals(setOf("descriptor", "frontend"), reasonHtml.icons.keys)
+  }
+
+  @Test
+  fun testReasonPopupShowsAliasAndModuleOfPredefinedDependency() {
+    loadSplitModeRestrictions()
+    createDeclaringModule()
+    createPredefinedModule("intellij.platform.backend", """
+      <idea-plugin>
+        <module value="test.backend.alias"/>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    createModuleWithModuleDescriptor("test.module", "test.module.xml", """
+      <idea-plugin>
+        <dependencies>
+          <plugin id="test.backend.alias"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromTempProjectFile("test.module/test.module.xml")
+
+    assertEquals(
+      "Backend content module Can be installed into: backend IDE " +
+      "Backend dependency: " +
+      "test.module.xml (current) " +
+      "\u2193 depends on test.backend.alias " +
+      "intellij.platform.backend predefined",
+      toPlainText(computeReasonHtml().html),
+    )
   }
 
   @Test
@@ -346,6 +361,28 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
 
   private fun computeCodeVisionEntry(): CodeVisionEntry {
     return DescriptorSplitModeCodeVisionProvider().computeForEditor(myFixture.editor, myFixture.file).single().second
+  }
+
+  private fun loadSplitModeRestrictions() {
+    val service = SplitModeApiRestrictionsService.getInstance(myFixture.project)
+    service.scheduleLoadRestrictions()
+    timeoutRunBlocking {
+      waitUntil("API restrictions failed to load", 2.seconds) { service.isLoaded() }
+    }
+  }
+
+  /**
+   * Creates a module with a name from the predefined module kinds, with its descriptor in a resource root.
+   */
+  private fun createPredefinedModule(moduleName: String, @Language("XML") descriptorText: String) {
+    val module = PsiTestUtil.addModule(
+      myFixture.project,
+      PluginModuleType.getInstance(),
+      moduleName,
+      myFixture.tempDirFixture.findOrCreateDir(moduleName),
+    )
+    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("$moduleName/resources"), JavaResourceRootType.RESOURCE)
+    myFixture.addFileToProject("$moduleName/resources/$moduleName.xml", descriptorText)
   }
 
   private fun computeReason(): DescriptorSplitModeReason {
