@@ -2,10 +2,13 @@
 package com.intellij.platform.testFramework.junit5.codeInsight.fixture
 
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.TestDataProvider
@@ -181,10 +184,32 @@ fun codeInsightModuleFixture(
   moduleTypeId: String = "",
 ): TestFixture<CodeInsightTestFixture> =
   testFixture("codeInsightModuleFixture") {
-    val pathFixture = tempPathFixture()
-    projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true, moduleTypeId = moduleTypeId).init()
-    initialized(codeInsightFixture(projectFixture, pathFixture).init()) {}
+    val pathFixture = vfsDeletedTempPathFixture()
+    val moduleFixture = projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true, moduleTypeId = moduleTypeId)
+    // The editors of the test must close before the module is disposed.
+    // Otherwise, the roots change of the module starts editor jobs that run in the next test.
+    val codeInsightFixture = codeInsightFixture(projectFixture, pathFixture).dependsOn(moduleFixture)
+    initialized(codeInsightFixture.init()) {}
   }
+
+/**
+ * Creates a temporary directory that is deleted through the VFS, so that no [VirtualFile] of the test stays valid.
+ * [tempPathFixture] deletes the directory only on disk.
+ */
+@TestOnly
+private fun vfsDeletedTempPathFixture(): TestFixture<Path> = testFixture("vfsDeletedTempPathFixture") {
+  val path = tempPathFixture().init()
+  initialized(path) {
+    val directory = LocalFileSystem.getInstance().findFileByNioFile(path)
+    if (directory != null) {
+      writeAction {
+        if (directory.isValid) {
+          directory.delete(directory.fileSystem)
+        }
+      }
+    }
+  }
+}
 
 private fun getTestDataPathString(context: TestContext): String {
   val rootPath = context.findAnnotation(TestDataPath::class.java)?.value?.removePrefix($$"$PROJECT_ROOT/") ?: ""
