@@ -98,6 +98,9 @@ class NotificationGroup private constructor(
       listeners.forEach { it(id, registered) }
     }
 
+    /**
+     * Creates a group that calls [title] on the first read of the group title.
+     */
     @ApiStatus.Internal
     @JvmStatic
     fun create(
@@ -105,28 +108,16 @@ class NotificationGroup private constructor(
       displayType: NotificationDisplayType,
       isLogByDefault: Boolean,
       toolWindowId: String?,
-      title: @NotificationTitle String?,
-      pluginId: PluginId?
-    ): NotificationGroup = NotificationGroup(displayId, displayType, isLogByDefault, toolWindowId, title, pluginId, registerGroup = false)
-
-    /**
-     * Creates a group that calls [title] on the first read of the group title.
-     * Use it when the title comes from a resource bundle: the bundle loads only when some code asks for the title.
-     */
-    @ApiStatus.Internal
-    @JvmStatic
-    fun createWithLazyTitle(displayId: String,
-                            displayType: NotificationDisplayType,
-                            isLogByDefault: Boolean,
-                            toolWindowId: String?,
-                            pluginId: PluginId?,
-                            title: () -> @NotificationTitle String?): NotificationGroup =
-      NotificationGroup(displayId = displayId,
-                        displayType = displayType,
-                        isLogByDefault = isLogByDefault,
-                        toolWindowId = toolWindowId,
-                        pluginId = pluginId,
-                        titleSupplier = title)
+      pluginId: PluginId?,
+      title: () -> @NotificationTitle String?,
+    ): NotificationGroup = NotificationGroup(
+      displayId = displayId,
+      displayType = displayType,
+      isLogByDefault = isLogByDefault,
+      toolWindowId = toolWindowId,
+      pluginId = pluginId,
+      titleSupplier = title,
+    )
 
     //<editor-fold desc="Deprecated stuff.">
     @JvmStatic

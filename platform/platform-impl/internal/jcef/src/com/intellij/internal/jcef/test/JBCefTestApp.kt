@@ -92,8 +92,7 @@ internal class JBCefTestAppFrame : JFrame() {
                    NotificationDisplayType.BALLOON,
                    true,
                    null,
-                   null,
-                   null)
+                   null) { null }
           })
           val notification = NOTIFICATION_GROUP.getValue().createNotification(
             "Can't register test custom schemes.",

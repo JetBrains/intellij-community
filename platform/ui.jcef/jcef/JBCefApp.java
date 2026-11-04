@@ -108,7 +108,7 @@ public final class JBCefApp {
   private static final String MIN_SUPPORTED_GLIBC_DEFAULT = "2.28.0";
 
   static final @NotNull NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = NotNullLazyValue.createValue(() -> {
-    return NotificationGroup.create("JCEF", NotificationDisplayType.BALLOON, true, null, null, null);
+    return NotificationGroup.create("JCEF", NotificationDisplayType.BALLOON, true, null, null, () -> null);
   });
 
   private final @Nullable CefDelegate myDelegate;

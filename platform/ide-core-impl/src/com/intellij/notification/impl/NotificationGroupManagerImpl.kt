@@ -83,7 +83,7 @@ private fun registerNotificationGroup(extension: NotificationGroupEP,
       return
     }
 
-    val notificationGroup = NotificationGroup.createWithLazyTitle(
+    val notificationGroup = NotificationGroup.create(
       displayId = groupId,
       displayType = type,
       isLogByDefault = extension.isLogByDefault,
