@@ -63,7 +63,7 @@ private abstract class UpdatingPopupContext(
 
   private val items = MutableSharedFlow<Any?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
-  final override fun requestFlow(): Flow<DocumentationRequest?> = items.asRequestFlow()
+  final override fun requestFlow(): Flow<DocumentationRequest?> = items.asRequestFlow(project)
 
   final override fun preparePopup(builder: ComponentPopupBuilder) {
     super.preparePopup(builder)
@@ -117,11 +117,11 @@ private class HintUpdateSupplyPopupContext(
   }
 }
 
-private fun Flow<Any?>.asRequestFlow(): Flow<DocumentationRequest?> {
+private fun Flow<Any?>.asRequestFlow(project: Project): Flow<DocumentationRequest?> {
   EDT.assertIsEdt()
   return map {
     readAction {
-      val targetElement = PSIPresentationBgRendererWrapper.toPsi(it) ?: return@readAction null
+      val targetElement = PSIPresentationBgRendererWrapper.toPsi(it, project) ?: return@readAction null
       if (!targetElement.isValid) {
         return@readAction null
       }
