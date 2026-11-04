@@ -35,6 +35,7 @@ intellij.compose.ide.plugin.projectStructureTests
 intellij.configurationScript.test.java
 intellij.configurationScript.tests
 intellij.copyright.tests
+intellij.debugger.jvm.advanced.java.tests
 intellij.dev.leakDetection.tests
 intellij.dev.pluginLoading.tests
 intellij.devkit.apiDump.lang.tests
