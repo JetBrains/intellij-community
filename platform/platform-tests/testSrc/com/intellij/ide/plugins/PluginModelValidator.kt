@@ -48,15 +48,6 @@ val COMMUNITY_CORE_PLUGINS = listOf(
   CorePluginDescription(mainModuleName = "intellij.mps.resources"),
 )
 
-/**
- * Defines a variant of a plugin with a custom value of system property used in `includeUnless`/`includeIf` directives. 
- */
-data class PluginVariantWithDynamicIncludes(
-  val mainModuleName: String,
-  val systemPropertyName: String,
-  val systemPropertyValue: String,
-)
-
 data class PluginValidationOptions(
   val skipUnresolvedOptionalContentModules: Boolean = false,
   val skipServicesOverridesCheck: Boolean = false,
