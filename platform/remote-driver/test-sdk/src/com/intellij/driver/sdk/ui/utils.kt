@@ -99,6 +99,7 @@ interface IJSwingUtilities {
 @Remote("javax.swing.SwingUtilities")
 interface SwingUtilities {
   fun computeDifference(rectA: Rectangle, rectB: Rectangle): Array<Rectangle>
+  fun getRootPane(c: Component): Component?
 }
 
 val Rectangle.center: Point get() = Point(centerX.toInt(), centerY.toInt())

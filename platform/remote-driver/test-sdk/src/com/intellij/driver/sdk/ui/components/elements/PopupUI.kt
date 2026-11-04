@@ -1,17 +1,22 @@
 package com.intellij.driver.sdk.ui.components.elements
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
+import com.intellij.driver.client.service
 import com.intellij.driver.client.utility
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.model.RdTarget
+import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
+import com.intellij.driver.sdk.ui.SwingUtilities
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.Icon
 import com.intellij.driver.sdk.ui.remote.Component
-import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.ui.xQuery
+import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration.Companion.seconds
@@ -73,24 +78,52 @@ class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
 }
 
 open class PopupUiComponent(data: ComponentData) : WindowUiComponent(data) {
+  /**
+   * Closes the popup.
+   *
+   * In the Split mode, a backend popup shows on the frontend as a copy.
+   * For such a copy, [close] also waits until the backend closes the popup with the same data id.
+   */
   fun close() {
-    val popup = driver.utility<PopupUtil>().getPopupFor(driver.cast(component, Window::class))
-    if (popup != null) {
-      driver.withContext(OnDispatcher.EDT) { popup.cancel() }
+    val backendPopupId = driver.withContext(OnDispatcher.EDT) {
+      val popup = utility<SwingUtilities>().getRootPane(component)?.let { utility<PopupUtil>().getPopupContainerFor(it) }
+      if (popup == null) {
+        dispose()
+        return@withContext null
+      }
+      val backendPopupId = if (isRemDevMode) utility<RdPopupUtils>().getRdPopupId(popup)?.takeIf { hasBackendPopup(it) } else null
+      popup.cancel()
+      backendPopupId
     }
-    else {
-      dispose()
+    if (backendPopupId != null) {
+      waitFor(message = "The backend popup of $this is closed", timeout = DEFAULT_FIND_TIMEOUT) {
+        !driver.withContext(OnDispatcher.EDT) { hasBackendPopup(backendPopupId) }
+      }
     }
   }
 
+  private fun Driver.hasBackendPopup(dataId: Int): Boolean = service<RemoteDriverHostService>().hasBeControl(dataId)
+
   @Remote("com.intellij.openapi.ui.popup.util.PopupUtil")
   private interface PopupUtil {
-    fun getPopupFor(window: Window): JBPopup?
+    fun getPopupContainerFor(component: Component): JBPopup?
   }
 
   @Remote("com.intellij.openapi.ui.popup.JBPopup")
   private interface JBPopup {
     fun cancel()
+  }
+
+  @Remote("com.jetbrains.rd.ui.bindable.popup.PopupUtils", plugin = "com.intellij/intellij.rd.ui")
+  private interface RdPopupUtils {
+    fun getRdPopupId(popup: JBPopup): Int?
+  }
+
+  @Remote("com.intellij.cwm.plugin.driver.RemoteDriverHostService",
+          plugin = "com.jetbrains.performancePlugin/intellij.driver.backend.split",
+          rdTarget = RdTarget.BACKEND)
+  private interface RemoteDriverHostService {
+    fun hasBeControl(dataId: Int): Boolean
   }
 }
 
