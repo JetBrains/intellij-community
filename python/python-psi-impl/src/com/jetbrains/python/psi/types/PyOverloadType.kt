@@ -37,6 +37,16 @@ class PyOverloadType(val items: List<PyCallableType>, val impl: Ref<PyType?>?) :
     }
     return visitor.visitPyType(this)
   }
+
+  private val cachedHashCode: Int by lazy(LazyThreadSafetyMode.PUBLICATION) { 31 * items.hashCode() + impl?.get().hashCode() }
+
+  override fun hashCode(): Int = cachedHashCode
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is PyOverloadType) return false
+    return cachedHashCode == other.cachedHashCode && items == other.items && impl?.get() == other.impl?.get()
+  }
 }
 
 @ApiStatus.Experimental

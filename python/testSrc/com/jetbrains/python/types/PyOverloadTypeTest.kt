@@ -2,12 +2,21 @@
 package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.application.runReadActionBlocking
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyExpressionStatement
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.types.PyCloningTypeVisitor
+import com.jetbrains.python.psi.types.PyOverloadType
+import com.jetbrains.python.psi.types.TypeEvalContext
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -980,6 +989,57 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       #                    ^^^ WARNING Expected type 'str | None', got 'EllipsisType' instead
           print(a)
       """.trimIndent())
+
+    // Iterator is matched against zip through __iter__ returning itself, so the recursion guard is expected to stop it.
+    @Test
+    @TestFor(issues = ["PY-93590"])
+    @TestCaseOptions(assertRecursionPrevention = false)
+    fun `matching a protocol against zip of overloaded functions terminates`() = test("""
+      import operator
+
+      ARITH_OPS_SYMS = ("+", "-", "*", "/", "**", "//", "%")
+      _arith_ops_funcs = (
+          operator.add,
+          operator.sub,
+          operator.mul,
+          operator.truediv,
+          operator.pow,
+          operator.floordiv,
+          operator.mod,
+      )
+      _arith_ops_dict = dict(zip(ARITH_OPS_SYMS, _arith_ops_funcs))
+      """.trimIndent())
+
+    // Function items become PyCallableTypeImpl when cloned, so a clone equals another clone rather than the original.
+    @Test
+    @TestFor(issues = ["PY-93590"], classes = [PyOverloadType::class])
+    fun `clones of an overload type are equal and a reordered copy is not`() {
+      myFixture.configureByText("a.py", """
+        from typing import overload
+
+        @overload
+        def f(x: int) -> int: ...
+        @overload
+        def f(x: str) -> str: ...
+        def f(x): return x
+
+        f
+        """.trimIndent())
+      runReadActionBlocking {
+        val context = TypeEvalContext.codeAnalysis(myFixture.project, myFixture.file)
+        val reference = (myFixture.file as PyFile).statements.last() as PyExpressionStatement
+        val overload = context.getType(reference.expression) as PyOverloadType
+
+        val clone = PyCloningTypeVisitor.clone(overload, object : PyCloningTypeVisitor(context) {}) as PyOverloadType
+        val otherClone = PyCloningTypeVisitor.clone(overload, object : PyCloningTypeVisitor(context) {})
+        assertNotSame(clone, otherClone)
+        assertEquals(clone, otherClone)
+        assertEquals(clone.hashCode(), otherClone.hashCode())
+
+        val reordered = PyOverloadType(clone.items.reversed(), clone.impl)
+        assertNotEquals(clone, reordered)
+      }
+    }
   }
 
   companion object {
