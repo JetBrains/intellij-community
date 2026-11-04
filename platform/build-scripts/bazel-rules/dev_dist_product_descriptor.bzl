@@ -11,6 +11,7 @@ and `dev_dist_platform_jar` patches their outputs into the jar.
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load(":dev_dist_embedded_product_descriptor.bzl", "add_product_content_args", "declared_descriptors")
 load(":dev_dist_product_content.bzl", "product_content_attributes")
+load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
 
 def _dev_dist_product_descriptor_impl(ctx):
     declared = declared_descriptors(ctx)
@@ -33,6 +34,7 @@ def _dev_dist_product_descriptor_impl(ctx):
         inputs = declared.inputs,
         outputs = [output, ctx.outputs.plugin_classpath_prefix, ctx.outputs.classpath_descriptor],
         executable = ctx.executable._resolver,
+        tools = dev_dist_tool_inputs(ctx.attr._resolver),
         arguments = [args],
         progress_message = "Resolving the product descriptor of %{label}",
     )
@@ -101,6 +103,7 @@ def _dev_dist_product_application_info_impl(ctx):
         inputs = [ctx.file.source],
         outputs = [output],
         executable = ctx.executable._resolver,
+        tools = dev_dist_tool_inputs(ctx.attr._resolver),
         arguments = [args],
         progress_message = "Replacing the product markers of the application info of %{label}",
     )

@@ -1,5 +1,7 @@
 """Produces the application info of an embedded frontend from declared files."""
 
+load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
+
 def dev_dist_frontend_application_info_target_name(main_module, product = None):
     """Returns the target name for a plugin's embedded frontend application info.
 
@@ -23,6 +25,7 @@ def _dev_dist_frontend_application_info_impl(ctx):
         inputs = [ctx.file.client_application_info, ctx.file.product_application_info],
         outputs = [output],
         executable = ctx.executable._resolver,
+        tools = dev_dist_tool_inputs(ctx.attr._resolver),
         arguments = [args],
         progress_message = "Producing the frontend application info of %{label}",
     )

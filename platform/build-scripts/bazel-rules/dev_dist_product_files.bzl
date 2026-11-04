@@ -2,6 +2,7 @@
 
 load(":dev_dist_build_date.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
 load(":dev_dist_content.bzl", "DevDistPlatformPayloadInfo")
+load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
 
 def product_info_destination(os, language_server):
     """The path of `product-info.json` in a distribution, for an OS token of `platform_parts`.
@@ -77,6 +78,7 @@ def _dev_dist_product_files_impl(ctx):
         inputs.append(core_classpath)
     ctx.actions.run(
         executable = ctx.executable.tool,
+        tools = dev_dist_tool_inputs(ctx.attr.tool),
         arguments = [args],
         inputs = inputs,
         outputs = outputs,
@@ -107,7 +109,7 @@ dev_dist_product_files = rule(
     implementation = _dev_dist_product_files_impl,
     attrs = {
         "tool": attr.label(
-            default = Label("//build/dev-dist-tools/bins/product-files"),
+            default = Label("//platform/build-scripts/bazel-rules:product_files"),
             executable = True,
             cfg = "exec",
         ),

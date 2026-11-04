@@ -10,6 +10,7 @@ from it, the project model and the plugin descriptors.
 load(":dev_dist_content.bzl", "DevDistPlatformPayloadInfo")
 load(":dev_dist_platform_jar_order.bzl", "platform_jar_order")
 load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_PRODUCT_INFO_ATTR", "dev_dist_check_product_stamp_class", "dev_dist_product_info_transition")
+load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo")
 load(":intellij_dev_dist.bzl", "IntellijProjectModelTreeInfo")
 
@@ -108,6 +109,7 @@ def _dev_dist_runtime_module_repository_impl(ctx):
     ctx.actions.run(
         mnemonic = "DevDistRuntimeLayout",
         executable = ctx.executable._runtime_layout,
+        tools = dev_dist_tool_inputs(ctx.attr._runtime_layout),
         inputs = depset(parts + frontend_parts + inputs + [ctx.file.bazel_targets_json]),
         outputs = [layout],
         arguments = [layout_args],

@@ -1,6 +1,7 @@
 """The gzip resources of one module: each `.xml` entry of the library jars as one gzip member file."""
 
 load("@rules_jvm//:jvm.bzl", "ResourceGroupInfo")
+load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
 
 def _gzip_resources_impl(ctx):
     directory = ctx.actions.declare_directory(ctx.label.name)
@@ -10,6 +11,7 @@ def _gzip_resources_impl(ctx):
     args.add_all(ctx.files.srcs)
     ctx.actions.run(
         executable = ctx.executable._packer,
+        tools = dev_dist_tool_inputs(ctx.attr._packer),
         arguments = [args],
         inputs = ctx.files.srcs,
         outputs = [directory],

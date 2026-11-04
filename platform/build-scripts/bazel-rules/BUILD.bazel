@@ -71,6 +71,12 @@ dev_dist_tool(
 )
 
 dev_dist_tool(
+    name = "product_files",
+    tool = "//build/dev-dist-tools/bins/product-files",
+    visibility = ["//visibility:public"],
+)
+
+dev_dist_tool(
     name = "runtime_layout",
     tool = "//build/dev-dist-tools/bins/runtime-layout",
     visibility = ["//visibility:public"],

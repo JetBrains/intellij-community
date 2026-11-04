@@ -284,6 +284,17 @@ common:linux --host_platform=//build/native/platforms:local_linux
 common:macos --host_platform=//build/native/platforms:local_macos
 common:windows --host_platform=//build/native/platforms:local_windows
 
+# One output directory name for the host platform of every operating system: `bazel-out/local-fastbuild` and
+# `bazel-out/local-opt-exec`. An action of the host configuration then has the same paths on macOS, Linux and Windows,
+# so its cache key differs only where its inputs or its command differ. The ultimate root names a host platform by its
+# alias, and an exec configuration names the platform itself, so each platform has both labels.
+common --experimental_override_platform_cpu_name=//build/native/platforms:local_linux=local
+common --experimental_override_platform_cpu_name=//build/native/platforms:local_macos=local
+common --experimental_override_platform_cpu_name=//build/native/platforms:local_windows=local
+common --experimental_override_platform_cpu_name=@community//build/native/platforms:local_linux=local
+common --experimental_override_platform_cpu_name=@community//build/native/platforms:local_macos=local
+common --experimental_override_platform_cpu_name=@community//build/native/platforms:local_windows=local
+
 # Rust warnings are errors. The flag applies to the target configuration only, and rules_rust caps the lints of
 # third-party crates.
 build --@rules_rust//rust/settings:extra_rustc_flags=-Dwarnings

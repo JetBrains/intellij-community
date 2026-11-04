@@ -45,6 +45,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `bins/product-files` | The tool of `dev_dist_product_files`. | `@community//build/dev-dist-tools/bins/product-files:product-files_test` |
 | `bins/project-model-tree` | The `materializer` of `intellij_project_model_tree`. | `@community//build/dev-dist-tools/bins/project-model-tree:project-model-tree_test` |
 | `bins/runtime-layout` | The runtime layout tool. | `@community//build/dev-dist-tools/bins/runtime-layout:runtime-layout_test` |
+| `bins/tool-identity` | The identity writer: the identity file of each dev-dist tool, from the facts and the files that `dev_dist_tool` states. | `@community//build/dev-dist-tools/bins/tool-identity:tool-identity_test` |
 | `build/dev-dist-tools/bins/dev-dist` | The binary of `./build/dev-dist.cmd`, in the ultimate root. | `//build/dev-dist-tools/bins/dev-dist:dev-dist_test` |
 | `build/dev-dist-tools/bins/content-report` | The `content-report pure` command, in the ultimate root. | `//build/dev-dist-tools/bins/content-report:content-report_test` |
 

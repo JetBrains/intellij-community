@@ -170,7 +170,8 @@ def rust_tool_test_deps(hub, package, cross_module_crates):
 _PLATFORMS = "//command_line_option:platforms"
 
 # The crates that a platform-conditional dependency adds on some hosts only. `cargo tree --target <triple>` over the
-# triples of a hub lists them. The crate closure test leaves them out, so one `closure.txt` holds on every host.
+# triples of a hub lists them. The crate closure test and the tool identity leave them out, so one `closure.txt` and one
+# identity hold on every host.
 _HOST_CRATES = [
     "bitflags",
     "errno",
@@ -228,6 +229,80 @@ rust_crate_closure = rule(
         ),
     },
 )
+
+# The Starlark sources of the rules that compile a crate, its build script and its proc macros, and the pin of the rules_rust
+# archive. They include rules_rs, the patched rules_rust and every file that they load. A version or a patch of rules_rs
+# changes them.
+_RULES_RS_SOURCES = [
+    Label("@rules_rs//rs:cargo_build_script"),
+    Label("@rules_rs//rs:rules_rust"),
+    Label("@rules_rs//rs:rust_binary"),
+    Label("@rules_rs//rs:rust_library"),
+    Label("@rules_rs//rs:rust_proc_macro"),
+]
+
+# The attributes of `rust_tool_identity_inputs`. A rule that writes a tool identity adds them to its own attributes.
+RUST_TOOL_IDENTITY_ATTRS = {
+    "_rules_rs_sources": attr.label_list(default = _RULES_RS_SOURCES),
+}
+
+# The toolchain of `rust_tool_identity_inputs`.
+RUST_TOOLCHAIN_TYPE = Label("@rules_rust//rust:toolchain_type")
+
+# More crates than a tool closure holds, so the walk below ends.
+_MAX_CRATE_WALK = 10000
+
+def rust_tool_identity_inputs(ctx, binary):
+    """Returns the facts and the files of the identity of a Rust binary, as `struct(facts, files)`.
+
+    The identity is equal on every host and changes when a build of the binary can change. It states each crate that
+    the binary links and each proc macro with its own crates, except the host-only crates of `_HOST_CRATES`: the name,
+    the type, the edition and the label. Each file is a source or a compile data file of such a crate, with its short
+    path as the name. The facts also state the version, the compilation mode options and the extra flags of the Rust
+    toolchain. The files also hold the Starlark sources of rules_rs. The caller adds the files that pin the host-only
+    crates and the features of a crate, such as `Cargo.lock` and `Cargo.toml` of the workspace.
+
+    Args:
+      ctx: the context of a rule with `RUST_TOOL_IDENTITY_ATTRS` and the toolchain `RUST_TOOLCHAIN_TYPE`.
+      binary: the target of the `rust_binary`.
+    """
+    seen = {}
+    crates = []
+    pending = [binary[rust_common.crate_info]] + binary[rust_common.dep_info].transitive_crates.to_list()
+    for _ in range(_MAX_CRATE_WALK):
+        if not pending:
+            break
+        crate = pending.pop()
+        key = (str(crate.owner), crate.name, crate.type)
+        if key in seen or crate.name in _HOST_CRATES:
+            continue
+        seen[key] = None
+        crates.append(crate)
+        for variant in crate.deps.to_list() + crate.proc_macro_deps.to_list():
+            if variant.crate_info:
+                pending.append(variant.crate_info)
+            if variant.dep_info:
+                pending.extend(variant.dep_info.transitive_crates.to_list())
+    if pending:
+        fail("%s: the crate walk did not end within %d steps" % (binary.label, _MAX_CRATE_WALK))
+
+    facts = []
+    files = {}
+    for crate in sorted(crates, key = lambda crate: (str(crate.owner), crate.name, crate.type)):
+        facts.append("crate %s %s %s %s" % (crate.name, crate.type, crate.edition, crate.owner))
+        for file in crate.srcs.to_list() + crate.compile_data.to_list():
+            files[file.short_path] = file
+    for target in ctx.attr._rules_rs_sources:
+        for file in target[DefaultInfo].files.to_list():
+            files[file.short_path] = file
+
+    toolchain = ctx.toolchains[RUST_TOOLCHAIN_TYPE]
+    mode = ctx.var["COMPILATION_MODE"]
+    facts.append("rustc %s" % toolchain.version)
+    facts.append("compilation mode %s %s" % (mode, toolchain.compilation_mode_opts[mode]))
+    facts.append("extra rustc flags %s" % toolchain.extra_rustc_flags)
+    facts.append("extra exec rustc flags %s" % toolchain.extra_exec_rustc_flags)
+    return struct(facts = facts, files = [files[name] for name in sorted(files)])
 
 def rust_tool_crate(
         name,

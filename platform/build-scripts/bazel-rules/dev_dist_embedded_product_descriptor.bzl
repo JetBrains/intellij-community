@@ -7,6 +7,7 @@ See `dev_dist_product_content.bzl`.
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load(":content_module_jar.bzl", "library_entries")
 load(":dev_dist_product_content.bzl", "product_content_attributes")
+load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
 
 def dev_dist_embedded_product_descriptor_target_name(main_module, product = None):
     """Returns the target name for a plugin's embedded product descriptor.
@@ -85,6 +86,7 @@ def _dev_dist_embedded_product_descriptor_impl(ctx):
         inputs = declared.inputs,
         outputs = [output],
         executable = ctx.executable._resolver,
+        tools = dev_dist_tool_inputs(ctx.attr._resolver),
         arguments = [args],
         progress_message = "Resolving the embedded product descriptor of %{label}",
     )

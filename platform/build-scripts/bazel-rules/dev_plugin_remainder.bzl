@@ -7,6 +7,7 @@ load("//build:host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "library_entries", "module_output_jar")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_ATTRS", "DEV_DIST_STAMP_CLASS_FLAG_ATTR", "DevDistPluginDescriptorInfo", "dev_dist_check_stamp_class", "dev_dist_mode_refusals", "dev_dist_neutral_product_transition", "dev_dist_stamp_class_transition")
+load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_dist_plugin_directory")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
@@ -57,6 +58,13 @@ DevPluginArtifactCatalogueInfo = provider(
     },
 )
 
+# The packer of the source tree archive of `_declare_source_trees`.
+_SOURCE_TREE_PACKER = attr.label(
+    default = "//platform/build-scripts/bazel-rules:content_module_packer",
+    executable = True,
+    cfg = "exec",
+)
+
 def _declare_source_trees(ctx):
     by_id = {}
     for identifier, target in ctx.attr.source_tree_targets.items():
@@ -78,18 +86,28 @@ def _declare_source_trees(ctx):
 
         archive = ctx.actions.declare_file(ctx.label.name + ".source-tree-%d.zip" % index)
         directory = ctx.actions.declare_directory(ctx.label.name + ".source-tree-%d" % index)
-        args = ctx.actions.args()
+
+        # The packer writes each entry with the mode of a file that is not executable, whatever the mode on disk is.
+        # So the archive bytes, and the key of the extract action, are equal on every host and under every umask. The
+        # packer adds the `__index__` entry of a distribution jar, so the extract names the entries of the tree.
+        recipe = ctx.actions.args()
+        recipe.add(archive, format = "output=%s")
+        extracted = ctx.actions.args()
         inputs = []
         for entry in sorted(entries.keys()):
             file = entries[entry]
             inputs.append(file)
-            args.add("%s=%s" % (entry, file.path))
-        args.use_param_file("@%s", use_always = True)
-        args.set_param_file_format("multiline")
+            recipe.add("file=%s=%s" % (entry, file.path))
+            extracted.add(entry)
+        recipe.use_param_file("--flagfile=%s", use_always = True)
+        recipe.set_param_file_format("multiline")
+        extracted.use_param_file("@%s", use_always = True)
+        extracted.set_param_file_format("multiline")
         if entries:
             ctx.actions.run(
-                executable = ctx.executable._zipper,
-                arguments = ["c", archive.path, args],
+                executable = ctx.executable._source_tree_packer,
+                tools = dev_dist_tool_inputs(ctx.attr._source_tree_packer),
+                arguments = [recipe],
                 inputs = inputs,
                 outputs = [archive],
                 mnemonic = "DevPluginSourceTreeArchive",
@@ -99,7 +117,7 @@ def _declare_source_trees(ctx):
             ctx.actions.write(archive, "PK\005\006" + ("\000" * 18))
         ctx.actions.run(
             executable = ctx.executable._zipper,
-            arguments = ["x", archive.path, "-d", directory.path],
+            arguments = ["x", archive.path, "-d", directory.path, extracted],
             inputs = [archive],
             outputs = [directory],
             mnemonic = "DevPluginSourceTreeExtract",
@@ -213,6 +231,7 @@ dev_jupyter_frontend = rule(
         "source_tree_targets": attr.string_keyed_label_dict(allow_files = True),
         "source_tree_prefixes": attr.string_dict(),
         "optional_source_trees": attr.string_list(),
+        "_source_tree_packer": _SOURCE_TREE_PACKER,
         "_zipper": attr.label(default = "@bazel_tools//tools/zip:zipper", executable = True, cfg = "exec"),
     },
     doc = "Runs typed Jupyter preparation with resolved inputs. Skipping contributes an empty resource tree and no licenses.",
@@ -260,6 +279,7 @@ dev_debugger_egg = rule(
         "build_number": attr.string(mandatory = True),
         "file_name": attr.string(default = "pydevd-pycharm.egg"),
         "preparer": attr.label(mandatory = True, executable = True, cfg = "exec"),
+        "_source_tree_packer": _SOURCE_TREE_PACKER,
         "_zipper": attr.label(
             default = "@bazel_tools//tools/zip:zipper",
             executable = True,
@@ -343,6 +363,7 @@ dev_plugin_file_graph = rule(
         "optional_source_trees": attr.string_list(
             doc = "Source tree IDs that may have no files and then materialize as empty directories.",
         ),
+        "_source_tree_packer": _SOURCE_TREE_PACKER,
         "_zipper": attr.label(
             default = "@bazel_tools//tools/zip:zipper",
             executable = True,
@@ -773,6 +794,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
     ctx.actions.run(
         mnemonic = "PackDevPluginRemainder",
         executable = ctx.executable._packer,
+        tools = dev_dist_tool_inputs(ctx.attr._packer),
         inputs = inputs,
         outputs = packed.outputs.values() + [metadata, assets, classpath],
         arguments = [arguments],
@@ -805,6 +827,7 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
     ctx.actions.run(
         mnemonic = "DevDistRuntimeLayoutPart",
         executable = ctx.executable._runtime_layout,
+        tools = dev_dist_tool_inputs(ctx.attr._runtime_layout),
         inputs = layout_inputs,
         outputs = [runtime_layout],
         arguments = [layout_arguments],

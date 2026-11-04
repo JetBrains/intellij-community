@@ -1,0 +1,4 @@
+anyhow
+cli
+xxh3
+xxhash_rust

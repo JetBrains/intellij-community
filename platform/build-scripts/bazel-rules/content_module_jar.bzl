@@ -39,6 +39,7 @@ load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load("//build:host_platforms.bzl", "HOST_PLATFORMS")
+load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
 
 ContentModuleJarInfo = provider(
     doc = """A packed `lib/<module>.jar` of the platform distribution, and what went into it.
@@ -277,6 +278,7 @@ def pack_jar(ctx, output, spans, module_jars, library_jars, merged_module_names,
         inputs = depset(library_jars + module_jars + [patch.file for patch in patch_files]),
         outputs = outputs,
         executable = ctx.executable._packer,
+        tools = dev_dist_tool_inputs(ctx.attr._packer),
         # One process per action, not a persistent worker: the memory of each action is freed when it exits, and
         # `resource_set` states it to the scheduler. See ADR 0019. The action reads only its declared inputs and writes
         # only its declared outputs, so the sandbox adds cost and no check.

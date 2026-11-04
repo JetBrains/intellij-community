@@ -19,6 +19,7 @@ load("//build:dev_dist_product_info.bzl", "DEV_DIST_MARKETPLACE_NAMES")
 load("//build:host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "library_entries")
 load(":dev_dist_build_date.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
+load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
 
 DevDistPluginDescriptorInfo = provider(
     doc = """One plugin's patched descriptor, and the plugin it belongs to.
@@ -580,6 +581,7 @@ def _descriptor_action(ctx, request, output, tool, mnemonic, progress_message, r
         inputs = depset(action.inputs),
         outputs = list(action.outputs),
         executable = action.executable,
+        tools = dev_dist_tool_inputs(action._tool_target),
         arguments = [args],
         progress_message = progress_message,
         execution_requirements = action.execution_requirements,
