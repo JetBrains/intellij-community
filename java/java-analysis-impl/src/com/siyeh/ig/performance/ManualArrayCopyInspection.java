@@ -45,6 +45,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -166,10 +167,10 @@ public final class ManualArrayCopyInspection extends BaseInspection implements C
       }
       final PsiExpression lhs = assignmentExpression.getLExpression();
       final PsiExpression deparenthesizedExpression = PsiUtil.skipParenthesizedExprDown(lhs);
-      if (!(deparenthesizedExpression instanceof PsiArrayAccessExpression)) {
+      if (!(deparenthesizedExpression instanceof PsiArrayAccessExpression arrayAccessExpression)) {
         return null;
       }
-      return (PsiArrayAccessExpression)deparenthesizedExpression;
+      return arrayAccessExpression;
     }
 
     private static @Nullable PsiArrayAccessExpression getRhsArrayAccessExpression(PsiForStatement forStatement) {
@@ -207,10 +208,7 @@ public final class ManualArrayCopyInspection extends BaseInspection implements C
         return null;
       }
       final PsiExpression unparenthesizedExpression = PsiUtil.skipParenthesizedExprDown(arrayAccessExpression);
-      if (!(unparenthesizedExpression instanceof PsiArrayAccessExpression)) {
-        return null;
-      }
-      return (PsiArrayAccessExpression)unparenthesizedExpression;
+      return ObjectUtils.tryCast(unparenthesizedExpression, PsiArrayAccessExpression.class);
     }
 
     private static @NonNls @Nullable String buildLengthText(PsiExpression max, PsiExpression min, boolean plusOne, CommentTracker commentTracker) {
@@ -401,7 +399,7 @@ public final class ManualArrayCopyInspection extends BaseInspection implements C
       lhs = PsiUtil.skipParenthesizedExprDown(lhs);
       rhs = PsiUtil.skipParenthesizedExprDown(rhs);
       assert lhs != null && rhs != null;
-      /// checked in ExpressionUtils.isOffsetArrayAccess()
+      // checked in ExpressionUtils.isOffsetArrayAccess()
       PsiArrayAccessExpression left = (PsiArrayAccessExpression)lhs;
       PsiArrayAccessExpression right = (PsiArrayAccessExpression)rhs;
       return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(left.getArrayExpression(), right.getArrayExpression());

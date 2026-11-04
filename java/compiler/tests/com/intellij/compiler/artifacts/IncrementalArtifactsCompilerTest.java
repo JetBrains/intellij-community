@@ -14,8 +14,6 @@ import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 
-import java.io.IOException;
-
 public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
   public void testAddFile() {
     VirtualFile file = createFile("dir/file.txt");
@@ -67,7 +65,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     WriteAction.runAndWait(() -> {
       ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
       CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
-      DirectoryPackagingElement element = (DirectoryPackagingElement) rootElement.getChildren().get(0);
+      DirectoryPackagingElement element = (DirectoryPackagingElement) rootElement.getChildren().getFirst();
       element.addFirstChild(PackagingElementFactory.getInstance().createFileCopy(file.getPath(), null));
       model.commit();
     });
@@ -123,7 +121,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     WriteAction.runAndWait(() -> {
       ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
       CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
-      ArchivePackagingElement element = (ArchivePackagingElement)rootElement.getChildren().get(0);
+      ArchivePackagingElement element = (ArchivePackagingElement)rootElement.getChildren().getFirst();
       element.rename("AnotherName");
       model.commit();
     });
@@ -141,7 +139,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     WriteAction.runAndWait(() -> {
       ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
       CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
-      ArchivePackagingElement element = (ArchivePackagingElement)rootElement.getChildren().get(0);
+      ArchivePackagingElement element = (ArchivePackagingElement)rootElement.getChildren().getFirst();
       element.setArchiveFileName("AnotherName");
       model.commit();
     });
@@ -153,14 +151,14 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
   public void testSetDirectoryName() {
     VirtualFile file = createFile("file.txt", "a");
     final Artifact a = addArtifact(root().dir("myArchive").file(file));
-    /// Because of some reason the old directory is not cleared, but I actually test the rename itself here
+    // Because of some reason the old directory is not cleared, but I actually test the rename itself here
     //make(a);
     //assertOutput(a, fs().dir("myArchive").file("file.txt"));
 
     WriteAction.runAndWait(() -> {
       ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
       CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
-      DirectoryPackagingElement element = (DirectoryPackagingElement)rootElement.getChildren().get(0);
+      DirectoryPackagingElement element = (DirectoryPackagingElement)rootElement.getChildren().getFirst();
       element.setDirectoryName("AnotherName");
       model.commit();
     });
@@ -172,14 +170,14 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
   public void testRenameDirectory() {
     VirtualFile file = createFile("file.txt", "a");
     final Artifact a = addArtifact(root().dir("myArchive").file(file));
-    /// Because of some reason the old directory is not cleared, but I actually test the rename itself here
+    // Because of some reason the old directory is not cleared, but I actually test the rename itself here
     //make(a);
     //assertOutput(a, fs().dir("myArchive").file("file.txt"));
 
     WriteAction.runAndWait(() -> {
       ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
       CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
-      DirectoryPackagingElement element = (DirectoryPackagingElement)rootElement.getChildren().get(0);
+      DirectoryPackagingElement element = (DirectoryPackagingElement)rootElement.getChildren().getFirst();
       element.rename("AnotherName");
       model.commit();
     });
@@ -199,7 +197,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
       ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
       CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
       DirectoryPackagingElement element = rootElement.addOrFindChild(new DirectoryPackagingElement("dir"));
-      DirectoryPackagingElement anotherElement = (DirectoryPackagingElement)element.getChildren().get(0);
+      DirectoryPackagingElement anotherElement = (DirectoryPackagingElement)element.getChildren().getFirst();
       anotherElement.addFirstChild(PackagingElementFactory.getInstance().createFileCopy(file.getPath(), null));
       model.commit();
     });
@@ -330,7 +328,7 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     assertOutput(a, fs().file("1.txt"));
   }
 
-  public void testChangeFileOutsideContentRoot() throws IOException {
+  public void testChangeFileOutsideContentRoot() {
     final Artifact a = addArtifact(root().file(createFile("1.txt")));
     make(a);
     assertOutput(a, fs().file("1.txt"));
