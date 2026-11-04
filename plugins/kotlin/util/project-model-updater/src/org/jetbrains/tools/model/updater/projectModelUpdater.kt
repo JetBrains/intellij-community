@@ -313,7 +313,7 @@ internal fun renderCompilerDependenciesIml(
             for ((libraryName) in libraries) {
                 val moduleName = moduleLibraries[libraryName]
                 if (moduleName != null) {
-                    xml("orderEntry", "type" to "module", "module-name" to moduleName)
+                    xml("orderEntry", "type" to "module", "module-name" to moduleName, "scope" to "RUNTIME")
                 }
                 else {
                     xml("orderEntry", "type" to "library", "scope" to "PROVIDED", "name" to libraryName, "level" to "project")
