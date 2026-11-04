@@ -205,7 +205,6 @@ public final class UpdateHighlightersUtil {
     ThreadingAssertions.assertEventDispatchThread();
     Project project = session.getProject();
     PsiFile psiFile = session.getPsiFile();
-    SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     boolean[] changed = {false};
     HighlighterRecycler.runWithRecycler(session, infosToRemove -> {
       DaemonCodeAnalyzerEx.processHighlights(markup, project, null, range.getStartOffset(), range.getEndOffset(), session.getCodeInsightContext(), info -> {
@@ -221,27 +220,30 @@ public final class UpdateHighlightersUtil {
       });
 
       List<HighlightInfo> filteredInfos = HighlightInfoPostFilters.applyPostFilter(project, infos);
-      ContainerUtil.quickSort(filteredInfos, BY_ACTUAL_START_OFFSET_NO_DUPS);
-      Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
-      DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
-      SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
-      SweepProcessor.sweep(generator, (_, info, atStart, overlappingIntervals) -> {
-        if (!atStart) {
-          return true;
-        }
-        if (info.isFileLevelAnnotation()) {
-          codeAnalyzer.addFileLevelHighlight(group, info, psiFile, null, session.getCodeInsightContext());
-          changed[0] = true;
-          return true;
-        }
+      if (!filteredInfos.isEmpty()) {
+        SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
+        ContainerUtil.quickSort(filteredInfos, BY_ACTUAL_START_OFFSET_NO_DUPS);
+        Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
+        DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
+        SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
+        SweepProcessor.sweep(generator, (_, info, atStart, overlappingIntervals) -> {
+          if (!atStart) {
+            return true;
+          }
+          if (info.isFileLevelAnnotation()) {
+            codeAnalyzer.addFileLevelHighlight(group, info, psiFile, null, session.getCodeInsightContext());
+            changed[0] = true;
+            return true;
+          }
 
-        if (range.contains(info) && !isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
-          createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, infosToRemove, range2markerCache,
-                                      severityRegistrar, session);
-          changed[0] = true;
-        }
-        return true;
-      });
+          if (range.contains(info) && !isWarningCoveredByError(info, severityRegistrar, overlappingIntervals)) {
+            createOrReuseHighlighterFor(info, session.getColorsScheme(), document, group, psiFile, markup, infosToRemove, range2markerCache,
+                                        severityRegistrar, session);
+            changed[0] = true;
+          }
+          return true;
+        });
+      }
 
       changed[0] |= !infosToRemove.isEmpty();
     });

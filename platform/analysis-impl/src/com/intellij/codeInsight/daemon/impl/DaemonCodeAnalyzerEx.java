@@ -71,7 +71,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                           @NotNull CodeInsightContext context,
                                           @NotNull Processor<? super HighlightInfo> processor) {
     ThreadingAssertions.softAssertReadAccess();
-    SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
+    SeverityRegistrar severityRegistrar = minSeverity == null ? null : SeverityRegistrar.getSeverityRegistrar(project);
     return model.processRangeHighlightersOverlappingWith(startOffset, endOffset, marker -> {
       ProgressManager.checkCanceled();
       HighlightInfo info = HighlightInfo.fromRangeHighlighter(marker);

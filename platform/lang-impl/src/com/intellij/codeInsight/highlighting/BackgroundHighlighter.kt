@@ -33,6 +33,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -63,6 +64,7 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.getAndUpdateUserData
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.psi.util.PsiUtilBase
@@ -290,9 +292,12 @@ class BackgroundHighlighter(coroutineScope: CoroutineScope) {
         }
         catch (_: IndexNotReadyException) {
         }
+        if (infos.isNotEmpty()) {
+          project.serviceAsync<InspectionProjectProfileManager>()
+        }
+        val group = (project.serviceAsync<IdentifierHighlightingManager>() as IdentifierHighlightingManagerImpl).getPassId()
         launch(Dispatchers.EDT + modalityState) {
           if (isEditorUpToDate(hostEditor, offsetBefore, newEditor, newPsiFile, documentModStampBefore, job)) {
-            val group = (IdentifierHighlightingManager.getInstance(project) as IdentifierHighlightingManagerImpl).getPassId()
             UpdateHighlightersUtil.setHighlightersToSingleEditor(project,
                                                                  hostEditor,
                                                                  0,

@@ -124,6 +124,9 @@ jvm_library(
         "//platform/testFramework/junit5",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
         "//libraries/junit6",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/core-impl",
     ],
 )
 ### auto-generated section `build intellij.platform.analysis.impl.tests` end
