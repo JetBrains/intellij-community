@@ -7,6 +7,7 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.TechnologyFilter;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -397,16 +398,24 @@ public final class ConfigurableExtensionPointUtil {
   @ApiStatus.Internal
   public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings, boolean checkNonDefaultProject) {
     List<Configurable> list = new ArrayList<>();
+    // the settings of a tech the project has disabled are not shown for that project, see TechnologyFilter; the application settings
+    // are filtered by the project they are shown for too, and not filtered without a project (the welcome screen)
     if (withIdeSettings) {
       Application application = ApplicationManager.getApplication();
       if (application != null) {
         for (ConfigurableEP<Configurable> extension : Configurable.APPLICATION_CONFIGURABLE.getExtensionList()) {
+          if (project != null && !TechnologyFilter.getInstance().isApplicable(extension.getPluginDescriptor(), project)) {
+            continue;
+          }
           addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), null, checkNonDefaultProject);
         }
       }
     }
     if (project != null && !project.isDisposed()) {
       for (ConfigurableEP<Configurable> extension : Configurable.PROJECT_CONFIGURABLE.getExtensions(project)) {
+        if (!TechnologyFilter.getInstance().isApplicable(extension.getPluginDescriptor(), project)) {
+          continue;
+        }
         addValid(list, ConfigurableWrapper.wrapConfigurable(extension, true), project, checkNonDefaultProject);
       }
     }

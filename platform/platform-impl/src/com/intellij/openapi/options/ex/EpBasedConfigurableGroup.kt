@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPoint
 import com.intellij.openapi.extensions.ExtensionsArea
+import com.intellij.openapi.extensions.TechnologyFilter
+import com.intellij.openapi.extensions.TechnologyFilterListener
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.Configurable.NoScroll
 import com.intellij.openapi.options.Configurable.WithEpDependencies
@@ -45,10 +47,12 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
   @Synchronized
   override fun addListener(listener: MutableConfigurableGroup.Listener) {
     if (listeners.isEmpty()) {
-      val project = project ?: DefaultProjectFactory.getInstance().defaultProject
+      val projectOrDefault = project ?: DefaultProjectFactory.getInstance().defaultProject
       val epListener = createListener()
+
       Configurable.APPLICATION_CONFIGURABLE.addChangeListener(epListener, this)
-      Configurable.PROJECT_CONFIGURABLE.getPoint(project).addChangeListener(epListener, this)
+      Configurable.PROJECT_CONFIGURABLE.getPoint(projectOrDefault).addChangeListener(epListener, this)
+
       for (wrapper in extendableConfigurableWrappers) {
         val ep = wrapper.extensionPoint
         val area = wrapper.project?.extensionArea ?: ApplicationManager.getApplication().extensionArea
@@ -74,8 +78,17 @@ internal class EpBasedConfigurableGroup(private val project: Project?, delegate:
       }
       for (withEpDependency in configurablesWithEpDependencies) {
         for (it in withEpDependency.dependencies) {
-          findExtensionPoint(project.extensionArea, it.name).addChangeListener(epListener, this)
+          findExtensionPoint(projectOrDefault.extensionArea, it.name).addChangeListener(epListener, this)
         }
+      }
+
+      if (project != null) {
+        val appConnection = ApplicationManager.getApplication().messageBus.connect(this)
+        appConnection.subscribe(TechnologyFilter.TOPIC, TechnologyFilterListener { changedProject ->
+          if (changedProject === project) {
+            epListener.run()
+          }
+        })
       }
     }
     listeners.add(listener)

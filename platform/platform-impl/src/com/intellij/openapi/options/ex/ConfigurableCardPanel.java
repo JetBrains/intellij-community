@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
+import com.intellij.openapi.extensions.TechnologyFilter;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.MasterDetails;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.dsl.gridLayout.GridLayout;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -98,6 +100,18 @@ public class ConfigurableCardPanel extends CardLayoutPanel<Configurable, Configu
           assert project != null;
           ((ProjectExtensionPointName)dependency).addChangeListener(project, listener, disposable);
         }
+      }
+
+      // A tech change of the project resets the component the same way.
+      // An application configurable has no project, so a tech change does not reset it.
+      Project project = wrapper.getProject();
+      if (project != null) {
+        MessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect(disposable);
+        appConnection.subscribe(TechnologyFilter.TOPIC, changedProject -> {
+          if (changedProject == project) {
+            listener.run();
+          }
+        });
       }
 
       myListeners.put(wrapper, disposable);
