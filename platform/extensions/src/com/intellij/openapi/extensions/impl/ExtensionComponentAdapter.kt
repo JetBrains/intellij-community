@@ -19,7 +19,7 @@ abstract class ExtensionComponentAdapter internal constructor(
   @JvmField
   internal var implementationClassOrName: Any = implementationClassName
 
-  internal abstract val isInstanceCreated: Boolean
+  abstract val isInstanceCreated: Boolean
 
   abstract fun <T : Any> createInstance(componentManager: ComponentManager): T?
 

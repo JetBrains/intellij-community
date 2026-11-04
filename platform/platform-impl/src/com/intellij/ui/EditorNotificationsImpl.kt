@@ -21,6 +21,8 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.TechnologyAwareProjectExtensionPointName
+import com.intellij.openapi.extensions.TechnologyFilter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -79,6 +81,9 @@ private val EDITOR_NOTIFICATION_PROVIDER: Key<MutableMap<Class<EditorNotificatio
 private val PENDING_UPDATE: Key<Boolean> = Key.create("pending.notification.update")
 private val FILE_LEVEL_INTENTIONS: Key<List<IntentionActionWithOptions>> = Key.create("file.level.intentions")
 
+/** The notification providers applicable to a project: the ones whose techs the project has enabled. */
+private val TECH_AWARE_PROVIDERS = TechnologyAwareProjectExtensionPointName(EditorNotificationProvider.EP_NAME)
+
 @ApiStatus.Internal
 class EditorNotificationsImpl(private val project: Project, coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
   /**
@@ -129,6 +134,9 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
         updateAllNotifications()
       }
     })
+    // the applicable providers follow the techs of the project and the loaded plugins alike: the providers of a tech the project
+    // enabled are asked, the notifications of a disabled one are removed
+    TECH_AWARE_PROVIDERS.addChangeListener(project, this.coroutineScope) { updateAllNotifications() }
 
     updateAllRequestFlowJob = coroutineScope.launch {
       updateAllRequests
@@ -286,6 +294,10 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
           return@launch
         }
 
+        if (!TechnologyFilter.getInstance().isApplicable(adapter.pluginDescriptor, project) && !adapter.isInstanceCreated) {
+          continue
+        }
+
         try {
           val provider = try {
             adapter.createInstance<EditorNotificationProvider>(project) ?: continue
@@ -301,6 +313,18 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
             }
           }
           coroutineContext.ensureActive()
+
+          if (!TechnologyFilter.getInstance().isApplicable(adapter.pluginDescriptor, project)) {
+            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+              if (!file.isValid || project.isDisposed) {
+                return@withContext
+              }
+              for (fileEditor in fileEditors) {
+                updateNotification(fileEditor = fileEditor, provider = provider, component = null)
+              }
+            }
+            continue
+          }
 
           val result = readAction {
             if (file.isValid && !project.isDisposed &&
