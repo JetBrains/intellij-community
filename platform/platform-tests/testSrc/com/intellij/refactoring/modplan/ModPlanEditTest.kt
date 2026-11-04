@@ -6,16 +6,25 @@ import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCreateFile
 import com.intellij.modcommand.ModDeleteFile
 import com.intellij.modcommand.ModMoveFile
+import com.intellij.modcommand.ModUpdateFileText
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.lang.injection.MultiHostInjector
+import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.PsiManager
+import com.intellij.psi.createSmartFileRange
 import com.intellij.psi.impl.light.LightElement
 import com.intellij.psi.impl.source.tree.LeafElement
+import com.intellij.psi.xml.XmlFile
+import com.intellij.psi.xml.XmlText
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.util.concurrent.Callable
@@ -261,6 +270,135 @@ class ModPlanEditTest : BasePlatformTestCase() {
 
   fun `test no edits of PSI give no command`() {
     assertTrue(toCommand()!!.isEmpty)
+  }
+
+  /** An edit of an injected fragment before an edit of its host: both are written into the one copy of the host. */
+  fun `test an edit of an injected fragment and an edit of its host give one text of the host`() {
+    InjectedLanguageManager.getInstance(project).registerMultiHostInjector(PlainTextInXmlTextInjector(), testRootDisposable)
+    val xml = myFixture.addFileToProject("a.xml", "<a>one</a>") as XmlFile
+    val fragment = InjectedLanguageManager.getInstance(project).findInjectedElementAt(xml, xml.text.indexOf("one"))!!.containingFile
+
+    val command = toCommand(
+      ModPlanEdit.update(fragment) { (it.firstChild as LeafElement).replaceWithText("two") },
+      ModPlanEdit.update(xml) { (it as XmlFile).rootTag!!.setName("b") },
+    )
+
+    assertEquals(listOf("<b>two</b>"), command!!.unpack().filterIsInstance<ModUpdateFileText>().map { it.newText() })
+  }
+
+  /** Injects plain text into the whole text of an XML tag. */
+  private class PlainTextInXmlTextInjector : MultiHostInjector {
+    override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
+      val host = context as PsiLanguageInjectionHost
+      registrar.startInjecting(PlainTextLanguage.INSTANCE)
+      registrar.addPlace(null, null, host, TextRange(0, host.textLength))
+      registrar.doneInjecting()
+    }
+
+    override fun elementsToInjectIn(): List<Class<out PsiElement>> = listOf(XmlText::class.java)
+  }
+
+  /** @return the replacement of the first [oldText] of [file] with [newText] */
+  private fun replaceText(file: PsiFile, oldText: String, newText: String): ModPlanEdit = runReadActionBlocking {
+    val start = file.text.indexOf(oldText)
+    ModPlanEdit.ReplaceText(file.createSmartFileRange(TextRange(start, start + oldText.length))!!, newText)
+  }
+
+  private fun newTextsOf(command: ModCommand?): List<String> = command!!.unpack().filterIsInstance<ModUpdateFileText>().map { it.newText() }
+
+  fun `test a plan of one text replacement writes it`() {
+    val a = myFixture.addFileToProject("a.txt", "one two three")
+
+    assertEquals(listOf("one 2 three"), newTextsOf(toCommand(replaceText(a, "two", "2"))))
+  }
+
+  fun `test two text replacements in one file are both written`() {
+    val a = myFixture.addFileToProject("a.txt", "one two three")
+
+    assertEquals(listOf("one 2 3"), newTextsOf(toCommand(replaceText(a, "two", "2"), replaceText(a, "three", "3"))))
+  }
+
+  fun `test a text replacement follows a PSI edit before it in the same file`() {
+    val xml = myFixture.addFileToProject("a.xml", "<a>one</a><!--two-->") as XmlFile
+
+    val command = toCommand(replaceText(xml, "two", "2"), ModPlanEdit.update(xml) { (it as XmlFile).rootTag!!.setName("abc") })
+
+    assertEquals(listOf("<abc>one</abc><!--2-->"), newTextsOf(command))
+  }
+
+  fun `test a text replacement in a deleted file is skipped`() {
+    val a = myFixture.addFileToProject("a.txt", "one two three")
+
+    val command = toCommand(replaceText(a, "two", "2"), ModPlanEdit.delete(a))
+
+    assertEmpty(newTextsOf(command))
+    assertEquals(listOf(a.virtualFile), command!!.unpack().filterIsInstance<ModDeleteFile>().map { it.file() })
+  }
+
+  fun `test text replacements in two files write both files`() {
+    val a = myFixture.addFileToProject("a.txt", "one")
+    val b = myFixture.addFileToProject("b.txt", "two")
+
+    assertEquals(setOf("1", "2"), newTextsOf(toCommand(replaceText(a, "one", "1"), replaceText(b, "two", "2"))).toSet())
+  }
+
+  /** @return an edit of the first [oldText] of [file]: it logs the text at the range, then writes [newText] there in the leaf of the copy */
+  private fun updateRange(file: PsiFile, oldText: String, newText: String): ModPlanEdit = runReadActionBlocking {
+    val start = file.text.indexOf(oldText)
+    ModPlanEdit.UpdateRange(file.createSmartFileRange(TextRange(start, start + oldText.length))!!) { copy, range ->
+      logEntries.add(range.substring(copy.text))
+      val leaf = copy.findElementAt(range.startOffset)!!
+      (leaf.node as LeafElement).replaceWithText(range.shiftLeft(leaf.textRange.startOffset).replace(leaf.text, newText))
+    }
+  }
+
+  fun `test two range updates in one element both run at their text after the first makes it longer`() {
+    val a = myFixture.addFileToProject("a.txt", "one two")
+
+    val command = toCommand(updateRange(a, "one", "three"), updateRange(a, "two", "2"))
+
+    assertEquals(listOf("one", "two"), logEntries)
+    assertEquals(listOf("three 2"), newTextsOf(command))
+  }
+
+  fun `test a range update runs after an update replaces its element`() {
+    val a = myFixture.addFileToProject("a.txt", "one two")
+
+    val command = toCommand(ModPlanEdit.update(a.firstChild) { (it as LeafElement).replaceWithText("x one two") }, updateRange(a, "two", "2"))
+
+    assertEquals(listOf("two"), logEntries)
+    assertEquals(listOf("x one 2"), newTextsOf(command))
+  }
+
+  fun `test a range update whose text another update replaced is skipped`() {
+    val a = myFixture.addFileToProject("a.txt", "one two three")
+
+    val command = toCommand(ModPlanEdit.update(a.firstChild) { (it as LeafElement).replaceWithText("XYZ") }, updateRange(a, "two", "2"))
+
+    assertEmpty(logEntries)
+    assertEquals(listOf("XYZ"), newTextsOf(command))
+  }
+
+  fun `test a range update in an injected fragment follows an edit of its host`() {
+    InjectedLanguageManager.getInstance(project).registerMultiHostInjector(PlainTextInXmlTextInjector(), testRootDisposable)
+    val xml = myFixture.addFileToProject("a.xml", "<a>one two</a>") as XmlFile
+    val fragment = runReadActionBlocking {
+      InjectedLanguageManager.getInstance(project).findInjectedElementAt(xml, xml.text.indexOf("two"))!!.containingFile
+    }
+
+    val command = toCommand(ModPlanEdit.update(xml) { (it as XmlFile).rootTag!!.setName("abc") }, updateRange(fragment, "two", "2"))
+
+    assertEquals(listOf("two"), logEntries)
+    assertEquals(listOf("<abc>one 2</abc>"), newTextsOf(command))
+  }
+
+  fun `test a range update in a deleted file is skipped`() {
+    val a = myFixture.addFileToProject("a.txt", "one two three")
+
+    val command = toCommand(updateRange(a, "two", "2"), ModPlanEdit.delete(a))
+
+    assertEmpty(logEntries)
+    assertEquals(listOf(a.virtualFile), command!!.unpack().filterIsInstance<ModDeleteFile>().map { it.file() })
   }
 
   fun `test the edits run in the given order`() {

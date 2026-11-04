@@ -59,7 +59,6 @@
 - *s:createPlan(java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,Z,java.util.List,java.util.function.Supplier):com.intellij.refactoring.modplan.ModPlan
 *f:com.intellij.refactoring.modplan.ModPlan$AcceptedPlan
 - com.intellij.refactoring.modplan.ModPlan
-- <init>(com.intellij.refactoring.modplan.ModPlanConflicts,com.intellij.refactoring.modplan.ModPlanExecution,java.util.List,java.util.function.Supplier):V
 - f:getConflicts():com.intellij.refactoring.modplan.ModPlanConflicts
 - f:getExecution():com.intellij.refactoring.modplan.ModPlanExecution
 - f:getUsages():java.util.List
@@ -130,6 +129,7 @@
 - f:withOptionValues(com.intellij.refactoring.modplan.ModPlanRequest,com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanRequest
 *:com.intellij.refactoring.modplan.ModPlanChainBuilder
 - a:ask(com.intellij.refactoring.modplan.ModPlanQuestion,java.util.function.Function):com.intellij.refactoring.modplan.ModPlanChain
+- askAll(java.util.List,java.util.function.Function):com.intellij.refactoring.modplan.ModPlanChain
 - a:finish(com.intellij.refactoring.modplan.ModPlanFinalStep):com.intellij.refactoring.modplan.ModPlanChain
 - a:getRequest():com.intellij.refactoring.modplan.ModPlanRequest
 - a:passValue(java.lang.Object):com.intellij.refactoring.modplan.ModPlanChain
@@ -155,6 +155,7 @@
 *e:com.intellij.refactoring.modplan.ModPlanConflictKind
 - java.lang.Enum
 - sf:BROKEN:com.intellij.refactoring.modplan.ModPlanConflictKind
+- sf:CHANGED_NON_CODE_USAGE:com.intellij.refactoring.modplan.ModPlanConflictKind
 - sf:FIXABLE:com.intellij.refactoring.modplan.ModPlanConflictKind
 - sf:NON_CODE_USAGE:com.intellij.refactoring.modplan.ModPlanConflictKind
 - s:getEntries():kotlin.enums.EnumEntries
@@ -165,6 +166,7 @@
 - sf:EMPTY:com.intellij.refactoring.modplan.ModPlanConflicts
 - <init>(java.util.List):V
 - *sf:builder():com.intellij.refactoring.modplan.ModPlanConflicts$Builder
+- f:changedNonCodeUsages():java.util.List
 - equals(java.lang.Object):Z
 - f:getConflicts():java.util.List
 - f:hasBroken():Z
@@ -177,6 +179,7 @@
 *f:com.intellij.refactoring.modplan.ModPlanConflicts$Builder
 - f:broken(com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.modplan.ModPlanConflicts$Builder
 - f:build():com.intellij.refactoring.modplan.ModPlanConflicts
+- f:changedNonCodeUsage(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange):com.intellij.refactoring.modplan.ModPlanConflicts$Builder
 - f:fixable(com.intellij.psi.PsiElement,java.lang.String):com.intellij.refactoring.modplan.ModPlanConflicts$Builder
 - f:nonCodeUsage(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String):com.intellij.refactoring.modplan.ModPlanConflicts$Builder
 - f:unloadedModules(java.util.Collection):com.intellij.refactoring.modplan.ModPlanConflicts$Builder
@@ -218,6 +221,14 @@
 - f:hashCode():I
 - newName():java.lang.String
 - targetDirectory():com.intellij.openapi.vfs.VirtualFile
+*f:com.intellij.refactoring.modplan.ModPlanEdit$ReplaceText
+- java.lang.Record
+- com.intellij.refactoring.modplan.ModPlanEdit
+- <init>(com.intellij.psi.SmartPsiFileRange,java.lang.String):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- newText():java.lang.String
+- place():com.intellij.psi.SmartPsiFileRange
 *f:com.intellij.refactoring.modplan.ModPlanEdit$Update
 - java.lang.Record
 - com.intellij.refactoring.modplan.ModPlanEdit
@@ -226,11 +237,20 @@
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
 - pointers():java.util.List
+*f:com.intellij.refactoring.modplan.ModPlanEdit$UpdateRange
+- java.lang.Record
+- com.intellij.refactoring.modplan.ModPlanEdit
+- <init>(com.intellij.psi.SmartPsiFileRange,java.util.function.BiConsumer):V
+- action():java.util.function.BiConsumer
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- place():com.intellij.psi.SmartPsiFileRange
 *f:com.intellij.refactoring.modplan.ModPlanExecution
 - *sf:Companion:com.intellij.refactoring.modplan.ModPlanExecution$Companion
 - f:getAffectedFiles():java.util.List
 - f:getCommand():com.intellij.modcommand.ModCommand
 - f:getCommandName():java.lang.String
+- f:getWrittenFilesAndDirectories():java.util.List
 *f:com.intellij.refactoring.modplan.ModPlanExecution$Companion
 *:com.intellij.refactoring.modplan.ModPlanExecutionResult
 *f:com.intellij.refactoring.modplan.ModPlanExecutionResult$Applied
@@ -337,7 +357,6 @@
 - plan(com.intellij.refactoring.modplan.ModPlanRequest):com.intellij.refactoring.modplan.ModPlan
 - targetsNodeText():java.lang.String
 - a:title():java.lang.String
-- writeEvents(com.intellij.refactoring.modplan.ModPlanRequest):com.intellij.refactoring.modplan.ModPlanRefactoring$WriteEvent
 *f:com.intellij.refactoring.modplan.ModPlanRefactoring$ElementChange
 - java.lang.Record
 - <init>(com.intellij.psi.PsiElement,com.intellij.refactoring.modplan.ModPlanRefactoring$ElementChange$Kind,java.util.function.Supplier):V
@@ -372,10 +391,13 @@
 *f:com.intellij.refactoring.modplan.ModPlanRequest
 - java.lang.Record
 - <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.refactoring.modplan.ModPlanOptionValues):V
+- <init>(com.intellij.openapi.project.Project,java.util.List,com.intellij.refactoring.modplan.ModPlanOptionValues,java.util.function.Supplier):V
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
 - optionValues():com.intellij.refactoring.modplan.ModPlanOptionValues
 - project():com.intellij.openapi.project.Project
+- searchScope():java.util.function.Supplier
+- s:searchScopeSupplier(com.intellij.psi.search.SearchScope):java.util.function.Supplier
 - subjects():java.util.List
 *:com.intellij.refactoring.modplan.ModPlanUiInterpreter
 - s:getInstance():com.intellij.refactoring.modplan.ModPlanUiInterpreter
@@ -418,3 +440,5 @@
 - a:performRename():V
 *:com.intellij.refactoring.rename.RenamerFactory
 - a:createRenamers(com.intellij.openapi.actionSystem.DataContext):java.util.Collection
+com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
+- *:getOptionId():java.lang.String

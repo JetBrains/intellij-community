@@ -33,13 +33,17 @@ class ModPlanConflicts(conflicts: List<ModPlanConflict>) {
   val conflicts: @Unmodifiable List<ModPlanConflict> = conflicts.toList()
 
   /** @return true if a person has to agree before the refactoring runs: there is a fixable or a broken conflict */
-  fun needsConfirmation(): Boolean = conflicts.any { it.kind != ModPlanConflictKind.NON_CODE_USAGE }
+  fun needsConfirmation(): Boolean = conflicts.any { it.kind == ModPlanConflictKind.FIXABLE || it.kind == ModPlanConflictKind.BROKEN }
 
   /** @return true if there are conflicts that stay after the refactoring */
   fun hasBroken(): Boolean = conflicts.any { it.kind == ModPlanConflictKind.BROKEN }
 
   /** @return the places that the refactoring found and does not change */
   fun nonCodeUsages(): @Unmodifiable List<ModPlanConflict> = conflicts.filter { it.kind == ModPlanConflictKind.NON_CODE_USAGE }
+
+  /** @return the places in comments, strings and non-code files that the refactoring changes */
+  fun changedNonCodeUsages(): @Unmodifiable List<ModPlanConflict> =
+    conflicts.filter { it.kind == ModPlanConflictKind.CHANGED_NON_CODE_USAGE }
 
   /** @return the conflicts of both; the conflicts of the same location are joined */
   fun merge(otherConflicts: ModPlanConflicts): ModPlanConflicts = ModPlanConflicts(mergedByLocation(conflicts + otherConflicts.conflicts))
@@ -66,6 +70,7 @@ class ModPlanConflicts(conflicts: List<ModPlanConflict>) {
   private fun toShowConflicts(anchor: PsiElement, withNonCodeUsages: Boolean): @Unmodifiable Map<PsiPlace, ModShowConflicts.Conflict> {
     val resultConflicts = LinkedHashMap<PsiPlace, ModShowConflicts.Conflict>()
     for (conflict in conflicts.sortedBy { it.location?.range?.startOffset ?: Int.MAX_VALUE }) {
+      if (conflict.kind == ModPlanConflictKind.CHANGED_NON_CODE_USAGE) continue
       if (!withNonCodeUsages && conflict.kind == ModPlanConflictKind.NON_CODE_USAGE) continue
       val range = conflict.location?.range?.let { TextRange.create(it) }
       val element = conflict.location?.findElement()
@@ -114,6 +119,19 @@ class ModPlanConflicts(conflicts: List<ModPlanConflict>) {
     @RequiresReadLock
     fun nonCodeUsage(element: PsiElement, rangeInElement: TextRange?, message: @Nls String): Builder {
       myConflicts.add(ModPlanConflict(element.createSmartFileRange(rangeInElement), listOf(message), ModPlanConflictKind.NON_CODE_USAGE))
+      return this
+    }
+
+    /**
+     * Adds a place in a comment, a string or a non-code file that the refactoring changes. A person is told nothing about it, but an
+     * interactive flow shows it in a preview, as the legacy rename does.
+     *
+     * @param element        the element that holds the non-code usage
+     * @param rangeInElement the range of the non-code usage inside [element]; null for the whole element
+     */
+    @RequiresReadLock
+    fun changedNonCodeUsage(element: PsiElement, rangeInElement: TextRange?): Builder {
+      myConflicts.add(ModPlanConflict(element.createSmartFileRange(rangeInElement), listOf(), ModPlanConflictKind.CHANGED_NON_CODE_USAGE))
       return this
     }
 
@@ -173,7 +191,8 @@ class ModPlanConflicts(conflicts: List<ModPlanConflict>) {
  * A conflict of a ModPlan refactoring: the messages that [ModShowConflicts] shows for a place, and what agreeing to it does.
  *
  * @param location the place of the conflict; null for a conflict of the whole refactoring
- * @param messages what a person is told; a [ModPlanConflictKind.NON_CODE_USAGE] has its message too
+ * @param messages what a person is told; a [ModPlanConflictKind.NON_CODE_USAGE] has its message too, a
+ *                 [ModPlanConflictKind.CHANGED_NON_CODE_USAGE] has none
  * @param kind     what happens to the conflict if a person goes on
  */
 class ModPlanConflict(val location: SmartPsiFileRange?,
@@ -190,6 +209,9 @@ class ModPlanConflict(val location: SmartPsiFileRange?,
 
 /** In the order of strength: a merged conflict has the strongest kind. */
 enum class ModPlanConflictKind {
+  /** A place in a comment, a string or a non-code file that the refactoring changes. Nothing breaks. */
+  CHANGED_NON_CODE_USAGE,
+
   /** A place in a comment, a string or a non-code file that is not changed. Nothing breaks. */
   NON_CODE_USAGE,
 

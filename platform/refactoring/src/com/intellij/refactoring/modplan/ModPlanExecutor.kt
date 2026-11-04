@@ -16,7 +16,6 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.project.DumbService
@@ -26,14 +25,15 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.psi.PsiManager
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.listeners.RefactoringListenerManager
 import com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl
+import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.TrashBin
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
@@ -65,6 +65,8 @@ object ModPlanExecutor {
    * Writes the files of [execution]. If a file changed since the analysis or is read-only, nothing is written and no event is
    * published. No `RefactoringHelper` (such as import optimization) runs here: the [ModPlanRefactoringListener]s ran in the plan.
    * Whatever was written, also by a failed execution, is one undo step. A file deletion is undoable only where local history runs, as in an interactive refactoring.
+   * The refactoring events have no data, and the refactoring listeners hear about no element: to tell them, pass
+   * [ModPlan.AcceptedPlan.writeEvents] to the other overload.
    *
    * @param globalUndo whether the undo step is global, as it has to be if no editor is involved. An interactive refactoring that the user
    * started in an editor passes false, so that the undo in that editor needs no confirmation.
@@ -78,7 +80,7 @@ object ModPlanExecutor {
   /**
    * Writes the files of [execution], see [execute], with the events of [writeEvents], which runs in the command, before the writes: the
    * refactoring events get its data, and the refactoring listeners hear about its element changes after the writes. Pass
-   * [ModPlan.AcceptedPlan.writeEvents], or [ModPlanRefactoring.writeEvents] of the request if the plan has none.
+   * [ModPlan.AcceptedPlan.writeEvents].
    */
   @JvmStatic
   @RequiresEdt
@@ -99,7 +101,7 @@ object ModPlanExecutor {
     }
     // The existing files of the execution that cannot be written: the file or its loaded document is read-only.
     val documents = FileDocumentManager.getInstance()
-    val readOnlyFiles = writtenFilesAndDirectories(execution)
+    val readOnlyFiles = execution.writtenFilesAndDirectories
       .filter { !it.isWritable || documents.getCachedDocument(it)?.isWritable == false }
     if (readOnlyFiles.isNotEmpty()) {
       return ModPlanExecutionResult.ReadOnly(readOnlyFiles)
@@ -126,27 +128,37 @@ object ModPlanExecutor {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project)
         }
         // As in BaseRefactoringProcessor: the providers get the elements before the writes, the listeners run when the transaction commits.
+        // As in RenameProcessor, the undo of the rename tells the listeners the old name.
         val transaction = (RefactoringListenerManager.getInstance(project) as RefactoringListenerManagerImpl).startTransaction()
-        val listeners = currentEvents.elementChanges().mapNotNull { change ->
-          if (!change.before().isValid) {
-            thisLogger().error(PsiInvalidElementAccessException(change.before()))
-            return@mapNotNull null
+        val listeners = currentEvents.elementChanges().map { change ->
+          val listener = transaction.getElementListener(change.before())
+          if (change.kind() == ModPlanRefactoring.ElementChange.Kind.RENAMED) {
+            RenameUtil.registerUndoableRename(change.before(), listener)
           }
-          change to transaction.getElementListener(change.before())
+          change to listener
         }
         val currentBatch = ModCommandExecutor.getInstance().executeInBatch(ActionContext.from(null, contextFile), execution.command)
         batch = currentBatch
         if (currentBatch == ModCommandExecutor.Result.SUCCESS) {
           WriteAction.run<RuntimeException> { currentEvents.afterWrites().run() }
-          notify(project, listeners)
+          if (listeners.isNotEmpty()) DumbService.getInstance(project).completeJustSubmittedTasks()
+          // As in BaseRefactoringProcessor, the listeners run after the write action, so a listener may show a dialog.
+          notify(listeners)
           transaction.commit()
         }
       }
       finally {
         trashedFiles.forEach { LocalFileSystem.MOVE_TO_TRASH.set(it, null) }
-        project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
-          .refactoringDone(execution.refactoringId, events?.afterData()?.get())
-        history.finish()
+        // As in BaseRefactoringProcessor: the end is published only after the start, and the local history action always finishes.
+        try {
+          events?.let { startedEvents ->
+            project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+              .refactoringDone(execution.refactoringId, startedEvents.afterData().get())
+          }
+        }
+        finally {
+          history.finish()
+        }
       }
     }, execution.commandName, null, UndoConfirmationPolicy.DEFAULT, false)
 
@@ -160,11 +172,10 @@ object ModPlanExecutor {
   }
 
   /**
-   * Tells the listeners about the elements after the writes, as the legacy rename does: an element that is not found is skipped.
+   * Tells the listeners of the transaction about the elements after the writes, as the legacy rename does: an element that is not found
+   * is skipped. The transaction gives them to the real listeners when it commits.
    */
-  private fun notify(project: Project, listeners: List<Pair<ModPlanRefactoring.ElementChange, RefactoringElementListener>>) {
-    if (listeners.isEmpty()) return
-    DumbService.getInstance(project).completeJustSubmittedTasks()
+  private fun notify(listeners: List<Pair<ModPlanRefactoring.ElementChange, RefactoringElementListener>>) {
     for ([change, listener] in listeners) {
       val element = change.after().get() ?: continue
       when (change.kind()) {
@@ -172,27 +183,6 @@ object ModPlanExecutor {
         ModPlanRefactoring.ElementChange.Kind.MOVED -> listener.elementMoved(element)
       }
     }
-  }
-
-  /**
-   * The files that the execution writes, the files inside a moved or deleted directory, and the directories that a created, moved or
-   * deleted file leaves or enters.
-   */
-  private fun writtenFilesAndDirectories(execution: ModPlanExecution): Collection<VirtualFile> {
-    val files = LinkedHashSet(execution.affectedFiles)
-    files.addAll(execution.snapshotFiles)
-    for (write in execution.writes) {
-      when (write) {
-        is ModCreateFile -> files.add(ModPlanExecution.existingAncestor(write.file().parent))
-        is ModMoveFile -> {
-          files.add(ModPlanExecution.existingAncestor(write.targetFile().parent))
-          write.file().parent?.let { files.add(it) }
-        }
-        is ModDeleteFile -> write.file().parent?.let { files.add(it) }
-        else -> Unit
-      }
-    }
-    return files
   }
 
   /**
@@ -205,7 +195,8 @@ object ModPlanExecutor {
   }
 
   /** The files that changed since the analysis, or whose target place is taken. The checks differ by the kind of the write. */
-  private fun staleFiles(execution: ModPlanExecution): Set<VirtualFile> {
+  @ApiStatus.Internal
+  fun staleFiles(execution: ModPlanExecution): Set<VirtualFile> {
     val resultFiles = LinkedHashSet<VirtualFile>()
     execution.snapshotFiles.filterTo(resultFiles) { !execution.isUnchanged(it) }
     val createdPaths = HashSet<String>()

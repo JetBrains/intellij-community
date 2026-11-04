@@ -21,6 +21,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider
 import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
+import com.intellij.refactoring.listeners.UndoRefactoringElementListener
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.containers.ContainerUtil
@@ -166,6 +167,16 @@ class ModPlanExecutorTest : BasePlatformTestCase() {
     }
   }
 
+  fun `test a directory move needs its children, its parent and its destination to be writable`() {
+    val a = addFile("source/a.txt", "a")
+    val directory = a.parent
+    val destination = myFixture.tempDirFixture.findOrCreateDir("target")
+
+    val execution = execution(ModPlanEdit.Move(directory, destination, "source"))
+
+    assertSameElements(execution.writtenFilesAndDirectories, directory, a, directory.parent, destination)
+  }
+
   fun `test a renamed destination ancestor makes a move stale`() {
     val source = addFile("source/a.txt", "a")
     val destination = myFixture.tempDirFixture.findOrCreateDir("target/nested")
@@ -243,6 +254,69 @@ class ModPlanExecutorTest : BasePlatformTestCase() {
 
     assertEquals(ModPlanExecutionResult.Applied, result)
     assertEquals(listOf("started", "listener of source.txt", "listener of other.txt", "renamed to other.txt", "done"), listenerEntries)
+  }
+
+  /** As in BaseRefactoringProcessor: a listener runs with no write action, so it may show a dialog. */
+  fun `test the listeners hear about the elements after the write action`() {
+    val file = myFixture.addFileToProject("a.txt", "a")
+    val writeAccess = ArrayList<Boolean>()
+    project.extensionArea.getExtensionPoint(RefactoringElementListenerProvider.EP_NAME).registerExtension(
+      RefactoringElementListenerProvider {
+        object : RefactoringElementListener {
+          override fun elementMoved(newElement: PsiElement) {}
+
+          override fun elementRenamed(newElement: PsiElement) {
+            writeAccess.add(ApplicationManager.getApplication().isWriteAccessAllowed)
+          }
+        }
+      }, testRootDisposable,
+    )
+    val execution = execution(ModPlanEdit.Move(file.virtualFile, file.virtualFile.parent, "b.txt"))
+    val renamedFile = SmartPointerManager.createPointer<PsiElement>(file)
+
+    val result = ModPlanExecutor.execute(execution, true) {
+      ModPlanRefactoring.WriteEvent(null, listOf(ModPlanRefactoring.ElementChange(file, ModPlanRefactoring.ElementChange.Kind.RENAMED,
+                                                                                   renamedFile::getElement)), { null })
+    }
+
+    assertEquals(ModPlanExecutionResult.Applied, result)
+    assertEquals(listOf(false), writeAccess)
+  }
+
+  /** As in RenameProcessor: the undo of a rename gives the listeners the old name, so a run configuration takes it back. */
+  fun `test the undo of a rename tells the listeners the old name`() {
+    val file = myFixture.addFileToProject("a.txt", "a")
+    val root = file.virtualFile.parent
+    val oldPath = file.virtualFile.path
+    val oldNames = ArrayList<String>()
+    project.extensionArea.getExtensionPoint(RefactoringElementListenerProvider.EP_NAME).registerExtension(
+      RefactoringElementListenerProvider {
+        object : RefactoringElementListener, UndoRefactoringElementListener {
+          override fun elementMoved(newElement: PsiElement) {}
+
+          override fun elementRenamed(newElement: PsiElement) {}
+
+          override fun undoElementMovedOrRenamed(newElement: PsiElement, oldQualifiedName: String) {
+            oldNames.add(oldQualifiedName)
+          }
+        }
+      }, testRootDisposable,
+    )
+    val execution = execution(ModPlanEdit.Move(file.virtualFile, root, "b.txt"))
+    val renamedFile = SmartPointerManager.createPointer<PsiElement>(file)
+    TestDialogManager.setTestDialog(TestDialog.OK, testRootDisposable)
+
+    val result = ModPlanExecutor.execute(execution, true) {
+      ModPlanRefactoring.WriteEvent(null, listOf(ModPlanRefactoring.ElementChange(file, ModPlanRefactoring.ElementChange.Kind.RENAMED,
+                                                                                   renamedFile::getElement)), { null })
+    }
+    assertEquals(ModPlanExecutionResult.Applied, result)
+    assertEmpty(oldNames)
+
+    UndoManager.getInstance(project).undo(null)
+
+    assertEquals(listOf(oldPath), oldNames)
+    assertNotNull(root.findChild("a.txt"))
   }
 
   fun `test a stale plan asks for no events`() {

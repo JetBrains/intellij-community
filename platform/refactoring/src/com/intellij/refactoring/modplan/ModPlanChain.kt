@@ -89,10 +89,10 @@ sealed class ModPlanChain<T>(private val request: ModPlanRequest) {
   }
 
   companion object {
-    /** @return a request for the subjects of [request] with [optionValues] */
+    /** @return a request for the subjects and the scope of [request] with [optionValues] */
     @JvmStatic
     fun withOptionValues(request: ModPlanRequest, optionValues: ModPlanOptionValues): ModPlanRequest =
-      ModPlanRequest(request.project(), request.subjects(), optionValues)
+      ModPlanRequest(request.project(), request.subjects(), optionValues, request.searchScope())
 
     /**
      * Runs [chain] for [request] up to the next question that its option values do not answer. An interpreter calls it at the start
@@ -214,6 +214,17 @@ sealed interface ModPlanChainBuilder {
    * @throws IllegalStateException if the builder was used before
    */
   fun <T> finish(step: ModPlanFinalStep<T>): ModPlanChain<ModPlanFinalStep<T>>
+
+  /**
+   * Asks [questions] one after another, as [ask] does, then goes on with [afterAnswers]. A question that the option values answer is not
+   * asked.
+   *
+   * @throws IllegalStateException if the builder was used before
+   */
+  fun <T> askAll(questions: List<ModPlanQuestion>, afterAnswers: Function<ModPlanChainBuilder, ModPlanChain<T>>): ModPlanChain<T> {
+    val question = questions.firstOrNull() ?: return afterAnswers.apply(this)
+    return ask(question) { answeredBuilder -> answeredBuilder.askAll(questions.drop(1), afterAnswers) }
+  }
 }
 
 /**

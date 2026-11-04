@@ -74,18 +74,6 @@ public interface ModPlanRefactoring {
   }
 
   /**
-   * What the write tells the listeners: the data of the refactoring events and the elements that keep their identity at a new name or
-   * place. A refactoring gives the data that its legacy processor gives. {@link ModPlanExecutor} calls it in the command of the writes,
-   * before the writes: the elements are read from the subjects of {@code request} there, so no PSI is kept from the analysis.
-   *
-   * @return {@link WriteEvent#DEFAULT} by default: no data and no element changes
-   */
-  @RequiresReadLock
-  default @NotNull WriteEvent writeEvents(@NotNull ModPlanRequest request) {
-    return WriteEvent.DEFAULT;
-  }
-
-  /**
    * @return the id of the refactoring for its events and its help, such as {@code refactoring.safeDelete}
    */
   @NotNull @NonNls String id();
@@ -160,7 +148,7 @@ public interface ModPlanRefactoring {
 
   /**
    * What the write of a refactoring tells the listeners, as the legacy processor of the refactoring does with {@code getBeforeData},
-   * {@code getAfterData} and its refactoring transaction. See {@link ModPlanRefactoring#writeEvents}.
+   * {@code getAfterData} and its refactoring transaction. See {@link ModPlan.AcceptedPlan#getWriteEvents}.
    *
    * @param beforeData     the data of {@link RefactoringEventListener#refactoringStarted}; null if there is none
    * @param elementChanges the elements that the refactoring listeners hear about, see {@link ElementChange}
@@ -208,7 +196,7 @@ public interface ModPlanRefactoring {
    * <p>
    * {@code before} is read only before the writes, as in the legacy refactorings: a moved or renamed element is invalid after them. So
    * {@code after} finds the element by what it took before the writes, such as a smart pointer, a new path or a new name, not through
-   * {@code before}. A change whose {@code before} is already invalid before the writes is skipped.
+   * {@code before}. The supplier of the {@link WriteEvent} runs just before the writes, and it gives only a valid {@code before}.
    *
    * @param before the element as it is before the writes
    * @param kind   what happens to the element

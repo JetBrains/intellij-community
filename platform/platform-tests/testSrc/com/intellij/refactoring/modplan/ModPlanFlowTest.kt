@@ -4,8 +4,10 @@ package com.intellij.refactoring.modplan
 import com.intellij.model.SymbolPointer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiFileRange
@@ -15,13 +17,14 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.modplan.impl.ModPlanFlow
 import com.intellij.refactoring.modplan.impl.ModPlanFlowUi
 import com.intellij.refactoring.modplan.impl.ModPlanTestFlowUi
+import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.replaceService
 import com.intellij.usageView.UsageInfo
 import com.intellij.usages.UsageTarget
 import com.intellij.util.containers.MultiMap
 
-/** The preview with excluded usages and the questions after cancelled conflicts of [ModPlanFlow], on a refactoring of a text file. */
+/** The preview with excluded usages, the conflicts and the refusals of [ModPlanFlow], on a refactoring of a text file. */
 class ModPlanFlowTest : BasePlatformTestCase() {
   private val answered = ModPlanOption.bool("answered", false, RefactoringBundle.messagePointer("preview.button"))
   private val question = object : ModPlanQuestion.Custom {
@@ -40,7 +43,7 @@ class ModPlanFlowTest : BasePlatformTestCase() {
   fun `test the preview shows the usages and writes the plan it shows`() {
     val file = myFixture.addFileToProject("a.txt", "one two")
 
-    assertEquals(ModPlanFlow.Result.CANCELLED, run(file, UpperCaseRefactoring(null, false), ModPlanOptionValues.EMPTY.with(ModPlanRefactoring.PREVIEW, true)))
+    assertEquals(ModPlanFlow.Result.PREVIEW_SHOWN, run(file, UpperCaseRefactoring(null, false), ModPlanOptionValues.EMPTY.with(ModPlanRefactoring.PREVIEW, true)))
     assertEquals(2, ui.previewedUsages.size)
     assertEquals("one two", file.text)
 
@@ -57,7 +60,26 @@ class ModPlanFlowTest : BasePlatformTestCase() {
     ui.proceedFromPreview!!(false, setOf(ui.previewedUsages.first()))
 
     assertEquals("one TWO", file.text)
+    // The final step runs again for the exclusion.
     assertEquals(2, plannedRuns)
+  }
+
+  fun `test an excluded usage after a change of the file shows the error and writes nothing`() {
+    val file = myFixture.addFileToProject("a.txt", "one two")
+    run(file, UpperCaseRefactoring(null, false), ModPlanOptionValues.EMPTY.with(ModPlanRefactoring.PREVIEW, true))
+    val previewedUsage = ui.previewedUsages.first()
+    WriteCommandAction.runWriteCommandAction(project) {
+      val document = PsiDocumentManager.getInstance(project).getDocument(file)!!
+      document.insertString(0, "zero ")
+      PsiDocumentManager.getInstance(project).commitDocument(document)
+    }
+
+    assertThrows(CommonRefactoringUtil.RefactoringErrorHintException::class.java, RefactoringBundle.getCannotRefactorMessage(null)) {
+      ui.proceedFromPreview!!(false, setOf(previewedUsage))
+    }
+
+    assertEquals("zero one two", file.text)
+    assertEquals(1, plannedRuns)
   }
 
   fun `test cancelled conflicts ask the questions again`() {
@@ -80,6 +102,36 @@ class ModPlanFlowTest : BasePlatformTestCase() {
     assertEquals("one two", file.text)
   }
 
+  fun `test the conflicts before the preview are not confirmed again`() {
+    val file = myFixture.addFileToProject("a.txt", "one two")
+    ui.conflictAnswers.add(true)
+    run(file, UpperCaseRefactoring(null, true), ModPlanOptionValues.EMPTY.with(ModPlanRefactoring.PREVIEW, true))
+
+    ui.proceedFromPreview!!(false, emptySet())
+
+    assertEquals("ONE TWO", file.text)
+  }
+
+  fun `test the conflicts before the preview are not confirmed again after an excluded usage`() {
+    val file = myFixture.addFileToProject("a.txt", "one two")
+    ui.conflictAnswers.add(true)
+    run(file, UpperCaseRefactoring(null, true), ModPlanOptionValues.EMPTY.with(ModPlanRefactoring.PREVIEW, true))
+
+    ui.proceedFromPreview!!(false, setOf(ui.previewedUsages.first()))
+
+    assertEquals("one TWO", file.text)
+    assertEquals(2, plannedRuns)
+  }
+
+  fun `test a refusal shows its message`() {
+    val file = myFixture.addFileToProject("a.txt", "one two")
+
+    assertThrows(CommonRefactoringUtil.RefactoringErrorHintException::class.java, RefactoringBundle.getCannotRefactorMessage("No words")) {
+      run(file, UpperCaseRefactoring(null, false, "No words"), ModPlanOptionValues.EMPTY)
+    }
+    assertEquals("one two", file.text)
+  }
+
   private fun run(file: PsiFile, refactoring: UpperCaseRefactoring, optionValues: ModPlanOptionValues): ModPlanFlow.Result {
     val request = runReadActionBlocking { ModPlanRequest(project, listOf(SymbolPointer.of(file)), optionValues) }
     return ModPlanFlow.run(refactoring, request, true) {}
@@ -87,10 +139,13 @@ class ModPlanFlowTest : BasePlatformTestCase() {
 
   /**
    * Writes "one" and "two" of the file of the request in upper case, but the excluded ones; each word is a usage. It asks [question]
-   * first, and a conflict comes with the plan if [hasConflict].
+   * first, and a conflict comes with the plan if [hasConflict]. It refuses with the message [refusal] if there is one.
    */
-  private inner class UpperCaseRefactoring(private val question: ModPlanQuestion?, private val hasConflict: Boolean)
-    : ModPlanRefactoring {
+  private inner class UpperCaseRefactoring(
+    private val question: ModPlanQuestion?,
+    private val hasConflict: Boolean,
+    private val refusal: String? = null,
+  ) : ModPlanRefactoring {
     override fun id(): String = "refactoring.test"
 
     override fun title(): String = "Upper Case"
@@ -106,18 +161,17 @@ class ModPlanFlowTest : BasePlatformTestCase() {
     private fun planOf(request: ModPlanRequest): ModPlan {
       plannedRuns++
       val file = request.subjects().single().element() as PsiFile
-      var newText = file.text
-      val usages = ArrayList<SmartPsiFileRange>()
+      if (refusal != null) return ModPlan.RefusedPlan(ModPlanAnalysisResult.RefusedReason.NOT_APPLICABLE, file, refusal)
+      val usages = LinkedHashMap<SmartPsiFileRange, List<ModPlanEdit>>()
       for (word in listOf("one", "two")) {
         val location = file.createSmartFileRange(TextRange.from(file.text.indexOf(word), word.length))!!
-        usages.add(location)
-        if (!ModPlanRefactoring.isExcluded(request, location)) {
-          newText = newText.replace(word, word.uppercase())
-        }
+        usages[location] = listOf(ModPlanEdit.update(file) { copy ->
+          (copy.firstChild as LeafElement).replaceWithText(copy.text.replace(word, word.uppercase()))
+        })
       }
-      val edit = ModPlanEdit.update(file) { copy -> (copy.firstChild as LeafElement).replaceWithText(newText) }
       val conflicts = if (hasConflict) ModPlanConflicts.builder().fixable(file, "conflict").build() else ModPlanConflicts.EMPTY
-      return ModPlan.createPlan(listOf(edit), conflicts, "Upper case", id(), file, false, usages)
+      val keptUsages = usages.filterKeys { !ModPlanRefactoring.isExcluded(request, it) }
+      return ModPlan.createPlan(keptUsages.values.flatten(), conflicts, "Upper case", id(), file, false, keptUsages.keys.toList())
     }
   }
 
@@ -138,13 +192,12 @@ class ModPlanFlowTest : BasePlatformTestCase() {
     override fun previewUsages(
       project: Project,
       refactoring: ModPlanRefactoring,
-      commandName: String,
       targets: Array<out UsageTarget>,
-      usages: List<SmartPsiFileRange>,
+      plan: ModPlan.AcceptedPlan,
       nonCodeUsages: Array<UsageInfo>,
       proceed: (previewAgain: Boolean, excludedUsages: Set<SmartPsiFileRange>) -> Unit,
     ): Boolean {
-      previewedUsages = usages
+      previewedUsages = plan.usages
       proceedFromPreview = proceed
       return true
     }

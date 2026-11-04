@@ -498,6 +498,8 @@
     <extensionPoint qualifiedName="com.intellij.refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.refactoring.modPlanSafeDeleteProvider"
                     interface="com.intellij.refactoring.modplan.safeDelete.ModPlanSafeDeleteProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.refactoring.modPlanRenameProvider"
+                    interface="com.intellij.refactoring.modplan.rename.ModPlanRenameProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.rename.symbolRenameTargetFactory" dynamic="true"
                     interface="com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory"/>
@@ -580,6 +582,8 @@
                  description="Log stub inconsistencies at debug level during highlighting"/>
     <registryKey key="refactoring.safeDelete.modPlan" defaultValue="false" restartRequired="false"
                  description="Run the interactive Safe Delete on the ModPlan engine, in the same steps, where the engine supports the elements"/>
+    <registryKey key="refactoring.rename.modPlan" defaultValue="false" restartRequired="false"
+                 description="Run the Rename of the dialog and the inline Rename of members on the ModPlan engine, in the same steps, where the engine supports the elements"/>
     <registryKey key="hyperlink.ide.decompiler.open.file" defaultValue="true" description="Load binary files in hyperlink on background thread"/>
     <registryKey key="build.console.max.inlays" defaultValue="100"
                  description="Maximum number of Swing component inlays in the single build console. Extra messages are printed as plain text."/>
@@ -1528,6 +1532,10 @@
     <treeStructureProvider id="NestingTreeStructureProvider" implementation="com.intellij.ide.projectView.impl.NestingTreeStructureProvider" order="last"/>
     <refactoring.safeDeleteProcessor implementation="com.intellij.refactoring.safeDelete.RelatedFilesSafeDeleteProcessorDelegate"/>
     <refactoring.modPlanSafeDeleteProvider implementation="com.intellij.refactoring.modplan.safeDelete.impl.ModPlanLegacyBridgeSafeDeleteProvider" order="last"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor$ModPlanRenamePsiFileProvider"
+                                       order="last, before modPlanHeadlessRename"/>
+    <refactoring.modPlanRenameProvider implementation="com.intellij.refactoring.modplan.rename.impl.ModPlanHeadlessRenameProvider"
+                                       id="modPlanHeadlessRename" order="last"/>
     <applicationService serviceInterface="com.intellij.refactoring.modplan.impl.ModPlanFlowUi"
                         serviceImplementation="com.intellij.refactoring.modplan.impl.ModPlanDialogFlowUi"
                         testServiceImplementation="com.intellij.refactoring.modplan.impl.ModPlanTestFlowUi"/>

@@ -67,6 +67,29 @@ class ModPlanConflictsTest : BasePlatformTestCase() {
     assertTrue(conflicts.nonCodeUsages().isEmpty())
   }
 
+  fun `test a changed non-code usage needs no confirmation and is not shown as a conflict`() {
+    val file = addFile("a.txt", "text")
+
+    val conflicts = ModPlanConflicts.builder().changedNonCodeUsage(file, TextRange(1, 3)).build()
+
+    val changedNonCodeUsage = conflicts.changedNonCodeUsages().single()
+    assertEquals(ModPlanConflictKind.CHANGED_NON_CODE_USAGE, changedNonCodeUsage.kind)
+    assertEmpty(changedNonCodeUsage.messages)
+    assertEquals(TextRange(1, 3), TextRange.create(changedNonCodeUsage.location!!.range!!))
+    assertEmpty(conflicts.nonCodeUsages())
+    assertFalse(conflicts.needsConfirmation())
+    assertEmpty(runReadActionBlocking { conflicts.toShowConflictsWithNonCodeUsages(file) }.keys)
+  }
+
+  fun `test a changed non-code usage and a non-code usage of one place merge into the non-code usage`() {
+    val file = addFile("a.txt", "text")
+
+    val conflicts = ModPlanConflicts.builder().changedNonCodeUsage(file, null).nonCodeUsage(file, null, "nonCodeUsage").build()
+
+    assertEquals(ModPlanConflictKind.NON_CODE_USAGE, conflicts.at(file).kind)
+    assertEquals(listOf("nonCodeUsage"), conflicts.at(file).messages)
+  }
+
   fun `test non-code usages alone need no confirmation`() {
     val file = addFile("a.txt", "text")
 

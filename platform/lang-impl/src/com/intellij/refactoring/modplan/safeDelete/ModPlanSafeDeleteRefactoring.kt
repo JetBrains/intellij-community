@@ -224,7 +224,8 @@ private fun lastPositionFirst(edits: List<ModPlanEdit>): List<ModPlanEdit> {
   for (edit in edits) {
     val element = when (edit) {
       is ModPlanEdit.Update -> edit.pointers().firstOrNull()?.element
-      is ModPlanEdit.Delete, is ModPlanEdit.Create, is ModPlanEdit.CreateDirectory, is ModPlanEdit.Move -> null
+      is ModPlanEdit.Delete, is ModPlanEdit.Create, is ModPlanEdit.CreateDirectory, is ModPlanEdit.Move, is ModPlanEdit.ReplaceText,
+      is ModPlanEdit.UpdateRange -> null
     }
     if (element != null) {
       positionedEdits.add(edit to element)

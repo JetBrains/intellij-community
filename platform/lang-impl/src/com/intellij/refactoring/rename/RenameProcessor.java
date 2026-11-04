@@ -46,6 +46,8 @@ import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
+import com.intellij.refactoring.modplan.impl.ModPlanFlow;
+import com.intellij.refactoring.modplan.rename.impl.ModPlanRenameFlow;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
@@ -57,6 +59,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
 import io.opentelemetry.api.trace.Tracer;
 import org.jetbrains.annotations.ApiStatus;
@@ -140,6 +143,24 @@ public class RenameProcessor extends BaseRefactoringProcessor {
 
   public void removeRenamerFactory(AutomaticRenamerFactory factory) {
     myRenamerFactories.remove(factory);
+  }
+
+  /**
+   * Runs this rename on the ModPlan engine instead, if {@link ModPlanRenameFlow} handles it.
+   *
+   * @param preview whether the user asked for the preview of the usages
+   * @return {@link ModPlanFlow.Result#LEGACY} if the rename has to run as it is
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public @NotNull ModPlanFlow.Result runOnModPlan(boolean preview) {
+    // As isPreviewUsages: a processor of the element may force the preview.
+    boolean forcedPreview = ContainerUtil.exists(RenamePsiElementProcessor.allForElement(myPrimaryElement),
+                                                 RenamePsiElementProcessorBase::forcesShowPreview);
+    Map<PsiElement, String> renamesOfAddElement = new LinkedHashMap<>(myAllRenames);
+    renamesOfAddElement.remove(myPrimaryElement);
+    return ModPlanRenameFlow.run(myProject, myPrimaryElement, myNewName, myRefactoringScope, mySearchInComments, mySearchTextOccurrences,
+                                preview || forcedPreview, myRenamerFactories, renamesOfAddElement);
   }
 
   @Override

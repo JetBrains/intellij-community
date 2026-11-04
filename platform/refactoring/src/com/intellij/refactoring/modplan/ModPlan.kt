@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.modplan
 
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.FutureVirtualFile
 import com.intellij.modcommand.ModCommand
@@ -11,14 +12,18 @@ import com.intellij.modcommand.ModMoveFile
 import com.intellij.modcommand.ModNothing
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.ModUpdateFileText
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
@@ -29,6 +34,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.modplan.ModPlan.Companion.toCommand
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.NonNls
+import java.util.function.BiConsumer
 import java.util.function.Consumer
 import java.util.function.Supplier
 
@@ -63,27 +69,23 @@ sealed interface ModPlan {
    * @property execution what [ModPlanExecutor] runs; its [ModPlanExecution.affectedFiles] are the files that change
    * @property usages the places that the execution changes, which a preview shows and the user may exclude, see
    * [ModPlanRefactoring.EXCLUDED_USAGES]; empty if the refactoring shows none
-   * @property writeEvents what the write tells the listeners, if the analysis knows it better than the request does; null to use
-   * [ModPlanRefactoring.writeEvents]. It runs in the command of the writes, so it keeps smart pointers, not PSI.
+   * @property writeEvents what the write tells the listeners, see [ModPlanExecutor.execute]. It runs in the command of the writes, before
+   * the writes, so it keeps smart pointers, not PSI.
    */
-  class AcceptedPlan(
+  class AcceptedPlan internal constructor(
     val conflicts: ModPlanConflicts,
     val execution: ModPlanExecution,
     val usages: List<SmartPsiFileRange>,
-    val writeEvents: Supplier<ModPlanRefactoring.WriteEvent>?,
+    val writeEvents: Supplier<ModPlanRefactoring.WriteEvent>,
   ) : ModPlan
 
   companion object {
     /**
-     * The plan of [edits] with [conflicts]: [toCommand] converts the edits into the writes of the execution. Called in the analysis read
-     * action.
+     * The plan of [edits] with [conflicts]: [toCommand] converts the edits into the writes of the execution. The caller left out the
+     * edits of the excluded usages, see [ModPlanRefactoring.EXCLUDED_USAGES]. Called in the analysis read action.
      *
-     * @param edits the edits of the refactoring, which run in the given order, see [toCommand]
-     * @param anchor the element the refactoring was invoked on, see [toCommand]
-     * @param trashDeletedFiles whether [ModPlanExecutor] moves the deleted files to the trash if the user deletes to it in the settings.
-     * A directory is always deleted.
-     * @param usages the places that the edits change, for the preview, see [AcceptedPlan.usages]
-     * @param writeEvents see [AcceptedPlan.writeEvents]
+     * @param edits the edits of the refactoring, see [toCommand]
+     * @param usages the places that the edits change, see [AcceptedPlan.usages]
      * @return a [AcceptedPlan], or a [ModPlanAnalysisResult.RefusedReason.EDIT_FAILED] refusal if an edit failed, see [toCommand]
      */
     @JvmStatic
@@ -92,21 +94,33 @@ sealed interface ModPlan {
     fun createPlan(edits: List<ModPlanEdit>, conflicts: ModPlanConflicts,
                    commandName: @NlsContexts.Command String, refactoringId: @NonNls String, anchor: PsiElement,
                    trashDeletedFiles: Boolean, usages: List<SmartPsiFileRange> = emptyList(),
-                   writeEvents: Supplier<ModPlanRefactoring.WriteEvent>? = null): ModPlan {
-      val command = toCommand(edits, anchor)
-                    ?: return RefusedPlan(ModPlanAnalysisResult.RefusedReason.EDIT_FAILED, anchor, null)
-      val fileWrites = command.unpack().filterNot { it is ModNothing || it is ModUpdateFileText && it.isEmpty }
+                   writeEvents: Supplier<ModPlanRefactoring.WriteEvent> = Supplier { ModPlanRefactoring.WriteEvent.DEFAULT }): ModPlan {
+      val command = toCommand(edits, anchor) ?: return RefusedPlan(ModPlanAnalysisResult.RefusedReason.EDIT_FAILED, anchor, null)
+      val fileWrites = command.unpack().filterNot { it is ModNothing || it is ModUpdateFileText && it.isEmpty }.distinct()
       val execution = ModPlanExecution(anchor.project, commandName, refactoringId, fileWrites, trashDeletedFiles)
       return AcceptedPlan(conflicts, execution, usages, writeEvents)
     }
 
+    /** A write that runs among the PSI writes, in the order of the edits, on the writable copies of [elements]. */
+    private sealed interface OrderedWrite {
+      val elements: List<PsiElement>
+    }
+
     /** A write on the copies of [elements], which the engine hands to [write] in the same order. */
-    private class PsiWrite(val elements: List<PsiElement>, val write: Consumer<in List<PsiElement>>)
+    private class PsiWrite(override val elements: List<PsiElement>, val write: Consumer<in List<PsiElement>>) : OrderedWrite
+
+    /** A [ModPlanEdit.UpdateRange] as the engine writes it: [action] gets the copy of [file] and the range that [range] has then. */
+    private class RangeWrite(val file: PsiFile, val range: TextRange, val action: BiConsumer<in PsiFile, in TextRange>) : OrderedWrite {
+      override val elements: List<PsiElement> get() = listOf(file)
+    }
+
+    /** A [ModPlanEdit.ReplaceText] as the engine writes it: [range] of the copy of [file] gets [newText]. */
+    private class TextWrite(val file: PsiFile, val range: TextRange, val newText: String)
 
     /**
-     * Converts [edits] into one [ModCommand] on non-physical copies: the PSI edits run in their order in one updater, then the
-     * [ModPlanRefactoringListener]s run on the changed files; the file edits follow as file writes. An edit inside a deleted file is
-     * skipped.
+     * Converts [edits] into one [ModCommand] on non-physical copies: the PSI edits run in their order in one updater, then the text
+     * replacements, then the [ModPlanRefactoringListener]s run on the changed files; the file edits follow as file writes. An edit inside
+     * a deleted file is skipped.
      *
      * @param anchor the element the refactoring was invoked on; the command is built for its file, or for the file of the first edit that
      * has one
@@ -120,20 +134,37 @@ sealed interface ModPlan {
       val movedFiles = edits.filterIsInstance<ModPlanEdit.Move>().map { it.file() }
       val writtenFiles = HashSet<VirtualFile>()
       val fileWrites = ArrayList<ModCommand>()
-      val psiWrites = ArrayList<PsiWrite>()
+      val psiWrites = ArrayList<OrderedWrite>()
+      val textWrites = ArrayList<TextWrite>()
       for (edit in edits) {
         when (edit) {
           is ModPlanEdit.Update -> {
             val write = mapUpdate(edit) ?: return null
             if (!write.elements.all {
                 val file = PsiUtilCore.getVirtualFile(it)
-                isInsideDeletedFile(file, it is PsiFileSystemItem, deletedFiles) && !isInsideDeletedFile(file, false, movedFiles)
+                isInsideFiles(file, it is PsiFileSystemItem, deletedFiles) && !isInsideFiles(file, false, movedFiles)
               }) {
               psiWrites.add(write)
             }
           }
+          is ModPlanEdit.UpdateRange -> {
+            val file = edit.place().containingFile ?: return null
+            val range = edit.place().range ?: return null
+            val virtualFile = file.virtualFile
+            if (!isInsideFiles(virtualFile, false, deletedFiles) || isInsideFiles(virtualFile, false, movedFiles)) {
+              psiWrites.add(RangeWrite(file, TextRange.create(range), edit.action()))
+            }
+          }
+          is ModPlanEdit.ReplaceText -> {
+            val file = edit.place().containingFile ?: return null
+            val range = edit.place().range ?: return null
+            val virtualFile = file.virtualFile
+            if (!isInsideFiles(virtualFile, false, deletedFiles) || isInsideFiles(virtualFile, false, movedFiles)) {
+              textWrites.add(TextWrite(file, TextRange.create(range), edit.newText()))
+            }
+          }
           is ModPlanEdit.Delete -> {
-            if (!isInsideDeletedFile(edit.file(), true, deletedFiles) && writtenFiles.add(edit.file())) {
+            if (!isInsideFiles(edit.file(), true, deletedFiles) && writtenFiles.add(edit.file())) {
               fileWrites.add(ModDeleteFile(edit.file()))
             }
           }
@@ -156,9 +187,10 @@ sealed interface ModPlan {
         }
       }
 
-      val anchorFile =
-        anchor.containingFile ?: psiWrites.firstNotNullOfOrNull { write -> write.elements.firstNotNullOfOrNull { it.containingFile } }
-      val psiCommand = psiCommand(psiWrites, anchorFile) ?: return null
+      val anchorFile = anchor.containingFile
+                       ?: psiWrites.firstNotNullOfOrNull { write -> write.elements.firstNotNullOfOrNull { it.containingFile } }
+                       ?: textWrites.firstOrNull()?.file
+      val psiCommand = psiCommand(psiWrites, textWrites, anchorFile) ?: return null
       return fileWrites.fold(psiCommand) { command, nextCommand -> command.andThen(nextCommand) }
     }
 
@@ -177,20 +209,60 @@ sealed interface ModPlan {
       return PsiWrite(elements, edit.action())
     }
 
-    /** @return nop if there is nothing to write in PSI; null if there is, and no file to build the command for */
-    private fun psiCommand(writes: List<PsiWrite>, anchor: PsiFile?): ModCommand? {
-      if (writes.isEmpty()) return ModCommand.nop()
+    /**
+     * The text replacements and the [RangeWrite]s follow the PSI writes by range markers in the documents of the copies. The markers exist
+     * before the first write. A [RangeWrite] runs among the PSI writes. The text replacements are written after the PSI writes, in the
+     * document, from the last place of a file to the first.
+     *
+     * @return nop if there is nothing to write in the files; null if there is, and no file to build the command for
+     */
+    private fun psiCommand(writes: List<OrderedWrite>, textWrites: List<TextWrite>, anchor: PsiFile?): ModCommand? {
+      if (writes.isEmpty() && textWrites.isEmpty()) return ModCommand.nop()
       if (anchor == null) return null
       return ModCommand.psiUpdate(ActionContext.from(null, anchor)) { updater ->
+        // The copy of an injected fragment shares the copy of its host only if the host has one already, so the hosts get theirs first.
+        val injectionManager = InjectedLanguageManager.getInstance(anchor.project)
+        writes.flatMap { it.elements }.mapNotNull { it.containingFile?.let { file -> injectionManager.getInjectionHost(file)?.containingFile } }
+          .distinct().forEach { updater.getWritable(it) }
         val copies = writes.map { write -> write.elements.map { updater.getWritable(it) } }
-        val files = copies.flatten().mapNotNull { it.containingFile }.distinct()
+        val textCopies = textWrites.map { updater.getWritable(it.file) }
+        fun createMarker(copy: PsiFile, range: TextRange): RangeMarker {
+          val document = copy.viewProvider.document ?: throw IllegalStateException("No document of $copy")
+          return document.createRangeMarker(range)
+        }
+        val rangeMarkers = writes.mapIndexed { index, write ->
+          (write as? RangeWrite)?.let { createMarker(copies[index][0] as PsiFile, it.range) }
+        }
+        val markersByDocument = LinkedHashMap<Document, MutableList<Pair<RangeMarker, String>>>()
+        textWrites.forEachIndexed { index, write ->
+          val marker = createMarker(textCopies[index], write.range)
+          markersByDocument.getOrPut(marker.document) { ArrayList() }.add(marker to write.newText)
+        }
+        val files = (copies.flatten().mapNotNull { it.containingFile } + textCopies).distinct()
         keepIndentOfFiles(updater, copies.flatten())
+        val documentManager = PsiDocumentManager.getInstance(anchor.project)
         writes.forEachIndexed { index, write ->
           // Another edit may already have removed the element, such as a usage that deletes its parent or an edit that replaces the
           // deleted element: there is nothing left to write.
           if (copies[index].all { it.isValid }) {
-            write.write.accept(copies[index])
+            when (write) {
+              is PsiWrite -> write.write.accept(copies[index])
+              is RangeWrite -> {
+                val marker = rangeMarkers[index]!!
+                documentManager.doPostponedOperationsAndUnblockDocument(marker.document)
+                if (marker.isValid) {
+                  write.action.accept(copies[index][0] as PsiFile, marker.textRange)
+                }
+              }
+            }
           }
+        }
+        for ([document, markers] in markersByDocument) {
+          documentManager.doPostponedOperationsAndUnblockDocument(document)
+          markers.filter { (marker, _) -> marker.isValid }.sortedByDescending { (marker, _) -> marker.startOffset }
+            .distinctBy { (marker, _) -> marker.startOffset }
+            .forEach { (marker, newText) -> document.replaceString(marker.startOffset, marker.endOffset, newText) }
+          documentManager.commitDocument(document)
         }
         for (file in files) {
           if (file.isValid) {
@@ -221,11 +293,11 @@ sealed interface ModPlan {
     }
 
     /**
-     * Whether [file] is one of [deletedFiles] or is in one of them; with [strict], only whether it is in one of them. An edit inside a
+     * Whether [file] is one of [files] or is in one of them; with [strict], only whether it is in one of them. An edit inside a
      * deleted element is not checked here: the write skips it, because its copy is not valid after the element is deleted.
      */
-    private fun isInsideDeletedFile(file: VirtualFile?, strict: Boolean, deletedFiles: List<VirtualFile>): Boolean {
-      return file != null && deletedFiles.any { VfsUtilCore.isAncestor(it, file, strict) }
+    private fun isInsideFiles(file: VirtualFile?, strict: Boolean, files: List<VirtualFile>): Boolean {
+      return file != null && files.any { VfsUtilCore.isAncestor(it, file, strict) }
     }
   }
 }
@@ -266,6 +338,29 @@ class ModPlanExecution internal constructor(
    */
   internal val snapshotFiles: Set<VirtualFile>
     get() = snapshots.keys
+
+  /**
+   * The files that must be writable for the execution: the files that it writes, the files inside a moved or deleted directory, and the
+   * directories that a created, moved or deleted file leaves or enters. [ModPlanExecutor] writes nothing if one of them is read-only, so
+   * an interactive client asks the user to make them writable before.
+   */
+  val writtenFilesAndDirectories: List<VirtualFile>
+    get() {
+      val files = LinkedHashSet(affectedFiles)
+      files.addAll(snapshotFiles)
+      for (write in writes) {
+        when (write) {
+          is ModCreateFile -> files.add(existingAncestor(write.file().parent))
+          is ModMoveFile -> {
+            files.add(existingAncestor(write.targetFile().parent))
+            write.file().parent?.let { files.add(it) }
+          }
+          is ModDeleteFile -> write.file().parent?.let { files.add(it) }
+          else -> Unit
+        }
+      }
+      return files.toList()
+    }
 
   /**
    * Whether [file] is as the analysis saw it: at the same path, with the same stamp, and for a directory with the same children. The
