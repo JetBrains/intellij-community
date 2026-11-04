@@ -221,12 +221,19 @@ abstract class FloatingToolbar(
     onHintShown()
   }
 
+  /**
+   * Whether the toolbar needs the PSI file of its editor. A toolbar whose actions use only the selected text can return
+   * `false`, so it shows also in an editor without a PSI file, such as the editor of a unified diff.
+   */
+  protected open fun requiresPsiFile(): Boolean = true
+
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun canBeShownAtCurrentSelection(): Boolean {
     if (!isEnabled()) return false
     val selectionModel = editor.selectionModel
     val project = editor.project ?: return false
-    val file = EditorContextManager.getPsiFileForEditor(editor, project) ?: return false
+    val file = EditorContextManager.getPsiFileForEditor(editor, project)
+               ?: return !requiresPsiFile() && !AppMode.isRemoteDevHost()
     val document = editor.document
     if (!PsiDocumentManager.getInstance(file.project).isCommitted(document)) {
       return false
