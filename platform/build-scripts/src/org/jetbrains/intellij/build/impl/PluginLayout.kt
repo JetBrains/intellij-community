@@ -503,6 +503,13 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     /**
+     * Enables support for symlinks and files with a posix executable bit set, such as required by macOS.
+     */
+    fun enableSymlinksAndExecutableResources() {
+      layout.enableSymlinksAndExecutableResources = true
+    }
+
+    /**
      * @param resourcePath path to a resource file or directory relative to `moduleName` module content root
      * @param relativeOutputPath target path relative to the plugin root directory
      *
@@ -689,13 +696,6 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      */
     fun scrambleSkip(jar: String, classFilter: String) {
       layout.scrambleSkipStatements += Pair(jar, classFilter)
-    }
-
-    /**
-     * Enables support for symlinks and files with a posix executable bit set, such as required by macOS.
-     */
-    fun enableSymlinksAndExecutableResources() {
-      layout.enableSymlinksAndExecutableResources = true
     }
   }
 }
