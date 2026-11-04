@@ -27,6 +27,8 @@
                     interface="com.intellij.java.impl.template.JavaTemplateFormattingSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.java.templatePresentationSupport"
                     interface="com.intellij.java.impl.template.JavaTemplatePresentationSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageHelper"/>
