@@ -1236,7 +1236,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         task.id
       },
     )
-    toolWindow.stripeButtonDefault = shouldShowStripeButtonByDefault(task.id, task.contentFactory, task.pluginDescriptor, isNewUi)
+    toolWindow.stripeButtonVisibilityDefault = shouldShowStripeButtonByDefault(task.id, task.contentFactory, task.pluginDescriptor, isNewUi)
     if (task.hideOnEmptyContent) {
       toolWindow.setToHideOnEmptyContent(true)
     }

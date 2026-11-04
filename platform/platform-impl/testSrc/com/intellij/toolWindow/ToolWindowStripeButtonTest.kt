@@ -34,11 +34,11 @@ internal class ToolWindowStripeButtonTest {
       val pluginDefault = !bundled
       for (savedChoice in listOf(null, !pluginDefault)) {
         withWindow(available = false, bundled = bundled, savedChoice = savedChoice) { _, window ->
-          assertThat(window.stripeButtonDefault).isEqualTo(pluginDefault)
+          assertThat(window.stripeButtonVisibilityDefault).isEqualTo(pluginDefault)
 
           window.isAvailable = true
 
-          assertThat(window.stripeButtonDefault).isEqualTo(pluginDefault)
+          assertThat(window.stripeButtonVisibilityDefault).isEqualTo(pluginDefault)
         }
       }
     }
@@ -47,23 +47,27 @@ internal class ToolWindowStripeButtonTest {
   @Test
   fun `the factory stripe choice overrides the plugin default even with a saved host layout`(): Unit =
     timeoutRunBlocking(context = Dispatchers.EDT) {
-      for (factoryChoice in listOf(true, false)) {
+      for (factoryVisibilityChoice in listOf(true, false)) {
         // Both the plugin default and the saved layout oppose the factory choice.
-        withWindow(bundled = factoryChoice, savedChoice = !factoryChoice, factoryChoice = factoryChoice) { _, window ->
-          assertThat(window.stripeButtonDefault).isEqualTo(factoryChoice)
+        withWindow(
+          bundled = factoryVisibilityChoice,
+          savedChoice = !factoryVisibilityChoice,
+          factoryVisibilityChoice = factoryVisibilityChoice,
+        ) { _, window ->
+          assertThat(window.stripeButtonVisibilityDefault).isEqualTo(factoryVisibilityChoice)
         }
       }
     }
 
   @Test
   fun `a later explicit stripe choice is retained for lazy publication`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
-    withWindow(savedChoice = true, factoryChoice = true) { manager, window ->
-      assertThat(window.stripeButtonDefault).isTrue()
+    withWindow(savedChoice = true, factoryVisibilityChoice = true) { manager, window ->
+      assertThat(window.stripeButtonVisibilityDefault).isTrue()
       assertThat(manager.isStripeButtonShow(window)).isTrue()
 
       window.isShowStripeButton = false
 
-      assertThat(window.stripeButtonDefault).isFalse()
+      assertThat(window.stripeButtonVisibilityDefault).isFalse()
       // New UI keeps the host layout. The recorded choice can seed a later frontend registration.
       assertThat(window.isShowStripeButton).isTrue()
       assertThat(manager.isStripeButtonShow(window)).isTrue()
@@ -74,7 +78,7 @@ internal class ToolWindowStripeButtonTest {
     available: Boolean = true,
     bundled: Boolean = true,
     savedChoice: Boolean? = null,
-    factoryChoice: Boolean? = null,
+    factoryVisibilityChoice: Boolean? = null,
     check: (ToolWindowManagerImpl, ToolWindowImpl) -> Unit,
   ): Unit = coroutineScope {
     val buttonManager = ToolWindowPaneNewButtonManager(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
@@ -92,7 +96,7 @@ internal class ToolWindowStripeButtonTest {
     try {
       val factory = object : ToolWindowFactory {
         override fun init(toolWindow: ToolWindow) {
-          factoryChoice?.let { toolWindow.isShowStripeButton = it }
+          factoryVisibilityChoice?.let { toolWindow.isShowStripeButton = it }
         }
 
         override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) = Unit
