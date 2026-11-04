@@ -78,8 +78,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
     },
     plugin("intellij.java.guiForms.designer") { spec ->
-      spec.directoryName = "uiDesigner"
-      spec.mainJarName = "uiDesigner.jar"
       spec.withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar")
     },
     CommunityKotlinPluginBuilder.kotlinPlugin(),
