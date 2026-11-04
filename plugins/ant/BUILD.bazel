@@ -16,7 +16,7 @@ dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/ant-jps.jar": ["intellij.ant.jps"],
-        "lib/antIntegration.jar": ["intellij.ant"],
+        "lib/ant.jar": ["intellij.ant"],
     },
     main_module = "intellij.ant",
 )
