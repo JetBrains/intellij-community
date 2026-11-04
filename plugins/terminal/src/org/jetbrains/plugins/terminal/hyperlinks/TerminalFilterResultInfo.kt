@@ -14,6 +14,10 @@ sealed class TerminalFilterResultInfo {
   abstract val hyperlinkInfo: HyperlinkInfo?
 }
 
+/**
+ * A hyperlink found in the terminal output. [isFile] tells whether the backend [hyperlinkInfo] names a file. The
+ * frontend knows it without [hyperlinkInfo], which only the monolith carries.
+ */
 @ApiStatus.Internal
 data class TerminalHyperlinkInfo(
   override val id: TerminalHyperlinkId,
@@ -25,6 +29,7 @@ data class TerminalHyperlinkInfo(
   val hoveredStyle: TextAttributes?,
   val isInvisibleLink: Boolean,
   val layer: Int,
+  val isFile: Boolean,
 ) : TerminalFilterResultInfo()
 
 @ApiStatus.Internal

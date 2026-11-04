@@ -51,9 +51,10 @@ internal fun installInvisibleHyperlinksOnHover(
   session: TerminalHyperlinksSession,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
   processedHovers: MutableStateFlow<Long>,
+  fileHyperlinkIds: FrontendFileHyperlinkIds,
   coroutineScope: CoroutineScope,
 ) {
-  val processing = InvisibleHyperlinksOnHover(outputModel, applier, session, onLinkClicked, processedHovers)
+  val processing = InvisibleHyperlinksOnHover(outputModel, applier, session, onLinkClicked, processedHovers, fileHyperlinkIds)
   outputModel.addListener(coroutineScope.asDisposable(), processing.contentListener)
   coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement() + CoroutineName("Terminal invisible hyperlinks on hover")) {
     launch {
@@ -73,6 +74,7 @@ private class InvisibleHyperlinksOnHover(
   private val session: TerminalHyperlinksSession,
   private val onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
   private val processedHovers: MutableStateFlow<Long>,
+  private val fileHyperlinkIds: FrontendFileHyperlinkIds,
 ) {
   /**
    * The hovered line and the modification count of the output.
@@ -155,7 +157,8 @@ private class InvisibleHyperlinksOnHover(
     val osc8Hyperlinks = outputModel.getOsc8Hyperlinks()
     return results.mapNotNull {
       val info = it.toFilterResultInfo()
-      if (info.isOverlappedBy(osc8Hyperlinks)) null else info.toEditorDecoration(outputModel, onLinkClicked)
+      if (info.isOverlappedBy(osc8Hyperlinks)) return@mapNotNull null
+      info.toEditorDecoration(outputModel, onLinkClicked)?.also { fileHyperlinkIds.add(listOf(info)) }
     }
   }
 
@@ -165,6 +168,7 @@ private class InvisibleHyperlinksOnHover(
       val cached = iterator.next()
       iterator.remove()
       applier.removeDecorations(cached.decorationIds)
+      fileHyperlinkIds.removeDecorations(cached.decorationIds)
     }
   }
 
@@ -172,6 +176,7 @@ private class InvisibleHyperlinksOnHover(
     if (cachedLines.isNotEmpty()) {
       for (cached in cachedLines.values) {
         applier.removeDecorations(cached.decorationIds)
+        fileHyperlinkIds.removeDecorations(cached.decorationIds)
       }
       cachedLines.clear()
     }

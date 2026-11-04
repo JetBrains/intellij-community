@@ -36,6 +36,8 @@ data class TerminalHyperlinkInfoDto(
   val hoveredStyle: TerminalTextAttributesDto?,
   val isInvisibleLink: Boolean,
   val layer: Int,
+  /** Whether [hyperlinkInfo] names a file, so a frontend menu can offer a file entry. */
+  val isFile: Boolean,
 ) : TerminalFilterResultInfoDto()
 
 @ApiStatus.Internal
@@ -98,6 +100,7 @@ fun TerminalFilterResultInfo.toDto(): TerminalFilterResultInfoDto =
       hoveredStyle = hoveredStyle?.toDto(),
       isInvisibleLink = isInvisibleLink,
       layer = layer,
+      isFile = isFile,
     )
     is TerminalHighlightingInfo -> TerminalHighlightingInfoDto(
       id = id,
@@ -142,6 +145,7 @@ fun TerminalFilterResultInfoDto.toFilterResultInfo(): TerminalFilterResultInfo =
       hoveredStyle = hoveredStyle?.toTextAttributes(),
       isInvisibleLink = isInvisibleLink,
       layer = layer,
+      isFile = isFile,
     )
     is TerminalHighlightingInfoDto -> TerminalHighlightingInfo(
       id = id,

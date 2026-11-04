@@ -82,16 +82,17 @@ fun installHyperlinksProcessing(
   val lastFinishedTaskStamp = MutableStateFlow(0L)
   // The number of processed hover states, see installInvisibleHyperlinksOnHover().
   val processedHovers = MutableStateFlow(0L)
+  val fileHyperlinkIds = FrontendFileHyperlinkIds()
 
   val sessionDeferred = coroutineScope.async(CoroutineName("createHyperlinksSession")) {
     createHyperlinksSession(project, eelDescriptor, coroutineScope.childScope("FrontendTerminalHyperlinksSession"))
   }
 
   coroutineScope.launch(CoroutineName("processHyperlinks")) {
-    processHyperlinks(outputModel, sessionModel, sessionDeferred, decorationApplier, lastFinishedTaskStamp, processedHovers)
+    processHyperlinks(outputModel, sessionModel, sessionDeferred, decorationApplier, lastFinishedTaskStamp, processedHovers, fileHyperlinkIds)
   }
 
-  return FrontendTerminalHyperlinkFacade(sessionDeferred, decorationApplier, lastFinishedTaskStamp, processedHovers)
+  return FrontendTerminalHyperlinkFacade(sessionDeferred, decorationApplier, lastFinishedTaskStamp, processedHovers, fileHyperlinkIds)
 }
 
 private suspend fun processHyperlinks(
@@ -101,6 +102,7 @@ private suspend fun processHyperlinks(
   applier: EditorTextDecorationApplier,
   lastFinishedTaskStamp: MutableStateFlow<Long>,
   processedHovers: MutableStateFlow<Long>,
+  fileHyperlinkIds: FrontendFileHyperlinkIds,
 ) = coroutineScope {
   val scope = this
   val session = sessionDeferred.await()
@@ -116,7 +118,7 @@ private suspend fun processHyperlinks(
     }
   }
 
-  installInvisibleHyperlinksOnHover(outputModel, applier, session, onLinkClicked, processedHovers, scope)
+  installInvisibleHyperlinksOnHover(outputModel, applier, session, onLinkClicked, processedHovers, fileHyperlinkIds, scope)
 
   val outputModelChangesTracker = TerminalOutputModelChangesTracker(outputModel, parentDisposable = this.asDisposable())
 
@@ -134,6 +136,7 @@ private suspend fun processHyperlinks(
       inputEventsSink = session.inputEventsSink,
       lastFinishedTaskStamp = lastFinishedTaskStamp,
       onLinkClicked = onLinkClicked,
+      fileHyperlinkIds = fileHyperlinkIds,
     )
   }
 }
@@ -255,6 +258,7 @@ private suspend fun processHyperlinkResults(
   inputEventsSink: SendChannel<TerminalHyperlinksInputEvent>,
   lastFinishedTaskStamp: MutableStateFlow<Long>,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
+  fileHyperlinkIds: FrontendFileHyperlinkIds,
 ) {
   val hyperlinksModel = TerminalHyperlinksModel(debugName = debugName)
 
@@ -268,7 +272,8 @@ private suspend fun processHyperlinkResults(
         inputEventsSink = inputEventsSink,
         event = event,
         lastFinishedTaskStamp = lastFinishedTaskStamp,
-        onLinkClicked = onLinkClicked
+        onLinkClicked = onLinkClicked,
+        fileHyperlinkIds = fileHyperlinkIds,
       )
     }
     catch (e: CancellationException) {
@@ -289,6 +294,7 @@ private suspend fun processHyperlinksOutputEvent(
   event: TerminalHyperlinksOutputEvent,
   lastFinishedTaskStamp: MutableStateFlow<Long>,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
+  fileHyperlinkIds: FrontendFileHyperlinkIds,
 ) {
   when (event) {
     is TerminalHyperlinksOutputEvent.HyperlinksUpdated -> {
@@ -302,7 +308,8 @@ private suspend fun processHyperlinksOutputEvent(
         applier = applier,
         outputModelChangesTracker = outputModelChangesTracker,
         event = event,
-        onLinkClicked = onLinkClicked
+        onLinkClicked = onLinkClicked,
+        fileHyperlinkIds = fileHyperlinkIds,
       )
     }
     is TerminalHyperlinksOutputEvent.TaskFinished -> {
@@ -334,6 +341,7 @@ private fun processHyperlinksUpdatedEvent(
   outputModelChangesTracker: TerminalOutputModelChangesTracker,
   event: TerminalHyperlinksOutputEvent.HyperlinksUpdated,
   onLinkClicked: (TerminalHyperlinkId, EditorMouseEvent) -> Unit,
+  fileHyperlinkIds: FrontendFileHyperlinkIds,
 ) {
   val modelStartOffset = outputModel.startOffset.toAbsolute()
   val modelEndOffset = outputModel.endOffset.toAbsolute()
@@ -372,6 +380,7 @@ private fun processHyperlinksUpdatedEvent(
     trimUntilOffset = modelStartOffset,
   )
   applier.removeDecorations(removed.map { it.toPlatformId() })
+  fileHyperlinkIds.remove(removed)
 
   val osc8Hyperlinks = outputModel.getOsc8Hyperlinks()
   val newLinks = event.hyperlinks
@@ -391,6 +400,7 @@ private fun processHyperlinksUpdatedEvent(
     hyperlinks.add(link)
   }
   hyperlinksModel.addHyperlinks(hyperlinks)
+  fileHyperlinkIds.add(hyperlinks)
   applier.addDecorations(decorations)
 }
 

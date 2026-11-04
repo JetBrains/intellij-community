@@ -15,11 +15,12 @@ import org.jetbrains.plugins.terminal.hyperlinks.toTerminalId
 import org.jetbrains.plugins.terminal.util.getNow
 
 @ApiStatus.Internal
-class FrontendTerminalHyperlinkFacade(
+class FrontendTerminalHyperlinkFacade internal constructor(
   private val sessionDeferred: Deferred<TerminalHyperlinksSession>,
   private val applier: EditorTextDecorationApplier,
   private val lastFinishedTaskStamp: Flow<Long>,
   private val processedHovers: StateFlow<Long>,
+  private val fileHyperlinkIds: FrontendFileHyperlinkIds,
 ) {
   /** Can be null if session is not initialized yet (for example, backend requests are not yet performed, or it is not available) */
   val sessionId: TerminalHyperlinksSessionId?
@@ -28,6 +29,9 @@ class FrontendTerminalHyperlinkFacade(
   fun getHoveredHyperlinkId(): TerminalHyperlinkId? {
     return applier.getHoveredHyperlink()?.id?.toTerminalId()
   }
+
+  /** Whether the hyperlink [id] that the terminal shows now names a file. Any thread may call it. */
+  fun isFileHyperlink(id: TerminalHyperlinkId): Boolean = id in fileHyperlinkIds
 
   /**
    * Suspends until a highlighting task with `documentModificationStamp >= [targetStamp]` has finished.
