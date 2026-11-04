@@ -222,7 +222,7 @@ class PMarkerDirectRoot private constructor(
    */
   override fun mergeValidMarkersFrom(other: PMarkerRoot): PMarkerDirectRoot = keepingRootAlive {
     require(other is PMarkerDirectRoot) { "The roots must use the same implementation" }
-    if (other.root == null || root?.state === other.root.state) return@keepingRootAlive this
+    if (other.root == null || root === other.root) return@keepingRootAlive this
     val editor = Editor()
     var result = root
     other.processAllRangeMarkers { entry, delta ->
@@ -451,19 +451,20 @@ class PMarkerDirectRoot private constructor(
       left: PMarkerNode? = null,
       right: PMarkerNode? = null,
       delta: Int = 0,
-    ): PMarkerNode = PMarkerNode(version, entry, left, right, delta)
+      source: PMarkerNode? = null,
+    ): PMarkerNode = PMarkerNode(version, entry, left, right, delta, source)
 
     /** Copies the subtree root with shifted offsets and defers the same shift to both children. */
     fun shift(node: PMarkerNode?, delta: Int): PMarkerNode? {
       if (node == null || delta == 0) return node
       val entry = node.entry.copy(nodeStart = node.entry.nodeStart + delta, nodeEnd = node.entry.nodeEnd + delta)
-      return make(entry, node.left, node.right, node.lazyDelta + delta)
+      return make(entry, node.left, node.right, node.lazyDelta + delta, source = node)
     }
 
     /** Propagates the pending shift into copies of the children and clears the shift on the replacement node. */
     private fun push(node: PMarkerNode): PMarkerNode {
       if (node.lazyDelta == 0) return node
-      return make(node.entry, shift(node.left, node.lazyDelta), shift(node.right, node.lazyDelta))
+      return make(node.entry, shift(node.left, node.lazyDelta), shift(node.right, node.lazyDelta), source = node)
     }
 
     /**
@@ -491,10 +492,10 @@ class PMarkerDirectRoot private constructor(
       }
       val node = push(initial)
       val inserted = if (compare(entry.nodeStart, handle, node.entry.nodeStart, node.handle) < 0) {
-        make(node.entry, insertNode(node.left, handle, entry), node.right)
+        make(node.entry, insertNode(node.left, handle, entry), node.right, source = node)
       }
       else {
-        make(node.entry, node.left, insertNode(node.right, handle, entry))
+        make(node.entry, node.left, insertNode(node.right, handle, entry), source = node)
       }
       return balance(inserted)
     }
@@ -505,8 +506,8 @@ class PMarkerDirectRoot private constructor(
       val node = push(initial)
       val order = compare(start, handle, node.entry.nodeStart, node.handle)
       return when {
-        order < 0 -> balance(make(node.entry, delete(node.left, start, handle), node.right))
-        order > 0 -> balance(make(node.entry, node.left, delete(node.right, start, handle)))
+        order < 0 -> balance(make(node.entry, delete(node.left, start, handle), node.right, source = node))
+        order > 0 -> balance(make(node.entry, node.left, delete(node.right, start, handle), source = node))
         else -> join(node.left, node.right)
       }
     }
@@ -516,29 +517,29 @@ class PMarkerDirectRoot private constructor(
       if (left == null) return right
       if (right == null) return left
       val [minimum, remaining] = extractMinimum(right)
-      return join(left, minimum.entry, remaining)
+      return join(left, minimum.entry, remaining, minimum)
     }
 
     private fun extractMinimum(initial: PMarkerNode): Pair<PMarkerNode, PMarkerNode?> {
       val node = push(initial)
       if (node.left == null) return node to node.right
       val [minimum, remaining] = extractMinimum(node.left)
-      return minimum to balance(make(node.entry, remaining, node.right))
+      return minimum to balance(make(node.entry, remaining, node.right, source = node))
     }
 
     /** Joins ordered subtrees around [entry], which must follow all entries in [left] and precede all entries in [right]. */
-    private fun join(left: PMarkerNode?, entry: MarkerEntry, right: PMarkerNode?): PMarkerNode {
+    private fun join(left: PMarkerNode?, entry: MarkerEntry, right: PMarkerNode?, source: PMarkerNode? = null): PMarkerNode {
       val leftHeight = left?.height ?: 0
       val rightHeight = right?.height ?: 0
       if (leftHeight > rightHeight + 1) {
         val node = push(left!!)
-        return balance(make(node.entry, node.left, join(node.right, entry, right)))
+        return balance(make(node.entry, node.left, join(node.right, entry, right, source), source = node))
       }
       if (rightHeight > leftHeight + 1) {
         val node = push(right!!)
-        return balance(make(node.entry, join(left, entry, node.left), node.right))
+        return balance(make(node.entry, join(left, entry, node.left, source), node.right, source = node))
       }
-      return make(entry, left, right)
+      return make(entry, left, right, source = source)
     }
 
     /**
@@ -550,11 +551,11 @@ class PMarkerDirectRoot private constructor(
       val node = push(initial)
       return if (node.entry.nodeStart < boundary || equalGoesLeft && node.entry.nodeStart == boundary) {
         val [middle, after] = split(node.right, boundary, equalGoesLeft)
-        join(node.left, node.entry, middle) to after
+        join(node.left, node.entry, middle, node) to after
       }
       else {
         val [before, middle] = split(node.left, boundary, equalGoesLeft)
-        before to join(middle, node.entry, node.right)
+        before to join(middle, node.entry, node.right, node)
       }
     }
 
@@ -563,7 +564,7 @@ class PMarkerDirectRoot private constructor(
       if (factor > 1) {
         val left = node.left!!
         val prepared = if ((left.left?.height ?: 0) < (left.right?.height ?: 0)) {
-          make(node.entry, rotateLeft(left), node.right)
+          make(node.entry, rotateLeft(left), node.right, source = node)
         }
         else node
         return rotateRight(prepared)
@@ -571,7 +572,7 @@ class PMarkerDirectRoot private constructor(
       if (factor < -1) {
         val right = node.right!!
         val prepared = if ((right.left?.height ?: 0) > (right.right?.height ?: 0)) {
-          make(node.entry, node.left, rotateRight(right))
+          make(node.entry, node.left, rotateRight(right), source = node)
         }
         else node
         return rotateLeft(prepared)
@@ -582,15 +583,15 @@ class PMarkerDirectRoot private constructor(
     private fun rotateLeft(initial: PMarkerNode): PMarkerNode {
       val node = push(initial)
       val right = push(node.right!!)
-      val left = make(node.entry, node.left, right.left)
-      return make(right.entry, left, right.right)
+      val left = make(node.entry, node.left, right.left, source = node)
+      return make(right.entry, left, right.right, source = right)
     }
 
     private fun rotateRight(initial: PMarkerNode): PMarkerNode {
       val node = push(initial)
       val left = push(node.left!!)
-      val right = make(node.entry, left.right, node.right)
-      return make(left.entry, left.left, right)
+      val right = make(node.entry, left.right, node.right, source = node)
+      return make(left.entry, left.left, right, source = left)
     }
 
     /**
@@ -605,7 +606,7 @@ class PMarkerDirectRoot private constructor(
       val result = transform.transform(node.entry)
       if (!result.isValid) return join(left, right)
       check(result.startOffset == node.entry.nodeStart) { "An edit changed a marker start before the edit" }
-      return join(left, result.applyTo(node.entry), right)
+      return join(left, result.applyTo(node.entry), right, node)
     }
 
     /** Transforms a subtree and builds a balanced tree from valid results, sorting them when their order changes. */
@@ -679,11 +680,17 @@ class PMarkerDirectRoot private constructor(
      */
     private fun publish(node: PMarkerNode?) {
       if (node == null || node.version !== version) return
-      node.handle.states.put(version, node.state)
-      node.left?.state?.parents?.put(version, node.state)
-      node.right?.state?.parents?.put(version, node.state)
+      if (node.state.version === version) node.handle.states.put(version, node.state)
+      publishParent(node.left, node.state)
+      publishParent(node.right, node.state)
       publish(node.left)
       publish(node.right)
+    }
+
+    /** Publishes a parent link only when this version changes the parent position. */
+    private fun publishParent(child: PMarkerNode?, parent: PMarkerValidNode) {
+      val parents = child?.state?.parents ?: return
+      if (parents.get(version) !== parent) parents.put(version, parent)
     }
   }
 

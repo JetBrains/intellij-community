@@ -192,6 +192,41 @@ internal class SnapshotRangeMarkerImplTest {
   }
 
   @Test
+  fun `rotations preserve roots across shifted insertions and removals`() {
+    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
+      val document = DocumentImpl("x".repeat(512), true)
+      val marker = document.createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+      val handles = List(128) { SnapshotMarkerReference.create(marker, true) }
+      val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+      var original = PMarkerRoot.empty()
+      for (index in 63 downTo 0) {
+        val start = index * 4 + 1
+        original = original.insert(handles[index], start, start + 1, spec, flavorFlags = 0)
+      }
+      val before = document.core.snapshot().text()
+      val patch = DocumentPatch.simple(0, 0, "xx", newModStamp = 1, clearLineFlags = false)
+      val shifted = original.applyPatch(patch, before, before.replace(0, 0, "xx"))
+      var changed = shifted
+      for (index in 64 until handles.size) {
+        val start = (index % 64) * 4 + 3
+        changed = changed.insert(handles[index], start, start + 1, spec, flavorFlags = 0)
+      }
+      for (index in handles.indices step 2) changed = changed.remove(handles[index])
+      val fork = original.remove(handles[31])
+
+      for ([index, handle] in handles.withIndex()) {
+        val start = (index % 64) * 4 + 1
+        val range = TextRangeScalarUtil.toScalarRange(start, start + 1)
+        val shiftedRange = TextRangeScalarUtil.toScalarRange(start + 2, start + 3)
+        assertEquals(if (index < 64) range else PMarkerResolution.ABSENT, original.resolve(handle))
+        assertEquals(if (index < 64) shiftedRange else PMarkerResolution.ABSENT, shifted.resolve(handle))
+        assertEquals(if (index % 2 == 1) shiftedRange else PMarkerResolution.ABSENT, changed.resolve(handle))
+        assertEquals(if (index < 64 && index != 31) range else PMarkerResolution.ABSENT, fork.resolve(handle))
+      }
+    }
+  }
+
+  @Test
   fun `policy survives changes to marker flags`() {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)

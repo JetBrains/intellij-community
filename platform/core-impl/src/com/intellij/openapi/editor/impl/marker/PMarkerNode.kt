@@ -13,16 +13,24 @@ import kotlin.experimental.or
  * Stores a persistent AVL subtree with strong child references.
  * Metadata updates preserve the positions and parent histories of all entries.
  *
+ * @property version the revision that creates this subtree.
  * @property state the position before shifts from ancestors.
  * @property entry the current marker metadata and stored offsets.
+ * @property height the height used for AVL balancing.
+ * @property maximumEnd the largest end offset, including lazy shifts within this subtree.
+ * @property persistentCount the number of entries whose policies can require a full traversal.
  * @property subtreeFlavorFlags the combined flavor flags used for query pruning.
  * @property aggregate the sum of marker measures within this subtree.
  */
 internal class PMarkerNode private constructor(
+  val version: PMarkerNodeVersion,
   val state: PMarkerValidNode,
   val entry: MarkerEntry,
   val left: PMarkerNode?,
   val right: PMarkerNode?,
+  val height: Int,
+  val maximumEnd: Int,
+  val persistentCount: Int,
   val subtreeFlavorFlags: Byte,
   val aggregate: Int,
 ) {
@@ -32,29 +40,24 @@ internal class PMarkerNode private constructor(
     left: PMarkerNode?,
     right: PMarkerNode?,
     lazyDelta: Int = 0,
+    source: PMarkerNode? = null,
   ) : this(
-    PMarkerValidNode(
-      version, entry.handle, entry.nodeStart, entry.nodeEnd, lazyDelta,
-      maxOf(left?.height ?: 0, right?.height ?: 0) + 1,
-      maxOf(entry.nodeEnd, shiftedEnd(left, lazyDelta), shiftedEnd(right, lazyDelta)),
-      (if (entry.policy.isPersistent) 1 else 0) + (left?.persistentCount ?: 0) + (right?.persistentCount ?: 0),
-    ), entry, left, right,
+    version,
+    source?.state?.takeIf {
+      it.handle === entry.handle && it.nodeStart == entry.nodeStart && it.nodeEnd == entry.nodeEnd && it.lazyDelta == lazyDelta
+    } ?: PMarkerValidNode(version, entry.handle, entry.nodeStart, entry.nodeEnd, lazyDelta),
+    entry, left, right,
+    maxOf(left?.height ?: 0, right?.height ?: 0) + 1,
+    maxOf(entry.nodeEnd, shiftedEnd(left, lazyDelta), shiftedEnd(right, lazyDelta)),
+    (if (entry.policy.isPersistent) 1 else 0) + (left?.persistentCount ?: 0) + (right?.persistentCount ?: 0),
     entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0),
     entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0),
   )
 
-  val version: PMarkerNodeVersion
-    get() = state.version
   val handle: SnapshotMarkerReference<*>
     get() = entry.handle
   val lazyDelta: Int
     get() = state.lazyDelta
-  val height: Int
-    get() = state.height
-  val maximumEnd: Int
-    get() = state.maximumEnd
-  val persistentCount: Int
-    get() = state.persistentCount
 
   /** Copies metadata and preserves the shape, offsets, and policies of this subtree. */
   fun withMetadata(
@@ -63,7 +66,7 @@ internal class PMarkerNode private constructor(
     right: PMarkerNode? = this.right,
     updateAggregates: Boolean = true,
   ): PMarkerNode = PMarkerNode(
-    state, entry, left, right,
+    version, state, entry, left, right, height, maximumEnd, persistentCount,
     if (updateAggregates) entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0) else subtreeFlavorFlags,
     if (updateAggregates) entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0) else aggregate,
   )
@@ -78,13 +81,10 @@ internal sealed interface PMarkerNodeState
 
 /**
  * Stores a valid position without retaining child nodes or marker metadata.
- * Metadata updates share this position and its parent history.
+ * Copies with unchanged offsets and lazy shifts share this position and its parent history.
  *
  * @property version the revision that publishes this position.
  * @property lazyDelta the shift deferred to children.
- * @property height the height used for AVL balancing.
- * @property maximumEnd the largest end offset, including lazy shifts within this subtree.
- * @property persistentCount the number of entries whose policies can require a full traversal.
  */
 internal class PMarkerValidNode(
   val version: PMarkerNodeVersion,
@@ -92,9 +92,6 @@ internal class PMarkerValidNode(
   val nodeStart: Int,
   val nodeEnd: Int,
   val lazyDelta: Int,
-  val height: Int,
-  val maximumEnd: Int,
-  val persistentCount: Int,
 ) : PMarkerNodeState {
   val parents: PMarkerNodeHistory<PMarkerValidNode> = PMarkerNodeHistory()
 }
