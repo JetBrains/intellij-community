@@ -198,6 +198,6 @@ object PyCollectionTypeUtil {
         return tupleElementTypes[0] to tupleElementTypes[1]
       }
     }
-    return null to null
+    return PyAnyType.unknown to PyAnyType.unknown
   }
 }

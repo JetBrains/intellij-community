@@ -15,12 +15,14 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKeyValueExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
+import com.jetbrains.python.psi.types.PyCollectionTypeUtil
 import com.jetbrains.python.psi.types.PyOverloadType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -130,6 +132,18 @@ class PyTypeEngineFallbackTest : PyCodeInsightTestCase() {
 
         expr = f(1)
         #└ TYPE str
+      """.trimIndent())
+    }
+  }
+
+  @Test
+  @TestFor(classes = [PyCollectionTypeUtil::class], issues = ["PY-93604"])
+  fun `a dict literal whose entries the engine types as Any`() {
+    val engine = TestTypeEngine(exclusive = true, sees = { it is PyKeyValueExpression }, answer = { PyAnyType.any })
+    withTypeEngine(engine) {
+      test("""
+        expr = {"foo": 1}
+        #└ TYPE dict[Unknown, Unknown]
       """.trimIndent())
     }
   }

@@ -10,6 +10,7 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.psi.PyFromImportStatement
+import com.jetbrains.python.psi.PyKeyValueExpression
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
@@ -42,6 +43,7 @@ internal class PyreflyLspTypeEngine(private val pyProject: PyProject) : PyLspTyp
     ) {
       return false
     }
+    if (pyTypedElement is PyKeyValueExpression) return false
     return true
   }
 
