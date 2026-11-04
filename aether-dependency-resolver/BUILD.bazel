@@ -71,8 +71,8 @@ jvm_library(
         "//platform/testFramework",
         "//libraries/maven-resolver-provider",
         "//aether-dependency-resolver",
-        "//libraries/junit4",
         "//libraries/junit6",
+        "//libraries/assertj-core",
     ],
 )
 ### auto-generated section `build intellij.java.aetherDependencyResolver.tests` end

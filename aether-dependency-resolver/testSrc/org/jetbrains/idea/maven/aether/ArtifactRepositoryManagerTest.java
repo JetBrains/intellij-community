@@ -1,13 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.aether;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -21,8 +22,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.project.IntelliJProjectConfiguration.getLocalMavenRepo;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class ArtifactRepositoryManagerTest extends UsefulTestCase {
+public class ArtifactRepositoryManagerTest {
   private static final RemoteRepository mavenLocal;
 
   static {
@@ -34,28 +38,30 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
   }
 
   private ArtifactRepositoryManager myRepositoryManager;
+  @TempDir
   private File localRepository;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    localRepository = new File(FileUtil.getTempDirectory());
+  @BeforeEach
+  public void setUp() {
     List<RemoteRepository> repositories = new ArrayList<>();
     repositories.add(mavenLocal);
     repositories.addAll(ArtifactRepositoryManager.createDefaultRemoteRepositories());
     myRepositoryManager = new ArtifactRepositoryManager(localRepository, repositories, ProgressConsumer.DEAF);
   }
 
+  @Test
   public void testResolveTransitively() throws Exception {
     Collection<File> files = myRepositoryManager.resolveDependency("junit", "junit", "4.12", true, Collections.emptyList());
     assertFileNames(files, "junit-4.12.jar", "hamcrest-core-1.3.jar");
   }
 
+  @Test
   public void testResolveNonTransitively() throws Exception {
     Collection<File> files = myRepositoryManager.resolveDependency("junit", "junit", "4.12", false, Collections.emptyList());
     assertFileNames(files, "junit-4.12.jar");
   }
 
+  @Test
   public void testExcludeDirectDependency() throws Exception {
     Collection<File> all = myRepositoryManager.resolveDependency("junit", "junit", "4.12", true, Collections.singletonList("org.hamcrest:wrong"));
     assertFileNames(all, "junit-4.12.jar", "hamcrest-core-1.3.jar");
@@ -63,6 +69,7 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     assertFileNames(excluded, "junit-4.12.jar");
   }
 
+  @Test
   public void testExcludeDependenciesTransitively() throws Exception {
     Collection<File> all = myRepositoryManager.resolveDependency("org.apache.httpcomponents", "fluent-hc", "4.5.5", true, Collections.emptyList());
     assertFileNames(all, "fluent-hc-4.5.5.jar", "httpclient-4.5.5.jar", "httpcore-4.4.9.jar", "commons-logging-1.2.jar", "commons-codec-1.10.jar");
@@ -70,12 +77,14 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     assertFileNames(excluded, "fluent-hc-4.5.5.jar", "commons-logging-1.2.jar");
   }
 
+  @Test
   public void testResolveRuntimeDependencies() throws Exception {
     Collection<File> files = myRepositoryManager.resolveDependency("com.netflix.feign", "feign-jackson", "8.18.0", true,
                                                                    Collections.emptyList());
-    assertContainsElements(ContainerUtil.map(files, File::getName), "feign-core-8.18.0.jar");
+    assertThat(ContainerUtil.map(files, File::getName)).contains("feign-core-8.18.0.jar");
   }
 
+  @Test
   public void testCollectDependencies() throws Exception {
     ArtifactDependencyNode result = myRepositoryManager.collectDependencies("org.apache.httpcomponents", "fluent-hc", "4.5.5");
     assertNotNull(result);
@@ -91,6 +100,7 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     assertCoordinates(first.getDependencies().get(2).getArtifact(), "commons-codec", "commons-codec", "1.10");
   }
 
+  @Test
   public void testResolveAvailableOptionalArtifacts() throws Exception {
     Path remoteRepository = Files.createTempDirectory("aether-optional-artifacts");
     Path isolatedLocalRepository = Files.createTempDirectory("aether-optional-artifacts-local");
@@ -106,8 +116,8 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
       Collection<Artifact> artifacts = manager.resolveDependencyAsArtifact("test", "root", "1", EnumSet.of(ArtifactKind.SOURCES),
                                                                           true, Collections.emptyList());
 
-      assertSameElements(ContainerUtil.map(artifacts, artifact -> artifact.getFile().getName()),
-                         "root-1-sources.jar", "first-1-sources.jar");
+      assertThat(ContainerUtil.map(artifacts, artifact -> artifact.getFile().getName()))
+        .containsExactlyInAnyOrder("root-1-sources.jar", "first-1-sources.jar");
     }
     finally {
       NioFiles.deleteRecursively(remoteRepository);
@@ -115,20 +125,22 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     }
   }
 
+  @Test
   public void testTransitiveSnapshotDependenciesExcluded() throws Exception {
     // version of this excluded dependency is [0.8.1,)
     String excludedArtifact = "sshj";
     List<String> excluded = Collections.singletonList("net.schmizz:" + excludedArtifact);
     myRepositoryManager.resolveDependency("com.jcraft", "jsch.agentproxy.sshj", "0.0.9", true, excluded);
     try (Stream<Path> files = Files.walk(localRepository.toPath())) {
-      assertEmpty(files.filter(file -> {
+      assertThat(files.filter(file -> {
         String fileName = file.getFileName().toString();
         return fileName.startsWith(excludedArtifact + "-") &&
                (fileName.endsWith(".pom") || fileName.endsWith(".jar"));
-      }).collect(Collectors.toList()));
+      }).collect(Collectors.toList())).isEmpty();
     }
   }
 
+  @Test
   public void testThePropertyRepositoryAnswersFirst() throws Exception {
     Path priority = createTestRepository("from the priority repository");
     try {
@@ -139,10 +151,12 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     }
   }
 
+  @Test
   public void testABlankPropertyAddsNoRepository() throws Exception {
     assertEquals("from the requested repository", resolveWithPriorityProperty("  "));
   }
 
+  @Test
   public void testNoPropertyAddsNoRepository() throws Exception {
     assertEquals("from the requested repository", resolveWithPriorityProperty(null));
   }
@@ -185,6 +199,7 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
    * The priority repository helps only because Aether keeps the order of the list. This test locks
    * the order down. It uses two local directories, so it needs no network.
    */
+  @Test
   public void testTheFirstRepositoryOfTheListAnswers() throws Exception {
     // Both repositories hold the artifact. Only the content tells you which one answered.
     Path first = createTestRepository("from the first repository");
@@ -206,6 +221,7 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
    * A priority repository that holds no artifact must not break the resolution. Aether reads the
    * next repository of the list.
    */
+  @Test
   public void testTheNextRepositoryAnswersWhenTheFirstOneMisses() throws Exception {
     // The first repository stays empty.
     Path first = Files.createTempDirectory("aether-fallback-first");
@@ -232,7 +248,8 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     ArtifactRepositoryManager manager =
       new ArtifactRepositoryManager(localRepository.toFile(), remoteRepositories, ProgressConsumer.DEAF);
     Collection<File> files = manager.resolveDependency("test", "single", "1", false, Collections.emptyList());
-    return assertOneElement(files);
+    assertThat(files).hasSize(1);
+    return files.iterator().next();
   }
 
   private static void assertCoordinates(Artifact artifact, String groupId, String artifactId, String version) {
@@ -242,7 +259,7 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
   }
 
   private static void assertFileNames(Collection<File> files, String... expectedNames) {
-    assertSameElements(ContainerUtil.map(files, File::getName), expectedNames);
+    assertThat(ContainerUtil.map(files, File::getName)).containsExactlyInAnyOrder(expectedNames);
   }
 
   private static String pom(String artifactId, String... dependencies) {
