@@ -33,20 +33,15 @@ class MarkdownCodeFencePreviewHighlighter: CodeFenceGeneratingProvider {
       return DefaultCodeFenceGeneratingProvider.escape(raw)
     }
     val cacheKey = cacheManager.obtainCacheKey(raw, language)
-    val cached = cacheManager.obtainCachedHtml(cacheKey)
-    if (cached != null) {
-      return cached
-    }
-    val highlightedRanges = collectHighlightedChunks(injectedLanguage, raw)
-    val text = buildHighlightedFenceContent(
+    val highlightedRanges = cacheManager.obtainCachedRanges(cacheKey)
+                            ?: collectHighlightedChunks(injectedLanguage, raw).also { cacheManager.cacheRanges(cacheKey, it) }
+    return buildHighlightedFenceContent(
       raw,
       highlightedRanges,
       node,
       useAbsoluteOffsets = true,
       additionalLineProcessor = ::processCodeLine
     )
-    cacheManager.cacheHtml(cacheKey, text)
-    return text
   }
 
   private fun processCodeLine(line: String): String {
