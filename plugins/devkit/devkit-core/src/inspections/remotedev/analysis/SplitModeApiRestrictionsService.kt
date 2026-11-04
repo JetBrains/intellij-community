@@ -11,7 +11,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.xml.XmlFile
@@ -140,11 +142,21 @@ class SplitModeApiRestrictionsService(
   @Volatile
   private var restrictionsSnapshot = RestrictionsSnapshot()
 
+  private val restrictionsModificationTracker = SimpleModificationTracker()
+
   private var apiRestrictionsResource = createApiRestrictionsResource(SplitModeAnalysisFlags.getApiRestrictionsReadMode())
   private var predefinedModuleKindsResource = createPredefinedModuleKindsResource(SplitModeAnalysisFlags.getPredefinedModuleKindsReadMode())
 
   fun isLoaded(): Boolean {
     return loaded
+  }
+
+  /**
+   * Returns a tracker that changes when the service publishes different API restrictions or predefined module kinds.
+   * A cached value that reads them must depend on this tracker.
+   */
+  fun getModificationTracker(): ModificationTracker {
+    return restrictionsModificationTracker
   }
 
   fun ensureLoaded(timeout: Duration = 1.seconds): Boolean {
@@ -326,7 +338,10 @@ class SplitModeApiRestrictionsService(
   }
 
   private fun publishRestrictionsSnapshot(snapshot: RestrictionsSnapshot) {
-    restrictionsSnapshot = snapshot
+    if (snapshot != restrictionsSnapshot) {
+      restrictionsSnapshot = snapshot
+      restrictionsModificationTracker.incModificationCount()
+    }
     loaded = true
   }
 

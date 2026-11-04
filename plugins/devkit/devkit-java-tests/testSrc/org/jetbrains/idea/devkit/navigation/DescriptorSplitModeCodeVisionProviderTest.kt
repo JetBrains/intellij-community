@@ -15,10 +15,14 @@ import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.utils.codeVision.CodeVisionTestUtil
 import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ResolvedModuleKind
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService.ModuleKind
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -365,6 +369,33 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
   }
 
   @Test
+  fun testAnalysisBeforeRestrictionsLoadIsStaleAfterLoad() {
+    createDependencyOnPredefinedBackendModule()
+    assertFalse(SplitModeApiRestrictionsService.getInstance(myFixture.project).isLoaded())
+    assertEquals(ModuleKind.SHARED, computeResolvedModuleKind().kind)
+
+    loadSplitModeRestrictions()
+
+    assertEquals(
+      "Backend content module Can be installed into: backend IDE " +
+      "Backend dependency: " +
+      "test.module (current) " +
+      "↓ depends on " +
+      "intellij.platform.vcs (predefined)",
+      toPlainText(computeReasonHtml().html),
+    )
+  }
+
+  @Test
+  fun testCodeVisionLoadsRestrictions() {
+    createDependencyOnPredefinedBackendModule()
+    assertFalse(SplitModeApiRestrictionsService.getInstance(myFixture.project).isLoaded())
+
+    val entry = runReadActionBlocking { computeCodeVisionEntry() }
+    assertEquals("Backend content module", (entry as ClickableTextCodeVisionEntry).text)
+  }
+
+  @Test
   fun testPreview() {
     val previewPath = "codeVisionProviders/${DescriptorSplitModeCodeVisionProvider.ID}/preview.xml"
     val previewText = DescriptorSplitModeCodeVisionProvider::class.java.classLoader.getResource(previewPath)!!.readText()
@@ -424,6 +455,30 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     )
     PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("$moduleName/resources"), JavaResourceRootType.RESOURCE)
     myFixture.addFileToProject("$moduleName/resources/$moduleName.xml", descriptorText)
+  }
+
+  /**
+   * Creates `test.module` with a dependency on the predefined backend module `intellij.platform.vcs` and opens its descriptor.
+   * Only the predefined module kinds make `test.module` a backend module.
+   */
+  private fun createDependencyOnPredefinedBackendModule() {
+    createDeclaringModule()
+    createPredefinedModule("intellij.platform.vcs", "<idea-plugin/>")
+    createModuleWithModuleDescriptor("test.module", "test.module.xml", """
+      <idea-plugin>
+        <dependencies>
+          <module name="intellij.platform.vcs"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    myFixture.configureFromTempProjectFile("test.module/test.module.xml")
+  }
+
+  private fun computeResolvedModuleKind(): ResolvedModuleKind {
+    return runReadActionBlocking {
+      SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(myFixture.file as XmlFile).resolvedModuleKind
+    }
   }
 
   private fun computeReason(): DescriptorSplitModeReason {

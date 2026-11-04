@@ -61,6 +61,7 @@ internal object SplitModeModuleKindResolver {
         computeModuleAnalysis(module, null),
         ProjectRootModificationTracker.getInstance(project),
         PsiManager.getInstance(project).modificationTracker.forLanguage(XMLLanguage.INSTANCE),
+        SplitModeApiRestrictionsService.getInstance(project).getModificationTracker(),
       )
     }, false)
   }
@@ -79,6 +80,7 @@ internal object SplitModeModuleKindResolver {
         computeDescriptorAnalysis(descriptorFile),
         ProjectRootModificationTracker.getInstance(project),
         PsiManager.getInstance(project).modificationTracker.forLanguage(XMLLanguage.INSTANCE),
+        SplitModeApiRestrictionsService.getInstance(project).getModificationTracker(),
       )
     }, false)
   }

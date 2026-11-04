@@ -158,6 +158,7 @@ internal object SplitModeDescriptorDependencyAnalyzer {
                                                                     ProjectRootModificationTracker.getInstance(project),
                                                                     PsiManager.getInstance(project).modificationTracker.forLanguage(
                                                                       XMLLanguage.INSTANCE),
+                                                                    SplitModeApiRestrictionsService.getInstance(project).getModificationTracker(),
                                                                   )
                                                                 }, false)
     )

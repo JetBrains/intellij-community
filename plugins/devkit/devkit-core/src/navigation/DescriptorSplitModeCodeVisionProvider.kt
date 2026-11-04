@@ -19,7 +19,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
+import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.findDependingContentModuleEntriesInFile
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService.ModuleKind
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
 import org.jetbrains.idea.devkit.module.PluginModuleType
@@ -53,6 +55,9 @@ internal class DescriptorSplitModeCodeVisionProvider : DaemonBoundCodeVisionProv
     if (previewModuleKind != null) return computePreview(file, previewModuleKind)
 
     if (!DescriptorUtil.isPluginXml(file)) return emptyList()
+    if (!SplitModeInspectionUtil.ensureRestrictionsServiceIsLoaded(SplitModeApiRestrictionsService.getInstance(file.project))) {
+      return emptyList()
+    }
     val xmlFile = file as XmlFile
     val rootTag = DescriptorUtil.getIdeaPlugin(xmlFile)?.xmlTag ?: return emptyList()
     val info = getDescriptorSplitModeInlayInfo(xmlFile) ?: return emptyList()
