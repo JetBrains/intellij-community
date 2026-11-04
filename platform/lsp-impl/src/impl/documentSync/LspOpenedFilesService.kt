@@ -18,6 +18,7 @@ import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
+import com.intellij.platform.lsp.impl.getApplicableProviders
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.MultiMap
 import java.util.Collections
@@ -80,7 +81,7 @@ internal class LspOpenedFilesService(private val project: Project) {
         data.handledFiles.putAll(openedFilesToHandle)
       }
 
-      for (provider in LspIntegrationProvider.getAllExtensions()) {
+      for (provider in getApplicableProviders(project)) {
         val providerClass: Class<out LspIntegrationProvider> = provider.javaClass
         val clientsForProvider = manager.getClients(providerClass)
 

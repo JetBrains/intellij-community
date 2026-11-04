@@ -3,6 +3,7 @@ package com.intellij.platform.lsp.api
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
+import com.intellij.openapi.extensions.LazyExtension
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItem
@@ -130,6 +131,10 @@ interface LspIntegrationProvider {
       @Suppress("DEPRECATION")
       yieldAll(LspServerSupportProvider.EP_NAME.extensionList)
     }
+
+    @ApiStatus.Internal
+    fun lazyExtensions(): Sequence<LazyExtension<out LspIntegrationProvider>> =
+      EP_NAME.filterableLazySequence() + LspServerSupportProvider.EP_NAME.filterableLazySequence()
 
     @ApiStatus.Internal
     fun hasAnyExtensions(): Boolean {

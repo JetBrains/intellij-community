@@ -8,12 +8,12 @@ import com.intellij.platform.lang.lsWidget.LanguageServiceWidgetItemsProvider
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.LspClientManagerListener
-import com.intellij.platform.lsp.api.LspIntegrationProvider
+import com.intellij.platform.lsp.impl.getApplicableProviders
 
 internal class LspWidgetItemsProvider : LanguageServiceWidgetItemsProvider() {
 
   override fun createWidgetItems(project: Project, currentFile: VirtualFile?): List<LanguageServiceWidgetItem> =
-    LspIntegrationProvider.getAllExtensions().flatMap { it.createWidgetItems(project, currentFile) }.toList()
+    getApplicableProviders(project).flatMap { it.createWidgetItems(project, currentFile) }.toList()
 
   override fun registerWidgetUpdaters(project: Project, widgetDisposable: Disposable, updateWidget: () -> Unit) {
     LspClientManager.getInstance(project).addListener(
