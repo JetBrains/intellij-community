@@ -278,7 +278,9 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
       val keep: DisplayablePackage? = when (pkg) {
         is WorkspaceMember -> if (prunedChildren.isNotEmpty()) WorkspaceMember(pkg.name, prunedChildren, pkg.instance) else null
         is DependencyGroupNode -> if (prunedChildren.isNotEmpty()) DependencyGroupNode(pkg.name, prunedChildren) else null
-        is UndeclaredPackagesGroup -> if (prunedChildren.isNotEmpty()) UndeclaredPackagesGroup(prunedChildren.filterIsInstance<InstalledPackage>()) else null
+        is UndeclaredPackagesGroup -> if (prunedChildren.isNotEmpty()) UndeclaredPackagesGroup(
+          pkg.name, prunedChildren.filterIsInstance<InstalledPackage>()
+        ) else null
         is InstalledPackage -> if (selfMatches || prunedChildren.isNotEmpty()) InstalledPackage(
           pkg.instance, pkg.repository, pkg.nextVersion, prunedChildren.filterIsInstance<RequirementPackage>(), pkg.isDeclared,
           pkg.workspaceMember, pkg.dependencyGroup, pkg.isProjectPackage, pkg.extras
