@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
+import com.intellij.openapi.diagnostic.ControlFlowExceptionKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
@@ -66,7 +67,12 @@ public final class OSProcessUtil {
             return true;
           }
           catch (Throwable e) {
-            rethrowControlFlowException(e);
+            if (ControlFlowExceptionKt.isControlFlowException(e)) {
+              // A disposed application fails the lookup even in a non-cancelable section.
+              // The handler is already TERMINATING and does not retry, so kill before rethrowing.
+              WinProcessManager.kill(Math.toIntExact(pid), true);
+              throw e;
+            }
             LOG.error("Failed to kill " + pid + " tree with WinP, falling back to the default logic", e);
           }
         }
