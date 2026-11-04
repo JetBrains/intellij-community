@@ -63,6 +63,6 @@ internal fun formatQodanaBuildDate(buildDateInSeconds: Long): String {
 }
 
 private fun isEap(productCode: String): Boolean = when (productCode) {
-  "QDRST", "QDRUBY", "QDPOLY" -> true
+  "QDRST", "QDRUBY" -> true
   else -> IS_EAP
 }
