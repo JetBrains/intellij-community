@@ -6,7 +6,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -150,7 +149,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
    * See <a href="https://github.com/microsoft/WSL/issues/7301">WSL issue #7301</a> for the details.
    */
   private boolean isWslProcess() {
-    List<String> command = getProcessService().getCommand(myProcess);
+    List<String> command = LocalProcessService.getInstance().getCommand(myProcess);
     String executable = ContainerUtil.getFirstItem(command);
     boolean wsl = executable != null && PathUtil.getFileName(executable).equals("wsl.exe");
     if (wsl) {
@@ -163,7 +162,7 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
   }
 
   protected boolean destroyProcessGracefully() {
-    LocalProcessService processService = getProcessService();
+    LocalProcessService processService = LocalProcessService.getInstance();
     if (OS.CURRENT == OS.Windows) {
       if (processService.hasControllingTerminal(myProcess) &&
           WinProcessTerminator.terminateWinProcessGracefully(this, processService, this::sendInterruptToPtyProcess)) {
@@ -214,11 +213,6 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
       }
       return UnixProcessManager.sendSignal((int)myProcess.pid(), UnixProcessManager.SIGINT) == 0;
     }
-  }
-
-  private static @NotNull LocalProcessService getProcessService() {
-    // Without non-cancelable section "ProcessService.getInstance()" will fail under a canceled progress.
-    return ProgressManager.getInstance().computeInNonCancelableSection(LocalProcessService::getInstance);
   }
 
   /**
