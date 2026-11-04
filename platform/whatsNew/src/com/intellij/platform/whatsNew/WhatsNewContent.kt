@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettingsService
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.whatsNew.AIR_PROMO_REQUEST
 import com.intellij.ide.whatsNew.DefaultWhatsNewQueryHandler
 import com.intellij.ide.whatsNew.WhatsNewAirPromoListener
@@ -23,6 +24,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
@@ -180,6 +182,8 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
     private const val MEDIA_BASE_PATH_KEY = $$"$__VISION_PAGE_SETTINGS_MEDIA_BASE_PATH__$"
     private const val AIR_BUTTON_ALT_TEXT_KEY = $$"$__VISION_PAGE_SETTINGS_IS_AIR_BUTTON_ALT_TEXT_ENABLED__$"
     private const val IS_CHINESE_KEY = $$"$__VISION_PAGE_SETTINGS_IS_CHINESE__$"
+    private const val IS_AI_NOT_ALLOWED_KEY = $$"$__VISION_PAGE_SETTINGS_IS_AI_NOT_ALLOWED__$"
+    private val AIR_PLUGIN_ID = PluginId.getId("com.intellij.air")
 
     private const val ZOOM_VALUE = "whatsnew.vision.zoom"
     private const val GIF_VALUE = "whatsnew.vision.gif"
@@ -221,11 +225,13 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
    * Returns [content] with the variables replaced that can change between two openings of the page.
    * On the welcome screen, the Vision page shows the alternative label and action of the Air button.
    * The China flag marks the IDE region, not the IDE language.
+   * The AI flag tells the page to hide the Air block when the Air plugin is not loaded.
    */
-  internal fun getContent(isWelcomeScreenProject: Boolean, isChinaRegion: Boolean): String =
+  internal fun getContent(isWelcomeScreenProject: Boolean, isChinaRegion: Boolean, isAiNotAllowed: Boolean): String =
     content
       .replace(AIR_BUTTON_ALT_TEXT_KEY, isWelcomeScreenProject.toString())
       .replace(IS_CHINESE_KEY, isChinaRegion.toString())
+      .replace(IS_AI_NOT_ALLOWED_KEY, isAiNotAllowed.toString())
 
   @OptIn(DelicateCoroutinesApi::class)
   private fun getRequestHandler(dataContext: DataContext?): HTMLEditorProvider.ResourceHandler? {
@@ -333,7 +339,11 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
   }
 
   private fun getRequest(startPageId: String, dataContext: DataContext?, project: Project, isChinaRegion: Boolean): HTMLEditorProvider.Request {
-    val pageContent = getContent(WelcomeScreenProjectProvider.isWelcomeScreenProject(project), isChinaRegion)
+    val pageContent = getContent(
+      isWelcomeScreenProject = WelcomeScreenProjectProvider.isWelcomeScreenProject(project),
+      isChinaRegion = isChinaRegion,
+      isAiNotAllowed = !PluginManagerCore.isLoaded(AIR_PLUGIN_ID),
+    )
     // One-page case
     val request = if (startPageId == WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID || multipageIds.size == 1) {
       html(pageContent)
