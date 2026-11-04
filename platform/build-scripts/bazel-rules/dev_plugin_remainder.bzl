@@ -9,7 +9,7 @@ load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_dist_plugin_directory")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
-load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
+load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
 
 def _graph_info_init(**_kwargs):
     fail("DevPluginGraphInfo must come from dev_plugin_file_graph")
@@ -876,7 +876,7 @@ def _place_reused(reused, destination, file):
         fail("'%s' is the destination of both %s and %s" % (destination, reused[destination].path, file.path))
     reused[destination] = file
 
-def _component_placement(files, trees, reused, executables):
+def _component_placement(ctx, files, trees, reused, executables):
     """The placement of a complex plugin: the remainder outputs, then each reused jar and native tree.
 
     A runfiles tree cannot write below a linked directory. So a reused jar or native tree below a remainder tree has no
@@ -892,7 +892,7 @@ def _component_placement(files, trees, reused, executables):
     placed_trees = dict(trees)
     for destination, file in reused.items():
         (placed_trees if file.is_directory else placed_files)[destination] = file
-    return DevDistPlacementInfo(files = placed_files, trees = placed_trees, executables = executables)
+    return dev_dist_placement(ctx, placed_files, placed_trees, executables)
 
 def _dev_plugin_component_impl(ctx):
     product = ctx.attr._product_info[DevDistProductInfo]
@@ -1019,7 +1019,7 @@ def _dev_plugin_component_impl(ctx):
         progress_message = "Collecting plugin component metadata %{label}",
     )
 
-    placement = _component_placement(placed_files, placed_trees, reused, [destination(relative) for relative in remainder.executables])
+    placement = _component_placement(ctx, placed_files, placed_trees, reused, [destination(relative) for relative in remainder.executables])
     payload = depset(payload)
     return [
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),

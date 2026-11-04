@@ -24,7 +24,7 @@ load(":content_module_jar.bzl", "ContentModuleJarInfo", "declare_spans", "librar
 load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
-load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
+load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
 
 DevDistRuntimeLayoutInfo = provider(
     doc = """The layout part of one plugin component: which modules and libraries each of its jars merges.
@@ -473,10 +473,11 @@ def _dev_plugin_impl(ctx):
     placed_trees = {}
     for copy in copies:
         (placed_trees if copy.tree else placed_files)[plugin_directory + "/" + copy.destination] = copy.file
-    placement = DevDistPlacementInfo(
-        files = placed_files,
-        trees = placed_trees,
-        executables = [plugin_directory + "/" + copy.destination for copy in copies if copy.executable],
+    placement = dev_dist_placement(
+        ctx,
+        placed_files,
+        placed_trees,
+        [plugin_directory + "/" + copy.destination for copy in copies if copy.executable],
     )
     return [
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),

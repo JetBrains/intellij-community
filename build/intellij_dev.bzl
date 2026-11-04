@@ -145,22 +145,14 @@ def _cmd_argument(label, argument):
 def _runfiles_home(ctx, placement, dist):
     """The entries of the runfiles home: a dictionary from a destination to its `File`."""
 
-    # Analysis cannot see the mode of a source file, so an executable source file gets a copy, which Bazel leaves
-    # executable.
+    # The component declares one executable copy of each executable source file, see `dev_dist_placement`.
     home = {}
     executables = {destination: True for destination in placement.executables}
     for destination, file in placement.files.items():
         if destination in executables and file.is_source:
-            copy = ctx.actions.declare_file("%s.executables/%s" % (ctx.label.name, destination))
-            ctx.actions.run_shell(
-                outputs = [copy],
-                inputs = [file],
-                command = 'cp "$1" "$2"',
-                arguments = [file.path, copy.path],
-                mnemonic = "DevLaunchExecutableCopy",
-                progress_message = "Copying the executable %s of %%{label}" % destination,
-            )
-            file = copy
+            if destination not in placement.executable_copies:
+                fail("%s: the executable %s of the home is the source file %s, and its component declares no copy" % (ctx.label, destination, file.path))
+            file = placement.executable_copies[destination]
         home[destination] = file
     home.update(placement.trees)
     home["fingerprint.txt"] = dist.fingerprint
@@ -268,7 +260,7 @@ def _native_launch(ctx, os, dist, placement, flags, program_args):
     else:
         export = None
 
-        # One call declares each executable copy once. The root symlinks and the Linux stub share the result.
+        # The root symlinks and the Linux stub share one home.
         home = _runfiles_home(ctx, placement, dist)
         home_path = runfiles_directory + "/" + _runfiles_home_root(dist)
     launcher_path = home_path + "/" + launcher
