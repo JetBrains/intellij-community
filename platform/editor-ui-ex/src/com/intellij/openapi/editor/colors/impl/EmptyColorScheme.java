@@ -28,12 +28,12 @@ public final class EmptyColorScheme extends DefaultColorsScheme {
 
   private EmptyColorScheme() {
     updateSnapshot(current -> current.withAttributes(HighlighterColors.TEXT.getExternalName(), DEFAULT_ATTRS));
-    initFonts();
   }
 
   @Override
   protected @NotNull TextAttributes getKeyDefaults(@NotNull TextAttributesKey key) {
-    return getSnapshot().getAttributes(HighlighterColors.TEXT.getExternalName());
+    TextAttributes attributes = getSnapshot().getAttributes(HighlighterColors.TEXT.getExternalName());
+    return attributes != null ? attributes : DEFAULT_ATTRS;
   }
 
   @Override

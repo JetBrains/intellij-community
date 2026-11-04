@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
+import com.intellij.openapi.editor.colors.impl.EmptyColorScheme;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.util.LayeredTextAttributes;
 import com.intellij.openapi.editor.markup.EffectType;
@@ -69,6 +70,7 @@ import static com.intellij.editor.EditorColorSchemeTestUtil.serializeWithFixedMe
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -1255,6 +1257,90 @@ public class EditorColorsSchemeImplTest {
   public void testSetEditorFontSizeMarksSchemeForSave() {
     myScheme.setEditorFontSize(15);
     assertEquals(SchemeState.POSSIBLY_CHANGED, myScheme.getSchemeState());
+  }
+
+  @Test
+  public void testChangeDuringWriteKeepsSchemeMarkedForSave() {
+    AtomicBoolean changeOnce = new AtomicBoolean(true);
+    EditorColorsSchemeImpl scheme = new EditorColorsSchemeImpl(null) {
+      @Override
+      public @NotNull String getName() {
+        // writeExternal reads the name after it reads the snapshot
+        if (changeOnce.getAndSet(false)) {
+          setEditorFontSize(21);
+        }
+        return "ChangeDuringWrite";
+      }
+    };
+    Element written = new Element("scheme");
+    scheme.writeExternal(written);
+    assertNotEquals("21", optionValue(written, "EDITOR_FONT_SIZE"));
+    assertEquals(SchemeState.POSSIBLY_CHANGED, scheme.getSchemeState());
+  }
+
+  @Test
+  public void testFailedWriteKeepsSchemeMarkedForSave() {
+    EditorColorsSchemeImpl scheme = new EditorColorsSchemeImpl(null) {
+      @Override
+      public @NotNull String getName() {
+        throw new IllegalStateException("EditorColorsSchemeImplTest: the write fails");
+      }
+    };
+    scheme.setEditorFontSize(15);
+    assertThrows(IllegalStateException.class, () -> scheme.writeExternal(new Element("scheme")));
+    assertEquals(SchemeState.POSSIBLY_CHANGED, scheme.getSchemeState());
+  }
+
+  @Test
+  public void testReaderOnOtherThreadSeesOneConsoleFontSize() throws InterruptedException {
+    String firstFamily = "EditorColorsSchemeImplTest.firstConsoleFamily";
+    String secondFamily = "EditorColorsSchemeImplTest.secondConsoleFamily";
+    myScheme.setEditorFontSize(13);
+    myScheme.setConsoleFontName(firstFamily);
+    myScheme.setConsoleFontSize(20);
+    AtomicBoolean stop = new AtomicBoolean();
+    AtomicInteger halfDone = new AtomicInteger();
+    AtomicReference<Throwable> readerFailure = new AtomicReference<>();
+    Thread reader = new Thread(() -> {
+      try {
+        while (!stop.get()) {
+          if (myScheme.getConsoleFontSize2D() != 20f) {
+            halfDone.incrementAndGet();
+          }
+        }
+      }
+      catch (Throwable e) {
+        readerFailure.set(e);
+      }
+    }, "EditorColorsSchemeImplTest console font size reader");
+    reader.start();
+    try {
+      for (int i = 0; i < 20_000; i++) {
+        myScheme.setConsoleFontName(i % 2 == 0 ? secondFamily : firstFamily);
+      }
+    }
+    finally {
+      stop.set(true);
+      reader.join();
+    }
+    assertNull(readerFailure.get());
+    assertEquals(0, halfDone.get());
+  }
+
+  @Test
+  public void testResolveParentKeepsParentThatIsSetDuringTheResolve() throws Exception {
+    AbstractColorsScheme scheme = (AbstractColorsScheme)loadScheme(
+      """
+        <scheme name="LateParent" version="142" parent_scheme="NotLoadedYet" />
+        """
+    );
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getDefaultScheme();
+    EditorColorsScheme emptyScheme = EmptyColorScheme.getEmptyScheme();
+    scheme.resolveParent(name -> {
+      scheme.setParent(emptyScheme);
+      return defaultScheme;
+    });
+    assertSame(emptyScheme, scheme.getParentScheme());
   }
 
   @Test

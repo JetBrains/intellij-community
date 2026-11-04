@@ -47,6 +47,8 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+
 @SuppressWarnings("UseJBColor")
 public abstract class AbstractColorsScheme extends EditorFontCache implements EditorColorsScheme, SerializableScheme {
   private static final Logger LOG = Logger.getInstance(AbstractColorsScheme.class);
@@ -168,7 +170,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public boolean isUseLigatures() {
-    return getFontPreferences().useLigatures();
+    return fontPreferencesOf(snapshot).useLigatures();
   }
 
   @Override
@@ -333,11 +335,12 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   @Override
   public float getConsoleFontSize2D() {
-    String font = getConsoleFontName();
+    FontPreferences consolePreferences = getConsoleFontPreferences().getSnapshot();
+    String fontFamily = consolePreferences.getFontFamily();
     UISettings uiSettings = UISettings.getInstanceOrNull();
     if ((uiSettings == null || !uiSettings.getPresentationMode()) &&
-        getConsoleFontPreferences().hasSize(font)) {
-      return getConsoleFontPreferences().getSize2D(font);
+        consolePreferences.hasSize(fontFamily)) {
+      return consolePreferences.getSize2D(fontFamily);
     }
     return getEditorFontSize2D();
   }
@@ -591,7 +594,12 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
       if (newParent == null || !newParent.isReadOnly()) {
         throw new InvalidDataException(parentName);
       }
-      updateSnapshot(current -> current.withParentScheme(newParent));
+      updateSnapshot(current -> {
+        if (current.parentScheme() != temporaryParent) {
+          return current;
+        }
+        return current.withParentScheme(newParent);
+      });
     } else {
       String originalSchemeName = getMetaProperties().getProperty(META_INFO_ORIGINAL_SCHEME);
       String isPartial = getMetaProperties().getProperty(META_INFO_PARTIAL);
@@ -799,7 +807,8 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
         return null;
       }
       return parentScheme.getName();
-    } catch (Throwable e) {
+    } catch (RuntimeException e) {
+      rethrowControlFlowException(e);
       LOG.warn("An exception occurred while trying to get scheme name", e);
       return "null(e)";
     }

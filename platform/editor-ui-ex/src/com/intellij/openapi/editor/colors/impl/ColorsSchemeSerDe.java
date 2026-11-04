@@ -113,10 +113,28 @@ final class ColorsSchemeSerDe {
   }
 
   /**
+   * Writes {@code scheme} into {@code parentNode} and clears the save flag of the scheme.
+   * It clears the flag before it reads the scheme, so a change during the write marks the scheme again.
+   * A write that fails marks the scheme again too.
+   */
+  static void writeExternal(@NotNull AbstractColorsScheme scheme, @NotNull Element parentNode) {
+    scheme.setSaveNeeded(false);
+    boolean written = false;
+    try {
+      writeScheme(scheme, parentNode);
+      written = true;
+    } finally {
+      if (!written) {
+        scheme.setSaveNeeded(true);
+      }
+    }
+  }
+
+  /**
    * Writes {@code scheme} into {@code parentNode}.
    * The fonts, the colors and the text attributes come from one snapshot of the scheme.
    */
-  static void writeExternal(@NotNull AbstractColorsScheme scheme, @NotNull Element parentNode) {
+  private static void writeScheme(@NotNull AbstractColorsScheme scheme, @NotNull Element parentNode) {
     ColorsSchemeSnapshot current = scheme.getSnapshot();
     FontPreferences fontPreferences = current.fontPreferences();
     FontPreferences consoleFontPreferences = current.consoleFontPreferences();
@@ -196,7 +214,6 @@ final class ColorsSchemeSerDe {
     if (!attrElements.getChildren().isEmpty()) {
       parentNode.addContent(attrElements);
     }
-    scheme.setSaveNeeded(false);
   }
 
   /**

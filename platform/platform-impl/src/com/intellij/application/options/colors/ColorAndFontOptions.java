@@ -1440,8 +1440,6 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       RainbowHighlighter.transferRainbowState(this, parentScheme);
       myRainbowState = new RainbowColorsInSchemeState(this, parentScheme);
-
-      initFonts();
     }
 
     @Override

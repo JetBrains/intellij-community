@@ -23,7 +23,7 @@ import java.util.function.Predicate;
 public class EditorColorsSchemeImpl extends AbstractColorsScheme implements ExternalizableScheme {
   private final Map<String, TextAttributes> attributesTempMap = new ConcurrentHashMap<>();
   private boolean isVisible = true;
-  private boolean isSaveNeeded;
+  private volatile boolean isSaveNeeded;
 
   public EditorColorsSchemeImpl(EditorColorsScheme parentScheme) {
     super(parentScheme);
