@@ -10,6 +10,7 @@ import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.model.usePyprojectToml
 import com.intellij.python.pyproject.model.evolution.findModuleFor
 import com.intellij.python.requirements.PyPackageVersionNormalizer
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -177,7 +178,7 @@ internal suspend fun buildPackages(
     }
     else emptyList()
     val result = mutableListOf<DisplayablePackage>()
-    if (undeclared.isNotEmpty()) result.add(UndeclaredPackagesGroup(undeclared))
+    if (undeclared.isNotEmpty()) result.add(undeclaredPackagesGroup(context, undeclared))
     result.addAll(workspaceMembers)
     result
   }
@@ -185,12 +186,21 @@ internal suspend fun buildPackages(
     val declared = buildInstalledPackages(context, node.declaredPackages, packageIndex, declaredPackageNames, projectPackageNames, path)
     val undeclared = buildInstalledPackages(context, node.undeclaredPackages, packageIndex, declaredPackageNames, projectPackageNames, path)
     val result = mutableListOf<DisplayablePackage>()
-    if (undeclared.isNotEmpty()) result.add(UndeclaredPackagesGroup(undeclared))
+    if (undeclared.isNotEmpty()) result.add(undeclaredPackagesGroup(context, undeclared))
     result.addAll(declared)
     result
   }
   is FlatPackageStructureNode -> buildPackagesFromManager(packageIndex, declaredPackageNames, projectPackageNames)
   is PackagesUnavailableNode -> emptyList()
+}
+
+/** The group of [packages] that the root dependency file does not declare. The label names that file. */
+private suspend fun undeclaredPackagesGroup(context: PyPackageBuildContext, packages: List<InstalledPackage>): UndeclaredPackagesGroup {
+  // The manager can build the tree without a root dependency file. Then the label names no file.
+  val label = context.manager.getRootDependenciesFile()
+                ?.let { PyBundle.message("python.toolwindow.packages.not.added.to", it.virtualFile.name) }
+              ?: PyBundle.message("python.toolwindow.packages.not.added.to.dependencies")
+  return UndeclaredPackagesGroup(label, packages)
 }
 
 internal fun buildPackagesFromManager(

@@ -14,7 +14,6 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
-import com.jetbrains.python.packaging.management.PythonPackageManager.Companion.PackageManagerErrorMessage
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
@@ -26,6 +25,7 @@ import com.jetbrains.python.packaging.requirementsTxt.readDeclaredPackages
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import kotlinx.coroutines.Deferred
 import java.nio.file.Path
+import org.jetbrains.annotations.Nls
 
 /**
  * The uv package manager of an SDK in [UvMode.Pip]: a plain environment with no `pyproject.toml` and no lock file.
@@ -96,11 +96,7 @@ internal class UvPipPackageManager internal constructor(
 
   override fun updateLockedAction(): suspend () -> PyResult<Unit> = suspend { syncLocked().mapSuccess { } }
 
-  override fun syncErrorMessage(): PackageManagerErrorMessage =
-    PackageManagerErrorMessage(
-      message("python.uv.pip.requirements.not.installed"),
-      message("python.uv.pip.install.requirements"),
-    )
+  override fun updateLockedActionName(): @Nls String = message("python.uv.pip.install.requirements")
 
   /** Runs `uv init --bare --no-project` in the working directory when it has no `pyproject.toml`. */
   suspend fun initProjectIfNeeded(): PyResult<Unit> {

@@ -99,7 +99,6 @@ internal fun Panel.uvProjectModeRow(uvViewModel: UvViewModel<*>): Row = row("") 
 private fun Panel.uvProjectBannerRow(uvViewModel: UvViewModel<*>): Row = row {
   cell(InlineBanner(message("sdk.create.uv.project.banner"), EditorNotificationPanel.Status.Info))
     .applyToComponent {
-      showCloseButton(false)
       addAction(message("sdk.create.uv.project.banner.link")) { BrowserUtil.browse(message("sdk.create.uv.project.banner.url")) }
     }
     .align(AlignX.FILL)

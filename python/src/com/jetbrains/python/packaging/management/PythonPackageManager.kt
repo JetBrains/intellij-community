@@ -388,8 +388,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   open fun updateLockedAction(): (suspend () -> PyResult<Unit>)? = null
 
+  /** The name of [updateLockedAction] in the packages view. `null` gives the generic name. */
   @ApiStatus.Internal
-  open fun syncErrorMessage(): PackageManagerErrorMessage? = null
+  open fun updateLockedActionName(): @Nls String? = null
 
   /**
    * @param module the target workspace member module for workspace-aware package managers (e.g., UV).
@@ -664,12 +665,6 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     @Topic.AppLevel
     val PACKAGE_MANAGEMENT_TOPIC: Topic<PythonPackageManagementListener> =
       Topic(PythonPackageManagementListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN)
-
-    @ApiStatus.Internal
-    data class PackageManagerErrorMessage(
-      @param:Nls val descriptionMessage: String,
-      @param:Nls val fixCommandMessage: String,
-    )
   }
 }
 
