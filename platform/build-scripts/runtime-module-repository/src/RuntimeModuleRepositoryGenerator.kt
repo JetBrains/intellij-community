@@ -59,15 +59,30 @@ fun generateRuntimeModuleRepository(
   additionalFrontendOnlyPluginModules: Set<String>,
   project: JpsProject,
 ): RuntimeModuleRepositoryContent {
+  return generateRuntimeModuleRepository(
+    pluginDescriptorsData, pluginConfigurationModuleToDistributionEntries, additionalFrontendOnlyPluginModules, JpsRuntimeModuleModel(project),
+  )
+}
+
+/**
+ * Computes the runtime module repository of a distribution from the facts of [model].
+ */
+@ApiStatus.Internal
+fun generateRuntimeModuleRepository(
+  pluginDescriptorsData: List<PluginDescriptorDataForHeader>,
+  pluginConfigurationModuleToDistributionEntries: Map<String, Collection<PluginDistributionEntry>>,
+  additionalFrontendOnlyPluginModules: Set<String>,
+  model: RuntimeModuleModel,
+): RuntimeModuleRepositoryContent {
   val pluginHeadersData = try {
-    generateRuntimePluginHeaders(pluginDescriptorsData, pluginConfigurationModuleToDistributionEntries, project)
+    generateRuntimePluginHeaders(pluginDescriptorsData, pluginConfigurationModuleToDistributionEntries, model)
   }
   catch (e: Exception) {
     throw RuntimeModuleRepositoryException("Failed to generate runtime plugin headers: ${e.message}", e)
   }
   val pluginHeaders = pluginHeadersData.map { it.header }
   val pluginDataToGenerateModuleDescriptors = pluginHeadersData.filterNot { it.header.pluginDescriptorModuleId.name in additionalFrontendOnlyPluginModules }
-  val distDescriptors = generateRuntimeModuleDescriptors(pluginDataToGenerateModuleDescriptors)
+  val distDescriptors = generateRuntimeModuleDescriptors(pluginDataToGenerateModuleDescriptors, model)
   val errors = ArrayList<String>()
   val errorReporter = object : RuntimeModuleRepositoryValidator.ErrorReporter {
     override fun reportError(errorMessage: String) {

@@ -4,33 +4,25 @@ package com.intellij.platform.buildScripts.runtimeModuleRepository
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleVisibility
 import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDescriptor
-import org.jetbrains.jps.model.JpsNamedElement
-import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.ex.JpsElementBase
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
-import org.jetbrains.jps.model.library.JpsLibrary
-import org.jetbrains.jps.model.module.JpsModule
-import java.util.concurrent.ConcurrentHashMap
 
-internal fun generateRuntimeModuleDescriptors(pluginHeadersData: List<RuntimePluginHeaderData>): List<RawRuntimeModuleDescriptor> {
+internal fun generateRuntimeModuleDescriptors(pluginHeadersData: List<RuntimePluginHeaderData>, model: RuntimeModuleModel): List<RawRuntimeModuleDescriptor> {
   val elementToIds = pluginHeadersData
     .flatMap { it.includedElementToId.entries }
     .groupBy({ it.key }, { it.value })
-  val contentModuleDetector = ContentModuleDetector()
   return pluginHeadersData.asSequence().flatMap {
-    generateRuntimeModuleDescriptorsForPluginHeader(it, elementToIds, contentModuleDetector)
+    generateRuntimeModuleDescriptorsForPluginHeader(it, elementToIds, model)
   }.toList()
 }
 
 private fun generateRuntimeModuleDescriptorsForPluginHeader(
   pluginHeaderData: RuntimePluginHeaderData,
-  elementToIds: Map<JpsNamedElement, List<RuntimeModuleId>>,
-  contentModuleDetector: ContentModuleDetector
+  elementToIds: Map<RuntimeModelElement, List<RuntimeModuleId>>,
+  model: RuntimeModuleModel,
 ): Sequence<RawRuntimeModuleDescriptor> {
   val allIncludedModuleIds = pluginHeaderData.header.includedModules.asSequence().map { it.moduleId } + pluginHeaderData.additionalModules
   return allIncludedModuleIds.map { moduleId ->
     val visibility = pluginHeaderData.visibilityOfModules[moduleId] ?: RuntimeModuleVisibility.PUBLIC
-    val dependencies = generateDependenciesForModule(moduleId, pluginHeaderData, elementToIds, contentModuleDetector)
+    val dependencies = generateDependenciesForModule(moduleId, pluginHeaderData, elementToIds, model)
     val classpathEntries = pluginHeaderData.classpathEntries[moduleId].map {
       //converts a path relative to the root of the installation to a path relative to the runtime module repository
       if (it.startsWith("$RUNTIME_REPOSITORY_MODULES_DIR_NAME/")) it.removePrefix("$RUNTIME_REPOSITORY_MODULES_DIR_NAME/") else "../$it"
@@ -42,33 +34,33 @@ private fun generateRuntimeModuleDescriptorsForPluginHeader(
 private fun generateDependenciesForModule(
   moduleId: RuntimeModuleId,
   pluginHeaderData: RuntimePluginHeaderData,
-  elementToIds: Map<JpsNamedElement, List<RuntimeModuleId>>,
-  contentModuleDetector: ContentModuleDetector,
+  elementToIds: Map<RuntimeModelElement, List<RuntimeModuleId>>,
+  model: RuntimeModuleModel,
 ): List<RuntimeModuleId> {
-  val jpsElement = pluginHeaderData.moduleIdToJpsElement[moduleId]
-  if (jpsElement !is JpsModule) {
-    return emptyList()
+  val element = pluginHeaderData.moduleIdToElement[moduleId] ?: return emptyList()
+  val moduleFacts = when (element.kind) {
+    RuntimeModelElement.Kind.MODULE -> model.findModule(element.name) ?: error("Cannot find module by name: ${element.name}")
+    RuntimeModelElement.Kind.PROJECT_LIBRARY -> return emptyList()
   }
   val dependencies = ArrayList<RuntimeModuleId>()
-  JpsJavaExtensionService.dependencies(jpsElement).withoutSdk().withoutModuleSourceEntries().runtimeOnly().productionOnly().forEachModuleAndLibrary(
-    { module ->
-      dependencies.add(findTargetModuleId(module, pluginHeaderData, elementToIds, contentModuleDetector))
-    },
-    { library ->
-      if (library.isProjectLevel) {
-        val containingContentModules = pluginHeaderData.projectLibrariesToIncludingContentModules[library]
-        if (containingContentModules.isEmpty()) {
-          dependencies.add(findTargetModuleId(library, pluginHeaderData, elementToIds, contentModuleDetector))
-        }
-        else if (moduleId !in containingContentModules) {
-          require(containingContentModules.size == 1) {
-            "Library $library is included in multiple content modules in the same plugin ${pluginHeaderData.header.pluginId} ($containingContentModules) and used as a dependency in another module ${moduleId.displayName}"
-          }
-          dependencies.add(containingContentModules.single())
-        }
-      }
+  for (dependency in moduleFacts.dependencies) {
+    val moduleName = dependency.module
+    if (moduleName != null) {
+      dependencies.add(findTargetModuleId(moduleElement(moduleName), dependency.contentModule, pluginHeaderData, elementToIds))
+      continue
     }
-  )
+    val library = projectLibraryElement(dependency.library!!)
+    val containingContentModules = pluginHeaderData.projectLibrariesToIncludingContentModules[library]
+    if (containingContentModules.isEmpty()) {
+      dependencies.add(findTargetModuleId(library, isContentModule = false, pluginHeaderData, elementToIds))
+    }
+    else if (moduleId !in containingContentModules) {
+      require(containingContentModules.size == 1) {
+        "Library ${library.name} is included in multiple content modules in the same plugin ${pluginHeaderData.header.pluginId} ($containingContentModules) and used as a dependency in another module ${moduleId.displayName}"
+      }
+      dependencies.add(containingContentModules.single())
+    }
+  }
   val additional = pluginHeaderData.dependenciesOnPluginDescriptorModules[moduleId]
   if (!additional.isNullOrEmpty()) {
     dependencies.addAll(additional)
@@ -76,38 +68,26 @@ private fun generateDependenciesForModule(
   return dependencies
 }
 
-private val JpsLibrary.isProjectLevel: Boolean
-  get() = (this as JpsElementBase<*>).parent.parent is JpsProject
-
+/**
+ * Returns the ID of the dependency target [element]. [isContentModule] tells whether a module outside the distribution has its `<name>.xml`
+ * descriptor in a production root.
+ */
 private fun findTargetModuleId(
-  jpsElement: JpsNamedElement,
+  element: RuntimeModelElement,
+  isContentModule: Boolean,
   pluginHeaderData: RuntimePluginHeaderData,
-  elementToIds: Map<JpsNamedElement, List<RuntimeModuleId>>,
-  contentModuleDetector: ContentModuleDetector,
+  elementToIds: Map<RuntimeModelElement, List<RuntimeModuleId>>,
 ): RuntimeModuleId {
-  val inThisPlugin = pluginHeaderData.includedElementToId[jpsElement]
+  val inThisPlugin = pluginHeaderData.includedElementToId[element]
   if (inThisPlugin != null) return inThisPlugin
 
-  val inOtherPlugin = elementToIds[jpsElement]?.singleOrNull()
+  val inOtherPlugin = elementToIds[element]?.singleOrNull()
   if (inOtherPlugin != null) return inOtherPlugin
 
-  return when (jpsElement) {
-    is JpsLibrary -> RuntimeModuleId.projectLibrary(jpsElement.name)
-    is JpsModule if contentModuleDetector.isContentModule(jpsElement) -> RuntimeModuleId.contentModule(jpsElement.name, RuntimeModuleId.DEFAULT_NAMESPACE)
-    is JpsModule -> RuntimeModuleId.legacyJpsModule(jpsElement.name)
-    else -> error("Unexpected JPS element $jpsElement in dependencies of $pluginHeaderData")
-  }
-}
-
-private class ContentModuleDetector {
-  private val isContentModuleCache = ConcurrentHashMap<JpsModule, Boolean>()
-
-  fun isContentModule(jpsModule: JpsModule): Boolean {
-    return isContentModuleCache.computeIfAbsent(jpsModule) {
-      /* we have a few modules that contain the module XML descriptor but aren't registered as content modules (IJPL-210868), but given that this function is used only to compute
-         dependencies on modules not included in the current distribution, this should lead to problems */
-      JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(jpsModule, "${jpsModule.name}.xml") != null
+  return when (element.kind) {
+    RuntimeModelElement.Kind.PROJECT_LIBRARY -> RuntimeModuleId.projectLibrary(element.name)
+    RuntimeModelElement.Kind.MODULE -> {
+      if (isContentModule) RuntimeModuleId.contentModule(element.name, RuntimeModuleId.DEFAULT_NAMESPACE) else RuntimeModuleId.legacyJpsModule(element.name)
     }
   }
 }
-

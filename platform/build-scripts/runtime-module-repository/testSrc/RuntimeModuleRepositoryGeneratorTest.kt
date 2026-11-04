@@ -201,11 +201,17 @@ class RuntimeModuleRepositoryGeneratorTest {
     pluginConfigurationModuleToDistributionEntries: Map<String, List<PluginDistributionEntry>>,
     expected: ExpectedRuntimeRepositoryBuilder.() -> Unit,
   ) {
-    val pluginHeadersData = generateRuntimePluginHeaders(plugins, pluginConfigurationModuleToDistributionEntries, project)
-    val descriptors = generateRuntimeModuleDescriptors(pluginHeadersData)
-    val pluginHeaders = pluginHeadersData.map { it.header }
-    val runtimeModuleRepositoryData = RawRuntimeModuleRepositoryData.create(descriptors.associateBy { it.moduleId }, pluginHeaders, tempDirectory)
-    ExpectedRuntimeRepositoryBuilder().apply(expected).checkRuntimeModuleRepository(runtimeModuleRepositoryData)
+    // the JPS project, and its facts written to a file and read back
+    val jpsModel = JpsRuntimeModuleModel(project)
+    val factsFile = tempDirectory.resolve("module-facts.json")
+    writeRuntimeModuleFacts(jpsModel.toFactsTable(), factsFile)
+    for (model in listOf(jpsModel, readRuntimeModuleFacts(factsFile))) {
+      val pluginHeadersData = generateRuntimePluginHeaders(plugins, pluginConfigurationModuleToDistributionEntries, model)
+      val descriptors = generateRuntimeModuleDescriptors(pluginHeadersData, model)
+      val pluginHeaders = pluginHeadersData.map { it.header }
+      val runtimeModuleRepositoryData = RawRuntimeModuleRepositoryData.create(descriptors.associateBy { it.moduleId }, pluginHeaders, tempDirectory)
+      ExpectedRuntimeRepositoryBuilder().apply(expected).checkRuntimeModuleRepository(runtimeModuleRepositoryData)
+    }
   }
 
   private fun createHeader(pluginDescriptorModuleName: String, vararg contentModules: String): PluginDescriptorDataForHeader {

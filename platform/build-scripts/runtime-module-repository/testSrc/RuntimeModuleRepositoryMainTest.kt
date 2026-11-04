@@ -66,6 +66,40 @@ class RuntimeModuleRepositoryMainTest {
   }
 
   @Test
+  fun `module facts give the same bytes as the project model`() {
+    writeProject()
+    val args = writeInputs()
+    generateRuntimeModuleRepositoryFromLayout(args)
+    val fromProject = listOf(MODULE_DESCRIPTORS_COMPACT_PATH, MODULE_DESCRIPTORS_JAR_PATH).map { Files.readAllBytes(outputDir.resolve(it)) }
+
+    val factsFile = tempDirectory.resolve("module-facts.json")
+    writeRuntimeModuleFacts(JpsRuntimeModuleModel(loadProject(projectDir)).toFactsTable(), factsFile)
+    val factsOutputDir = tempDirectory.resolve("facts-out")
+    generateRuntimeModuleRepositoryFromLayout(args.map {
+      when {
+        it.startsWith("--project-dir=") -> "--module-facts=$factsFile"
+        it.startsWith("--output-dir=") -> "--output-dir=$factsOutputDir"
+        else -> it
+      }
+    })
+
+    val fromFacts = listOf(MODULE_DESCRIPTORS_COMPACT_PATH, MODULE_DESCRIPTORS_JAR_PATH).map { Files.readAllBytes(factsOutputDir.resolve(it)) }
+    assertThat(fromFacts[0]).isEqualTo(fromProject[0])
+    assertThat(fromFacts[1]).isEqualTo(fromProject[1])
+    val facts = readRuntimeModuleFacts(factsFile)
+    assertThat(facts.findModule("foo.util")!!.dependencies.map { it.module to it.contentModule }).containsExactly("bar" to true, "baz" to false)
+  }
+
+  @Test
+  fun `the project model and module facts together are an error`() {
+    writeProject()
+    val args = writeInputs() + "--module-facts=${tempDirectory.resolve("module-facts.json")}"
+
+    assertThatThrownBy { generateRuntimeModuleRepositoryFromLayout(args) }
+      .hasMessageContaining("Give exactly one of --project-dir and --module-facts")
+  }
+
+  @Test
   fun `a separate content module descriptor is used if the plugin descriptor holds none`() {
     writeProject()
     val separateDescriptor = tempDirectory.resolve("foo.core.xml")
