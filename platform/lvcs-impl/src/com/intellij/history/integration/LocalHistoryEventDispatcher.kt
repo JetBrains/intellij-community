@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration
 
 import com.intellij.history.ActivityId
@@ -8,11 +8,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManagerListener
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.newvfs.impl.VfsThreadingUtil
 import com.intellij.util.containers.DisposableWrapperList
+import com.intellij.util.containers.TreeNodeProcessingResult
 
 internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacade, private val gateway: IdeaGateway) {
   private val vfsEventListeners = DisposableWrapperList<BulkFileListener>()
@@ -55,26 +56,22 @@ internal class LocalHistoryEventDispatcher(private val facade: LocalHistoryFacad
   }
 
   private fun createRecursively(dir: VirtualFile) {
-    // Let's iterate only over content files.
-    // It was already the case before this change. Iteration over VFS-cached files outside the project didn't do anything because
-    // new non-indexable directories are not recursively loaded into VFS on creation.
-
-    for (containingProjectIndex in IdeaGateway.getVersionedFilterData().myProjectFileIndices) {
-      // It's unlikely that the same content directory belongs to multiple open projects, but for completeness let's iterate
-      // over all of them as projects may have different excluded directories.
-      containingProjectIndex.iterateContentUnderDirectory(dir, ContentIterator { fileOrDir -> // NOOP if dir is not under content roots
-        if (isVersioned(fileOrDir)) {
-          facade.created(gateway.getPathOrUrl(fileOrDir), fileOrDir.isDirectory)
+    // Walk only indexable content (IJPL-84970). The listener runs under the write lock, so it must not list the disk.
+    // The refresh has already loaded indexable dirs into VFS. Excluded dirs are not walked, only content roots inside them.
+    // A non-indexable or outside dir registers only itself: walking it would list the disk.
+    // Symlinks are registered but not walked: the refresh does not load symlinked dirs.
+    val registered = HashSet<VirtualFile>()
+    for (fileIndex in IdeaGateway.getVersionedFilterData().myWorkspaceFileIndices) {
+      // Projects may exclude different dirs, so walk each of them. Shared content is registered once.
+      fileIndex.processIndexableContentUnderDirectory(dir, ContentIteratorEx { file ->
+        if (isVersioned(file) && registered.add(file)) {
+          facade.created(gateway.getPathOrUrl(file), file.isDirectory)
         }
-        true
-      }, VirtualFileFilter { file -> isVersioned(file) })
+        if (file.`is`(VFileProperty.SYMLINK)) TreeNodeProcessingResult.SKIP_CHILDREN else TreeNodeProcessingResult.CONTINUE
+      }, null) { true }
     }
 
-    val inContent = IdeaGateway.getVersionedFilterData().myProjectFileIndices.any { it.isInContent(dir) }
-
-    if (!inContent && isVersioned(dir)) {
-      // Non-recursively register this file or directory if it's outside project roots but is versioned.
-      // (recursive iteration would load files into VFS, we don't want it)
+    if (dir !in registered && isVersioned(dir)) {
       facade.created(gateway.getPathOrUrl(dir), dir.isDirectory)
     }
   }

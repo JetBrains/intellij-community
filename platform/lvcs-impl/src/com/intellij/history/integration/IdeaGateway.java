@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration;
 
 import com.intellij.history.core.LocalHistoryFacade;
@@ -41,6 +41,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -177,6 +178,7 @@ public class IdeaGateway {
 
   protected static final class VersionedFilterData {
     final List<ProjectFileIndex> myProjectFileIndices = new ArrayList<>();
+    final List<WorkspaceFileIndexEx> myWorkspaceFileIndices = new ArrayList<>();
 
     VersionedFilterData() {
       Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -186,6 +188,7 @@ public class IdeaGateway {
         if (!each.isInitialized()) continue;
 
         myProjectFileIndices.add(ProjectRootManager.getInstance(each).getFileIndex());
+        myWorkspaceFileIndices.add(WorkspaceFileIndexEx.getInstance(each));
       }
     }
   }
