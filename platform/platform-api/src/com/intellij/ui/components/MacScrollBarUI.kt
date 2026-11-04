@@ -157,11 +157,11 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
     super.installUI(c)
     if (SystemInfoRt.isMac) {
       updateStyle(CURRENT_STYLE())
+      processReferences(toAdd = this, toRemove = null, list = null)
     }
     else {
       updateStyle(MacScrollbarStyle.Overlay)
     }
-    processReferences(toAdd = this, toRemove = null, list = null)
     val listener = MOVEMENT_LISTENER.getAndSet(null)
     if (listener != null) {
       Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK)
@@ -169,7 +169,9 @@ internal open class MacScrollBarUI : DefaultScrollBarUI {
   }
 
   override fun uninstallUI(c: JComponent) {
-    processReferences(toAdd = null, toRemove = this, list = null)
+    if (SystemInfoRt.isMac) {
+      processReferences(toAdd = null, toRemove = this, list = null)
+    }
     super.uninstallUI(c)
   }
 
