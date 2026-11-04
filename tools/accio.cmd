@@ -7,17 +7,15 @@ GOTO :CMDSCRIPT
 
 # accio wrapper - Unix section
 # Downloads and executes accio with version pinning and checksum verification.
-# The archives are the release archives of a JetBrains/accio commit (release.yml), mirrored to intellij-build-dependencies.
+# The archives are the assets of the GitHub release v<TOOL_VERSION> of JetBrains/accio, through the cache redirector.
 # An accio on the PATH wins over the pin when its version is at or above the pin: a developer build stays the one in use.
 # An older one gets one note on stderr, and the pinned accio runs. A cache file holds the version of the accio on the PATH.
 # It stays valid while it is newer than the binary and the directory of the binary, so a normal call starts no extra process.
 # ACCIO_WRAPPER_ACTIVE stops a loop when that accio is this wrapper.
 #
 # To bump the pin:
-#   1. gh workflow run release.yml -R JetBrains/accio --ref <branch>, then gh run download <run-id> when it is green.
-#   2. Upload the six archives to accio/<version>/ in https://jetbrains.team/p/ij/packages/files/intellij-build-dependencies.
-#      <version> is the Cargo.toml version and the short commit sha.
-#   3. Change TOOL_VERSION, ACCIO_ARCHIVE_VERSION and the checksums in both sections. The .sha256 files hold them.
+#   1. Make sure that the GitHub release v<version> of JetBrains/accio has the six archives (gh release view v<version> -R JetBrains/accio).
+#   2. Change TOOL_VERSION and the checksums in both sections. The .sha256 assets of the release hold them.
 #
 # IMPORTANT: After updating TOOL_VERSION or checksums, you MUST run:
 #   TOOL_VERIFY_ALL_PLATFORMS=1 ./community/tools/accio.cmd
@@ -25,8 +23,7 @@ GOTO :CMDSCRIPT
 
 set -eu
 
-TOOL_VERSION="0.10.0-16bcfaf"
-ACCIO_ARCHIVE_VERSION="v0.10.0"
+TOOL_VERSION="0.10.0"
 
 # Exit code 0 when version $1 is at or above version $2 (major.minor.patch). An unparsable version is older.
 accio_at_least() {
@@ -94,8 +91,8 @@ export TOOL_CHECKSUM_WINDOWS_ARM64="ad6203c6835b844e6ef22663bf8bfd29744d245a7c50
 export TOOL_CHECKSUM_MACOS_X64="1061b780937d05a09ebdb1215f1b6bda1cb809e55670658a569b624d4a8bcb19"
 export TOOL_CHECKSUM_MACOS_ARM64="f6be14f7085224317d3b79fee4e1c31c8b8b3e414111d889b6bab45ff2b3383e"
 
-# Download URLs (intellij-build-dependencies through the cache redirector)
-base="https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/accio/${TOOL_VERSION}/accio-${ACCIO_ARCHIVE_VERSION}"
+# Download URLs (the GitHub release through the cache redirector)
+base="https://cache-redirector.jetbrains.com/github.com/JetBrains/accio/releases/download/v${TOOL_VERSION}/accio-v${TOOL_VERSION}"
 export TOOL_URL_LINUX_X64="${base}-linux-x86_64.tar.gz"
 export TOOL_URL_LINUX_ARM64="${base}-linux-aarch64.tar.gz"
 export TOOL_URL_WINDOWS_X64="${base}-windows-x86_64.zip"
@@ -122,8 +119,7 @@ REM IMPORTANT: After updating TOOL_VERSION or checksums, you MUST run:
 REM   set TOOL_VERIFY_ALL_PLATFORMS=1 && community\tools\accio.cmd
 REM to verify all platform checksums before committing.
 
-set "TOOL_VERSION=0.10.0-16bcfaf"
-set "ACCIO_ARCHIVE_VERSION=v0.10.0"
+set "TOOL_VERSION=0.10.0"
 
 REM An accio.exe on the PATH wins over the pin when its version is at or above the pin.
 REM A cache file holds its version by path, size and time, so a normal call starts no extra process.
@@ -186,8 +182,8 @@ set "TOOL_CHECKSUM_WINDOWS_ARM64=ad6203c6835b844e6ef22663bf8bfd29744d245a7c508af
 set "TOOL_CHECKSUM_MACOS_X64=1061b780937d05a09ebdb1215f1b6bda1cb809e55670658a569b624d4a8bcb19"
 set "TOOL_CHECKSUM_MACOS_ARM64=f6be14f7085224317d3b79fee4e1c31c8b8b3e414111d889b6bab45ff2b3383e"
 
-REM Download URLs (intellij-build-dependencies through the cache redirector)
-set "ACCIO_BASE_URL=https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/accio/%TOOL_VERSION%/accio-%ACCIO_ARCHIVE_VERSION%"
+REM Download URLs (the GitHub release through the cache redirector)
+set "ACCIO_BASE_URL=https://cache-redirector.jetbrains.com/github.com/JetBrains/accio/releases/download/v%TOOL_VERSION%/accio-v%TOOL_VERSION%"
 set "TOOL_URL_LINUX_X64=%ACCIO_BASE_URL%-linux-x86_64.tar.gz"
 set "TOOL_URL_LINUX_ARM64=%ACCIO_BASE_URL%-linux-aarch64.tar.gz"
 set "TOOL_URL_WINDOWS_X64=%ACCIO_BASE_URL%-windows-x86_64.zip"
