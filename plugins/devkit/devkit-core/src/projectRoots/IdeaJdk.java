@@ -203,7 +203,10 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
                         "jpa-console-common.jar");
     }
     appendIdeaLibrary(plugins + "PersistenceSupport", result, "persistence-impl.jar");
-    appendIdeaLibrary(plugins + "DatabaseTools", result, "grid.jar", "grid-core.jar", "database-impl.jar", "jdbc-console.jar");
+    // "DatabaseTools" is the directory of the Database Tools plugin in older IDEs
+    for (String databaseDirName : List.of("database", "DatabaseTools")) {
+      appendIdeaLibrary(plugins + databaseDirName, result, "grid.jar", "grid-core.jar", "database-impl.jar", "jdbc-console.jar");
+    }
     appendIdeaLibrary(plugins + "css", result, "css.jar");
     // "uml" is the directory of the Diagrams plugin in older IDEs
     for (String diagramDirName : List.of("diagram", "uml")) {
