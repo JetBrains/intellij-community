@@ -8,12 +8,9 @@ import com.intellij.database.datagrid.DataGridWithNestedTables;
 import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridColumnLayout;
 import com.intellij.database.datagrid.GridHelper;
-import com.intellij.database.datagrid.GridModel;
 import com.intellij.database.datagrid.GridRequestSource;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.GridUtil;
-import com.intellij.database.datagrid.HierarchicalColumnsCollapseManager;
-import com.intellij.database.datagrid.HierarchicalReader;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.RawIndexConverter;
@@ -25,7 +22,6 @@ import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.datagrid.ViewIndexSet;
 import com.intellij.database.extractors.DisplayType;
-import com.intellij.database.run.actions.ColumnLocalFilterAction;
 import com.intellij.database.run.ui.ColumnMove;
 import com.intellij.database.run.ui.ColumnOrderRestorer;
 import com.intellij.database.run.ui.DataAccessType;
@@ -63,13 +59,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -127,7 +123,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.EventObject;
 import java.util.HashSet;
 import java.util.List;
@@ -161,13 +156,18 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   private final GridSelectionEvents myGridSelectionEvents;
   /** The grid's selection model, which reads the view's models; the grid finds it on {@link #getComponent()}. */
   private final TableSelectionModel mySelectionModel;
+  /** The view's columns in displayed order, which the slices, the header clicks and the controller share. */
+  private final DisplayedColumns myDisplayedColumns;
   /** The main table's slice: the unpinned columns of the view's column model. */
   private final GridColumnSlice myMainSlice;
   /** The main table, the pinned table while a visible column is pinned, and the columns each shows. Only the view changes it. */
   private final MutableViewTables myTables;
-  /** The popup groups of the column headers and the row header, which a pinned table created later gets too. */
-  private final ActionGroup myColumnHeaderPopupActions;
-  private final ActionGroup myRowHeaderPopupActions;
+  /** The header popups of both tables and of a transposed gutter, and the column the open column popup is about. */
+  private final TableHeaderPopups myHeaderPopups;
+  /** Decides what a click on a column header does; on the header of every table of the view, a pinned table created later too. */
+  private final TableHeaderClicks myHeaderClicks;
+  /** Which cells the view edits in the value editor instead of a cell editor, in every table of the view. */
+  private final ValueEditorCells myValueEditorCells;
   /** Mouse listeners for every table of the view, which a pinned table created later gets too. */
   private final List<MouseListener> myCellMouseListeners = new ArrayList<>();
   private final List<MouseMotionListener> myCellMotionListeners = new ArrayList<>();
@@ -185,8 +185,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   private StatisticsHeaderHost myStatisticsHeaderHost;
   /** The value of the open multi-cell edit, which both tables show in the selected cells. */
   private final MultiCellEditValue myEditedValue = new MultiCellEditValue();
-  /** The column whose header popup is open, which the column actions work on; -1 while no popup is open. */
-  private ModelIndex<GridColumn> myContextColumn;
   private final GridSelectionGrower myGrower;
   private boolean myWasAutomaticallyTransposed;
   private final TableCellImageCache myCellImageCache;
@@ -213,18 +211,16 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   public TableResultView(@NotNull DataGrid grid, @NotNull ActionGroup columnHeaderActions, @NotNull ActionGroup rowHeaderActions) {
     myGrid = grid;
-    myContextColumn = ModelIndex.forColumn(grid, -1);
+    myHeaderPopups = new TableHeaderPopups(grid, columnHeaderActions, rowHeaderActions);
     myDataModel = new RegularGridTableModel(grid);
     // Before any table listens: Swing tells the first listener last, so the grid hears of a new structure after every table took it.
     myDataModel.addTableModelListener(myDataStructureListener);
     myColumns = new GridColumns(grid, new ColumnsHost(), myDataModel);
-    myMainSlice = new GridColumnSlice(myColumns.getColumnModel(), myColumns, ColumnsToShow.UNPINNED);
-    myMainTable = new GridTable(grid, myDataModel, myRowSelection, myMainSlice, myColumns.getColumnCache(), columnHeaderActions,
-                              rowHeaderActions);
+    myDisplayedColumns = new DisplayedColumns(myColumns.getColumnModel(), myColumns);
+    myMainSlice = new GridColumnSlice(myColumns.getColumnModel(), myColumns, ColumnsToShow.UNPINNED, myDisplayedColumns);
+    myMainTable = new GridTable(grid, myDataModel, myRowSelection, myMainSlice, myColumns.getColumnCache());
     myRawIndexConverter = new TableRawIndexConverter(myMainTable, myColumns.getColumnModel());
     myTables = new MutableViewTables(grid, myMainTable, myMainSlice);
-    myColumnHeaderPopupActions = columnHeaderActions;
-    myRowHeaderPopupActions = rowHeaderActions;
     myGridSelectionEvents = new GridSelectionEvents(myRowSelection, myColumns.getColumnModel());
     mySelectionModel = new TableSelectionModel(grid, myRowSelection, myColumns.getColumnModel(),
                                                myGridSelectionEvents, myDataModel, this);
@@ -232,7 +228,11 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     // One cache for the cell images of every table of the view. It sizes itself by the main table's visible area, the cells that scroll.
     myCellImageCache = new TableCellImageCache(myMainTable, this);
     myFloatingToolbar = new TableFloatingToolbarController(grid, grid.getCoroutineScope());
-    myFrozenColumnsController = new FrozenColumnsController(myTables, myColumns.getColumnModel(), myRowSelection, grid);
+    myFrozenColumnsController =
+      new FrozenColumnsController(myTables, myColumns.getColumnModel(), myDisplayedColumns, myRowSelection, grid);
+    myHeaderClicks = new TableHeaderClicks(grid, mySelectionModel, myColumns.getColumnModel(), myDisplayedColumns, myMainTable,
+                                           myHeaderPopups);
+    myValueEditorCells = new ValueEditorCells(grid);
     myMainTable.installHost(adoptTable(myMainTable), myRowHeights, myCellImageCache, myEditedValue, myRowOrder.getSorter());
     MoveColumnListener mainMoveColumnListener = createMoveColumnListener();
     myMainTable.getTableHeader().addMouseListener(mainMoveColumnListener);
@@ -345,6 +345,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     });
     myFrozenColumnsController.installColumnNavigationActions(table);
     myFrozenColumnsController.addDragAnchorListener(table);
+    // Before the view's column drag listener, where the table's own header listener was.
+    table.getTableHeader().addMouseListener(myHeaderClicks);
     return new TableHost(table);
   }
 
@@ -457,10 +459,9 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
    * and, through their slices, the view's column model.
    */
   private @NotNull GridTable addPinnedTable() {
-    GridColumnSlice pinnedSlice = new GridColumnSlice(myColumns.getColumnModel(), myColumns, ColumnsToShow.PINNED);
+    GridColumnSlice pinnedSlice = new GridColumnSlice(myColumns.getColumnModel(), myColumns, ColumnsToShow.PINNED, myDisplayedColumns);
     FrozenStripTable table = new FrozenStripTable(myGrid, myDataModel, new DefaultListSelectionModel(),
-                                                  new DefaultTableColumnModel(), myColumns.getColumnCache(),
-                                                  myColumnHeaderPopupActions, myRowHeaderPopupActions);
+                                                  new DefaultTableColumnModel(), myColumns.getColumnCache());
     table.installHost(adoptTable(table), myRowHeights, myCellImageCache, myEditedValue, myRowOrder.getSorter());
     table.setSelectionModel(myRowSelection);
     table.setColumnModel(pinnedSlice);
@@ -492,6 +493,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
       table.getTableHeader().removeMouseListener(moveColumnListener);
       pinnedSlice.removeColumnModelListener(moveColumnListener);
     }
+    table.getTableHeader().removeMouseListener(myHeaderClicks);
     for (MouseListener listener : myCellMouseListeners) table.removeMouseListener(listener);
     for (MouseMotionListener listener : myCellMotionListeners) table.removeMouseMotionListener(listener);
     for (FocusListener listener : myCellFocusListeners) table.removeFocusListener(listener);
@@ -565,10 +567,10 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   int getAvailableColumnsWidth() { return myFrozenColumnsController.getAvailableColumnsWidth(); }
 
   @Override
-  public @NotNull ModelIndex<GridColumn> getContextColumn() { return myContextColumn; }
+  public @NotNull ModelIndex<GridColumn> getContextColumn() { return myHeaderPopups.getContextColumn(); }
 
   @TestOnly
-  public void setContextColumn(@NotNull ModelIndex<GridColumn> column) { myContextColumn = column; }
+  public void setContextColumn(@NotNull ModelIndex<GridColumn> column) { myHeaderPopups.setContextColumnForTests(column); }
 
   /** The main table, which shows the unpinned columns. */
   @TestOnly
@@ -800,8 +802,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   @Override
   public void showFirstCell(int rowNumOnCurrentPage) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      GridTable pinned = myTables.getPinned();
-      int firstShown = pinned != null && pinned.getColumnCount() > 0 ? positionAt(pinned, 0) : 0;
+      Integer first = myDisplayedColumns.order().first();
+      int firstShown = first != null ? first : 0;
       myGrid.showCell(rowIndexOfNumber(rowNumOnCurrentPage), ViewIndex.forColumn(myGrid, firstShown).toModel(myGrid));
     }, ignored -> myDisposed);
   }
@@ -1277,13 +1279,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void onColumnHierarchyChanged() {
-    GridModel<?, GridColumn> model = myGrid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS);
-    HierarchicalReader hierarchicalReader = model.getHierarchicalReader();
-    HierarchicalColumnsCollapseManager collapseManager = myGrid.getHierarchicalColumnsCollapseManager();
-    if (hierarchicalReader != null && collapseManager != null) {
-      hierarchicalReader.updateDepthOfHierarchy(
-        column -> GridTable.isColumnDisabledOrCollapsed(column, myGrid) || collapseManager.isColumnCollapsedSubtree(column));
-    }
+    GridColumnHeaderState.updateColumnHierarchyDepth(myGrid);
   }
 
   /**
@@ -1490,14 +1486,15 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   @NotNull TableColumnModel getViewColumnModel() { return myColumns.getColumnModel(); }
 
   void toggleSortOrder(@NotNull ModelIndex<GridColumn> column, boolean additive) {
-    myGrid.getAutoscrollLocker().runWithLock(() -> myGrid.toggleSortColumns(Collections.singletonList(column), additive));
+    GridColumnHeaderState.toggleSortOrder(myGrid, column, additive);
   }
 
+  /** Opens the column popup of a transposed gutter, whose actions get the main table's data. */
   void invokeColumnPopup(@NotNull ModelIndex<GridColumn> column, @NotNull Component component, @NotNull Point point) {
-    myMainTable.invokeColumnPopup(column, component, point);
+    myHeaderPopups.showColumnPopup(column, myMainTable, component, point);
   }
 
-  void invokeRowPopup(@NotNull Component component, int x, int y) { myMainTable.invokeRowPopup(component, x, y); }
+  void invokeRowPopup(@NotNull Component component, int x, int y) { myHeaderPopups.showRowPopup(component, new Point(x, y)); }
 
   int getTextLineHeight() { return myMainTable.getTextLineHeight(); }
 
@@ -1525,50 +1522,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     return myRawIndexConverter.columnIndexToView(modelColumn);
   }
 
-  private void selectHeaderColumn(GridTable source, int localIndex, MouseEvent event) {
-    boolean interval = GridUtil.isIntervalModifierSet(event);
-    boolean exclusive = GridUtil.isExclusiveModifierSet(event);
-    if (interval && myFrozenColumnsController.selectDisplayedColumnRange(source, localIndex, exclusive)) {
-      if (exclusive) {
-        mySelectionModel.addRowSelectionInterval(myMainTable.getRowCount() - 1, 0);
-      }
-      else {
-        mySelectionModel.setRowSelectionInterval(myMainTable.getRowCount() - 1, 0);
-      }
-      return;
-    }
-    int position = positionAt(source, localIndex);
-    if (position < 0) return;
-    ListSelectionModel columnSelection = myColumns.getColumnModel().getSelectionModel();
-    if (interval) {
-      int lead = columnSelection.getLeadSelectionIndex();
-      if (lead < 0 || lead >= myColumns.getColumnModel().getColumnCount()) lead = position;
-      if (exclusive) {
-        mySelectionModel.addRowSelectionInterval(myMainTable.getRowCount() - 1, 0);
-        mySelectionModel.addColumnSelectionInterval(position, lead);
-      }
-      else {
-        mySelectionModel.setRowSelectionInterval(myMainTable.getRowCount() - 1, 0);
-        mySelectionModel.setColumnSelectionInterval(position, lead);
-      }
-    }
-    else if (exclusive) {
-      if (columnSelection.isSelectedIndex(position)) {
-        columnSelection.removeSelectionInterval(position, position);
-      }
-      else {
-        mySelectionModel.addRowSelectionInterval(myMainTable.getRowCount() - 1, 0);
-        mySelectionModel.addColumnSelectionInterval(position, position);
-      }
-    }
-    else {
-      mySelectionModel.setRowSelectionInterval(myMainTable.getRowCount() - 1, 0);
-      mySelectionModel.setColumnSelectionInterval(position, position);
-    }
-  }
-
   /**
-   * What one table asks of the view: its input goes through the pinned-column controller; edits, popups and sorting go to the view and
+   * What one table asks of the view. Its input goes through the pinned-column controller; edits and the value editor go to the view and
    * the grid.
    */
   private final class TableHost implements GridTableHost {
@@ -1577,13 +1532,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     private TableHost(GridTable table) { myTable = table; }
 
     @Override
-    public boolean stopEditingBeforeSelectionChange(int row, int localIndex) {
-      return myFrozenColumnsController.stopEditingBeforeSelectionChange(myTable, row, localIndex);
-    }
-
-    @Override
-    public boolean selectCellRange(int row, int localIndex, boolean addToSelection) {
-      return myFrozenColumnsController.selectCellRange(myTable, row, localIndex, addToSelection);
+    public boolean stopEditingBeforeSelectionChange(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column) {
+      return myFrozenColumnsController.stopEditingBeforeSelectionChange(myTable, row, column);
     }
 
     @Override
@@ -1605,22 +1555,11 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     public void columnMarginChanged() { myFrozenColumnsController.columnMarginChanged(myTable); }
 
     @Override
-    public void setRowHeight(int row, int height) {
-      // A removed pinned table can still restore an editor's row height late, but its rows no longer match the grid's.
-      if (myTable != myMainTable && myTable != myTables.getPinned()) return;
-      myRowHeights.setHeight(myTable.convertRowIndexToModel(row), height);
-    }
-
-    @Override
-    public void toggleSortOrder(@NotNull ModelIndex<GridColumn> column, boolean additive) {
-      TableResultView.this.toggleSortOrder(column, additive);
-    }
-
-    @Override
     public void cellImageCacheSizeChanged() { updateCellImageCacheSize(); }
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.CONTEXT_MENU_POINT, myHeaderPopups.contextMenuPoint(myTable));
       // An open cell editor sits inside a table, and its own shortcuts must win over cell actions bound to F2 or Alt+Enter.
       sink.set(DatabaseDataKeys.DATA_GRID_ACTION_UI_STATE_KEY, GridActionUiState.capture(myGrid, !isEditing()));
     }
@@ -1643,37 +1582,14 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     }
 
     @Override
-    public void setContextColumn(@NotNull ModelIndex<GridColumn> column) { myContextColumn = column; }
-
-    @Override
-    public boolean columnPopupClosed(@NotNull ModelIndex<GridColumn> column) {
-      if (!myContextColumn.equals(column)) return false;
-      myContextColumn = ModelIndex.forColumn(myGrid, -1);
+    public boolean editsInValueEditor(@NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column,
+                                      @Nullable EventObject startingEvent) {
+      if (!myValueEditorCells.isValueEditorCell(row, column)) return false;
+      if (myValueEditorCells.opensValueEditor(startingEvent)) openValueEditor();
       return true;
     }
 
-    @Override
-    public void selectHeaderColumn(int localIndex, @NotNull MouseEvent event) {
-      TableResultView.this.selectHeaderColumn(myTable, localIndex, event);
-    }
-
-    @Override
-    public void hideColumn(@NotNull ModelIndex<GridColumn> column) { myGrid.setColumnEnabled(column, false); }
-
-    @Override
-    public void collapseColumnGroup(@NotNull ModelIndex<GridColumn> column, int headerLine) {
-      myGrid.getAutoscrollLocker().runWithLock(
-        () -> GridUtil.collapseColumnsSubtree(myGrid, column, headerLine, TableResultView.this::onColumnHierarchyChanged));
-    }
-
-    @Override
-    public void showLocalFilter(@NotNull ModelIndex<GridColumn> column, @NotNull RelativePoint location) {
-      JBPopup popup = ColumnLocalFilterAction.createFilterPopup(myGrid, column);
-      if (popup != null) popup.show(location);
-    }
-
-    @Override
-    public void openValueEditor() {
+    private void openValueEditor() {
       AnAction action = ActionUtil.wrap("Console.TableResult.EditValueMaximized");
       // The cell's own table, so the action sees the data the table gives.
       AnActionEvent event = AnActionEvent.createEvent(action, DataManager.getInstance().getDataContext(myTable), null, ActionPlaces.UNKNOWN,

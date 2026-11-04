@@ -40,13 +40,13 @@ The view owns everything the two tables share:
 Each table shows a [GridColumnSlice](src/run/ui/table/GridColumnSlice.kt) of that column model: the main table the unpinned columns, the pinned table the pinned ones.
 A slice copies no column, and a column asks the view's columns whether it is pinned.
 A table reaches the view only through [GridTableHost](src/run/ui/table/GridTableHost.kt), and code outside the package works with `TableResultView`.
-[FrozenColumnsController](src/run/ui/table/FrozenColumnsController.kt) handles what crosses the divider, and [FrozenStripLayout](src/run/ui/table/FrozenStripLayout.kt) places the pinned table with the view's row numbers beside it.
+[FrozenColumnsController](src/run/ui/table/FrozenColumnsController.kt) handles keys, drags and edits that cross the divider, and [FrozenStripLayout](src/run/ui/table/FrozenStripLayout.kt) places the pinned table with the view's row numbers beside it.
 
 ## Columns and pins
 
 [TableResultPanel](src/run/ui/TableResultPanel.java) stores the column order, hidden columns included.
 [GridColumnPinModel](src/run/ui/table/GridColumnPinModel.kt) holds the pins in the panel, so they survive a presentation switch and a reload.
-[DisplayedColumnOrder](src/run/ui/table/DisplayedColumnOrder.kt) puts pinned columns first for keyboard navigation.
+[DisplayedColumns](src/run/ui/table/DisplayedColumns.kt) gives the view's columns in displayed order, pinned first, for keyboard navigation, drags, header clicks and extends across the divider.
 A transposed grid has no pinned columns.
 
 ## Embedding and editing

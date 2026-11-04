@@ -10,8 +10,6 @@ import com.intellij.database.datagrid.GridHelper;
 import com.intellij.database.datagrid.GridModel;
 import com.intellij.database.datagrid.GridRequestSource;
 import com.intellij.database.datagrid.GridRow;
-import com.intellij.database.datagrid.GridSortingModel;
-import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.GridUtilCore;
 import com.intellij.database.datagrid.HierarchicalColumnsCollapseManager;
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.HierarchicalGridColumn;
@@ -23,7 +21,6 @@ import com.intellij.database.datagrid.RawIndexConverter;
 import com.intellij.database.datagrid.ResultView.HoveredRowBgHighlightMode;
 import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.datagrid.ViewIndexSet;
-import com.intellij.database.remote.jdbc.LobInfo;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.database.run.ui.EditMaximizedView;
@@ -42,29 +39,19 @@ import com.intellij.database.run.ui.grid.TableCellImageCache;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorFactory;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorFactoryProvider;
 import com.intellij.database.run.ui.grid.renderers.GridCellRenderer;
-import com.intellij.database.settings.DataGridSettings;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.bookmark.BookmarksManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
@@ -83,7 +70,6 @@ import com.intellij.ui.RelativeFont;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.TableCell;
 import com.intellij.ui.TableExpandableItemsHandler;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
@@ -161,7 +147,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
 
-import static com.intellij.database.datagrid.GridUtilKt.isArrayCell;
 import static com.intellij.database.datagrid.GridUtilKt.setupDynamicRowHeight;
 import static com.intellij.database.run.ui.DataAccessType.DATA_WITH_MUTATIONS;
 import static com.intellij.database.run.ui.EditMaximizedViewKt.EDIT_MAXIMIZED_GRID_KEY;
@@ -179,7 +164,6 @@ import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.util.ui.UIUtil.getFontWithFallback;
-import static java.awt.event.InputEvent.ALT_DOWN_MASK;
 
 /**
  * A Swing table that shows the cells of the grid columns in its slice of the view's column model. The view has a main table and, while
@@ -195,11 +179,8 @@ class GridTable extends JBTableWithResizableCells
   private final ViewColumnCache myColumnCache;
   private final Renderers myRenderers;
   private final TableRawIndexConverter myRawIndexConverter;
-  private final ActionGroup myColumnHeaderPopupActions;
-  private final ActionGroup myRowHeaderPopupActions;
   private GridColumnLayout<GridRow, GridColumn> myColumnLayout = new DummyGridColumnLayout();
 
-  private Point myClickedHeaderPoint;
   private double myFontSizeIncrement = 0.0d;
   private double myFontSizeScale = 1.0d;
   private final UpdateScaleHelper myUpdateScaleHelper = new UpdateScaleHelper();
@@ -244,14 +225,10 @@ class GridTable extends JBTableWithResizableCells
             @NotNull GridTableModel model,
             @NotNull ListSelectionModel rowSelection,
             @NotNull TableColumnModel columnModel,
-            @NotNull ViewColumnCache columnCache,
-            @NotNull ActionGroup columnHeaderPopupActions,
-            @NotNull ActionGroup rowHeaderPopupActions) {
+            @NotNull ViewColumnCache columnCache) {
     super(model, columnModel);
     setSelectionModel(rowSelection);
     myGrid = grid;
-    myColumnHeaderPopupActions = columnHeaderPopupActions;
-    myRowHeaderPopupActions = rowHeaderPopupActions;
     myRawIndexConverter = new TableRawIndexConverter(this);
     myColumnCache = columnCache;
     myRenderers = new Renderers(myGrid, this);
@@ -291,7 +268,6 @@ class GridTable extends JBTableWithResizableCells
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(PlatformDataKeys.CONTEXT_MENU_POINT, myClickedHeaderPoint);
     if (myHost != null) myHost.uiDataSnapshot(sink);
   }
 
@@ -331,14 +307,36 @@ class GridTable extends JBTableWithResizableCells
   }
 
   /**
-   * Before Swing changes the selection, the host commits an open editor; a refusal keeps the selection. While columns are pinned, the host
-   * selects an extended range across both tables.
+   * Before Swing changes the selection, the host commits an open editor; a refusal keeps the selection.
+   * <p>
+   * An extend from an anchor column that this table doesn't show goes to the table's slice, which extends in displayed order. Swing reads
+   * that anchor in the slice as -1, so it would extend from this table's first column. Swing handles everything else, as without pins.
    */
   @Override
   public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
-    if (!myHost.stopEditingBeforeSelectionChange(rowIndex, columnIndex)) return;
-    if (extend && myHost.selectCellRange(rowIndex, columnIndex, toggle)) return;
+    if (!myHost.stopEditingBeforeSelectionChange(modelRowAt(rowIndex, columnIndex), modelColumnAt(rowIndex, columnIndex))) return;
+    if (extend && getColumnModel() instanceof GridColumnSlice slice && slice.omitsAnchor() &&
+        rowIndex >= 0 && rowIndex < getRowCount() && columnIndex >= 0 && columnIndex < getColumnCount()) {
+      extendFromAnchorInOtherSlice(slice, rowIndex, columnIndex, toggle);
+      return;
+    }
     super.changeSelection(rowIndex, columnIndex, toggle, extend);
+  }
+
+  /**
+   * Extends the selection to the cell at {@code row} and {@code localIndex} from an anchor column that {@code slice} doesn't show. It
+   * follows JTable: without an anchor row in the table, the rows start at the first one, and the anchor cell counts as unselected. Like
+   * JTable, it scrolls to the cell only when the table autoscrolls; a table with a JBAutoScroller scrolls on the selection change instead.
+   */
+  private void extendFromAnchorInOtherSlice(@NotNull GridColumnSlice slice, int row, int localIndex, boolean toggle) {
+    ListSelectionModel rows = getSelectionModel();
+    int anchorRow = rows.getAnchorSelectionIndex();
+    boolean hasAnchorRow = anchorRow >= 0 && anchorRow < getRowCount();
+    boolean anchorSelected = hasAnchorRow && rows.isSelectedIndex(anchorRow) && slice.isAnchorColumnSelected();
+    RangeChange change = RangeChange.forExtend(toggle, anchorSelected);
+    change.applyTo(rows, hasAnchorRow ? anchorRow : 0, row);
+    slice.extendColumnSelection(localIndex, change);
+    if (getAutoscrolls()) scrollRectToVisible(getCellRect(row, localIndex, false));
   }
 
   @Override
@@ -759,12 +757,14 @@ class GridTable extends JBTableWithResizableCells
     if (row < 0 || row >= getRowCount()) {
       return;
     }
-    if (myHost != null) {
-      myHost.setRowHeight(row, rowHeight);
-    }
-    else {
+    if (myRowHeights == null) {
       applyRowHeight(row, rowHeight);
+      return;
     }
+    // A dropped pinned table can still restore an editor's row height late, but its rows no longer match the view's.
+    if (!sharesTheViewRowOrder()) return;
+    // An int table-model row: while transposed, a table row is a grid column, and the row heights go by table-model rows.
+    myRowHeights.setHeight(convertRowIndexToModel(row), rowHeight);
   }
 
   /** Setting the uniform height drops the per-row heights of this table, so it applies the view's row heights again. */
@@ -962,22 +962,8 @@ class GridTable extends JBTableWithResizableCells
     {
       setOpaque(false);
       setFocusable(false);
+      // Clicks on the header are the view's, which asks headerHitAt; this listener only ends the hover.
       addMouseListener(new MouseAdapter() {
-        @Override
-        public void mouseClicked(final @NotNull MouseEvent e) {
-          processEvent(e);
-        }
-
-        @Override
-        public void mousePressed(final @NotNull MouseEvent e) {
-          processEvent(e);
-        }
-
-        @Override
-        public void mouseReleased(final @NotNull MouseEvent e) {
-          processEvent(e);
-        }
-
         @Override
         public void mouseExited(MouseEvent e) {
           if (isTransposed()) {
@@ -988,21 +974,6 @@ class GridTable extends JBTableWithResizableCells
             MyTableHeader.this.myHoveredFilterColumn = null;
             MyTableHeader.this.myHoveredSortColumn = null;
             MyTableHeader.this.repaint();
-          }
-        }
-
-        private void processEvent(MouseEvent e) {
-          if (isTransposed()) {
-            int modelRow = myRawIndexConverter.row2Model().applyAsInt(columnAtPoint(e.getPoint()));
-            if (modelRow >= 0) {
-              onRowHeaderClicked(ModelIndex.forRow(myGrid, modelRow), e);
-            }
-          }
-          else {
-            int modelColumn = myRawIndexConverter.column2Model().applyAsInt(columnAtPoint(e.getPoint()));
-            if (modelColumn >= 0) {
-              onColumnHeaderClicked(ModelIndex.forColumn(myGrid, modelColumn), e);
-            }
           }
         }
       });
@@ -1214,11 +1185,13 @@ class GridTable extends JBTableWithResizableCells
   public boolean editCellAt(int row, int column, EventObject e) {
     // JTable finishes only its own editor; the host first commits an editor open in another table of the view.
     if (!stopEditingBeforeEdit()) return false;
-    ClientProperty.put(this, GridTableCellEditor.EDITING_STARTER_CLIENT_PROPERTY_KEY, e);
-    if (shouldDisplayValueEditor(row, column)) {
-      showValueEditor(e);
+    ModelIndex<GridRow> modelRow = modelRowAt(row, column);
+    ModelIndex<GridColumn> modelColumn = modelColumnAt(row, column);
+    if (myHost != null && modelRow.asInteger() >= 0 && modelColumn.asInteger() >= 0 &&
+        myHost.editsInValueEditor(modelRow, modelColumn, e)) {
       return false;
     }
+    ClientProperty.put(this, GridTableCellEditor.EDITING_STARTER_CLIENT_PROPERTY_KEY, e);
     try {
       return WriteIntentReadAction.compute(() -> super.editCellAt(row, column, e));
     }
@@ -1230,35 +1203,6 @@ class GridTable extends JBTableWithResizableCells
   /** Commits an editor open in the view's other table. False when it refuses, and no edit starts in this table. */
   private boolean stopEditingBeforeEdit() {
     return myHost == null || myHost.stopEditingBeforeEdit();
-  }
-
-  private boolean shouldDisplayValueEditor(int row, int column) {
-    var cellValue = super.getValueAt(row, column);
-    if ((cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded()) ||
-        (cellValue instanceof LobInfo.BlobInfo blob && blob.isFullyReloaded()) ||
-        isArrayViewCell(row, column)) {
-      return true;
-    }
-    return false;
-  }
-
-  private boolean isArrayViewCell(int row, int column) {
-    var settings = GridUtil.getSettings(myGrid);
-    if (Registry.is("database.new.arrays.editor", false) && (settings != null && !settings.isEditArrayAsText())) {
-      int modelColumnIdx = convertColumnIndexToModel(column);
-      int modelRowIdx = convertRowIndexToModel(row);
-      var columnIndex = ModelIndex.forColumn(myGrid, modelColumnIdx);
-      var rowIndex = ModelIndex.forRow(myGrid, modelRowIdx);
-      return isArrayCell(GridCellRequestKt.request(myGrid, rowIndex, columnIndex));
-    }
-    return false;
-  }
-
-  private void showValueEditor(EventObject e) {
-    if (e instanceof MouseEvent mouseEvent && mouseEvent.getClickCount() < 2) return;
-    if (e instanceof KeyEvent && !UIUtil.isReallyTypedEvent((KeyEvent)e)) return;
-
-    myHost.openValueEditor();
   }
 
   @Override
@@ -1445,93 +1389,37 @@ class GridTable extends JBTableWithResizableCells
     return getModel() instanceof TransposedGridTableModel;
   }
 
-  private void onRowHeaderClicked(ModelIndex<GridRow> rowIdx, MouseEvent e) {
-    if (e.getID() != MouseEvent.MOUSE_PRESSED) return;
-
-    if (myGrid.isHeaderSelecting() && isTransposed()) {
-      int localIndex = myRawIndexConverter.row2View().applyAsInt(rowIdx.value);
-      selectHeaderColumn(localIndex, e);
+  /**
+   * What {@code point} of this table's header, in the header's coordinates, falls on. A transposed header's cells are grid rows. The parts
+   * of a cell are where the header paints them.
+   */
+  @NotNull ColumnHeaderHit headerHitAt(@NotNull Point point) {
+    int localIndex = columnAtPoint(point);
+    if (isTransposed()) {
+      int modelRow = myRawIndexConverter.row2Model().applyAsInt(localIndex);
+      return modelRow < 0 ? ColumnHeaderHit.Outside.INSTANCE : new ColumnHeaderHit.RowCell(ModelIndex.forRow(myGrid, modelRow));
     }
-
-    if (e.isPopupTrigger()) {
-      invokeRowPopup(e.getComponent(), e.getX(), e.getY());
-    }
+    int modelColumn = myRawIndexConverter.column2Model().applyAsInt(localIndex);
+    if (modelColumn < 0) return ColumnHeaderHit.Outside.INSTANCE;
+    ModelIndex<GridColumn> column = ModelIndex.forColumn(myGrid, modelColumn);
+    return new ColumnHeaderHit.ColumnCell(column, headerPartAt(column, localIndex, point));
   }
 
-  // A popup changes no state of the grid, so it may stay in the table until DBE-27115 moves both header popups.
-  void invokeRowPopup(@NotNull Component component, int x, int y) {
-    if (myRowHeaderPopupActions != ActionGroup.EMPTY_GROUP) {
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("TableResultViewHeader", myRowHeaderPopupActions);
-      popupMenu.getComponent().show(component, x, y);
+  private @NotNull ColumnHeaderPart headerPartAt(@NotNull ModelIndex<GridColumn> column, int localIndex, @NotNull Point point) {
+    if (myGrid.getDataModel(DATA_WITH_MUTATIONS).getColumn(column) instanceof HierarchicalGridColumn hierarchicalColumn) {
+      OptionalInt line = getIndexOfClickedHeaderLine(localIndex, point);
+      if (line.isEmpty()) return ColumnHeaderPart.BlankLine.INSTANCE;
+      return isLeafColumnHeaderLineClicked(hierarchicalColumn, line.getAsInt())
+             ? ColumnHeaderPart.LeafLine.INSTANCE
+             : new ColumnHeaderPart.GroupLine(line.getAsInt());
     }
-  }
-
-  private void onColumnHeaderClicked(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull MouseEvent e) {
-    if (e.getID() == MouseEvent.MOUSE_CLICKED && e.getButton() == MouseEvent.BUTTON1) {
-      handleClickOnColumnHeader(columnIdx, e);
-      return;
-    }
-    if (e.getID() != MouseEvent.MOUSE_CLICKED && e.getButton() == MouseEvent.BUTTON2 && e.getClickCount() == 1) {
-      if (columnIdx.value >= 0) myHost.hideColumn(columnIdx);
-      return;
-    }
-    if (e.isPopupTrigger()) {
-      if (myGrid.isHeaderSelecting() && !isTransposed()) {
-        int localIndex = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
-        // Right-clicking a column already in the selection keeps it; only a click outside collapses to that column.
-        if (!isColumnSelected(localIndex)) selectHeaderColumn(localIndex, e);
-      }
-
-      invokeColumnPopup(columnIdx, e.getComponent(), new Point(e.getX(), e.getY()));
-    }
-  }
-
-  private void handleClickOnColumnHeader(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull MouseEvent e) {
-    GridColumn column = myGrid.getDataModel(DATA_WITH_MUTATIONS).getColumn(columnIdx);
-    if (column instanceof HierarchicalGridColumn hierarchicalColumn) {
-      handleClickOnHierarchicalColumnHeader(hierarchicalColumn, columnIdx, e);
-    }
-    else {
-      // Map to this table's own column index; a grid index would overrun its column model, which holds only part of the columns.
-      var localIndex = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
-      if (localIndex < 0 || localIndex >= columnModel.getColumnCount()) return;
-      var headerRect = tableHeader.getHeaderRect(localIndex);
-
-      MyHeaderCellComponent currentHeader = renderWithActualBounds(tableHeader, localIndex);
-
-      var point = e.getPoint();
-      var relativePoint = new Point(point.x - headerRect.x, point.y);
-      var filterLabel = currentHeader.filterLabel;
-      var sortLabel = currentHeader.mySortLabels.isEmpty() ?
-                      null :
-                      currentHeader.mySortLabels.getLast();
-
-      if (filterLabel.getBounds().contains(relativePoint)) {
-        myHost.showLocalFilter(columnIdx, new RelativePoint(e.getComponent(), point));
-      }
-      else if (sortLabel != null && sortLabel.getBounds().contains(relativePoint)) {
-        handleClickToSortColumn(columnIdx, e);
-      }
-      else {
-        selectHeaderColumn(localIndex, e);
-      }
-    }
-  }
-
-  private void handleClickOnHierarchicalColumnHeader(@NotNull HierarchicalGridColumn hierarchicalColumn,
-                                                     @NotNull ModelIndex<GridColumn> columnIdx,
-                                                     @NotNull MouseEvent e) {
-    OptionalInt clickedHeaderLineIndex = getIndexOfClickedHeaderLine(columnIdx, e);
-    if (clickedHeaderLineIndex.isEmpty()) return;
-
-    if (isLeafColumnHeaderLineClicked(hierarchicalColumn, clickedHeaderLineIndex.getAsInt())) {
-      // Handle sorting if the clicked header line corresponds to a leaf column.
-      handleClickToSortColumn(columnIdx, e);
-    }
-    else {
-      // Collapse the columns subtree for any other clicked header line.
-      myHost.collapseColumnGroup(columnIdx, clickedHeaderLineIndex.getAsInt());
-    }
+    Rectangle headerRect = tableHeader.getHeaderRect(localIndex);
+    MyHeaderCellComponent currentHeader = renderWithActualBounds(tableHeader, localIndex);
+    Point relativePoint = new Point(point.x - headerRect.x, point.y);
+    JLabel sortLabel = currentHeader.mySortLabels.isEmpty() ? null : currentHeader.mySortLabels.getLast();
+    if (currentHeader.filterLabel.getBounds().contains(relativePoint)) return ColumnHeaderPart.FilterIcon.INSTANCE;
+    if (sortLabel != null && sortLabel.getBounds().contains(relativePoint)) return ColumnHeaderPart.SortArrow.INSTANCE;
+    return ColumnHeaderPart.Name.INSTANCE;
   }
 
   static boolean isColumnDisabledOrCollapsed(@NotNull HierarchicalGridColumn column, @NotNull DataGrid grid) {
@@ -1566,17 +1454,7 @@ class GridTable extends JBTableWithResizableCells
     return leafColumnHeaderLineIdx == clickedLineIdx;
   }
 
-  private void handleClickToSortColumn(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull MouseEvent e) {
-    if (!GridHelper.get(myGrid).isSortingApplicable(columnIdx)) return;
-    boolean alt = e.getModifiersEx() == ALT_DOWN_MASK;
-    DataGridSettings settings = GridUtil.getSettings(myGrid);
-    GridSortingModel<GridRow, GridColumn> model = myGrid.getDataHookup().getSortingModel();
-    boolean supportsAdditiveSorting = model == null || !model.isSortingEnabled() || model.supportsAdditiveSorting();
-    myHost.toggleSortOrder(columnIdx, supportsAdditiveSorting && (settings == null || settings.isAddToSortViaAltClick()) == alt);
-  }
-
-  private OptionalInt getIndexOfClickedHeaderLine(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull MouseEvent e) {
-    int localIndex = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
+  private OptionalInt getIndexOfClickedHeaderLine(int localIndex, @NotNull Point point) {
     if (localIndex < 0 || localIndex >= getColumnModel().getColumnCount()) return OptionalInt.empty();
     Component headerRenderer = getHeaderRenderer(this, localIndex);
 
@@ -1586,7 +1464,7 @@ class GridTable extends JBTableWithResizableCells
 
     Rectangle headerRect = getTableHeader().getHeaderRect(localIndex);
 
-    return findIndexOfClickedHeaderLineWithNonEmptyLabel(e, customHeaderComponent, headerRect.x, headerRect.width);
+    return findIndexOfClickedHeaderLineWithNonEmptyLabel(point, customHeaderComponent, headerRect.x, headerRect.width);
   }
 
   private static Component getHeaderRenderer(@NotNull GridTable table, int localIndex) {
@@ -1613,13 +1491,13 @@ class GridTable extends JBTableWithResizableCells
     return currentHeaderCell;
   }
 
-  private OptionalInt findIndexOfClickedHeaderLineWithNonEmptyLabel(@NotNull MouseEvent e,
+  private OptionalInt findIndexOfClickedHeaderLineWithNonEmptyLabel(@NotNull Point point,
                                                                     @NotNull MyHeaderCellComponent customHeaderComponent,
                                                                     int clickedColumnX,
                                                                     int columnWidth) {
     for (int idx = 0; idx < customHeaderComponent.myNameLabels.size(); ++idx) {
       JLabel nameLabel = customHeaderComponent.myNameLabels.get(idx);
-      if (isColumnNameLabelNotEmpty(nameLabel) && isClickedWithinHeaderLine(e, clickedColumnX, columnWidth, idx)) {
+      if (isColumnNameLabelNotEmpty(nameLabel) && isClickedWithinHeaderLine(point, clickedColumnX, columnWidth, idx)) {
         return OptionalInt.of(idx);
       }
     }
@@ -1631,9 +1509,9 @@ class GridTable extends JBTableWithResizableCells
     return labelText != null && !labelText.isBlank();
   }
 
-  private boolean isClickedWithinHeaderLine(@NotNull MouseEvent e, int clickedColumnX, int columnWidth, int idx) {
+  private boolean isClickedWithinHeaderLine(@NotNull Point point, int clickedColumnX, int columnWidth, int idx) {
     Rectangle bounds = getHeaderLineBounds(clickedColumnX, columnWidth, idx);
-    return bounds.contains(e.getPoint());
+    return bounds.contains(point);
   }
 
   private Rectangle getHeaderLineBounds(int clickedColumnX, int columnWidth, int idx) {
@@ -1644,32 +1522,6 @@ class GridTable extends JBTableWithResizableCells
     headerLineBounds.width = columnWidth;
 
     return headerLineBounds;
-  }
-
-  // Suppressed until DBE-27115 splits the grid module into frontend and backend parts.
-  @SuppressWarnings("SplitModeApiUsage")
-  void invokeColumnPopup(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull Component component, @NotNull Point point) {
-    if (myColumnHeaderPopupActions != ActionGroup.EMPTY_GROUP) {
-      myHost.setContextColumn(columnIdx);
-      myClickedHeaderPoint = point;
-      ListPopup popupMenu = JBPopupFactory.getInstance()
-        .createActionGroupPopup(null, myColumnHeaderPopupActions, DataManager.getInstance().getDataContext(getComponent()),
-                                JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
-      popupMenu.addListener(new JBPopupListener() {
-        @Override
-        public void onClosed(@NotNull LightweightWindowEvent event) {
-          SwingUtilities.invokeLater(() -> {
-            // if not clicked on another column
-            if (myHost.columnPopupClosed(columnIdx)) myClickedHeaderPoint = null;
-          });
-        }
-      });
-      popupMenu.show(new RelativePoint(component, point));
-    }
-  }
-
-  void selectHeaderColumn(int localIndex, @NotNull MouseEvent e) {
-    myHost.selectHeaderColumn(localIndex, e);
   }
 
   public @NotNull ModelIndexSet<GridRow> getVisibleRows() {
@@ -1774,7 +1626,7 @@ class GridTable extends JBTableWithResizableCells
 
       @Override
       public void toggleSortOrder(int modelColumn) {
-        // Does nothing: Swing calls this only once for a double click, so header clicks sort in onColumnHeaderClicked.
+        // Does nothing: Swing calls this only once for a double click, so the view's TableHeaderClicks sorts on header clicks.
       }
 
       @Override
@@ -1823,11 +1675,21 @@ class GridTable extends JBTableWithResizableCells
   /** Hands a value committed by a cell editor of this table to the view, which writes it to the cell or every selected cell. */
   @Override
   public void setValueAt(Object value, int row, int localIndex) {
-    int modelRow = myRawIndexConverter.row2Model().applyAsInt(isTransposed() ? localIndex : row);
-    int modelColumn = myRawIndexConverter.column2Model().applyAsInt(isTransposed() ? row : localIndex);
-    if (modelRow < 0 || modelColumn < 0) return;
-    myHost.setValueAt(value, ModelIndex.forRow(myGrid, modelRow), ModelIndex.forColumn(myGrid, modelColumn),
-                      true, new GridRequestSource(new DataGridRequestPlace(myGrid)), null);
+    ModelIndex<GridRow> modelRow = modelRowAt(row, localIndex);
+    ModelIndex<GridColumn> modelColumn = modelColumnAt(row, localIndex);
+    if (modelRow.asInteger() < 0 || modelColumn.asInteger() < 0) return;
+    myHost.setValueAt(value, modelRow, modelColumn, true, new GridRequestSource(new DataGridRequestPlace(myGrid)), null);
+  }
+
+  /** The grid row of the cell at {@code row} and {@code localIndex} of this table, or an index of -1 outside the table. */
+  @NotNull ModelIndex<GridRow> modelRowAt(int row, int localIndex) {
+    // While transposed, a table row is a grid column, and a table column is a grid row.
+    return ModelIndex.forRow(myGrid, myRawIndexConverter.row2Model().applyAsInt(isTransposed() ? localIndex : row));
+  }
+
+  /** The grid column of the cell at {@code row} and {@code localIndex} of this table, or an index of -1 outside the table. */
+  @NotNull ModelIndex<GridColumn> modelColumnAt(int row, int localIndex) {
+    return ModelIndex.forColumn(myGrid, myRawIndexConverter.column2Model().applyAsInt(isTransposed() ? row : localIndex));
   }
 
   private Font doGetFont() {

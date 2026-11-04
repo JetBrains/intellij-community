@@ -38,6 +38,8 @@ class GridColumnSlice(
   private val masterColumns: TableColumnModel,
   private val pins: ColumnPins,
   private val columnsToShow: ColumnsToShow,
+  /** The view's columns in displayed order, which an extend from the other table's anchor follows. */
+  private val displayedColumns: DisplayedColumns,
 ) : TableColumnModel {
   private val listeners = EventListenerList()
   private val columns = mutableListOf<TableColumn>()
@@ -132,6 +134,20 @@ class GridColumnSlice(
 
   /** Whether [masterIndex] is a column of the master that this slice doesn't show. */
   internal fun omits(masterIndex: Int): Boolean = masterIndex in 0 until masterColumns.columnCount && toLocal(masterIndex) < 0
+
+  /** Whether the anchor of the master's column selection is a column this slice doesn't show. This slice's selection reads it as -1. */
+  fun omitsAnchor(): Boolean = omits(masterColumns.selectionModel.anchorSelectionIndex)
+
+  /** Whether the anchor column of the master's selection is selected, also when the other slice shows it. */
+  fun isAnchorColumnSelected(): Boolean = masterColumns.selectionModel.let { it.isSelectedIndex(it.anchorSelectionIndex) }
+
+  /**
+   * Extends the master's column selection from its anchor to the column at [localIndex], in displayed order, as [change] says. Swing's
+   * own extend starts from this slice's first column when the slice omits the anchor.
+   */
+  fun extendColumnSelection(localIndex: Int, change: RangeChange) {
+    displayedColumns.select(masterColumns.selectionModel.anchorSelectionIndex, toMaster(localIndex), change)
+  }
 
   /** Whether each cached column is at its master index, which it is except while the master is in the middle of a move. */
   internal fun isInStepWithMaster(): Boolean {
@@ -389,23 +405,6 @@ private class GridColumnSliceSelection(
     }
   }
 
-  /** The master indices of [localRange], as runs of consecutive master indices. */
-  private fun masterRuns(localRange: IntRange): List<IntRange> {
-    val runs = mutableListOf<IntRange>()
-    var start = -1
-    var previous = -1
-    for (localIndex in localRange) {
-      val masterIndex = slice.toMaster(localIndex)
-      if (masterIndex < 0) continue
-      if (start >= 0 && masterIndex == previous + 1) {
-        previous = masterIndex
-        continue
-      }
-      if (start >= 0) runs.add(start..previous)
-      start = masterIndex
-      previous = masterIndex
-    }
-    if (start >= 0) runs.add(start..previous)
-    return runs
-  }
+  /** The master indices of [localRange], as runs of adjacent master indices. */
+  private fun masterRuns(localRange: IntRange): List<IntRange> = adjacentRuns(localRange.map(slice::toMaster).filter { it >= 0 })
 }

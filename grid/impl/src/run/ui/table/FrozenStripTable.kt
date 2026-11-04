@@ -1,7 +1,6 @@
 package com.intellij.database.run.ui.table
 
 import com.intellij.database.datagrid.DataGrid
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.ui.TableCell
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
@@ -27,9 +26,7 @@ internal class FrozenStripTable(
   rowSelection: ListSelectionModel,
   columnModel: TableColumnModel,
   columnCache: ViewColumnCache,
-  columnActions: ActionGroup,
-  rowActions: ActionGroup,
-) : GridTable(grid, viewDataModel, rowSelection, columnModel, columnCache, columnActions, rowActions) {
+) : GridTable(grid, viewDataModel, rowSelection, columnModel, columnCache) {
   /**
    * Draws the divider to the main table on this table's trailing edge. The table paints it itself, so a partial repaint that starts inside
    * the table paints it again. An overlay in an ancestor would be erased or ghosted. The line follows the visible rect, so the hosting
