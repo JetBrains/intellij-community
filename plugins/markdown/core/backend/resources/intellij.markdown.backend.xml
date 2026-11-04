@@ -54,6 +54,8 @@
         apiInterfaces="org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi"/>
       <completion.contributor
         language="Markdown" implementationClass="com.intellij.markdown.backend.completion.MarkdownAtPathCompletionContributor"/>
+      <completion.contributor
+        language="Markdown" implementationClass="com.intellij.markdown.backend.completion.MarkdownSlashPathCompletionContributor"/>
       <platform.rpc.backend.remoteApiProvider
         implementation="com.intellij.markdown.backend.providers.MarkdownLinkOpenerApiProvider"
         apiInterfaces="org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi"/>

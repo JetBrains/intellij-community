@@ -32,7 +32,7 @@ public final class MarkdownTypedHandler extends TypedHandlerDelegate {
   @Override
   public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!MarkdownLanguageUtilsKt.supportsMarkdown(file.getLanguage(), null)) return Result.CONTINUE;
-    if (charTyped == '@') {
+    if (charTyped == '@' || charTyped == '/') {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor);
       return Result.STOP;
     }

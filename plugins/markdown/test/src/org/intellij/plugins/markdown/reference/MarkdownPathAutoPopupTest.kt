@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 @TestApplication
-class MarkdownAtPathAutoPopupTest {
+class MarkdownPathAutoPopupTest {
   companion object {
     private val projectFixture = projectFixture(openAfterCreation = true)
   }
@@ -44,14 +44,54 @@ class MarkdownAtPathAutoPopupTest {
   fun `test at completion opens automatically and suggests recent files`(): Unit = runTest {
     EditorHistoryManager.getInstance(myFixture.project).removeAllFiles()
     val recentFile = myFixture.addFileToProject("src/RecentClass.kt", "")
-    application.invokeAndWait {
-      FileEditorManager.getInstance(myFixture.project).openFile(recentFile.virtualFile, true)
-    }
+    FileEditorManager.getInstance(myFixture.project).requestOpenFile(recentFile.virtualFile).get()
 
     myFixture.configureByText("README.md", "See <caret>")
     type("@")
 
     assertNotNull(lookup)
     assertTrue(lookup!!.items.any { "src/RecentClass.kt" in it.allLookupStrings })
+  }
+
+  @Test
+  fun `test slash completion opens automatically and suggests recent files`(): Unit = runTest {
+    EditorHistoryManager.getInstance(myFixture.project).removeAllFiles()
+    val recentFile = myFixture.addFileToProject("src/RecentClass.kt", "")
+    FileEditorManager.getInstance(myFixture.project).requestOpenFile(recentFile.virtualFile).get()
+
+    myFixture.configureByText("README.md", "See <caret>")
+    type("/")
+
+    assertNotNull(lookup)
+    assertTrue(lookup!!.items.any { "src/RecentClass.kt" in it.allLookupStrings })
+  }
+
+  @Test
+  fun `test slash completion finds nested file by name`(): Unit = runTest {
+    val path = "src/bazillion/trillion/nesting/directories/UniqueNameForClass.kt"
+    myFixture.addFileToProject(path, "")
+
+    myFixture.configureByText("README.md", "See /UniqueName<caret>")
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
+    type("F")
+
+    assertNotNull(lookup)
+    assertTrue(lookup!!.items.any { path in it.allLookupStrings })
+  }
+
+  @Test
+  fun `test relative slash completion keeps the relative prefix`(): Unit = runTest {
+    val path = "src/bazillion/trillion/nesting/directories/UniqueNameForClass.kt"
+    myFixture.addFileToProject(path, "")
+
+    myFixture.configureByText("README.md", "See ./UniqueName<caret>")
+    IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
+    type("F")
+
+    val item = lookup!!.items.first { path in it.allLookupStrings }
+    application.invokeAndWait {
+      lookup!!.finishLookup('\n', item)
+      myFixture.checkResult("See ./$path<caret>")
+    }
   }
 }
