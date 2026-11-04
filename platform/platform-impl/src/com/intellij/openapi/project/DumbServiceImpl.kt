@@ -399,13 +399,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       if (LOG.isDebugEnabled) {
         LOG.debug("dumb mode [${project.name}] trace", dumbModeStartTrace)
       }
-      try {
-        publishDumbModeChangedEvent(DumbModeEventListenerState.ENTERED)
-      } catch (t: Throwable) {
-        // in unit tests we may get here because of exception thrown from Log.error from catch block inside runCatchingIgnorePCE
-        decrementDumbCounterBlocking()
-        throw t
-      }
+      publishDumbModeChangedEvent(DumbModeEventListenerState.ENTERED)
     }
   }
 
@@ -923,7 +917,16 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
       catch (_: ProcessCanceledException) {
       }
       catch (t: Throwable) {
-        LOG.error(t)
+        try {
+          LOG.error(t)
+        }
+        catch (rethrown: Throwable) {
+          // In a test, LOG.error throws. A throw here corrupts the dumb state, so rethrow in a later EDT event.
+          // The modality is `any` because the event only throws, and a modal dialog must not defer it.
+          ApplicationManager.getApplication().invokeLater({
+            throw IllegalStateException("A dumb mode listener failed", rethrown)
+          }, ModalityState.any())
+        }
       }
     }
 

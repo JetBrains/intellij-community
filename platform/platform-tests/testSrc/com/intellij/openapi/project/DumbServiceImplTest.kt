@@ -23,6 +23,7 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.EdtRule
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RunsInEdt
@@ -74,6 +75,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.File
+import java.util.EnumSet
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -988,5 +991,120 @@ class DumbServiceImplTest {
     finally {
       releaseDumbTask.countDown()
     }
+  }
+
+  @Test
+  fun `failing backgroundable enteredDumbMode listener does not leave the project dumb`() {
+    Registry.get("ide.dumb.service.use.background.write.action").setValue(true, testDisposable)
+    val listenerCalled = CountDownLatch(1)
+    project.messageBus.connect(testDisposable).subscribe(DumbModeListenerBackgroundable.TOPIC, object : DumbModeListenerBackgroundable {
+      override fun enteredDumbMode() {
+        listenerCalled.countDown()
+        throw ListenerFailure()
+      }
+    })
+
+    val failures = collectRethrownListenerFailures {
+      dumbService.queue {}
+      listenerCalled.awaitOrThrow(5, "Backgroundable enteredDumbMode listener was not called")
+      waitForSmartModeFiveSecondsOrThrow()
+    }
+    assertTrue("The listener failure should be logged", failures.isNotEmpty())
+  }
+
+  @Test
+  fun `failing backgroundable exitDumbMode listener does not suppress the legacy exitDumbMode event`() {
+    Registry.get("ide.dumb.service.use.background.write.action").setValue(true, testDisposable)
+    val legacyExited = CountDownLatch(1)
+    project.messageBus.connect(testDisposable).run {
+      subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+        override fun exitDumbMode() = legacyExited.countDown()
+      })
+      subscribe(DumbModeListenerBackgroundable.TOPIC, object : DumbModeListenerBackgroundable {
+        override fun exitDumbMode() = throw ListenerFailure()
+      })
+    }
+
+    val failures = collectRethrownListenerFailures {
+      dumbService.queue {}
+      legacyExited.awaitOrThrow(5, "Legacy exitDumbMode listener was not called")
+      waitForSmartModeFiveSecondsOrThrow()
+    }
+    assertTrue("The listener failure should be logged", failures.isNotEmpty())
+  }
+
+  @Test
+  fun `failing legacy enteredDumbMode listener does not end dumb mode before the task finishes`() {
+    Registry.get("ide.dumb.service.use.background.write.action").setValue(true, testDisposable)
+    val legacyEntered = CountDownLatch(1)
+    val legacyExited = CountDownLatch(1)
+    project.messageBus.connect(testDisposable).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+      override fun enteredDumbMode() {
+        legacyEntered.countDown()
+        throw ListenerFailure()
+      }
+
+      override fun exitDumbMode() = legacyExited.countDown()
+    })
+
+    val taskStarted = CountDownLatch(1)
+    val releaseTask = CountDownLatch(1)
+    val failures = collectRethrownListenerFailures {
+      try {
+        dumbService.queue {
+          taskStarted.countDown()
+          releaseTask.awaitOrThrow(10, "Dumb task was not released")
+        }
+        taskStarted.awaitOrThrow(5, "Dumb task did not start")
+        legacyEntered.awaitOrThrow(5, "Legacy enteredDumbMode listener was not called")
+        runInEdtAndWait {} // the EDT event that called the listener is complete
+        assertTrue("Dumb service should be dumb because the task has not completed yet", dumbService.isDumb)
+      }
+      finally {
+        releaseTask.countDown()
+      }
+      legacyExited.awaitOrThrow(5, "Legacy exitDumbMode listener was not called")
+      waitForSmartModeFiveSecondsOrThrow()
+    }
+    assertTrue("The listener failure should be logged", failures.isNotEmpty())
+  }
+
+  private class ListenerFailure : RuntimeException("Dumb mode listener failure")
+
+  private fun Throwable.isCausedByListenerFailure(): Boolean = generateSequence(this) { it.cause }.any { it is ListenerFailure }
+
+  /**
+   * Runs [block] while `LOG.error` throws on every thread, as it does in a test on a thread without an error log.
+   * Returns the logged errors caused by [ListenerFailure].
+   * Also asserts that the dumb service rethrows the failure in a later EDT event, where a test can observe it.
+   */
+  private fun collectRethrownListenerFailures(block: () -> Unit): List<Throwable> {
+    val failures = CopyOnWriteArrayList<Throwable>()
+    val uncaught = CopyOnWriteArrayList<Throwable>()
+    val previousHandler = Thread.getDefaultUncaughtExceptionHandler()
+    Thread.setDefaultUncaughtExceptionHandler { _, e -> uncaught.add(e) }
+    try {
+      LoggedErrorProcessor.executeWith(object : LoggedErrorProcessor() {
+        override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<LoggedErrorProcessor.Action> {
+          if (t == null || !t.isCausedByListenerFailure()) {
+            return super.processError(category, message, details, t)
+          }
+          failures.add(t)
+          return EnumSet.of(LoggedErrorProcessor.Action.RETHROW)
+        }
+      }).use {
+        block()
+      }
+      val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5)
+      while (uncaught.none { it.isCausedByListenerFailure() } && System.nanoTime() < deadline) {
+        Thread.sleep(10)
+      }
+    }
+    finally {
+      Thread.setDefaultUncaughtExceptionHandler(previousHandler)
+    }
+    assertTrue("The dumb service should rethrow the listener failure on the EDT",
+               uncaught.any { it.isCausedByListenerFailure() })
+    return failures
   }
 }
