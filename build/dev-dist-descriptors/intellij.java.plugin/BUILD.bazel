@@ -327,7 +327,7 @@ dev_plugin(
         "lib/resources/jdkAnnotations.jar": [
             "intellij.java.jdkAnnotations",
         ],
-        "lib/java-impl.jar": [
+        "lib/java-plugin.jar": [
             "intellij.java.plugin",
         ],
         "lib/debugger-memory-agent.jar": [

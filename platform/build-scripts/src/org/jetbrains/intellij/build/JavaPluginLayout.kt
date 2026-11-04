@@ -8,9 +8,6 @@ object JavaPluginLayout {
 
   fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return PluginLayout.plugin(mainModuleName = MAIN_MODULE_NAME, auto = true) { spec ->
-      spec.directoryName = "java"
-      spec.mainJarName = "java-impl.jar"
-
       spec.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
       // run configurations put this jar on the classpath of a user process, so it stays a jar of its own
       // A layout jar and not a content module: the test plugins of every product declare intellij.java.rt themselves.
