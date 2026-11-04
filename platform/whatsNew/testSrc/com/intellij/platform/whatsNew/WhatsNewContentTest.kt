@@ -40,8 +40,8 @@ class WhatsNewContentTest {
       publicVars = listOf(WhatsNewInVisionContentProvider.PublicVar(key, "")),
     )
     val content = WhatsNewVisionContent(WhatsNewInVisionContentProvider(), page)
-    Assert.assertEquals("isAirButtonAltTextEnabled: 'true'", content.getContent(isWelcomeScreenProject = true, isChinaRegion = false))
-    Assert.assertEquals("isAirButtonAltTextEnabled: 'false'", content.getContent(isWelcomeScreenProject = false, isChinaRegion = false))
+    Assert.assertEquals("isAirButtonAltTextEnabled: 'true'", content.getContent(isWelcomeScreenProject = true, isChinaRegion = false, isAiNotAllowed = false))
+    Assert.assertEquals("isAirButtonAltTextEnabled: 'false'", content.getContent(isWelcomeScreenProject = false, isChinaRegion = false, isAiNotAllowed = false))
   }
 
   @Test
@@ -55,7 +55,22 @@ class WhatsNewContentTest {
       publicVars = listOf(WhatsNewInVisionContentProvider.PublicVar(key, "")),
     )
     val content = WhatsNewVisionContent(WhatsNewInVisionContentProvider(), page)
-    Assert.assertEquals("isChinese: 'true'", content.getContent(isWelcomeScreenProject = false, isChinaRegion = true))
-    Assert.assertEquals("isChinese: 'false'", content.getContent(isWelcomeScreenProject = false, isChinaRegion = false))
+    Assert.assertEquals("isChinese: 'true'", content.getContent(isWelcomeScreenProject = false, isChinaRegion = true, isAiNotAllowed = false))
+    Assert.assertEquals("isChinese: 'false'", content.getContent(isWelcomeScreenProject = false, isChinaRegion = false, isAiNotAllowed = false))
+  }
+
+  @Test
+  fun `AI not allowed variable follows the Air plugin state`() {
+    val key = $$"$__VISION_PAGE_SETTINGS_IS_AI_NOT_ALLOWED__$"
+    val page = WhatsNewInVisionContentProvider.Page(
+      id = 1,
+      actions = emptyList(),
+      html = "isAiNotAllowed: '$key'",
+      languages = emptyList(),
+      publicVars = listOf(WhatsNewInVisionContentProvider.PublicVar(key, "")),
+    )
+    val content = WhatsNewVisionContent(WhatsNewInVisionContentProvider(), page)
+    Assert.assertEquals("isAiNotAllowed: 'true'", content.getContent(isWelcomeScreenProject = false, isChinaRegion = false, isAiNotAllowed = true))
+    Assert.assertEquals("isAiNotAllowed: 'false'", content.getContent(isWelcomeScreenProject = false, isChinaRegion = false, isAiNotAllowed = false))
   }
 }
