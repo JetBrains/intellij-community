@@ -35,6 +35,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 import java.util.Collections
 import java.util.IdentityHashMap
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 import kotlin.jvm.optionals.getOrNull
 
@@ -45,8 +46,6 @@ internal class TestFixtureExtension : BeforeAllCallback,
                                       AfterAllCallback,
                                       InvocationInterceptor {
   private companion object {
-    val exceptionsKey = TypedStoreKey.createKey<Throwable>()
-
     /**
      * Eels resolved while test class instances were being constructed (a `@ParameterizedClass` taking an
      * `EelHolder` constructor parameter).
@@ -132,14 +131,17 @@ internal class TestFixtureExtension : BeforeAllCallback,
     }
 
     TestLoggerFactory.fixtureInitialization<Exception>(static, context.displayName) {
-      val exceptionHandler = CoroutineExceptionHandler { _, exception ->
-        context[exceptionsKey] = exception
-        throw exception
-      }
+      // The failure belongs to the test or the class that owns the fixture, so `after` of the same context reports it.
+      // A rethrow here would also hand it to the uncaught exception handler of the run, which the next test drains:
+      // the failed teardown of a class fixture then also failed the first test of the next class.
+      val failure = FixtureFailure()
+      val exceptionHandler = CoroutineExceptionHandler { _, exception -> failure.record(exception) }
 
       @OptIn(DelicateCoroutinesApi::class)
       val testScope = GlobalScope.childScope(context.displayName + "[" + context.uniqueId + "]", exceptionHandler)
-      context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension_$static", testScope)
+      val store = context.getStore(ExtensionContext.Namespace.GLOBAL)
+      store.put("TestFixtureExtension_$static", testScope)
+      store.put("TestFixtureExtension_failure_$static", failure)
       val pendingFixtures = ArrayList<Deferred<*>>()
 
       val classToTestInstance = collectTestInstances(context)
@@ -166,36 +168,40 @@ internal class TestFixtureExtension : BeforeAllCallback,
     if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
       return
     }
-    try {
+    val failure = try {
       after(context, static = false)
     }
     finally {
       context.forgetCtorEel()
     }
+    failure?.let { throw it }
   }
 
   override fun afterAll(context: ExtensionContext) {
+    var failure: Throwable? = null
     if (context.testInstanceLifecycle.getOrNull() == TestInstance.Lifecycle.PER_CLASS) {
-      try {
+      failure = try {
         after(context, static = false)
       }
       finally {
         context.forgetCtorEel()
       }
     }
-    after(context, static = true)
-    // Throw unprocessed exceptions thrown by fixtures to break the test
-    val exception = context[exceptionsKey]
-    context.remove(exceptionsKey)
-    if (exception != null) {
-      throw exception
+    val staticFailure = after(context, static = true)
+    if (failure == null) {
+      failure = staticFailure
     }
+    else if (staticFailure != null) {
+      failure.addSuppressed(staticFailure)
+    }
+    failure?.let { throw it }
   }
 
-  private fun after(context: ExtensionContext, static: Boolean) {
+  /** Tears down the fixtures of [context] and answers the failure of a fixture, which fails the test or the class. */
+  private fun after(context: ExtensionContext, static: Boolean): Throwable? {
     if (static && !context.enclosingTestClasses.isEmpty()) {
       // There can't be static fixtures in nested classes
-      return
+      return null
     }
 
     TestLoggerFactory.onFixturesDisposeStart(static)
@@ -203,10 +209,12 @@ internal class TestFixtureExtension : BeforeAllCallback,
     // `remove` is local to this context's store, whereas `get` walks up the parent stores. Using it enforces that
     // `before` and `after` always run on the very same context: a scope stored on a container context can no longer
     // be cancelled from a test context, nor the other way round.
-    val testScope = context.getStore(ExtensionContext.Namespace.GLOBAL).remove("TestFixtureExtension_$static") ?: return
+    val store = context.getStore(ExtensionContext.Namespace.GLOBAL)
+    val testScope = store.remove("TestFixtureExtension_$static") ?: return null
     runBlocking {
       (testScope as CoroutineScope).coroutineContext.job.cancelAndJoin()
     }
+    return (store.remove("TestFixtureExtension_failure_$static") as FixtureFailure?)?.first
   }
 }
 
@@ -223,6 +231,26 @@ private fun awaitFixtureInitialization(cleanupScope: CoroutineScope, pendingFixt
         e.addSuppressed(Throwable("Exception during cleanup of test fixture", exceptionDuringCleanup))
       }
       throw e
+    }
+  }
+}
+
+/**
+ * The first failure of the fixtures of one context. A later failure is a suppressed exception of the first one, so the
+ * report of the test or the class keeps all of them.
+ */
+private class FixtureFailure {
+  private val recorded = AtomicReference<Throwable?>()
+
+  val first: Throwable?
+    get() = recorded.get()
+
+  fun record(exception: Throwable) {
+    if (!recorded.compareAndSet(null, exception)) {
+      val first = recorded.get()
+      if (first !== exception) {
+        first?.addSuppressed(exception)
+      }
     }
   }
 }
