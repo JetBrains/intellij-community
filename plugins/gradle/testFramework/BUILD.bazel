@@ -27,6 +27,7 @@ jvm_library(
         "//plugins/groovy-scripting",
         "//plugins/gradle/java/plugin",
         "//plugins/gradle/plugin",
+        "//plugins/properties/plugin",
         "//platform/vcs/plugin",
     ],
     deps = [
