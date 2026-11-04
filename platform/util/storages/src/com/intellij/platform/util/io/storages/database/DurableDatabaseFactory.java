@@ -5,7 +5,9 @@ import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.database.spi.housekeeping.OnStartupHousekeeper;
 import com.intellij.platform.util.io.storages.database.impl.BlocksDatabaseImpl;
 import com.intellij.platform.util.io.storages.database.impl.DurableDatabaseImpl;
-import com.intellij.platform.util.io.storages.database.impl.DurableDatabaseWithScheduledHousekeeping;
+import com.intellij.platform.util.io.storages.database.impl.housekeeping.AsyncHousekeepingScheduler;
+import com.intellij.platform.util.io.storages.database.impl.housekeeping.DatabaseHousekeepingCoordinator;
+import com.intellij.platform.util.io.storages.database.impl.housekeeping.DatabaseHousekeepingScheduler;
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,20 +19,21 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Function;
 
-/**
- * A factory for durable databases
- *
- * @param fsyncOnFlush controls whether flushing a database calls fsync
- * @param fsyncOnClose controls whether closing a database calls fsync
- * @param housekeepingConfiguration (optional) periodic housekeeping configuration
- */
+/// A factory for durable databases
+///
+/// @param fsyncOnFlush                 controls whether flushing a database calls fsync
+/// @param fsyncOnClose                 controls whether closing a database calls fsync
+/// @param housekeepingSchedulerFactory creates a scheduler for each database; {@code null} disables regular housekeeping
 @ApiStatus.Internal
-public record DurableDatabaseFactory(int chunkSize,
-                                     boolean fsyncOnFlush,
-                                     boolean fsyncOnClose,
-                                     @Nullable HousekeepingConfiguration housekeepingConfiguration,
-                                     @NotNull List<OnStartupHousekeeper> startupHousekeepers)
+public record DurableDatabaseFactory(
+  int chunkSize,
+  boolean fsyncOnFlush,
+  boolean fsyncOnClose,
+  @Nullable Function<? super DatabaseHousekeepingCoordinator, ? extends DatabaseHousekeepingScheduler> housekeepingSchedulerFactory,
+  @NotNull List<OnStartupHousekeeper> startupHousekeepers
+)
   implements StorageFactory<DurableDatabase> {
 
   public static final int DEFAULT_CHUNK_SIZE = BlocksDatabaseFactory.DEFAULT_CHUNK_SIZE;
@@ -50,8 +53,8 @@ public record DurableDatabaseFactory(int chunkSize,
   }
 
   public DurableDatabaseFactory(int chunkSize, boolean fsyncOnFlush, boolean fsyncOnClose,
-                                @Nullable HousekeepingConfiguration housekeepingConfiguration) {
-    this(chunkSize, fsyncOnFlush, fsyncOnClose, housekeepingConfiguration, List.of());
+                                @Nullable Function<? super DatabaseHousekeepingCoordinator, ? extends DatabaseHousekeepingScheduler> housekeepingSchedulerFactory) {
+    this(chunkSize, fsyncOnFlush, fsyncOnClose, housekeepingSchedulerFactory, List.of());
   }
 
   public DurableDatabaseFactory {
@@ -61,33 +64,41 @@ public record DurableDatabaseFactory(int chunkSize,
     }
   }
 
-  /** @return factory with the default chunk size */
+  /// @return factory with the default chunk size
   public static @NotNull DurableDatabaseFactory withDefaults() {
     return new DurableDatabaseFactory(DEFAULT_CHUNK_SIZE, DEFAULT_FSYNC_ON_FLUSH, DEFAULT_FSYNC_ON_CLOSE);
   }
 
   public @NotNull DurableDatabaseFactory chunkSize(int newChunkSize) {
-    return new DurableDatabaseFactory(newChunkSize, fsyncOnFlush, fsyncOnClose, housekeepingConfiguration, startupHousekeepers);
+    return new DurableDatabaseFactory(newChunkSize, fsyncOnFlush, fsyncOnClose, housekeepingSchedulerFactory, startupHousekeepers);
   }
 
   public @NotNull DurableDatabaseFactory fsyncOnFlush(boolean newFsyncOnFlush) {
-    return new DurableDatabaseFactory(chunkSize, newFsyncOnFlush, fsyncOnClose, housekeepingConfiguration, startupHousekeepers);
+    return new DurableDatabaseFactory(chunkSize, newFsyncOnFlush, fsyncOnClose, housekeepingSchedulerFactory, startupHousekeepers);
   }
 
   public @NotNull DurableDatabaseFactory fsyncOnClose(boolean newFsyncOnClose) {
-    return new DurableDatabaseFactory(chunkSize, fsyncOnFlush, newFsyncOnClose, housekeepingConfiguration, startupHousekeepers);
+    return new DurableDatabaseFactory(chunkSize, fsyncOnFlush, newFsyncOnClose, housekeepingSchedulerFactory, startupHousekeepers);
   }
 
+  /// Configures asynchronous regular housekeeping without taking ownership of either executor
   public @NotNull DurableDatabaseFactory housekeeping(@NotNull ScheduledExecutorService scheduler,
                                                       @NotNull Executor executor) {
+    return housekeeping(coordinator -> new AsyncHousekeepingScheduler(coordinator, scheduler, executor));
+  }
+
+  /// Configures housekeeping with a scheduler created for each opened database
+  public @NotNull DurableDatabaseFactory housekeeping(
+    @NotNull Function<? super DatabaseHousekeepingCoordinator, ? extends DatabaseHousekeepingScheduler> schedulerFactory
+  ) {
     return new DurableDatabaseFactory(
-      chunkSize, fsyncOnFlush, fsyncOnClose, new HousekeepingConfiguration(scheduler, executor), startupHousekeepers
+      chunkSize, fsyncOnFlush, fsyncOnClose, schedulerFactory, startupHousekeepers
     );
   }
 
-  /// Configures startup housekeeping independently of the periodic scheduler
+  /// Configures startup housekeeping independently of the regular housekeeping scheduler
   public @NotNull DurableDatabaseFactory startupHousekeeping(@NotNull OnStartupHousekeeper @NotNull ... housekeepers) {
-    return new DurableDatabaseFactory(chunkSize, fsyncOnFlush, fsyncOnClose, housekeepingConfiguration, List.of(housekeepers));
+    return new DurableDatabaseFactory(chunkSize, fsyncOnFlush, fsyncOnClose, housekeepingSchedulerFactory, List.of(housekeepers));
   }
 
   /// Opens or creates a database and completes startup housekeeping before returning it
@@ -96,23 +107,8 @@ public record DurableDatabaseFactory(int chunkSize,
     var blocksDatabase = BlocksDatabaseImpl.open(
       databaseDirectory.toAbsolutePath(), chunkSize, fsyncOnFlush, fsyncOnClose, startupHousekeepers
     );
-    return IOUtil.wrapSafely(blocksDatabase, blocks -> {
-      var database = new DurableDatabaseImpl(blocks);
-      if (housekeepingConfiguration == null) {
-        return database;
-      }
-      return IOUtil.wrapSafely(database, openedDatabase -> {
-        return new DurableDatabaseWithScheduledHousekeeping(
-          openedDatabase,
-          housekeepingConfiguration.scheduler(),
-          housekeepingConfiguration.executor()
-        );
-      });
-    });
+    return IOUtil.wrapSafely(blocksDatabase, blocksDB -> housekeepingSchedulerFactory == null
+                                                         ? new DurableDatabaseImpl(blocksDB)
+                                                         : new DurableDatabaseImpl(blocksDB, housekeepingSchedulerFactory));
   }
-
-  /// Defines optional periodic housekeeping for a database factory
-  @ApiStatus.Internal
-  public record HousekeepingConfiguration(@NotNull ScheduledExecutorService scheduler,
-                                          @NotNull Executor executor) { }
 }

@@ -677,6 +677,7 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
       if (cancellationRequested.getAsBoolean()) {
         return;
       }
+      //TODO RC: keep track of sealed blocks, and skip retirement completely if no new sealed block appears?
       var blocksToCheckForRetirement = blockCatalog.blocks(VALUES).stream()
         .filter(block -> block.state() == BlocksStore.Block.LifecycleState.SEALED)
         .toList();

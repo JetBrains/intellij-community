@@ -8,16 +8,15 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.function.BooleanSupplier;
 
-/// Performs regular housekeeping:
-/// - the database invokes each housekeeper periodically, according to intervals requested by [[#runHousekeeping(BooleanSupplier)];
-/// - Housekeeper runs in parallel with DB operations, and shares database access with clients;
+/// Performs regular housekeeping in parallel with database operations.
+/// The scheduler decides whether and when to invoke each housekeeper.
 @ApiStatus.Internal
 @FunctionalInterface
 public interface Housekeeper {
   /// Performs one round of housekeeping;
   /// Rounds should be short, and regularly check for cancellation.
   ///
-  /// @return a positive delay from the end of this run until the next run;
-  ///         this delay is a hint for housekeeper scheduler, not a guarantee.
+  /// @return a positive _logical_ delay hint for a later run;
+  ///         the scheduler decides whether and when to run again, and how to map the delay to _physical_ time.
   @NotNull Duration runHousekeeping(@NotNull BooleanSupplier cancellationRequested) throws IOException;
 }

@@ -32,15 +32,14 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Function;
 
 /// Provides named durable maps over a block database
 @ApiStatus.Internal
 public final class DurableDatabaseImpl implements DurableDatabase {
   private final @NotNull BlocksDatabase blocksDatabase;
 
-  private final @NotNull DatabaseHousekeepingCoordinator housekeepingCoordinator = new DatabaseHousekeepingCoordinator();
+  private final @NotNull DatabaseHousekeepingCoordinator housekeepingCoordinator;
 
   private final transient Object lock = new Object();
   /// GuardedBy(lock)
@@ -50,9 +49,25 @@ public final class DurableDatabaseImpl implements DurableDatabase {
   /// GuardedBy(lock)
   private boolean closed;
 
-  /// Creates a facade that owns the specified block database
+  /// Creates a facade that owns the specified block database, without a housekeeping scheduler;
+  /// Without housekeeping scheduler regular housekeeping is not run: option for tests, for read-only DB access, or for
+  /// quick DB opening for some short tasks.
   public DurableDatabaseImpl(@NotNull BlocksDatabase blocksDatabase) {
+    this(blocksDatabase, new DatabaseHousekeepingCoordinator());
+  }
+
+  /// Creates a facade that owns the specified block database and uses the configured housekeeping scheduler
+  public DurableDatabaseImpl(
+    @NotNull BlocksDatabase blocksDatabase,
+    @NotNull Function<? super DatabaseHousekeepingCoordinator, ? extends DatabaseHousekeepingScheduler> schedulerFactory
+  ) {
+    this(blocksDatabase, new DatabaseHousekeepingCoordinator(schedulerFactory));
+  }
+
+  private DurableDatabaseImpl(@NotNull BlocksDatabase blocksDatabase,
+                              @NotNull DatabaseHousekeepingCoordinator housekeepingCoordinator) {
     this.blocksDatabase = blocksDatabase;
+    this.housekeepingCoordinator = housekeepingCoordinator;
     if (blocksDatabase instanceof BlocksDatabaseImpl implementation) {
       housekeepingCoordinator.register(new RetireUnusedChunksHousekeeper(implementation));
     }
@@ -60,11 +75,6 @@ public final class DurableDatabaseImpl implements DurableDatabase {
 
   @NotNull HousekeepingRegistration registerHousekeeper(@NotNull Housekeeper housekeeper) {
     return housekeepingCoordinator.register(housekeeper);
-  }
-
-  @NotNull DatabaseHousekeepingScheduler startHousekeeping(@NotNull ScheduledExecutorService scheduler,
-                                                           @NotNull Executor executor) {
-    return housekeepingCoordinator.startScheduling(scheduler, executor);
   }
 
   @Override
