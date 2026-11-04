@@ -48,6 +48,11 @@ private fun PsiFile.getTemplateIfAtLiteral(offset: Int, at: PsiElement? = findEl
     }
 }
 
+private fun RawText?.isFromSingleLineLiteral(): Boolean {
+    val rawText = this?.rawText ?: return false
+    return !StringUtil.containsLineBreak(rawText)
+}
+
 
 //Copied from StringLiteralCopyPasteProcessor to avoid erroneous inheritance
 private fun deduceBlockSelectionWidth(startOffsets: IntArray, endOffsets: IntArray, text: String): Int {
@@ -137,7 +142,10 @@ internal class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
         val prefixLength = interpolationPrefix?.textLength ?: 0
 
         return if (beginTp.isSingleQuoted()) {
-            singleQuotedPaste(text, prefixLength, editor, selectionModel)
+            singleQuotedPaste(
+                text, prefixLength, editor, selectionModel,
+                splitLines = !rawText.isFromSingleLineLiteral(),
+            )
         } else {
             tripleQuotedPaste(text, prefixLength, selectionStartElement, beginTp, selectionModel, editor)
         }
@@ -149,16 +157,19 @@ internal class KotlinLiteralCopyPasteProcessor : CopyPastePreProcessor {
      * Special characters, quotes, and interpolation entries are escaped unconditionally.
      * Dollars of literal chunks are only escaped when they would otherwise start an interpolation entry,
      * see [findDollarsToEscapeOnPaste].
+     * With [splitLines], each line break splits the string into a concatenation of strings.
+     * Without it, each line break becomes a regular `\n` escape.
      */
     private fun singleQuotedPaste(
         text: String,
         interpolationPrefixLength: Int,
         editor: Editor,
         selectionModel: SelectionModel,
+        splitLines: Boolean,
     ): String {
         val res = StringBuilder()
         val interpolationPrefix = "$".repeat(interpolationPrefixLength)
-        val lineBreak = "\\n\"+\n $interpolationPrefix\""
+        val lineBreak = if (splitLines) "\\n\"+\n $interpolationPrefix\"" else "\\n"
         val chunks = TemplateTokenSequence(text, interpolationPrefixLength).toList()
         val dollarContext = createPasteDollarContext(editor, selectionModel, interpolationPrefixLength)
         var endsInLineBreak = false
