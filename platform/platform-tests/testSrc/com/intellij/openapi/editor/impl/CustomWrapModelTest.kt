@@ -150,7 +150,7 @@ class CustomWrapModelTest {
       }
     }, testRootDisposable)
 
-    assertNotNull(customWrapModel.runBatchMutation { addWrap(5) })
+    val wrap = customWrapModel.runBatchMutation { addWrap(5) }!!
 
     runWriteCommand {
       editor.document.deleteString(4, 5)
@@ -158,7 +158,7 @@ class CustomWrapModelTest {
 
     assertTrue(customWrapModel.getWraps().isEmpty())
     assertEquals(1, removeCount)
-    assertEquals(4, removedOffset)
+    assertEquals(wrap.offset, removedOffset)
   }
 
   @Test
@@ -210,14 +210,14 @@ class CustomWrapModelTest {
     val events = mutableListOf<String>()
     addRecordingListener(events)
 
-    assertNotNull(customWrapModel.runBatchMutation { addWrap(5) })
+    val wrap = customWrapModel.runBatchMutation { addWrap(5) }!!
 
     runWriteCommand {
       editor.document.deleteString(4, 5)
     }
 
     assertTrue(customWrapModel.getWraps().isEmpty())
-    assertEquals(listOf("add:5", "remove:4"), events)
+    assertEquals(listOf("add:5", "remove:${wrap.offset}"), events)
   }
 
   @Test
