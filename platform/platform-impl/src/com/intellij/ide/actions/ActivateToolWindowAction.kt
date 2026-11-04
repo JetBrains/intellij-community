@@ -17,7 +17,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.impl.FrameGuests
+import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
@@ -116,7 +116,7 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
 
   override fun update(e: AnActionEvent) {
     e.presentation.putClientProperty(ActionUtil.SHOW_ICON_IN_MAIN_MENU, true)
-    val project = FrameGuests.frameOwnerOf(e)
+    val project = IdeFrameGuests.frameOwnerOf(e)
     val presentation = e.presentation
     if (project == null) {
       presentation.isEnabledAndVisible = false
@@ -144,7 +144,7 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
   protected open fun hasEmptyState(project: Project): Boolean = false
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = FrameGuests.frameOwnerOf(e) ?: return
+    val project = IdeFrameGuests.frameOwnerOf(e) ?: return
 
     val toolWindowManager = ToolWindowManager.getInstance(project)
     val source = when {

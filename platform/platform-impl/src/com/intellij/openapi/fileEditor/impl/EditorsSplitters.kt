@@ -70,7 +70,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.FloatingDecorator
 import com.intellij.openapi.wm.impl.FocusManagerImpl
-import com.intellij.openapi.wm.impl.FrameGuests
+import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.openapi.wm.impl.FrameTitleBuilder
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -926,7 +926,7 @@ open class EditorsSplitters internal constructor(
     val frame = getFrame() ?: return
     // the frame shows the editors of its active project; the editors of another project of the frame leave the title alone
     val frameOwner = frame.project
-    fun showsThisProject(): Boolean = frameOwner == null || FrameGuests.activeProjectOf(frameOwner) === project
+    fun showsThisProject(): Boolean = frameOwner == null || IdeFrameGuests.activeProjectOf(frameOwner) === project
     if (!showsThisProject()) return
     val file = currentCompositeFlow.value?.file
     if (file == null) {
@@ -1926,7 +1926,7 @@ private fun getSplittersToFocus(suggestedProject: Project?): EditorsSplitters? {
   val frame = FocusManagerImpl.getInstance().lastFocusedFrame
   if (frame is IdeFrameImpl && frame.isActive) {
     // a frame that shows frame guests focuses the editors of its active project, see WindowManagerEx.getActiveProject
-    val frameProject = ProjectFrameHelper.getFrameHelper(frame)?.project?.let(FrameGuests::activeProjectOf)
+    val frameProject = ProjectFrameHelper.getFrameHelper(frame)?.project?.let(IdeFrameGuests::activeProjectOf)
     return activeWindow?.let { getSplittersToActivate(activeWindow = it, project = frameProject) }
   }
 

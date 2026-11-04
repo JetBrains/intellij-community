@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
-private val LOG = logger<ProjectFrameAssignments>()
+private val LOG = logger<IdeFrameRegistry>()
 
 /**
  * The projects of one frame: the frame owner, its frame helper, the frame guests, and the active project.
@@ -18,7 +18,7 @@ private val LOG = logger<ProjectFrameAssignments>()
  * [active] is [owner] or a guest: the project that the frame UI gives to an action.
  */
 @Internal
-class FrameAssignment internal constructor(
+class IdeFrameProjects internal constructor(
   @JvmField val owner: Project,
   @JvmField val frameHelper: ProjectFrameHelper?,
   @JvmField val guests: List<Project>,
@@ -30,7 +30,7 @@ class FrameAssignment internal constructor(
     guests: List<Project> = this.guests,
     activation: List<Project> = this.activation,
     active: Project = this.active,
-  ): FrameAssignment = FrameAssignment(owner, frameHelper, guests, activation, active)
+  ): IdeFrameProjects = IdeFrameProjects(owner, frameHelper, guests, activation, active)
 }
 
 /** The active project of the frame of [frameOwner] changed from [previousActive] to [active]. */
@@ -43,13 +43,13 @@ class ActiveProjectChange internal constructor(
 
 /** A frame guest left the frame of [frameOwner]. [activeChange] is set when the guest was the active project. */
 @Internal
-class FrameGuestLeft internal constructor(
+class IdeFrameGuestLeft internal constructor(
   @JvmField val frameOwner: Project,
   @JvmField val activeChange: ActiveProjectChange?,
 )
 
 /**
- * The one record of which frame shows each open project.
+ * The registry of the IDE frames: which frame shows each open project.
  *
  * A project owns a frame, or it is a frame guest: a project with no frame of its own that the frame of its owner shows.
  * Each frame has one active project, the project that the frame UI gives to an action, see `WindowManagerEx.getActiveProject`.
@@ -62,16 +62,16 @@ class FrameGuestLeft internal constructor(
  * A change of the active project is published through [publisher] after the lock is released, on the calling thread.
  */
 @Internal
-class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener) {
+class IdeFrameRegistry(private val publisher: () -> WindowManagerListener) {
   /** The record at one point in time: the frame of each owner, and the owner of each guest. */
   private class State(
-    val byOwner: Map<Project, FrameAssignment>,
+    val byOwner: Map<Project, IdeFrameProjects>,
     val ownerOfGuest: Map<Project, Project>,
   ) {
     fun ownerOf(project: Project): Project = ownerOfGuest[project] ?: project
 
-    /** The record of the frame that shows [project], for an owner and for a guest. */
-    fun frameOf(project: Project): FrameAssignment? = byOwner[ownerOf(project)]
+    /** The [IdeFrameProjects] of the frame that shows [project], for an owner and for a guest. */
+    fun frameShowing(project: Project): IdeFrameProjects? = byOwner[ownerOf(project)]
   }
 
   private val lock = ReentrantLock()
@@ -79,11 +79,11 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
   @Volatile
   private var state = State(byOwner = emptyMap(), ownerOfGuest = emptyMap())
 
-  /** The record of every frame owner. */
-  fun assignments(): Collection<FrameAssignment> = state.byOwner.values
+  /** The [IdeFrameProjects] of every frame owner. */
+  fun frames(): Collection<IdeFrameProjects> = state.byOwner.values
 
-  /** The record of [frameOwner], or `null` when [frameOwner] owns no frame and has no guest. */
-  fun assignmentOf(frameOwner: Project): FrameAssignment? = state.byOwner[frameOwner]
+  /** The [IdeFrameProjects] of [frameOwner], or `null` when [frameOwner] owns no frame and has no guest. */
+  fun frameOf(frameOwner: Project): IdeFrameProjects? = state.byOwner[frameOwner]
 
   /** The project that owns the frame that shows [project]: [project] itself unless it is a frame guest. */
   fun ownerOf(project: Project): Project = state.ownerOf(project)
@@ -93,7 +93,7 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
   fun guestsOf(frameOwner: Project): List<Project> = state.byOwner[frameOwner]?.guests ?: emptyList()
 
   /** The frame helper of the frame that shows [project], for an owner and for a guest. */
-  fun frameHelperOf(project: Project): ProjectFrameHelper? = state.frameOf(project)?.frameHelper
+  fun frameHelperOf(project: Project): ProjectFrameHelper? = state.frameShowing(project)?.frameHelper
 
   /** The active project of the frame that shows [project]: the owner of that frame when the frame has no active guest. */
   fun activeProjectOf(project: Project): Project {
@@ -104,10 +104,10 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
   }
 
   /**
-   * Records [frameHelper] as the frame of [owner]. A record that a guest created first is completed.
+   * Records [frameHelper] as the frame of [owner]. The [IdeFrameProjects] that a guest created first is completed.
    * A second frame for the same owner replaces the first one, with an error in the log.
    */
-  fun assignOwner(owner: Project, frameHelper: ProjectFrameHelper) {
+  fun registerFrame(owner: Project, frameHelper: ProjectFrameHelper) {
     lock.withLock {
       val state = state
       val ownerOfOwner = state.ownerOfGuest[owner]
@@ -119,17 +119,17 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
       if (current?.frameHelper != null) {
         LOG.error("$owner owns a frame already")
       }
-      val assignment = current?.copy(frameHelper = frameHelper) ?: FrameAssignment(owner, frameHelper, emptyList(), emptyList(), owner)
-      this.state = State(byOwner = state.byOwner + (owner to assignment), ownerOfGuest = state.ownerOfGuest)
+      val projects = current?.copy(frameHelper = frameHelper) ?: IdeFrameProjects(owner, frameHelper, emptyList(), emptyList(), owner)
+      this.state = State(byOwner = state.byOwner + (owner to projects), ownerOfGuest = state.ownerOfGuest)
     }
   }
 
   /**
-   * Removes the record of [owner].
+   * Removes the [IdeFrameProjects] of [owner].
    *
-   * @return the removed record, with the guests that were still in the frame, or `null` when [owner] had no record
+   * @return the removed [IdeFrameProjects], with the guests that were still in the frame, or `null` when [owner] had none
    */
-  fun releaseOwner(owner: Project): FrameAssignment? {
+  fun removeOwner(owner: Project): IdeFrameProjects? {
     lock.withLock {
       val state = state
       val released = state.byOwner[owner] ?: return null
@@ -161,7 +161,7 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
         }
         return
       }
-      val current = state.byOwner[frameOwner] ?: FrameAssignment(frameOwner, null, emptyList(), emptyList(), frameOwner)
+      val current = state.byOwner[frameOwner] ?: IdeFrameProjects(frameOwner, null, emptyList(), emptyList(), frameOwner)
       val joined = current.copy(guests = current.guests + guest, activation = current.activation + guest)
       this.state = State(byOwner = state.byOwner + (frameOwner to joined), ownerOfGuest = state.ownerOfGuest + (guest to frameOwner))
     }
@@ -173,8 +173,8 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
    *
    * @return what changed, or `null` when [guest] is not a frame guest
    */
-  fun removeGuest(guest: Project): FrameGuestLeft? {
-    val left: FrameGuestLeft
+  fun removeGuest(guest: Project): IdeFrameGuestLeft? {
+    val left: IdeFrameGuestLeft
     lock.withLock {
       val state = state
       val frameOwner = state.ownerOfGuest[guest] ?: return null
@@ -191,7 +191,7 @@ class ProjectFrameAssignments(private val publisher: () -> WindowManagerListener
       }
       this.state = State(byOwner = byOwner, ownerOfGuest = state.ownerOfGuest - guest)
       val activeChange = if (active === current.active) null else ActiveProjectChange(frameOwner, current.active, active)
-      left = FrameGuestLeft(frameOwner, activeChange)
+      left = IdeFrameGuestLeft(frameOwner, activeChange)
     }
     left.activeChange?.let { publisher().onActiveProjectChanged(it.frameOwner, it.active) }
     return left

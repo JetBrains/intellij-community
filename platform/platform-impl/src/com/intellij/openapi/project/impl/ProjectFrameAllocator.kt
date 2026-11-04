@@ -108,7 +108,7 @@ class HeadlessProjectFrameAllocator : ProjectFrameAllocator {
  * without a frame. A headless application and a unit test allocate no frame. Every other project gets a frame of its own.
  */
 internal fun createProjectFrameAllocator(options: OpenProjectTask, projectStoreBaseDir: Path): ProjectFrameAllocator {
-  options.frameOwner?.let { return FrameGuestProjectFrameAllocator(it) }
+  options.frameOwner?.let { return GuestProjectFrameAllocator(it) }
   val app = ApplicationManager.getApplication()
   if (app.isHeadlessEnvironment || app.isUnitTestMode) {
     return HeadlessProjectFrameAllocator()
@@ -117,7 +117,7 @@ internal fun createProjectFrameAllocator(options: OpenProjectTask, projectStoreB
 }
 
 /**
- * The open of a frame guest while it is in progress, see [FrameGuestProjectFrameAllocator].
+ * The open of a frame guest while it is in progress, see [GuestProjectFrameAllocator].
  *
  * The close of the frame owner and the end of the open race for the outcome, and the first one wins. The owner close asks
  * the open to end as cancelled with [endForOwnerClose]. The allocator marks the end of the open with [markOpened], and the
@@ -169,7 +169,7 @@ internal val Project.frameGuestOpening: FrameGuestOpening?
  * the cancel path of the project manager: the guest closes once, leaves the record, and `openProjectAsync` gives `null`.
  * The owner close and the end of the open can race; the [FrameGuestOpening] handle on the guest decides who was first.
  */
-internal class FrameGuestProjectFrameAllocator(private val frameOwner: Project) : ProjectFrameAllocator {
+internal class GuestProjectFrameAllocator(private val frameOwner: Project) : ProjectFrameAllocator {
   @Volatile
   private var guest: Project? = null
 
@@ -246,7 +246,7 @@ internal class FrameGuestProjectFrameAllocator(private val frameOwner: Project) 
         return
       }
       withContext(Dispatchers.UI) {
-        frameHelper.joinFrame(project)
+        frameHelper.addGuest(project)
       }
       projectInitObservable.awaitProjectInit()
       // the status bar of the frame shows the background tasks of the guest, as it shows the status text

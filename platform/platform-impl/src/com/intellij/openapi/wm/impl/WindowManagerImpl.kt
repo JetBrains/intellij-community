@@ -90,8 +90,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   internal var oldLayout: DesktopLayout? = null
     private set
 
-  /** The one record of which frame shows each project, see [ProjectFrameAssignments]. */
-  private val assignments = ProjectFrameAssignments { application.messageBus.syncPublisher(WindowManagerListener.TOPIC) }
+  /** The registry of which frame shows each project, see [IdeFrameRegistry]. */
+  private val frameRegistry = IdeFrameRegistry { application.messageBus.syncPublisher(WindowManagerListener.TOPIC) }
 
   /** The frame state listener of each frame owner. EDT only. */
   private val frameStateListeners = HashMap<Project, ComponentListener>()
@@ -111,8 +111,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       Disposer.register(app, Disposable { disposeRootFrame() })
       connection.subscribe(TitleInfoProvider.TOPIC, object : TitleInfoProvider.TitleInfoProviderListener {
         override fun configurationChanged() {
-          for (assignment in assignments.assignments()) {
-            assignment.frameHelper?.updateTitle(assignment.owner)
+          for (frame in frameRegistry.frames()) {
+            frame.frameHelper?.updateTitle(frame.owner)
           }
         }
       })
@@ -122,25 +122,25 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosing(project: Project) {
         // a guest leaves before its dispose starts, so the frame takes its editors out while they are valid
-        if (assignments.isGuest(project)) {
-          leaveFrame(project)
+        if (frameRegistry.isGuest(project)) {
+          removeGuest(project)
         }
       }
 
       override fun projectClosed(project: Project) {
-        val assignment = assignments.assignmentOf(project)
-        val helper = assignment?.frameHelper
+        val frame = frameRegistry.frameOf(project)
+        val helper = frame?.frameHelper
         LOG.info("=== Release(${helper != null}) frame on closed project ===")
         when {
           helper != null -> releaseFrame(helper)
-          assignment != null -> assignments.releaseOwner(project)
-          else -> leaveFrame(project)
+          frame != null -> frameRegistry.removeOwner(project)
+          else -> removeGuest(project)
         }
       }
     })
   }
 
-  private fun frameHelpers(): List<ProjectFrameHelper> = assignments.assignments().mapNotNull { it.frameHelper }
+  private fun frameHelpers(): List<ProjectFrameHelper> = frameRegistry.frames().mapNotNull { it.frameHelper }
 
   override fun getAllProjectFrames(): Array<ProjectFrameHelper> = frameHelpers().toTypedArray()
 
@@ -278,42 +278,42 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   @Internal
   override fun getFrameHelper(project: Project?): ProjectFrameHelper? {
     // a frame guest resolves to the frame that shows it
-    return project?.let { assignments.frameHelperOf(it) }
+    return project?.let { frameRegistry.frameHelperOf(it) }
   }
 
   @Internal
-  override fun getFrameOwner(project: Project): Project = assignments.ownerOf(project)
+  override fun getFrameOwner(project: Project): Project = frameRegistry.ownerOf(project)
 
   @Internal
-  override fun isFrameGuest(project: Project): Boolean = assignments.isGuest(project)
+  override fun isFrameGuest(project: Project): Boolean = frameRegistry.isGuest(project)
 
   @Internal
-  override fun getFrameGuests(frameOwner: Project): List<Project> = assignments.guestsOf(frameOwner)
+  override fun getFrameGuests(frameOwner: Project): List<Project> = frameRegistry.guestsOf(frameOwner)
 
   @Internal
-  override fun getActiveProject(project: Project): Project = assignments.activeProjectOf(project)
+  override fun getActiveProject(project: Project): Project = frameRegistry.activeProjectOf(project)
 
   @Internal
   override fun setActiveProject(project: Project) {
-    val change = assignments.setActive(project) ?: return
+    val change = frameRegistry.setActive(project) ?: return
     runOnEdt { applyActiveProject(change) }
   }
 
   @Internal
   override fun addFrameGuest(frameOwner: Project, guest: Project) {
-    assignments.addGuest(frameOwner, guest)
+    frameRegistry.addGuest(frameOwner, guest)
   }
 
   @Internal
   override fun removeFrameGuest(guest: Project) {
-    leaveFrame(guest)
+    removeGuest(guest)
   }
 
   /** Takes [guest] out of the record and out of the UI of its frame. */
-  private fun leaveFrame(guest: Project) {
-    val left = assignments.removeGuest(guest) ?: return
+  private fun removeGuest(guest: Project) {
+    val left = frameRegistry.removeGuest(guest) ?: return
     runOnEdt {
-      assignments.frameHelperOf(left.frameOwner)?.leaveFrame(guest)
+      frameRegistry.frameHelperOf(left.frameOwner)?.removeGuest(guest)
       left.activeChange?.let { applyActiveProject(it) }
     }
   }
@@ -321,8 +321,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   /** Shows the new active project in its frame. A later change wins, and a frame that is gone shows nothing. */
   @RequiresEdt
   private fun applyActiveProject(change: ActiveProjectChange) {
-    if (assignments.activeProjectOf(change.frameOwner) !== change.active) return
-    val frameHelper = assignments.frameHelperOf(change.frameOwner) ?: return
+    if (frameRegistry.activeProjectOf(change.frameOwner) !== change.active) return
+    val frameHelper = frameRegistry.frameHelperOf(change.frameOwner) ?: return
     frameHelper.showActiveProject(change.active)
     ActivityTracker.getInstance().inc()
   }
@@ -375,7 +375,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   internal suspend fun assignFrame(frameHelper: ProjectFrameHelper, project: Project, withListener: Boolean) {
     withContext(Dispatchers.UI) {
-      assignments.assignOwner(project, frameHelper)
+      frameRegistry.registerFrame(project, frameHelper)
       if (withListener) {
         val listener = FrameStateListener(defaultFrameInfoHelper)
         frameHelper.frame.addComponentListener(listener)
@@ -390,7 +390,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun releaseFrame(releasedFrameHelper: ProjectFrameHelper) {
     val project = releasedFrameHelper.project
     if (project != null) {
-      val remainingGuests = assignments.releaseOwner(project)?.guests ?: emptyList()
+      val remainingGuests = frameRegistry.removeOwner(project)?.guests ?: emptyList()
       frameStateListeners.remove(project)?.let { releasedFrameHelper.frame.removeComponentListener(it) }
       if (remainingGuests.isNotEmpty()) {
         // the close of an owner closes its open guests first, and ends the open of a guest that still opens
@@ -484,7 +484,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   override fun updateDefaultFrameInfoOnProjectClose(project: Project) {
     // the frame of a guest belongs to its owner, and the owner records it
-    if (assignments.isGuest(project)) return
+    if (frameRegistry.isGuest(project)) return
     val frameHelper = getFrameHelper(project) ?: return
     defaultFrameInfoHelper.copyFrom(getFrameInfoByFrameHelper(frameHelper))
   }

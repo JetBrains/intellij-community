@@ -83,12 +83,12 @@ class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehavior
   override fun isDumbAware(): Boolean = true
 
   fun activateNextWindow(e: AnActionEvent) {
-    val presentableUrl = locationOf(FrameGuests.frameOwnerOf(e)) ?: return
+    val presentableUrl = locationOf(IdeFrameGuests.frameOwnerOf(e)) ?: return
     findSwitchTarget(presentableUrl, next = true)?.setSelected(e, true)
   }
 
   fun activatePreviousWindow(e: AnActionEvent) {
-    val presentableUrl = locationOf(FrameGuests.frameOwnerOf(e)) ?: return
+    val presentableUrl = locationOf(IdeFrameGuests.frameOwnerOf(e)) ?: return
     findSwitchTarget(presentableUrl, next = false)?.setSelected(e, true)
   }
 
@@ -97,7 +97,7 @@ class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehavior
    * entry of its own, see `WindowDressingStartupActivity`. Null for a project without a store.
    */
   private fun locationOf(project: Project?): Path? {
-    val owner = project?.let(FrameGuests::frameOwnerOf)
+    val owner = project?.let(IdeFrameGuests::frameOwnerOf)
     return (owner as? ProjectStoreOwner)?.componentStore?.storeDescriptor?.presentableUrl
   }
 

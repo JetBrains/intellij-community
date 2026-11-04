@@ -51,56 +51,56 @@ public final class TestWindowManager extends WindowManagerEx {
   private static final Key<StatusBar> STATUS_BAR = Key.create("STATUS_BAR");
 
   /** The record of the frame owners and the frame guests, as in {@code WindowManagerImpl}, so a unit test sees the guests. */
-  private final ProjectFrameAssignments assignments =
-    new ProjectFrameAssignments(() -> ApplicationManager.getApplication().getMessageBus().syncPublisher(WindowManagerListener.Companion.getTOPIC()));
+  private final IdeFrameRegistry frameRegistry =
+    new IdeFrameRegistry(() -> ApplicationManager.getApplication().getMessageBus().syncPublisher(WindowManagerListener.Companion.getTOPIC()));
 
   public TestWindowManager() {
     ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        assignments.removeGuest(project);
+        frameRegistry.removeGuest(project);
       }
 
       @Override
       public void projectClosed(@NotNull Project project) {
-        assignments.releaseOwner(project);
+        frameRegistry.removeOwner(project);
       }
     });
   }
 
   @Override
   public @NotNull Project getFrameOwner(@NotNull Project project) {
-    return assignments.ownerOf(project);
+    return frameRegistry.ownerOf(project);
   }
 
   @Override
   public boolean isFrameGuest(@NotNull Project project) {
-    return assignments.isGuest(project);
+    return frameRegistry.isGuest(project);
   }
 
   @Override
   public @NotNull List<Project> getFrameGuests(@NotNull Project frameOwner) {
-    return assignments.guestsOf(frameOwner);
+    return frameRegistry.guestsOf(frameOwner);
   }
 
   @Override
   public @NotNull Project getActiveProject(@NotNull Project project) {
-    return assignments.activeProjectOf(project);
+    return frameRegistry.activeProjectOf(project);
   }
 
   @Override
   public void setActiveProject(@NotNull Project project) {
-    assignments.setActive(project);
+    frameRegistry.setActive(project);
   }
 
   @Override
   public void addFrameGuest(@NotNull Project frameOwner, @NotNull Project guest) {
-    assignments.addGuest(frameOwner, guest);
+    frameRegistry.addGuest(frameOwner, guest);
   }
 
   @Override
   public void removeFrameGuest(@NotNull Project guest) {
-    assignments.removeGuest(guest);
+    frameRegistry.removeGuest(guest);
   }
 
   @Override

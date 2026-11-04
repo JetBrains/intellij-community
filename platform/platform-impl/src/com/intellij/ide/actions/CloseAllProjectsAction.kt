@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.impl.FrameGuests
+import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.ui.IdeUICustomization
 import org.jetbrains.annotations.ApiStatus
 
@@ -23,7 +23,7 @@ open class CloseAllProjectsAction : CloseProjectsActionBase(), ActionRemoteBehav
 
   override fun canClose(project: Project, currentProject: Project): Boolean = !WelcomeUtils.isWelcomeProject(project)
 
-  override fun shouldShow(e: AnActionEvent): Boolean = FrameGuests.openFrameOwners().size > 1
+  override fun shouldShow(e: AnActionEvent): Boolean = IdeFrameGuests.openFrameOwners().size > 1
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT

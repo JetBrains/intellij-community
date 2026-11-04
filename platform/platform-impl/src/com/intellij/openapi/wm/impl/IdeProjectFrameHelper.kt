@@ -78,8 +78,8 @@ internal class IdeProjectFrameHelper(
     }
   }
 
-  override fun leaveFrame(guest: Project) {
-    super.leaveFrame(guest)
+  override fun removeGuest(guest: Project) {
+    super.removeGuest(guest)
     editorArea.removeGuestEditors(guest)
   }
 

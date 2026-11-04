@@ -25,8 +25,8 @@ open class PlatformFrameTitleBuilder : FrameTitleBuilder() {
   override fun getProjectTitle(project: Project): String {
     val basePath: @SystemIndependent @NonNls String = project.basePath ?: return project.name
     // only another frame owner with the same name asks for the path: a frame guest shares the frame and the name of its owner
-    val frameOwner = FrameGuests.frameOwnerOf(project)
-    val otherSameNamed = FrameGuests.openFrameOwners().any { it !== frameOwner && it.name == project.name }
+    val frameOwner = IdeFrameGuests.frameOwnerOf(project)
+    val otherSameNamed = IdeFrameGuests.openFrameOwners().any { it !== frameOwner && it.name == project.name }
     if (!otherSameNamed && !UISettings.getInstance().fullPathsInWindowHeader) {
       return project.name
     }

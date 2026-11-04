@@ -24,10 +24,10 @@ import org.jetbrains.annotations.ApiStatus
  * own. The queries never create the window manager service.
  */
 @ApiStatus.Internal
-object FrameGuests {
+object IdeFrameGuests {
   /** The project that owns the frame that shows [project]: [project] itself unless it is a frame guest. */
   @JvmStatic
-  fun frameOwnerOf(project: Project): Project = frameGuestRecord()?.getFrameOwner(project) ?: project
+  fun frameOwnerOf(project: Project): Project = windowManager()?.getFrameOwner(project) ?: project
 
   /**
    * The frame owner of the project of [event], or `null` without a live project: the project whose manager shows the tool
@@ -38,16 +38,16 @@ object FrameGuests {
 
   /** Tells whether [project] is a frame guest, see `WindowManagerEx.isFrameGuest`. */
   @JvmStatic
-  fun isFrameGuest(project: Project): Boolean = frameGuestRecord()?.isFrameGuest(project) == true
+  fun isFrameGuest(project: Project): Boolean = windowManager()?.isFrameGuest(project) == true
 
   /** The frame guests of [frameOwner], in the order they joined. */
   @JvmStatic
-  fun frameGuestsOf(frameOwner: Project): List<Project> = frameGuestRecord()?.getFrameGuests(frameOwner) ?: emptyList()
+  fun frameGuestsOf(frameOwner: Project): List<Project> = windowManager()?.getFrameGuests(frameOwner) ?: emptyList()
 
   /** The open projects that have a frame of their own: every open project except the frame guests. */
   @JvmStatic
   fun openFrameOwners(): List<Project> {
-    val record = frameGuestRecord()
+    val record = windowManager()
     val openProjects = ProjectManager.getInstance().openProjects
     return if (record == null) openProjects.asList() else openProjects.filter { !record.isFrameGuest(it) }
   }
@@ -58,12 +58,12 @@ object FrameGuests {
    */
   @JvmStatic
   fun activeProjectOf(project: Project): Project {
-    val record = frameGuestRecord() ?: return project
+    val record = windowManager() ?: return project
     val active = record.getActiveProject(project)
     return if (active === project || active.isInitialized) active else record.getFrameOwner(project)
   }
 
-  private fun frameGuestRecord(): WindowManagerEx? {
+  private fun windowManager(): WindowManagerEx? {
     return ApplicationManager.getApplication()?.serviceIfCreated<WindowManager>() as? WindowManagerEx
   }
 }

@@ -96,7 +96,7 @@ import javax.swing.WindowConstants
 
 private const val INIT_BOUNDS_KEY = "InitBounds"
 
-/** The status text relay of a frame guest while it is in a frame, see [ProjectFrameHelper.joinFrame]. EDT only. */
+/** The status text relay of a frame guest while it is in a frame, see [ProjectFrameHelper.addGuest]. EDT only. */
 private val GUEST_STATUS_CONNECTION_KEY = Key.create<SimpleMessageBusConnection>("ProjectFrameHelper.guestStatusConnection")
 
 private val LOG: Logger
@@ -452,7 +452,7 @@ abstract class ProjectFrameHelper internal constructor(
     sink[IdeFrame.KEY] = this
     if (project == null || !project.isInitialized) return
     // a frame that shows guests gives the active one, see WindowManagerEx.getActiveProject
-    val active = FrameGuests.activeProjectOf(project)
+    val active = IdeFrameGuests.activeProjectOf(project)
     sink[CommonDataKeys.PROJECT] = active
     // The tool windows belong to the project of the frame
     sink[PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS] =
@@ -470,7 +470,7 @@ abstract class ProjectFrameHelper internal constructor(
    * The record of the guests is the window manager, see `WindowManagerEx.addFrameGuest`; this is the UI side of the join.
    */
   @RequiresEdt
-  internal open fun joinFrame(guest: Project) {
+  internal open fun addGuest(guest: Project) {
     if (isDisposed() || guest.getUserData(GUEST_STATUS_CONNECTION_KEY) != null) return
     val statusBar = statusBar ?: return
     // the connection ends with the frame, see [dispose], or when the guest leaves
@@ -479,9 +479,9 @@ abstract class ProjectFrameHelper internal constructor(
     guest.putUserData(GUEST_STATUS_CONNECTION_KEY, connection)
   }
 
-  /** Takes [guest] out of the UI of this frame, see [joinFrame]. */
+  /** Takes [guest] out of the UI of this frame, see [addGuest]. */
   @RequiresEdt
-  internal open fun leaveFrame(guest: Project) {
+  internal open fun removeGuest(guest: Project) {
     guest.getUserData(GUEST_STATUS_CONNECTION_KEY)?.disconnect()
     guest.putUserData(GUEST_STATUS_CONNECTION_KEY, null)
   }
@@ -580,7 +580,7 @@ abstract class ProjectFrameHelper internal constructor(
   }
 
   open fun dispose() {
-    // the cancel also disconnects the status text relay of each frame guest, see [joinFrame]
+    // the cancel also disconnects the status text relay of each frame guest, see [addGuest]
     coroutineScope.cancel()
     MouseGestureManager.getInstance().remove(this)
     balloonLayout?.let {

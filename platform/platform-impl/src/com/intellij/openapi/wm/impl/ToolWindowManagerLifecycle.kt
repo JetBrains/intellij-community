@@ -153,7 +153,7 @@ private inline fun process(processor: (manager: ToolWindowManagerImpl) -> Unit) 
 @JvmName("getToolWindowManagerForEvent")
 internal fun getToolWindowManagerForEvent(event: AnActionEvent): ToolWindowManagerEx? {
   (event.getData(PlatformDataKeys.TOOL_WINDOW) as? ToolWindowImpl)?.let { return it.toolWindowManager }
-  val project = FrameGuests.frameOwnerOf(event) ?: return null
+  val project = IdeFrameGuests.frameOwnerOf(event) ?: return null
   return ToolWindowManager.getInstance(project) as? ToolWindowManagerEx
 }
 

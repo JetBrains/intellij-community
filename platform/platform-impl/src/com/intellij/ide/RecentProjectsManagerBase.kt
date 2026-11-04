@@ -44,7 +44,7 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.FrameGuests
+import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.openapi.wm.impl.IDE_FRAME_EVENT_LOG
 import com.intellij.openapi.wm.impl.IdeFrameImpl
@@ -346,7 +346,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       }
 
       for (project in openProjects) {
-        if (FrameGuests.isFrameGuest(project)) continue
+        if (IdeFrameGuests.isFrameGuest(project)) continue
         val path = getProjectPath(project)?.invariantSeparatorsPathString ?: continue
         val info = state.additionalInfo.get(path) ?: continue
         info.opened = true
@@ -509,7 +509,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   override fun setActivationTimestamp(project: Project, timestamp: Long) {
     LOG.trace { "setActivationTimestamp: project=$project, timestamp=$timestamp" }
 
-    if (disableUpdatingRecentInfo.get() || FrameGuests.isFrameGuest(project)) {
+    if (disableUpdatingRecentInfo.get() || IdeFrameGuests.isFrameGuest(project)) {
       LOG.trace { "setActivationTimestamp: updating recent info is disabled" }
       return
     }
@@ -541,7 +541,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   internal fun projectOpened(project: Project, openTimestamp: Long) {
     LOG.trace { "projectOpened: project=$project, openTimestamp=$openTimestamp" }
 
-    if (disableUpdatingRecentInfo.get() || LightEdit.owns(project) || FrameGuests.isFrameGuest(project)) {
+    if (disableUpdatingRecentInfo.get() || LightEdit.owns(project) || IdeFrameGuests.isFrameGuest(project)) {
       LOG.trace { "projectOpened: updating recent info is disabled" }
       return
     }
@@ -1208,7 +1208,7 @@ data class OpenProjectImplOptions(
   @JvmField val frame: IdeFrameImpl? = null,
   /**
    * The project whose frame shows the opened project. The project then opens as a frame guest: it gets no frame of its own,
-   * see `FrameGuestProjectFrameAllocator`.
+   * see `GuestProjectFrameAllocator`.
    */
   @JvmField val frameOwner: Project? = null,
 )

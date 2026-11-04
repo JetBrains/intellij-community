@@ -108,7 +108,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.ex.isBackgroundActivitiesSuppressed
-import com.intellij.openapi.wm.impl.FrameGuests
+import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PROJECT_NEWLY_CREATED
 import com.intellij.platform.PROJECT_NEWLY_OPENED
@@ -421,7 +421,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     check(!ApplicationManager.getApplication().isWriteAccessAllowed)
     // a frame guest closes before the owner of its frame, so an owner never releases a frame that still shows a guest
     val projects = (openProjects.toList() + listOfNotNull(LightEditUtil.getProjectIfCreated())).distinct()
-      .sortedBy { if (FrameGuests.isFrameGuest(it)) 0 else 1 }
+      .sortedBy { if (IdeFrameGuests.isFrameGuest(it)) 0 else 1 }
     // a light project is closed by `closeProject` without a save, so it has no veto and no preparation
     val heavyProjects = projects.filter { !it.isDisposed && !isLight(it) }
     if (checkCanClose && !heavyProjects.all { canClose(it) }) {
@@ -540,7 +540,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
    */
   private fun frameGuestsToCloseWith(project: Project): List<Project> {
     if (ApplicationManagerEx.getApplicationEx().isExitInProgress) return emptyList()
-    return FrameGuests.frameGuestsOf(project).filter { !it.isDisposed && it.frameGuestOpening == null }
+    return IdeFrameGuests.frameGuestsOf(project).filter { !it.isDisposed && it.frameGuestOpening == null }
   }
 
   /**
@@ -561,7 +561,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
    */
   private fun closeFrameGuests(owner: Project, askedGuests: List<Project>, saveProject: Boolean, checkCanClose: Boolean): Boolean {
     if (ApplicationManagerEx.getApplicationEx().isExitInProgress) return true
-    for (guest in FrameGuests.frameGuestsOf(owner)) {
+    for (guest in IdeFrameGuests.frameGuestsOf(owner)) {
       if (guest.isDisposed || guest.frameGuestOpening?.endForOwnerClose() == true) continue
       val asked = guest in askedGuests
       if (asked) guest.putUserData(FRAME_GUEST_CLOSE_ASKED_KEY, true)
@@ -1566,7 +1566,7 @@ internal fun resolveProjectToClose(
   options: OpenProjectTask,
   openProjects: List<Project>,
   lastFocusedProject: () -> Project?,
-  ownerOf: (Project) -> Project = FrameGuests::frameOwnerOf,
+  ownerOf: (Project) -> Project = IdeFrameGuests::frameOwnerOf,
 ): Project? {
   if (options.frameOwner != null) return null
   options.projectToClose?.let {

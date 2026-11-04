@@ -88,7 +88,7 @@ class ProjectWindowAction(
 
   override fun isSelected(e: AnActionEvent): Boolean {
     // show check mark for active and visible project frame; the entry of the frame owner stands for an active frame guest
-    val project = FrameGuests.frameOwnerOf(e) as? ProjectStoreOwner ?: return false
+    val project = IdeFrameGuests.frameOwnerOf(e) as? ProjectStoreOwner ?: return false
     return projectLocation == project.componentStore.storeDescriptor.presentableUrl
   }
 
