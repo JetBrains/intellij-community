@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.createEditorDockContainer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.PopupCornerType
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
@@ -128,7 +129,14 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   fun addDragSessionListener(listener: DockDragSessionListener, parentDisposable: Disposable) {
     dragSessionListeners.add(listener)
     Disposer.register(parentDisposable) { dragSessionListeners.remove(listener) }
-    currentDragSession?.let { session ->
+    val activeSession = currentDragSession
+      ?: if (listener.isCrossProjectDropTarget()) {
+        getOtherProjectDockManagers().firstNotNullOfOrNull { it.currentDragSession }
+      }
+      else {
+        null
+      }
+    activeSession?.let { session ->
       listener.sessionStarted(session.content)
     }
   }
@@ -198,7 +206,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     }
     val session = MyDragSession(mouseEvent, content)
     currentDragSession = session
-    for (listener in dragSessionListeners) {
+    for (listener in getDragSessionListeners()) {
       listener.sessionStarted(content)
     }
     return session
@@ -207,7 +215,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   fun stopCurrentDragSession() {
     val session = currentDragSession ?: return
 
-    for (listener in dragSessionListeners) {
+    for (listener in getDragSessionListeners()) {
       listener.sessionFinished(session.content)
     }
 
@@ -260,7 +268,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
     override fun getResponse(e: MouseEvent): ContentResponse {
       val point = DevicePoint(e)
-      for (each in getAllContainers().sortedByDescending { it.dropPriority }) {
+      for (each in getDragTargetContainers().sortedByDescending { it.dropPriority }) {
         val rec = each.acceptArea
         if (rec.contains(point)) {
           val component = each.containerComponent
@@ -384,7 +392,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   }
 
   private fun findContainerFor(devicePoint: DevicePoint, content: DockableContent<*>): DockContainer? {
-    val containers = getAllContainers().toMutableList()
+    val containers = getDragTargetContainers().toMutableList()
     getFileManagerContainer()?.let(containers::add)
 
     val startDragContainer = currentDragSession?.startDragContainer
@@ -560,6 +568,28 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     return sequenceOfNotNull(getFileManagerContainer()) + containers.asSequence() + containerToWindow.keys
   }
 
+  private fun getDragTargetContainers(): Sequence<DockContainer> {
+    val crossProjectContainers = getOtherProjectDockManagers()
+      .flatMap { it.containers.asSequence() }
+      .filter { (it as? DockDragSessionListener)?.isCrossProjectDropTarget() == true }
+    return getAllContainers() + crossProjectContainers
+  }
+
+  private fun getDragSessionListeners(): Sequence<DockDragSessionListener> {
+    val crossProjectListeners = getOtherProjectDockManagers()
+      .flatMap { it.dragSessionListeners.asSequence() }
+      .filter { it.isCrossProjectDropTarget() }
+    return dragSessionListeners.asSequence() + crossProjectListeners
+  }
+
+  private fun getOtherProjectDockManagers(): Sequence<DockManagerImpl> {
+    if (project.isDefault) return emptySequence()
+    val projectManager = ProjectManager.getInstanceIfCreated() ?: return emptySequence()
+    return projectManager.openProjects.asSequence()
+      .filter { it !== project && !it.isDisposed && !it.isDefault }
+      .mapNotNull { it.getServiceIfCreated(DockManager::class.java) as? DockManagerImpl }
+  }
+
   private fun getFileManagerContainer(): DockContainer? {
     return if (project.isDefault) null else FileEditorManagerEx.getInstanceEx(project).dockContainer
   }
@@ -616,6 +646,8 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
  */
 @ApiStatus.Internal
 interface DockDragSessionListener {
+  fun isCrossProjectDropTarget(): Boolean = false
+
   fun sessionStarted(content: DockableContent<*>)
 
   fun sessionFinished(content: DockableContent<*>)
