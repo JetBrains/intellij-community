@@ -11402,20 +11402,6 @@
       ]
     },
     {
-      "name": "RubyStubsGeneratedCache",
-      "scope": "app",
-      "pluginId": "org.jetbrains.plugins.ruby",
-      "classFqn": "org.jetbrains.plugins.ruby.ruby.codeInsight.nativerb.RubyStubBuilderService",
-      "storage": "gemmanager.xml",
-      "properties": [
-        {
-          "name": "map",
-          "type": "StringMap",
-          "javaType": "java.util.Map"
-        }
-      ]
-    },
-    {
       "name": "RubyTypeRenderersSettings",
       "scope": "app",
       "pluginId": "org.jetbrains.plugins.ruby",
