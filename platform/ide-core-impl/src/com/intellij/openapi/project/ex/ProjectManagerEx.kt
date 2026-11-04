@@ -5,6 +5,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus.Experimental
@@ -85,6 +86,7 @@ abstract class ProjectManagerEx : ProjectManager() {
    * [beforeInit] runs on the new project before the project registers its components and reads its settings.
    */
   @Internal
+  @RequiresBlockingContext
   abstract fun loadProject(path: Path, beforeInit: ((Project) -> Unit)? = null): Project
 
   /**
