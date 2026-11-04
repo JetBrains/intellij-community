@@ -77,10 +77,8 @@ internal class ColorsSchemeSnapshotTest {
   fun `a state with function returns the same snapshot for the same value`() {
     val current = newSnapshot()
       .withSchemeName("Scheme")
-      .withVersion(1)
       .withCanBeDeleted(false)
     assertThat(current.withSchemeName("Scheme")).isSameAs(current)
-    assertThat(current.withVersion(1)).isSameAs(current)
     assertThat(current.withCanBeDeleted(false)).isSameAs(current)
     assertThat(current.withParentScheme(null)).isSameAs(current)
   }
@@ -89,14 +87,12 @@ internal class ColorsSchemeSnapshotTest {
   fun `withColorsAndAttributesOf takes only the colors and the text attributes`() {
     val source = newSnapshot()
       .withSchemeName("Source")
-      .withVersion(1)
       .withCanBeDeleted(false)
       .withColor(FIRST, Color.RED)
       .withAttributes(FIRST_NAME, BOLD)
     val target = newSnapshot().withSchemeName("Target")
     val result = target.withColorsAndAttributesOf(source)
     assertThat(result.schemeName()).isEqualTo("Target")
-    assertThat(result.version()).isEqualTo(AbstractColorsScheme.CURR_VERSION)
     assertThat(result.canBeDeleted()).isTrue()
     assertThat(result.fontPreferences()).isSameAs(target.fontPreferences())
     assertThat(result.colors()).isSameAs(source.colors())

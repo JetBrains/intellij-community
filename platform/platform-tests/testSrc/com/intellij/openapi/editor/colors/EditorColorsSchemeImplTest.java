@@ -1367,6 +1367,51 @@ public class EditorColorsSchemeImplTest {
   }
 
   @Test
+  public void testReaderOnOtherThreadAlwaysSeesMetaProperties() throws Exception {
+    Element first = JDOMUtil.load(metaInfoScheme("first"));
+    Element second = JDOMUtil.load(metaInfoScheme("second"));
+    myScheme.readExternal(first);
+    AtomicBoolean stop = new AtomicBoolean();
+    AtomicInteger halfDone = new AtomicInteger();
+    AtomicReference<Throwable> readerFailure = new AtomicReference<>();
+    Thread reader = new Thread(() -> {
+      try {
+        while (!stop.get()) {
+          if (myScheme.getMetaProperties().getProperty(META_PROPERTY) == null) {
+            halfDone.incrementAndGet();
+          }
+        }
+      }
+      catch (Throwable e) {
+        readerFailure.set(e);
+      }
+    }, "EditorColorsSchemeImplTest meta properties reader");
+    reader.start();
+    try {
+      for (int i = 0; i < 20_000; i++) {
+        myScheme.readExternal(i % 2 == 0 ? second : first);
+      }
+    }
+    finally {
+      stop.set(true);
+      reader.join();
+    }
+    assertNull(readerFailure.get());
+    assertEquals(0, halfDone.get());
+  }
+
+  @Test
+  public void testReadOfOldVersionWritesCurrentVersion() throws Exception {
+    EditorColorsScheme scheme = loadScheme(
+      """
+        <scheme name="OldVersion" version="141" parent_scheme="Default" />
+        """
+    );
+    Element written = serialize(scheme);
+    assertEquals(Integer.toString(AbstractColorsScheme.CURR_VERSION), written.getAttributeValue("version"));
+  }
+
+  @Test
   public void testToStringOfSchemeWithoutName() {
     assertEquals("<unnamed scheme>", myScheme.toString());
     myScheme.setName("Named");
@@ -1519,6 +1564,18 @@ public class EditorColorsSchemeImplTest {
     } finally {
       settings.setPresentationMode(presentationMode);
     }
+  }
+
+  private static final String META_PROPERTY = "EditorColorsSchemeImplTest.meta";
+
+  private static @NotNull String metaInfoScheme(@NotNull String value) {
+    return """
+      <scheme name="MetaInfo" version="142">
+        <metaInfo>
+          <property name="%s">%s</property>
+        </metaInfo>
+      </scheme>
+      """.formatted(META_PROPERTY, value);
   }
 
   private static @NotNull String fontOptionsScheme(int fontSize, @NotNull String lineSpacing) {

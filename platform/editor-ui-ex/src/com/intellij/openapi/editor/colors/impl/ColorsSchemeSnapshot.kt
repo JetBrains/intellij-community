@@ -11,7 +11,7 @@ import java.util.function.BiPredicate
 
 /**
  * An immutable snapshot of the state of one [AbstractColorsScheme].
- * It has the name, the version and the parent scheme of the scheme, and it tells if a user can delete the scheme.
+ * It has the name and the parent scheme of the scheme, and it tells if a user can delete the scheme.
  * It has the own font preferences of the editor and of the console, and it tells if the scheme uses them.
  * It also has the colors and the text attributes that the scheme defines itself, without the values of the parent scheme.
  * The scheme keeps its current snapshot in one volatile field and replaces the snapshot on each change.
@@ -22,7 +22,6 @@ import java.util.function.BiPredicate
 @ApiStatus.Internal
 class ColorsSchemeSnapshot private constructor(
   private val schemeName: String?, // null until the scheme gets a name
-  private val version: Int, // the version of the XML format
   private val parentScheme: EditorColorsScheme?,
   private val canBeDeleted: Boolean,
   private val fontPreferences: FontPreferencesSnapshot, // the own editor font, unused while the scheme uses the application font
@@ -33,8 +32,6 @@ class ColorsSchemeSnapshot private constructor(
   private val attributes: Map<String, TextAttributes>, // the text attributes by the external name of their key
 ) {
   fun schemeName(): String? = schemeName
-
-  fun version(): Int = version
 
   fun parentScheme(): EditorColorsScheme? = parentScheme
 
@@ -70,10 +67,6 @@ class ColorsSchemeSnapshot private constructor(
 
   fun withSchemeName(schemeName: String): ColorsSchemeSnapshot {
     return copy(schemeName = schemeName)
-  }
-
-  fun withVersion(version: Int): ColorsSchemeSnapshot {
-    return copy(version = version)
   }
 
   fun withParentScheme(parentScheme: EditorColorsScheme?): ColorsSchemeSnapshot {
@@ -171,7 +164,6 @@ class ColorsSchemeSnapshot private constructor(
 
   private fun copy(
     schemeName: String? = this.schemeName,
-    version: Int = this.version,
     parentScheme: EditorColorsScheme? = this.parentScheme,
     canBeDeleted: Boolean = this.canBeDeleted,
     fontPreferences: FontPreferencesSnapshot = this.fontPreferences,
@@ -182,7 +174,6 @@ class ColorsSchemeSnapshot private constructor(
     attributes: Map<String, TextAttributes> = this.attributes,
   ): ColorsSchemeSnapshot {
     if (schemeName == this.schemeName &&
-        version == this.version &&
         parentScheme === this.parentScheme &&
         canBeDeleted == this.canBeDeleted &&
         fontPreferences === this.fontPreferences &&
@@ -195,7 +186,6 @@ class ColorsSchemeSnapshot private constructor(
     }
     return ColorsSchemeSnapshot(
       schemeName,
-      version,
       parentScheme,
       canBeDeleted,
       fontPreferences,
@@ -212,13 +202,11 @@ class ColorsSchemeSnapshot private constructor(
      * Returns the snapshot of a new scheme.
      * The scheme uses the application font in the editor and the editor font in the console.
      * It has no name, no parent scheme, no colors and no text attributes, and a user can delete it.
-     * Its version is [AbstractColorsScheme.CURR_VERSION].
      */
     @JvmStatic
     fun initial(): ColorsSchemeSnapshot {
       return ColorsSchemeSnapshot(
         schemeName = null,
-        version = AbstractColorsScheme.CURR_VERSION,
         parentScheme = null,
         canBeDeleted = true,
         fontPreferences = FontPreferencesSnapshot.EMPTY,

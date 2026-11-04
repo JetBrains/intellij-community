@@ -91,7 +91,6 @@ final class ColorsSchemeSerDe {
         readScheme(scheme, element, valueReader);
       }
     }
-    scheme.updateSnapshot(current -> current.withVersion(CURR_VERSION));
   }
 
   /**
@@ -145,7 +144,7 @@ final class ColorsSchemeSerDe {
     boolean consoleDelegating = current.useEditorFontPreferencesInConsole();
     Properties metaInfo = scheme.getMetaProperties();
     parentNode.setAttribute(NAME_ATTR, scheme.getName());
-    parentNode.setAttribute(VERSION_ATTR, Integer.toString(current.version()));
+    parentNode.setAttribute(VERSION_ATTR, Integer.toString(CURR_VERSION));
     /*
      * FONT_SCALE is used to correctly identify the font size in both the JRE-managed HiDPI mode and
      * the IDE-managed HiDPI mode: {@link UIUtil#isJreHiDPIEnabled()}. Also, it helps to distinguish
@@ -249,8 +248,7 @@ final class ColorsSchemeSerDe {
     EditorColorsScheme newParent = isDefault
                                    ? null
                                    : getDefaultScheme(node.getAttributeValue(PARENT_SCHEME_ATTR, EmptyColorScheme.getSchemeName()));
-    Properties metaInfo = scheme.getMetaProperties();
-    metaInfo.clear();
+    Properties metaInfo = new Properties();
     ColorsSchemeFontDraft fonts = scheme.createFontDraft(scheme.getSnapshot());
     Ref<Float> fontScale = new Ref<>();
     boolean clearEditorFonts = true;
@@ -282,10 +280,10 @@ final class ColorsSchemeSerDe {
     fillEmptyConsoleFont(fonts);
     ColorsSchemeSnapshot readFonts = fonts.snapshot();
     Color deprecatedBackgroundColor = backgroundColor.get();
+    scheme.replaceMetaProperties(metaInfo);
     scheme.updateSnapshot(current -> {
       ColorsSchemeSnapshot loaded = current
         .withFontsOf(readFonts)
-        .withVersion(readVersion)
         .withAllColors(colors)
         .withAllAttributes(attributes);
       if (newParent != null) {

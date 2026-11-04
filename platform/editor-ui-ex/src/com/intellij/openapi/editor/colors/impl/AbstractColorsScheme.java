@@ -418,7 +418,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
         LOG.debug("Copying scheme " + debugSchemeName() + " to " + newScheme.debugSchemeName() + delegateInfo);
       }
     }
-    newScheme.updateSnapshot(current -> current.withColorsAndAttributesOf(source).withVersion(source.version()));
+    newScheme.updateSnapshot(current -> current.withColorsAndAttributesOf(source));
   }
 
   /**
@@ -717,6 +717,18 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
       }
     }
     return true;
+  }
+
+  /**
+   * Replaces the meta properties of this scheme with {@code properties}.
+   * It removes only the properties that {@code properties} does not have, and then puts the new values.
+   * So a reader on another thread never misses a property that the old and the new properties both have.
+   */
+  void replaceMetaProperties(@NotNull Properties properties) {
+    synchronized (metaInfo) {
+      metaInfo.keySet().retainAll(properties.keySet());
+      metaInfo.putAll(properties);
+    }
   }
 
   /**
