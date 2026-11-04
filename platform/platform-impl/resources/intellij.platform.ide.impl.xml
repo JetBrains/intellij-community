@@ -455,6 +455,8 @@
     <extensionPoint qualifiedName="com.intellij.diagnostic.freezeNotifier" interface="com.intellij.diagnostic.FreezeNotifier" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenAccessPoint"
                     interface="com.intellij.ide.welcomeScreen.WelcomeAccessPoint" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lightModeProjectMigration"
+                    interface="com.intellij.ide.startup.LightModeProjectMigration" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <iw.actionProvider implementation="com.intellij.openapi.editor.impl.multiverse.CodeInsightContextSwitcherProvider"/>
