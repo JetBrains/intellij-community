@@ -1,48 +1,67 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.openapi.vcs.VcsShowConfirmationOption
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.vcs.AbstractVcsTestCase
+import com.intellij.vcs.test.refresh
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
+import git4idea.GitVcs
 import git4idea.index.vfs.GitIndexFileSystemRefresher
-import git4idea.test.GitSingleRepoTest
-import junit.framework.TestCase
+import git4idea.test.GitSingleRepoContext
+import git4idea.test.git
+import git4idea.test.gitSingleRepoContextFixture
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.apache.commons.lang3.RandomStringUtils
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
 
-class GitStageTrackerTest : GitSingleRepoTest() {
-  private var _tracker: GitStageTracker? = null
+private val LOG = logger<GitStageTrackerTest>()
 
-  private val tracker get() = _tracker!!
+@TestApplication
+class GitStageTrackerTest {
+  private val fixture = gitSingleRepoContextFixture()
+  private val context: GitSingleRepoContext get() = fixture.get()
 
-  override fun setUp() {
-    super.setUp()
-    VcsConfiguration.StandardConfirmation.ADD.doNothing()
+  @TestDisposable
+  private lateinit var disposable: Disposable
+
+  private lateinit var tracker: GitStageTracker
+
+  @BeforeEach
+  fun setUp(): Unit = with(context) {
+    AbstractVcsTestCase.setStandardConfirmation(project, GitVcs.NAME, VcsConfiguration.StandardConfirmation.ADD,
+                                                VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY)
     runBlocking {
       repo.untrackedFilesHolder.awaitNotBusy()
     }
-    _tracker = object : GitStageTracker(project) {
+    tracker = object : GitStageTracker(project) {
       override fun isStagingAreaAvailable() = true
     }
+    Disposer.register(disposable, tracker)
     project.messageBus.connect(tracker).subscribe(FileDocumentManagerListener.TOPIC, object : GitStageFileDocumentManagerListener() {
       override fun getTrackers(): List<GitStageTracker> = listOf(tracker)
     })
@@ -51,131 +70,108 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     }, tracker)
   }
 
-  override fun tearDown() {
-    try {
-      val t = _tracker
-      _tracker = null
-      t?.let { Disposer.dispose(it) }
-      runBlocking {
-        repo.untrackedFilesHolder.awaitNotBusy()
-      }
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
+  @AfterEach
+  fun tearDown() {
+    runBlocking {
+      context.repo.untrackedFilesHolder.awaitNotBusy()
     }
   }
 
-  fun `test unstaged`() {
+  @Test
+  fun `test unstaged`(): Unit = with(context) {
     val fileName = "file.txt"
-    Executor.touch(fileName, RandomStringUtils.randomAlphanumeric(200))
+    touch(fileName, RandomStringUtils.insecure().nextAlphanumeric(200))
     git("add .")
     git("commit -m file")
 
     runWithTrackerUpdate("refresh") {
       refresh()
     }
-    assertTrue(trackerState().isEmpty())
+    assertThat(trackerState().statuses).isEmpty()
 
     val file = projectRoot.findChild(fileName)!!
-    val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!! }
+    val document = runReadActionBlocking { FileDocumentManager.getInstance().getDocument(file)!! }
 
     runWithTrackerUpdate("setText") {
-      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
+      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.insecure().nextAlphanumeric(100)) } }
     }
-    trackerState().let { state ->
-      TestCase.assertEquals(GitFileStatus(' ', 'M', VcsUtil.getFilePath(file)),
-                            state.statuses.getValue(VcsUtil.getFilePath(file)))
-    }
+    assertThat(trackerState().statuses.getValue(VcsUtil.getFilePath(file)))
+      .isEqualTo(GitFileStatus(' ', 'M', VcsUtil.getFilePath(file)))
 
     runWithTrackerUpdate("saveDocument") {
       invokeAndWaitIfNeeded { FileDocumentManager.getInstance().saveDocument(document) }
     }
-    trackerState().let { state ->
-      TestCase.assertEquals(GitFileStatus(' ', 'M', VcsUtil.getFilePath(file)),
-                            state.statuses.getValue(VcsUtil.getFilePath(file)))
-    }
+    assertThat(trackerState().statuses.getValue(VcsUtil.getFilePath(file)))
+      .isEqualTo(GitFileStatus(' ', 'M', VcsUtil.getFilePath(file)))
   }
 
-  fun `test staged`() {
+  @Test
+  fun `test staged`(): Unit = with(context) {
     val fileName = "file.txt"
-    Executor.touch(fileName, RandomStringUtils.randomAlphanumeric(200))
+    touch(fileName, RandomStringUtils.insecure().nextAlphanumeric(200))
     git("add .")
     git("commit -m file")
 
     runWithTrackerUpdate("refresh") {
       refresh()
     }
-    assertTrue(trackerState().isEmpty())
+    assertThat(trackerState().statuses).isEmpty()
 
     val file = projectRoot.findChild(fileName)!!
     val indexFile = project.service<GitIndexFileSystemRefresher>().createFile(projectRoot, VcsUtil.getFilePath(file))!!
-    val document = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile)!! }
+    val document = runReadActionBlocking { FileDocumentManager.getInstance().getDocument(indexFile)!! }
 
     runWithTrackerUpdate("setText") {
-      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
+      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.insecure().nextAlphanumeric(100)) } }
     }
-    trackerState().let { state ->
-      TestCase.assertEquals(GitFileStatus('M', ' ', VcsUtil.getFilePath(file)),
-                            state.statuses.getValue(VcsUtil.getFilePath(file)))
-    }
+    assertThat(trackerState().statuses.getValue(VcsUtil.getFilePath(file)))
+      .isEqualTo(GitFileStatus('M', ' ', VcsUtil.getFilePath(file)))
 
     runWithTrackerUpdate("saveDocument") {
       invokeAndWaitIfNeeded { FileDocumentManager.getInstance().saveDocument(document) }
     }
-    trackerState().let { state ->
-      TestCase.assertEquals(GitFileStatus('M', 'M', VcsUtil.getFilePath(file)),
-                            state.statuses.getValue(VcsUtil.getFilePath(file)))
-    }
+    assertThat(trackerState().statuses.getValue(VcsUtil.getFilePath(file)))
+      .isEqualTo(GitFileStatus('M', 'M', VcsUtil.getFilePath(file)))
   }
 
-  fun `test untracked`() {
+  @Test
+  fun `test untracked`(): Unit = with(context) {
     val fileName = "file.txt"
-    val file = runWithTrackerUpdate("createChildData") {
-      invokeAndWaitIfNeeded { runWriteAction { projectRoot.createChildData(this, fileName) } }
-        .also { AsyncVfsEventsPostProcessorImpl.waitEventsProcessed() }
-    }
-    TestCase.assertEquals(GitFileStatus('?', '?', VcsUtil.getFilePath(file)),
-                          awaitTrackerStatus(VcsUtil.getFilePath(projectRoot, fileName)))
+    val file = invokeAndWaitIfNeeded { runWriteAction { projectRoot.createChildData(this, fileName) } }
+    AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
+    assertThat(awaitTrackerStatus(VcsUtil.getFilePath(projectRoot, fileName)))
+      .isEqualTo(GitFileStatus('?', '?', VcsUtil.getFilePath(file)))
 
-    val document = runReadAction { FileDocumentManager.getInstance().getDocument(file)!! }
+    val document = runReadActionBlocking { FileDocumentManager.getInstance().getDocument(file)!! }
 
     runWithTrackerUpdate("setText") {
-      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.randomAlphanumeric(100)) } }
+      invokeAndWaitIfNeeded { runWriteAction { document.setText(RandomStringUtils.insecure().nextAlphanumeric(100)) } }
     }
-    trackerState().let { state ->
-      TestCase.assertEquals(GitFileStatus('?', '?', VcsUtil.getFilePath(file)),
-                            state.statuses.getValue(VcsUtil.getFilePath(file)))
-    }
+    assertThat(trackerState().statuses.getValue(VcsUtil.getFilePath(file)))
+      .isEqualTo(GitFileStatus('?', '?', VcsUtil.getFilePath(file)))
 
     runWithTrackerUpdate("saveDocument") {
       invokeAndWaitIfNeeded { FileDocumentManager.getInstance().saveDocument(document) }
     }
-    trackerState().let { state ->
-      TestCase.assertEquals(GitFileStatus('?', '?', VcsUtil.getFilePath(file)),
-                            state.statuses.getValue(VcsUtil.getFilePath(file)))
-    }
+    assertThat(trackerState().statuses.getValue(VcsUtil.getFilePath(file)))
+      .isEqualTo(GitFileStatus('?', '?', VcsUtil.getFilePath(file)))
   }
 
-  private fun trackerState() = tracker.state.rootStates.getValue(projectRoot)
+  private fun trackerState() = tracker.state.rootStates.getValue(context.projectRoot)
 
-  private fun awaitTrackerStatus(filePath: FilePath): GitFileStatus = runBlocking {
-    withTimeout(2.seconds) {
-      var status = trackerState().statuses[filePath]
-      while (status == null) {
-        delay(10.milliseconds)
-        status = trackerState().statuses[filePath]
-      }
-      status
+  private fun awaitTrackerStatus(filePath: FilePath): GitFileStatus = timeoutRunBlocking {
+    var status = trackerState().statuses[filePath]
+    while (status == null) {
+      delay(10.milliseconds)
+      status = trackerState().statuses[filePath]
     }
+    status
   }
 
   private fun <T> runWithTrackerUpdate(name: String, function: () -> T): T {
     return tracker.futureUpdate(name).let { futureUpdate ->
       val result = function()
-      changeListManager.waitEverythingDoneInTestMode()
+      context.changeListManager.waitEverythingDoneInTestMode()
       futureUpdate.waitOrCancel()
       return@let result
     }
@@ -195,7 +191,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     val future = SettableFuture.create<Unit>()
     addListener(object : GitStageTrackerListener {
       override fun update() {
-        UsefulTestCase.LOG.debug("Refreshed tracker after \"$name\"")
+        LOG.debug("Refreshed tracker after \"$name\"")
         future.set(Unit)
       }
     }, removeListener)
