@@ -854,6 +854,8 @@ internal class BazelBuildFileGenerator(
         option("associates", deps.associates.sorted())
       }
 
+      insertManuallyWrittenAttributes(manuallyWrittenAttributes.getManuallyWrittenAttributes(moduleDescriptor, DATA_ATTRIBUTE))
+
       if (javacOptionsLabel != null && sources.isNotEmpty()) {
         option("javac_opts", javacOptionsLabel)
       }

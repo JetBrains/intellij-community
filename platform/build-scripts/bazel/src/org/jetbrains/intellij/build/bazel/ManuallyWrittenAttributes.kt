@@ -30,8 +30,9 @@ internal fun Target.insertManuallyWrittenAttributes(manuallyWrittenAttributes: L
   }
 }
 
+internal const val DATA_ATTRIBUTE = "data"
 internal const val NON_CLASSPATH_DATA_ATTRIBUTE = "non_classpath_data"
-private val MANUALLY_WRITTEN_ATTRIBUTES = setOf(NON_CLASSPATH_DATA_ATTRIBUTE)
+private val MANUALLY_WRITTEN_ATTRIBUTES = setOf(DATA_ATTRIBUTE, NON_CLASSPATH_DATA_ATTRIBUTE)
 
 private val FUNCTION_CALL_REGEX = Regex("""([a-zA-Z_][a-zA-Z0-9_]*)\(""")
 private val ATTRIBUTE_ASSIGNMENT_REGEX = Regex(""" *([a-zA-Z_][a-zA-Z0-9_]*) = (.*)""")
