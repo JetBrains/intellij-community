@@ -12,6 +12,7 @@ import java.util.ServiceLoader
  * Housekeeping for eel environment
  */
 @VisibleToClasses(
+    "com.intellij.draft.remote.agent.DraftAgentForwarding",
     "com.intellij.platform.eel.impl.provider.EelEnvironmentHousekeepingServiceProviderImpl",
     "com.intellij.platform.eel.impl.provider.IjentEnvironmentServiceProviderImplBridge",
     "com.intellij.platform.ijent.impl.base.GrpcIjentExecApiDelegate",
