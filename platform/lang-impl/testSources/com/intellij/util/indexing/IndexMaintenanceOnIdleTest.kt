@@ -9,6 +9,7 @@ import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -107,25 +108,28 @@ internal class IndexMaintenanceOnIdleTest {
   }
 
   @Test
-  fun `user input during maintenance preserves the initial interval`() = runTest {
+  fun `user input during maintenance cancels the round and preserves the initial interval`() = runTest {
     val events = MutableSharedFlow<Unit>(replay = 1)
     events.emit(Unit)
     var maintenanceCount = 0
+    var cancellationObserved = false
     backgroundScope.launch {
-      runMaintenanceOnIdle(events, 20.minutes, timeSource = testScheduler.timeSource) {
+      runMaintenanceOnIdle(events, 20.minutes, timeSource = testScheduler.timeSource) { cancellationRequested ->
         maintenanceCount++
         if (maintenanceCount == 1) {
           // Simulate a user event processed by the modal progress
           events.tryEmit(Unit)
           testScheduler.runCurrent()
+          cancellationObserved = cancellationRequested.asBoolean
         }
-        true
+        !cancellationRequested.asBoolean
       }
     }
 
     advanceTimeBy(20.minutes)
     runCurrent()
     assertEquals(1, maintenanceCount)
+    assertTrue(cancellationObserved, "Maintenance must observe user input as cancellation")
 
     advanceTimeBy(19.minutes + 59.seconds)
     runCurrent()

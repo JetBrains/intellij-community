@@ -6,6 +6,7 @@ package com.intellij.util.indexing
 import com.intellij.ide.IdleTracker
 import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
@@ -18,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics
 import com.intellij.util.SystemProperties.getFloatProperty
 import com.intellij.util.SystemProperties.getIntProperty
+import com.intellij.util.indexing.impl.storage.HousekeepingRunner
 import com.intellij.util.indexing.impl.storage.IndexMaintenance
 import com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider
 import kotlinx.coroutines.CoroutineScope
@@ -38,6 +40,8 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
+import java.util.concurrent.atomic.AtomicLong
+import java.util.function.BooleanSupplier
 
 private val LOG = logger<IndexMaintenanceService>()
 
@@ -58,6 +62,7 @@ private val MAINTENANCE_INTERVAL_MULTIPLIER = getFloatProperty("ide.index.mainte
 class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableDatabaseIndexLayoutProvider> {
   private val lock = Any()
   private var activeProvider: DurableDatabaseIndexLayoutProvider? = null
+  private var activeHousekeepingRunner: HousekeepingRunner? = null
   /**
    * During the maintenance round the [DurableDatabaseIndexLayoutProvider] could be closed/recreated, leaving [activeProvider] empty.
    * To not occasionally disable the maintenance because of that, we set `maintenanceInProgress=true` during this gap.
@@ -102,10 +107,14 @@ class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableD
     }
   }
 
-  override fun registerForMaintenance(provider: DurableDatabaseIndexLayoutProvider): AutoCloseable {
+  override fun registerForMaintenance(
+    provider: DurableDatabaseIndexLayoutProvider,
+    housekeepingRunner: HousekeepingRunner,
+  ): AutoCloseable {
     synchronized(lock) {
       check(activeProvider == null) { "Provider is already registered: $activeProvider" }
       activeProvider = provider
+      activeHousekeepingRunner = housekeepingRunner
       providerBaselineMetrics = null
       updateEnabledLocked()
     }
@@ -113,6 +122,7 @@ class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableD
       synchronized(lock) {
         if (activeProvider === provider) {
           activeProvider = null
+          activeHousekeepingRunner = null
           providerBaselineMetrics = null
         }
         updateEnabledLocked()
@@ -120,7 +130,10 @@ class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableD
     }
   }
 
-  /** Releases the lock before the action can close or replace a provider */
+  /**
+   * Runs the action without the service lock, so the action can close or replace the active provider
+   * @return true if action completed successfully, false if action wasn't executed because preconditions weren't met
+   */
   fun tryRunMaintenance(expectedProvider: DurableDatabaseIndexLayoutProvider? = null, action: () -> Unit): Boolean {
     synchronized(lock) {
       if (activeProvider == null || maintenanceInProgress ||
@@ -140,28 +153,53 @@ class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableD
     }
   }
 
-  /** Shows the modal progress while the tumbler consumes EDT */
-  private suspend fun runMaintenanceWithProgress(): Boolean {
-    val provider = synchronized(lock) { activeProvider } ?: return false
+  /** Runs regular housekeeping, then shows the modal progress while the tumbler consumes EDT */
+  @VisibleForTesting
+  suspend fun runMaintenanceWithProgress(cancellationRequested: BooleanSupplier): Boolean {
+    lateinit var provider: DurableDatabaseIndexLayoutProvider
+    lateinit var housekeepingRunner: HousekeepingRunner
+    synchronized(lock) {
+      provider = activeProvider ?: return false
+      housekeepingRunner = activeHousekeepingRunner ?: return false
+    }
+
+    // 1) let regular housekeepers do their job
+    // 2) Check DB metrics: is full defragmentation worthwhile?
+    // 3) If yes -> run full defragmentation
+
+    if (!runRegularHousekeeping(provider, housekeepingRunner, cancellationRequested)) {
+      return false
+    }
+
     val metrics = withContext(Dispatchers.Default) { provider.databaseMetrics() }
-    val previous = synchronized(lock) { providerBaselineMetrics }
+    val previousMetrics = synchronized(lock) {
+      if (activeProvider !== provider || activeHousekeepingRunner !== housekeepingRunner) {
+        LOG.warn("Maintenance stopped because the database provider changed")
+        return false
+      }
+      providerBaselineMetrics
+    }
+    if (cancellationRequested.asBoolean) {
+      LOG.info("Maintenance cancelled after regular housekeeping")
+      return false
+    }
     if (metrics === DatabaseMetrics.DUMMY) {
       LOG.info("Maintenance skipped: database metrics are unavailable")
       return false
     }
-    val current = metrics.forMaintenance()
-    if (!shouldRunMaintenance(current, previous)) {
-      if (current.sealedChunks == 0 && current.retiredChunks == 0) {
+    val currentMetrics = metrics.forMaintenance()
+    if (!shouldRunMaintenance(currentMetrics, previousMetrics)) {
+      if (currentMetrics.sealedChunks == 0 && currentMetrics.retiredChunks == 0) {
         LOG.info("Maintenance skipped: no sealed or retired chunks")
       }
-      else if (previous != null) {
-        LOG.info("Maintenance skipped: sealed chunks=${current.sealedChunks}; since the previous round, " +
-                 "created chunks=${current.createdChunks - previous.createdChunks}, " +
-                 "allocated blocks=${current.allocatedBlocks - previous.allocatedBlocks}, " +
-                 "retired blocks=${current.retiredBlocks - previous.retiredBlocks}; " +
-                 "block threshold=${blockGrowthThreshold(previous.totalBlocks)}")
+      else if (previousMetrics != null) {
+        LOG.info("Maintenance skipped: sealed chunks=${currentMetrics.sealedChunks}; since the previous round, " +
+                 "created chunks=${currentMetrics.createdChunks - previousMetrics.createdChunks}, " +
+                 "allocated blocks=${currentMetrics.allocatedBlocks - previousMetrics.allocatedBlocks}, " +
+                 "retired blocks=${currentMetrics.retiredBlocks - previousMetrics.retiredBlocks}; " +
+                 "block threshold=${blockGrowthThreshold(previousMetrics.totalBlocks)}")
       }
-      return false
+      return true
     }
     val title = IndexingBundle.message("indexes.defragmentation.progress.title")
     val progress = PotemkinProgress(title, null, null, null) //use PotemkinProgress because we block EDT
@@ -171,7 +209,13 @@ class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableD
     progress.runInSwingThread {
       progress.text2 = IndexingBundle.message("indexes.defragmentation.progress.closing")
       progress.interact()
+      if (cancellationRequested.asBoolean) {
+        LOG.info("Maintenance cancelled before index defragmentation")
+        return@runInSwingThread
+      }
+
       completed = tryRunMaintenance(provider) {
+        LOG.info("Index defragmentation started")
         val tumbler = FileBasedIndexTumbler("Idle index maintenance")
         try {
           tumbler.turnOffLightweight()
@@ -187,19 +231,67 @@ class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableD
             tumbler.turnOnLightweight()
           }
         }
+        LOG.info("Index defragmentation completed")
       }
+    }
+    if (!completed && !cancellationRequested.asBoolean) {
+      LOG.info("Index defragmentation skipped because the database provider changed or maintenance is already in progress")
     }
     if (completed) {
       val currentProvider = synchronized(lock) { activeProvider }
-      val metrics = withContext(Dispatchers.Default) { currentProvider?.databaseMetrics() }
+      val metricsAfterDefragmentation = withContext(Dispatchers.Default) { currentProvider?.databaseMetrics() }
       synchronized(lock) {
-        providerBaselineMetrics = if (currentProvider != null && currentProvider === activeProvider && metrics != null && metrics !== DatabaseMetrics.DUMMY) {
-          metrics.forMaintenance()
+        if (currentProvider != null && currentProvider === activeProvider
+            && metricsAfterDefragmentation != null && metricsAfterDefragmentation !== DatabaseMetrics.DUMMY) {
+          providerBaselineMetrics = metricsAfterDefragmentation.forMaintenance()
         }
         else null
       }
     }
     return completed
+  }
+
+  /** Runs a single round of regular (!startup) housekeeping: let all registered housekeepers do one pass */
+  private suspend fun runRegularHousekeeping(
+    provider: DurableDatabaseIndexLayoutProvider,
+    housekeepingRunner: HousekeepingRunner,
+    cancellationRequested: BooleanSupplier,
+  ): Boolean {
+    if (cancellationRequested.asBoolean) {
+      LOG.info("Regular index housekeeping cancelled before the round started")
+      return false
+    }
+
+    var completed = false
+    val started = try {
+      withContext(Dispatchers.IO) {
+        tryRunMaintenance(provider) {
+          completed = housekeepingRunner.runHousekeepingRound(cancellationRequested)
+        }
+      }
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      LOG.warn("Regular index housekeeping failed", e)
+      return false
+    }
+    if (!started) {
+      LOG.info("Regular index housekeeping skipped because the database provider changed or maintenance is already in progress")
+      return false
+    }
+    if (!completed || cancellationRequested.asBoolean) {
+      LOG.info("Regular index housekeeping cancelled")
+      return false
+    }
+    val providerIsActive = synchronized(lock) {
+      activeProvider === provider && activeHousekeepingRunner === housekeepingRunner
+    }
+    if (!providerIsActive) {
+      LOG.info("Regular index housekeeping stopped because the database provider changed")
+      return false
+    }
+    LOG.info("Regular index housekeeping completed")
+    return true
   }
 
   private fun fetchBackgroundActivity(): BackgroundActivities {
@@ -228,7 +320,7 @@ class IndexMaintenanceService(scope: CoroutineScope) : IndexMaintenance<DurableD
   }
 
   private fun updateEnabledLocked() {
-    maintenanceEnabled.value = activeProvider != null || maintenanceInProgress
+    maintenanceEnabled.value = (activeProvider != null && activeHousekeepingRunner != null) || maintenanceInProgress
   }
 }
 
@@ -292,7 +384,7 @@ suspend fun runMaintenanceOnIdle(
   backgroundActivities: () -> BackgroundActivities = { BackgroundActivities() },
   timeSource: TimeSource = TimeSource.Monotonic,
   powerSaveMode: () -> Boolean = { false },
-  maintenance: suspend () -> Boolean,
+  maintenance: suspend (BooleanSupplier) -> Boolean,
 ): Unit = coroutineScope {
   require(delayMultiplier.isFinite() && delayMultiplier >= 1.0) {
     "The maintenance interval multiplier(=$delayMultiplier) must be finite and >=1"
@@ -300,10 +392,12 @@ suspend fun runMaintenanceOnIdle(
 
   var lastUserActivity = timeSource.markNow()
   var repeatDelay = initialIdleDelay
+  val edtEventNo = AtomicLong()
   launch {
     edtEventFinished.collect {
       lastUserActivity = timeSource.markNow()
       repeatDelay = initialIdleDelay
+      edtEventNo.incrementAndGet()
     }
   }
 
@@ -339,15 +433,20 @@ suspend fun runMaintenanceOnIdle(
     }
 
     val startedAt = timeSource.markNow()
-    val userActivityBeforeMaintenance = lastUserActivity
+    val edtEventNoBeforeMaintenance = edtEventNo.get()
+    val maintenanceContext = currentCoroutineContext()
+    val cancellationRequested = BooleanSupplier {
+      //interrupt housekeeping if any EDT event happens:
+      edtEventNo.get() != edtEventNoBeforeMaintenance || !maintenanceContext.isActive
+    }
     LOG.info("Maintenance round started")
-    if (!maintenance()) {
+    if (!maintenance(cancellationRequested)) {
       LOG.info("Maintenance round skipped")
       continue
     }
     lastMaintenanceCompletedAt = timeSource.markNow()
     // The modal progress can process user events during maintenance
-    if (lastUserActivity == userActivityBeforeMaintenance) {
+    if (edtEventNo.get() == edtEventNoBeforeMaintenance) {
       repeatDelay *= delayMultiplier
     }
     LOG.info("Maintenance round completed in ${startedAt.elapsedNow().inWholeMilliseconds}ms; next round in $repeatDelay")

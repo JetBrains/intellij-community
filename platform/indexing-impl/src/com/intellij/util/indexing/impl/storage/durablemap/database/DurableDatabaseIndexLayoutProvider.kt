@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage.durablemap.database
 
-import com.intellij.concurrency.virtualThreads.IntelliJVirtualThreads
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
@@ -14,6 +13,7 @@ import com.intellij.platform.util.io.storages.database.DurableMapImplementation.
 import com.intellij.platform.util.io.storages.database.DurableMapImplementation.KEY_VALUE_TOGETHER
 import com.intellij.platform.util.io.storages.database.impl.DropRetiredChunksHousekeeper
 import com.intellij.platform.util.io.storages.database.impl.SparseChunksEvacuationHousekeeper
+import com.intellij.platform.util.io.storages.database.impl.housekeeping.OnDemandHousekeepingScheduler
 import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics
 import com.intellij.util.ExceptionUtil.runAllAndRethrowAllExceptions
 import com.intellij.util.indexing.FileBasedIndexExtension
@@ -28,8 +28,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
 import java.util.function.Predicate
 
 /**
@@ -69,7 +67,6 @@ class DurableDatabaseIndexLayoutProvider @JvmOverloads constructor(
     val reporter = DurableDatabaseOTelReporter(TelemetryManager.getMeter(Storage))
   }
 
-  private val lazyExecutorHolder: Lazy<ScheduledExecutorService> = newExecutorHolder()
   private val lazyDatabaseHolder: Lazy<DurableDatabase> = newDatabaseHolder()
   private val keyHashLogs = FileChannelKeyHashLogAccessor.Registry(databasePath.resolve("key-hash-logs"))
 
@@ -79,21 +76,21 @@ class DurableDatabaseIndexLayoutProvider @JvmOverloads constructor(
   //@GuardedBy(this)
   private var maintenanceRegistration: AutoCloseable? = null
 
-  private fun newExecutorHolder(): Lazy<ScheduledExecutorService> = lazy {
-    Executors.newSingleThreadScheduledExecutor(
-      IntelliJVirtualThreads.ofVirtual().name("durableDatabaseCompaction").factory()
-    )
-  }
+  //@GuardedBy(this)
+  private var housekeepingScheduler: OnDemandHousekeepingScheduler? = null
 
   private fun newDatabaseHolder(): Lazy<DurableDatabase> = lazy {
-    //TODO RC: use one of the platform executors?
-    val scheduler = lazyExecutorHolder.value
     LOG.info(
       "implementations: forwardIndex=$forwardMapImplementation, invertedIndex=$invertedMapImplementation, " +
       "directory: [$databasePath]",
     )
+
+    lateinit var housekeepingScheduler: OnDemandHousekeepingScheduler
     val database = DurableDatabaseFactory.withDefaults()
-      .housekeeping(scheduler, scheduler)
+      .housekeeping { coordinator ->
+        housekeepingScheduler = OnDemandHousekeepingScheduler(coordinator)
+        return@housekeeping housekeepingScheduler
+      }
       .startupHousekeeping(
         SparseChunksEvacuationHousekeeper(
           /* evacuateBelow:       */ 0.25f,
@@ -105,6 +102,7 @@ class DurableDatabaseIndexLayoutProvider @JvmOverloads constructor(
       .open(databasePath)
     try {
       OTelReporterHolder.reporter.attachDatabase(database)
+      this@DurableDatabaseIndexLayoutProvider.housekeepingScheduler = housekeepingScheduler
       database
     }
     catch (t: Throwable) {
@@ -168,7 +166,8 @@ class DurableDatabaseIndexLayoutProvider @JvmOverloads constructor(
     }
 
     if (maintenanceRegistration == null) {
-      maintenanceRegistration = maintenanceService()?.registerForMaintenance(this)
+      val scheduler = checkNotNull(housekeepingScheduler) { "The database housekeeping scheduler is not initialized" }
+      maintenanceRegistration = maintenanceService()?.registerForMaintenance(this, scheduler::runHousekeepingRound)
     }
     return layout
   }
@@ -214,12 +213,6 @@ class DurableDatabaseIndexLayoutProvider @JvmOverloads constructor(
           lazyDatabaseHolder.value.close()
         }
       },
-
-      {
-        if (lazyExecutorHolder.isInitialized()) {
-          lazyExecutorHolder.value.shutdown()
-        }
-      }
     )
   }
 

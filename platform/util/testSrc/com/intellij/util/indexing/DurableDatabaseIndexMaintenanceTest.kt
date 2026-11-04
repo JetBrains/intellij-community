@@ -3,18 +3,22 @@ package com.intellij.util.indexing
 
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.SingleEntryIntegerValueIndexExtension
+import com.intellij.util.indexing.impl.storage.HousekeepingRunner
 import com.intellij.util.indexing.impl.storage.IndexMaintenance
 import com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.function.BooleanSupplier
 
 @TestApplication
 internal class DurableDatabaseIndexMaintenanceTest {
@@ -26,10 +30,15 @@ internal class DurableDatabaseIndexMaintenanceTest {
     var registrations = 0
     var releases = 0
     var registeredProvider: DurableDatabaseIndexLayoutProvider? = null
+    var registeredHousekeepingRunner: HousekeepingRunner? = null
     val maintenance = object : IndexMaintenance<DurableDatabaseIndexLayoutProvider> {
-      override fun registerForMaintenance(provider: DurableDatabaseIndexLayoutProvider): AutoCloseable {
+      override fun registerForMaintenance(
+        provider: DurableDatabaseIndexLayoutProvider,
+        housekeepingRunner: HousekeepingRunner,
+      ): AutoCloseable {
         registrations++
         registeredProvider = provider
+        registeredHousekeepingRunner = housekeepingRunner
         return AutoCloseable { releases++ }
       }
     }
@@ -43,6 +52,11 @@ internal class DurableDatabaseIndexMaintenanceTest {
       provider.getLayout(SingleEntryIntegerValueIndexExtension(), emptyList())
       assertEquals(1, registrations, "All layouts of one provider must share a registration")
       assertSame(provider, registeredProvider, "Maintenance must receive the provider for future metric reads")
+      assertNotNull(registeredHousekeepingRunner, "Maintenance must receive the regular housekeeping operation")
+      assertTrue(
+        registeredHousekeepingRunner!!.runHousekeepingRound(BooleanSupplier { false }),
+        "The housekeeping operation must complete without cancellation",
+      )
 
       provider.close()
       provider.closeAndClearData()
@@ -70,7 +84,10 @@ internal class DurableDatabaseIndexMaintenanceTest {
     val databasePath = tempDir.resolve("database")
     var releases = 0
     val maintenance = object : IndexMaintenance<DurableDatabaseIndexLayoutProvider> {
-      override fun registerForMaintenance(provider: DurableDatabaseIndexLayoutProvider): AutoCloseable = AutoCloseable {
+      override fun registerForMaintenance(
+        provider: DurableDatabaseIndexLayoutProvider,
+        housekeepingRunner: HousekeepingRunner,
+      ): AutoCloseable = AutoCloseable {
         releases++
         throw IOException("Cannot release the registration")
       }

@@ -4,6 +4,7 @@ package com.intellij.util.indexing.impl.storage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.BooleanSupplier
 
 /**
  * Starts a maintenance service for an index database;
@@ -14,8 +15,8 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface IndexMaintenance<P : FileBasedIndexLayoutProvider> {
-  /** Keeps the provider available for maintenance decisions until the registration closes */
-  fun registerForMaintenance(provider: P): AutoCloseable
+  /** Keeps the provider and its regular housekeeping operation available until the registration closes */
+  fun registerForMaintenance(provider: P, housekeepingRunner: HousekeepingRunner): AutoCloseable
 
   companion object {
     @JvmStatic
@@ -28,4 +29,13 @@ interface IndexMaintenance<P : FileBasedIndexLayoutProvider> {
       return app.getService(IndexMaintenance::class.java) as IndexMaintenance<P>?
     }
   }
+}
+
+@ApiStatus.Internal
+fun interface HousekeepingRunner {
+  /**
+   * Runs one regular housekeeping round, with cancellability provided by `cancellationRequested`
+   * @return true if the round successfully finished, false if the round was interrupted by cancellation
+   */
+  fun runHousekeepingRound(cancellationRequested: BooleanSupplier): Boolean
 }

@@ -4,11 +4,14 @@ package com.intellij.util.indexing
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider
 import kotlinx.coroutines.test.runTest
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.io.IOException
 import java.nio.file.Path
+import java.util.function.BooleanSupplier
 
 @TestApplication
 internal class IndexMaintenanceServiceTest {
@@ -16,15 +19,15 @@ internal class IndexMaintenanceServiceTest {
   fun `closing an old registration twice preserves the next provider`() = runTest {
     val service = IndexMaintenanceService(backgroundScope)
     val oldProvider = provider()
-    val oldRegistration = service.registerForMaintenance(oldProvider)
+    val oldRegistration = service.registerForMaintenance(oldProvider) { true }
     assertTrue(service.hasActiveProvider)
-    assertThrows(IllegalStateException::class.java) { service.registerForMaintenance(oldProvider) }
-    assertThrows(IllegalStateException::class.java) { service.registerForMaintenance(provider()) }
+    assertThrows(IllegalStateException::class.java) { service.registerForMaintenance(oldProvider) { true } }
+    assertThrows(IllegalStateException::class.java) { service.registerForMaintenance(provider()) { true } }
 
     oldRegistration.close()
     assertFalse(service.hasActiveProvider)
 
-    val nextRegistration = service.registerForMaintenance(provider())
+    val nextRegistration = service.registerForMaintenance(provider()) { true }
     oldRegistration.close()
     assertTrue(service.hasActiveProvider, "A stale handle must not remove the next provider")
 
@@ -35,13 +38,13 @@ internal class IndexMaintenanceServiceTest {
   @Test
   fun `replacement during maintenance permits a later cycle`() = runTest {
     val service = IndexMaintenanceService(backgroundScope)
-    var registration = service.registerForMaintenance(provider())
+    var registration = service.registerForMaintenance(provider()) { true }
 
     assertTrue(service.tryRunMaintenance {
       registration.close()
       assertFalse(service.hasActiveProvider)
       assertFalse(service.tryRunMaintenance { error("A cycle is already running") })
-      registration = service.registerForMaintenance(provider())
+      registration = service.registerForMaintenance(provider()) { true }
     })
 
     assertTrue(service.hasActiveProvider)
@@ -53,8 +56,8 @@ internal class IndexMaintenanceServiceTest {
   fun `a replaced provider cannot start a cycle based on old metrics`() = runTest {
     val service = IndexMaintenanceService(backgroundScope)
     val oldProvider = provider()
-    service.registerForMaintenance(oldProvider).close()
-    service.registerForMaintenance(provider()).use {
+    service.registerForMaintenance(oldProvider) { true }.close()
+    service.registerForMaintenance(provider()) { true }.use {
       assertFalse(service.tryRunMaintenance(oldProvider) { error("The old provider is closed") })
     }
   }
@@ -75,7 +78,7 @@ internal class IndexMaintenanceServiceTest {
   @Test
   fun `failed maintenance releases its hold`() = runTest {
     val service = IndexMaintenanceService(backgroundScope)
-    val registration = service.registerForMaintenance(provider())
+    val registration = service.registerForMaintenance(provider()) { true }
 
     assertThrows(IllegalStateException::class.java) {
       service.tryRunMaintenance {
@@ -86,9 +89,42 @@ internal class IndexMaintenanceServiceTest {
     assertFalse(service.hasActiveProvider)
     assertFalse(service.tryRunMaintenance { error("No provider is registered") })
 
-    service.registerForMaintenance(provider()).use {
+    service.registerForMaintenance(provider()) { true }.use {
       assertTrue(service.tryRunMaintenance { }, "A later provider must permit maintenance again")
     }
+  }
+
+  @Test
+  fun `failed regular housekeeping permits a later attempt`() = runTest {
+    val service = IndexMaintenanceService(backgroundScope)
+    var attempts = 0
+    service.registerForMaintenance(provider()) {
+      attempts++
+      if (attempts == 1) throw IOException("Expected housekeeping failure")
+      true
+    }.use {
+      assertFalse(service.runMaintenanceWithProgress(BooleanSupplier { false }))
+      assertEquals(1, attempts, "The first housekeeping attempt must reach the registered runner")
+
+      assertFalse(service.runMaintenanceWithProgress(BooleanSupplier { false }))
+      assertEquals(2, attempts, "A housekeeping failure must not block a later attempt")
+    }
+  }
+
+  @Test
+  fun `provider replacement during regular housekeeping stops the old cycle`() = runTest {
+    val service = IndexMaintenanceService(backgroundScope)
+    lateinit var oldRegistration: AutoCloseable
+    var nextRegistration: AutoCloseable? = null
+    oldRegistration = service.registerForMaintenance(provider()) {
+      oldRegistration.close()
+      nextRegistration = service.registerForMaintenance(provider()) { true }
+      true
+    }
+
+    assertFalse(service.runMaintenanceWithProgress(BooleanSupplier { false }))
+    assertTrue(service.hasActiveProvider, "The replacement provider must stay registered")
+    nextRegistration?.close()
   }
 
   private fun provider(): DurableDatabaseIndexLayoutProvider =
