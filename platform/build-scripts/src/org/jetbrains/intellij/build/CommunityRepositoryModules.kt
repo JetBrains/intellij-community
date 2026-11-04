@@ -204,7 +204,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withModule("intellij.junit.v6.rt", "junit6-rt.jar")
     },
     plugin("intellij.testng") { spec ->
-      spec.mainJarName = "testng-plugin.jar"
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
     },
     pluginAuto(listOf("intellij.devkit")) { spec ->

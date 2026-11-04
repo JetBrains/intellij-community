@@ -25,7 +25,7 @@ dev_dist_plugin(
             "@lib//:libraries-testng-_test_n_g",
         ],
         "lib/testng-rt.jar": ["intellij.testng.rt"],
-        "lib/testng-plugin.jar": ["intellij.testng"],
+        "lib/testng.jar": ["intellij.testng"],
     },
     main_module = "intellij.testng",
 )
