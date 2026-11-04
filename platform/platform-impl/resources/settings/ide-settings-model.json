@@ -11344,30 +11344,6 @@
       ]
     },
     {
-      "name": "RailsApplicationSettings",
-      "scope": "app",
-      "pluginId": "org.jetbrains.plugins.ruby",
-      "classFqn": "org.jetbrains.plugins.ruby.rails.facet.RailsApplicationSettings",
-      "storage": "rubysettings.xml",
-      "properties": [
-        {
-          "name": "wizardRailsFacetPreconfigureDBName",
-          "type": "String",
-          "javaType": "java.lang.String"
-        },
-        {
-          "name": "wizardRailsFacetPreconfigureSkipTUnitFiles",
-          "type": "Boolean",
-          "javaType": "boolean"
-        },
-        {
-          "name": "wizardRailsFacetTemplates",
-          "type": "Unsupported",
-          "javaType": "java.lang.String[]"
-        }
-      ]
-    },
-    {
       "name": "RubyEditorOptions",
       "scope": "app",
       "pluginId": "org.jetbrains.plugins.ruby",
