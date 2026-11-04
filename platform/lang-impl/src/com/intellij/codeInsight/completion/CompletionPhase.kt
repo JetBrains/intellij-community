@@ -399,7 +399,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
 
         val language = PsiUtilCore.findLanguageFromElement(elementAt)
 
-        for (confidence in CompletionConfidenceEP.forLanguage(language)) {
+        for (confidence in CompletionConfidenceEP.forLanguage(language, psiFile.project)) {
           try {
             val result = confidence.shouldSkipAutopopup(editor, elementAt, psiFile, offset)
             if (result != ThreeState.UNSURE) {

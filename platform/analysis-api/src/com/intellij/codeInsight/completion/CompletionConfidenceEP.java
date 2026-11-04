@@ -5,6 +5,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.lang.LanguageExtensionWithAny;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -17,5 +18,14 @@ public final class CompletionConfidenceEP extends LanguageExtensionPoint<Complet
   @ApiStatus.Internal
   public static @Unmodifiable List<CompletionConfidence> forLanguage(@NotNull Language language) {
     return INSTANCE.allForLanguage(language);
+  }
+
+  /**
+   * The confidences of {@link #forLanguage(Language)} that apply to the project.
+   * See {@link LanguageExtension#allForLanguage(Language, Project)}.
+   */
+  @ApiStatus.Internal
+  public static @Unmodifiable List<CompletionConfidence> forLanguage(@NotNull Language language, @NotNull Project project) {
+    return INSTANCE.allForLanguage(language, project);
   }
 }

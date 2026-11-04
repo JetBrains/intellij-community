@@ -253,26 +253,45 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
 
   @ApiStatus.Internal
   public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language, @Nullable Editor editor) {
+    return forLanguage(language, null, editor);
+  }
+
+  /**
+   * The contributors that apply to {@code project}, see {@link com.intellij.openapi.extensions.TechnologyFilter}.
+   * When {@code project} is {@code null}, the project of {@code editor} is used.
+   */
+  @ApiStatus.Internal
+  public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language,
+                                                                 @Nullable Project project,
+                                                                 @Nullable Editor editor) {
     boolean isRDFrontend = NewRdCompletionSupport.isFrontendRdCompletionOn(editor) && PlatformUtils.isJetBrainsClient();
 
+    if (project == null && editor != null) {
+      project = editor.getProject();
+    }
+    List<CompletionContributor> registered = project == null ? INSTANCE.forKey(language) : INSTANCE.forKey(language, project);
     List<CompletionContributor> contributors;
     if (isRDFrontend) {
       //noinspection deprecation
-      contributors = ContainerUtil.filter(INSTANCE.forKey(language), c -> c instanceof FrontendCompletionContributor);
+      contributors = ContainerUtil.filter(registered, c -> c instanceof FrontendCompletionContributor);
       // TODO forbid wild FrontendCompletionContributors
       //if (contributors.size() > 1) {
       //  LOG.error("FrontendCompletionContributors are not allowed to be used by plugins yet: " + contributors);
       //}
     }
     else {
-      contributors = INSTANCE.forKey(language);
+      contributors = registered;
     }
 
-    List<ModCompletionItemProvider> providers = ModCompletionItemProvider.forLanguage(language);
+    List<ModCompletionItemProvider> providers = project == null
+                                                ? ModCompletionItemProvider.forLanguage(language)
+                                                : ModCompletionItemProvider.EP_NAME.forKey(language, project);
     if (providers.isEmpty()) {
       return contributors;
     }
-    List<ModCompletionItemFilter> filters = ModCompletionItemFilter.EP_NAME.allForLanguage(language);
+    List<ModCompletionItemFilter> filters = project == null
+                                            ? ModCompletionItemFilter.EP_NAME.allForLanguage(language)
+                                            : ModCompletionItemFilter.EP_NAME.allForLanguage(language, project);
 
     Map<Class<? extends CompletionContributor>, Integer> order = IntStream.range(0, contributors.size())
       .boxed().collect(Collectors.toMap(idx -> contributors.get(idx).getClass(), Function.identity(), (a, _) -> a));
@@ -291,7 +310,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
 
   @ApiStatus.Internal
   public static @NotNull List<CompletionContributor> forLanguageHonorDumbness(@NotNull Language language, @NotNull Project project, @NotNull Editor editor) {
-    List<CompletionContributor> contributors = forLanguage(language, editor);
+    List<CompletionContributor> contributors = forLanguage(language, project, editor);
     return DumbService.getInstance(project).filterByDumbAwareness(contributors);
   }
 
