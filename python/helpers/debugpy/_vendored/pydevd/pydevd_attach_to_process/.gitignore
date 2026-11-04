@@ -1,6 +1,5 @@
-## PY-92333: these are fetched from the pinned Space Files version in bin.debugpy-attach.properties,
-## never committed. See ../../../pydev/pydevd_attach_to_process/linux_and_mac/.gitignore for the
-## upstream pydevd precedent this follows.
+## PY-92333: the build fetches these from the `Python.Attach binaries` TeamCity pipeline, pinned by
+## pythonAttachToProcessBuild in community/build/dependencies/dependencies.properties. Never commit them.
 /attach.dylib
 /attach_arm64.dylib
 /attach_x86_64.dylib

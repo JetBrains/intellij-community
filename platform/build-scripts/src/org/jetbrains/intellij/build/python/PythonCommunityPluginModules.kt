@@ -8,6 +8,9 @@ object PythonCommunityPluginModules {
 
   const val pythonCommunityName: String = "python-ce"
 
+  /** The directory of the plugin that holds the whole `intellij.python.helpers` tree. */
+  const val HELPERS_PLUGIN_DIR: String = "helpers"
+
   /**
    * The pydev tree of the Python helpers. The path is relative to the content root of the module. The debugger egg of a
    * Python plugin reads the whole tree, so the community Python layout declares it as a dev-distribution source tree.
@@ -31,7 +34,7 @@ object PythonCommunityPluginModules {
         spec.withResourceTree(
           moduleName = "intellij.python.helpers",
           resourcePath = "",
-          relativeOutputPath = "helpers",
+          relativeOutputPath = HELPERS_PLUGIN_DIR,
           excludedFiles = listOf("setup.py", "conftest.py"),
           excludedDirectories = listOf("tests", ".idea", "pydev/pydev_test*"),
         )

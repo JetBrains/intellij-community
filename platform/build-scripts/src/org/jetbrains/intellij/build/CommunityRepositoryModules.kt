@@ -34,6 +34,7 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.io.defaultLibrarySourcesNamesFilter
 import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
+import org.jetbrains.intellij.build.python.withBundledPydevdNativeDeps
 import org.jetbrains.intellij.build.python.withBundledPyrefly
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -249,6 +250,7 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     },
     PythonCommunityPluginModules.pythonCommunityPluginLayout { spec ->
       spec.withBundledPyrefly()
+      spec.withBundledPydevdNativeDeps()
     },
     androidDesignPlugin(),
     pluginAuto(listOf("intellij.completionMlRankingModels")) { spec ->

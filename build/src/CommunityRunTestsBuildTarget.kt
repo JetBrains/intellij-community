@@ -4,6 +4,7 @@ import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.TestingOptions
 import org.jetbrains.intellij.build.TestingTasks
 import org.jetbrains.intellij.build.impl.createCompilationContext
+import org.jetbrains.intellij.build.python.setupPythonAttachBinariesForTests
 
 /**
  * Compiles the sources and runs tests from the 'community' project. Look at [org.jetbrains.intellij.build.TestingOptions] to see which
@@ -26,6 +27,7 @@ object CommunityRunTestsBuildTarget {
     )
     val options = TestingOptions()
     options.mainModule = options.mainModule ?: "intellij.idea.community.main.tests"
+    setupPythonAttachBinariesForTests(COMMUNITY_ROOT, options.mainModule)
     TestingTasks.create(context, options).runTests()
   }
 }
