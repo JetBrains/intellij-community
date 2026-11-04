@@ -226,38 +226,55 @@ abstract class AlignedDiffModelBase(
       map2[range.start2] = changeInlay
     }
 
+    // An inlay outside a change gets a mirror only for the height that the other side lacks at the same slot.
+    val slots1 = LinkedHashMap<Slot, MutableList<Inlay<*>>>()
     val inlays1 = editor1.inlayModel.getBlockElementsInRange(0, editor1.document.textLength)
       .filter { it.renderer !is AlignDiffInlayRenderer }
     for (sourceInlay in inlays1) {
-      val targetLine = getMirrorTargetLine(Side.LEFT, sourceInlay)
-      val changeBlock = getChangeBlockFor(Side.LEFT, map1, targetLine)
+      val line = editor1.offsetToLogicalPosition(sourceInlay.offset).line
+      val changeBlock = getChangeBlockFor(Side.LEFT, map1, line, sourceInlay.properties.isShownAbove)
       if (changeBlock != null) {
         changeBlock.innerSourceInlay1 += sourceInlay
       }
       else {
-        mirrorInlays1 += MirrorInlay(
-          sourceInlay,
-          createMirrorInlay(Side.LEFT, sourceInlay, targetLine)
-        )
+        val slot = Slot(line, syncScrollable.transfer(Side.LEFT, line), sourceInlay.properties.isShownAbove)
+        slots1.getOrPut(slot) { ArrayList() } += sourceInlay
       }
     }
 
+    val slots2 = LinkedHashMap<Slot, MutableList<Inlay<*>>>()
     val inlays2 = editor2.inlayModel.getBlockElementsInRange(0, editor2.document.textLength)
       .filter { it.renderer !is AlignDiffInlayRenderer }
     for (sourceInlay in inlays2) {
-      val targetLine = getMirrorTargetLine(Side.RIGHT, sourceInlay)
-      val changeBlock = getChangeBlockFor(Side.RIGHT, map2, targetLine)
+      val line = editor2.offsetToLogicalPosition(sourceInlay.offset).line
+      val changeBlock = getChangeBlockFor(Side.RIGHT, map2, line, sourceInlay.properties.isShownAbove)
       if (changeBlock != null) {
         changeBlock.innerSourceInlay2 += sourceInlay
       }
       else {
-        mirrorInlays2 += MirrorInlay(
-          sourceInlay,
-          createMirrorInlay(Side.RIGHT, sourceInlay, targetLine)
-        )
+        val slot = Slot(syncScrollable.transfer(Side.RIGHT, line), line, sourceInlay.properties.isShownAbove)
+        slots2.getOrPut(slot) { ArrayList() } += sourceInlay
       }
     }
+
+    for ((slot, sources) in slots1) {
+      mirrorInlays1 += MirrorInlay(
+        sources,
+        slots2[slot].orEmpty(),
+        createMirrorInlay(Side.LEFT, sources.first(), slot.line2)
+      )
+    }
+    for ((slot, sources) in slots2) {
+      mirrorInlays2 += MirrorInlay(
+        sources,
+        slots1[slot].orEmpty(),
+        createMirrorInlay(Side.RIGHT, sources.first(), slot.line1)
+      )
+    }
   }
+
+  /** A pair of lines, one per side, and whether an inlay is above */
+  private data class Slot(val line1: Int, val line2: Int, val above: Boolean)
 
   private fun createAlignInlay(side: Side, line: Int, isTop: Boolean, diffType: TextDiffType): Inlay<AlignDiffInlayRenderer> {
     val editor = getEditor(side)
@@ -309,17 +326,11 @@ abstract class AlignedDiffModelBase(
     return editor.inlayModel.addBlockElement(offset, inlayProperties, inlayPresentation)
   }
 
-  private fun getMirrorTargetLine(sourceSide: Side, sourceInlay: Inlay<*>): Int {
-    val sourceEditor = getEditor(sourceSide)
-
-    val sourceLine = sourceEditor.offsetToLogicalPosition(sourceInlay.offset).line
-    return syncScrollable.transfer(sourceSide, sourceLine)
-  }
-
-  private fun getChangeBlockFor(sourceSide: Side, changeBlockMap: TreeMap<Int, ChangeInlay>, line: Int): ChangeInlay? {
-    val block = changeBlockMap.ceilingEntry(line)?.value ?: return null
+  private fun getChangeBlockFor(sourceSide: Side, changeBlockMap: TreeMap<Int, ChangeInlay>, line: Int, above: Boolean): ChangeInlay? {
+    val block = changeBlockMap.floorEntry(line)?.value ?: return null
     val range = block.change.range
-    if (range.start(sourceSide) <= line && range.end(sourceSide) > line) {
+    val first = if (above) range.start(sourceSide) + 1 else range.start(sourceSide)
+    if (first <= line && range.end(sourceSide) > line) {
       return block
     }
     return null
@@ -359,12 +370,12 @@ abstract class AlignedDiffModelBase(
 
     for (mirrorInlay in mirrorInlays1) {
       val inlay = mirrorInlay.inlay ?: continue
-      inlay.renderer.height = mirrorInlay.sourceInlay.heightInPixels
+      inlay.renderer.height = mirrorInlay.heightInPixels
       inlay.update()
     }
     for (mirrorInlay in mirrorInlays2) {
       val inlay = mirrorInlay.inlay ?: continue
-      inlay.renderer.height = mirrorInlay.sourceInlay.heightInPixels
+      inlay.renderer.height = mirrorInlay.heightInPixels
       inlay.update()
     }
   }
@@ -508,9 +519,12 @@ abstract class AlignedDiffModelBase(
   }
 
   private class MirrorInlay(
-    val sourceInlay: Inlay<*>,
+    val sourceInlays: List<Inlay<*>>, val oppositeInlays: List<Inlay<*>>,
     val inlay: Inlay<AlignDiffInlayRenderer>?
   ) : Disposable {
+    val heightInPixels: Int
+      get() = max(0, sourceInlays.sumOf { it.heightInPixels } - oppositeInlays.sumOf { it.heightInPixels })
+
     override fun dispose() {
       if (inlay != null) Disposer.dispose(inlay)
     }

@@ -25,6 +25,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.withForcedRespectIsShowingClientProperty
 import com.intellij.util.ui.withShowingChanged
 import java.nio.file.Path
+import kotlin.io.path.readText
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -151,6 +152,108 @@ class SimpleDiffViewerScrollTest : HeavyDiffTestCase() {
     UIUtil.dispatchAllInvocationEvents()
   }
 
+  fun `test same inlay on both sides gets no extra space`() {
+    val inlayText = "a\nb\nc\nd\n"
+    withViewer(inlayText, inlayText, expandByDefault = true) { viewer ->
+      addInlay(viewer.getEditor(Side.LEFT), 1, 50)
+      addInlay(viewer.getEditor(Side.RIGHT), 1, 50)
+      viewer.rediff(true)
+      waitForRediff(viewer)
+
+      assertTotalInlayHeight(viewer, 50)
+    }
+  }
+
+  fun `test one-sided inlay is mirrored`() {
+    val inlayText = "a\nb\nc\nd\n"
+    withViewer(inlayText, inlayText, expandByDefault = true) { viewer ->
+      addInlay(viewer.getEditor(Side.LEFT), 1, 50)
+      viewer.rediff(true)
+      waitForRediff(viewer)
+
+      assertTotalInlayHeight(viewer, 50)
+    }
+  }
+
+  fun `test inlays inside a change are aligned by the change`() {
+    val inlayText = "a\nb\nc\nd\n"
+    withViewer(inlayText, "a\nB\nC\nd\n", expandByDefault = true) { viewer ->
+      val left = viewer.getEditor(Side.LEFT)
+      val right = viewer.getEditor(Side.RIGHT)
+      addInlay(left, 2, 30)
+      addInlay(right, 2, 80)
+      viewer.rediff(true)
+      waitForRediff(viewer)
+
+      assertTotalInlayHeight(viewer, 80)
+      assertEquals(1, left.inlayModel.getBlockElementsForVisualLine(2, false).size)
+      assertEquals(1, right.inlayModel.getBlockElementsForVisualLine(2, false).size)
+    }
+  }
+
+  fun `test inlay above the first line of a change is mirrored to the left`() {
+    doTestWithInlayAbove(Side.RIGHT)
+  }
+
+  fun `test inlay above the first line of a change is mirrored to the right`() {
+    doTestWithInlayAbove(Side.LEFT)
+  }
+
+  fun `test inlays above the first line of a change on both sides get no extra space`() {
+    doTestWithInlayAbove(Side.LEFT, Side.RIGHT)
+  }
+
+  fun `test inlay above the first inserted line is mirrored`() {
+    withViewer("a\nb\n", "a\nx\nb\n", expandByDefault = true) { viewer ->
+      val left = viewer.getEditor(Side.LEFT)
+      addInlay(viewer.getEditor(Side.RIGHT), 1, 50, above = true)
+      viewer.rediff(true)
+      waitForRediff(viewer)
+
+      assertLinesAligned(viewer, 1 to 2)
+      val heights = left.inlayModel.getBlockElementsForVisualLine(1, true).map { it.heightInPixels }.filter { it > 0 }
+      assertEquals(listOf(50, left.lineHeight).sorted(), heights.sorted())
+    }
+  }
+
+  private fun doTestWithInlayAbove(vararg inlaySides: Side) {
+    withViewer("a\nb\nc\n", "x\na\nB\nc\n", expandByDefault = true) { viewer ->
+      for (side in inlaySides) {
+        addInlay(viewer.getEditor(side), side.select(1, 2), 50, above = true)
+      }
+      viewer.rediff(true)
+      waitForRediff(viewer)
+
+      assertLinesAligned(viewer, 1 to 2, 2 to 3)
+      assertTotalInlayHeight(viewer, 50 + viewer.getEditor(Side.LEFT).lineHeight, 50)
+    }
+  }
+
+  private fun addInlay(editor: EditorEx, line: Int, height: Int, above: Boolean = false): Inlay<*> {
+    val renderer = object : EditorCustomElementRenderer {
+      override fun calcWidthInPixels(inlay: Inlay<*>): Int = 10
+      override fun calcHeightInPixels(inlay: Inlay<*>): Int = height
+    }
+    val document = editor.document
+    val offset = if (above) document.getLineStartOffset(line) else document.getLineEndOffset(line)
+    return editor.inlayModel.addBlockElement(offset, InlayProperties().showAbove(above), renderer)!!
+  }
+
+  private fun assertTotalInlayHeight(viewer: SimpleDiffViewer, expectedLeft: Int, expectedRight: Int = expectedLeft) {
+    for (side in Side.entries) {
+      val total = blockInlays(viewer.getEditor(side)).sumOf { it.heightInPixels }
+      assertEquals("block inlay height of the $side editor", side.select(expectedLeft, expectedRight), total)
+    }
+  }
+
+  private fun assertLinesAligned(viewer: SimpleDiffViewer, vararg pairs: Pair<Int, Int>) {
+    val left = viewer.getEditor(Side.LEFT)
+    val right = viewer.getEditor(Side.RIGHT)
+    for ((leftLine, rightLine) in pairs) {
+      assertEquals("left line $leftLine and right line $rightLine", left.visualLineToY(leftLine), right.visualLineToY(rightLine))
+    }
+  }
+
   private fun blockInlays(editor: EditorEx): List<Inlay<*>> =
     editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength)
 
@@ -183,15 +286,23 @@ class SimpleDiffViewerScrollTest : HeavyDiffTestCase() {
 
   private fun withViewer(body: (SimpleDiffViewer) -> Unit) {
     val dir = Path.of(PlatformTestUtil.getCommunityPath(), "platform/diff-impl/tests/testData/diff/scroll")
+    withViewer(
+      dir.resolve("ijpl101212_before.md").readText(),
+      dir.resolve("ijpl101212_after.md").readText(),
+      expandByDefault = false, body
+    )
+  }
+
+  private fun withViewer(leftText: String, rightText: String, expandByDefault: Boolean, body: (SimpleDiffViewer) -> Unit) {
     val contentFactory = DiffContentFactoryImpl()
-    val leftContent: DocumentContent = contentFactory.create(project, dir.resolve("ijpl101212_before.md").toFile().readText())
-    val rightContent: DocumentContent = contentFactory.create(project, dir.resolve("ijpl101212_after.md").toFile().readText())
+    val leftContent: DocumentContent = contentFactory.create(project, leftText)
+    val rightContent: DocumentContent = contentFactory.create(project, rightText)
     rightContent.document.setReadOnly(false)
 
     val context = MockDiffContext(project)
     // Mirror the commit diff: unchanged ranges collapsed, changes aligned.
     val settings = TextDiffSettings()
-    settings.isExpandByDefault = false
+    settings.isExpandByDefault = expandByDefault
     settings.contextRange = 4
     settings.isEnableAligningChangesMode = true
     context.putUserData(TextDiffSettings.KEY, settings)
