@@ -2,6 +2,7 @@
 package com.intellij.execution.process
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressManager
 import org.jetbrains.annotations.ApiStatus
 import java.io.OutputStream
 
@@ -61,8 +62,15 @@ interface LocalProcessService {
   fun getCommand(process: Process): List<String> = listOf()
 
   companion object {
+    /**
+     * The service; the lookup ignores cancellation, because a canceled caller is often the one that stops a process.
+     */
     @JvmStatic
-    fun getInstance(): LocalProcessService = service<LocalProcessService>()
+    fun getInstance(): LocalProcessService {
+      return ProgressManager.getInstance().computeInNonCancelableSection<LocalProcessService, RuntimeException> {
+        service<LocalProcessService>()
+      }
+    }
   }
 }
 
