@@ -79,25 +79,32 @@ class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
 
 open class PopupUiComponent(data: ComponentData) : WindowUiComponent(data) {
   /**
-   * Closes the popup.
+   * Closes the popup and waits until its window no longer shows.
    *
+   * The wait checks the window that this component found, not a new search by its xpath.
    * In the Split mode, a backend popup shows on the frontend as a copy.
    * For such a copy, [close] also waits until the backend closes the popup with the same data id.
    */
   fun close() {
-    val backendPopupId = driver.withContext(OnDispatcher.EDT) {
-      val popup = utility<SwingUtilities>().getRootPane(component)?.let { utility<PopupUtil>().getPopupContainerFor(it) }
-      if (popup == null) {
-        dispose()
-        return@withContext null
+    // One session keeps a hard reference to the window until the wait ends.
+    driver.withContext {
+      val window = component
+      val backendPopupId = withContext(OnDispatcher.EDT) {
+        val popup = utility<SwingUtilities>().getRootPane(window)?.let { utility<PopupUtil>().getPopupContainerFor(it) }
+        if (popup == null) {
+          dispose()
+          return@withContext null
+        }
+        val backendPopupId = if (isRemDevMode) utility<RdPopupUtils>().getRdPopupId(popup)?.takeIf { hasBackendPopup(it) } else null
+        popup.cancel()
+        backendPopupId
       }
-      val backendPopupId = if (isRemDevMode) utility<RdPopupUtils>().getRdPopupId(popup)?.takeIf { hasBackendPopup(it) } else null
-      popup.cancel()
-      backendPopupId
-    }
-    if (backendPopupId != null) {
-      waitFor(message = "The backend popup of $this is closed", timeout = DEFAULT_FIND_TIMEOUT) {
-        !driver.withContext(OnDispatcher.EDT) { hasBackendPopup(backendPopupId) }
+      waitFor(message = "The window of $this is closed", timeout = DEFAULT_FIND_TIMEOUT,
+              getter = { window.isShowing() }, checker = { isShowing -> !isShowing })
+      if (backendPopupId != null) {
+        waitFor(message = "The backend popup of $this is closed", timeout = DEFAULT_FIND_TIMEOUT) {
+          !withContext(OnDispatcher.EDT) { hasBackendPopup(backendPopupId) }
+        }
       }
     }
   }

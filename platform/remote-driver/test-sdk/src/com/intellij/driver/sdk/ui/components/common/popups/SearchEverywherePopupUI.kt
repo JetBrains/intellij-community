@@ -79,16 +79,18 @@ open class SearchEverywherePopupUI(data: ComponentData) : PopupUiComponent(data)
 
   fun switchTypeFilters(types: List<String>) {
     typeFilterButton.click()
-    types.forEach { type ->
-      searchEverywhereTypeFilterPopup().clickType(type)
+    searchEverywhereTypeFilterPopup {
+      types.forEach { type -> clickType(type) }
+      close()
     }
-    typeFilterButton.click()
   }
 
   fun clickNoneButtonInTypeFilters() {
     typeFilterButton.click()
-    searchEverywhereTypeFilterPopup().button("None").click()
-    typeFilterButton.click()
+    searchEverywhereTypeFilterPopup {
+      button("None").click()
+      close()
+    }
   }
 
   fun selectTab(tab: String) {
@@ -116,7 +118,7 @@ fun Finder.searchEverywhereTypeFilterPopup(
   x(xpath ?: xQuery { componentWithChild(byClass("HeavyWeightWindow"), byClass("ElementsChooser")) },
     SearchEverywhereTypeFilterUI::class.java).apply(block)
 
-class SearchEverywhereTypeFilterUI(data: ComponentData) : UiComponent(data) {
+class SearchEverywhereTypeFilterUI(data: ComponentData) : PopupUiComponent(data) {
   fun clickType(type: String) {
     val actionsLabelRowColumn = table().findRowColumn { it == type }
     table().clickCell(actionsLabelRowColumn.first, actionsLabelRowColumn.second - 1)
