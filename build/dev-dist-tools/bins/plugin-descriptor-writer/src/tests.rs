@@ -354,10 +354,17 @@ fn a_valueless_or_repeated_option_is_refused() {
 /// A boolean is strict, the way Kotlin's `toBooleanStrict` is.
 #[test]
 fn a_loose_boolean_is_refused() {
+    assert_one_more_option_is_refused("--retain-product-descriptor=yes");
+}
+
+/// Fails unless the writer refuses the request of [`PLUGIN_A`] with one more `option`, as a usage error, and writes no
+/// output.
+#[track_caller]
+fn assert_one_more_option_is_refused(option: &str) {
     let plugin = Plugin::new(PLUGIN_A);
     let mut request = plugin.request();
-    request.push("--retain-product-descriptor=yes".to_owned());
-    assert_eq!(plugin.run(&request), 2);
+    request.push(option.to_owned());
+    assert_eq!(plugin.run(&request), 2, "{option}");
     require_absent(&plugin.output);
 }
 
@@ -368,11 +375,7 @@ fn an_application_info_option_without_a_retained_product_descriptor_is_refused()
     let host = format!("--host-application-info-source={}", testdata("plugin_descriptor/release.xml"));
     let info = application_info("release");
     for option in [info.as_str(), host.as_str(), PINNED_BUILD_DATE, "--replacement=RELEASE_DATE="] {
-        let plugin = Plugin::new(PLUGIN_A);
-        let mut request = plugin.request();
-        request.push(option.to_owned());
-        assert_eq!(plugin.run(&request), 2, "{option}");
-        require_absent(&plugin.output);
+        assert_one_more_option_is_refused(option);
     }
 }
 
@@ -652,11 +655,7 @@ fn the_stamps_come_from_the_application_info() {
 #[test]
 fn the_old_stamp_options_are_refused() {
     for option in ["--eap=true", "--release-date=20260101", "--release-version=2026300"] {
-        let plugin = Plugin::new(PLUGIN_A);
-        let mut request = plugin.request();
-        request.push(option.to_owned());
-        assert_eq!(plugin.run(&request), 2, "{option}");
-        require_absent(&plugin.output);
+        assert_one_more_option_is_refused(option);
     }
 }
 
