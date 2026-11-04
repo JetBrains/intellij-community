@@ -83,5 +83,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
   </component>
 </module>
