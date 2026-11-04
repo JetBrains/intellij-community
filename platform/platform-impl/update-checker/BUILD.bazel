@@ -32,7 +32,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//libraries/http-client",
-        "//libraries/kotlinx/serialization/json",
         "//platform/forms_rt:java-guiForms-rt",
     ],
     deps = [
@@ -54,6 +53,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//platform/platform-impl/initial-config-import",
         "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
         "//platform/util/concurrency",
         "//platform/util:util-ui",
         "//platform/editor-ui-api:editor-ui",

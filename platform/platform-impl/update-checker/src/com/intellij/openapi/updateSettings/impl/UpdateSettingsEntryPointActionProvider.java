@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
-import com.intellij.openapi.util.Pair;
 import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
@@ -286,19 +285,23 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     }
   }
 
+  private record ReloadResult(@NotNull PlatformUpdates updates,
+                              @NotNull PlatformUpdateDecision decision,
+                              @Nullable PluginUpdatesModel pluginUpdates) { }
+
   static @Nullable PlatformUpdates.Loaded reloadPlatformUpdateInfo(@Nullable Project project) {
-    Pair<PlatformUpdates, PluginUpdatesModel> result = ProgressManager.getInstance()
+    ReloadResult result = ProgressManager.getInstance()
       .run(new Task.WithResult<>(project,
                                  IdeBundle.message("find.ide.update.title"),
                                  true) {
 
         @Override
-        protected @NotNull Pair<@NotNull PlatformUpdates, @Nullable PluginUpdatesModel> compute(@NotNull ProgressIndicator indicator) {
+        protected @NotNull ReloadResult compute(@NotNull ProgressIndicator indicator) {
           PlatformUpdates platformUpdates = UpdateChecker.getPlatformUpdates(UpdateSettings.getInstance(), indicator);
-          PluginUpdatesModel pluginResults = platformUpdates instanceof PlatformUpdates.Loaded ?
-                                                getInternalPluginUpdates((PlatformUpdates.Loaded)platformUpdates, indicator) :
-                                                null;
-          return Pair.create(platformUpdates, pluginResults);
+          PlatformUpdateDecision decision = MigrationOfferKt.decidePlatformUpdate(platformUpdates, true, false);
+          PlatformUpdates.Loaded announced = decision.getAnnounced();
+          PluginUpdatesModel pluginResults = announced != null ? getInternalPluginUpdates(announced, indicator) : null;
+          return new ReloadResult(platformUpdates, decision, pluginResults);
         }
 
         private static PluginUpdatesModel getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
@@ -308,8 +311,14 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         }
       });
 
-    PlatformUpdates platformUpdateInfo = result.getFirst();
-    PluginUpdatesModel pluginUpdatesModel = result.getSecond();
+    PlatformUpdates platformUpdateInfo = result.updates();
+    PluginUpdatesModel pluginUpdatesModel = result.pluginUpdates();
+    if (result.decision().getMigration() != null) {
+      // the migration is not a usual update: the update check offers it in its own dialog
+      clearUpdatesInfo();
+      UpdateChecker.updateAndShowResult(project);
+      return null;
+    }
     if (platformUpdateInfo instanceof PlatformUpdates.Loaded loadedUpdate && pluginUpdatesModel != null) {
       setPlatformUpdateInfo(loadedUpdate);
       IdeUpdateWidgetState.getInstance().onUpdateFound(isReleaseChannel(loadedUpdate));

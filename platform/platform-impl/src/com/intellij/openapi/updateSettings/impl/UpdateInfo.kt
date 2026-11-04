@@ -10,6 +10,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.util.system.CpuArch
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -61,6 +62,8 @@ class BuildInfo internal constructor(node: Element, productCode: String) {
   val target: BuildRange? = BuildRange.fromStrings(node.getAttributeValue("targetSince"), node.getAttributeValue("targetUntil"))
   val patches: List<PatchInfo> = node.getChildren("patch").map(::PatchInfo)
   val downloadUrl: String? = node.getChildren("button").find { it.getAttributeValue("download") != null }?.getMandatoryAttributeValue("url")
+  @Internal
+  val distribution: DistributionInfo? = node.getChild("distribution")?.let { parseDistribution(it) }
 
   private fun parseBuildNumber(value: String, productCode: String): BuildNumber {
     val buildNumber = BuildNumber.fromString(value)!!
@@ -89,6 +92,37 @@ class PatchInfo internal constructor(node: Element) {
   val fromBuild: BuildNumber = BuildNumber.fromString(node.getMandatoryAttributeValue("fullFrom", "from"))!!
   val size: String? = node.getAttributeValue("size")
   val isAvailable: Boolean = node.getAttributeValue("exclusions")?.splitToSequence(",")?.none { it.trim() == OS_SUFFIX } ?: true
+}
+
+/**
+ * The full distribution of another product that replaces the IDE.
+ * The update offers it instead of a patch. [fileUrl] is the file for the current OS and CPU.
+ */
+@Internal
+class DistributionInfo(val product: String, val manifestUrl: String, val fileUrl: String)
+
+private const val MIGRATION_OS = "mac"
+private val ARCH_SUFFIX: String = if (CpuArch.isArm64()) "aarch64" else if (CpuArch.isIntel64()) "x64" else "unknown"
+
+/**
+ * Returns `null` when the element is not valid, when [os] is not macOS, or when the element has no file for [os] and [arch].
+ * The update then works as if the element did not exist.
+ */
+@Internal
+fun parseDistribution(node: Element, os: String = PatchInfo.OS_SUFFIX, arch: String = ARCH_SUFFIX): DistributionInfo? {
+  fun invalid(reason: String): DistributionInfo? {
+    logger<DistributionInfo>().info("ignored <distribution>: ${reason}")
+    return null
+  }
+
+  if (os != MIGRATION_OS) return invalid("the migration works only on macOS")
+  val product = node.getAttributeValue("product")?.takeIf { it.isNotBlank() } ?: return invalid("no 'product'")
+  val manifestUrl = node.getAttributeValue("manifest")?.takeIf { it.isNotBlank() } ?: return invalid("no 'manifest'")
+  val fileUrl = node.getChildren("file")
+                  .find { it.getAttributeValue("os") == os && it.getAttributeValue("arch") == arch }
+                  ?.getAttributeValue("url")?.takeIf { it.isNotBlank() }
+                ?: return invalid("no file for ${os}/${arch}")
+  return DistributionInfo(product, manifestUrl, fileUrl)
 }
 
 private fun Element.getMandatoryAttributeValue(attribute: String) =

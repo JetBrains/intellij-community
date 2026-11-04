@@ -750,15 +750,16 @@ private suspend fun doUpdateAndShowResult(
     return null
   }
 
-  // The check has completed and there is no platform update.
+  // The check has completed and there is no usual platform update: a migration build is not one.
   // Custom settings are a probe with another channel, and its answer is not about the real state
-  if (platformUpdates !is PlatformUpdates.Loaded && customSettings == null) {
+  val isUsualUpdate = platformUpdates is PlatformUpdates.Loaded && platformUpdates.newBuild.distribution == null
+  if (!isUsualUpdate && customSettings == null) {
     UpdateSettingsEntryPointActionProvider.clearPlatformUpdateInfo()
   }
 
-  // "Remind Me Later" mutes the IDE announcement
-  val announcedUpdate = if (userInitiated || !IdeUpdateWidgetState.isRemindLaterActive()) platformUpdates as? PlatformUpdates.Loaded
-  else null
+  val decision = decidePlatformUpdate(platformUpdates, userInitiated, IdeUpdateWidgetState.isRemindLaterActive())
+  val announcedUpdate = decision.announced
+  val migrationOffer = decision.migration?.takeIf { showResults }?.let { loadMigrationOffer(it, indicator) }
   val apiVersion = announcedUpdate?.newBuild?.apiVersion
   val updatesModel = PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(apiVersion?.asString(), indicator = indicator)
   publishPluginUpdates(apiVersion?.asString(), updatesModel)
@@ -825,6 +826,20 @@ private suspend fun doUpdateAndShowResult(
   return {
     val forceDialog = preferDialog || userInitiated && !notificationsEnabled()
 
+    when (migrationOffer) {
+      is MigrationOfferResult.Loaded -> showMigrationOffer(project, migrationOffer.content)
+      is MigrationOfferResult.Failed -> if (userInitiated) {
+        val error = migrationOffer.error
+        if (error != null) {
+          showErrors(project, IdeBundle.message("updates.error.connection.failed", error.message ?: error.toString()), preferDialog)
+        }
+        else {
+          showErrors(project, IdeBundle.message("updates.migration.content.invalid"), preferDialog, IdeBundle.message("find.ide.update.title"))
+        }
+      }
+      null -> {}
+    }
+
     if (announcedUpdate != null) {
       showResults(
         project = project,
@@ -845,16 +860,22 @@ private suspend fun doUpdateAndShowResult(
         externalUpdates = externalUpdates,
         userInitiated = userInitiated,
         forceDialog = forceDialog,
-        showSettingsLink = showSettingsLink
+        showSettingsLink = showSettingsLink,
+        platformOffered = migrationOffer != null,
       )
     }
     callback?.setDone()
   }
 }
 
-private fun showErrors(project: Project?, @NlsContexts.DialogMessage message: String, preferDialog: Boolean) {
+private fun showErrors(
+  project: Project?,
+  @NlsContexts.DialogMessage message: String,
+  preferDialog: Boolean,
+  @NlsContexts.DialogTitle title: String = IdeBundle.message("updates.error.connection.title"),
+) {
   if (preferDialog) {
-    UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog(project, message, IdeBundle.message("updates.error.connection.title")) }
+    UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog(project, message, title) }
   }
   else {
     UpdateChecker.getNotificationGroup().createNotification(message, NotificationType.WARNING).notify(project)
@@ -871,6 +892,7 @@ private suspend fun showResults(
   userInitiated: Boolean,
   forceDialog: Boolean,
   showSettingsLink: Boolean,
+  platformOffered: Boolean,
 ) {
   if (pluginUpdates.isNotEmpty()) {
     if (userInitiated) {
@@ -927,7 +949,7 @@ private suspend fun showResults(
       }
     }
   }
-  else if (pluginUpdates.isEmpty()) {
+  else if (pluginUpdates.isEmpty() && !platformOffered) {
     if (forceDialog) {
       NoUpdatesDialog(showSettingsLink).show()
       PluginsMissingUpdateSourceNotifier.notify(project)

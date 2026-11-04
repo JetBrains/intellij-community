@@ -3,6 +3,7 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.io.IoTestUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -75,6 +76,61 @@ class UpdateStrategyTest {
     assertNull(result.patches)
     assertNull(result.newBuild.downloadUrl)
     assertNull(getUpdateMode(result, testPatch = null))
+  }
+
+  @Test
+  fun `build with a distribution is a manual download for a direct caller`() {
+    IoTestUtil.assumeMacOS()
+    val result = assertLoaded(
+      currentBuild = "IU-263.100",
+      selectedChannel = ChannelStatus.RELEASE,
+      testData = """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="271.1234" fullNumber="271.1234.56" version="2027.1">
+          <button name="Download" url="https://www.jetbrains.com/idea/download/" download="true"/>
+          ${distributionXml()}
+        </build>
+      </channel>""",
+    )
+    assertEquals("IU-271.1234.56", result.newBuild.number.asString())
+    assertNotNull(result.newBuild.distribution)
+    assertEquals(UpdateMode.MANUAL_DOWNLOAD, getUpdateMode(result, testPatch = null))
+  }
+
+  @Test
+  fun `build with an invalid distribution is offered as a manual download`() {
+    val result = assertLoaded(
+      currentBuild = "IU-263.100",
+      selectedChannel = ChannelStatus.RELEASE,
+      testData = """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="271.1234" version="2027.1">
+          <button name="Download" url="https://www.jetbrains.com/idea/download/" download="true"/>
+          ${distributionXml(product = null)}
+        </build>
+      </channel>""",
+    )
+    assertNull(result.newBuild.distribution)
+    assertEquals(UpdateMode.MANUAL_DOWNLOAD, getUpdateMode(result, testPatch = null))
+  }
+
+  @Test
+  fun `newer build of the same major wins over a migration`() {
+    val result = assertLoaded(
+      currentBuild = "IU-263.100",
+      selectedChannel = ChannelStatus.RELEASE,
+      testData = """
+      <channel id="IDEA_Release" status="release" licensing="release">
+        <build number="271.1234" version="2027.1">
+          ${distributionXml()}
+        </build>
+        <build number="263.200" version="2026.3.1">
+          <button name="Download" url="https://www.jetbrains.com/idea/download/" download="true"/>
+        </build>
+      </channel>""",
+    )
+    assertBuild("263.200", result.newBuild)
+    assertEquals(UpdateMode.MANUAL_DOWNLOAD, getUpdateMode(result, testPatch = null))
   }
 
   @Test fun `order of builds does not matter`() {
