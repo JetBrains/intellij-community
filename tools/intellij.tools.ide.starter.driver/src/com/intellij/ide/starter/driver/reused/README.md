@@ -66,6 +66,8 @@ test of the class:
 - **The config databases.** The IDE keeps `app-internal-state.db` and `updatedBrokenPlugins.db` open, and writes them
   at most every 2 minutes. Live recovery does not rewind them. A restart copies them from the cached context.
   The plugin advertiser cache, the EditorConfig encoding cache, and the `$CACHE_FILE$` settings live there.
+- **The extracted plugin resources.** `ExtensionsRootType` extracts them into `config/extensions` on the first use and
+  records that in a config database. So live recovery keeps the files with the database.
 - **The lock and the tokens of the process.** No restore touches `config/.lock`.
 - **The SDK table and the global libraries.** The IDE reads `jdk.table.xml` and `applicationLibraries.xml` only at
   its start. Recovery rewinds the files, but an SDK that a test adds stays in memory until a restart.

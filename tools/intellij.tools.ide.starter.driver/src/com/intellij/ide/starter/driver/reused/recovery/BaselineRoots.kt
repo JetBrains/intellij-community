@@ -79,7 +79,9 @@ private fun MutableList<BaselineRootSpec>.addConfigAndPluginsRootSpecs(
   add(BaselineRootSpec(
     reloadable = true,
     preserveUntrackedPaths = true,
-    shouldTrackDirectory = { relativePath -> !relativePath.startsWith(EVENT_LOG_METADATA_DIRECTORY) },
+    shouldTrackDirectory = { relativePath ->
+      !relativePath.startsWith(EVENT_LOG_METADATA_DIRECTORY) && !relativePath.startsWith(EXTENSIONS_DIRECTORY)
+    },
     shouldTrackFile = { relativePath -> relativePath.nameCount > 1 || relativePath.toString() !in ideRuntimeConfigFiles },
   ) { testContext(it).paths.configDir })
 }
@@ -115,3 +117,11 @@ private val configDatabaseFiles: Set<String> = setOf("app-internal-state.db", "u
 private val ideRuntimeConfigFiles: Set<String> = setOf(".lock", "port.lock", "token", "user.web.token") + configDatabaseFiles
 
 private val EVENT_LOG_METADATA_DIRECTORY: Path = Path.of("event-log-metadata")
+
+/**
+ * The plugin resources that `ExtensionsRootType` extracts on the first use.
+ *
+ * `ResourceVersions` records each extraction in a config database, and live recovery does not rewind that database.
+ * So live recovery keeps these files too. A restart rewinds the database, and the IDE extracts the files again.
+ */
+private val EXTENSIONS_DIRECTORY: Path = Path.of("extensions")

@@ -234,6 +234,27 @@ class ReusedSessionBaselineTest {
     }
   }
 
+  /** `ResourceVersions` records the extraction in a config database, which live recovery does not rewind. */
+  @Test
+  fun `settings recovery keeps the extracted plugin resources`(@TempDir tempDir: Path) {
+    val context = createDummyTestContext("extracted-resources", tempDir.resolve("runtime"))
+    ReusedSessionBaseline(cachedTestContextOf(context)).use { baseline ->
+      baseline.capture(context, emptyList(), emptyList())
+      val extractedFile = context.paths.configDir.resolve("extensions/com.intellij.database/data/aggregators/AVG.groovy").apply {
+        parent.createDirectories()
+        writeText("extracted")
+      }
+
+      val recoveryPlan = baseline.settingsRecoveryPlan(context)
+      baseline.restore(context)
+
+      assertFalse(recoveryPlan.requiresRestart)
+      assertTrue(recoveryPlan.changedFileSpecs.isEmpty())
+      assertTrue(recoveryPlan.deletedFileSpecs.isEmpty())
+      assertEquals("extracted", extractedFile.readText())
+    }
+  }
+
   /** No IDE runs before a restart, so the restart takes the config databases of the cached context. */
   @Test
   fun `a restart rewinds the config databases to the cached context`(@TempDir tempDir: Path) {
