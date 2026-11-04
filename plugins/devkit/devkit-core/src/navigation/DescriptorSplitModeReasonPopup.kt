@@ -309,7 +309,7 @@ private class ReasonHtmlBuilder(
           // An alias or a plugin id differs from the name of the next node, so the edge keeps it.
           val isNamedByNextNode = when (val nextStep = steps.getOrNull(index + 1)) {
             is DependencyTraceStep.Descriptor -> nextStep.descriptorName == "${step.dependencyName}.xml"
-            is DependencyTraceStep.Predefined -> nextStep.moduleName == step.dependencyName
+            is DependencyTraceStep.Predefined -> nextStep.descriptorName == "${step.dependencyName}.xml"
             is DependencyTraceStep.ViaDependency,
             is DependencyTraceStep.ContentModule,
             DependencyTraceStep.ContainingPlugin,
@@ -323,8 +323,9 @@ private class ReasonHtmlBuilder(
         is DependencyTraceStep.ContentModule -> rows.add(ChainRow.Edge(edgeLabel("inlay.split.mode.reason.popup.edge.content.module",
                                                                                  text(step.loadingRule.value))))
         DependencyTraceStep.ContainingPlugin -> rows.add(ChainRow.Edge(edgeLabel("inlay.split.mode.reason.popup.edge.containing.plugin")))
+        // The kind icon shows the kind that the configuration predefines, so the node does not use the file icon.
         is DependencyTraceStep.Predefined -> rows.add(ChainRow.Node(kindIcon(evidence.kind), HtmlBuilder()
-          .append(code(step.moduleName))
+          .append(descriptorNode(step.descriptorName, step.moduleName))
           .append(" ")
           .append(secondary(DevKitBundle.message("inlay.split.mode.reason.popup.predefined.dependency")))
           .toFragment()))

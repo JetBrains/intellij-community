@@ -80,8 +80,10 @@ internal sealed interface DependencyTraceStep {
   /**
    * The split-mode configuration predefines the kind of the module [moduleName].
    * This module ends the path.
+   *
+   * @property descriptorName the descriptor of [moduleName] that the analysis resolved.
    */
-  data class Predefined(val reasoning: @NlsSafe String, val moduleName: String) : DependencyTraceStep
+  data class Predefined(val reasoning: @NlsSafe String, val moduleName: String, val descriptorName: String) : DependencyTraceStep
 
   /** The predefined [kind] dependency [dependencyName] implies the dependency on `intellij.platform.rpc`. */
   data class ImpliedRpc(val kind: ModuleKind, val dependencyName: String) : DependencyTraceStep

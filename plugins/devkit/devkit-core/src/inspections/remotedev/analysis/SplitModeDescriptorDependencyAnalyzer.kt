@@ -255,16 +255,18 @@ private fun getPredefinedDependencyFacts(ideaPlugin: IdeaPlugin): DependencyFact
   val predefinedModuleKind =
     SplitModeApiRestrictionsService.getInstance(descriptorFile.project).getPredefinedModuleKind(module, descriptorFile, ideaPlugin)
     ?: return null
-  return createPredefinedDependencyFacts(module.name, predefinedModuleKind)
+  return createPredefinedDependencyFacts(module.name, descriptorFile.name, predefinedModuleKind)
 }
 
 private fun createPredefinedDependencyFacts(
   moduleName: String,
+  descriptorName: String,
   predefinedModuleKind: SplitModeApiRestrictionsService.PredefinedModuleKindMatch,
 ): DependencyFacts {
   return when (predefinedModuleKind.moduleKind) {
     SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> {
-      val frontendEvidence = createPredefinedDependencyInfo(SplitModeApiRestrictionsService.ModuleKind.FRONTEND, predefinedModuleKind)
+      val frontendEvidence =
+        createPredefinedDependencyInfo(SplitModeApiRestrictionsService.ModuleKind.FRONTEND, descriptorName, predefinedModuleKind)
       DependencyFacts(
         frontendEvidence = frontendEvidence,
         rpcEvidence = createImpliedRpcDependencyInfo(
@@ -275,10 +277,10 @@ private fun createPredefinedDependencyFacts(
       )
     }
     SplitModeApiRestrictionsService.ModuleKind.BACKEND -> DependencyFacts(
-      backendEvidence = createPredefinedDependencyInfo(SplitModeApiRestrictionsService.ModuleKind.BACKEND, predefinedModuleKind),
+      backendEvidence = createPredefinedDependencyInfo(SplitModeApiRestrictionsService.ModuleKind.BACKEND, descriptorName, predefinedModuleKind),
     )
     SplitModeApiRestrictionsService.ModuleKind.MONOLITH -> DependencyFacts(
-      monolithEvidence = createPredefinedDependencyInfo(SplitModeApiRestrictionsService.ModuleKind.MONOLITH, predefinedModuleKind),
+      monolithEvidence = createPredefinedDependencyInfo(SplitModeApiRestrictionsService.ModuleKind.MONOLITH, descriptorName, predefinedModuleKind),
     )
     SplitModeApiRestrictionsService.ModuleKind.SHARED -> DependencyFacts()
     SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND,
@@ -307,13 +309,14 @@ private fun createImpliedRpcDependencyInfo(
 
 private fun createPredefinedDependencyInfo(
   moduleKind: SplitModeApiRestrictionsService.ModuleKind,
+  descriptorName: String,
   predefinedModuleKind: SplitModeApiRestrictionsService.PredefinedModuleKindMatch,
 ): DependencyInfo {
   return DependencyInfo(
     name = getExplicitPlatformDependencyName(moduleKind),
     trace = DependencyTrace(
       cacheKey = "predefined|${predefinedModuleKind.cacheKey}",
-      steps = listOf(DependencyTraceStep.Predefined(predefinedModuleKind.reasoning, predefinedModuleKind.moduleName)),
+      steps = listOf(DependencyTraceStep.Predefined(predefinedModuleKind.reasoning, predefinedModuleKind.moduleName, descriptorName)),
     ),
   )
 }

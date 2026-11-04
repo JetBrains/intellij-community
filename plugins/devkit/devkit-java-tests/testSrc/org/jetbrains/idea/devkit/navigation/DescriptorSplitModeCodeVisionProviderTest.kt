@@ -211,7 +211,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
 
     val entry = runReadActionBlocking { computeCodeVisionEntry() }
     assertInstanceOf(ClickableTextCodeVisionEntry::class.java, entry)
-    val reasonHtml = computeReasonHtml()
+    (val html, val links, val icons) = computeReasonHtml()
     assertEquals(
       "Backend plugin Can be installed into: backend IDE " +
       "Backend dependency: " +
@@ -220,19 +220,19 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
       "dependency.module.xml " +
       "\u2193 depends on " +
       "intellij.platform.backend",
-      toPlainText(reasonHtml.html),
+      toPlainText(html),
     )
     assertEquals(
       listOf(DescriptorLink("dependency.module.xml", "dependency.module")),
-      reasonHtml.links,
+      links,
     )
-    assertEquals(setOf("plugin", "descriptor", "backend"), reasonHtml.icons.keys)
+    assertEquals(setOf("plugin", "descriptor", "backend"), icons.keys)
 
     val currentFile = DescriptorLink("plugin.xml", "root.plugin")
-    val resolvedDescriptors = runReadActionBlocking { resolveDescriptors(myFixture.project, reasonHtml.links + currentFile) }
+    val resolvedDescriptors = runReadActionBlocking { resolveDescriptors(myFixture.project, links + currentFile) }
     assertEquals(
-      mapOf(reasonHtml.links[0] to "dependency.module/dependency.module.xml", currentFile to "root.plugin/plugin.xml"),
-      resolvedDescriptors.mapValues { (_, resolved) -> "${resolved.file.parent.name}/${resolved.file.name}" },
+      mapOf(links[0] to "dependency.module/dependency.module.xml", currentFile to "root.plugin/plugin.xml"),
+      resolvedDescriptors.mapValues { [_, resolved] -> "${resolved.file.parent.name}/${resolved.file.name}" },
     )
     val reasonHtmlWithFileIcons = computeReason().toHtml(resolvedDescriptors.mapValues { it.value.icon })
     assertEquals(
@@ -280,17 +280,17 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     )
     myFixture.configureFromTempProjectFile("test.module/test.module.xml")
 
-    val reasonHtml = computeReasonHtml()
+    (val html, val icons) = computeReasonHtml()
     assertEquals(
       "LiteFrontend content module Can be installed into: lite frontend IDE " +
       "Frontend dependency: " +
       "test.module.xml (current) " +
       "\u2193 depends on " +
-      "intellij.platform.frontend predefined " +
+      "intellij.platform.frontend.xml predefined " +
       "No dependency on intellij.platform.rpc was found. The module can be installed only into a lite frontend.",
-      toPlainText(reasonHtml.html),
+      toPlainText(html),
     )
-    assertEquals(setOf("descriptor", "frontend"), reasonHtml.icons.keys)
+    assertEquals(setOf("descriptor", "frontend"), icons.keys)
   }
 
   @Test
@@ -313,14 +313,19 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     )
     myFixture.configureFromTempProjectFile("test.module/test.module.xml")
 
+    (val html, val links) = computeReasonHtml()
     assertEquals(
       "Backend content module Can be installed into: backend IDE " +
       "Backend dependency: " +
       "test.module.xml (current) " +
       "\u2193 depends on test.backend.alias " +
-      "intellij.platform.backend predefined",
-      toPlainText(computeReasonHtml().html),
+      "intellij.platform.backend.xml predefined",
+      toPlainText(html),
     )
+    val predefinedDescriptor = DescriptorLink("intellij.platform.backend.xml", "intellij.platform.backend")
+    assertEquals(listOf(predefinedDescriptor), links)
+    val resolvedDescriptors = runReadActionBlocking { resolveDescriptors(myFixture.project, links) }
+    assertEquals("intellij.platform.backend.xml", resolvedDescriptors[predefinedDescriptor]?.file?.name)
   }
 
   @Test
@@ -331,7 +336,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
 
     val provider = DescriptorSplitModeCodeVisionProvider()
     provider.preparePreview(myFixture.editor, myFixture.file)
-    val (range, entry) = runReadActionBlocking { provider.computeForEditor(myFixture.editor, myFixture.file) }.single()
+    val [range, entry] = runReadActionBlocking { provider.computeForEditor(myFixture.editor, myFixture.file) }.single()
 
     assertEquals(0, range.startOffset)
     assertEquals("Backend plugin", (entry as TextCodeVisionEntry).text)
