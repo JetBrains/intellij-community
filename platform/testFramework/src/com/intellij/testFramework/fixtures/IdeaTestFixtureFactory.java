@@ -41,7 +41,7 @@ public abstract class IdeaTestFixtureFactory {
   }
 
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name,
-                                                                                  @NotNull HeavyIdeaTestFixturePathProvider projectPathProvider,
+                                                                                  @NotNull IdeaTestFixturePathProvider projectPathProvider,
                                                                                   boolean isDirectoryBasedProject);
 
   public abstract @NotNull TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String projectName);

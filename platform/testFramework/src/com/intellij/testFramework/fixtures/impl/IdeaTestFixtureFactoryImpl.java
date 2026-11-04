@@ -9,7 +9,7 @@ import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.BareTestFixture;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProvider;
+import com.intellij.testFramework.fixtures.IdeaTestFixturePathProvider;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.ModuleFixture;
@@ -55,7 +55,7 @@ public final class IdeaTestFixtureFactoryImpl extends IdeaTestFixtureFactory {
 
   @Override
   public TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name,
-                                                                         @NotNull HeavyIdeaTestFixturePathProvider projectPathProvider,
+                                                                         @NotNull IdeaTestFixturePathProvider projectPathProvider,
                                                                          boolean isDirectoryBasedProject) {
     return new HeavyTestFixtureBuilderImpl(
       new HeavyIdeaTestFixtureImpl(name, projectPathProvider, isDirectoryBasedProject),

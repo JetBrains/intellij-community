@@ -48,7 +48,7 @@ import com.intellij.testFramework.ThreadTracker;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.HeavyIdeaTestFixture;
-import com.intellij.testFramework.fixtures.HeavyIdeaTestFixturePathProvider;
+import com.intellij.testFramework.fixtures.IdeaTestFixturePathProvider;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.lang.CompoundRuntimeException;
@@ -84,14 +84,14 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private EditorListenerTracker myEditorListenerTracker;
   private ThreadTracker myThreadTracker;
   private final String mySanitizedName;
-  private @Nullable HeavyIdeaTestFixturePathProvider myProjectPathProvider;
+  private @Nullable IdeaTestFixturePathProvider myProjectPathProvider;
   private final boolean myIsDirectoryBasedProject;
   private SdkLeakTracker mySdkLeakTracker;
 
   private AccessToken projectTracker;
 
   HeavyIdeaTestFixtureImpl(@NotNull String name,
-                           @Nullable HeavyIdeaTestFixturePathProvider projectPathProvider,
+                           @Nullable IdeaTestFixturePathProvider projectPathProvider,
                            boolean isDirectoryBasedProject) {
     mySanitizedName = FileUtil.sanitizeFileName(name, false);
     myProjectPathProvider = projectPathProvider;
@@ -184,7 +184,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
       }
     });
     actions.add(() -> {
-      HeavyIdeaTestFixturePathProvider provider = myProjectPathProvider;
+      IdeaTestFixturePathProvider provider = myProjectPathProvider;
       if (provider != null) {
         provider.afterTest(mySanitizedName);
       }
@@ -233,9 +233,9 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
 
   private @NotNull Path generateProjectPath() {
     Path tempDirectory;
-    HeavyIdeaTestFixturePathProvider pathProvider = myProjectPathProvider;
+    IdeaTestFixturePathProvider pathProvider = myProjectPathProvider;
     if (pathProvider == null) {
-      pathProvider = myProjectPathProvider = ApplicationManager.getApplication().getService(HeavyIdeaTestFixturePathProvider.class);
+      pathProvider = myProjectPathProvider = ApplicationManager.getApplication().getService(IdeaTestFixturePathProvider.class);
     }
     Path projectPath = null;
     if (pathProvider != null) {

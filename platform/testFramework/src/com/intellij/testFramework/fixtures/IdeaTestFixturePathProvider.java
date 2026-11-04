@@ -12,7 +12,7 @@ import java.nio.file.Path;
  * be able to determine the target location of a Project.
  */
 @FunctionalInterface
-public interface HeavyIdeaTestFixturePathProvider {
+public interface IdeaTestFixturePathProvider {
 
   /**
    * Location where the project should be created. There are no restrictions on the idempotency.

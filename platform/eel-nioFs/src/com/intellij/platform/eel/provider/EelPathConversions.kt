@@ -108,7 +108,7 @@ private val LOG = Logger.getLogger("com.intellij.platform.eel.provider.EelNioBri
     "com.intellij.database.run.EelDatabaseHelperKt",
     "com.intellij.docker.agent.eel.EelFacade",
     "com.intellij.docker.cli.CliExecutor",
-    "com.intellij.eel.ultimate.testFramework.EelHeavyIdeaTestFixturePathProvider",
+    "com.intellij.eel.ultimate.testFramework.EelIdeaTestFixturePathProvider",
     "com.intellij.embark.cli.EmbarkCliLayout",
     "com.intellij.execution.eel.EelSystemFolderTest",
     "com.intellij.execution.portsWatcher.impl.LinuxPortsScanningKt",
