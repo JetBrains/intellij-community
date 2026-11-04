@@ -12,8 +12,13 @@ import com.intellij.openapi.extensions.ExtensionPointPriorityListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.ExtensionsArea;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.TechnologyFilter;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
+import com.intellij.serviceContainer.PluginAwareLazyExtension;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Java11Shim;
 import kotlinx.collections.immutable.PersistentList;
 import org.jetbrains.annotations.ApiStatus;
@@ -47,6 +52,8 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   private Map<String, PersistentList<T>> explicitExtensions = Java11Shim.INSTANCE.mapOf();
 
   private volatile @UnmodifiableView Map<String, List<T>> cache = Java11Shim.INSTANCE.mapOf();
+  /** The extensions of a key with their modules, for {@link #forKey(Object, Project)}. It is filled and cleared as {@link #cache}. */
+  private volatile @UnmodifiableView Map<String, List<ExtensionWithModule<T>>> cacheWithModules = Java11Shim.INSTANCE.mapOf();
   private final @NotNull String epName;
   private final SimpleModificationTracker tracker = new SimpleModificationTracker();
 
@@ -64,6 +71,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   public void clearCache() {
     synchronized (lock) {
       cache = Collections.emptyMap();
+      cacheWithModules = Collections.emptyMap();
       tracker.incModificationCount();
     }
   }
@@ -75,12 +83,13 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
   }
 
   protected void invalidateCacheForExtension(@NotNull String key) {
-    if (!cache.containsKey(key)) {
+    if (!cache.containsKey(key) && !cacheWithModules.containsKey(key)) {
       return;
     }
 
     synchronized (lock) {
       cache = without(cache, key);
+      cacheWithModules = without(cacheWithModules, key);
       tracker.incModificationCount();
     }
   }
@@ -137,6 +146,43 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
       }
 
       cache = with(cache, stringKey, cached);
+      return cached;
+    }
+  }
+
+  /**
+   * The extensions of {@link #forKey(Object)} that apply to {@code project}, see {@link TechnologyFilter}.
+   * A subclass that overrides {@link #buildExtensions(String, Object)} must also override {@link #buildExtensionsWithModules(String, Object)}.
+   * Otherwise the two lookups give different extensions.
+   */
+  @ApiStatus.Experimental
+  public final @NotNull @Unmodifiable List<T> forKey(@NotNull KeyT key, @NotNull Project project) {
+    TechnologyFilter filter = TechnologyFilter.getInstance();
+    if (!filter.isRestricted(project)) {
+      return forKey(key);
+    }
+    return ContainerUtil.mapNotNull(forKeyWithModules(key), extension -> extension.isApplicable(filter, project) ? extension.getInstance() : null);
+  }
+
+  private @NotNull @Unmodifiable List<ExtensionWithModule<T>> forKeyWithModules(@NotNull KeyT key) {
+    String stringKey = keyToString(key);
+
+    List<ExtensionWithModule<T>> cached = cacheWithModules.get(stringKey);
+    if (cached != null) {
+      return cached;
+    }
+
+    cached = buildExtensionsWithModules(stringKey, key);
+
+    if (!myEpListenerAdded.get()) return cached;
+
+    synchronized (lock) {
+      List<ExtensionWithModule<T>> recent = cacheWithModules.get(stringKey);
+      if (recent != null) {
+        return recent;
+      }
+
+      cacheWithModules = with(cacheWithModules, stringKey, cached);
       return cached;
     }
   }
@@ -235,18 +281,92 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     synchronized (lock) {
       List<T> explicit = buildExtensionsFromExplicitRegistration(keys::contains);
       List<T> result = buildExtensionsFromExtensionPoint(bean -> {
-        String key;
-        try {
-          key = bean.getKey();
-        }
-        catch (IllegalStateException e) {
-          LOG.error(e);
-          return false;
-        }
-
-        return keys.contains(key);
+        String key = keyOf(bean);
+        return key != null && keys.contains(key);
       }, extensions);
       return toPersistentList(explicit).addingAll(result);
+    }
+  }
+
+  /**
+   * The extensions of a key with their modules, see {@link ExtensionWithModule}.
+   * They are the extensions of {@link #buildExtensions(String, Object)}, in the same order.
+   * A subclass that overrides that method to look the extensions up by other keys overrides this one in the same way.
+   */
+  @ApiStatus.Internal
+  protected @NotNull @Unmodifiable List<ExtensionWithModule<T>> buildExtensionsWithModules(@NotNull String stringKey, @NotNull KeyT key) {
+    return buildExtensionsWithModules(Collections.singleton(stringKey));
+  }
+
+  /** The same as {@link #buildExtensions(Set)}, with the module of each extension. */
+  @ApiStatus.Internal
+  protected final @NotNull @Unmodifiable List<ExtensionWithModule<T>> buildExtensionsWithModules(@NotNull @Unmodifiable Set<String> keys) {
+    List<KeyedLazyInstance<T>> extensions = getExtensions();
+    synchronized (lock) {
+      List<T> explicit = buildExtensionsFromExplicitRegistration(keys::contains);
+      List<ExtensionWithModule<T>> explicitWithModules = ContainerUtil.map(explicit, it -> new ExtensionWithModule<>(it, null));
+
+      List<ExtensionWithModule<T>> resultWithModules = new SmartList<>();
+      for (KeyedLazyInstance<T> bean : extensions) {
+        String key = keyOf(bean);
+        if (key == null || !keys.contains(key)) {
+          continue;
+        }
+        T instance = instantiate(bean);
+        if (instance != null) {
+          resultWithModules.add(new ExtensionWithModule<>(instance, moduleOf(bean)));
+        }
+      }
+      return toPersistentList(explicitWithModules).addingAll(resultWithModules);
+    }
+  }
+
+  private static @Nullable String keyOf(@NotNull KeyedLazyInstance<?> bean) {
+    try {
+      return bean.getKey();
+    }
+    catch (IllegalStateException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  /** The module that declares a bean, or {@code null} for a bean that code created without a module. */
+  private static @Nullable PluginDescriptor moduleOf(@NotNull KeyedLazyInstance<?> bean) {
+    return bean instanceof PluginAwareLazyExtension ? ((PluginAwareLazyExtension)bean).getPluginDescriptor() : null;
+  }
+
+  /**
+   * An extension of the collector with the module that declares its bean.
+   * An explicit extension has no module, and it applies to every project.
+   * For a collector that gives the extensions of a project, see {@code LanguageExtension.allForLanguage(Language, Project)}.
+   */
+  @ApiStatus.Internal
+  public static final class ExtensionWithModule<T> {
+    private final @NotNull T instance;
+    private final @Nullable PluginDescriptor module;
+
+    ExtensionWithModule(@NotNull T instance, @Nullable PluginDescriptor module) {
+      this.instance = instance;
+      this.module = module;
+    }
+
+    public @NotNull T getInstance() {
+      return instance;
+    }
+
+    public @Nullable PluginDescriptor getModule() {
+      return module;
+    }
+
+    /** Whether the extension applies to {@code project}. An extension without a module always applies. */
+    public boolean isApplicable(@NotNull TechnologyFilter filter, @NotNull Project project) {
+      return module == null || filter.isApplicable(module, project);
+    }
+
+    @Override
+    public String toString() {
+      return module == null ? instance.toString() : instance + " module=" + module.getPluginId();
     }
   }
 
@@ -315,6 +435,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     public void areaReplaced(@NotNull ExtensionsArea area) {
       synchronized (lock) {
         cache = Java11Shim.INSTANCE.mapOf();
+        cacheWithModules = Java11Shim.INSTANCE.mapOf();
         myEpListenerAdded.set(false);
         tracker.incModificationCount();
       }

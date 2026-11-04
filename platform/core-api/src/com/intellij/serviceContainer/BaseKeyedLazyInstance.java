@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 @Transient
-public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> implements PluginAware {
+public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> implements PluginAware, PluginAwareLazyExtension {
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private PluginDescriptor pluginDescriptor;
 
@@ -22,6 +22,7 @@ public abstract class BaseKeyedLazyInstance<T> extends LazyExtensionInstance<T> 
     super(instance);
   }
 
+  @Override
   public final @NotNull PluginDescriptor getPluginDescriptor() {
     return pluginDescriptor;
   }

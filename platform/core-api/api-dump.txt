@@ -3542,8 +3542,8 @@ f:com.intellij.serviceContainer.AlreadyDisposedException
 - com.intellij.openapi.progress.ProcessCanceledException
 - <init>(java.lang.String):V
 a:com.intellij.serviceContainer.BaseKeyedLazyInstance
-- com.intellij.serviceContainer.LazyExtensionInstance
 - com.intellij.openapi.extensions.PluginAware
+- com.intellij.serviceContainer.LazyExtensionInstance
 - p:<init>():V
 - f:getInstance():java.lang.Object
 - getLoaderForClass():java.lang.ClassLoader

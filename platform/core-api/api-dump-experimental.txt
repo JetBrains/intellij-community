@@ -81,6 +81,10 @@ com.intellij.ide.plugins.DynamicPluginListener
 - f:fromModuleId(com.intellij.openapi.extensions.PluginId):com.intellij.ide.plugins.IdeaPluginOsRequirement
 - f:fromOs(com.intellij.util.system.OS):com.intellij.ide.plugins.IdeaPluginOsRequirement
 - f:getHostOsModuleIds():java.util.List
+c:com.intellij.lang.LanguageExtension
+- com.intellij.openapi.util.KeyedExtensionCollector
+- *:allForLanguage(com.intellij.lang.Language,com.intellij.openapi.project.Project):java.util.List
+- *:allForLanguageOrAny(com.intellij.lang.Language,com.intellij.openapi.project.Project):java.util.List
 *a:com.intellij.lang.LanguageMatcher
 - s:match(com.intellij.lang.Language):com.intellij.lang.LanguageMatcher
 - s:matchWithDialects(com.intellij.lang.Language):com.intellij.lang.LanguageMatcher
@@ -346,6 +350,9 @@ a:com.intellij.openapi.project.DumbService
 - a:processFileEx(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.containers.TreeNodeProcessingResult
 a:com.intellij.openapi.roots.FileIndexFacade
 - *a:isIndexable(com.intellij.openapi.vfs.VirtualFile):Z
+c:com.intellij.openapi.util.KeyedExtensionCollector
+- com.intellij.openapi.util.ModificationTracker
+- *f:forKey(java.lang.Object,com.intellij.openapi.project.Project):java.util.List
 com.intellij.openapi.util.registry.RegistryManager
 - *a:is(java.lang.String,Z):Z
 - *a:stringValue(java.lang.String,java.lang.String):java.lang.String
