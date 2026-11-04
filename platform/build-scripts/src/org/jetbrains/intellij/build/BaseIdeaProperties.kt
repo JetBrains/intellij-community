@@ -78,8 +78,8 @@ val CE_CLASS_VERSIONS: Map<String, String> = mapOf(
   "plugins/maven/lib/intellij.maven.server3/maven3-server.jar" to "1.8",
   "plugins/maven/lib/artifact-resolver-m31.jar" to "1.8",
   "plugins/java/lib/sa-jdwp" to "",  // ignored
-  "plugins/Groovy/lib/groovy-rt.jar" to "1.8",
-  "plugins/Groovy/lib/groovy-constants-rt.jar" to "1.8",
+  "plugins/groovy/lib/groovy-rt.jar" to "1.8",
+  "plugins/groovy/lib/groovy-constants-rt.jar" to "1.8",
 )
 
 fun configurePropertiesForAllEditionsOfIntelliJIdea(properties: JetBrainsProductProperties) {

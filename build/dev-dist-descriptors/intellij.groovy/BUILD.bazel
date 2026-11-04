@@ -86,7 +86,7 @@ dev_plugin(
         "lib/standardDsls": "//plugins/groovy/groovy-psi:dev_dist_resources",
     },
     jars = {
-        "lib/Groovy.jar": [
+        "lib/groovy.jar": [
             "intellij.groovy",
             "intellij.groovy.git",
             "intellij.groovy.psi",
@@ -123,7 +123,7 @@ dev_plugin(
         "//plugins/groovy/rt/classLoader": "intellij.groovy.rt.classLoader",
         "//plugins/groovy/spock-rt": "intellij.groovy.spock.rt",
     },
-    plugin_directory = "plugins/Groovy",
+    plugin_directory = "plugins/groovy",
     stamp_class_modes = [
         "frontend",
     ],

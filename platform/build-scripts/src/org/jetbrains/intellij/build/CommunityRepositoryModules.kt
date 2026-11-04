@@ -750,10 +750,8 @@ private fun createAndroidPluginLayout(
   }
 }
 
-fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-  return pluginAutoWithCustomDirName("intellij.groovy") { spec ->
-    spec.directoryName = "Groovy"
-    spec.mainJarName = "Groovy.jar"
+fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((PluginLayout.PluginLayoutBuilder) -> Unit)? = null): PluginLayout {
+  return pluginAuto("intellij.groovy") { spec ->
     spec.withModules(
       listOf(
         "intellij.groovy.psi",
