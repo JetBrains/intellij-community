@@ -25,6 +25,8 @@ val IDEA_COMMUNITY_MAVEN_ARTIFACTS_ADDITIONAL_MODULES: PersistentList<String> = 
   "intellij.platform.vcs.testFramework",
   "intellij.platform.externalSystem.testFramework",
   "intellij.platform.uast.testFramework",
+  "intellij.platform.testFramework.buildView",
+  "intellij.platform.testFramework.structureView",
   "intellij.maven.testFramework",
   "intellij.tools.reproducibleBuilds.diff",
   "intellij.space.java.jps",
