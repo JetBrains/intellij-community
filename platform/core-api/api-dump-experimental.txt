@@ -234,6 +234,28 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 c:com.intellij.openapi.editor.markup.UnmodifiableTextAttributes
 - com.intellij.openapi.editor.markup.TextAttributes
 - *:setFontFamilies(com.intellij.openapi.editor.markup.FontFamilies):V
+*f:com.intellij.openapi.extensions.TechnologyAwareExtensionPointName
+- com.intellij.openapi.extensions.TechnologyAwareExtensions
+- <init>(com.intellij.openapi.extensions.ExtensionPointName):V
+- <init>(java.lang.String):V
+- f:addChangeListener(com.intellij.openapi.Disposable,com.intellij.openapi.extensions.TechnologyAwareExtensions$ApplicableExtensionsListener):V
+- f:addChangeListener(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.extensions.TechnologyAwareExtensions$ApplicableExtensionsListener):V
+*a:com.intellij.openapi.extensions.TechnologyAwareExtensions
+- f:pointName:com.intellij.openapi.extensions.BaseExtensionPointName
+- f:computeSafeIfAny(com.intellij.openapi.project.Project,java.util.function.Function):java.lang.Object
+- f:extensionList(com.intellij.openapi.project.Project):java.util.List
+- f:findFirstSafe(com.intellij.openapi.project.Project,java.util.function.Predicate):java.lang.Object
+- f:forEachExtensionSafe(com.intellij.openapi.project.Project,java.util.function.Consumer):V
+- f:getName():java.lang.String
+- f:lazySequence(com.intellij.openapi.project.Project):kotlin.sequences.Sequence
+*:com.intellij.openapi.extensions.TechnologyAwareExtensions$ApplicableExtensionsListener
+- a:applicableExtensionsChanged(com.intellij.openapi.project.Project):V
+*f:com.intellij.openapi.extensions.TechnologyAwareProjectExtensionPointName
+- com.intellij.openapi.extensions.TechnologyAwareExtensions
+- <init>(com.intellij.openapi.extensions.ProjectExtensionPointName):V
+- <init>(java.lang.String):V
+- f:addChangeListener(com.intellij.openapi.project.Project,com.intellij.openapi.Disposable,com.intellij.openapi.extensions.TechnologyAwareExtensions$ApplicableExtensionsListener):V
+- f:addChangeListener(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope,com.intellij.openapi.extensions.TechnologyAwareExtensions$ApplicableExtensionsListener):V
 a:com.intellij.openapi.fileEditor.FileDocumentManager
 - com.intellij.openapi.vfs.SavingRequestor
 - *:overrideConflictResolution(com.intellij.openapi.fileEditor.FileDocumentManager$ConflictResolution,com.intellij.openapi.Disposable):V
