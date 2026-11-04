@@ -1,14 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework.fixtures
 
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
+import com.intellij.testFramework.fixtures.IdeaTestFixturePathProvider
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
@@ -16,6 +17,7 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.maven.internal.MavenPluginDisposable
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.nio.file.Path
@@ -99,7 +101,8 @@ private fun mavenFixtureImpl(
   useCodeInsight: Boolean = false,
   indices: MavenDomTestFixtureIndices? = null,
 ): TestFixture<MavenDomTestFixture> {
-  val dirFixture = tempPathFixture(subdirName = "project")
+  val projectRoot = getTestProjectRoot()
+  val dirFixture = tempPathFixture(root = projectRoot, subdirName = "project")
   // The project must be opened so that the hosted CodeInsightTestFixture can commit documents and run
   // completion / highlighting against it.
   // Put the project base in its own per-run sub-directory so the directory ABOVE the project pom is a fresh, per-run
@@ -138,6 +141,12 @@ private fun mavenFixtureImpl(
       fixture.tearDown()
     }
   }
+}
+
+private fun getTestProjectRoot(): Path? {
+  val fixturePathProvider = ApplicationManager.getApplication().getService(IdeaTestFixturePathProvider::class.java) ?: return null
+  val mavenPluginDisposable = Disposer.newDisposable(MavenPluginDisposable.getInstance())
+  return fixturePathProvider.get("mavenTests", mavenPluginDisposable)
 }
 
 /**
