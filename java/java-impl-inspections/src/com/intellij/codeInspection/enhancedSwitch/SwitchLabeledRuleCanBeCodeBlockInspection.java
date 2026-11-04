@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.enhancedSwitch;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,7 +20,7 @@ import com.intellij.psi.PsiSwitchExpression;
 import com.intellij.psi.PsiSwitchLabeledRuleStatement;
 import com.intellij.psi.PsiThrowStatement;
 import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,27 +92,8 @@ public final class SwitchLabeledRuleCanBeCodeBlockInspection extends AbstractBas
         element = element.getParent();
       }
       if (element instanceof PsiSwitchLabeledRuleStatement rule) {
-        PsiSwitchBlock switchBlock = rule.getEnclosingSwitchBlock();
-        PsiStatement body = rule.getBody();
-
-        if (switchBlock instanceof PsiSwitchExpression && body instanceof PsiExpressionStatement statement) {
-          wrapExpression(statement);
-        }
-        else if (body != null) {
-          wrapStatement(body);
-        }
+        SwitchUtils.wrapRuleBodyIntoCodeBlock(rule);
       }
-    }
-
-    private static void wrapExpression(PsiExpressionStatement expressionStatement) {
-      CommentTracker tracker = new CommentTracker();
-      String valueKeyword = JavaKeywords.YIELD;
-      tracker.replaceAndRestoreComments(expressionStatement, "{ " + valueKeyword + " " + tracker.text(expressionStatement) + "\n }");
-    }
-
-    private static void wrapStatement(@NotNull PsiStatement statement) {
-      CommentTracker tracker = new CommentTracker();
-      tracker.replaceAndRestoreComments(statement, "{ " + tracker.text(statement) + "\n }");
     }
   }
 }

@@ -72,7 +72,7 @@ public final class IntroduceVariableAndSurroundWithIfFix extends PsiUpdateModCom
     PsiIfStatement ifStatement = new JavaWithIfSurrounder()
       .surroundStatements(project, extracted.statement().getParent(), extracted.statementWithSuppression(), condition);
     if (ifStatement == null) return;
-    new MergeIfAndIntention().invoke(ifStatement.getFirstChild());
+    MergeIfAndIntention.mergeWithNestedIf(ifStatement);
 
     extracted.templateRename(updater);
   }

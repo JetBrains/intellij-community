@@ -69,4 +69,16 @@ public final class MergeIfAndIntention extends MCIntention {
     final @NonNls String statement = "if(" + parentConditionText + "&&" + childConditionText + ')' + ct.text(childThenBranch);
     ct.replaceAndRestoreComments(parentStatement, statement);
   }
+
+  /**
+   * Merges {@code ifStatement} with the if statement in its then-branch, if {@link MergeIfAndIntention} is available there.
+   * The availability check keeps the else-branch of the nested if statement.
+   */
+  public static void mergeWithNestedIf(@NotNull PsiIfStatement ifStatement) {
+    MergeIfAndIntention intention = new MergeIfAndIntention();
+    PsiElement token = ifStatement.getFirstChild();
+    if (intention.getElementPredicate().satisfiedBy(token)) {
+      intention.invoke(token);
+    }
+  }
 }

@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
@@ -393,6 +394,24 @@ public final class SwitchUtils {
   @Contract(pure = true)
   public static boolean isRuleFormatSwitch(@NotNull PsiSwitchBlock block) {
     return PsiUtil.isRuleFormatSwitch(block);
+  }
+
+  /**
+   * Replaces the body of {@code rule} with a code block that holds the same code.
+   * In a switch expression, an expression body becomes a yield statement.
+   *
+   * @param rule the rule to change
+   * @return the code block of the rule, or null if the rule has no body
+   */
+  public static @Nullable PsiCodeBlock wrapRuleBodyIntoCodeBlock(@NotNull PsiSwitchLabeledRuleStatement rule) {
+    PsiStatement body = rule.getBody();
+    if (body == null) return null;
+    if (body instanceof PsiBlockStatement blockStatement) return blockStatement.getCodeBlock();
+    CommentTracker tracker = new CommentTracker();
+    String prefix = body instanceof PsiExpressionStatement && rule.getEnclosingSwitchBlock() instanceof PsiSwitchExpression
+                    ? JavaKeywords.YIELD + " " : "";
+    PsiElement result = tracker.replaceAndRestoreComments(body, "{ " + prefix + tracker.text(body) + "\n }");
+    return ((PsiBlockStatement)result).getCodeBlock();
   }
 
   public static boolean canBeSwitchSelectorExpression(@Nullable PsiExpression expression,
