@@ -2928,7 +2928,6 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - getAnnotationLocalChangesListener():com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener
 - getCompositeCheckoutListener():com.intellij.openapi.vcs.CheckoutProvider$Listener
 - getConfirmation(com.intellij.openapi.vcs.VcsConfiguration$StandardConfirmation):com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption
-- getConsolidatedVcsName():java.lang.String
 - getContentManager():com.intellij.ui.content.ContentManager
 - getContentRevisionCache():com.intellij.openapi.vcs.impl.ContentRevisionCache
 - getDirectoryMappingFor(com.intellij.openapi.vcs.FilePath):com.intellij.openapi.vcs.VcsDirectoryMapping

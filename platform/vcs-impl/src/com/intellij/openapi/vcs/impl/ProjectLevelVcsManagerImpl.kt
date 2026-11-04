@@ -345,11 +345,6 @@ class ProjectLevelVcsManagerImpl(
     return vcsRoots.toTypedArray<VcsRoot>()
   }
 
-  override fun getConsolidatedVcsName(): String {
-    val singleVcs = getSingleVCS()
-    return singleVcs?.shortNameWithMnemonic ?: VcsBundle.message("vcs.generic.name.with.mnemonic")
-  }
-
   @Deprecated("A plugin should not need to call this.")
   override fun notifyDirectoryMappingChanged() {
     fireDirectoryMappingsChanged()

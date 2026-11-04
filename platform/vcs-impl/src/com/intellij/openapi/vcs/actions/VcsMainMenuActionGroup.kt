@@ -5,13 +5,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.platform.vcs.impl.shared.VcsMappingsHolder
 
 internal class VcsMainMenuActionGroup : DefaultActionGroup(), DumbAware {
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
-    val vcs = ProjectLevelVcsManager.getInstance(project).getSingleVCS() ?: return
-    e.presentation.isEnabledAndVisible = !vcs.isWithCustomMenu
+    val vcs = VcsMappingsHolder.getInstance(project).getSingleActiveVcs() ?: return
+    val presentation = findVcsPresentation(project, vcs) ?: return
+    e.presentation.isEnabledAndVisible = !presentation.isWithCustomMenu
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

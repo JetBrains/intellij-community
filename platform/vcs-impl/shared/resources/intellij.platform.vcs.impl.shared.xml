@@ -52,6 +52,9 @@
     <extensionPoint qualifiedName="com.intellij.openapi.vcs.merge.resolveActionProvider"
                     interface="com.intellij.openapi.vcs.merge.MergeResolveActionProvider"
                     dynamic="true"/>
+    <extensionPoint name="vcs.presenter"
+                    interface="com.intellij.platform.vcs.impl.shared.VcsPresenter"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

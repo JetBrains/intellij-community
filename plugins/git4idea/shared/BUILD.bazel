@@ -47,6 +47,7 @@ jvm_library(
         "//platform/diagnostic/telemetry",
         "//libraries/opentelemetry",
         "//platform/vcs-api/shared",
+        "//platform/vcs-api/vcs-api-core:vcs-core",
         "//platform/util:util-ui",
         "//platform/collaboration-tools/shared",
         "//platform/vcs-api/vcs-api-core:vcs-core",

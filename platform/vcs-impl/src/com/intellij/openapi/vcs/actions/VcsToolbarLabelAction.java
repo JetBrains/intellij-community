@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsKey;
+import com.intellij.platform.vcs.impl.shared.VcsMappingsHolder;
+import com.intellij.platform.vcs.impl.shared.VcsPresentation;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +21,7 @@ public final class VcsToolbarLabelAction extends ToolbarLabelAction {
     super.update(e);
 
     Project project = e.getProject();
-    e.getPresentation().setVisible(project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss());
+    e.getPresentation().setVisible(project != null && VcsMappingsHolder.getInstance(project).hasActiveVcss());
     e.getPresentation().setText(getConsolidatedVcsName(project));
   }
 
@@ -31,7 +33,11 @@ public final class VcsToolbarLabelAction extends ToolbarLabelAction {
   private static @NlsContexts.Label String getConsolidatedVcsName(@Nullable Project project) {
     String name = VcsBundle.message("vcs.common.labels.vcs");
     if (project != null) {
-      name = ProjectLevelVcsManager.getInstance(project).getConsolidatedVcsName() + ":";
+      VcsKey vcsKey = VcsMappingsHolder.getInstance(project).getSingleActiveVcs();
+      if (vcsKey == null) return name;
+      VcsPresentation presentation = VcsGroupsActionGroupKt.findVcsPresentation(project, vcsKey);
+      if (presentation == null) return name;
+      name = presentation.getShortNameWithMnemonic() + ":";
     }
     return name;
   }
