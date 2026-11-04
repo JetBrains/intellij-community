@@ -3458,6 +3458,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/smartCastType/DifferentReceiver.kt");
         }
 
+        @TestMetadata("ExplicitCompanionQualifier.kt")
+        public void testExplicitCompanionQualifier() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/ExplicitCompanionQualifier.kt");
+        }
+
         @TestMetadata("FunctionReturnType.kt")
         public void testFunctionReturnType() throws Exception {
             runTest("../../completion/testData/basic/common/smartCastType/FunctionReturnType.kt");
@@ -3481,6 +3486,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("LocalVariable.kt")
         public void testLocalVariable() throws Exception {
             runTest("../../completion/testData/basic/common/smartCastType/LocalVariable.kt");
+        }
+
+        @TestMetadata("NestedObjectQualifier.kt")
+        public void testNestedObjectQualifier() throws Exception {
+            runTest("../../completion/testData/basic/common/smartCastType/NestedObjectQualifier.kt");
         }
 
         @TestMetadata("NoExpectedType.kt")

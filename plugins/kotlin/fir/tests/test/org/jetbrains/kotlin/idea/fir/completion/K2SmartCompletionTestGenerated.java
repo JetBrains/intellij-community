@@ -1269,6 +1269,11 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
             runTest("../../completion/testData/smart/smartCasts/DifferentImplicitRootOfReceiverChain.kt");
         }
 
+        @TestMetadata("DifferentNestedObject.kt")
+        public void testDifferentNestedObject() throws Exception {
+            runTest("../../completion/testData/smart/smartCasts/DifferentNestedObject.kt");
+        }
+
         @TestMetadata("DifferentReceiverProperty.kt")
         public void testDifferentReceiverProperty() throws Exception {
             runTest("../../completion/testData/smart/smartCasts/DifferentReceiverProperty.kt");
@@ -1284,6 +1289,11 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
             runTest("../../completion/testData/smart/smartCasts/ElseBranch.kt");
         }
 
+        @TestMetadata("ExplicitCompanionQualifier.kt")
+        public void testExplicitCompanionQualifier() throws Exception {
+            runTest("../../completion/testData/smart/smartCasts/ExplicitCompanionQualifier.kt");
+        }
+
         @TestMetadata("ExplicitOuterReceiverChain.kt")
         public void testExplicitOuterReceiverChain() throws Exception {
             runTest("../../completion/testData/smart/smartCasts/ExplicitOuterReceiverChain.kt");
@@ -1292,6 +1302,11 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
         @TestMetadata("ExplicitThisReceiver.kt")
         public void testExplicitThisReceiver() throws Exception {
             runTest("../../completion/testData/smart/smartCasts/ExplicitThisReceiver.kt");
+        }
+
+        @TestMetadata("ImplicitCompanionQualifier.kt")
+        public void testImplicitCompanionQualifier() throws Exception {
+            runTest("../../completion/testData/smart/smartCasts/ImplicitCompanionQualifier.kt");
         }
 
         @TestMetadata("ImplicitDispatchReceiver.kt")
@@ -1339,9 +1354,19 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
             runTest("../../completion/testData/smart/smartCasts/MemberPropertyInExtensionProperty.kt");
         }
 
+        @TestMetadata("MixedCompanionQualifier.kt")
+        public void testMixedCompanionQualifier() throws Exception {
+            runTest("../../completion/testData/smart/smartCasts/MixedCompanionQualifier.kt");
+        }
+
         @TestMetadata("MutableProperty.kt")
         public void testMutableProperty() throws Exception {
             runTest("../../completion/testData/smart/smartCasts/MutableProperty.kt");
+        }
+
+        @TestMetadata("NestedObjectQualifier.kt")
+        public void testNestedObjectQualifier() throws Exception {
+            runTest("../../completion/testData/smart/smartCasts/NestedObjectQualifier.kt");
         }
 
         @TestMetadata("NullableIntersection.kt")
@@ -1354,6 +1379,11 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
             runTest("../../completion/testData/smart/smartCasts/NullableTypeCheck.kt");
         }
 
+        @TestMetadata("ObjectQualifier.kt")
+        public void testObjectQualifier() throws Exception {
+            runTest("../../completion/testData/smart/smartCasts/ObjectQualifier.kt");
+        }
+
         @TestMetadata("OuterImplicitReceiverWithUnrelatedInner.kt")
         public void testOuterImplicitReceiverWithUnrelatedInner() throws Exception {
             runTest("../../completion/testData/smart/smartCasts/OuterImplicitReceiverWithUnrelatedInner.kt");
@@ -1362,6 +1392,11 @@ public abstract class K2SmartCompletionTestGenerated extends AbstractK2SmartComp
         @TestMetadata("OutsideBranch.kt")
         public void testOutsideBranch() throws Exception {
             runTest("../../completion/testData/smart/smartCasts/OutsideBranch.kt");
+        }
+
+        @TestMetadata("PackageQualifiedObject.kt")
+        public void testPackageQualifiedObject() throws Exception {
+            runTest("../../completion/testData/smart/smartCasts/PackageQualifiedObject.kt");
         }
 
         @TestMetadata("PackageQualifier.kt")

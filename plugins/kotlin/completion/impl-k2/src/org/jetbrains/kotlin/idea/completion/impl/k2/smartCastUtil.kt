@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.components.KaSmartCastSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
@@ -135,11 +136,14 @@ private fun KotlinNameReferencePositionContext.resolveExplicitReceiverChain(): L
         }
 
         // Call expressions cannot be used in stable smart casts
-        val resolvedReceiver = receiver.takeIf { it !is KtCallExpression }?.resolveSuccessfulExpressionSymbol()
+        val resolvedReceiver = receiver.takeIf { it !is KtCallExpression }?.resolveReceiverSymbol()
         // We stop at a package symbol because it is not a real receiver. There are also no implicit receivers
         // after it.
         if (resolvedReceiver is KaPackageSymbol) return@buildList
         add(resolvedReceiver)
+        // The qualifiers to the left of a classifier, such as `Outer` in `Outer.Inner`, are not receivers.
+        // They only name the class or package that contains the classifier, so we stop here.
+        if (resolvedReceiver is KaClassLikeSymbol) return@buildList
         receiver = (receiver as? KtQualifiedExpression)?.receiverExpression ?: break
     }
 
@@ -148,6 +152,19 @@ private fun KotlinNameReferencePositionContext.resolveExplicitReceiverChain(): L
     if (dispatchReceiver is KaImplicitReceiverValue) {
         add(dispatchReceiver.symbol)
     }
+}
+
+/**
+ * Resolves the receiver to its symbol.
+ * Note that this also works for qualified receivers that reference classifiers rather than callables.
+ */
+context(_: KaSession)
+private fun KtExpression.resolveReceiverSymbol(): KaSymbol? {
+    // Attempt to resolve expression symbol first
+    resolveSuccessfulExpressionSymbol()?.let { return it }
+    // If it does not work, attempt to resolve classifier symbol
+    val selectorExpression = (this as? KtQualifiedExpression)?.selectorExpression ?: return null
+    return selectorExpression.resolveSuccessfulExpressionSymbol() as? KaClassLikeSymbol
 }
 
 /**
