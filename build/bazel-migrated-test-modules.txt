@@ -282,3 +282,4 @@ intellij.yaml.backend.tests
 intellij.yaml.tests
 kotlin.gradle.gradle-java.tests
 kotlin.gradle.gradle-java.tests.shared
+kotlin.jps.graphImplementationTests
