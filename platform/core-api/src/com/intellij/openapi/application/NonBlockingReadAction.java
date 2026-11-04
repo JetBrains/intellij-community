@@ -151,11 +151,14 @@ public interface NonBlockingReadAction<T> {
    * It's the responsibility of the caller to take care about it.<p></p>
    * <p>
    * {@link #finishOnUiThread} and {@link #coalesceBy} are not supported with synchronous non-blocking read actions.
+   * <p>
+   * When the computation throws a checked exception, this method throws {@link java.util.concurrent.ExecutionException}
+   * with that exception as its cause. The method does not declare it, so Java callers catch it as {@link Exception}.
    *
    * @return the result of the computation
    * @throws ProcessCanceledException if the computation got expired due to {@link #expireWhen} or {@link #expireWith} or {@link #wrapProgress}.
    * @throws IllegalStateException    if current thread already has read access and the constraints (e.g. {@link #inSmartMode} are not satisfied)
-   * @throws RuntimeException         when the computation throws an exception. If it's a checked one, it's wrapped into a {@link RuntimeException}.
+   * @throws RuntimeException         when the computation throws an unchecked exception; it is rethrown as is.
    */
   @RequiresBlockingContext
   T executeSynchronously() throws ProcessCanceledException;
