@@ -2,7 +2,6 @@
 package com.jetbrains.python.packaging.toolwindow.model
 
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.python.PyBundle
 import com.intellij.python.requirements.PyPackageVersion
 import com.intellij.python.requirements.PyPackageVersionComparator
 import com.intellij.python.requirements.PyPackageVersionNormalizer
@@ -12,6 +11,7 @@ import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 sealed class DisplayablePackage(val name: @NlsSafe String, open val repository: PyPackageRepository?) {
   open fun getRequirements(): List<DisplayablePackage> = emptyList()
@@ -64,10 +64,12 @@ class WorkspaceMember(
   override fun getRequirements(): List<DisplayablePackage> = packages
 }
 
+/** The installed packages that the root dependency file does not declare. [name] is the label of the group. */
 @ApiStatus.Internal
 class UndeclaredPackagesGroup(
+  name: @Nls String,
   private val packages: List<InstalledPackage>,
-) : DisplayablePackage(PyBundle.message("python.toolwindow.packages.not.added.to.pyproject"), null) {
+) : DisplayablePackage(name, null) {
   override fun getRequirements(): List<DisplayablePackage> = packages
 }
 

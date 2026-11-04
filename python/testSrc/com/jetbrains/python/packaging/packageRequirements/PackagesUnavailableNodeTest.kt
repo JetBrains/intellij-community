@@ -9,7 +9,6 @@ import com.jetbrains.python.errorProcessing.ExecErrorImpl
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.MessageError
-import com.jetbrains.python.packaging.management.PythonPackageManager.Companion.PackageManagerErrorMessage
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -21,20 +20,18 @@ import org.junit.jupiter.api.Test
 @Layers.Functional
 class PackagesUnavailableNodeTest {
 
-  private val outOfSync = PackageManagerErrorMessage("The lock file at `uv.lock` is out of sync", "Update uv lock")
+  private val updateLock = "Update uv lock"
 
   @Test
   fun `the description is what actually failed`() {
-    val state = packagesUnavailableNode(MessageError("uv: command not found"), outOfSync, canUpdateLocked = true)
+    val state = packagesUnavailableNode(MessageError("uv: command not found"), updateLock, canUpdateLocked = true)
 
-    // Not "the lock file is out of sync": that message describes one condition, and a manager reports it whatever
-    // went wrong, so it would tell the user something untrue about a missing executable.
     assertThat(state.description).isEqualTo("uv: command not found")
   }
 
   @Test
   fun `a failed process is named, not quoted`() {
-    val state = packagesUnavailableNode(uvTreeFailure(), outOfSync, canUpdateLocked = true)
+    val state = packagesUnavailableNode(uvTreeFailure(), updateLock, canUpdateLocked = true)
 
     // The panel is one narrow column. The command line, the stdout, the stderr and the exit code do not fit it, and
     // the Process Output tool window already holds all of them.
@@ -44,14 +41,14 @@ class PackagesUnavailableNodeTest {
 
   @Test
   fun `the failed process is kept, so the view can link to its output`() {
-    val state = packagesUnavailableNode(uvTreeFailure(), outOfSync, canUpdateLocked = true)
+    val state = packagesUnavailableNode(uvTreeFailure(), updateLock, canUpdateLocked = true)
 
     assertThat(state.failedProcess).isNotNull()
   }
 
   @Test
   fun `a failure with no process to show keeps none`() {
-    val state = packagesUnavailableNode(MessageError("boom"), outOfSync, canUpdateLocked = true)
+    val state = packagesUnavailableNode(MessageError("boom"), updateLock, canUpdateLocked = true)
 
     assertThat(state.failedProcess).isNull()
   }
@@ -70,21 +67,21 @@ class PackagesUnavailableNodeTest {
 
   @Test
   fun `the fix carries the manager's name for it`() {
-    val state = packagesUnavailableNode(MessageError("error: Unable to find lockfile"), outOfSync, canUpdateLocked = true)
+    val state = packagesUnavailableNode(MessageError("error: Unable to find lockfile"), updateLock, canUpdateLocked = true)
 
     assertThat(state.fixCommand).isEqualTo("Update uv lock")
   }
 
   @Test
   fun `a manager that names no fix still gets one, because it can run one`() {
-    val state = packagesUnavailableNode(MessageError("boom"), syncError = null, canUpdateLocked = true)
+    val state = packagesUnavailableNode(MessageError("boom"), fixCommand = null, canUpdateLocked = true)
 
     assertThat(state.fixCommand).isEqualTo("Sync project")
   }
 
   @Test
   fun `no fix is offered when the manager has no action to run`() {
-    val state = packagesUnavailableNode(MessageError("boom"), outOfSync, canUpdateLocked = false)
+    val state = packagesUnavailableNode(MessageError("boom"), updateLock, canUpdateLocked = false)
 
     assertThat(state.description).isEqualTo("boom")
     assertThat(state.fixCommand).isNull()

@@ -8,7 +8,6 @@ import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.PythonPackageManager.Companion.PackageManagerErrorMessage
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PyDependencyGroupName
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -108,26 +107,26 @@ data class PackagesUnavailableNode(
 /**
  * The state to show when the tool could not report the packages.
  *
- * The description comes from [error]. A manager can fail for any reason — a missing executable, a broken environment,
- * a read error — and [syncError] describes only one of them, so it cannot say what went wrong here.
+ * The description comes from [error]. A manager can fail for any reason, such as a missing executable, a broken
+ * environment or a read error.
  *
  * A failed process describes itself over as many lines as it likes, and the panel is one narrow column, so the
  * description names the command and the view links to its output in the Process Output tool window.
  *
  * The fix is an offer, not a diagnosis: it appears when the manager has an action to run ([canUpdateLocked]), named by
- * [syncError] where the manager names it. The description says what failed, so the user can judge whether the offer
+ * [fixCommand] where the manager names it. The description says what failed, so the user can judge whether the offer
  * applies.
  */
 @ApiStatus.Internal
 fun packagesUnavailableNode(
   error: PyError,
-  syncError: PackageManagerErrorMessage?,
+  fixCommand: @Nls String?,
   canUpdateLocked: Boolean,
 ): PackagesUnavailableNode = PackagesUnavailableNode(
   description = if (error is ExecError) PyBundle.message("python.packaging.unavailable.command.failed", commandName(error))
   else error.message,
   // "Sync project" is what the same action is called as an intention, and one action keeps one name.
-  fixCommand = if (canUpdateLocked) syncError?.fixCommandMessage ?: PyBundle.message("python.sdk.intention.family.name.sync.project")
+  fixCommand = if (canUpdateLocked) fixCommand ?: PyBundle.message("python.sdk.intention.family.name.sync.project")
   else null,
   failedProcess = error as? ExecError,
 )
@@ -138,7 +137,7 @@ fun packagesUnavailableNode(
  */
 @ApiStatus.Internal
 fun PythonPackageManager.packagesUnavailable(error: PyError): PackagesUnavailableNode =
-  packagesUnavailableNode(error, syncErrorMessage(), canUpdateLocked = updateLockedAction() != null)
+  packagesUnavailableNode(error, updateLockedActionName(), canUpdateLocked = updateLockedAction() != null)
 
 /** The command as a user says it — `uv tree`, `pip install` — and not the absolute path with every flag. */
 private fun commandName(error: ExecError): @NlsSafe String {

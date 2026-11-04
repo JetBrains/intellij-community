@@ -29,7 +29,7 @@ internal class PyPackageTreePresenterTest {
 
   @Test
   fun `direct child of undeclared group is detected`() {
-    val group = UndeclaredPackagesGroup(packages = emptyList())
+    val group = UndeclaredPackagesGroup(name = "Not added to requirements.txt", packages = emptyList())
     val child = installedPackage("requests")
 
     val root = DefaultMutableTreeNode(null)
@@ -43,7 +43,7 @@ internal class PyPackageTreePresenterTest {
 
   @Test
   fun `nested descendant of undeclared group is detected`() {
-    val group = UndeclaredPackagesGroup(packages = emptyList())
+    val group = UndeclaredPackagesGroup(name = "Not added to requirements.txt", packages = emptyList())
     val member = WorkspaceMember("app", packages = emptyList())
     val leaf = installedPackage("urllib3")
 
@@ -60,7 +60,7 @@ internal class PyPackageTreePresenterTest {
 
   @Test
   fun `sibling of undeclared group is not affected`() {
-    val group = UndeclaredPackagesGroup(packages = emptyList())
+    val group = UndeclaredPackagesGroup(name = "Not added to requirements.txt", packages = emptyList())
     val declared = installedPackage("numpy")
 
     val root = DefaultMutableTreeNode(null)
@@ -93,7 +93,8 @@ internal class PyPackageTreePresenterTest {
     val member: com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage = WorkspaceMember("m", emptyList())
     val loading: com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage = LoadingNode()
     val depGroup: com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage = DependencyGroupNode("dev", emptyList())
-    val undeclared: com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage = UndeclaredPackagesGroup(emptyList())
+    val undeclared: com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage =
+      UndeclaredPackagesGroup("Not added to requirements.txt", emptyList())
 
     assertNull(installable.asInstalledPackageOrNull())
     assertNull(requirement.asInstalledPackageOrNull())

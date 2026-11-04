@@ -25,7 +25,6 @@ import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
-import com.jetbrains.python.packaging.management.PythonPackageManager.Companion.PackageManagerErrorMessage
 import com.jetbrains.python.packaging.management.PythonWorkspaceSupport
 import com.jetbrains.python.packaging.packageRequirements.CachedDependencyTreeProvider
 import com.jetbrains.python.packaging.packageRequirements.PackageCollectionPackageStructureNode
@@ -43,6 +42,7 @@ import java.nio.file.Path
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 
 /**
  * The uv package manager of an SDK in [UvMode.Project]: a `pyproject.toml`, a `uv.lock`, and possibly a workspace.
@@ -208,12 +208,6 @@ internal class UvPackageManager internal constructor(
     return withUv { uv -> uv.sync().mapSuccess { } }
   }
 
-  override fun syncErrorMessage(): PackageManagerErrorMessage =
-    PackageManagerErrorMessage(
-      message("python.uv.lockfile.out.of.sync"),
-      message("python.uv.update.lock")
-    )
-
   override suspend fun reloadPackages(): PyResult<List<PythonPackage>> {
     installedTreeProvider.invalidateCache()
     return super.reloadPackages()
@@ -229,6 +223,8 @@ internal class UvPackageManager internal constructor(
   }
 
   override fun updateLockedAction(): suspend () -> PyResult<Unit> = suspend { syncLocked().mapSuccess { } }
+
+  override fun updateLockedActionName(): @Nls String = message("python.uv.update.lock")
 
   private suspend fun resolvePackageName(module: Module): String {
     val pyProject = module.asPyProject() ?: return module.name
