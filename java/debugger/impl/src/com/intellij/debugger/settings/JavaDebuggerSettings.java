@@ -33,9 +33,7 @@ public final class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   @Override
   public @NotNull Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
     return switch (category) {
-      case GENERAL ->
-        singletonList(SimpleConfigurable.create("reference.idesettings.debugger.launching", JavaBundle.message("options.java.display.name"),
-                                                DebuggerLaunchingConfigurable.class, DebuggerSettings::getInstance));
+      case GENERAL -> singletonList(new DebuggerLaunchingConfigurable());
       case DATA_VIEWS -> createDataViewsConfigurable();
       case STEPPING ->
         singletonList(SimpleConfigurable.create("reference.idesettings.debugger.stepping", JavaBundle.message("options.java.display.name"),
