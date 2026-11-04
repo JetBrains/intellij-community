@@ -107,6 +107,94 @@ fn a_refusal_carries_no_clap_tip() {
     }
 }
 
+/// An agent typed `--nocache` and got no hint, because the suggestion of clap is a `tip:` line.
+#[test]
+fn a_mistyped_flag_names_the_similar_flag() {
+    let failure = refusal(parse_args(["FooTest", "--nocache"], areas()));
+    assert_eq!(failure.exit, exit::USAGE);
+    assert!(
+        failure.message.contains("a similar argument exists: '--no-cache'"),
+        "{}",
+        failure.message
+    );
+    assert!(!failure.message.contains("tip:"), "{}", failure.message);
+    assert!(!failure.message.contains("'-- --nocache'"), "{}", failure.message);
+}
+
+/// Agents gave several class names to run them in one call. The answer names the forms that work.
+#[test]
+fn a_second_selector_names_one_call_for_each_class() {
+    let failure = refusal(parse_args(["FooTest", "BarTest", "BazTest"], areas()));
+    assert_eq!(failure.exit, exit::USAGE);
+    assert!(failure.message.contains("'BarTest'"), "{}", failure.message);
+    assert!(
+        failure
+            .message
+            .contains("Run each class in its own call: --module <module> --filter <FQN>"),
+        "{}",
+        failure.message
+    );
+    assert!(failure.message.contains("--filter <package>"), "{}", failure.message);
+    let flag = refusal(parse_args(["FooTest", "--bogus"], areas()));
+    assert!(!flag.message.contains("one selector"), "{}", flag.message);
+    // Two labels are two targets, not two classes of one target.
+    let labels = refusal(parse_args(["//a:a_test", "//b:b_test"], areas()));
+    assert!(!labels.message.contains("one selector"), "{}", labels.message);
+    // A class after a label gets the same answer. The `--module` form works for the class too.
+    let class_after_label = refusal(parse_args(["//a:a_test", "FooTest"], areas()));
+    assert!(
+        class_after_label.message.contains("bt takes one selector"),
+        "{}",
+        class_after_label.message
+    );
+}
+
+/// An agent gave `--module` and a class name. The answer names `--filter`, in both orders of the arguments. clap names
+/// only `[SELECTOR]`, not its value, so a label or a package beside `--module` gets the same answer, and it names no
+/// class only.
+#[test]
+fn a_selector_beside_module_names_the_filter() {
+    for argv in [
+        ["--module", "intellij.x.tests", "FooTest"],
+        ["FooTest", "--module", "intellij.x.tests"],
+        ["--module", "intellij.x.tests", "//a:a_test"],
+        ["--module", "intellij.x.tests", "plugins/air/backend"],
+    ] {
+        let failure = refusal(parse_args(argv, areas()));
+        assert_eq!(failure.exit, exit::USAGE, "{argv:?}");
+        assert!(
+            failure
+                .message
+                .contains("Give a class or a package with --filter: --module <module> --filter <FQN|package>"),
+            "{argv:?}: {}",
+            failure.message
+        );
+    }
+    let lane = refusal(parse_args(["--module", "intellij.x.tests", "--lane", "fast"], areas()));
+    assert!(!lane.message.contains("--filter"), "{}", lane.message);
+}
+
+/// Agents gave one --filter for each class to run them in one call. bt takes one filter, and the answer names the
+/// forms that work.
+#[test]
+fn a_second_filter_names_one_call_for_each_class() {
+    let failure = refusal(parse_args(
+        ["--module", "intellij.x.tests", "--filter", "a.FooTest", "--filter", "a.BarTest"],
+        areas(),
+    ));
+    assert_eq!(failure.exit, exit::USAGE);
+    assert!(failure.message.contains("cannot be used multiple times"), "{}", failure.message);
+    assert!(
+        failure
+            .message
+            .contains("Run each class in its own call, or give the package of the classes: --filter <package>"),
+        "{}",
+        failure.message
+    );
+    let shards = refusal(parse_args(["FooTest", "--shards", "2", "--shards", "3"], areas()));
+    assert!(!shards.message.contains("--filter"), "{}", shards.message);
+}
+
 /// A typo in a count must not surface after a five-minute build.
 #[test]
 fn a_count_is_checked_before_any_work_starts() {

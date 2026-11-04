@@ -2,10 +2,10 @@
 
 use std::ffi::OsString;
 
-use bt_core::selector::is_target_pattern;
+use bt_core::selector::{Selector, SelectorKind, is_target_pattern};
 use bt_core::{AREAS_FILE, Areas, Refusal, exit, fail_usage};
 use clap::Parser;
-use clap::error::ErrorKind;
+use clap::error::{ContextKind, ContextValue, ErrorKind};
 
 /// The help text, kept from the tool's first version so a caller reading either sees one tool. `{lanes}` is where
 /// [`usage`] lists the lanes of the areas.
@@ -346,20 +346,64 @@ fn help_or_refusal(error: &clap::Error, help: String) -> Result<Invocation, Refu
 
 /// clap's message without its `Usage:` tail, its `--help` hint and its `tip:` lines: the curated help is one flag
 /// away, the generated usage line would contradict it, and a tip such as "use '-- -k'" is wrong for bt, where
-/// everything after `--` goes to bazel.
+/// everything after `--` goes to bazel. The similar flags of clap stay, without a `tip:`, because they name the fix of
+/// a typo such as `--nocache`.
+///
+/// A second class name is a second selector, and a second `--filter` is a second filter. bt takes one of each, so the
+/// message tells to run each class in its own call, or to give the package of the classes. A class name beside
+/// `--module` gets the `--filter` form.
 fn usage_message(error: &clap::Error) -> String {
     let rendered = error.render().to_string();
     let message = rendered.split("\n\nUsage:").next().unwrap_or(&rendered);
     let message = message
         .lines()
         .filter(|line| {
-            let line = line.trim_start();
-            !line.starts_with("tip:") && !line.starts_with("For more information, try")
+            let text = line.trim_start();
+            !text.starts_with("tip: ") && !text.starts_with("For more information, try")
         })
         .collect::<Vec<_>>()
         .join("\n");
     let message = message.trim();
-    message.strip_prefix("error: ").unwrap_or(message).to_owned()
+    let message = message.strip_prefix("error: ").unwrap_or(message);
+    let names = |kind| match error.get(kind) {
+        Some(ContextValue::String(name)) => vec![name.as_str()],
+        Some(ContextValue::Strings(names)) => names.iter().map(String::as_str).collect(),
+        _ => Vec::new(),
+    };
+    let similar: Vec<String> = names(ContextKind::SuggestedArg).iter().map(|name| format!("'{name}'")).collect();
+    let message = match similar.as_slice() {
+        [] => message.to_owned(),
+        [one] => format!("{message}\n\n  a similar argument exists: {one}"),
+        _ => format!("{message}\n\n  similar arguments exist: {}", similar.join(", ")),
+    };
+    let invalid = names(ContextKind::InvalidArg);
+    let conflicting: Vec<&str> = invalid.iter().copied().chain(names(ContextKind::PriorArg)).collect();
+    match error.kind() {
+        ErrorKind::UnknownArgument if invalid.iter().copied().any(is_class_name) => format!(
+            "{message}\nbt takes one selector. Run each class in its own call: --module <module> --filter <FQN>. To run \
+             all the classes of a package, give the package: --module <module> --filter <package>"
+        ),
+        ErrorKind::ArgumentConflict
+            if conflicting.iter().any(|name| name.starts_with("--module")) && conflicting.contains(&"[SELECTOR]") =>
+        {
+            format!(
+                "{message}\n--module is the selector of the run. Give a class or a package with --filter: --module <module> \
+                 --filter <FQN|package>"
+            )
+        }
+        ErrorKind::ArgumentConflict if conflicting.iter().all(|name| name.starts_with("--filter")) => {
+            format!(
+                "{message}\n--filter takes one class, one Class#method or one package. Run each class in its own call, or \
+                 give the package of the classes: --filter <package>"
+            )
+        }
+        _ => message,
+    }
+}
+
+/// Whether a refused argument is a simple class name or an FQN, which bt reads as a selector.
+fn is_class_name(argument: &str) -> bool {
+    Selector::classify(argument).is_ok_and(|selector| matches!(selector.kind, SelectorKind::SimpleName | SelectorKind::Fqn))
 }
 
 #[cfg(test)]
