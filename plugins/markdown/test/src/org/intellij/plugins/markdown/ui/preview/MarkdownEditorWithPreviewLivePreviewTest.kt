@@ -69,22 +69,23 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     assertTrue(createEditor().editor.isLivePreviewEnabled())
   }
 
-  fun testEmptyMarkdownOpensInEditorAfterPreviewOnlyWasChosen() {
-    val properties = PropertiesComponent.getInstance()
-    val layoutProperty = MarkdownBundle.message("markdown.editor.name") + "Layout"
-    val previousLayout = properties.getValue(layoutProperty)
-    Disposer.register(testRootDisposable) {
-      if (previousLayout == null) properties.unsetValue(layoutProperty)
-      else properties.setValue(layoutProperty, previousLayout)
-    }
-
+  fun testEmptyMarkdownOpensInEditorAndPreviewAfterPreviewOnlyWasChosen() {
+    restoreLastUsedLayoutAfterTest()
     createEditor().setLayout(Layout.SHOW_PREVIEW)
 
     myFixture.configureByText("empty.md", "")
-    assertEquals(Layout.SHOW_EDITOR, createEditor().getLayout())
+    assertEquals(Layout.SHOW_EDITOR_AND_PREVIEW, createEditor().getLayout())
 
     myFixture.configureByText("filled.md", "# Heading")
     assertEquals(Layout.SHOW_PREVIEW, createEditor().getLayout())
+  }
+
+  fun testEmptyMarkdownOpensInDefaultLayout() {
+    restoreLastUsedLayoutAfterTest()
+    PropertiesComponent.getInstance().unsetValue(LAST_USED_LAYOUT_PROPERTY)
+
+    myFixture.configureByText("empty.md", "")
+    assertEquals(Layout.SHOW_EDITOR_AND_PREVIEW, createEditor().getLayout())
   }
 
   fun testDisabledRegistryKeyHidesLivePreview() {
@@ -281,6 +282,16 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     assertEquals(listOf(LIVE_PREVIEW_ACTION_ID), editorWithPreview.selectedViewActionIds())
   }
 
+  /** The test root disposable restores the last used layout of the Markdown editors. */
+  private fun restoreLastUsedLayoutAfterTest() {
+    val properties = PropertiesComponent.getInstance()
+    val previousLayout = properties.getValue(LAST_USED_LAYOUT_PROPERTY)
+    Disposer.register(testRootDisposable) {
+      if (previousLayout == null) properties.unsetValue(LAST_USED_LAYOUT_PROPERTY)
+      else properties.setValue(LAST_USED_LAYOUT_PROPERTY, previousLayout)
+    }
+  }
+
   private fun createEditor(): MarkdownEditorWithPreview {
     val file = myFixture.file.virtualFile
     val textEditor = TextEditorProvider.getInstance().createEditor(project, file) as TextEditor
@@ -382,5 +393,8 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     const val LIVE_PREVIEW_ACTION_ID = "Markdown.Layout.LivePreview"
     const val PREVIEW_ONLY_ACTION_ID = "TextEditorWithPreview.Layout.PreviewOnly"
     const val TIMEOUT_SECONDS = 10
+
+    val LAST_USED_LAYOUT_PROPERTY: String
+      get() = MarkdownBundle.message("markdown.editor.name") + "Layout"
   }
 }

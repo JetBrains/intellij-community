@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.ui.preview;
 
-import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -65,8 +64,14 @@ public final class MarkdownEditorWithPreview extends TextEditorWithPreview imple
       MarkdownBundle.message("markdown.editor.name"),
       Layout.SHOW_EDITOR_AND_PREVIEW,
       !settings.isVerticalSplit(),
-      // Without a preview or text to edit, the last used layout of other editors must not apply.
-      previewAvailable && editor.getEditor().getDocument().getTextLength() != 0 ? null : Layout.SHOW_EDITOR
+      // Without a preview, the last used layout of other editors must not apply.
+      // An empty file must not open in "Preview only", because the user then sees no text to edit.
+      !previewAvailable
+      ? Layout.SHOW_EDITOR
+      : (editor.getEditor().getDocument().getTextLength() == 0 &&
+         Layout.SHOW_PREVIEW.getId().equals(PropertiesComponent.getInstance().getValue(MarkdownBundle.message("markdown.editor.name") + "Layout")))
+        ? Layout.SHOW_EDITOR_AND_PREVIEW
+        : null
     );
 
     this.settings = settings;
