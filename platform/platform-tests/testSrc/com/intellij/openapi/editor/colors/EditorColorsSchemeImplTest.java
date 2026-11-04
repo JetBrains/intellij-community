@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.ex.util.LayeredTextAttributes;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.InvalidDataException;
@@ -61,6 +62,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import static com.intellij.editor.EditorColorSchemeTestUtil.assertXmlOutputEquals;
 import static com.intellij.editor.EditorColorSchemeTestUtil.doTestWriteRead;
@@ -1336,11 +1338,32 @@ public class EditorColorsSchemeImplTest {
     );
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getDefaultScheme();
     EditorColorsScheme emptyScheme = EmptyColorScheme.getEmptyScheme();
-    scheme.resolveParent(name -> {
+    scheme.resolveParent(parentName -> {
       scheme.setParent(emptyScheme);
-      return defaultScheme;
+      return parentName.equals("NotLoadedYet") ? defaultScheme : null;
     });
     assertSame(emptyScheme, scheme.getParentScheme());
+  }
+
+  @Test
+  public void testWrittenUserCopyEqualsItsBundledSchemeUntilItChanges() {
+    EditorColorsSchemeImpl bundled = new EditorColorsSchemeImpl(EditorColorsManager.getInstance().getDefaultScheme());
+    bundled.setName("EditorColorsSchemeImplTest.Bundled");
+    bundled.setAttributes(HighlighterColors.TEXT, new TextAttributes(new Color(1, 2, 3), null, null, null, Font.PLAIN));
+    EditorColorsSchemeImpl userCopy = (EditorColorsSchemeImpl)bundled.clone();
+    userCopy.setName(Scheme.EDITABLE_COPY_PREFIX + bundled.getName());
+    Function<String, EditorColorsScheme> oldSchemeById = AbstractColorsScheme.getSchemeById;
+    AbstractColorsScheme.getSchemeById = name -> name.equals(bundled.getName()) ? bundled : oldSchemeById.apply(name);
+    try {
+      userCopy.writeExternal(new Element("scheme"));
+      assertEquals("true", userCopy.getMetaProperties().getProperty("partialSave"));
+      assertTrue(userCopy.settingsEqual(bundled));
+      userCopy.setAttributes(HighlighterColors.TEXT, new TextAttributes(new Color(4, 5, 6), null, null, null, Font.PLAIN));
+      assertFalse(userCopy.settingsEqual(bundled));
+    }
+    finally {
+      AbstractColorsScheme.getSchemeById = oldSchemeById;
+    }
   }
 
   @Test

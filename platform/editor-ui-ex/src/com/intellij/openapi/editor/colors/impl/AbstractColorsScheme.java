@@ -547,6 +547,17 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
     return settingsEqual(other, colorKeyFilter, ignoreMetaInfo, true);
   }
 
+  /**
+   * Returns {@code true} when {@code other} is a scheme with the same settings as this scheme.
+   * Each meta property of this scheme must have the same value in {@code other}.
+   * The check skips the bookkeeping properties: the creation and modification times, the IDE and its version,
+   * the original scheme and the partial save flag.
+   * A property that only {@code other} has does not count, because a user copy has fewer meta properties than its bundled scheme.
+   *
+   * @param colorKeyFilter accepts the color keys to compare, or {@code null} to compare all colors
+   * @param ignoreMetaInfo {@code true} to skip all meta properties
+   * @param useDefaults {@code false} to compare the text attributes without the default attributes of their keys
+   */
   public boolean settingsEqual(
     Object other,
     @Nullable Predicate<? super ColorKey> colorKeyFilter,
@@ -566,7 +577,8 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
           propertyName.equals(META_INFO_MODIFIED_TIME) ||
           propertyName.equals(META_INFO_IDE) ||
           propertyName.equals(META_INFO_IDE_VERSION) ||
-          propertyName.equals(META_INFO_ORIGINAL_SCHEME)) {
+          propertyName.equals(META_INFO_ORIGINAL_SCHEME) ||
+          propertyName.equals(META_INFO_PARTIAL)) {
         continue;
       }
       if (!Objects.equals(metaInfo.getProperty(propertyName), otherScheme.metaInfo.getProperty(propertyName))) {
