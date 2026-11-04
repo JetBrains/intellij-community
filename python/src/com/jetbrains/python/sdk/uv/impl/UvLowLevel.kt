@@ -8,6 +8,7 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.PyDependencyGroupKind
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.PyError
@@ -93,9 +94,17 @@ private class UvLowLevelImpl<P : PathHolder>(
       venvArgs.add("system")
     }
     venvArgs += pythonArgs(version)
-    uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray()).onFailure {
-      uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray(), "--force").getOr { return it }
-    }.getOr { return it }
+    suspend fun runUvVenv(vararg extraArgs: String): PyResult<String> =
+      uvCli.runUv(cwd, null, true, *venvArgs.toTypedArray(), *extraArgs)
+
+    // A failed `uv venv` gets one retry with `--force`. The result of the retry decides, not the first failure.
+    // The stdout of `uv venv` is not needed: the Python of the environment is found on disk below.
+    when (runUvVenv()) {
+      is Result.Success -> Unit
+      is Result.Failure -> {
+        val _ = runUvVenv("--force").getOr { return it }
+      }
+    }
 
     val resolvedVenvPath = venvPath?.let { fileSystem.resolvePythonBinary(it) }
     if (resolvedVenvPath != null) {
