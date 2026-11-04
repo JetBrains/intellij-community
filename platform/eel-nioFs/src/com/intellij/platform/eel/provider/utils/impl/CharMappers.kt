@@ -1,5 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:EelInternalApi
+
 package com.intellij.platform.eel.provider.utils.impl
 
 import com.intellij.platform.eel.EelInternalApi
@@ -15,7 +16,13 @@ import it.unimi.dsi.fastutil.ints.Int2IntArrayMap
 private val enabled by lazy {
   LocalEelDescriptor.osFamily.isWindows
 }
-private val mappings = arrayOf(':' to 0xF03A.toChar(), '|' to 0xF07C.toChar())
+private val mappings = arrayOf(
+  ':' to 0xF03A.toChar(),
+  '|' to 0xF07C.toChar(),
+  '?' to 0xF03F.toChar(),
+  '<' to 0xF03C.toChar(),
+  '>' to 0xF03E.toChar()
+)
 private val unixToWinMap =
   Int2IntArrayMap(mappings.map { it.first.code }.toIntArray(), mappings.map { it.second.code }.toIntArray(), mappings.size)
 private val winToUnixMap = Int2IntArrayMap(unixToWinMap.values.toIntArray(), unixToWinMap.keys.toIntArray(), unixToWinMap.size)
@@ -25,7 +32,7 @@ private fun convert(fileName: String, mapping: Int2IntArrayMap): String {
     return fileName
   }
   var result: StringBuilder? = null
-  for ((i, char) in fileName.withIndex()) {
+  for ([i, char] in fileName.withIndex()) {
     val codeToReplace = mapping[char.code]
     if (codeToReplace != 0) {
       val builder = result ?: StringBuilder(fileName).also { result = it }
