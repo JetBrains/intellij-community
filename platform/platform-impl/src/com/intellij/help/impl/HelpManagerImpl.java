@@ -80,15 +80,15 @@ public class HelpManagerImpl extends HelpManager {
     var url = urlSupplier.invoke(requireNonNullElse(id, "top"));
 
     var activeKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
-    if (activeKeymap != null && activeKeymap.canModify()) {
+    if (activeKeymap.canModify()) {
       // if the user has a custom keymap, we need to show the predefined keymap it was inherited from
       activeKeymap = activeKeymap.getParent();
     }
+
     if (activeKeymap != null) {
       var keymapID = ApplicationManager.getApplication().getService(KeymapHelpIdPresenter.class).getKeymapIdForHelp(activeKeymap);
       url = url.addParameters(Map.of("keymap", keymapID));
     }
-
     return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url.toExternalForm());
   }
 }
