@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtParameterList
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtTypeParameterList
 import org.jetbrains.kotlin.psi.ValueArgument
@@ -224,8 +225,8 @@ private fun findElementToInjectWithAnnotation(host: KtElement): KtModifierListOw
         false, /* strict */
         KtBlockExpression::class.java, KtParameterList::class.java, KtTypeParameterList::class.java /* Stop at */
     )?.takeIf { it.operationToken in KtTokens.ALL_ASSIGNMENTS } ?: return null
-    val left = binaryExpression.left ?: return null
-    return left.mainReference?.resolve() as? KtModifierListOwner
+    val left = binaryExpression.left as? KtReferenceExpression ?: return null
+    return left.mainReference.resolve() as? KtModifierListOwner
 }
 
 private fun findElementToInjectWithComment(host: KtElement): KtExpression? {

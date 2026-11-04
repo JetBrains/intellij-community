@@ -163,6 +163,32 @@ class K2KotlinInjectionTest: KotlinInjectionTestBase() {
         )
     }
 
+    // KTIJ-33305
+    fun testStringLiteralOnAssignmentLhs() {
+        myFixture.configureByText(
+            "a.kt",
+            """
+            fun foo() {
+                "abc" = "def"
+            }
+            """.trimIndent()
+        )
+        myFixture.doHighlighting()
+    }
+
+    // KTIJ-33305
+    fun testStringLiteralOnAssignmentLhsQualified() {
+        myFixture.configureByText(
+            "a.kt",
+            """
+            fun foo(a: Any) {
+                a."abc" = "def"
+            }
+            """.trimIndent()
+        )
+        myFixture.doHighlighting()
+    }
+
     @OptIn(KaAllowAnalysisOnEdt::class)
     fun testCompletionAfterEditingKDocCodeBlock() {
         allowAnalysisOnEdt {
