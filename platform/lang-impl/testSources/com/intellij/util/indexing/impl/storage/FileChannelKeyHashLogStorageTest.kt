@@ -59,6 +59,30 @@ class FileChannelKeyHashLogStorageTest {
         base, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE, 16, false, true
       ).close()
     }, "The incompatible log must cause an index rebuild")
+
+    assertFalse(Files.exists(directory.resolve("log.storage")), "The format check must run before the map storage opens")
+    Files.delete(directory.resolve("log.project.len"))
+    Files.delete(directory.resolve("log.project"))
+    VfsAwareMapIndexStorage(
+      base, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE, 16, false, true
+    ).close()
+  }
+
+  @Test
+  fun `failed key hash log initialization releases the map storage`() {
+    val base = directory.resolve("log")
+    Files.write(directory.resolve("log.project"), byteArrayOf(1))
+
+    assertThrows(EOFException::class.java, {
+      VfsAwareMapIndexStorage(
+        base, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE, 16, false, true
+      ).close()
+    }, "The invalid key hash log must fail initialization")
+
+    Files.delete(directory.resolve("log.project"))
+    VfsAwareMapIndexStorage(
+      base, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE, 16, false, true
+    ).close()
   }
 
   @Test

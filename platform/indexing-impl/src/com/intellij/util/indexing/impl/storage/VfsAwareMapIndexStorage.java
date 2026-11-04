@@ -117,14 +117,39 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
 
   @Override
   protected void initMapAndCache() throws IOException {
+    // Reject the legacy log before the map storage registers its files.
+    if (myBuildKeyHashToVirtualFileMapping && myBaseStorageFile != null) {
+      checkKeyHashLogFormat(myBaseStorageFile);
+    }
     super.initMapAndCache();
     if (myBuildKeyHashToVirtualFileMapping && myBaseStorageFile != null) {
       FileSystem projectFileFS = myBaseStorageFile.getFileSystem();
       assert !projectFileFS.isReadOnly() : "File system " + projectFileFS + " is read only";
-      myKeyHashToVirtualFileMapping = createKeyHashLog(myKeyDescriptor, myBaseStorageFile, storageLockContext());
+      try {
+        myKeyHashToVirtualFileMapping = createKeyHashLog(myKeyDescriptor, myBaseStorageFile, storageLockContext());
+      }
+      catch (IOException | RuntimeException | Error e) {
+        try {
+          super.close();
+        }
+        catch (IOException | RuntimeException | Error closeError) {
+          e.addSuppressed(closeError);
+        }
+        throw e;
+      }
     }
     else {
       myKeyHashToVirtualFileMapping = null;
+    }
+  }
+
+  private static void checkKeyHashLogFormat(@NotNull Path baseStorageFile) throws IOException {
+    if (!USE_FILE_CHANNEL_KEY_HASH_LOG_STORAGE) return;
+
+    Path legacyLengthFile = baseStorageFile.resolveSibling(baseStorageFile.getFileName() + ".project.len");
+    if (Files.exists(legacyLengthFile)) {
+      //expect index to be rebuilt as a result, and KeyHashLog recreated with new format
+      throw new IOException("The key hash log uses the legacy format: " + baseStorageFile);
     }
   }
 
@@ -133,10 +158,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
                                                                  @Nullable StorageLockContext storageLockContext) throws IOException {
     KeyHashLogStorage storage;
     if (USE_FILE_CHANNEL_KEY_HASH_LOG_STORAGE) {
-      Path legacyLengthFile = baseStorageFile.resolveSibling(baseStorageFile.getFileName() + ".project.len");
-      if (Files.exists(legacyLengthFile)) {
-        throw new IOException("The key hash log uses the legacy format: " + baseStorageFile);
-      }
+      checkKeyHashLogFormat(baseStorageFile);
       storage = storageLockContext == null
                 ? new FileChannelKeyHashLogStorage(baseStorageFile)
                 : new FileChannelKeyHashLogStorage(baseStorageFile, storageLockContext.getChannelsAccessor(false));
