@@ -117,7 +117,6 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinInfixCallPositionCon
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinWithSubjectEntryPositionContext
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
-import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -135,30 +134,12 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.ArrayFqNames
-import org.jetbrains.kotlin.resolve.constants.evaluate.CompileTimeType
 import org.jetbrains.kotlin.resolve.constants.evaluate.canEvalOp
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.plusIfNotNull
 import kotlin.reflect.KClass
 
 private val NOT_PROPERTIES = NotPropertiesService.DEFAULT.toSet()
-
-private val COMPILE_TIME_TYPES: Map<ClassId, CompileTimeType> = mapOf(
-    StandardClassIds.Byte to CompileTimeType.BYTE,
-    StandardClassIds.Short to CompileTimeType.SHORT,
-    StandardClassIds.Int to CompileTimeType.INT,
-    StandardClassIds.Long to CompileTimeType.LONG,
-    StandardClassIds.UByte to CompileTimeType.UBYTE,
-    StandardClassIds.UShort to CompileTimeType.USHORT,
-    StandardClassIds.UInt to CompileTimeType.UINT,
-    StandardClassIds.ULong to CompileTimeType.ULONG,
-    StandardClassIds.Double to CompileTimeType.DOUBLE,
-    StandardClassIds.Float to CompileTimeType.FLOAT,
-    StandardClassIds.Char to CompileTimeType.CHAR,
-    StandardClassIds.Boolean to CompileTimeType.BOOLEAN,
-    StandardClassIds.String to CompileTimeType.STRING,
-    StandardClassIds.Any to CompileTimeType.ANY,
-)
 
 /**
  * This contributor is responsible for emitting callable elements (e.g. properties, methods).

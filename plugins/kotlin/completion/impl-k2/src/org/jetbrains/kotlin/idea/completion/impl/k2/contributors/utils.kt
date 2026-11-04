@@ -47,11 +47,14 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.Weighers.applyWeigh
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.name.CallableId
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.resolve.constants.evaluate.CompileTimeType
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 context(_: KaSession, context: K2CompletionSectionContext<*>)
@@ -286,3 +289,23 @@ internal fun shouldShowElementsFromIndex(): Boolean {
 
     return prefix.isNotEmpty() || completionType == CompletionType.SMART
 }
+
+/**
+ * A map of [ClassId]s that can be used in compile time evaluation, together with their [CompileTimeType].
+ */
+internal val COMPILE_TIME_TYPES: Map<ClassId, CompileTimeType> = mapOf(
+    StandardClassIds.Byte to CompileTimeType.BYTE,
+    StandardClassIds.Short to CompileTimeType.SHORT,
+    StandardClassIds.Int to CompileTimeType.INT,
+    StandardClassIds.Long to CompileTimeType.LONG,
+    StandardClassIds.UByte to CompileTimeType.UBYTE,
+    StandardClassIds.UShort to CompileTimeType.USHORT,
+    StandardClassIds.UInt to CompileTimeType.UINT,
+    StandardClassIds.ULong to CompileTimeType.ULONG,
+    StandardClassIds.Double to CompileTimeType.DOUBLE,
+    StandardClassIds.Float to CompileTimeType.FLOAT,
+    StandardClassIds.Char to CompileTimeType.CHAR,
+    StandardClassIds.Boolean to CompileTimeType.BOOLEAN,
+    StandardClassIds.String to CompileTimeType.STRING,
+    StandardClassIds.Any to CompileTimeType.ANY,
+)
