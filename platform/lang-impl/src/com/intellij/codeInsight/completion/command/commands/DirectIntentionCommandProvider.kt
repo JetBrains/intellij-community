@@ -28,6 +28,7 @@ import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -499,6 +500,7 @@ internal class DirectIntentionCommandProvider : CommandProvider {
           val offsets = offsetProvider?.findOffsets(psiFile, offset) ?: mutableListOf(offset)
 
           val availableIntentions = IntentionManager.getInstance().getAvailableIntentions(mutableListOf(language.id))
+            .filter { IntentionActionWrapper.isApplicableToProject(it, originalFile.project) }
           for (currentOffset in offsets) {
             val actionsToShow = IntentionsInfo()
             for (action in availableIntentions) {

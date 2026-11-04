@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -22,11 +23,10 @@ class IntentionActionAsAction(intention: IntentionAction)
   private val actionId = intention.wrappedActionId
 
   override fun actionPerformed(e: AnActionEvent) {
-    val intention = findIntention() ?: return
-
     val dataContext = e.dataContext
     val file = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return
     val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
+    val intention = findIntention(file.project) ?: return
 
     intention.invokeAsAction(editor, file, IntentionSource.CUSTOM_SHORTCUT)
   }
@@ -36,10 +36,10 @@ class IntentionActionAsAction(intention: IntentionAction)
     val file = e.dataContext.getData(CommonDataKeys.PSI_FILE) ?: return
     val project = e.project ?: return
 
-    e.presentation.isEnabled = findIntention()?.isAvailable(project, editor, file) == true
+    e.presentation.isEnabled = findIntention(project)?.isAvailable(project, editor, file) == true
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  private fun findIntention(): IntentionAction? = IntentionShortcutManager.getInstance().findIntention(actionId)
+  private fun findIntention(project: Project): IntentionAction? = IntentionShortcutManager.getInstance().findIntention(actionId, project)
 }

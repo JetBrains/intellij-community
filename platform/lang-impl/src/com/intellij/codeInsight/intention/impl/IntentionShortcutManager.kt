@@ -87,8 +87,11 @@ class IntentionShortcutManager(private val coroutineScope: CoroutineScope) {
     return actionRegistrar.getActionOrStub(intention.wrappedActionId)
   }
 
-  internal fun findIntention(wrappedActionId: String): IntentionAction? {
-    return IntentionManager.getInstance().availableIntentions.firstOrNull { it.wrappedActionId == wrappedActionId }
+  /** The intention of [wrappedActionId] that applies to [project], see [IntentionActionWrapper.isApplicableToProject]. */
+  internal fun findIntention(wrappedActionId: String, project: Project): IntentionAction? {
+    return IntentionManager.getInstance().availableIntentions
+      .firstOrNull { it.wrappedActionId == wrappedActionId }
+      ?.takeIf { IntentionActionWrapper.isApplicableToProject(it, project) }
   }
 
   // register all intentions with shortcuts and keep them up to date

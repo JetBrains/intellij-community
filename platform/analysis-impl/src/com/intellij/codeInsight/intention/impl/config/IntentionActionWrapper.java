@@ -11,10 +11,13 @@ import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.TechnologyFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.serviceContainer.PluginAwareLazyExtension;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,7 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Set;
 
-public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, Comparable<IntentionAction> {
+public final class IntentionActionWrapper implements IntentionAction, ShortcutProvider, IntentionActionDelegate, PluginAwareLazyExtension,
+                                                     Comparable<IntentionAction> {
   private final IntentionActionBean extension;
   private IntentionAction instance;
   private String fullFamilyName;
@@ -132,6 +136,27 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
   @ApiStatus.Internal
   public @NotNull ClassLoader getImplementationClassLoader() {
     return extension.getLoaderForClass();
+  }
+
+  @Override
+  public @NotNull PluginDescriptor getPluginDescriptor() {
+    return extension.getPluginDescriptor();
+  }
+
+  /**
+   * Whether {@code action} applies to the project, see {@link TechnologyFilter}.
+   * An intention of a module that the project has disabled does not apply. An intention that code registers always applies.
+   */
+  @ApiStatus.Internal
+  public static boolean isApplicableToProject(@NotNull IntentionAction action, @NotNull Project project) {
+    TechnologyFilter filter = TechnologyFilter.getInstance();
+    return !filter.isRestricted(project) || isApplicableToProject(filter, action, project);
+  }
+
+  /** The same as {@link #isApplicableToProject(IntentionAction, Project)}, for a loop that gets the filter once. */
+  @ApiStatus.Internal
+  public static boolean isApplicableToProject(@NotNull TechnologyFilter filter, @NotNull IntentionAction action, @NotNull Project project) {
+    return !(action instanceof PluginAwareLazyExtension extension) || filter.isApplicable(extension.getPluginDescriptor(), project);
   }
 
   @Override

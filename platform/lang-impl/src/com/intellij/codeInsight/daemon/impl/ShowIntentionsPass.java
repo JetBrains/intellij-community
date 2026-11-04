@@ -13,6 +13,7 @@ import com.intellij.codeInsight.intention.impl.EnableDisableIntentionAction;
 import com.intellij.codeInsight.intention.impl.IntentionShortcutManager;
 import com.intellij.codeInsight.intention.impl.RemoveIntentionActionShortcut;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
@@ -31,6 +32,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.extensions.TechnologyAwareExtensionPointName;
+import com.intellij.openapi.extensions.TechnologyFilter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -65,6 +68,8 @@ import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlow
 
 public final class ShowIntentionsPass extends TextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ShowIntentionsPass.class);
+  private static final TechnologyAwareExtensionPointName<IntentionMenuContributor> MENU_CONTRIBUTORS =
+    new TechnologyAwareExtensionPointName<>(IntentionMenuContributor.EP_NAME);
 
   private final Editor myEditor;
 
@@ -384,10 +389,16 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     Collection<String> languages = getLanguagesForIntentions(hostFile, psiElement, injectedFile);
     List<IntentionAction> availableIntentions = IntentionManager.getInstance().getAvailableIntentions(languages);
 
-    DumbService dumbService = DumbService.getInstance(hostFile.getProject());
+    Project project = hostFile.getProject();
+    DumbService dumbService = DumbService.getInstance(project);
+    TechnologyFilter technologyFilter = TechnologyFilter.getInstance();
+    boolean restricted = technologyFilter.isRestricted(project);
     for (IntentionAction action : availableIntentions) {
       ProgressManager.checkCanceled();
       if (!dumbService.isUsableInCurrentContext(action, hostFile.getVirtualFile())) {
+        continue;
+      }
+      if (restricted && !IntentionActionWrapper.isApplicableToProject(technologyFilter, action, project)) {
         continue;
       }
 
@@ -420,7 +431,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     if (indicator != null) {
       indicator.setText(CodeInsightBundle.message("progress.text.searching.for.additional.intention.actions.quick.fixes"));
     }
-    for (IntentionMenuContributor extension : IntentionMenuContributor.EP_NAME.getExtensionList()) {
+    for (IntentionMenuContributor extension : MENU_CONTRIBUTORS.extensionList(project)) {
       ProgressManager.checkCanceled();
       try {
         if (dumbService.isUsableInCurrentContext(extension, hostFile.getVirtualFile())) {

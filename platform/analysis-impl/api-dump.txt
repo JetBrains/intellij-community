@@ -314,6 +314,8 @@ c:com.intellij.codeInsight.dataflow.map.DFAMap
 - remove(java.lang.String):V
 f:com.intellij.codeInsight.intention.EmptyIntentionAction
 - <init>(java.lang.String):V
+f:com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper
+- getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 Fa:com.intellij.codeInsight.lookup.Classifier
 - s:empty():com.intellij.codeInsight.lookup.Classifier
 f:com.intellij.codeInsight.lookup.DefaultLookupItemRenderer
