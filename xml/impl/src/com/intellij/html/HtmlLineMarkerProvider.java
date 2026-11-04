@@ -26,7 +26,7 @@ public final class HtmlLineMarkerProvider implements LineMarkerProvider {
     final Language language = element.getLanguage();
 
     if (!(language instanceof XMLLanguage)) {
-      List<LineMarkerProvider> markerProviders = LineMarkerProviders.getInstance().allForLanguage(language);
+      List<LineMarkerProvider> markerProviders = LineMarkerProviders.getInstance().allForLanguage(language, element.getProject());
       for (LineMarkerProvider provider : markerProviders) {
         if (provider instanceof HtmlLineMarkerProvider) continue;
         LineMarkerInfo<?> info = provider.getLineMarkerInfo(element);
@@ -47,7 +47,7 @@ public final class HtmlLineMarkerProvider implements LineMarkerProvider {
       final Language language = element.getLanguage();
 
       if (!(language instanceof XMLLanguage)) {
-        List<LineMarkerProvider> lineMarkerProviders = LineMarkerProviders.getInstance().allForLanguage(language);
+        List<LineMarkerProvider> lineMarkerProviders = LineMarkerProviders.getInstance().allForLanguage(language, element.getProject());
         for (LineMarkerProvider provider : lineMarkerProviders) {
           if (provider instanceof HtmlLineMarkerProvider) continue;
           if (embeddedLineMarkersWorkItems == null) {

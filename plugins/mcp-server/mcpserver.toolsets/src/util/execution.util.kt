@@ -777,7 +777,7 @@ fun collectRunPoints(psiFile: PsiFile, document: Document, project: Project): Li
     ProgressManager.checkCanceled()
 
     val contributors = DumbService.getInstance(project)
-      .filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.language))
+      .filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.language, project))
 
     var bestInfo: RunLineMarkerContributorBase.InfoBase? = null
     for (contributor in contributors) {

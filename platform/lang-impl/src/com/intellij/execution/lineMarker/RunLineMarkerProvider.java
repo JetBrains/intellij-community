@@ -64,8 +64,8 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager.isInjectedFragment(element.getContainingFile())) return null;
 
-    List<RunLineMarkerContributorBase> contributors =
-      DumbService.getInstance(element.getProject()).filterByDumbAwareness(EXTENSION_POINT.allForLanguageOrAny(element.getLanguage()));
+    List<RunLineMarkerContributorBase> contributors = DumbService.getInstance(element.getProject())
+      .filterByDumbAwareness(EXTENSION_POINT.allForLanguageOrAny(element.getLanguage(), element.getProject()));
     Icon icon = null;
     List<InfoBase> infos = null;
     for (RunLineMarkerContributorBase contributor : contributors) {
@@ -95,7 +95,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
     Boolean untrusted = null;
     for (PsiElement element : elements) {
       List<RunLineMarkerContributorBase> contributors = DumbService.getInstance(element.getProject())
-        .filterByDumbAwareness(EXTENSION_POINT.allForLanguageOrAny(element.getLanguage()));
+        .filterByDumbAwareness(EXTENSION_POINT.allForLanguageOrAny(element.getLanguage(), element.getProject()));
       Icon icon = null;
       List<InfoBase> infos = null;
       for (RunLineMarkerContributorBase contributor : contributors) {

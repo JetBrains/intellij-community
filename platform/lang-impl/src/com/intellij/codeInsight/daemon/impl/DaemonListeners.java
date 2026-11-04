@@ -71,6 +71,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.TechnologyFilter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -170,6 +171,7 @@ public final class DaemonListeners implements Disposable {
     }
 
     SimpleMessageBusConnection connection = project.getMessageBus().connect(coroutineScope);
+    SimpleMessageBusConnection appConnection = ApplicationManager.getApplication().getMessageBus().connect(coroutineScope);
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
@@ -516,6 +518,12 @@ public final class DaemonListeners implements Disposable {
         stopDaemonAndRestartAllFiles("Plugin unloaded");
       }
     });
+    appConnection.subscribe(TechnologyFilter.TOPIC, changed -> {
+      if (myProject.equals(changed)) {
+        stopDaemonAndRestartAllFiles("Technologies of the project changed");
+      }
+    });
+
     connection.subscribe(FileHighlightingSettingListener.SETTING_CHANGE, (root, _) ->
       ApplicationManager.getApplication().runWriteAction(() -> {
         PsiFile psiFile = root.getContainingFile();

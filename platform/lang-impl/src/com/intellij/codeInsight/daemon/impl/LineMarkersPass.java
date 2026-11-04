@@ -169,11 +169,10 @@ public final class LineMarkersPass extends TextEditorHighlightingPass implements
   }
 
   public static @Unmodifiable @NotNull List<LineMarkerProvider> getMarkerProviders(@NotNull Language language, @NotNull Project project) {
-    List<LineMarkerProvider> forLanguage = LineMarkerProviders.getInstance().allForLanguageOrAny(language);
+    List<LineMarkerProvider> forLanguage = LineMarkerProviders.getInstance().allForLanguageOrAny(language, project);
     List<LineMarkerProvider> providers = DumbService.getInstance(project).filterByDumbAwareness(forLanguage);
     LineMarkerSettings settings = LineMarkerSettings.getSettings();
-    return ContainerUtil.filter(providers, provider -> !(provider instanceof LineMarkerProviderDescriptor line)
-                                                       || settings.isEnabled(line));
+    return ContainerUtil.filter(providers, provider -> !(provider instanceof LineMarkerProviderDescriptor line) || settings.isEnabled(line));
   }
 
   private void queryProviders(@NotNull List<? extends PsiElement> elements,
