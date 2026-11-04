@@ -36,17 +36,15 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
-import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.reportSequentialProgress
 import com.intellij.vcs.VcsActivity
 import com.intellij.vcs.ViewUpdateInfoNotification
+import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import java.io.File
 import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG = logger<VcsUpdateTask>()
@@ -269,15 +267,14 @@ internal class VcsUpdateTask(
 private fun refreshFilesStatus(project: Project, updatedFiles: UpdatedFiles) {
   RemoteRevisionsCache.getInstance(project).invalidate(updatedFiles)
 
-  val files = ArrayList<VirtualFile>()
+  // paths only: resolving each one through VFS is a disk stat per file (remote round trip over SSH).
+  // The directory flag comes from the VFS cache: executeUpdate ran RefreshVFsSynchronously.updateAllChanged, which caches changed entries under cached parents.
+  val fileSystem = LocalFileSystem.getInstance()
+  val paths = ArrayList<FilePath>()
   UpdateFilesHelper.iterateFileGroupFiles(updatedFiles) { filePath, _ ->
-    val path = VfsUtilCore.pathToUrl(filePath.replace(File.separatorChar, '/'))
-    val file = VirtualFileManager.getInstance().findFileByUrl(path)
-    if (file != null) {
-      files.add(file)
-    }
+    paths.add(VcsUtil.getFilePath(filePath, fileSystem.findFileByPathIfCached(filePath)?.isDirectory ?: false))
   }
-  VcsDirtyScopeManager.getInstance(project).filesDirty(files, null)
+  VcsDirtyScopeManager.getInstance(project).filePathsDirty(paths, null)
 }
 
 private fun notifyAnnotations(project: Project, updatedFiles: UpdatedFiles) {
