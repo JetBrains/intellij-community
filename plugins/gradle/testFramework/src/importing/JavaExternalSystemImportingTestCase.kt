@@ -13,6 +13,8 @@ import com.intellij.packaging.artifacts.Artifact
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.testFramework.assertions.Assertions
+import com.intellij.testFramework.buildArtifacts
+import com.intellij.testFramework.compileModules
 import com.intellij.util.PathUtil
 import com.intellij.util.io.TestFileSystemItem
 import junit.framework.TestCase

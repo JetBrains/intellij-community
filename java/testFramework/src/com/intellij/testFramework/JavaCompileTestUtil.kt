@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("JavaCompileTestUtil")
 
-package com.intellij.gradle.testFramework.importing
+package com.intellij.testFramework
 
 import com.intellij.compiler.impl.ModuleCompileScope
 import com.intellij.openapi.application.runReadActionBlocking
@@ -14,7 +14,6 @@ import com.intellij.packaging.artifacts.Artifact
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope
 import com.intellij.task.ProjectTaskManager
-import com.intellij.testFramework.CompilerTester
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlin.time.Duration.Companion.minutes

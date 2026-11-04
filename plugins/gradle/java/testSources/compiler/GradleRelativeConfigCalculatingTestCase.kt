@@ -3,10 +3,10 @@ package org.jetbrains.plugins.gradle.compiler
 
 import com.intellij.compiler.server.BuildManager
 import com.intellij.gradle.testFramework.GradleTestCase
-import com.intellij.gradle.testFramework.importing.compileModules
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.compileModules
 import com.intellij.testFramework.utils.io.deleteRecursively
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.jupiter.api.AfterEach

@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.gradle.testFramework.annotations.CsvCrossProductSource
-import com.intellij.gradle.testFramework.importing.compileModules
 import com.intellij.gradle.testFramework.projectInfo.buildFile
 import com.intellij.gradle.testFramework.projectInfo.file
 import com.intellij.gradle.testFramework.projectInfo.settingsFile
@@ -21,6 +20,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAssertions.assertModules
 import com.intellij.testFramework.closeProjectAsync
+import com.intellij.testFramework.compileModules
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.withProjectAsync
 import com.intellij.util.asDisposable
