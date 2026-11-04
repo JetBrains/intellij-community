@@ -161,9 +161,9 @@ copy next to the cache; commit it into the fixture and run the regeneration agai
   toolchains with javac on `remotejdk_25`. The workspace gets a generated `hermetic_java_toolchain` package with a
   `default_java_toolchain` whose javac runs on `remotejdk_21`, registered first through `--extra_toolchains`, so the
   cache needs no second JDK per platform.
-- The consumer copies the bundled binary to where the code under test looks for Bazel (`installBazelBinary`). The
-  IntelliJ Bazel plugin reads `<system>/bazel-plugin/bazelisk`, but only when `forceBazeliskDownload` is on;
-  otherwise a `bazel` on `PATH` wins. The LS sets the flag; the plugin's own tests do not.
+- The consumer copies the bundled binary to a path of its choice (`installBazelBinary`) and points the code under test
+  at it. The IntelliJ Bazel plugin reads `bazel_binary` from the project view first. An in-process test can also
+  replace the `BazelExecutableProvider` extensions. Otherwise the plugin uses a `bazel` on `PATH` or downloads Bazelisk.
 
 ## Limits
 
