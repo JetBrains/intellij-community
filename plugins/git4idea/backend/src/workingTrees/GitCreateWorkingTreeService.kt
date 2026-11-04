@@ -143,7 +143,8 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     }
     val branchSpec =
       if (newBranchName != null) WorktreeBranchSpec.CreateNewBranch(branch, newBranchName) else WorktreeBranchSpec.CheckoutExisting(branch)
-    val request = GitWorktreeCreationRequest(repository, VcsUtil.getFilePath(worktreeDir, true), branchSpec)
+    val request = GitWorktreeCreationRequest(repository, VcsUtil.getFilePath(worktreeDir, true), branchSpec,
+                                             copyWorktreeIncludeMatches = true)
     val ideActivity = GitOperationsCollector.logCreateWorktreeActionInvoked(repository.project, place, branch)
     doCreateWorkingTree(ideActivity, request, onProjectOpened, force, reportOwnProgress = false)
   }
