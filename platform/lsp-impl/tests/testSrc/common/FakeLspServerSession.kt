@@ -72,6 +72,13 @@ internal class UnansweredRequest {
   }
 }
 
+/**
+ * Answers a request with `null`: `expectRequest(method) { nullResponse() }`.
+ * The declared response types are non-null, so a plain `null` doesn't compile.
+ */
+@Suppress("UNCHECKED_CAST")
+internal fun <T> nullResponse(): T = null as T
+
 internal data class ExpectedNotification(
   val method: String,
   val predicate: (Any?) -> Boolean,

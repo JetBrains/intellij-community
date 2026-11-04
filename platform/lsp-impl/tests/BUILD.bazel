@@ -35,6 +35,8 @@ jvm_library(
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
         "//xml/plugin",
+        "//platform/lsp-impl/structureView",
+        "//platform/structure-view-impl/plugin",
     ],
     deps = [
         # do not sort,
@@ -73,6 +75,12 @@ jvm_library(
         "//xml/xml-psi-impl:psi-impl",
         "//libraries/junit4",
         "//libraries/junit6",
+        "//platform/testFramework/structureView",
+        "//platform/structure-view-impl:structureView",
+        "//platform/navbar/testFramework",
+        "//platform/navbar/shared:navbar",
+        "//platform/usageView",
+        "//platform/usageView-impl",
     ],
 )
 ### auto-generated section `build intellij.platform.lsp.impl.tests` end
