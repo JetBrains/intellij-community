@@ -87,10 +87,13 @@ public final class ClassDataIndexer implements VirtualFileGist.GistCalculator<Ma
     (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
 
   private static final int VERSION = 19; // change when inference algorithm changes
-  private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
-  static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER + StringHash.murmur(
-    BytecodeAnalysisSuppressor.EP_NAME.getExtensionList().stream().map(ep -> String.valueOf(ep.getVersion())).collect(Collectors.joining("-")),
-    31);
+
+  static int getVersion() {
+    var versionModifier = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
+    return VERSION * 2 + versionModifier + StringHash.murmur(
+      BytecodeAnalysisSuppressor.EP_NAME.getExtensionList().stream().map(ep -> String.valueOf(ep.getVersion())).collect(Collectors.joining("-")),
+      31);
+  }
 
   @Override
   public @Nullable Map<HMember, Equations> calcData(Project project, @NotNull VirtualFile file) {

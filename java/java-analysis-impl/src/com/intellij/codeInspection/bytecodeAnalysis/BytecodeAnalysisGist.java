@@ -23,7 +23,7 @@ public final class BytecodeAnalysisGist {
   public BytecodeAnalysisGist() {
     gist = GistManager.getInstance().newVirtualFileGist(
       "BytecodeAnalysisIndex",
-      ClassDataIndexer.FINAL_VERSION,
+      ClassDataIndexer.getVersion(),
       BytecodeAnalysisIndex.EquationsExternalizer.INSTANCE,
       new ClassDataIndexer()
     );
