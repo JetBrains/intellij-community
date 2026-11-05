@@ -68,8 +68,10 @@ import java.awt.font.LineMetrics;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.text.Bidi;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 /**
@@ -687,7 +689,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   /**
-   * Creates the font resolver of the current font settings for the render context, with the fonts of the font families.
+   * Creates the font resolver of the current font settings for the render context.
+   * It resolves the font families, and the font families of the text attributes of the scheme,
+   * see {@link EditorColorsScheme#getTextAttributesFontFamilies()}.
+   * So the text that the editor highlighter colors with the keys of the scheme gets the fonts of their families.
    * Like {@link #createNewMetrics}, it can run on any thread.
    */
   private @NotNull EditorFontResolver createFontResolver(FontRenderContext context, Collection<FontFamilies> fontFamilies) {
@@ -699,8 +704,18 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       context,
       specialCharacterFont,
       fontFamiliesEnabled,
-      fontFamilies
+      withSchemeFontFamilies(fontFamilies, colorsScheme)
     );
+  }
+
+  private static Collection<FontFamilies> withSchemeFontFamilies(Collection<FontFamilies> fontFamilies, EditorColorsScheme scheme) {
+    Set<FontFamilies> schemeFontFamilies = scheme.getTextAttributesFontFamilies();
+    if (schemeFontFamilies.isEmpty()) {
+      return fontFamilies;
+    }
+    List<FontFamilies> result = new ArrayList<>(fontFamilies);
+    result.addAll(schemeFontFamilies);
+    return result;
   }
 
   Insets getInsets() {

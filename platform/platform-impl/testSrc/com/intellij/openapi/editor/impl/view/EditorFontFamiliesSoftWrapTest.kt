@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl.view
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontFamilyService
 import com.intellij.openapi.editor.markup.FontFamilies
@@ -23,7 +22,6 @@ private const val EDITOR_WIDTH = 10
 private const val WIDE_WIDTH = 20
 private const val NARROW_WIDTH = 5
 private const val VISIBLE_WIDTH = 400
-private const val KEY_NAME = "EDITOR_FONT_FAMILIES_SOFT_WRAP_TEST"
 
 /**
  * 29 characters: the line fits into [VISIBLE_WIDTH] with the editor fonts and does not fit with the wide font family.
@@ -45,7 +43,6 @@ internal class EditorFontFamiliesSoftWrapTest {
   private val families = FontFamilyService.getAvailableFamilies().filter { !it.startsWith(".") }
   private val wide = FontFamilies.of(families[0])
   private val narrow = FontFamilies.of(families[1])
-  private val key = TextAttributesKey.createTextAttributesKey(KEY_NAME)
 
   @BeforeEach
   fun setUp() {
@@ -56,7 +53,6 @@ internal class EditorFontFamiliesSoftWrapTest {
   @AfterEach
   fun tearDown() {
     FontLayoutService.setInstance(null)
-    TextAttributesKey.removeTextAttributesKey(key.externalName)
   }
 
   @Test
@@ -111,7 +107,7 @@ internal class EditorFontFamiliesSoftWrapTest {
   @Test
   fun `unresolved font families measure with the editor fonts`() {
     val softWraps = softWraps(SHORT_LINE, measureEachLine = true) { editor ->
-      highlightAllText(editor, key, wide)
+      highlightAllTextWithoutKey(editor, wide)
     }
 
     assertThat(softWraps).isEmpty()
@@ -121,7 +117,7 @@ internal class EditorFontFamiliesSoftWrapTest {
   fun `the resolved font families of the editor highlighter measure with their fonts`() {
     val softWraps = softWraps(SHORT_LINE, measureEachLine = true) { editor ->
       editor.view.resolveFontFamilies(listOf(wide))
-      highlightAllText(editor, key, wide)
+      highlightAllTextWithoutKey(editor, wide)
     }
 
     assertThat(softWraps).isNotEmpty()

@@ -5,6 +5,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -29,6 +32,7 @@ import java.util.concurrent.Callable
 private const val FAMILY_WIDTH = 20
 private const val OTHER_WIDTH = 10
 private const val VISIBLE_WIDTH = 400
+private const val KEY_NAME = "EDITOR_FONT_FAMILIES_RESOLUTION_TEST"
 
 /**
  * 29 characters: the line fits into [VISIBLE_WIDTH] with the editor fonts and does not fit with the font family.
@@ -36,7 +40,7 @@ private const val VISIBLE_WIDTH = 400
 private val LINE = "word ".repeat(6).trim()
 
 /**
- * Checks that the editor resolves the font families of its range highlighters, so the text gets the fonts of the families.
+ * Checks that the editor resolves the font families of its range highlighters and of its scheme, so the text gets the fonts of the families.
  * [FamilyFontLayoutService] gives the characters of one font family their own width.
  */
 @TestApplication
@@ -44,6 +48,7 @@ private val LINE = "word ".repeat(6).trim()
 internal class EditorFontFamiliesResolutionTest {
   private val family = FontFamilyService.getAvailableFamilies().first { !it.startsWith(".") }
   private val value = FontFamilies.of(family)
+  private val key = TextAttributesKey.createTextAttributesKey(KEY_NAME)
 
   @BeforeEach
   fun setUp() {
@@ -53,6 +58,7 @@ internal class EditorFontFamiliesResolutionTest {
   @AfterEach
   fun tearDown() {
     FontLayoutService.setInstance(null)
+    TextAttributesKey.removeTextAttributesKey(KEY_NAME)
   }
 
   @Test
@@ -151,6 +157,45 @@ internal class EditorFontFamiliesResolutionTest {
     withEditor(document) { editor ->
       assertThat(editor.view.fontResolver.resolvedFontFamilies()).isEmpty()
     }
+  }
+
+  @Test
+  fun `a key of the editor scheme with font families gets the widths of the families`(): Unit = withEditor("aaaa") { editor ->
+    editor.colorsScheme = schemeWithFontFamilies()
+
+    highlightAllText(editor, key)
+
+    assertThat(editor.view.fontResolver.isResolved(value)).isTrue()
+    assertThat(width(editor, 0, 4)).isEqualTo(4 * FAMILY_WIDTH)
+  }
+
+  @Test
+  fun `a scheme change resolves the font families of the new scheme`(): Unit = withEditor("aaaa") { editor ->
+    highlightAllText(editor, key)
+    assertThat(width(editor, 0, 4)).isEqualTo(4 * OTHER_WIDTH)
+
+    editor.colorsScheme = schemeWithFontFamilies()
+
+    assertThat(width(editor, 0, 4)).isEqualTo(4 * FAMILY_WIDTH)
+  }
+
+  @Test
+  fun `the attributes that the editor sets for itself resolve at the next reinit`(): Unit = withEditor("aaaa") { editor ->
+    editor.colorsScheme.setAttributes(key, attributesWithFontFamilies())
+    assertThat(editor.view.fontResolver.isResolved(value)).isFalse()
+
+    editor.reinitSettings()
+
+    assertThat(editor.view.fontResolver.isResolved(value)).isTrue()
+  }
+
+  /**
+   * Returns a scheme that gives [key] the attributes with [value]. Its parent is the global scheme.
+   */
+  private fun schemeWithFontFamilies(): EditorColorsSchemeImpl {
+    val scheme = EditorColorsSchemeImpl(EditorColorsManager.getInstance().globalScheme)
+    scheme.setAttributes(key, attributesWithFontFamilies())
+    return scheme
   }
 
   private fun createDocument(text: String): Document {

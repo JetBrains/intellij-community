@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl.view
 
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontFamilyService
 import com.intellij.openapi.editor.markup.FontFamilies
@@ -20,7 +19,6 @@ import java.awt.Font
 private const val FAMILY_WIDTH = 7
 private const val OTHER_WIDTH = 10
 private const val MISSING_FAMILY = "No Such Font Family"
-private const val KEY_NAME = "EDITOR_FONT_FAMILIES_LAYOUT_TEST"
 
 /**
  * Checks that the text layout uses the fonts of the resolved font families of a text range.
@@ -32,7 +30,6 @@ internal class EditorFontFamiliesLayoutTest {
   private val families = FontFamilyService.getAvailableFamilies().filter { !it.startsWith(".") }
   private val family = families[0]
   private val otherFamily = families[1]
-  private val key = TextAttributesKey.createTextAttributesKey(KEY_NAME)
 
   @BeforeEach
   fun setUp() {
@@ -42,7 +39,6 @@ internal class EditorFontFamiliesLayoutTest {
   @AfterEach
   fun tearDown() {
     FontLayoutService.setInstance(null)
-    TextAttributesKey.removeTextAttributesKey(key.externalName)
   }
 
   @Test
@@ -58,7 +54,7 @@ internal class EditorFontFamiliesLayoutTest {
 
   @Test
   fun `text with unresolved font families gets the widths of the editor fonts`(): Unit = withEditor("aaaa") { editor ->
-    highlightAllText(editor, key, FontFamilies.of(family))
+    highlightAllTextWithoutKey(editor, FontFamilies.of(family))
 
     assertThat(width(editor, 0, 4)).isEqualTo(4 * OTHER_WIDTH)
   }
@@ -67,7 +63,7 @@ internal class EditorFontFamiliesLayoutTest {
   fun `the resolved font families of the editor highlighter get the widths of the families`(): Unit = withEditor("aaaa") { editor ->
     editor.view.resolveFontFamilies(listOf(FontFamilies.of(family)))
 
-    highlightAllText(editor, key, FontFamilies.of(family))
+    highlightAllTextWithoutKey(editor, FontFamilies.of(family))
 
     assertThat(width(editor, 0, 4)).isEqualTo(4 * FAMILY_WIDTH)
   }
