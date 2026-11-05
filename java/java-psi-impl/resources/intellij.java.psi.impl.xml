@@ -39,6 +39,8 @@
     <extensionPoint qualifiedName="com.intellij.custom.exception.handler" interface="com.intellij.codeInsight.CustomExceptionHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.inferredAnnotationProvider" interface="com.intellij.codeInsight.InferredAnnotationProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.dataflowNullabilityContributor"
+                    interface="com.intellij.codeInsight.DataflowNullabilityContributor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.psi.clsCustomNavigationPolicy" interface="com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.jvm.elementProvider" area="IDEA_PROJECT" interface="com.intellij.lang.jvm.facade.JvmElementProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder" dynamic="true"/>

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.DataflowNullabilityContributor;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullabilitySource;
@@ -206,6 +207,10 @@ public final class DfaPsiUtil {
     Project project = owner.getProject();
     if (DumbService.isDumb(project)) return Nullability.UNKNOWN;
     NullabilityAnnotationInfo fromAnnotation = getNullabilityFromAnnotation(owner, forRead);
+    if (forRead && (fromAnnotation == null || fromAnnotation.isContainer() || fromAnnotation.isInferred())) {
+      Nullability contributed = contributeNullability(owner);
+      if (contributed != null) return contributed;
+    }
     if (fromAnnotation != null) {
       if (resultType != null && fromAnnotation.getNullability() != Nullability.NOT_NULL) {
         PsiType type = PsiUtil.getTypeByPsiElement(owner);
@@ -357,6 +362,18 @@ public final class DfaPsiUtil {
       }
     }
     return type.getNullability().nullability();
+  }
+
+  /**
+   * A contributed nullability is weaker than an annotation that the author wrote, and stronger than a container default or an inference.
+   */
+  private static @Nullable Nullability contributeNullability(@NotNull PsiModifierListOwner owner) {
+    if (owner instanceof PsiParameter parameter && !(parameter.getDeclarationScope() instanceof PsiMethod)) return null;
+    Nullability nullability = DataflowNullabilityContributor.findNullability(owner);
+    if (nullability == null || nullability == Nullability.UNKNOWN) return null;
+    // NullabilityUtil uses a contributed not-null value of a field only when the code never writes the field
+    if (nullability == Nullability.NOT_NULL && owner instanceof PsiField) return null;
+    return nullability;
   }
 
   public static @NotNull Nullability getTypeNullability(@Nullable PsiType type) {

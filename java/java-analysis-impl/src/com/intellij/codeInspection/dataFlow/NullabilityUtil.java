@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.DataflowNullabilityContributor;
 import com.intellij.codeInsight.JavaPsiEquivalenceUtil;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -88,8 +89,9 @@ public final class NullabilityUtil {
       PsiModificationTracker.MODIFICATION_COUNT));
   }
 
-  private static boolean isImplicitlyInitializedNotNull(PsiField field) {
-    return ContainerUtil.exists(ImplicitUsageProvider.EP_NAME.getExtensionList(), p -> p.isImplicitlyNotNullInitialized(field));
+  public static boolean isImplicitlyInitializedNotNull(@NotNull PsiField field) {
+    return ContainerUtil.exists(ImplicitUsageProvider.EP_NAME.getExtensionList(), p -> p.isImplicitlyNotNullInitialized(field)) ||
+           DataflowNullabilityContributor.findNullability(field) == Nullability.NOT_NULL;
   }
 
   private static boolean weAreSureThereAreNoExplicitWrites(PsiField field) {
