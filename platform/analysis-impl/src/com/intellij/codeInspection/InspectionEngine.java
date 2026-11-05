@@ -385,7 +385,7 @@ public final class InspectionEngine {
                   span.setAttribute("file", file.getPath());
                 }
               }
-              inspectionVisitorsOptimizer.acceptElements(elements, visitor);
+              inspectionVisitorsOptimizer.acceptElements(visitor);
               return null;
             });
             tool.inspectionFinished(session, holder);

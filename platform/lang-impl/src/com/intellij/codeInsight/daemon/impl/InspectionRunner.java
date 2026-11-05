@@ -143,7 +143,12 @@ final class InspectionRunner {
                            @NotNull @Unmodifiable List<? extends PsiElement> elementsOutside,
                            @NotNull @Unmodifiable List<? extends Class<?>> acceptingPsiTypes,
                            // The containing file this tool was called for. In the case of injected context, this will be the injected file.
-                           @NotNull PsiFile psiFile) {
+                           @NotNull PsiFile psiFile) implements Consumer<PsiElement> {
+    @Override
+    public void accept(PsiElement psiElement) {
+      holder.visitElement(psiElement, visitor);
+    }
+
     @Override
     public @NotNull String toString() {
       return tool +"; inside:"+elementsInside().size()+"; outside:"+elementsOutside().size();
@@ -230,6 +235,14 @@ final class InspectionRunner {
                                     "\n"+"; outside:"+restrictedOutside.size()+": "+restrictedOutside);
     }
     InspectionEngine.withSession(myPsiFile, myRestrictRange, finalPriorityRange, minimumSeverity, myIsOnTheFly, null, session -> {
+      NotNullLazyValue<InspectionVisitorOptimizer> restrictedInsideOptimizer =
+        NotNullLazyValue.atomicLazy(() -> new InspectionVisitorOptimizer(restrictedInside));
+      NotNullLazyValue<InspectionVisitorOptimizer> restrictedOutsideOptimizer =
+        NotNullLazyValue.atomicLazy(() -> new InspectionVisitorOptimizer(restrictedOutside));
+      NotNullLazyValue<InspectionVisitorOptimizer> wholeInsideOptimizer =
+        NotNullLazyValue.atomicLazy(() -> new InspectionVisitorOptimizer(wholeInside));
+      NotNullLazyValue<InspectionVisitorOptimizer> wholeOutsideOptimizer =
+        NotNullLazyValue.atomicLazy(() -> new InspectionVisitorOptimizer(wholeOutside));
       for (LocalInspectionToolWrapper toolWrapper : applicableByLanguage) {
         if (enabledToolsPredicate == null || enabledToolsPredicate.value(toolWrapper)) {
         LocalInspectionTool tool = toolWrapper.getTool();
@@ -244,9 +257,18 @@ final class InspectionRunner {
           }
           tool.inspectionStarted(session, myIsOnTheFly);
 
-          List<? extends PsiElement> sortedInside = HighlightInfoUpdaterImpl.sortByPsiElementFertility(myPsiFile, toolWrapper, toolWrapper.runForWholeFile() ? wholeInside : restrictedInside);
-          List<? extends PsiElement> outside = toolWrapper.runForWholeFile() ? wholeOutside : restrictedOutside;
-          InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedInside, outside, InspectionVisitorOptimizer.getAcceptingPsiTypes(visitor), myPsiFile);
+          InspectionVisitorOptimizer insideOptimizer =
+            (toolWrapper.runForWholeFile() ? wholeInsideOptimizer : restrictedInsideOptimizer).getValue();
+          InspectionVisitorOptimizer outsideOptimizer =
+            (toolWrapper.runForWholeFile() ? wholeOutsideOptimizer : restrictedOutsideOptimizer).getValue();
+          List<? extends Class<? extends PsiElement>> acceptingPsiTypes = InspectionVisitorOptimizer.getAcceptingPsiTypes(visitor);
+          Set<Class<? extends PsiElement>> acceptingPsiClasses =
+            InspectionVisitorOptimizer.getVisitorAcceptClasses(acceptingPsiTypes, insideOptimizer, outsideOptimizer);
+          List<? extends PsiElement> sortedFilteredInside = HighlightInfoUpdaterImpl.sortByPsiElementFertility(
+            myPsiFile, toolWrapper, insideOptimizer.filterElements(acceptingPsiClasses));
+          List<? extends PsiElement> filteredOutside = outsideOptimizer.filterElements(acceptingPsiClasses);
+          InspectionContext context = new InspectionContext(toolWrapper, holder, visitor, sortedFilteredInside,
+                                                            filteredOutside, acceptingPsiTypes, myPsiFile);
           init.add(context);
         }
       }
@@ -254,8 +276,6 @@ final class InspectionRunner {
       // but only for visible elements, because we don't care about the order in 'outside', and spending CPU on their rearrangement would be counterproductive
       InspectionProfilerDataHolder.sortByLatencies(myPsiFile, init);
 
-      NotNullLazyValue<InspectionVisitorOptimizer> optimizer = NotNullLazyValue.atomicLazy(() -> new InspectionVisitorOptimizer(
-        hasWholeFileTools ? ContainerUtil.concat(wholeInside, wholeOutside) : ContainerUtil.concat(restrictedInside, restrictedOutside)));
       Processor<? super InspectionContext> contextProcessor = context -> {
         executeInImpatientReadAction(()-> {
           if (DumbService.isDumb(project) != myDumbMode) {
@@ -263,8 +283,8 @@ final class InspectionRunner {
             return;
           }
           // sequentially to avoid inspection visitor reentrancy
-          processContext(context, context.elementsInside(), optimizer.getValue());
-          processContext(context, context.elementsOutside(), optimizer.getValue());
+          processContext(context, context.elementsInside());
+          processContext(context, context.elementsOutside());
           contextCompleted(context, session, contextFinishedCallback);
         });
         return true;
@@ -526,16 +546,13 @@ final class InspectionRunner {
    * maintaining parallelism during this process (i.e., several visitors from {@code init} can be executed concurrently, but elements from the list head get higher priority than the list tail).
    */
   private static void processContext(@NotNull InspectionContext context,
-                                     @NotNull @Unmodifiable List<? extends PsiElement> psiElements,
-                                     @NotNull InspectionVisitorOptimizer optimizer) {
+                                     @NotNull @Unmodifiable List<? extends PsiElement> psiElements) {
     if (LOG.isTraceEnabled()) {
       LOG.trace("processContext: " +
                 context + "; elements(" + psiElements.size() + "): " + StringUtil.join(psiElements, e-> e + "(" + e.getClass() + ")", ", ") + "; accepts=" + context.acceptingPsiTypes());
     }
     try {
-      optimizer.acceptElements(psiElements,
-                               context.acceptingPsiTypes,
-                               psiElement -> context.holder.visitElement(psiElement, context.visitor));
+      InspectionVisitorOptimizer.acceptElements(psiElements, context);
     }
     catch (Throwable t) {
       rethrowControlFlowException(t);

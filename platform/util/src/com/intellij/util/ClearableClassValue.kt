@@ -7,8 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentMap
 
 /**
- * This ClassValue is made to workaround a memory leak (see IJPL-171223) when underlying ClassValueMap.cacheArray holds references
- * to classes even the classes' classloader was unloaded. This prevents full unload of these classes.
+ * This ClassValue is made to work around a memory leak (see IJPL-171223) when underlying ClassValueMap.cacheArray holds references
+ * to classes even if the classes' classloader was unloaded. This prevents full unload of these classes.
  */
 @ApiStatus.Internal
 abstract class ClearableClassValue<T> : ClassValue<T>() {
