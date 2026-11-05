@@ -76,6 +76,9 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
 
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
       withKotlincInPluginDirectory(spec = spec)
+      for (script in listOf("kotlin", "kotlinc", "kotlinc-js", "kotlinc-jvm")) {
+        spec.withExecutable("kotlinc/bin/$script")
+      }
 
       spec.withCustomVersion(KotlinPluginVersion(kind))
 

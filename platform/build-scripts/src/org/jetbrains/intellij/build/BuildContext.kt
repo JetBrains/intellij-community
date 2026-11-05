@@ -42,14 +42,6 @@ interface BuildContext : CompilationContext {
     get() = !isStepSkipped(BuildOptions.MAC_SIGN_STEP) && proprietaryBuildTools.signTool.signNativeFileMode != SignNativeFileMode.DISABLED
 
   /**
-   * Relative paths to files in distribution which should take 'executable' permissions.
-   * No need to add *.sh.
-   */
-  fun addExtraExecutablePattern(os: OsFamily, pattern: String)
-
-  fun getExtraExecutablePattern(os: OsFamily): List<String>
-
-  /**
    * IDE build number without product code (e.g. '251.500.10').
    * [org.jetbrains.intellij.build.impl.SnapshotBuildNumber.VALUE] by default.
    * May not match [com.intellij.util.text.SemVer].

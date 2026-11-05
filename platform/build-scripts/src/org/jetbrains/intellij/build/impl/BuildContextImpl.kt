@@ -8,12 +8,9 @@ import com.intellij.platform.runtime.product.serialization.ProductModulesSeriali
 import com.intellij.platform.runtime.product.serialization.RawProductModules
 import com.intellij.platform.runtime.product.serialization.ResourceFileResolver
 import com.intellij.platform.runtime.repository.RuntimeModuleId
-import com.intellij.util.containers.with
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.ApplicationInfoProperties
@@ -61,7 +58,6 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.inputStream
 import kotlin.io.path.pathString
 import kotlin.time.Duration
@@ -184,8 +180,6 @@ class BuildContextImpl internal constructor(
     get() = lifetime.http
 
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
-
-  private val extraExecutablePatterns = AtomicReference<Map<OsFamily, PersistentList<String>>>(java.util.Map.of())
 
   override val fullBuildNumber: String
     get() = "${applicationInfo.productCode}-$buildNumber"
@@ -459,14 +453,6 @@ class BuildContextImpl internal constructor(
       applicationInfoOf = { loadApplicationInfoPropertiesForProduct(it, this) },
     )
   }
-
-  override fun addExtraExecutablePattern(os: OsFamily, pattern: String) {
-    extraExecutablePatterns.updateAndGet { prev ->
-      prev.with(os, (prev.get(os) ?: persistentListOf()).adding(pattern))
-    }
-  }
-
-  override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get()[os] ?: listOf()
 
   override val appInfoXml: String by lazy {
     computeAppInfoXml(appInfo = applicationInfo, context = this)

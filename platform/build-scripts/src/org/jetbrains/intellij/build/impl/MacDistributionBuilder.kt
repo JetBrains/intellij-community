@@ -290,7 +290,6 @@ class MacDistributionBuilder(
     val executable = context.productProperties.baseFileName
     val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, arch)
     val copy = macDistDir.resolve("bin/${executable}")
-    context.addExtraExecutablePattern(OsFamily.MACOS, "bin/${executable}")
     copyFile(execPath, copy)
     MachOUuid(copy, customizer, context).patch()
     copyFile(licensePath, macDistDir.resolve("license/launcher-third-party-libraries.html"))

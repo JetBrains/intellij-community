@@ -89,6 +89,9 @@ class LinuxCustomizerBuilder @PublishedApi internal constructor(private val proj
    */
   fun getCopyAdditionalFilesHandler(): ((Path, JvmArchitecture, BuildContext) -> Unit)? = copyAdditionalFilesHandler
 
+  /** Returns the handler that [executableFilePatterns] set, so that a wrapper can extend it, or `null`. */
+  fun getExecutableFilePatternsHandler(): ((Sequence<String>, Boolean, JvmArchitecture, LibcImpl, BuildContext) -> Sequence<String>)? = executableFilePatternsHandler
+
   /**
    * Adds custom logic for copying additional files to the Linux distribution.
    * This handler is called after the base copyAdditionalFiles logic.
@@ -189,7 +192,6 @@ open class LinuxDistributionCustomizer {
     val basePatterns = if (context.isLanguageServer) sequenceOf("bin/${context.productProperties.baseFileName}")
     else sequenceOf(
       "bin/*.sh",
-      "plugins/**/*.sh",
       "bin/fsnotifier",
       "bin/restarter",
       "bin/${context.productProperties.baseFileName}",
@@ -208,8 +210,7 @@ open class LinuxDistributionCustomizer {
     return basePatterns +
            rtPatterns +
            RepairUtilityBuilder.executableFilesPatterns(context) +
-           extraExecutables +
-           context.getExtraExecutablePattern(OsFamily.LINUX)
+           extraExecutables
   }
 
   /**

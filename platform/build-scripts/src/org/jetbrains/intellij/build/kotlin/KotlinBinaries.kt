@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.platform.bazel.runfiles.BazelRunfiles
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -16,17 +15,6 @@ import java.nio.file.Path
  */
 @ApiStatus.Internal
 class KotlinBinaries(private val communityHome: BuildDependenciesCommunityRoot, private val httpSession: BuildHttpSession? = null) {
-  companion object {
-    val kotlinCompilerExecutables: List<String>
-      get() {
-        return persistentListOf(
-          "plugins/Kotlin/kotlinc/bin/kotlin",
-          "plugins/Kotlin/kotlinc/bin/kotlinc",
-          "plugins/Kotlin/kotlinc/bin/kotlinc-js",
-          "plugins/Kotlin/kotlinc/bin/kotlinc-jvm"
-        )
-      }
-  }
 
   val kotlinCompilerHome: Path by lazy {
     val compilerHome = KotlinCompilerDependencyDownloader.downloadAndExtractKotlinCompiler(communityHome, httpSession)

@@ -160,6 +160,9 @@ class MacCustomizerBuilder @PublishedApi internal constructor(private val projec
    */
   fun getCopyAdditionalFilesHandler(): ((Path, JvmArchitecture, BuildContext) -> Unit)? = copyAdditionalFilesHandler
 
+  /** Returns the handler that [executableFilePatterns] set, so that a wrapper can extend it, or `null`. */
+  fun getExecutableFilePatternsHandler(): ((Sequence<String>, Boolean, JvmArchitecture, BuildContext) -> Sequence<String>)? = executableFilePatternsHandler
+
   /**
    * Gets the current distributionUUID handler for checking if one is set.
    * @return the current handler, or `null` if none is set
@@ -435,7 +438,6 @@ open class MacDistributionCustomizer {
     val basePatterns = if (context.isLanguageServer) sequenceOf("bin/${context.productProperties.baseFileName}")
     else sequenceOf(
       "bin/*.sh",
-      "plugins/**/*.sh",
       "bin/fsnotifier",
       "bin/printenv",
       "bin/restarter",
@@ -450,7 +452,7 @@ open class MacDistributionCustomizer {
     }
 
     val utilPatters = RepairUtilityBuilder.executableFilesPatterns(context)
-    return basePatterns + rtPatterns + utilPatters + extraExecutables + context.getExtraExecutablePattern(OsFamily.MACOS)
+    return basePatterns + rtPatterns + utilPatters + extraExecutables
   }
 
   /**
