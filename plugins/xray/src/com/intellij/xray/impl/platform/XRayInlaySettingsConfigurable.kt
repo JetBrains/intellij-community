@@ -4,6 +4,7 @@ package com.intellij.xray.impl.platform
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.hints.settings.INLAY_ID
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
+import com.intellij.codeInsight.hints.settings.InlaySettingsConfigurable
 import com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableApi
 import com.intellij.lang.Language
 import com.intellij.openapi.options.Configurable
@@ -51,4 +52,8 @@ internal class XRayInlaySettingsConfigurable(val project: Project) : Configurabl
   override fun getHelpTopic(): String = "settings.inlays"
 
   override fun isProjectLevel(): Boolean = false
+
+  override fun getOriginalClass(): Class<*> {
+    return InlaySettingsConfigurable::class.java
+  }
 }
