@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.types.PyLibraryModificationTracker
  * as we do for the built-in resolver
  */
 @Service(Service.Level.PROJECT)
-internal class PyreflyLspTypeEngineFileCache(val project: Project) : Disposable.Default {
+internal class PyreflyTypeEvalContextCache(val project: Project) : Disposable.Default {
   private val lowMemoryModificationTracker = SimpleModificationTracker()
 
   private val cachedMapStorage = CachedValuesManager.getManager(project).createCachedValue {
@@ -53,6 +53,6 @@ internal class PyreflyLspTypeEngineFileCache(val project: Project) : Disposable.
   }
 
   companion object {
-    fun getInstance(project: Project): PyreflyLspTypeEngineFileCache = project.service()
+    fun getInstance(project: Project): PyreflyTypeEvalContextCache = project.service()
   }
 }
