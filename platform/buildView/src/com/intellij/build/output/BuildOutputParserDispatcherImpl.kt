@@ -48,9 +48,9 @@ class BuildOutputParserDispatcherImpl(
           try {
             if (parser.parse(line, readerWrapper, taskId, multicasterWrapper)) break
           }
-          catch (exception: Exception) {
-            rethrowControlFlowException(exception)
-            logException("Build output parser error", exception)
+          catch (throwable: Throwable) {
+            rethrowControlFlowException(throwable)
+            logException("Build output parser error", throwable)
           }
           readerWrapper.pushAllBack()
         }
@@ -98,7 +98,7 @@ class BuildOutputParserDispatcherImpl(
 
     private val LOG = logger<BuildOutputInstantReader>()
 
-    private fun logException(message: String, exception: Exception) {
+    private fun logException(message: String, exception: Throwable) {
       when {
         LOG.isDebugEnabled -> LOG.warn(message, exception)
         else -> LOG.warn("$message: ${exception.message}")
