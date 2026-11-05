@@ -23,8 +23,8 @@ import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecificatio
 import com.jetbrains.python.packaging.common.toPythonPackage
 import com.jetbrains.python.packaging.common.toPythonPackages
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers
+import com.jetbrains.python.pipenv.getPipFileDependenciesMap
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.sdk.pipenv.PipEnvParser
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.toml.lang.psi.TomlFile
@@ -140,7 +140,7 @@ internal class TestPythonPackageManager(project: Project, interpreter: PythonInt
   private suspend fun extractFromPipfile(file: VirtualFile): PyResult<List<PythonPackage>> {
     return readAction {
       val pipfile = file.toPsi(project) as TomlFile
-      PyResult.success(PipEnvParser.getPipFileDependenciesMap(pipfile).keys.toList().map { it.toPythonPackage() })
+      PyResult.success(getPipFileDependenciesMap(pipfile).keys.toList().map { it.toPythonPackage() })
     }
   }
 

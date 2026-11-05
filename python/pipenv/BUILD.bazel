@@ -9,6 +9,7 @@ content_module_jar(module = ":pipenv")
 ### auto-generated section `build intellij.python.community.impl.pipenv` start
 create_kotlinc_options(
     name = "custom_pipenv",
+    opt_in = ["com.jetbrains.python.PyInternalExecApi"],
     warn = "error",
     x_warning_level = ["DEPRECATION:warning"],
 )
@@ -41,6 +42,17 @@ jvm_library(
         "//python/python-process-output/common",
         "//python/openapi:community",
         "//python/python-pytools/backend",
+        "//python/python-packaging:packaging",
+        "//python/python-pyproject:pyproject",
+        "//python/python-requirements/backend",
+        "//python/python-requirements/common",
+        "//python/python-exec-service:community-execService",
+        "//python/python-exec-service/execService.python",
+        "//platform/projectModel-api:projectModel",
+        "//platform/analysis-api:analysis",
+        "//platform/eel",
+        "//libraries/gson",
+        "//platform/util/jdom",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl.pipenv` end

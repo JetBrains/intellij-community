@@ -13,11 +13,13 @@ import org.jetbrains.annotations.ApiStatus.Internal
 /**
  * Tells if the SDK was added as a pipenv.
  */
-internal val Sdk.isPipEnv: Boolean
+@get:Internal
+val Sdk.isPipEnv: Boolean
   get() = PythonSdkUtil.isPythonSdk(this) && pySdkAdditionalData.flavor == PyPipEnvSdkFlavor
 
 /** Whether the interpreter was added as a pipenv. */
-internal val PythonInterpreter.isPipEnv: Boolean
+@get:Internal
+val PythonInterpreter.isPipEnv: Boolean
   get() = flavor == PyPipEnvSdkFlavor
 
 @Internal

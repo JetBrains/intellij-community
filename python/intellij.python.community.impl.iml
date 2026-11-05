@@ -140,7 +140,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" exported="" />
     <orderEntry type="module" module-name="intellij.python.community.impl.installer" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />

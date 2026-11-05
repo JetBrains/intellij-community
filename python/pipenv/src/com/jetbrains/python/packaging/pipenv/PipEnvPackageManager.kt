@@ -3,29 +3,31 @@ package com.jetbrains.python.packaging.pipenv
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.jetbrains.python.sdk.pipenv.PIP_FILE_LOCK
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.packageRequirements.cachedDependencyTree
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
 import com.jetbrains.python.packaging.common.toPythonPackages
-import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.packageRequirements.DependencyTreeProvider
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
+import com.jetbrains.python.packaging.packageRequirements.cachedDependencyTree
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.sdk.pipenv.PIP_FILE
+import com.jetbrains.python.sdk.pipenv.PIP_FILE_LOCK
 import com.jetbrains.python.sdk.pipenv.runPipEnvWithSdk
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import com.jetbrains.python.sdk.pipenv.PipEnvParser as SdkPipEnvParser
 
-internal class PipEnvPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
+@ApiStatus.Internal
+class PipEnvPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
 
   override val treeProvider: DependencyTreeProvider = cachedDependencyTree(
