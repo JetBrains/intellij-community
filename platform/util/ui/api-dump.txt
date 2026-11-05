@@ -5510,6 +5510,7 @@ f:com.intellij.util.ui.UIUtil
 - s:isDescendingFrom(java.awt.Component,java.awt.Component):Z
 - s:isDialogRootPane(javax.swing.JRootPane):Z
 - s:isFocusAncestor(java.awt.Component):Z
+- s:isFocusAncestorInWindow(java.awt.Component):Z
 - s:isFocusable(java.awt.Component):Z
 - s:isFullRowSelectionLAF():Z
 - s:isFullScreenSupportedByDefaultGD():Z

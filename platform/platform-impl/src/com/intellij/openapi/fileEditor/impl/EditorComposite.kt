@@ -593,6 +593,7 @@ open class EditorComposite internal constructor(
     fileEditorWithProviders: List<FileEditorWithProvider>,
     selectedFileEditorProvider: FileEditorProvider?,
   ): FileEditorWithProvider? {
+    val hadFocus = UIUtil.isFocusAncestorInWindow(compositePanel)
     var fileEditorWithProviderToSelect = fileEditorWithProviders.firstOrNull()
     WriteIntentReadAction.run {
       if (fileEditorWithProviders.size == 1) {
@@ -610,6 +611,9 @@ open class EditorComposite internal constructor(
           }
         }
       }
+    }
+    if (hadFocus) {
+      compositePanel.focusComponent()?.requestFocusInWindow()
     }
     return fileEditorWithProviderToSelect
   }
@@ -1251,10 +1255,23 @@ internal class EditorCompositePanel(@JvmField val composite: EditorComposite) : 
     this.focusComponent = focusComponent
   }
 
-  override fun requestFocusInWindow(): Boolean = focusComponent()?.requestFocusInWindow() ?: false
+  /**
+   * [EditorCompositePanel] may hold focus itself until the editors are loaded
+   */
+  override fun requestFocusInWindow(): Boolean {
+    val focusComponent = focusComponent()
+    if (focusComponent == null) {
+      return super.requestFocusInWindow()
+    }
+    return focusComponent.requestFocusInWindow()
+  }
 
   override fun requestFocus() {
-    val focusComponent = focusComponent() ?: return
+    val focusComponent = focusComponent()
+    if (focusComponent == null) {
+      super.requestFocus()
+      return
+    }
     val focusManager = IdeFocusManager.getGlobalInstance()
     focusManager.doWhenFocusSettlesDown {
       focusManager.requestFocus(focusComponent, true)

@@ -147,7 +147,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.LightVirtualFileBase;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -1015,11 +1014,7 @@ public final class DiffUtil {
   }
 
   public static boolean isFocusedComponentInWindow(@Nullable Component component) {
-    if (component == null) return false;
-    Window window = ComponentUtil.getWindow(component);
-    if (window == null) return false;
-    Component windowFocusOwner = window.getMostRecentFocusOwner();
-    return windowFocusOwner != null && SwingUtilities.isDescendingFrom(windowFocusOwner, component);
+    return UIUtil.isFocusAncestorInWindow(component);
   }
 
   public static void requestFocusInWindow(@Nullable Component component) {

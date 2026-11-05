@@ -1748,6 +1748,21 @@ public final class UIUtil {
   }
 
   /**
+   * Checks whether the focus is inside {@code component} hierarchy from the point of view of its window.
+   * Unlike {@link #isFocusAncestor(Component)}, it reads the most recent focus owner of the window,
+   * so it also answers for a window that is not active.
+   *
+   * @return {@code true} if the most recent focus owner of the window is {@code component} or one of its descendants
+   */
+  public static boolean isFocusAncestorInWindow(@Nullable Component component) {
+    if (component == null) return false;
+    Window window = ComponentUtil.getWindow(component);
+    if (window == null) return false;
+    Component windowFocusOwner = window.getMostRecentFocusOwner();
+    return windowFocusOwner != null && SwingUtilities.isDescendingFrom(windowFocusOwner, component);
+  }
+
+  /**
    * Get the parent of a component in a more general sense than UI parent, i.e.,
    * if it doesn't have a real UI parent, use a foster one instead.
    *
