@@ -161,6 +161,7 @@ abstract class GitBranchesPopupBase<T : GitBranchesPopupStepBase>(
     }
 
     setUiDataProvider { sink ->
+      sink[CommonDataKeys.PROJECT] = project
       sink[GitBranchesPopupKeys.POPUP] = this@GitBranchesPopupBase
       sink[GitBranchesPopupKeys.AFFECTED_REPOSITORIES] = treeStep.affectedRepositories
       sink[GitBranchesPopupKeys.SELECTED_REPOSITORY] = treeStep.selectedRepository
