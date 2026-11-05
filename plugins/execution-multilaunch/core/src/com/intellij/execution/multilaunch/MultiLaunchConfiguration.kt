@@ -26,7 +26,11 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.ObjectEventData
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.jetbrains.rd.util.getLogger
+import com.jetbrains.rd.util.warn
 import org.jetbrains.annotations.ApiStatus
+
+private val logger = getLogger<MultiLaunchConfiguration>()
 
 class MultiLaunchConfiguration(
   private val project: Project,
@@ -101,16 +105,27 @@ class MultiLaunchConfiguration(
       return FusCondition.createData(condition.template.type)
     }
 
-    fun createEvent(row: ExecutableRow): ObjectEventData {
+    fun createEvent(row: ExecutableRow): ObjectEventData? {
+
+      val executable = row.executable
+      if (executable == null) {
+        logger.warn { "Stored executable can't be null" }
+        return null
+      }
+
+      val condition = row.condition
+      if (condition == null) {
+        logger.warn { "Stored condition can't be null" }
+        return null
+      }
+
       return FusExecutionRow.createData(
-        createEvent(row.executable
-                    ?: throw CantRunException(MultiLaunchBundle.message("run.configurations.multilaunch.error.missing.stored.executable"))),
-        createEvent(row.condition
-                    ?: throw CantRunException(MultiLaunchBundle.message("run.configurations.multilaunch.error.missing.stored.condition"))),
+        createEvent(executable),
+        createEvent(condition),
         row.disableDebugging)
     }
 
-    val fusRows = FusExecutableRows.FIELD.with(descriptors.map { createEvent(it) })
+    val fusRows = FusExecutableRows.FIELD.with(descriptors.mapNotNull { createEvent(it) })
     val fusActivateToolWindows = MultiLaunchEventFields.ACTIVATE_TOOL_WINDOWS_FIELD.with(state.activateToolWindows)
 
     return mutableListOf(fusRows, fusActivateToolWindows)
