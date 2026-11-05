@@ -1074,6 +1074,8 @@ platform/settings.v2/backend
 platform/settings.v2/backend/baseline
 platform/settings.v2/shared
 platform/settings.v2/test
+platform/settings.v2/testKeys
+platform/settings.v2/testKeys/plugin
 platform/smRunner
 platform/smRunner/dashboard
 platform/smRunner/vcs

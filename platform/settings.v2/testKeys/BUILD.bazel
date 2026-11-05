@@ -1,0 +1,39 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.settings.v2.testKeys` start
+jvm_library(
+    name = "testKeys",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.settings.v2.testKeys",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/settings.v2",
+        "//libraries/jetbrains/annotations",
+        "//platform/core-api:core",
+        "//platform/settings.v2/shared",
+    ],
+)
+### auto-generated section `build intellij.platform.settings.v2.testKeys` end
+
+### auto-generated section `iml intellij.platform.settings.v2.testKeys` start
+exports_files(
+    [
+        "intellij.platform.settings.v2.testKeys.iml",
+        "resources/intellij.platform.settings.v2.testKeys.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.settings.v2.testKeys` end

@@ -1945,6 +1945,8 @@
       <module fileurl="file://$PROJECT_DIR$/platform/settings.v2/backend/baseline/intellij.platform.settings.v2.backend.baseline.iml" filepath="$PROJECT_DIR$/platform/settings.v2/backend/baseline/intellij.platform.settings.v2.backend.baseline.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/settings.v2/shared/intellij.platform.settings.v2.shared.iml" filepath="$PROJECT_DIR$/platform/settings.v2/shared/intellij.platform.settings.v2.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/settings.v2/test/intellij.platform.settings.v2.test.iml" filepath="$PROJECT_DIR$/platform/settings.v2/test/intellij.platform.settings.v2.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/settings.v2/testKeys/intellij.platform.settings.v2.testKeys.iml" filepath="$PROJECT_DIR$/platform/settings.v2/testKeys/intellij.platform.settings.v2.testKeys.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/settings.v2/testKeys/plugin/intellij.platform.settings.v2.testKeys.plugin.iml" filepath="$PROJECT_DIR$/platform/settings.v2/testKeys/plugin/intellij.platform.settings.v2.testKeys.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" filepath="$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/dashboard/intellij.platform.smRunner.dashboard.iml" filepath="$PROJECT_DIR$/platform/smRunner/dashboard/intellij.platform.smRunner.dashboard.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.tests.iml" filepath="$PROJECT_DIR$/platform/smRunner/intellij.platform.smRunner.tests.iml" />

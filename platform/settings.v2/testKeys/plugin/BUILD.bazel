@@ -1,0 +1,27 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.settings.v2.testKeys.plugin` start
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.settings.v2.testKeys.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.platform.settings.v2.testKeys.plugin` end
+
+### auto-generated section `iml intellij.platform.settings.v2.testKeys.plugin` start
+exports_files(
+    [
+        "intellij.platform.settings.v2.testKeys.plugin.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.settings.v2.testKeys.plugin` end

@@ -10,6 +10,8 @@ layers supply the values. The vault resolves and stores them.
 | `intellij.platform.settings.v2.backend.baseline` | `backend/baseline/` |
 | `intellij.platform.settings.v2.backend` | `backend/` |
 | `intellij.platform.settings.v2.test`    | `test/`    |
+| `intellij.platform.settings.v2.testKeys` | `testKeys/` |
+| `intellij.platform.settings.v2.testKeys.plugin` | `testKeys/plugin/` |
 
 Some modules of the feature live outside `community/`. Their own `AGENTS.md` points here, and `spec/` and `adr/`
 cover them too.

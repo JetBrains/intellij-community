@@ -1,0 +1,22 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run 'Generate Product Layouts' or directly UltimateGenerator.main() -->
+<!-- Source: platform/buildScripts/src/productLayout/UltimateModuleSets.kt: UltimateModuleSets.getTestProductSpecs()["lambdaTestFixtures"], testPlugin(pluginId = "com.intellij.platform.settings.v2.testKeys.plugin") -->
+<idea-plugin>
+  <id>com.intellij.platform.settings.v2.testKeys.plugin</id>
+  <name>Settings v2 Test Keys</name>
+  <vendor>JetBrains</vendor>
+
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.settings.v2"/>
+    <module name="intellij.platform.settings.v2.shared"/>
+  </dependencies>
+
+  <!-- region additional -->
+  <content namespace="jetbrains">
+    <!-- chain: direct -->
+    <module name="intellij.platform.settings.v2.testKeys"/>
+  </content>
+  <!-- endregion -->
+</idea-plugin>
