@@ -35,6 +35,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.zoomIndicator.ZoomIndicatorManager;
@@ -168,6 +169,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   }
 
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer, boolean oneLineMode) {
+    if (EditorFactory.getInstance() instanceof EditorFactoryImpl factory) {
+      factory.startEditorClassesPreparation();
+    }
     myOneLineMode = oneLineMode;
     myIsViewer = isViewer;
     setDocument(document);

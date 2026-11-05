@@ -7,13 +7,16 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.CaretState
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
 import com.intellij.openapi.fileEditor.DocumentsEditor
@@ -33,6 +36,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.pom.Navigatable
 import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -113,6 +117,9 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     val interceptedEditor = ImplicitSplitModeEditorBinder.tryBindSuppliedEditorToBackendAsync(this, project, file, document, editorCoroutineScope)
     if (interceptedEditor != null) return interceptedEditor
 
+    span("editor classes preparation") {
+      (serviceAsync<EditorFactory>() as? EditorFactoryImpl)?.prepareEditorClasses()
+    }
     val asyncLoader = createAsyncEditorLoader(
       provider = this@TextEditorProvider,
       project = project,

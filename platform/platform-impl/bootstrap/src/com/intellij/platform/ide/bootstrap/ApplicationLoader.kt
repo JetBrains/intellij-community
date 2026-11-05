@@ -32,6 +32,7 @@ import com.intellij.ide.plugins.ThirdPartyPluginsPrivacyConsentState
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.saveBundledPluginsState
+import com.intellij.ide.startup.impl.isStartupUiGateEnabled
 import com.intellij.ide.startup.impl.preloadStartupUiClasses
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
@@ -136,7 +137,7 @@ internal suspend fun loadApp(
 ): ApplicationStarter {
   return span("app initialization") {
     // JetBrains Light sets the property; the other products keep the old order of the frame initialization
-    if (!AppMode.isHeadless() && System.getProperty("ide.startup.ui.gate").toBoolean()) {
+    if (isStartupUiGateEnabled()) {
       StartupUiGate.arm()
       StartUpMeasurer.addInstantEvent("startup UI gate armed")
       asyncScope.launch(CoroutineName("startup UI class preloading")) {

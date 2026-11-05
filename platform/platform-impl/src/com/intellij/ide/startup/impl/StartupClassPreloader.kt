@@ -2,6 +2,7 @@
 package com.intellij.ide.startup.impl
 
 import com.intellij.ide.plugins.PluginSet
+import com.intellij.idea.AppMode
 import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +15,13 @@ import java.util.concurrent.ConcurrentHashMap
 private object StartupClassPreloader
 
 private const val PLUGIN_CLASSES_MARKER = "# Plugin classes"
+
+/**
+ * Tells whether the application start arms [com.intellij.util.StartupUiGate] and runs [preloadStartupUiClasses].
+ * JetBrains Light sets the property `ide.startup.ui.gate`. A headless application never does it.
+ */
+@ApiStatus.Internal
+fun isStartupUiGateEnabled(): Boolean = !AppMode.isHeadless() && System.getProperty("ide.startup.ui.gate").toBoolean()
 
 /**
  * Loads and links the classes that the project frame and the first editor need, so the EDT does not do it.

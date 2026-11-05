@@ -79,18 +79,24 @@ internal class FrameClassesWarmUpTest {
  * An `invokedynamic` is not followed, because a lambda body does not run when the lambda is created.
  * The classes of the JDK and of the Kotlin libraries are not read, because their initializers do not call IDE code.
  */
-private class ClassInitializationGraph(private val classLoader: ClassLoader) {
+internal class ClassInitializationGraph(private val classLoader: ClassLoader) {
   private val models = HashMap<String, ClassModel?>()
   private val methodInfos = HashMap<MethodRef, MethodInfo>()
   private val edges = HashMap<String, Map<String, String>>()
 
-  /** Returns one line per cycle that the [roots] reach: the classes of the cycle with the reason of each edge. */
-  fun findCycles(roots: List<String>): List<String> {
+  /** Returns the [roots] and every class that their initialization initializes. */
+  fun reachableFrom(roots: List<String>): Set<String> {
     val nodes = LinkedHashSet(roots)
     val queue = ArrayDeque(roots)
     while (queue.isNotEmpty()) {
       edgesOf(queue.removeFirst()).keys.filterTo(queue) { nodes.add(it) }
     }
+    return nodes
+  }
+
+  /** Returns one line per cycle that the [roots] reach: the classes of the cycle with the reason of each edge. */
+  fun findCycles(roots: List<String>): List<String> {
+    val nodes = reachableFrom(roots)
     val graph = object : OutboundSemiGraph<String> {
       override fun getNodes(): Collection<String> = nodes
 

@@ -104,6 +104,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       )
 
       val factory = serviceAsync<EditorFactory>() as EditorFactoryImpl
+      span("editor classes preparation") {
+        factory.prepareEditorClasses()
+      }
       var pendingEditor: EditorFactoryImpl.PendingMainEditor? = null
       var disposeUnclaimedEditor: (() -> Unit)? = null
 

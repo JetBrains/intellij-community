@@ -50,8 +50,10 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorBundle
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -418,6 +420,9 @@ open class FileEditorManagerImpl(
       })
     }
     else {
+      coroutineScope.launch {
+        (serviceAsync<EditorFactory>() as? EditorFactoryImpl)?.startEditorClassesPreparation()
+      }
       initJob = coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
         val component = EditorsSplitters(manager = this@FileEditorManagerImpl, coroutineScope = coroutineScope)
         component.isFocusable = false
