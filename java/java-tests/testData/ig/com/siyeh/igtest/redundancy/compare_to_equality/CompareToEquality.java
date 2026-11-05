@@ -1,3 +1,5 @@
+import java.math.BigInteger;
+
 public class CompareToEquality {
 
   boolean eq(String a, String b) {
@@ -29,5 +31,30 @@ public class CompareToEquality {
   // No warning: a nullable argument would change behavior (compareTo(null) throws, equals(null) returns false).
   boolean nullableArgument(String a) {
     return a.compareTo(null) == 0;
+  }
+
+  enum TokenType { LT, LE, GT, GE, EQEQ, NE }
+
+  // No warning: sevaral compareTo() calls nearby that can't be replaced and the symmetry in the code would be lost
+  boolean evaluate(TokenType op, BigInteger first, BigInteger second) {
+    if (op == TokenType.LT) {
+      return first.compareTo(second) < 0;
+    }
+    else if (op == TokenType.LE) {
+      return first.compareTo(second) <= 0;
+    }
+    else if (op == TokenType.GT) {
+      return first.compareTo(second) > 0;
+    }
+    else if (op == TokenType.GE) {
+      return first.compareTo(second) >= 0;
+    }
+    else if (op == TokenType.EQEQ) {
+      return first.compareTo(second) == 0;
+    }
+    else if (op == TokenType.NE) {
+      return first.compareTo(second) != 0;
+    }
+    return false;
   }
 }

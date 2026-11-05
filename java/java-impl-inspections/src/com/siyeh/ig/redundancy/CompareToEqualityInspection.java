@@ -15,13 +15,18 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiIfStatement;
+import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiThisExpression;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,6 +38,8 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class CompareToEqualityInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher COMPARE_TO =
@@ -51,21 +58,46 @@ public final class CompareToEqualityInspection extends AbstractBaseJavaLocalInsp
         final PsiExpression argument = call.getArgumentList().getExpressions()[0];
         // compareTo(null) throws a NullPointerException, but equals(null) returns false, so the replacement
         // would change behavior when the argument may be null.
-        boolean nullable = NullabilityUtil.getExpressionNullability(argument) == Nullability.NULLABLE;
-        PsiMethod method = call.resolveMethod();
+        final boolean nullable = NullabilityUtil.getExpressionNullability(argument) == Nullability.NULLABLE;
+        final PsiMethod method = call.resolveMethod();
         if (method == null) return;
-        PsiClass aClass = method.getContainingClass();
+        final PsiClass aClass = method.getContainingClass();
         if (aClass == null) return;
         final boolean replaceWithEquality = InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_ENUM);
-        boolean mayChangeSemantics = nullable || (!replaceWithEquality && !isAllowedClass(aClass));
+        final boolean mayChangeSemantics = nullable || (!replaceWithEquality && !isAllowedClass(aClass)) || isPartOfSequence(call);
         if (!isOnTheFly && mayChangeSemantics) return;
         final PsiElement anchor =
           !isOnTheFly || isVisibleHighlight(expression) ? call.getMethodExpression().getReferenceNameElement() : expression;
         assert anchor != null;
-        ProblemHighlightType highlightType =
+        final ProblemHighlightType highlightType =
           mayChangeSemantics ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
         holder.registerProblem(anchor, InspectionGadgetsBundle.message("compare.to.equality.problem.descriptor"),
                                highlightType, new ReplaceWithEqualsFix(replaceWithEquality, mayChangeSemantics));
+      }
+
+      /// do not highlight when there are several compareTo() calls nearby that can't be replaced.
+      private static boolean isPartOfSequence(@NotNull PsiMethodCallExpression call) {
+        final PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+        if (qualifier == null) return false;
+        PsiElement block = PsiTreeUtil.getParentOfType(call, PsiCodeBlock.class, true, PsiLambdaExpression.class, PsiMember.class);
+        if (block == null) return false;
+        if (block.getParent().getParent() instanceof PsiIfStatement) {
+          block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class, true, PsiLambdaExpression.class, PsiMember.class);
+        }
+        AtomicInteger count = new AtomicInteger(0);
+        PsiTreeUtil.processElements(block, PsiMethodCallExpression.class, new PsiElementProcessor.CollectElementsWithLimit<>(2) {
+          @Override
+          public boolean execute(@NotNull PsiMethodCallExpression c) {
+            if (!COMPARE_TO.test(c) || call == c) return true;
+            if (PsiUtil.skipParenthesizedExprUp(c.getParent()) instanceof PsiBinaryExpression binary) {
+              final IElementType tokenType = binary.getOperationTokenType();
+              if ((tokenType.equals(JavaTokenType.EQEQ) || tokenType.equals(JavaTokenType.NE)) 
+                  && (ExpressionUtils.isZero(binary.getROperand()) || ExpressionUtils.isZero(binary.getLOperand()))) return true;
+            }
+            return count.incrementAndGet() < 2;
+          }
+        });
+        return count.get() > 1;
       }
 
       private static boolean isAllowedClass(PsiClass aClass) {
@@ -104,16 +136,9 @@ public final class CompareToEqualityInspection extends AbstractBaseJavaLocalInsp
   private static @Nullable PsiMethodCallExpression compareToComparedWithZero(@NotNull PsiBinaryExpression expression) {
     final PsiExpression left = PsiUtil.skipParenthesizedExprDown(expression.getLOperand());
     final PsiExpression right = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
-    if (left == null || right == null) return null;
-    final PsiMethodCallExpression leftCall = asCompareTo(left);
-    if (leftCall != null && ExpressionUtils.isZero(right)) return leftCall;
-    final PsiMethodCallExpression rightCall = asCompareTo(right);
-    if (rightCall != null && ExpressionUtils.isZero(left)) return rightCall;
+    if (left instanceof PsiMethodCallExpression call && COMPARE_TO.test(call) && ExpressionUtils.isZero(right)) return call;
+    if (right instanceof PsiMethodCallExpression call && COMPARE_TO.test(call) && ExpressionUtils.isZero(left)) return call;
     return null;
-  }
-
-  private static @Nullable PsiMethodCallExpression asCompareTo(@NotNull PsiExpression expression) {
-    return expression instanceof PsiMethodCallExpression call && COMPARE_TO.test(call) ? call : null;
   }
 
   private static class ReplaceWithEqualsFix extends PsiUpdateModCommandQuickFix {
