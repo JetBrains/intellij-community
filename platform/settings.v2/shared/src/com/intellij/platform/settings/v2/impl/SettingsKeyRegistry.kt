@@ -3,6 +3,7 @@ package com.intellij.platform.settings.v2.impl
 
 // @spec ../../../../../../../../spec/key-registry.spec.md
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -82,15 +83,16 @@ class SettingsKeyRegistry(private val scope: CoroutineScope) {
    * A second registration of the same key is a no-op. A different key with the same identity is refused, because
    * the identity is what the wire and the storage address, and only one key can answer it.
    *
-   * @param plugin the plugin that registers, which must be the one that declared [key]
+   * @param plugin the plugin that registers, which must be the one that declared [key], or the core plugin for a key
+   *   with no plugin
    * @return `true` when the registry holds [key] after the call
    */
   @Internal
-  fun register(key: SettingsKey<*>, plugin: PluginId?): Boolean = register(key, plugin, keys)
+  fun register(key: SettingsKey<*>, plugin: PluginId): Boolean = register(key, plugin, keys)
 
-  private fun register(key: SettingsKey<*>, plugin: PluginId?, target: ConcurrentHashMap<String, SettingsKey<*>>): Boolean {
-    if (key.pluginId != plugin) {
-      LOG.error("Plugin '$plugin' promotes settings key '${key.name}' of plugin '${key.pluginId}'. " +
+  private fun register(key: SettingsKey<*>, plugin: PluginId, target: ConcurrentHashMap<String, SettingsKey<*>>): Boolean {
+    if (key.ownerPluginId != plugin) {
+      LOG.error("Plugin '$plugin' promotes settings key '${key.name}' of plugin '${key.ownerPluginId}'. " +
                 "Promote only the keys the plugin declares.")
       return false
     }
@@ -220,12 +222,19 @@ class SettingsKeyRegistry(private val scope: CoroutineScope) {
       return true
     }
     LOG.error("Settings key '${key.identity}' was not promoted. Register it in a settings.v2.keyPromoter of " +
-              "plugin '${key.pluginId}'.")
-    return register(key, key.pluginId)
+              "plugin '${key.ownerPluginId}'.")
+    return register(key, key.ownerPluginId)
   }
 
   companion object {
     private val LOG = logger<SettingsKeyRegistry>()
+
+    /**
+     * The plugin that may promote this key. A platform key has no plugin of its own ([SettingsKey.pluginId] is
+     * `null`), and the core plugin promotes it.
+     */
+    private val SettingsKey<*>.ownerPluginId: PluginId
+      get() = pluginId ?: PluginManagerCore.CORE_ID
 
     fun getInstance(): SettingsKeyRegistry = service()
   }

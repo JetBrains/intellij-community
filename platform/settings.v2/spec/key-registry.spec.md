@@ -40,7 +40,8 @@ from outside, such as from another remote-dev side, could resolve to nothing.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
 - A different key with a taken identity must be refused and logged.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
-- A promoter must register the keys of its own plugin only.
+- A promoter must register the keys of its own plugin only. A platform key has no plugin of its own, and the core
+  plugin promotes it.
   See [ADR 0111](../adr/0111-the-registry-takes-keys-only-from-their-own-plugin-and-a-prefix-belongs-to-one-plugin.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
 - An unloaded promoter must take its keys along. The other promoters of that plugin keep theirs.

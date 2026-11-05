@@ -34,6 +34,7 @@ jvm_library(
         "//libraries/jetbrains/annotations",
         "//platform/settings.v2",
         "//platform/core-api:core",
+        "//platform/core-impl",
         "//platform/projectModel-api:projectModel",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",

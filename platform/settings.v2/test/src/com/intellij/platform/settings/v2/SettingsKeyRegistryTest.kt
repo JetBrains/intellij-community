@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings.v2
 
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
@@ -76,7 +77,7 @@ class SettingsKeyRegistryTest {
     val first = SettingsKey("test.registry.dupe.name", default = "d")
     val second = SettingsKey("name", default = "d").withTestPluginId(PluginId.getId("test.registry.dupe"))
     assertEquals(first.identity, second.identity)
-    assertTrue(registry.register(first, null))
+    assertTrue(registry.register(first, PluginManagerCore.CORE_ID))
 
     assertFalse(expectingErrors { registry.register(second, PluginId.getId("test.registry.dupe")) })
 
@@ -97,6 +98,17 @@ class SettingsKeyRegistryTest {
 
     assertSame(own, registry[own.identity])
     assertNull(registry[foreign.identity])
+  }
+
+  @Test
+  fun `the core plugin promotes a platform key, and another plugin may not`() {
+    val platformKey = SettingsKey("test.registry.platform", default = "d")
+
+    expectingErrors { registry.promote(promoterOf(platformKey), DefaultPluginDescriptor(OWNER, null)) }
+    assertNull(registry[platformKey.identity])
+
+    registry.promote(promoterOf(platformKey), DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null))
+    assertSame(platformKey, registry[platformKey.identity])
   }
 
   @Test
@@ -247,7 +259,7 @@ class SettingsKeyRegistryTest {
     ExtensionTestUtil.maskExtensions(LayerProvider.EP_NAME, listOf(TestLayerProvider()), disposable)
     val promoted = SettingsKey("test.registry.taken.name", default = "d")
     val impostor = SettingsKey("name", default = "d").withTestPluginId(PluginId.getId("test.registry.taken"))
-    registry.register(promoted, null)
+    registry.register(promoted, PluginManagerCore.CORE_ID)
 
     expectingErrors {
       assertThrows<IllegalStateException> {
@@ -285,7 +297,7 @@ class SettingsKeyRegistryTest {
    */
   private fun registerUnreferencedKey(): WeakReference<SettingsKey<*>> {
     val key = SettingsKey("test.registry.held.strongly", default = "d")
-    assertTrue(registry.register(key, null))
+    assertTrue(registry.register(key, PluginManagerCore.CORE_ID))
     return WeakReference(key)
   }
 
