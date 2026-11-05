@@ -17,6 +17,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.FilteringProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +63,13 @@ public final class EditorFilteringMarkupModelEx implements MarkupModelEx {
   @Override
   public @NotNull MarkupIterator<RangeHighlighterEx> overlappingGutterIterator(int startOffset, int endOffset) {
     MarkupIterator<RangeHighlighterEx> iterator = myDelegate.overlappingGutterIterator(startOffset, endOffset);
+    return FilteringMarkupIterator.create(iterator, h -> isAvailable(h, myEditor));
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public MarkupIterator<RangeHighlighterEx> overlappingFontFamiliesIterator(int startOffset, int endOffset) {
+    MarkupIterator<RangeHighlighterEx> iterator = myDelegate.overlappingFontFamiliesIterator(startOffset, endOffset);
     return FilteringMarkupIterator.create(iterator, h -> isAvailable(h, myEditor));
   }
 

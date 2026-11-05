@@ -7,6 +7,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -139,6 +140,24 @@ public class MarkupModelTest {
 
       lines.dispose();
       assertThat(fontFamiliesHighlighters(markupModel, document)).containsExactly(exact);
+    });
+  }
+
+  @Test
+  public void testFilteredFontFamiliesIteratorSkipsHighlightersThatTheEditorHides() {
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef");
+      Document document = getDocument(myFixture.getFile());
+      MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myFixture.getProject(), true);
+      TextAttributes withFontFamilies = attributes(Color.RED, FontFamilies.of("Noto Serif"));
+      RangeHighlighterEx shown =
+        (RangeHighlighterEx)markupModel.addRangeHighlighter(0, 1, 0, withFontFamilies, HighlighterTargetArea.EXACT_RANGE);
+      RangeHighlighterEx hidden =
+        (RangeHighlighterEx)markupModel.addRangeHighlighter(4, 5, 0, withFontFamilies, HighlighterTargetArea.EXACT_RANGE);
+      hidden.setEditorFilter(_ -> false);
+      MarkupModelEx filteredMarkupModel = ((EditorEx)myFixture.getEditor()).getFilteredDocumentMarkupModel();
+
+      assertThat(fontFamiliesHighlighters(filteredMarkupModel, document)).containsExactly(shown);
     });
   }
 
