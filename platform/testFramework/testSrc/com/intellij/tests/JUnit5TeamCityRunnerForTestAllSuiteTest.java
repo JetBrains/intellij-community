@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -8,6 +9,7 @@ import org.junit.jupiter.params.Parameter;
 import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.launcher.TestExecutionListener;
 import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
@@ -15,7 +17,10 @@ import org.junit.platform.launcher.core.LauncherConfig;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -200,7 +205,38 @@ class JUnit5TeamCityRunnerForTestAllSuiteTest {
     );
   }
 
+  @Test
+  void recordsTheLocationOfAFailedClassConfiguration() {
+    List<String> recorded = new ArrayList<>();
+    var listener = new JUnit5TeamCityRunner.TCExecutionListener(
+      new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8),
+      (testIdentifier, status, testName) -> {
+        String className = testIdentifier.getSource().map(s -> ((ClassSource)s).getClassName()).orElse(null);
+        recorded.add(testName + " -> " + className + " " + status);
+      });
+    String suiteName = execute(FailingClassSetupScenario.class, listener);
+
+    assertThat(recorded).containsExactly(
+      suiteName + ": Class Configuration -> " + FailingClassSetupScenario.class.getName() + " FAILED"
+    );
+  }
+
   private static Names execute(Class<?> scenarioRootClass) {
+    Names names = new Names();
+    execute(scenarioRootClass, names);
+    return names;
+  }
+
+  private static String execute(Class<?> scenarioRootClass, JUnit5TeamCityRunner.TCExecutionListener listener) {
+    Names names = new Names();
+    execute(scenarioRootClass, listener, names);
+    return names.allNames.stream()
+      .filter(name -> name.endsWith(scenarioRootClass.getSimpleName()))
+      .findFirst()
+      .orElseThrow();
+  }
+
+  private static void execute(Class<?> scenarioRootClass, TestExecutionListener... listeners) {
     // Keep this isolated from globally auto-registered launcher session listeners: they enable IDE-wide test
     // extensions and first/last-in-suite leak checks that have nothing to do with the naming under test.
     var launcher = LauncherFactory.create(LauncherConfig.builder()
@@ -211,9 +247,7 @@ class JUnit5TeamCityRunnerForTestAllSuiteTest {
       .configurationParameter("junit.jupiter.conditions.deactivate", "org.junit.*DisabledCondition")
       .build();
 
-    Names names = new Names();
-    launcher.execute(request, names);
-    return names;
+    launcher.execute(request, listeners);
   }
 
   private static final class Names implements TestExecutionListener {
@@ -329,6 +363,17 @@ class JUnit5TeamCityRunnerForTestAllSuiteTest {
   static class DefaultPatternScenario {
     @Parameter
     String value;
+
+    @Test
+    void t() { }
+  }
+
+  @Disabled(SCENARIO_DISABLED_REASON)
+  static class FailingClassSetupScenario {
+    @BeforeAll
+    static void setUp() {
+      throw new IllegalStateException("class setup failed");
+    }
 
     @Test
     void t() { }

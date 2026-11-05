@@ -502,8 +502,19 @@ public final class JUnit5TeamCityRunner {
       }
     }
 
+    interface TestLocationRecorder {
+      void record(TestIdentifier testIdentifier, TestExecutionResult.Status status, String testName);
+    }
+
+    private final TestLocationRecorder myLocationRecorder;
+
     private TCExecutionListener() {
-      myPrintStream = System.out;
+      this(System.out, TestLocationStorage::recordTestLocation);
+    }
+
+    TCExecutionListener(PrintStream printStream, TestLocationRecorder locationRecorder) {
+      myPrintStream = printStream;
+      myLocationRecorder = locationRecorder;
       myPrintStream.println("##teamcity[enteredTheMatrix]");
     }
 
@@ -586,7 +597,7 @@ public final class JUnit5TeamCityRunner {
           testFailure(testIdentifier, ServiceMessageTypes.TEST_IGNORED, throwableOptional, duration, reason);
         }
 
-        TestLocationStorage.recordTestLocation(testIdentifier, status, fullTestName(testIdentifier));
+        myLocationRecorder.record(testIdentifier, status, fullTestName(getName(testIdentifier)));
 
         testFinished(testIdentifier, duration);
         myFinishCount++;
@@ -594,11 +605,18 @@ public final class JUnit5TeamCityRunner {
       else if (hasNonTrivialParent(testIdentifier)) {
         final boolean shouldReportAsTestSuite = shouldReportAsTestSuite(testIdentifier);
         if (status == TestExecutionResult.Status.FAILED) {
-          if (!shouldReportAsTestSuite) myPrintStream.println(new TestSuiteStarted(getName(testIdentifier)));
+          if (!shouldReportAsTestSuite) {
+            String suiteName = getName(testIdentifier);
+            myOpenSuites.addLast(suiteName);
+            myPrintStream.println(new TestSuiteStarted(suiteName));
+          }
           myPrintStream.println(new TestStarted(CLASS_CONFIGURATION, false, null));
           testFailure(CLASS_CONFIGURATION, ServiceMessageTypes.TEST_FAILED, throwableOptional, 0, reason);
+          myLocationRecorder.record(testIdentifier, status, fullTestName(CLASS_CONFIGURATION));
           myPrintStream.println(new TestFinished(CLASS_CONFIGURATION, 0));
-          if (!shouldReportAsTestSuite) myPrintStream.println(new TestSuiteFinished(getName(testIdentifier)));
+          if (!shouldReportAsTestSuite) {
+            myPrintStream.println(new TestSuiteFinished(myOpenSuites.pollLast()));
+          }
         }
         if (status != TestExecutionResult.Status.SUCCESSFUL) {
           final Set<TestIdentifier> descendants = myTestPlan != null ? myTestPlan.getDescendants(testIdentifier) : Collections.emptySet();
@@ -646,8 +664,7 @@ public final class JUnit5TeamCityRunner {
      * and the TeamCity testOccurrences API). testMetadata attached after the run is matched against precisely
      * this composed name.
      */
-    private String fullTestName(TestIdentifier testIdentifier) {
-      String name = getName(testIdentifier);
+    private String fullTestName(String name) {
       if (myOpenSuites.isEmpty()) return name;
       StringBuilder result = new StringBuilder();
       for (String suite : myOpenSuites) {
