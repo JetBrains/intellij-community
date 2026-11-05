@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.generation.surroundWith;
 
@@ -144,7 +144,20 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
     int[] endOffsets = editor.getCaretModel().getAllCarets().stream()
       .mapToInt(Caret::getSelectionEnd)
       .toArray();
+    return computeSurrounders(file, startOffsets, endOffsets, hasSelection);
+  }
 
+  /**
+   * The surrounders for the ranges given by {@code startOffsets} and {@code endOffsets}, one range per caret, with the
+   * elements each of them surrounds. The applicability of a surrounder is not checked.
+   *
+   * @param hasSelection whether the ranges were selected by the user, rather than taken from the caret line
+   */
+  @ApiStatus.Internal
+  public static @NotNull Map<Surrounder, PsiElement[]> computeSurrounders(@NotNull PsiFile file,
+                                                                          int @NotNull [] startOffsets,
+                                                                          int @NotNull [] endOffsets,
+                                                                          boolean hasSelection) {
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
 
     Language previousLanguage = null;
@@ -216,20 +229,28 @@ public final class SurroundWithHandler implements CodeInsightActionHandler {
 
   private static void selectLogicalLineContents(Editor editor) {
     Document document = editor.getDocument();
-    CharSequence text = document.getImmutableCharSequence();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      int caretOffset = caret.getOffset();
-      caret.setSelection(CharArrayUtil.shiftForward(text, DocumentUtil.getLineStartOffset(caretOffset, document), " \t"),
-                         CharArrayUtil.shiftBackward(text, DocumentUtil.getLineEndOffset(caretOffset, document) - 1, " \t") + 1);
+      TextRange line = logicalLineContents(document, caret.getOffset());
+      caret.setSelection(line.getStartOffset(), line.getEndOffset());
     }
   }
 
   public static void selectLogicalLineContentsAtCaret(Editor editor) {
-    int caretOffset = editor.getCaretModel().getOffset();
-    Document document = editor.getDocument();
+    TextRange line = logicalLineContents(editor.getDocument(), editor.getCaretModel().getOffset());
+    editor.getSelectionModel().setSelection(line.getStartOffset(), line.getEndOffset());
+  }
+
+  /**
+   * The range of the line at {@code offset} without its leading and trailing spaces and tabs: what <em>Surround With</em>
+   * surrounds when nothing is selected.
+   */
+  @ApiStatus.Internal
+  public static @NotNull TextRange logicalLineContents(@NotNull Document document, int offset) {
     CharSequence text = document.getImmutableCharSequence();
-    editor.getSelectionModel().setSelection(CharArrayUtil.shiftForward(text, DocumentUtil.getLineStartOffset(caretOffset, document), " \t"),
-                                            CharArrayUtil.shiftBackward(text, DocumentUtil.getLineEndOffset(caretOffset, document) - 1, " \t") + 1);
+    int start = CharArrayUtil.shiftForward(text, DocumentUtil.getLineStartOffset(offset, document), " \t");
+    int end = CharArrayUtil.shiftBackward(text, DocumentUtil.getLineEndOffset(offset, document) - 1, " \t") + 1;
+    // A blank line has its start after its end. A caret selection accepts the offsets in either order.
+    return new TextRange(Math.min(start, end), Math.max(start, end));
   }
 
   private static void showPopup(Editor editor, List<AnAction> applicable) {
