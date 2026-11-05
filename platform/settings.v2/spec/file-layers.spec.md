@@ -101,8 +101,8 @@ file layer holds the settings of a directory and of each file in it, in one conf
 - The file layer must be absent in the light mode. A write at a file context then lands in the project layer, and
   a read at a file context sees the project value. After the move to the full mode, the file layer loads, and a
   write at a file context lands in the directory config. See
-  [ADR 0164](../adr/0164-file-settings-are-off-in-the-light-mode-until-the-move-to-the-full-mode.md). No test
-  covers it yet.
+  [ADR 0164](../adr/0164-file-settings-are-off-in-the-light-mode-until-the-move-to-the-full-mode.md).
+  [@test] ../../../../platform/unified/integrationTests/testSrc/com/intellij/platform/unified/integrationTests/JetBrainsLightSettingsTest.kt
 - The file layer must find only the configs in the project content. A config in an excluded directory never loads.
   [@test] ../test/src/com/intellij/platform/settings/v2/FileLayerIndexLookupTest.kt
 - A project that closes while the file layer waits for its index must end the wait, and it must give no configs.
