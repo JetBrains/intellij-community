@@ -169,20 +169,21 @@ internal class EditorMarkupRepainter(
    * So on the EDT it applies the pending request at once, and the new editor keeps no layout from before the resolution.
    */
   fun resolveExistingFontFamilies(documentMarkup: MarkupModelEx) {
-    val values = ArrayList<FontFamilies>()
+    var values: HashSet<FontFamilies>? = null
     var fontStyleArea = RepaintArea.NONE
     documentMarkup.overlappingFontFamiliesIterator(0, documentMarkup.document.textLength).use { iterator ->
       for (highlighter in iterator) {
         val value = highlighter.forcedTextAttributes?.fontFamilies
         if (value != null) {
-          if (values.none { it === value }) {
-            values.add(value)
+          if (values == null) {
+            values = HashSet()
           }
+          values.add(value)
           fontStyleArea = fontStyleArea.union(affectedArea(highlighter))
         }
       }
     }
-    if (values.isNotEmpty() && editor.view.resolveFontFamilies(values)) {
+    if (values != null && editor.view.resolveFontFamilies(values)) {
       joinRequest(
         fontStyleArea,
         canImpactGutterSize = false,
