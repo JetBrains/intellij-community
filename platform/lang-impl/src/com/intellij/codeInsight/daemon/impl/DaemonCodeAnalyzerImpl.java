@@ -195,24 +195,33 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     myFileStatusMap = new FileStatusMap(project);
     myPassExecutorService = new PassExecutorService(project);
-    Disposer.register(this, myPassExecutorService);
-    Disposer.register(this, myFileStatusMap);
-    //noinspection TestOnlyProblems
-    DaemonProgressIndicator.setDebug(LOG.isDebugEnabled());
+    boolean constructed = false;
+    try {
+      Disposer.register(this, myPassExecutorService);
+      Disposer.register(this, myFileStatusMap);
+      //noinspection TestOnlyProblems
+      DaemonProgressIndicator.setDebug(LOG.isDebugEnabled());
 
-    myFileStatusMap.markAllFilesDirty("DaemonCodeAnalyzer init");
-    Disposer.register(this, () -> {
-      assert !myDisposed : "Double dispose";
-      myUpdateRunnable.clearFieldsOnDispose();
+      myFileStatusMap.markAllFilesDirty("DaemonCodeAnalyzer init");
+      Disposer.register(this, () -> {
+        assert !myDisposed : "Double dispose";
+        myUpdateRunnable.clearFieldsOnDispose();
 
-      stopProcess(false, "Dispose "+project);
+        stopProcess(false, "Dispose "+project);
 
-      myDisposed = true;
-    });
-    myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
-    myListeners = new DaemonListeners(project, this, coroutineScope);
-    Disposer.register(this, myListeners);
-    repaintIconHelper = new DaemonCodeAnalyzerRepaintIconHelper(coroutineScope);
+        myDisposed = true;
+      });
+      myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
+      myListeners = new DaemonListeners(project, this, coroutineScope);
+      repaintIconHelper = new DaemonCodeAnalyzerRepaintIconHelper(coroutineScope);
+      constructed = true;
+    }
+    finally {
+      if (!constructed) {
+        // the container gets no instance from a failed constructor, so only this call disposes the children registered above
+        Disposer.dispose(this);
+      }
+    }
   }
 
   private @NotNull FileEditorManager getFileEditorManager() {

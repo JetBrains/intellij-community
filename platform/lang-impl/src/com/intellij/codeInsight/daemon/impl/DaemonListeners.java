@@ -158,6 +158,8 @@ public final class DaemonListeners implements Disposable {
   DaemonListeners(@NotNull Project project, @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
+    // the daemon disposes this object also when a later statement of this constructor throws
+    Disposer.register(daemonCodeAnalyzer, this);
     myRecomputeFlagsInBGT = new Alarm(coroutineScope, Alarm.ThreadToUse.POOLED_THREAD);
 
     if (project.isDefault()) {
