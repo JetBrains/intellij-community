@@ -245,7 +245,7 @@ internal class MarkdownListEnterHandlerDelegate: EnterHandlerDelegate {
     private const val CHECK_BOX_MARKER = "[ ] "
 
     private fun MarkdownListNumber.replaceWithOtherNumber(number: Int): MarkdownListNumber {
-      return replaceWithText("$number$delimiter ") as MarkdownListNumber
+      return replaceWithText("${text.takeWhile(Char::isWhitespace)}$number$delimiter ") as MarkdownListNumber
     }
   }
 }

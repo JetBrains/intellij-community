@@ -62,6 +62,22 @@ class MarkdownListPreviousItemBasedNumberingEnterHandlerTest: LightPlatformCodeI
     doTest(content, expected)
   }
 
+  @Test
+  fun `test in sublist with extra indent`() {
+    // language=Markdown
+    val content = """
+    1. Top Level
+        1. Nested<caret>
+    """.trimIndent()
+    // language=Markdown
+    val expected = """
+    1. Top Level
+        1. Nested
+        2. <caret>
+    """.trimIndent()
+    doTest(content, expected)
+  }
+
   private fun doTest(content: String, expected: String) {
     configureFromFileText("some.md", content)
     executeAction(IdeActions.ACTION_EDITOR_ENTER)
