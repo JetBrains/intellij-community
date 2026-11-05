@@ -97,7 +97,8 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
     if (fold == null) {
       int codePoint = getCodePoint();
       if (codePoint == '\t') {
-        return EditorUtil.nextTabStop(startX + getInlaysPrefixWidth(), viewSnapshot.plainSpaceWidth(), viewSnapshot.tabSize()) + getInlaysSuffixWidth();
+        float tabEnd = EditorUtil.nextTabStop(startX + getInlaysPrefixWidth(), viewSnapshot.plainSpaceWidth(), viewSnapshot.tabSize());
+        return tabEnd + getInlaysSuffixWidth();
       } else if (codePoint == '\r') { // can only happen when \n part of \r\n line break is folded
         return startX;
       } else {

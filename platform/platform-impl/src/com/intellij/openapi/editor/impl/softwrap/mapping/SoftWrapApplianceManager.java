@@ -232,7 +232,8 @@ public final class SoftWrapApplianceManager implements Dumpable {
           event,
           myLineWrapPositionStrategy,
           myVisibleAreaWidth,
-          myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1, myAllowGridModeOptimizations
+          myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1,
+          myAllowGridModeOptimizations
         ).generate();
       }
       if (LOG.isDebugEnabled()) {

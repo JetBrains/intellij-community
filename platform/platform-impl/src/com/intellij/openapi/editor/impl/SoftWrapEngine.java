@@ -101,7 +101,8 @@ public final class SoftWrapEngine {
     int minEndOffset = myEvent.getMandatoryEndOffset();
     int maxEndOffset = SoftWrapHelper.getEndOffsetUpperEstimate(myEditor, myDocument, myEvent);
     var inlineInlays = myEditor.getInlayModel().getInlineElementsInRange(startOffset, maxEndOffset);
-    var inlays = myEditor.getInlayModel().getAfterLineEndElementsInRange(DocumentTextUtil.getLineStartOffsetAt(myDocument, startOffset), maxEndOffset);
+    int firstLineStartOffset = DocumentTextUtil.getLineStartOffsetAt(myDocument, startOffset);
+    var inlays = myEditor.getInlayModel().getAfterLineEndElementsInRange(firstLineStartOffset, maxEndOffset);
     var afterLineEndInlays = ContainerUtil.filter(inlays, inlay -> !inlay.getProperties().isSoftWrappingDisabled());
     var customWraps = myEditor.getCustomWrapModel().getWrapsInRange(startOffset, maxEndOffset);
     var grid = myEditor.getCharacterGrid();
@@ -202,7 +203,14 @@ public final class SoftWrapEngine {
               softWrappingAllowed = getLineWrapPositionStrategy().isSoftWrappingAllowed(myEditor, it.getElementStartOffset());
             }
             if (softWrappingAllowed) {
-              lastSoftWrap = createSoftWrap(lastSoftWrap, minWrapOffset, maxWrapOffset, minWrapOffsetAtFolding, nonWhitespaceStartOffset, nonWhitespaceStartX);
+              lastSoftWrap = createSoftWrap(
+                lastSoftWrap,
+                minWrapOffset,
+                maxWrapOffset,
+                minWrapOffsetAtFolding,
+                nonWhitespaceStartOffset,
+                nonWhitespaceStartX
+              );
               int wrapOffset = lastSoftWrap.getStart();
               if (wrapOffset > minEndOffset && myDataMapper.matchesOldSoftWrap(lastSoftWrap, myEvent.getLengthDiff())) {
                 myEvent.setActualEndOffset(wrapOffset);
