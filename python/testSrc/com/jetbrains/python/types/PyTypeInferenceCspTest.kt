@@ -2,11 +2,19 @@
 package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.CspBuilder
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory
+import com.jetbrains.python.psi.types.TypeEvalContext
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
 
@@ -14,6 +22,24 @@ import org.junit.jupiter.api.Test
 @Subsystems.CodeInsight
 @Layers.Functional
 class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
+
+  // The inspections share one context on several threads, so any of them can solve the call first
+  @Test
+  fun `sequence in a call has its type also after the call is solved`() {
+    val file = myFixture.configureByText("a.py", """
+      from typing import TypeAliasType
+      TA = TypeAliasType("TA", int, type_params=(int,))
+    """.trimIndent()) as PyFile
+    val type = runReadActionBlocking {
+      val context = TypeEvalContext.codeAnalysis(file.project, file)
+      val call = PsiTreeUtil.findChildOfType(file, PyCallExpression::class.java)!!
+      for (mapping in call.multiMapArguments(PyResolveContext.defaultContext(context))) {
+        PyTypeInferenceCspFactory.unifyReceiver(mapping, context)
+      }
+      context.getType(PsiTreeUtil.findChildOfType(call, PyTupleExpression::class.java)!!)?.name
+    }
+    assertEquals("(int,)", type)
+  }
 
   @Test
   fun `Simple union via arguments`() = test("""
