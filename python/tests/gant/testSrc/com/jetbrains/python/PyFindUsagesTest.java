@@ -6,11 +6,24 @@ import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.idea.TestFor;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.DefinitionsScopedSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyAssignmentStatement;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
+import com.jetbrains.python.psi.search.PyDefinitionsSearch;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -232,6 +245,50 @@ public class PyFindUsagesTest extends PyTestCase {
   public void testChildClassAttributeHasPyiStub() {
     final Collection<UsageInfo> usages = findMultiFileUsages("child.py");
     assertEquals(2, usages.size());
+  }
+
+  @TestFor(issues = "PY-92744", classes = PyQualifiedReference.class)
+  public void testQualifiedUsageOfGlobalAssignedInFunction() {
+    final PsiFile b = myFixture.addFileToProject("b.py", """
+      import a
+      print(a.counter)
+      """);
+    final PyFile a = (PyFile)myFixture.configureByText("a.py", """
+      def init():
+          global counter
+          counter = 0
+      """);
+    final PyAssignmentStatement assignment = (PyAssignmentStatement)a.findTopLevelFunction("init").getStatementList().getStatements()[1];
+    final PyTargetExpression target = (PyTargetExpression)assignment.getTargets()[0];
+    final PyReferenceExpression usage =
+      ContainerUtil.find(PsiTreeUtil.findChildrenOfType(b, PyReferenceExpression.class), e -> "counter".equals(e.getName()));
+    assertNotNull(usage);
+
+    fixme("PY-92744 a qualified reference to a global assigned in a function is unresolved", AssertionError.class, "but was:<null>",
+          () -> assertEquals(target, usage.getReference().resolve()));
+    fixme("PY-92744 find usages misses a qualified usage of a global assigned in a function", AssertionError.class,
+          "but was:<[a.py, a.py]>",
+          () -> assertEquals(List.of("a.py", "a.py", "b.py"),
+                             ContainerUtil.sorted(ContainerUtil.map(myFixture.findUsages(target), info -> info.getFile().getName()))));
+  }
+
+  @TestFor(issues = "PY-92745", classes = PyDefinitionsSearch.class)
+  public void testDefinitionsSearchHonoursLocalScope() {
+    myFixture.addFileToProject("b.py", """
+      from a import Base
+
+      class Child(Base):
+          pass
+      """);
+    final PyFile file = (PyFile)myFixture.configureByText("a.py", """
+      class Base:
+          pass
+      """);
+    final PyClass base = file.findTopLevelClass("Base");
+    fixme("PY-92745 the definitions search ignores the search scope", AssertionError.class, "expected:<[]> but was:<[Child]>",
+          () -> assertEquals(List.of(),
+                             ContainerUtil.map(DefinitionsScopedSearch.search(base, new LocalSearchScope(file), true).findAll(),
+                                               e -> ((PyClass)e).getName())));
   }
 
   private Collection<UsageInfo> findMultiFileUsages(String filename) {

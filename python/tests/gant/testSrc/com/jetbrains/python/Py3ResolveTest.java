@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.editor.Document;
@@ -991,6 +992,24 @@ public class Py3ResolveTest extends PyResolveTestCase {
     runWithAdditionalClassEntryInSdkRoots(
       path + "/lib",
       () -> assertNull(PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve())
+    );
+  }
+
+  // The bundled typeshed stubs of peewee cover only a part of `playhouse` and mark it with `partial-stub = true`
+  @TestFor(issues = "PY-92668")
+  public void testPyInsteadPartialTypeShedOfPeewee() {
+    final String path = "resolve/" + getTestName(false);
+    myFixture.configureByFile(path + "/main.py");
+    enablePyiStubsForPackages("peewee");
+
+    runWithAdditionalClassEntryInSdkRoots(
+      path + "/lib",
+      () -> fixme("PY-92668 PyTypeShed reads only partial_stub", AssertionError.class,
+                  "Expected instance of: com.jetbrains.python.psi.PyFunction actual: null", () -> {
+          final PsiElement element = PyResolveTestCase.findReferenceByMarker(myFixture.getFile()).resolve();
+          assertInstanceOf(element, PyFunction.class);
+          assertEquals("shortcuts.py", element.getContainingFile().getName());
+        })
     );
   }
 

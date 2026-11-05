@@ -717,6 +717,18 @@ public class PyEditingTest extends PyTestCase {
     doTypingTest('(');
   }
 
+  @TestFor(issues = "PY-92748")
+  public void testFirstParamAfterTypeParameterList() {
+    String text = """
+      class C:
+          def f[T]""";
+    String expected = """
+      class C:
+          def f[T](self):""";
+    fixme("PY-92748", AssertionError.class, "def f[T]([)]>",
+          () -> assertEquals(expected, doTestTyping(text, text.length(), '(')));
+  }
+
   // PY-21289
   public void testPairedParenthesesMultipleCalls() {
     doTypingTest('(');

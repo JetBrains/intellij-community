@@ -16,10 +16,34 @@ import org.jetbrains.annotations.NotNull;
 @Subsystems.Editing
 @Layers.Functional
 public class PyCopyPasteTest extends PyTestCase {
+  private static final String TOP_LEVEL_DESTINATION = """
+    x = 0
+    <caret>""";
+
+  private static final String TOP_LEVEL_METHOD = """
+    x = 0
+
+
+    def foo():
+        x = 1
+        return x
+    """;
+
+  private static final String TOP_LEVEL_STATIC_METHOD = """
+    x = 0
+
+
+    @staticmethod
+    def foo():
+        x = 1
+        return x
+    """;
+
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     CodeInsightSettings.runWithTemporarySettings(settings -> {
       settings.INDENT_TO_CARET_ON_PASTE = true;
+      settings.REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
       super.runTestRunnable(testRunnable);
       return null;
     });
@@ -333,22 +357,68 @@ public class PyCopyPasteTest extends PyTestCase {
     doTestTabs();
   }
 
+  @TestFor(issues = "PY-92749")
+  public void testMethodPastedToTopLevel() {
+    paste("""
+            class C:
+            <selection>    def foo():
+                    x = 1
+                    return x
+            </selection>""", TOP_LEVEL_DESTINATION);
+    myFixture.checkResult(TOP_LEVEL_METHOD, true);
+  }
+
+  @TestFor(issues = "PY-92749")
+  public void testDecoratedMethodPastedToTopLevel() {
+    paste("""
+            class C:
+            <selection>    @staticmethod
+                def foo():
+                    x = 1
+                    return x
+            </selection>""", TOP_LEVEL_DESTINATION);
+    myFixture.checkResult(TOP_LEVEL_STATIC_METHOD, true);
+  }
+
+  @TestFor(issues = "PY-92749")
+  public void testMethodSelectedFromDefKeywordPastedToTopLevel() {
+    paste("""
+            class C:
+                <selection>def foo():
+                    x = 1
+                    return x
+            </selection>""", TOP_LEVEL_DESTINATION);
+    myFixture.checkResult(TOP_LEVEL_METHOD, true);
+  }
+
+  @TestFor(issues = "PY-92749")
+  public void testDecoratedMethodSelectedFromDecoratorPastedToTopLevel() {
+    paste("""
+            class C:
+                <selection>@staticmethod
+                def foo():
+                    x = 1
+                    return x
+            </selection>""", TOP_LEVEL_DESTINATION);
+    fixme("PY-92749", AssertionError.class, "@staticmethod\n    def foo():",
+          () -> assertEquals(TOP_LEVEL_STATIC_METHOD, myFixture.getEditor().getDocument().getText()));
+  }
+
   private void doTest(String prefix) {
-    int oldReformat = CodeInsightSettings.getInstance().REFORMAT_ON_PASTE;
-    try {
-      CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;
-      String name = getTestName(false);
+    String name = getTestName(false);
+    myFixture.configureByFile("copyPaste/" + prefix + name + ".src.py");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
+    myFixture.configureByFile("copyPaste/" + prefix + name + ".dst.py");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
+    myFixture.checkResultByFile("copyPaste/" + prefix + name + ".after.py", true);
+  }
 
-      myFixture.configureByFile("copyPaste/" + prefix + name + ".src.py");
-      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
-      myFixture.configureByFile("copyPaste/" + prefix + name + ".dst.py");
-      myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
-      myFixture.checkResultByFile("copyPaste/" + prefix + name + ".after.py", true);
-    }
-    finally {
-      CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = oldReformat;
-    }
-
+  /** Copies the selection of {@code source} and pastes it at the caret of {@code destination}. */
+  private void paste(@NotNull String source, @NotNull String destination) {
+    myFixture.configureByText(PythonFileType.INSTANCE, source);
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COPY);
+    myFixture.configureByText(PythonFileType.INSTANCE, destination);
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
   }
 
   private void doTest() {

@@ -7,6 +7,7 @@ import com.jetbrains.python.allure.Subsystems;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.idea.TestFor;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyProjectStructureTestUtilKt;
@@ -144,6 +145,29 @@ public class PythonInspectionsTest extends PyTestCase {
   // PY-9795
   public void testGoogleDocstringParametersInspection() {
     runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
+  }
+
+  @TestFor(issues = "PY-92707")
+  public void testDocstringTypeContradictingAnnotationIsReported() {
+    runWithDocStringFormat(DocStringFormat.REST, () -> {
+      myFixture.configureByText(PythonFileType.INSTANCE, """
+        def f(x: str):
+            \"""
+            :param x: a value
+            :type x: <weak_warning>int</weak_warning>
+            \"""
+
+
+        def g(x: int):
+            \"""
+            :param x: a value
+            :type x: int
+            \"""
+        """);
+      myFixture.enableInspections(PyIncorrectDocstringInspection.class);
+      fixme("PY-92707", AssertionError.class, "missing (4:14/3 at offset 58): 'int' (*)",
+            () -> myFixture.checkHighlighting(true, false, true));
+    });
   }
 
   public void testPySimplifyBooleanCheckInspection() {

@@ -6,6 +6,7 @@ import json
 import os
 import sys
 import textwrap
+import unittest
 
 import six
 from docstring_formatter import format_fragments
@@ -197,6 +198,46 @@ class DocstringFormatterTest(HelpersTestCase):
 
     def test_rest_fragments_only_body(self):
         self._test()
+
+    @unittest.expectedFailure
+    def test_rest_tilde_role_shows_last_name(self):
+        """PY-92696: ``~pkg.mod.Klass`` links to ``pkg.mod.Klass`` and shows ``Klass``."""
+        from docstring_formatter import format_rest
+        html = format_rest('Use :class:`~pkg.mod.Klass`.\n')
+        self.assertIn('href="psi_element://#typename#pkg.mod.Klass"', html)
+        self.assertIn('>Klass</a>', html)
+        self.assertNotIn('~', html)
+
+    @unittest.expectedFailure
+    def test_rest_deprecated_directive_is_rendered(self):
+        """PY-92698: ``deprecated`` shows its version and text."""
+        from docstring_formatter import format_rest
+        html = format_rest('Summary.\n\n'
+                           '.. deprecated:: 2.0\n'
+                           '   Use g().\n')
+        self.assertIn('Deprecated', html)
+        self.assertIn('2.0', html)
+        self.assertIn('Use g().', html)
+
+    @unittest.expectedFailure
+    def test_rest_versionadded_directive_is_rendered(self):
+        """PY-92698: ``versionadded`` shows its version and text."""
+        from docstring_formatter import format_rest
+        html = format_rest('Summary.\n\n'
+                           '.. versionadded:: 1.5\n'
+                           '   Added x.\n')
+        self.assertIn('1.5', html)
+        self.assertIn('Added x.', html)
+
+    @unittest.expectedFailure
+    def test_rest_versionchanged_directive_is_rendered(self):
+        """PY-92698: ``versionchanged`` shows its version and text."""
+        from docstring_formatter import format_rest
+        html = format_rest('Summary.\n\n'
+                           '.. versionchanged:: 1.7\n'
+                           '   Changed y.\n')
+        self.assertIn('1.7', html)
+        self.assertIn('Changed y.', html)
 
     def test_google_fragments_math(self):
         self._test()

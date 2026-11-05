@@ -22,21 +22,27 @@ import com.jetbrains.python.allure.Subsystems;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.idea.TestFor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyPossibleClassMember;
+import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +50,9 @@ import org.junit.Assert;
 
 import javax.swing.JLabel;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -53,6 +61,9 @@ import java.util.List;
 @Subsystems.CodeInsight
 @Layers.Functional
 public final class PyLineMarkerProviderTest extends PyTestCase {
+  private static final int SUBCLASS_COUNT = 20;
+  private static final ExtensionPointName<QueryExecutor<PyClass, PyClassInheritorsSearch.SearchParameters>> INHERITORS_SEARCH_EP =
+    ExtensionPointName.create("Pythonid.pyClassInheritorsSearch");
 
   /**
    * Checks method has "up" arrow when overrides, and this arrow works
@@ -125,6 +136,68 @@ public final class PyLineMarkerProviderTest extends PyTestCase {
       assertHasSeparator(findElementByName("MyClass", PyClass.class), lineMarkers);
       assertHasSeparator(findElementByName("func", PyFunction.class), lineMarkers);
     });
+  }
+
+  @TestFor(issues = "PY-92743", classes = PyLineMarkerProvider.class)
+  public void testOverridingMethodsSearchStopsAtFirstOverridingSubclass() {
+    assertEquals(1, countSubclassesVisitedByOverridingMethodsSearch(false));
+  }
+
+  @TestFor(issues = "PY-92743", classes = PyLineMarkerProvider.class)
+  public void testOverridingMethodsSearchStopsAtFirstOverridingSubclassWithAnotherClassInBatch() {
+    fixme("PY-92743 the search continues while another class in the batch has unmatched methods",
+          AssertionError.class, "expected:<1> but was:<" + SUBCLASS_COUNT + ">",
+          () -> assertEquals(1, countSubclassesVisitedByOverridingMethodsSearch(true)));
+  }
+
+  /**
+   * Feeds the subclasses of {@code A} to the slow line marker pass through a masked inheritors search and counts the subclasses
+   * the provider takes before it stops the search. Only the first subclass overrides {@code A.m}.
+   */
+  private int countSubclassesVisitedByOverridingMethodsSearch(boolean withSecondClass) {
+    final StringBuilder text = new StringBuilder("""
+      class A:
+          def m(self): ...
+      """);
+    if (withSecondClass) {
+      text.append("""
+        class B:
+            def n(self): ...
+        """);
+    }
+    text.append("""
+      class A1(A):
+          def m(self): ...
+      """);
+    for (int i = 2; i <= SUBCLASS_COUNT; i++) {
+      text.append("class A").append(i).append("(A): ...\n");
+    }
+    final PyFile file = (PyFile)myFixture.configureByText("a.py", text.toString());
+    final PyClass a = file.findTopLevelClass("A");
+    final List<PyClass> subclasses = new ArrayList<>();
+    for (int i = 1; i <= SUBCLASS_COUNT; i++) {
+      subclasses.add(file.findTopLevelClass("A" + i));
+    }
+    final AtomicInteger visited = new AtomicInteger();
+    final QueryExecutor<PyClass, PyClassInheritorsSearch.SearchParameters> executor = (parameters, consumer) -> {
+      if (parameters.getSuperClass() != a) return true;
+      for (PyClass subclass : subclasses) {
+        visited.incrementAndGet();
+        if (!consumer.process(subclass)) return false;
+      }
+      return true;
+    };
+    ExtensionTestUtil.maskExtensions(INHERITORS_SEARCH_EP, List.of(executor), myFixture.getTestRootDisposable());
+
+    final List<PsiElement> methods = new ArrayList<>();
+    methods.add(a.findMethodByName("m", false, null));
+    if (withSecondClass) {
+      methods.add(file.findTopLevelClass("B").findMethodByName("n", false, null));
+    }
+    final List<LineMarkerInfo<?>> markers = new ArrayList<>();
+    new PyLineMarkerProvider().collectSlowLineMarkers(methods, markers);
+    assertEquals("The overriding marker of A.m", 1, markers.size());
+    return visited.get();
   }
 
   private void doSingleFileLineMarkersTest(@SuppressWarnings("BoundedWildcard") Consumer<List<? extends LineMarkerInfo<?>>> consumer) {

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.python.community.testFramework.fixme
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.TestDataFile
 import com.intellij.testFramework.TestDataPath
@@ -1015,6 +1016,34 @@ class Py2QuickFixTest : PyTestCase() {
         true,
         true
       )
+    }
+  }
+
+  @TestFor(issues = ["PY-92775"])
+  fun testDocstringFixUpdatesWholeDocstring() {
+    runWithDocStringFormat(DocStringFormat.REST) {
+      myFixture.enableInspections(PyIncorrectDocstringInspection::class.java)
+      myFixture.configureByText(PythonFileType.INSTANCE, """
+        def foo(<caret>a, b):
+            '''Summary.
+
+            :param c: gone
+            '''
+            pass
+      """.trimIndent())
+      fixme<AssertionError>("PY-92775", "\"Update docstring\" not in") {
+        myFixture.launchAction(myFixture.findSingleIntention("Update docstring"))
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        myFixture.checkResult("""
+          def foo(a, b):
+              '''Summary.
+
+              :param a:
+              :param b:
+              '''
+              pass
+        """.trimIndent(), true)
+      }
     }
   }
 

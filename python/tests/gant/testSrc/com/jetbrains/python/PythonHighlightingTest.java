@@ -759,6 +759,22 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON312, false, true);
   }
 
+  @TestFor(issues = "PY-92697")
+  public void testTypeParameterHighlightedAsTypeParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      myFixture.configureByText(PythonFileType.INSTANCE, """
+        class <info descr="PY.CLASS_DEFINITION">Box</info>[<info descr="PY.TYPE_PARAMETER">U</info>]:
+            pass
+
+
+        def <info descr="PY.FUNC_DEFINITION">foo</info>[<info descr="PY.TYPE_PARAMETER">T</info>: <info descr="PY.BUILTIN_NAME">int</info>](
+            <info descr="PY.PARAMETER">x</info>: <info descr="PY.ANNOTATION"><info descr="PY.TYPE_PARAMETER">T</info></info>,
+        ): pass
+        """);
+      fixme("PY-92697", AssertionError.class, "'T' (PY.TYPE_PARAMETER)", () -> myFixture.checkHighlighting(false, true, false));
+    });
+  }
+
   // PY-61856
   public void testTypeAliasStatementBefore312() {
     doTest(LanguageLevel.PYTHON311, false, true);

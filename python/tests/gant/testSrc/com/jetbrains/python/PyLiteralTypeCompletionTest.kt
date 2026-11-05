@@ -4,6 +4,8 @@ package com.jetbrains.python
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
+import com.intellij.idea.TestFor
+import com.intellij.python.community.testFramework.fixme
 import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.fixtures.PyTestCase
 
@@ -90,6 +92,67 @@ class PyLiteralTypeCompletionTest : PyTestCase() {
     doTestCompletionVariantsDoesNotContain("noLiteralVariantsOnQualifiedReferenceInCallArgument.py", "\"upper\"")
   }
 
+  @TestFor(issues = ["PY-92770"])
+  fun testInStringComparedForEquality() {
+    val variants = completionVariantsByText("""
+      from typing import Literal
+
+
+      def f(mode: Literal["r", "w"]) -> None:
+          if mode == "<caret>":
+              pass
+    """.trimIndent())
+    fixme<AssertionError>("PY-92770", "expected:<[r, w]> but was:<[]>") {
+      assertContainsElements(variants, "r", "w")
+    }
+  }
+
+  @TestFor(issues = ["PY-92770"])
+  fun testInStringComparedForInequality() {
+    val variants = completionVariantsByText("""
+      from typing import Literal
+
+
+      def f(mode: Literal["r", "w"]) -> None:
+          if mode != "<caret>":
+              pass
+    """.trimIndent())
+    fixme<AssertionError>("PY-92770", "expected:<[r, w]> but was:<[]>") {
+      assertContainsElements(variants, "r", "w")
+    }
+  }
+
+  @TestFor(issues = ["PY-92770"])
+  fun testInStringOfContainerTestedForMembership() {
+    val variants = completionVariantsByText("""
+      from typing import Literal
+
+
+      def f(mode: Literal["r", "w"]) -> None:
+          if mode in ("<caret>",):
+              pass
+    """.trimIndent())
+    fixme<AssertionError>("PY-92770", "expected:<[r, w]> but was:<[]>") {
+      assertContainsElements(variants, "r", "w")
+    }
+  }
+
+  @TestFor(issues = ["PY-92770"])
+  fun testInStringCasePattern() {
+    val variants = completionVariantsByText("""
+      from typing import Literal
+
+
+      def f(mode: Literal["r", "w"]) -> None:
+          match mode:
+              case "<caret>":
+                  pass
+    """.trimIndent())
+    fixme<AssertionError>("PY-92770", "expected:<[r, w]> but was:<[]>") {
+      assertContainsElements(variants, "r", "w")
+    }
+  }
+
   override fun getTestDataPath(): String {
     return super.getTestDataPath() + "/completion/literalType"
   }
@@ -98,6 +161,12 @@ class PyLiteralTypeCompletionTest : PyTestCase() {
     val result = myFixture.getCompletionVariants(fileBefore)
     assertNotNull(result)
     assertContainsElements(result!!, *items)
+  }
+
+  private fun completionVariantsByText(text: String): List<String> {
+    myFixture.configureByText(PythonFileType.INSTANCE, text)
+    assertNotNull(myFixture.completeBasic())
+    return myFixture.lookupElementStrings!!
   }
 
   private fun doTestCompletionVariantsDoesNotContain(fileBefore: String, vararg items: String) {

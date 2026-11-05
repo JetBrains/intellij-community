@@ -981,6 +981,28 @@ public class Py3QuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  @TestFor(issues = "PY-92710")
+  public void testAnnotatedDocTextShownForParameter() {
+    final Map<String, PsiElement> marks = configureByFileText("""
+      from typing import Annotated
+      from typing_extensions import Doc
+
+
+      def f(x: Annotated[int, Doc("The count of items.")]) -> None:
+          \"""Summary.\"""
+
+
+      <the_ref>f(1)
+      """, "a.py", MARKER);
+    final PsiElement originalElement = marks.get("<the_ref>");
+    final PsiElement target = originalElement.getParent().getReference().resolve();
+    final String doc = myProvider.generateDoc(target, originalElement);
+    assertNotNull(doc);
+    fixme("PY-92710", AssertionError.class, "The Doc text of 'x' is shown", () ->
+      assertTrue("The Doc text of 'x' is shown:\n" + doc, doc.contains("The count of items."))
+    );
+  }
+
   // PY-85799
   public void testPyiStubFallbackForTargetExpression() {
     myFixture.copyDirectoryToProject(getTestName(false), "");

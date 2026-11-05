@@ -4,13 +4,16 @@ package com.jetbrains.python;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.idea.TestFor;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.module.Module;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.TestLookupElementPresentation;
@@ -26,6 +29,8 @@ import org.junit.Ignore;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 
 @TestDataPath("$CONTENT_ROOT/../testData/completion")
@@ -1060,6 +1065,51 @@ public class Py3CompletionTest extends PyTestCase {
   // PY-88016
   public void testQualifyClassAttributeViaExistingFromImport() {
     doMultiFileTest();
+  }
+
+  @TestFor(issues = "PY-92746")
+  public void testMembersOfClassGuessedFromUnknownQualifierName() {
+    List<String> suggested = doTestByText("""
+      class Foo:
+          bar = 1
+
+          def baz(self): ...
+
+      foo.<caret>""");
+    assertNotNull(suggested);
+    assertContainsElements(suggested, "bar", "baz");
+  }
+
+  @TestFor(issues = "PY-92746")
+  public void testMemberGuessedFromUnknownQualifierNameInKeywordArgumentValue() {
+    List<String> errors = new CopyOnWriteArrayList<>();
+    LoggedErrorProcessor errorCollector = new LoggedErrorProcessor() {
+      @Override
+      public @NotNull Set<Action> processError(@NotNull String category,
+                                               @NotNull String message,
+                                               String @NotNull [] details,
+                                               @Nullable Throwable t) {
+        errors.add(message);
+        return Action.NONE;
+      }
+    };
+    List<String> suggested = CodeInsightSettings.runWithTemporarySettings(settings -> {
+      settings.AUTOCOMPLETE_ON_CODE_COMPLETION = false;
+      try (AccessToken ignored = LoggedErrorProcessor.executeWith(errorCollector)) {
+        return doTestByText("""
+          class Foo:
+              bar = 1
+
+          def f(bar): ...
+
+          f(bar=foo.<caret>)""");
+      }
+    });
+    fixme("PY-92746", AssertionError.class, "Null string for object", () -> {
+      assertTrue("Logged errors: " + errors, errors.isEmpty());
+      assertNotNull(suggested);
+      assertContainsElements(suggested, "bar");
+    });
   }
 
   private void doTestVariants(String @NotNull ... expected) {
