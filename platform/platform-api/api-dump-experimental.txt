@@ -154,6 +154,9 @@ c:com.intellij.openapi.diagnostic.IdeaLoggingEvent
 - f:getDurationMs():J
 - f:getMessage():java.lang.String
 - f:getThreadDumps():java.util.Collection
+c:com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter
+- com.intellij.openapi.editor.highlighter.EditorHighlighter
+- *:getTextAttributesFontFamilies():java.util.Set
 com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware

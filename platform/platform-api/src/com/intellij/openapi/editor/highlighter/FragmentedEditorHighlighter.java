@@ -2,22 +2,28 @@
 package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class FragmentedEditorHighlighter implements EditorHighlighter {
   private final List<Element> myPieces;
   private final Document myDocument;
   private final int myAdditionalOffset;
   private final boolean myMergeByTextAttributes;
+  private final @Unmodifiable Set<FontFamilies> myFontFamilies;
 
   public FragmentedEditorHighlighter(@NotNull EditorHighlighter highlighter, TextRange range) {
     this(highlighter.createIterator(range.getStartOffset()), Collections.singletonList(range));
@@ -36,6 +42,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
     myPieces = new ArrayList<>();
     myAdditionalOffset = additionalOffset;
     translate(sourceIterator, ranges);
+    myFontFamilies = collectFontFamilies(myPieces);
   }
 
   private void translate(HighlighterIterator iterator, List<? extends TextRange> ranges) {
@@ -62,7 +69,7 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
 
       if (range.getEndOffset() < iterator.getEnd()) {
         offset += range.getLength() + 1 + myAdditionalOffset;  // myAdditionalOffset because of extra line - for shown separators
-        int lastEnd = myPieces.isEmpty() ? -1 : myPieces.get(myPieces.size() - 1).getEnd();
+        int lastEnd = myPieces.isEmpty() ? -1 : myPieces.getLast().getEnd();
         addElement(new Element(Math.max(offset - 1 - myAdditionalOffset, lastEnd), offset, null, TextAttributes.ERASE_MARKER));
         index++;
         continue;
@@ -75,12 +82,12 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
   private void addElement(@NotNull Element element) {
     boolean merged = false;
     if (myMergeByTextAttributes && !myPieces.isEmpty()) {
-      Element oldElement = myPieces.get(myPieces.size() - 1);
+      Element oldElement = myPieces.getLast();
       if (oldElement.getEnd() >= element.getStart() &&
           Comparing.equal(oldElement.getAttributes(), element.getAttributes()) &&
           Comparing.equal(oldElement.getElementType(), element.getElementType())) {
         merged = true;
-        myPieces.remove(myPieces.size() - 1);
+        myPieces.removeLast();
         myPieces.add(new Element(oldElement.getStart(),
                                  element.getEnd(),
                                  element.getElementType(),
@@ -103,6 +110,27 @@ public class FragmentedEditorHighlighter implements EditorHighlighter {
 
   @Override
   public void setEditor(@NotNull HighlighterClient editor) {
+  }
+
+  @Override
+  @ApiStatus.Experimental
+  public @Unmodifiable Set<FontFamilies> getTextAttributesFontFamilies() {
+    return myFontFamilies;
+  }
+
+  private static @Unmodifiable Set<FontFamilies> collectFontFamilies(List<Element> pieces) {
+    Set<FontFamilies> result = null;
+    for (Element piece : pieces) {
+      TextAttributes attributes = piece.getAttributes();
+      FontFamilies fontFamilies = attributes == null ? null : attributes.getFontFamilies();
+      if (fontFamilies != null) {
+        if (result == null) {
+          result = new HashSet<>();
+        }
+        result.add(fontFamilies);
+      }
+    }
+    return result == null ? Set.of() : Set.copyOf(result);
   }
 
   private final class ProxyIterator implements HighlighterIterator {

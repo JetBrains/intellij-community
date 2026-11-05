@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontFamilyService
@@ -18,6 +19,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.MarkupModel
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -276,6 +278,31 @@ internal class EditorFontFamiliesResolutionTest {
 
     assertThat(softWrapCount(editor)).isPositive()
     assertThat(editor.unresolvedFontFamiliesRecordCount).isZero()
+  }
+
+  @Test
+  fun `a fragment of a highlighter with font families is resolved when the editor gets it`(): Unit = withEditor("aaaa") { source ->
+    // The scheme of the editor that gets the fragment gives the key no font families, so only the fragment declares them.
+    source.colorsScheme = schemeWithFontFamilies()
+    highlightAllText(source, key)
+    val fragment = FragmentedEditorHighlighter(source.highlighter, TextRange(0, 4))
+    assertThat(fragment.textAttributesFontFamilies).containsExactly(value)
+
+    withEditor("aaaa") { editor ->
+      editor.highlighter = fragment
+
+      assertThat(editor.view.fontResolver.isResolved(value)).isTrue()
+      assertThat(width(editor, 0, 4)).isEqualTo(4 * FAMILY_WIDTH)
+      assertThat(editor.unresolvedFontFamiliesRecordCount).isZero()
+    }
+  }
+
+  @Test
+  fun `a fragment of a highlighter without font families declares nothing`(): Unit = withEditor("aaaa") { source ->
+    highlightAllText(source, key)
+    val fragment = FragmentedEditorHighlighter(source.highlighter, TextRange(0, 2))
+
+    assertThat(fragment.textAttributesFontFamilies).isEmpty()
   }
 
   @Test
