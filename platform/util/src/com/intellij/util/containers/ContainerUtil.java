@@ -1824,7 +1824,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T iterateAndGetLastItem(@NotNull Iterable<? extends T> items) {
+  public static <T> @Nullable T iterateAndGetLastItem(@NotNull Iterable<? extends T> items) {
     Iterator<? extends T> itr = items.iterator();
     T res = null;
     while (itr.hasNext()) {
