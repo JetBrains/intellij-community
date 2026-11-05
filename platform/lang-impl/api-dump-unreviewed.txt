@@ -3551,6 +3551,7 @@ a:com.intellij.ide.actions.CreateFileFromTemplateAction
 - s:createFileFromTemplate(java.lang.String,com.intellij.ide.fileTemplates.FileTemplate,com.intellij.psi.PsiDirectory,java.lang.String,Z):com.intellij.psi.PsiFile
 - s:createFileFromTemplate(java.lang.String,com.intellij.ide.fileTemplates.FileTemplate,com.intellij.psi.PsiDirectory,java.lang.String,Z,java.util.Map):com.intellij.psi.PsiFile
 - s:createFileFromTemplate(java.lang.String,com.intellij.ide.fileTemplates.FileTemplate,com.intellij.psi.PsiDirectory,java.lang.String,Z,java.util.Map,java.util.Map):com.intellij.psi.PsiFile
+- startInWriteAction():Z
 c:com.intellij.ide.actions.CreateFileFromTemplateDialog
 - $$$getRootComponent$$$():javax.swing.JComponent
 - p:createCenterPanel():javax.swing.JComponent

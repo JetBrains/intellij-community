@@ -47,6 +47,17 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
     super(dynamicText, dynamicDescription, icon);
   }
 
+  /**
+   * Runs {@link #createFile} on the EDT in a command without a write action, so the template is merged under a progress
+   * and {@link #createFileFromTemplate} takes a write command only to create the file.
+   * A subclass that modifies PSI or VFS in {@code createFile} by other means takes the write action itself;
+   * returning {@code true} runs {@code createFile} in a write action, where the template is merged on the EDT.
+   */
+  @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
   protected PsiFile createFileFromTemplate(final String name, final FileTemplate template, final PsiDirectory dir) {
     return createFileFromTemplate(name, template, dir, getDefaultTemplateProperty(), true);
   }

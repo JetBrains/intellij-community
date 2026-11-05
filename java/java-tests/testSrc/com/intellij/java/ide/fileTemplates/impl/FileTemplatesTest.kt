@@ -2,7 +2,12 @@
 package com.intellij.java.ide.fileTemplates.impl
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.ide.IdeView
 import com.intellij.ide.actions.CreateFileFromTemplateAction
+import com.intellij.ide.actions.CreateFileFromTemplateDialog
+import com.intellij.ide.actions.ElementCreator
+import com.intellij.ide.actions.TestDialogBuilder
 import com.intellij.ide.fileTemplates.CreateFromTemplateHandler
 import com.intellij.ide.fileTemplates.DefaultCreateFromTemplateHandler
 import com.intellij.ide.fileTemplates.DefaultTemplatePropertiesProvider
@@ -18,19 +23,32 @@ import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.LangDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.JavaDirectoryService
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.JavaProjectTestCase
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.registerExtension
+import com.intellij.util.Consumer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.delete
 import com.intellij.util.ui.EDT
@@ -243,6 +261,51 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = true, writeAccess = true))
   }
 
+  fun testNewFileActionRunsPropertiesProvidersOutsideWriteAction() {
+    val providerCalls = recordPropertiesProviderCalls()
+    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
+    val created = performNewFileAction(addTxtTemplate(), directory, "foo")
+    assertEquals("foo.txt", created!!.text)
+    Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = false, writeAccess = false))
+  }
+
+  fun testNewFileActionCreatesSubdirectoriesOfTheName() {
+    val providerCalls = recordPropertiesProviderCalls()
+    val root = tempDir.createVirtualDir()
+    VfsTestUtil.createDir(root, "a")
+    val created = performNewFileAction(addTxtTemplate(), PsiManager.getInstance(project).findDirectory(root)!!, "a/b/foo")
+    assertEquals("a/b/foo.txt", VfsUtilCore.getRelativePath(created!!.virtualFile, root))
+    Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = false, writeAccess = false))
+  }
+
+  fun testNewFileActionCreatesFileInDumbMode() {
+    val providerCalls = recordPropertiesProviderCalls()
+    val template = addTxtTemplate()
+    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
+    val created = DumbModeTestUtils.computeInDumbModeSynchronously(project) { performNewFileAction(template, directory, "foo") }
+    assertEquals("foo.txt", created!!.text)
+    Assertions.assertThat(providerCalls).containsExactly(ProviderCall(onEdt = false, writeAccess = false))
+  }
+
+  fun testNewFileActionStartsLiveTemplateOutsideWriteAction() {
+    TemplateManagerImpl.setTemplateTesting(testRootDisposable)
+    val template = addTxtTemplate()
+    template.text = "\${FILE_NAME} #[[\$END\$]]#"
+    template.isLiveTemplateEnabled = true
+    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
+    val created = performNewFileAction(template, directory, "foo")
+    assertEquals("foo.txt ", created!!.text)
+  }
+
+  fun testNewFileActionReportsTemplateErrorWithoutCreatingFile() {
+    TestDialogManager.setTestDialog(TestDialog.OK, testRootDisposable)
+    val template = addTxtTemplate()
+    template.text = "#if("
+    val directory = PsiManager.getInstance(project).findDirectory(tempDir.createVirtualDir())!!
+    assertNull(performNewFileAction(template, directory, "foo"))
+    assertEmpty(directory.files)
+  }
+
   fun testComputeUnderModalProgressRethrowsCheckedException() {
     Assertions.assertThatThrownBy {
       FileTemplateUtil.computeUnderModalProgress<Unit, IOException>(project) { throw IOException("template error") }
@@ -258,6 +321,50 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     }
     ApplicationManager.getApplication().registerExtension(DefaultTemplatePropertiesProvider.EP_NAME, provider, testRootDisposable)
     return calls
+  }
+
+  /**
+   * Performs a New File action that creates [name] from [template] in [directory], and returns the file it selects.
+   */
+  private fun performNewFileAction(template: FileTemplate, directory: PsiDirectory, name: String): PsiFile? {
+    var selected: PsiFile? = null
+    val view = object : IdeView {
+      override fun getDirectories(): Array<PsiDirectory> = arrayOf(directory)
+      override fun getOrChooseDirectory(): PsiDirectory = directory
+      override fun selectElement(element: PsiElement) {
+        selected = element as PsiFile
+      }
+    }
+    val action = object : CreateFileFromTemplateAction() {
+      override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {}
+      override fun getActionName(directory: PsiDirectory, newName: String, templateName: String): String = "Create"
+      override fun createFile(name: String, templateName: String, dir: PsiDirectory): PsiFile? = createFileFromTemplate(name, template, dir)
+      override fun createDialogBuilder(project: Project, dataContext: DataContext): CreateFileFromTemplateDialog.Builder =
+        PopupDialogBuilder(project, name, template.name)
+    }
+    val dataContext = SimpleDataContext.builder().add(CommonDataKeys.PROJECT, project).add(LangDataKeys.IDE_VIEW, view).build()
+    action.actionPerformed(TestActionEvent.createTestEvent(action, dataContext))
+    return selected
+  }
+
+  /**
+   * Answers the dialog with [name] and [templateName], and creates the file in an [ElementCreator] as the New File popup does.
+   */
+  private class PopupDialogBuilder(private val project: Project, private val name: String, private val templateName: String)
+    : CreateFileFromTemplateDialog.Builder by TestDialogBuilder(TestDialogBuilder.TestAnswers(name, templateName)) {
+    override fun <T : PsiElement> show(errorTitle: String, selectedItem: String?,
+                                       creator: CreateFileFromTemplateDialog.FileCreator<T>, elementConsumer: Consumer<in T>) {
+      val elementCreator = object : ElementCreator(project, errorTitle) {
+        override fun create(newName: String): Array<PsiElement> = listOfNotNull(creator.createFile(newName, templateName)).toTypedArray()
+        override fun getActionName(newName: String): String = creator.getActionName(newName, templateName)
+        override fun startInWriteAction(): Boolean = creator.startInWriteAction()
+      }
+      @Suppress("UNCHECKED_CAST")
+      val created = elementCreator.tryCreate(name).firstOrNull() as T?
+      if (created != null) {
+        elementConsumer.consume(created)
+      }
+    }
   }
 
   private fun addTxtTemplate(): FileTemplate {
