@@ -46,6 +46,7 @@ public final class ConverterSupport {
   private static class TimestampDelegate extends DateAndTimeFormatterDelegate<TemporalAccessor, TemporalAccessor> {
     TimestampDelegate() {
       super(OffsetDateTime::from,
+            ZonedDateTime::from,
             temporal -> LocalDateTime.from(temporal).atOffset(DataGridFormattersUtilCore.getDefaultOffset()),
             temporal -> LocalDate.from(temporal).atStartOfDay().atOffset(DataGridFormattersUtilCore.getDefaultOffset()));
     }
