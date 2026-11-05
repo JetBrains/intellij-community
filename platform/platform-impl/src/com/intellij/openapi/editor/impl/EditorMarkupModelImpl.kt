@@ -51,6 +51,7 @@ import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -240,6 +241,8 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   private val extensionActions: HashMap<InspectionWidgetActionProvider, AnAction> = HashMap<InspectionWidgetActionProvider, AnAction>()
 
   init {
+    LOG.trace { "EditorMarkupModelImpl created: hashCode=${hashCode()} editor=$editor" }
+    
     setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().errorStripeMarkMinHeight)
 
     trafficLightPopup = TrafficLightPopup(editor, CompactViewAction())
@@ -352,6 +355,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     trafficLightIconUpdateQueue = projectScope?.let { scope ->
       DebouncedUpdates.forScope<Unit>(scope, "traffic-light-icon-update", 50.milliseconds)
         .runLatest {
+          LOG.trace { "${hashCode()} Update traffic light icon: errorStripeRenderer=$errorStripeRenderer" }
           val errorStripeRenderer = errorStripeRenderer ?: return@runLatest
           val newStatus = readAction { errorStripeRenderer.getStatus() }
           if (!newStatus.equalsTo(analyzerStatus)) {
@@ -589,6 +593,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   }
 
   fun repaintTrafficLightIcon() {
+    LOG.trace { "${hashCode()} Repaint traffic light icon: errorStripeRenderer=$errorStripeRenderer" }
     if (errorStripeRenderer != null) {
       trafficLightIconUpdateQueue?.queue(Unit)
     }
@@ -620,6 +625,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   }
 
   fun changeStatus(newStatus: AnalyzerStatus) {
+    LOG.trace { "${hashCode()} Change analyzer status: isErrorStripeVisible=$isErrorStripeVisible newStatus=$newStatus" }
     ThreadingAssertions.assertEventDispatchThread()
     if (!isErrorStripeVisible || resourcesDisposable.isDisposed()) {
       return
@@ -874,6 +880,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   override fun getEditor(): Editor = editor
 
   override fun setErrorStripeRenderer(renderer: ErrorStripeRenderer?) {
+    LOG.trace { "${hashCode()} Set error stripe renderer: renderer=$renderer" }
     ThreadingAssertions.assertEventDispatchThread()
     (errorStripeRenderer as Disposable?)?.let {
       Disposer.dispose(it)
@@ -1559,9 +1566,11 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     }
 
     override fun update(e: AnActionEvent) {
+      LOG.trace { "${this@EditorMarkupModelImpl.hashCode()} Update TrafficLightAction: hasAnalyzed=$hasAnalyzed analyzerStatus=$analyzerStatus" }
       val presentation = e.presentation
 
       if (RedesignedInspectionsManager.isAvailable()) {
+        LOG.trace { "${this@EditorMarkupModelImpl.hashCode()} RedesignedInspectionsManager is enabled" }
         presentation.setEnabledAndVisible(false)
         return
       }
@@ -1672,6 +1681,9 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     fun updateFromPresentation(presentation: Presentation) {
       val newTranslucent = true == presentation.getClientProperty(TRANSLUCENT_STATE)
       val newItems = presentation.getClientProperty(EXPANDED_STATUS)
+
+      LOG.trace { "${this@EditorMarkupModelImpl.hashCode()} Update TrafficLightButton from presentation: newTranslucent=$newTranslucent newItems=$newItems" }
+
       if (translucent == newTranslucent && items == newItems) {
         return
       }
