@@ -6,6 +6,7 @@ targets:
   - ../src/com/intellij/platform/settings/v2/SettingsVault.kt
   - ../src/com/intellij/platform/settings/v2/SettingsMutationBuilder.kt
   - ../src/com/intellij/platform/settings/v2/SettingsApi.kt
+  - ../src/com/intellij/platform/settings/v2/SettingsBlockingApi.kt
   - ../src/com/intellij/platform/settings/v2/LayerProvider.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsVaultImpl.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsAppLifecycleListener.kt
@@ -67,6 +68,8 @@ A batch applies several writes and slot operations as one atomic change.
   See [ADR 0032](../adr/0032-reads-are-synchronous-and-writes-suspend.md) and
   [ADR 0058](../adr/0058-mutations-apply-as-atomic-declarative-batches-under-one-lock.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsResolutionTest.kt
+- `SettingsBlockingApi.set` must block until the write is applied, for a caller that cannot suspend. See
+  [ADR 0032](../adr/0032-reads-are-synchronous-and-writes-suspend.md).
 - A write must wait until its context is ready. See [Layer Loading](layer-loading.spec.md) and
   [ADR 0063](../adr/0063-a-write-waits-for-its-scope-to-be-ready-and-a-read-never-waits.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReadinessGateTest.kt

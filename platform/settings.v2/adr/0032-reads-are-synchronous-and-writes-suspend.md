@@ -18,10 +18,13 @@ suspending one.
 **Reads are fast, synchronous calls resolved against the in-memory model. Writes are `suspend`. There is no
 separate sync and suspend read.** Agreed in the discussion with Daniil Ovchinnikov.
 
+Code that cannot suspend, such as Java code or a driver call, writes through `SettingsBlockingApi`. It blocks on
+the same suspend write.
+
 ## Consequences
 
 - Any code can read a setting, with no coroutine.
-- A write needs a coroutine.
+- A write needs a coroutine, or the blocking bridge.
 - One read API, so no caller picks between stale and fresh.
 - The resulting behavior is in the [layer resolution spec](../spec/layer-resolution.spec.md) and the
   [settings writes spec](../spec/settings-writes.spec.md).
