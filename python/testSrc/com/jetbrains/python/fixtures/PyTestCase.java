@@ -63,17 +63,15 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import com.jetbrains.python.packaging.common.PythonPackage;
-import com.jetbrains.python.packaging.management.PythonPackageManager;
-import com.jetbrains.python.packaging.management.TestPythonPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -422,43 +420,8 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   /** Adds the bundled stubs of {@code packageNames} to the interpreter of {@code module}, and returns the restore. */
   private static @NotNull Runnable enablePyiStubs(@NotNull Module module, String @NotNull ... packageNames) {
-    for (String packageName : packageNames) {
-      VirtualFile stubPackageRoot = PyTypeShed.INSTANCE.getStubRootForPackage(packageName);
-      if (stubPackageRoot == null) {
-        stubPackageRoot = PyBundledStubs.INSTANCE.getStubRootForPackage(packageName);
-      }
-      assertNotNull("Stub package root for " + packageName + " not found", stubPackageRoot);
-    }
-    final PythonInterpreter interpreter = PyProjectStructureTestUtilKt.findPythonInterpreterForTests(module);
-    assertNotNull(interpreter);
-    // The stub roots follow the installed packages, see PythonPackageStubRoots, so the test installs the packages.
-    final PythonPackageManager anyManager = PythonPackageManager.Companion.forPythonInterpreter(module.getProject(), interpreter);
-    assertTrue("The stubs follow the installed packages, which only the test manager of a mock SDK lets a test set: " + anyManager,
-               anyManager instanceof TestPythonPackageManager);
-    final TestPythonPackageManager manager = (TestPythonPackageManager)anyManager;
-    final List<PythonPackage> before = manager.listInstalledPackagesSnapshot();
-    final List<PythonPackage> installed = new ArrayList<>(before);
-    for (String name : packageNames) installed.add(new PythonPackage(name, "", false));
-    install(module, manager, installed);
-    return () -> {
-      if (!module.isDisposed()) install(module, manager, before);
-    };
-  }
-
-  /**
-   * Installs {@code packages} in the test manager of the interpreter of {@code module}. The install publishes
-   * {@code packagesChanged}, and the stub roots follow in the background, see {@code PythonPackageStubRoots}. The test goes
-   * on when the roots follow it, see {@link PyProjectStructureTestUtilKt#awaitDerivedRoots}.
-   */
-  private static void install(@NotNull Module module,
-                              @NotNull TestPythonPackageManager manager,
-                              @NotNull List<PythonPackage> packages) {
-    // First, so it follows the packages that the install publishes: a change that comes before it is there is lost.
-    PythonInterpreterRoots.getInstance(module.getProject());
-    manager.installPackages(packages);
-    PyProjectStructureTestUtilKt.awaitDerivedRoots(module.getProject());
-    PyProjectStructureTestUtilKt.syncPythonInterpreterLibraries();
-    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
+    final List<PythonPackage> packages = ContainerUtil.map(packageNames, name -> new PythonPackage(name, "", false));
+    return PyProjectStructureTestUtilKt.installPackagesWithBundledStubsForTests(module, packages);
   }
 
   /** The interpreter of the Python project of the fixture module, read from the snapshot. */

@@ -16,11 +16,15 @@ import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
+import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageStubs
+import com.jetbrains.python.packaging.management.TestPythonPackageManager
 import com.jetbrains.python.packaging.management.awaitDerivedRootsForTests
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
@@ -31,6 +35,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.asPromise
+import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 
 /**
@@ -173,4 +178,40 @@ fun syncPythonInterpreterLibraries(project: Project) {
     }
   }
   job.asPromise().waitForPromiseAndPumpEdt(DEFAULT_TEST_TIMEOUT)
+}
+
+/**
+ * Installs [packages] in the test manager of the interpreter of [module], next to the packages that it holds, and returns
+ * the restore of the previous packages. The bundled stubs of each package then become class roots through the production
+ * path, see [com.jetbrains.python.packaging.management.PythonPackageStubRoots]. Each package must have bundled stubs.
+ */
+@TestOnly
+fun installPackagesWithBundledStubsForTests(module: Module, packages: List<PythonPackage>): Runnable {
+  for (pythonPackage in packages) {
+    Assertions.assertTrue(PythonPackageStubs.stubRootsOf(setOf(pythonPackage.name)).isNotEmpty(),
+                          "Stub package root for ${pythonPackage.name} not found")
+  }
+  val interpreter = checkNotNull(findPythonInterpreterForTests(module)) { "No interpreter for ${module.name}" }
+  val manager = PythonPackageManager.forPythonInterpreter(module.project, interpreter)
+  check(manager is TestPythonPackageManager) {
+    "The stubs follow the installed packages, which only the test manager of a mock SDK lets a test set: $manager"
+  }
+  val before = manager.listInstalledPackagesSnapshot()
+  installPackagesForTests(module, manager, before + packages)
+  return Runnable {
+    if (!module.isDisposed) installPackagesForTests(module, manager, before)
+  }
+}
+
+/**
+ * Installs [packages] in [manager]. The install publishes `packagesChanged`, and the stub roots follow in the background.
+ * The test goes on when the roots follow it, see [awaitDerivedRoots].
+ */
+private fun installPackagesForTests(module: Module, manager: TestPythonPackageManager, packages: List<PythonPackage>) {
+  // First, so it follows the packages that the install publishes: a change that comes before it is there is lost.
+  PythonInterpreterRoots.getInstance(module.project)
+  manager.installPackages(packages)
+  awaitDerivedRoots(module.project)
+  syncPythonInterpreterLibraries()
+  IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
 }
