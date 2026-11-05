@@ -141,7 +141,7 @@ private fun originalLayoutState(layout: PluginLayout): List<Any?> {
     layout.patchers.toList(), layout.resourcePaths.toList(), layout.resourceGenerators.toList(),
     layout.customAssets.map { listOf(it, it.relativePath, it.platformSpecific) },
     layout.platformResourceGenerators.mapValues { it.value.toList() },
-    layout.executablePatterns.mapValues { it.value.toList() }, layout.getDeprecatedPostScrambleProcessor().toList(),
+    layout.executableDeclarations.toList(), layout.getDeprecatedPostScrambleProcessor().toList(),
     restrictions.supportedOs.toList(), restrictions.supportedArch.toList(), restrictions.includeInDistribution,
     restrictions === PluginBundlingRestrictions.MARKETPLACE,
     layout.semanticVersioning, layout.versionEvaluator, layout.versionSuffix, layout.rawPluginXmlPatcher, layout.pluginXmlPatcher,

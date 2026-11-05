@@ -8,7 +8,6 @@ import com.intellij.platform.buildScripts.concurrency.TaskScope
 import com.intellij.platform.buildScripts.concurrency.taskScope
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
@@ -565,10 +564,7 @@ internal fun collectPluginExecutablePatterns(
   val platformDistribution = SupportedDistribution(os, arch, libc)
   return bundledPluginLayouts.asSequence()
     .flatMap { plugin ->
-      val patterns = plugin.executablePatterns[platformDistribution] ?: persistentListOf()
-      patterns.asSequence().map { pattern ->
-        "plugins/${plugin.directoryName}/$pattern"
-      }
+      plugin.executableFiles(platformDistribution).asSequence().map { path -> "plugins/${plugin.directoryName}/$path" }
     }
 }
 

@@ -1006,10 +1006,8 @@ private fun crossPlatformZip(
   val fileSystem = FileSystems.getDefault()
   val crossPlatformPluginPatterns = crossPlatformBuiltPlugins
     .flatMap { descriptor ->
-      descriptor.layout.executablePatterns.flatMap { (_, patterns) ->
-        patterns.map { pattern ->
-          fileSystem.getPathMatcher("glob:plugins/${descriptor.layout.directoryName}/$pattern")
-        }
+      descriptor.layout.executableDeclarations.map { declaration ->
+        fileSystem.getPathMatcher("glob:plugins/${descriptor.layout.directoryName}/${declaration.path}")
       }
     }
 

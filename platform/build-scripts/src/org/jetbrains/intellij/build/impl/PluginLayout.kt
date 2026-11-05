@@ -238,18 +238,16 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   /** The custom assets that a build packs, see [selectForBuild]. */
   internal fun customAssetsFor(classicDev: Boolean): List<CustomAssetDescriptor> = selectForBuild(customAssets, classicDev)
 
-  @ApiStatus.Internal
-  var executablePatterns: PersistentMap<SupportedDistribution, PersistentList<String>> = persistentMapOf()
+  /** The executable files that [PluginLayoutBuilder.withExecutable] declared, in the order of the declarations. */
+  @Internal
+  var executableDeclarations: PersistentList<ExecutableFileDeclaration> = persistentListOf()
     private set
 
-  /**
-   * The patterns [PluginLayoutBuilder.withPlatformExecutable] registered, one list per distribution it named.
-   *
-   * A plain map, unlike [executablePatterns]: a caller outside the layout builders is not expected to know
-   * `kotlinx.collections.immutable`.
-   */
+  /** The paths, relative to the plugin directory, that [distribution] ships with the executable bit. A path can be a glob. */
   @Internal
-  fun getExecutablePatterns(): Map<SupportedDistribution, List<String>> = executablePatterns
+  fun executableFiles(distribution: SupportedDistribution): List<String> {
+    return executableDeclarations.filter { distribution in it.distributions }.map { it.path }
+  }
 
   val hasPlatformSpecificResources: Boolean
     get() = platformResourceGenerators.isNotEmpty() || customAssets.any { it.platformSpecific != null }
@@ -494,12 +492,11 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     /**
-     * Add platform-specific executable file pattern.
-     * Pattern is relative to plugin root directory.
+     * Declares that [distributions] ship [path] with the executable bit.
+     * [path] is relative to the plugin directory, and it can be a glob.
      */
-    fun withPlatformExecutable(platform: SupportedDistribution, pattern: String) {
-      val existing = layout.executablePatterns.get(platform) ?: persistentListOf()
-      layout.executablePatterns = layout.executablePatterns.putting(platform, existing.adding(pattern))
+    fun withExecutable(path: String, distributions: Collection<SupportedDistribution> = SUPPORTED_DISTRIBUTIONS) {
+      layout.executableDeclarations = layout.executableDeclarations.adding(ExecutableFileDeclaration(path, distributions.toSet()))
     }
 
     /**

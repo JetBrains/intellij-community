@@ -89,7 +89,7 @@ fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
     }
 
     if (os != OsFamily.WINDOWS && bundlingEnabled) {
-      withPlatformExecutable(platform, "$PYREFLY_DIR_NAME/${pyreflyPlatformDirName(os, arch)}/${os.binaryName(PYREFLY_BINARY_NAME)}")
+      withExecutable("$PYREFLY_DIR_NAME/${pyreflyPlatformDirName(os, arch)}/${os.binaryName(PYREFLY_BINARY_NAME)}", listOf(platform))
     }
   }
 }
