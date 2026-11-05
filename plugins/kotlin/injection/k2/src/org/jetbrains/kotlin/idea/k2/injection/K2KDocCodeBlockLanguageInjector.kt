@@ -4,15 +4,18 @@ package org.jetbrains.kotlin.idea.k2.injection
 import com.intellij.lang.Language
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.TokenType
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import kotlin.math.min
 
 private const val tripleQuotes = "```"
@@ -41,7 +44,8 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector, DumbAware {
             val elementType = e.elementType
             when (elementType) {
                 KDocTokens.CODE_SPAN_TEXT -> {
-                    injectTextRanges(registrar, KotlinLanguage.INSTANCE, listOf(e.textRangeInParent), context)
+                    val language = if (e.isKotlinCode()) KotlinLanguage.INSTANCE else PlainTextLanguage.INSTANCE
+                    injectTextRanges(registrar, language, listOf(e.textRangeInParent), context)
                 }
 
                 KDocTokens.TEXT -> {
@@ -103,6 +107,17 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector, DumbAware {
         elements.clear()
     }
 
+    /**
+     * A code span has no language tag, so it holds Kotlin only if its text parses as a Kotlin block without syntax errors.
+     * For example, `package.json` and `^1.0.0` do not.
+     */
+    private fun PsiElement.isKotlinCode(): Boolean {
+        val text = text
+        if (text.isBlank()) return false
+        val fragment = KtPsiFactory(project, markGenerated = false).createBlockCodeFragment(text, context = null)
+        return !PsiTreeUtil.hasErrorElements(fragment)
+    }
+
     private fun PsiElement.isWhiteSpace() = this is PsiWhiteSpace || text.all { it.isWhitespace() }
 
     private fun PsiElement.isWhiteSpaceOrKDocSyntax(): Boolean =
@@ -153,7 +168,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector, DumbAware {
 
             if (next is PsiWhiteSpace && text.contains("\n")) return 0
 
-            for ((index, ch) in text.withIndex()) {
+            for ([index, ch] in text.withIndex()) {
                 if (!ch.isWhitespace()) return index
             }
 

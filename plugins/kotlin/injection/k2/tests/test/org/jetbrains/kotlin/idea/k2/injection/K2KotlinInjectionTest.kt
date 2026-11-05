@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.common.runAll
@@ -161,6 +162,30 @@ class K2KotlinInjectionTest: KotlinInjectionTestBase() {
             """,
             KotlinLanguage.INSTANCE
         )
+    }
+
+    // KTIJ-39788
+    fun testNoInjectionInKDocCodeSpanWithFileName() {
+        assertKDocInjectionPresent(
+            """
+            /**
+             * The version from a `package.json` dependencies block, or from `package-lock.json`.
+             */
+            fun usage() {}
+            """,
+            PlainTextLanguage.INSTANCE)
+    }
+
+    // KTIJ-39788
+    fun testNoInjectionInKDocCodeSpanWithVersion() {
+        assertKDocInjectionPresent(
+            """
+            /**
+             * Typically this will be a dynamic version, e.g. `^1.0.0` or `1.0.0`.
+             */
+            fun usage() {}
+            """,
+            PlainTextLanguage.INSTANCE)
     }
 
     // KTIJ-33305
