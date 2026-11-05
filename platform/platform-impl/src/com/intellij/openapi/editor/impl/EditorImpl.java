@@ -2077,7 +2077,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myView != null) {
       Set<FontFamilies> fontFamilies = myHighlighter.getTextAttributesFontFamilies();
       if (!fontFamilies.isEmpty()) {
-        myView.resolveFontFamilies(fontFamilies);
+        myMarkupRepainter.resolveHighlighterFontFamilies(fontFamilies, startOffset, endOffset);
       }
     }
     if (myDocumentChangeInProgress) {

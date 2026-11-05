@@ -255,7 +255,7 @@ internal class EditorFontFamiliesResolutionTest {
 
   @Test
   fun `a value that the editor highlighter declares is resolved when the editor gets the highlighter`(): Unit = withEditor("aaaa") { editor ->
-    val highlighter = DeclaringHighlighter(value)
+    val highlighter = DeclaringHighlighter()
     highlighter.declare(value, 4)
 
     editor.highlighter = highlighter
@@ -267,7 +267,7 @@ internal class EditorFontFamiliesResolutionTest {
 
   @Test
   fun `a declared value gives the soft wraps of a line that the fast path would skip without a layout`(): Unit = withEditor(LINE) { editor ->
-    val highlighter = DeclaringHighlighter(value)
+    val highlighter = DeclaringHighlighter()
     highlighter.declare(value, LINE.length)
     editor.highlighter = highlighter
 
@@ -280,7 +280,7 @@ internal class EditorFontFamiliesResolutionTest {
 
   @Test
   fun `a value that the editor highlighter declares later is resolved at its repaint`(): Unit = withEditor("aaaa") { editor ->
-    val highlighter = DeclaringHighlighter(value)
+    val highlighter = DeclaringHighlighter()
     editor.highlighter = highlighter
     assertThat(editor.view.fontResolver.isResolved(value)).isFalse()
     assertThat(width(editor, 0, 4)).isEqualTo(4 * OTHER_WIDTH)
@@ -289,6 +289,21 @@ internal class EditorFontFamiliesResolutionTest {
 
     assertThat(editor.view.fontResolver.isResolved(value)).isTrue()
     assertThat(width(editor, 0, 4)).isEqualTo(4 * FAMILY_WIDTH)
+  }
+
+  @Test
+  fun `a value that the editor highlighter declares later recalculates the soft wraps after the request`(): Unit = withEditor(LINE) { editor ->
+    val highlighter = DeclaringHighlighter()
+    editor.highlighter = highlighter
+    editor.settings.isUseSoftWraps = true
+    EditorTestUtil.setEditorVisibleSizeInPixels(editor, VISIBLE_WIDTH, 1000)
+    assertThat(softWrapCount(editor)).isZero()
+
+    highlighter.declare(value, LINE.length)
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+
+    assertThat(softWrapCount(editor)).isPositive()
+    assertThat(editor.unresolvedFontFamiliesRecordCount).isZero()
   }
 
   /**

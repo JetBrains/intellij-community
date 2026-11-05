@@ -198,6 +198,24 @@ internal class EditorMarkupRepainter(
   }
 
   /**
+   * Resolves the font families of the editor highlighter, see [com.intellij.openapi.editor.highlighter.EditorHighlighter.getTextAttributesFontFamilies].
+   * The editor calls it when the highlighter repaints the text from [start] to [end].
+   * When a value is new, it joins a request that lays out that text again and recalculates its soft wraps.
+   */
+  fun resolveHighlighterFontFamilies(values: Set<FontFamilies>, start: Int, end: Int) {
+    if (editor.view.resolveFontFamilies(values)) {
+      joinRequest(
+        RepaintArea(start, end),
+        canImpactGutterSize = false,
+        fontStyleChanged = true,
+        foregroundColorChanged = false,
+        hasAccessibleGutterElement = false,
+        fontFamilies = emptySet(),
+      )
+    }
+  }
+
+  /**
    * Records a value that the layout or the soft wraps meet unresolved,
    * see [com.intellij.openapi.editor.impl.view.EditorFontResolver.resolvedFonts].
    * The text of [start, end) gets the editor fonts until a request resolves the value on the EDT.
