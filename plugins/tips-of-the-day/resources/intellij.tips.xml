@@ -47,7 +47,7 @@
   <xi:include href="/META-INF/tips-rubymine.xml"><xi:fallback/></xi:include>
 
   <extensionPoints>
-    <extensionPoint name="tipAndTrickPromotionFactory" interface="com.intellij.ide.util.TipAndTrickPromotionFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.tipAndTrickPromotionFactory" interface="com.intellij.ide.util.TipAndTrickPromotionFactory" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
