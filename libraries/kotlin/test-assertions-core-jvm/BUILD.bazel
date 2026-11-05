@@ -13,8 +13,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlin_test_assertions_core_jvm-kotlin-test-assertions-core-jvm"],
-    runtime_deps = ["@lib//:libraries-kotlin_test_assertions_core_jvm-kotlin-test-assertions-core-jvm"],
+    exports = [
+        # do not sort,
+        "//libraries/opentest4j",
+        "@lib//:libraries-kotlin_test_assertions_core_jvm-kotlin-test-assertions-core-jvm",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/opentest4j",
+        "@lib//:libraries-kotlin_test_assertions_core_jvm-kotlin-test-assertions-core-jvm",
+    ],
 )
 ### auto-generated section `build intellij.libraries.kotlinTestAssertionsCoreJvm` end
 

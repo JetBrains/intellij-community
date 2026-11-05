@@ -11025,7 +11025,6 @@ java_library(
         # do not sort,
         ":io_kotest-kotest-assertions-core-jvm-5_5_4_http_import",
         ":io_kotest-kotest-assertions-shared-jvm-5_5_4_http_import",
-        ":org_opentest4j-opentest4j-1_2_0_http_import",
         ":io_kotest-kotest-common-jvm-5_5_4_http_import",
         ":io_kotest-kotest-assertions-api-jvm-5_5_4_http_import",
     ],

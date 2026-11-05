@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.libraries.opentest4j" exported="" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-test-assertions-core-jvm" type="repository">
         <properties maven-id="io.kotest:kotest-assertions-core-jvm:5.5.4">
@@ -16,9 +17,6 @@
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-shared-jvm/5.5.4/kotest-assertions-shared-jvm-5.5.4.jar">
               <sha256sum>9977d913ef1fccf2e2663b5906d955fdf8215d0ec48265d669b01e05179e2043</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar">
-              <sha256sum>58812de60898d976fb81ef3b62da05c6604c18fd4a249f5044282479fc286af2</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/io/kotest/kotest-common-jvm/5.5.4/kotest-common-jvm-5.5.4.jar">
               <sha256sum>a2a4d02b86b2e849e514d18dbdf4b29e2e9d091e3c6f4d9d028db9cdc55dd28b</sha256sum>
@@ -34,26 +32,24 @@
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8" />
             <dependency maven-id="io.github.java-diff-utils:java-diff-utils" />
+            <dependency maven-id="org.opentest4j:opentest4j" />
           </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-core-jvm/5.5.4/kotest-assertions-core-jvm-5.5.4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-shared-jvm/5.5.4/kotest-assertions-shared-jvm-5.5.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-common-jvm/5.5.4/kotest-common-jvm-5.5.4.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-api-jvm/5.5.4/kotest-assertions-api-jvm-5.5.4.jar!/" />
         </CLASSES>
         <JAVADOC>
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-core-jvm/5.5.4/kotest-assertions-core-jvm-5.5.4-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-shared-jvm/5.5.4/kotest-assertions-shared-jvm-5.5.4-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-common-jvm/5.5.4/kotest-common-jvm-5.5.4-javadoc.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-api-jvm/5.5.4/kotest-assertions-api-jvm-5.5.4-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-core-jvm/5.5.4/kotest-assertions-core-jvm-5.5.4-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-shared-jvm/5.5.4/kotest-assertions-shared-jvm-5.5.4-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/opentest4j/opentest4j/1.2.0/opentest4j-1.2.0-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-common-jvm/5.5.4/kotest-common-jvm-5.5.4-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/io/kotest/kotest-assertions-api-jvm/5.5.4/kotest-assertions-api-jvm-5.5.4-sources.jar!/" />
         </SOURCES>
