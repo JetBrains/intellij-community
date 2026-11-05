@@ -159,6 +159,7 @@ intellij.jvm.analysis.java.tests.codeInspection
 intellij.jvm.analysis.java.tests.console
 intellij.jvm.analysis.java.tests.logging
 intellij.jvm.analysis.java.tests.refactoring
+intellij.kotlin.builder.jps.tests
 intellij.kotlin.gradle.tooling.impl.tests
 intellij.kotlin.jvm.debugger.eval4j.tests
 intellij.kotlin.onboarding.gradle.tests

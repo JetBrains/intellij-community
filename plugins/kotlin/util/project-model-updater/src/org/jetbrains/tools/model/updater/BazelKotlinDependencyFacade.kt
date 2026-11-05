@@ -17,6 +17,11 @@ class BazelKotlinDependencyFacade(val communityRoot: Path) {
         private val JPS_PLUGIN_REPOSITORY_URL_CONST = DependencyConstant("jpsPluginRepositoryUrl")
         private val KOTLINC_KOTLIN_JPS_PLUGIN_TESTS_VERSION_CONST = DependencyConstant("kotlincKotlinJpsPluginTestsVersion")
 
+        // The pinned versions of the Kotlin JPS builder tests. `update` replaces none of them: they do not follow the
+        // Kotlin compiler of the IDE. The URL substitution of `dependencies` resolves them.
+        private val KOTLIN_BUILD_TOOLS_IMPL_BOOTSTRAP_VERSION_CONST = DependencyConstant("kotlinBuildToolsImplBootstrapVersion")
+        private val KOTLIN_BUILD_TOOLS_IMPL_STABLE_VERSION_CONST = DependencyConstant("kotlinBuildToolsImplStableVersion")
+
         private val NAME_REGEX = Regex("""name\s*=\s*["']([^"']+)["']""")
         private val SHA256_REGEX = Regex("""sha256\s*=\s*["']([^"']+)["']""")
         private val SIMPLE_URL_REGEX = Regex("""url\s*=\s*["'](.+)["']""")
@@ -83,6 +88,8 @@ class BazelKotlinDependencyFacade(val communityRoot: Path) {
             get(KOTLIN_COMPILER_CLI_VERSION_CONST),
             get(JPS_PLUGIN_REPOSITORY_URL_CONST),
             get(KOTLINC_KOTLIN_JPS_PLUGIN_TESTS_VERSION_CONST),
+            get(KOTLIN_BUILD_TOOLS_IMPL_BOOTSTRAP_VERSION_CONST),
+            get(KOTLIN_BUILD_TOOLS_IMPL_STABLE_VERSION_CONST),
         )
     }
 
