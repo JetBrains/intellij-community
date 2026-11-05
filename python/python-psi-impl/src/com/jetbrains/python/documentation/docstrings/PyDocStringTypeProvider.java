@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyTypeVarType;
 import com.jetbrains.python.psi.types.PyTypeVarTypeImpl;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,12 +32,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 /**
+ * Gives the types of a function from the legacy type syntax of its docstring.
+ * <p>
+ * A stub has its types in annotations, so the provider skips the functions of a stub.
+ *
  * @author Mikhail Golubev
  */
 @ApiStatus.Internal
 public final class PyDocStringTypeProvider extends PyTypeProviderBase {
   @Override
   public Ref<PyType> getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
+    if (PyiUtil.isInsideStub(func)) {
+      return null;
+    }
     StructuredDocString docString = func.getStructuredDocString();
     if (docString == null) {
       final PyClass pyClass = PyUtil.turnConstructorIntoClass(func);
@@ -67,7 +75,7 @@ public final class PyDocStringTypeProvider extends PyTypeProviderBase {
 
   @Override
   public @Nullable Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    if (callable instanceof PyDocStringOwner) {
+    if (callable instanceof PyDocStringOwner && !PyiUtil.isInsideStub(callable)) {
       final StructuredDocString docString = ((PyDocStringOwner)callable).getStructuredDocString();
       if (docString != null) {
         final String typeText = docString.getReturnType();
