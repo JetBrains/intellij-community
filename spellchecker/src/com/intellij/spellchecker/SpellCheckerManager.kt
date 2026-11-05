@@ -56,6 +56,7 @@ import com.intellij.spellchecker.state.ProjectDictionaryState
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.spellchecker.util.Strings
 import com.intellij.util.EventDispatcher
+import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.computeDetached
@@ -95,16 +96,17 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   private var suggestionProvider: SuggestionProvider? = null
   private val settings by lazy { SpellCheckerSettings.getInstance(project) }
+  private val disposable = coroutineScope.asDisposable()
 
   init {
     fullConfigurationReload()
 
-    StandardFileSystems.local().addVirtualFileListener(CustomDictFileListener(project = project, manager = this), this)
-    StandardFileSystems.local().addVirtualFileListener(ProjectDictFileListener(this), this)
+    StandardFileSystems.local().addVirtualFileListener(CustomDictFileListener(project = project, manager = this), disposable)
+    StandardFileSystems.local().addVirtualFileListener(ProjectDictFileListener(this), disposable)
     BUNDLED_EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
     RuntimeDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
     CustomDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
-    addUserDictionaryChangedListener({ DictionaryModificationTracker.getInstance(project).incModificationCount() }, this)
+    addUserDictionaryChangedListener({ DictionaryModificationTracker.getInstance(project).incModificationCount() }, disposable)
   }
 
   companion object {
@@ -221,7 +223,7 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   private fun initUserDictionaries(spellChecker: SpellCheckerEngine) {
     val appDictionaryState = AppDictionaryState.getInstance()
-    appDictionaryState.addAppDictListener({ restartInspections("SpellCheckerManager.addAppDictListener") }, this)
+    appDictionaryState.addAppDictListener({ restartInspections("SpellCheckerManager.addAppDictListener") }, disposable)
     if (appDictionaryState.dictionary == null) {
       appDictionaryState.dictionary = UserDictionary(AppDictionaryState.DEFAULT_NAME)
     }
