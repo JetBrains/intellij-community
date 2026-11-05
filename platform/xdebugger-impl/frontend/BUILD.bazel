@@ -5,7 +5,10 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 jps_test(
     name = "debugger-impl-frontend-tests_test",
     timeout = "moderate",
-    tags = ["community-aggregator"],
+    sandbox = True,
+    tags = [
+        "debugger-tests",
+    ],
     runtime_deps = [":debugger-impl-frontend-tests_test_lib"],
 )
 
