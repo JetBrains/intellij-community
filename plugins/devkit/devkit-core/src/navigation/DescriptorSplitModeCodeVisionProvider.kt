@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.findDependingContentModuleEntriesInFile
@@ -88,18 +89,28 @@ internal class DescriptorSplitModeCodeVisionGroupSettingProvider : CodeVisionGro
 }
 
 /**
+ * @property moduleKind the resolved split-mode kind of the descriptor.
  * @property reason the content of the popup that opens on a click on the inlay.
  */
 internal data class DescriptorSplitModeInlayInfo(
+  val moduleKind: ModuleKind,
   val text: @Nls String,
   val tooltip: @NlsContexts.Tooltip String,
   val reason: DescriptorSplitModeReason,
 )
 
-internal fun getDescriptorSplitModeInlayInfo(xmlFile: XmlFile): DescriptorSplitModeInlayInfo? {
+/**
+ * @param descriptorKindMessageKey the message key of the descriptor kind, for example "content module".
+ * A caller that knows the descriptor kind gives it, because the default computation can search all XML files of the project.
+ * @param currentFile the descriptor in the editor. The reason popup shows it without a link.
+ */
+internal fun getDescriptorSplitModeInlayInfo(
+  xmlFile: XmlFile,
+  descriptorKindMessageKey: @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String = getDescriptorKindMessageKey(xmlFile),
+  currentFile: XmlFile = xmlFile,
+): DescriptorSplitModeInlayInfo? {
   val module = ModuleUtilCore.findModuleForPsiElement(xmlFile) ?: return null
   val resolvedModuleKind = SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(xmlFile).resolvedModuleKind
-  val descriptorKindMessageKey = getDescriptorKindMessageKey(xmlFile)
   val descriptorKind = DevKitBundle.message(descriptorKindMessageKey)
   val text = DevKitBundle.message(
     "inlay.split.mode.module.kind.presentation",
@@ -107,7 +118,12 @@ internal fun getDescriptorSplitModeInlayInfo(xmlFile: XmlFile): DescriptorSplitM
     descriptorKind,
   )
   val compatibilityTarget = getCompatibilityTarget(resolvedModuleKind.kind)
+  val analyzedDescriptor = DescriptorLink(xmlFile.name, module.name)
+  val currentDescriptor =
+    if (currentFile == xmlFile) analyzedDescriptor
+    else ModuleUtilCore.findModuleForPsiElement(currentFile)?.let { DescriptorLink(currentFile.name, it.name) }
   return DescriptorSplitModeInlayInfo(
+    moduleKind = resolvedModuleKind.kind,
     text = text,
     tooltip = DevKitBundle.message(
       "inlay.split.mode.module.kind.tooltip",
@@ -118,7 +134,8 @@ internal fun getDescriptorSplitModeInlayInfo(xmlFile: XmlFile): DescriptorSplitM
     reason = DescriptorSplitModeReason(
       presentation = text,
       compatibilityTarget = compatibilityTarget,
-      analyzedDescriptor = DescriptorLink(xmlFile.name, module.name),
+      analyzedDescriptor = analyzedDescriptor,
+      currentDescriptor = currentDescriptor,
       analyzedPluginId = DescriptorUtil.getIdeaPlugin(xmlFile)?.pluginId,
       reason = resolvedModuleKind.reason,
     ),
@@ -157,7 +174,7 @@ private fun getCompatibilityTarget(kind: ModuleKind): String {
   return DevKitBundle.message(messageKey)
 }
 
-private fun getDescriptorKindMessageKey(xmlFile: XmlFile): String {
+private fun getDescriptorKindMessageKey(xmlFile: XmlFile): @PropertyKey(resourceBundle = DevKitBundle.BUNDLE) String {
   if (xmlFile.name == "plugin.xml") {
     return "inlay.split.mode.module.kind.plugin"
   }

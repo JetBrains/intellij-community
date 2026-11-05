@@ -146,6 +146,7 @@ exports_files(
         "intellij.devkit.core.iml",
         "resources/assets/devkit-Run_IDE_with_Plugin_run.xml",
         "resources/codeVisionProviders/devkit.descriptors.including.content.module/preview.xml",
+        "resources/codeVisionProviders/devkit.module.entry.split.mode.kind/preview.xml",
         "resources/codeVisionProviders/devkit.plugin.descriptor.split.mode.kind/preview.xml",
         "resources/intellij.devkit.core.xml",
     ],

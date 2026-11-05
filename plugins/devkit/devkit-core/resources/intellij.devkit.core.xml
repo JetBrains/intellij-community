@@ -946,6 +946,11 @@
       implementation="org.jetbrains.idea.devkit.navigation.DescriptorSplitModeCodeVisionGroupSettingProvider"/>
     <codeInsight.codeVisionSettingsPreviewLanguage modelId="devkit.plugin.descriptor.split.mode.kind" language="XML"/>
     <codeInsight.daemonBoundCodeVisionProvider
+      implementation="org.jetbrains.idea.devkit.navigation.ModuleEntrySplitModeCodeVisionProvider"/>
+    <config.codeVisionGroupSettingProvider
+      implementation="org.jetbrains.idea.devkit.navigation.ModuleEntrySplitModeCodeVisionGroupSettingProvider"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="devkit.module.entry.split.mode.kind" language="XML"/>
+    <codeInsight.daemonBoundCodeVisionProvider
       implementation="org.jetbrains.idea.devkit.navigation.DescriptorsIncludingContentModuleCodeVisionProvider"/>
     <config.codeVisionGroupSettingProvider
       implementation="org.jetbrains.idea.devkit.navigation.DescriptorsIncludingContentModuleCodeVisionGroupSettingProvider"/>

@@ -1,0 +1,10 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.frontend"/>
+  </dependencies>
+  <content>
+    <module name="my.plugin.frontend"/>
+    <module name="my.plugin.backend"/>
+    <module name="my.plugin.shared"/>
+  </content>
+</idea-plugin>

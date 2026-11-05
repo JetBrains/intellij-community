@@ -75,12 +75,15 @@ internal data class DescriptorSplitModeReasonHtml(
  * @property presentation the text of the inlay, for example "Backend plugin".
  * @property compatibilityTarget the IDE that the descriptor can be installed into.
  * @property analyzedDescriptor the descriptor of the inlay. A dependency path that does not name its start starts here.
+ * @property currentDescriptor the descriptor in the editor, or `null` when it has no module. The popup shows it without a link.
+ * It is not [analyzedDescriptor] when the inlay is on a `module` entry of another descriptor.
  * @property analyzedPluginId the plugin id of [analyzedDescriptor], or its plugin name.
  */
 internal data class DescriptorSplitModeReason(
   val presentation: @Nls String,
   val compatibilityTarget: @Nls String,
   val analyzedDescriptor: DescriptorLink,
+  val currentDescriptor: DescriptorLink?,
   val analyzedPluginId: String?,
   val reason: ModuleKindReason,
 ) {
@@ -90,7 +93,8 @@ internal data class DescriptorSplitModeReason(
    * @param descriptorIcons the file icons of the descriptors. A descriptor without an icon here gets a generic icon.
    */
   fun toHtml(descriptorIcons: Map<DescriptorLink, Icon> = emptyMap()): DescriptorSplitModeReasonHtml {
-    return ReasonHtmlBuilder(analyzedDescriptor, analyzedPluginId, descriptorIcons).build(presentation, compatibilityTarget, reason)
+    return ReasonHtmlBuilder(analyzedDescriptor, currentDescriptor, analyzedPluginId, descriptorIcons)
+      .build(presentation, compatibilityTarget, reason)
   }
 }
 
@@ -146,7 +150,7 @@ internal fun showDescriptorSplitModeReasonPopup(
   }
 
   // The current file has no link, but it needs its file icon too.
-  val descriptors = (reasonHtml.links + reason.analyzedDescriptor).distinct()
+  val descriptors = (reasonHtml.links + listOfNotNull(reason.analyzedDescriptor, reason.currentDescriptor)).distinct()
   ReadAction.nonBlocking<Map<DescriptorLink, ResolvedDescriptor>> { resolveDescriptors(project, descriptors) }
     .inSmartMode(project)
     .expireWhen { popup.isDisposed }
@@ -212,6 +216,7 @@ private fun findDescriptorFile(project: Project, link: DescriptorLink): VirtualF
 
 private class ReasonHtmlBuilder(
   private val analyzedDescriptor: DescriptorLink,
+  private val currentDescriptor: DescriptorLink?,
   private val analyzedPluginId: String?,
   private val descriptorIcons: Map<DescriptorLink, Icon>,
 ) {
@@ -382,7 +387,7 @@ private class ReasonHtmlBuilder(
     }
     val isModuleDescriptor = descriptorName == "$moduleName.xml"
     val name = if (isModuleDescriptor) moduleName else descriptorName
-    val isCurrent = DescriptorLink(descriptorName, moduleName) == analyzedDescriptor
+    val isCurrent = DescriptorLink(descriptorName, moduleName) == currentDescriptor
     val builder = HtmlBuilder()
     if (isCurrent) {
       builder.append(name)
