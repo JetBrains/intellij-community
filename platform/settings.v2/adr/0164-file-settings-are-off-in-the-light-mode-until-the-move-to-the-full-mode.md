@@ -4,7 +4,7 @@ Date: 2026-11-05
 
 ## Status
 
-Proposed ([IJPL-260062](https://youtrack.jetbrains.com/issue/IJPL-260062)).
+Accepted ([IJPL-260062](https://youtrack.jetbrains.com/issue/IJPL-260062)).
 
 ## Context
 
@@ -15,7 +15,8 @@ cannot find the configs there in the way it does in the full mode.
 
 The application and the project layers need no scan. They read one known file each, and they live in modules that
 the light mode loads ([IJPL-260062](https://youtrack.jetbrains.com/issue/IJPL-260062)). The file layer lives in
-the backend module, which the light mode leaves out.
+the backend module, which the light mode leaves out
+([ADR 0166](./0166-the-light-compatible-backend-code-lives-in-the-backend-baseline-module.md)).
 
 ## Decision
 
@@ -24,8 +25,9 @@ so the light mode has no file layer. A write at a file context lands in the proj
 narrower layer takes. After the move to the full mode, the file layer loads, and a write at a file context lands in
 the directory config.**
 
-A lazy discovery of the directory configs for the light mode, on the first use of a file context under a directory,
-is a later step ([IJPL-260652](https://youtrack.jetbrains.com/issue/IJPL-260652)).
+A lazy discovery of the directory configs for the light mode is a later step
+([IJPL-260652](https://youtrack.jetbrains.com/issue/IJPL-260652)). It would load a config on the first use of a file
+context under its directory.
 
 ## Consequences
 
@@ -40,9 +42,9 @@ is a later step ([IJPL-260652](https://youtrack.jetbrains.com/issue/IJPL-260652)
 
 ### A lazy discovery of the directory configs in the light mode now
 
-It is the right end state, but it is a feature of its own: a lookup of the configs on the path from a file to its
-root, with no index and no scan, and a reconciliation with the index-based load after the move. It goes to
-[IJPL-260652](https://youtrack.jetbrains.com/issue/IJPL-260652).
+It is the right end state, but it is a feature of its own. It needs a lookup of the configs on the path from a file
+to its root, with no index and no scan. It also needs a reconciliation with the index-based load after the move. It
+goes to [IJPL-260652](https://youtrack.jetbrains.com/issue/IJPL-260652).
 
 ### A scan of the project content in the light mode
 
