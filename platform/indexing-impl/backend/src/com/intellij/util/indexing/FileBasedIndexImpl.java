@@ -2493,20 +2493,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  // ==== Flushers implementations: =====
-
-  //We're trying to guess when and how to flush indexes so that this flush is the least intrusive for others, who
-  //  also want access Indexes.
-  //  Indexes are protected by (many) locks, so the flushing could hold those locks for a long time, which freezes
-  //  the whole app very easily, especially if there is a lot of data to flush.
-  //  We're trying to reduce the probability of such long freezes by looking for the signs of intensive Indexes use
-  //  and postponing index flushing if such signs are present.
-
-
-  /**
-   * Basic flusher implementation: do some basic precautions against contention.
-   * Wait for a period without modifications to avoid competing with other threads.
-   */
+  /// Flush indexes periodically.
+  ///
+  /// Does some basic precautions against contention: e.g. wait for a period without modifications
+  /// and with empty index writing queue -- to avoid competing with other threads using indexes
   private final class SimpleFlusher implements Runnable, AutoCloseable {
 
     private int lastModCount;
@@ -2596,6 +2586,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
       //Any heavy processes are in progress:
       if (HeavyProcessLatch.INSTANCE.isRunning()) {
+        return true;
+      }
+      //There are still some updates in the asynchronous writer queue:
+      if (IndexWriter.defaultParallelWriter().writesQueued() > 0) {
         return true;
       }
       //There have been some _updates_ in indexes since the last invocation of this method:
