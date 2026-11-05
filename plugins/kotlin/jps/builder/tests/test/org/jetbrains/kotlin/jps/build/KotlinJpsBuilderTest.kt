@@ -1,34 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.jps.build
 
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.URLUtil
-import org.jetbrains.jps.api.GlobalOptions
-import org.jetbrains.jps.builders.JpsBuildTestBase
-import org.jetbrains.jps.model.java.JpsJavaLibraryType
-import org.jetbrains.jps.model.java.JpsJavaSdkType
-import org.jetbrains.jps.model.library.JpsOrderRootType
-import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
 
-/**
- * Builds a Kotlin module with the bundled builder through the Build Tools API.
- *
- * The implementation is not on the test classpath. The test hands the directory of [KotlinBtaImplementation.CURRENT]
- * over to the builder, as the IDE hands it over to the build process.
- */
-class KotlinJpsBuilderTest : JpsBuildTestBase() {
-  @BeforeEach
-  fun setUpKotlinJpsBuilderTest() {
-    KotlinBtaImplementation.CURRENT.install()
-    System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "true")
-    System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
-  }
-
+/** Builds a Kotlin module in process. */
+class KotlinJpsBuilderTest : AbstractKotlinJpsBuilderTest() {
   @Test
   fun testCompilesOnlyTheChangedFile() {
     createFile("src/a.kt", "package p\n\nfun a(): Int = 1\n")
@@ -106,24 +84,5 @@ class KotlinJpsBuilderTest : JpsBuildTestBase() {
     change(getAbsolutePath("src/p/Util.java"), "package p;\n\npublic class Util { public static int method() { return 1; } }\n")
     buildAllModules().assertSuccessful()
     assertCompiled(KotlinBuilder.KOTLIN_BUILDER_NAME, "src/k.kt")
-  }
-
-  /**
-   * A module on the JDK of the test JVM, registered the way the IDE registers a modular JDK: with `jrt://` roots.
-   * The builder hands such a JDK to the compiler as `-jdk-home`.
-   */
-  private fun addModuleOnModularJdk(name: String, vararg srcPaths: String): JpsModule {
-    val javaHome = FileUtil.toSystemIndependentName(System.getProperty("java.home"))
-    val jdk = myModel.global.addSdk("modular-jdk", javaHome, System.getProperty("java.version"), JpsJavaSdkType.INSTANCE)
-    jdk.addRoot(URLUtil.JRT_PROTOCOL + URLUtil.SCHEME_SEPARATOR + javaHome + URLUtil.JAR_SEPARATOR + "java.base", JpsOrderRootType.COMPILED)
-    return addModule(name, srcPaths, getAbsolutePath(getModuleOutputRelativePath(name)), null, jdk.properties)
-  }
-
-  private fun addKotlinStdlib(module: JpsModule) {
-    val library = myProject.addLibrary("kotlin-stdlib", JpsJavaLibraryType.INSTANCE)
-    for (root in KotlinBtaImplementation.CURRENT.stdlibRoots) {
-      library.addRoot(root.toPath(), JpsOrderRootType.COMPILED)
-    }
-    module.dependenciesList.addLibraryDependency(library)
   }
 }

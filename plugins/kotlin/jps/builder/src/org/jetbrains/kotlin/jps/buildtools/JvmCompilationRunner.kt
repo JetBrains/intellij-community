@@ -5,6 +5,8 @@ import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.kotlin.buildtools.api.BaseCompilationOperation
 import org.jetbrains.kotlin.buildtools.api.CompilationResult
+import org.jetbrains.kotlin.buildtools.api.CompilerMessageRenderer
+import org.jetbrains.kotlin.buildtools.api.ExecutionPolicy
 import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
 import org.jetbrains.kotlin.buildtools.api.OperationCancelledException
 import org.jetbrains.kotlin.buildtools.api.arguments.JvmCompilerArguments
@@ -55,25 +57,77 @@ class JvmCompilationOutcome(
 )
 
 /**
- * Compiles one target through the Build Tools API, in process.
+ * Compiles one target through the Build Tools API, with the execution policy of [KotlinBuildToolsSession]: the daemon
+ * policy while the `kotlin.daemon.enabled` system property is set, an in-process policy otherwise.
  *
- * In process is a requirement, not a preference: the implementation rejects a JPS-managed incremental configuration
- * with the daemon execution policy.
+ * When the daemon compilation ends with an internal error, the compilation runs once more in process. The API also
+ * returns an internal error when it cannot connect to the daemon. An exception of the daemon compilation fails the
+ * compilation without a retry.
  */
-class JvmCompilationRunner(private val session: KotlinToolchains.BuildSession, private val context: CompileContext) {
+class JvmCompilationRunner(
+  private val session: KotlinToolchains.BuildSession,
+  private val buildToolsSession: KotlinBuildToolsSession,
+  private val context: CompileContext,
+) {
   fun compile(request: JvmCompilationRequest, sink: JpsCompilerMessageSink): JvmCompilationOutcome {
+    val policy = buildToolsSession.executionPolicy()
+    if (policy !is ExecutionPolicy.WithDaemon) {
+      val (trackers, result) = compileOnce(request, sink, policy)
+      return JvmCompilationOutcome(request, trackers, result == CompilationResult.COMPILATION_SUCCESS)
+    }
+
+    // An error message of the attempt fails the whole JPS build, so the attempt holds the errors back
+    val attemptSink = DaemonAttemptMessageSink(sink)
+    try {
+      val (trackers, result) = compileOnce(request, attemptSink, policy)
+      if (result == CompilationResult.COMPILER_INTERNAL_ERROR) {
+        return fallBackToInProcess(request, sink, attemptSink)
+      }
+      return JvmCompilationOutcome(request, trackers, result == CompilationResult.COMPILATION_SUCCESS)
+    }
+    finally {
+      // The fallback has dropped the held errors already. In each other case, the held errors go to JPS.
+      attemptSink.flush()
+    }
+  }
+
+  /**
+   * Runs one compilation again in process and switches the whole build to the in-process policy.
+   */
+  private fun fallBackToInProcess(
+    request: JvmCompilationRequest,
+    sink: JpsCompilerMessageSink,
+    attemptSink: DaemonAttemptMessageSink,
+  ): JvmCompilationOutcome {
+    KotlinBuilder.LOG.info("The Kotlin daemon returned an internal error for ${request.moduleName}. Compiling it in process")
+    attemptSink.discard()
+    sink.reportWarning(KotlinJpsBuilderBundle.message("warning.kotlin.daemon.failed.0", request.moduleName))
+    val (trackers, result) = compileOnce(request, sink, buildToolsSession.fallBackToInProcess())
+    return JvmCompilationOutcome(request, trackers, result == CompilationResult.COMPILATION_SUCCESS)
+  }
+
+  /**
+   * Runs one compilation through the Build Tools API.
+   *
+   * @return the trackers of the compilation and its result.
+   */
+  private fun compileOnce(
+    request: JvmCompilationRequest,
+    sink: CompilationMessageSink,
+    policy: ExecutionPolicy,
+  ): Pair<JvmCompilationTrackers, CompilationResult> {
     val trackers = JvmCompilationTrackers()
-    val success = try {
+    try {
       val operation = buildOperation(request, trackers, sink)
       val result = withCancellationWatchdog(operation) {
-        session.executeOperation(operation, session.kotlinToolchains.createInProcessExecutionPolicy(), sink)
+        session.executeOperation(operation, policy, sink)
       }
       // The diagnostics reached JPS through the renderer. An internal compiler error can come back without an
       // error message, so report the result explicitly.
       if (result != CompilationResult.COMPILATION_SUCCESS && !sink.hasErrors) {
         sink.reportError(KotlinJpsBuilderBundle.message("error.compilation.of.0.failed.1", request.moduleName, result))
       }
-      result == CompilationResult.COMPILATION_SUCCESS
+      return trackers to result
     }
     catch (e: OperationCancelledException) {
       KotlinBuilder.LOG.info("Kotlin compilation of ${request.moduleName} was cancelled", e)
@@ -81,10 +135,9 @@ class JvmCompilationRunner(private val session: KotlinToolchains.BuildSession, p
       context.checkCanceled()
       throw e
     }
-    return JvmCompilationOutcome(request, trackers, success)
   }
 
-  private fun buildOperation(request: JvmCompilationRequest, trackers: JvmCompilationTrackers, sink: JpsCompilerMessageSink): JvmCompilationOperation {
+  private fun buildOperation(request: JvmCompilationRequest, trackers: JvmCompilationTrackers, sink: CompilationMessageSink): JvmCompilationOperation {
     val jvm = session.kotlinToolchains.getToolchain<JvmPlatformToolchain>()
     val builder = jvm.jvmCompilationOperationBuilder(request.sources.map { it.toPath() }, request.outputDirectory.toPath())
 
@@ -238,5 +291,56 @@ class JvmCompilationRunner(private val session: KotlinToolchains.BuildSession, p
 
   private companion object {
     const val CANCELLATION_POLL_INTERVAL_MS = 200L
+  }
+}
+
+/**
+ * Holds the error messages of one daemon attempt back. A single error message fails the whole JPS build, so a
+ * compilation that falls back to the build process must not leave the error behind. The other messages go through at
+ * once, so the build log stays live.
+ */
+private class DaemonAttemptMessageSink(val delegate: CompilationMessageSink) : CompilationMessageSink {
+  private val heldErrors = ArrayDeque<Pair<String, () -> Unit>>()
+
+  override val hasErrors: Boolean
+    get() = delegate.hasErrors || heldErrors.isNotEmpty()
+
+  override val isDebugEnabled: Boolean
+    get() = delegate.isDebugEnabled
+
+  override fun render(severity: CompilerMessageRenderer.Severity, message: String, location: CompilerMessageRenderer.SourceLocation?): String {
+    if (severity != CompilerMessageRenderer.Severity.ERROR) return delegate.render(severity, message, location)
+    heldErrors.add(message to { delegate.render(severity, message, location) })
+    return ""
+  }
+
+  override fun error(msg: String, throwable: Throwable?) {
+    heldErrors.add(msg to { delegate.error(msg, throwable) })
+  }
+
+  override fun warn(msg: String) = delegate.warn(msg)
+
+  override fun warn(msg: String, throwable: Throwable?) = delegate.warn(msg, throwable)
+
+  override fun info(msg: String) = delegate.info(msg)
+
+  override fun debug(msg: String) = delegate.debug(msg)
+
+  override fun lifecycle(msg: String) = delegate.lifecycle(msg)
+
+  override fun reportError(message: String) {
+    heldErrors.add(message to { delegate.reportError(message) })
+  }
+
+  /** Sends the held errors to the delegate, when the compilation does not run again. */
+  fun flush() {
+    while (heldErrors.isNotEmpty()) heldErrors.removeFirst().second()
+  }
+
+  /** Drops the held errors and logs them, when the compilation runs again in process. */
+  fun discard() {
+    while (heldErrors.isNotEmpty()) {
+      KotlinBuilder.LOG.info("Kotlin daemon error: " + heldErrors.removeFirst().first)
+    }
   }
 }

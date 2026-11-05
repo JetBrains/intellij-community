@@ -64,7 +64,7 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
       previousModuleMapping = KotlinModuleMappingStorage.of(context, jpsModuleBuildTarget).read(),
     )
 
-    return JvmCompilationRunner(session, context).compile(request, sink)
+    return JvmCompilationRunner(session, kotlinContext.buildToolsSession, context).compile(request, sink)
   }
 
   /**

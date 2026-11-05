@@ -291,6 +291,10 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
             )
             return ExitCode.ABORT
         }
+        if (kotlinContext.buildToolsSession.consumeDaemonPolicyReport()) {
+            val text = KotlinJpsBuilderBundle.message("info.compiling.through.kotlin.daemon")
+            context.processMessage(CompilerMessage(KOTLIN_COMPILER_NAME, BuildMessage.Kind.JPS_INFO, text))
+        }
         val compilerVersion = session.kotlinToolchains.getCompilerVersion()
 
         if (needsChunkRebuild(context, kotlinChunk, kotlinDirtyFilesHolder, compilerVersion) ||

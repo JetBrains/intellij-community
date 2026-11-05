@@ -13,6 +13,19 @@ import org.jetbrains.kotlin.jps.targets.KotlinModuleBuildTarget
 import java.io.File
 
 /**
+ * The messages of one compilation: what the compiler and the Build Tools API report.
+ *
+ * [JpsCompilerMessageSink] sends the messages to JPS. The daemon attempt of [JvmCompilationRunner] wraps the sink and
+ * holds the error messages back.
+ */
+interface CompilationMessageSink : CompilerMessageRenderer, KotlinLogger {
+  val hasErrors: Boolean
+
+  /** Reports an error of the compilation, which fails the build. */
+  fun reportError(@Nls message: String)
+}
+
+/**
  * Reports what the compiler and the Build Tools API say as JPS build messages.
  *
  * The compiler diagnostics arrive through [CompilerMessageRenderer]. The renderer returns a blank string, so the
@@ -22,8 +35,8 @@ import java.io.File
 class JpsCompilerMessageSink(
   private val context: CompileContext,
   private val target: KotlinModuleBuildTarget?,
-) : CompilerMessageRenderer, KotlinLogger {
-  var hasErrors: Boolean = false
+) : CompilationMessageSink {
+  override var hasErrors: Boolean = false
     private set
 
   val filesWithErrors: MutableSet<String> = LinkedHashSet()
@@ -42,7 +55,7 @@ class JpsCompilerMessageSink(
     return ""
   }
 
-  fun reportError(@Nls message: String) {
+  override fun reportError(@Nls message: String) {
     report(BuildMessage.Kind.ERROR, message, null)
   }
 

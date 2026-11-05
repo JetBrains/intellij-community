@@ -21,6 +21,7 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.sdk.JpsSdk
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.kotlin.cli.common.CompilerSystemProperties
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.config.KotlinFacetSettings
@@ -53,6 +54,7 @@ abstract class AbstractKotlinJpsIncrementalTest : JpsBuildTestBase() {
   fun setUpKotlinJpsIncrementalTest() {
     System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "true")
     System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
+    CompilerSystemProperties.COMPILE_DAEMON_ENABLED_PROPERTY.clear()
     btaImplementation.install()
   }
 
