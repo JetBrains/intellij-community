@@ -25,6 +25,7 @@ import com.intellij.refactoring.util.RefactoringMessageUtil
 import org.jetbrains.kotlin.idea.base.psi.setPackageFqName
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.hasIdentifiersOnly
+import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.findExistingNonGeneratedKotlinSourceRootFiles
@@ -52,6 +53,8 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
         override fun visitPackageDirective(directive: KtPackageDirective) {
             val project = holder.project
             val file = directive.containingKtFile
+            // an outsider (a diff side, a language server scratch) does not live in its directory, so the directory gives no package
+            if (file.virtualFile?.let(::isOutsiderFile) == true) return
             val packageMatches = if (reportImplicitPackagePrefix)
                 file.packageFqName == file.getFqNameByDirectory()
             else
