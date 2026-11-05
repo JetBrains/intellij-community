@@ -7,6 +7,8 @@ import com.intellij.platform.buildScripts.concurrency.Subtask
 import com.intellij.platform.buildScripts.concurrency.TaskScope
 import com.intellij.platform.buildScripts.concurrency.taskScope
 import com.intellij.platform.ijent.community.buildConstants.isMultiRoutingFileSystemEnabledForProduct
+import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
@@ -47,7 +49,11 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
+import java.util.EnumSet
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.listDirectoryEntries
 
 /**
@@ -884,6 +890,7 @@ internal fun layoutDistribution(
 
 private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, outputProvider: ModuleOutputProvider) {
   val missing = ArrayList<String>()
+  val dropped = ArrayList<String>()
   for (resourceData in layout.resourcePaths) {
     val source = basePath(resourceData.moduleName, outputProvider).resolve(resourceData.resourcePath).normalize()
     if (!Files.exists(source)) {
@@ -893,18 +900,51 @@ private fun layoutResourcePaths(layout: BaseLayout, targetDirectory: Path, outpu
       continue
     }
     val target = targetDirectory.resolve(resourceData.relativeOutputPath).normalize()
-    if (Files.isRegularFile(source)) {
+    val copied = if (Files.isRegularFile(source)) {
       copyFileToDir(source, target)
+      listOf(target.resolve(source.fileName))
     }
     else {
       copyDir(source, target)
     }
+    dropped.addAll(dropCheckoutExecutableBits(copied).map { targetDirectory.relativize(it).invariantSeparatorsPathString })
   }
 
   check(missing.isEmpty()) {
     "Resource paths of layout '$layout' do not exist:\n  " + missing.joinToString(separator = "\n  ")
   }
+  if (dropped.isNotEmpty()) {
+    Span.current().addEvent("checkout executable bits dropped", Attributes.of(
+      AttributeKey.stringKey("layout"), layout.toString(),
+      AttributeKey.stringArrayKey("files"), dropped.sorted(),
+    ))
+  }
 }
+
+/**
+ * Removes the executable bits of the regular files in [files], which a copy from the checkout wrote, and returns the files
+ * that had one.
+ *
+ * The mode of a checkout file depends on the host: a Windows checkout has none. So a file of the checkout is executable
+ * in a distribution only when its layout declares it, see [PluginLayout.PluginLayoutBuilder.withExecutable].
+ */
+internal fun dropCheckoutExecutableBits(files: List<Path>): List<Path> {
+  val dropped = ArrayList<Path>()
+  for (file in files) {
+    if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS) || !Files.getFileStore(file).supportsFileAttributeView("posix")) {
+      continue
+    }
+    val permissions = Files.getPosixFilePermissions(file)
+    if (permissions.removeAll(EXECUTE_PERMISSIONS)) {
+      Files.setPosixFilePermissions(file, permissions)
+      dropped.add(file)
+    }
+  }
+  return dropped
+}
+
+private val EXECUTE_PERMISSIONS: Set<PosixFilePermission> =
+  EnumSet.of(PosixFilePermission.OWNER_EXECUTE, PosixFilePermission.GROUP_EXECUTE, PosixFilePermission.OTHERS_EXECUTE)
 
 private fun layoutAdditionalResources(layout: BaseLayout, targetDirectory: Path, context: BuildContext) {
   layoutResourcePaths(layout = layout, targetDirectory = targetDirectory, outputProvider = context.outputProvider)
