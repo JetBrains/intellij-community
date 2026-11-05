@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
@@ -83,25 +83,11 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
           }
         },
         existingTargetFolder = {
-          calculateExistingGenFolder(sourceRoot)
+          findGenSourceRoot(sourceRoot)?.url?.virtualFile
         },
         formatCode = true
       )
     }
-  }
-
-  private fun calculateExistingGenFolder(sourceRoot: SourceRootEntity): VirtualFile? {
-    val closest = sourceRoot.javaSourceRoots.firstOrNull { it.generated }
-    if (closest != null) {
-      return closest.sourceRoot.url.virtualFile
-    }
-    val contentRoot = sourceRoot.contentRoot
-    val inContentRoot = contentRoot.sourceRoots.filter { it.rootTypeId == sourceRoot.rootTypeId }
-      .flatMap { it.javaSourceRoots }.firstOrNull { it.generated }
-    if (inContentRoot != null) {
-      return inContentRoot.sourceRoot.url.virtualFile
-    }
-    return null
   }
 
   private fun createGenSourceRoot(storage: MutableEntityStorage, sourceRoot: SourceRootEntity): SourceRootEntity {
@@ -148,5 +134,28 @@ class WorkspaceModelGenerator(private val project: Project, private val coroutin
     const val WORKSPACE_TESTS_MODULE: String = "intellij.platform.workspace.storage.testEntities"
 
     fun getInstance(project: Project): WorkspaceModelGenerator = project.service()
+
+    fun findGenSourceRoot(sourceRoot: SourceRootEntity): SourceRootEntity? {
+      val closest = sourceRoot.javaSourceRoots.firstOrNull { it.generated }
+      if (closest != null) {
+        return closest.sourceRoot
+      }
+      val contentRoot = sourceRoot.contentRoot
+      val inContentRoot = contentRoot.sourceRoots.filter { it.rootTypeId == sourceRoot.rootTypeId }
+        .flatMap { it.javaSourceRoots }.firstOrNull { it.generated }
+      if (inContentRoot != null) {
+        return inContentRoot.sourceRoot
+      }
+      // case when there is are two separate single-root content roots in a module: (test)Src and (test)Gen
+      val module = contentRoot.module
+      for (content in module.contentRoots) {
+        if (content.sourceRoots.size != 1) continue
+        val source = content.sourceRoots.first()
+        if (source.rootTypeId != sourceRoot.rootTypeId || source.javaSourceRoots.size != 1) continue
+        val javaSource = source.javaSourceRoots.first()
+        if (javaSource.generated) return javaSource.sourceRoot
+      }
+      return null
+    }
   }
 }

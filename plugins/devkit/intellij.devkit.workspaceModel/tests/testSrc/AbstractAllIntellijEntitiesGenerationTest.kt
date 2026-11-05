@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.configurationStore.StoreReloadManager
@@ -10,8 +10,8 @@ import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaSourceRoots
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
@@ -34,7 +34,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.jps.entities.modifyContentRootEntity
-import com.intellij.platform.workspace.jps.entities.sourceRoots
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializers
@@ -48,8 +47,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.pom.PomManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.suspendUntilIndexesAreReady
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -64,7 +63,6 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileCont
 import com.intellij.workspaceModel.ide.impl.jps.serialization.SerializationContextForTests
 import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAffectedEntities
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_SOURCE_ROOT_ENTITY_TYPE_ID
-import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENTITY_TYPE_ID
 import com.maddyhome.idea.copyright.CopyrightProfile
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.runBlocking
@@ -351,23 +349,7 @@ abstract class AbstractAllIntellijEntitiesGenerationTest {
     return false
   }
 
-  private fun findGenSourceRoot(sourceRoot: SourceRootEntity): SourceRootEntity? {
-    val closest = sourceRoot.javaSourceRoots.firstOrNull { it.generated }
-    if (closest != null) {
-      return closest.sourceRoot
-    }
-    val contentRoot = sourceRoot.contentRoot
-    val inContentRoot = contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }
-    if (inContentRoot != null) {
-      return inContentRoot.sourceRoot
-    }
-    if (sourceRoot.rootTypeId != JAVA_TEST_ROOT_ENTITY_TYPE_ID)
-      return null
-    val testGenSourceRoot = sourceRoot.contentRoot.module.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }?.takeIf {
-      it.sourceRoot.url.presentableUrl.endsWith("/testGen")
-    }
-    return testGenSourceRoot?.sourceRoot
-  }
+  private fun findGenSourceRoot(sourceRoot: SourceRootEntity): SourceRootEntity? = WorkspaceModelGenerator.findGenSourceRoot(sourceRoot)
 
   private fun createGenSourceRoot(storage: MutableEntityStorage, sourceRoot: SourceRootEntity): SourceRootEntity {
     val genFolderVirtualFile =
