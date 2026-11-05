@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.view
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontFamilyService
 import com.intellij.openapi.editor.markup.FontFamilies
@@ -22,6 +23,7 @@ private const val EDITOR_WIDTH = 10
 private const val WIDE_WIDTH = 20
 private const val NARROW_WIDTH = 5
 private const val VISIBLE_WIDTH = 400
+private const val KEY_NAME = "EDITOR_FONT_FAMILIES_SOFT_WRAP_TEST"
 
 /**
  * 29 characters: the line fits into [VISIBLE_WIDTH] with the editor fonts and does not fit with the wide font family.
@@ -39,11 +41,11 @@ private val LONG_LINE = "word ".repeat(12).trim()
  * The engine skips a line that surely fits, so the tests also compare with an editor where the engine measures each line.
  */
 @TestApplication
-@Suppress("SuspiciousPackagePrivateAccess")
 internal class EditorFontFamiliesSoftWrapTest {
   private val families = FontFamilyService.getAvailableFamilies().filter { !it.startsWith(".") }
   private val wide = FontFamilies.of(families[0])
   private val narrow = FontFamilies.of(families[1])
+  private val key = TextAttributesKey.createTextAttributesKey(KEY_NAME)
 
   @BeforeEach
   fun setUp() {
@@ -54,6 +56,7 @@ internal class EditorFontFamiliesSoftWrapTest {
   @AfterEach
   fun tearDown() {
     FontLayoutService.setInstance(null)
+    TextAttributesKey.removeTextAttributesKey(key.externalName)
   }
 
   @Test
@@ -108,10 +111,20 @@ internal class EditorFontFamiliesSoftWrapTest {
   @Test
   fun `unpublished font families measure with the editor fonts`() {
     val softWraps = softWraps(SHORT_LINE, measureEachLine = true) { editor ->
-      addFontFamilies(editor, 0, SHORT_LINE.length, wide)
+      highlightAllText(editor, key, wide)
     }
 
     assertThat(softWraps).isEmpty()
+  }
+
+  @Test
+  fun `the font families of the editor highlighter measure with their fonts after a publication`() {
+    val softWraps = softWraps(SHORT_LINE, measureEachLine = true) { editor ->
+      editor.view.publishFontFamilies(listOf(wide))
+      highlightAllText(editor, key, wide)
+    }
+
+    assertThat(softWraps).isNotEmpty()
   }
 
   /**

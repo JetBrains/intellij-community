@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +22,10 @@ import java.util.concurrent.atomic.AtomicReference
  * Repaints the editor when the range highlighters of its markup models change.
  * A highlighter can change on any thread.
  * The repainter joins the changes into the repaint request and applies it on the EDT.
+ *
+ * An added highlighter and an attributes change publish the font families of the highlighter at once, on the thread of the change.
+ * So the fonts of the families exist before the request lays out the text again,
+ * see [com.intellij.openapi.editor.impl.view.EditorView.publishFontFamilies].
  */
 internal class EditorMarkupRepainter(
   private val editor: EditorImpl,
@@ -39,11 +44,14 @@ internal class EditorMarkupRepainter(
   private val repaintRequest = AtomicReference<RepaintRequest?>()
 
   override fun afterAdded(highlighter: RangeHighlighterEx) {
-    onHighlighterChanged(highlighter, editor.canImpactGutterSize(highlighter))
+    val attributes = highlighter.getTextAttributes(editor.colorsScheme)
+    publishFontFamilies(attributes)
+    onHighlighterChanged(highlighter, attributes, editor.canImpactGutterSize(highlighter))
   }
 
   override fun afterRemoved(highlighter: RangeHighlighterEx) {
-    onHighlighterChanged(highlighter, editor.canImpactGutterSize(highlighter))
+    val attributes = highlighter.getTextAttributes(editor.colorsScheme)
+    onHighlighterChanged(highlighter, attributes, editor.canImpactGutterSize(highlighter))
   }
 
   override fun attributesChanged(
@@ -52,6 +60,9 @@ internal class EditorMarkupRepainter(
     fontStyleChanged: Boolean,
     foregroundColorChanged: Boolean,
   ) {
+    if (fontStyleChanged) {
+      publishFontFamilies(highlighter.getTextAttributes(editor.colorsScheme))
+    }
     joinRequest(
       highlighter,
       canImpactGutterSize = renderersChanged,
@@ -87,7 +98,8 @@ internal class EditorMarkupRepainter(
    * Updates the editor after its highlighting filter starts or stops rendering the highlighter.
    */
   fun renderingChanged(highlighter: RangeHighlighterEx) {
-    onHighlighterChanged(highlighter, canImpactGutterSize = true)
+    val attributes = highlighter.getTextAttributes(editor.colorsScheme)
+    onHighlighterChanged(highlighter, attributes, canImpactGutterSize = true)
   }
 
   /**
@@ -129,16 +141,27 @@ internal class EditorMarkupRepainter(
   }
 
   /**
-   * Takes the font style and the color flags from the current attributes of the highlighter, and gives them to [joinRequest].
+   * Takes the font style and the color flags from the current [attributes] of the highlighter, and gives them to [joinRequest].
    */
-  private fun onHighlighterChanged(highlighter: RangeHighlighterEx, canImpactGutterSize: Boolean) {
-    val attributes = highlighter.getTextAttributes(editor.colorsScheme)
+  private fun onHighlighterChanged(highlighter: RangeHighlighterEx, attributes: TextAttributes?, canImpactGutterSize: Boolean) {
     joinRequest(
       highlighter,
       canImpactGutterSize,
       EditorUtil.attributesImpactFontStyle(attributes),
       EditorUtil.attributesImpactForegroundColor(attributes),
     )
+  }
+
+  /**
+   * Publishes the font families of [attributes], when they have them.
+   * The first publication of a value creates its fonts, so it runs on the thread of the change and not in the request.
+   * A value stays published after its highlighter goes away.
+   */
+  private fun publishFontFamilies(attributes: TextAttributes?) {
+    val fontFamilies = attributes?.fontFamilies
+    if (fontFamilies != null) {
+      editor.view.publishFontFamilies(listOf(fontFamilies))
+    }
   }
 
   /**

@@ -668,7 +668,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    * @return whether a value was new
    * @see EditorFontResolver#withFontFamilies
    */
-  boolean publishFontFamilies(Collection<FontFamilies> values) {
+  public boolean publishFontFamilies(Collection<FontFamilies> values) {
     while (true) {
       EditorViewSnapshot snapshot = mySnapshot;
       EditorFontResolver resolver = snapshot.fontResolver();
