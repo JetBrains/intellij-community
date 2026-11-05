@@ -574,6 +574,7 @@
             icon="AllIcons.Actions.DeleteTag"/>
     <action id="WelcomeScreen.Branches" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.BranchesRecentProjectAction"
             icon="AllIcons.Vcs.Branch"/>
+    <action id="WelcomeScreen.OpenInTerminal" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.OpenInTerminal"/>
     <action id="WelcomeScreen.RevealIn" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.RevealProjectDirAction"/>
     <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.projectActions.CopyProjectPathAction"
             use-shortcut-of="CopyPaths"/>
