@@ -913,7 +913,6 @@ class LineStatusTrackerManager(
     }
   }
 
-  @RequiresReadLock /* installTracker */
   @RequiresEdt
   private fun ensureTrackerOnDocumentEvent(event: DocumentEvent) {
     if (!partialChangeListsEnabled || project.isDisposed) return
@@ -934,8 +933,10 @@ class LineStatusTrackerManager(
 
       log("Tracker install from DocumentListener: ", virtualFile)
 
-      val tracker = synchronized(LOCK) {
-        installTracker(virtualFile, document, provider)
+      val tracker = runReadActionBlocking {
+        synchronized(LOCK) {
+          installTracker(virtualFile, document, provider)
+        }
       }
       if (tracker is ChangelistsLocalLineStatusTracker) {
         tracker.replayChangesFromDocumentEvents(listOf(event))
