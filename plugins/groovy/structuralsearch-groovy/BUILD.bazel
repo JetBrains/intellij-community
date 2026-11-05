@@ -106,8 +106,8 @@ jvm_library(
         "//libraries/lucene.common",
         "//platform/code-style-api:codeStyle",
         "//plugins/groovy/structuralsearch-groovy:structuralSearch",
-        "//libraries/junit4",
         "//libraries/junit6",
+        "//platform/testFramework/junit5",
     ],
 )
 ### auto-generated section `build intellij.groovy.structuralSearch.tests` end

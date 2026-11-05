@@ -45,7 +45,7 @@ public abstract class StructuralReplaceTestCase extends LightPlatformCodeInsight
     }
     matchOptions.fillSearchCriteria(what);
     final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), matchOptions, true, false);
-    final String message = StructuralSearchTestCase.checkApplicableConstraints(matchOptions, compiledPattern);
+    final String message = StructuralSearchTestFixture.checkApplicableConstraints(matchOptions, compiledPattern);
     assertNull(message, message);
     return Replacer.testReplace(in, what, by, options, getProject(), sourceIsFile);
   }

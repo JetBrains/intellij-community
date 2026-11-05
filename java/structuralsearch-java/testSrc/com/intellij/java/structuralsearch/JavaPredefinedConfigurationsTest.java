@@ -2,52 +2,59 @@
 package com.intellij.java.structuralsearch;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.JavaPredefinedConfigurations;
-import com.intellij.structuralsearch.PredefinedConfigurationsTestCase;
 import com.intellij.structuralsearch.SSRBundle;
+import com.intellij.structuralsearch.StructuralSearchTestFixture;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.TestDisposable;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.structuralsearch.StructuralSearchTestFixtureKt.structuralSearchFixture;
+import static com.intellij.testFramework.JavaCodeInsightFixtureKt.setUpJdk;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.disposableFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.moduleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+
 /**
  * @author Bas Leijdekkers
  */
-public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTestCase {
-  private final Disposable myBeforeParentDisposeDisposable = Disposer.newDisposable();
+@TestApplication
+public class JavaPredefinedConfigurationsTest {
+  private static final TestFixture<Disposable> disposableFixture = disposableFixture();
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+  private static final TestFixture<Module> moduleFixture = moduleFixture(projectFixture);
+  private final TestFixture<StructuralSearchTestFixture> ssrFixture = structuralSearchFixture(projectFixture);
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_16, myBeforeParentDisposeDisposable);
+  @BeforeAll
+  static void setUpJdk18() {
+    EdtTestUtil.runInEdtAndWait(() -> setUpJdk(LanguageLevel.JDK_1_8, projectFixture.get(), moduleFixture.get(), disposableFixture.get()));
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      Disposer.dispose(myBeforeParentDisposeDisposable);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @BeforeEach
+  void setUp(@TestDisposable Disposable disposable) {
+    IdeaTestUtil.setProjectLanguageLevel(projectFixture.get(), LanguageLevel.JDK_16, disposable);
   }
 
-  @Override
-  protected Sdk getProjectJDK() {
-    return IdeaTestUtil.getMockJdk18();
-  }
-
+  @Test
   public void testAll() {
     final Configuration[] templates = JavaPredefinedConfigurations.createPredefinedTemplates();
     final Map<String, Configuration> configurationMap = Stream.of(templates).collect(Collectors.toMap(Configuration::getName, x -> x));
@@ -209,10 +216,11 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
                <T extends U, V> X(int i) {}
              }""",
            "<T> X(String s) {}", "<T extends U, V> X(int i) {}");
-    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy")),
-           "class X {}\ninterface I { void x(); }", JavaFileType.INSTANCE,
-           PsiElement::getText,
-           "registerNatives", "getClass", "hashCode", "equals", "clone", "toString", "notify", "notifyAll", "wait", "wait", "wait", "finalize");
+    ssrFixture.get().checkPredefinedConfiguration(
+      configurationMap.remove(SSRBundle.message("predefined.configuration.all.methods.of.the.class.within.hierarchy")),
+      "class X {}\ninterface I { void x(); }", JavaFileType.INSTANCE,
+      PsiElement::getText,
+      "registerNatives", "getClass", "hashCode", "equals", "clone", "toString", "notify", "notifyAll", "wait", "wait", "wait", "finalize");
     doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.methods.with.final.parameters")),
            """
              /** @noinspection ALL*/
@@ -591,6 +599,6 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
   }
 
   protected void doTest(Configuration template, @Language("JAVA") String source, String... results) {
-    doTest(template, source, JavaFileType.INSTANCE, results);
+    ssrFixture.get().checkPredefinedConfiguration(template, source, JavaFileType.INSTANCE, results);
   }
 }

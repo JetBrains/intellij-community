@@ -113,6 +113,8 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//platform/lang-api:lang",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
         "//platform/bazel-runfiles",
     ],
 )

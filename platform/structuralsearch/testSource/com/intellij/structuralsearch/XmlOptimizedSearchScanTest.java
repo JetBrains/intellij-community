@@ -2,27 +2,45 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.ide.highlighter.HtmlFileType;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.structuralsearch.StructuralSearchTestFixtureKt.structuralSearchFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Bas Leijdekkers
  */
-public class XmlOptimizedSearchScanTest extends StructuralSearchTestCase {
+@TestApplication
+public class XmlOptimizedSearchScanTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+  private final TestFixture<StructuralSearchTestFixture> ssrFixture = structuralSearchFixture(projectFixture);
 
+  @Test
   public void testSimple() {
     doTest("hello world!", "[in text:hello][in text:world]");
     doTest("<html>", "[in code:html]");
   }
 
+  @Test
   public void testVars() {
     doTest("<'_A{0,0}><b>freak <em>mulching</em> accident</b></'_A><br>", "[in code:br]");
   }
 
+  @Test
   public void testAttributes() {
     doTest("<'_a title=\"fiber\">", "[in code:title][in code:fiber]");
     doTest("<a '_t{0,1}:[regex( href )]=\"https://www.jetbrains.com\">", "[in code:a]");
     doTest("<a href=\"'_value{0,1}:[regex( xxx )]\">", "[in code:a][in code:href]");
   }
 
+  @Test
   public void testElementsThatAreNotWords() {
     doTest("""
              <TextView
@@ -38,6 +56,6 @@ public class XmlOptimizedSearchScanTest extends StructuralSearchTestCase {
   }
 
   private void doTest(String query, String plan) {
-    assertEquals(plan, getSearchPlan(query, HtmlFileType.INSTANCE));
+    assertEquals(plan, ssrFixture.get().getSearchPlan(query, HtmlFileType.INSTANCE));
   }
 }

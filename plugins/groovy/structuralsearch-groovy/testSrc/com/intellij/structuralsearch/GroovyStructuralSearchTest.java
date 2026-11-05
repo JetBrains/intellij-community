@@ -2,11 +2,26 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.project.Project;
 import com.intellij.structuralsearch.groovy.GroovyStructuralSearchProfile;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.junit.jupiter.api.Test;
 
-public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
+import static com.intellij.structuralsearch.StructuralSearchTestFixtureKt.structuralSearchFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class GroovyStructuralSearchTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+  private final TestFixture<StructuralSearchTestFixture> ssrFixture = structuralSearchFixture(projectFixture);
+
+  @Test
   public void test1() {
     String s = """
       def int x = 0;
@@ -23,6 +38,7 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "int $x$ = $value$", 2, 2);
   }
 
+  @Test
   public void test2() {
     String s = """
       def void f(int x) {}
@@ -52,6 +68,7 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "def '_T1('_T2*) {'_T3*}", 6, 1);
   }
 
+  @Test
   public void test3() {
     String s = """
       public class C implements I1, I2 {
@@ -72,6 +89,7 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
     doTest(s, "def a = 1\n def b = 2", 1, 0);
   }
 
+  @Test
   public void test4() {
     String s = """
       for (a in list) {
@@ -107,7 +125,9 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
       }""", 1, 0);
   }
 
+  @Test
   public void test5() {
+    StructuralSearchTestFixture ssr = ssrFixture.get();
     String s = """
       class A {
         def f = {
@@ -122,16 +142,16 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
       def $name$ = {
         '_T+
       }""", 0, 0);
-    final PatternContext old = options.getPatternContext();
+    final PatternContext old = ssr.getOptions().getPatternContext();
     try {
-      options.setPatternContext(GroovyStructuralSearchProfile.CLASS_CONTEXT);
+      ssr.getOptions().setPatternContext(GroovyStructuralSearchProfile.CLASS_CONTEXT);
       doTest(s, """
         def $name$ = {
           '_T+
         }""", 2, 2);
     }
     finally {
-      options.setPatternContext(old);
+      ssr.getOptions().setPatternContext(old);
     }
   }
 
@@ -147,6 +167,6 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
   }
 
   private void findAndCheck(String source, String pattern, int expectedOccurrences) {
-    assertEquals(expectedOccurrences, findMatchesCount(source, pattern, GroovyFileType.GROOVY_FILE_TYPE));
+    assertEquals(expectedOccurrences, ssrFixture.get().findMatchesCount(source, pattern, GroovyFileType.GROOVY_FILE_TYPE));
   }
 }
