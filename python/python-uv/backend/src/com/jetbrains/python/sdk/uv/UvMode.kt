@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.pySdkAdditionalData
@@ -47,7 +47,8 @@ sealed interface UvMode {
  * No stored file reads as [UvMode.Pip]. An SDK saved before the mode existed reads the same way until
  * [pinLegacyUvMode] has run for it.
  */
-internal val Sdk.uvMode: UvMode
+@get:ApiStatus.Internal
+val Sdk.uvMode: UvMode
   get() = when (val fileName = pySdkAdditionalData.requirementsFile) {
     null -> UvMode.Pip()
     PY_PROJECT_TOML -> UvMode.Project
@@ -55,16 +56,19 @@ internal val Sdk.uvMode: UvMode
   }
 
 /** The mode of the SDK of this interpreter. See [Sdk.uvMode]. */
-internal val PythonInterpreter.uvMode: UvMode
+@get:ApiStatus.Internal
+val PythonInterpreter.uvMode: UvMode
   @Suppress("DEPRECATION") get() = getSdkAPI().uvMode
 
 /** Whether [workingDir] holds a `pyproject.toml`. One file stat, on the IO dispatcher. */
-internal suspend fun hasPyProjectToml(workingDir: Path): Boolean = withContext(Dispatchers.IO) {
+@ApiStatus.Internal
+suspend fun hasPyProjectToml(workingDir: Path): Boolean = withContext(Dispatchers.IO) {
   workingDir.resolve(PY_PROJECT_TOML).exists()
 }
 
 /** The mode a directory calls for: [UvMode.Project] when it holds a `pyproject.toml`, else [UvMode.Pip]. */
-internal suspend fun detectUvMode(workingDir: Path): UvMode =
+@ApiStatus.Internal
+suspend fun detectUvMode(workingDir: Path): UvMode =
   if (hasPyProjectToml(workingDir)) UvMode.Project else UvMode.Pip()
 
 /** Whether an SDK of this mode in [workingDir] needs `uv init` first. [UvMode.Project] needs it when the directory has no `pyproject.toml`. */
@@ -94,7 +98,8 @@ internal fun pinLegacyUvMode(project: Project, sdk: Sdk): UvMode {
  * Refreshes the `pyproject.toml` of a legacy SDK from disk on the IO dispatcher, then calls [pinLegacyUvMode].
  * The VFS is current at that point, so the answer is final.
  */
-internal suspend fun migrateLegacyUvMode(project: Project, sdk: Sdk): UvMode {
+@ApiStatus.Internal
+suspend fun migrateLegacyUvMode(project: Project, sdk: Sdk): UvMode {
   legacyPyProjectToml(sdk)?.let { path ->
     withContext(Dispatchers.IO) { VirtualFileManager.getInstance().refreshAndFindFileByNioPath(path) }
   }

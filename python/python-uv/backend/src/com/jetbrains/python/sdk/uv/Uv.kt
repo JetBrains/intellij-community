@@ -2,11 +2,11 @@
 package com.jetbrains.python.sdk.uv
 
 import com.intellij.python.community.execService.Args
+import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
-import com.intellij.python.pyproject.PyDependencyGroup
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.sdk.add.v2.FileSystem
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
-internal interface UvCli<P : PathHolder> {
+interface UvCli<P : PathHolder> {
   val fileSystem: FileSystem<P>
   /**
    * [workingDir] is the directory uv runs in. It is `null` for a command that needs none, such as a query of the uv
@@ -32,7 +32,7 @@ internal interface UvCli<P : PathHolder> {
 }
 
 @ApiStatus.Internal
-internal interface UvLowLevel<P : PathHolder> {
+interface UvLowLevel<P : PathHolder> {
   /** `uv init --bare --no-project` in the working directory: a `pyproject.toml` named after the directory, nothing else. */
   suspend fun initProject(version: Version?): PyResult<Unit>
 
@@ -99,10 +99,11 @@ internal interface UvLowLevel<P : PathHolder> {
  * Both are paths on the machine uv ran on, kept as reported: parsing them locally would mangle a target path whose
  * separators are not the host's.
  */
-internal data class UvScriptEnvironment(val path: String, val pythonPath: String)
+@ApiStatus.Internal
+data class UvScriptEnvironment(val path: String, val pythonPath: String)
 
 @ApiStatus.Internal
-internal sealed class ScriptSyncCheckResult {
+sealed class ScriptSyncCheckResult {
   data object Synced : ScriptSyncCheckResult()
   data object NotSynced : ScriptSyncCheckResult()
   data object NoInlineMetadata : ScriptSyncCheckResult()

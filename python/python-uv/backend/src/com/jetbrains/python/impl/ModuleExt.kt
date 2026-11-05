@@ -7,6 +7,7 @@ import com.intellij.python.pyproject.model.internal.SuggestedSdk
 import com.intellij.python.pyproject.model.internal.suggestSdk
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -16,12 +17,14 @@ import com.jetbrains.python.project.PyProject.Companion.asPyProject
  * `null` when the workspace root is no Python project. Its directory is then unknown, and this project's own
  * directory is the wrong one: a member holds neither the environment nor the lock file of its workspace (PY-92193).
  */
-internal suspend fun PyProject.getSdkAssociatedPyProject(toolId: ToolId): PyProject? {
+@ApiStatus.Internal
+suspend fun PyProject.getSdkAssociatedPyProject(toolId: ToolId): PyProject? {
   val rootModule = residesOnModule.getRootModuleOrNull(toolId) ?: return this
   return rootModule.asPyProject()
 }
 
-internal suspend fun Module.getRootModuleOrNull(toolId: ToolId): Module? =
+@ApiStatus.Internal
+suspend fun Module.getRootModuleOrNull(toolId: ToolId): Module? =
   when (val r = suggestSdk()) {
     // Workspace suggested by uv
     is SuggestedSdk.SameAs -> if (r.accordingTo == toolId) r.parentModule else null

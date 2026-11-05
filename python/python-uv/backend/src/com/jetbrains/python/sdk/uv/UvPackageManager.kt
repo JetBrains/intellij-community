@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyDependencyGroup
@@ -16,8 +15,8 @@ import com.intellij.python.pyproject.model.evolution.findModuleFor
 import com.intellij.python.pyproject.model.internal.workspaceBridge.getToolWorkspaceLayout
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.uv.backend.PyUvBundle.message
 import com.intellij.python.uv.common.UV_TOOL_ID
-import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.PyPackageName
@@ -38,18 +37,20 @@ import com.jetbrains.python.packaging.packageRequirements.packagesUnavailable
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.uv.UV_LOCK
-import java.nio.file.Path
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.nio.file.Path
 
 /**
  * The uv package manager of an SDK in [UvMode.Project]: a `pyproject.toml`, a `uv.lock`, and possibly a workspace.
  *
  * Dependencies go through `uv add`, `uv remove`, `uv sync` and `uv lock`. The tool window shows `uv tree`.
  */
-internal class UvPackageManager internal constructor(
+@ApiStatus.Internal
+class UvPackageManager internal constructor(
   project: Project,
   interpreter: PythonInterpreter,
   uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>,

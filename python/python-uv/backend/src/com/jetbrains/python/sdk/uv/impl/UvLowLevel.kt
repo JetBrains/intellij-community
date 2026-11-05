@@ -7,7 +7,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.execService.Args
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.pyproject.PyDependencyGroupKind
-import com.jetbrains.python.PyBundle
+import com.intellij.python.uv.backend.PyUvBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.ExecErrorReason
@@ -22,9 +22,9 @@ import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.pip.PipParseUtils
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.uv.ScriptSyncCheckResult
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.sdk.uv.UvLowLevel
@@ -32,6 +32,7 @@ import com.jetbrains.python.sdk.uv.UvScriptEnvironment
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import com.jetbrains.python.venvReader.tryResolvePath
 import io.github.z4kn4fein.semver.Version
+import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JacksonException
 import tools.jackson.module.kotlin.jacksonObjectMapper
 import tools.jackson.module.kotlin.readValue
@@ -51,7 +52,7 @@ private class UvLowLevelImpl<P : PathHolder>(
   private val fileSystem: FileSystem<P>,
 ) : UvLowLevel<P> {
   override suspend fun initProject(version: Version?): PyResult<Unit> {
-    val cwd = cwd ?: return PyResult.localizedError(PyBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
+    val cwd = cwd ?: return PyResult.localizedError(PyUvBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
     val initArgs = mutableListOf("init")
     initArgs += pythonArgs(version)
     initArgs.add("--bare")
@@ -73,7 +74,7 @@ private class UvLowLevelImpl<P : PathHolder>(
     inheritSitePackages: Boolean,
   ): PyResult<P> {
     // Every other command only forwards the directory to uv. This one reads it, so it needs a real one.
-    val cwd = cwd ?: return PyResult.localizedError(PyBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
+    val cwd = cwd ?: return PyResult.localizedError(PyUvBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
 
     if (init) {
       initProject(version).getOr { return it }
@@ -113,7 +114,7 @@ private class UvLowLevelImpl<P : PathHolder>(
 
     val resolvedFallback = fileSystem.resolveInWorkingDir(cwd, VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
                              ?.let { fileSystem.resolvePythonBinary(it) }
-                           ?: return PyResult.localizedError(PyBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
+                           ?: return PyResult.localizedError(PyUvBundle.message("python.sdk.uv.failed.to.initialize.uv.environment"))
 
     return PyResult.success(resolvedFallback)
   }
@@ -128,7 +129,7 @@ private class UvLowLevelImpl<P : PathHolder>(
 
     val uvDir = tryResolvePath(out)
     if (uvDir == null) {
-      return PyResult.localizedError(PyBundle.message("python.sdk.uv.failed.to.detect.uv.python.directory"))
+      return PyResult.localizedError(PyUvBundle.message("python.sdk.uv.failed.to.detect.uv.python.directory"))
     }
 
     // TODO: ask for json output format
@@ -392,7 +393,7 @@ private class UvLowLevelImpl<P : PathHolder>(
     val schemaVersion = report.path("schema").path("version").stringValue(null)
     if (schemaVersion != SUPPORTED_SYNC_SCHEMA_VERSION) {
       return PyResult.localizedError(
-        PyBundle.message("uv.script.sync.unsupported.schema", schemaVersion ?: "", SUPPORTED_SYNC_SCHEMA_VERSION)
+        PyUvBundle.message("uv.script.sync.unsupported.schema", schemaVersion ?: "", SUPPORTED_SYNC_SCHEMA_VERSION)
       )
     }
 
@@ -400,7 +401,7 @@ private class UvLowLevelImpl<P : PathHolder>(
     val environmentPath = environment.path("path").stringValue(null)
     val pythonPath = environment.path("python").path("path").stringValue(null)
     if (environmentPath.isNullOrBlank() || pythonPath.isNullOrBlank()) {
-      return PyResult.localizedError(PyBundle.message("uv.script.sync.no.environment", scriptPath.pathString))
+      return PyResult.localizedError(PyUvBundle.message("uv.script.sync.no.environment", scriptPath.pathString))
     }
 
     return PyResult.success(UvScriptEnvironment(environmentPath, pythonPath))
@@ -425,12 +426,14 @@ internal fun constructSyncArgs(inexact: Boolean): MutableList<String> {
  * [cwd] is the directory uv runs in. Pass `null` for a caller that only queries uv and needs no directory.
  * [UvLowLevel.initializeEnvironment] needs a real one.
  */
-internal fun <P : PathHolder> createUvLowLevel(cwd: Path?, uvCli: UvCli<P>, venvPath: P? = null): UvLowLevel<P> =
+@ApiStatus.Internal
+fun <P : PathHolder> createUvLowLevel(cwd: Path?, uvCli: UvCli<P>, venvPath: P? = null): UvLowLevel<P> =
   UvLowLevelImpl(cwd, venvPath, uvCli, uvCli.fileSystem)
 
-internal suspend fun createUvLowLevelOnEel(eelApi: EelApi, cwd: Path? = null): PyResult<UvLowLevel<PathHolder.Eel>> {
+@ApiStatus.Internal
+suspend fun createUvLowLevelOnEel(eelApi: EelApi, cwd: Path? = null): PyResult<UvLowLevel<PathHolder.Eel>> {
   check(cwd == null || cwd.getEelDescriptor().equalsMayBeUsingMachine(eelApi.descriptor)) { "$cwd is not on $eelApi" }
-  return validateAndCreateUvCli(null, EelFileSystem(eelApi)).mapSuccess { createUvLowLevel(cwd, it) }
+  return validateAndCreateUvCli(null, eelApi.toFileSystem()).mapSuccess { createUvLowLevel(cwd, it) }
 }
 
 private fun tryExtractStderr(err: PyError): String? =

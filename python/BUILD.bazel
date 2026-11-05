@@ -312,6 +312,7 @@ jvm_library(
         "//python/python-venv:venv",
         "//python/python-hatch:hatch",
         "//python/python-requirements/backend",
+        "//python/python-uv/backend",
         "//python/python-poetry/backend",
         "//python/python-packaging:packaging",
     ],

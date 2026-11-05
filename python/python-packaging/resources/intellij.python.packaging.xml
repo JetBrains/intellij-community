@@ -16,6 +16,7 @@
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
@@ -23,6 +24,7 @@
     <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.requirements.common"/>
     <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.syntax.core"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -36,5 +38,9 @@
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <projectSettings service="com.jetbrains.python.packaging.PyPackagingSettings"/>
     <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>
+    <applicationSettings service="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
+    <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
+    <workspaceModel.customImlComponentNameContributor
+      implementation="com.jetbrains.python.packaging.PyPackageRequirementsSettingsImlComponentNameContributor"/>
   </extensions>
 </idea-plugin>

@@ -10,15 +10,15 @@ import com.intellij.python.community.execService.EnvVarVal
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.resolveExecutable
+import com.intellij.python.uv.backend.PyUvBundle
 import com.intellij.python.uv.backend.UvPyTool
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateExecutableFile
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.runExecutableWithProgress
 import com.jetbrains.python.sdk.uv.UvCli
 import com.jetbrains.python.uv.UV_LOCK
@@ -26,6 +26,7 @@ import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.minutes
 
@@ -33,7 +34,7 @@ import kotlin.time.Duration.Companion.minutes
 private fun <P : PathHolder> validateUvExecutable(uvPath: P?, platformAndRoot: PlatformAndRoot): ValidationInfo? {
   return validateExecutableFile(ValidationRequest(
     path = uvPath?.toStringOnRemoteMachine(),
-    fieldIsEmpty = PyBundle.message("python.sdk.uv.executable.not.found"),
+    fieldIsEmpty = PyUvBundle.message("python.sdk.uv.executable.not.found"),
     platformAndRoot = platformAndRoot
   ))
 }
@@ -77,17 +78,19 @@ private class UvCliImpl<P : PathHolder>(val dispatcher: CoroutineDispatcher, val
 }
 
 suspend fun hasUvExecutableLocal(): Boolean {
-  return UvPyTool.getInstance().resolveExecutable(EelFileSystem(localEel)) != null
+  return UvPyTool.getInstance().resolveExecutable(localEel.toFileSystem()) != null
 }
 
 internal suspend fun createUvCliLocal(uv: Path? = null, dispatcher: CoroutineDispatcher = Dispatchers.IO): PyResult<UvCli<PathHolder.Eel>> {
-  return validateAndCreateUvCli(uv?.let { PathHolder.Eel(it) }, EelFileSystem(localEel), dispatcher)
+  return validateAndCreateUvCli(uv?.let { PathHolder.Eel(it) }, localEel.toFileSystem(), dispatcher)
 }
 
-internal fun <P : PathHolder> createUvCli(uv: P, fileSystem: FileSystem<P>, dispatcher: CoroutineDispatcher = Dispatchers.IO): UvCli<P> =
+@ApiStatus.Internal
+fun <P : PathHolder> createUvCli(uv: P, fileSystem: FileSystem<P>, dispatcher: CoroutineDispatcher = Dispatchers.IO): UvCli<P> =
   UvCliImpl(dispatcher, uv, fileSystem)
 
-internal suspend fun <P : PathHolder> validateAndCreateUvCli(
+@ApiStatus.Internal
+suspend fun <P : PathHolder> validateAndCreateUvCli(
   uv: P?,
   fileSystem: FileSystem<P>,
   dispatcher: CoroutineDispatcher = Dispatchers.IO,

@@ -1,19 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
-import com.intellij.python.sdk.backend.resolvePythonHome
-import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.project.Project
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.resolvePythonHome
+import com.intellij.python.uv.backend.PyUvBundle
 import com.intellij.python.uv.backend.UvPyTool
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
@@ -21,7 +18,7 @@ import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.onSuccess
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toFileSystem
@@ -35,6 +32,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
@@ -43,7 +41,8 @@ import java.nio.file.Path
  *
  * Use [getUvExecutionContextAsync] to create an instance from an interpreter.
  */
-internal data class UvExecutionContext<P : PathHolder>(
+@ApiStatus.Internal
+data class UvExecutionContext<P : PathHolder>(
   val workingDir: Path,
   val venvPath: P?,
   val fileSystem: FileSystem<P>,
@@ -94,7 +93,8 @@ internal fun PythonInterpreter.getUvExecutionContextAsync(scope: CoroutineScope,
   }
 }
 
-internal suspend fun setupNewUvSdkAndEnv(
+@ApiStatus.Internal
+suspend fun setupNewUvSdkAndEnv(
   moduleOrProject: ModuleOrProject,
   uvExecutable: Path,
   workingDir: Path,
@@ -107,7 +107,7 @@ internal suspend fun setupNewUvSdkAndEnv(
     uvExecutable = PathHolder.Eel(uvExecutable),
     workingDir = workingDir,
     venvPath = null,
-    fileSystem = EelFileSystem(uvExecutable.getEelDescriptor().toEelApi()),
+    fileSystem = uvExecutable.toFileSystem(),
     version = version,
     errorSink = errorSink,
     mode = mode,
@@ -119,7 +119,8 @@ internal suspend fun setupNewUvSdkAndEnv(
  * [UvMode.Project] runs `uv init` first when the directory has no `pyproject.toml`. It syncs a project that is
  * already there. [UvMode.Pip] runs `uv venv` alone and writes no file.
  */
-internal suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
+@ApiStatus.Internal
+suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
   moduleOrProject: ModuleOrProject,
   uvExecutable: P,
   workingDir: Path,
@@ -144,7 +145,7 @@ internal suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
   val normalizedUvExecutablePath = fileSystem.normalizePathToRemote(uvExecutable)
 
   val uv = createUvLowLevel(workingDir, validateAndCreateUvCli(normalizedUvExecutablePath, fileSystem).getOr { return it }, venvPath)
-  val pythonBinary = withProgressText(PyBundle.message("python.sdk.progress.uv.creating")) {
+  val pythonBinary = withProgressText(PyUvBundle.message("python.sdk.progress.uv.creating")) {
     uv.initializeEnvironment(initProject, version, clearExisting = overrideExistingEnv, inheritSitePackages = inheritSitePackages)
   }.getOr { return it }
 
@@ -173,13 +174,15 @@ internal suspend fun <P : PathHolder> setupNewUvSdkAndEnv(
  *
  * [uvExecutable] must be a validated uv executable. This function runs no check on it.
  */
-internal suspend fun <P : PathHolder> initUvProjectIfNeeded(uvExecutable: P, workingDir: Path, fileSystem: FileSystem<P>, mode: UvMode): PyResult<Unit> {
+@ApiStatus.Internal
+suspend fun <P : PathHolder> initUvProjectIfNeeded(uvExecutable: P, workingDir: Path, fileSystem: FileSystem<P>, mode: UvMode): PyResult<Unit> {
   if (!mode.needsInit(workingDir)) return PyResult.success(Unit)
   val uvCli = createUvCli(fileSystem.normalizePathToRemote(uvExecutable), fileSystem)
   return createUvLowLevel(workingDir, uvCli).initProject(version = null)
 }
 
-internal suspend fun setupExistingEnvAndSdk(
+@ApiStatus.Internal
+suspend fun setupExistingEnvAndSdk(
   moduleOrProject: ModuleOrProject,
   pythonBinary: PythonBinary,
   envWorkingDir: Path,
@@ -189,7 +192,7 @@ internal suspend fun setupExistingEnvAndSdk(
     moduleOrProject = moduleOrProject,
     pythonBinary = PathHolder.Eel(pythonBinary),
     workingDir = envWorkingDir,
-    fileSystem = EelFileSystem(pythonBinary.getEelDescriptor().toEelApi()),
+    fileSystem = pythonBinary.toFileSystem(),
     mode = mode,
   )
 
@@ -199,19 +202,21 @@ internal suspend fun setupExistingEnvAndSdk(
  * Runs no uv command. A caller that asks for [UvMode.Project] in a directory without a `pyproject.toml` runs
  * [UvLowLevel.initProject] first.
  */
-internal suspend fun <P : PathHolder> setupExistingEnvAndSdk(
+@ApiStatus.Internal
+suspend fun <P : PathHolder> setupExistingEnvAndSdk(
   moduleOrProject: ModuleOrProject,
   pythonBinary: P,
   workingDir: Path,
   fileSystem: FileSystem<P>,
   mode: UvMode,
-): PyResult<PythonInterpreter> = withProgressText(PyBundle.message("python.sdk.progress.uv.configuring")) {
+): PyResult<PythonInterpreter> = withProgressText(PyUvBundle.message("python.sdk.progress.uv.configuring")) {
   val data = uvSdkDataOf(pythonBinary, workingDir).also { it.requirementsPath = mode.requirementsFile }
   fileSystem.setupSdk(moduleOrProject, pythonBinary, data, null, null)
 }
 
 /** The SDK data of the existing uv environment of [pythonBinary]. The caller stores its dependency file. */
-internal fun uvSdkDataOf(pythonBinary: PathHolder, workingDir: Path): UvSdkAdditionalData {
+@ApiStatus.Internal
+fun uvSdkDataOf(pythonBinary: PathHolder, workingDir: Path): UvSdkAdditionalData {
   val venvPath = pythonBinary.resolvePythonHome().toStringOnRemoteMachine()
   return UvSdkAdditionalData(uvWorkingDirectory = workingDir, usePip = null, venvPath = venvPath, uvPath = null)
 }

@@ -55,6 +55,17 @@ jvm_library(
         "//platform/util/jdom",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
+        "//python/python-packaging:packaging",
+        "//python/python-requirements/backend",
+        "//python/python-requirements/common",
+        "//platform/ide-core",
+        "//libraries/semver",
+        "//platform/util-ex",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/databind",
+        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
+        "//platform/util/progress",
+        "//platform/platform-api:ide",
     ],
 )
 ### auto-generated section `build intellij.python.uv.backend` end

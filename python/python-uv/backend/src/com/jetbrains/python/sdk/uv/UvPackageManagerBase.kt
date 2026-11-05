@@ -19,8 +19,9 @@ import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import kotlinx.coroutines.Deferred
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * What the two uv managers share: the uv CLI of the SDK and the commands that read the environment.
@@ -28,7 +29,8 @@ import kotlinx.coroutines.Deferred
  * [UvPackageManager] serves [UvMode.Project]. [UvPipPackageManager] serves [UvMode.Pip]. Both list the installed and
  * the outdated packages with `uv pip list`, and both update a package by installing it again.
  */
-internal abstract class UvPackageManagerBase(
+@ApiStatus.Internal
+abstract class UvPackageManagerBase(
   project: Project,
   interpreter: PythonInterpreter,
   uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>,
@@ -36,7 +38,7 @@ internal abstract class UvPackageManagerBase(
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = listOf(
-    PythonManagerCliSpec("uv", { EelFileSystem(eelApi).resolveExecutable(UvPyTool.getInstance())?.path })
+    PythonManagerCliSpec("uv", { eelApi.toFileSystem().resolveExecutable(UvPyTool.getInstance())?.path })
   )
 
   protected val uvExecutionContextDeferred: Deferred<UvExecutionContext<*>> = uvExecutionContextDeferred.cancelWithManager()

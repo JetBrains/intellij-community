@@ -58,6 +58,8 @@ jvm_library(
         "//libraries/caffeine",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
+        "//python/python-syntax-core:syntax-core",
+        "//platform/workspace/jps",
     ],
 )
 ### auto-generated section `build intellij.python.packaging` end

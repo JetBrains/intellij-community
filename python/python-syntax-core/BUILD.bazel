@@ -50,6 +50,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/workspace/jps",
         "//platform/util/jdom",
+        "//platform/indexing-api:indexing",
     ],
 )
 ### auto-generated section `build intellij.python.syntax.core` end

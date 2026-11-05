@@ -1,13 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv
 
-import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.PyDependencyGroup
-import com.jetbrains.python.PyBundle.message
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.uv.backend.PyUvBundle.message
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyRequirement
@@ -24,8 +23,9 @@ import com.jetbrains.python.packaging.requirementsTxt.addRequirement
 import com.jetbrains.python.packaging.requirementsTxt.readDeclaredPackages
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import kotlinx.coroutines.Deferred
-import java.nio.file.Path
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import java.nio.file.Path
 
 /**
  * The uv package manager of an SDK in [UvMode.Pip]: a plain environment with no `pyproject.toml` and no lock file.
@@ -33,7 +33,8 @@ import org.jetbrains.annotations.Nls
  * Every command goes through `uv pip`. The requirements file, when the SDK has one, is the declared list. Install and
  * sync are two separate operations. `uv pip sync` removes what the file does not name.
  */
-internal class UvPipPackageManager internal constructor(
+@ApiStatus.Internal
+class UvPipPackageManager internal constructor(
   project: Project,
   interpreter: PythonInterpreter,
   uvExecutionContextDeferred: Deferred<UvExecutionContext<*>>,

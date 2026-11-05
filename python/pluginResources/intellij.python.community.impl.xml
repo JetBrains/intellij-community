@@ -220,7 +220,6 @@
     <statistics.validation.customValidationRule implementation="com.jetbrains.python.run.features.PyRunToolIdValidator"/>
 
     <postStartupActivity implementation="com.jetbrains.python.formatter.PyCodeStyleMigrationActivity"/>
-    <applicationSettings service="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
     <projectSettings service="com.jetbrains.python.console.PyConsoleOptions"/>
     <applicationSettings service="com.jetbrains.python.testing.TestRunnerService$AppService"/>
     <projectSettings service="com.jetbrains.python.debugger.PyDebuggerOptionsProvider"/>
@@ -450,11 +449,8 @@
       implementation="com.jetbrains.python.testing.TestRunnerServiceImlComponentNameContributor"/>
 
     <!-- Packaging -->
-    <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
     <applicationService serviceInterface="com.jetbrains.python.packaging.requirementsTxt.PyRequirementsSyncService"
                         serviceImplementation="com.jetbrains.python.packaging.PyRequirementsSyncServiceImpl"/>
-    <workspaceModel.customImlComponentNameContributor
-      implementation="com.jetbrains.python.packaging.PyPackageRequirementsSettingsImlComponentNameContributor"/>
 
     <!-- asyncio REPL -->
     <registryKey key="python.console.asyncio.repl" defaultValue="true" restartRequired="false"
@@ -833,7 +829,6 @@
     <pySdkDataProvider implementation="com.jetbrains.python.sdk.uv.UvSdkDataProvider"/>
     <pySdkDataProvider implementation="com.jetbrains.python.venv.sdk.VenvSdkDataProvider"/>
     <pySdkDataProvider implementation="com.jetbrains.python.sdk.conda.CondaSdkDataProvider"/>
-    <pythonPackageManagerProvider implementation="com.jetbrains.python.sdk.uv.UvPackageManagerProvider"/>
 
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
     <packageInstalledIconProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageInstalledIconProvider"/>
