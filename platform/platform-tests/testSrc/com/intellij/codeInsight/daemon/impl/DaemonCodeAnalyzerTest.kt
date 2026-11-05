@@ -14,15 +14,21 @@ import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditorProviderBean
 import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.project.DumbAware
@@ -37,7 +43,9 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.editorFixture
+import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
@@ -57,7 +65,9 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertSame
 
+@Suppress("SuspiciousPackagePrivateAccess")
 @TestApplication
 class DaemonCodeAnalyzerTest {
   private companion object {
@@ -69,9 +79,12 @@ class DaemonCodeAnalyzerTest {
     val nonAwtFile = sourceRoot.virtualFileFixture("NonAwt.txt", "text")
   }
 
-  private val localEditor = file.editorFixture()
+  private val localEditor: TestFixture<Editor> = file.editorFixture()
 
-  private val highlighting = localEditor.highlightingFixture()
+  private val highlighting: TestFixture<DaemonCodeAnalyzer> = localEditor.highlightingFixture()
+
+  private val wrapperProject: TestFixture<Project> = projectFixture()
+  private val wrapperFileEditorManager: TestFixture<FileEditorManagerImpl> = wrapperProject.fileEditorManagerFixture()
 
   @Test
   fun `non-AWT document change does not acquire daemon read lock`(): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
@@ -169,6 +182,41 @@ class DaemonCodeAnalyzerTest {
       withContext(Dispatchers.EDT) {
         fileEditorManager.closeFile(virtualFile)
         EditorHistoryManager.getInstance(project.get()).removeFile(virtualFile)
+      }
+    }
+  }
+
+  @Test
+  fun `text editor wrapper keeps the highlighting editor on focus gain`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val virtualFile = LightVirtualFile("wrapped.txt", "text")
+    FileEditorProviderBean.EP_NAME.point.registerExtension(FileEditorProviderBean(object : FileEditorProvider, DumbAware {
+      override fun accept(project: Project, file: VirtualFile): Boolean = file == virtualFile
+
+      override fun createEditor(project: Project, file: VirtualFile): FileEditor {
+        val textEditor = assertIs<TextEditor>(TextEditorProvider.getInstance().createEditor(project, file))
+        return TextEditorWithPreview(textEditor, NonHighlightableFileEditor(file))
+      }
+
+      override fun getEditorTypeId(): String = "wrapped-text-editor"
+
+      override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+    }), disposable)
+
+    val fileEditorManager = wrapperFileEditorManager.get()
+    val analyzer = assertIs<DaemonCodeAnalyzerImpl>(DaemonCodeAnalyzer.getInstance(wrapperProject.get()))
+    val tracker = EditorTracker.getInstance(wrapperProject.get())
+    val composite = fileEditorManager.openFile(virtualFile, FileEditorOpenRequest.defaults())
+    withContext(Dispatchers.EDT) {
+      try {
+        val wrapper = assertIs<TextEditorWithPreview>(composite.allEditors.single())
+        tracker.setActiveEditorsInTests(emptyList())
+        assertSame(wrapper.textEditor, analyzer.selectedEditors.single())
+
+        tracker.setActiveEditorsInTests(listOf(wrapper.editor))
+        assertSame(wrapper.textEditor, analyzer.selectedEditors.single())
+      }
+      finally {
+        fileEditorManager.closeFile(virtualFile)
       }
     }
   }

@@ -1676,23 +1676,20 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   @RequiresEdt
-  private @NotNull Collection<? extends FileEditor> getSelectedEditors() {
+  @VisibleForTesting
+  @NotNull Collection<? extends FileEditor> getSelectedEditors() {
     ThreadingAssertions.assertEventDispatchThread();
     // editors in modal context
     List<? extends Editor> editors = EditorTracker.Companion.getInstance(myProject).getActiveEditors();
     Collection<FileEditor> activeTextEditors = new LinkedHashSet<>(editors.size());
     Set<FileInContext> scheduledPassesWithKnownContext = new HashSet<>(editors.size());
-    if (!editors.isEmpty()) {
-      TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
-      for (Editor editor : editors) {
-        if (!editor.isDisposed()) {
-          TextEditor textEditor = textEditorProvider.getTextEditor(editor);
-          if (isValidEditor(textEditor)) {
-            FileInContext fileInContext = FileInContext.of(textEditor, myProject);
-            activeTextEditors.add(textEditor);
-            scheduledPassesWithKnownContext.add(fileInContext);
-          }
-        }
+    TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
+    for (Editor editor : editors) {
+      if (editor.isDisposed()) continue;
+      TextEditor textEditor = textEditorProvider.getTextEditor(editor);
+      if (isValidEditor(textEditor)) {
+        activeTextEditors.add(textEditor);
+        scheduledPassesWithKnownContext.add(FileInContext.of(textEditor, myProject));
       }
     }
 
@@ -1701,23 +1698,30 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
 
     // tests usually care about just one explicitly configured editor
-    if (!ApplicationManager.getApplication().isUnitTestMode() || activeTextEditors.isEmpty()) {
-      Collection<FileEditor> selectedEditors = getFileEditorManager().getSelectedEditorWithRemotes();
-      for (FileEditor tabEditor : selectedEditors) {
-        if (!isValidEditor(tabEditor)) continue;
+    if (ApplicationManager.getApplication().isUnitTestMode() && !activeTextEditors.isEmpty()) {
+      return activeTextEditors;
+    }
+    Collection<FileEditor> selectedEditors = getFileEditorManager().getSelectedEditorWithRemotes();
+    for (FileEditor tabEditor : selectedEditors) {
+      if (!isValidEditor(tabEditor)) continue;
 
-        if (tabEditor instanceof FileEditorWithTextEditors delegate) {
-          TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
-
-          for (Editor embeddedEditor : delegate.getEmbeddedEditors()) {
-            TextEditor embeddedTextEditor = textEditorProvider.getTextEditor(embeddedEditor);
-            if (isValidEditor(embeddedTextEditor) && FileInContext.of(embeddedTextEditor, myProject).addIfNew(scheduledPassesWithKnownContext)) {
-              activeTextEditors.add(embeddedTextEditor);
-            }
-          }
-        }
-        else if (FileInContext.of(tabEditor, myProject).addIfNew(scheduledPassesWithKnownContext)) {
+      List<? extends Editor> textEditors = switch (tabEditor) {
+        case FileEditorWithTextEditors delegate -> delegate.getEmbeddedEditors();
+        case TextEditor textEditor -> List.of(textEditor.getEditor());
+        default -> null;
+      };
+      if (textEditors == null) {
+        if (FileInContext.of(tabEditor, myProject).addIfNew(scheduledPassesWithKnownContext)) {
           activeTextEditors.add(tabEditor);
+        }
+        continue;
+      }
+      // Use the same TextEditor as for focused editors, so myUpdateProgress finds and reuses the running session.
+      // Otherwise, a preview wrapper and its inner text editor can start separate sessions when focus changes (IJPL-260606).
+      for (Editor editor : textEditors) {
+        TextEditor textEditor = textEditorProvider.getTextEditor(editor);
+        if (isValidEditor(textEditor) && FileInContext.of(textEditor, myProject).addIfNew(scheduledPassesWithKnownContext)) {
+          activeTextEditors.add(textEditor);
         }
       }
     }
