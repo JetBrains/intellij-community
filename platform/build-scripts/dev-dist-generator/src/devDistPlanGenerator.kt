@@ -35,6 +35,7 @@ import org.jetbrains.intellij.build.impl.DevPlatformPatchOwner
 import org.jetbrains.intellij.build.impl.LibraryPackMode
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.commonExecutableFilePatterns
 import org.jetbrains.intellij.build.impl.createContentModuleFilter
 import org.jetbrains.intellij.build.impl.createPlatformLayout
 import org.jetbrains.intellij.build.impl.createProductModeContentModuleFilter
@@ -2289,11 +2290,14 @@ internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductPr
     for (arch in JvmArchitecture.entries) {
       val hostPlatform = hostPlatformName(os, arch)
       val platformFiles = files.getOrPut(hostPlatform) { ArrayList() }
+      // A native is executable when a common pattern of production names it: a library and a Windows file are not.
+      val executables = commonExecutableFilePatterns(os).map { FileSystems.getDefault().getPathMatcher("glob:$it") }
       for (native in nativeBinFiles(communityHome = communityRoot, os = os, arch = arch)) {
+        val path = "bin/${native.fileName}"
         platformFiles.add(PlatformAssetFile(
           source = index.planLabel("${COMMUNITY_REPOSITORY_PREFIX}bin:${binDir.relativize(native).invariantSeparatorsPathString}"),
-          path = "bin/${native.fileName}",
-          executable = true,
+          path = path,
+          executable = executables.any { it.matches(Path.of(path)) },
         ))
       }
       for (file in properties.additionalOsSpecificFiles(os, arch)) {

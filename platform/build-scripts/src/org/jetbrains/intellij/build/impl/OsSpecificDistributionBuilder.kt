@@ -37,6 +37,20 @@ internal fun copyNativeBinFileToDir(file: Path, binDir: Path): Path {
 }
 
 /**
+ * The executable patterns that the customizer of [os] applies to every product, without the launcher of the product. A
+ * pattern is a `java.nio` glob relative to the distribution root. A Windows archive keeps no executable bit, so Windows
+ * has no pattern.
+ */
+@Internal
+fun commonExecutableFilePatterns(os: OsFamily): List<String> {
+  return when (os) {
+    OsFamily.MACOS -> listOf("bin/*.sh", "bin/fsnotifier", "bin/printenv", "bin/restarter", "MacOS/*")
+    OsFamily.LINUX -> listOf("bin/*.sh", "bin/fsnotifier", "bin/restarter")
+    OsFamily.WINDOWS -> emptyList()
+  }
+}
+
+/**
  * The native files of `community/bin` that the `bin` directory of a distribution for [os] and [arch] takes, sorted by
  * name within each directory.
  *

@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.intellij.build.impl.commonExecutableFilePatterns
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.impl.support.bundleRepairUtility
 import java.nio.file.Path
@@ -436,13 +437,7 @@ open class MacDistributionCustomizer {
 
   open fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, context: BuildContext): Sequence<String> {
     val basePatterns = if (context.isLanguageServer) sequenceOf("bin/${context.productProperties.baseFileName}")
-    else sequenceOf(
-      "bin/*.sh",
-      "bin/fsnotifier",
-      "bin/printenv",
-      "bin/restarter",
-      "MacOS/*"
-    )
+    else commonExecutableFilePatterns(OsFamily.MACOS).asSequence()
 
     val rtPatterns = if (includeRuntime) {
       context.bundledRuntime.executableFilesPatterns(OsFamily.MACOS, context.productProperties.runtimeDistribution)

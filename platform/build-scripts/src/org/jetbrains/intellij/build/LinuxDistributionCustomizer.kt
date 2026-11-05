@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import org.jetbrains.intellij.build.impl.commonExecutableFilePatterns
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.impl.support.bundleRepairUtility
 import java.nio.file.Path
@@ -190,12 +191,7 @@ open class LinuxDistributionCustomizer {
 
   open fun generateExecutableFilesPatterns(includeRuntime: Boolean, arch: JvmArchitecture, targetLibcImpl: LibcImpl, context: BuildContext): Sequence<String> {
     val basePatterns = if (context.isLanguageServer) sequenceOf("bin/${context.productProperties.baseFileName}")
-    else sequenceOf(
-      "bin/*.sh",
-      "bin/fsnotifier",
-      "bin/restarter",
-      "bin/${context.productProperties.baseFileName}",
-    )
+    else commonExecutableFilePatterns(OsFamily.LINUX).asSequence() + "bin/${context.productProperties.baseFileName}"
 
     val rtPatterns = if (includeRuntime) {
       val distribution =

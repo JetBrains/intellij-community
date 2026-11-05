@@ -10,12 +10,12 @@ import java.nio.file.Path
  * that copies it. [relativePath] is the destination under the distribution root.
  *
  * [executable] is the mode a split dev distribution gives the file. A production build takes the mode of the source
- * file and then applies the executable patterns of the OS.
+ * file and then applies the executable patterns of the OS. A file that a program runs states `true`.
  */
 class OsSpecificDistFile(
   @JvmField val label: String,
   @JvmField val relativePath: String,
-  @JvmField val executable: Boolean = true,
+  @JvmField val executable: Boolean = false,
   private val resolver: () -> Path,
 ) {
   fun resolve(): Path = resolver()
