@@ -49,7 +49,7 @@ internal class DependencyGraphRegistrar(
             val imports = trackers.imports.importsBySource[source.path]
             val enumImports = trackers.enumWhens.enumClassImportsBySource[source.path]
             if (imports != null || enumImports != null) {
-              callback.registerImports(className, imports.orEmpty(), enumImports.orEmpty())
+              callback.registerImports(className, imports.orEmpty(), staticImportsOf(imports, enumImports))
             }
           }
 
@@ -73,5 +73,25 @@ internal class DependencyGraphRegistrar(
     val storage = KotlinModuleMappingStorage.of(context, target)
     val mappingFile = File(target.outputDir, "META-INF").listFiles()?.firstOrNull { it.name.endsWith(".${ModuleMapping.MAPPING_FILE_EXT}") }
     if (mappingFile != null) storage.write(mappingFile.readBytes()) else storage.clean()
+  }
+
+  /**
+   * The imports to report as static imports: the enum classes of the exhaustive `when` expressions of the source, and
+   * the imports that can bring in a static member.
+   *
+   * The compiler reports the text of an import directive. It does not report what the directive resolved to. A Kotlin
+   * import has no `static` form. An import of `a.b.C.m` can name a nested class or a static member. A star import of
+   * `a.b.C` can bring in nested classes and static members both. JPS turns a static import into a `ClassUsage` of the
+   * owner and an `ImportStaticMemberUsage` or an `ImportStaticOnDemandUsage` of the member. A change of the member then
+   * recompiles the source. A name without a dot has no owner, and JPS cannot turn it into a member import, so such a
+   * name is left out.
+   */
+  private fun staticImportsOf(imports: Collection<String>?, enumImports: Collection<String>?): Collection<String> {
+    val staticImports = LinkedHashSet<String>()
+    enumImports?.let(staticImports::addAll)
+    imports?.forEach { importedFqName ->
+      if (importedFqName.lastIndexOf('.') > 0) staticImports.add(importedFqName)
+    }
+    return staticImports
   }
 }

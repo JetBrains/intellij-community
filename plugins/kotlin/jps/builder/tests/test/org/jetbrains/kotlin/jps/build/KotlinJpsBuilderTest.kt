@@ -70,6 +70,45 @@ class KotlinJpsBuilderTest : JpsBuildTestBase() {
   }
 
   /**
+   * The Kotlin file leaves the imported static member unused, so the compiled output keeps no trace of the import.
+   * Only the import usage tells JPS to recompile the file when the member loses its static modifier. The build then
+   * reports the import that no longer resolves, so it fails.
+   */
+  @Test
+  fun testRecompilesTheFileThatImportsAMemberThatBecameNonStatic() {
+    createFile("src/p/Util.java", "package p;\n\npublic class Util { public static int method() { return 1; } }\n")
+    createFile("src/k.kt", "package p\n\nimport p.Util.method\n\nfun k(): Int = 1\n")
+    val module = addModuleOnModularJdk("m", getAbsolutePath("src"))
+    addKotlinStdlib(module)
+
+    rebuildAllModules()
+    buildAllModules().assertUpToDate()
+
+    change(getAbsolutePath("src/p/Util.java"), "package p;\n\npublic class Util { public int method() { return 1; } }\n")
+    buildAllModules()
+    assertCompiled(KotlinBuilder.KOTLIN_BUILDER_NAME, "src/k.kt")
+  }
+
+  /**
+   * A star import can bring in a static member that appears later, so the graph also takes it as a static star import.
+   * A new static member of the imported scope then recompiles the file.
+   */
+  @Test
+  fun testRecompilesTheFileOfAStarImportWhenAStaticMemberAppears() {
+    createFile("src/p/Util.java", "package p;\n\npublic class Util { }\n")
+    createFile("src/k.kt", "package p\n\nimport p.Util.*\n\nfun k(): Int = 1\n")
+    val module = addModuleOnModularJdk("m", getAbsolutePath("src"))
+    addKotlinStdlib(module)
+
+    rebuildAllModules()
+    buildAllModules().assertUpToDate()
+
+    change(getAbsolutePath("src/p/Util.java"), "package p;\n\npublic class Util { public static int method() { return 1; } }\n")
+    buildAllModules().assertSuccessful()
+    assertCompiled(KotlinBuilder.KOTLIN_BUILDER_NAME, "src/k.kt")
+  }
+
+  /**
    * A module on the JDK of the test JVM, registered the way the IDE registers a modular JDK: with `jrt://` roots.
    * The builder hands such a JDK to the compiler as `-jdk-home`.
    */
