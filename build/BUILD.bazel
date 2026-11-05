@@ -3,6 +3,7 @@ load("@intellij_add_opens//:intellij_add_opens.bzl", "INTELLIJ_ADD_OPENS")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", "ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
 load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:community_build_target.bzl", "community_build_target")
 load("//build:dev_dist_local_launch_test.bzl", "dev_dist_local_launch_test")
 load("//build:dev_dist_products.bzl", "DEV_DIST_PRODUCTS")
 load("//build:intellij_dev_community.bzl", "intellij_dev_launch_assembles_test", "intellij_dev_platform_set_community")
@@ -160,13 +161,8 @@ jps_to_bazel_targets_json(
     }.items()
 ]
 
-java_binary(
+community_build_target(
     name = "intellij_community_installers",
-    add_opens = INTELLIJ_ADD_OPENS,
-    data = ALL_COMMUNITY_TARGETS + [BAZEL_TARGETS_JSON_COMMUNITY],
-    jvm_flags = [
-        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON_COMMUNITY,
-    ],
     main_class = "OpenSourceCommunityInstallersBuildTarget",
     runtime_deps = [":build"],
 )
