@@ -70,6 +70,7 @@ A batch applies several writes and slot operations as one atomic change.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsResolutionTest.kt
 - `SettingsBlockingApi.set` must block until the write is applied, for a caller that cannot suspend. See
   [ADR 0032](../adr/0032-reads-are-synchronous-and-writes-suspend.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsBlockingApiTest.kt
 - A write must wait until its context is ready. See [Layer Loading](layer-loading.spec.md) and
   [ADR 0063](../adr/0063-a-write-waits-for-its-scope-to-be-ready-and-a-read-never-waits.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReadinessGateTest.kt
