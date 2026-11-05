@@ -36,9 +36,11 @@ class ColorsSchemeSnapshot private constructor(
   private val attributes: PersistentMap<String, TextAttributes>, // the text attributes by the external name of their key
   private val tempAttributes: PersistentMap<String, TextAttributes>, // the text attributes of temporary keys, see TextAttributesKey.isTemp
 ) {
-  private val textAttributesFontFamilies: Set<FontFamilies> by lazy {
-    collectFontFamilies(attributes.values, tempAttributes.values)
-  }
+  /**
+   * The font families of [attributes] and [tempAttributes], or `null` before the first [textAttributesFontFamilies] call.
+   */
+  @Volatile
+  private var textAttributesFontFamilies: Set<FontFamilies>? = null
 
   fun schemeName(): String? = schemeName
 
@@ -70,7 +72,21 @@ class ColorsSchemeSnapshot private constructor(
    * Returns the font families of the text attributes that the scheme defines itself, of temporary keys included.
    * The parent scheme does not count. The snapshot computes the set once.
    */
-  fun textAttributesFontFamilies(): Set<FontFamilies> = textAttributesFontFamilies
+  fun textAttributesFontFamilies(): Set<FontFamilies> {
+    val current = textAttributesFontFamilies
+    if (current != null) {
+      return current
+    }
+    synchronized(this) {
+      val again = textAttributesFontFamilies
+      if (again != null) {
+        return again
+      }
+      val computed = collectFontFamilies(attributes.values, tempAttributes.values)
+      textAttributesFontFamilies = computed
+      return computed
+    }
+  }
 
   fun getColor(key: ColorKey): Color? {
     return colors[key]
