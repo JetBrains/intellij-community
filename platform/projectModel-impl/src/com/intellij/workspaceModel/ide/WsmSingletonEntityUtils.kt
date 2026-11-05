@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.workspace.jps.entities.ProjectSettingsEntity
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SingletonWorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jetbrains.annotations.ApiStatus
 
@@ -15,6 +16,9 @@ object WsmSingletonEntityUtils {
   private val LOG: Logger = thisLogger()
 
   fun <E : WorkspaceEntity> getSingleEntity(storage: EntityStorage, entityClass: Class<E>): E? {
+    if (SingletonWorkspaceEntity::class.java.isAssignableFrom(entityClass)) {
+      LOG.warn("Consider marking $entityClass as SingletonWorkspaceEntity")
+    }
     val entities = storage.entities(entityClass).toList()
     if (entities.size > 1) {
       val entList = entities.map {
