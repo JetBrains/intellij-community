@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeMetaInfo;
@@ -10,9 +11,12 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.HashSet;
+import java.util.Set;
 
 public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme, SchemeMetaInfo {
 
@@ -26,6 +30,23 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
 
   default TextAttributes getAttributes(@Nullable TextAttributesKey key, boolean useDefaults) {
     return getAttributes(key);
+  }
+
+  /**
+   * Returns the font families that the text attributes of this scheme can have, see {@link TextAttributes#getFontFamilies()}.
+   * The set covers the attributes that the scheme defines and the attributes of its parent schemes.
+   * It can have values that no key has now, and it can leave out the default attributes of a key.
+   */
+  @ApiStatus.Internal
+  default @Unmodifiable Set<FontFamilies> getTextAttributesFontFamilies() {
+    Set<FontFamilies> result = new HashSet<>();
+    for (TextAttributesKey key : TextAttributesKey.getAllKeys()) {
+      TextAttributes attributes = getAttributes(key);
+      if (attributes != null && attributes.getFontFamilies() != null) {
+        result.add(attributes.getFontFamilies());
+      }
+    }
+    return Set.copyOf(result);
   }
 
   @NotNull Color getDefaultBackground();

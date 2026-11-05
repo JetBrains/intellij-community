@@ -6,14 +6,18 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.util.Properties;
+import java.util.Set;
 
 public abstract class DelegateColorScheme implements EditorColorsScheme {
   /**
@@ -46,6 +50,16 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
   @Override
   public TextAttributes getAttributes(TextAttributesKey key) {
     return myDelegate.getAttributes(key);
+  }
+
+  /**
+   * Gives the font families of the delegate.
+   * A subclass that changes the attributes of some keys gives the font families of the delegate for these keys too.
+   */
+  @Override
+  @ApiStatus.Internal
+  public @Unmodifiable Set<FontFamilies> getTextAttributesFontFamilies() {
+    return myDelegate.getTextAttributesFontFamilies();
   }
 
   @Override

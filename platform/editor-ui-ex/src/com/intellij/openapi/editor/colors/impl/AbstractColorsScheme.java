@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeState;
@@ -31,11 +32,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.awt.Color;
 import java.awt.Font;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
@@ -530,6 +533,32 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
 
   public EditorColorsScheme getParentScheme() {
     return snapshot.parentScheme();
+  }
+
+  /**
+   * Joins the font families of the own text attributes, which the snapshot keeps, with the font families of the parent scheme.
+   * It reads the parent scheme on each call, because the parent can change and this scheme then keeps its snapshot.
+   * The default attributes of a key do not count.
+   */
+  @Override
+  @ApiStatus.Internal
+  public @Unmodifiable Set<FontFamilies> getTextAttributesFontFamilies() {
+    ColorsSchemeSnapshot current = snapshot;
+    Set<FontFamilies> own = current.textAttributesFontFamilies();
+    EditorColorsScheme parent = current.parentScheme();
+    if (parent == null) {
+      return own;
+    }
+    Set<FontFamilies> inherited = parent.getTextAttributesFontFamilies();
+    if (own.isEmpty()) {
+      return inherited;
+    }
+    if (inherited.isEmpty()) {
+      return own;
+    }
+    Set<FontFamilies> result = new HashSet<>(inherited);
+    result.addAll(own);
+    return Set.copyOf(result);
   }
 
   public boolean settingsEqual(Object other) {

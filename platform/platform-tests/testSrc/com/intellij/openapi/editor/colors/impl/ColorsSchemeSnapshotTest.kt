@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.colors.impl
 
 import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.markup.FontFamilies
 import com.intellij.openapi.editor.markup.TextAttributes
 import kotlinx.collections.immutable.ImmutableMap
 import org.assertj.core.api.Assertions.assertThat
@@ -160,6 +161,33 @@ internal class ColorsSchemeSnapshotTest {
     assertThat(current.withFontPreferences(fonts).getTempAttributes(TEMP_NAME)).isSameAs(BOLD)
     assertThat(current.withAttributes(FIRST_NAME, ITALIC)).isSameAs(current)
     assertThat(current.withTempAttributes(TEMP_NAME, BOLD)).isSameAs(current)
+  }
+
+  @Test
+  fun `the font families of a snapshot come from its own and its temporary attributes`() {
+    val own = attributesWithFontFamilies("Noto Serif")
+    val temp = attributesWithFontFamilies("Noto Sans")
+    val current = newSnapshot()
+      .withAttributes(FIRST_NAME, own)
+      .withAttributes(SECOND_NAME, BOLD)
+      .withTempAttributes(TEMP_NAME, temp)
+    assertThat(current.textAttributesFontFamilies()).containsExactlyInAnyOrder(own.fontFamilies, temp.fontFamilies)
+    assertThat(newSnapshot().textAttributesFontFamilies()).isEmpty()
+  }
+
+  @Test
+  fun `a new snapshot has the font families of its new attributes and the old one keeps its own`() {
+    val before = newSnapshot().withAttributes(FIRST_NAME, attributesWithFontFamilies("Noto Serif"))
+    assertThat(before.textAttributesFontFamilies()).containsExactly(FontFamilies.of("Noto Serif"))
+    val after = before.withAttributes(FIRST_NAME, BOLD)
+    assertThat(after.textAttributesFontFamilies()).isEmpty()
+    assertThat(before.textAttributesFontFamilies()).containsExactly(FontFamilies.of("Noto Serif"))
+  }
+
+  private fun attributesWithFontFamilies(name: String): TextAttributes {
+    val attributes = TextAttributes()
+    attributes.fontFamilies = FontFamilies.of(name)
+    return attributes
   }
 
   private fun newSnapshot(): ColorsSchemeSnapshot {

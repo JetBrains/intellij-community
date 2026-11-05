@@ -14,15 +14,19 @@ import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.colors.impl.EditorFonts;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesSnapshot;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.UnaryOperator;
 
@@ -66,6 +70,25 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       return ownAttributes.get(key);
     }
     return getDelegate().getAttributes(key);
+  }
+
+  /**
+   * Joins the font families of the attributes that the editor sets for itself with the font families of the delegate.
+   */
+  @Override
+  public @Unmodifiable Set<FontFamilies> getTextAttributesFontFamilies() {
+    Set<FontFamilies> inherited = super.getTextAttributesFontFamilies();
+    Set<FontFamilies> result = null;
+    for (TextAttributes attributes : mySnapshot.ownAttributes().values()) {
+      FontFamilies fontFamilies = attributes == null ? null : attributes.getFontFamilies();
+      if (fontFamilies != null && !inherited.contains(fontFamilies)) {
+        if (result == null) {
+          result = new HashSet<>(inherited);
+        }
+        result.add(fontFamilies);
+      }
+    }
+    return result == null ? inherited : Set.copyOf(result);
   }
 
   @Override
