@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.livepreview
 
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -48,6 +49,7 @@ internal class MarkdownLivePreviewImageManager(
   }
 
   suspend fun load(destination: String) {
+    if (!TrustedProjects.isProjectTrusted(project)) return
     val source = watcher.loadedValueOf(destination) ?: startLoading(destination).await()
     publishSource(destination, source)
   }

@@ -2,6 +2,7 @@
 package com.intellij.markdown.frontend.editor.livepreview
 
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
@@ -32,7 +33,10 @@ private data class ImageInlay(
 
 private data class InlayKey(val line: Int, val destination: String, val ordinal: Int)
 
-internal class MarkdownLivePreviewImageRenderer(project: Project, private val editor: EditorEx) : MarkdownLivePreviewElementRenderer {
+internal class MarkdownLivePreviewImageRenderer(
+  private val project: Project,
+  private val editor: EditorEx,
+) : MarkdownLivePreviewElementRenderer {
   private val inlays = LinkedHashSet<Inlay<MarkdownLivePreviewImageInlayRenderer>>()
   private val requestedDestinations = HashSet<String>()
   private var visibleWidth = editor.scrollingModel.visibleArea.width
@@ -46,6 +50,7 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
   }
 
   override fun presentation(spec: MarkdownLivePreviewSpec): List<MarkdownLivePreviewFold> {
+    if (!TrustedProjects.isProjectTrusted(project)) return emptyList()
     return presentation(spec as MarkdownLivePreviewSpec.Image)
   }
 
@@ -65,6 +70,10 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
   }
 
   private fun reconcileImages(images: List<MarkdownLivePreviewSpec.Image>) {
+    if (!TrustedProjects.isProjectTrusted(project)) {
+      reconcileInlays(emptyList())
+      return
+    }
     val document = editor.document
     val desired = ArrayList<ImageInlay>()
     var previousOffset = -1

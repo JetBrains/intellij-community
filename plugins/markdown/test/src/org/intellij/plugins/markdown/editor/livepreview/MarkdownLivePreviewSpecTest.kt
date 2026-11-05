@@ -2,7 +2,9 @@
 package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.ide.rpc.DocumentPatchVersion
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec.AlertType
@@ -140,6 +142,19 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     )
     val other = images("![a](//example.org/a.png) ![b](data:text/plain,text)")
     assertEquals(listOf("//example.org/a.png", "data:text/plain,text"), other.map { it.destination })
+  }
+
+  fun testImagesAreNotRenderedInUntrustedProject() {
+    TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled {
+      TrustedProjects.setProjectTrusted(project, false)
+      try {
+        myFixture.configureByText("test.md", "![local](image.png)\n\n![remote](https://example.org/image.png)")
+        assertEmpty(computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements.filterIsInstance<MarkdownLivePreviewSpec.Image>())
+      }
+      finally {
+        TrustedProjects.setProjectTrusted(project, true)
+      }
+    }
   }
 
   fun testFileUriIsALocalImageDestination() {

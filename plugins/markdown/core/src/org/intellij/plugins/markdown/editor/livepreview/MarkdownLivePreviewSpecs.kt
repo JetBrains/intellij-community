@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.livepreview
 
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
@@ -272,6 +273,7 @@ private fun PsiElement.isTopLevelOrQuoted(): Boolean =
     .all { PsiUtilCore.getElementType(it) in QuoteTypes }
 
 private fun PsiElement.toImageSpec(editor: Editor): MarkdownLivePreviewSpec.Image? {
+  if (!editor.isProjectTrusted()) return null
   val image = this as? MarkdownImage ?: return null
   val linkDestination = image.linkDestination ?: return null
   val destination = linkDestination.text.markdownDestination()
@@ -492,4 +494,9 @@ private fun String.firstLineBreak(): Int {
     carriageReturn < 0 -> lineFeed
     else -> minOf(lineFeed, carriageReturn)
   }
+}
+
+private fun Editor.isProjectTrusted(): Boolean {
+  val project = this.project ?: return false
+  return TrustedProjects.isProjectTrusted(project)
 }

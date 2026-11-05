@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
@@ -43,6 +44,7 @@ object MarkdownImageLoader {
   }
 
   suspend fun findImageFile(project: Project, file: VirtualFile, destination: String): VirtualFile? {
+    if (!TrustedProjects.isProjectTrusted(project)) return null
     val projectRoot = BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(file)
                       ?: project.guessProjectDir()
                       ?: return null

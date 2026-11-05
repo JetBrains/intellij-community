@@ -33,6 +33,7 @@ class MarkdownImageResourceProvider(
   private fun loadContent(source: String): ByteArray? {
     val project = project ?: return null
     val document = document ?: return null
+    if (!TrustedProjects.isProjectTrusted(project)) return null
     // No parent means a Remote Development frontend. Only the backend can resolve the source.
     if (document.parent == null) {
       return loadFromBackend(source, document, project)
@@ -56,6 +57,7 @@ class MarkdownImageResourceProvider(
   suspend fun resolveFile(source: String): VirtualFile? {
     val project = project ?: return null
     val document = document ?: return null
+    if (!TrustedProjects.isProjectTrusted(project)) return null
     return (resolve(source, project, document) as? MarkdownPreviewPathResolver.Resolution.Found)?.file
   }
 

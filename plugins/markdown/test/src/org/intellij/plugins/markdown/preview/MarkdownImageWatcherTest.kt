@@ -1,10 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.preview
 
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
@@ -119,6 +121,19 @@ class MarkdownImageWatcherTest : BasePlatformTestCase() {
     watcher.onImageLoaded("img/later.png", null)
     runWriteActionAndWait { nearImage.parent.createChildData(this, "later.png") }
     assertNull(watcher.versionOf("img/later.png"))
+  }
+
+  fun `test an untrusted project cannot load an image`() {
+    TrustedProjectsTestUtil.withTrustedProjectsCheckEnabled {
+      TrustedProjects.setProjectTrusted(project, false)
+      try {
+        provider = MarkdownImageResourceProvider(project, document)
+        assertNull(provider.loadResource(MarkdownImageResourceProvider.resourceName("img/near.png")))
+      }
+      finally {
+        TrustedProjects.setProjectTrusted(project, true)
+      }
+    }
   }
 
   fun `test the watcher reports the changed images`() {

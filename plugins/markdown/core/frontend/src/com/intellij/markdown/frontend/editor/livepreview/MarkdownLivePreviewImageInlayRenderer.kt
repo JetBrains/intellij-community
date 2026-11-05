@@ -2,6 +2,7 @@
 package com.intellij.markdown.frontend.editor.livepreview
 
 import com.intellij.codeInsight.documentation.CachingAdaptiveImageManagerService
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
@@ -39,8 +40,10 @@ class MarkdownLivePreviewImageInlayRenderer(
   private val image = CachingAdaptiveImageManagerService.getInstance().createRenderer(::onEvent)
 
   init {
-    image.setOrigin(origin)
-    if (source == null) image.getRenderedImage()
+    if (editor.isProjectTrusted()) {
+      image.setOrigin(origin)
+      if (source == null) image.getRenderedImage()
+    }
   }
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int = getDimension()?.let { it.width + 2 * getHorizontalInset() } ?: 0
@@ -64,6 +67,7 @@ class MarkdownLivePreviewImageInlayRenderer(
   }
 
   private fun onEvent(event: AdaptiveImageRendererEvent) {
+    if (!editor.isProjectTrusted()) return
     if (event is AdaptiveImageRendererEvent.Loaded && inlaySize == null) {
       val size = event.dimensions.fallBack
       inlaySize = Dimension(max(1, size.width.roundToInt()), max(1, size.height.roundToInt()))
@@ -75,6 +79,7 @@ class MarkdownLivePreviewImageInlayRenderer(
 
   /** The drawn size: the intrinsic size, shrunk to the visible width and the maximum height. Null while the size is unknown. */
   private fun getDimension(): Dimension? {
+    if (!editor.isProjectTrusted()) return null
     val size = inlaySize ?: return null
     val visibleWidth = editor.scrollingModel.visibleArea.width - 2 * getHorizontalInset()
     val maxHeight = MAX_HEIGHT_IN_LINES * editor.lineHeight
@@ -87,6 +92,11 @@ class MarkdownLivePreviewImageInlayRenderer(
   private fun getHorizontalInset(): Int = JBUI.scale(HORIZONTAL_INSET)
 
   private fun getVerticalInset(): Int = JBUI.scale(VERTICAL_INSET)
+
+  private fun Editor.isProjectTrusted(): Boolean {
+    val project = this.project ?: return false
+    return TrustedProjects.isProjectTrusted(project)
+  }
 
   private companion object {
     const val MAX_HEIGHT_IN_LINES = 20
