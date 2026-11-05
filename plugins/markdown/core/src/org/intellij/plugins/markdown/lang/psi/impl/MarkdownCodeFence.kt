@@ -31,7 +31,7 @@ import org.jetbrains.annotations.ApiStatus
  *
  * A fence also suppresses the background of its injection. That background follows the injected ranges,
  * which leave out the indent, so it does not make a rectangle.
- * `CodeFenceBackgroundHighlightingPassFactory` paints the background of a fence instead.
+ * `MarkdownBackgroundHighlightingPassFactory` paints the background of a fence instead.
  */
 @Suppress("DEPRECATION")
 class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elementType), InjectionBackgroundSuppressor {

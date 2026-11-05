@@ -26,6 +26,8 @@ public final class MarkdownHighlighterColors {
   public static final TextAttributesKey CODE_SPAN_BACKGROUND = createTextAttributesKey("MARKDOWN_CODE_SPAN_BACKGROUND");
   public static final TextAttributesKey CODE_SPAN_MARKER = createTextAttributesKey("MARKDOWN_CODE_SPAN_MARKER", KEYWORD);
   public static final TextAttributesKey BLOCK_QUOTE = createTextAttributesKey("MARKDOWN_BLOCK_QUOTE", STRING);
+  @ApiStatus.Internal
+  public static final TextAttributesKey BLOCK_QUOTE_BACKGROUND = createTextAttributesKey("MARKDOWN_BLOCK_QUOTE_BACKGROUND");
   public static final TextAttributesKey BLOCK_QUOTE_MARKER = createTextAttributesKey("MARKDOWN_BLOCK_QUOTE_MARKER", KEYWORD);
   public static final TextAttributesKey LIST_MARKER = createTextAttributesKey("MARKDOWN_LIST_MARKER", KEYWORD);
   public static final TextAttributesKey HEADER_MARKER = createTextAttributesKey("MARKDOWN_HEADER_MARKER", KEYWORD);

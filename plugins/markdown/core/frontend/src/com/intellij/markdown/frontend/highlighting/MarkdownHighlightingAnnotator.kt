@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.OuterLanguageElementType
 import com.intellij.psi.tree.TokenSet
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
 import com.intellij.psi.util.siblings
@@ -41,7 +40,7 @@ private val CITATION_KEY_IN_LABEL = Regex("""(?:^|[\s;,])-?@[\p{L}\p{N}_][\p{L}\
  */
 private typealias HighlightingKeys = Set<TextAttributesKey>
 
-/** An alert is a blockquote with a title, so its lines get the blockquote background too. */
+/** An alert is a blockquote with a title, so its lines get the blockquote style too. */
 private val BlockQuoteTypes = TokenSet.create(MarkdownElementTypes.BLOCK_QUOTE, MarkdownElementTypes.ALERT)
 
 internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
@@ -52,7 +51,6 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
     if (element.elementType is OuterLanguageElementType) return
 
     annotateBlockQuoteLines(element, holder)
-    annotateBlockQuoteLastLineBreak(element, holder)
     annotateInlineFootnoteMarker(element, holder)
     if (annotateShortReferenceSyntax(element, holder)) return
     if (annotateFootnoteContinuationCodeLine(element, holder)) return
@@ -62,37 +60,30 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
   }
 
   /**
-   * Highlights each line of an outermost block quote from its first character to its line break.
-   * A range that holds the line break makes the editor paint the background up to the right edge.
-   * The line break after the last line is outside the quote, so [annotateBlockQuoteLastLineBreak] highlights it.
+   * Applies the style of [MarkdownHighlighterColors.BLOCK_QUOTE] without its background to each line of an outermost block quote.
+   * A line starts at its first non-blank character. The background pass paints the background of the quote.
+   * The bundled schemes give the style only a background, so they get no annotation.
    */
   private fun annotateBlockQuoteLines(element: PsiElement, holder: AnnotationHolder) {
     if (element.elementType !in BlockQuoteTypes || element.parents(withSelf = false).any { it.elementType in BlockQuoteTypes }) return
+    val attributes = EditorColorsManager.getInstance().globalScheme.getAttributes(MarkdownHighlighterColors.BLOCK_QUOTE)?.clone() ?: return
+    attributes.backgroundColor = null
+    if (attributes.isEmpty) return
     val contents = element.containingFile.viewProvider.contents
     val quoteRange = element.textRange
     var lineStart = quoteRange.startOffset
     while (lineStart < quoteRange.endOffset) {
       val lineBreak = StringUtil.indexOf(contents, '\n', lineStart, quoteRange.endOffset)
-      val lineEnd = if (lineBreak < 0) quoteRange.endOffset else lineBreak + 1
+      val lineEnd = if (lineBreak < 0) quoteRange.endOffset else lineBreak
       val start = CharArrayUtil.shiftForward(contents, lineStart, lineEnd, " \t")
       if (start < lineEnd) {
         holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-          .textAttributes(MarkdownHighlighterColors.BLOCK_QUOTE)
+          .enforcedTextAttributes(attributes)
           .range(TextRange(start, lineEnd))
           .create()
       }
-      lineStart = lineEnd
+      lineStart = lineEnd + 1
     }
-  }
-
-  private fun annotateBlockQuoteLastLineBreak(element: PsiElement, holder: AnnotationHolder) {
-    if (element.firstChild != null || element.node.chars.firstOrNull() != '\n') return
-    val quote = PsiTreeUtil.prevLeaf(element)?.parents(withSelf = false)?.lastOrNull { it.elementType in BlockQuoteTypes }
-    if (quote?.textRange?.endOffset != element.textRange.startOffset) return
-    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-      .textAttributes(MarkdownHighlighterColors.BLOCK_QUOTE)
-      .range(TextRange.from(element.textRange.startOffset, 1))
-      .create()
   }
 
   private fun annotateShortReferenceSyntax(element: PsiElement, holder: AnnotationHolder): Boolean {
@@ -183,7 +174,7 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
       parents
         .asReversed()
         .filterNot { isImageLinkContent && it.elementType == MarkdownElementTypes.IMAGE }
-        // annotateBlockQuoteLines highlights whole lines, so the leaves do not repeat the block quote style
+        // annotateBlockQuoteLines and the background pass cover whole lines, so the leaves do not repeat the block quote style
         .filterNot { it.elementType == MarkdownElementTypes.BLOCK_QUOTE }
         .mapNotNullTo(linkedSetOf()) {
           it.primaryNonTextAttributesKey()

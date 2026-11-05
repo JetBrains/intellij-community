@@ -49,6 +49,7 @@ import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.publishSpecsAndWait
 import java.awt.Color
@@ -89,7 +90,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     editor.settings.isCaretRowShown = false
     editor.colorsScheme.setAttributes(MarkdownHighlighterColors.CODE_SPAN, TextAttributes(null, Color.RED, null, null, Font.PLAIN))
 
-    val image = paintEditor()
+    val image = MarkdownTestingUtil.paintEditor(editor)
     val content = editor.offsetToXY(3)
     val y = content.y + editor.lineHeight / 2
 
@@ -799,7 +800,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   fun testRapidCheckboxClicksDoNotWaitForHighlighting() {
     val content = "- [ ] first\n- [ ] second\n\ntail"
     configure("$content<caret>")
-    val (first, second) = checkboxInlays()
+    val [first, second] = checkboxInlays()
     clickCheckbox(first)
     assertTrue(first.renderer.checked)
     clickCheckbox(first)
@@ -1295,10 +1296,12 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   fun testPlaceholdersShowTheBackgroundOfTheirText() {
     configure("- > - item\n\ntail<caret>")
     val editor = myFixture.editor
+    // The background of the quote ends at the right edge of the visible area.
+    EditorTestUtil.setEditorVisibleSize(editor, 80, 12)
     editor.colorsScheme.setAttributes(MarkdownHighlighterColors.BLOCK_QUOTE, TextAttributes(null, Color.RED, null, null, Font.PLAIN))
-    val (listBullet, marker, quotedBullet) = concealedLivePreviewRegions(editor)
+    val [listBullet, marker, quotedBullet] = concealedLivePreviewRegions(editor)
 
-    var image = paintEditor()
+    var image = MarkdownTestingUtil.paintEditor(editor)
     assertFalse("A bullet before the quote must keep the editor background", Color.RED.rgb == placeholderBackground(image, listBullet))
     assertEquals(Color.RED.rgb, placeholderBackground(image, marker))
     assertEquals(Color.RED.rgb, placeholderBackground(image, quotedBullet))
@@ -1306,7 +1309,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     // A diff change paints its lines above the quote background.
     val change = TextAttributes(null, Color.GREEN, null, null, Font.PLAIN)
     editor.markupModel.addRangeHighlighter(0, 1, HighlighterLayer.SELECTION - 1, change, HighlighterTargetArea.LINES_IN_RANGE)
-    image = paintEditor()
+    image = MarkdownTestingUtil.paintEditor(editor)
     for (region in listOf(listBullet, marker, quotedBullet)) {
       assertEquals("The placeholder at ${region.startOffset} must show the change", Color.GREEN.rgb, placeholderBackground(image, region))
     }
@@ -1319,7 +1322,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val document = editor.document
     val concealedRules = paintedRules()
     assertEquals(9, concealedRules.size)
-    for ((marker, bounds) in concealedRules) {
+    for ([marker, bounds] in concealedRules) {
       assertEquals("The rule must start at the x position of its marker", editor.offsetToXY(marker).x, bounds.x)
     }
     val outerRules = (0..2).map { concealedRules.getValue(document.getLineStartOffset(it)) }
@@ -1418,9 +1421,9 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     )
     configureProjectFile("![alt](image.svg)\n\ntail")
 
-    val source = waitForImageInlay().renderer.source!!
-    assertEquals(90, source.width)
-    assertEquals(45, source.height)
+    (val width, val height) = waitForImageInlay().renderer.source!!
+    assertEquals(90, width)
+    assertEquals(45, height)
   }
 
   fun testDataUriImageRendersWithTheSizeFromTheImageEngine() {
@@ -2169,20 +2172,6 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     }
     result.append(text, offset, text.length)
     return result.toString()
-  }
-
-  private fun paintEditor(): BufferedImage {
-    val component = myFixture.editor.contentComponent
-    component.size = component.preferredSize
-    val image = BufferedImage(component.width, component.height, BufferedImage.TYPE_INT_RGB)
-    val graphics = image.createGraphics()
-    try {
-      component.paint(graphics)
-    }
-    finally {
-      graphics.dispose()
-    }
-    return image
   }
 
   /** Returns the pixel at the top right of a placeholder, clear of its glyph and of a blockquote rule. */

@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.io.FileUtil
@@ -14,6 +15,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.future.future
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
+import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.File
@@ -43,6 +45,18 @@ internal object MarkdownTestingUtil {
   fun paintInlay(inlay: Inlay<*>) {
     newGraphics().use { inlay.renderer.paint(inlay, it, Rectangle2D.Double(), TextAttributes()) }
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+  }
+
+  fun paintEditor(editor: Editor, clip: Rectangle? = null): BufferedImage {
+    val component = editor.contentComponent
+    val preferredSize = component.preferredSize
+    component.setSize(maxOf(preferredSize.width, editor.scrollingModel.visibleArea.width), preferredSize.height)
+    val image = BufferedImage(component.width, component.height, BufferedImage.TYPE_INT_RGB)
+    image.createGraphics().use { graphics ->
+      if (clip != null) graphics.clipRect(clip.x, clip.y, clip.width, clip.height)
+      component.paint(graphics)
+    }
+    return image
   }
 
   private fun newGraphics() = BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB).createGraphics()

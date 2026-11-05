@@ -48,37 +48,6 @@ class MarkdownHighlightingAnnotatorTest : BasePlatformTestCase() {
     assertElementHighlightedWithKey(highlights, ">", MarkdownHighlighterColors.BLOCK_QUOTE_MARKER)
   }
 
-  fun testBlockQuoteLinesAreHighlightedUpToTheirLineBreaks() {
-    val text = "- > a [link](x) `code`\n  > > b\n\ntail"
-    myFixture.configureByText("test.md", text)
-    val highlights = myFixture.doHighlighting()
-
-    val lines = highlights
-      .filter { it.forcedTextAttributesKey == MarkdownHighlighterColors.BLOCK_QUOTE }
-      .sortedBy { it.startOffset }
-      .map { text.substring(it.startOffset, it.endOffset) }
-    assertEquals(listOf("> a [link](x) `code`\n", "> > b", "\n"), lines)
-    assertElementHighlightedWithKey(highlights, "link", MarkdownHighlighterColors.LINK_TEXT)
-    assertElementHighlightedWithKey(highlights, "code", MarkdownHighlighterColors.CODE_SPAN)
-  }
-
-  fun testAlertLinesAreHighlightedLikeBlockQuoteLines() {
-    val text = "> [!NOTE]\n> text\n\ntail"
-    myFixture.configureByText("test.md", text)
-    val highlights = myFixture.doHighlighting()
-
-    val lines = highlights
-      .filter { it.forcedTextAttributesKey == MarkdownHighlighterColors.BLOCK_QUOTE }
-      .sortedBy { it.startOffset }
-      .map { text.substring(it.startOffset, it.endOffset) }
-    assertEquals(listOf("> [!NOTE]\n", "> text", "\n"), lines)
-    assertElementHighlightedWithKey(highlights, ">", MarkdownHighlighterColors.BLOCK_QUOTE_MARKER)
-    assertEmpty(
-      "The TEXT background must not hide the quote background",
-      highlights.filter { it.forcedTextAttributesKey == MarkdownHighlighterColors.TEXT },
-    )
-  }
-
   fun testInlineFormattingAndLinksKeepInheritedHighlighting() {
     val text = "A **bold** and *italic* [link](target.md)"
     myFixture.configureByText("test.md", text)
