@@ -241,7 +241,7 @@ internal object ChangeMemberFunctionSignatureFixFactory {
             })
             superFunction.returnType.takeUnless { it.classId == KaStandardTypeClassIds.UNIT }?.let {
                 append(": ")
-                append((substitutor?.substitute(it) ?: it).render(declarationRenderer.typeRenderer, Variance.INVARIANT))
+                append((substitutor?.substitute(it) ?: it).approximateToDenotableSubtypeOrSelf().render(declarationRenderer.typeRenderer, Variance.INVARIANT))
             }
         }
     }

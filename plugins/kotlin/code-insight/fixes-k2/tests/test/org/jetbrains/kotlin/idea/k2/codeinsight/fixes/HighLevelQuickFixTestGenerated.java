@@ -12232,6 +12232,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/noOpenSuperFunction.kt");
             }
 
+            @TestMetadata("overrideJavaGenericMethod.kt")
+            public void testOverrideJavaGenericMethod() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/overrideJavaGenericMethod.kt");
+            }
+
             @TestMetadata("overrideJavaMethod.kt")
             public void testOverrideJavaMethod() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/overrideJavaMethod.kt");

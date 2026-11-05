@@ -1,0 +1,11 @@
+// "Change function signature to 'fun call(): String'" "true"
+// RUNTIME_WITH_FULL_JDK
+// K2_ERROR: ABSTRACT_MEMBER_NOT_IMPLEMENTED
+// K2_ERROR: NOTHING_TO_OVERRIDE
+import java.util.concurrent.Callable
+
+class B : Callable<String> {
+    <caret>override fun call(x: Int): String = ""
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeMemberFunctionSignatureFixFactory$ChangeMemberFunctionSignatureFix
