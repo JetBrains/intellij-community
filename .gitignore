@@ -1,6 +1,8 @@
 *.pyc
 .DS_Store
 .bazelrc-user.bazelrc
+# git filter-branch default temp folder, see https://git-scm.com/docs/git-filter-branch
+.git-rewrite
 .gradle
 /.bazelbsp
 /.diff
