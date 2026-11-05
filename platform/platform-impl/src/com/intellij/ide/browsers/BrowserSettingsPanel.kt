@@ -3,6 +3,8 @@ package com.intellij.ide.browsers
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.BrowserLauncherAppless.Companion.canUseSystemDefaultBrowserPolicy
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.UnnamedConfigurable
@@ -17,8 +19,11 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
+import com.intellij.util.EnvironmentUtil
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
+import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.LocalPathCellEditor
 import com.intellij.util.ui.table.TableModelEditor
@@ -33,22 +38,38 @@ import javax.swing.ListCellRenderer
 import javax.swing.event.TableModelEvent
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
+import kotlin.io.path.Path
 
 /**
- * An item of the "Default Browser" dropdown: [SystemDefaultBrowser], a browser of a [WebBrowserProvider], or a browser of the list.
+ * An item of the "Default Browser" dropdown: [SystemDefaultBrowser], a browser of a [WebBrowserProvider], a browser of the list,
+ * or an installed browser that is not in the list yet.
  * For a browser of the list, [id] is the id of the original row, see [BrowserSettingsConfigurable.originalOf].
+ * For an installed browser, [installed] is what [detectInstalledBrowsers] found.
+ * Apply adds a selected installed browser to the list, see [BrowserSettingsConfigurable.addInstalledBrowser].
  */
-internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val icon: Icon) {
+internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val icon: Icon, val installed: InstalledBrowser? = null) {
   companion object {
     fun systemDefault(): BrowserChoice = of(SystemDefaultBrowser)
 
     fun of(browser: WebBrowser): BrowserChoice = BrowserChoice(browser.id, browser.name, browser.icon)
+
+    fun installed(browser: InstalledBrowser): BrowserChoice {
+      val icon = ConfigurableWebBrowser(UUID.randomUUID(), browser.knownBrowser.family, browser.name, browser.path, true, null).icon
+      return BrowserChoice(UUID.nameUUIDFromBytes(browser.path.toByteArray()), browser.name, icon, browser)
+    }
   }
 }
 
+/**
+ * The Web Browsers settings page.
+ *
+ * When the page opens, it detects the installed browsers in the background, and keeps the result while it is open.
+ * The "Default Browser" dropdown offers each installed browser that no browser of the list opens, see [InstalledBrowser.isSameAs].
+ */
 internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   private lateinit var browsersTable: JComponent
   private lateinit var browsersEditor: TableModelEditor<ConfigurableWebBrowser>
+  private var installedBrowsers: List<InstalledBrowser> = emptyList()
   private val defaultBrowserModel = CollectionComboBoxModel<BrowserChoice>()
   private lateinit var serverReloadModeComboBox: ComboBox<ReloadMode>
   private lateinit var previewReloadModeComboBox: ComboBox<ReloadMode>
@@ -80,19 +101,69 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
       .filter { it.isActive && it.path != null }
       .map { BrowserChoice(originalOf(it).id, it.name, it.icon) }
 
+  /**
+   * The installed browsers that no active browser of the table opens. The arguments of a browser of the table do not matter.
+   * An inactive browser of the table does not hide an installed browser, see [addInstalledBrowser].
+   */
+  private fun installedChoices(): List<BrowserChoice> {
+    val activeRows = browsersEditor.model.items.filter { it.isActive }
+    return installedBrowsers.filter { installed -> activeRows.none(installed::isSameAs) }.map { BrowserChoice.installed(it) }
+  }
+
+  /**
+   * Makes [installed] a browser of the table, and returns the id of its original row.
+   * It activates an inactive browser of the table that opens [installed]. Otherwise, it adds a browser to the table.
+   */
+  private fun addInstalledBrowser(installed: InstalledBrowser): UUID {
+    val model = browsersEditor.model
+    val inactiveRow = model.items.firstOrNull { !it.isActive && installed.isSameAs(it) }
+    val row = if (inactiveRow != null) {
+      // the table edits a copy of the row, so Cancel keeps the browser of the settings inactive
+      browsersEditor.getMutable(inactiveRow).also {
+        it.isActive = true
+        val index = model.indexOf(it)
+        model.fireTableRowsUpdated(index, index)
+      }
+    }
+    else {
+      val family = installed.knownBrowser.family
+      ConfigurableWebBrowser(UUID.randomUUID(), family, installed.name, installed.path, true, family.createBrowserSpecificSettings())
+        .also { model.addRow(it) }
+    }
+    return originalOf(row).id
+  }
+
+  /**
+   * Detects the installed browsers in the background, and adds them to the dropdown.
+   * The page keeps the result while it is open.
+   */
+  private fun startDetection() {
+    val modality = ModalityState.current()
+    AppExecutorUtil.getAppExecutorService().execute {
+      val detected = detectInstalledBrowsers(Path(SystemProperties.getUserHome()), EnvironmentUtil.getEnvironmentMap())
+      ApplicationManager.getApplication().invokeLater({
+        installedBrowsers = detected
+        updateBrowserChoices()
+      }, modality) { root == null }
+    }
+  }
+
   /** Fills the dropdown from the table and keeps the selected item. */
   private fun updateBrowserChoices() {
     val choice = defaultBrowserModel.selected
     val systemDefault = if (canUseSystemDefaultBrowserPolicy()) listOf(BrowserChoice.systemDefault()) else emptyList()
     val provided = WebBrowserProvider.getAvailableBrowsers().map { BrowserChoice.of(it) }
     val listed = listedBrowsers()
+    val installed = installedChoices()
     defaultBrowserModel.replaceAll(buildList {
       addAll(systemDefault)
       addAll(provided)
       addAll(listed)
+      addAll(installed)
     })
-    // the provided browsers come last, so a provider cannot take the id of the system default browser or of a browser of the list
-    val choiceById = sequenceOf(systemDefault, listed, provided).flatten().find { it.id == choice?.id }
+    // the provided browsers come after the browsers of the list, so a provider cannot take the id of the system default browser
+    // or of a browser of the list
+    val choiceById = sequenceOf(systemDefault, listed, provided, installed).flatten().find { it.id == choice?.id }
     defaultBrowserModel.selectedItem = choiceById ?: fallbackChoice()
   }
 
@@ -201,7 +272,12 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
         }
       }
     }
+    startDetection()
     return root
+  }
+
+  override fun disposeUIResources() {
+    root = null
   }
 
   override fun isModified(): Boolean {
@@ -219,13 +295,17 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   override fun apply() {
     val browserManager = WebBrowserManager.getInstance()
     val choice = defaultBrowserChoice
+    // read the id before the table applies its edits, because then the table replaces an edited copy with its original row
+    val defaultBrowserId = choice?.installed?.let(::addInstalledBrowser) ?: choice?.id
     browserManager.isShowBrowserHover = showBrowserHover.isSelected
     browserManager.isShowBrowserHoverXml = showBrowserHoverXml.isSelected
     browserManager.webPreviewReloadMode = previewReloadModeComboBox.item
     browserManager.webServerReloadMode = serverReloadModeComboBox.item
     browserManager.list = browsersEditor.apply()
     // the manager resolves the default browser in the new list
-    browserManager.setDefaultBrowserId(choice?.id)
+    browserManager.setDefaultBrowserId(defaultBrowserId)
+    // an added installed browser is a browser of the list now
+    defaultBrowserModel.selectedItem = storedChoice(browserManager)
   }
 
   override fun reset() {
