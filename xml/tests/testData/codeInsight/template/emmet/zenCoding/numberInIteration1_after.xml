@@ -1,0 +1,5 @@
+<root>
+    <man id="001" name="Person-1">a</man>
+    <woman id="002" name="Person-2">b</woman>
+    <man id="003" name="Person-3"><caret></man>
+</root>

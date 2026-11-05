@@ -1,0 +1,3 @@
+<root>
+{item number $ ${nl}}*5<caret>
+</root>

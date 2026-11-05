@@ -1,0 +1,6 @@
+<root>
+    <aba></aba>
+    <caba>
+        <child><caret></child>
+    </caba>
+</root>

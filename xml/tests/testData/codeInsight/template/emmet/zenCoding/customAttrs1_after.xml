@@ -1,0 +1,10 @@
+<root>
+    <group size="2">
+        <employee name="Name1" surname="Surname1"><caret></employee>
+        <employee name="Name2" surname="Surname2"></employee>
+    </group>
+    <group size="2">
+        <employee name="Name1" surname="Surname1"></employee>
+        <employee name="Name2" surname="Surname2"></employee>
+    </group>
+</root>

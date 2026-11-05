@@ -1,0 +1,5 @@
+<xsl:apply-templates select="" mode="">
+    <xsl:with-param name="">
+        <xsl:call-template name="someName"></xsl:call-template>
+    </xsl:with-param>
+</xsl:apply-templates>

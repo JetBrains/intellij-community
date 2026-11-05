@@ -1,0 +1,10 @@
+<root>
+    <div>
+        <templ>
+            <div><caret></div>
+        </templ>
+        <templ>
+            <div></div>
+        </templ>
+    </div>
+</root>

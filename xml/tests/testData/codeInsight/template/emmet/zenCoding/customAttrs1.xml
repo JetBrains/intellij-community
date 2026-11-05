@@ -1,0 +1,1 @@
+root>group[size=2]*2>employee[name=Name1][surname=Surname1]+employee[name=Name2][surname=Surname2]<caret>

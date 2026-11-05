@@ -1,0 +1,15 @@
+<root>
+    <_a>
+        <b><caret></b>
+        <b></b>
+        <div>
+            <c></c>
+        </div>
+        <div>
+            <c></c>
+        </div>
+        <div>
+            <c></c>
+        </div>
+    </_a>
+</root>
