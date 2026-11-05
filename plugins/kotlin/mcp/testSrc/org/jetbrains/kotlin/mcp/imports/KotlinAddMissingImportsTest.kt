@@ -61,7 +61,103 @@ class KotlinAddMissingImportsTest : KotlinImportsTestBase() {
         testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesAmbiguousArgument.kt")) { result ->
             val text = result.textContent.text
             assertContains(text, "one.Marker")
-            assertFalse("\"overloaded\"" in text, "The tool must not report overloaded: $text")
+            assertFalse("\"target\"" in text, "The tool must not report target: $text")
+        }
+    }
+
+    @Test
+    fun `get, set, component and rangeTo extensions are imported`() =
+        assertOperatorsImported("src/UsesOperatorExtensions.kt", "get", "set", "component1", "rangeTo")
+
+    @Test
+    fun `contains extension is imported for in and not in`() = assertOperatorsImported("src/UsesContains.kt", "contains")
+
+    @Test
+    fun `contains extension is imported when other contains candidates do not apply`() =
+        assertOperatorsImported("src/UsesContainsWithInapplicableCandidates.kt", "contains")
+
+    @Test
+    fun `rangeUntil extension is imported`() = assertOperatorsImported("src/UsesRangeUntil.kt", "rangeUntil")
+
+    @Test
+    fun `iterator extension is imported for a for loop`() = assertOperatorsImported("src/UsesIterator.kt", "iterator")
+
+    @Test
+    fun `getValue extension is imported for a delegate`() = assertOperatorsImported("src/UsesDelegate.kt", "getValue")
+
+    @Test
+    fun `arithmetic, call and infix extensions are imported`() =
+        assertOperatorsImported("src/UsesCallOperators.kt", "plus", "unaryMinus", "not", "inc", "invoke", "split")
+
+    @Test
+    fun `one operator name for two receivers imports both`() = runBlocking {
+        testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesTwoReceivers.kt")) { result ->
+            val text = result.textContent.text
+            assertContains(text, "+import ops1.get")
+            assertContains(text, "+import ops3.get")
+            assertFalse("symbol_not_found" in text, "Nothing may stay unresolved: $text")
+        }
+    }
+
+    @Test
+    fun `one operator name for two receivers imports both when they resolve in different passes`() = runBlocking {
+        testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesTwoReceiversInTwoPasses.kt")) { result ->
+            val text = result.textContent.text
+            assertContains(text, "+import ops1.get")
+            assertContains(text, "+import ops3.get")
+            assertFalse("symbol_not_found" in text, "Nothing may stay unresolved: $text")
+        }
+    }
+
+    @Test
+    fun `an ambiguous operator is reported at its line and not imported`() = runBlocking {
+        testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesAmbiguousOperator.kt")) { result ->
+            val text = result.textContent.text
+            assertContains(text, "ops1.get")
+            assertContains(text, "ops2.get")
+            // The file is written, so the line counts the three lines of the added imports.
+            assertContains(text, "\"line\":8")
+            assertFalse("+import ops1.get" in text || "+import ops2.get" in text, "An ambiguous operator must not be imported: $text")
+        }
+    }
+
+    @Test
+    fun `the best candidate is imported for an ambiguous operator`() = runBlocking {
+        testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesAmbiguousOperator.kt", ambiguity = "best")) { result ->
+            val text = result.textContent.text
+            assertTrue("+import ops1.get" in text || "+import ops2.get" in text, "One candidate must be imported: $text")
+            assertFalse("+import ops1.get" in text && "+import ops2.get" in text, "Only one candidate may be imported: $text")
+        }
+    }
+
+    @Test
+    fun `a second run after apply adds nothing`() = runBlocking {
+        testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesAppliedOperators.kt", mode = "apply")) { result ->
+            assertContains(result.textContent.text, "+import ops1.get")
+        }
+        testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesAppliedOperators.kt", mode = "apply")) { result ->
+            val text = result.textContent.text
+            assertFalse("+import" in text, "The second run must add nothing: $text")
+            assertFalse("symbol_not_found" in text, "Nothing may stay unresolved: $text")
+            assertContains(text, "\"applied\":false")
+        }
+    }
+
+    @Test
+    fun `an operator without any candidate is reported by its function name`() = runBlocking {
+        testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesMissingOperator.kt")) { result ->
+            val text = result.textContent.text.replace(" ", "")
+            assertContains(text, "\"shortName\":\"get\"")
+            assertContains(text, "\"shortName\":\"iterator\"")
+            assertContains(text, "symbol_not_found")
+        }
+    }
+
+    private fun assertOperatorsImported(path: String, vararg names: String) = runBlocking {
+        testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request(path)) { result ->
+            val text = result.textContent.text
+            for (name in names) assertContains(text, "+import ops1.$name")
+            assertFalse("symbol_not_found" in text, "Nothing may stay unresolved: $text")
         }
     }
 

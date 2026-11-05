@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package sample
 
-class First
+class TypeI
 
-class Second
+class TypeJ
 
-fun overloaded(value: First) {}
+fun target(value: TypeI) {}
 
-fun overloaded(value: Second) {}
+fun target(value: TypeJ) {}
 
-fun usesAmbiguousArgument() {
-    overloaded(Marker())
+fun case11() {
+    target(Marker())
 }
