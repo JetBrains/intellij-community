@@ -19,6 +19,7 @@ import kotlin.uuid.Uuid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -300,6 +301,11 @@ public abstract class DataConverter<V, T> {
       catch (NumberFormatException ignore) {
       }
       try {
+        return new BigDecimal(data);
+      }
+      catch (NumberFormatException ignore) {
+      }
+      try {
         return Double.parseDouble(data);
       }
       catch (NumberFormatException ignore) {
@@ -336,6 +342,13 @@ public abstract class DataConverter<V, T> {
     }
 
     private static @Nullable Number parseCurrency(@NotNull String value) {
+      NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.US);
+      if (currencyFormat instanceof DecimalFormat decimalFormat) decimalFormat.setParseBigDecimal(true);
+      try {
+        return currencyFormat.parse(value);
+      }
+      catch (ParseException ignore) {
+      }
       try {
         return FORMAT.parse(value.substring(1));
       }

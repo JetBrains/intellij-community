@@ -70,7 +70,10 @@ public class DateAndTimeFormatter<T, V extends TemporalAccessor> extends Formatt
   @Override
   public Object parse(@NotNull String value, @NotNull ParsePosition position) {
     Object boundary = myBoundaryValuesResolver.createFromInfinityString(value);
-    if (boundary != null) return boundary;
+    if (boundary != null) {
+      position.setIndex(value.length());
+      return boundary;
+    }
     TemporalAccessor parsed = parseValue(value, position);
     if (parsed == null) return null;
     V temporal = query(parsed, myDelegate.getQueries());
