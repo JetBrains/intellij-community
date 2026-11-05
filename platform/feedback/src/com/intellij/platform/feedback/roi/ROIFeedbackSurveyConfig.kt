@@ -28,11 +28,11 @@ internal class ROIFeedbackSurveyConfig : ExternalFeedbackSurveyConfig {
   override val surveyId: String = "feedback_survey_for_roi_calculation"
 
   override val lastDayOfFeedbackCollection: LocalDate =
-    LocalDate(2026, Month.OCTOBER, 19) // 2026.2.4 is scheduled for 13 October 2026. Duration is 1 week.
+    LocalDate(2026, Month.NOVEMBER, 21) // 2026.2.5 is scheduled for 12 November 2026. The survey is shown until 20 November 2026 included.
 
-  override val requireIdeEAP: Boolean = false // Should be shown in 2026.2.4 release
+  override val requireIdeEAP: Boolean = false // Should be shown in 2026.2.5 release
 
-  private val suitableIdeVersion = "2026.2.4"
+  private val suitableIdeVersion = "2026.2.5"
 
   private val unsuitableRegions = listOf(Region.AFRICA, Region.CHINA)
 
