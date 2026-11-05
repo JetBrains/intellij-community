@@ -10,6 +10,7 @@ import com.intellij.mcpserver.createStreamableServerJsonEntry
 import com.intellij.mcpserver.frontend.services.McpServiceViewContributor
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.toolwindow.McpDiagnosticService
@@ -130,7 +131,7 @@ internal class McpServerPopupModelImpl(
   override fun enable() {
     coroutineScope.launch {
       McpServerSettings.getInstance().enableMcpServer = true
-      McpServerService.getInstance().settingsChanged(true)
+      McpServerServiceImpl.getInstance().settingsChanged(true)
       withContext(Dispatchers.EDT) {
         onStateChangedAction()
       }
@@ -140,7 +141,7 @@ internal class McpServerPopupModelImpl(
   override fun disable() {
     coroutineScope.launch {
       McpServerSettings.getInstance().enableMcpServer = false
-      McpServerService.getInstance().settingsChanged(false)
+      McpServerServiceImpl.getInstance().settingsChanged(false)
       withContext(Dispatchers.EDT) {
         onStateChangedAction()
       }

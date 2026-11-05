@@ -4,7 +4,7 @@ import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolCategory
 import com.intellij.mcpserver.McpToolsMarkdownExporter
-import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.presentableDescription
 import com.intellij.mcpserver.presentableName
 import com.intellij.mcpserver.settings.McpToolFilterOptimizer
@@ -45,7 +45,7 @@ internal class ShowMcpToolsAction : AnAction() {
     val (allMcpTools, enabledTools) = runWithModalProgressBlocking(ModalTaskOwner.project(project),
                                                                    McpServerBundle.message("dialog.mcp.tools.title"),
                                                                    TaskCancellation.nonCancellable()) {
-      val service = McpServerService.getInstance()
+      val service = McpServerServiceImpl.getInstance()
       // Get all tools without filtering to show the complete list with current filter state
       val allTools = service.getMcpToolsAsync(useFiltersFromEP = false)
       // Get currently enabled tools to determine initial checkbox state

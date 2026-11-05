@@ -51,7 +51,7 @@ internal class McpToolsListProviderTest {
    */
   @Test
   fun `extension point change is converted off the EDT`(): Unit = timeoutRunBlocking {
-    val service = McpServerService.getInstance()
+    val service = McpServerServiceImpl.getInstance()
     // warm the tools up, so the assertions below are about the extension point listener rather than the initial load
     service.getAllMcpToolsAsync()
     val toolsStateProvider = service.toolsStateProvider
@@ -79,7 +79,7 @@ internal class McpToolsListProviderTest {
    */
   @Test
   fun `extension removal drops the tools of the removed provider immediately`(): Unit = timeoutRunBlocking {
-    val service = McpServerService.getInstance()
+    val service = McpServerServiceImpl.getInstance()
     service.getAllMcpToolsAsync()
     val toolsStateProvider = service.toolsStateProvider
 

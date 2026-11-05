@@ -18,7 +18,7 @@ internal class McpServerServiceInitializationTest {
     settings.enableMcpServer = false
     try {
       runBlocking {
-        val service = McpServerService(this)
+        val service = McpServerServiceImpl(this)
 
         assertThat(service.isToolsStateProviderInitialized()).isFalse()
         assertThat(service.isRunning).isFalse()

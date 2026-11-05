@@ -22,6 +22,7 @@ import com.intellij.mcpserver.frontend.util.getConsentDialog
 import com.intellij.mcpserver.icons.McpserverIcons
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.impl.McpServerTerminalPromotionDismissalState
 import com.intellij.mcpserver.impl.util.network.isValidPort
 import com.intellij.mcpserver.settings.McpServerSettings
@@ -214,7 +215,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     // multiple uncontrolled instances. For soundness, the life-cycle of the server and the creation
     // of a new instance should be protected by e.g. a Mutex.
     withContext(Dispatchers.Default) {
-      McpServerService.getInstance().settingsChanged(enabled, port)
+      McpServerServiceImpl.getInstance().settingsChanged(enabled, port)
     }
   }
 
@@ -223,7 +224,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
     // live server state. The scheduled reset joins the toggles, then applies the persisted setting.
     val staleToggles = enableChangeScope.coroutineContext.job.children.toList()
     enableChangeScope.cancel()
-    McpServerService.getInstance().scheduleResetToSettings(after = staleToggles)
+    McpServerServiceImpl.getInstance().scheduleResetToSettings(after = staleToggles)
     super.disposeUIResources()
   }
 

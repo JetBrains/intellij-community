@@ -5,6 +5,7 @@ package com.intellij.mcpserver
 
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings
 import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
@@ -26,7 +27,7 @@ import kotlin.time.Duration.Companion.seconds
 private const val ROUTER_TOOL = "execute_tool"
 
 /**
- * Tests [McpServerService.getMcpTools] with different [McpToolInvocationMode] values.
+ * Tests [McpServerServiceImpl.getMcpTools] with different [McpToolInvocationMode] values.
  * Uses a mocked tool provider so exact tool counts are deterministic.
  */
 @Testable
@@ -66,7 +67,7 @@ class McpToolInvocationModeTest {
 
   @Test
   fun `getMcpTools in DIRECT mode returns all fake tools plus router`() {
-    val tools = McpServerService.getInstance().getMcpTools(
+    val tools = McpServerServiceImpl.getInstance().getMcpTools(
       invocationMode = McpToolInvocationMode.DIRECT
     )
 
@@ -76,7 +77,7 @@ class McpToolInvocationModeTest {
 
   @Test
   fun `getMcpTools in DIRECT_WITH_ROUTER_ENABLED mode returns enabled tools and router`() {
-    val tools = McpServerService.getInstance().getMcpTools(
+    val tools = McpServerServiceImpl.getInstance().getMcpTools(
       invocationMode = McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED
     )
 
@@ -88,7 +89,7 @@ class McpToolInvocationModeTest {
 
   @Test
   fun `getMcpTools in VIA_ROUTER mode returns only router only tools and router`() {
-    val tools = McpServerService.getInstance().getMcpTools(
+    val tools = McpServerServiceImpl.getInstance().getMcpTools(
       invocationMode = McpToolInvocationMode.VIA_ROUTER
     )
 
@@ -138,7 +139,7 @@ class McpToolInvocationModeTest {
 
   @Test
   fun `the path without filter providers omits the router when the session opts in`() {
-    val tools = McpServerService.getInstance().getMcpTools(
+    val tools = McpServerServiceImpl.getInstance().getMcpTools(
       filter = McpToolFilter.AllowList(setOf("tool_a")),
       useFiltersFromEP = false,
       sessionOptions = omittingRouterOptions(),
@@ -155,7 +156,7 @@ class McpToolInvocationModeTest {
     sessionOptions: McpServerService.McpSessionOptions?,
     filter: McpToolFilter? = null,
   ): List<String> {
-    return McpServerService.getInstance()
+    return McpServerServiceImpl.getInstance()
       .getMcpTools(filter = filter, sessionOptions = sessionOptions, invocationMode = invocationMode)
       .map { it.descriptor.name }
   }

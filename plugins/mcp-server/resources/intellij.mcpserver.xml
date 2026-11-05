@@ -68,7 +68,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider"/>
-    <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerService"/>
+    <applicationService serviceInterface="com.intellij.mcpserver.impl.McpServerService"
+                        serviceImplementation="com.intellij.mcpserver.impl.McpServerServiceImpl"/>
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.McpServerConsentGate"/>
     <applicationService serviceImplementation="com.intellij.mcpserver.impl.wsl.McpWslForwarderService" os="windows"/>
     <applicationService serviceInterface="com.intellij.mcpserver.impl.McpSessionProjectResolver" serviceImplementation="com.intellij.mcpserver.impl.McpSessionProjectResolverImpl" open="true"/>
@@ -79,7 +80,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.mcpserver.statistics.McpServerApplicationUsagesCollector"/>
 
     <appStarter id="mcpServer" implementation="com.intellij.mcpserver.McpServerHeadlessStarter" internal="true"/>
-    <postStartupActivity implementation="com.intellij.mcpserver.impl.McpServerService$MyProjectListener" />
+    <postStartupActivity implementation="com.intellij.mcpserver.impl.McpServerServiceImpl$MyProjectListener" />
     <backgroundPostStartupActivity implementation="com.intellij.mcpserver.impl.wsl.McpWslForwarderService$ProjectOpenTracker" os="windows"/>
     <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"
       notificationIds="mcp.client.detected;mcp.client.autoconfigured;mcp.client.error.autoconfigured;mcp.client.wrong.port.detected"/>

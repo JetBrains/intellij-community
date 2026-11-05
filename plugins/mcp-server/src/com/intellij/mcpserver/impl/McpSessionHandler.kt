@@ -98,7 +98,7 @@ private fun getTracer(): IJTracer =
 internal class McpSessionHandler(
   parentScope: CoroutineScope,
   private val sessionOptions: McpServerService.McpSessionOptions,
-  mcpServerService: McpServerService,
+  mcpServerService: McpServerServiceImpl,
   private val mcpServer: Server,
   private val transportType: TransportType,
   private val projectPathFromInitialRequest: String?,
@@ -389,7 +389,7 @@ internal class McpSessionHandler(
       val clientVersion = session.clientVersion ?: Implementation("Unknown MCP client", "Unknown version")
 
       val additionalData = McpCallInfo(
-        callId = McpServerService.callId.getAndAdd(1),
+        callId = McpServerServiceImpl.callId.getAndAdd(1),
         clientInfo = ClientInfo(clientVersion.name, clientVersion.version),
         project = project,
         mcpToolDescriptor = mcpTool.descriptor,

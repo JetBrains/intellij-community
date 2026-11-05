@@ -8,7 +8,7 @@ import com.intellij.mcpserver.McpToolCallId
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.annotations.McpTool
-import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.impl.util.McpServerJson
 import com.intellij.mcpserver.mcpCallInfo
 import com.intellij.mcpserver.mcpCallOwnerIdsOf
@@ -160,7 +160,7 @@ class UniversalToolset : McpToolset {
   private suspend fun resolveRouterTools(): List<McpToolDef> {
     // No session: the host runs the call outside an MCP session, for example as an LSP command.
     val sessionHandler = currentCoroutineContext().mcpCallInfo.sessionHandler
-                         ?: return McpServerService.getInstanceAsync().getMcpToolsAsync(useFiltersFromEP = false)
+                         ?: return McpServerServiceImpl.getInstanceAsync().getMcpToolsAsync(useFiltersFromEP = false)
     val directTools = sessionHandler.toolsProvider.mcpTools.value
     val routerTools = sessionHandler.routerToolsProvider.mcpTools.value
     return (directTools + routerTools).distinctBy { it.descriptor.name }

@@ -2,7 +2,7 @@
 
 package com.intellij.mcpserver
 
-import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -26,7 +26,7 @@ class McpToolFilterSettingsTest {
   fun `default filter allows all tools`() {
     McpToolFilterSettings.getInstance().toolsFilter = "*"
 
-    val tools = McpServerService.getInstance().getMcpTools()
+    val tools = McpServerServiceImpl.getInstance().getMcpTools()
 
     assertThat(tools).isNotEmpty()
     assertThat(tools).anyMatch { it.descriptor.name == "read_file" }
@@ -38,7 +38,7 @@ class McpToolFilterSettingsTest {
     // Exclude all, then include only tools from general package
     McpToolFilterSettings.getInstance().toolsFilter = "-*,+com.intellij.mcpserver.toolsets.general.*"
 
-    val tools = McpServerService.getInstance().getMcpTools()
+    val tools = McpServerServiceImpl.getInstance().getMcpTools()
 
     assertThat(tools).isNotEmpty()
     // All tools should be from the general package
@@ -52,7 +52,7 @@ class McpToolFilterSettingsTest {
     // Allow all, then exclude specific tool
     McpToolFilterSettings.getInstance().toolsFilter = "*,-*.read_file"
 
-    val tools = McpServerService.getInstance().getMcpTools()
+    val tools = McpServerServiceImpl.getInstance().getMcpTools()
 
     assertThat(tools).isNotEmpty()
     assertThat(tools).noneMatch { it.descriptor.name == "read_file" }
@@ -64,7 +64,7 @@ class McpToolFilterSettingsTest {
     // Exclude all, include general package, then exclude read_file
     McpToolFilterSettings.getInstance().toolsFilter = "-*,+com.intellij.mcpserver.toolsets.general.*,-*.read_file"
 
-    val tools = McpServerService.getInstance().getMcpTools()
+    val tools = McpServerServiceImpl.getInstance().getMcpTools()
 
     assertThat(tools).isNotEmpty()
     // All tools should be from the general package
@@ -80,7 +80,7 @@ class McpToolFilterSettingsTest {
   fun `filter excludes all tools`() {
     McpToolFilterSettings.getInstance().toolsFilter = "-*"
 
-    val tools = McpServerService.getInstance().getMcpTools()
+    val tools = McpServerServiceImpl.getInstance().getMcpTools()
 
     // Router tool (execute_tool) is always available
     assertThat(tools).hasSize(1)
@@ -91,7 +91,7 @@ class McpToolFilterSettingsTest {
   fun `filter includes only PatchToolset tools`() {
     McpToolFilterSettings.getInstance().toolsFilter = "-*,+com.intellij.mcpserver.toolsets.general.PatchToolset.*"
 
-    val tools = McpServerService.getInstance().getMcpTools()
+    val tools = McpServerServiceImpl.getInstance().getMcpTools()
 
     assertThat(tools).isNotEmpty()
     tools.forEach { tool ->
@@ -115,7 +115,7 @@ class McpToolFilterSettingsTest {
     // 5. Include read_file again (should be present in final result)
     McpToolFilterSettings.getInstance().toolsFilter = "-*,+com.intellij.mcpserver.toolsets.general.*,-*.read_file,+*.read_file"
 
-    val tools = McpServerService.getInstance().getMcpTools()
+    val tools = McpServerServiceImpl.getInstance().getMcpTools()
 
     assertThat(tools).isNotEmpty()
     assertThat(tools).anyMatch { it.descriptor.name == "read_file" }
@@ -126,7 +126,7 @@ class McpToolFilterSettingsTest {
     // Test that spaces around commas are handled correctly
     McpToolFilterSettings.getInstance().toolsFilter = "-*, +com.intellij.mcpserver.toolsets.general.PatchToolset.*"
 
-    val tools = McpServerService.getInstance().getMcpTools()
+    val tools = McpServerServiceImpl.getInstance().getMcpTools()
 
     assertThat(tools).isNotEmpty()
     tools.forEach { tool ->

@@ -25,6 +25,7 @@ import com.intellij.mcpserver.McpExpectedError
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.annotations.McpDescription
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.mcpCallInfo
 import com.intellij.mcpserver.mcpFail
 import com.intellij.mcpserver.project
@@ -494,7 +495,7 @@ private suspend fun executeResolvedRunConfiguration(
     // if process exited and output is not big/truncated, delete output file, because the whole output will be returned in the result
     if (!startedExecution.outputCollector.isOutputPreviewTruncated) {
       logger.trace { "Output is truncated. Scheduling temp file deletion: ${startedExecution.outputCollector.outputPath}..." }
-      McpServerService.getInstance().coroutineScope.launch(Dispatchers.IO) {
+      McpServerServiceImpl.getInstance().coroutineScope.launch(Dispatchers.IO) {
         try {
           logger.trace { "Deleting temp file: ${startedExecution.outputCollector.outputPath}..." }
           startedExecution.outputCollector.outputPath.deleteIfExists()
@@ -607,7 +608,7 @@ private fun createProcessCallback(
       val outputPath = createRunConfigurationOutputFile(sessionName)
       // remove on IDE close
       @OptIn(AwaitCancellationAndInvoke::class)
-      McpServerService.getInstance().coroutineScope.awaitCancellationAndInvoke(Dispatchers.IO) {
+      McpServerServiceImpl.getInstance().coroutineScope.awaitCancellationAndInvoke(Dispatchers.IO) {
         try {
           outputPath.deleteIfExists()
         }
@@ -615,7 +616,7 @@ private fun createProcessCallback(
           logger.debug("Failed to delete temp output file: ${outputPath}", e)
         }
       }
-      OutputCollector(McpServerService.getInstance().coroutineScope, outputPath)
+      OutputCollector(McpServerServiceImpl.getInstance().coroutineScope, outputPath)
     }
     catch (e: Exception) {
       rethrowControlFlowException(e)

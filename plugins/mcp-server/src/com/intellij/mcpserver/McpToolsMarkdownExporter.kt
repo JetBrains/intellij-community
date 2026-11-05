@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver
 
-import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -157,7 +157,7 @@ object McpToolsMarkdownExporter {
    * Generates markdown documentation for all currently available MCP tools.
    */
   suspend fun generateMarkdownForAllTools(): String {
-    return generateMarkdown(McpServerService.getInstance().getMcpToolsAsync())
+    return generateMarkdown(McpServerServiceImpl.getInstance().getMcpToolsAsync())
   }
 
   private data class SchemaTableRow(

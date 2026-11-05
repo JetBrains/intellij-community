@@ -1,6 +1,7 @@
 package com.intellij.mcpserver.impl.util.network
 
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceOrNull
 import java.net.InetAddress
@@ -37,7 +38,7 @@ open class McpServerConnectionAddressProvider {
   }
 
   private fun effectiveHost(hostOverride: String?): String {
-    val candidate = hostOverride ?: serverService.resolvedConnectorHost().takeUnless { it.isNullOrBlank() }
+    val candidate = hostOverride ?: (serverService as? McpServerServiceImpl)?.resolvedConnectorHost().takeUnless { it.isNullOrBlank() }
     return candidate?.normalizeConnectorHost() ?: loopbackHost
   }
 

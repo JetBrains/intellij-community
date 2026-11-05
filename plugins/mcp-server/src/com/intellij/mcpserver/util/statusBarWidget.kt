@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver.util
 
-import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.wm.StatusBarWidgetFactory
@@ -16,7 +16,7 @@ const val MCP_STATUS_BAR_WIDGET_ID: String = "McpServerStatusBarWidget"
  * Runs asynchronously in the background.
  */
 internal fun enableIfNotExplicitlyDisabled() {
-  McpServerService.getInstance().coroutineScope.launch {
+  McpServerServiceImpl.getInstance().coroutineScope.launch {
     val settings = serviceOrNull<StatusBarWidgetSettings>() ?: return@launch
     if (settings.isExplicitlyDisabled(MCP_STATUS_BAR_WIDGET_ID)) return@launch
     val factory = StatusBarWidgetFactory.EP_NAME.findFirstSafe{ it?.getId() == MCP_STATUS_BAR_WIDGET_ID } ?: return@launch

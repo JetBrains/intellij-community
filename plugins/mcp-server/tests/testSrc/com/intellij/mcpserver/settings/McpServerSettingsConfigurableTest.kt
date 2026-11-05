@@ -6,6 +6,7 @@ import com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable
 import com.intellij.mcpserver.frontend.settings.TerminalPromotionSetting
 import com.intellij.mcpserver.frontend.settings.openFileInEditor
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.impl.McpServerTerminalPromotionDismissalState
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteAction
@@ -184,7 +185,7 @@ class McpServerSettingsConfigurableTest {
     val settings = McpServerSettings.getInstance()
     val original = settings.enableMcpServer
     settings.enableMcpServer = false
-    withContext(Dispatchers.Default) { McpServerService.getInstance().settingsChanged(false) }
+    withContext(Dispatchers.Default) { McpServerServiceImpl.getInstance().settingsChanged(false) }
     val previousDialog = TestDialogManager.setTestDialog(TestDialog.YES)
     val configurable = McpServerSettingsConfigurable()
     try {
@@ -211,7 +212,7 @@ class McpServerSettingsConfigurableTest {
       TestDialogManager.setTestDialog(previousDialog)
       configurable.disposeUIResources()
       settings.enableMcpServer = original
-      withContext(Dispatchers.Default) { McpServerService.getInstance().settingsChanged(original) }
+      withContext(Dispatchers.Default) { McpServerServiceImpl.getInstance().settingsChanged(original) }
     }
   }
 
@@ -225,7 +226,7 @@ class McpServerSettingsConfigurableTest {
     val settings = McpServerSettings.getInstance()
     val original = settings.enableMcpServer
     settings.enableMcpServer = false
-    val service = McpServerService(this)
+    val service = McpServerServiceImpl(this)
     try {
       service.settingsChanged(false)
 

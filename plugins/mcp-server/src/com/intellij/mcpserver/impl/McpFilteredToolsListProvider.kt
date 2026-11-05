@@ -24,7 +24,7 @@ private val logger = logger<McpFilteredToolsListProvider>()
 internal class McpFilteredToolsListProvider(
   parentScope: CoroutineScope,
   private val sessionOptions: McpServerService.McpSessionOptions,
-  private val mcpServerService: McpServerService,
+  private val mcpServerService: McpServerServiceImpl,
   private val useFiltersFromEP: Boolean,
   private val invocationMode: McpToolInvocationMode = McpToolInvocationMode.DIRECT,
 ) {

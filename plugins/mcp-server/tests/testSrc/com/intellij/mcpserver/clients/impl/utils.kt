@@ -2,7 +2,7 @@ package com.intellij.mcpserver.clients.impl
 
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.configs.ExistingConfig
-import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.serialization.json.JsonObject
@@ -27,7 +27,7 @@ internal class TestMcpServerConnectionAddressProvider(
  * Test implementation of McpServerService that provides a fixed port without requiring server startup.
  * Used in client configuration tests where the actual MCP server doesn't need to be running.
  */
-internal class TestMcpServerService(cs: CoroutineScope, override val port: Int) : McpServerService(cs)
+internal class TestMcpServerService(cs: CoroutineScope, override val port: Int) : McpServerServiceImpl(cs)
 
 /**
  * Reads the mcp servers section from a JSON config file.

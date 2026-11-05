@@ -14,6 +14,7 @@ import com.intellij.mcpserver.frontend.settings.McpToolFilterPanel
 import com.intellij.mcpserver.frontend.settings.buildDescriptionRenderModel
 import com.intellij.mcpserver.frontend.settings.userConfigurableTools
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings.ToolState
 import com.intellij.mcpserver.toolsets.general.UniversalToolset
 import com.intellij.openapi.application.EDT
@@ -116,7 +117,7 @@ class McpToolFilterConfigurableTest {
 
   @Test
   fun `stored tool overrides do not mark configurable modified`(): Unit = runBlocking(Dispatchers.EDT) {
-    val toolKey = McpServerService.getInstance()
+    val toolKey = McpServerServiceImpl.getInstance()
       .getMcpToolsFilteredAsync(useFiltersFromEP = false, excludeProviders = emptySet())
       .first()
       .descriptor
@@ -141,7 +142,7 @@ class McpToolFilterConfigurableTest {
 
   @Test
   fun `hidden on demand changes are ignored by modified state and apply`(): Unit = runBlocking(Dispatchers.EDT) {
-    val toolKey = McpServerService.getInstance()
+    val toolKey = McpServerServiceImpl.getInstance()
       .getMcpToolsFilteredAsync(useFiltersFromEP = false, excludeProviders = emptySet())
       .first()
       .descriptor
@@ -172,7 +173,7 @@ class McpToolFilterConfigurableTest {
 
   @Test
   fun `tool state toggled back to default clears modified state`(): Unit = runBlocking(Dispatchers.EDT) {
-    val toolKey = McpServerService.getInstance()
+    val toolKey = McpServerServiceImpl.getInstance()
       .getMcpToolsFilteredAsync(useFiltersFromEP = false, excludeProviders = emptySet())
       .first()
       .descriptor
@@ -197,7 +198,7 @@ class McpToolFilterConfigurableTest {
 
   @Test
   fun `enabled checkbox toggled back clears modified state`(): Unit = runBlocking(Dispatchers.EDT) {
-    val toolKey = McpServerService.getInstance()
+    val toolKey = McpServerServiceImpl.getInstance()
       .getMcpToolsFilteredAsync(useFiltersFromEP = false, excludeProviders = emptySet())
       .first { it.descriptor.name != UniversalToolset::execute_tool.name }
       .descriptor
@@ -224,7 +225,7 @@ class McpToolFilterConfigurableTest {
   @Test
   fun `configurable applies product filter providers but ignores user settings filters`(): Unit = runBlocking(Dispatchers.EDT) {
     val disposable = Disposer.newDisposable()
-    val filteredTool = McpServerService.getInstance()
+    val filteredTool = McpServerServiceImpl.getInstance()
       .getMcpToolsFilteredAsync(useFiltersFromEP = false, excludeProviders = emptySet())
       .first { it.descriptor.name != UniversalToolset::execute_tool.name }
     val filteredToolName = filteredTool.descriptor.fullyQualifiedName

@@ -70,7 +70,7 @@ internal class McpServerConsentGate(
     settings.enabledByFreshInstallPolicy = false
     if (!granted) {
       settings.enableMcpServer = false
-      McpServerService.getInstanceIfCreated()?.scheduleResetToSettings()
+      McpServerServiceImpl.getInstanceIfCreated()?.scheduleResetToSettings()
     }
     if (ApplicationManager.getApplication().isUnitTestMode) return
     try {

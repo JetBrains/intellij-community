@@ -6,7 +6,7 @@ import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.McpTool
 import com.intellij.mcpserver.McpToolsMarkdownExporter
-import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.impl.UserConfigurableMcpToolFilterProvider
 import com.intellij.mcpserver.presentableDescription
 import com.intellij.mcpserver.presentableName
@@ -186,7 +186,7 @@ class McpToolFilterPanel @RequiresEdt constructor() {
    * Visible for tests: [initOnShow] never fires for a component that is not showing.
    */
   suspend fun loadToolsAndUpdateUi() {
-    val tools = McpServerService.getInstance()
+    val tools = McpServerServiceImpl.getInstance()
       .getMcpToolsFilteredAsync(excludeProviders = setOf(UserConfigurableMcpToolFilterProvider::class.java))
       .let(::userConfigurableTools)
     withContext(Dispatchers.EDT) {
@@ -359,7 +359,7 @@ class McpToolFilterPanel @RequiresEdt constructor() {
    */
   private fun rebuildToolGroupsIfLoaded() {
     if (!toolsLoaded) return
-    val tools = McpServerService.getInstance().getMcpToolsFiltered(
+    val tools = McpServerServiceImpl.getInstance().getMcpToolsFiltered(
       excludeProviders = setOf(UserConfigurableMcpToolFilterProvider::class.java),
     ).let(::userConfigurableTools)
     rebuildToolGroups(tools)

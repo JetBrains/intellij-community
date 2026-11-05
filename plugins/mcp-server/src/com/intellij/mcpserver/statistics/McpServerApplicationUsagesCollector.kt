@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.mcpserver.McpSessionInvocationMode
 import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.impl.McpClientDetector
-import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.settings.McpServerConsent
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.settings.McpToolDisallowListSettings
@@ -71,7 +71,7 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
 
   override suspend fun getMetricsAsync(): Set<MetricEvent> {
     val settings = McpServerSettings.getInstance()
-    val mcpServerService = McpServerService.getInstanceAsync()
+    val mcpServerService = McpServerServiceImpl.getInstanceAsync()
     val metrics = mutableSetOf<MetricEvent>()
 
     metrics.add(MCP_RUNNING.metric(mcpServerService.isRunning))
@@ -88,7 +88,7 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
     return metrics
   }
 
-  private fun collectExposedToolsMetric(mcpServerService: McpServerService): MetricEvent {
+  private fun collectExposedToolsMetric(mcpServerService: McpServerServiceImpl): MetricEvent {
     val disallowListSettings = McpToolDisallowListSettings.getInstance()
     var enabled = 0
     var routerOnly = 0
@@ -110,7 +110,7 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
     )
   }
 
-  private fun collectToolStateMetrics(mcpServerService: McpServerService): List<MetricEvent> {
+  private fun collectToolStateMetrics(mcpServerService: McpServerServiceImpl): List<MetricEvent> {
     val disallowListSettings = McpToolDisallowListSettings.getInstance()
     return mcpServerService.getAllMcpTools().map { tool ->
       val state = disallowListSettings.toolStateFor(tool)

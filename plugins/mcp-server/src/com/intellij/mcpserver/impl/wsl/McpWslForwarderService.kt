@@ -4,6 +4,7 @@ package com.intellij.mcpserver.impl.wsl
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslPath
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -112,7 +113,7 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
     // touch WSL from tests that merely instantiate the service graph.
     //
     // Also stay completely off when the registry flag is set to `false` — no coroutines
-    // launched in [cs], no subscription to McpServerService.serverPortFlow.
+    // launched in [cs], no subscription to McpServerServiceImpl.serverPortFlow.
     //
     if (!ApplicationManager.getApplication().isUnitTestMode && isFeatureEnabled()) {
       startReconcileCollector()
@@ -130,11 +131,11 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
   }
 
   /**
-   * Subscribe to [McpServerService.serverPortFlow]; every start/stop transition reconciles every known
+   * Subscribe to [McpServerServiceImpl.serverPortFlow]; every start/stop transition reconciles every known
    * distro. This replaces the previous polling of `isRunning` / `port`.
    */
   private fun subscribeToMcpServerFlow() {
-    val svc = serviceOrNull<McpServerService>() ?: return
+    val svc = McpServerServiceImpl.getInstanceIfCreated() ?: return
     cs.launch(CoroutineName("mcp-wsl-forwarder-mcp-signal")) {
       svc.serverPortFlow.collect { port ->
         LOG.debug { "MCP server port signal → $port" }
@@ -407,7 +408,7 @@ class McpWslForwarderService(private val cs: CoroutineScope) {
    *   not running.
    */
   private fun readMcpSignal(): Int? {
-    val svc = serviceOrNull<McpServerService>() ?: return null
+    val svc = McpServerServiceImpl.getInstanceIfCreated() ?: return null
     return svc.serverPortFlow.value
   }
 
