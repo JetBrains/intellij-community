@@ -3808,7 +3808,6 @@ com.intellij.openapi.updateSettings.impl.UpdateSettingsProvider
 com.intellij.openapi.updateSettings.impl.UpdateSettingsUIProvider
 - a:init(com.intellij.ui.dsl.builder.Panel):V
 f:com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
-- sf:getNotificationGroup():com.intellij.notification.NotificationGroup
 - sf:getPluginSuggestionNotificationGroup():com.intellij.notification.NotificationGroup
 c:com.intellij.openapi.util.MultiValuesMap
 - <init>(Z):V

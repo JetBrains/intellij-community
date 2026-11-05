@@ -14,7 +14,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils
 import com.intellij.util.PlatformUtils.isIdeaUltimate
-import org.jetbrains.annotations.ApiStatus
 
 private const val IGNORE_ULTIMATE_EDITION = "promo.ignore.suggested.ide"
 
@@ -24,11 +23,6 @@ internal var isIgnoreIdeSuggestion: Boolean
           || !PluginAdvertiserService.isAdvertisingProducts()
           || (!PlatformUtils.isCommunityEdition() && PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID))
   set(value) = PropertiesComponent.getInstance().setValue(IGNORE_ULTIMATE_EDITION, value)
-
-@get:Deprecated("Use `getPluginSuggestionNotificationGroup()`")
-@get:ApiStatus.ScheduledForRemoval
-val notificationGroup: NotificationGroup
-  get() = getPluginSuggestionNotificationGroup()
 
 fun getPluginSuggestionNotificationGroup(): NotificationGroup {
   return NotificationGroupManager.getInstance().getNotificationGroup("Plugins Suggestion")
