@@ -89,6 +89,8 @@ jvm_library(
         "//plugins/properties/plugin",
         "//platform/vcs/plugin",
         "//java/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,

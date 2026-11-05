@@ -40,5 +40,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
   </component>
 </module>

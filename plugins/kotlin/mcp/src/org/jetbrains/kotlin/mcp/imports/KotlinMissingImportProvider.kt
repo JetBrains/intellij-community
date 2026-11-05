@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtPackageDirective
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.isConventionOperator
 
 /**
  * Adds a missing Kotlin import.
@@ -57,9 +56,9 @@ private fun importAll(file: KtFile, takeBestCandidate: Boolean, foundNames: Muta
         // The offsets are taken before the pass changes anything, so the first pass keeps the offsets of the file.
         val pending = unresolvedExpressions(file).map { pointerManager.createSmartPsiElementPointer(it) to it.textRange.startOffset }
         val undecidedNames = HashSet<String>()
-        for ((pointer, offset) in pending) {
+        for ([pointer, offset] in pending) {
             val expression = pointer.element ?: continue
-            if (expression.mainReference.resolve() != null) continue
+            if (expression.mainReference.multiResolve(false).isNotEmpty()) continue
             val name = expression.getReferencedName()
             if (name in undecidedNames) continue
             val variants = importVariantsOf(facility, expression, file)
@@ -84,7 +83,7 @@ private fun importsOf(file: KtFile): List<String> = file.importDirectives.mapNot
 private fun unresolvedExpressions(file: KtFile): List<KtSimpleNameExpression> =
     SyntaxTraverser.psiTraverser(file)
         .filter(KtSimpleNameExpression::class.java)
-        .filter { it.mainReference.resolvesByNames.isNotEmpty() && canTakeImport(it) && it.mainReference.resolve() == null }
+        .filter { it.mainReference.resolvesByNames.isNotEmpty() && canTakeImport(it) && it.mainReference.multiResolve(false).isEmpty() }
         .toList()
 
 private fun importVariantsOf(

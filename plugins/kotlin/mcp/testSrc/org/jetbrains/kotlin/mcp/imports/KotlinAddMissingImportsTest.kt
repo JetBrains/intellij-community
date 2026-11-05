@@ -57,6 +57,15 @@ class KotlinAddMissingImportsTest : KotlinImportsTestBase() {
     }
 
     @Test
+    fun `a call with an ambiguous argument is not reported as not found`() = runBlocking {
+        testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesAmbiguousArgument.kt")) { result ->
+            val text = result.textContent.text
+            assertContains(text, "one.Marker")
+            assertFalse("\"overloaded\"" in text, "The tool must not report overloaded: $text")
+        }
+    }
+
+    @Test
     fun `an invented name is reported as not found`() = runBlocking {
         testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesInvented.kt")) { result ->
             val text = result.textContent.text
