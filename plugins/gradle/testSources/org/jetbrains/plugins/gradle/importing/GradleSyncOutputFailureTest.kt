@@ -153,7 +153,10 @@ class GradleSyncOutputFailureTest(
           if (isResilientSyncEnabled(gradleVersion) && showSuppressedFailures) {
             assertNode("A problem occurred configuring root project 'project'.")
           }
-          assertNode("Expecting '}'")
+          when {
+            GradleVersionUtil.isGradleAtLeast(gradleVersion, "9.9") -> assertNode("Syntax error: Expecting '}'.")
+            else -> assertNode("Expecting '}'")
+          }
         }
       }
     }

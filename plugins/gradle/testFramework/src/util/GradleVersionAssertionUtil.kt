@@ -38,6 +38,9 @@ const val KOTLIN_DSL_DELEGATING_PROPERTY_SUPPORTED_VERSIONS = "<9.6.0"
 const val KOTLIN_DSL_BASE_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS = "9.2+"
 const val KOTLIN_DSL_BASE_SCRIPTS_MODEL_IMPORT_UNSUPPORTED_VERSIONS = "<9.2"
 
+// See gradle/gradle/pull/39501 for more details
+const val GRADLE_ANT_INTEGRATION_DEPRECATED = "<9.9.0"
+
 fun assertThatGradleIsAtLeast(gradleVersion: GradleVersion, version: String) {
   assertThatGradleIsAtLeast(gradleVersion, version) {
     """

@@ -72,6 +72,7 @@ import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.intellij.gradle.testFramework.util.GradleVersionAssertionUtilKt.GRADLE_ANT_INTEGRATION_DEPRECATED;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectId;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectPath;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectVersion;
@@ -2403,7 +2404,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  @TargetVersions("6.1+")
+  @TargetVersions({"6.1+", GRADLE_ANT_INTEGRATION_DEPRECATED})
   public void testSourcesJavadocAttachmentFromClassesFolder() throws Exception {
     createSettingsFile(including("aLib"));
     createProjectSubFile("aLib/build.gradle",

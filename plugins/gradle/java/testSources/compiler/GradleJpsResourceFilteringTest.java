@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.compiler;
 
+import com.intellij.gradle.testFramework.annotations.TargetVersions;
 import org.junit.Test;
+
+import static com.intellij.gradle.testFramework.util.GradleVersionAssertionUtilKt.GRADLE_ANT_INTEGRATION_DEPRECATED;
 
 /**
  * @author Vladislav.Soroka
@@ -178,6 +181,7 @@ public class GradleJpsResourceFilteringTest extends GradleJpsCompilingTestCase {
   }
 
   @Test
+  @TargetVersions(GRADLE_ANT_INTEGRATION_DEPRECATED)
   public void testExpandPropertiesFilter() throws Exception {
     createProjectSubFile(
       "src/main/resources/dir/file.txt", "some text ${myProp} another text");
@@ -198,6 +202,7 @@ public class GradleJpsResourceFilteringTest extends GradleJpsCompilingTestCase {
   }
 
   @Test
+  @TargetVersions(GRADLE_ANT_INTEGRATION_DEPRECATED)
   public void testExpandPropertiesFilter_MergedProject() throws Exception {
     createProjectSubFile(
       "src/main/resources/dir/file.txt", "some text ${myProp} another text");
