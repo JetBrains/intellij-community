@@ -495,6 +495,10 @@
       <reference ref="Arrangement.Rule.Group.Condition.Move.Up"/>
       <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
     </group>
+    <action id="InjectionHalloweenParty" class="com.intellij.codeInsight.daemon.impl.InjectionHalloweenPartyAction"
+            internal="true">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
     <group id="Internal.Dump" internal="true" popup="true">
       <reference ref="DumpPluginDescriptorsAction"/>
     </group>

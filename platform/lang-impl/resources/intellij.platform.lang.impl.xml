@@ -579,6 +579,9 @@
                  description="Maximum number of scanning cancellation reports per session. Use '-1' to keep reporting."/>
     <registryKey key="search.everywhere.goto.file.literal.directory.match" defaultValue="true"
                  description="Goto File resolves a directory pattern that is a literal path through the VFS cache, instead of walking the project tree."/>
+    <registryKey key="editor.injection.halloween.party" defaultValue="false"
+                 description="Gives each injected fragment a random installed font family. This is an internal demo of the editor font families."/>
+    <postStartupActivity implementation="com.intellij.codeInsight.daemon.impl.InjectionHalloweenPartyActivity"/>
     <applicationService serviceImplementation="com.intellij.codeInsight.template.TemplateGroupOrderProvider" open="true"/>
     <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump" internal="true"/>
     <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump" internal="true"/>
@@ -1919,6 +1922,9 @@
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
     <listener class="com.intellij.ide.projectView.impl.ProjectViewVfsInfoListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ide.projectView.impl.ProjectViewIndexableInfoListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+    <listener class="com.intellij.codeInsight.daemon.impl.InjectionHalloweenPartyRegistryListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.codeInsight.inline.completion.listeners.typing.InlineCompletionTemplateListener"
