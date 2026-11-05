@@ -2,7 +2,6 @@
 package com.intellij.java.navigation;
 
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
-import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider;
@@ -953,20 +952,6 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     return contributor.search(text, new MockProgressIndicator(), ELEMENTS_LIMIT).getItems();
   }
 
-  public static SearchEverywhereContributor<Object> createClassContributor(Project project,
-                                                                           Disposable parentDisposable,
-                                                                           PsiElement context,
-                                                                           boolean everywhere) {
-    TestClassContributor res = new TestClassContributor(createEvent(project, context));
-    res.setEverywhere(everywhere);
-    Disposer.register(parentDisposable, res);
-    return res;
-  }
-
-  public static SearchEverywhereContributor<Object> createClassContributor(Project project, Disposable parentDisposable) {
-    return ChooseByNameTest.createClassContributor(project, parentDisposable, null, false);
-  }
-
   public static SearchEverywhereContributor<Object> createFileContributor(Project project,
                                                                           Disposable parentDisposable,
                                                                           PsiElement context,
@@ -997,22 +982,6 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private static final Integer ELEMENTS_LIMIT = 30;
-
-  private static class TestClassContributor extends ClassSearchEverywhereContributor {
-    private TestClassContributor(@NotNull AnActionEvent event) {
-      super(event);
-    }
-
-    public void setEverywhere(boolean state) {
-      myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state));
-    }
-
-    @NotNull
-    @Override
-    public String getSearchProviderId() {
-      return "ClassSearchEverywhereContributor";
-    }
-  }
 
   private static class TestFileContributor extends FileSearchEverywhereContributor {
     private TestFileContributor(@NotNull AnActionEvent event) {

@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ide.gotoByName;
 
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.ide.ui.OptionsSearchTopHitProvider;
 import com.intellij.ide.ui.OptionsTopHitProvider;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -29,7 +27,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils;
 import com.intellij.platform.searchEverywhere.testFramework.SeProvidersTestFixture;
 import com.intellij.testFramework.ExtensionTestUtil;
@@ -42,7 +39,6 @@ import org.assertj.core.api.SoftAssertions;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -517,13 +513,6 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     return new MatchedValue(option, pattern, MatchedValueType.OPTION);
   }
 
-  public static SearchEverywhereContributor<?> createActionContributor(Project project, Disposable parentDisposable) {
-    TestActionContributor res = new TestActionContributor(project, null, null);
-    res.setShowDisabled(true);
-    Disposer.register(parentDisposable, res);
-    return res;
-  }
-  
   private static class TestBooleanOption extends BooleanOptionDescription {
     private TestBooleanOption(String option) {
       super(option, null);
@@ -536,16 +525,6 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
     @Override
     public void setOptionState(boolean enabled) {
-    }
-  }
-
-  private static class TestActionContributor extends ActionSearchEverywhereContributor {
-    private TestActionContributor(Project project, Component contextComponent, Editor editor) {
-      super(project, contextComponent, editor);
-    }
-
-    public void setShowDisabled(boolean val) {
-      setMyDisabledActions(val);
     }
   }
 }

@@ -33,7 +33,7 @@ class SeResultListEventsTest {
   }
 
   @Test
-  fun `an equal weight puts the provider with the lower sort weight first`(): Unit = runBlocking {
+  fun `an equal weight puts the provider with the higher minor priority first`(): Unit = runBlocking {
     list.add(itemData("file", 100, SeProviderIdUtils.FILES_ID))
     list.add(itemData("class", 100, SeProviderIdUtils.CLASSES_ID))
 
@@ -52,7 +52,7 @@ class SeResultListEventsTest {
   }
 
   @Test
-  fun `a replace by a provider with a lower sort weight moves the item to its place`(): Unit = runBlocking {
+  fun `a replace by a provider with a higher minor priority moves the item to its place`(): Unit = runBlocking {
     list.add(itemData("b", 100, SeProviderIdUtils.FILES_ID))
     val a = itemData("a", 100, SeProviderIdUtils.FILES_ID)
     list.add(a)
