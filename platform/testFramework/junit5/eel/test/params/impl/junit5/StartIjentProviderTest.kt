@@ -36,15 +36,17 @@ internal class StartIjentProviderTest {
   }
 
   private fun startMandatoryWsl(provider: EelIjentTestProvider<WslTest>) {
-    val annotation = MandatoryWslClass::class.java.getAnnotation(WslTest::class.java)
+    val annotation = MandatoryWslClass::class.java.getDeclaredMethod("mandatoryWsl").getAnnotation(WslTest::class.java)
     runBlocking {
       EelHolderImpl(provider, annotation).startIjentProvider(ParentOfIjentScopes(this))
     }
   }
 }
 
-@WslTest
-private class MandatoryWslClass
+private class MandatoryWslClass {
+  @WslTest
+  fun mandatoryWsl(): Unit = Unit
+}
 
 private object AbsentWslProvider : EelIjentTestProvider<WslTest> by FakeWslProvider {
   override suspend fun start(scope: ParentOfIjentScopes, annotation: WslTest?): StartResult =
