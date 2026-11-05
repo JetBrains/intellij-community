@@ -6,8 +6,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.view.IterationState;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -212,5 +214,12 @@ public class WrapElementIterator {
   @JdkConstants.FontStyle
   public int getFontStyle() {
     return myIterationState.getMergedAttributes().getFontType();
+  }
+
+  /**
+   * Returns the font families of the current element, or {@code null} when the element has the editor fonts.
+   */
+  public @Nullable FontFamilies getFontFamilies() {
+    return myIterationState.getMergedAttributes().getFontFamilies();
   }
 }

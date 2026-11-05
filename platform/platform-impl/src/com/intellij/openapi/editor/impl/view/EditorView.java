@@ -632,21 +632,30 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
+    return getCodePointWidth(codePoint, fontStyle, getFontResolver().editorFonts());
+  }
+
+  /**
+   * Returns the width of the code point in the fonts, see {@link EditorFontResolver#fonts}.
+   * A character grid gives its own width and ignores the fonts, as the text layout does.
+   */
+  float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle, TextFonts fonts) {
     var grid = myEditor.getCharacterGrid();
     if (grid != null) {
       return grid.codePointWidth(codePoint);
     }
     else {
-      return getFontResolver().editorFonts().codePointWidth(codePoint, fontStyle);
+      return fonts.codePointWidth(codePoint, fontStyle);
     }
   }
 
   /**
-   * Returns an upper bound of {@link #getCodePointWidth} for a printable ASCII character in any font style.
+   * Returns an upper bound of {@link #getCodePointWidth} for a printable ASCII character in any font style,
+   * in the editor fonts and in the fonts of the published font families.
    * The bound does not apply to a character grid.
    */
   float getMaxPrintableAsciiWidth() {
-    return getFontResolver().editorFonts().maxPrintableAsciiWidth();
+    return getFontResolver().maxPrintableAsciiWidth();
   }
 
   /**

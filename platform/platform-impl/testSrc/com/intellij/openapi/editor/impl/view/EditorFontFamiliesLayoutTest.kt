@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.markup.FontFamilies
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
@@ -16,7 +15,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.awt.Font
-import java.awt.FontMetrics
 
 private const val FAMILY_WIDTH = 7
 private const val OTHER_WIDTH = 10
@@ -35,7 +33,7 @@ internal class EditorFontFamiliesLayoutTest {
 
   @BeforeEach
   fun setUp() {
-    FontLayoutService.setInstance(FamilyWidthFontLayoutService(FontFamilyService.getFont(family, null, null, Font.PLAIN).family))
+    FontLayoutService.setInstance(FamilyWidthFontLayoutService(mapOf(family to FAMILY_WIDTH), OTHER_WIDTH))
   }
 
   @AfterEach
@@ -139,14 +137,5 @@ internal class EditorFontFamiliesLayoutTest {
         factory.releaseEditor(editor)
       }
     }
-  }
-}
-
-/**
- * Gives the fonts of one family another character width than all other fonts.
- */
-private class FamilyWidthFontLayoutService(private val family: String) : MockFontLayoutService(OTHER_WIDTH, 20, 4) {
-  override fun charWidth2D(fontMetrics: FontMetrics, codePoint: Int): Float {
-    return if (fontMetrics.font.family == family) FAMILY_WIDTH.toFloat() else OTHER_WIDTH.toFloat()
   }
 }

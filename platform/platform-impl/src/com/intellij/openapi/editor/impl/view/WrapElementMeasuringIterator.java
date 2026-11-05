@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.WrapElementIterator;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,15 +14,20 @@ import java.util.List;
 
 /**
  * {@link WrapElementIterator} extension that also calculates widths of elements.
+ * The iterator measures a character with the fonts of the font families of its text range.
+ * It reads the font resolver of the view once, so all elements measure with the same published font families.
  */
 @ApiStatus.Internal
 public final class WrapElementMeasuringIterator extends WrapElementIterator {
   private final EditorView myView;
+  private final EditorFontResolver fontResolver;
   private final List<Inlay<?>> inlineInlays;
   private final List<Inlay<?>> afterLineEndInlays;
 
   private int inlineInlayIndex;
   private int afterLineEndInlayIndex;
+  private FontFamilies lastFontFamilies;
+  private TextFonts lastFonts;
 
   public WrapElementMeasuringIterator(@NotNull EditorView view, int startOffset, int endOffset,
                                       List<Inlay<?>> inlineInlays,
@@ -29,6 +35,8 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
                                       List<? extends CustomWrap> customWraps) {
     super(view.getEditor(), customWraps, startOffset, endOffset);
     myView = view;
+    fontResolver = view.getFontResolver();
+    lastFonts = fontResolver.editorFonts();
     this.inlineInlays = inlineInlays;
     this.afterLineEndInlays = afterLineEndInlays;
   }
@@ -37,6 +45,7 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
    * Checks that the text in the range fits into the width, and does not measure each character for that.
    * The check is conservative.
    * It counts each printable ASCII character as the widest one, and it fails on any other character except the tab.
+   * The widest one covers the editor fonts and the published font families, see {@link EditorFontResolver#maxPrintableAsciiWidth}.
    * The range must hold no line break, fold region, inlay, or custom wrap, and the editor must have no character grid.
    *
    * @param startX the x coordinate at the start of the range
@@ -78,12 +87,25 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
         return startX;
       }
       else {
-        return startX + getInlaysPrefixWidth() + myView.getCodePointWidth(codePoint, getFontStyle()) + getInlaysSuffixWidth();
+        float codePointWidth = myView.getCodePointWidth(codePoint, getFontStyle(), getFonts());
+        return startX + getInlaysPrefixWidth() + codePointWidth + getInlaysSuffixWidth();
       }
     }
     else {
       return startX + myView.getFoldRegionLayout(fold).getWidth();
     }
+  }
+
+  /**
+   * Returns the fonts of the current element. The search runs only when the font families change.
+   */
+  private TextFonts getFonts() {
+    FontFamilies fontFamilies = getFontFamilies();
+    if (fontFamilies != lastFontFamilies) {
+      lastFonts = fontResolver.fonts(fontFamilies);
+      lastFontFamilies = fontFamilies;
+    }
+    return lastFonts;
   }
 
   private float getInlaysPrefixWidth() {
