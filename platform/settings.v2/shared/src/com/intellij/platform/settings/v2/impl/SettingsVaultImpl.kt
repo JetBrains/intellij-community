@@ -514,6 +514,10 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
    * Drops every structure keyed by [provider] when its extension unloads: its cached layers, its pending-save
    * markers, its held pushes, and its saver coroutine (closing the channel ends the loop). Otherwise the coroutine and
    * a reference to the unloaded provider would leak.
+   *
+   * A pending save of [provider] is lost, not written: the services of the provider are gone when this runs, so the
+   * vault cannot persist it here. A write of the last debounce window before an unload, such as the move of JetBrains
+   * Light back to the light mode, therefore stays in the model only. The owner of the unload has to flush before it.
    */
   private suspend fun forgetProvider(provider: LayerProvider) {
     savingChannels.keys.filter { it.second.provider == provider }.forEach { savingChannels.remove(it)?.close() }
@@ -525,8 +529,13 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
         }
       }
       model = model.mapValues { it.value.without(provider) }.filterValues { it.layers.isNotEmpty() }
+      val lostSaves = pendingSaves.count { it.second.provider == provider }
       pendingSaves.removeAll { it.second.provider == provider }
       heldPushes.removeAll { it.provider == provider }
+      if (lostSaves > 0) {
+        LOG.warn("${provider.javaClass.simpleName} unloads with $lostSaves pending saves, which are lost. " +
+                 "The owner of the unload has to flush the settings first.")
+      }
     }
     notifyListeners(settingsChangeEvents)
   }
