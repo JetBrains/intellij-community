@@ -71,6 +71,11 @@ sealed interface PluginAdvertiserService {
       return getSuggestedCommercialIdeCode(thisProductCode) != null
     }
 
+    fun isAdvertisingProducts(): Boolean {
+      val thisProductCode = ApplicationInfoImpl.getShadowInstanceImpl().build.productCode
+      return !"JB".equals(thisProductCode, ignoreCase = true)
+    }
+
     @JvmStatic
     fun getSuggestedCommercialIdeCode(activeProductCode: String): String? {
       return when (activeProductCode) {

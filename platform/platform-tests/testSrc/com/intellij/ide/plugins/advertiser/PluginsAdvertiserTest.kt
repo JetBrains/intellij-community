@@ -69,16 +69,6 @@ class PluginsAdvertiserTest {
   }
 
   @Test
-  fun noIdeSuggestionForMappedExtensionWhenTheProductTurnsItOff() = runBlocking {
-    preparePluginCache("*.js" to PluginData("JavaScript"))
-    Registry.get("ide.plugin.advertiser.suggest.ide.for.textmate.files").setValue(false, disposableRule.disposable)
-    withJsMappedToPlainText {
-      val suggestion = getSuggestionData(projectRule.project, "IC", "foo.js", PlainTextFileType.INSTANCE)
-      assertFalse(suggestion!!.hasSuggestedIde)
-    }
-  }
-
-  @Test
   fun suggestedIdeDismissed() = runBlocking {
     preparePluginCache("*.js" to PluginData("JavaScript", isBundled = true))
     PropertiesComponent.getInstance().setValue("promo.ignore.suggested.ide", true)

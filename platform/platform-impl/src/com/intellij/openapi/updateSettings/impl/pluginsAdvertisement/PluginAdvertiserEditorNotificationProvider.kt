@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.TrustedFiles
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
 import com.intellij.ide.plugins.FILE_HANDLER_KIND
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -10,7 +11,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.pluginRequiresUltimatePluginButItsDisabled
-import com.intellij.ide.TrustedFiles
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -33,7 +33,6 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdver
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.getSuggestedCommercialIdeCode
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.isCommunityIde
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -71,8 +70,9 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       return null
     }
 
-    val providedSuggestion = SUGGESTION_EP_NAME.extensionList
-      .firstNotNullOfOrNull { it.getSuggestion(project, file) }
+    val providedSuggestion: PluginSuggestion? = (SUGGESTION_EP_NAME.extensionList)
+      .takeIf { PluginAdvertiserService.isAdvertisingProducts() }
+      ?.firstNotNullOfOrNull { it.getSuggestion(project, file) }
 
     val suggestionChoice = getSuggestionData(project = project,
                                              activeProductCode = service<ApplicationInfo>().build.productCode,
@@ -138,7 +138,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
         }
       }
 
-      hasSuggestedIde = Registry.`is`("ide.plugin.advertiser.suggest.ide.for.textmate.files")
+      hasSuggestedIde = PluginAdvertiserService.isAdvertisingProducts()
                         && suggestedIdes.isNotEmpty()
                         && jbProduced.isEmpty()
                         && isMappedToTextMate(extensionOrFileName)
@@ -242,6 +242,8 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, D
       pluginAdvertiserExtensionsState: ExtensionDataProvider,
       currentFile: VirtualFile? = null,
     ) {
+      if (!PluginAdvertiserService.isAdvertisingProducts()) return
+
       logSuggestedProducts(project, suggestedIdes)
 
       if (suggestedIdes.size > 1) {
