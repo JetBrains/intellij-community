@@ -26,6 +26,7 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jewel.e2e.PopupScenarios
+import org.jetbrains.jewel.e2e.ScrollbarScenarios
 import org.junit.jupiter.api.Test
 
 /**
@@ -95,7 +96,10 @@ class JewelBridgeShowcaseE2ETest {
                 // Keys go through the driver's robot; see AttachedShowcaseAutomator.
                 val automator =
                     AttachedShowcaseAutomator(attached, pressOsKey = { keyCode -> ui.keyboard { key(keyCode) } })
-                runBlocking { PopupScenarios.runAll(automator, failures) }
+                runBlocking {
+                    PopupScenarios.runAll(automator, failures)
+                    ScrollbarScenarios.runAll(automator, failures)
+                }
             }
         }
 
