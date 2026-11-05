@@ -734,6 +734,194 @@ internal class IjPluginPackagerTest {
     assertTrue(writer.toString().contains("--flagfile="), writer.toString())
   }
 
+  @Test
+  fun inlinesXIncludesFromTheSameJar(@TempDir tempDirectory: Path) {
+    val pluginXml = """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>my.plugin</id>
+        <content>
+          <module name="my.module"/>
+          <module name="my.merged.module"/>
+        </content>
+        <xi:include href="/META-INF/actions.xml" xpointer="xpointer(/idea-plugin/*)"/>
+        <xi:include href="optional.xml"><xi:fallback/></xi:include>
+      </idea-plugin>
+    """.trimIndent()
+    val actionsXml = """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <actions>
+          <action id="first" class="First"/>
+          <xi:include href="nested/more-actions.xml"/>
+        </actions>
+      </idea-plugin>
+    """.trimIndent()
+    val moreActionsXml = """<idea-plugin><action id="second" class="Second"/></idea-plugin>"""
+    val moduleXml = """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="my.module.part.xml"/></idea-plugin>"""
+    val modulePartXml = """<idea-plugin><extensionPoints><extensionPoint name="ep" interface="Ep"/></extensionPoints></idea-plugin>"""
+    val mergedModuleXml = """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="my.merged"><xi:include href="part.xml"/></idea-plugin>"""
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", pluginXml)
+          file("actions.xml", actionsXml)
+          dir("nested") {
+            file("more-actions.xml", moreActionsXml)
+          }
+        }
+      }
+      zip("my-module.jar") {
+        file("my.module.xml", moduleXml)
+        file("my.module.part.xml", modulePartXml)
+      }
+      zip("my-merged-module.jar") {
+        file("my.merged.module.xml", mergedModuleXml)
+        file("part.xml", """<idea-plugin><resource-bundle>messages.MyBundle</resource-bundle></idea-plugin>""")
+      }
+    }.generate(tempDirectory.resolve("input"))
+
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--content_module",
+        "my.module:input/my-module.jar",
+        "--content_module",
+        "my.merged.module:input/my-merged-module.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    val expectedPluginXml = """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <id>my.plugin</id>
+        <content>
+          <module name="my.module"><![CDATA[<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <extensionPoints>
+          <extensionPoint name="ep" interface="Ep" />
+        </extensionPoints>
+      </idea-plugin>]]></module>
+          <module name="my.merged.module"><![CDATA[<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="my.merged">
+        <resource-bundle>messages.MyBundle</resource-bundle>
+      </idea-plugin>]]></module>
+        </content>
+        <actions>
+          <action id="first" class="First" />
+          <action id="second" class="Second" />
+        </actions>
+        <xi:include href="optional.xml">
+          <xi:fallback />
+        </xi:include>
+      </idea-plugin>
+    """.trimIndent()
+    val descriptorJar = tempDirectory.resolve("output/lib/descriptor.jar")
+    assertEquals(expectedPluginXml, readZipEntry(descriptorJar, "META-INF/plugin.xml"))
+    // the descriptor files of the content modules keep their xi:include elements
+    assertEquals(moduleXml, readZipEntry(tempDirectory.resolve("output/lib/modules/my.module.jar"), "my.module.xml"))
+    assertEquals(mergedModuleXml, readZipEntry(descriptorJar, "my.merged.module.xml"))
+  }
+
+  @Test
+  fun reportsErrorIfXIncludeTargetIsNotFound(@TempDir tempDirectory: Path) {
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="missing.xml"/></idea-plugin>""")
+        }
+      }
+    }.generate(tempDirectory.resolve("input"))
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(args = listOf("output", "--descriptor_module", "descriptor:input/descriptor.jar"), baseDir = tempDirectory)
+    }
+
+    val descriptorJar = tempDirectory.resolve("input/descriptor.jar")
+    assertEquals(
+      "Cannot resolve xi:include of 'missing.xml' in META-INF/plugin.xml in $descriptorJar: 'META-INF/missing.xml' is not found in the same JAR",
+      error.message,
+    )
+  }
+
+  @Test
+  fun reportsErrorIfXIncludeTargetIsInAnotherJar(@TempDir tempDirectory: Path) {
+    val pluginXml = """<idea-plugin><content><module name="my.module"/></content></idea-plugin>"""
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", pluginXml)
+          file("shared.xml", "<idea-plugin/>")
+        }
+      }
+      zip("my-module.jar") {
+        file("my.module.xml", """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="/META-INF/shared.xml"/></idea-plugin>""")
+      }
+    }.generate(tempDirectory.resolve("input"))
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf("output", "--descriptor_module", "descriptor:input/descriptor.jar", "--content_module", "my.module:input/my-module.jar"),
+        baseDir = tempDirectory,
+      )
+    }
+
+    val moduleJar = tempDirectory.resolve("input/my-module.jar")
+    assertEquals(
+      "Cannot resolve xi:include of '/META-INF/shared.xml' in my.module.xml in $moduleJar: 'META-INF/shared.xml' is not found in the same JAR",
+      error.message,
+    )
+  }
+
+  @Test
+  fun reportsErrorIfXPointerIsNotSupported(@TempDir tempDirectory: Path) {
+    val pluginXml = """
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+        <xi:include href="actions.xml" xpointer="xpointer(/idea-plugin/actions/*)"/>
+      </idea-plugin>
+    """.trimIndent()
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", pluginXml)
+          file("actions.xml", "<idea-plugin><actions/></idea-plugin>")
+        }
+      }
+    }.generate(tempDirectory.resolve("input"))
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(args = listOf("output", "--descriptor_module", "descriptor:input/descriptor.jar"), baseDir = tempDirectory)
+    }
+
+    val descriptorJar = tempDirectory.resolve("input/descriptor.jar")
+    assertEquals(
+      "Unsupported 'xpointer' attribute value 'xpointer(/idea-plugin/actions/*)' for xi:include element in META-INF/plugin.xml in $descriptorJar; " +
+      "only 'xpointer(/idea-plugin/*)' is supported",
+      error.message,
+    )
+  }
+
+  @Test
+  fun reportsErrorIfXIncludesAreCircular(@TempDir tempDirectory: Path) {
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="other.xml"/></idea-plugin>""")
+          file("other.xml", """<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude"><xi:include href="/META-INF/plugin.xml"/></idea-plugin>""")
+        }
+      }
+    }.generate(tempDirectory.resolve("input"))
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(args = listOf("output", "--descriptor_module", "descriptor:input/descriptor.jar"), baseDir = tempDirectory)
+    }
+
+    val descriptorJar = tempDirectory.resolve("input/descriptor.jar")
+    assertEquals(
+      "Circular xi:include of '/META-INF/plugin.xml' in META-INF/other.xml in $descriptorJar: " +
+      "META-INF/plugin.xml -> META-INF/other.xml -> META-INF/plugin.xml",
+      error.message,
+    )
+  }
+
   private fun createDescriptorJar(inputDirectory: Path) {
     directoryContent {
       zip("descriptor.jar") {

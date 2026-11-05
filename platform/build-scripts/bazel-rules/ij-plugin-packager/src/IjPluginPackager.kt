@@ -167,7 +167,7 @@ object IjPluginPackager {
         untilBuild = substituteBuildNumber(untilBuild, buildNumberFromFile),
         contentModules = contentModules.associateBy { it.moduleElement.name },
         skippedContentModuleNames = skippedContentModuleNames,
-        presentablePluginDescriptorLocation = descriptorJar.pathString,
+        descriptorJar = descriptorJar,
       )
       packager.addFile(PLUGIN_DESCRIPTOR_ENTRY_NAME, patchedPluginXmlContent, presentableOrigin = descriptorJar.pathString)
       packager.addEntriesFromJar(descriptorJar) { filePath, dataFetcher ->
@@ -438,6 +438,6 @@ internal object IjPluginPackagerExecutor : WorkRequestExecutor {
 
 private fun generateNameForPluginDescriptorJar(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-') + ".jar"
 
-private const val PLUGIN_DESCRIPTOR_ENTRY_NAME = "META-INF/plugin.xml"
+internal const val PLUGIN_DESCRIPTOR_ENTRY_NAME = "META-INF/plugin.xml"
 
 private const val FLAG_FILE_PREFIX = "--flagfile="
