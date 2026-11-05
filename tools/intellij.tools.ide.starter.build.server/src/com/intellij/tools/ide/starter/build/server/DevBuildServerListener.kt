@@ -42,7 +42,15 @@ private fun devBuildServerRunner(): DevBuildServerRunner {
   val configFile = DevIdeConfig.declaredConfigFile()
   if (configFile != null) {
     logOutput("Dev build server: using the distribution declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}' ($configFile)")
-    return PrebuiltDevDistRunner(configFile)
+    val frontendConfigFile = System.getProperty(FRONTEND_CONFIG_PATH_PROPERTY)?.takeIf { it.isNotEmpty() }?.let(DevIdeConfig::resolveConfigFile)
+    if (frontendConfigFile == null) {
+      return PrebuiltDevDistRunner(configFile)
+    }
+    logOutput("Dev build server: using the frontend distribution declared by '$FRONTEND_CONFIG_PATH_PROPERTY' ($frontendConfigFile)")
+    return PrebuiltDevDistRunner(
+      configFiles = listOf(configFile, frontendConfigFile),
+      origin = "declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}' and '$FRONTEND_CONFIG_PATH_PROPERTY'",
+    )
   }
   val underBazel = BazelRunfiles.isRunningFromBazel
   if (legacyEngineHasNoBazelInputs(underBazel, System.getProperty(ArchivedCompilationContextUtil.BAZEL_TARGETS_JSON_FILE_PROPERTY))) {
