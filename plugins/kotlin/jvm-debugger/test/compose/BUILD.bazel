@@ -8,6 +8,9 @@ jps_test(
         "@community//plugins/kotlin/jvm-debugger/test:testData",
     ] + all_test_dep_targets,
     sandbox = True,
+    tags = [
+        "kotlin-jvm-debugger-tests",
+    ],
     runtime_deps = [
         ":compose_test_lib",
         "//:main",
