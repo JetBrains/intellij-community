@@ -61,6 +61,10 @@ A batch applies several writes and slot operations as one atomic change.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsLayerKeyFilterTest.kt
 - A write that a file layer refuses must climb to a wider context. Then it affects the siblings too.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsWriteFallthroughTest.kt
+- A write at a file context with no file layer at all, as in the light mode, must climb to the project layer, and
+  the project layer must persist it as a write at the project context. See
+  [ADR 0164](../adr/0164-file-settings-are-off-in-the-light-mode-until-the-move-to-the-full-mode.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsClimbedWritePersistenceTest.kt
 - A write that no layer in the whole chain takes must fail with `IllegalStateException`. The message names the key
   and the context. It does not name a layer.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsLayerWriteLocalitiesTest.kt
