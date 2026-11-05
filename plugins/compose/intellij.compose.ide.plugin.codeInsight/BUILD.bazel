@@ -114,6 +114,7 @@ jvm_library(
         "//plugins/kotlin/references",
         "//uast/uast-common:uast",
         "//plugins/kotlin/base/util",
+        "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
         ":libraries_kotlinc_libraries-kotlinc-compose-compiler-plugin_provided",
         ":plugins_kotlin_jps_util_runtime_provided",

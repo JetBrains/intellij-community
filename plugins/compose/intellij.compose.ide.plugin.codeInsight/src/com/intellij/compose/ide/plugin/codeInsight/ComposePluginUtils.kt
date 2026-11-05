@@ -2,17 +2,15 @@
 package com.intellij.compose.ide.plugin.codeInsight
 
 import com.intellij.compose.ide.plugin.shared.COMPOSABLE_ANNOTATION_CLASS_ID
+import com.intellij.compose.ide.plugin.shared.COMPOSE_COMPILER_GRADLE_PLUGIN_ARTIFACT_ID
+import com.intellij.compose.ide.plugin.shared.COMPOSE_COMPILER_GRADLE_PLUGIN_GROUP_ID
 import com.intellij.compose.ide.plugin.shared.COMPOSE_PLUGIN_ARTIFACT_ID
 import com.intellij.compose.ide.plugin.shared.COMPOSE_PLUGIN_GROUP_ID
 import com.intellij.compose.ide.plugin.shared.COMPOSE_RUNTIME_ARTIFACT_ID
 import com.intellij.compose.ide.plugin.shared.COMPOSE_RUNTIME_GROUP_ID
 import com.intellij.compose.ide.plugin.shared.REMEMBER_IN_COMPOSITION_CLASS_ID
-import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiManager
@@ -76,36 +74,52 @@ private fun getGradleExtensions(moduleDataNode: DataNode<*>): List<GradleExtensi
 internal class ComposeRuntimeLibraryVersionProvider : KotlinLibraryVersionProvider {
   override fun getVersion(module: Module, groupId: String, artifactId: String): String? {
     if (groupId != COMPOSE_RUNTIME_GROUP_ID || artifactId != COMPOSE_RUNTIME_ARTIFACT_ID) return null
-
-    val moduleNode = CachedModuleDataFinder.findMainModuleData(module) ?: return null
-
-    val classpathData = ExternalSystemApiUtil.find(moduleNode, BuildScriptClasspathData.KEY)?.data ?: return null
-
-    // The build script classpath of a subproject is prefixed with the entries inherited from its parent project
-    // (see GradleBuildScriptClasspathModelBuilder.collectClasspathEntries), so iterate backwards to let the version
-    // declared closest to this module win.
-    return classpathData.classpathEntries.asReversed()
-      .asSequence()
-      .flatMap { it.classesFile.asSequence() }
-      .firstNotNullOfOrNull(::extractComposePluginVersion)
+    return module.findBuildScriptClasspathArtifactVersion(COMPOSE_PLUGIN_GROUP_ID, COMPOSE_PLUGIN_ARTIFACT_ID)
   }
+}
 
-  /**
-   * Extracts `<version>` from a `compose-gradle-plugin` jar path, supporting both the Gradle cache layout
-   * (`…/org.jetbrains.compose/compose-gradle-plugin/<version>/…`) and the Maven repository layout
-   * (`…/org/jetbrains/compose/compose-gradle-plugin/<version>/…`).
-   */
-  private fun extractComposePluginVersion(path: String): String? {
-    val normalizedPath = PathUtil.toSystemIndependentName(path)
+/**
+ * Returns `true` when the build script classpath of the module already contains the Compose compiler Gradle plugin.
+ * Then the module must apply the plugin without a version.
+ */
+internal val Module.isComposeCompilerGradlePluginOnBuildScriptClasspath: Boolean
+  get() = findBuildScriptClasspathArtifactVersion(
+    COMPOSE_COMPILER_GRADLE_PLUGIN_GROUP_ID,
+    COMPOSE_COMPILER_GRADLE_PLUGIN_ARTIFACT_ID,
+  ) != null
 
-    return sequenceOf(
-      "${COMPOSE_PLUGIN_GROUP_ID}/${COMPOSE_PLUGIN_ARTIFACT_ID}/",
-      "${COMPOSE_PLUGIN_GROUP_ID.replace('.', '/')}/${COMPOSE_PLUGIN_ARTIFACT_ID}/",
-    ).firstNotNullOfOrNull { marker ->
-      normalizedPath.substringAfter(marker, "")
-        .substringBefore('/')
-        .takeIf(String::isNotBlank)
-    }
+/**
+ * Returns the version of the `groupId:artifactId` artifact on the build script classpath of the module,
+ * or `null` when the classpath does not contain the artifact.
+ */
+private fun Module.findBuildScriptClasspathArtifactVersion(groupId: String, artifactId: String): String? {
+  val moduleNode = CachedModuleDataFinder.findMainModuleData(this) ?: return null
+  val classpathData = ExternalSystemApiUtil.find(moduleNode, BuildScriptClasspathData.KEY)?.data ?: return null
+
+  // The build script classpath of a subproject is prefixed with the entries inherited from its parent project
+  // (see GradleBuildScriptClasspathModelBuilder.collectClasspathEntries), so iterate backwards to let the version
+  // declared closest to this module win.
+  return classpathData.classpathEntries.asReversed()
+    .asSequence()
+    .flatMap { it.classesFile.asSequence() }
+    .firstNotNullOfOrNull { extractArtifactVersion(it, groupId, artifactId) }
+}
+
+/**
+ * Extracts `<version>` from an artifact jar path, supporting both the Gradle cache layout
+ * (`…/<groupId>/<artifactId>/<version>/…`) and the Maven repository layout
+ * (`…/<groupId as path>/<artifactId>/<version>/…`).
+ */
+private fun extractArtifactVersion(path: String, groupId: String, artifactId: String): String? {
+  val normalizedPath = PathUtil.toSystemIndependentName(path)
+
+  return sequenceOf(
+    "/$groupId/$artifactId/",
+    "/${groupId.replace('.', '/')}/$artifactId/",
+  ).firstNotNullOfOrNull { marker ->
+    normalizedPath.substringAfter(marker, "")
+      .substringBefore('/')
+      .takeIf(String::isNotBlank)
   }
 }
 
@@ -120,19 +134,6 @@ internal val Module.buildScriptKtFile: KtFile?
     val vFile = VfsUtil.findFile(path, true) ?: return null
     return PsiManager.getInstance(project).findFile(vFile) as? KtFile
   }
-
-internal fun refreshGradleProject(module: Module) {
-  val project = module.project
-  val externalProjectPath = ExternalSystemApiUtil.getExternalRootProjectPath(module) ?: return
-
-  ExternalProjectsManager.getInstance(project).runWhenInitialized {
-    val spec = ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
-      .use(ProgressExecutionMode.IN_BACKGROUND_ASYNC)
-      .build()
-
-    ExternalSystemUtil.refreshProject(externalProjectPath, spec)
-  }
-}
 
 @OptIn(KaExperimentalApi::class)
 internal fun checkRequiresComposePlugin(expression: KtCallExpression): Boolean = analyze(expression) {

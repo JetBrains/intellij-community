@@ -25,8 +25,9 @@ interface ComposeModuleConfigurationExtension {
 
   /**
    * Creates a quick fix that enables Compose support in [module].
+   * Returns `null` when the quick fix cannot make a correct build configuration for [module].
    */
-  fun createEnableComposeQuickFix(module: Module): LocalQuickFix
+  fun createEnableComposeQuickFix(module: Module): LocalQuickFix?
 
   companion object {
     val EP_NAME: ExtensionPointName<ComposeModuleConfigurationExtension> =

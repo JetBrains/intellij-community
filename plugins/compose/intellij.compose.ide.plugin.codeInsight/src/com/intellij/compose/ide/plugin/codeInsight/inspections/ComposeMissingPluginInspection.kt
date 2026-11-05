@@ -3,6 +3,7 @@ package com.intellij.compose.ide.plugin.codeInsight.inspections
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.compose.ide.plugin.codeInsight.checkRequiresComposePlugin
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
@@ -40,7 +41,7 @@ class ComposeMissingPluginInspection : AbstractKotlinInspection() {
         holder.registerProblem(
           expression.calleeExpression ?: expression,
           ComposeIdeBundle.message("compose.inspection.missing.plugin.name"),
-          moduleConfiguration.createEnableComposeQuickFix(module),
+          *LocalQuickFix.notNullElements(moduleConfiguration.createEnableComposeQuickFix(module)),
         )
       }
 
@@ -50,7 +51,7 @@ class ComposeMissingPluginInspection : AbstractKotlinInspection() {
         holder.registerProblem(
           expression,
           ComposeIdeBundle.message("compose.inspection.missing.plugin.name"),
-          moduleConfiguration.createEnableComposeQuickFix(module),
+          *LocalQuickFix.notNullElements(moduleConfiguration.createEnableComposeQuickFix(module)),
         )
       }
     }

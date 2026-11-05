@@ -62,6 +62,10 @@ val COMPOSE_IMAGE_FILTER_QUALITY_PARAMETER_NAME: Name = Name.identifier("filterQ
 val COMPOSE_FILTER_QUALITY_FQ_NAME: FqName = FqName("androidx.compose.ui.graphics.FilterQuality")
 
 const val COMPOSE_RUNTIME_GROUP_ID: String = "org.jetbrains.compose.runtime"
+const val COMPOSE_RUNTIME_ARTIFACT_ID: String = "runtime"
+
 const val COMPOSE_PLUGIN_GROUP_ID: String = "org.jetbrains.compose"
 const val COMPOSE_PLUGIN_ARTIFACT_ID: String = "compose-gradle-plugin"
-const val COMPOSE_RUNTIME_ARTIFACT_ID: String = "runtime"
+
+const val COMPOSE_COMPILER_GRADLE_PLUGIN_GROUP_ID: String = "org.jetbrains.kotlin"
+const val COMPOSE_COMPILER_GRADLE_PLUGIN_ARTIFACT_ID: String = "compose-compiler-gradle-plugin"
