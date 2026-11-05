@@ -246,7 +246,10 @@ class BackendPluginManagerApi : PluginManagerApi {
 
   override suspend fun initSession(sessionId: String): InitSessionResult {
     val initSessionResult = DefaultUiPluginManagerController.initSession(sessionId)
-    return InitSessionResult(initSessionResult.visiblePlugins.map { PluginDto.fromModel(it, true) }, initSessionResult.pluginStates)
+    return InitSessionResult(
+      pluginStates = initSessionResult.pluginStates,
+      visiblePluginDtos = initSessionResult.visiblePlugins.map { PluginDto.fromModel(it, true) },
+    )
   }
 
   override suspend fun isPluginEnabled(pluginId: PluginId): Boolean {
