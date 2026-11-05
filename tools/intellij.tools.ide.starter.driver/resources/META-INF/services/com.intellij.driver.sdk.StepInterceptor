@@ -1,1 +1,2 @@
 com.intellij.ide.starter.driver.AllureStepInterceptor
+com.intellij.ide.starter.driver.StarterStepOverlayInterceptor

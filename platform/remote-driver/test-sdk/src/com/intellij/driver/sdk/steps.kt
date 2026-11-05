@@ -30,6 +30,9 @@ class ConsoleStepsProvider : StepsProvider
 
 interface StepInterceptor {
   fun <T> intercept(name: String, action: () -> T): T
+
+  /** Wraps the step [name] of [driver], or of no Driver. Override it when the interceptor needs the Driver of the step. */
+  fun <T> intercept(name: String, driver: Driver?, action: () -> T): T = intercept(name, action)
 }
 
 private const val GREEN = "\u001B[32m"
@@ -43,7 +46,7 @@ private val interceptors: List<StepInterceptor> by lazy {
 private fun <T> runStep(name: String, driver: Driver?, action: () -> T): T {
   val text = "Step '$name'"
   log(driver, "$text started", GREEN) { info(it) }
-  val wrapped = interceptors.fold(action) { inner, interceptor -> { interceptor.intercept(name, inner) } }
+  val wrapped = interceptors.fold(action) { inner, interceptor -> { interceptor.intercept(name, driver, inner) } }
   val start = TimeSource.Monotonic.markNow()
   try {
     return wrapped().also {

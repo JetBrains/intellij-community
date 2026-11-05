@@ -23,6 +23,7 @@ private const val ENV_SKIP_PERIODIC_IDE_THREAD_DUMPS = "SKIP_PERIODIC_IDE_THREAD
 private const val ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS = "COROUTINE_SCOPES_CANCEL_TIMEOUT_MS"
 private const val ENV_DEBUG_LOGGING_ENABLED = "DEBUG_LOGGING_ENABLED"
 private const val ENV_SCREEN_RECORDING_ENABLED = "SCREEN_RECORDING_ENABLED"
+private const val ENV_DRIVER_INFO_OVERLAYS_ENABLED = "DRIVER_INFO_OVERLAYS_ENABLED"
 
 val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_ENABLE_CLASS_FILE_VERIFICATION to System.getenv(ENV_ENABLE_CLASS_FILE_VERIFICATION),
@@ -40,6 +41,7 @@ val starterConfigurationStorageDefaults = mapOf<String, String>(
   ENV_SKIP_PERIODIC_IDE_THREAD_DUMPS to System.getenv().getOrDefault(ENV_SKIP_PERIODIC_IDE_THREAD_DUMPS, "false"),
   ENV_DEBUG_LOGGING_ENABLED to System.getenv().getOrDefault(ENV_DEBUG_LOGGING_ENABLED, "false"),
   ENV_SCREEN_RECORDING_ENABLED to System.getenv().getOrDefault(ENV_SCREEN_RECORDING_ENABLED, "false"),
+  ENV_DRIVER_INFO_OVERLAYS_ENABLED to System.getenv(ENV_DRIVER_INFO_OVERLAYS_ENABLED),
 ).filter { entry ->
   @Suppress("SENSELESS_COMPARISON")
   entry.value != null
@@ -130,6 +132,13 @@ fun ConfigurationStorage.Companion.disableScrambling() = instance().put(ENABLE_S
 
 fun ConfigurationStorage.Companion.isScreenRecordingEnabled(): Boolean = instance().getBoolean(ENV_SCREEN_RECORDING_ENABLED)
 fun ConfigurationStorage.Companion.enableScreenRecording() = instance().put(ENV_SCREEN_RECORDING_ENABLED, true)
+
+/**
+ * Tells if a Driver step shows its name in an overlay on the IDE, and a failed step shows its failure, in every test.
+ * Without a value, the overlays are on only in the UI tests of the `com.intellij.driver.tests` package.
+ */
+fun ConfigurationStorage.Companion.driverInfoOverlaysEnabled(): Boolean? = instance().getOrNull(ENV_DRIVER_INFO_OVERLAYS_ENABLED)?.toBoolean()
+fun ConfigurationStorage.Companion.driverInfoOverlaysEnabled(value: Boolean): Unit = instance().put(ENV_DRIVER_INFO_OVERLAYS_ENABLED, value)
 
 var ConfigurationStorage.Companion.coroutineScopesCancellationTimeout: Duration
   get() = instance().get(ENV_COROUTINE_SCOPES_CANCEL_TIMEOUT_MS) { (it ?: "10000").toLong().milliseconds }
