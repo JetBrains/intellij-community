@@ -268,6 +268,7 @@ private fun doSaveFileOnExit(project: Project, file: VirtualFile): Boolean {
 
 private fun showSaveFileDialog(project: Project, file: VirtualFile): VirtualFile? {
   val descriptor = FileSaverDescriptor(IdeBundle.message("dialog.title.save.as"), IdeBundle.message("label.choose.target.file"))
+  file.extension?.let { descriptor.withExtensionFilter(it) }
   val dialog = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, project)
 
   val fileWrapper = dialog.save(Path.of(SystemProperties.getUserHome()), file.name)
