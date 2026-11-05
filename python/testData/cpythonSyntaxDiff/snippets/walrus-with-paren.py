@@ -1,0 +1,1 @@
+with (x := f()): pass

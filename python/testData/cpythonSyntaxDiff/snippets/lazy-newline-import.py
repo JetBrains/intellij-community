@@ -1,0 +1,2 @@
+lazy
+import foo

@@ -1,0 +1,1 @@
+x: tuple = *a, b

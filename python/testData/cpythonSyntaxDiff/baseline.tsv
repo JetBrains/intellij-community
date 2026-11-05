@@ -1,0 +1,175 @@
+# id	level	CPython	PyCharm
+type-oneline-suite	3.13	OK	parse error
+type-after-semicolon	3.13	OK	parse error
+type-in-class-oneline	3.13	OK	parse error
+case-plus-literal	3.13	error	clean
+case-imag-plus-imag	3.13	error	clean
+case-dstar-not-last	3.13	error	clean
+case-dup-key	3.13	error	clean
+walrus-in-tuple-value	3.13	error	clean
+walrus-return	3.13	error	clean
+walrus-yield	3.13	error	clean
+walrus-for-iter	3.13	error	clean
+walrus-comp-iter-var	3.13	error	clean
+star-paren-in-tuple	3.13	error	clean
+ellipsis-spaced	3.13	error	clean
+bare-raise-module	3.13	OK	annotator error
+star-import-func	3.13	error	clean
+global-in-class-in-func	3.13	OK	annotator error
+global-after-use	3.13	error	clean
+nonlocal-module	3.13	error	clean
+nonlocal-nobinding	3.13	error	clean
+yield-in-listcomp	3.13	error	clean
+typeparam-default-order	3.13	error	clean
+typeparam-walrus-bound	3.13	error	clean
+int-leading-zeros	3.13	OK	annotator error
+ident-other-id-start	3.13	OK	parse error
+ident-middle-dot	3.13	OK	parse error
+ident-combining-start	3.13	error	clean
+ident-pc-start	3.13	error	clean
+genexp-sole-trailing-comma	3.13	error	clean
+kw-unpack-then-star	3.13	error	clean
+assign-to-cond	3.13	error	clean
+two-star-targets	3.13	error	clean
+class-star-import	3.13	error	clean
+future-late	3.13	error	clean
+future-unknown	3.13	error	clean
+tab-space-mix	3.13	error	clean
+paren-augassign	3.13	OK	annotator error
+unary-target	3.13	error	clean
+ellipsis-target	3.13	error	clean
+compound-after-semicolon-in-suite	3.13	error	clean
+star-after-kwunpack	3.13	error	clean
+nonlocal-and-global	3.13	error	clean
+assign-before-global	3.13	error	clean
+typeparam-bound-tuple-one	3.13	OK	annotator error
+typealias-walrus	3.13	error	clean
+fstring-yield	3.13	OK	parse error
+bytes-nonascii	3.13	error	clean
+bytes-str-concat	3.13	error	clean
+await-in-sync-genexp	3.13	OK	annotator error
+backslash-continuation-eof	3.13	error	clean
+backslash-space-after	3.13	error	clean
+type-oneline-suite	3.14	OK	parse error
+type-after-semicolon	3.14	OK	parse error
+type-in-class-oneline	3.14	OK	parse error
+case-plus-literal	3.14	error	clean
+case-imag-plus-imag	3.14	error	clean
+case-dstar-not-last	3.14	error	clean
+case-dup-key	3.14	error	clean
+walrus-in-tuple-value	3.14	error	clean
+walrus-return	3.14	error	clean
+walrus-yield	3.14	error	clean
+walrus-for-iter	3.14	error	clean
+walrus-comp-iter-var	3.14	error	clean
+star-paren-in-tuple	3.14	error	clean
+ellipsis-spaced	3.14	error	clean
+finally-return	3.14	OK	annotator error
+finally-break	3.14	OK	annotator error
+finally-continue	3.14	OK	annotator error
+bare-raise-module	3.14	OK	annotator error
+star-import-func	3.14	error	clean
+global-in-class-in-func	3.14	OK	annotator error
+global-after-use	3.14	error	clean
+nonlocal-module	3.14	error	clean
+nonlocal-nobinding	3.14	error	clean
+yield-in-listcomp	3.14	error	clean
+yield-in-annotation	3.14	error	clean
+await-in-annotation	3.14	error	clean
+walrus-in-annotation	3.14	error	clean
+typeparam-default-order	3.14	error	clean
+typeparam-walrus-bound	3.14	error	clean
+tstring-concat-str	3.14	error	clean
+tstring-concat-f	3.14	error	clean
+int-leading-zeros	3.14	OK	annotator error
+ident-other-id-start	3.14	OK	parse error
+ident-middle-dot	3.14	OK	parse error
+ident-combining-start	3.14	error	clean
+ident-pc-start	3.14	error	clean
+genexp-sole-trailing-comma	3.14	error	clean
+kw-unpack-then-star	3.14	error	clean
+assign-to-cond	3.14	error	clean
+two-star-targets	3.14	error	clean
+class-star-import	3.14	error	clean
+future-late	3.14	error	clean
+future-unknown	3.14	error	clean
+tab-space-mix	3.14	error	clean
+paren-augassign	3.14	OK	annotator error
+unary-target	3.14	error	clean
+ellipsis-target	3.14	error	clean
+compound-after-semicolon-in-suite	3.14	error	clean
+star-after-kwunpack	3.14	error	clean
+nonlocal-and-global	3.14	error	clean
+assign-before-global	3.14	error	clean
+typeparam-bound-tuple-one	3.14	OK	annotator error
+typealias-walrus	3.14	error	clean
+fstring-yield	3.14	OK	parse error
+bytes-nonascii	3.14	error	clean
+bytes-str-concat	3.14	error	clean
+await-in-sync-genexp	3.14	OK	annotator error
+backslash-continuation-eof	3.14	error	clean
+backslash-space-after	3.14	error	clean
+type-oneline-suite	3.15	OK	parse error
+type-after-semicolon	3.15	OK	parse error
+type-in-class-oneline	3.15	OK	parse error
+lazy-oneline-suite	3.15	OK	parse error
+lazy-in-func	3.15	error	clean
+lazy-in-try	3.15	error	clean
+lazy-star	3.15	error	clean
+case-imag-plus-imag	3.15	error	clean
+case-dstar-not-last	3.15	error	clean
+case-dup-key	3.15	error	clean
+walrus-in-tuple-value	3.15	error	clean
+walrus-return	3.15	error	clean
+walrus-yield	3.15	error	clean
+walrus-for-iter	3.15	error	clean
+walrus-comp-iter-var	3.15	error	clean
+star-paren-in-tuple	3.15	error	clean
+ellipsis-spaced	3.15	error	clean
+finally-return	3.15	OK	annotator error
+finally-break	3.15	OK	annotator error
+finally-continue	3.15	OK	annotator error
+bare-raise-module	3.15	OK	annotator error
+star-import-func	3.15	error	clean
+global-in-class-in-func	3.15	OK	annotator error
+global-after-use	3.15	error	clean
+nonlocal-module	3.15	error	clean
+nonlocal-nobinding	3.15	error	clean
+yield-in-listcomp	3.15	error	clean
+yield-in-annotation	3.15	error	clean
+await-in-annotation	3.15	error	clean
+walrus-in-annotation	3.15	error	clean
+typeparam-default-order	3.15	error	clean
+typeparam-walrus-bound	3.15	error	clean
+tstring-concat-str	3.15	error	clean
+tstring-concat-f	3.15	error	clean
+int-leading-zeros	3.15	OK	annotator error
+ident-other-id-start	3.15	OK	parse error
+ident-middle-dot	3.15	OK	parse error
+ident-combining-start	3.15	error	clean
+ident-pc-start	3.15	error	clean
+genexp-sole-trailing-comma	3.15	error	clean
+kw-unpack-then-star	3.15	error	clean
+assign-to-cond	3.15	error	clean
+two-star-targets	3.15	error	clean
+class-star-import	3.15	error	clean
+future-late	3.15	error	clean
+future-unknown	3.15	error	clean
+tab-space-mix	3.15	error	clean
+paren-augassign	3.15	OK	annotator error
+unary-target	3.15	error	clean
+ellipsis-target	3.15	error	clean
+compound-after-semicolon-in-suite	3.15	error	clean
+star-after-kwunpack	3.15	error	clean
+nonlocal-and-global	3.15	error	clean
+assign-before-global	3.15	error	clean
+lazy-class	3.15	error	clean
+lazy-future	3.15	error	clean
+typeparam-bound-tuple-one	3.15	OK	annotator error
+typealias-walrus	3.15	error	clean
+fstring-yield	3.15	OK	parse error
+bytes-nonascii	3.15	error	clean
+bytes-str-concat	3.15	error	clean
+await-in-sync-genexp	3.15	OK	annotator error
+backslash-continuation-eof	3.15	error	clean
+backslash-space-after	3.15	error	clean

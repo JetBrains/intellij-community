@@ -1,0 +1,280 @@
+# id	CPython 3.13.18	CPython 3.14.10	CPython 3.15.2
+ann-call-target	SyntaxError: illegal target for annotation	SyntaxError: illegal target for annotation	SyntaxError: illegal target for annotation
+ann-list-target	SyntaxError: only single target (not list) can be annotated	SyntaxError: only single target (not list) can be annotated	SyntaxError: only single target (not list) can be annotated
+ann-only-in-class-attr	OK	OK	OK
+annassign-paren-name	OK	OK	OK
+annassign-star-rhs	OK	OK	OK
+annassign-tuple	SyntaxError: only single target (not tuple) can be annotated	SyntaxError: only single target (not tuple) can be annotated	SyntaxError: only single target (not tuple) can be annotated
+assert-tuple-walrus	OK	OK	OK
+assign-before-global	SyntaxError: name 'x' is assigned to before global declaration	SyntaxError: name 'x' is assigned to before global declaration	SyntaxError: name 'x' is assigned to before global declaration
+assign-to-cond	SyntaxError: cannot assign to conditional expression here. Maybe you meant '==' instead of '='?	SyntaxError: cannot assign to conditional expression here. Maybe you meant '==' instead of '='?	SyntaxError: cannot assign to conditional expression here. Maybe you meant '==' instead of '='?
+assign-yield-target	SyntaxError: assignment to yield expression not possible	SyntaxError: assignment to yield expression not possible	SyntaxError: assignment to yield expression not possible
+async-comp-in-sync-func	SyntaxError: asynchronous comprehension outside of an asynchronous function	SyntaxError: asynchronous comprehension outside of an asynchronous function	SyntaxError: asynchronous comprehension outside of an asynchronous function
+async-comp-module	SyntaxError: asynchronous comprehension outside of an asynchronous function	SyntaxError: asynchronous comprehension outside of an asynchronous function	SyntaxError: asynchronous comprehension outside of an asynchronous function
+async-for-in-sync-genexp-in-async	OK	OK	OK
+async-genexp-module	OK	OK	OK
+augassign-tuple	SyntaxError: 'tuple' is an illegal expression for augmented assignment	SyntaxError: 'tuple' is an illegal expression for augmented assignment	SyntaxError: 'tuple' is an illegal expression for augmented assignment
+await-in-annotation	OK	SyntaxError: await expression cannot be used within an annotation	SyntaxError: await expression cannot be used within an annotation
+await-in-lambda-in-async	SyntaxError: 'await' outside async function	SyntaxError: 'await' outside async function	SyntaxError: 'await' outside async function
+await-in-sync-genexp	OK	OK	OK
+await-module	SyntaxError: 'await' outside function	SyntaxError: 'await' outside function	SyntaxError: 'await' outside function
+await-power	OK	OK	OK
+await-unary	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+backslash-continuation-eof	SyntaxError: unexpected EOF while parsing	SyntaxError: unexpected EOF while parsing	SyntaxError: unexpected EOF while parsing
+backslash-space-after	SyntaxError: unexpected character after line continuation character	SyntaxError: unexpected character after line continuation character	SyntaxError: unexpected character after line continuation character
+backticks	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+bare-raise-module	OK	OK	OK
+bare-star-kwargs	SyntaxError: named arguments must follow bare *	SyntaxError: named arguments must follow bare *	SyntaxError: named parameters must follow bare *
+bare-star-last	SyntaxError: named arguments must follow bare *	SyntaxError: named arguments must follow bare *	SyntaxError: named parameters must follow bare *
+break-in-class-in-loop	SyntaxError: 'break' outside loop	SyntaxError: 'break' outside loop	SyntaxError: 'break' outside loop
+bytes-nonascii	SyntaxError: bytes can only contain ASCII literal characters	SyntaxError: bytes can only contain ASCII literal characters	SyntaxError: bytes can only contain ASCII literal characters
+bytes-str-concat	SyntaxError: cannot mix bytes and nonbytes literals	SyntaxError: cannot mix bytes and nonbytes literals	SyntaxError: cannot mix bytes and nonbytes literals
+call-genexp-kw	SyntaxError: Generator expression must be parenthesized	SyntaxError: Generator expression must be parenthesized	SyntaxError: Generator expression must be parenthesized
+call-star-after-kw	OK	OK	OK
+call-walrus-kw	SyntaxError: positional argument follows keyword argument	SyntaxError: positional argument follows keyword argument	SyntaxError: positional argument follows keyword argument
+case-as-underscore	SyntaxError: cannot use '_' as a target	SyntaxError: cannot use '_' as a target	SyntaxError: cannot use '_' as a target
+case-dstar-not-last	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: double star pattern must be the last (right-most) subpattern in the mapping pattern
+case-dstar-wildcard	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+case-dup-key	SyntaxError: mapping pattern checks duplicate key ('a')	SyntaxError: mapping pattern checks duplicate key ('a')	SyntaxError: mapping pattern checks duplicate key ('a')
+case-ellipsis	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+case-fstring	SyntaxError: patterns may only match literals and attribute lookups	SyntaxError: patterns may only match literals and attribute lookups	SyntaxError: patterns may only match literals and attribute lookups
+case-imag-plus-imag	SyntaxError: real number required in complex literal	SyntaxError: real number required in complex literal	SyntaxError: real number required in complex literal
+case-irrefutable-not-last	SyntaxError: name capture 'y' makes remaining patterns unreachable	SyntaxError: name capture 'y' makes remaining patterns unreachable	SyntaxError: name capture 'y' makes remaining patterns unreachable
+case-kw-then-pos	SyntaxError: positional patterns follow keyword patterns	SyntaxError: positional patterns follow keyword patterns	SyntaxError: positional patterns follow keyword patterns
+case-neg-zero-imag	OK	OK	OK
+case-or-bind-mismatch	SyntaxError: alternative patterns bind different names	SyntaxError: alternative patterns bind different names	SyntaxError: alternative patterns bind different names
+case-outside	OK	OK	OK
+case-plus-literal	SyntaxError: invalid syntax	SyntaxError: invalid syntax	OK
+case-real-plus-real	SyntaxError: imaginary number required in complex literal	SyntaxError: imaginary number required in complex literal	SyntaxError: imaginary number required in complex literal
+case-star-wildcard	OK	OK	OK
+case-two-stars	SyntaxError: multiple starred names in sequence pattern	SyntaxError: multiple starred names in sequence pattern	SyntaxError: multiple starred names in sequence pattern
+case-value-call	OK	OK	OK
+chain-assign-yield	OK	OK	OK
+chained-assign-annot	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+class-global-then-def	OK	OK	OK
+class-kw-soft-names	OK	OK	OK
+class-star-import	SyntaxError: import * only allowed at module level	SyntaxError: import * only allowed at module level	SyntaxError: import * only allowed at module level
+class-typeparam-yield	SyntaxError: yield expression cannot be used within the definition of a generic	SyntaxError: yield expression cannot be used within the definition of a generic	SyntaxError: yield expression cannot be used within the definition of a generic
+compound-after-semicolon	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+compound-after-semicolon-in-suite	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+conditional-lambda-else	OK	OK	OK
+continue-in-finally-in-loop-in-finally	OK	OK	OK
+debug-assign	SyntaxError: cannot assign to __debug__	SyntaxError: cannot assign to __debug__	SyntaxError: cannot assign to __debug__
+decorator-arbitrary	OK	OK	OK
+decorator-class	OK	OK	OK
+decorator-lambda	OK	OK	OK
+decorator-nothing	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+decorator-on-async	OK	OK	OK
+decorator-tuple	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+default-except-not-last	SyntaxError: default 'except:' must be last	SyntaxError: default 'except:' must be last	SyntaxError: default 'except:' must be last
+default-then-nondefault-posonly	SyntaxError: parameter without a default follows parameter with a default	SyntaxError: parameter without a default follows parameter with a default	SyntaxError: parameter without a default follows parameter with a default
+del-call	SyntaxError: cannot delete function call	SyntaxError: cannot delete function call	SyntaxError: cannot delete function call
+del-literal	SyntaxError: cannot delete literal	SyntaxError: cannot delete literal	SyntaxError: cannot delete literal
+del-paren-list	OK	OK	OK
+del-star	SyntaxError: cannot delete starred	SyntaxError: cannot delete starred	SyntaxError: cannot delete starred
+diamond	SyntaxError: invalid syntax.  Maybe you meant '!=' instead of '<>'?	SyntaxError: invalid syntax.  Maybe you meant '!=' instead of '<>'?	SyntaxError: invalid syntax.  Maybe you meant '!=' instead of '<>'?
+dict-single-star	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: cannot use a starred expression in a dictionary key
+dict-star-mix	OK	OK	OK
+dict-walrus-value	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+dstar-comp-798	SyntaxError: dict unpacking cannot be used in dict comprehension	SyntaxError: dict unpacking cannot be used in dict comprehension	OK
+dunder-class-nonlocal	OK	OK	OK
+dup-arg	SyntaxError: duplicate argument 'a' in function definition	SyntaxError: duplicate argument 'a' in function definition	SyntaxError: duplicate parameter 'a' in function definition
+dup-kwarg	SyntaxError: keyword argument repeated: a	SyntaxError: keyword argument repeated: a	SyntaxError: keyword argument repeated: a
+ellipsis-name-assign	OK	OK	OK
+ellipsis-spaced	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+ellipsis-target	SyntaxError: cannot assign to ellipsis here. Maybe you meant '==' instead of '='?	SyntaxError: cannot assign to ellipsis here. Maybe you meant '==' instead of '='?	SyntaxError: cannot assign to ellipsis here. Maybe you meant '==' instead of '='?
+except-mixed-star	SyntaxError: cannot have both 'except' and 'except*' on the same 'try'	SyntaxError: cannot have both 'except' and 'except*' on the same 'try'	SyntaxError: cannot have both 'except' and 'except*' on the same 'try'
+except-noparen	SyntaxError: multiple exception types must be parenthesized	OK	OK
+except-noparen-as	SyntaxError: multiple exception types must be parenthesized	SyntaxError: multiple exception types must be parenthesized when using 'as'	SyntaxError: multiple exception types must be parenthesized when using 'as'
+except-star-bare	SyntaxError: expected one or more exception types	SyntaxError: expected one or more exception types	SyntaxError: expected one or more exception types
+except-star-return	SyntaxError: 'break', 'continue' and 'return' cannot appear in an except* block	SyntaxError: 'break', 'continue' and 'return' cannot appear in an except* block	SyntaxError: 'break', 'continue' and 'return' cannot appear in an except* block
+exceptstar-noparen	SyntaxError: multiple exception types must be parenthesized	OK	OK
+exec-stmt	SyntaxError: Missing parentheses in call to 'exec'. Did you mean exec(...)?	SyntaxError: Missing parentheses in call to 'exec'. Did you mean exec(...)?	SyntaxError: Missing parentheses in call to 'exec'. Did you mean exec(...)?
+finally-break	OK	OK  [SyntaxWarning: 'break' in a 'finally' block]	OK  [SyntaxWarning: 'break' in a 'finally' block]
+finally-continue	OK	OK  [SyntaxWarning: 'continue' in a 'finally' block]	OK  [SyntaxWarning: 'continue' in a 'finally' block]
+finally-return	OK	OK  [SyntaxWarning: 'return' in a 'finally' block]	OK  [SyntaxWarning: 'return' in a 'finally' block]
+float-leading-zero	OK	OK	OK
+for-star-target	SyntaxError: starred assignment target must be in a list or tuple	SyntaxError: starred assignment target must be in a list or tuple	SyntaxError: starred assignment target must be in a list or tuple
+formfeed-indent	OK	OK	OK
+from-dot-space	OK	OK	OK
+from-ellipsis-import	OK	OK	OK
+from-paren-star	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+from-trailing-comma	SyntaxError: trailing comma not allowed without surrounding parentheses	SyntaxError: trailing comma not allowed without surrounding parentheses	SyntaxError: trailing comma not allowed without surrounding parentheses
+fstring-N-escape	OK	OK	OK
+fstring-backslash	OK	OK	OK
+fstring-bad-conv	SyntaxError: f-string: invalid conversion character 'z': expected 's', 'r', or 'a'	SyntaxError: f-string: invalid conversion character 'z': expected 's', 'r', or 'a'	SyntaxError: f-string: invalid conversion character 'z': expected 's', 'r', or 'a'
+fstring-bytes	SyntaxError: invalid syntax	SyntaxError: 'b' and 'f' prefixes are incompatible	SyntaxError: 'b' and 'f' prefixes are incompatible
+fstring-colon-in-brackets	OK	OK	OK
+fstring-comment	OK	OK	OK
+fstring-comment-same-line	SyntaxError: '{' was never closed	SyntaxError: '{' was never closed	SyntaxError: '{' was never closed
+fstring-conv-space	SyntaxError: f-string: conversion type must come right after the exclamation mark	SyntaxError: f-string: conversion type must come right after the exclamation mark	SyntaxError: f-string: conversion type must come right after the exclamation mark
+fstring-conv-then-eq	SyntaxError: f-string: expecting ':' or '}'	SyntaxError: f-string: expecting ':' or '}'	SyntaxError: f-string: expecting ':' or '}'
+fstring-debug	OK	OK	OK
+fstring-empty	SyntaxError: f-string: valid expression required before '}'	SyntaxError: f-string: valid expression required before '}'	SyntaxError: f-string: valid expression required before '}'
+fstring-eq-spaces	OK	OK	OK
+fstring-escaped	OK	OK	OK
+fstring-lambda	SyntaxError: f-string: lambda expressions are not allowed without parentheses	SyntaxError: f-string: lambda expressions are not allowed without parentheses	SyntaxError: f-string: lambda expressions are not allowed without parentheses
+fstring-multiline-triple	OK	OK	OK
+fstring-neq	OK	OK	OK
+fstring-nested-deep	OK	OK	OK
+fstring-nested-format-depth	OK	OK	OK
+fstring-nested-same-quote	OK	OK	OK
+fstring-newline-in-field	OK	OK	OK
+fstring-raw-backslash-brace	OK	OK	OK
+fstring-rbrace-format	OK	OK	OK
+fstring-single-rbrace	SyntaxError: f-string: single '}' is not allowed	SyntaxError: f-string: single '}' is not allowed	SyntaxError: f-string: single '}' is not allowed
+fstring-star	SyntaxError: can't use starred expression here	SyntaxError: can't use starred expression here	SyntaxError: can't use starred expression here
+fstring-star-tuple	OK	OK	OK
+fstring-triple-in-single	OK	OK	OK
+fstring-u	SyntaxError: invalid syntax	SyntaxError: 'u' and 'f' prefixes are incompatible	SyntaxError: 'u' and 'f' prefixes are incompatible
+fstring-walrus-paren	OK	OK	OK
+fstring-yield	OK	OK	OK
+future-late	SyntaxError: from __future__ imports must occur at the beginning of the file	SyntaxError: from __future__ imports must occur at the beginning of the file	SyntaxError: from __future__ imports must occur at the beginning of the file
+future-unknown	SyntaxError: future feature nope is not defined	SyntaxError: future feature nope is not defined	SyntaxError: future feature nope is not defined
+genexp-not-sole	SyntaxError: Generator expression must be parenthesized	SyntaxError: Generator expression must be parenthesized	SyntaxError: Generator expression must be parenthesized
+genexp-sole-trailing-comma	SyntaxError: Generator expression must be parenthesized	SyntaxError: Generator expression must be parenthesized	SyntaxError: Generator expression must be parenthesized
+global-after-use	SyntaxError: name 'x' is used prior to global declaration	SyntaxError: name 'x' is used prior to global declaration	SyntaxError: name 'x' is used prior to global declaration
+global-in-class-in-func	OK	OK	OK
+global-param	SyntaxError: name 'x' is parameter and global	SyntaxError: name 'x' is parameter and global	SyntaxError: name 'x' is parameter and global
+ident-combining-start	SyntaxError: invalid character '́' (U+0301)	SyntaxError: invalid character '́' (U+0301)	SyntaxError: invalid character '́' (U+0301)
+ident-middle-dot	OK	OK	OK
+ident-nfkc	OK	OK	OK
+ident-other-id-start	OK	OK	OK
+ident-pc-start	SyntaxError: invalid character '‿' (U+203F)	SyntaxError: invalid character '‿' (U+203F)	SyntaxError: invalid character '‿' (U+203F)
+import-as-dotted	SyntaxError: invalid syntax	SyntaxError: cannot use attribute as import target	SyntaxError: cannot use attribute as import target
+import-rel-only-dots	OK	OK	OK
+import-star-then-lazy-name	OK	OK	OK
+int-double-underscore	SyntaxError: invalid decimal literal	SyntaxError: invalid decimal literal	SyntaxError: invalid decimal literal
+int-leading-zeros	OK	OK	OK
+int-old-octal	SyntaxError: leading zeros in decimal integer literals are not permitted; use an 0o prefix for octal integers	SyntaxError: leading zeros in decimal integer literals are not permitted; use an 0o prefix for octal integers	SyntaxError: leading zeros in decimal integer literals are not permitted; use an 0o prefix for octal integers
+int-suffix-ll	SyntaxError: invalid decimal literal	SyntaxError: invalid decimal literal	SyntaxError: invalid decimal literal
+int-suffix-u	SyntaxError: invalid decimal literal	SyntaxError: invalid decimal literal	SyntaxError: invalid decimal literal
+kw-only-after-star-default	OK	OK	OK
+kw-then-pos	SyntaxError: positional argument follows keyword argument	SyntaxError: positional argument follows keyword argument	SyntaxError: positional argument follows keyword argument
+kw-unpack-then-pos	SyntaxError: positional argument follows keyword argument unpacking	SyntaxError: positional argument follows keyword argument unpacking	SyntaxError: positional argument follows keyword argument unpacking
+kw-unpack-then-star	SyntaxError: iterable argument unpacking follows keyword argument unpacking	SyntaxError: iterable argument unpacking follows keyword argument unpacking	SyntaxError: iterable argument unpacking follows keyword argument unpacking
+lambda-annot	SyntaxError: illegal target for annotation	SyntaxError: illegal target for annotation	SyntaxError: illegal target for annotation
+lambda-default-walrus	OK	OK	OK
+lambda-star-slash	OK	OK	OK
+lambda-tuple-param	SyntaxError: Lambda expression parameters cannot be parenthesized	SyntaxError: Lambda expression parameters cannot be parenthesized	SyntaxError: Lambda expression parameters cannot be parenthesized
+lazy-as-name	OK	OK	OK
+lazy-class	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: lazy import not allowed inside classes
+lazy-from	SyntaxError: invalid syntax	SyntaxError: invalid syntax	OK
+lazy-future	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: lazy from __future__ import is not allowed
+lazy-if	SyntaxError: invalid syntax	SyntaxError: invalid syntax	OK
+lazy-import	SyntaxError: invalid syntax	SyntaxError: invalid syntax	OK
+lazy-in-func	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: lazy import not allowed inside functions
+lazy-in-try	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: lazy import not allowed inside try/except blocks
+lazy-newline-import	OK	OK	OK
+lazy-oneline-suite	SyntaxError: invalid syntax	SyntaxError: invalid syntax	OK
+lazy-star	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: lazy from ... import * is not allowed
+lazy-with	SyntaxError: invalid syntax	SyntaxError: invalid syntax	OK
+match-as-expr-colon-slice	OK	OK	OK
+match-call-stmt	OK	OK	OK
+match-dict-annassign	OK	OK	OK
+match-newline-needed	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+match-paren-annassign	OK	OK	OK
+match-star-subject	OK	OK	OK
+match-subscript-annassign	OK	OK	OK
+nested-blocks-21	OK	OK	OK
+nonlocal-and-global	SyntaxError: name 'x' is nonlocal and global	SyntaxError: name 'x' is nonlocal and global	SyntaxError: name 'x' is nonlocal and global
+nonlocal-class-scope	OK	OK	OK
+nonlocal-module	SyntaxError: nonlocal declaration not allowed at module level	SyntaxError: nonlocal declaration not allowed at module level	SyntaxError: nonlocal declaration not allowed at module level
+nonlocal-nobinding	SyntaxError: no binding for nonlocal 'x' found	SyntaxError: no binding for nonlocal 'x' found	SyntaxError: no binding for nonlocal 'x' found
+not-in-unary	OK	OK	OK
+num-0b2	SyntaxError: invalid digit '2' in binary literal	SyntaxError: invalid digit '2' in binary literal	SyntaxError: invalid digit '2' in binary literal
+num-0xfor	OK  [SyntaxWarning: invalid hexadecimal literal]	OK  [SyntaxWarning: invalid hexadecimal literal]	OK  [SyntaxWarning: invalid hexadecimal literal]
+num-1if	OK  [SyntaxWarning: invalid decimal literal]	OK  [SyntaxWarning: invalid decimal literal]	OK  [SyntaxWarning: invalid decimal literal]
+num-dot-attr	OK	OK	OK
+num-exp-underscore	OK	OK	OK
+num-underscore-end	SyntaxError: invalid decimal literal	SyntaxError: invalid decimal literal	SyntaxError: invalid decimal literal
+param-annot-star-nonvararg	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+paren-augassign	OK	OK	OK
+posonly	OK	OK	OK
+posonly-dup-slash	SyntaxError: / may appear only once	SyntaxError: / may appear only once	SyntaxError: / may appear only once
+posonly-first	SyntaxError: at least one argument must precede /	SyntaxError: at least one argument must precede /	SyntaxError: at least one parameter must precede /
+print-soft	OK	OK	OK
+print-stmt	SyntaxError: Missing parentheses in call to 'print'. Did you mean print(...)?	SyntaxError: Missing parentheses in call to 'print'. Did you mean print(...)?	SyntaxError: Missing parentheses in call to 'print'. Did you mean print(...)?
+return-class-in-func	SyntaxError: 'return' outside function	SyntaxError: 'return' outside function	SyntaxError: 'return' outside function
+return-in-def-in-finally	OK	OK	OK
+return-module	SyntaxError: 'return' outside function	SyntaxError: 'return' outside function	SyntaxError: 'return' outside function
+return-value-async-gen	SyntaxError: 'return' with value in async generator	SyntaxError: 'return' with value in async generator	SyntaxError: 'return' with value in async generator
+semicolon-only	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+set-star	OK	OK	OK
+slash-after-star	SyntaxError: / must be ahead of *	SyntaxError: / must be ahead of *	SyntaxError: / must be ahead of *
+slice-walrus	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+star-after-kwunpack	SyntaxError: iterable argument unpacking follows keyword argument unpacking	SyntaxError: iterable argument unpacking follows keyword argument unpacking	SyntaxError: iterable argument unpacking follows keyword argument unpacking
+star-annot-varargs	OK	OK	OK
+star-cmp-list	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+star-comp-798	SyntaxError: iterable unpacking cannot be used in comprehension	SyntaxError: iterable unpacking cannot be used in comprehension	OK
+star-for-iter	OK	OK	OK
+star-genexp-arg-798	SyntaxError: iterable unpacking cannot be used in comprehension	SyntaxError: iterable unpacking cannot be used in comprehension	OK
+star-import-func	SyntaxError: import * only allowed at module level	SyntaxError: import * only allowed at module level	SyntaxError: import * only allowed at module level
+star-index	OK	OK	OK
+star-param-default	SyntaxError: var-positional argument cannot have default value	SyntaxError: var-positional argument cannot have default value	SyntaxError: var-positional parameter cannot have default value
+star-paren-in-tuple	SyntaxError: cannot use starred expression here	SyntaxError: cannot use starred expression here	SyntaxError: cannot use starred expression here
+star-ret-annot	SyntaxError: expected ':'	SyntaxError: expected ':'	SyntaxError: expected ':'
+star-return-bare	SyntaxError: can't use starred expression here	SyntaxError: can't use starred expression here	SyntaxError: can't use starred expression here
+star-return-tuple	OK	OK	OK
+star-slice	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+star-target-alone	SyntaxError: starred assignment target must be in a list or tuple	SyntaxError: starred assignment target must be in a list or tuple	SyntaxError: starred assignment target must be in a list or tuple
+str-prefix-br-upper	OK	OK	OK
+str-prefix-ur	SyntaxError: invalid syntax	SyntaxError: 'u' and 'r' prefixes are incompatible	SyntaxError: 'u' and 'r' prefixes are incompatible
+subscript-kw	SyntaxError: invalid syntax. Maybe you meant '==' or ':=' instead of '='?	SyntaxError: invalid syntax. Maybe you meant '==' or ':=' instead of '='?	SyntaxError: invalid syntax. Maybe you meant '==' or ':=' instead of '='?
+tab-space-mix	TabError: inconsistent use of tabs and spaces in indentation	TabError: inconsistent use of tabs and spaces in indentation	TabError: inconsistent use of tabs and spaces in indentation
+tstring	SyntaxError: invalid syntax	OK	OK
+tstring-bt	SyntaxError: invalid syntax	SyntaxError: 'b' and 't' prefixes are incompatible	SyntaxError: 'b' and 't' prefixes are incompatible
+tstring-concat-f	SyntaxError: invalid syntax	SyntaxError: cannot mix t-string literals with string or bytes literals	SyntaxError: cannot mix t-string literals with string or bytes literals
+tstring-concat-str	SyntaxError: invalid syntax	SyntaxError: cannot mix t-string literals with string or bytes literals	SyntaxError: cannot mix t-string literals with string or bytes literals
+tstring-concat-t	SyntaxError: invalid syntax	OK	OK
+tstring-ft	SyntaxError: invalid syntax	SyntaxError: 'f' and 't' prefixes are incompatible	SyntaxError: 'f' and 't' prefixes are incompatible
+tstring-nested-f	SyntaxError: invalid syntax	OK	OK
+tstring-rt	SyntaxError: invalid syntax	OK	OK
+two-star-targets	SyntaxError: multiple starred expressions in assignment	SyntaxError: multiple starred expressions in assignment	SyntaxError: multiple starred expressions in assignment
+type-after-semicolon	OK	OK	OK
+type-after-semicolon-in-suite	OK	OK	OK
+type-alias-soft-name	OK	OK	OK
+type-expr-stmt	OK	OK	OK
+type-in-class-oneline	OK	OK	OK
+type-oneline-suite	OK	OK	OK
+typealias-in-func	OK	OK	OK
+typealias-lambda	OK	OK	OK
+typealias-walrus	SyntaxError: named expression cannot be used within a type alias	SyntaxError: named expression cannot be used within a type alias	SyntaxError: named expression cannot be used within a type alias
+typeparam-bound-tuple-one	OK	OK	OK
+typeparam-default	OK	OK	OK
+typeparam-default-312-style	OK	OK	OK
+typeparam-default-order	SyntaxError: non-default type parameter 'U' follows default type parameter	SyntaxError: non-default type parameter 'U' follows default type parameter	SyntaxError: non-default type parameter 'U' follows default type parameter
+typeparam-dup	SyntaxError: duplicate type parameter 'T'	SyntaxError: duplicate type parameter 'T'	SyntaxError: duplicate type parameter 'T'
+typeparam-empty	SyntaxError: Type parameter list cannot be empty	SyntaxError: Type parameter list cannot be empty	SyntaxError: Type parameter list cannot be empty
+typeparam-paramspec-bound	SyntaxError: cannot use bound with ParamSpec	SyntaxError: cannot use bound with ParamSpec	SyntaxError: cannot use bound with ParamSpec
+typeparam-star-default	OK	OK	OK
+typeparam-walrus-bound	SyntaxError: named expression cannot be used within a TypeVar bound	SyntaxError: named expression cannot be used within a TypeVar bound	SyntaxError: named expression cannot be used within a TypeVar bound
+unary-target	SyntaxError: cannot assign to expression here. Maybe you meant '==' instead of '='?	SyntaxError: cannot assign to expression here. Maybe you meant '==' instead of '='?	SyntaxError: cannot assign to expression here. Maybe you meant '==' instead of '='?
+unicode-bom-and-nbsp	SyntaxError: invalid non-printable character U+00A0	SyntaxError: invalid non-printable character U+00A0	SyntaxError: invalid non-printable character U+00A0
+walrus-annassign	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+walrus-assign-value	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+walrus-attr-target	SyntaxError: cannot use assignment expressions with attribute	SyntaxError: cannot use assignment expressions with attribute	SyntaxError: cannot use assignment expressions with attribute
+walrus-comp-class	SyntaxError: assignment expression within a comprehension cannot be used in a class body	SyntaxError: assignment expression within a comprehension cannot be used in a class body	SyntaxError: assignment expression within a comprehension cannot be used in a class body
+walrus-comp-iter-var	SyntaxError: assignment expression cannot rebind comprehension iteration variable 'i'	SyntaxError: assignment expression cannot rebind comprehension iteration variable 'i'	SyntaxError: assignment expression cannot rebind comprehension iteration variable 'i'
+walrus-decorator	OK	OK	OK
+walrus-default	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+walrus-for-iter	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+walrus-fstring-format	OK	OK	OK
+walrus-in-annotation	OK	SyntaxError: named expression cannot be used within an annotation	SyntaxError: named expression cannot be used within an annotation
+walrus-in-tuple-value	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+walrus-index	OK	OK	OK
+walrus-return	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+walrus-set	OK	OK	OK
+walrus-stmt	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+walrus-with-paren	OK	OK	OK
+walrus-yield	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+with-as-paren-target	OK	OK	OK
+with-paren-attr	OK	OK	OK
+with-paren-multi	OK	OK	OK
+with-paren-tuple-as	OK	OK	OK
+yield-from-async	SyntaxError: 'yield from' inside async function	SyntaxError: 'yield from' inside async function	SyntaxError: 'yield from' inside async function
+yield-from-star	SyntaxError: invalid syntax	SyntaxError: invalid syntax	SyntaxError: invalid syntax
+yield-in-annotation	OK	SyntaxError: yield expression cannot be used within an annotation	SyntaxError: yield expression cannot be used within an annotation
+yield-in-listcomp	SyntaxError: 'yield' inside list comprehension	SyntaxError: 'yield' inside list comprehension	SyntaxError: 'yield' inside list comprehension
+yield-in-type-alias	SyntaxError: yield expression cannot be used within a type alias	SyntaxError: yield expression cannot be used within a type alias	SyntaxError: yield expression cannot be used within a type alias
+yield-star	OK	OK	OK
