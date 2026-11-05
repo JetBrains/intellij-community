@@ -28,6 +28,7 @@ object PyCodeInsightCounters {
     CONTEXT_LOOKUP_MISSES("type.context.lookupMisses"),
     ASSUME_TYPE_CALLS("type.assumeType.calls"),
     MATCH_STEPS("type.match.steps"),
+    TYPE_TRAVERSAL_VISITS("type.traversal.visits"),
     OVERLOAD_CANDIDATES_CHECKED("overload.candidatesChecked"),
     CFG_BUILDS("cfg.builds"),
     CFG_INSTRUCTIONS("cfg.instructions"),

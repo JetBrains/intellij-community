@@ -2,6 +2,8 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters;
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +53,7 @@ public final class PyRecursiveTypeVisitor extends PyTypeVisitorExt<PyRecursiveTy
     if (!myVisited.add(type)) {
       return Traversal.CONTINUE;
     }
+    PyCodeInsightCounters.inc(Counter.TYPE_TRAVERSAL_VISITS);
     try {
       Traversal next = visit(type, myTraverser);
       if (next == Traversal.TERMINATE) {

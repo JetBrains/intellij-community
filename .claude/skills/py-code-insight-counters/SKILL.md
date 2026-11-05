@@ -24,6 +24,7 @@ defect in a test. A work count does not flake like a time.
 | `CONTEXT_LOOKUP_MISSES` | the context lookups that store a new context | `TypeEvalContextCacheImpl` |
 | `ASSUME_TYPE_CALLS` | the narrowing assumptions that create a context | `TypeEvalContextImpl.assumeType` |
 | `MATCH_STEPS` | the steps of the type match | `PyTypeChecker.match` |
+| `TYPE_TRAVERSAL_VISITS` | the types that a recursive type walk visits | `PyRecursiveTypeVisitor.visitPyType` |
 | `OVERLOAD_CANDIDATES_CHECKED` | the overload candidates that the argument types check | `PyCallExpressionHelper.matchesByArgumentTypes` |
 | `CFG_BUILDS`, `CFG_INSTRUCTIONS` | the control flow builds and their instructions | `PyControlFlowBuilder.buildControlFlow` |
 | `COMPLETION_LOOKUP_ITEMS` | the lookup items of the Python completion | `CompletionVariantsProcessor.setupItem` |

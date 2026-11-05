@@ -144,6 +144,23 @@ class PyCodeInsightScalingPerformanceTest : PyCodeInsightTestCase() {
   }
 
   @Test
+  @TestFor(issues = ["PY-93781"])
+  fun `type inference of a generic call grows linearly with the type parameters`() {
+    assertGrowth("generic_call/traversal visits", TYPE_PARAMETER_SIZES, PyGrowth.LINEAR) { typeParameters ->
+      val (file, target) = configureGenericCall(typeParameters)
+      perf.probe.work { inferAll(file, listOf(target)) }[Counter.TYPE_TRAVERSAL_VISITS]
+    }
+  }
+
+  @Test
+  fun `type inference of a generic call binds each type parameter`() {
+    val typeParameters = TYPE_PARAMETER_SIZES.last()
+    val (file, target) = configureGenericCall(typeParameters)
+    val type = runReadActionBlocking { TypeEvalContext.codeAnalysis(file.project, file).getType(target)?.name }
+    assertEquals((0 until typeParameters).joinToString(", ", "(", ")") { "Literal[$it]" }, type)
+  }
+
+  @Test
   fun `overload resolution grows linearly with the overloads`() {
     for (arguments in listOf(1, 4)) {
       assertGrowth("overloads_m=$arguments/candidates", OVERLOAD_SIZES, PyGrowth.LINEAR) { overloads ->
@@ -319,6 +336,18 @@ class PyCodeInsightScalingPerformanceTest : PyCodeInsightTestCase() {
     myFixture.configureByText("union_$literals.py", code)
   }
 
+  /** A function with `N` type parameters, and one call of it whose arguments are generic calls too. */
+  private fun configureGenericCall(typeParameters: Int): Pair<PyFile, PyTargetExpression> {
+    val indices = 0 until typeParameters
+    val code = """
+      def f[T](x: T) -> list[T]: ...
+      def g[${indices.joinToString(", ") { "T$it" }}](${indices.joinToString(", ") { "a$it: list[T$it]" }}) -> tuple[${indices.joinToString(", ") { "T$it" }}]: ...
+      r = g(${indices.joinToString(", ") { "f($it)" }})
+    """.trimIndent()
+    val file = myFixture.configureByText("generic_call_$typeParameters.py", code) as PyFile
+    return file to runReadActionBlocking { file.findTopLevelAttribute("r")!! }
+  }
+
   private fun inferAll(file: PyFile, elements: List<PyTypedElement>) {
     runReadActionBlocking {
       val context = TypeEvalContext.codeAnalysis(file.project, file)
@@ -342,6 +371,7 @@ class PyCodeInsightScalingPerformanceTest : PyCodeInsightTestCase() {
     val DEPTHS = listOf(4, 8)
     val OVERLOAD_SIZES = listOf(10, 20, 40)
     val UNION_SIZES = listOf(10, 20, 40)
+    val TYPE_PARAMETER_SIZES = listOf(10, 20, 40)
     const val SITES = 20
     const val SITES_UNION = 50
 

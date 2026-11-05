@@ -142,25 +142,38 @@ class CspBuilder(val context: TypeEvalContext) {
   }
 
   private fun discardUnboundConstraints(constraints: Set<TypeConstraint>) : Pair<List<TypeConstraint>, Set<PyInferenceVariable>> {
-    val resultConstraints = constraints.toMutableList()
     val unboundIVs = HashSet<PyInferenceVariable>()
     val ivToConstraintMap = HashMultimap.create<PyInferenceVariable, TypeConstraint>()
-    for (iv in inferenceVars.values()) {
-      for (constraint in constraints) {
-        if (constraint.left.containsType(iv, context)) {
-          ivToConstraintMap.put(iv, constraint)
+    val poolSize = inferenceVars.values().size
+    if (poolSize == 0) return Pair(constraints.toList(), emptySet())
+    for (constraint in constraints) {
+      // One walk of the constraint finds all its inference variables.
+      // The walk evaluates the component types, so it stops when it has found every variable of the pool.
+      val found = HashSet<PyInferenceVariable>()
+      PyRecursiveTypeVisitor.traverse(constraint.left, context, object : PyTypeTraverser() {
+        override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
+          if (type is PyInferenceVariable) {
+            // The pool is keyed by the name, and equals also compares the names
+            val iv = inferenceVars.findByName(type.name)
+            if (iv != null && found.add(iv)) {
+              ivToConstraintMap.put(iv, constraint)
+              if (found.size == poolSize) return PyRecursiveTypeVisitor.Traversal.TERMINATE
+            }
+          }
+          return PyRecursiveTypeVisitor.Traversal.CONTINUE
         }
-      }
+      })
     }
+    val discardedConstraints = HashSet<TypeConstraint>()
     for (iv in inferenceVars.values()) {
       val ivConstraints = ivToConstraintMap.get(iv)
       val boundIV = ivConstraints.any { c -> c.isBinding == true }
       if (!boundIV) {
         unboundIVs.add(iv)
-        resultConstraints.removeAll(ivConstraints)
+        discardedConstraints.addAll(ivConstraints)
       }
     }
-    return Pair(resultConstraints, unboundIVs)
+    return Pair(constraints.filter { it !in discardedConstraints }, unboundIVs)
   }
 
   private fun getSortedConstraints(constraints: Collection<TypeConstraint>): Collection<TypeConstraint> {
@@ -317,6 +330,8 @@ private class InferenceVariablePool {
   fun values(): Collection<PyInferenceVariable> {
     return pool.values
   }
+
+  fun findByName(name: String): PyInferenceVariable? = pool[name]
 
   fun setUnbound(infVars: Collection<PyInferenceVariable>) {
     unboundIVs.addAll(infVars)
@@ -1883,22 +1898,6 @@ internal fun isWidenBoundsCase(typeParam: PyTypeParameterType, context: TypeEval
     PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeParam, context)
   }
   return variance != PyVariance.COVARIANT
-}
-
-private fun PyType?.containsType(t2: PyType, context: TypeEvalContext): Boolean {
-  if (this == null) return false
-  if (this == t2) return true
-  var found = false
-  PyRecursiveTypeVisitor.traverse(this, context, object : PyTypeTraverser() {
-    override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
-      if (type == t2) {
-        found = true
-        return PyRecursiveTypeVisitor.Traversal.TERMINATE
-      }
-      return PyRecursiveTypeVisitor.Traversal.CONTINUE
-    }
-  })
-  return found
 }
 
 /** Returns true iff this type is Any or object */
