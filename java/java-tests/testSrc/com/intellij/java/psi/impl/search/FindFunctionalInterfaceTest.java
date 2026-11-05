@@ -221,6 +221,18 @@ public class FindFunctionalInterfaceTest extends LightJavaCodeInsightFixtureTest
     assertFalse(((PsiFileImpl) usages).isContentsLoaded());
   }
 
+  public void testLambdaInSecondFieldOfSharedDeclaration() {
+    PsiClass sam = myFixture.addClass("interface I { void run(); }");
+    PsiFile usages = myFixture.addFileToProject("Some.java", """
+      class Some {
+        I first = null, second = () -> {};
+      }
+      """);
+    assertFalse(((PsiFileImpl)usages).isContentsLoaded());
+
+    assertOneElement(ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(sam).findAll()));
+  }
+
   private PsiClass findClass(String fqName) {
     return myFixture.findClass(fqName);
   }

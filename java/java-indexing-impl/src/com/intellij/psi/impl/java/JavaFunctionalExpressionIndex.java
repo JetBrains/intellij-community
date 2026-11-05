@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.java;
 
@@ -70,6 +70,7 @@ import static com.intellij.psi.impl.source.tree.JavaElementType.LOCAL_VARIABLE;
 import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD;
 import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD_CALL_EXPRESSION;
 import static com.intellij.psi.impl.source.tree.JavaElementType.METHOD_REF_EXPRESSION;
+import static com.intellij.psi.impl.source.tree.JavaElementType.MODIFIER_LIST;
 import static com.intellij.psi.impl.source.tree.JavaElementType.NEW_EXPRESSION;
 import static com.intellij.psi.impl.source.tree.JavaElementType.PARAMETER_LIST;
 import static com.intellij.psi.impl.source.tree.JavaElementType.PARENTH_EXPRESSION;
@@ -367,7 +368,7 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
 
   @Override
   public int getVersion() {
-    return 6;
+    return 7;
   }
 
   @Override
@@ -413,7 +414,7 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
             if (context != null) {
               List<IndexEntry> list = result.computeIfAbsent(key, _ -> new ArrayList<>());
               list.add(new IndexEntry(element.getStartOffset(), index,
-                                      context.getStartOffset(), context.getEndOffset(),
+                                      getContextStart(tree, context), context.getEndOffset(),
                                       createOccurrence(element, resolver)));
             }
             index++;
@@ -423,6 +424,26 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
 
       return result;
     };
+  }
+
+  /**
+   * A field after the first one in a shared declaration like {@code I first = null, second = () -> {};}
+   * has no modifier list and type of its own, so its context starts at the first field of the declaration.
+   */
+  private static int getContextStart(@NotNull LighterAST tree, @NotNull LighterASTNode context) {
+    if (context.getTokenType() != FIELD || LightTreeUtil.firstChildOfType(tree, context, MODIFIER_LIST) != null) {
+      return context.getStartOffset();
+    }
+    LighterASTNode parent = tree.getParent(context);
+    if (parent == null) return context.getStartOffset();
+    int declarationStart = context.getStartOffset();
+    for (LighterASTNode sibling : tree.getChildren(parent)) {
+      if (sibling.getStartOffset() >= context.getStartOffset()) break;
+      if (sibling.getTokenType() == FIELD && LightTreeUtil.firstChildOfType(tree, sibling, MODIFIER_LIST) != null) {
+        declarationStart = sibling.getStartOffset();
+      }
+    }
+    return declarationStart;
   }
 
   private static @NotNull FunExprOccurrence createOccurrence(@NotNull LighterASTNode funExpr, FileLocalResolver resolver) {
