@@ -59,7 +59,7 @@ def dev_dist_plugin(
         classpath_jars = [],
         files = {},
         file_prefixes = {},
-        executable_files = [],
+        executables = [],
         tree_files = [],
         directory_name = "",
         **descriptor_attrs):
@@ -92,8 +92,8 @@ def dev_dist_plugin(
             `tree_files` names copies every file of the directory artifact in the same way. Any other destination copies
             the one file the label produces. A copied file is not on the plugin classpath. Requires `jars`.
         file_prefixes: The repository-relative prefix of each source tree copy in `files`, keyed by destination.
-        executable_files: The single-file destinations of `files` the distribution marks executable. This is the mode
-            `withResource*` gives a file.
+        executables: The files the plugin ships with the executable bit, as `java.nio` globs relative to the plugin
+            directory. The collector marks each file of the component that a pattern matches. Requires `jars`.
         tree_files: The destinations of `files` whose label produces one directory artifact. Each copied file gets the
             mode 0644.
         frontend_application_info: The application info template of the embedded frontend. Stated together with the other
@@ -116,8 +116,10 @@ def dev_dist_plugin(
         fail("dev_dist_plugin: %s states jars and layout variants, and a packed plugin has one layout" % main_module)
     if jars and not descriptor:
         fail("dev_dist_plugin: %s states jars and no descriptor" % main_module)
-    if (files or file_prefixes or executable_files or tree_files) and not jars:
+    if (files or file_prefixes or tree_files) and not jars:
         fail("dev_dist_plugin: %s states copied files and no jars, and a copy belongs to a packed plugin" % main_module)
+    if executables and not jars:
+        fail("dev_dist_plugin: %s states executables and no jars, and a complex plugin states them on its chain" % main_module)
     for destination in file_prefixes:
         if destination not in files:
             fail("dev_dist_plugin: %s states a file prefix for '%s', which `files` does not copy" % (main_module, destination))
@@ -128,11 +130,6 @@ def dev_dist_plugin(
     for module in content_module_jar_labels:
         if module not in content_modules or module in jar_tokens:
             fail("dev_dist_plugin: %s states a content_module_jar label for '%s', which it does not reuse" % (main_module, module))
-    for destination in executable_files:
-        if destination not in files:
-            fail("dev_dist_plugin: %s marks '%s' executable, which `files` does not copy" % (main_module, destination))
-        if destination in file_prefixes or destination in tree_files:
-            fail("dev_dist_plugin: %s marks the directory copy '%s' executable, and only a single file has a stated mode" % (main_module, destination))
 
     if not descriptor:
         if variants or descriptor_attrs:
@@ -207,7 +204,7 @@ def dev_dist_plugin(
             classpath_jars = classpath_jars,
             files = files,
             file_prefixes = file_prefixes,
-            executable_files = executable_files,
+            executables = executables,
             tree_files = tree_files,
             # The stamp class of the component follows from the facts of its descriptor, so the call states them once.
             stamp_class_modes = sorted([

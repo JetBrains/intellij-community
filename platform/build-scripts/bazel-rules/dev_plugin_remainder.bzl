@@ -11,6 +11,7 @@ load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_dist_plugin_directory")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
+load(":java_glob.bzl", "executable_destinations")
 
 def _graph_info_init(**_kwargs):
     fail("DevPluginGraphInfo must come from dev_plugin_file_graph")
@@ -1289,6 +1290,8 @@ def _dev_plugin_component_impl(ctx):
         collection["descriptorRemainder"] = {"directory": remainder.root, "metadata": remainder.metadata.path}
     if remainder.refused_modules:
         collection["refusedModules"] = remainder.refused_modules
+    if ctx.attr.executables:
+        collection["executables"] = ctx.attr.executables
     spec = ctx.actions.declare_file(ctx.label.name + ".collection.json")
     ctx.actions.write(spec, json.encode(collection) + "\n")
     manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
@@ -1322,7 +1325,10 @@ def _dev_plugin_component_impl(ctx):
         progress_message = "Collecting plugin component metadata %{label}",
     )
 
-    placement = _component_placement(ctx, placed_files, placed_trees, reused, [destination(relative) for relative in remainder.executables])
+    executables = {destination(relative): True for relative in remainder.executables}
+    for path in executable_destinations(ctx.attr.executables, "%s: executables" % ctx.label, plugin_directory, placed_files.keys() + reused.keys()):
+        executables[path] = True
+    placement = _component_placement(ctx, placed_files, placed_trees, reused, sorted(executables.keys()))
     payload = depset(payload)
     return [
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),
@@ -1368,6 +1374,11 @@ keyed by the module. A native tree states its destination under `native-tree:<mo
 `lib/<native_lib_dir>`.""",
         ),
         "component_name": attr.string(mandatory = True),
+        "executables": attr.string_list(
+            doc = """The files the plugin ships with the executable bit on `target_platform`, as `java.nio` globs relative to
+the plugin directory. The collector marks each regular file that a pattern matches, and fails for a pattern that matches
+no file. The placement marks the placed files that a pattern matches.""",
+        ),
         "target_platform": attr.string(doc = "A `HOST_PLATFORMS` entry, or empty for a component that serves every platform."),
         "_trace_spans": attr.label(default = "//platform/build-scripts/bazel-rules:trace_spans", providers = [BuildSettingInfo]),
         "_collector": attr.label(default = "//platform/build-scripts/bazel-rules:dev_dist_collector", executable = True, cfg = "exec"),
@@ -1479,6 +1490,7 @@ def dev_dist_complex_plugin(
         remainder_trees = [],
         remainder_executables = [],
         independent_destinations = {},
+        executables = [],
         stamp_class_modes = [],
         embed_content_modules = True,
         tags = [],
@@ -1534,6 +1546,9 @@ def dev_dist_complex_plugin(
         remainder_executables: The destinations of `remainder_files` with the executable mode.
         independent_destinations: The destination of a reused jar outside `lib/modules/<module>.jar`, keyed by the
             module, and the destination of each native tree, keyed by `native-tree:<module>`.
+        executables: The `java.nio` globs, relative to the plugin directory, of the files that the plugin ships with
+            the executable bit. A list for a call that serves every platform. A dict from a platform of `platforms`
+            to its list for a call with platforms, without a platform whose list is empty.
         stamp_class_modes: The modes whose refusal list of the descriptor is not empty, sorted.
         embed_content_modules: The `embed_content_modules` of the descriptor. False only for a layout that scrambles
             paths.
@@ -1549,6 +1564,13 @@ def dev_dist_complex_plugin(
     error = platform_values_error(main_module, platforms, platform_values, platform_plans)
     if error:
         fail(error)
+    if executables and platforms and type(executables) != "dict":
+        fail("%s states platforms, so its executables are a dict from a platform to its patterns" % main_module)
+    if executables and not platforms and type(executables) != "list":
+        fail("%s serves every platform, so its executables are a list of patterns" % main_module)
+    for platform in executables if executables and platforms else []:
+        if platform not in platforms or not executables[platform]:
+            fail("%s states executables for '%s', which is no platform of the call or has no pattern" % (main_module, platform))
     descriptor_id = "descriptor:" + main_module
     plan_stem = plan_package + ":" + main_module + ("." + plan_class if plan_class else "")
     chain_stem = main_module + ("." + chain_class if chain_class else "")
@@ -1580,6 +1602,7 @@ def dev_dist_complex_plugin(
             remainder_trees = [_resolve_slot(main_module, destination, values) for destination in remainder_trees],
             remainder_executables = [_resolve_slot(main_module, destination, values) for destination in remainder_executables],
             independent_destinations = {key: _resolve_slot(main_module, value, values) for key, value in independent_destinations.items()},
+            executables = (executables.get(platform, []) if platform else executables) if executables else [],
             stamp_class_modes = stamp_class_modes,
             embed_content_modules = embed_content_modules,
             tags = tags,
@@ -1606,6 +1629,7 @@ def dev_dist_complex_plugin_variant(
         remainder_trees = [],
         remainder_executables = [],
         independent_destinations = {},
+        executables = [],
         stamp_class_modes = [],
         embed_content_modules = True,
         tags = [],
@@ -1645,6 +1669,8 @@ def dev_dist_complex_plugin_variant(
         remainder_executables: The destinations of `remainder_files` with the executable mode.
         independent_destinations: The destination of a reused jar outside `lib/modules/<module>.jar`, keyed by the
             module, and the destination of each native tree, keyed by `native-tree:<module>`.
+        executables: The `java.nio` globs, relative to the plugin directory, of the files that the plugin ships with
+            the executable bit on `target_platform`. The component applies them, see `dev_plugin_component`.
         stamp_class_modes: The modes whose refusal list of the descriptor is not empty, sorted.
         embed_content_modules: The `embed_content_modules` of the descriptor. The descriptor part of a split remainder
             then packs in the class of the leaf, see `dev_plugin_descriptor_remainder`.
@@ -1749,6 +1775,7 @@ def dev_dist_complex_plugin_variant(
         independent_destinations = independent_destinations,
         plugin_directory = plugin_directory,
         component_name = component_name,
+        executables = executables,
         target_platform = target_platform,
         stamp_class_modes = stamp_class_modes,
         tags = tags,

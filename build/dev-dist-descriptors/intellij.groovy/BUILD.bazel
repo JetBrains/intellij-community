@@ -73,7 +73,7 @@ dev_plugin(
         "//plugins/groovy/structuralsearch-groovy:structuralSearch_content_module_jar",
     ],
     descriptor = "//build/dev-dist-descriptors/intellij.groovy:intellij.groovy_dev_descriptor",
-    executable_files = [
+    executables = [
         "lib/agent/gragent.jar",
         "lib/console.groovy",
     ],

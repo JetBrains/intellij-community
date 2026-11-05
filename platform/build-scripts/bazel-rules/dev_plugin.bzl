@@ -26,6 +26,7 @@ load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_ATTRS", "DEV_DIST_STAMP_CLASS_FLAG_ATTR", "DevDistPluginDescriptorInfo", "dev_dist_check_stamp_class", "dev_dist_mode_refusals", "dev_dist_neutral_product_transition", "dev_dist_stamp_class_transition")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
+load(":java_glob.bzl", "executable_destinations")
 
 DevDistRuntimeLayoutInfo = provider(
     doc = """The layout part of one plugin component: which modules and libraries each of its jars merges.
@@ -348,7 +349,7 @@ _REUSED = "reused from a content module jar"
 _COPIED = "copied by `files`"
 
 def _copies(ctx, inputs, destinations):
-    """The copied files as `struct(destination, file, executable, tree)`, sorted by destination.
+    """The copied files as `struct(destination, file, tree)`, sorted by destination.
 
     A destination in `file_prefixes` is a directory copy: every file of the label below the prefix lands at
     `<destination>/<entry>`. A destination in `tree_files` copies the one directory artifact of its label, and the
@@ -362,12 +363,6 @@ def _copies(ctx, inputs, destinations):
             fail("tree_files names '%s', which `files` does not copy" % destination, attr = "tree_files")
         if destination in ctx.attr.file_prefixes:
             fail("tree_files names '%s', which `file_prefixes` also names; a copy takes one directory or one source tree" % destination, attr = "tree_files")
-    for destination in ctx.attr.executable_files:
-        if destination not in ctx.attr.files:
-            fail("executable_files names '%s', which `files` does not copy" % destination, attr = "executable_files")
-        if destination in ctx.attr.file_prefixes or destination in ctx.attr.tree_files:
-            fail("executable_files names '%s', which is a directory copy; the mode of a copied directory is not stated" % destination, attr = "executable_files")
-
     for destination in ctx.attr.file_prefixes:
         _check_destination(destination, attr = "file_prefixes", jar = False)
         _claim_copied_directory(destinations, destination, "file_prefixes")
@@ -385,7 +380,7 @@ def _copies(ctx, inputs, destinations):
         if destination in ctx.attr.tree_files:
             if not directory:
                 fail("tree_files names '%s', and %s produces no single directory" % (destination, token), attr = "tree_files")
-            copies.append(struct(destination = destination, file = sources[0], executable = False, tree = True))
+            copies.append(struct(destination = destination, file = sources[0], tree = True))
             continue
         if directory:
             fail("'%s' copies directory %s of %s; state the destination in `tree_files`" % (destination, sources[0].path, token), attr = "files")
@@ -395,13 +390,13 @@ def _copies(ctx, inputs, destinations):
             if len(sources) != 1:
                 fail("'%s' copies one file, and %s produces %d files; state a directory copy in `file_prefixes`" % (destination, token, len(sources)), attr = "files")
             _claim_destination(destinations, destination, _COPIED, "files")
-            copies.append(struct(destination = destination, file = sources[0], executable = destination in ctx.attr.executable_files, tree = False))
+            copies.append(struct(destination = destination, file = sources[0], tree = False))
             continue
         entries = source_tree_entries(sources, source_tree_prefix(prefix, destination), destination, token)
         for entry in sorted(entries):
             path = destination + "/" + entry
             _claim_destination(destinations, path, _COPIED, "files", directory = destination)
-            copies.append(struct(destination = path, file = entries[entry], executable = False, tree = False))
+            copies.append(struct(destination = path, file = entries[entry], tree = False))
     return copies
 
 def _dev_plugin_impl(ctx):
@@ -523,13 +518,15 @@ def _dev_plugin_impl(ctx):
         ],
     }
 
-    # Absent, and not empty, for a plugin without a copy: the spec of every jar-only plugin stays byte-identical. A tree
-    # states no mode: the collector gives each file of it the mode 0644.
+    # Absent, and not empty, for a plugin without a copy: the spec of every jar-only plugin stays byte-identical. A copy
+    # states no mode, because the collector applies `executables` to every file of the component.
     if copies:
         spec_content["files"] = [
-            {"destination": copy.destination, "source": copy.file.path, "tree": True} if copy.tree else {"destination": copy.destination, "source": copy.file.path, "executable": copy.executable}
+            {"destination": copy.destination, "source": copy.file.path, "tree": True} if copy.tree else {"destination": copy.destination, "source": copy.file.path}
             for copy in copies
         ]
+    if ctx.attr.executables:
+        spec_content["executables"] = ctx.attr.executables
     ctx.actions.write(spec, json.encode(spec_content) + "\n")
 
     manifest = ctx.actions.declare_file(ctx.label.name + ".component.json")
@@ -572,12 +569,8 @@ def _dev_plugin_impl(ctx):
     placed_trees = {}
     for copy in copies:
         (placed_trees if copy.tree else placed_files)[plugin_directory + "/" + copy.destination] = copy.file
-    placement = dev_dist_placement(
-        ctx,
-        placed_files,
-        placed_trees,
-        [plugin_directory + "/" + copy.destination for copy in copies if copy.executable],
-    )
+    executables = executable_destinations(ctx.attr.executables, "%s: executables" % ctx.label, plugin_directory, placed_files)
+    placement = dev_dist_placement(ctx, placed_files, placed_trees, executables)
     return [
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),
         DevDistRuntimeLayoutInfo(part = runtime_layout, descriptor = classpath_descriptor, descriptor_module = main_module),
@@ -642,8 +635,10 @@ one file the label produces. A copied file is not on the plugin classpath.""",
             doc = """The repository-relative prefix of each directory copy in `files`, keyed by destination. A file of the label
 at `<prefix>/<entry>` lands at `<destination>/<entry>`.""",
         ),
-        "executable_files": attr.string_list(
-            doc = "The single-file destinations of `files` the distribution marks executable, as `withResource*` does with mode 493.",
+        "executables": attr.string_list(
+            doc = """The files the plugin ships with the executable bit, as `java.nio` globs relative to the plugin directory.
+The collector marks each regular file that a pattern matches, in every copy kind, and fails for a pattern that matches
+no file. The placement marks the placed files that a pattern matches.""",
         ),
         "tree_files": attr.string_list(
             doc = """The destinations of `files` whose label produces one directory artifact. The collector walks the directory
@@ -674,7 +669,7 @@ def dev_plugin(
         classpath_jars = [],
         files = {},
         file_prefixes = {},
-        executable_files = [],
+        executables = [],
         tree_files = [],
         embed_content_modules = True,
         tags = [],
@@ -699,7 +694,7 @@ def dev_plugin(
         files: destination to the label of a plain copy, see `_dev_plugin`. The label is a source file, a filegroup or
             another target that produces regular files, or a target that produces one directory artifact.
         file_prefixes: destination to repository-relative prefix, for every entry of `files` that copies a source tree.
-        executable_files: the single-file destinations of `files` that are executable.
+        executables: the `java.nio` globs, relative to the plugin directory, of the files with the executable bit.
         tree_files: the destinations of `files` that copy one directory artifact.
         embed_content_modules: the `embed_content_modules` of the descriptor. The jar of the main module then packs in
             the class of the descriptor leaf, see `_dev_plugin_descriptor_jars`.
@@ -751,7 +746,7 @@ def dev_plugin(
         classpath_jars = classpath_jars,
         files = files,
         file_prefixes = file_prefixes,
-        executable_files = executable_files,
+        executables = executables,
         tree_files = tree_files,
         tags = tags + ["manual"],
         **kwargs

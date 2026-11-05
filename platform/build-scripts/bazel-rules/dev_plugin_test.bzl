@@ -8,7 +8,7 @@ load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin.bzl", "dev_dist_plugin", "dev_dist_plugin_component_target_name")
 load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_plugin")
-load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
+load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
 
 # The application info of the fixture product, an EAP product without a release date.
 
@@ -209,10 +209,17 @@ def _dev_plugin_test_impl(ctx):
     metadata_tail = content.metadata.short_path.removeprefix("../")
     asserts.true(env, spec["jars"][0]["metadata"].endswith("/" + metadata_tail), spec["jars"][0]["metadata"])
 
-    # The copies come sorted by destination. The directory copy expands to one record per file below the prefix, and
-    # only the single file `executable_files` names is executable. No action copies a byte: the source is the file itself.
+    # The copies come sorted by destination. The directory copy expands to one record per file below the prefix. A copy
+    # states no mode: the spec states `executables`, and the placement marks the placed files that a pattern matches,
+    # in every copy kind. No action copies a byte: the source is the file itself.
     asserts.equals(env, ["bin/helper.sh", "helpers/first.txt", "helpers/nested/second.txt"], [copy["destination"] for copy in spec["files"]])
-    asserts.equals(env, [True, False, False], [copy["executable"] for copy in spec["files"]])
+    asserts.equals(env, [["destination", "source"]] * 3, [sorted(copy.keys()) for copy in spec["files"]])
+    asserts.equals(env, ["bin/*.sh", "helpers/{nested/**,none}"], spec["executables"])
+    asserts.equals(
+        env,
+        ["plugins/dev-plugin/bin/helper.sh", "plugins/dev-plugin/helpers/nested/second.txt"],
+        target[DevDistPlacementInfo].executables,
+    )
     asserts.equals(env, copied_helper[0].path, spec["files"][0]["source"])
     asserts.true(env, spec["files"][1]["source"].endswith("/" + resources["first.txt"].short_path.removeprefix("../")), spec["files"][1]["source"])
     asserts.true(env, spec["files"][2]["source"].endswith("/" + resources["second.txt"].short_path.removeprefix("../")), spec["files"][2]["source"])
@@ -380,7 +387,7 @@ def _tree_test_impl(ctx):
     asserts.equals(env, ["bin/helper.sh", "web"], [copy["destination"] for copy in copies])
     asserts.equals(env, {"destination": "web", "source": copies[1]["source"], "tree": True}, copies[1])
     asserts.true(env, copies[1]["source"].endswith("/" + tree.short_path.removeprefix("../")), copies[1]["source"])
-    asserts.equals(env, True, copies[0]["executable"])
+    asserts.equals(env, ["destination", "source"], sorted(copies[0].keys()))
     collects = [action for action in actions if action.mnemonic == "CollectDevPluginComponent"]
     asserts.equals(env, 1, len(collects))
     directories = [file for file in collects[0].inputs.to_list() if file.is_directory]
@@ -481,7 +488,7 @@ def _stale_macro_test(name):
     return test
 
 def _copies_macro_test(name, helper_token, resources_token, resources_prefix, tree_token):
-    """`dev_dist_plugin` forwards `files`, `file_prefixes`, `executable_files` and `tree_files` to the component it declares."""
+    """`dev_dist_plugin` forwards `files`, `file_prefixes`, `executables` and `tree_files` to the component it declares."""
     main_module = "intellij.test.copied"
     copied_owner = name + "_copied_owner"
     copied_source = name + "_copied_descriptor"
@@ -489,7 +496,7 @@ def _copies_macro_test(name, helper_token, resources_token, resources_prefix, tr
     _fixture_xml(name = copied_source)
     files = {"bin/helper.sh": helper_token, "helpers": resources_token, "web": tree_token}
     file_prefixes = {"helpers": resources_prefix}
-    executable_files = ["bin/helper.sh"]
+    executables = ["bin/helper.sh"]
     tree_files = ["web"]
     dev_dist_plugin(
         main_module = main_module,
@@ -498,15 +505,15 @@ def _copies_macro_test(name, helper_token, resources_token, resources_prefix, tr
         jars = {"lib/test-copied.jar": [main_module]},
         files = files,
         file_prefixes = file_prefixes,
-        executable_files = executable_files,
+        executables = executables,
         tree_files = tree_files,
     )
     component = native.existing_rule(dev_dist_plugin_component_target_name(main_module))
     test = name + "_copies_macro_test"
     _declaration_test(
         name = test,
-        actual = json.encode([component["files"], component["file_prefixes"], component["executable_files"], component["tree_files"]]),
-        expected = json.encode([files, file_prefixes, executable_files, tree_files]),
+        actual = json.encode([component["files"], component["file_prefixes"], component["executables"], component["tree_files"]]),
+        expected = json.encode([files, file_prefixes, executables, tree_files]),
     )
     return test
 
@@ -594,7 +601,7 @@ def dev_plugin_test_suite(name):
             "helpers": resources_token,
         },
         file_prefixes = {"helpers": resources_prefix},
-        executable_files = ["bin/helper.sh"],
+        executables = ["bin/*.sh", "helpers/{nested/**,none}"],
     )
     tests = []
     for suffix, test_rule, spans in [("_test", _dev_plugin_test, False), ("_spans_test", _dev_plugin_spans_test, True)]:
@@ -667,13 +674,13 @@ def dev_plugin_test_suite(name):
         tests.append(failing + "_test")
         _failure_test(name = tests[-1], target_under_test = ":" + failing, expected_message = message)
 
-    # A copy is refused when it meets a jar or another copy, when a single-file destination has two sources, when a
-    # directory copy is empty, and when `executable_files` names anything but a copied single file.
-    for case, files, file_prefixes, executable_files, message in [
+    # A copy is refused when it meets a jar or another copy, when a single-file destination has two sources, and when a
+    # directory copy is empty. An executable pattern is refused outside the glob subset of the collector.
+    for case, files, file_prefixes, executables, message in [
         ("many_files", {"bin/helper": resources_token}, {}, [], "copies one file"),
         ("jar_collision", {"lib/x.jar": helper_token}, {}, [], "is both stated in `jars` and copied by `files`"),
-        ("unknown_executable", {"bin/helper.sh": helper_token}, {}, ["bin/none"], "executable_files names 'bin/none', which `files` does not copy"),
-        ("directory_executable", {"helpers": resources_token}, {"helpers": resources_prefix}, ["helpers"], "which is a directory copy"),
+        ("executable_outside_the_subset", {"bin/helper.sh": helper_token}, {}, ["bin/helper.s?"], "glob \"bin/helper.s?\": the dev-dist plan supports only *, ** and {a,b}, but the pattern has '?' at 12"),
+        ("executable_nested_group", {"bin/helper.sh": helper_token}, {}, ["bin/{a,{b}}"], "the pattern has a nested '{' at 7"),
         ("empty_directory", {"helpers": resources_token}, {"helpers": "nowhere/at/all"}, [], "has no declared File below nowhere/at/all"),
         ("file_under_directory", {"helpers": resources_token, "helpers/extra.txt": helper_token}, {"helpers": resources_prefix}, [], "is below 'helpers', which `file_prefixes` copies as a whole"),
         ("directory_over_jar", {"lib": resources_token}, {"lib": resources_prefix}, [], "'lib' is a directory of another destination"),
@@ -689,13 +696,13 @@ def dev_plugin_test_suite(name):
             jars = {"lib/x.jar": [_MAIN_MODULE]},
             files = files,
             file_prefixes = file_prefixes,
-            executable_files = executable_files,
+            executables = executables,
         )
         tests.append(failing + "_test")
         _failure_test(name = tests[-1], target_under_test = ":" + failing, expected_message = message)
 
-    # A directory artifact is a copy only in `tree_files`. It is refused as a source tree, beside another file or
-    # directory, and with a stated mode. `tree_files` refuses a destination whose label is a regular file.
+    # A directory artifact is a copy only in `tree_files`. It is refused as a source tree, and beside another file or
+    # directory. `tree_files` refuses a destination whose label is a regular file.
     tree_component = name + "_tree_component"
     dev_plugin(
         name = tree_component,
@@ -705,12 +712,12 @@ def dev_plugin_test_suite(name):
         modules = modules,
         jars = {"lib/x.jar": [_MAIN_MODULE]},
         files = {"bin/helper.sh": helper_token, "web": tree_token},
-        executable_files = ["bin/helper.sh"],
+        executables = ["bin/helper.sh"],
         tree_files = ["web"],
     )
     tests.append(tree_component + "_test")
     _tree_test(name = tests[-1], target_under_test = ":" + tree_component, tree = ":" + tree)
-    for case, files, file_prefixes, executable_files, tree_files, message in [
+    for case, files, file_prefixes, executables, tree_files, message in [
         ("tree_without_tree_files", {"web": tree_token}, {}, [], [], "state the destination in `tree_files`"),
         ("tree_as_source_tree", {"web": tree_token}, {"web": "nowhere"}, [], [], "state the destination in `tree_files`"),
         ("tree_files_and_prefix", {"web": tree_token}, {"web": "nowhere"}, [], ["web"], "which `file_prefixes` also names"),
@@ -718,7 +725,6 @@ def dev_plugin_test_suite(name):
         ("mixed_tree", {"web": _PACKAGE + ":" + mixed_tree}, {}, [], ["web"], "and a copy takes regular files only, or one directory alone"),
         ("tree_of_a_file", {"bin/helper.sh": helper_token}, {}, [], ["bin/helper.sh"], "produces no single directory"),
         ("unknown_tree", {"bin/helper.sh": helper_token}, {}, [], ["web"], "tree_files names 'web', which `files` does not copy"),
-        ("executable_tree", {"web": tree_token}, {}, ["web"], ["web"], "which is a directory copy"),
         ("file_under_tree", {"web": tree_token, "web/extra.txt": helper_token}, {}, [], ["web"], "is below 'web', which `tree_files` copies as a whole"),
     ]:
         failing = name + "_failing_" + case
@@ -731,7 +737,7 @@ def dev_plugin_test_suite(name):
             jars = {"lib/x.jar": [_MAIN_MODULE]},
             files = files,
             file_prefixes = file_prefixes,
-            executable_files = executable_files,
+            executables = executables,
             tree_files = tree_files,
         )
         tests.append(failing + "_test")

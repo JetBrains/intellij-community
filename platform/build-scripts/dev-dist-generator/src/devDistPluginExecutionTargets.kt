@@ -55,6 +55,9 @@ internal class DevDistPluginExecutionConfiguration(
  * values of its folded plan file. [platform] is null for a chain that serves every platform. [folded] is true for a
  * chain with a folded plan file. [platformValues] is empty for a chain without a folded plan file, and for a folded
  * plan file without a slot. The fold over the platforms happens in [renderDevDistPluginExecutionCalls].
+ *
+ * [executables] are the `java.nio` globs, relative to the plugin directory, of the files that the chain ships with the
+ * executable bit, see [pluginExecutables]. The call states them per platform, so they take no part in the fold.
  */
 internal class DevDistPluginExecutionVariant(
   @JvmField val platform: String?,
@@ -62,6 +65,7 @@ internal class DevDistPluginExecutionVariant(
   @JvmField val componentLabel: String,
   @JvmField val platformValues: Map<String, String>,
   @JvmField val folded: Boolean = false,
+  @JvmField val executables: List<String> = emptyList(),
 )
 
 internal fun renderDevDistPluginExecutionTargets(
@@ -81,14 +85,16 @@ internal fun renderDevDistPluginExecutionTargets(
     record.variant.id == key.variant && record.plan.projection.plugin == entry.mainModule && record.plan.projection.variant == key.variant
   ) { "The execution record has a stale plugin or variant" }
   val platform = configuration.targetPlatform
-  if (platform == null) {
+  val distribution = if (platform == null) {
     require(key.variant.isEmpty()) { "A neutral execution requires the neutral record" }
+    null
   }
   else {
     val distribution = requireNotNull(record.variant.distribution) { "Execution requires an exact platform variant" }
     require(distribution in SUPPORTED_DISTRIBUTIONS) { "Unsupported execution distribution: $distribution" }
     val recordPlatform = devDistHostPlatform(distribution)
     require(platform == recordPlatform && key.variant == platform) { "The execution target platform does not match the record: $recordPlatform" }
+    distribution
   }
   checkExecutionName(entry.product)
   checkExecutionPathComponent(originalDirectoryName)
@@ -105,6 +111,7 @@ internal fun renderDevDistPluginExecutionTargets(
   val plan = record.plan
   requireNotNull(record.preparationRecipe) { "The execution record is incomplete: no preparation recipe" }
   val selected = plan.selectedPlan()
+  val executables = pluginExecutables(entry.layout(key.variant), distribution, selected.assets.map { it.asset })
   val version = pluginPackingExecutionVersion(plan.projection.assets)
   require(plan.projection.version == version) { "The execution record has a stale execution version" }
   files.checkExecutionGraph(key, record, configuration.graph)
@@ -275,7 +282,14 @@ internal fun renderDevDistPluginExecutionTargets(
     "independent_destinations" to executionDictionary(outputs.independentDestinations.map { (key, destination) -> key to executionQuote(destination) }),
     "stamp_class_modes" to executionStrings(configuration.stampClassModes),
   ) + (if (configuration.embedContentModules) emptyList() else listOf("embed_content_modules" to "False"))
-  return DevDistPluginExecutionVariant(platform, arguments, "${configuration.packageLabel}:${names.getValue("component")}", platformValues, folded)
+  return DevDistPluginExecutionVariant(
+    platform = platform,
+    arguments = arguments,
+    componentLabel = "${configuration.packageLabel}:${names.getValue("component")}",
+    platformValues = platformValues,
+    folded = folded,
+    executables = executables,
+  )
 }
 
 private const val PLATFORM_TOKEN = "{platform}"
@@ -411,13 +425,22 @@ internal fun renderDevDistPluginExecutionCalls(mainModule: String, variants: Lis
     if (masked.distinct().size == 1) listOf(platforms to masked.first()) else variants.map { listOf(requireNotNull(it.platform)) to it.arguments }
   }
   val valuesByPlatform = variants.filter { it.platform != null }.associate { requireNotNull(it.platform) to it.platformValues }
+  val executablesByPlatform = variants.associate { it.platform.orEmpty() to it.executables }
   return buildString {
     for ((platforms, arguments) in calls) {
       val platformValues = executionPlatformValues(platforms.associateWith { valuesByPlatform.getValue(it) })
       val platformPlans = if (platforms.isNotEmpty() && !folded) listOf("platform_plans" to "True") else emptyList()
+      val executables = if (platforms.isEmpty()) {
+        executionStrings(executablesByPlatform.getValue(""))
+      }
+      else {
+        executionDictionary(platforms.sorted().mapNotNull { platform ->
+          executablesByPlatform.getValue(platform).takeIf { it.isNotEmpty() }?.let { platform to executionStrings(it, indent = 8) }
+        })
+      }
       executionCall(
         "dev_dist_complex_plugin",
-        arguments + ("platforms" to executionStrings(platforms)) + ("platform_values" to platformValues) + platformPlans,
+        arguments + ("platforms" to executionStrings(platforms)) + ("platform_values" to platformValues) + platformPlans + ("executables" to executables),
       )
     }
   }.removePrefix("\n")

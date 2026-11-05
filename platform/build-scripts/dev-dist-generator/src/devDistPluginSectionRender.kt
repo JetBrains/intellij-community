@@ -447,7 +447,7 @@ private fun renderBody(
   if (descriptor?.exactVersion == true) {
     call.option("exact_version", true)
   }
-  declaredPackaging?.executableFiles?.ifNotEmpty { call.option("executable_files", it.sorted()) }
+  declaredPackaging?.executables?.ifNotEmpty { call.option("executables", it.sorted()) }
   declaredPackaging?.filePrefixes?.ifNotEmpty { call.option("file_prefixes", LinkedHashMap(TreeMap(it))) }
   declaredPackaging?.let { filesOption(context, it) }?.let { call.option("files", it) }
   descriptor?.embeddedProductDescriptor?.frontendApplicationInfo?.let { frontend ->

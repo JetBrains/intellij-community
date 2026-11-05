@@ -667,7 +667,8 @@ fn prepared_component_protects_the_inputs_and_the_payload_from_the_outputs() {
     }
 }
 
-/// The packed shape of `_dev_plugin`: three jars, one of them below `lib/modules/`, and two copied files.
+/// The packed shape of `_dev_plugin`: three jars, one of them below `lib/modules/`, and two copied files. A pattern of
+/// `executables` names the first copied file.
 fn packed_spec(with_files: bool) -> Value {
     let mut spec = json!({
         "version": 1,
@@ -681,9 +682,10 @@ fn packed_spec(with_files: bool) -> Value {
     });
     if with_files {
         spec["files"] = json!([
-            {"destination": "bin/helper.sh", "source": "resources/helper.sh", "executable": true},
-            {"destination": "openui/renderer.zip", "source": "resources/renderer.zip", "executable": false},
+            {"destination": "bin/helper.sh", "source": "resources/helper.sh"},
+            {"destination": "openui/renderer.zip", "source": "resources/renderer.zip"},
         ]);
+        spec["executables"] = json!(["bin/*.sh"]);
     }
     spec
 }
@@ -1139,16 +1141,11 @@ fn packed_component_refuses_a_link_in_a_copied_tree() {
 #[test]
 fn packed_component_refuses_an_invalid_tree_copy() {
     type Change = fn(&mut Value);
-    let scenarios: [(&str, Change, &str); 4] = [
+    let scenarios: [(&str, Change, &str); 3] = [
         (
             "tree with a mode",
             |spec| spec["files"][0]["executable"] = json!(false),
-            "copied file web must state either executable or tree, and not both",
-        ),
-        (
-            "file without a mode",
-            |spec| spec["files"][0]["tree"] = json!(false),
-            "copied file web must state either executable or tree, and not both",
+            "unknown field `executable`",
         ),
         (
             "tree of a file",
@@ -1170,6 +1167,101 @@ fn packed_component_refuses_an_invalid_tree_copy() {
         write_json("component-spec.json", &spec);
         require_refused(name, &[message]);
     }
+}
+
+/// A pattern of `executables` marks the files that it matches in every copy kind: a tree, a jar and a single file. The
+/// mode on disk changes nothing.
+#[cfg(unix)]
+#[test]
+fn packed_component_marks_the_files_that_an_executable_pattern_matches() {
+    let _directory = WorkingDirectory::enter();
+    write_tree_fixture();
+    let mut spec = tree_spec();
+    spec["executables"] = json!(["web/bin/*", "web/{index.html,missing}", "lib/json.jar"]);
+    write_json("component-spec.json", &spec);
+    run_collector(&plugin_component_args()).assert_success();
+    let entries = manifest_entries("component.json");
+    let executable: Vec<&str> = entries
+        .iter()
+        .filter(|(_, entry)| entry.get("executable") == Some(&json!(true)))
+        .map(|(path, _)| path.as_str())
+        .collect();
+    assert_eq!(
+        executable,
+        [
+            "plugins/json/lib/json.jar",
+            "plugins/json/web/bin/run.sh",
+            "plugins/json/web/index.html"
+        ]
+    );
+    // The jar has the metadata mode 0600. A marked file takes the conventional mode of an executable file.
+    assert_eq!(entries["plugins/json/lib/json.jar"].get("mode"), None);
+    assert_eq!(entries["plugins/json/web/bin"]["type"], json!("directory"));
+}
+
+#[cfg(unix)]
+#[test]
+fn packed_component_refuses_an_executable_pattern_that_matches_no_file() {
+    type Change = fn(&mut Value);
+    let scenarios: [(&str, Change, &str); 5] = [
+        (
+            "no file",
+            |spec| spec["executables"] = json!(["web/bin/*", "web/tool"]),
+            "the executable pattern \"web/tool\" of plugins/json matches no file of the component",
+        ),
+        (
+            "a directory only",
+            |spec| spec["executables"] = json!(["web/assets"]),
+            "the executable pattern \"web/assets\" of plugins/json matches no file of the component",
+        ),
+        (
+            "outside the subset",
+            |spec| spec["executables"] = json!(["web/bin/?"]),
+            "invalid executable pattern \"web/bin/?\"",
+        ),
+        (
+            "repeated",
+            |spec| spec["executables"] = json!(["web/bin/*", "web/bin/*"]),
+            "the executable pattern \"web/bin/*\" is stated twice",
+        ),
+        (
+            "empty",
+            |spec| spec["executables"] = json!([""]),
+            "an executable pattern requires a value",
+        ),
+    ];
+    for (name, change, message) in scenarios {
+        let _directory = WorkingDirectory::enter();
+        write_tree_fixture();
+        let mut spec = tree_spec();
+        change(&mut spec);
+        write_json("component-spec.json", &spec);
+        require_refused(name, &[message]);
+    }
+}
+
+/// A pattern of `executables` marks a file of the remainder and a file of a remainder tree. The metadata mode of a
+/// marked file does not stay in the manifest.
+#[cfg(unix)]
+#[test]
+fn prepared_component_marks_the_files_that_an_executable_pattern_matches() {
+    let _directory = WorkingDirectory::enter();
+    let mut fixture = Prepared::with_trees();
+    fixture.spec["executables"] = json!(["kotlinc/lib/*.jar", "lib/demo.jar", "bin/current"]);
+    fixture.write();
+    require_refused(
+        "a link only",
+        &["the executable pattern \"bin/current\" of plugins/demo matches no file of the component"],
+    );
+    fixture.spec["executables"] = json!(["kotlinc/lib/*.jar", "lib/demo.jar"]);
+    fixture.write();
+    run_collector(&plugin_component_args()).assert_success();
+    let entries = manifest_entries("component.json");
+    for path in ["plugins/demo/kotlinc/lib/compiler.jar", "plugins/demo/lib/demo.jar"] {
+        assert_eq!(entries[path]["executable"], json!(true), "{path}");
+        assert_eq!(entries[path].get("mode"), None, "{path}");
+    }
+    assert_eq!(entries["plugins/demo/lib/member.jar"].get("executable"), None);
 }
 
 /// The manifest of a packed plugin with a copied tree does not depend on the umask or on the modes in the tree. A child

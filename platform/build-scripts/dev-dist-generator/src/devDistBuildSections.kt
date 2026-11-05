@@ -1086,7 +1086,7 @@ private fun packagingDifference(first: DevDistSimplePackaging, second: DevDistSi
     Triple("classpathJars", first.classpathJars, second.classpathJars),
     Triple("files", first.files, second.files),
     Triple("filePrefixes", first.filePrefixes, second.filePrefixes),
-    Triple("executableFiles", first.executableFiles, second.executableFiles),
+    Triple("executables", first.executables, second.executables),
     Triple("treeFiles", first.treeFiles, second.treeFiles),
   )
   val (name, a, b) = facts.firstOrNull { (_, a, b) -> a != b } ?: return null

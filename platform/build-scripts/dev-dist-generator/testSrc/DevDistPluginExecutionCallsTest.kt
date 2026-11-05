@@ -90,6 +90,51 @@ class DevDistPluginExecutionCallsTest {
     )
   }
 
+  /** The executable patterns of each platform take no part in the fold, so two chains that differ in them stay one call. */
+  @Test
+  fun `a call states the executable patterns of each platform that has some`() {
+    val variants = listOf(
+      variant("darwin_aarch64", folded = true, executables = listOf("bin/mac/tool", "bin/*.sh")),
+      variant("linux_x64", folded = true),
+    )
+
+    val text = renderDevDistPluginExecutionCalls(mainModule, variants)
+
+    assertThat(text).isEqualTo(
+      """
+      dev_dist_complex_plugin(
+          descriptor = "//plugins/sample:descriptor_{platform}",
+          executables = {
+              "darwin_aarch64": [
+                  "bin/mac/tool",
+                  "bin/*.sh",
+              ],
+          },
+          main_module = "intellij.sample",
+          platforms = [
+              "darwin_aarch64",
+              "linux_x64",
+          ],
+      )
+      """.trimIndent() + "\n"
+    )
+  }
+
+  @Test
+  fun `a neutral chain states its executable patterns as a list`() {
+    val text = renderDevDistPluginExecutionCalls(mainModule, listOf(variant(platform = null, folded = false, executables = listOf("bin/tool"))))
+
+    assertThat(text).isEqualTo(
+      """
+      dev_dist_complex_plugin(
+          descriptor = "//plugins/sample:descriptor",
+          executables = ["bin/tool"],
+          main_module = "intellij.sample",
+      )
+      """.trimIndent() + "\n"
+    )
+  }
+
   @Test
   fun `folded and unfolded chains of one plugin fail the render`() {
     val variants = listOf(variant("darwin_aarch64", folded = true), variant("linux_x64", folded = false))
@@ -99,7 +144,12 @@ class DevDistPluginExecutionCallsTest {
       .hasMessageContaining("mixes folded and unfolded plan files")
   }
 
-  private fun variant(platform: String?, folded: Boolean, values: Map<String, String> = emptyMap()): DevDistPluginExecutionVariant {
+  private fun variant(
+    platform: String?,
+    folded: Boolean,
+    values: Map<String, String> = emptyMap(),
+    executables: List<String> = emptyList(),
+  ): DevDistPluginExecutionVariant {
     val descriptor = if (platform == null) "//plugins/sample:descriptor" else "//plugins/sample:descriptor_$platform"
     return DevDistPluginExecutionVariant(
       platform = platform,
@@ -107,6 +157,7 @@ class DevDistPluginExecutionCallsTest {
       componentLabel = "//plugins/sample:${devDistChainStem(mainModule, chainClass = "", platform = platform)}_component",
       platformValues = values,
       folded = folded,
+      executables = executables,
     )
   }
 }

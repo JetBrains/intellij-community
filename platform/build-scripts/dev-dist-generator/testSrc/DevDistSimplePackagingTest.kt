@@ -20,7 +20,9 @@ import org.jetbrains.intellij.build.devDist.PluginPackingAsset
 import org.jetbrains.intellij.build.devDist.PluginPackingProjection
 import org.jetbrains.intellij.build.devDist.ReusableJarArtifact
 import org.jetbrains.intellij.build.devDist.pluginPackingExecutionVersion
+import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -120,6 +122,7 @@ class DevDistSimplePackagingTest {
     operations: List<DevPluginPreparationOperation> = emptyList(),
     reusable: List<ReusableJarArtifact> = emptyList(),
     testModules: Set<String> = emptySet(),
+    layout: PluginLayout = PluginLayout.plugin(plugin),
   ): DevDistPluginPlanEntry {
     val moduleLabel = if (plugin == communityPlugin) "@community//plugins/c:c" else "//plugins/x:x"
     val plan = object : DevDistPluginBuildPlan {
@@ -145,7 +148,7 @@ class DevDistSimplePackagingTest {
       product = "idea",
       tier = DevDistPluginTier.BUNDLED,
       mainModule = plugin,
-      layouts = mapOf("" to PluginLayout.plugin(plugin)),
+      layouts = mapOf("" to layout),
       records = mapOf("" to record),
     )
   }
@@ -184,23 +187,44 @@ class DevDistSimplePackagingTest {
     assertThat(packaging.jars.keys).containsExactly("lib/x.jar")
     assertThat(packaging.files).isEmpty()
     assertThat(packaging.filePrefixes).isEmpty()
-    assertThat(packaging.executableFiles).isEmpty()
+    assertThat(packaging.executables).isEmpty()
     assertThat(packaging.fileLabels).isEmpty()
     assertThat(packaging.crossHalf).isFalse()
   }
 
   @Test
-  fun `a withResource file gives files and executable_files`() {
+  fun `a withResource file of mode 493 gives files and an executable pattern`() {
     val input: DevDistPluginRawInput = fileInput("module-resource:0:source", "//plugins/x:helper.sh")
     val packaging: DevDistSimplePackaging = requireSimple(planEntry(assets = listOf(mainJar(), fileCopy("bin/helper.sh", input.id)), inputs = listOf(input)))
 
     assertThat(packaging.jars.keys).containsExactly("lib/x.jar")
     assertThat(packaging.files).containsExactly(entry("bin/helper.sh", "//plugins/x:helper.sh"))
     assertThat(packaging.filePrefixes).isEmpty()
-    assertThat(packaging.executableFiles).containsExactly("bin/helper.sh")
+    assertThat(packaging.executables).containsExactly("bin/helper.sh")
     assertThat(packaging.fileLabels).containsExactly("//plugins/x:helper.sh")
     assertThat(packaging.classpathJars).isEmpty()
     assertThat(packaging.crossHalf).isFalse()
+  }
+
+  @Suppress("DEPRECATION")
+  @Test
+  fun `a neutral plugin takes the executable patterns of every distribution that an asset can place`() {
+    val input: DevDistPluginRawInput = treeInput("module-resource:0:source", "plugins/x/bin")
+    val layout = PluginLayout.plugin(plugin) { spec ->
+      spec.withExecutable("bin/tool", SUPPORTED_DISTRIBUTIONS.filter { it.os != OsFamily.WINDOWS })
+      spec.withExecutable("bin/*.sh")
+      spec.withExecutable("bin/tool")
+      // A Windows build applies no executable pattern of a plugin.
+      spec.withExecutable("bin/helper.exe", SUPPORTED_DISTRIBUTIONS.filter { it.os == OsFamily.WINDOWS })
+      // No asset places a file below `selfcontained`, as for a resource that the dev distribution omits.
+      spec.withExecutable("selfcontained/bin/Xvfb", SUPPORTED_DISTRIBUTIONS.filter { it.os == OsFamily.LINUX })
+      spec.withExecutable("lib/*.so")
+    }
+    val packaging: DevDistSimplePackaging = requireSimple(
+      planEntry(assets = listOf(mainJar(), treeCopy("bin", input.id)), inputs = listOf(input), layout = layout)
+    )
+
+    assertThat(packaging.executables).containsExactly("bin/*.sh", "bin/tool")
   }
 
   @Test
@@ -210,7 +234,7 @@ class DevDistSimplePackagingTest {
 
     assertThat(packaging.files).containsExactly(entry("helpers", "//plugins/x:dev_dist_resources"))
     assertThat(packaging.filePrefixes).containsExactly(entry("helpers", "plugins/x/helpers"))
-    assertThat(packaging.executableFiles).isEmpty()
+    assertThat(packaging.executables).isEmpty()
     assertThat(packaging.crossHalf).isFalse()
   }
 
@@ -222,7 +246,7 @@ class DevDistSimplePackagingTest {
 
     assertThat(packaging.files).containsExactly(entry("openui/air-openui-renderer.zip", "@dev_launch_air_openui_renderer//:files"))
     assertThat(packaging.filePrefixes).isEmpty()
-    assertThat(packaging.executableFiles).isEmpty()
+    assertThat(packaging.executables).isEmpty()
     assertThat(packaging.crossHalf).isFalse()
   }
 
@@ -329,7 +353,7 @@ class DevDistSimplePackagingTest {
     assertThat(packaging.files).containsExactly(entry("frontend", "//plugins/x:frontend"))
     assertThat(packaging.filePrefixes).isEmpty()
     assertThat(packaging.treeFiles).containsExactly("frontend")
-    assertThat(packaging.executableFiles).isEmpty()
+    assertThat(packaging.executables).isEmpty()
   }
 
   @Test
@@ -434,7 +458,7 @@ class DevDistSimplePackagingTest {
       dev_plugin(
           name = "intellij.c_dev_plugin",
           descriptor = "//build/dev-dist-descriptors/intellij.c:intellij.c_dev_descriptor",
-          executable_files = [
+          executables = [
               "bin/helper.sh",
           ],
           file_prefixes = {

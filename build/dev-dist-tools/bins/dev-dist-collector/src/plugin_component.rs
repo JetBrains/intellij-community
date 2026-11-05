@@ -5,8 +5,12 @@
 //! that Bazel packed and the files that the plugin copies. A top-level `jars` key selects the packed shape, and then
 //! the collector writes the classpath record itself.
 //!
-//! A copied file of the packed shape can be a tree: one directory artifact that the collector walks when it runs. A
-//! tree declares no executable file, so each regular file has the mode 0644 and each directory 0755.
+//! A copied file of the packed shape can be a tree: one directory artifact that the collector walks when it runs. Each
+//! directory of a tree has the mode 0755.
+//!
+//! Both shapes can name `executables`: the `java.nio` globs, relative to the plugin directory, of the files that the
+//! plugin ships with the executable bit. The collector marks each regular file that a pattern matches, whatever its
+//! producer or its copy kind. A pattern that matches no regular file of the component fails the run.
 //!
 //! A prepared spec can name `descriptorRemainder`: the remainder part that holds the assets which read the descriptor.
 //! Then `remainder` is the neutral part, which holds every other asset, and its `omitted` names each file asset that the
@@ -21,6 +25,7 @@ use std::path::Path;
 
 use anyhow::{Context, bail};
 use filemeta::{Entry, EntryType};
+use javaglob::JavaGlob;
 use planfile::contract::{self, Asset, AssetKind, Producer, TREE_VERSION};
 use serde::Deserialize;
 
@@ -41,6 +46,7 @@ struct SpecFile {
     descriptor: Option<String>,
     jars: Option<Vec<PackedJar>>,
     files: Option<Vec<PackedFile>>,
+    executables: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -84,15 +90,73 @@ pub(crate) struct PackedJar {
 }
 
 /// One file or one tree that a packed plugin copies. No packer writes metadata for it, so the inventory hashes the
-/// source. A file states `executable`. A tree states `tree` and no mode, because each of its files keeps its own.
+/// source. It states no mode: [`Executables`] of the spec gives the executable bit.
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(crate) struct PackedFile {
     pub(crate) destination: String,
     pub(crate) source: String,
-    pub(crate) executable: Option<bool>,
     #[serde(default)]
     pub(crate) tree: bool,
+}
+
+/// The `executables` of a spec: each pattern with its compiled glob, in the order of the spec.
+#[derive(Debug, Default)]
+pub(crate) struct Executables {
+    patterns: Vec<(String, JavaGlob)>,
+}
+
+impl Executables {
+    /// Compiles the patterns. An empty or repeated pattern is a defect of the rule that writes the spec.
+    fn compile(patterns: Vec<String>) -> anyhow::Result<Self> {
+        let mut compiled: Vec<(String, JavaGlob)> = Vec::with_capacity(patterns.len());
+        for pattern in patterns {
+            if pattern.trim().is_empty() {
+                bail!("an executable pattern requires a value");
+            }
+            if compiled.iter().any(|(previous, _)| *previous == pattern) {
+                bail!("the executable pattern {pattern:?} is stated twice");
+            }
+            let glob = JavaGlob::compile(&pattern).with_context(|| format!("invalid executable pattern {pattern:?}"))?;
+            compiled.push((pattern, glob));
+        }
+        Ok(Self { patterns: compiled })
+    }
+
+    /// Marks each regular file below `plugin_directory` that a pattern matches as executable. The mode of a marked file
+    /// is the conventional mode of an executable file. A directory and a link take no mode, so a pattern skips them.
+    /// The function fails for the first pattern that matches no regular file.
+    fn apply(&self, plugin_directory: &str, files: &mut [SourcedFile]) -> anyhow::Result<()> {
+        if self.patterns.is_empty() {
+            return Ok(());
+        }
+        let prefix = format!("{plugin_directory}/");
+        let mut matched = vec![false; self.patterns.len()];
+        for file in files.iter_mut() {
+            let regular = file.metadata.as_ref().is_none_or(|entry| entry.entry_type == EntryType::File);
+            let Some(relative) = file.relative_path.strip_prefix(&prefix).filter(|_| regular) else {
+                continue;
+            };
+            let mut executable = false;
+            for (index, (_, glob)) in self.patterns.iter().enumerate() {
+                if glob.matches(relative) {
+                    matched[index] = true;
+                    executable = true;
+                }
+            }
+            if executable {
+                file.executable = true;
+                file.mode = None;
+            }
+        }
+        if let Some(index) = matched.iter().position(|matched| !matched) {
+            bail!(
+                "the executable pattern {:?} of {plugin_directory} matches no file of the component",
+                self.patterns[index].0
+            );
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug)]
@@ -105,6 +169,7 @@ pub(crate) struct PreparedSpec {
     pub(crate) assets: String,
     pub(crate) classpath: String,
     pub(crate) independent: Vec<Independent>,
+    pub(crate) executables: Executables,
 }
 
 #[derive(Debug)]
@@ -113,6 +178,7 @@ pub(crate) struct PackedSpec {
     pub(crate) descriptor: String,
     pub(crate) jars: Vec<PackedJar>,
     pub(crate) files: Vec<PackedFile>,
+    pub(crate) executables: Executables,
 }
 
 #[derive(Debug)]
@@ -159,6 +225,7 @@ impl PluginComponentSpec {
             assets: spec.assets.unwrap_or_default(),
             classpath: spec.classpath.unwrap_or_default(),
             independent,
+            executables: Executables::compile(spec.executables.unwrap_or_default())?,
         };
         let mut metadata = vec![file, &spec.assets, &spec.classpath, &spec.remainder.metadata];
         let mut payload = vec![spec.remainder.directory.as_str()];
@@ -210,6 +277,7 @@ impl PluginComponentSpec {
             descriptor: spec.descriptor.unwrap_or_default(),
             jars: spec.jars.unwrap_or_default(),
             files: spec.files.unwrap_or_default(),
+            executables: Executables::compile(spec.executables.unwrap_or_default())?,
         };
         if spec.jars.is_empty() {
             bail!("a packed plugin component requires at least one jar");
@@ -223,12 +291,6 @@ impl PluginComponentSpec {
             payload.push(jar.source.as_str());
         }
         for copied in &spec.files {
-            if copied.tree == copied.executable.is_some() {
-                bail!(
-                    "copied file {} must state either executable or tree, and not both",
-                    copied.destination
-                );
-            }
             destinations.push(copied.destination.as_str());
             payload.push(copied.source.as_str());
         }
@@ -242,13 +304,21 @@ impl PluginComponentSpec {
     pub(crate) fn collect(&self, parent: &trace::Span) -> anyhow::Result<(Vec<SourcedFile>, Vec<u8>)> {
         match self {
             Self::Prepared(spec) => {
-                let files = in_span(&parent.child("merge plugin component metadata"), || collect_prepared(spec))?;
+                let files = in_span(&parent.child("merge plugin component metadata"), || {
+                    let mut files = collect_prepared(spec)?;
+                    spec.executables.apply(&spec.plugin_directory, &mut files)?;
+                    Ok(files)
+                })?;
                 let classpath = std::fs::read(&spec.classpath).with_context(|| format!("read {}", spec.classpath))?;
                 crate::plugin_classpath::validate_component_record(&classpath, &spec.plugin_directory, &files)?;
                 Ok((files, classpath))
             }
             Self::Packed(spec) => {
-                let files = in_span(&parent.child("collect packed plugin jars"), || collect_packed(spec))?;
+                let files = in_span(&parent.child("collect packed plugin jars"), || {
+                    let mut files = collect_packed(spec)?;
+                    spec.executables.apply(&spec.plugin_directory, &mut files)?;
+                    Ok(files)
+                })?;
                 let descriptor = std::fs::read(&spec.descriptor).with_context(|| format!("read {}", spec.descriptor))?;
                 let classpath = crate::plugin_classpath::component_record(&spec.plugin_directory, &descriptor, &files)?;
                 Ok((files, classpath))
@@ -803,10 +873,7 @@ fn collect_packed(spec: &PackedSpec) -> anyhow::Result<Vec<SourcedFile>> {
             tree.walk(root, "", &mut files)?;
             continue;
         }
-        files.push(SourcedFile {
-            executable: copied.executable.unwrap_or_default(),
-            ..SourcedFile::new(&copied.source, destination)
-        });
+        files.push(SourcedFile::new(&copied.source, destination));
     }
     Ok(files)
 }

@@ -211,6 +211,12 @@ dev_dist_complex_plugin(
     },
     descriptor = "//build/dev-dist-descriptors/intellij.kotlin.plugin:intellij.kotlin.plugin_dev_descriptor",
     directory_name = "Kotlin",
+    executables = [
+        "kotlinc/bin/kotlin",
+        "kotlinc/bin/kotlinc",
+        "kotlinc/bin/kotlinc-js",
+        "kotlinc/bin/kotlinc-jvm",
+    ],
     execution_version = 2,
     independent_artifacts = [
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_content_module_jar",

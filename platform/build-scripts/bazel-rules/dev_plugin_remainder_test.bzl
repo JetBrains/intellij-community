@@ -851,6 +851,13 @@ def _placement_test_impl(ctx):
     placement = target[DevDistPlacementInfo]
     asserts.equals(env, sorted(ctx.attr.files), sorted(placement.files.keys()))
     asserts.equals(env, sorted(ctx.attr.trees), sorted(placement.trees.keys()))
+
+    # The collector reads the patterns from the spec. The placement marks the placed files that they match, and no file
+    # below a placed tree.
+    asserts.equals(env, ctx.attr.executables, placement.executables)
+    specs = [action for action in analysistest.target_actions(env) if [file for file in action.outputs.to_list() if file.basename.endswith(".collection.json")]]
+    asserts.equals(env, 1, len(specs))
+    asserts.equals(env, ctx.attr.patterns, json.decode(specs[0].content).get("executables", []))
     return analysistest.end(env)
 
 _placement_test = analysistest.make(
@@ -860,6 +867,8 @@ _placement_test = analysistest.make(
         "placed": attr.bool(default = True, doc = "Whether the component states a placement."),
         "files": attr.string_list(doc = "The placed file destinations."),
         "trees": attr.string_list(doc = "The placed tree destinations."),
+        "executables": attr.string_list(doc = "The placed file destinations with the executable bit."),
+        "patterns": attr.string_list(doc = "The executable patterns of the collector spec."),
     },
 )
 
@@ -1350,9 +1359,18 @@ def dev_plugin_remainder_test_suite(name):
         (
             "moved",
             {"remainder_trees": ["lib/native"], "independent_destinations": {member_module: "lib/member.jar"}},
-            struct(placed = True, files = ["plugins/test/lib/member.jar"], trees = ["plugins/test/lib/native"]),
+            struct(placed = True, files = ["plugins/test/lib/member.jar"], trees = ["plugins/test/lib/native"], executables = []),
         ),
-        ("below_tree", {"remainder_trees": ["lib"]}, struct(placed = False, files = [], trees = [])),
+        (
+            "executable",
+            {
+                "remainder_trees": ["lib/native"],
+                "independent_destinations": {member_module: "lib/member.jar"},
+                "executables": ["lib/*.jar", "lib/native/**"],
+            },
+            struct(placed = True, files = ["plugins/test/lib/member.jar"], trees = ["plugins/test/lib/native"], executables = ["plugins/test/lib/member.jar"]),
+        ),
+        ("below_tree", {"remainder_trees": ["lib"]}, struct(placed = False, files = [], trees = [], executables = [])),
     ]:
         placement_chain = complex + "_" + suffix
         dev_dist_complex_plugin_variant(
@@ -1378,6 +1396,8 @@ def dev_plugin_remainder_test_suite(name):
             placed = expected.placed,
             files = expected.files,
             trees = expected.trees,
+            executables = expected.executables,
+            patterns = arguments.get("executables", []),
         )
         placement_tests.append(placement_test)
 
@@ -1552,7 +1572,8 @@ def dev_plugin_remainder_test_suite(name):
 
     # The derived form: one call, one chain per platform, the plan label `<main module>.<platform>.dev-plan.json` in
     # the package of the call and the descriptor entry derived, and the platform token substituted in a label.
-    # `platform_plans` states that the call keeps a plan file per platform.
+    # `platform_plans` states that the call keeps a plan file per platform. The component of each chain takes the
+    # executable patterns of its platform, and a platform that the dict omits has none.
     derived_module = "test.%s.derived" % name
     derived_platforms = ["linux_x64", "darwin_aarch64"]
     for platform in derived_platforms:
@@ -1565,11 +1586,15 @@ def dev_plugin_remainder_test_suite(name):
         platforms = derived_platforms,
         platform_plans = True,
         resource_inputs = {":" + name + "_derived_raw_{platform}": "raw"},
+        executables = {"darwin_aarch64": ["bin/tool"]},
     )
     derived_tests = []
     for platform in derived_platforms:
         stem = derived_module + "_" + platform
         _check_chain_shape(stem)
+        executables = native.existing_rule(stem + "_component")["executables"]
+        if list(executables) != ({"darwin_aarch64": ["bin/tool"]}).get(platform, []):
+            fail("chain %s states the executables %s" % (stem, executables))
         derived_test = stem + "_test"
         _derived_remainder_test(
             name = derived_test,

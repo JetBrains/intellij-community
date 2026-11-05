@@ -1,3 +1,4 @@
+aho_corasick
 anyhow
 cfg_if
 cli
@@ -11,8 +12,12 @@ hashbrown
 httpdate
 indexmap
 itoa
+javaglob
 memchr
 planfile
+regex
+regex_automata
+regex_syntax
 same_file
 serde
 serde_core

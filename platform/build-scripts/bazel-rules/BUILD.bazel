@@ -3,6 +3,7 @@ load(":dev_dist_content_test.bzl", "dev_dist_content_test_suite")
 load(":dev_dist_platform_jar_order_test.bzl", "dev_dist_platform_jar_order_test_suite")
 load(":dev_dist_product_content_test.bzl", "dev_dist_product_content_test_suite")
 load(":dev_dist_tool.bzl", "dev_dist_tool")
+load(":java_glob_test.bzl", "java_glob_test_suite")
 
 # Whether the packaging actions of a dev distribution write a Jaeger-JSON span file beside each of their outputs.
 #
@@ -88,12 +89,15 @@ dev_dist_platform_jar_order_test_suite(name = "dev_dist_platform_jar_order_tests
 
 dev_dist_product_content_test_suite(name = "dev_dist_product_content_tests")
 
+java_glob_test_suite(name = "java_glob_tests")
+
 test_suite(
     name = "bazel_rules_tests",
     tests = [
         ":dev_dist_content_tests",
         ":dev_dist_platform_jar_order_tests",
         ":dev_dist_product_content_tests",
+        ":java_glob_tests",
         "//build/dev-dist-tools/bins/plugin-descriptor-writer:descriptor_rule_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-remainder-tests:dev_plugin_remainder_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-tests:dev_plugin_tests",

@@ -181,6 +181,7 @@ dependencies = [
  "component",
  "distpath",
  "filemeta",
+ "javaglob",
  "planfile",
  "serde",
  "serde_json",

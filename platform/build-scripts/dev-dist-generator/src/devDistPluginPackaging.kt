@@ -7,8 +7,13 @@ import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.OsFamily
+import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
+import org.jetbrains.intellij.build.impl.SupportedDistribution
+import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.util.Collections
+import java.util.TreeSet
 
 /**
  * The plans of one plugin in one product, with the platform axis folded.
@@ -49,8 +54,10 @@ internal class DevDistPluginPlanEntry(
  *
  * [files] maps the destination of each verbatim copy to the label of its source, in the ultimate spelling. A destination
  * in [filePrefixes] is a directory copy, and the value is the repository-relative prefix of the source tree. A destination
- * in [treeFiles] copies the one directory artifact of its label, and each file of it gets mode 420. Every other
- * destination is a single file, and [executableFiles] names the ones of mode 493.
+ * in [treeFiles] copies the one directory artifact of its label. Every other destination is a single file.
+ *
+ * [executables] are the `java.nio` globs, relative to the plugin directory, of the files with the executable bit: the
+ * patterns of [pluginExecutables] for every distribution, and each single-file copy of mode 493.
  */
 internal class DevDistSimplePackaging(
   @JvmField val mainModule: String,
@@ -72,7 +79,7 @@ internal class DevDistSimplePackaging(
   @JvmField val classpathJars: List<String>,
   @JvmField val files: Map<String, String>,
   @JvmField val filePrefixes: Map<String, String>,
-  @JvmField val executableFiles: List<String>,
+  @JvmField val executables: List<String>,
   @JvmField val treeFiles: List<String>,
   /**
    * The module tokens that name a test-only module, in token order. The jar of such a module is its `_test_lib.jar`
@@ -153,7 +160,7 @@ internal fun classifySimplePluginPackaging(
   val reused = ArrayList<String>()
   val files = LinkedHashMap<String, String>()
   val filePrefixes = LinkedHashMap<String, String>()
-  val executableFiles = ArrayList<String>()
+  val executables = TreeSet<String>(pluginExecutables(entry.layout(""), distribution = null, assets = plan.selectedPlan().assets.map { it.asset }))
   val treeFiles = ArrayList<String>()
   val rawInputs = plan.requiredRawInputs.associateBy { it.id }
   var descriptorJars = 0
@@ -164,7 +171,11 @@ internal fun classifySimplePluginPackaging(
       val copy = plainCopy(asset, rawInputs) ?: return null
       files.put(copy.destination, copy.label)
       copy.prefix?.let { filePrefixes.put(copy.destination, it) }
-      if (copy.executable) executableFiles.add(copy.destination)
+      if (copy.executable) {
+        // A destination is a literal pattern only when it holds no glob character.
+        if (copy.destination.any { it in GLOB_CHARACTERS }) return null
+        executables.add(copy.destination)
+      }
       if (copy.tree) treeFiles.add(copy.destination)
       continue
     }
@@ -271,10 +282,40 @@ internal fun classifySimplePluginPackaging(
     classpathJars = if (planOrder == defaultOrder) emptyList() else java.util.List.copyOf(planDestinations),
     files = Collections.unmodifiableMap(files),
     filePrefixes = Collections.unmodifiableMap(filePrefixes),
-    executableFiles = java.util.List.copyOf(executableFiles),
+    executables = java.util.List.copyOf(executables),
     treeFiles = java.util.List.copyOf(treeFiles),
     testModules = java.util.List.copyOf(declaredTestModules),
   )
+}
+
+/** The characters that the glob subset of `executables` reads as more than a literal. */
+private const val GLOB_CHARACTERS = "*?[]{},\\"
+
+/**
+ * The executable patterns of a plugin component, without repeats, sorted: the patterns of [layout] for [distribution],
+ * or for every supported distribution when [distribution] is `null`, as a component that serves every platform needs.
+ *
+ * Only a macOS or a Linux build applies the patterns of a plugin, so a Windows distribution adds none. A pattern stays
+ * only when one of [assets] can place a file that it matches: a file asset at a matching destination, or a tree asset
+ * that the pattern can reach into. So an asset that the dev distribution omits takes its patterns with it. The collector
+ * fails for a stated pattern that matches no file.
+ */
+internal fun pluginExecutables(layout: PluginLayout, distribution: SupportedDistribution?, assets: List<PluginPackingAsset>): List<String> {
+  val distributions = if (distribution == null) SUPPORTED_DISTRIBUTIONS else listOf(distribution)
+  val patterns = distributions.filter { it.os != OsFamily.WINDOWS }.flatMapTo(TreeSet()) { layout.executableFiles(it) }
+  return patterns.filter { pattern -> assets.any { canPlaceMatch(pattern, it) } }
+}
+
+private fun canPlaceMatch(pattern: String, asset: PluginPackingAsset): Boolean {
+  return when (asset.kind) {
+    "file" -> asset.symlinkTarget == null && FileSystems.getDefault().getPathMatcher("glob:$pattern").matches(Path.of(asset.destination))
+    "tree" -> {
+      val tree = asset.destination
+      val literal = pattern.substringBefore('*').substringBefore('{')
+      tree.isEmpty() || literal.startsWith("$tree/") || "$tree/".startsWith(literal)
+    }
+    else -> false
+  }
 }
 
 /** One verbatim copy of a simple plugin. [prefix] is set for a directory copy of a source tree, and [tree] for a directory artifact. */

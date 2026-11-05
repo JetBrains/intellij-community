@@ -381,7 +381,7 @@ internal fun renderCrossHalfDevPluginTarget(
   if (!embedContentModules) {
     append("    embed_content_modules = False,\n")
   }
-  appendStarlarkStringList(name = "executable_files", values = packaging.executableFiles.sorted())
+  appendStarlarkStringList(name = "executables", values = packaging.executables.sorted())
   appendStarlarkStringDict(name = "file_prefixes", rows = packaging.filePrefixes)
   appendStarlarkStringDict(name = "files", rows = packaging.files.mapValues { index.planLabel(it.value) })
   append("    jars = {\n")
