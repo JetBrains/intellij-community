@@ -4,7 +4,7 @@ Date: 2026-11-05
 
 ## Status
 
-Proposed ([IJPL-260062](https://youtrack.jetbrains.com/issue/IJPL-260062)). Amends
+Accepted ([IJPL-260062](https://youtrack.jetbrains.com/issue/IJPL-260062)). Amends
 [ADR 0082](./0082-a-backend-module-holds-the-project-scoped-machinery.md).
 
 ## Context

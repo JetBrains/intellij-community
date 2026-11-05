@@ -4,7 +4,8 @@ Date: 2026-09-02
 
 ## Status
 
-Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
+Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)). Amended by
+[ADR 0166](./0166-the-light-compatible-backend-code-lives-in-the-backend-baseline-module.md).
 
 ## Context
 
