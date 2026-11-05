@@ -4,11 +4,13 @@ package com.intellij.platform.settings.v2
 import com.intellij.lang.Language
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 /** Holds a custom discriminator dimension that is not the language. The tests pin it with the generic `this[key] = value` form. */
 private val PROFILE = SettingsKey("test.access.profile", default = "")
@@ -63,6 +65,15 @@ class SettingsAccessContextTest {
     val access = base.access { language = Language.ANY }
     assertNotSame(base, access, "the overlay is a distinct context while a dimension is pinned")
     assertSame(base, access.access { language = null }, "clearing the last dimension collapses back to the base")
+  }
+
+  @Test
+  fun `the language key pins at run time only - a read gets the common slot and a write fails`(): Unit = runBlocking {
+    val base = SettingsContext.project(project)
+
+    assertEquals(Language.ANY, LANGUAGE[base], "a context with no pinned language reads the common slot")
+    assertEquals(html, base.access { language = html }.language, "an access context pins the language")
+    assertThrows<ReadOnlySettingsException> { LANGUAGE[base] = html }
   }
 }
 

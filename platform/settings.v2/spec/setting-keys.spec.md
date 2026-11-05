@@ -94,6 +94,9 @@ key identity is the name that the key has in storage. See [Setting Values](setti
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsResolutionTest.kt
 - A write of a read-only key must fail with `ReadOnlySettingsException`.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsBulkMutationTest.kt
+- `LANGUAGE` must be read-only. It is the discriminator that a context pins at run time, and it stores no value.
+  A read with no pinned language must get `Language.ANY`, the common slot.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsAccessContextTest.kt
 
 ### Validation
 

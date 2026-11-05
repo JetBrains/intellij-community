@@ -147,9 +147,12 @@ enum class SettingsContextKind {
 /**
  * Holds the platform-wide discriminator of the current language, which backs [SettingsContext.language]. It is
  * common enough to be built in. A setting that varies per language, such as code style, discriminates on it.
+ *
+ * The key is a tool, not a setting: a context pins the language at run time, and no layer stores one. So the key is
+ * read-only (ADR 0011). A read with no pinned language gets [Language.ANY], the common slot.
  */
 @Experimental
-val LANGUAGE: SettingsKey<Language> = SettingsKey("platform.language", default = Language.ANY, serializer = LanguageSerializer)
+val LANGUAGE: SettingsKey<Language> = SettingsKey("platform.language", default = Language.ANY, readonly = true, serializer = LanguageSerializer)
 
 private object LanguageSerializer : Serializer<Language> {
   override fun serialize(value: Language): SettingsValue = StringValue(value.id)
