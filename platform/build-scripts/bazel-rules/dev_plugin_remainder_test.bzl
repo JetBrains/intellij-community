@@ -611,27 +611,39 @@ def _check_chain_shape(chain, component_visibility = ["//visibility:public"]):
 
 def _split_part_test_impl(ctx):
     """One part of a split remainder: its packer action names the part and the descriptor assets, and writes only its
-    own file assets. The neutral part reads no descriptor and writes no asset rows."""
+    own file assets. The neutral part reads no descriptor and writes no asset rows. The descriptor part writes the rows
+    of each mode in `rows`, with the refusals in `refusals`."""
     env = analysistest.begin(ctx)
     packs = [action for action in analysistest.target_actions(env) if action.mnemonic == "PackDevPluginRemainder"]
     asserts.equals(env, 1, len(packs))
     argv = packs[0].argv
     asserts.true(env, "--part=" + ctx.attr.part in argv, str(argv))
-    asserts.true(env, "--descriptor-asset=lib/test.jar" in argv, str(argv))
+    asserts.true(env, "--descriptor-asset=" + ctx.attr.descriptor_asset in argv, str(argv))
     written = sorted([file.path.split(".plugin/", 1)[1] for file in packs[0].outputs.to_list() if ".plugin/" in file.path])
     asserts.equals(env, ctx.attr.files, written)
     asserts.equals(env, ctx.attr.part == "descriptor", len([argument for argument in argv if argument.startswith("--classpath-descriptor=")]) == 1)
-    asserts.equals(env, ctx.attr.part == "descriptor", len([argument for argument in argv if argument.startswith("--assets=")]) == 1)
+    asserts.equals(env, [], [argument for argument in argv if argument.startswith("--assets=") or argument.startswith("--refused-module=")])
+    asserts.equals(env, sorted(ctx.attr.rows), sorted([argument.removeprefix("--rows=").split(":", 1)[0] for argument in argv if argument.startswith("--rows=")]))
+    asserts.equals(env, sorted(ctx.attr.refusals), sorted([argument.removeprefix("--mode-refused-module=") for argument in argv if argument.startswith("--mode-refused-module=")]))
     return analysistest.end(env)
 
-_split_part_test = analysistest.make(
-    _split_part_test_impl,
-    config_settings = _PRODUCT_CONFIG,
-    attrs = {
-        "part": attr.string(mandatory = True),
-        "files": attr.string_list(mandatory = True, doc = "The file assets the part writes, below the plugin directory."),
-    },
-)
+_SPLIT_PART_ATTRS = {
+    "part": attr.string(mandatory = True),
+    "files": attr.string_list(mandatory = True, doc = "The file assets the part writes, below the plugin directory."),
+    "descriptor_asset": attr.string(default = "lib/test.jar"),
+    "rows": attr.string_list(doc = "The modes whose rows the part writes. The empty text is the default."),
+    "refusals": attr.string_list(doc = "Each `<mode>:<module>` that the part states."),
+}
+
+_split_part_test = analysistest.make(_split_part_test_impl, config_settings = _PRODUCT_CONFIG, attrs = _SPLIT_PART_ATTRS)
+
+def _split_chain_remainder_test_impl(ctx):
+    """The chain of a split remainder packs nothing. It derives only its runtime layout part."""
+    env = analysistest.begin(ctx)
+    asserts.equals(env, ["DevDistRuntimeLayoutPart"], [action.mnemonic for action in analysistest.target_actions(env)])
+    return analysistest.end(env)
+
+_split_chain_remainder_test = analysistest.make(_split_chain_remainder_test_impl, config_settings = _PRODUCT_CONFIG)
 
 def _split_component_test_impl(ctx):
     """The component of a split remainder names the neutral part as `remainder` and the other part as
@@ -642,12 +654,27 @@ def _split_component_test_impl(ctx):
     asserts.equals(env, 1, len(specs))
     spec = json.decode(specs[0].content)
     asserts.true(env, spec["remainder"]["directory"].endswith("_neutral_remainder.plugin"), spec["remainder"]["directory"])
-    asserts.true(env, spec["descriptorRemainder"]["directory"].endswith("_remainder.plugin"), spec["descriptorRemainder"]["directory"])
+    descriptor_part = spec["descriptorRemainder"]["directory"]
+    asserts.true(env, descriptor_part.endswith("_descriptor_remainder.plugin"), descriptor_part)
+    asserts.true(env, spec["descriptorRemainder"]["metadata"].startswith(descriptor_part.rsplit("/", 1)[0] + "/"), str(spec))
+    asserts.true(env, spec["assets"].endswith("_descriptor_remainder" + ctx.attr.rows_suffix + ".assets.json"), spec["assets"])
+    asserts.true(env, spec["classpath"].endswith("_descriptor_remainder" + ctx.attr.rows_suffix + ".plugin-classpath.txt"), spec["classpath"])
+
+    # The descriptor part runs in the class of the leaf. That is the class of the component, unless the leaf embeds
+    # every content module and the component keeps a mode.
+    configuration = specs[0].outputs.to_list()[0].path.split("/bin/", 1)[0]
+    asserts.equals(env, ctx.attr.own_class, descriptor_part.split("/bin/", 1)[0] == configuration, descriptor_part + " and " + configuration)
     placed = sorted([file.path.split(".plugin/", 1)[1] for file in target[IntellijDevFragmentInfo].payload.to_list() if ".plugin/" in file.path])
-    asserts.equals(env, ["lib/other.jar", "lib/test.jar"], placed)
+    asserts.equals(env, ctx.attr.placed, placed)
     return analysistest.end(env)
 
-_split_component_test = analysistest.make(_split_component_test_impl, config_settings = _PRODUCT_CONFIG)
+_SPLIT_COMPONENT_ATTRS = {
+    "rows_suffix": attr.string(doc = "The mode part of the name of the rows the component reads, such as `.frontend`."),
+    "own_class": attr.bool(default = True, doc = "Whether the descriptor part runs in the configuration of the component."),
+    "placed": attr.string_list(default = ["lib/other.jar", "lib/test.jar"]),
+}
+
+_split_component_test = analysistest.make(_split_component_test_impl, config_settings = _PRODUCT_CONFIG, attrs = _SPLIT_COMPONENT_ATTRS)
 
 def _plan(variant, destination):
     """The plan file of a fixture: one jar packed from a layout-assets operation over the raw input. An analysis test
@@ -814,6 +841,17 @@ _FRONTEND_PRODUCT_CONFIG = {
 }
 
 _refused_remainder_outputs_test = analysistest.make(_remainder_outputs_test_impl, config_settings = _FRONTEND_PRODUCT_CONFIG, attrs = _REMAINDER_OUTPUTS_ATTRS)
+
+_frontend_split_part_test = analysistest.make(_split_part_test_impl, config_settings = _FRONTEND_PRODUCT_CONFIG, attrs = _SPLIT_PART_ATTRS)
+
+_frontend_split_component_test = analysistest.make(_split_component_test_impl, config_settings = _FRONTEND_PRODUCT_CONFIG, attrs = _SPLIT_COMPONENT_ATTRS)
+
+_expected_frontend_failure_test = analysistest.make(
+    _expected_failure_test_impl,
+    expect_failure = True,
+    config_settings = _FRONTEND_PRODUCT_CONFIG,
+    attrs = {"expected_message": attr.string(mandatory = True)},
+)
 
 def _placement_test_impl(ctx):
     """A component places the remainder outputs and the reused jars at their destinations, or states no placement."""
@@ -1157,6 +1195,14 @@ def dev_plugin_remainder_test_suite(name):
         descriptor = ":" + descriptor_source,
         mode_refused_content_modules = {"frontend": ["test.refused"]},
     )
+    refusing_scrambled_main_module = "test.%s.refusing.scrambled" % name
+    refusing_scrambled_descriptor = dev_dist_plugin_descriptor_target_name(refusing_scrambled_main_module)
+    dev_dist_plugin_descriptor(
+        main_module = refusing_scrambled_main_module,
+        descriptor = ":" + descriptor_source,
+        mode_refused_content_modules = {"frontend": ["test.refused"]},
+        embed_content_modules = False,
+    )
     for suffix, test_rule, descriptor, arguments, expected in [
         (
             "nested",
@@ -1450,10 +1496,84 @@ def dev_plugin_remainder_test_suite(name):
         remainder_files = {"lib/test.jar": ["plugin-test"], "lib/other.jar": []},
         tags = ["manual"],
     )
-    split_tests = [split_chain + "_neutral_test", split_chain + "_descriptor_test", split_chain + "_component_test"]
+    split_tests = [split_chain + "_neutral_test", split_chain + "_descriptor_test", split_chain + "_chain_test", split_chain + "_component_test"]
     _split_part_test(name = split_tests[0], target_under_test = ":" + split_chain + "_neutral_remainder", part = "neutral", files = ["lib/other.jar"])
-    _split_part_test(name = split_tests[1], target_under_test = ":" + split_chain + "_remainder", part = "descriptor", files = ["lib/test.jar"])
-    _split_component_test(name = split_tests[2], target_under_test = ":" + split_chain + "_component")
+    _split_part_test(name = split_tests[1], target_under_test = ":" + split_chain + "_descriptor_remainder", part = "descriptor", files = ["lib/test.jar"], rows = [""])
+    _split_chain_remainder_test(name = split_tests[2], target_under_test = ":" + split_chain + "_remainder")
+    _split_component_test(name = split_tests[3], target_under_test = ":" + split_chain + "_component")
+
+    # A split remainder of a leaf that refuses a module for `frontend`. A leaf that embeds every content module reads
+    # no mode, so its descriptor part packs the main jar once, without a mode, and writes the rows of both modes. A
+    # frontend component reads the frontend rows from there. A leaf that embeds no content module reads the mode, so
+    # its descriptor part runs in the frontend class and writes the frontend rows alone.
+    refusing_remainder_files = {
+        "lib/test.jar": ["plugin-test"],
+        "lib/other.jar": [],
+        "lib/modules/test.refused.jar": ["test.refused"],
+    }
+    for case, descriptor, embed, rows, own_class in [
+        ("embedding", refusing_descriptor, True, ["", "frontend"], False),
+        ("scrambled", refusing_scrambled_descriptor, False, ["frontend"], True),
+    ]:
+        refusing_chain = name + "_refusing_" + case + "_chain"
+        dev_dist_complex_plugin_variant(
+            name = refusing_chain,
+            projection = ":" + plan_file,
+            execution_version = 1,
+            descriptor = ":" + descriptor,
+            plugin_directory = "plugins/test",
+            component_name = "plugin-test",
+            target_platform = "linux_x64",
+            resource_inputs = {
+                ":" + descriptor: "descriptor",
+                ":" + raw: "raw",
+            },
+            remainder_files = refusing_remainder_files,
+            stamp_class_modes = ["frontend"],
+            embed_content_modules = embed,
+            tags = ["manual"],
+        )
+        split_tests.append(refusing_chain + "_descriptor_test")
+        _frontend_split_part_test(
+            name = split_tests[-1],
+            target_under_test = ":" + refusing_chain + "_descriptor_remainder",
+            part = "descriptor",
+            files = ["lib/test.jar"],
+            rows = rows,
+            refusals = ["frontend:test.refused"],
+        )
+        split_tests.append(refusing_chain + "_component_test")
+        _frontend_split_component_test(
+            name = split_tests[-1],
+            target_under_test = ":" + refusing_chain + "_component",
+            rows_suffix = ".frontend",
+            own_class = own_class,
+        )
+
+    # No mode may refuse every module of a descriptor asset, because the collector places every one.
+    omitting_chain = name + "_omitting_chain"
+    dev_dist_complex_plugin_variant(
+        name = omitting_chain,
+        projection = ":" + plan_file,
+        execution_version = 1,
+        descriptor = ":" + refusing_descriptor,
+        plugin_directory = "plugins/test",
+        component_name = "test.refused",
+        target_platform = "linux_x64",
+        resource_inputs = {
+            ":" + refusing_descriptor: "descriptor",
+            ":" + raw: "raw",
+        },
+        remainder_files = {"lib/test.jar": ["test.refused"], "lib/other.jar": []},
+        stamp_class_modes = ["frontend"],
+        tags = ["manual"],
+    )
+    split_tests.append(omitting_chain + "_test")
+    _expected_frontend_failure_test(
+        name = split_tests[-1],
+        target_under_test = ":" + omitting_chain + "_descriptor_remainder",
+        expected_message = "the mode 'frontend' refuses every module of the descriptor asset 'lib/test.jar'",
+    )
 
     # The derived form: one call, one chain per platform, the plan label `<main module>.<platform>.dev-plan.json` in
     # the package of the call and the descriptor entry derived, and the platform token substituted in a label.

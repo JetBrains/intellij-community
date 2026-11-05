@@ -4,9 +4,10 @@
 //!
 //! `--part` splits one remainder into two actions. The part `neutral` packs every asset that reads no descriptor, in the
 //! default configuration, and writes no asset rows and no classpath record. The part `descriptor` packs only the assets
-//! that read the descriptor, in the stamp class of the chain, and writes the rows and the record of the whole plugin.
-//! Both parts state the descriptor assets with `--descriptor-asset`, and the packer refuses a list that differs from the
-//! plan file.
+//! that read the descriptor, in the stamp class of the descriptor leaf. It writes the rows and the record of the whole
+//! plugin once for each mode that `--rows` names, so one action serves every mode whose chain reaches that class. Both
+//! parts state the descriptor assets with `--descriptor-asset`, and the packer refuses a list that differs from the plan
+//! file.
 //!
 //! The mode `gzip-resources` writes the gzip resources of one module instead, see [`pluginpack::write_gzip_resources`].
 //! The caller is `gzip_resources` in `gzip_resources.bzl`.
@@ -38,8 +39,22 @@ fn main() -> ExitCode {
 enum Part {
     /// Every asset that reads no descriptor, in the default configuration.
     Neutral,
-    /// Only the assets that read the descriptor, with the asset rows and the classpath record of the whole plugin.
+    /// Only the assets that read the descriptor, with the asset rows and the classpath record of the whole plugin for
+    /// each mode of `--rows`.
     Descriptor,
+}
+
+/// The asset rows and the plugin classpath record of one mode, which the descriptor part writes.
+#[derive(Debug)]
+struct ModeRows {
+    /// The mode, or the empty text for the default.
+    mode: String,
+    /// The asset rows of the mode.
+    assets: PathBuf,
+    /// The plugin classpath record of the mode.
+    classpath: PathBuf,
+    /// The content modules that the mode refuses, from `--mode-refused-module=<mode>:<module>`.
+    refused_modules: Vec<String>,
 }
 
 /// The command line of the packer. Each option has the form `--name=value`, and only the module lists and the
@@ -59,10 +74,12 @@ struct Options {
     output_dir: PathBuf,
     /// `--inventory`: the inventory of the plugin directory.
     inventory: PathBuf,
-    /// `--assets`: the asset rows. The neutral part writes none.
+    /// `--assets`: the asset rows of one action that packs every asset. A part writes none.
     assets: Option<PathBuf>,
-    /// `--classpath`: the plugin classpath record. The neutral part writes none.
+    /// `--classpath`: the plugin classpath record of one action that packs every asset. A part writes none.
     classpath: Option<PathBuf>,
+    /// `--rows=<mode>:<assets>:<classpath>`: the rows and the record of each mode. Only the descriptor part states them.
+    rows: Vec<ModeRows>,
     /// `--part`: the part of a split remainder, or `None` for one action that packs every asset.
     part: Option<Part>,
     /// `--descriptor-asset`: each asset that reads the descriptor. A split remainder states them, and no other one.
@@ -70,7 +87,8 @@ struct Options {
     /// `--independent-module`: each module whose plain module jar the chain reuses. It can be absent.
     independent_modules: Vec<String>,
     /// `--refused-module`: each content module that the product mode of the chain refuses. It can be absent. An asset
-    /// whose every module is refused is omitted from the remainder, see `planfile::omitted_assets`.
+    /// whose every module is refused is omitted from the remainder, see `planfile::omitted_assets`. Only one action
+    /// that packs every asset states it.
     refused_modules: Vec<String>,
 }
 
@@ -94,18 +112,42 @@ impl Options {
         let execution_version = options.require("--execution-version")?;
         let output_dir = PathBuf::from(options.require("--output-dir")?);
         let inventory = PathBuf::from(options.require("--inventory")?);
-        // The neutral part reads no descriptor and writes no rows and no record, so it takes none of these options.
-        let (classpath_descriptor, assets, classpath) = if part == Some(Part::Neutral) {
-            if !refused_modules.is_empty() {
-                bail!("the neutral part packs every asset, so it takes no --refused-module");
+        let rows = options.take_all("--rows")?;
+        let mode_refusals = options.take_all("--mode-refused-module")?;
+        let (classpath_descriptor, assets, classpath, rows) = match part {
+            // The neutral part reads no descriptor and writes no rows and no record, so it takes none of these options.
+            Some(Part::Neutral) => {
+                if !refused_modules.is_empty() {
+                    bail!("the neutral part packs every asset, so it takes no --refused-module");
+                }
+                if !rows.is_empty() || !mode_refusals.is_empty() {
+                    bail!("the neutral part writes no rows, so it takes no --rows and no --mode-refused-module");
+                }
+                (None, None, None, Vec::new())
             }
-            (None, None, None)
-        } else {
-            (
-                Some(PathBuf::from(options.require("--classpath-descriptor")?)),
-                Some(PathBuf::from(options.require("--assets")?)),
-                Some(PathBuf::from(options.require("--classpath")?)),
-            )
+            // The descriptor part writes the rows of each mode, and it packs every descriptor asset without a refusal.
+            Some(Part::Descriptor) => {
+                if !refused_modules.is_empty() {
+                    bail!("the descriptor part takes the refusals of each mode as --mode-refused-module, not --refused-module");
+                }
+                (
+                    Some(PathBuf::from(options.require("--classpath-descriptor")?)),
+                    None,
+                    None,
+                    mode_rows(&rows, &mode_refusals)?,
+                )
+            }
+            None => {
+                if !rows.is_empty() || !mode_refusals.is_empty() {
+                    bail!("only the descriptor part takes --rows and --mode-refused-module");
+                }
+                (
+                    Some(PathBuf::from(options.require("--classpath-descriptor")?)),
+                    Some(PathBuf::from(options.require("--assets")?)),
+                    Some(PathBuf::from(options.require("--classpath")?)),
+                    Vec::new(),
+                )
+            }
         };
         options.finish()?;
         if part.is_some() == descriptor_assets.is_empty() {
@@ -125,6 +167,7 @@ impl Options {
             inventory,
             assets,
             classpath,
+            rows,
             part,
             descriptor_assets,
             independent_modules,
@@ -183,6 +226,43 @@ fn parse_gzip_resources(arguments: impl IntoIterator<Item = OsString>) -> anyhow
     Ok((output, archives))
 }
 
+/// Reads `--rows=<mode>:<assets>:<classpath>` and `--mode-refused-module=<mode>:<module>`. The empty mode is the default.
+/// A mode takes one row, at least one row is stated, and every refusal names a mode of a row.
+fn mode_rows(rows: &[String], refusals: &[String]) -> anyhow::Result<Vec<ModeRows>> {
+    if rows.is_empty() {
+        bail!("the descriptor part needs at least one --rows=<mode>:<assets>:<classpath>");
+    }
+    let mut result: Vec<ModeRows> = Vec::new();
+    for value in rows {
+        let mut parts = value.splitn(3, ':');
+        let (Some(mode), Some(assets), Some(classpath)) = (parts.next(), parts.next(), parts.next()) else {
+            bail!("--rows is <mode>:<assets>:<classpath>, and {value:?} is not");
+        };
+        if assets.is_empty() || classpath.is_empty() {
+            bail!("--rows is <mode>:<assets>:<classpath>, and {value:?} has an empty path");
+        }
+        if result.iter().any(|row| row.mode == mode) {
+            bail!("--rows names the mode {mode:?} twice");
+        }
+        result.push(ModeRows {
+            mode: mode.to_owned(),
+            assets: PathBuf::from(assets),
+            classpath: PathBuf::from(classpath),
+            refused_modules: Vec::new(),
+        });
+    }
+    for value in refusals {
+        let Some((mode, module)) = value.split_once(':').filter(|(_, module)| !module.is_empty()) else {
+            bail!("--mode-refused-module is <mode>:<module>, and {value:?} is not");
+        };
+        let Some(row) = result.iter_mut().find(|row| row.mode == mode) else {
+            bail!("--mode-refused-module names the mode {mode:?}, and no --rows names it");
+        };
+        row.refused_modules.push(module.to_owned());
+    }
+    Ok(result)
+}
+
 /// Takes the modules of a list option. A module name must not be empty.
 fn modules(options: &mut cli::Options, name: &str) -> anyhow::Result<Vec<String>> {
     let modules = options.take_all(name)?;
@@ -230,6 +310,9 @@ fn project(options: &Options) -> anyhow::Result<String> {
         .as_ref()
         .expect("the parser requires it outside the neutral part");
     let descriptor = fs::read(classpath_descriptor).with_context(|| classpath_descriptor.display().to_string())?;
+    if options.part == Some(Part::Descriptor) {
+        return project_descriptor_part(options, &file, &catalogue, &descriptor);
+    }
     let derivation = planfile::derive(
         &file,
         &catalogue,
@@ -239,12 +322,7 @@ fn project(options: &Options) -> anyhow::Result<String> {
         &options.independent_modules,
         &options.refused_modules,
     )?;
-    let (recipe, catalogue) = if options.part == Some(Part::Descriptor) {
-        only_assets(&derivation.recipe, &derivation.catalogue, &options.descriptor_assets)
-    } else {
-        (derivation.recipe.clone(), derivation.catalogue.clone())
-    };
-    let execution = pluginpack::plan(&recipe, &catalogue)?;
+    let execution = pluginpack::plan(&derivation.recipe, &derivation.catalogue)?;
     let assets = serde_json::to_vec(&derivation.assets)?;
     execution.write(&options.output_dir, &options.inventory)?;
     write_output(
@@ -256,6 +334,53 @@ fn project(options: &Options) -> anyhow::Result<String> {
         &derivation.class_path,
     )?;
     Ok(file.plugin)
+}
+
+/// The descriptor part: packs the descriptor assets once, without a refusal, and writes the rows and the record of each
+/// mode.
+///
+/// A refusal omits only a whole asset, see `planfile::omitted_assets`. So a descriptor asset that no mode omits has the
+/// same bytes in every mode. A mode that omits one is refused, because the collector places every descriptor asset.
+fn project_descriptor_part(
+    options: &Options,
+    file: &planfile::PlanFile,
+    catalogue: &Catalogue,
+    descriptor: &[u8],
+) -> anyhow::Result<String> {
+    let derive = |refused_modules: &[String]| {
+        planfile::derive(
+            file,
+            catalogue,
+            &options.plugin_directory,
+            descriptor,
+            options.execution_version,
+            &options.independent_modules,
+            refused_modules,
+        )
+    };
+    let whole = derive(&[])?;
+    let (recipe, packed_catalogue) = only_assets(&whole.recipe, &whole.catalogue, &options.descriptor_assets);
+    let execution = pluginpack::plan(&recipe, &packed_catalogue)?;
+    let mut rows = Vec::with_capacity(options.rows.len());
+    for row in &options.rows {
+        let derivation = derive(&row.refused_modules)?;
+        for asset in &options.descriptor_assets {
+            if !derivation.recipe.assets.iter().any(|placed| &placed.destination == asset) {
+                bail!(
+                    "plugin {:?}: the mode {:?} omits the descriptor asset {asset:?}, and the collector places every one",
+                    file.plugin,
+                    row.mode
+                );
+            }
+        }
+        rows.push((row, serde_json::to_vec(&derivation.assets)?, derivation.class_path));
+    }
+    execution.write(&options.output_dir, &options.inventory)?;
+    for (row, assets, class_path) in rows {
+        write_output(&row.assets, &assets)?;
+        write_output(&row.classpath, &class_path)?;
+    }
+    Ok(file.plugin.clone())
 }
 
 /// The recipe and the catalogue of the remainder assets of `destinations` alone. The catalogue keeps only the artifacts

@@ -43,6 +43,11 @@ internal class DevDistPluginExecutionConfiguration(
   @JvmField val descriptorVariant: String,
   /** The stamp class modes of the descriptor, see [PluginDescriptorEntry.stampClassModes]. */
   @JvmField val stampClassModes: List<String> = emptyList(),
+  /**
+   * Whether the descriptor embeds every content module, see [PluginDescriptorEntry.embedsContentModules]. Then the
+   * descriptor part of a split remainder packs once for every mode.
+   */
+  @JvmField val embedContentModules: Boolean = true,
 )
 
 /**
@@ -269,7 +274,7 @@ internal fun renderDevDistPluginExecutionTargets(
     "remainder_executables" to executionStrings(outputs.executables),
     "independent_destinations" to executionDictionary(outputs.independentDestinations.map { (key, destination) -> key to executionQuote(destination) }),
     "stamp_class_modes" to executionStrings(configuration.stampClassModes),
-  )
+  ) + (if (configuration.embedContentModules) emptyList() else listOf("embed_content_modules" to "False"))
   return DevDistPluginExecutionVariant(platform, arguments, "${configuration.packageLabel}:${names.getValue("component")}", platformValues, folded)
 }
 
