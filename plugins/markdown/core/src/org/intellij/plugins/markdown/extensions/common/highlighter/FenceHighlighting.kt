@@ -85,6 +85,9 @@ private fun processLines(
   additionalLineProcessor: ((String) -> String)? = null
 ) {
   for (lineRange in text.lineRanges(includeDelimiter = true)) {
+    if (additionalLineProcessor != null) {
+      builder.append(additionalLineProcessor.invoke(lineRange.substring(text)))
+    }
     val ranges = highlightedRanges.filter { (range, _) -> lineRange.intersects(range) }
     if (ranges.isEmpty()) {
       val span = createSpan(lineRange.shiftRight(contentOffset), lineRange.substring(text))
@@ -113,10 +116,6 @@ private fun processLines(
       val range = TextRange(left, lineRange.endOffset)
       val span = createSpan(range.shiftRight(contentOffset), range.substring(text))
       builder.appendChunk(span)
-    }
-    if (additionalLineProcessor != null) {
-      val processed = additionalLineProcessor.invoke(lineRange.substring(text))
-      builder.append(processed)
     }
   }
 }

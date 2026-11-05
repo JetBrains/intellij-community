@@ -174,8 +174,7 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
   @Test
   fun `preview line icon of a fence runs after the second render`() {
     MarkdownSettings.getInstance().useFileDirectoryForCommands = true
-    // A fence line gets a run-line icon only when it has a colored token, such as the quoted string.
-    val command = "echo \"second-render-${System.nanoTime()}\""
+    val command = "echo second-render-${System.nanoTime()}"
     val runnability = replacePreviewCommandRunnability(command)
     val file = myFixture.addFileToProject("foo/second-render.md", "```shell\n$command\n```").virtualFile
     val pipe = TestBrowserPipe()
@@ -184,6 +183,55 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     renderPreview(file)
     val html = renderPreview(file)
 
+    clickPreviewLine(pipe, html)
+    assertEquals(command, runnability.executedCommand?.trim())
+  }
+
+  @Test
+  fun `preview puts the run-line icon of a fence before the text of its line`() {
+    val command = "echo plain-${System.nanoTime()}"
+    replacePreviewCommandRunnability(command)
+    val file = myFixture.addFileToProject("foo/plain.md", "```shell\necho first\n$command\n```").virtualFile
+    createRegisteredPreviewExtension(createPreviewPanel(file, TestBrowserPipe()))
+
+    val html = renderPreview(file)
+
+    val lineIcon = html.indexOf("class='run-icon-line code-block'")
+    assertTrue("The command has no colored token, but it must still get a run-line icon: $html", lineIcon >= 0)
+    assertTrue("The run-line icon must come before the text of its line: $html", lineIcon < html.indexOf(command))
+    assertTrue("The run-line icon must come after the previous line: $html", lineIcon > html.indexOf("echo first"))
+  }
+
+  @Test
+  fun `preview gives the first line of a fence a run-line icon also when the fence has a block icon`() {
+    val command = "echo first-${System.nanoTime()}"
+    replacePreviewCommandRunnability(command)
+    val file = myFixture.addFileToProject("foo/first-line.md", "```shell\n$command\necho second\n```").virtualFile
+    createRegisteredPreviewExtension(createPreviewPanel(file, TestBrowserPipe()))
+
+    val html = renderPreview(file)
+
+    val blockIcon = html.indexOf("class='run-icon code-block'")
+    val lineIcon = html.indexOf("class='run-icon-line code-block'")
+    assertTrue("The fence must have a block icon: $html", blockIcon >= 0)
+    assertTrue("The first line must have a run-line icon: $html", lineIcon >= 0)
+    assertTrue("The block icon comes first, for the outer column: $html", blockIcon < lineIcon)
+    assertTrue("The run-line icon must come before the text of its line: $html", lineIcon < html.indexOf(command, lineIcon))
+  }
+
+  @Test
+  fun `preview gives the first line of a fence a run-line icon when the fence has no block icon`() {
+    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
+    capturingRunner.acceptsLanguage = registeredRunners.single { it.javaClass.simpleName == "ShMarkdownRunner" }::isApplicable
+    val command = "echo no-block-${System.nanoTime()}"
+    val runnability = replacePreviewCommandRunnability(command)
+    val file = myFixture.addFileToProject("foo/no-block.md", "```text\n$command\n```").virtualFile
+    val pipe = TestBrowserPipe()
+    createRegisteredPreviewExtension(createPreviewPanel(file, pipe))
+
+    val html = renderPreview(file)
+
+    assertFalse("No block runner handles a text fence: $html", html.contains("class='run-icon code-block'"))
     clickPreviewLine(pipe, html)
     assertEquals(command, runnability.executedCommand?.trim())
   }

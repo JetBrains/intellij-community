@@ -13,9 +13,26 @@
   margin-right: 0.3em;
 }
 
+/* The padding makes the gutter columns, and the negative margins of the icons move them into it. */
+pre:has(.code-block) {
+  padding-left: 2.5em;
+}
+
+pre:has(.run-icon.code-block):has(.run-icon-line) {
+  padding-left: 4em;
+}
+
+.code-block > img {
+  margin: 0 0 0 -1.75em;
+}
+
+pre:has(.run-icon-line) .run-icon.code-block > img {
+  margin-left: -3.5em;
+}
+
 .code-block {
-  position: absolute;
-  left: 3em;
+  display: inline-block;
+  width: 0;
 }
 
 .hidden {

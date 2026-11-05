@@ -60,7 +60,7 @@ internal class DefaultCodeFenceGeneratingProvider(
     file: VirtualFile?
   ): String {
     return when {
-      this is MarkdownCodeFencePreviewHighlighter && file != null -> generateHtmlForFile(language, raw, node, file)
+      this is MarkdownCodeFencePreviewHighlighter && file != null -> generateHtml(language, raw, node, ::processCodeLine)
       else -> generateHtml(language, raw, node)
     }
   }
