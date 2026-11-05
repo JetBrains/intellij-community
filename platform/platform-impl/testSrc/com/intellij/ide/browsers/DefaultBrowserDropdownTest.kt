@@ -23,7 +23,7 @@ import javax.swing.Icon
 import javax.swing.JComboBox
 
 /**
- * Tests the "Default Browser" dropdown of [BrowserSettingsConfigurable].
+ * Tests the "Default Browser" and "JavaScript Debugger" dropdowns of [BrowserSettingsConfigurable].
  */
 @TestApplication
 class DefaultBrowserDropdownTest {
@@ -136,6 +136,37 @@ class DefaultBrowserDropdownTest {
     }
   }
 
+  @Test
+  fun `JavaScript debugger dropdown offers the Chromium-based browsers and selects the predefined Chrome`() {
+    loadState("""<state />""")
+
+    withPage(CHROMIUM_BASED_BROWSER_DROPDOWN) { page, comboBox ->
+      val ids = (0 until comboBox.itemCount).map { comboBox.getItemAt(it).id }
+      val manager = WebBrowserManager.getInstance()
+      val expected = manager.browsers.filter { it.family == BrowserFamily.CHROME && (manager.isActive(it) && it.path != null || it.id == chromeId) }
+      assertEquals(expected.map { it.id }, ids.take(expected.size))
+      assertEquals(chromeId, (comboBox.selectedItem as BrowserChoice).id)
+      assertFalse(page.isModified)
+    }
+  }
+
+  @Test
+  fun `JavaScript debugger dropdown keeps the stored inactive browser and apply stores the selection`() {
+    loadState("""<state chromiumBasedBrowser="$operaId" />""")
+
+    withPage(CHROMIUM_BASED_BROWSER_DROPDOWN) { page, comboBox ->
+      assertEquals(operaId, (comboBox.selectedItem as BrowserChoice).id)
+      assertFalse(page.isModified)
+
+      comboBox.selectedItem = (0 until comboBox.itemCount).map { comboBox.getItemAt(it) }.first { it.id == chromeId }
+      assertTrue(page.isModified)
+      page.apply()
+      assertFalse(page.isModified)
+    }
+
+    assertEquals(chromeId, WebBrowserManager.getInstance().chromiumBasedBrowser.id)
+  }
+
   private fun withProvidedBrowser(id: UUID = PROVIDED_BROWSER_ID): WebBrowser {
     val providedBrowser = object : WebBrowser() {
       override fun getName(): String = "Provided"
@@ -166,14 +197,14 @@ class DefaultBrowserDropdownTest {
   }
 
   @Suppress("UNCHECKED_CAST")
-  private fun withPage(action: (BrowserSettingsConfigurable, JComboBox<BrowserChoice>) -> Unit) {
+  private fun withPage(dropdownIndex: Int = DEFAULT_BROWSER_DROPDOWN, action: (BrowserSettingsConfigurable, JComboBox<BrowserChoice>) -> Unit) {
     runInEdtAndWait {
       val page = BrowserSettingsConfigurable()
       val component = page.createComponent()!!
       page.reset()
       try {
-        // the "Default Browser" dropdown is the first combo box of the page
-        val comboBox = UIUtil.findComponentsOfType(component, JComboBox::class.java).first() as JComboBox<BrowserChoice>
+        // the "Default Browser" and "JavaScript Debugger" dropdowns are the first combo boxes of the page
+        val comboBox = UIUtil.findComponentsOfType(component, JComboBox::class.java)[dropdownIndex] as JComboBox<BrowserChoice>
         action(page, comboBox)
       }
       finally {
@@ -183,6 +214,9 @@ class DefaultBrowserDropdownTest {
   }
 
   private companion object {
+    const val DEFAULT_BROWSER_DROPDOWN = 0
+    const val CHROMIUM_BASED_BROWSER_DROPDOWN = 1
+    val operaId: UUID = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776")
     val PROVIDED_BROWSER_ID: UUID = UUID.fromString("7c1d2e3f-4a5b-4c6d-8e9f-0a1b2c3d4e5f")
   }
 }
