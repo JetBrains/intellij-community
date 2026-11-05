@@ -367,8 +367,7 @@ public final class PythonSdkType extends SdkType {
         return targetAdditionalData;
       }
       else if (isPreTargetSdkHomePath(homePath)) {
-        LOG.warn("Pretarget SDK skipped " + homePath);
-        return new PyInvalidSdk();
+        throw new AssertionError("Pretarget SDK:" + homePath  + ", please drop it from `jdk.table.xml`");
       }
     }
 
