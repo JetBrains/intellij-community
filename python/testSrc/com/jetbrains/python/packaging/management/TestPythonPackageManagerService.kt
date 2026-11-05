@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -16,11 +17,12 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.mockito.Mockito
 
+/** The managers of this service live until the service is disposed. The removal of a replacement service disposes it. */
 @TestOnly
 internal class TestPythonPackageManagerService(
   val installedPackages: List<PythonPackage> = emptyList(),
   val availablePackageNames: List<String> = emptyList(),
-) : PythonPackageManagerService {
+) : PythonPackageManagerService, Disposable {
   private val cache: MutableMap<PythonInterpreter, PythonPackageManager> = ConcurrentHashMap()
 
   override fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager {
@@ -48,7 +50,7 @@ internal class TestPythonPackageManagerService(
     if (installedPackages.isEmpty()) {
       return TestPythonPackageManager(project, interpreter)
         .withPackageNames(repoPackageNames)
-        .also { Disposer.register(project, it) }
+        .also { Disposer.register(this, it) }
     }
 
     return TestPythonPackageManager(project, interpreter)
@@ -56,9 +58,11 @@ internal class TestPythonPackageManagerService(
       .withPackageNames(repoPackageNames)
       .withPackageDetails(PythonSimplePackageDetails(installedPackages.first().name, listOf(installedPackages.first().version),
                                                      TestPackageRepository(repoPackageNames.toSet()))).also {
-        Disposer.register(project, it)
+        Disposer.register(this, it)
       }
   }
+
+  override fun dispose() {}
 
   override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
     return PythonPackageManagementServiceBridge(project, sdk)

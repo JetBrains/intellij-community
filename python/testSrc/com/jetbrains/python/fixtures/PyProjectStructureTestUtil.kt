@@ -5,15 +5,20 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.concurrency.waitForPromiseAndPumpEdt
+import com.intellij.testFramework.replaceService
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.PythonPackageManagerService
+import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
@@ -65,6 +70,22 @@ fun installPackagesWithBundledStubsForTests(module: Module, packages: List<Pytho
     }
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }
+}
+
+/**
+ * Replaces the package manager service of the project of [module] with a test service, and returns the restore of the
+ * previous service. The manager of the SDK of [module] has [packages] installed, and no other package. If [packages] is
+ * empty, the manager has the default packages of the test manager.
+ */
+@TestOnly
+fun installPackagesInTestPackageManagerForTests(module: Module, packages: List<PythonPackage>): Runnable {
+  val sdk = checkNotNull(PythonSdkUtil.findPythonSdk(module)) { "No SDK for ${module.name}" }
+  val disposable = Disposer.newDisposable(module, "Test package manager of ${module.name}")
+  module.project.replaceService(PythonPackageManagerService::class.java, TestPythonPackageManagerService(packages), disposable)
+  // The first lookup waits for the init of the manager. Inside a read action, that wait can deadlock with a write action.
+  @Suppress("DEPRECATION") // The same lookup as the callers that still use an SDK, for example DjangoModelApi.
+  PythonPackageManager.forSdk(module.project, sdk)
+  return Runnable { Disposer.dispose(disposable) }
 }
 
 /**
