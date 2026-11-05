@@ -522,7 +522,8 @@ private fun addDep(
         require(isExported ||
                 dependentModule.module.name == "fleet.dock.bootstrapWasm"  // TODO: remove this
         ) {
-          "module must not have COMPILE-scope, TEST-scope, or PROVIDED-scope dependencies, please consider changing their scope to RUNTIME or remove them: ${dependentModule.imlFile}"
+          "module without ${if (isTest) "test " else ""}source folders must not have non-exported COMPILE-scope, TEST-scope, or PROVIDED-scope dependencies, " +
+          "please change the scope of the dependency ${dependencyLabel.label} to RUNTIME, export it, remove it, or add a source folder: ${dependentModule.imlFile}"
         }
         runtimeDeps.add(dependencyLabel)
       }
