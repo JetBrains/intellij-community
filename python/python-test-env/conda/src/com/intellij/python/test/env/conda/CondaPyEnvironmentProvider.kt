@@ -14,12 +14,10 @@ import com.intellij.python.test.env.core.CacheKey
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentProvider
 import com.intellij.python.test.env.core.PyEnvironmentSpec
-import com.intellij.python.test.env.core.cacheLockFile
 import com.intellij.python.test.env.core.defaultPyEnvDownloadCache
 import com.intellij.python.test.env.core.executeProcess
-import com.intellij.python.test.env.core.extractIfNecessary
 import com.intellij.python.test.env.core.markExecutable
-import com.intellij.python.test.env.core.withCacheLock
+import com.intellij.python.test.env.core.useExtractionWithRetries
 import com.intellij.util.io.awaitExit
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.OS
@@ -39,13 +37,12 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
 
 /**
  * Specification for Conda Python environment with mandatory version pinning.
- * 
+ *
  * @property condaVersion Specific Miniconda version (e.g., "py312_26.7.1-1")
  */
 @ApiStatus.Internal
@@ -60,9 +57,9 @@ class CondaPyEnvironmentSpec(
 
 /**
  * DSL entry point for creating Conda environment specifications.
- * 
+ *
  * Version must be specified explicitly - no default or "latest" option.
- * 
+ *
  * Example:
  * ```kotlin
  * val env = condaEnvironment("py312_26.7.1-1") {
@@ -100,6 +97,9 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
     /** The architecture names that the Miniconda installer file names use. */
     const val ARCH_ARM64 = "arm64"
     const val ARCH_X86_64 = "x86_64"
+
+    /** The maximum number of attempts to create an environment. Each failed attempt installs conda again. */
+    const val MAX_ATTEMPTS = 5
   }
 
   @OptIn(PyInternalExecApi::class)
@@ -111,16 +111,24 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
     logger.info("Conda version: ${spec.condaVersion}")
     logger.info("Python version: ${spec.pythonVersion}")
 
-    val condaDir = downloadAndSetupConda(spec.condaVersion)
+    val condaDir = getCondaDir(spec.condaVersion)
     val condaExecutable = getCondaExecutablePath(condaDir)
     logger.info("Conda executable: $condaExecutable")
 
-    // conda keeps one package cache in its installation directory, and that cache is not safe for
-    // a concurrent writer. Two `conda create` runs download the same package into the same
-    // `<package>.conda.partial` file and then rename it. The loser stops with
-    // "No such file or directory". The lock gives one process at a time the right to write to this
-    // conda installation. See PY-91298.
-    return withCacheLock(cacheLockFile(condaDir), logger) {
+    // Sometimes the conda installation is broken. Then `conda create` fails, and useExtractionWithRetries installs
+    // conda again and tries again.
+    //
+    // useExtractionWithRetries also runs the block with the lock of the conda installation. conda keeps one package
+    // cache in its installation directory, and that cache is not safe for a concurrent writer. Two `conda create`
+    // runs download the same package into the same `<package>.conda.partial` file and then rename it. The loser
+    // stops with "No such file or directory". The lock gives one process at a time the right to write to this conda
+    // installation. See PY-91298.
+    val env = useExtractionWithRetries(
+      target = condaDir,
+      logger = logger,
+      maxAttempts = MAX_ATTEMPTS,
+      unpack = { installConda(spec.condaVersion, it) },
+    ) {
       // conda 25+ refuses to create envs from the default Anaconda channels until their ToS is
       // accepted. The `conda tos` plugin doesn't exist on older conda releases, so we run the
       // accept commands best-effort and ignore non-zero exit codes.
@@ -130,7 +138,7 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
 
       logger.info("Creating Conda environment")
       val binaryToExec = BinOnEel(condaExecutable)
-      CondaExecutor.createUnnamedEnv(binaryToExec, targetPath.pathString, fullPythonVersion).getOrThrow()
+      CondaExecutor.createUnnamedEnv(binaryToExec, targetPath.pathString, fullPythonVersion).getOr { return@useExtractionWithRetries it }
       logger.info("Conda environment created")
 
       val pythonPath = findPythonInCondaEnv(targetPath)
@@ -143,40 +151,40 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
       }
 
       logger.info("Conda environment setup completed at: $targetPath")
-      CondaPyEnvironment(pythonPath, targetPath, condaExecutable)
+      Result.success(CondaPyEnvironment(pythonPath, targetPath, condaExecutable))
     }
+    return env.orThrow { AssertionError("Failed to set up the Conda environment after $MAX_ATTEMPTS attempts: ${it.message}") }
   }
 
   /**
-   * Downloads and sets up Miniconda in the cache directory.
-   * Directory name includes installer name to handle different OS/architecture variants.
-   * @return Path to the Miniconda installation directory
+   * The Miniconda installation directory in the cache directory.
+   * The directory name includes the installer name, because each OS and architecture has a different installer.
    */
-  @OptIn(ExperimentalPathApi::class)
-  private suspend fun downloadAndSetupConda(condaVersion: String): Path = withContext(Dispatchers.IO) {
+  private fun getCondaDir(condaVersion: String): Path {
+    val installerBaseName = getMinicondaInstallerName(condaVersion).substringBeforeLast('.')
+    return defaultPyEnvDownloadCache.cacheDirectory().resolve("conda").resolve(installerBaseName)
+  }
+
+  /**
+   * Downloads the Miniconda installer and installs Miniconda to [condaDir].
+   */
+  private suspend fun installConda(condaVersion: String, condaDir: Path) {
     val logger = thisLogger()
     val installerName = getMinicondaInstallerName(condaVersion)
-    val installerBaseName = installerName.substringBeforeLast('.')
-    val condaDir = defaultPyEnvDownloadCache.cacheDirectory().resolve("conda").resolve(installerBaseName)
+    val downloadUrl = "$MINICONDA_BASE_URL/$installerName"
+    logger.info("Downloading Miniconda installer: $installerName")
+    val cachedInstaller = defaultPyEnvDownloadCache.getOrDownload(downloadUrl, installerName)
+    logger.info("Miniconda installer downloaded: $cachedInstaller")
+
+    logger.info("Installing Miniconda to: $condaDir")
+    installMiniconda(logger, cachedInstaller, condaDir)
+    logger.info("Miniconda installation completed")
+
     val condaExecutable = getCondaExecutablePath(condaDir)
-
-    extractIfNecessary(condaDir, logger) {
-      val downloadUrl = "$MINICONDA_BASE_URL/$installerName"
-      logger.info("Downloading Miniconda installer: $installerName")
-      val cachedInstaller = defaultPyEnvDownloadCache.getOrDownload(downloadUrl, installerName)
-      logger.info("Miniconda installer downloaded: $cachedInstaller")
-
-      logger.info("Installing Miniconda to: $condaDir")
-      installMiniconda(logger, cachedInstaller, condaDir)
-      logger.info("Miniconda installation completed")
-
-      if (!condaExecutable.exists()) {
-        error("Conda executable not found after installation: $condaExecutable")
-      }
-      logger.info("Conda setup completed")
+    if (!condaExecutable.exists()) {
+      error("Conda executable not found after installation: $condaExecutable")
     }
-
-    condaDir
+    logger.info("Conda setup completed")
   }
 
   /**
@@ -236,7 +244,7 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
         "-p", targetDir.pathString  // Install prefix
       )
     }
-    
+
     executeProcess(command, thisLogger(), "miniconda installer")
   }
 
@@ -310,15 +318,15 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
     }
   }
 }
-  
+
 /**
  * Conda Python environment implementation
  */
 @ApiStatus.Internal
 class CondaPyEnvironment(
-    override val pythonPath: PythonBinary,
-    override val envPath: Path,
-    val condaExecutable: Path,
+  override val pythonPath: PythonBinary,
+  override val envPath: Path,
+  val condaExecutable: Path,
 ) : PyEnvironment {
   override fun close() {
     runBlocking(Dispatchers.IO) {

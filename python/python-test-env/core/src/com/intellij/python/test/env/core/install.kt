@@ -1,10 +1,15 @@
 package com.intellij.python.test.env.core
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.util.io.Decompressor
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.jetbrains.python.PyInternalExecApi
+import com.jetbrains.python.Result
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -136,6 +141,79 @@ suspend fun extractIfNecessary(
       Files.createFile(completionMarker)
       logger.info("Extraction setup completed")
     }
+  }
+}
+
+/**
+ * Runs [action] on the extraction at [target]. If [action] fails, this function extracts [target] again and
+ * tries again.
+ *
+ * Each attempt first calls [extractIfNecessary] with [unpack]. Then it runs [action] with the [withCacheLock] lock
+ * of [target], so no other process uses [target] at the same time. If [action] returns [Result.Failure], the
+ * extraction is possibly broken. Then this function deletes it while it still holds the lock, and the next attempt
+ * extracts it again. There are [maxAttempts] attempts at most.
+ *
+ * @return the result of the first successful attempt, or the failure of the last attempt.
+ * @throws IOException if this function cannot delete a broken extraction.
+ */
+@ApiStatus.Internal
+@OptIn(PyInternalExecApi::class)
+@Throws(IOException::class)
+suspend fun <S, E> useExtractionWithRetries(
+  target: Path,
+  logger: Logger,
+  maxAttempts: Int,
+  unpack: suspend (Path) -> Unit,
+  action: suspend () -> Result<S, E>,
+): Result<S, E> {
+  require(maxAttempts > 0) { "maxAttempts must be positive: $maxAttempts" }
+  var attempt = 1
+  while (true) {
+    extractIfNecessary(target, logger, unpack)
+    val result = withCacheLock(cacheLockFile(target), logger) {
+      val result = action()
+      when (result) {
+        is Result.Success -> Unit
+        is Result.Failure -> invalidateExtraction(target, logger)
+      }
+      result
+    }
+    when (result) {
+      is Result.Success -> return result
+      is Result.Failure -> {
+        logger.warn("Attempt $attempt of $maxAttempts failed for $target: ${result.error}")
+        if (attempt == maxAttempts) return result
+        attempt++
+      }
+    }
+  }
+}
+
+/**
+ * Marks the extraction at [target] as broken, so that the next [extractIfNecessary] extracts it again.
+ *
+ * The caller must hold the [withCacheLock] lock of [cacheLockFile] of [target]. This function does not take the
+ * lock itself, because the lock is not reentrant.
+ *
+ * This function deletes the completion marker first. Then it tries to delete [target]. If a file of [target] is
+ * in use (on Windows, for example), the delete stops, but the marker is already gone. Thus [extractIfNecessary]
+ * cleans up and extracts again.
+ *
+ * @throws IOException if this function cannot delete the completion marker.
+ */
+@OptIn(ExperimentalPathApi::class)
+@Throws(IOException::class)
+private suspend fun invalidateExtraction(target: Path, logger: Logger): Unit = withContext(Dispatchers.IO) {
+  Files.deleteIfExists(target.resolve(COMPLETION_MARKER_NAME))
+  logger.info("Deleting broken extraction at: $target")
+  try {
+    if (localEel.platform.isWindows) {
+      deleteCheckLocking(target)
+    }
+    target.deleteRecursively()
+  }
+  catch (e: IOException) {
+    logger.warn("Failed to fully delete $target, the next extraction will clean it up", e)
   }
 }
 

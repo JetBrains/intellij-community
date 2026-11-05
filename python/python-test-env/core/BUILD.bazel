@@ -57,6 +57,7 @@ jvm_library(
         "//python/python-sdk/backend",
         "//python/python-sdk/common",
         "//python/python-pytools/common",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.test.env.core` end
