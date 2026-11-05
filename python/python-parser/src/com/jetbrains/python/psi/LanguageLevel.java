@@ -85,7 +85,8 @@ public enum LanguageLevel {
       .toList();
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
-  private static final LanguageLevel DEFAULT3 = PYTHON310;
+  /// latest stable version
+  private static final LanguageLevel DEFAULT3 = PYTHON315;
 
   @ApiStatus.Internal
   public static final Pattern VERSION_RE = Pattern.compile("((Python|GraalPy) (\\S+)).*", Pattern.DOTALL);
@@ -93,8 +94,9 @@ public enum LanguageLevel {
   @ApiStatus.Internal
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
+  /// latest stable version
   public static @NotNull LanguageLevel getDefault() {
-    return getLatest();
+    return DEFAULT3;
   }
 
   private final int myVersion;
