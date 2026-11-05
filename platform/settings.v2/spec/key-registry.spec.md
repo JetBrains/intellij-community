@@ -40,12 +40,17 @@ from outside, such as from another remote-dev side, could resolve to nothing.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
 - A different key with a taken identity must be refused and logged.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
-- The platform must promote the keys that the API module declares, `EDIT_TEAM_LAYER` and `LANGUAGE`. No test covers
-  it, because a missing promotion shows only on a write outside the unit test mode.
+- The platform must promote the keys that the API module declares, `EDIT_TEAM_LAYER` and `LANGUAGE`. A missing
+  promotion shows only on a write outside the unit test mode, so only an integration test covers it.
+  [@test] ../../../../platform/unified/integrationTests/testSrc/com/intellij/platform/unified/integrationTests/JetBrainsLightSettingsTest.kt
 - A promoter must register the keys of its own plugin only. A platform key has no plugin of its own, and the core
   plugin promotes it.
   See [ADR 0111](../adr/0111-the-registry-takes-keys-only-from-their-own-plugin-and-a-prefix-belongs-to-one-plugin.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
+- An integration test must write a key of `intellij.platform.settings.v2.testKeys`, which its own promoter registers.
+  See [ADR 0165](../adr/0165-a-test-writes-a-key-of-the-test-keys-module-inside-the-ide-under-test.md).
+  [@test] ../../../../platform/unified/integrationTests/testSrc/com/intellij/platform/unified/integrationTests/JetBrainsLightSettingsTest.kt
+  [@test] ../../../../remote-dev/settings/v2/lambdaTests/src/com/intellij/platform/settings/v2/lambdaTests/SnapshotCacheRestartTest.kt
 - An unloaded promoter must take its keys along. The other promoters of that plugin keep theirs.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKeyRegistryTest.kt
 - A promoter that throws must be logged. All its keys stay unknown, also the keys it passed before it threw.

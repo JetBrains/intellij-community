@@ -16,6 +16,17 @@ layers supply the values. The vault resolves and stores them.
 Some modules of the feature live outside `community/`. Their own `AGENTS.md` points here, and `spec/` and `adr/`
 cover them too.
 
+- A key that an integration test writes inside the IDE under test lives in `intellij.platform.settings.v2.testKeys`.
+  A lambda test gets it through its wrapper plugin, and a driver test adds the plugin
+  `com.intellij.platform.settings.v2.testKeys.plugin` to the product. See
+  [ADR 0165](adr/0165-a-test-writes-a-key-of-the-test-keys-module-inside-the-ide-under-test.md).
+- The descriptor of that plugin is a test resource. Keep it one: a plugin with a production descriptor and no test
+  framework dependency is a compatible plugin, so every product build publishes it and fails on its descriptor. A
+  driver test gets the module from `settingsTestKeysPluginModule()`, which also lets the dev build pack a test module.
+  The test module of such a test depends on `intellij.platform.settings.v2.testKeys.plugin` and on the keys module
+  with the `TEST` scope. The CI compiles only what a test module depends on, and the dev build packs only compiled
+  output, so without the dependency the plugin has no descriptor on the CI.
+
 ## Where each kind of text goes
 
 | Kind of text | Home |
