@@ -23,6 +23,18 @@ kt_compiler_plugin(
     deps = ["@rules_jvm//:kotlin-compose-compiler-plugin-embeddable_import"],
 )
 
+kt_compiler_plugin(
+    name = "krpc-plugin",
+    id = "org.jetbrains.kotlin.kotlinx-rpc-compiler-plugin",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@rules_jvm//:kotlinx-rpc-compiler-plugin-backend_import",
+        "@rules_jvm//:kotlinx-rpc-compiler-plugin-cli_import",
+        "@rules_jvm//:kotlinx-rpc-compiler-plugin-common_import",
+        "@rules_jvm//:kotlinx-rpc-compiler-plugin-k2_import",
+    ],
+)
+
 # The files in the root directory of the Ant distribution. The Ant plugin puts them in its `dist` directory.
 filegroup(
     name = "ant_distribution_root_files",

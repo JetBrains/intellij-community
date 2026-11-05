@@ -328,6 +328,30 @@ jvm_import(
 )
 
 jvm_import(
+    name = "kotlinx-rpc-compiler-plugin-cli_import",
+    jar = "@kotlinx-rpc-compiler-plugin-cli_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlinx-rpc-compiler-plugin-k2_import",
+    jar = "@kotlinx-rpc-compiler-plugin-k2_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlinx-rpc-compiler-plugin-common_import",
+    jar = "@kotlinx-rpc-compiler-plugin-common_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlinx-rpc-compiler-plugin-backend_import",
+    jar = "@kotlinx-rpc-compiler-plugin-backend_http//file",
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
     name = "kotlin-compose-compiler-plugin-embeddable_import",
     jar = "@kotlin-compose-compiler-plugin-embeddable_http//file",
     visibility = ["//visibility:public"],

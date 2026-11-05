@@ -339,6 +339,37 @@ http_file(
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-daemon-client/%s/kotlin-daemon-client-%s.jar" % (_KOTLIN_VERSION, _KOTLIN_VERSION),
 )
 
+# The kotlinx-rpc compiler plugin is built against one Kotlin version: update the checksums with _KOTLIN_VERSION.
+_KRPC_PLUGIN_VERSION = _KOTLIN_VERSION + "-0.10.4"
+
+http_file(
+    name = "kotlinx-rpc-compiler-plugin-cli_http",
+    downloaded_file_path = "kotlinx-rpc-compiler-plugin-cli-%s.jar" % _KRPC_PLUGIN_VERSION,
+    sha256 = "34c8c512bdea55728412880b142814cdb3a6138fc043267d33cd6787dd458e3b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-rpc-compiler-plugin-cli/%s/kotlinx-rpc-compiler-plugin-cli-%s.jar" % (_KRPC_PLUGIN_VERSION, _KRPC_PLUGIN_VERSION),
+)
+
+http_file(
+    name = "kotlinx-rpc-compiler-plugin-k2_http",
+    downloaded_file_path = "kotlinx-rpc-compiler-plugin-k2-%s.jar" % _KRPC_PLUGIN_VERSION,
+    sha256 = "8e8cc0b97eed3806d78a6d93fc2f4a101b3cabdc0f4fc3ae866db9333fb74162",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-rpc-compiler-plugin-k2/%s/kotlinx-rpc-compiler-plugin-k2-%s.jar" % (_KRPC_PLUGIN_VERSION, _KRPC_PLUGIN_VERSION),
+)
+
+http_file(
+    name = "kotlinx-rpc-compiler-plugin-common_http",
+    downloaded_file_path = "kotlinx-rpc-compiler-plugin-common-%s.jar" % _KRPC_PLUGIN_VERSION,
+    sha256 = "12b96ffa165a1a3ae43677dca87292c174947f215c06f4465fb9189ac39f5f57",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-rpc-compiler-plugin-common/%s/kotlinx-rpc-compiler-plugin-common-%s.jar" % (_KRPC_PLUGIN_VERSION, _KRPC_PLUGIN_VERSION),
+)
+
+http_file(
+    name = "kotlinx-rpc-compiler-plugin-backend_http",
+    downloaded_file_path = "kotlinx-rpc-compiler-plugin-backend-%s.jar" % _KRPC_PLUGIN_VERSION,
+    sha256 = "6a41240c3910625a8f73e00819b4eaa4954750e2006329430414db3f642fd3b0",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-rpc-compiler-plugin-backend/%s/kotlinx-rpc-compiler-plugin-backend-%s.jar" % (_KRPC_PLUGIN_VERSION, _KRPC_PLUGIN_VERSION),
+)
+
 http_file(
     name = "kotlin-compose-compiler-plugin-embeddable_http",
     downloaded_file_path = "kotlin-compose-compiler-plugin-embeddable-%s.jar" % _KOTLIN_VERSION,
