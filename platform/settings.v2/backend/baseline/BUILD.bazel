@@ -23,7 +23,18 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     runtime_deps = ["//platform/backend/baseline"],
-    deps = ["//platform/settings.v2/shared"],
+    deps = [
+        # do not sort,
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/settings.v2/shared",
+        "@lib//:kotlin-stdlib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/settings.v2",
+        "//platform/progress/shared:ide-progress",
+    ],
 )
 ### auto-generated section `build intellij.platform.settings.v2.backend.baseline` end
 

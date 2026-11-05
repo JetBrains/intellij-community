@@ -18,19 +18,8 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.platform.settings.v2.ContextFactory"
-                        serviceImplementation="com.intellij.platform.settings.v2.impl.BackendSettingsContextFactory"/>
-    <postStartupActivity implementation="com.intellij.platform.settings.v2.impl.ProjectSettingsLoadActivity"/>
     <settings.v2.layerProvider id="settings.v2.fileProvider" order="after settings.v2.projectProvider"
                                implementation="com.intellij.platform.settings.v2.impl.providers.JsonFileLayerProvider"/>
   </extensions>
 
-  <actions resource-bundle="messages.SettingsV2Bundle">
-    <action id="internal.settings.v2.DumpSettingsContext" internal="true"
-            class="com.intellij.platform.settings.v2.impl.DumpSettingsContextAction"/>
-  </actions>
-  <applicationListeners>
-    <listener class="com.intellij.platform.settings.v2.impl.SettingsProjectListener"
-              topic="com.intellij.openapi.project.ProjectCloseListener"/>
-  </applicationListeners>
 </idea-plugin>

@@ -2,7 +2,26 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend.baseline"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.settings.v2"/>
     <module name="intellij.platform.settings.v2.shared"/>
   </dependencies>
   <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.platform.settings.v2.impl.ProjectSettingsLoadActivity"/>
+    <applicationService serviceInterface="com.intellij.platform.settings.v2.ContextFactory"
+                        serviceImplementation="com.intellij.platform.settings.v2.impl.BackendSettingsContextFactory"/>
+  </extensions>
+  <applicationListeners>
+    <listener class="com.intellij.platform.settings.v2.impl.SettingsProjectListener"
+              topic="com.intellij.openapi.project.ProjectCloseListener"/>
+  </applicationListeners>
+  <actions resource-bundle="messages.SettingsV2Bundle">
+    <action id="internal.settings.v2.DumpSettingsContext" internal="true"
+            class="com.intellij.platform.settings.v2.impl.DumpSettingsContextAction"/>
+  </actions>
 </idea-plugin>
