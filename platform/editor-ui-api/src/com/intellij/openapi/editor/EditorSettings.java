@@ -153,7 +153,7 @@ public interface EditorSettings {
    * <p>
    *   Settings this to a non-null value enables a special mode in which the editor tries to align all
    *   characters to a grid of cells with their width determined by multiplying this value
-   *   by {@link com.intellij.openapi.editor.impl.view.EditorView#getMaxCharWidth() EditorView.getMaxCharWidth}.
+   *   by the width of the widest character of the editor fonts.
    *   Double-width characters take two cells each.
    * </p>
    * <p>

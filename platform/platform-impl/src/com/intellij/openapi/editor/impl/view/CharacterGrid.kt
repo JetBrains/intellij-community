@@ -133,8 +133,11 @@ internal class CharacterGridImpl(
   private val size: Dimension
     get() = editor.scrollingModel.visibleArea.size
 
+  /**
+   * The cell width comes from the editor fonts alone, so the font families of the text do not change the grid.
+   */
   override val charWidth: Float
-    get() = view.maxCharWidth * columnSpacing
+    get() = view.metrics.maxCharWidth() * columnSpacing
 
   override val columns: Int
     get() {

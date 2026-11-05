@@ -37,7 +37,7 @@ private val LONG_LINE = "word ".repeat(12).trim()
 
 /**
  * Checks that the soft wraps measure text with the fonts of the resolved font families of a text range.
- * [FamilyWidthFontLayoutService] gives the characters of the wide font family and of the narrow font family their own widths.
+ * [FamilyFontLayoutService] gives the characters of the wide font family and of the narrow font family their own widths.
  * The engine skips a line that surely fits, so the tests also compare with an editor where the engine measures each line.
  */
 @TestApplication
@@ -50,7 +50,7 @@ internal class EditorFontFamiliesSoftWrapTest {
   @BeforeEach
   fun setUp() {
     val familyWidths = mapOf(families[0] to WIDE_WIDTH, families[1] to NARROW_WIDTH)
-    FontLayoutService.setInstance(FamilyWidthFontLayoutService(familyWidths, EDITOR_WIDTH))
+    FontLayoutService.setInstance(FamilyFontLayoutService(familyWidths, EDITOR_WIDTH))
   }
 
   @AfterEach

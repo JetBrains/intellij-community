@@ -24,7 +24,7 @@ private const val KEY_NAME = "EDITOR_FONT_FAMILIES_LAYOUT_TEST"
 
 /**
  * Checks that the text layout uses the fonts of the resolved font families of a text range.
- * [FamilyWidthFontLayoutService] gives the characters of one font family their own width.
+ * [FamilyFontLayoutService] gives the characters of one font family their own width.
  */
 @TestApplication
 @Suppress("SuspiciousPackagePrivateAccess")
@@ -36,7 +36,7 @@ internal class EditorFontFamiliesLayoutTest {
 
   @BeforeEach
   fun setUp() {
-    FontLayoutService.setInstance(FamilyWidthFontLayoutService(mapOf(family to FAMILY_WIDTH), OTHER_WIDTH))
+    FontLayoutService.setInstance(FamilyFontLayoutService(mapOf(family to FAMILY_WIDTH), OTHER_WIDTH))
   }
 
   @AfterEach

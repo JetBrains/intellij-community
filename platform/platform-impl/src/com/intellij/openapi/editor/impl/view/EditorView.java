@@ -769,8 +769,19 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     }
   }
 
+  /**
+   * Returns the width estimate of the widest character in the editor fonts and in the resolved font families.
+   * The width estimates before the layout use it.
+   */
   float getMaxCharWidth() {
     return getSnapshotWithMetrics().maxCharWidth();
+  }
+
+  /**
+   * Returns the metrics of the editor fonts. They do not cover the font families of the text.
+   */
+  EditorViewMetrics getMetrics() {
+    return getSnapshotWithMetrics().metrics();
   }
 
   public int getBidiFlags() {

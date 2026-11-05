@@ -37,7 +37,7 @@ private val LINE = "word ".repeat(6).trim()
 
 /**
  * Checks that the editor resolves the font families of its range highlighters, so the text gets the fonts of the families.
- * [FamilyWidthFontLayoutService] gives the characters of one font family their own width.
+ * [FamilyFontLayoutService] gives the characters of one font family their own width.
  */
 @TestApplication
 @Suppress("SuspiciousPackagePrivateAccess")
@@ -47,7 +47,7 @@ internal class EditorFontFamiliesResolutionTest {
 
   @BeforeEach
   fun setUp() {
-    FontLayoutService.setInstance(FamilyWidthFontLayoutService(mapOf(family to FAMILY_WIDTH), OTHER_WIDTH))
+    FontLayoutService.setInstance(FamilyFontLayoutService(mapOf(family to FAMILY_WIDTH), OTHER_WIDTH))
   }
 
   @AfterEach

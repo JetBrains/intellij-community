@@ -30,10 +30,7 @@ internal data class EditorViewSnapshot(
   fun lineHeight(): Int = metrics.lineHeight
   fun descent(): Int = metrics.descent
   fun charHeight(): Int = metrics.charHeight
-  fun maxCharWidth(): Float = metrics.maxCharWidth
   fun capHeight(): Int = metrics.capHeight
-  fun topOverhang(): Int = metrics.topOverhang
-  fun bottomOverhang(): Int = metrics.bottomOverhang
   fun caretHeight(): Int = metrics.caretHeight
   fun caretTopOverhang(): Int = metrics.caretTopOverhang
   fun ascent(): Int = metrics.ascent
@@ -47,6 +44,28 @@ internal data class EditorViewSnapshot(
   fun prefix(): EditorPrefix? = prefix
   fun metrics(): EditorViewMetrics = metrics
   fun fontResolver(): EditorFontResolver = fontResolver
+
+  /**
+   * Returns how far text can reach above its line, in the editor fonts and in the resolved font families.
+   */
+  fun topOverhang(): Int {
+    return maxOf(metrics.topOverhang, fontResolver.fontFamiliesAscent() - metrics.ascent)
+  }
+
+  /**
+   * Returns how far text can reach below its line, in the editor fonts and in the resolved font families.
+   */
+  fun bottomOverhang(): Int {
+    return maxOf(metrics.bottomOverhang, fontResolver.fontFamiliesDescent() - metrics.descent)
+  }
+
+  /**
+   * Returns the width estimate of the widest character in the editor fonts and in the resolved font families.
+   * The value of the editor fonts alone is in [metrics].
+   */
+  fun maxCharWidth(): Float {
+    return maxOf(metrics.maxCharWidth, fontResolver.fontFamiliesMaxCharWidth())
+  }
 
   fun withFontRenderContext(fontRenderContext: FontRenderContext): EditorViewSnapshot {
     return if (fontRenderContext === this.fontRenderContext) {
