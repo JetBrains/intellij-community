@@ -16,6 +16,7 @@ import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.CefSettings;
 import org.cef.misc.BoolRef;
 import org.cef.misc.Utils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +51,10 @@ final class SettingsHelper {
 
   static boolean isOffScreenRenderingModeEnabled() {
     return RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled");
+  }
+
+  private static boolean hasX11Display() {
+    return !StringUtil.isEmptyOrSpaces(System.getenv("DISPLAY"));
   }
 
   static CefSettings loadSettings(@NotNull JCefAppConfig config) {
@@ -206,12 +211,11 @@ final class SettingsHelper {
 
     args = ArrayUtil.mergeArrays(args, "--autoplay-policy=no-user-gesture-required");
     if (SystemInfoRt.isLinux) {
-      if (StringUtil.isEmptyOrSpaces(System.getenv("DISPLAY"))) {
-        args = ArrayUtil.mergeArrays(args, "--disable-features=WaylandFractionalScaleV1");
-      }
-      else {
-        args = ArrayUtil.mergeArrays(args, "--ozone-platform=x11");
-      }
+      args = switch (getOzonePlatform()) {
+        case X11 -> ArrayUtil.mergeArrays(args, "--ozone-platform=x11");
+        case WAYLAND -> ArrayUtil.mergeArrays(args, "--ozone-platform=wayland",
+                                              "--disable-features=WaylandFractionalScaleV1");
+      };
     }
 
     if (!SKIP_CHROMIUM_SPECIAL_ARGS) {
@@ -270,6 +274,14 @@ final class SettingsHelper {
       LOG.debug(e);
     }
     return null;
+  }
+
+  @ApiStatus.Internal
+  static @NotNull JBCefOzonePlatform getOzonePlatform() {
+    String option = RegistryManager.getInstance().get("ide.browser.jcef.linux.ozone.platform").getSelectedOption();
+    if (JBCefOzonePlatform.X11.getRegistryOption().equals(option)) return JBCefOzonePlatform.X11;
+    if (JBCefOzonePlatform.WAYLAND.getRegistryOption().equals(option)) return JBCefOzonePlatform.WAYLAND;
+    return hasX11Display() ? JBCefOzonePlatform.X11 : JBCefOzonePlatform.WAYLAND;
   }
 
   final static class ChromiumArgs {

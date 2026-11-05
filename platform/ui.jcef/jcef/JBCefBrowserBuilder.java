@@ -2,8 +2,12 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.UnixDesktopEnv;
 import org.cef.browser.CefBrowser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +21,7 @@ public class JBCefBrowserBuilder {
   @Nullable JBCefClient myClient;
   @Nullable String myUrl;
   @Nullable CefBrowser myCefBrowser;
+  @Nullable Boolean myUseClipboardBridge;
   @Nullable JBCefOSRHandlerFactory myOSRHandlerFactory;
   boolean myIsOffScreenRendering = RegistryManager.getInstance().is("ide.browser.jcef.osr.enabled") || JBCefApp.getInstance()
     .isRemoteEnabled();
@@ -25,6 +30,27 @@ public class JBCefBrowserBuilder {
   boolean myMouseWheelEventEnable = true;
   boolean myUseCertManager = RegistryManager.getInstance().is("ide.browser.jcef.cert.manager.enabled");
   int myWindowlessFrameRate = RegistryManager.getInstance().intValue("ide.browser.jcef.osr.framerate", 120);
+
+  @ApiStatus.Internal
+  boolean isClipboardBridgeUsed() {
+    return myUseClipboardBridge != null ?
+           myUseClipboardBridge :
+           myIsOffScreenRendering && isClipboardBridgeEnabledByDefault();
+  }
+
+  @ApiStatus.Internal
+  private static boolean isClipboardBridgeEnabledByDefault() {
+    if (!SystemInfoRt.isLinux) return false;
+
+    String setting = System.getProperty("ide.browser.jcef.linux.clipboard.bridge");
+    if ("true".equals(setting)) return true;
+    if ("false".equals(setting)) return false;
+
+    return switch (SettingsHelper.getOzonePlatform()) {
+      case WAYLAND -> true;
+      case X11 -> StartupUiUtil.isWayland() && UnixDesktopEnv.CURRENT == UnixDesktopEnv.KDE;
+    };
+  }
 
   /**
    * Sets whether the browser is rendered off-screen.
@@ -78,8 +104,6 @@ public class JBCefBrowserBuilder {
    * When not set, the default browser is created.
    * <p>
    * Use this option to set a browser like DevTools.
-   *
-   * @see CefBrowser#getDevTools
    */
   public @NotNull JBCefBrowserBuilder setCefBrowser(@Nullable CefBrowser browser) {
     myCefBrowser = browser;
@@ -154,7 +178,7 @@ public class JBCefBrowserBuilder {
    * will be called for a windowless browser.
    * The actual fps may be lower if the browser cannot generate frames at the requested rate.
    *
-   * @param frameRate the maximum frame rate
+   * @param framerate the maximum frame rate
    * @throws UnsupportedOperationException if not supported
    */
   public @NotNull JBCefBrowserBuilder setWindowlessFramerate(int framerate) {
@@ -169,6 +193,16 @@ public class JBCefBrowserBuilder {
    */
   public @NotNull JBCefBrowserBuilder setUseCertificateManager(boolean useCertManager) {
     myUseCertManager = useCertManager;
+    return this;
+  }
+
+  /**
+   * Sets whether to use the clipboard bridge.
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @NotNull JBCefBrowserBuilder setUseClipboardBridge(boolean useClipboardBridge) {
+    myUseClipboardBridge = useClipboardBridge;
     return this;
   }
 }

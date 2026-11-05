@@ -220,6 +220,9 @@ public class JBCefBrowser extends JBCefBrowserBase {
       // We handle shortcuts manually on MacOS: https://www.magpcss.org/ceforum/viewtopic.php?f=6&t=12561
       JcefShortcutProvider.registerShortcuts(resultPanel, this);
     }
+    else if (getClipboardBridge() != null) {
+      JcefShortcutProvider.registerClipboardShortcuts(resultPanel, this);
+    }
     resultPanel.add(uiComp, BorderLayout.CENTER);
     if (SystemInfo.isWindows) {
       myCefBrowser.getUIComponent().addMouseListener(new MouseAdapter() {

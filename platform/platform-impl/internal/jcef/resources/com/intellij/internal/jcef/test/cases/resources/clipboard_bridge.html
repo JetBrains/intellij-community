@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JCEF Clipboard Bridge Test</title>
+  <style>
+    body {
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 32px);
+      margin: 16px;
+      background: #f1f1f1;
+      color: #222;
+      color-scheme: light;
+      font-family: sans-serif;
+    }
+
+    p { margin: 0 0 8px; }
+
+    .actions {
+      display: flex;
+      flex-shrink: 0;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0;
+    }
+
+    .hint {
+      color: #666;
+      font-size: 12px;
+    }
+
+    #lastInsert {
+      flex-shrink: 0;
+      color: #666;
+      font: 12px/1.4 monospace;
+      white-space: pre-wrap;
+    }
+
+    #editor {
+      box-sizing: border-box;
+      flex: 1 1 0;
+      min-height: 80px;
+      width: 100%;
+      overflow: auto;
+      padding: 4px;
+      border: 1px solid #999;
+      outline: none;
+      background: #fff;
+      color: #222;
+      font: 13px/1.4 sans-serif;
+    }
+
+    #editor:focus { border-color: #3574f0; }
+
+    #editor.dragover { background: #e8f0fe; }
+
+    #editor img {
+      max-width: 100%;
+      max-height: 160px;
+      vertical-align: middle;
+    }
+
+    #editor .file {
+      display: inline-block;
+      margin: 2px;
+      padding: 2px 6px;
+      border: 1px solid #999;
+      border-radius: 4px;
+      background: #eee;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+<p id="bridgeStatus">Checking for the bridge script…</p>
+<div class="actions">
+  <button id="copy">Copy</button>
+  <button id="cut">Cut</button>
+</div>
+<div id="editor" contenteditable="true" aria-label="Browser input area">Text in the browser</div>
+<p id="lastInsert"></p>
+
+<script>
+  const editor = document.getElementById('editor');
+  const lastInsert = document.getElementById('lastInsert');
+
+  document.getElementById('copy').addEventListener('click', () => {
+    editor.focus();
+    document.execCommand('copy');
+  });
+
+  document.getElementById('cut').addEventListener('click', () => {
+    editor.focus();
+    document.execCommand('cut');
+  });
+
+  // One handler for the paste and the drop events. Both carry a DataTransfer with the same shape.
+  editor.addEventListener('paste', event => {
+    event.preventDefault();
+    insertTransfer(event.clipboardData, 'paste');
+  });
+
+  editor.addEventListener('dragover', event => {
+    event.preventDefault();
+    editor.classList.add('dragover');
+  });
+  editor.addEventListener('dragleave', () => editor.classList.remove('dragover'));
+  editor.addEventListener('drop', event => {
+    event.preventDefault();
+    editor.classList.remove('dragover');
+    editor.focus();
+    insertTransfer(event.dataTransfer, 'drop');
+  });
+
+  function insertTransfer(data, source) {
+    if (!data) {
+      lastInsert.textContent = `Last ${source}: no DataTransfer in the event.`;
+      return;
+    }
+
+    const types = Array.from(data.types);
+    const files = Array.from(data.files || []);
+    const parts = types.filter(type => type !== 'Files').map(type => `${type} (${data.getData(type).length} chars)`);
+    for (const file of files) {
+      parts.push(`file ${file.name || '(no name)'} (${file.type || 'unknown type'}, ${file.size} bytes)`);
+    }
+    lastInsert.textContent = `Last ${source}: ${parts.length === 0 ? '(empty)' : parts.join(', ')}`;
+
+    insertContent(data, types, files);
+  }
+
+  // Rich content first, then images, then other files. A text-only transfer inserts text.
+  function insertContent(data, types, files) {
+    const html = types.includes('text/html') ? data.getData('text/html') : '';
+    const text = types.includes('text/plain') ? data.getData('text/plain') : '';
+    const uris = types.includes('text/uri-list') ? data.getData('text/uri-list') : '';
+
+    if (html) {
+      document.execCommand('insertHTML', false, html);
+    }
+    else if (text) {
+      document.execCommand('insertText', false, text);
+    }
+    else if (uris) {
+      document.execCommand('insertText', false, uris);
+    }
+
+    for (const file of files) {
+      if (file.type.startsWith('image/')) {
+        const url = URL.createObjectURL(file);
+        document.execCommand('insertHTML', false, `<img src="${url}" alt="${escapeHtml(file.name || 'image')}">`);
+      }
+      else {
+        const label = `${file.name || '(no name)'} · ${file.type || 'unknown type'} · ${file.size} bytes`;
+        document.execCommand('insertHTML', false, `<span class="file" contenteditable="false">${escapeHtml(label)}</span>&nbsp;`);
+      }
+    }
+  }
+
+  function escapeHtml(value) {
+    return value.replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+  }
+
+  const status = document.getElementById('bridgeStatus');
+  const startedAt = Date.now();
+  const statusTimer = setInterval(() => {
+    if (window.__jbCefClipboardBridge) {
+      status.textContent = 'Bridge script injected.';
+      clearInterval(statusTimer);
+    }
+    else if (Date.now() - startedAt >= 3000) {
+      status.textContent = 'Bridge script not injected.';
+      clearInterval(statusTimer);
+    }
+  }, 100);
+</script>
+</body>
+</html>

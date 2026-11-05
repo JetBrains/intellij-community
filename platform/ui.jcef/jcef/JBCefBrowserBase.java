@@ -190,6 +190,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   private volatile @Nullable String myCssBgColor;
 
   private final @NotNull CefKeyboardHandler myKeyboardHandler;
+  private final @Nullable JBCefClipboardBridge myClipboardBridge;
 
   /**
    * The browser instance is disposed automatically with {@link JBCefClient}
@@ -333,6 +334,8 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       myRequestHandler = null;
       myContextMenuHandler = null;
     }
+
+    myClipboardBridge = builder.isClipboardBridgeUsed() ? new JBCefClipboardBridge(this) : null;
 
     if (builder.myCreateImmediately) createImmediately();
 
@@ -577,6 +580,17 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   public boolean isOffScreenRendering() {
     return myIsOffScreenRendering;
+  }
+
+  /**
+   * Returns the bridge that routes the clipboard traffic through the IDE process, or null when this browser does not need it.
+   *
+   * @see JBCefBrowserBuilder#setUseClipboardBridge(boolean)
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  @Nullable JBCefClipboardBridge getClipboardBridge() {
+    return myClipboardBridge;
   }
 
   @VisibleForTesting
