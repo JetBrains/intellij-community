@@ -42,11 +42,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
-        "//plugins/kotlin/project-configuration",
-    ],
+    runtime_deps = ["//plugins/kotlin/project-configuration"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

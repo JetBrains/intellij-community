@@ -570,7 +570,6 @@ libraries/kotlin/test-junit
 libraries/kotlin/tooling-core
 libraries/kotlinc/allopen-compiler-plugin
 libraries/kotlinc/analysis-api
-libraries/kotlinc/analysis-api-impl-base
 libraries/kotlinc/analysis-api-k2
 libraries/kotlinc/analysis-api-platform-interface
 libraries/kotlinc/assignment-compiler-plugin

@@ -518,26 +518,6 @@
             }
         },
         {
-            "destination": "lib/modules/intellij.libraries.kotlinc.analysis.api.impl.base.jar",
-            "recipe": {
-                "sources": [
-                    {
-                        "input": "intellij.libraries.kotlinc.analysis.api.impl.base",
-                        "kind": "module",
-                        "filter": "module-v1"
-                    },
-                    {
-                        "input": "@lib//:libraries-kotlinc-analysis-api-impl-base-kotlinc-analysis-api-impl-base",
-                        "kind": "library",
-                        "filter": "library-v1"
-                    }
-                ],
-                "writer": {
-                    "mergeEntities": true
-                }
-            }
-        },
-        {
             "destination": "lib/modules/intellij.libraries.kotlinc.analysis.api.k2.jar",
             "recipe": {
                 "sources": [

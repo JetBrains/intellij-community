@@ -193,7 +193,6 @@
     <module name="intellij.libraries.kotlin.gradle.plugin.idea.browser.debug" loading="required"/>
     <module name="intellij.kotlin.codeInsight.vcs"/>
     <module name="intellij.libraries.kotlinc.analysis.api" required-if-available="intellij.platform.backend"/>
-    <module name="intellij.libraries.kotlinc.analysis.api.impl.base" required-if-available="intellij.platform.backend"/>
     <module name="intellij.libraries.kotlinc.analysis.api.k2" required-if-available="intellij.platform.backend"/>
     <module name="intellij.libraries.kotlinc.analysis.api.platform.interface" required-if-available="intellij.platform.backend"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common" loading="embedded"/>

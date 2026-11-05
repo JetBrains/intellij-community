@@ -11077,21 +11077,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.5.20-dev-3282.jar_copy",
-    src = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_20-dev-3282_http//file",
-    out = "org.jetbrains.kotlin/analysis-api-impl-base-for-ide-2.5.20-dev-3282.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "libraries-kotlinc-analysis-api-impl-base-kotlinc-analysis-api-impl-base",
-    jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_20-dev-3282_http//file",
-    source_jar = "@org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_20-dev-3282-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.jetbrains.kotlin/analysis-api-k2-for-ide-2.5.20-dev-3282.jar_copy",
     src = "@org_jetbrains_kotlin-analysis-api-k2-for-ide-2_5_20-dev-3282_http//file",
     out = "org.jetbrains.kotlin/analysis-api-k2-for-ide-2.5.20-dev-3282.jar",

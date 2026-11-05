@@ -45,7 +45,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//platform/lang-core",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//platform/util/jdom",
         "//plugins/kotlin/code-insight/descriptions",
         "//plugins/kotlin/base/platforms",
@@ -207,7 +206,6 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//java/java-psi-impl:psi-impl",
         "//java/java-impl:impl",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//plugins/kotlin/code-insight/utils",
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//java/openapi:java",

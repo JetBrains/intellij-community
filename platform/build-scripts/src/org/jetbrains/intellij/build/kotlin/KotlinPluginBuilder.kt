@@ -27,7 +27,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
 
     private val KOTLINC_LIBRARY_MODULES = java.util.List.of(
       "intellij.libraries.kotlinc.analysis.api",
-      "intellij.libraries.kotlinc.analysis.api.impl.base",
       "intellij.libraries.kotlinc.analysis.api.k2",
       "intellij.libraries.kotlinc.analysis.api.platform.interface",
       "intellij.libraries.kotlinc.kotlin.compiler.fir",

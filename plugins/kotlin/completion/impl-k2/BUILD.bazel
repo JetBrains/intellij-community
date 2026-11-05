@@ -44,7 +44,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//java/java-indexing-api:indexing",
         "//libraries/kotlinx/serialization/json",
         "//platform/structure-view-impl/backend",

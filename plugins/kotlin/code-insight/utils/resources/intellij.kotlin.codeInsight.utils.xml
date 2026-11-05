@@ -12,7 +12,6 @@
     <module name="intellij.kotlin.references"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinc.analysis.api"/>
-    <module name="intellij.libraries.kotlinc.analysis.api.impl.base"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>

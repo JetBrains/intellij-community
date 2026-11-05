@@ -150,7 +150,6 @@ dev_dist_plugin(
         "intellij.libraries.kotlin.gradle.plugin.idea.browser.debug",
         "intellij.kotlin.codeInsight.vcs",
         "intellij.libraries.kotlinc.analysis.api",
-        "intellij.libraries.kotlinc.analysis.api.impl.base",
         "intellij.libraries.kotlinc.analysis.api.k2",
         "intellij.libraries.kotlinc.analysis.api.platform.interface",
         "intellij.libraries.kotlinc.kotlin.compiler.common",
@@ -362,7 +361,6 @@ dev_dist_complex_plugin(
         "//libraries/kotlin/gradle.plugin.idea.browser.debug:gradle.plugin.idea.browser.debug_content_module_jar",
         "//plugins/kotlin/code-insight/vcs:vcs_content_module_jar",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_content_module_jar",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_content_module_jar",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_content_module_jar",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_content_module_jar",
         "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir_content_module_jar",
@@ -473,7 +471,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",

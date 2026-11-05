@@ -8982,20 +8982,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_20-dev-3282_http",
-    downloaded_file_path = "analysis-api-impl-base-for-ide-2.5.20-dev-3282.jar",
-    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.5.20-dev-3282/analysis-api-impl-base-for-ide-2.5.20-dev-3282.jar",
-)
-
-http_file(
-    name = "org_jetbrains_kotlin-analysis-api-impl-base-for-ide-2_5_20-dev-3282-sources_http",
-    downloaded_file_path = "analysis-api-impl-base-for-ide-2.5.20-dev-3282-sources.jar",
-    sha256 = "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/analysis-api-impl-base-for-ide/2.5.20-dev-3282/analysis-api-impl-base-for-ide-2.5.20-dev-3282-sources.jar",
-)
-
-http_file(
     name = "org_jetbrains_kotlin-analysis-api-k2-for-ide-2_5_20-dev-3282_http",
     downloaded_file_path = "analysis-api-k2-for-ide-2.5.20-dev-3282.jar",
     sha256 = "1b80073f82bfc118a65a9152708eaa03b3612583c11b82e7d23b94b97259c537",

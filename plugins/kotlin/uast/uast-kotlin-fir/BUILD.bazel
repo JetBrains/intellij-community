@@ -46,7 +46,6 @@ jvm_library(
         # do not sort,
         "//libraries/asm",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir",
     ],
     deps = [

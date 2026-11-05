@@ -5,7 +5,6 @@
       <map>
         <entry key="kotlinc.allopen-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.analysis-api" value="kotlin.util.compiler-classpath" />
-        <entry key="kotlinc.analysis-api-impl-base" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.analysis-api-k2" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.analysis-api-platform-interface" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.assignment-compiler-plugin" value="kotlin.util.compiler-classpath" />

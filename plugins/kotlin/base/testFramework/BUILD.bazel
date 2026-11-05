@@ -26,7 +26,6 @@ jvm_library(
     exports = ["//plugins/junit_rt:junit-rt"],
     runtime_deps = [
         # do not sort,
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//java/java-syntax:syntax",
         "//jps/model-api:model",
         "//platform/projectModel-api:projectModel",
