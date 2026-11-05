@@ -20,6 +20,10 @@ and collide.
 A prefix belongs to one plugin in a process: the first declaration wins, and a second plugin declaring it logs an
 error and keeps its plugin id.**
 
+A platform key has no owner
+([ADR 0124](./0124-a-key-is-identified-by-its-name-and-the-plugin-of-the-class-that-declares-it.md)). For the
+promotion, it belongs to the core plugin.
+
 ## Consequences
 
 - Eviction is exact: a listener on the extension point drops every key of a plugin when its extension goes away.
