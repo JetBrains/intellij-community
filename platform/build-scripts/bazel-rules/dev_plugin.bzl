@@ -604,8 +604,7 @@ _dev_plugin = rule(
     doc = """One simple plugin, packed and collected as a platform-neutral component.
 
 The consumer reaches it in the configuration of its product. The incoming `dev_dist_stamp_class_transition` keeps only
-the stamp class that `stamp_class_modes` and `retain_product_descriptor` state, so one component serves every product
-of one stamp class.""",
+the stamp class that `stamp_class_modes` states, so one component serves every product of one mode.""",
     cfg = dev_dist_stamp_class_transition,
     implementation = _dev_plugin_impl,
     attrs = {
@@ -735,7 +734,6 @@ def dev_plugin(
         output_stem = name,
         embed_content_modules = embed_content_modules,
         stamp_class_modes = kwargs.get("stamp_class_modes", []),
-        retain_product_descriptor = kwargs.get("retain_product_descriptor", False),
         tags = ["manual"],
         visibility = ["//visibility:private"],
         **inputs_attrs

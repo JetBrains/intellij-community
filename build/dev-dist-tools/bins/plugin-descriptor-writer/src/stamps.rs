@@ -22,7 +22,9 @@
 
 mod version;
 
-pub(crate) use version::{CompatibleBuildRange, compatible_platform_version_range, plugin_build_number};
+pub(crate) use version::{
+    CompatibleBuildRange, compatible_platform_version_range, is_eap, plugin_build_number, release_version_for_licensing,
+};
 
 use crate::descriptorxml::{Element, Node};
 
@@ -45,7 +47,8 @@ pub(crate) struct Request {
     pub product_descriptor: Option<ProductDescriptorStamps>,
 }
 
-/// The three product facts that a retained `product-descriptor` takes from the application info.
+/// The three facts that a retained `product-descriptor` takes. A dev distribution derives them from the build number
+/// and the pinned build date, and reads no application info. See `retained_product_stamps` of `main.rs`.
 #[derive(Clone, Debug, Default)]
 pub(crate) struct ProductDescriptorStamps {
     pub release_date: String,

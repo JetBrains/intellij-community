@@ -1,12 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-//! The two scalars that this binary computes and does not receive.
+//! The scalars that this binary computes from the build number and does not receive.
 //!
-//! The assembly computes them with `computePluginBuildNumber` and `getCompatiblePlatformVersionRange`, and this module
-//! is their port. A disagreement here moves the `<version>` and the `<idea-version>` of every plugin. The fragment that
-//! reads the produced file refuses that in `checkProducedPluginDescriptor`.
+//! The assembly computes the first two with `computePluginBuildNumber` and `getCompatiblePlatformVersionRange`, and
+//! this module is their port. A disagreement here moves the `<version>` and the `<idea-version>` of every plugin. The
+//! fragment that reads the produced file refuses that in `checkProducedPluginDescriptor`. The release version and the
+//! EAP flag of a retained `product-descriptor` are dev distribution rules.
 
-use super::{CompatibleBuildRange, compatible_platform_version_range, plugin_build_number};
+use super::{CompatibleBuildRange, compatible_platform_version_range, is_eap, plugin_build_number, release_version_for_licensing};
 
 #[test]
 fn the_plugin_build_number() {
@@ -71,4 +72,29 @@ fn the_compatible_platform_version_range() {
             "{name}"
         );
     }
+}
+
+/// The baseline names the release: `271` is 2027.1. The rest of the build number does not change the version.
+#[test]
+fn the_release_version_comes_from_the_baseline() {
+    for (build_number, want) in [
+        ("271.SNAPSHOT", "2027100"),
+        ("271.100.5", "2027100"),
+        ("263.SNAPSHOT", "2026300"),
+        ("263", "2026300"),
+    ] {
+        assert_eq!(release_version_for_licensing(build_number).unwrap(), want, "{build_number}");
+    }
+    for build_number in ["2027.1", "27.1", "27a.1", ""] {
+        assert!(release_version_for_licensing(build_number).is_err(), "{build_number:?}");
+    }
+}
+
+/// A `.SNAPSHOT` build number is an EAP, and a numeric one is not.
+#[test]
+fn a_snapshot_is_an_eap() {
+    assert!(is_eap("271.SNAPSHOT"));
+    assert!(is_eap("271.100.SNAPSHOT"));
+    assert!(!is_eap("271.100.5"));
+    assert!(!is_eap("271"));
 }

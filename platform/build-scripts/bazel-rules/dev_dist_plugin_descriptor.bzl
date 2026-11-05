@@ -40,23 +40,17 @@ DevDistPluginDescriptorInfo = provider(
         "stamp_class_modes": """The modes whose refusal list of this leaf is not empty, sorted.
 
         A component of the plugin states the same list, so its stamp class matches the class of this leaf.""",
-        "retain_product_descriptor": "Whether the leaf retains `product-descriptor`, so its stamp class keeps the product.",
         "_declaration": "Private versioned metadata with the declared File objects and action parameters.",
         "_declaration_file": "The private metadata file. It is not a default output or an action input.",
     },
 )
 
 DevDistProductInfo = provider(
-    doc = """The product facts that a retained `product-descriptor` reads, and the mode of the product.
+    doc = """The product facts of one product, and the mode of the product, read through the `label_flag` `dev_dist_product_info`.
 
-    A configuration and not attributes on the leaf rule, read through the `label_flag` `dev_dist_product_info`. The
-    consumer of a plugin component sets the flag and `dev_dist_stamp_class` for its product. Only a leaf with
-    `retain_product_descriptor` keeps the product, see `dev_dist_stamp_class_transition`. So one leaf serves every
-    product of one stamp class. The exception is a plugin two products state differently. The later product gets a
-    leaf of its own.
-
-    The stamps name the application info source and never its values. The descriptor writer reads the EAP flag, the
-    release date and the release version from it, so an edit of that file changes no generated file.""",
+    The consumer of a plugin component sets the flag and `dev_dist_stamp_class` for its product. No leaf reads the
+    product, so `dev_dist_stamp_class_transition` resets it, and one leaf serves every product of one mode. The
+    descriptor writer stamps a retained `product-descriptor` from the build number and the pinned build date.""",
     fields = {
         "application_info": "The product's application info source as a `File`, or None in the flag's default.",
         "host_application_info": "The application info of the host product as a `File`, for a frontend. None for every other product.",
@@ -147,14 +141,13 @@ def _dev_dist_stamp_class_transition_impl(settings, attr):
     mode = settings[_STAMP_CLASS_FLAG]
     return {
         _STAMP_CLASS_FLAG: mode if mode in _stamp_class_modes(attr) else _NO_STAMP_CLASS,
-        _PRODUCT_INFO_FLAG: settings[_PRODUCT_INFO_FLAG] if attr.retain_product_descriptor else _NO_PRODUCT_INFO,
+        _PRODUCT_INFO_FLAG: _NO_PRODUCT_INFO,
     }
 
 # The incoming transition of a plugin component, of a descriptor leaf and of the target that packs the descriptor jar. It
-# keeps the mode only when the plugin refuses content modules for that mode, and the product only when the plugin
-# retains its `product-descriptor`. A leaf that embeds every content module keeps no mode. Every other
-# value goes back to its default, which Bazel trims. So the components of products with equal stamps share one
-# configuration, and one action packs them for all.
+# keeps the mode only when the plugin refuses content modules for that mode. A leaf that embeds every content module
+# keeps no mode. No leaf reads a product, so the product goes back to its default too, which Bazel trims. So the
+# components of every product of one mode share one configuration, and one action packs them for all.
 dev_dist_stamp_class_transition = transition(
     implementation = _dev_dist_stamp_class_transition_impl,
     inputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
@@ -181,9 +174,6 @@ DEV_DIST_STAMP_CLASS_ATTRS = {
 
 The incoming transition keeps the mode of the consumer only when this list names it.""",
     ),
-    "retain_product_descriptor": attr.bool(
-        doc = "Whether the descriptor retains `product-descriptor`. Only then the incoming transition keeps the product.",
-    ),
     "_allowlist_function_transition": attr.label(
         default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist"),
     ),
@@ -207,7 +197,7 @@ def dev_dist_mode_refusals(ctx, descriptor):
     return descriptor.mode_refusals.get(ctx.attr._stamp_class[BuildSettingInfo].value, [])
 
 def dev_dist_check_stamp_class(ctx, descriptor):
-    """Fails unless the stamp class facts of a component equal the ones of its descriptor leaf.
+    """Fails unless the stamp class modes of a component equal the ones of its descriptor leaf.
 
     A component whose facts lack a mode would build under no mode, so its descriptor would embed no refused module.
 
@@ -221,12 +211,6 @@ def dev_dist_check_stamp_class(ctx, descriptor):
             sorted(ctx.attr.stamp_class_modes),
             descriptor.stamp_class_modes,
         ), attr = "stamp_class_modes")
-    if ctx.attr.retain_product_descriptor != descriptor.retain_product_descriptor:
-        fail("%s states retain_product_descriptor = %s, and its descriptor states %s" % (
-            ctx.label,
-            ctx.attr.retain_product_descriptor,
-            descriptor.retain_product_descriptor,
-        ), attr = "retain_product_descriptor")
 
 # The attributes a rule that collects per-product components declares, with the allowlist the transition needs.
 # Public, because `dev_dist_plugin_content` of `dev_dist_content.bzl` collects plugin components the same way.
@@ -337,7 +321,6 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
     Returns:
         The parameters, declared inputs, source bindings, and resolved stamps.
     """
-    product = ctx.attr._product_info[DevDistProductInfo]
     stamp_class = ctx.attr._stamp_class[BuildSettingInfo].value
     jars = ctx.attr.jar_inputs[_DevDistDescriptorJarsInfo] if ctx.attr.jar_inputs != None else _NO_DESCRIPTOR_JARS
     source = ctx.file.descriptor
@@ -356,16 +339,10 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
         ("--compatible-build-range", _compatible_build_range(ctx), "literal"),
     ]
 
-    # Only a retained `product-descriptor` reads the application info. Every other leaf names none, so an edit of an
-    # application info re-keys no other descriptor.
+    # A retained `product-descriptor` takes the pinned build date as its release date, and the writer derives the rest
+    # from the build number. No leaf reads an application info, so one leaf serves every product.
     if ctx.attr.retain_product_descriptor:
-        parameters.append(("--application-info-source", product.application_info, "formatted"))
-        if product.host_application_info != None:
-            parameters.append(("--host-application-info-source", product.host_application_info, "formatted"))
-        parameters.extend([
-            ("--replacement", list(product.replacements), "repeated"),
-            ("--build-date-seconds", DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS, "literal"),
-        ])
+        parameters.append(("--build-date-seconds", DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS, "literal"))
     parameters.extend([
         ("--retain-product-descriptor", str(ctx.attr.retain_product_descriptor).lower(), "literal"),
         ("--embed-content-modules", str(embed_content_modules).lower(), "literal"),
@@ -396,12 +373,6 @@ def _descriptor_request(ctx, module_name, embed_content_modules = None, reserial
         _descriptor_source_binding("descriptor" if source != None else "descriptor_jar", source_label, ctx.attr.descriptor_entry if source_jar != None else None, [source_file]),
         _descriptor_source_binding("build_number", ctx.attr._build_number_file.label, None, [ctx.file._build_number_file]),
     ]
-    if ctx.attr.retain_product_descriptor:
-        inputs.append(product.application_info)
-        sources.append(_descriptor_source_binding("application_info", product.application_info.owner, None, [product.application_info]))
-        if product.host_application_info != None:
-            inputs.append(product.host_application_info)
-            sources.append(_descriptor_source_binding("host_application_info", product.host_application_info.owner, None, [product.host_application_info]))
 
     # One answer per load path. The writer seeds the files first and puts a jar entry in only when the path is
     # absent. So a load path two declarations answer is refused here, where every declaration is visible.
@@ -592,11 +563,6 @@ def _descriptor_declaration_json(declaration):
     return json.encode({
         "version": declaration.version,
         "producer": declaration.producer,
-        "product": {
-            "producer": declaration.product._producer,
-            "dependency_label": str(declaration.product_dependency_label),
-            "replacements": list(declaration.product.replacements),
-        },
         "scope": declaration.scope,
         "sources": [{
             "attribute": source.attribute,
@@ -625,16 +591,6 @@ def _dev_dist_plugin_descriptor_impl(ctx):
     module_name = ctx.attr.main_module
     if not module_name:
         fail("The plugin must state its main module", attr = "main_module")
-
-    # Fail closed. The flag's default states no product, and a retained `product-descriptor` stamped from it would have
-    # no application info to read. The consumer of a plugin component sets the flag on the way down. A leaf built on its
-    # own has to set the flag itself, and the failure below says which flag that is.
-    product = ctx.attr._product_info[DevDistProductInfo]
-    if ctx.attr.retain_product_descriptor and product.application_info == None:
-        fail("%s states no application info, so no product asked for this descriptor. Point %s at one" % (
-            ctx.attr._product_info.label,
-            _PRODUCT_INFO_FLAG,
-        ))
 
     # The mode of the stamp class. The incoming transition keeps it only when this leaf refuses modules for it.
     stamp_class = ctx.attr._stamp_class[BuildSettingInfo].value
@@ -680,10 +636,8 @@ def _dev_dist_plugin_descriptor_impl(ctx):
 
     platforms = _resolved_platforms(ctx)
     declaration = struct(
-        version = 2,
+        version = 3,
         producer = _descriptor_producer_identity(ctx),
-        product = product,
-        product_dependency_label = ctx.attr._product_info.label,
         scope = {
             "main_module": module_name,
             "stamp_class": stamp_class,
@@ -713,7 +667,6 @@ def _dev_dist_plugin_descriptor_impl(ctx):
             mode_refusals = {mode: list(modules) for mode, modules in ctx.attr.mode_refused_content_modules.items()},
             embeds_content_modules = ctx.attr.embed_content_modules,
             stamp_class_modes = sorted(_refusing_modes(ctx.attr)),
-            retain_product_descriptor = ctx.attr.retain_product_descriptor,
             _declaration = declaration,
             _declaration_file = metadata,
         ),
@@ -839,14 +792,6 @@ critical path of the build.""",
             default = Label("//platform/build-scripts/bazel-rules:plugin_descriptor_writer"),
             executable = True,
             cfg = "exec",
-        ),
-        "_product_info": attr.label(
-            doc = """The product the stamps of a retained `product-descriptor` come from, as a flag rather than attributes.
-
-The default states nothing, so a leaf that retains `product-descriptor` and that no product's consumer reached fails at
-analysis. See `DevDistProductInfo`.""",
-            default = Label("//build:dev_dist_product_info"),
-            providers = [DevDistProductInfo],
         ),
         "_stamp_class": attr.label(
             doc = "The mode of the stamp class, the flag `dev_dist_stamp_class`. The leaf embeds the refusals of that mode.",

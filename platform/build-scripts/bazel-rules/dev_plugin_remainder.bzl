@@ -1198,8 +1198,7 @@ dev_plugin_component = rule(
     doc = """The component of one complex plugin chain.
 
 The consumer reaches it in the configuration of its product. The incoming `dev_dist_stamp_class_transition` keeps only
-the stamp class that `stamp_class_modes` and `retain_product_descriptor` state, so the whole chain below serves every
-product of one stamp class.""",
+the stamp class that `stamp_class_modes` states, so the whole chain below serves every product of one mode.""",
     cfg = dev_dist_stamp_class_transition,
     attrs = {
         "remainder": attr.label(mandatory = True, providers = [DevPluginRemainderInfo, DevDistRuntimeLayoutInfo]),
@@ -1329,14 +1328,13 @@ def dev_dist_complex_plugin(
         remainder_executables = [],
         independent_destinations = {},
         stamp_class_modes = [],
-        retain_product_descriptor = False,
         tags = [],
         visibility = ["//visibility:public"]):
     """Declares the execution chains of one complex plugin: one chain per platform it is bundled on, or one for all.
 
     One call serves every product whose rendered call is the same. The call states no product. The consumer of the
     component sets the product and the mode through `dev_dist_product_info_transition`. The component keeps only its
-    stamp class, which `stamp_class_modes` and `retain_product_descriptor` state.
+    stamp class, which `stamp_class_modes` states.
 
     The generator states the facts that vary per plugin. The macro derives everything that follows from them: the chain
     stem `<main module>[.<chain class>][_<platform>]`, the component name, the plan file label
@@ -1384,7 +1382,6 @@ def dev_dist_complex_plugin(
         independent_destinations: The destination of a reused jar outside `lib/modules/<module>.jar`, keyed by the
             module, and the destination of each native tree, keyed by `native-tree:<module>`.
         stamp_class_modes: The modes whose refusal list of the descriptor is not empty, sorted.
-        retain_product_descriptor: Whether the descriptor retains `product-descriptor`.
         tags: Tags for every target of every chain. `manual` is added.
         visibility: The visibility of every component. Public by default, because the product's dist is in another
             package. The other targets of a chain keep the package default.
@@ -1429,7 +1426,6 @@ def dev_dist_complex_plugin(
             remainder_executables = [_resolve_slot(main_module, destination, values) for destination in remainder_executables],
             independent_destinations = {key: _resolve_slot(main_module, value, values) for key, value in independent_destinations.items()},
             stamp_class_modes = stamp_class_modes,
-            retain_product_descriptor = retain_product_descriptor,
             tags = tags,
             visibility = visibility,
         )
@@ -1455,7 +1451,6 @@ def dev_dist_complex_plugin_variant(
         remainder_executables = [],
         independent_destinations = {},
         stamp_class_modes = [],
-        retain_product_descriptor = False,
         tags = [],
         visibility = ["//visibility:public"]):
     """Declares the execution chain of one complex plugin variant, every argument stated.
@@ -1494,7 +1489,6 @@ def dev_dist_complex_plugin_variant(
         independent_destinations: The destination of a reused jar outside `lib/modules/<module>.jar`, keyed by the
             module, and the destination of each native tree, keyed by `native-tree:<module>`.
         stamp_class_modes: The modes whose refusal list of the descriptor is not empty, sorted.
-        retain_product_descriptor: Whether the descriptor retains `product-descriptor`.
         tags: Tags for every target of the chain. `manual` is added.
         visibility: The visibility of `<name>_component`. The graph, the catalogue and the remainder keep the package
             default.
@@ -1580,7 +1574,6 @@ def dev_dist_complex_plugin_variant(
         component_name = component_name,
         target_platform = target_platform,
         stamp_class_modes = stamp_class_modes,
-        retain_product_descriptor = retain_product_descriptor,
         tags = tags,
         visibility = visibility,
     )

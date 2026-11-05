@@ -2,12 +2,11 @@
 #
 # The product mode of every product. `build/dev-dist-descriptors/BUILD.bazel` declares one `<product>_product_info`
 # target per key. A consumer of a plugin component sets `@community//build:dev_dist_product_info` to it and
-# `@community//build:dev_dist_stamp_class` to its mode. Only a plugin that retains its `product-descriptor` keeps
-# the product in its configuration.
+# `@community//build:dev_dist_stamp_class` to its mode. No leaf reads the product, so no plugin component keeps
+# it in its configuration.
 #
-# The target also names the application info sources of `DEV_DIST_APPLICATION_INFOS`, and the descriptor writer
-# reads the EAP flag, the release date and the release version from them. So an edit of an application info
-# changes no generated file.
+# No descriptor reads an application info. The descriptor writer stamps a retained `product-descriptor` from the
+# build number and the pinned build date. So an edit of an application info changes no generated file.
 #
 # Products with equal values share one private struct, named after the first of them.
 

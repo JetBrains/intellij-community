@@ -388,15 +388,15 @@ class DevDistSimplePackagingTest {
       descriptorLabel = "//build/dev-dist-descriptors/intellij.c:intellij.c_dev_descriptor",
       index = index,
       stampClassModes = listOf("frontend"),
-      retainProductDescriptor = true,
       embedContentModules = false,
     )
 
     assertThat(target).contains("    embed_content_modules = False,\n")
+    // The component reads no product, so the call states no `retain_product_descriptor`. Only the leaf does.
+    assertThat(target).doesNotContain("retain_product_descriptor")
     assertThat(target).contains(
       """
           plugin_directory = "plugins/c",
-          retain_product_descriptor = True,
           stamp_class_modes = [
               "frontend",
           ],

@@ -1074,7 +1074,6 @@ private fun renderPluginCall(
       descriptorLabel = declaration.label,
       descriptorVariant = descriptorEntry.variant,
       stampClassModes = descriptorEntry.stampClassModes,
-      retainProductDescriptor = descriptorEntry.retainProductDescriptor,
     )
     val rendered = renderDevDistPluginExecutionTargets(owner, entry, record, files, configuration)
     variants.add(rendered)

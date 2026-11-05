@@ -215,7 +215,6 @@ def dev_dist_plugin(
                 for mode, modules in descriptor_attrs.get("mode_refused_content_modules", {}).items()
                 if modules
             ]),
-            retain_product_descriptor = descriptor_attrs.get("retain_product_descriptor", False),
             embed_content_modules = descriptor_attrs.get("embed_content_modules", True),
             visibility = ["//visibility:public"],
         )

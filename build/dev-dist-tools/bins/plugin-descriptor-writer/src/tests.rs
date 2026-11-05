@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 
 use testkit::{TempDir, read_text, require_absent, write_file};
 
-use crate::test_support::{build_number_file, descriptor_jar, lines, option_lines, path_string, run_arguments, run_request, testdata};
+use crate::test_support::{build_number_file, descriptor_jar, lines, option_lines, path_string, run_arguments, run_request};
 use crate::{Mode, take_mode};
 
 fn path(dir: &Path, name: &str) -> String {
@@ -23,11 +23,6 @@ const PINNED_BUILD_DATE: &str = "--build-date-seconds=1767225600";
 
 /// The range that the rule states for every plugin without an exact version.
 const DEV_RANGE: &str = "--compatible-build-range=NEWER_WITH_SAME_BASELINE";
-
-/// The option that names an application info of `testdata/plugin_descriptor`.
-fn application_info(name: &str) -> String {
-    format!("--application-info-source={}", testdata(&format!("plugin_descriptor/{name}.xml")))
-}
 
 #[test]
 fn the_whole_request_is_patched() {
@@ -158,15 +153,15 @@ impl Plugin {
         minimal_request(self.dir(), &self.source, &self.output, "263.100.5")
     }
 
-    /// The request with the build number `263.100.5` that retains `product-descriptor` and stamps it from the
-    /// application info `testdata/plugin_descriptor/<name>.xml`.
-    fn retained_request(&self, application_info_name: &str) -> Vec<String> {
-        let mut request = self.request();
-        request.extend([
-            "--retain-product-descriptor=true".to_owned(),
-            application_info(application_info_name),
-            PINNED_BUILD_DATE.to_owned(),
-        ]);
+    /// The request with the build number `263.100.5` that retains `product-descriptor`.
+    fn retained_request(&self) -> Vec<String> {
+        self.retained_request_with_build_number("263.100.5")
+    }
+
+    /// The request with `build_number` that retains `product-descriptor`.
+    fn retained_request_with_build_number(&self, build_number: &str) -> Vec<String> {
+        let mut request = minimal_request(self.dir(), &self.source, &self.output, build_number);
+        request.extend(["--retain-product-descriptor=true".to_owned(), PINNED_BUILD_DATE.to_owned()]);
         request
     }
 
@@ -258,31 +253,6 @@ fn an_exact_range_pins_both_ends() {
     assert!(got.contains("since-build=\"263.100.5\" until-build=\"263.100.5\""), "{got}");
 }
 
-/// A numeric build number gives one range for an EAP and a release application info. The EAP flag reaches only the
-/// stamps of a retained `product-descriptor`, so a release flip changes no other byte of the descriptor.
-#[test]
-fn one_range_serves_both_eap_values() {
-    let mut outputs = Vec::new();
-    for name in ["eap", "release"] {
-        let plugin = Plugin::new(r#"<idea-plugin><id>a</id><product-descriptor code="X" release-date="20200101"/></idea-plugin>"#);
-        assert_eq!(plugin.run(&plugin.retained_request(name)), 0, "{name}");
-        let got = plugin.output_text();
-        assert!(got.contains(r#"since-build="263.100" until-build="263.*""#), "{name}:\n{got}");
-        outputs.push(got);
-    }
-    let without_product_descriptor: Vec<String> = outputs
-        .iter()
-        .map(|text| {
-            text.lines()
-                .filter(|line| !line.contains("<product-descriptor"))
-                .collect::<Vec<_>>()
-                .join("\n")
-        })
-        .collect();
-    assert_eq!(without_product_descriptor[0], without_product_descriptor[1]);
-    assert_ne!(outputs[0], outputs[1]);
-}
-
 /// The rule states `EXACT` or `NEWER_WITH_SAME_BASELINE`. Every other name of `CompatibleBuildRange` is refused like an
 /// unknown one, and so is a request without a range.
 #[test]
@@ -368,13 +338,27 @@ fn assert_one_more_option_is_refused(option: &str) {
     require_absent(&plugin.output);
 }
 
-/// Only a retained `product-descriptor` reads the application info. The rule states no application info option for
-/// another plugin, so the writer refuses each one as unknown.
+/// Only a retained `product-descriptor` reads the build date. The rule states it for no other plugin, so the writer
+/// refuses it as unknown.
 #[test]
-fn an_application_info_option_without_a_retained_product_descriptor_is_refused() {
-    let host = format!("--host-application-info-source={}", testdata("plugin_descriptor/release.xml"));
-    let info = application_info("release");
-    for option in [info.as_str(), host.as_str(), PINNED_BUILD_DATE, "--replacement=RELEASE_DATE="] {
+fn a_build_date_without_a_retained_product_descriptor_is_refused() {
+    assert_one_more_option_is_refused(PINNED_BUILD_DATE);
+}
+
+/// The descriptor writer reads no application info, so the rule states no application info option. The writer
+/// refuses each one as unknown, also for a retained `product-descriptor`.
+#[test]
+fn an_application_info_option_is_refused() {
+    for option in [
+        "--application-info-source=info.xml",
+        "--host-application-info-source=host.xml",
+        "--replacement=RELEASE_DATE=",
+    ] {
+        let plugin = Plugin::new(PLUGIN_A);
+        let mut request = plugin.retained_request();
+        request.push(option.to_owned());
+        assert_eq!(plugin.run(&request), 2, "{option}");
+        require_absent(&plugin.output);
         assert_one_more_option_is_refused(option);
     }
 }
@@ -386,7 +370,6 @@ fn a_missing_required_option_is_refused() {
     let source = path_string(&dir.join("plugin.xml"));
     write_file(dir.join("plugin.xml"), "<idea-plugin/>");
     let source_option = format!("--source={source}");
-    let info = application_info("release");
     for complete in [
         &["--out=o", "--main-module=m", &source_option, "--build-number-file=b", DEV_RANGE][..],
         &[
@@ -396,7 +379,6 @@ fn a_missing_required_option_is_refused() {
             "--build-number-file=b",
             DEV_RANGE,
             "--retain-product-descriptor=true",
-            &info,
             PINNED_BUILD_DATE,
         ][..],
     ] {
@@ -602,56 +584,50 @@ fn invalid_modes_are_refused() {
     }
 }
 
-/// The stamps of a retained `product-descriptor` come from the application info: the EAP flag, the release date and the
-/// release version. A frontend takes them from its host, and a language server applies its markers first. The range is
-/// the stated one for each of them.
+/// The stamps of a retained `product-descriptor` come from the build number and the pinned build date, and the writer
+/// reads no application info. `271` is the release 2027.1, so the release version is `2027100`. A `.SNAPSHOT` build
+/// number sets `eap`, and a numeric one clears it. The range is the stated one in both cases.
 #[test]
-fn the_stamps_come_from_the_application_info() {
-    let host = format!("--host-application-info-source={}", testdata("plugin_descriptor/release.xml"));
-    let cases: [(&str, &[&str], &str, &str); 4] = [
+fn the_stamps_come_from_the_build_number_and_the_build_date() {
+    for (build_number, descriptor, range) in [
         (
-            "eap",
-            &[],
-            r#"<product-descriptor code="X" release-date="20260101" release-version="2026300" eap="true" />"#,
-            r#"since-build="263.100" until-build="263.*""#,
+            "271.SNAPSHOT",
+            r#"<product-descriptor code="X" release-date="20260101" release-version="2027100" eap="true" />"#,
+            r#"since-build="271.SNAPSHOT" until-build="271.SNAPSHOT""#,
         ),
         (
-            "release",
-            &[],
-            r#"<product-descriptor code="X" release-date="20261201" release-version="2026200" />"#,
+            "263.100.5",
+            r#"<product-descriptor code="X" release-date="20260101" release-version="2026300" />"#,
             r#"since-build="263.100" until-build="263.*""#,
         ),
-        (
-            "client",
-            &[&host],
-            r#"<product-descriptor code="X" release-date="20261201" release-version="2026200" />"#,
-            r#"since-build="263.100" until-build="263.*""#,
-        ),
-        (
-            "server",
-            &[
-                "--replacement=BUNDLE_EAP= eap=\"true\"",
-                "--replacement=RELEASE_DATE=",
-                "--replacement=BUNDLE_NAME=server",
-            ],
-            r#"<product-descriptor code="X" release-date="20260101" release-version="2026300" eap="true" />"#,
-            r#"since-build="263.100" until-build="263.*""#,
-        ),
-    ];
-    for (name, options, descriptor, range) in cases {
+    ] {
         let plugin = Plugin::new(
-            r#"<idea-plugin><id>a</id><product-descriptor code="X" release-date="__DATE__" release-version="__VERSION__"/></idea-plugin>"#,
+            r#"<idea-plugin><id>a</id><product-descriptor code="X" release-date="__DATE__" release-version="__VERSION__" eap="true"/></idea-plugin>"#,
         );
-        let mut request = plugin.retained_request(name);
-        request.extend(lines(options));
-        assert_eq!(plugin.run(&request), 0, "{name}");
+        assert_eq!(
+            plugin.run(&plugin.retained_request_with_build_number(build_number)),
+            0,
+            "{build_number}"
+        );
         let got = plugin.output_text();
-        assert!(got.contains(descriptor), "{name}:\n{got}");
-        assert!(got.contains(range), "{name}:\n{got}");
+        assert!(got.contains(descriptor), "{build_number}:\n{got}");
+        assert!(got.contains(range), "{build_number}:\n{got}");
     }
 }
 
-/// The rule states the application info and no stamp value, so the three old options are unknown.
+/// A release date that the descriptor states wins, unless it starts with `__`. Two Rider plugins state one.
+#[test]
+fn a_stated_release_date_wins() {
+    let plugin = Plugin::new(r#"<idea-plugin><id>a</id><product-descriptor code="X" release-date="20270401"/></idea-plugin>"#);
+    assert_eq!(plugin.run(&plugin.retained_request_with_build_number("271.SNAPSHOT")), 0);
+    let got = plugin.output_text();
+    assert!(
+        got.contains(r#"<product-descriptor code="X" release-date="20270401" eap="true" release-version="2027100" />"#),
+        "{got}"
+    );
+}
+
+/// The rule states no stamp value, so the three old stamp options are unknown.
 #[test]
 fn the_old_stamp_options_are_refused() {
     for option in ["--eap=true", "--release-date=20260101", "--release-version=2026300"] {
@@ -659,49 +635,24 @@ fn the_old_stamp_options_are_refused() {
     }
 }
 
-/// A malformed application info option is a request that the rule cannot state. An application info that the reader
-/// refuses is a request that the inputs cannot satisfy.
+/// A build date that is no number of seconds is a request that the rule cannot state. A build number without a
+/// baseline of three digits names no release version, so the inputs cannot satisfy the request.
 #[test]
-fn a_bad_application_info_is_refused() {
-    for (options, code) in [
-        (&["--build-date-seconds=soon"][..], 2),
-        (&["--replacement=VALUE"][..], 2),
-        (&["--replacement==value"][..], 2),
-        (&["--replacement=A=1", "--replacement=A=2"][..], 2),
-        (&["--host-application-info-source="][..], 2),
-        (&["--application-info-source=absent.xml"][..], 1),
-    ] {
+fn a_bad_stamp_input_is_refused() {
+    let plugin = Plugin::new(PLUGIN_A);
+    let mut request = plugin.retained_request();
+    request.retain(|line| line != PINNED_BUILD_DATE);
+    request.push("--build-date-seconds=soon".to_owned());
+    assert_eq!(plugin.run(&request), 2);
+    require_absent(&plugin.output);
+
+    for build_number in ["2027.1", "27.1", "27a.1"] {
         let plugin = Plugin::new(PLUGIN_A);
-        let mut request = plugin.retained_request("release");
-        let replaced: Vec<&str> = options.iter().map(|option| option.split('=').next().unwrap()).collect();
-        request.retain(|line| {
-            !replaced
-                .iter()
-                .any(|name| *name != "--replacement" && line.starts_with(&format!("{name}=")))
-        });
-        request.extend(lines(options));
-        assert_eq!(plugin.run(&request), code, "{options:?}");
+        assert_eq!(
+            plugin.run(&plugin.retained_request_with_build_number(build_number)),
+            1,
+            "{build_number}"
+        );
         require_absent(&plugin.output);
     }
-}
-
-/// A release product without a release date takes the pinned build date. A release build takes the date from a system
-/// property, and a dev distribution sets none.
-#[test]
-fn a_release_without_a_release_date_takes_the_build_date() {
-    let plugin = Plugin::new(
-        r#"<idea-plugin><id>a</id><product-descriptor code="X" release-date="__DATE__" release-version="__VERSION__"/></idea-plugin>"#,
-    );
-    let info = plugin.dir().join("dateless.xml");
-    let release = read_text(Path::new(&testdata("plugin_descriptor/release.xml")));
-    write_file(&info, release.replace(r#" majorReleaseDate="20261201""#, ""));
-    let mut request = plugin.retained_request("release");
-    request.retain(|line| !line.starts_with("--application-info-source="));
-    request.push(format!("--application-info-source={}", path_string(&info)));
-    assert_eq!(plugin.run(&request), 0);
-    let got = plugin.output_text();
-    assert!(
-        got.contains(r#"<product-descriptor code="X" release-date="20260101" release-version="2026200" />"#),
-        "{got}"
-    );
 }

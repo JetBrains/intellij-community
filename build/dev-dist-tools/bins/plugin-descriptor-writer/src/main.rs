@@ -72,7 +72,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, anyhow, bail};
-use appinfo::{ApplicationInfo, Replacement, descriptorxml};
+use appinfo::{descriptorxml, format_major_release_date};
 use jarpack::Jar;
 
 use crate::stamps::CompatibleBuildRange;
@@ -173,8 +173,7 @@ struct PluginRequest {
     build_number_file: PathBuf,
     /// The since and until range of the descriptor. The rule states it, so no product fact selects it.
     compatible_build_range: CompatibleBuildRange,
-    /// The product facts of a retained `product-descriptor`. `None` for a plugin that drops the element, and then the
-    /// request names no application info.
+    /// The facts of a retained `product-descriptor`. `None` for a plugin that drops the element.
     retained_product: Option<RetainedProduct>,
     embeds_content: bool,
     /// Finishes the ordinary XML normalization before the embedded descriptors add CDATA.
@@ -200,17 +199,14 @@ struct PluginRequest {
     reserialized_output: Option<PathBuf>,
 }
 
-/// The application info that the stamps of a retained `product-descriptor` read: the EAP flag, the release date and the
-/// release version. Only `--retain-product-descriptor=true` states it.
+/// What the stamps of a retained `product-descriptor` read besides the build number. Only
+/// `--retain-product-descriptor=true` states it.
+///
+/// A dev distribution reads no application info here. So one descriptor serves every product, and no product is in the
+/// configuration of the leaf. See [`retained_product_stamps`].
 #[derive(Debug, PartialEq, Eq)]
 struct RetainedProduct {
-    /// The application info of the product.
-    application_info: PathBuf,
-    /// The application info of the host product, for a frontend.
-    host_application_info: Option<PathBuf>,
-    /// The markers of the application info, in the order that the writer replaces them.
-    replacements: Vec<Replacement>,
-    /// The pinned build date. An EAP product without a release date takes its date.
+    /// The pinned build date, which is the release date.
     build_date_seconds: i64,
 }
 
@@ -263,7 +259,7 @@ fn patch(parsed: &PluginRequest) -> Result<String> {
     let plugin_version = stamps::plugin_build_number(&build_number)? + &parsed.version_suffix;
     let (since_build, until_build) = stamps::compatible_platform_version_range(parsed.compatible_build_range, &build_number);
     let product_stamps = match &parsed.retained_product {
-        Some(product) => Some(read_application_info(product)?),
+        Some(product) => Some(retained_product_stamps(&build_number, product)?),
         None => None,
     };
 
@@ -283,11 +279,7 @@ fn patch(parsed: &PluginRequest) -> Result<String> {
             version: plugin_version,
             since_build,
             until_build,
-            product_descriptor: product_stamps.map(|application_info| stamps::ProductDescriptorStamps {
-                release_date: application_info.major_release_date.clone(),
-                release_version: application_info.release_version_for_licensing(),
-                is_eap: application_info.is_eap,
-            }),
+            product_descriptor: product_stamps,
         },
     );
     structural::resolve_includes(&mut element, &cache)?;
@@ -310,14 +302,18 @@ fn patch(parsed: &PluginRequest) -> Result<String> {
     Ok(descriptorxml::write(&element))
 }
 
-/// Reads the facts of the application info. A frontend reads its host too, as the product files tool does.
-fn read_application_info(product: &RetainedProduct) -> Result<ApplicationInfo> {
-    ApplicationInfo::load(
-        &product.application_info,
-        &product.replacements,
-        product.host_application_info.as_deref(),
-        product.build_date_seconds,
-    )
+/// The stamps of a retained `product-descriptor` in a dev distribution.
+///
+/// The release date is the pinned build date, the release version comes from the baseline of the build number, and
+/// `eap` is set for a `.SNAPSHOT` build number. A bundled plugin is released with its product, so production stamps
+/// the facts of the product here. Every product of a dev distribution has the same facts, so the writer derives them
+/// from what every leaf reads.
+fn retained_product_stamps(build_number: &str, product: &RetainedProduct) -> Result<stamps::ProductDescriptorStamps> {
+    Ok(stamps::ProductDescriptorStamps {
+        release_date: format_major_release_date(None, product.build_date_seconds)?,
+        release_version: stamps::release_version_for_licensing(build_number)?,
+        is_eap: stamps::is_eap(build_number),
+    })
 }
 
 /// Reads the parameter file that `dev_dist_plugin_descriptor` writes, one option per line.
@@ -341,8 +337,8 @@ fn parse_plugin_request(mut options: cli::Options) -> Result<PluginRequest> {
     };
     let build_number_file = options.require("--build-number-file")?.into();
     let compatible_build_range = parse_compatible_build_range(&options.require("--compatible-build-range")?)?;
-    // Only a retained `product-descriptor` reads the application info. The rule states it for no other plugin, so the
-    // application info options of another request stay unknown and fail at `finish`.
+    // Only a retained `product-descriptor` reads the build date. The rule states it for no other plugin, so the option
+    // of another request stays unknown and fails at `finish`.
     let retained_product = if boolean_option(&mut options, "--retain-product-descriptor", false)? {
         Some(parse_retained_product(&mut options)?)
     } else {
@@ -388,22 +384,14 @@ fn parse_compatible_build_range(value: &str) -> Result<CompatibleBuildRange> {
     }
 }
 
-/// Reads the application info options of a retained `product-descriptor`. The rule states the application info of the
-/// product and the pinned build date, so a request without them is one that the rule cannot state.
+/// Reads the option of a retained `product-descriptor`. The rule states the pinned build date, so a request without it
+/// is one that the rule cannot state.
 fn parse_retained_product(options: &mut cli::Options) -> Result<RetainedProduct> {
-    let application_info = options.require("--application-info-source")?.into();
-    let host_application_info = non_empty_path(options, "--host-application-info-source")?;
-    let replacements = Replacement::parse_all(&options.take_all("--replacement")?)?;
     let build_date_seconds = options.require("--build-date-seconds")?;
     let Ok(build_date_seconds) = build_date_seconds.parse::<i64>() else {
         bail!("--build-date-seconds is not a number of seconds: '{build_date_seconds}'");
     };
-    Ok(RetainedProduct {
-        application_info,
-        host_application_info,
-        replacements,
-        build_date_seconds,
-    })
+    Ok(RetainedProduct { build_date_seconds })
 }
 
 /// Reads an optional path option. The rules never write an empty value, so this function refuses one.

@@ -81,6 +81,25 @@ fn digit_dot_digit_shape(build_number: &str) -> bool {
     build_number_shape(build_number) && build_number.matches('.').count() == 1
 }
 
+/// The `release-version` that a dev distribution stamps on a retained `product-descriptor`.
+///
+/// The baseline of the build number names the release: `271` is the release 2027.1. The value has the shape of
+/// `ApplicationInfo.release_version_for_licensing` of the `appinfo` crate, the major version, the main part of the
+/// minor version and `00`. So `271.SNAPSHOT` gives `2027100`. A baseline of three digits is the only shape that names
+/// a release.
+pub(crate) fn release_version_for_licensing(build_number: &str) -> Result<String> {
+    let baseline = build_number.split('.').next().unwrap_or_default();
+    if baseline.len() != 3 || !baseline.bytes().all(|byte| byte.is_ascii_digit()) {
+        bail!("the build number {build_number:?} has no baseline of three digits, so it names no release version");
+    }
+    Ok(format!("20{}{}00", &baseline[..2], &baseline[2..]))
+}
+
+/// Whether a dev distribution stamps `eap` on a retained `product-descriptor`: exactly for a `.SNAPSHOT` build number.
+pub(crate) fn is_eap(build_number: &str) -> bool {
+    build_number.ends_with(SNAPSHOT_SUFFIX)
+}
+
 /// `getCompatiblePlatformVersionRange`
 /// (`community/platform/build-scripts/src/org/jetbrains/intellij/build/impl/PluginXmlPatcher.kt:27-49`).
 ///

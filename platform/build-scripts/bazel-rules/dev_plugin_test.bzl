@@ -786,9 +786,8 @@ def dev_plugin_test_suite(name):
 
     # A component must state the stamp class of its descriptor. Without the mode, the component would build under no
     # mode, and its descriptor would embed no refused module.
-    for case, modes, retain, message in [
-        ("no_modes", [], False, "states the stamp class modes [], and its descriptor states [\"frontend\"]"),
-        ("retain", ["frontend"], True, "states retain_product_descriptor = True, and its descriptor states False"),
+    for case, modes, message in [
+        ("no_modes", [], "states the stamp class modes [], and its descriptor states [\"frontend\"]"),
     ]:
         mismatch = name + "_stamp_class_" + case
         dev_plugin(
@@ -799,7 +798,6 @@ def dev_plugin_test_suite(name):
             modules = {":" + mode_owner: _MODE_MODULE},
             jars = {"lib/mode.jar": [_MODE_MODULE]},
             stamp_class_modes = modes,
-            retain_product_descriptor = retain,
         )
         tests.append(mismatch + "_test")
         _failure_test(name = tests[-1], target_under_test = ":" + mismatch, expected_message = message)

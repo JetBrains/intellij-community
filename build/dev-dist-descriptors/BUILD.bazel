@@ -6,9 +6,8 @@ load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev
 # plugin packages of the community half sit under this package.
 #
 # One `<product>_product_info` per product: the descriptor stamps a consumer sets `dev_dist_product_info` to. The
-# generated map is the one owner of the product list, so no product name is hand-written here. The stamps name the
-# application info sources of `DEV_DIST_APPLICATION_INFOS`, and the descriptor writer reads the EAP flag, the release
-# date and the release version from them. So an edit of an application info changes no generated file.
+# generated map is the one owner of the product list, so no product name is hand-written here. No descriptor reads
+# the application info sources that a target names, so an edit of an application info changes no generated file.
 #
 # Every target is `manual`: it runs no action and declares no output, and the tag keeps the rule of the package simple.
 [

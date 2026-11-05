@@ -234,8 +234,8 @@ internal class PluginDescriptorEntry(
 ) {
   /**
    * The modes that change the bytes of the plugin component: each mode of [modeRefusedContentModules] with a refusal,
-   * sorted. With [retainProductDescriptor], they form the stamp class of the component. A component call states both,
-   * and `dev_dist_stamp_class_transition` keeps only these parts of the configuration.
+   * sorted. They form the stamp class of the component. A component call states them, and
+   * `dev_dist_stamp_class_transition` keeps only this part of the configuration.
    */
   val stampClassModes: List<String>
     get() = modeRefusedContentModules.filterValues { it.isNotEmpty() }.keys.sorted()
@@ -1352,9 +1352,8 @@ internal fun descriptorLabel(descriptor: ReachedDescriptor, index: DevDistBazelI
 /**
  * Renders `dev_dist_product_info.bzl`: the product mode of every product, and nothing about a plugin.
  *
- * It states no value of the application info. The descriptor writer reads the EAP flag, the release date and the
- * release version from the sources of `DEV_DIST_APPLICATION_INFOS`, so an edit of an application info changes no
- * generated file.
+ * It states no value of the application info, and no descriptor reads an application info. The descriptor writer
+ * stamps a retained `product-descriptor` from the build number and the pinned build date.
  *
  * The community half also states [MARKETPLACE_NAMES] as `DEV_DIST_MARKETPLACE_NAMES`. The descriptor rule of both halves
  * loads that one constant, so the names are no product fact.
@@ -1367,12 +1366,11 @@ internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DevDistH
   append("#\n")
   append("# The product mode of every product. `build/dev-dist-descriptors/BUILD.bazel` declares one `<product>_product_info`\n")
   append("# target per key. A consumer of a plugin component sets `@community//build:dev_dist_product_info` to it and\n")
-  append("# `@community//build:dev_dist_stamp_class` to its mode. Only a plugin that retains its `product-descriptor` keeps\n")
-  append("# the product in its configuration.\n")
+  append("# `@community//build:dev_dist_stamp_class` to its mode. No leaf reads the product, so no plugin component keeps\n")
+  append("# it in its configuration.\n")
   append("#\n")
-  append("# The target also names the application info sources of `DEV_DIST_APPLICATION_INFOS`, and the descriptor writer\n")
-  append("# reads the EAP flag, the release date and the release version from them. So an edit of an application info\n")
-  append("# changes no generated file.\n")
+  append("# No descriptor reads an application info. The descriptor writer stamps a retained `product-descriptor` from the\n")
+  append("# build number and the pinned build date. So an edit of an application info changes no generated file.\n")
   append("#\n")
   append("# Products with equal values share one private struct, named after the first of them.\n")
   if (half.rootDirectory == COMMUNITY_ROOT_DIRECTORY) {

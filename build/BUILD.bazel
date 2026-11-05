@@ -78,11 +78,10 @@ filegroup(
 # component keeps only what changes its bytes, so one component serves every product of one stamp class.
 #
 # `dev_dist_stamp_class` is the product mode, such as `frontend`. A component keeps it only when its descriptor refuses
-# content modules for that mode. `dev_dist_product_info` names the product whose application info a retained
-# `product-descriptor` reads. Only a plugin with `retain_product_descriptor` keeps it. Every other component resets both
-# flags to their defaults, which Bazel trims from the configuration.
+# content modules for that mode. `dev_dist_product_info` names the product. No leaf reads it, so every component resets
+# it, and the mode that its descriptor does not refuse, to the default. Bazel trims a default from the configuration.
 #
-# The default states no product, and a leaf that retains `product-descriptor` fails on it.
+# The default states no product.
 dev_dist_product_info(name = "no_dev_dist_product_info")
 
 label_flag(
