@@ -44,7 +44,6 @@ object CommunityProductFragments {
 
     // Optional plugin support
     module("intellij.platform.remoteServers.impl")
-    deprecatedInclude("intellij.uiDesigner", "META-INF/DesignerCorePlugin.xml", optional = true)
 
     // Extensions block (UTM tracking, productivity features, tips)
     requiredModule("intellij.java.ide.resources")

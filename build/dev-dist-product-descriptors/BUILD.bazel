@@ -79,9 +79,6 @@ dev_dist_product_descriptor(
         "//platform/xdebugger-impl:resources/intellij.platform.debugger.impl.actions.xml": "intellij.platform.debugger.impl.actions.xml",
         "//platform/xdebugger-impl:resources/intellij.platform.debugger.impl.content.xml": "intellij.platform.debugger.impl.content.xml",
     },
-    includes = {
-        "/META-INF/DesignerCorePlugin.xml": "optional",
-    },
     main_module = "intellij.idea.android.customization",
     module_set_table = DEV_DIST_MODULE_SETS,
     module_sets = [
@@ -165,9 +162,6 @@ dev_dist_product_descriptor(
         "//platform/xdebugger-impl/ui:resources/intellij.platform.debugger.impl.ui.actions.xml": "intellij.platform.debugger.impl.ui.actions.xml",
         "//platform/xdebugger-impl:resources/intellij.platform.debugger.impl.actions.xml": "intellij.platform.debugger.impl.actions.xml",
         "//platform/xdebugger-impl:resources/intellij.platform.debugger.impl.content.xml": "intellij.platform.debugger.impl.content.xml",
-    },
-    includes = {
-        "/META-INF/DesignerCorePlugin.xml": "optional",
     },
     main_module = "intellij.idea.community.customization",
     module_set_table = DEV_DIST_MODULE_SETS,

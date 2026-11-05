@@ -213,5 +213,4 @@ DEV_DIST_EXTRA_DESCRIPTOR_FILES = [
     ("plugins/groovy/resources/META-INF/groovy-logback-support.xml", "intellij.groovy"),
     ("plugins/groovy/resources/META-INF/groovy-templates.xml", "intellij.groovy"),
     ("plugins/terminal/resources/META-INF/terminal.xml", "intellij.terminal"),
-    ("plugins/ui-designer-core/resources/META-INF/DesignerCorePlugin.xml", "intellij.uiDesigner"),
 ]
