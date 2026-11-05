@@ -37,8 +37,8 @@ abstract class AbstractKotlinCompilerReferenceTest : KotlinCompilerReferenceTest
         val isTestEnabled = isCompatibleVersions && (ignoreK2Compiler == null)
 
         runCatching {
-            val allFiles = listOf(mainFile) + Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile)
-            myFixture.configureByFiles(*allFiles.toTypedArray())
+            Path(testDataFilePath).listDirectoryEntries().map { it.name }.minus(mainFile).forEach(myFixture::copyFileToProject)
+            myFixture.configureByFile(mainFile)
             project.putUserData(CompileDriver.TIMEOUT, 100_000)
             try {
                 rebuildProject()

@@ -1,3 +1,3 @@
 fun test123() {
-    Main().compon<caret>ent2()
+    Main().component2()
 }
