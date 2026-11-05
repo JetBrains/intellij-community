@@ -3,6 +3,8 @@ package com.intellij.ide.browsers
 
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
@@ -28,144 +30,183 @@ fun detectBrowserBinary(
 
   // An explicit absolute path was configured but is missing or not executable: fail instead of silently falling
   // back to a different installed browser resolved by name-based detection (which could launch the wrong browser).
+  val failure = Result.failure<Path>(BrowserExecutableNotFoundException(browser))
   if (browserPath != null && browserPath.isAbsolute && !browserPath.exists()) {
-    return Result.failure(BrowserExecutableNotFoundException(browser))
+    return failure
   }
 
-  val detectedBrowser = detectBrowserType(browser) ?: return Result.failure(
-    BrowserExecutableNotFoundException(browser)
-  )
+  val detectedBrowser = detectBrowserType(browser) ?: return failure
+  val pathToBinary = findBrowserBinary(detectedBrowser, os, env, fs, userHome) ?: return failure
 
-  val pathToBinary = findBrowserBinary(detectedBrowser, os, env, fs, userHome)
-  if (pathToBinary != null) {
-    return Result.success(pathToBinary)
-  }
-  return Result.failure(BrowserExecutableNotFoundException(browser))
+  return Result.success(pathToBinary)
 }
 
 /**
- * Sealed class hierarchy representing well-known browsers
+ * A browser that [detectInstalledBrowsers] found in a default install location.
+ *
+ * [path] is the short form to store in the browser list:
+ * the app name on macOS, for `open -a`,
+ * the executable name on Linux when the directory of the executable is in `PATH`,
+ * and the full path of [binary] otherwise.
+ * [bundle] is the app bundle on macOS.
  */
 @ApiStatus.Internal
-sealed class DetectedBrowser {
-  sealed class BrowserWithQuality(open val quality: BrowserQuality) : DetectedBrowser()
-
-  data class Chrome(override val quality: ChromeQuality) : BrowserWithQuality(quality)
-  data class Edge(override val quality: EdgeQuality) : BrowserWithQuality(quality)
-  data object Chromium : DetectedBrowser()
-  data object Opera : DetectedBrowser()
-  data object Brave : DetectedBrowser()
-  data object Vivaldi : DetectedBrowser()
+data class InstalledBrowser(
+  @NlsSafe val name: String,
+  @NlsSafe val path: String,
+  val binary: Path,
+  val bundle: Path?,
+  val knownBrowser: KnownBrowser,
+) {
+  /**
+   * Returns `true` when [browser] opens this installed browser. The settings of [browser], such as its arguments, do not matter.
+   *
+   * The path of [browser] can be [path], [binary] or [bundle].
+   * A path without a directory, such as `google-chrome`, can also name this browser by its version, see [detectBrowserType].
+   */
+  fun isSameAs(browser: WebBrowser): Boolean {
+    val browserPath = browser.path?.let(FileUtil::toSystemIndependentName) ?: return false
+    val knownPaths = listOfNotNull(path, binary.toString(), bundle?.toString()).map(FileUtil::toSystemIndependentName)
+    if (knownPaths.any { FileUtil.pathsEqual(it, browserPath) }) {
+      return true
+    }
+    return '/' !in browserPath && detectBrowserType(browser) == knownBrowser
+  }
 }
 
+/**
+ * Returns the known browsers that are installed in their default locations, see [KnownBrowser].
+ * It checks the file system, so call it on a background thread.
+ */
 @ApiStatus.Internal
-sealed class BrowserQuality(
-  val windowsFolder: String,
+@OptIn(LowLevelLocalMachineAccess::class) // we don't need eel here because we need to get the client OS, not the project's one
+fun detectInstalledBrowsers(
+  userHome: Path? = null,
+  env: Map<String, String> = emptyMap(),
+  fs: FileSystem = FileSystems.getDefault(),
+  os: OS = OS.CURRENT,
+): List<InstalledBrowser> {
+  val pathDirectories = env["PATH"]?.split(':')?.filter { it.isNotEmpty() }?.map(fs::getPath)?.toSet() ?: emptySet()
+  return KnownBrowser.entries.mapNotNull { knownBrowser ->
+    val binary = findBrowserBinary(knownBrowser, os, env, fs, userHome) ?: return@mapNotNull null
+    val name = knownBrowser.macAppName
+    when (os) {
+      OS.macOS -> InstalledBrowser(name, name, binary, binary.parent.parent.parent, knownBrowser)
+      OS.FreeBSD, OS.Linux -> {
+        val path = if (binary.parent in pathDirectories) binary.fileName.toString() else binary.toString()
+        InstalledBrowser(name, path, binary, null, knownBrowser)
+      }
+      else -> InstalledBrowser(name, binary.toString(), binary, null, knownBrowser)
+    }
+  }
+}
+
+/**
+ * A version of a well-known browser and its default install locations.
+ *
+ * [windowsExecutable] is the path of the executable relative to `LOCALAPPDATA`, `ProgramFiles` and `ProgramFiles(x86)`,
+ * or `null` without a Windows version.
+ * [macAppName] is the name of the macOS app, and [macExecutable] is the executable inside `Contents/MacOS` of the app.
+ * [linuxExecutables] are the names of the executable in the usual Linux directories.
+ */
+@ApiStatus.Internal
+enum class KnownBrowser(
+  val family: BrowserFamily,
+  val windowsExecutable: String?,
   val macAppName: String,
   val linuxExecutables: List<String>,
-)
+  val macExecutable: String = macAppName,
+) {
+  CHROME(BrowserFamily.CHROME, "Google\\Chrome\\Application\\chrome.exe", "Google Chrome",
+         listOf("google-chrome", "google-chrome-stable", "chrome")),
+  CHROME_BETA(BrowserFamily.CHROME, "Google\\Chrome Beta\\Application\\chrome.exe", "Google Chrome Beta",
+              listOf("google-chrome-beta")),
+  CHROME_DEV(BrowserFamily.CHROME, "Google\\Chrome Dev\\Application\\chrome.exe", "Google Chrome Dev",
+             listOf("google-chrome-unstable", "google-chrome-dev")),
+  CHROME_CANARY(BrowserFamily.CHROME, "Google\\Chrome SxS\\Application\\chrome.exe", "Google Chrome Canary",
+                listOf("google-chrome-canary")),
 
-@ApiStatus.Internal
-sealed class ChromeQuality(windowsFolder: String, macAppName: String, linuxExecutables: List<String>) : BrowserQuality(windowsFolder, macAppName, linuxExecutables) {
-  data object Stable : ChromeQuality(
-    windowsFolder = "Google\\Chrome\\Application\\chrome.exe",
-    macAppName = "Google Chrome",
-    linuxExecutables = listOf("google-chrome", "google-chrome-stable", "chrome")
-  )
+  EDGE(BrowserFamily.CHROME, "Microsoft\\Edge\\Application\\msedge.exe", "Microsoft Edge",
+       listOf("microsoft-edge", "microsoft-edge-stable")),
+  EDGE_BETA(BrowserFamily.CHROME, "Microsoft\\Edge Beta\\Application\\msedge.exe", "Microsoft Edge Beta",
+            listOf("microsoft-edge-beta")),
+  EDGE_DEV(BrowserFamily.CHROME, "Microsoft\\Edge Dev\\Application\\msedge.exe", "Microsoft Edge Dev",
+           listOf("microsoft-edge-dev")),
+  EDGE_CANARY(BrowserFamily.CHROME, "Microsoft\\Edge SxS\\Application\\msedge.exe", "Microsoft Edge Canary",
+              listOf("microsoft-edge-canary")),
 
-  data object Beta : ChromeQuality(
-    windowsFolder = "Google\\Chrome Beta\\Application\\chrome.exe",
-    macAppName = "Google Chrome Beta",
-    linuxExecutables = listOf("google-chrome-beta")
-  )
+  BRAVE(BrowserFamily.CHROME, "BraveSoftware\\Brave-Browser\\Application\\brave.exe", "Brave Browser",
+        listOf("brave-browser", "brave-browser-stable", "brave")),
+  BRAVE_BETA(BrowserFamily.CHROME, "BraveSoftware\\Brave-Browser-Beta\\Application\\brave.exe", "Brave Browser Beta",
+             listOf("brave-browser-beta")),
+  BRAVE_NIGHTLY(BrowserFamily.CHROME, "BraveSoftware\\Brave-Browser-Nightly\\Application\\brave.exe", "Brave Browser Nightly",
+                listOf("brave-browser-nightly")),
 
-  data object Dev : ChromeQuality(
-    windowsFolder = "Google\\Chrome Dev\\Application\\chrome.exe",
-    macAppName = "Google Chrome Dev",
-    linuxExecutables = listOf("google-chrome-unstable", "google-chrome-dev")
-  )
+  VIVALDI(BrowserFamily.CHROME, "Vivaldi\\Application\\vivaldi.exe", "Vivaldi", listOf("vivaldi", "vivaldi-stable")),
+  VIVALDI_SNAPSHOT(BrowserFamily.CHROME, "Vivaldi Snapshot\\Application\\vivaldi.exe", "Vivaldi Snapshot", listOf("vivaldi-snapshot")),
 
-  data object Canary : ChromeQuality(
-    windowsFolder = "Google\\Chrome SxS\\Application\\chrome.exe",
-    macAppName = "Google Chrome Canary",
-    linuxExecutables = listOf("google-chrome-canary")
-  )
-}
+  OPERA(BrowserFamily.CHROME, "Programs\\Opera\\opera.exe", "Opera", listOf("opera")),
+  OPERA_BETA(BrowserFamily.CHROME, "Programs\\Opera beta\\opera.exe", "Opera Beta", listOf("opera-beta")),
+  OPERA_DEVELOPER(BrowserFamily.CHROME, "Programs\\Opera developer\\opera.exe", "Opera Developer", listOf("opera-developer")),
+  OPERA_GX(BrowserFamily.CHROME, "Programs\\Opera GX\\opera.exe", "Opera GX", emptyList()),
 
-@ApiStatus.Internal
-sealed class EdgeQuality(windowsFolder: String, macAppName: String, linuxExecutables: List<String>) : BrowserQuality(windowsFolder, macAppName, linuxExecutables) {
-  data object Stable : EdgeQuality(
-    windowsFolder = "Microsoft\\Edge\\Application\\msedge.exe",
-    macAppName = "Microsoft Edge",
-    linuxExecutables = listOf("microsoft-edge", "microsoft-edge-stable")
-  )
+  CHROMIUM(BrowserFamily.CHROME, "Chromium\\Application\\chrome.exe", "Chromium", listOf("chromium", "chromium-browser")),
 
-  data object Beta : EdgeQuality(
-    windowsFolder = "Microsoft\\Edge Beta\\Application\\msedge.exe",
-    macAppName = "Microsoft Edge Beta",
-    linuxExecutables = listOf("microsoft-edge-beta")
-  )
+  FIREFOX(BrowserFamily.FIREFOX, "Mozilla Firefox\\firefox.exe", "Firefox", listOf("firefox", "firefox-esr"), macExecutable = "firefox"),
+  FIREFOX_DEVELOPER_EDITION(BrowserFamily.FIREFOX, "Firefox Developer Edition\\firefox.exe", "Firefox Developer Edition",
+                            listOf("firefox-developer-edition"), macExecutable = "firefox"),
+  FIREFOX_NIGHTLY(BrowserFamily.FIREFOX, "Firefox Nightly\\firefox.exe", "Firefox Nightly", listOf("firefox-nightly"),
+                  macExecutable = "firefox"),
 
-  data object Dev : EdgeQuality(
-    windowsFolder = "Microsoft\\Edge Dev\\Application\\msedge.exe",
-    macAppName = "Microsoft Edge Dev",
-    linuxExecutables = listOf("microsoft-edge-dev")
-  )
-
-  data object Canary : EdgeQuality(
-    windowsFolder = "Microsoft\\Edge SxS\\Application\\msedge.exe",
-    macAppName = "Microsoft Edge Canary",
-    linuxExecutables = listOf("microsoft-edge-canary")
-  )
+  SAFARI(BrowserFamily.SAFARI, null, "Safari", emptyList()),
+  SAFARI_TECHNOLOGY_PREVIEW(BrowserFamily.SAFARI, null, "Safari Technology Preview", emptyList()),
 }
 
 private fun findBrowserBinary(
-  browser: DetectedBrowser,
+  knownBrowser: KnownBrowser,
   os: OS,
   env: Map<String, String>,
   fs: FileSystem,
   userHome: Path?,
 ): Path? {
-  val browser = browser as? DetectedBrowser.BrowserWithQuality
-                ?: return null
-
   val candidates = when (os) {
-    OS.Windows -> windowsCandidates(browser, env, fs)
-    OS.macOS -> macosCandidates(browser, env, fs, userHome)
-    OS.FreeBSD, OS.Linux -> linuxCandidates(browser, env, fs)
-    OS.OHOS -> harmonyOSCandidates(browser, env, fs)
+    OS.Windows -> windowsCandidates(knownBrowser, env, fs)
+    OS.macOS -> macosCandidates(knownBrowser, fs, userHome)
+    OS.FreeBSD, OS.Linux -> linuxCandidates(knownBrowser, fs)
+    OS.OHOS -> harmonyOSCandidates()
     OS.Other -> emptySequence()
   }
 
-  return candidates.filter { it.isExecutable() }.firstOrNull()
+  return candidates.firstOrNull { it.isExecutable() }
 }
 
-private fun windowsCandidates(browser: DetectedBrowser.BrowserWithQuality, env: Map<String, String>, fs: FileSystem): Sequence<Path> = sequence {
+private fun windowsCandidates(knownBrowser: KnownBrowser, env: Map<String, String>, fs: FileSystem): Sequence<Path> = sequence {
+  val windowsExecutable = knownBrowser.windowsExecutable ?: return@sequence
   for (envVar in arrayOf("LOCALAPPDATA", "ProgramFiles", "ProgramFiles(x86)")) {
     val path = env[envVar]?.let(fs::getPath) ?: continue
-    yield(path.resolve(browser.quality.windowsFolder))
+    yield(path.resolve(windowsExecutable))
   }
 }
 
-private fun linuxCandidates(browser: DetectedBrowser.BrowserWithQuality, env: Map<String, String>, fs: FileSystem): Sequence<Path> = sequence {
-  for (installationDir in arrayOf("/usr/local/bin", "/opt/local/bin", "/usr/bin", "/opt/bin")) {
-    for (executableName in browser.quality.linuxExecutables) {
+private fun linuxCandidates(knownBrowser: KnownBrowser, fs: FileSystem): Sequence<Path> = sequence {
+  for (installationDir in arrayOf("/usr/local/bin", "/opt/local/bin", "/usr/bin", "/opt/bin", "/snap/bin")) {
+    for (executableName in knownBrowser.linuxExecutables) {
       yield(fs.getPath(installationDir, executableName))
     }
   }
-  for (executableName in browser.quality.linuxExecutables) {
+  for (executableName in knownBrowser.linuxExecutables) {
     yield(fs.getPath("/usr/local", executableName, "bin", executableName))
   }
 }
 
-private fun macosCandidates(browser: DetectedBrowser.BrowserWithQuality, env: Map<String, String>, fs: FileSystem, userHome: Path?): Sequence<Path> {
-  val appName = browser.quality.macAppName
+private fun macosCandidates(knownBrowser: KnownBrowser, fs: FileSystem, userHome: Path?): Sequence<Path> {
+  val appName = knownBrowser.macAppName
   return listOfNotNull(fs.getPath("/Applications"), userHome?.resolve("Applications"))
     .asSequence()
-    .map { it.resolve("${appName}.app").resolve("Contents").resolve("MacOS").resolve(appName) }
+    .map { it.resolve("${appName}.app").resolve("Contents").resolve("MacOS").resolve(knownBrowser.macExecutable) }
 }
 
-private fun harmonyOSCandidates(browser: DetectedBrowser.BrowserWithQuality, env: Map<String, String>, fs: FileSystem): Sequence<Path> {
+private fun harmonyOSCandidates(): Sequence<Path> {
   //todo[kb] implement
   return emptySequence()
 }
@@ -179,33 +220,43 @@ private fun findInNameAndPath(what: String, browser: WebBrowser): Boolean {
  * Guessing browser type from [WebBrowser] name and path.
  */
 @ApiStatus.Internal
-fun detectBrowserType(browser: WebBrowser): DetectedBrowser? {
+fun detectBrowserType(browser: WebBrowser): KnownBrowser? {
   return when {
-    findInNameAndPath("chromium", browser) -> DetectedBrowser.Chromium
-    findInNameAndPath("chrome", browser) -> {
-      val quality = when {
-        findInNameAndPath("canary", browser) || findInNameAndPath("sxs", browser) -> ChromeQuality.Canary
-        findInNameAndPath("dev", browser) || findInNameAndPath("unstable", browser) -> ChromeQuality.Dev
-        findInNameAndPath("beta", browser) -> ChromeQuality.Beta
-        else -> ChromeQuality.Stable
-      }
-      DetectedBrowser.Chrome(quality)
+    findInNameAndPath("chromium", browser) -> KnownBrowser.CHROMIUM
+    findInNameAndPath("chrome", browser) -> when {
+      findInNameAndPath("canary", browser) || findInNameAndPath("sxs", browser) -> KnownBrowser.CHROME_CANARY
+      findInNameAndPath("dev", browser) || findInNameAndPath("unstable", browser) -> KnownBrowser.CHROME_DEV
+      findInNameAndPath("beta", browser) -> KnownBrowser.CHROME_BETA
+      else -> KnownBrowser.CHROME
     }
-
-    findInNameAndPath("edge", browser) -> {
-      val quality = when {
-        findInNameAndPath("canary", browser) || findInNameAndPath("sxs", browser) -> EdgeQuality.Canary
-        findInNameAndPath("dev", browser) -> EdgeQuality.Dev
-        findInNameAndPath("beta", browser) -> EdgeQuality.Beta
-        else -> EdgeQuality.Stable
-      }
-      DetectedBrowser.Edge(quality)
+    findInNameAndPath("edge", browser) -> when {
+      findInNameAndPath("canary", browser) || findInNameAndPath("sxs", browser) -> KnownBrowser.EDGE_CANARY
+      findInNameAndPath("dev", browser) -> KnownBrowser.EDGE_DEV
+      findInNameAndPath("beta", browser) -> KnownBrowser.EDGE_BETA
+      else -> KnownBrowser.EDGE
     }
-
-    findInNameAndPath("opera", browser) -> DetectedBrowser.Opera
-    findInNameAndPath("brave", browser) -> DetectedBrowser.Brave
-    findInNameAndPath("vivaldi", browser) -> DetectedBrowser.Vivaldi
-
+    findInNameAndPath("opera", browser) -> when {
+      findInNameAndPath("gx", browser) -> KnownBrowser.OPERA_GX
+      findInNameAndPath("developer", browser) -> KnownBrowser.OPERA_DEVELOPER
+      findInNameAndPath("beta", browser) -> KnownBrowser.OPERA_BETA
+      else -> KnownBrowser.OPERA
+    }
+    findInNameAndPath("brave", browser) -> when {
+      findInNameAndPath("nightly", browser) -> KnownBrowser.BRAVE_NIGHTLY
+      findInNameAndPath("beta", browser) -> KnownBrowser.BRAVE_BETA
+      else -> KnownBrowser.BRAVE
+    }
+    findInNameAndPath("vivaldi", browser) -> {
+      if (findInNameAndPath("snapshot", browser)) KnownBrowser.VIVALDI_SNAPSHOT else KnownBrowser.VIVALDI
+    }
+    findInNameAndPath("firefox", browser) -> when {
+      findInNameAndPath("nightly", browser) -> KnownBrowser.FIREFOX_NIGHTLY
+      findInNameAndPath("developer", browser) -> KnownBrowser.FIREFOX_DEVELOPER_EDITION
+      else -> KnownBrowser.FIREFOX
+    }
+    findInNameAndPath("safari", browser) -> {
+      if (findInNameAndPath("technology preview", browser)) KnownBrowser.SAFARI_TECHNOLOGY_PREVIEW else KnownBrowser.SAFARI
+    }
     else -> null
   }
 }
