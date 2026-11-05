@@ -3,6 +3,7 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.ui.UISettings;
@@ -67,8 +68,9 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
-import com.intellij.util.ui.update.MergingUpdateQueue;
-import com.intellij.util.ui.update.Update;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -114,6 +116,7 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
 import java.io.IOException;
@@ -136,20 +139,28 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private static final Color WRONG_CONTENT = JBColor.namedColor("Tree.errorForeground", JBColor.RED);
   private static final Color MODIFIED_CONTENT = JBColor.namedColor("Tree.modifiedItemForeground", JBColor.BLUE);
   private static final Icon NEW_BADGE_DOT = new LargeBlueDotIcon();
+  /** The time in milliseconds from the last key move in the tree to the change of the current page. */
+  static final int KEY_SELECTION_DELAY_MS = 300;
 
   private final SimpleTree myTree;
 
   private final SettingsFilter myFilter;
   private final JScrollPane myScroller;
   private final Map<Configurable, MyNode> myConfigurableToNodeMap = new IdentityHashMap<>();
-  private final MergingUpdateQueue myQueue = new MergingUpdateQueue("SettingsTreeView", 150, true, MergingUpdateQueue.ANY_COMPONENT, this)
-    .setRestartTimerOnAdd(true);
+  /**
+   * Shows the page of the selected row {@link #KEY_SELECTION_DELAY_MS} after the last key move in the tree.
+   * A walk with the arrow keys thus builds only the page where the walk stops.
+   */
+  private final UpdateQueue<Unit> myKeySelectionQueue =
+    DebouncedUpdates.<Unit>forComponent(this, "SettingsTreeView.keySelection", KEY_SELECTION_DELAY_MS)
+      .restartTimerOnAdd(true)
+      .runLatest(ignored -> fireSelected(getSelectedConfigurable()))
+      .cancelOnDispose(this);
 
   private final MyRoot myRoot;
   private final FilteringTreeModel myModel;
   private final SettingsNewBadgeState myNewBadgeState = new SettingsNewBadgeState();
 
-  private Configurable myQueuedConfigurable;
   private MyControl myControl;
   private boolean myRegularGroups;
 
@@ -253,7 +264,12 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     });
 
     myTree.getSelectionModel().addTreeSelectionListener(event -> {
-      MyNode node = extractNode(event.getNewLeadSelectionPath());
+      if (IdeEventQueue.getInstance().getTrueCurrentEvent() instanceof KeyEvent) {
+        myKeySelectionQueue.queue(Unit.INSTANCE);
+        return;
+      }
+      myKeySelectionQueue.cancelPending();
+      var node = extractNode(event.getNewLeadSelectionPath());
       fireSelected(node == null ? null : node.myConfigurable);
     });
     myRoot = new MyRoot(groups);
@@ -510,57 +526,33 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myScroller.setBounds(0, 0, getWidth(), getHeight());
   }
 
+  /**
+   * Selects the row of {@code configurable} and makes it the current page.
+   * The promise completes after the tree shows the row.
+   * A page that the filter hides is not selected, and its promise does not complete.
+   */
   @NotNull
   Promise<? super Object> select(@Nullable Configurable configurable) {
-    return queueSelection(configurable);
+    AsyncPromise<? super Object> promise = new AsyncPromise<>();
+    if (configurable == null) {
+      fireSelected(null).processed(promise);
+      return promise;
+    }
+    var editorUiNode = myModel.getTreeStructure().getVisibleNodeFor(findNode(configurable));
+    if (editorUiNode != null) {
+      myModel.select(editorUiNode, myTree, treePath -> fireSelected(configurable).processed(promise));
+    }
+    return promise;
   }
 
   /**
-   * Selects {@code configurable} on the next EDT event, without the merge delay of {@link #select(Configurable)}.
-   * Use it for the first page of a new Settings editor.
-   * The first selection has nothing to merge with, so it does not need the merge delay.
-   * The selection still runs after the current EDT event, so the window shows before the page is created.
+   * Returns the configurable of the selected row.
+   * After a key move, it can differ from the current page for {@link #KEY_SELECTION_DELAY_MS}.
    */
-  @NotNull
-  Promise<? super Object> selectWithoutDelay(@Nullable Configurable configurable) {
-    Promise<? super Object> promise = queueSelection(configurable);
-    myQueue.sendFlush();
-    return promise;
-  }
-
-  private @NotNull Promise<? super Object> queueSelection(@Nullable Configurable configurable) {
-    AsyncPromise<? super Object> promise = new AsyncPromise<>();
-    myQueuedConfigurable = configurable;
-    myQueue.queue(new Update(this) {
-      @Override
-      public void run() {
-        if (configurable != myQueuedConfigurable) {
-          return;
-        }
-
-        Runnable handler = () -> {
-          fireSelected(configurable).processed(promise);
-        };
-
-        if (configurable == null) {
-          handler.run();
-          return;
-        }
-
-        MyNode editorNode = findNode(configurable);
-        FilteringTreeStructure.FilteringNode editorUiNode = myModel.getTreeStructure().getVisibleNodeFor(editorNode);
-        if (editorUiNode == null) return;
-
-        myModel.select(editorUiNode, myTree, treePath -> handler.run());
-      }
-
-      @Override
-      public void setRejected() {
-        super.setRejected();
-        promise.cancel();
-      }
-    });
-    return promise;
+  @Nullable
+  Configurable getSelectedConfigurable() {
+    var node = extractNode(myTree.getSelectionPath());
+    return node == null ? null : node.myConfigurable;
   }
 
   private @NotNull Promise<?> fireSelected(Configurable configurable) {
@@ -576,7 +568,6 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   @Override
   public void dispose() {
-    myQueuedConfigurable = null;
     // help GC and avoid leak on dynamic plugin reload (if some configurable hold language or something plugin-specific)
     myConfigurableToNodeMap.clear();
   }
@@ -1201,8 +1192,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   void reloadWithSelection(@Nullable Configurable toSelect) {
     myRoot.cleanUpCache();
-    myQueuedConfigurable = null;
-    myQueue.cancelAllUpdates();
+    myKeySelectionQueue.cancelPending();
     myConfigurableToNodeMap.clear();
 
     //remove expansion and selection (to avoid stuck old elements) before cleanup

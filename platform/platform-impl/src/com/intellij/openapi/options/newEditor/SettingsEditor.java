@@ -452,13 +452,13 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       }
     }
 
-    treeView.selectWithoutDelay(configurable).onProcessed(it -> this.filter.update(filter));
+    treeView.select(configurable).onProcessed(it -> this.filter.update(filter));
 
     Disposer.register(this, treeView);
     installSpotlightRemover();
-    //noinspection CodeBlock2Expr
     search.getTextEditor().addActionListener(event -> {
-      treeView.select(this.filter.context.getCurrentConfigurable()).onProcessed(o -> requestFocusToEditor());
+      var selected = treeView.getSelectedConfigurable();
+      treeView.select(selected != null ? selected : this.filter.context.getCurrentConfigurable()).onProcessed(o -> requestFocusToEditor());
     });
 
     for (ConfigurableGroup group : groups) {
