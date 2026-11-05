@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isFromCompanionBlock
 
 @RequiresBackgroundThread(generateAssertion = false)
 fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadAction { useScope }, compatibleOnly: Boolean = true): Sequence<SmartPsiElementPointer<KtDeclaration>> {
@@ -60,8 +61,15 @@ fun KtDeclaration.findAllActualForExpect(searchScope: SearchScope = runReadActio
                 }
                 is KtNamedDeclaration ->
                     when (targetDeclaration) {
-                        is KtClassOrObject -> targetDeclaration.declarations.firstOrNull {
-                            it is KtNamedDeclaration && it.name == declaration.name && it.matchesWithExpect(declaration, compatibleOnly)
+                        is KtClassOrObject -> {
+                            val targetMembers = if (declaration.isFromCompanionBlock) {
+                                targetDeclaration.companionBlocks.flatMap { it.declarations }
+                            } else {
+                                targetDeclaration.declarations
+                            }
+                            targetMembers.firstOrNull {
+                                it is KtNamedDeclaration && it.name == declaration.name && it.matchesWithExpect(declaration, compatibleOnly)
+                            }
                         }
                         else -> null
                     }

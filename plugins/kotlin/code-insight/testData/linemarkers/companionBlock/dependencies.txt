@@ -1,0 +1,10 @@
+MODULE common { platform=[JVM, JS, Native]; root=common; additionalCompilerArgs=-XXLanguage:+CompanionBlocks }
+MODULE jvm { platform=[JVM]; root=jvm; additionalCompilerArgs=-XXLanguage:+CompanionBlocks }
+MODULE js { platform=[JS]; root=js; additionalCompilerArgs=-XXLanguage:+CompanionBlocks }
+
+jvm -> common { kind=DEPENDS_ON }
+js -> common { kind=DEPENDS_ON }
+
+common -> STDLIB_COMMON, KOTLIN_SDK { kind=DEPENDENCY }
+jvm -> STDLIB_JVM, MOCK_JDK { kind=DEPENDENCY }
+js -> STDLIB_JS, KOTLIN_SDK { kind=DEPENDENCY }

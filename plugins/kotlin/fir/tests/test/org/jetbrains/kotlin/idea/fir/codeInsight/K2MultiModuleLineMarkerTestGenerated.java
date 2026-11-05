@@ -23,6 +23,11 @@ public class K2MultiModuleLineMarkerTestGenerated extends AbstractK2MultiModuleL
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("companionBlock")
+    public void testCompanionBlock() throws Exception {
+        runTest("../../code-insight/testData/linemarkers/companionBlock/");
+    }
+
     @TestMetadata("multiplatform")
     public void testMultiplatform() throws Exception {
         runTest("../../code-insight/testData/linemarkers/multiplatform/");
