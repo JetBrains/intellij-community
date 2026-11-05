@@ -203,9 +203,9 @@ class AsyncEditorLoader internal constructor(
         // make sure that async loaded marked as completed
         delayedActions.set(null)
 
-        // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
-        // for instance, `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
-        daemonCodeAnalyzer.restart("AsyncEditorLoader.start ${textEditor.file.name}")
+        // the daemon creates no pass for an editor that is not loaded (see `DaemonCodeAnalyzerImpl.runUpdate`), so the load schedules
+        // the passes of this editor. A restart would cancel the first pass of the other editors (CPP-53017).
+        daemonCodeAnalyzer.scheduleUpdateAfterEditorLoad(textEditor)
       }
   }
 

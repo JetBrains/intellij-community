@@ -14,9 +14,11 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -26,6 +28,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -34,12 +37,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 /**
  * Tests that the first daemon pass of a project starts without the autoreparse delay and that later restarts honor it.
  * A pass over an embedded editor does not count as the first pass, also when a stop cancels it.
  * A stop that cancels the unfinished first pass enables the delay, so a held key does not rerun the pass on every press.
  * The focus gain of the first editor itself keeps its unfinished first pass, because the pass still covers an active editor.
  * A focus move to another editor still cancels the unfinished pass.
+ * The end of an editor load keeps the unfinished first pass of another editor.
  */
 public class DaemonFirstPassDelayTest extends ProductionDaemonAnalyzerTestCase {
   private static final int REPARSE_DELAY_MS = 10_000;
@@ -253,6 +259,64 @@ public class DaemonFirstPassDelayTest extends ProductionDaemonAnalyzerTestCase {
       finally {
         passReleased.set(true);
       }
+    });
+  }
+
+  public void testEditorLoadKeepsTheUnfinishedFirstPassOfAnotherEditor() throws IOException {
+    VirtualFile second = createTempVirtualFile("second.txt", null, "text", UTF_8);
+    TestDaemonCodeAnalyzerImpl.runWithReparseDelay(REPARSE_DELAY_MS, () -> {
+      List<FileEditor> started = new CopyOnWriteArrayList<>();
+      List<FileEditor> canceled = new CopyOnWriteArrayList<>();
+      List<FileEditor> finished = new CopyOnWriteArrayList<>();
+      getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
+        @Override
+        public void daemonStarting(@NotNull Collection<? extends FileEditor> fileEditors) {
+          started.addAll(fileEditors);
+        }
+
+        @Override
+        public void daemonCanceled(@NotNull String reason, @NotNull Collection<? extends FileEditor> fileEditors) {
+          canceled.addAll(fileEditors);
+        }
+
+        @Override
+        public void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
+          finished.addAll(fileEditors);
+        }
+      });
+      AtomicInteger passEntries = new AtomicInteger();
+      AtomicBoolean passReleased = new AtomicBoolean();
+      registerMainEditorPassThatRunsUntilCanceled(passEntries, passReleased);
+      try {
+        // phase 1: the second editor opens before the first pass starts, because createEditor restarts the daemon.
+        // The active embedded editor keeps the daemon off the second editor, because a finished pass of an open file enables the delay.
+        EditorTracker.getInstance(getProject()).setActiveEditorsInTests(List.of(createEmbeddedEditor()));
+        Editor secondEditor = createEditor(second);
+        assertNotNull(secondEditor);
+
+        // phase 2: the first pass of the main editor starts without the delay and keeps running
+        configureByText(PlainTextFileType.INSTANCE, "text");
+        EditorTracker.getInstance(getProject()).setActiveEditorsInTests(List.of(getEditor()));
+        waitUntil(() -> passEntries.get() > 0, "The first pass must start without the autoreparse delay");
+
+        // phase 3: like AsyncEditorLoader, the load of the second editor ends, and the unfinished first pass survives
+        myDaemonCodeAnalyzer.scheduleUpdateAfterEditorLoad(TextEditorProvider.getInstance().getTextEditor(secondEditor));
+        long loadTime = System.currentTimeMillis();
+        while (System.currentTimeMillis() - loadTime < LATER_RESTART_QUIET_MS) {
+          TimeoutUtil.sleep(100);
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+          assertEquals("The end of an editor load must not restart the running pass", 1, passEntries.get());
+          assertFalse("The end of an editor load must not cancel the running pass", isForEditor(canceled, getEditor()));
+        }
+
+        // phase 4: the second editor becomes active and gets its pass without the delay
+        EditorTracker.getInstance(getProject()).setActiveEditorsInTests(List.of(getEditor(), secondEditor));
+        waitUntil(() -> isForEditor(started, secondEditor), "The loaded editor must get its pass without the autoreparse delay");
+      }
+      finally {
+        passReleased.set(true);
+      }
+      waitUntil(() -> isForEditor(finished, getEditor()), "The first pass must finish after the release");
     });
   }
 
