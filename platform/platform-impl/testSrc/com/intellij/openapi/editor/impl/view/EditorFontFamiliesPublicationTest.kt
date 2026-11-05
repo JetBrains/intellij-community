@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl.view
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
@@ -116,6 +117,46 @@ internal class EditorFontFamiliesPublicationTest {
     assertThat(editor.view.fontResolver.publishedFontFamilies()).isEmpty()
   }
 
+  @Test
+  fun `a new editor gets the font families of the existing highlighters`() {
+    val document = createDocument("aaaa")
+    addHighlighter(DocumentMarkupModel.forDocument(document, null, true), 0, 4, attributesWithFontFamilies())
+
+    withEditor(document) { editor ->
+      assertThat(editor.view.fontResolver.isPublished(value)).isTrue()
+      assertThat(width(editor, 0, 4)).isEqualTo(4 * FAMILY_WIDTH)
+    }
+  }
+
+  @Test
+  fun `existing highlighters without font families publish nothing`() {
+    val document = createDocument("aaaa")
+    val attributes = TextAttributes()
+    attributes.fontType = Font.BOLD
+    addHighlighter(DocumentMarkupModel.forDocument(document, null, true), 0, 4, attributes)
+
+    withEditor(document) { editor ->
+      assertThat(editor.view.fontResolver.publishedFontFamilies()).isEmpty()
+    }
+  }
+
+  @Test
+  fun `an existing highlighter that lost its font families publishes nothing`() {
+    val document = createDocument("aaaa")
+    val highlighter = addHighlighter(DocumentMarkupModel.forDocument(document, null, true), 0, 4, attributesWithFontFamilies())
+    runInEdtAndWait {
+      (highlighter as RangeHighlighterEx).setTextAttributes(TextAttributes())
+    }
+
+    withEditor(document) { editor ->
+      assertThat(editor.view.fontResolver.publishedFontFamilies()).isEmpty()
+    }
+  }
+
+  private fun createDocument(text: String): Document {
+    return EditorFactory.getInstance().createDocument(text)
+  }
+
   private fun attributesWithFontFamilies(): TextAttributes {
     val attributes = TextAttributes()
     attributes.fontFamilies = value
@@ -143,9 +184,13 @@ internal class EditorFontFamiliesPublicationTest {
   }
 
   private fun withEditor(text: String, test: (EditorImpl) -> Unit) {
+    withEditor(createDocument(text), test)
+  }
+
+  private fun withEditor(document: Document, test: (EditorImpl) -> Unit) {
     runInEdtAndWait {
       val factory = EditorFactory.getInstance()
-      val editor = factory.createEditor(factory.createDocument(text)) as EditorImpl
+      val editor = factory.createEditor(document) as EditorImpl
       try {
         test(editor)
       }

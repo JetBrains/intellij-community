@@ -7,10 +7,12 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
+import com.intellij.openapi.editor.markup.FontFamilies
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
@@ -153,6 +155,39 @@ internal class EditorMarkupRepainter(
   }
 
   /**
+   * Publishes the font families of the highlighters that [documentMarkup] has before the editor listens to it.
+   * The editor calls it after it starts to listen.
+   * So a highlighter that another thread adds meanwhile reaches the editor here or in [afterAdded].
+   * The pass visits only the highlighters with forced font families, see [MarkupModelEx.overlappingFontFamiliesIterator].
+   * When a value is new, it joins a request that lays out the text of these highlighters again.
+   * The editor can have laid out that text already.
+   */
+  fun publishExistingFontFamilies(documentMarkup: MarkupModelEx) {
+    val values = ArrayList<FontFamilies>()
+    var fontStyleArea = RepaintArea.NONE
+    documentMarkup.overlappingFontFamiliesIterator(0, documentMarkup.document.textLength).use { iterator ->
+      for (highlighter in iterator) {
+        val value = highlighter.forcedTextAttributes?.fontFamilies
+        if (value != null) {
+          if (values.none { it === value }) {
+            values.add(value)
+          }
+          fontStyleArea = fontStyleArea.union(affectedArea(highlighter))
+        }
+      }
+    }
+    if (values.isNotEmpty() && editor.view.publishFontFamilies(values)) {
+      joinRequest(
+        fontStyleArea,
+        canImpactGutterSize = false,
+        fontStyleChanged = true,
+        foregroundColorChanged = false,
+        hasAccessibleGutterElement = false,
+      )
+    }
+  }
+
+  /**
    * Publishes the font families of [attributes], when they have them.
    * The first publication of a value creates its fonts, so it runs on the thread of the change and not in the request.
    * A value stays published after its highlighter goes away.
@@ -165,7 +200,26 @@ internal class EditorMarkupRepainter(
   }
 
   /**
-   * Joins the request for the change of the highlighter into the pending request.
+   * Joins the request for the change of the highlighter into the pending request, see the other `joinRequest`.
+   */
+  private fun joinRequest(
+    highlighter: RangeHighlighterEx,
+    canImpactGutterSize: Boolean,
+    fontStyleChanged: Boolean,
+    foregroundColorChanged: Boolean,
+  ) {
+    joinRequest(
+      affectedArea(highlighter),
+      canImpactGutterSize,
+      fontStyleChanged,
+      foregroundColorChanged,
+      AccessibleGutterLine.isAccessibleGutterElement(highlighter.gutterIconRenderer),
+    )
+  }
+
+  /**
+   * Joins the request for the change of [affectedArea] into the pending request.
+   * With [fontStyleChanged], the font style area is [affectedArea], and otherwise [RepaintArea.NONE].
    *
    * On the EDT, the editor applies the change at once when no request is pending and [canApplyNow] is true.
    * This fast path makes no [RepaintRequest] and writes nothing to [repaintRequest].
@@ -175,18 +229,17 @@ internal class EditorMarkupRepainter(
    * A request that the EDT stores while [canApplyNow] is false is blocked.
    */
   private fun joinRequest(
-    highlighter: RangeHighlighterEx,
+    affectedArea: RepaintArea,
     canImpactGutterSize: Boolean,
     fontStyleChanged: Boolean,
     foregroundColorChanged: Boolean,
+    hasAccessibleGutterElement: Boolean,
   ) {
-    val affectedArea = RepaintArea(highlighter.affectedAreaStartOffset, highlighter.affectedAreaEndOffset)
     val fontStyleArea = if (fontStyleChanged) {
       affectedArea
     } else {
       RepaintArea.NONE
     }
-    val hasAccessibleGutterElement = AccessibleGutterLine.isAccessibleGutterElement(highlighter.gutterIconRenderer)
     val onEdt = EDT.isCurrentThreadEdt()
     val deferToCoroutine = !onEdt || recalculatesSoftWraps(fontStyleChanged)
     val canApply = onEdt && canApplyNow()
@@ -225,6 +278,10 @@ internal class EditorMarkupRepainter(
         return
       }
     }
+  }
+
+  private fun affectedArea(highlighter: RangeHighlighterEx): RepaintArea {
+    return RepaintArea(highlighter.affectedAreaStartOffset, highlighter.affectedAreaEndOffset)
   }
 
   private fun recalculatesSoftWraps(fontStyleChanged: Boolean): Boolean {
