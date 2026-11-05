@@ -14,7 +14,7 @@ import com.jetbrains.python.psi.PyFile
 @TestDataPath("\$CONTENT_ROOT/../testData/docGeneration")
 @Subsystems.QuickDocumentation
 @Layers.Functional
-class PyDocstringGeneratorTestCase : PyTestCase() {
+class PyDocstringGeneratorTest : PyTestCase() {
   override fun getTestDataPath(): String = super.getTestDataPath() + "/docGeneration"
 
   fun testModuleLevel() = doTestModuleLevelDocumentation()

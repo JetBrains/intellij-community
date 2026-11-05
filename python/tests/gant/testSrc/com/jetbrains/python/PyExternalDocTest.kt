@@ -95,7 +95,7 @@ abstract class PyExternalDocTest : PyTestCase() {
 @Subsystems.QuickDocumentation
 @Layers.Functional
 @Ignore("AT-3959")
-class PyExternalDocTestPy3 : PyExternalDocTest() {
+class PyExternalDocPy3Test : PyExternalDocTest() {
   private val pythonDocsLibrary = "https://docs.python.org/3.7 Mock SDK/library"
 
   fun testBuiltins() { // PY-9061
@@ -141,7 +141,7 @@ print(os.path.isf<caret>ile)
 
 @Subsystems.QuickDocumentation
 @Layers.Functional
-class PyExternalDocTestPy2 : PyExternalDocTest() {
+class PyExternalDocPy2Test : PyExternalDocTest() {
   private val pythonDocsLibrary = "https://docs.python.org/2.7 Mock SDK/library"
 
   @IJIgnore(issue = "AT-3959")
