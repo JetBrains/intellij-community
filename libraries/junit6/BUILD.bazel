@@ -21,8 +21,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-junit6-_j_unit6"],
-    runtime_deps = ["@lib//:libraries-junit6-_j_unit6"],
+    exports = [
+        # do not sort,
+        "//libraries/opentest4j",
+        "@lib//:libraries-junit6-_j_unit6",
+    ],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/opentest4j",
+        "@lib//:libraries-junit6-_j_unit6",
+    ],
 )
 ### auto-generated section `build intellij.libraries.junit6` end
 

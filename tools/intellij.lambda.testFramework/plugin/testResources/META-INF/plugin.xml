@@ -172,7 +172,7 @@
   <content>
     <!-- chain: direct -->
     <module name="intellij.libraries.assertj.core"/>
-    <!-- chain: intellij.platform.testFramework.core -> intellij.libraries.opentest4j -->
+    <!-- chain: intellij.libraries.junit6 -> intellij.libraries.opentest4j -->
     <module name="intellij.libraries.opentest4j"/>
     <!-- chain: intellij.tools.ide.starter -> intellij.libraries.qodana.sarif -->
     <module name="intellij.libraries.qodana.sarif"/>
