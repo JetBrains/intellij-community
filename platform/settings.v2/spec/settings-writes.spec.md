@@ -9,7 +9,7 @@ targets:
   - ../src/com/intellij/platform/settings/v2/LayerProvider.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsVaultImpl.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsAppLifecycleListener.kt
-  - ../backend/src/com/intellij/platform/settings/v2/impl/SettingsProjectListener.kt
+  - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/SettingsProjectListener.kt
 ---
 
 # Settings Writes

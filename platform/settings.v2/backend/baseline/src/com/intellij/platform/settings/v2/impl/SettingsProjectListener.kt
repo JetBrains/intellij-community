@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings.v2.impl
 
-// @spec ../../../../../../../../spec/settings-writes.spec.md
-// @spec ../../../../../../../../spec/snapshot-cache.spec.md
+// @spec ../../../../../../../../../spec/settings-writes.spec.md
+// @spec ../../../../../../../../../spec/snapshot-cache.spec.md
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -22,7 +22,7 @@ import com.intellij.platform.settings.v2.SettingsVault
  * project scope covers the project layer and every file config under it. `SettingsAppLifecycleListener` of the shared
  * module handles the application shutdown.
  *
- * `intellij.platform.settings.v2.backend.xml` registers it as an application listener, because
+ * `intellij.platform.settings.v2.backend.baseline.xml` registers it as an application listener, because
  * [ProjectCloseListener.TOPIC] is an application-level topic.
  */
 internal class SettingsProjectListener : ProjectCloseListener {

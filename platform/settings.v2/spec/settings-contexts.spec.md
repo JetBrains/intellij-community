@@ -9,8 +9,8 @@ targets:
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsContexts.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/BaseSettingsContextFactory.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/contentRoots.kt
-  - ../backend/src/com/intellij/platform/settings/v2/impl/BackendSettingsContextFactory.kt
-  - ../backend/src/com/intellij/platform/settings/v2/impl/SettingsRootsCache.kt
+  - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/BackendSettingsContextFactory.kt
+  - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/SettingsRootsCache.kt
 ---
 
 # Settings Contexts

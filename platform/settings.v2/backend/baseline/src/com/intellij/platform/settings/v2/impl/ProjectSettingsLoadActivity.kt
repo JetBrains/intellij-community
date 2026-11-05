@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings.v2.impl
 
-// @spec ../../../../../../../../spec/layer-loading.spec.md
-// @spec ../../../../../../../../spec/snapshot-cache.spec.md
+// @spec ../../../../../../../../../spec/layer-loading.spec.md
+// @spec ../../../../../../../../../spec/snapshot-cache.spec.md
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity

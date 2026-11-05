@@ -9,9 +9,9 @@ targets:
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsCacheInvalidator.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsVaultImpl.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsAppLifecycleListener.kt
-  - ../backend/src/com/intellij/platform/settings/v2/impl/ProjectSettingsCacheService.kt
-  - ../backend/src/com/intellij/platform/settings/v2/impl/ProjectSettingsLoadActivity.kt
-  - ../backend/src/com/intellij/platform/settings/v2/impl/SettingsProjectListener.kt
+  - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/ProjectSettingsCacheService.kt
+  - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/ProjectSettingsLoadActivity.kt
+  - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/SettingsProjectListener.kt
 ---
 
 # Snapshot Cache

@@ -10,7 +10,7 @@ targets:
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsVaultImpl.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsVaultInitializer.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/providers/BaseLayerService.kt
-  - ../backend/src/com/intellij/platform/settings/v2/impl/ProjectSettingsLoadActivity.kt
+  - ../backend/baseline/src/com/intellij/platform/settings/v2/impl/ProjectSettingsLoadActivity.kt
 ---
 
 # Layer Loading

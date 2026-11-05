@@ -7,6 +7,7 @@ layers supply the values. The vault resolves and stores them.
 |-----------------------------------------|------------|
 | `intellij.platform.settings.v2` (API)   | `src/`     |
 | `intellij.platform.settings.v2.shared`  | `shared/`  |
+| `intellij.platform.settings.v2.backend.baseline` | `backend/baseline/` |
 | `intellij.platform.settings.v2.backend` | `backend/` |
 | `intellij.platform.settings.v2.test`    | `test/`    |
 
@@ -46,7 +47,7 @@ override it.
 - A spec is `spec/<feature>.spec.md`. Keep the folder flat until it needs subfolders by area.
 - Every spec declares `style: plain-1`.
 - Paths in `targets` and `[@test]` are relative to the spec file: `../src/...`, `../shared/src/...`,
-  `../backend/src/...`, `../test/src/...`.
+  `../backend/baseline/src/...`, `../backend/src/...`, `../testKeys/src/...`, `../test/src/...`.
 - A main target file carries a backlink in its header, relative to that file. From
   `src/com/intellij/platform/settings/v2/` it is `// @spec ../../../../../../spec/<feature>.spec.md`.
 - Only a Kotlin or a Java target carries a backlink. An XML target, such as a module descriptor, has none. A spec or
