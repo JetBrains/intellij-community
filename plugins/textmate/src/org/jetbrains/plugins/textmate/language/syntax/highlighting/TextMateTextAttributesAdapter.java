@@ -45,7 +45,7 @@ public class TextMateTextAttributesAdapter {
         }
         else {
           TextAttributes defaultAttributes = HighlighterColors.TEXT.getDefaultAttributes();
-          effectColor = defaultAttributes != null ? defaultAttributes.getForegroundColor() : null;
+          effectColor = defaultAttributes.getForegroundColor();
         }
         myTextAttributes.setEffectColor(effectColor);
         myTextAttributes.setEffectType(EffectType.LINE_UNDERSCORE);

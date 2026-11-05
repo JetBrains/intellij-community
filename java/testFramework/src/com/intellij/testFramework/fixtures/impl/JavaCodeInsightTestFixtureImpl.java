@@ -47,14 +47,12 @@ public class JavaCodeInsightTestFixtureImpl extends CodeInsightTestFixtureImpl i
 
     // Make sure rootPath belongs to the module:
     final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
-    if (rootManager != null) {
-      VirtualFile[] allSourceRoots = rootManager.getSourceRoots(true);
-      VirtualFile[] productionSourceRoots = rootManager.getSourceRoots(false);
-      VirtualFile rootVirtualFile = getTempDirFixture().getFile(""); // should be equivalent to rootPath.
-      if (!ArrayUtil.contains(rootVirtualFile, allSourceRoots) && !ArrayUtil.isEmpty(productionSourceRoots)) {
-        // The temp directory is not a source root, so there's little point adding the class there. Pick a production source root instead.
-        rootPath = productionSourceRoots[0].getPath();
-      }
+    VirtualFile[] allSourceRoots = rootManager.getSourceRoots(true);
+    VirtualFile[] productionSourceRoots = rootManager.getSourceRoots(false);
+    VirtualFile rootVirtualFile = getTempDirFixture().getFile(""); // should be equivalent to rootPath.
+    if (!ArrayUtil.contains(rootVirtualFile, allSourceRoots) && !ArrayUtil.isEmpty(productionSourceRoots)) {
+      // The temp directory is not a source root, so there's little point adding the class there. Pick a production source root instead.
+      rootPath = productionSourceRoots[0].getPath();
     }
 
     final PsiClass psiClass = addClass(rootPath, classText);

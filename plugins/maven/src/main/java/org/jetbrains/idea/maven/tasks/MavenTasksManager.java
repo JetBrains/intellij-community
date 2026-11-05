@@ -222,9 +222,6 @@ public final class MavenTasksManager extends MavenSimpleProjectComponent impleme
       if (null == module) continue;
       if (!affectedModules.contains(module)) continue;
       var rootProject = projectsManager.findRootProject(mavenProject);
-      if (null == rootProject) {
-        rootProject = mavenProject;
-      }
       taskInfos.add(new MavenTaskInfo(task.getGoal(), file, mavenProject, rootProject));
     }
 

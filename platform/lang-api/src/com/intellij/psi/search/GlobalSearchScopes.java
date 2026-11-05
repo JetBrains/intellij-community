@@ -16,7 +16,7 @@ public final class GlobalSearchScopes {
 
   public static @NotNull GlobalSearchScope openFilesScope(@NotNull Project project) {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
-    final VirtualFile[] files = fileEditorManager != null ? fileEditorManager.getOpenFiles() : VirtualFile.EMPTY_ARRAY;
+    final VirtualFile[] files = fileEditorManager.getOpenFiles();
     return GlobalSearchScope.filesScope(project, Arrays.asList(files), IdeBundle.message("scope.open.files"));
   }
 

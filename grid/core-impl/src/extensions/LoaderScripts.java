@@ -32,7 +32,7 @@ public final class LoaderScripts {
 
   public static @Nullable String getScriptsDirectoryWithoutUnpack() {
     PluginId id = getPluginId();
-    return id == null ? null : ExtensionsService.getInstance().extensionsRootTypePathWithoutUnpack(id, SCRIPT_DIR);
+    return ExtensionsService.getInstance().extensionsRootTypePathWithoutUnpack(id, SCRIPT_DIR);
   }
 
   public static @Nullable File getScriptsDirectory() {
@@ -82,7 +82,6 @@ public final class LoaderScripts {
 
   private static @Nullable Path getScriptDirectoryImpl(boolean createIfMissing) {
     PluginId pluginId = getPluginId();
-    if (pluginId == null) return null;
 
     try {
       return ExtensionsService.getInstance().extensionsRootTypeFindResourceDirectory(pluginId, SCRIPT_DIR, createIfMissing);

@@ -142,11 +142,9 @@ public final class ExecuteScriptDialog extends DialogWrapper {
   private static String getCurrentFileCommand(Project project) {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
     String openFileCommand = "";
-    if (fileEditorManager != null) {
-      VirtualFile[] openFiles = fileEditorManager.getSelectedFiles();
-      if (openFiles.length != 0) {
-        openFileCommand = "%openFile " + openFiles[0].getCanonicalPath() + '\n';
-      }
+    VirtualFile[] openFiles = fileEditorManager.getSelectedFiles();
+    if (openFiles.length != 0) {
+      openFileCommand = "%openFile " + openFiles[0].getCanonicalPath() + '\n';
     }
     return openFileCommand;
   }

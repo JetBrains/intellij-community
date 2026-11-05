@@ -333,9 +333,7 @@ public class ModuleNameLocationComponent implements ModuleNameLocationSettings {
     final String moduleName = getModuleName();
     final Module module;
     final ProjectStructureConfigurable fromConfigurable = ProjectStructureConfigurable.getInstance(project);
-    ModifiableModuleModel modifiableModel =
-      fromConfigurable != null ? fromConfigurable.getContext().getModulesConfigurator().getModuleModel()
-                               : null;
+    ModifiableModuleModel modifiableModel = fromConfigurable.getContext().getModulesConfigurator().getModuleModel();
     if (modifiableModel != null) {
       module = modifiableModel.findModuleByName(moduleName);
     }

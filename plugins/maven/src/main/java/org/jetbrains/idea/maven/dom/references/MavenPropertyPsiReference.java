@@ -175,13 +175,11 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
 
     if (myText.equals(MULTIPROJECT_DIR_PROP)) {
       MavenProject rootProject = myProjectsManager.findRootProject(myMavenProject);
-      if (rootProject == null) return null;
       return getBaseDir(rootProject);
     }
 
     if (isModel410() && (myText.equals("project.rootDirectory") || myText.equals("session.rootDirectory") || myText.equals("session.topDirectory"))) {
       MavenProject rootProject = myProjectsManager.findRootProject(myMavenProject);
-      if (rootProject == null) return null;
       return getBaseDir(rootProject);
     }
 
@@ -343,7 +341,6 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
 
   private PsiDirectory getRootDir(@NotNull MavenProject mavenProject) {
     MavenProject root = MavenProjectsManager.getInstance(myProject).findRootProject(mavenProject);
-    if (root == null) return getBaseDir(mavenProject);
     return PsiManager.getInstance(myProject).findDirectory(root.getDirectoryFile());
   }
 

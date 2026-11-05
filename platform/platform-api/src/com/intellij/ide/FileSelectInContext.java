@@ -55,7 +55,7 @@ public class FileSelectInContext implements SelectInContext {
 
   private static FileEditorProvider getFileEditorProvider(@NotNull Project project, @NotNull VirtualFile file) {
     FileEditorManager manager = FileEditorManager.getInstance(project);
-    return manager == null ? null : () -> getFirstElement(manager.openFile(file, false));
+    return () -> getFirstElement(manager.openFile(file, false));
   }
 
   @Override

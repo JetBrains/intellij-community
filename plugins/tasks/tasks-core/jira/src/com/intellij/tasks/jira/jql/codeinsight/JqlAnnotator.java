@@ -79,10 +79,7 @@ final class JqlAnnotator implements Annotator {
       @Override
       public void visitJqlIdentifier(JqlIdentifier identifier) {
         TextAttributes attributes = DefaultLanguageHighlighterColors.CONSTANT.getDefaultAttributes();
-        if (attributes != null) {
-          holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-          .enforcedTextAttributes(attributes).create();
-        }
+        holder.newSilentAnnotation(HighlightSeverity.INFORMATION).enforcedTextAttributes(attributes).create();
       }
     });
   }
