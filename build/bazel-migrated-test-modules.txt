@@ -33,6 +33,7 @@ intellij.featuresTrainer.tests
 intellij.findUsagesMl.tests
 intellij.golsp.performanceTests
 intellij.gradle.backend.tests
+intellij.gradle.completion.kotlin.tests.benchmark
 intellij.gradle.completion.tests
 intellij.gradle.java.maven.tests
 intellij.gradle.java.tests.benchmark
