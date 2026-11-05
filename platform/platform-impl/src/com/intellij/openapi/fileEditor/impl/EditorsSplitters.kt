@@ -101,6 +101,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
+import com.intellij.util.StartupUiGate
 import com.intellij.util.computeFileIconImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
@@ -1608,6 +1609,8 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
           window.tabbedPane.editorTabs.updateListeners()
 
           window.coroutineScope.launch {
+            // every tab update lays out the whole tab strip, so the restored editor comes first
+            StartupUiGate.awaitEditorsShown()
             for (delayedTask in delayedTasks) {
               delayedTask.start()
             }
@@ -1794,6 +1797,7 @@ fun setupFileTab(
       }
 
       compositeCoroutineScope.launch {
+        StartupUiGate.awaitEditorsShown()
         val tooltipText = if (UISettings.getInstance().showTabsTooltips) {
           readAction { fileEditorManager.getFileTooltipText(notFullyPreparedFile, tab.composite) }
         }
@@ -1808,6 +1812,7 @@ fun setupFileTab(
       }
 
       compositeCoroutineScope.launch {
+        StartupUiGate.awaitEditorsShown()
         val (foregroundColor, attributes) = tabColorTask.await()
         withContext(Dispatchers.EDT) {
           tab.setDefaultForegroundAndAttributes(
@@ -1819,6 +1824,7 @@ fun setupFileTab(
 
       if (tabIconTask != null) {
         compositeCoroutineScope.launch {
+          StartupUiGate.awaitEditorsShown()
           val icon = tabIconTask.await()
           withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
             tab.setIcon(decorateFileIcon(composite = tab.composite, baseIcon = icon, uiSettings = UISettings.getInstance()))

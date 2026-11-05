@@ -70,11 +70,12 @@ internal class SpinnerTabIconHolder(
 
   private suspend fun setIconImmediately(icon: Icon?) {
     val oldIcon = this@SpinnerTabIconHolder.icon
+    if (oldIcon == icon) {
+      return
+    }
     withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      if (oldIcon != icon) {
-        this@SpinnerTabIconHolder.icon = icon
-        owner.changeSupport.firePropertyChange(TabInfo.ICON, oldIcon, icon)
-      }
+      this@SpinnerTabIconHolder.icon = icon
+      owner.changeSupport.firePropertyChange(TabInfo.ICON, oldIcon, icon)
     }
   }
 

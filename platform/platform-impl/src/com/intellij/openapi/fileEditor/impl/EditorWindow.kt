@@ -46,6 +46,7 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener
 import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.util.PlatformUtils
+import com.intellij.util.StartupUiGate
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.EmptyIcon
@@ -437,6 +438,7 @@ class EditorWindow internal constructor(
     // on unsplit, we transfer composite to another window, so, we launch in the window's scope
     coroutineScope.launch {
       attachAsChildTo(composite.coroutineScope)
+      StartupUiGate.awaitEditorsShown()
       composite.selectedEditorWithProvider.collectLatest {
         val tabActions = it?.fileEditor?.tabActions
         withContext(Dispatchers.EDT) { // we cannot use strict dispatcher here, this code update action toolbar which may update lock-requiring actions synchronously

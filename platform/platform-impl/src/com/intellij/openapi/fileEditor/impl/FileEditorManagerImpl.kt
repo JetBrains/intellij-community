@@ -136,6 +136,7 @@ import com.intellij.ui.tabs.TabInfo
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.IconUtil
 import com.intellij.util.ObjectUtils
+import com.intellij.util.StartupUiGate
 import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -2630,6 +2631,7 @@ open class FileEditorManagerImpl(
       selectionHistory.addRecord(composite.file to window)
 
       composite.coroutineScope.launch {
+        StartupUiGate.awaitEditorsShown()
         val color = readAction { EditorTabPresentationUtil.getEditorTabBackgroundColor(composite.project, composite.file) }
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           tab.setTabColor(color)
