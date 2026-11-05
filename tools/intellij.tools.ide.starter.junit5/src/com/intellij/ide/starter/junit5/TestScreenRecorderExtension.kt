@@ -1,11 +1,14 @@
 package com.intellij.ide.starter.junit5
 
+import com.intellij.ide.starter.ci.CIServer
+import com.intellij.ide.starter.ci.reportTestInfraFailure
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.runner.CurrentTestMethod
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
+import com.intellij.ide.starter.runner.events.MetricsPublishedEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
 import com.intellij.ide.starter.utils.FileSystem.listDirectoryEntriesQuietly
 import com.intellij.ide.starter.utils.catchAll
@@ -28,6 +31,10 @@ import kotlin.jvm.optionals.getOrNull
 annotation class WithScreenRecording
 
 internal class TestScreenRecorderExtension(
+  private val isRunningOnCI: () -> Boolean = { CIServer.instance.isBuildRunningOnCI },
+  private val reportTestInfraFailure: (testName: String, message: String) -> Unit = { testName, message ->
+    CIServer.instance.reportTestInfraFailure(testName, message)
+  },
   private val createRecorder: (IDERunContext, Path, String) -> IDEScreenRecorder = { runContext, directory, prefix ->
     IDEScreenRecorder.create(runContext, recordingDir = directory, recordingFilePrefix = prefix)
   },
@@ -36,6 +43,8 @@ internal class TestScreenRecorderExtension(
   private var recording: Recording? = null
   private var liveRunContext: IDERunContext? = null
   private var currentTestRecordingEnabled: Boolean? = null
+  private var currentTest: ExtensionContext? = null
+  private var missingPerformanceTestReported: Boolean = false
 
   override fun beforeAll(context: ExtensionContext) {
     subscribeToIdeLaunchEvents()
@@ -43,6 +52,8 @@ internal class TestScreenRecorderExtension(
 
   override fun beforeEach(context: ExtensionContext) {
     subscribeToIdeLaunchEvents() // to handle StarterConfigurationStorage.afterEachMessageBusCleanup
+    currentTest = context
+    missingPerformanceTestReported = false
     // Every test is recorded, except a performance test: a recorder would distort its measurements.
     currentTestRecordingEnabled = !context.isPerformanceTest()
     liveRunContext?.let { startRecorderIfNeeded(it) }
@@ -63,12 +74,14 @@ internal class TestScreenRecorderExtension(
    */
   override fun afterEach(context: ExtensionContext) {
     currentTestRecordingEnabled = null
+    currentTest = null
     stopAndPublishRecording()
   }
 
   // No unsubscribe: StarterBusAllTestCallback wipes the bus after every container anyway.
   override fun afterAll(context: ExtensionContext) {
     currentTestRecordingEnabled = null
+    currentTest = null
     liveRunContext = null
     stopAndPublishRecording()
   }
@@ -82,8 +95,14 @@ internal class TestScreenRecorderExtension(
    * and `withScreenRecording` is left for callers outside it, who have no extension to record for them.
    *
    * Called from [beforeEach] as well, because `StarterBusEachTestCallback` wipes the bus after every test.
+   *
+   * The reminder about a missing [PerformanceTest] subscribes to [MetricsPublishedEvent] under the class of this extension.
+   * The key of [IDEScreenRecorder] is for the recording only.
    */
   private fun subscribeToIdeLaunchEvents() {
+    EventsBus.subscribe(TestScreenRecorderExtension::class.java) { _: MetricsPublishedEvent ->
+      reportMissingPerformanceTestAnnotation()
+    }
     EventsBus.subscribe(IDEScreenRecorder::class.java) { event: IdeLaunchEvent ->
       if (event.runContext.testContext.isRemDevContext()) return@subscribe // skip remdev backend
 
@@ -121,6 +140,21 @@ internal class TestScreenRecorderExtension(
           artifactName = completedRecording.directory.name,
         )
       }
+    }
+  }
+
+  private fun reportMissingPerformanceTestAnnotation() {
+    val test = currentTest ?: return
+    if (missingPerformanceTestReported || test.isPerformanceTest() || isRunningOnCI()) return
+    missingPerformanceTestReported = true
+    catchAll("report missing @PerformanceTest") {
+      val testName = listOfNotNull(test.testClass.getOrNull()?.name, test.testMethod.getOrNull()?.name).joinToString("#")
+      reportTestInfraFailure(
+        "${test.uniqueId}.performanceTest",
+        "Test $testName publishes performance metrics but has no @${PerformanceTest::class.qualifiedName} annotation. " +
+        "Without the annotation, the screen of the test is recorded, and the recording can distort the metrics. " +
+        "Add @PerformanceTest to the test class or the test method.",
+      )
     }
   }
 

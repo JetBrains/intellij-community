@@ -3,6 +3,7 @@ package com.intellij.tools.ide.metrics.collector.starter.publishing
 import com.intellij.ide.starter.di.di
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.runner.IDERunContext
+import com.intellij.ide.starter.runner.events.MetricsPublishedEvent
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.starter.collector.ProvidedMetricsCollector
@@ -10,6 +11,7 @@ import com.intellij.tools.ide.metrics.collector.starter.collector.StarterMetrics
 import com.intellij.tools.ide.metrics.collector.starter.collector.StarterTelemetryJsonMeterCollector
 import com.intellij.tools.ide.metrics.collector.starter.collector.StarterTelemetrySpanCollector
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
+import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.PrintFailuresMode
 import com.intellij.tools.ide.util.common.withRetryBlocking
 import io.opentelemetry.sdk.metrics.data.MetricData
@@ -80,6 +82,7 @@ abstract class MetricsPublisher<T> {
   /** Collect metrics from all registered collectors and publish them */
   fun publish(ideStartResult: IDEStartResult): MetricsPublisher<T> {
     publishAction(ideStartResult, collectMetrics(ideStartResult))
+    EventsBus.postAndWaitProcessing(MetricsPublishedEvent(ideStartResult.runContext))
     return this
   }
 }

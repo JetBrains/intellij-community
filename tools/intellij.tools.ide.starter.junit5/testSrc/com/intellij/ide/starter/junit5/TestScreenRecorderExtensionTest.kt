@@ -10,6 +10,7 @@ import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.TestMethod
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
+import com.intellij.ide.starter.runner.events.MetricsPublishedEvent
 import com.intellij.ide.starter.screenRecorder.IDEScreenRecorder
 import com.intellij.tools.ide.starter.bus.EventsBus
 import org.junit.jupiter.api.AfterEach
@@ -49,7 +50,12 @@ internal class TestScreenRecorderExtensionTest {
   lateinit var testHome: Path
 
   private val recordings = mutableListOf<CreatedRecording>()
-  private val extension = TestScreenRecorderExtension { runContext, directory, prefix -> createRecorder(runContext, directory, prefix) }
+  private var runningOnCI = false
+  private val testInfraFailures = mutableListOf<Pair<String, String>>()
+  private val extension = TestScreenRecorderExtension(
+    isRunningOnCI = { runningOnCI },
+    reportTestInfraFailure = { testName, message -> testInfraFailures.add(testName to message) },
+  ) { runContext, directory, prefix -> createRecorder(runContext, directory, prefix) }
   private val context = testContext()
 
   @BeforeEach
@@ -230,6 +236,89 @@ internal class TestScreenRecorderExtensionTest {
     assertTrue(recordings.isEmpty(), "one IDE is only ever recorded once")
   }
 
+  @Test
+  fun `reports once when a test without the performance marker publishes metrics`() {
+    val plain = testContext(methodName = "plainTest")
+    startTest(plain)
+    metricsPublished()
+    metricsPublished()
+    extension.afterTestExecution(plain)
+    extension.afterEach(plain)
+
+    val failure = testInfraFailures.single()
+    val message = failure.second
+    assertEquals("${plain.uniqueId}.performanceTest", failure.first)
+    assertTrue(message.contains("${TestMethods::class.java.name}#plainTest"), "the report names the test: $message")
+    assertTrue(message.contains("@${PerformanceTest::class.qualifiedName}"), "the report names the annotation: $message")
+  }
+
+  @Test
+  fun `reports each test without the performance marker on its own`() {
+    listOf("plainTest", "recordedTest").forEach { methodName ->
+      val test = testContext(methodName = methodName)
+      startTest(test)
+      metricsPublished()
+      extension.afterTestExecution(test)
+      extension.afterEach(test)
+    }
+
+    assertEquals(2, testInfraFailures.size, "each test gets a report of its own")
+  }
+
+  @Test
+  fun `does not report a performance test that publishes metrics`() {
+    listOf(
+      testContext(methodName = "performanceTest"),
+      testContext(methodName = "inheritedTest", testClass = PerformanceTestClass::class.java),
+      testContext(methodName = "ownTest", testClass = PerformanceTestSubclass::class.java),
+      testContext(methodName = "nestedTest", testClass = PerformanceTestClass.NestedTests::class.java),
+    ).forEach { test ->
+      startTest(test)
+      metricsPublished()
+      extension.afterTestExecution(test)
+      extension.afterEach(test)
+    }
+
+    assertTrue(testInfraFailures.isEmpty(), "a performance test has the marker already: $testInfraFailures")
+  }
+
+  @Test
+  fun `does not report on CI`() {
+    runningOnCI = true
+    val plain = testContext(methodName = "plainTest")
+    startTest(plain)
+    metricsPublished()
+
+    assertTrue(testInfraFailures.isEmpty(), "the report is for local runs only: $testInfraFailures")
+  }
+
+  @Test
+  fun `does not report metrics published outside a test`() {
+    metricsPublished() // from @BeforeAll
+    val plain = testContext(methodName = "plainTest")
+    startTest(plain)
+    extension.afterTestExecution(plain)
+    extension.afterEach(plain)
+    metricsPublished() // from @AfterAll
+
+    assertTrue(testInfraFailures.isEmpty(), "metrics published from class setup or teardown have no test: $testInfraFailures")
+  }
+
+  @Test
+  fun `reports metrics published from an AfterEach method`() {
+    val plain = testContext(methodName = "plainTest")
+    startTest(plain)
+    extension.afterTestExecution(plain)
+    metricsPublished() // JUnit runs the @AfterEach methods of the test between afterTestExecution and afterEach
+    extension.afterEach(plain)
+
+    assertEquals(listOf("${plain.uniqueId}.performanceTest"), testInfraFailures.map { it.first })
+  }
+
+  private fun metricsPublished(runContext: IDERunContext = runContext()) {
+    EventsBus.postAndWaitProcessing(MetricsPublishedEvent(runContext), ignoreExceptions = false)
+  }
+
   private fun ideLaunched(runContext: IDERunContext) {
     EventsBus.postAndWaitProcessing(IdeLaunchEvent(runContext, mock(IDEHandle::class.java)), ignoreExceptions = false)
   }
@@ -273,6 +362,7 @@ internal class TestScreenRecorderExtensionTest {
     testClass: Class<*> = TestMethods::class.java,
   ): ExtensionContext =
     mock(ExtensionContext::class.java).also {
+      doReturn("[engine:junit-jupiter]/[class:${testClass.name}]/[method:$displayName]").`when`(it).uniqueId
       doReturn(displayName).`when`(it).displayName
       doReturn(Optional.of(testClass)).`when`(it).testClass
       doReturn(Optional.of(testClass.getMethod(methodName))).`when`(it).testMethod
