@@ -31,11 +31,11 @@ import kotlin.time.Duration.Companion.seconds
 @TestApplication
 internal class DescriptorSplitModeCodeVisionProviderTest {
   private val projectFixture = codeInsightProjectFixture()
-  private val myFixture by codeInsightFixture(projectFixture)
+  private val codeInsightFixture by codeInsightFixture(projectFixture)
 
   @BeforeEach
   fun setUp() {
-    CodeVisionTestUtil.setUp(myFixture)
+    CodeVisionTestUtil.setUp(codeInsightFixture)
   }
 
   @Test
@@ -211,7 +211,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
       </idea-plugin>
       """.trimIndent()
     )
-    myFixture.configureFromTempProjectFile("root.plugin/plugin.xml")
+    codeInsightFixture.configureFromTempProjectFile("root.plugin/plugin.xml")
 
     val entry = runReadActionBlocking { computeCodeVisionEntry() }
     assertInstanceOf(ClickableTextCodeVisionEntry::class.java, entry)
@@ -233,7 +233,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     assertEquals(setOf("plugin", "descriptor", "backend"), icons.keys)
 
     val currentFile = DescriptorLink("plugin.xml", "root.plugin")
-    val resolvedDescriptors = runReadActionBlocking { resolveDescriptors(myFixture.project, links + currentFile) }
+    val resolvedDescriptors = runReadActionBlocking { resolveDescriptors(codeInsightFixture.project, links + currentFile) }
     assertEquals(
       mapOf(links[0] to "dependency.module/dependency.module.xml", currentFile to "root.plugin/plugin.xml"),
       resolvedDescriptors.mapValues { [_, resolved] -> "${resolved.file.parent.name}/${resolved.file.name}" },
@@ -265,7 +265,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
       </idea-plugin>
       """.trimIndent()
     )
-    myFixture.configureFromTempProjectFile("root.plugin/plugin.xml")
+    codeInsightFixture.configureFromTempProjectFile("root.plugin/plugin.xml")
 
     val reasonHtml = computeReasonHtml()
     assertEquals(
@@ -292,7 +292,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
       </idea-plugin>
       """.trimIndent()
     )
-    myFixture.configureFromTempProjectFile("test.module/test.module.xml")
+    codeInsightFixture.configureFromTempProjectFile("test.module/test.module.xml")
 
     assertEquals(
       "LiteFrontend content module Can be installed into: lite frontend IDE " +
@@ -318,7 +318,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
       </idea-plugin>
       """.trimIndent()
     )
-    myFixture.configureFromTempProjectFile("test.module/test.module.xml")
+    codeInsightFixture.configureFromTempProjectFile("test.module/test.module.xml")
 
     (val html, val icons) = computeReasonHtml()
     assertEquals(
@@ -351,7 +351,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
       </idea-plugin>
       """.trimIndent()
     )
-    myFixture.configureFromTempProjectFile("test.module/test.module.xml")
+    codeInsightFixture.configureFromTempProjectFile("test.module/test.module.xml")
 
     (val html, val links) = computeReasonHtml()
     assertEquals(
@@ -364,14 +364,14 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     )
     val predefinedDescriptor = DescriptorLink("intellij.platform.backend.xml", "intellij.platform.backend")
     assertEquals(listOf(predefinedDescriptor), links)
-    val resolvedDescriptors = runReadActionBlocking { resolveDescriptors(myFixture.project, links) }
+    val resolvedDescriptors = runReadActionBlocking { resolveDescriptors(codeInsightFixture.project, links) }
     assertEquals("intellij.platform.backend.xml", resolvedDescriptors[predefinedDescriptor]?.file?.name)
   }
 
   @Test
   fun testAnalysisBeforeRestrictionsLoadIsStaleAfterLoad() {
     createDependencyOnPredefinedBackendModule()
-    assertFalse(SplitModeApiRestrictionsService.getInstance(myFixture.project).isLoaded())
+    assertFalse(SplitModeApiRestrictionsService.getInstance(codeInsightFixture.project).isLoaded())
     assertEquals(ModuleKind.SHARED, computeResolvedModuleKind().kind)
 
     loadSplitModeRestrictions()
@@ -389,7 +389,7 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
   @Test
   fun testCodeVisionLoadsRestrictions() {
     createDependencyOnPredefinedBackendModule()
-    assertFalse(SplitModeApiRestrictionsService.getInstance(myFixture.project).isLoaded())
+    assertFalse(SplitModeApiRestrictionsService.getInstance(codeInsightFixture.project).isLoaded())
 
     val entry = runReadActionBlocking { computeCodeVisionEntry() }
     assertEquals("Backend content module", (entry as ClickableTextCodeVisionEntry).text)
@@ -399,11 +399,11 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
   fun testPreview() {
     val previewPath = "codeVisionProviders/${DescriptorSplitModeCodeVisionProvider.ID}/preview.xml"
     val previewText = DescriptorSplitModeCodeVisionProvider::class.java.classLoader.getResource(previewPath)!!.readText()
-    myFixture.configureByText("preview.xml", previewText)
+    codeInsightFixture.configureByText("preview.xml", previewText)
 
     val provider = DescriptorSplitModeCodeVisionProvider()
-    provider.preparePreview(myFixture.editor, myFixture.file)
-    val [range, entry] = runReadActionBlocking { provider.computeForEditor(myFixture.editor, myFixture.file) }.single()
+    provider.preparePreview(codeInsightFixture.editor, codeInsightFixture.file)
+    val [range, entry] = runReadActionBlocking { provider.computeForEditor(codeInsightFixture.editor, codeInsightFixture.file) }.single()
 
     assertEquals(0, range.startOffset)
     assertEquals("Backend plugin", (entry as TextCodeVisionEntry).text)
@@ -417,11 +417,11 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     enabledProviderGroupIds: List<String> = listOf(DescriptorSplitModeCodeVisionProvider.ID),
   ) {
     CodeVisionTestUtil.testProviders(
-      myFixture,
+      codeInsightFixture,
       expectedText,
       { sourceText ->
         createModuleWithModuleDescriptor(moduleName, descriptorName, sourceText)
-        myFixture.configureFromTempProjectFile("$moduleName/$descriptorName")
+        codeInsightFixture.configureFromTempProjectFile("$moduleName/$descriptorName")
       },
       false,
       *enabledProviderGroupIds.toTypedArray(),
@@ -432,11 +432,11 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
   }
 
   private fun computeCodeVisionEntry(): CodeVisionEntry {
-    return DescriptorSplitModeCodeVisionProvider().computeForEditor(myFixture.editor, myFixture.file).single().second
+    return DescriptorSplitModeCodeVisionProvider().computeForEditor(codeInsightFixture.editor, codeInsightFixture.file).single().second
   }
 
   private fun loadSplitModeRestrictions() {
-    val service = SplitModeApiRestrictionsService.getInstance(myFixture.project)
+    val service = SplitModeApiRestrictionsService.getInstance(codeInsightFixture.project)
     service.scheduleLoadRestrictions()
     timeoutRunBlocking {
       waitUntil("API restrictions failed to load", 2.seconds) { service.isLoaded() }
@@ -448,13 +448,13 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
    */
   private fun createPredefinedModule(moduleName: String, @Language("XML") descriptorText: String) {
     val module = PsiTestUtil.addModule(
-      myFixture.project,
+      codeInsightFixture.project,
       PluginModuleType.getInstance(),
       moduleName,
-      myFixture.tempDirFixture.findOrCreateDir(moduleName),
+      codeInsightFixture.tempDirFixture.findOrCreateDir(moduleName),
     )
-    PsiTestUtil.addSourceRoot(module, myFixture.tempDirFixture.findOrCreateDir("$moduleName/resources"), JavaResourceRootType.RESOURCE)
-    myFixture.addFileToProject("$moduleName/resources/$moduleName.xml", descriptorText)
+    PsiTestUtil.addSourceRoot(module, codeInsightFixture.tempDirFixture.findOrCreateDir("$moduleName/resources"), JavaResourceRootType.RESOURCE)
+    codeInsightFixture.addFileToProject("$moduleName/resources/$moduleName.xml", descriptorText)
   }
 
   /**
@@ -472,17 +472,17 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
       </idea-plugin>
       """.trimIndent()
     )
-    myFixture.configureFromTempProjectFile("test.module/test.module.xml")
+    codeInsightFixture.configureFromTempProjectFile("test.module/test.module.xml")
   }
 
   private fun computeResolvedModuleKind(): ResolvedModuleKind {
     return runReadActionBlocking {
-      SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(myFixture.file as XmlFile).resolvedModuleKind
+      SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(codeInsightFixture.file as XmlFile).resolvedModuleKind
     }
   }
 
   private fun computeReason(): DescriptorSplitModeReason {
-    return runReadActionBlocking { getDescriptorSplitModeInlayInfo(myFixture.file as XmlFile) }!!.reason
+    return runReadActionBlocking { getDescriptorSplitModeInlayInfo(codeInsightFixture.file as XmlFile) }!!.reason
   }
 
   private fun computeReasonHtml(): DescriptorSplitModeReasonHtml = computeReason().toHtml()
@@ -513,11 +513,11 @@ internal class DescriptorSplitModeCodeVisionProviderTest {
     @Language("XML") moduleDescriptorText: String,
   ) {
     PsiTestUtil.addModule(
-      myFixture.project,
+      codeInsightFixture.project,
       PluginModuleType.getInstance(),
       moduleName,
-      myFixture.tempDirFixture.findOrCreateDir(moduleName)
+      codeInsightFixture.tempDirFixture.findOrCreateDir(moduleName)
     )
-    myFixture.addFileToProject("$moduleName/$moduleDescriptorName", moduleDescriptorText)
+    codeInsightFixture.addFileToProject("$moduleName/$moduleDescriptorName", moduleDescriptorText)
   }
 }
