@@ -54,6 +54,7 @@ import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import tools.jackson.jr.ob.JSON
 import java.nio.ByteBuffer
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -204,8 +205,10 @@ private fun buildNonBundledPlugins(
       }
 
       if (isPluginArchiveEnabled) {
+        val executables = layout?.executablePatterns?.filterKeys { it.os == os && it.arch == arch }?.values?.flatten().orEmpty()
         archivePlugin(
-          optimizedZip = layout == null || !layout.enableSymlinksAndExecutableResources,
+          optimizedZip = layout == null || !layout.enableSymlinksAndExecutableResources && executables.isEmpty(),
+          executables = executables,
           source = pluginDirOrFile,
           target = destFile,
           compress = compressPluginArchive,
@@ -321,6 +324,7 @@ private fun archivePlugin(
   target: Path,
   compress: Boolean,
   optimizedZip: Boolean,
+  executables: List<String>,
   withBlockMap: Boolean,
   json: Lazy<JSON>,
   context: BuildContext,
@@ -330,7 +334,7 @@ private fun archivePlugin(
     .setAttribute("outputFile", target.toString())
     .setAttribute("optimizedZip", optimizedZip)
     .use {
-      archivePlugin(optimized = optimizedZip, target = target, compress = compress, source = source, context = context)
+      archivePlugin(optimized = optimizedZip, target = target, compress = compress, source = source, executables = executables, context = context)
     }
   if (withBlockMap) {
     spanBuilder("build plugin blockmap").setAttribute("file", target.toString()).use {
@@ -339,7 +343,7 @@ private fun archivePlugin(
   }
 }
 
-private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, source: Path, context: BuildContext) {
+private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, source: Path, executables: List<String>, context: BuildContext) {
   if (optimized) {
     writeNewZipWithoutIndex(target, compress) { zipCreator ->
       val archiver = ZipArchiver()
@@ -357,8 +361,10 @@ private fun archivePlugin(optimized: Boolean, target: Path, compress: Boolean, s
     writeNewFile(target) { outFileChannel ->
       NoDuplicateZipArchiveOutputStream(outFileChannel, context.options.compressZipFiles).use { out ->
         out.setUseZip64(Zip64Mode.Never)
-        out.dir(startDir = source, prefix = "${source.fileName}/", entryCustomizer = { entry, file, _ ->
-          if (Files.isExecutable(file)) {
+        val fileSystem = FileSystems.getDefault()
+        val matchers = executables.map { fileSystem.getPathMatcher("glob:$it") }
+        out.dir(startDir = source, prefix = "${source.fileName}/", entryCustomizer = { entry, file, relativePath ->
+          if (Files.isExecutable(file) || matchers.any { it.matches(Path.of(relativePath)) }) {
             entry.unixMode = executableFileUnixMode
           }
         })
