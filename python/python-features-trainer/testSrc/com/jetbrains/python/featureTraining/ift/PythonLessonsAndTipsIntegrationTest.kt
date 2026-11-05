@@ -6,12 +6,11 @@ import com.jetbrains.python.allure.Subsystems
 
 import com.intellij.python.featuresTrainer.ift.PythonLangSupport
 import com.intellij.python.featuresTrainer.ift.PythonLearningCourse
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import com.intellij.testFramework.junit5.TestApplication
 import training.lang.LangSupport
 import training.simple.LessonsAndTipsIntegrationTest
 
-@RunWith(JUnit4::class)
+@TestApplication
 @Subsystems.IDE
 @Components.FeatureTrainer
 @Layers.Functional

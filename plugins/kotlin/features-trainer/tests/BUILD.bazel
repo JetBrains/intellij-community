@@ -32,6 +32,8 @@ jvm_library(
         "//plugins/kotlin/features-trainer",
         "//plugins/ide-features-trainer:featuresTrainer-tests_test_lib",
         "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
         "//platform/scratch/plugin",
     ],
 )

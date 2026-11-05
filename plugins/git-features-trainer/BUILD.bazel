@@ -86,10 +86,10 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/ide-features-trainer:featuresTrainer",
-        "//platform/testFramework",
         "//plugins/git-features-trainer:vcs-git-featuresTrainer",
         "//plugins/ide-features-trainer:featuresTrainer-tests_test_lib",
-        "//libraries/junit4",
+        "//platform/testFramework/junit5",
+        "//libraries/junit6",
         "//platform/scratch/plugin",
     ],
 )
