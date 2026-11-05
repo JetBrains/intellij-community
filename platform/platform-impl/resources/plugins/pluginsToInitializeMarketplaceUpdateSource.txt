@@ -173,7 +173,6 @@ com.samdark.intellij-visual-studio-code-dark-plus
 com.andrey4623.rainbowcsv
 com.intellij.spring.boot
 com.intellij.javaee.ejb
-com.intellij.ml.llm.experimental
 aws.toolkit.core
 monokai-pro
 com.starxg.mybatis-log-plugin-free

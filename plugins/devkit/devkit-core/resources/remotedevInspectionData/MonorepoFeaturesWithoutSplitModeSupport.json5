@@ -7,7 +7,6 @@
 {
   pathPatterns: [
     "plugins/llm//*",
-    "plugins/llm-experimental//*",
     "plugins/llm-installer//*",
     "community/python//*",
     "community/plugins/grazie//*",
