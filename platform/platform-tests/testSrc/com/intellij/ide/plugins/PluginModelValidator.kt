@@ -110,9 +110,11 @@ data class PluginValidationOptions(
 
   /**
    * xi:include directives should not refer to files located in other modules.
-   * This set is temporarily introduced to avoid reporting errors for existing cases.
+   * This map is temporarily introduced to avoid reporting errors for existing cases.
+   * It maps the name of a module to the short name of the file from another module which the module includes.
+   * Use `*` as the value if the module includes multiple such files.
    */
-  val modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore: Set<String> = emptySet(),
+  val modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore: Map<String, String> = emptyMap(),
 )
 
 /**
@@ -320,7 +322,8 @@ internal class PluginModelValidator(
     }
 
     val corePluginModuleNames = validationOptions.pluginModelBuilderOptions.corePluginDescriptions.mapTo(HashSet()) { it.mainModuleName }
-    val obsoleteModulesWithXIncludeReferencingFilesFromOtherModules = validationOptions.modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore.toMutableSet()
+    val ignoredXIncludesFromOtherModules = validationOptions.modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore
+    val actualIgnoredXIncludesFromOtherModules = HashMap<String, MutableSet<String>>()
     for ((val sourceModule, val targetModule, val sourceFile, val targetFile) in sourceCodeBasedPluginModel.resolvedXIncludeDirectives) {
       if (targetModule.name == targetFile.nameWithoutExtension
           && JpsJavaExtensionService.getInstance().findSourceFileInProductionRoots(targetModule, targetFile.name) != null) {
@@ -337,11 +340,12 @@ internal class PluginModelValidator(
         continue
       }
 
-      if (sourceModule != targetModule
-          && sourceModule.name !in corePluginModuleNames // core plugins include a lot of *.moduleSets.* files, so ignore them for now
-      ) {
-        if (sourceModule.name in validationOptions.modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore) {
-          obsoleteModulesWithXIncludeReferencingFilesFromOtherModules.remove(sourceModule.name)
+      //we don't have a proper replacement for such cases yet, so they are allowed
+      val isModuleSetInclusion = sourceModule.name in corePluginModuleNames && targetFile.name.startsWith("intellij.moduleSets.")
+      if (sourceModule != targetModule && !isModuleSetInclusion) {
+        val ignoredTargetFileName = ignoredXIncludesFromOtherModules[sourceModule.name]
+        if (ignoredTargetFileName == "*" || ignoredTargetFileName == targetFile.name) {
+          actualIgnoredXIncludesFromOtherModules.computeIfAbsent(sourceModule.name) { HashSet() }.add(targetFile.name)
         }
         else {
           reportError(
@@ -357,8 +361,15 @@ internal class PluginModelValidator(
         }
       }
     }
-    for (module in obsoleteModulesWithXIncludeReferencingFilesFromOtherModules) {
-      println("Obsolete entry for module $module in modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore")
+    for ((module, ignoredTargetFileName) in ignoredXIncludesFromOtherModules) {
+      val actualTargetFileNames = actualIgnoredXIncludesFromOtherModules[module]
+      if (actualTargetFileNames == null) {
+        println("Obsolete entry for module $module in modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore")
+      }
+      else if (ignoredTargetFileName == "*" && actualTargetFileNames.size == 1) {
+        println("Entry for module $module in modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore uses '*', " +
+                "but the module includes only '${actualTargetFileNames.single()}', so specify this name instead")
+      }
     }
 
     for ((pluginId, moduleNames) in validationOptions.pluginsToContentModulesWithoutDedicatedJpsModules) {

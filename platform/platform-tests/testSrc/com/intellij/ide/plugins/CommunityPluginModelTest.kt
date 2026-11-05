@@ -60,9 +60,10 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "intellij.vcs.git.testFramework",
     "intellij.python.community.services.systemPython.tests",
   ),
-  modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore = setOf(
-    "intellij.android.design-plugin.descriptor",
-    "intellij.android.plugin.descriptor",
+  modulesWithXIncludeReferencingFilesFromOtherModulesToIgnore = mapOf(
+    "intellij.android.design-plugin.descriptor" to "*",
+    "intellij.android.plugin.descriptor" to "*",
+    "intellij.idea.community.customization" to "DesignerCorePlugin.xml", //todo: convert to a content module
   )
 )
 
