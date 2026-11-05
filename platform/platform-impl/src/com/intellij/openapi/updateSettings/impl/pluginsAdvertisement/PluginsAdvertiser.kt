@@ -21,6 +21,7 @@ private const val IGNORE_ULTIMATE_EDITION = "promo.ignore.suggested.ide"
 internal var isIgnoreIdeSuggestion: Boolean
   get() = PropertiesComponent.getInstance().isTrueValue(IGNORE_ULTIMATE_EDITION)
           || PlatformUtils.isJetBrainsClient()
+          || !PluginAdvertiserService.isAdvertisingProducts()
           || (!PlatformUtils.isCommunityEdition() && PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID))
   set(value) = PropertiesComponent.getInstance().setValue(IGNORE_ULTIMATE_EDITION, value)
 

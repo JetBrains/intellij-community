@@ -430,7 +430,7 @@ open class PluginAdvertiserServiceImpl(
     }
 
     val promoteDisabledPlugins = if (PluginManagerCore.isDisabled(PluginManagerCore.ULTIMATE_PLUGIN_ID)) emptyList() else disabledDescriptors
-    val (notificationMessage, notificationActions) = if (suggestionPlugins.isNotEmpty() || promoteDisabledPlugins.isNotEmpty()) {
+    val [notificationMessage, notificationActions] = if (suggestionPlugins.isNotEmpty() || promoteDisabledPlugins.isNotEmpty()) {
       val action = if (promoteDisabledPlugins.isEmpty()) {
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
           FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
