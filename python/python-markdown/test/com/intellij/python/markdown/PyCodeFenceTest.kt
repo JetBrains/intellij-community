@@ -1,6 +1,5 @@
 package com.intellij.python.markdown
 
-import com.intellij.idea.IJIgnore
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 
@@ -130,7 +129,6 @@ class PyCodeFenceTest : PyTestCase() {
   }
 
   //PY-40313
-  @IJIgnore(issue = "AT-3959")
   fun testStringsAndBytesResolvedCorrectlyInPythonFragment() {
     myFixture.configureByText("a.md", """
     ```python
@@ -144,7 +142,7 @@ class PyCodeFenceTest : PyTestCase() {
     expect_str("abc")
     
     # Should warn
-    expect_bytes(<warning descr="Expected type 'bytes', got 'str' instead">"abc"</warning>)
+    expect_bytes(<warning descr="Expected type 'bytes', got 'Literal[\"abc\"]' instead">"abc"</warning>)
     ```
     """.trimIndent())
     myFixture.enableInspections(PyTypeCheckerInspection::class.java)
