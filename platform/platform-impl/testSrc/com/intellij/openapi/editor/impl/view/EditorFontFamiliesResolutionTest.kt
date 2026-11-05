@@ -36,12 +36,12 @@ private const val VISIBLE_WIDTH = 400
 private val LINE = "word ".repeat(6).trim()
 
 /**
- * Checks that the editor publishes the font families of its range highlighters, so the text gets the fonts of the families.
+ * Checks that the editor resolves the font families of its range highlighters, so the text gets the fonts of the families.
  * [FamilyWidthFontLayoutService] gives the characters of one font family their own width.
  */
 @TestApplication
 @Suppress("SuspiciousPackagePrivateAccess")
-internal class EditorFontFamiliesPublicationTest {
+internal class EditorFontFamiliesResolutionTest {
   private val family = FontFamilyService.getAvailableFamilies().first { !it.startsWith(".") }
   private val value = FontFamilies.of(family)
 
@@ -98,23 +98,23 @@ internal class EditorFontFamiliesPublicationTest {
   }
 
   @Test
-  fun `a value stays published after its highlighter goes away`(): Unit = withEditor("aaaa") { editor ->
+  fun `a value stays resolved after its highlighter goes away`(): Unit = withEditor("aaaa") { editor ->
     val highlighter = addHighlighter(editor.markupModel, 0, 4, attributesWithFontFamilies())
 
     highlighter.dispose()
 
-    assertThat(editor.view.fontResolver.isPublished(value)).isTrue()
+    assertThat(editor.view.fontResolver.isResolved(value)).isTrue()
     assertThat(width(editor, 0, 4)).isEqualTo(4 * OTHER_WIDTH)
   }
 
   @Test
-  fun `a highlighter without font families publishes nothing`(): Unit = withEditor("aaaa") { editor ->
+  fun `a highlighter without font families resolves nothing`(): Unit = withEditor("aaaa") { editor ->
     val attributes = TextAttributes()
     attributes.fontType = Font.BOLD
 
     addHighlighter(editor.markupModel, 0, 4, attributes)
 
-    assertThat(editor.view.fontResolver.publishedFontFamilies()).isEmpty()
+    assertThat(editor.view.fontResolver.resolvedFontFamilies()).isEmpty()
   }
 
   @Test
@@ -123,25 +123,25 @@ internal class EditorFontFamiliesPublicationTest {
     addHighlighter(DocumentMarkupModel.forDocument(document, null, true), 0, 4, attributesWithFontFamilies())
 
     withEditor(document) { editor ->
-      assertThat(editor.view.fontResolver.isPublished(value)).isTrue()
+      assertThat(editor.view.fontResolver.isResolved(value)).isTrue()
       assertThat(width(editor, 0, 4)).isEqualTo(4 * FAMILY_WIDTH)
     }
   }
 
   @Test
-  fun `existing highlighters without font families publish nothing`() {
+  fun `existing highlighters without font families resolve nothing`() {
     val document = createDocument("aaaa")
     val attributes = TextAttributes()
     attributes.fontType = Font.BOLD
     addHighlighter(DocumentMarkupModel.forDocument(document, null, true), 0, 4, attributes)
 
     withEditor(document) { editor ->
-      assertThat(editor.view.fontResolver.publishedFontFamilies()).isEmpty()
+      assertThat(editor.view.fontResolver.resolvedFontFamilies()).isEmpty()
     }
   }
 
   @Test
-  fun `an existing highlighter that lost its font families publishes nothing`() {
+  fun `an existing highlighter that lost its font families resolves nothing`() {
     val document = createDocument("aaaa")
     val highlighter = addHighlighter(DocumentMarkupModel.forDocument(document, null, true), 0, 4, attributesWithFontFamilies())
     runInEdtAndWait {
@@ -149,7 +149,7 @@ internal class EditorFontFamiliesPublicationTest {
     }
 
     withEditor(document) { editor ->
-      assertThat(editor.view.fontResolver.publishedFontFamilies()).isEmpty()
+      assertThat(editor.view.fontResolver.resolvedFontFamilies()).isEmpty()
     }
   }
 

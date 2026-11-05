@@ -25,9 +25,9 @@ import java.util.concurrent.atomic.AtomicReference
  * A highlighter can change on any thread.
  * The repainter joins the changes into the repaint request and applies it on the EDT.
  *
- * An added highlighter and an attributes change publish the font families of the highlighter at once, on the thread of the change.
+ * An added highlighter and an attributes change resolve the font families of the highlighter at once, on the thread of the change.
  * So the fonts of the families exist before the request lays out the text again,
- * see [com.intellij.openapi.editor.impl.view.EditorView.publishFontFamilies].
+ * see [com.intellij.openapi.editor.impl.view.EditorView.resolveFontFamilies].
  */
 internal class EditorMarkupRepainter(
   private val editor: EditorImpl,
@@ -47,7 +47,7 @@ internal class EditorMarkupRepainter(
 
   override fun afterAdded(highlighter: RangeHighlighterEx) {
     val attributes = highlighter.getTextAttributes(editor.colorsScheme)
-    publishFontFamilies(attributes)
+    resolveFontFamilies(attributes)
     onHighlighterChanged(highlighter, attributes, editor.canImpactGutterSize(highlighter))
   }
 
@@ -63,7 +63,7 @@ internal class EditorMarkupRepainter(
     foregroundColorChanged: Boolean,
   ) {
     if (fontStyleChanged) {
-      publishFontFamilies(highlighter.getTextAttributes(editor.colorsScheme))
+      resolveFontFamilies(highlighter.getTextAttributes(editor.colorsScheme))
     }
     joinRequest(
       highlighter,
@@ -155,14 +155,14 @@ internal class EditorMarkupRepainter(
   }
 
   /**
-   * Publishes the font families of the highlighters that [documentMarkup] has before the editor listens to it.
+   * Resolves the font families of the highlighters that [documentMarkup] has before the editor listens to it.
    * The editor calls it after it starts to listen.
    * So a highlighter that another thread adds meanwhile reaches the editor here or in [afterAdded].
    * The pass visits only the highlighters with forced font families, see [MarkupModelEx.overlappingFontFamiliesIterator].
    * When a value is new, it joins a request that lays out the text of these highlighters again.
    * The editor can have laid out that text already.
    */
-  fun publishExistingFontFamilies(documentMarkup: MarkupModelEx) {
+  fun resolveExistingFontFamilies(documentMarkup: MarkupModelEx) {
     val values = ArrayList<FontFamilies>()
     var fontStyleArea = RepaintArea.NONE
     documentMarkup.overlappingFontFamiliesIterator(0, documentMarkup.document.textLength).use { iterator ->
@@ -176,7 +176,7 @@ internal class EditorMarkupRepainter(
         }
       }
     }
-    if (values.isNotEmpty() && editor.view.publishFontFamilies(values)) {
+    if (values.isNotEmpty() && editor.view.resolveFontFamilies(values)) {
       joinRequest(
         fontStyleArea,
         canImpactGutterSize = false,
@@ -188,14 +188,14 @@ internal class EditorMarkupRepainter(
   }
 
   /**
-   * Publishes the font families of [attributes], when they have them.
-   * The first publication of a value creates its fonts, so it runs on the thread of the change and not in the request.
-   * A value stays published after its highlighter goes away.
+   * Resolves the font families of [attributes], when they have them.
+   * The first call for a value creates its fonts, so it runs on the thread of the change and not in the request.
+   * A value stays resolved after its highlighter goes away.
    */
-  private fun publishFontFamilies(attributes: TextAttributes?) {
+  private fun resolveFontFamilies(attributes: TextAttributes?) {
     val fontFamilies = attributes?.fontFamilies
     if (fontFamilies != null) {
-      editor.view.publishFontFamilies(listOf(fontFamilies))
+      editor.view.resolveFontFamilies(listOf(fontFamilies))
     }
   }
 

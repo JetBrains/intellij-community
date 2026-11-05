@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * {@link WrapElementIterator} extension that also calculates widths of elements.
  * The iterator measures a character with the fonts of the font families of its text range.
- * It reads the font resolver of the view once, so all elements measure with the same published font families.
+ * It reads the font resolver of the view once, so all elements measure with the same resolved font families.
  */
 @ApiStatus.Internal
 public final class WrapElementMeasuringIterator extends WrapElementIterator {
@@ -26,7 +26,7 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
    * Checks that the text in the range fits into the width, and does not measure each character for that.
    * The check is conservative.
    * It counts each printable ASCII character as the widest one, and it fails on any other character except the tab.
-   * The widest one covers the editor fonts and the published font families, see {@link EditorFontResolver#maxPrintableAsciiWidth}.
+   * The widest one covers the editor fonts and the resolved font families, see {@link EditorFontResolver#maxPrintableAsciiWidth}.
    * The range must hold no line break, fold region, inlay, or custom wrap, and the editor must have no character grid.
    *
    * @param startX the x coordinate at the start of the range

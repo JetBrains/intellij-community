@@ -23,7 +23,7 @@ private const val MISSING_FAMILY = "No Such Font Family"
 private const val KEY_NAME = "EDITOR_FONT_FAMILIES_LAYOUT_TEST"
 
 /**
- * Checks that the text layout uses the fonts of the published font families of a text range.
+ * Checks that the text layout uses the fonts of the resolved font families of a text range.
  * [FamilyWidthFontLayoutService] gives the characters of one font family their own width.
  */
 @TestApplication
@@ -46,9 +46,9 @@ internal class EditorFontFamiliesLayoutTest {
   }
 
   @Test
-  fun `text with published font families gets the widths of the families`(): Unit = withEditor("aaaa bbbb") { editor ->
+  fun `text with resolved font families gets the widths of the families`(): Unit = withEditor("aaaa bbbb") { editor ->
     val value = FontFamilies.of(family)
-    editor.view.publishFontFamilies(listOf(value))
+    editor.view.resolveFontFamilies(listOf(value))
 
     addFontFamilies(editor, 5, 9, value)
 
@@ -57,15 +57,15 @@ internal class EditorFontFamiliesLayoutTest {
   }
 
   @Test
-  fun `text with unpublished font families gets the widths of the editor fonts`(): Unit = withEditor("aaaa") { editor ->
+  fun `text with unresolved font families gets the widths of the editor fonts`(): Unit = withEditor("aaaa") { editor ->
     highlightAllText(editor, key, FontFamilies.of(family))
 
     assertThat(width(editor, 0, 4)).isEqualTo(4 * OTHER_WIDTH)
   }
 
   @Test
-  fun `the font families of the editor highlighter get the widths of the families after a publication`(): Unit = withEditor("aaaa") { editor ->
-    editor.view.publishFontFamilies(listOf(FontFamilies.of(family)))
+  fun `the resolved font families of the editor highlighter get the widths of the families`(): Unit = withEditor("aaaa") { editor ->
+    editor.view.resolveFontFamilies(listOf(FontFamilies.of(family)))
 
     highlightAllText(editor, key, FontFamilies.of(family))
 
@@ -76,7 +76,7 @@ internal class EditorFontFamiliesLayoutTest {
   fun `two values with the same installed families make one fragment`(): Unit = withEditor("aaaa") { editor ->
     val installed = FontFamilies.of(family)
     val withMissingFamily = FontFamilies.of(MISSING_FAMILY, family)
-    editor.view.publishFontFamilies(listOf(installed, withMissingFamily))
+    editor.view.resolveFontFamilies(listOf(installed, withMissingFamily))
 
     addFontFamilies(editor, 0, 2, installed)
     addFontFamilies(editor, 2, 4, withMissingFamily)
@@ -89,7 +89,7 @@ internal class EditorFontFamiliesLayoutTest {
   fun `a change of the fonts starts a new fragment`(): Unit = withEditor("aaaa") { editor ->
     val first = FontFamilies.of(family)
     val second = FontFamilies.of(otherFamily)
-    editor.view.publishFontFamilies(listOf(first, second))
+    editor.view.resolveFontFamilies(listOf(first, second))
 
     addFontFamilies(editor, 0, 2, first)
     addFontFamilies(editor, 2, 4, second)
@@ -102,7 +102,7 @@ internal class EditorFontFamiliesLayoutTest {
   @Test
   fun `the font families keep the font style of the text`(): Unit = withEditor("aaaa") { editor ->
     val value = FontFamilies.of(family)
-    editor.view.publishFontFamilies(listOf(value))
+    editor.view.resolveFontFamilies(listOf(value))
     val attributes = TextAttributes()
     attributes.fontFamilies = value
     attributes.fontType = Font.BOLD

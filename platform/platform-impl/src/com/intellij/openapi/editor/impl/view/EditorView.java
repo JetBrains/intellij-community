@@ -420,7 +420,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       return snapshot
         .withFontRenderContext(newFontRenderContext)
         .withMetrics(EditorViewMetrics.UNINITIALIZED)
-        .withFontResolver(createFontResolver(newFontRenderContext, snapshot.fontResolver().publishedFontFamilies()))
+        .withFontResolver(createFontResolver(newFontRenderContext, snapshot.fontResolver().resolvedFontFamilies()))
         .withTabSize(newTabSize)
         .withBidiFlags(newBidiFlags)
         .withRtlEnabled(myEditor.getSettings().isRtlEnabled())
@@ -661,14 +661,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   /**
-   * Publishes font families values: the resolver creates their fonts now, so that the layout and the paint only read them.
+   * Resolves font families values: the resolver creates their fonts now, so that the layout and the paint only read them.
    * The caller then lays out the text with these values again.
    * It is safe to call on any thread.
    *
    * @return whether a value was new
    * @see EditorFontResolver#withFontFamilies
    */
-  public boolean publishFontFamilies(Collection<FontFamilies> values) {
+  public boolean resolveFontFamilies(Collection<FontFamilies> values) {
     while (true) {
       EditorViewSnapshot snapshot = mySnapshot;
       EditorFontResolver resolver = snapshot.fontResolver();
@@ -1017,7 +1017,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       EditorViewSnapshot newSnapshot = snapshot
         .withFontRenderContext(newContext)
         .withMetrics(EditorViewMetrics.UNINITIALIZED)
-        .withFontResolver(createFontResolver(newContext, snapshot.fontResolver().publishedFontFamilies()))
+        .withFontResolver(createFontResolver(newContext, snapshot.fontResolver().resolvedFontFamilies()))
         .withPrefixLayout(NOT_INITIALIZED_PREFIX);
       if (SNAPSHOT_UPDATER.compareAndSet(this, snapshot, newSnapshot)) {
         return true;

@@ -13,12 +13,12 @@ import java.awt.font.FontRenderContext
  * Turns the font settings of one editor into fonts and character widths.
  * The text layout and the soft wraps read the same resolver, so they measure with the same fonts.
  *
- * The resolver also holds the published font families of the editor: the [FontFamilies] values that its text can have.
+ * The resolver also holds the resolved font families of the editor: the [FontFamilies] values that its text can have.
  * It keeps the [TextFonts] of each value. A reader gets them with [fonts] and never creates fonts.
- * An event publishes new values with [withFontFamilies], which gives a new resolver, see [EditorView.publishFontFamilies].
+ * An event resolves new values with [withFontFamilies], which gives a new resolver, see [EditorView.resolveFontFamilies].
  *
  * [EditorView] keeps one resolver in [EditorViewSnapshot].
- * A settings change and a render context change make the view build a new resolver for the same published values.
+ * A settings change and a render context change make the view build a new resolver for the same resolved values.
  * The resolver is immutable and safe to use on any thread.
  */
 internal class EditorFontResolver private constructor(
@@ -27,15 +27,15 @@ internal class EditorFontResolver private constructor(
   private val specialCharacterFont: Font?,
   private val fontFamiliesEnabled: Boolean,
   private val editorFonts: TextFonts,
-  private val published: List<PublishedFontFamilies>,
+  private val resolved: List<ResolvedFontFamilies>,
 ) {
-  private val fontFamiliesAscent: Int = published.maxOfOrNull { it.fonts.ascent() } ?: 0
+  private val fontFamiliesAscent: Int = resolved.maxOfOrNull { it.fonts.ascent() } ?: 0
 
-  private val fontFamiliesDescent: Int = published.maxOfOrNull { it.fonts.descent() } ?: 0
+  private val fontFamiliesDescent: Int = resolved.maxOfOrNull { it.fonts.descent() } ?: 0
 
-  private val fontFamiliesMaxCharWidth: Float = published.maxOfOrNull { it.fonts.maxCharWidth() } ?: 0f
+  private val fontFamiliesMaxCharWidth: Float = resolved.maxOfOrNull { it.fonts.maxCharWidth() } ?: 0f
 
-  private val fontFamiliesMaxPrintableAsciiWidth: Float = published
+  private val fontFamiliesMaxPrintableAsciiWidth: Float = resolved
     .filter { it.fonts !== editorFonts }
     .maxOfOrNull { it.fonts.maxPrintableAsciiWidth() } ?: 0f
 
@@ -48,7 +48,7 @@ internal class EditorFontResolver private constructor(
 
   /**
    * Returns the fonts of text with [fontFamilies].
-   * Returns the editor fonts for `null`, for a value that is not published, and for a value without installed families.
+   * Returns the editor fonts for `null`, for a value that is not resolved, and for a value without installed families.
    * When the font families are off, see [com.intellij.openapi.editor.registry.EditorRegistry.isFontFamiliesEnabled],
    * each value gives the editor fonts.
    */
@@ -56,33 +56,33 @@ internal class EditorFontResolver private constructor(
     if (fontFamilies == null) {
       return editorFonts
     }
-    return find(published, fontFamilies)?.fonts ?: editorFonts
+    return find(resolved, fontFamilies)?.fonts ?: editorFonts
   }
 
   /**
    * Tells whether [withFontFamilies] added [fontFamilies] to this resolver or to an earlier one.
    */
-  fun isPublished(fontFamilies: FontFamilies): Boolean {
-    return find(published, fontFamilies) != null
+  fun isResolved(fontFamilies: FontFamilies): Boolean {
+    return find(resolved, fontFamilies) != null
   }
 
   /**
-   * Returns the published values, in the order of their publication.
+   * Returns the resolved values, oldest first.
    */
-  fun publishedFontFamilies(): List<FontFamilies> {
-    return published.map { it.fontFamilies }
+  fun resolvedFontFamilies(): List<FontFamilies> {
+    return resolved.map { it.fontFamilies }
   }
 
   /**
    * Returns a resolver that also has the fonts of [values], or this resolver when it already has all of them.
    * Values with the same installed families share one [TextFonts].
-   * A value without installed families gets the editor fonts. It is published too, so that a reader does not report it again.
+   * A value without installed families gets the editor fonts. It is resolved too, so that a reader does not report it again.
    */
   fun withFontFamilies(values: Collection<FontFamilies>): EditorFontResolver {
-    val added = ArrayList<PublishedFontFamilies>()
+    val added = ArrayList<ResolvedFontFamilies>()
     for (value in values) {
-      if (find(published, value) == null && find(added, value) == null) {
-        added.add(createPublishedFontFamilies(value, added))
+      if (find(resolved, value) == null && find(added, value) == null) {
+        added.add(createResolvedFontFamilies(value, added))
       }
     }
     if (added.isEmpty()) {
@@ -94,12 +94,12 @@ internal class EditorFontResolver private constructor(
       specialCharacterFont = specialCharacterFont,
       fontFamiliesEnabled = fontFamiliesEnabled,
       editorFonts = editorFonts,
-      published = java.util.List.copyOf(published + added),
+      resolved = java.util.List.copyOf(resolved + added),
     )
   }
 
   /**
-   * Returns the largest ascent of the fonts of the published font families, or 0 without them.
+   * Returns the largest ascent of the fonts of the resolved font families, or 0 without them.
    * The ascent includes the leading, see [TextFonts.ascent].
    */
   fun fontFamiliesAscent(): Int {
@@ -107,21 +107,21 @@ internal class EditorFontResolver private constructor(
   }
 
   /**
-   * Returns the largest descent of the fonts of the published font families, or 0 without them.
+   * Returns the largest descent of the fonts of the resolved font families, or 0 without them.
    */
   fun fontFamiliesDescent(): Int {
     return fontFamiliesDescent
   }
 
   /**
-   * Returns the largest [TextFonts.maxCharWidth] of the published font families, or 0 without them.
+   * Returns the largest [TextFonts.maxCharWidth] of the resolved font families, or 0 without them.
    */
   fun fontFamiliesMaxCharWidth(): Float {
     return fontFamiliesMaxCharWidth
   }
 
   /**
-   * Returns an upper bound of the width of a printable ASCII character in the editor fonts and in the published font families.
+   * Returns an upper bound of the width of a printable ASCII character in the editor fonts and in the resolved font families.
    */
   fun maxPrintableAsciiWidth(): Float {
     return maxOf(editorFonts.maxPrintableAsciiWidth(), fontFamiliesMaxPrintableAsciiWidth)
@@ -142,7 +142,7 @@ internal class EditorFontResolver private constructor(
     return specialCharacterFont
   }
 
-  private fun createPublishedFontFamilies(value: FontFamilies, added: List<PublishedFontFamilies>): PublishedFontFamilies {
+  private fun createResolvedFontFamilies(value: FontFamilies, added: List<ResolvedFontFamilies>): ResolvedFontFamilies {
     val installedNames: List<String>
     if (fontFamiliesEnabled) {
       installedNames = value.names().filter { FontFamilyService.isAvailable(it) }
@@ -153,20 +153,20 @@ internal class EditorFontResolver private constructor(
     if (installedNames.isEmpty()) {
       fonts = editorFonts
     } else {
-      val shared = sharedFonts(published, installedNames) ?: sharedFonts(added, installedNames)
+      val shared = sharedFonts(resolved, installedNames) ?: sharedFonts(added, installedNames)
       fonts = shared ?: TextFonts.forFontFamilies(installedNames, editorPreferences, fontRenderContext, specialCharacterFont)
     }
-    return PublishedFontFamilies(value, installedNames, fonts)
+    return ResolvedFontFamilies(value, installedNames, fonts)
   }
 
-  private fun sharedFonts(entries: List<PublishedFontFamilies>, installedNames: List<String>): TextFonts? {
+  private fun sharedFonts(entries: List<ResolvedFontFamilies>, installedNames: List<String>): TextFonts? {
     return entries.firstOrNull { it.installedNames == installedNames }?.fonts
   }
 
   /**
-   * A published value, the installed families of its names, in their order, and their fonts.
+   * A resolved value, the installed families of its names, in their order, and their fonts.
    */
-  private class PublishedFontFamilies(
+  private class ResolvedFontFamilies(
     val fontFamilies: FontFamilies,
     val installedNames: List<String>,
     val fonts: TextFonts,
@@ -208,16 +208,16 @@ internal class EditorFontResolver private constructor(
         specialCharacterFont = specialCharacterFont,
         fontFamiliesEnabled = fontFamiliesEnabled,
         editorFonts = editorFonts,
-        published = listOf(),
+        resolved = listOf(),
       )
       return resolver.withFontFamilies(fontFamilies)
     }
 
     /**
-     * Finds the published value. [FontFamilies] equality checks the identity first, so a lookup of the same object is fast.
+     * Finds the resolved value. [FontFamilies] equality checks the identity first, so a lookup of the same object is fast.
      */
-    private fun find(published: List<PublishedFontFamilies>, value: FontFamilies): PublishedFontFamilies? {
-      for (entry in published) {
+    private fun find(resolved: List<ResolvedFontFamilies>, value: FontFamilies): ResolvedFontFamilies? {
+      for (entry in resolved) {
         if (entry.fontFamilies == value) {
           return entry
         }

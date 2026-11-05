@@ -36,7 +36,7 @@ private val SHORT_LINE = "word ".repeat(6).trim()
 private val LONG_LINE = "word ".repeat(12).trim()
 
 /**
- * Checks that the soft wraps measure text with the fonts of the published font families of a text range.
+ * Checks that the soft wraps measure text with the fonts of the resolved font families of a text range.
  * [FamilyWidthFontLayoutService] gives the characters of the wide font family and of the narrow font family their own widths.
  * The engine skips a line that surely fits, so the tests also compare with an editor where the engine measures each line.
  */
@@ -63,7 +63,7 @@ internal class EditorFontFamiliesSoftWrapTest {
   fun `a wide font family gives a soft wrap to a line that fits with the editor fonts`() {
     val withoutFontFamilies = softWraps(SHORT_LINE, measureEachLine = true) {}
     val withFontFamilies = softWraps(SHORT_LINE, measureEachLine = true) { editor ->
-      publishForAllText(editor, wide)
+      resolveForAllText(editor, wide)
     }
 
     assertThat(withoutFontFamilies).isEmpty()
@@ -73,10 +73,10 @@ internal class EditorFontFamiliesSoftWrapTest {
   @Test
   fun `the engine does not skip a line that does not fit with a wide font family`() {
     val skipped = softWraps(SHORT_LINE, measureEachLine = false) { editor ->
-      publishForAllText(editor, wide)
+      resolveForAllText(editor, wide)
     }
     val measured = softWraps(SHORT_LINE, measureEachLine = true) { editor ->
-      publishForAllText(editor, wide)
+      resolveForAllText(editor, wide)
     }
 
     assertThat(measured).isNotEmpty()
@@ -87,7 +87,7 @@ internal class EditorFontFamiliesSoftWrapTest {
   fun `a narrow font family removes a soft wrap`() {
     val withoutFontFamilies = softWraps(LONG_LINE, measureEachLine = false) {}
     val withFontFamilies = softWraps(LONG_LINE, measureEachLine = false) { editor ->
-      publishForAllText(editor, narrow)
+      resolveForAllText(editor, narrow)
     }
 
     assertThat(withoutFontFamilies).isNotEmpty()
@@ -100,7 +100,7 @@ internal class EditorFontFamiliesSoftWrapTest {
     // With only the narrow font family or only the editor fonts, the line fits.
     val text = "word ".repeat(7).trim()
     val softWraps = softWraps(text, measureEachLine = false) { editor ->
-      editor.view.publishFontFamilies(listOf(narrow, wide))
+      editor.view.resolveFontFamilies(listOf(narrow, wide))
       addFontFamilies(editor, 0, 10, narrow)
       addFontFamilies(editor, 10, text.length, wide)
     }
@@ -109,7 +109,7 @@ internal class EditorFontFamiliesSoftWrapTest {
   }
 
   @Test
-  fun `unpublished font families measure with the editor fonts`() {
+  fun `unresolved font families measure with the editor fonts`() {
     val softWraps = softWraps(SHORT_LINE, measureEachLine = true) { editor ->
       highlightAllText(editor, key, wide)
     }
@@ -118,9 +118,9 @@ internal class EditorFontFamiliesSoftWrapTest {
   }
 
   @Test
-  fun `the font families of the editor highlighter measure with their fonts after a publication`() {
+  fun `the resolved font families of the editor highlighter measure with their fonts`() {
     val softWraps = softWraps(SHORT_LINE, measureEachLine = true) { editor ->
-      editor.view.publishFontFamilies(listOf(wide))
+      editor.view.resolveFontFamilies(listOf(wide))
       highlightAllText(editor, key, wide)
     }
 
@@ -128,10 +128,10 @@ internal class EditorFontFamiliesSoftWrapTest {
   }
 
   /**
-   * Publishes [value] and gives it to all text of the editor.
+   * Resolves [value] and gives it to all text of the editor.
    */
-  private fun publishForAllText(editor: EditorImpl, value: FontFamilies) {
-    editor.view.publishFontFamilies(listOf(value))
+  private fun resolveForAllText(editor: EditorImpl, value: FontFamilies) {
+    editor.view.resolveFontFamilies(listOf(value))
     addFontFamilies(editor, 0, editor.document.textLength, value)
   }
 

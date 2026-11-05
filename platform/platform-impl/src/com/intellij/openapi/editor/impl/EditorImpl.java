@@ -695,7 +695,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Disposer.register(myDisposable, myScrollingPositionKeeper);
 
     addListeners();
-    myMarkupRepainter.publishExistingFontFamilies(myEditorFilteringMarkupModel.getDelegate());
+    myMarkupRepainter.resolveExistingFontFamilies(myEditorFilteringMarkupModel.getDelegate());
   }
 
   private void addListeners() {

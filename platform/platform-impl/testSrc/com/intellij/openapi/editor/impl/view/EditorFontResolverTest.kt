@@ -26,12 +26,12 @@ import java.util.concurrent.TimeUnit
 private const val CHAR_WIDTH = 10
 private const val NON_BREAKING_SPACE = 0xA0.toChar()
 private const val MISSING_FAMILY = "No Such Font Family"
-private const val PUBLISHING_THREADS = 8
-private const val PUBLISHING_ROUNDS = 5
+private const val RESOLVING_THREADS = 8
+private const val RESOLVING_ROUNDS = 5
 
 /**
  * Checks when [EditorView] creates a new [EditorFontResolver], that the layout and the soft wraps use its fonts,
- * and how the view publishes font families.
+ * and how the view resolves font families.
  */
 @TestApplication
 @Suppress("SuspiciousPackagePrivateAccess")
@@ -109,23 +109,23 @@ internal class EditorFontResolverTest {
   }
 
   @Test
-  fun `a published value gets the fonts of its families`(): Unit = withEditor { editor ->
+  fun `a resolved value gets the fonts of its families`(): Unit = withEditor { editor ->
     val family = installedFamilies().first()
     val value = FontFamilies.of(family)
-    assertThat(editor.view.fontResolver.isPublished(value)).isFalse()
+    assertThat(editor.view.fontResolver.isResolved(value)).isFalse()
     assertThat(editor.view.fontResolver.fonts(value)).isSameAs(editor.view.fontResolver.editorFonts())
 
-    assertThat(editor.view.publishFontFamilies(listOf(value))).isTrue()
+    assertThat(editor.view.resolveFontFamilies(listOf(value))).isTrue()
 
     val resolver = editor.view.fontResolver
     val fonts = resolver.fonts(value)
-    assertThat(resolver.isPublished(value)).isTrue()
+    assertThat(resolver.isResolved(value)).isTrue()
     assertThat(fonts).isNotSameAs(resolver.editorFonts())
     val font = fonts.fontAbleToDisplay("a", 0, 1, Font.PLAIN, resolver.fontRenderContext())
     val familyFont = FontFamilyService.getFont(family, null, null, Font.PLAIN)
     assertThat(font.font.family).isEqualTo(familyFont.family)
     assertThat(resolver.fonts(FontFamilies.of(family))).isSameAs(fonts)
-    assertThat(editor.view.publishFontFamilies(listOf(FontFamilies.of(family)))).isFalse()
+    assertThat(editor.view.resolveFontFamilies(listOf(FontFamilies.of(family)))).isFalse()
     assertThat(editor.view.fontResolver).isSameAs(resolver)
   }
 
@@ -135,49 +135,49 @@ internal class EditorFontResolverTest {
     val installed = FontFamilies.of(family)
     val withMissingFamily = FontFamilies.of(MISSING_FAMILY, family)
 
-    editor.view.publishFontFamilies(listOf(installed, withMissingFamily))
+    editor.view.resolveFontFamilies(listOf(installed, withMissingFamily))
 
     val resolver = editor.view.fontResolver
     assertThat(resolver.fonts(withMissingFamily)).isSameAs(resolver.fonts(installed)).isNotSameAs(resolver.editorFonts())
   }
 
   @Test
-  fun `a value without installed families gets the editor fonts and is published`(): Unit = withEditor { editor ->
+  fun `a value without installed families gets the editor fonts and is resolved`(): Unit = withEditor { editor ->
     val value = FontFamilies.of(MISSING_FAMILY)
 
-    assertThat(editor.view.publishFontFamilies(listOf(value))).isTrue()
+    assertThat(editor.view.resolveFontFamilies(listOf(value))).isTrue()
 
     val resolver = editor.view.fontResolver
-    assertThat(resolver.isPublished(value)).isTrue()
+    assertThat(resolver.isResolved(value)).isTrue()
     assertThat(resolver.fonts(value)).isSameAs(resolver.editorFonts())
-    assertThat(editor.view.publishFontFamilies(listOf(value))).isFalse()
+    assertThat(editor.view.resolveFontFamilies(listOf(value))).isFalse()
   }
 
   @Test
-  fun `a settings change keeps the published values`(): Unit = withEditor { editor ->
+  fun `a settings change keeps the resolved values`(): Unit = withEditor { editor ->
     val value = FontFamilies.of(installedFamilies().first())
-    editor.view.publishFontFamilies(listOf(value))
+    editor.view.resolveFontFamilies(listOf(value))
     val resolver = editor.view.fontResolver
 
     editor.reinitSettings()
 
     val newResolver = editor.view.fontResolver
     assertThat(newResolver).isNotSameAs(resolver)
-    assertThat(newResolver.publishedFontFamilies()).containsExactly(value)
+    assertThat(newResolver.resolvedFontFamilies()).containsExactly(value)
     assertThat(newResolver.fonts(value)).isNotSameAs(newResolver.editorFonts()).isNotSameAs(resolver.fonts(value))
   }
 
   @Test
-  fun `a render context change keeps the published values`(): Unit = withEditor { editor ->
+  fun `a render context change keeps the resolved values`(): Unit = withEditor { editor ->
     val value = FontFamilies.of(installedFamilies().first())
-    editor.view.publishFontFamilies(listOf(value))
+    editor.view.resolveFontFamilies(listOf(value))
     val fontsBefore = editor.view.fontResolver.fonts(value)
 
     paintScaled(editor)
 
     val resolver = editor.view.fontResolver
     assertThat(resolver.fontRenderContext().transform.scaleX).isEqualTo(2.0)
-    assertThat(resolver.publishedFontFamilies()).containsExactly(value)
+    assertThat(resolver.resolvedFontFamilies()).containsExactly(value)
     assertThat(resolver.fonts(value)).isNotSameAs(fontsBefore).isNotSameAs(resolver.editorFonts())
   }
 
@@ -186,10 +186,10 @@ internal class EditorFontResolverTest {
   fun `with the font families off, each value gets the editor fonts`(): Unit = withEditor { editor ->
     val value = FontFamilies.of(installedFamilies().first())
 
-    editor.view.publishFontFamilies(listOf(value))
+    editor.view.resolveFontFamilies(listOf(value))
 
     val resolver = editor.view.fontResolver
-    assertThat(resolver.isPublished(value)).isTrue()
+    assertThat(resolver.isResolved(value)).isTrue()
     assertThat(resolver.fonts(value)).isSameAs(resolver.editorFonts())
     assertThat(resolver.fontFamiliesAscent()).isZero()
     assertThat(resolver.fontFamiliesMaxCharWidth()).isZero()
@@ -198,7 +198,7 @@ internal class EditorFontResolverTest {
   @Test
   fun `a change of the font families key rebuilds the resolver`(): Unit = withEditor { editor ->
     val value = FontFamilies.of(installedFamilies().first())
-    editor.view.publishFontFamilies(listOf(value))
+    editor.view.resolveFontFamilies(listOf(value))
     assertThat(editor.view.fontResolver.fonts(value)).isNotSameAs(editor.view.fontResolver.editorFonts())
     val disposable = Disposer.newDisposable()
     try {
@@ -215,7 +215,7 @@ internal class EditorFontResolverTest {
   }
 
   @Test
-  fun `the bounds cover the published font families`(): Unit = withEditor { editor ->
+  fun `the bounds cover the resolved font families`(): Unit = withEditor { editor ->
     val resolver = editor.view.fontResolver
     assertThat(resolver.fontFamiliesAscent()).isZero()
     assertThat(resolver.fontFamiliesDescent()).isZero()
@@ -223,7 +223,7 @@ internal class EditorFontResolverTest {
     assertThat(resolver.maxPrintableAsciiWidth()).isEqualTo(resolver.editorFonts().maxPrintableAsciiWidth())
     val values = installedFamilies().take(2).map { FontFamilies.of(it) }
 
-    editor.view.publishFontFamilies(values)
+    editor.view.resolveFontFamilies(values)
 
     val newResolver = editor.view.fontResolver
     val fonts = values.map { newResolver.fonts(it) }
@@ -235,31 +235,31 @@ internal class EditorFontResolverTest {
   }
 
   @Test
-  fun `parallel publications lose no value`(): Unit = withEditor { editor ->
+  fun `parallel resolving loses no value`(): Unit = withEditor { editor ->
     val family = installedFamilies().first()
-    val published = ArrayList<FontFamilies>()
-    val executor = Executors.newFixedThreadPool(PUBLISHING_THREADS)
+    val resolved = ArrayList<FontFamilies>()
+    val executor = Executors.newFixedThreadPool(RESOLVING_THREADS)
     try {
-      repeat(PUBLISHING_ROUNDS) { round ->
-        val values = (0 until PUBLISHING_THREADS).map { FontFamilies.of("$MISSING_FAMILY $round $it", family) }
-        val barrier = CyclicBarrier(PUBLISHING_THREADS)
+      repeat(RESOLVING_ROUNDS) { round ->
+        val values = (0 until RESOLVING_THREADS).map { FontFamilies.of("$MISSING_FAMILY $round $it", family) }
+        val barrier = CyclicBarrier(RESOLVING_THREADS)
         val results = values.map { value ->
           executor.submit<Boolean> {
             barrier.await(10, TimeUnit.SECONDS)
-            editor.view.publishFontFamilies(listOf(value))
+            editor.view.resolveFontFamilies(listOf(value))
           }
         }
         for (result in results) {
           assertThat(result.get(30, TimeUnit.SECONDS)).isTrue()
         }
-        published.addAll(values)
+        resolved.addAll(values)
       }
     }
     finally {
       executor.shutdownNow()
     }
 
-    assertThat(editor.view.fontResolver.publishedFontFamilies()).containsExactlyInAnyOrderElementsOf(published)
+    assertThat(editor.view.fontResolver.resolvedFontFamilies()).containsExactlyInAnyOrderElementsOf(resolved)
   }
 
   private fun installedFamilies(): List<String> {

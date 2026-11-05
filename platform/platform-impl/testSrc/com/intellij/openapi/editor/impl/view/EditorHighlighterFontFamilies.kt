@@ -11,7 +11,8 @@ import com.intellij.psi.tree.IElementType
 
 /**
  * Makes the editor highlighter of [editor] give [key] to all text, and makes the scheme of the editor give [value] to [key].
- * The editor highlighter does not publish the font families of its attributes, so the text gets them only after a publication.
+ * The editor highlighter does not resolve the font families of its attributes.
+ * So the text gets them only after another source resolves them.
  */
 internal fun highlightAllText(editor: EditorEx, key: TextAttributesKey, value: FontFamilies) {
   val attributes = TextAttributes()
