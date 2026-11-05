@@ -172,6 +172,9 @@ class TerminalViewImpl(
   @VisibleForTesting
   var isAlternateScreenBuffer: Boolean = false
 
+  /** The geometry of the last resize event sent, so an equal one is not sent again. */
+  private var lastSentGeometry: TerminalGridGeometryDto? = null
+
   private val terminalPanel: TerminalPanel
 
   @VisibleForTesting
@@ -504,7 +507,11 @@ class TerminalViewImpl(
 
   private fun sendResizeEvent() {
     val geometry = gridGeometry ?: return
-    terminalInput.sendResize(geometry)
+    // A window drag changes the size in pixels many times before the grid changes.
+    if (geometry == lastSentGeometry) return
+    if (terminalInput.sendResize(geometry)) {
+      lastSentGeometry = geometry
+    }
   }
 
   private fun listenAlternateBufferSwitch() {

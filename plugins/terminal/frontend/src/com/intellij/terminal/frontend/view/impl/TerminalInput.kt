@@ -169,12 +169,13 @@ class TerminalInput(
   }
 
   /**
-   * Note that resize events sent before the terminal session is initialized will be ignored.
+   * Sends [newGeometry] to the session and returns `true` if the session is initialized.
+   * Otherwise, sends nothing and returns `false`.
    */
-  fun sendResize(newGeometry: TerminalGridGeometryDto) {
-    terminalSessionDeferred.getNow() ?: return
-    val event = TerminalResizeEvent(newGeometry)
-    sendEvent(event)
+  fun sendResize(newGeometry: TerminalGridGeometryDto): Boolean {
+    terminalSessionDeferred.getNow() ?: return false
+    sendEvent(TerminalResizeEvent(newGeometry))
+    return true
   }
 
   fun sendEvent(event: TerminalInputEvent) {
