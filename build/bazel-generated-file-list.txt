@@ -1071,6 +1071,7 @@ platform/settings-local
 platform/settings-sync-core
 platform/settings.v2
 platform/settings.v2/backend
+platform/settings.v2/backend/baseline
 platform/settings.v2/shared
 platform/settings.v2/test
 platform/smRunner

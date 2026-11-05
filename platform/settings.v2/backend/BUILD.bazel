@@ -25,6 +25,7 @@ jvm_library(
     exports = ["//platform/settings.v2/shared"],
     deps = [
         # do not sort,
+        "//platform/settings.v2/backend/baseline",
         "//platform/util",
         "@lib//:kotlin-stdlib",
         "//platform/settings.v2/shared",
