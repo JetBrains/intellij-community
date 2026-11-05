@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.nio.file.Path
 import kotlin.io.path.exists
 
-const val NATIVE_PREBUILT_BOOTSTRAP_CDN_URL = "https://packages.jetbrains.team/maven/p/kt/bootstrap/org/jetbrains/kotlin/kotlin-native-prebuilt"
+const val NATIVE_PREBUILT_BOOTSTRAP_CDN_URL = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/kt/bootstrap/org/jetbrains/kotlin/kotlin-native-prebuilt"
 const val NATIVE_PREBUILT_RELEASE_CDN_URL = "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-native-prebuilt"
 
 @Throws(TargetSupportException::class)
