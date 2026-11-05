@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
@@ -197,6 +198,10 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     return reloadPackages()
   }
 
+  /**
+   * Installs the packages of [installRequest] and reloads the installed packages. The VFS guarantee of [reloadPackages]
+   * holds only in a modal-aware context.
+   */
   @ApiStatus.Internal
   suspend fun installPackage(
     installRequest: PythonPackageInstallRequest,
@@ -246,6 +251,11 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     return reloadPackages()
   }
 
+  /**
+   * Reloads the installed packages and refreshes the interpreter paths in the VFS. The call waits for the refresh only
+   * in a modal-aware context. Under [ModalityState.any] the refresh runs async, so the VFS can still hold the old paths
+   * when the call returns.
+   */
   @ApiStatus.Internal
   open suspend fun reloadPackages(): PyResult<List<PythonPackage>> {
     treeProvider?.invalidateCache()
@@ -280,8 +290,9 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
     // Outside the mutex: in a headless run the SDK update is synchronous, and the update it queues reloads the packages.
     if (!isInit) {
-      withContext(NonCancellable + ModalityState.nonModal().asContextElement()) {
-        refreshPaths(project, interpreter)
+      withContext(NonCancellable) {
+        // The suspending refresh does not accept ModalityState.any(): the refresh then runs async, without a wait.
+        refreshPaths(project, interpreter, async = !isModalAwareContext())
       }
     }
 
