@@ -83,7 +83,7 @@ class LinuxIdeDistribution : IdeDistribution() {
   }
 
   override fun installIde(unpackDir: Path, executableFileName: String): InstalledIde {
-    require(SystemInfo.isLinux) { "Can only run on Linux, docker is possible, please PR" }
+    require(SystemInfo.isLinux || ConfigurationStorage.useDockerContainer()) { "Can only run on Linux or in docker" }
 
     val appHome = (unpackDir.listDirectoryEntriesQuietly()?.singleOrNull { it.isDirectory() } ?: unpackDir).toAbsolutePath()
     JBRResolver.applyInstallerJbrOverrideIfLocalJbrPathNotEmpty(appHome)

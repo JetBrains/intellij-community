@@ -47,6 +47,9 @@ data class IdeInfo(
 
   val fullName: String,
 
+  /** The OS that the installer is for. [com.intellij.ide.starter.ide.installer.StandardInstaller] sets it. */
+  val installerOs: OS = OS.CURRENT,
+
   val getInstaller: (IdeInfo) -> IdeInstaller = { di.direct.instance<IdeInstallerFactory>().createInstaller(it) }
 ) {
   val isFrontend: Boolean = platformPrefix == PlatformUtils.JETBRAINS_CLIENT_PREFIX
@@ -104,7 +107,7 @@ data class IdeInfo(
 
   val installerFileExt: String
     get() {
-      val ext = when (OS.CURRENT) {
+      val ext = when (installerOs) {
         OS.Windows -> ".exe"
         OS.Linux -> ".tar.gz"
         OS.macOS -> ".dmg"
