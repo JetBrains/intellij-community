@@ -18,16 +18,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import java.io.IOException
 import javax.swing.text.MutableAttributeSet
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.parser.ParserDelegator
-import kotlin.text.lowercase
 
 @Service
-internal class PythonSimpleRepositoryCacheService {
+@ApiStatus.Internal
+class PythonSimpleRepositoryCacheService {
   val repositories: List<PyPackageRepository>
     get() = cache.keys.toList()
 
@@ -68,7 +69,8 @@ internal class PythonSimpleRepositoryCacheService {
   }
 }
 
-internal class PythonSimpleRepositoryCache(private val repository: PyPackageRepository) : PythonPackageCache {
+@ApiStatus.Internal
+class PythonSimpleRepositoryCache(private val repository: PyPackageRepository) : PythonPackageCache {
   override val size: Int
     get() = cache.size
 

@@ -24,6 +24,9 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.ui.JBColor
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBComboBoxLabel
@@ -34,11 +37,11 @@ import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.common.PythonPackageDetails
+import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.management.toInstallRequest
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
-import com.intellij.python.pyproject.PyDependencyGroup
-import com.jetbrains.python.packaging.management.PyWorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
@@ -50,9 +53,6 @@ import com.jetbrains.python.packaging.toolwindow.model.UndeclaredPackagesGroup
 import com.jetbrains.python.packaging.toolwindow.model.WorkspaceMember
 import com.jetbrains.python.packaging.toolwindow.ui.PyPackagesUiComponents
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.packaging.PyPackageUtil
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.ui.PyEmbeddedBrowserProvider
 import com.jetbrains.python.ui.PyHtmlPanel
 import kotlinx.coroutines.Dispatchers

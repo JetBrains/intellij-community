@@ -1,14 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * Represents a zero-allocation integer range of [start..endExclusive).
  * 
  * Packs [start] (highest 32 bits) and [endExclusive] (lowest 32 bits).
  */
+@ApiStatus.Internal
 @JvmInline
-internal value class PackedIntRange(
-  internal val packedData: Long,
+value class PackedIntRange(
+  val packedData: Long,
 ) {
   constructor(start: Int, endExclusive: Int) : this(
     // (start << 32) | (size & 0xFFFF_FFFF)

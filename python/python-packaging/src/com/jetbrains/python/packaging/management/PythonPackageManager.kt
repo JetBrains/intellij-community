@@ -29,6 +29,9 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.isReadOnly
+import com.intellij.python.sdk.backend.readOnlyErrorMessage
+import com.intellij.python.sdk.backend.refreshPaths
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -52,20 +55,11 @@ import com.jetbrains.python.packaging.common.loadInstalledPackagesMetadata
 import com.jetbrains.python.packaging.packageRequirements.DependencyTreeProvider
 import com.jetbrains.python.packaging.packageRequirements.FlatPackageStructureNode
 import com.jetbrains.python.packaging.packageRequirements.PackageStructureNode
-import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.requirements.PyDependenciesFile
 import com.jetbrains.python.requirements.PyDependenciesFileProvider
 import com.jetbrains.python.sdk.associatedModuleDir
-import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.pySdkAdditionalData
-import com.jetbrains.python.sdk.readOnlyErrorMessage
-import com.jetbrains.python.sdk.refreshPaths
-import java.net.URI
-import java.nio.file.Path
-import java.util.SequencedMap
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -88,6 +82,11 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
+import java.net.URI
+import java.nio.file.Path
+import java.util.SequencedMap
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.cancellation.CancellationException
 
 
 /**
@@ -198,7 +197,8 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     return reloadPackages()
   }
 
-  internal suspend fun installPackage(
+  @ApiStatus.Internal
+  suspend fun installPackage(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
     module: Module? = null,
@@ -567,9 +567,10 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   suspend fun getRootDependenciesFile(): PyDependenciesFile? {
-    val virtualFile = if (sdk.pySdkAdditionalData.requirementsPath != null) {
+    val requirementsPath = sdk.pySdkAdditionalData.requirementsPath
+    val virtualFile = if (requirementsPath != null) {
       // An explicitly stored path wins over (and does not fall back to) the manager-specific defaults.
-      PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(sdk)
+      VirtualFileManager.getInstance().findFileByNioPath(requirementsPath)
     }
     else {
       sdk.associatedModuleDir?.let { baseDir ->
@@ -785,7 +786,8 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
  * (PY-89774).
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-internal fun PythonPackageManager.listInstalledPackagesAsync(): List<PythonPackage> = runBlockingMaybeCancellable {
+@ApiStatus.Internal
+fun PythonPackageManager.listInstalledPackagesAsync(): List<PythonPackage> = runBlockingMaybeCancellable {
   listInstalledPackages()
 }
 

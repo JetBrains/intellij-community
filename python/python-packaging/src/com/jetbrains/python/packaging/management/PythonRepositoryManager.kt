@@ -114,7 +114,8 @@ interface PythonRepositoryManager {
  * readiness is required — the type system then enforces that a caller has waited, so it can't
  * accidentally search against a half-initialised manager.
  */
-internal suspend fun PythonRepositoryManager.getSearchApi(): PythonRepositoryManager.PythonRepositorySearchApi {
+@ApiStatus.Internal
+suspend fun PythonRepositoryManager.getSearchApi(): PythonRepositoryManager.PythonRepositorySearchApi {
   awaitReady()
   return PythonRepositoryManager.PythonRepositorySearchApi(this)
 }

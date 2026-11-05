@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
        storages = [Storage("python-repositories.xml", roamingType = RoamingType.DISABLED)])
 @Service(Service.Level.APP)
 @ApiStatus.Internal
-internal class PyPackageRepositories : PersistentStateComponent<PyPackageRepositories> {
+class PyPackageRepositories : PersistentStateComponent<PyPackageRepositories> {
   @Property
   val repositories = mutableListOf<PyPackageRepository>()
 

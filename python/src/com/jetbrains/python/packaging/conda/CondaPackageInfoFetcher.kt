@@ -14,12 +14,10 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.python.Result
 import com.jetbrains.python.mapError
+import com.jetbrains.python.packaging.cache.PackageVersionMap
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import java.io.IOException
 import java.nio.file.FileSystems
-
-typealias VersionSet = Set<String>
-typealias PackageVersionMap = Map<String, VersionSet>
 
 internal object CondaPackageInfoFetcher {
   private const val CONDA_BASE_URL = "https://conda.anaconda.org"

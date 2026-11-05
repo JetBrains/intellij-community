@@ -22,7 +22,7 @@ import com.intellij.python.pyproject.model.api.isPyProjectTomlBased
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiPackageUtil
@@ -55,7 +55,6 @@ import com.jetbrains.python.psi.impl.references.PyFromImportNameReference
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.resolve.fromModule
 import com.jetbrains.python.psi.resolve.resolveInRoot
-import com.jetbrains.python.sdk.isReadOnly
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal

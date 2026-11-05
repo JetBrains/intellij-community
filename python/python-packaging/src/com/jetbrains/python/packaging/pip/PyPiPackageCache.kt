@@ -12,11 +12,11 @@ import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.cache.MappedPackedAsciiStringSetCacheFile
+import com.jetbrains.python.packaging.cache.PackageVersionMap
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.cache.PythonPackageCacheIOError
 import com.jetbrains.python.packaging.cache.PythonPackageCacheIOError.FailedToFetchPackages
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
-import com.jetbrains.python.packaging.conda.PackageVersionMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus

@@ -54,6 +54,9 @@
     <extensionPoint qualifiedName="Pythonid.projectSdkConfigurationExtension"
                     interface="com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pythonSdkReadOnlyProvider"
+                    interface="com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider"
+                    dynamic="true"/>
     <!-- Experimental sdk EP, avoid using it -->
     <extensionPoint qualifiedName="Pythonid.pySdkProvider"
                     interface="com.jetbrains.python.sdk.PySdkProvider"

@@ -14,6 +14,6 @@ sealed class PythonPackageInstallRequest(val title: @NlsSafe String) {
 }
 
 @ApiStatus.Internal
-internal fun PythonRepositoryPackageSpecification.toInstallRequest(): PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications {
+fun PythonRepositoryPackageSpecification.toInstallRequest(): PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications {
   return PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(this))
 }

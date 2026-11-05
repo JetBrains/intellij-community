@@ -24,6 +24,7 @@ import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.pyproject.model.internal.startPyProjectModelSyncIfNeeded
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.refreshPaths
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.DEFAULT_EEL_FOR_NEW_PROJECTS
 import com.jetbrains.python.PyBundle
@@ -36,8 +37,6 @@ import com.jetbrains.python.newProjectWizard.impl.PyV3GeneratorPeer
 import com.jetbrains.python.newProjectWizard.impl.PyV3UIServicesProd
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.sdk.refreshPaths
-import com.jetbrains.python.statistics.version
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

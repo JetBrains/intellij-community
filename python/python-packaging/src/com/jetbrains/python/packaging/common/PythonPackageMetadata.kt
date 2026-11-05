@@ -129,4 +129,5 @@ data class ProjectUrl(
 )
 
 private val PROJECT_URL_PRIORITY: List<String> = listOf("Homepage", "Documentation", "Source", "Repository")
-internal const val DEFAULT_PROJECT_URL_LABEL: String = "Repository"
+@ApiStatus.Internal
+const val DEFAULT_PROJECT_URL_LABEL: String = "Repository"

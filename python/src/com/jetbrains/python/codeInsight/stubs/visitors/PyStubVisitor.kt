@@ -1,14 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.stubs.visitors
 
-import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.isReadOnly
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.sdk.isReadOnly
 
 internal abstract class PyStubVisitor(
   holder: ProblemsHolder,

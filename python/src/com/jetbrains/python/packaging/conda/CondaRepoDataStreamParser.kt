@@ -4,6 +4,7 @@ package com.jetbrains.python.packaging.conda
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
+import com.jetbrains.python.packaging.cache.PackageVersionMap
 import tools.jackson.core.JacksonException
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken

@@ -555,8 +555,9 @@ internal class PyPackagingToolWindowService(val project: Project, val serviceSco
           showProcessExecutionErrorDialog(failed)
         })
       }
-      if (state.fixCommand != null && updateLocked != null) {
-        add(PackagesUnavailableAction(state.fixCommand) {
+      val fixCommand = state.fixCommand
+      if (fixCommand != null && updateLocked != null) {
+        add(PackagesUnavailableAction(fixCommand) {
           serviceScope.launch {
             updateLocked().onFailure { thisLogger().warn("Failed to update the lock file: $it") }
             refreshInstalledPackages()

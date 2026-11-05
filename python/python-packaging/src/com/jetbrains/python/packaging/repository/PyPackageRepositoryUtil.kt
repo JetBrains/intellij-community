@@ -4,21 +4,20 @@
 package com.jetbrains.python.packaging.repository
 
 import com.intellij.openapi.components.service
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.python.requirements.PyPackageVersionComparator
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.packaging.PyPIPackageUtil
-import com.intellij.python.requirements.PyPackageVersionComparator
+import com.jetbrains.python.packaging.PyPackagingBundle
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.common.ProjectUrl
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.pip.PyPiPackageCache
-import kotlinx.io.IOException
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.Base64
 
@@ -34,7 +33,8 @@ internal fun RequestBuilder.withBasicAuthorization(repository: PyPackageReposito
 }
 
 @ApiStatus.Experimental
-internal fun PyPackageRepository.checkValid(): Boolean {
+@ApiStatus.Internal
+fun PyPackageRepository.checkValid(): Boolean {
   val url = repositoryUrl.ifEmpty { return false }
   return HttpRequests
     .request(url)
@@ -70,7 +70,7 @@ object PyPiPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_
     }
 
     val repositoryUrl =
-      repositoryUrl.ifEmpty { return PyResult.localizedError(PyBundle.message("python.packaging.error.no.repository.url", name)) }
+      repositoryUrl.ifEmpty { return PyResult.localizedError(PyPackagingBundle.message("python.packaging.error.no.repository.url", name)) }
 
     val versions = runCatching {
       PyPIPackageUtil.parsePackageVersionsFromRepository(repositoryUrl, packageName)
@@ -85,7 +85,7 @@ object PyPiPackageRepository : PyPackageRepository("PyPI", PyPIPackageUtil.PYPI_
       name = packageName,
       availableVersions = versions.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()),
       repository = this,
-      description = PyBundle.message("python.packages.no.details.in.repo", name)
+      description = PyPackagingBundle.message("python.packages.no.details.in.repo", name)
     )
     return PyResult.success(simplePackageDetails)
   }

@@ -32,10 +32,12 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.isTargetBased
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pySdkAdditionalData
+import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
 import com.jetbrains.python.sdk.skeletonsPath
 import com.jetbrains.python.sdk.targetAdditionalData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -359,3 +361,14 @@ val PythonInterpreter.isOnTarget: Boolean
     is TargetPythonInterpreter -> true
     is NativePythonInterpreter -> false
   }
+
+/** Whether packages cannot be installed into this interpreter, for example one inside a Docker image. */
+@get:Internal
+val PythonInterpreter.isReadOnly: Boolean
+  get() = PythonSdkReadOnlyProvider.isReadOnly(this)
+
+/** Why packages cannot be installed into this interpreter. See [isReadOnly]. */
+@get:Internal
+val PythonInterpreter.readOnlyErrorMessage: @Nls String
+  @Suppress("DEPRECATION") // The fallback names the SDK.
+  get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PySdkBundle.message("python.sdk.read.only", getSdkAPI().name)

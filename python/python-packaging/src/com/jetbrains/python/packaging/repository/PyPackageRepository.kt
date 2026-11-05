@@ -15,6 +15,7 @@ import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.intellij.python.requirements.PyPackageVersionComparator
+import com.jetbrains.python.packaging.PyPackagingBundle
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCacheService
@@ -34,8 +35,9 @@ import java.nio.charset.StandardCharsets
 
 private val GSON = Gson()
 
-internal fun PyPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(packageName: String): PyResult<PythonSimplePackageDetails> {
-  val repositoryUrl = repositoryUrl.ifEmpty { return PyResult.failure(MessageError("There is no repository url for $name")) }
+@ApiStatus.Internal
+fun PyPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(packageName: String): PyResult<PythonSimplePackageDetails> {
+  val repositoryUrl = repositoryUrl.ifEmpty { return PyResult.failure(MessageError(PyPackagingBundle.message("python.packaging.error.no.repository.url", name))) }
 
   val packageDetails = runCatching {
     val packageDetailsUrl = PyPIPackageUtil.buildDetailsUrl(repositoryUrl, packageName)
@@ -71,14 +73,14 @@ internal fun PyPackageRepository.buildPackageDetailsBySimpleDetailsProtocol(pack
 @ApiStatus.Internal
 open class PyPackageRepository() {
   var name: String = ""
-    internal set
+    @ApiStatus.Internal set
 
   var repositoryUrl: String = ""
-    internal set
+    @ApiStatus.Internal set
   var login: String? = null
-    internal set
+    @ApiStatus.Internal set
   var authorizationType: PyPackageRepositoryAuthenticationType = PyPackageRepositoryAuthenticationType.NONE
-    internal set
+    @ApiStatus.Internal set
   open var enabled: Boolean = true
 
   constructor(name: String, repositoryUrl: String?, login: String?) : this() {

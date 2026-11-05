@@ -250,7 +250,7 @@ internal class PixiPackageManager(project: Project, interpreter: PythonInterpret
         PythonRepositoryPackageSpecification(repositoryManager.nativeRepository, parsed)
       }
     }
-    return installPackage(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(resolved), emptyList(), null)
+    return installPackage(PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(resolved), emptyList(), dependencyGroup = null)
   }
 
   override suspend fun uninstallPackageCommand(

@@ -8,17 +8,16 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.python.pyproject.PyDependencyGroup
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.python.requirements.pyRequirement
+import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.PyPackagingBundle
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecification
-import com.intellij.python.requirements.pyRequirement
-import com.intellij.python.requirements.pyRequirementVersionSpec
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
@@ -27,14 +26,14 @@ import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
-internal fun PythonPackageManager.waitInitBlocking() {
+fun PythonPackageManager.waitInitBlocking() {
   runBlockingMaybeCancellable {
     waitForInit()
   }
 }
 
 @ApiStatus.Internal
-internal fun PythonPackageManager.reloadPackagesBlocking() {
+fun PythonPackageManager.reloadPackagesBlocking() {
   runBlockingMaybeCancellable {
     withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT + ModalityState.any().asContextElement()) {
       reloadPackages().orLogException(thisLogger())
@@ -55,7 +54,7 @@ suspend fun PythonPackageManager.installPackages(
       val repository = repositoryManager.repositories.firstOrNull()
       repository ?: return@let null
       PythonRepositoryPackageSpecification(repository, pyRequirement(packageName))
-    } ?: return PyResult.localizedError(PyBundle.message("python.packaging.installing.error.failed.to.find.specification", it))
+    } ?: return PyResult.localizedError(PyPackagingBundle.message("python.packaging.installing.error.failed.to.find.specification", it))
   }
   return installPackage(
     PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(specifications),
@@ -81,7 +80,7 @@ suspend fun PythonPackageManager.isNotInstalledAndCanBeInstalled(packageName: St
 
 
 @ApiStatus.Internal
-internal suspend fun PythonPackageManager.findPackageSpecification(
+suspend fun PythonPackageManager.findPackageSpecification(
   packageName: String,
   versionSpec: PyRequirementVersionSpec? = null,
 ): PythonRepositoryPackageSpecification? {
@@ -89,7 +88,7 @@ internal suspend fun PythonPackageManager.findPackageSpecification(
 }
 
 @ApiStatus.Internal
-internal suspend fun PythonPackageManager.findPackageSpecification(
+suspend fun PythonPackageManager.findPackageSpecification(
   requirement: PyRequirement,
   repository: PyPackageRepository? = null,
 ): PythonRepositoryPackageSpecification? {
@@ -98,7 +97,7 @@ internal suspend fun PythonPackageManager.findPackageSpecification(
 
 
 @ApiStatus.Internal
-internal suspend fun PythonPackageManager.findPackageSpecification(
+suspend fun PythonPackageManager.findPackageSpecification(
   packageName: String,
   version: String? = null,
   relation: PyRequirementRelation = PyRequirementRelation.EQ,

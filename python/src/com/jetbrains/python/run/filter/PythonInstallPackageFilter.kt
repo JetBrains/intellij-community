@@ -7,18 +7,18 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.psi.PsiDocumentManager
+import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.ui.awt.RelativePoint
-import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
-import com.jetbrains.python.packaging.management.ui.launchInstallPackageWithBalloonBackground
 import com.jetbrains.python.PyPsiPackageUtil
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.isNotInstalledAndCanBeInstalled
+import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.management.ui.launchInstallPackageWithBalloonBackground
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.sdk.isReadOnly
 import org.jetbrains.annotations.ApiStatus
 
 class PythonInstallPackageFilter(val project: Project, var editor: EditorImpl? = null) : Filter {

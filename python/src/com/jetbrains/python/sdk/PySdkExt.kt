@@ -15,16 +15,13 @@ import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResult
 import com.intellij.python.sdk.backend.remoteSourcesLocalPath
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
-import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 
 internal fun resetSystemWideSdksDetectors() {
@@ -91,17 +88,6 @@ internal fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
 internal val Sdk.isSystemWide: Boolean
   get() = !PythonSdkUtil.isRemote(this) && !this.isNonToolVirtualEnv && !this.isCondaVirtualEnv
 
-
-/** Whether packages cannot be installed into this interpreter, for example one inside a Docker image. */
-@get:Internal
-val PythonInterpreter.isReadOnly: Boolean
-  get() = PythonSdkReadOnlyProvider.isReadOnly(this)
-
-/** Why packages cannot be installed into this interpreter. See [isReadOnly]. */
-@get:Internal
-val PythonInterpreter.readOnlyErrorMessage: @Nls String
-  @Suppress("DEPRECATION") // The fallback names the SDK.
-  get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PyBundle.message("python.sdk.read.only", getSdkAPI().name)
 
 internal val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = pySdkAdditionalData.flavor
 

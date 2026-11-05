@@ -16,14 +16,13 @@ import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.associatedModuleDir
 import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.isReadOnly
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.annotations.ApiStatus
 import kotlin.text.Regex.Companion.escape
 
 /**
@@ -33,7 +32,6 @@ import kotlin.text.Regex.Companion.escape
  * @param T The type of the Python package manager this action operates on.
  * @param V The result type of the background jobs performed by this action.
  */
-@ApiStatus.Internal
 internal abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwareAction() {
   protected val errorSink: ErrorSink = ErrorSink()
 

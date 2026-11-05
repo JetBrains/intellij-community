@@ -6,34 +6,34 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.SafeFileOutputStream
-import com.jetbrains.python.packaging.pip.PackedAsciiStringSet
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import org.jetbrains.annotations.CheckReturnValue
-import java.nio.ByteBuffer
-import java.nio.file.Path
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.cache.impl.MemoryMappedSearchPage
-import com.jetbrains.python.packaging.conda.PackageVersionMap
-import com.jetbrains.python.packaging.conda.VersionSet
+import com.jetbrains.python.packaging.pip.PackedAsciiStringSet
 import com.jetbrains.python.packaging.pip.PackedAsciiStringSet.InvalidFormatError
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.CheckReturnValue
 import java.lang.foreign.Arena
+import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 
-internal class MappedPackedAsciiStringSetCacheFile<TReloadError>(
+@ApiStatus.Internal
+class MappedPackedAsciiStringSetCacheFile<TReloadError>(
   val filePath: Path,
   val cacheValidFor: Duration = Duration.ofDays(1),
 

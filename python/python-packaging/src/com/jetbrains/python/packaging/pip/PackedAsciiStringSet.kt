@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.pip
 
 import com.jetbrains.python.Result
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 
 /**
@@ -15,7 +16,8 @@ import java.nio.ByteBuffer
  * - `"aaa:aaa metadata here\nbbb\nccc:ccc metadata here\n"`
  * - `"aaa:\nbbb\nccc:\n"`
  */
-internal class PackedAsciiStringSet private constructor(
+@ApiStatus.Internal
+class PackedAsciiStringSet private constructor(
   private val byteBuffer: ByteBuffer,
 
   /**

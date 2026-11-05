@@ -310,6 +310,7 @@ jvm_library(
         "//RegExpSupport:regexp",
         "//python/python-psi-impl:psi-impl",
         "//python/python-requirements/backend",
+        "//python/python-packaging:packaging",
     ],
     runtime_deps = [
         # do not sort,

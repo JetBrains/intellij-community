@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.cache.MappedPackedAsciiStringSetCacheFile
+import com.jetbrains.python.packaging.cache.PackageVersionMap
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.cache.PythonPackageCacheIOError
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult

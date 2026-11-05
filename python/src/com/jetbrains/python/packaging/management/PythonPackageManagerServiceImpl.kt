@@ -17,14 +17,11 @@ import com.intellij.python.sdk.backend.isDisposed
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.IncorrectOperationException
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
-import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -35,8 +32,6 @@ internal class PythonPackageManagerServiceImpl(
 ) : PythonPackageManagerService, Disposable {
   /** One entry for each interpreter. Two interpreters of one SDK, with two owners, have two managers. */
   private val cache = ConcurrentHashMap<PythonInterpreter, CachedManager>()
-
-  private val bridgeCache = ConcurrentHashMap<UUID, PythonPackageManagementServiceBridge>()
 
   /** Guards the watcher of every entry, because a root change and a first call can reconcile at the same moment. */
   private val watchersLock = ReentrantLock()
@@ -102,7 +97,7 @@ internal class PythonPackageManagerServiceImpl(
    * leaves the entry right. A `null` [structure] is the moment before the first one lands, and the flow brings it.
    *
    * Reads a set and registers a file listener, so it costs little. A cache hit does not call it: that would put the
-   * call on every read of [PythonPackageManagementServiceBridge.manager], which is a property.
+   * call on every read of [com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge.manager], which is a property.
    */
   private fun syncWatchers(structure: EvoPyProjectModel.Snapshot?) {
     if (cache.isEmpty() || structure == null) return
@@ -252,15 +247,6 @@ internal class PythonPackageManagerServiceImpl(
   @TestOnly
   internal fun watchesInterpreterPaths(interpreter: PythonInterpreter): Boolean =
     cache[interpreter]?.let { it.watcher != null && it.subscribed } == true
-
-  override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
-    val cacheKey = (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid
-    return bridgeCache.computeIfAbsent(cacheKey) {
-      val bridge = PythonPackageManagementServiceBridge(project, sdk)
-      Disposer.register(this@PythonPackageManagerServiceImpl, bridge)
-      bridge
-    }
-  }
 
   /**
    * Takes the watcher from every entry before dropping them.

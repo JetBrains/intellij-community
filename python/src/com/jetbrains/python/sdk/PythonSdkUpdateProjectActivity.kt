@@ -6,21 +6,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
-import com.intellij.python.sdk.backend.associatedModuleDir
-import com.intellij.python.sdk.backend.classRoots
-import com.intellij.python.sdk.backend.sitePackagesDirectory
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 internal class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
   override suspend fun execute(project: Project) {
@@ -60,24 +52,6 @@ internal class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
       PythonInterpreterUpdater.getInstance(project).request(interpreter, PythonInterpreterUpdateRequest(packages = true, background = false))
     }
   }
-}
-
-internal suspend fun refreshPaths(project: Project, interpreter: PythonInterpreter): Unit = withContext(Dispatchers.IO) {
-  // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
-  // Temporary folders can't be deleted on Windows due to that.
-  // That breaks tests.
-  // This code should be deleted, but disabled temporary to fix tests
-  if (!(ApplicationManager.getApplication().isUnitTestMode && SystemInfoRt.isWindows)) {
-    val files = interpreter.classRoots(project)
-    VfsUtil.markDirty(true, true, *files)
-    RefreshQueue.getInstance().refresh(true, files.toList())
-    RefreshQueue.getInstance().refresh(false, listOfNotNull(interpreter.associatedModuleDir))
-  }
-  else {
-    RefreshQueue.getInstance().refresh(true, listOfNotNull(interpreter.sitePackagesDirectory(project), interpreter.associatedModuleDir))
-  }
-
-  PythonInterpreterUpdater.getInstance(project).request(interpreter, PythonInterpreterUpdateRequest(packages = false, background = false))
 }
 
 internal fun dropUpdaterInHeadless(): Boolean {

@@ -8,8 +8,8 @@ import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.isReadOnly
 import com.jetbrains.python.PyInternalExecApi
-import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.executionType
 

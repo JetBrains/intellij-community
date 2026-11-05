@@ -1,16 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.packageRequirements
 
-import com.jetbrains.python.PyBundle
 import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
-import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.packaging.PyPackagingBundle
 import com.jetbrains.python.packaging.common.PyDependencyGroupName
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.annotations.ApiStatus
@@ -123,10 +123,10 @@ fun packagesUnavailableNode(
   fixCommand: @Nls String?,
   canUpdateLocked: Boolean,
 ): PackagesUnavailableNode = PackagesUnavailableNode(
-  description = if (error is ExecError) PyBundle.message("python.packaging.unavailable.command.failed", commandName(error))
+  description = if (error is ExecError) PyPackagingBundle.message("python.packaging.unavailable.command.failed", commandName(error))
   else error.message,
   // "Sync project" is what the same action is called as an intention, and one action keeps one name.
-  fixCommand = if (canUpdateLocked) fixCommand ?: PyBundle.message("python.sdk.intention.family.name.sync.project")
+  fixCommand = if (canUpdateLocked) fixCommand ?: PyPackagingBundle.message("python.sdk.intention.family.name.sync.project")
   else null,
   failedProcess = error as? ExecError,
 )
@@ -340,7 +340,7 @@ interface DependencyTreeProvider {
 }
 
 @ApiStatus.Internal
-internal class CachedDependencyTreeProvider(
+class CachedDependencyTreeProvider(
   private val fetchOutput: suspend () -> PyResult<String>,
   private val parse: (String) -> List<PackageTreeNode> = { TreeParser.parseTrees(it.lines()) },
   /**

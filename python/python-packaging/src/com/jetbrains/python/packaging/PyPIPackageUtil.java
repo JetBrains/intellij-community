@@ -20,7 +20,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.repository.PyPackageRepositories;
 import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import one.util.streamex.EntryStream;
@@ -65,7 +64,7 @@ public final class PyPIPackageUtil {
 
   public static class NotSimpleRepositoryApiUrlException extends Exception {
     private NotSimpleRepositoryApiUrlException(String url) {
-      super(PyBundle.message("python.packaging.error.not.simple.repository.url", url, PYPI_SIMPLE_REPOSITORY_API));
+      super(PyPackagingBundle.message("python.packaging.error.not.simple.repository.url", url, PYPI_SIMPLE_REPOSITORY_API));
     }
   }
 

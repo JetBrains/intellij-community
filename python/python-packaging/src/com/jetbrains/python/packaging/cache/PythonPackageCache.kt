@@ -63,7 +63,7 @@ data class PythonPackageSearchResult(
    */
   val pages: List<PythonPackageSearchPage>,
 
-  internal val maxPageSize: Int,
+  val maxPageSize: Int,
 )
 
 /**

@@ -221,14 +221,12 @@
 
     <postStartupActivity implementation="com.jetbrains.python.formatter.PyCodeStyleMigrationActivity"/>
     <projectSettings service="com.jetbrains.python.packaging.PyPackagingSettings"/>
-    <applicationSettings service="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationSettings service="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
     <projectSettings service="com.jetbrains.python.console.PyConsoleOptions"/>
     <applicationSettings service="com.jetbrains.python.testing.TestRunnerService$AppService"/>
     <projectSettings service="com.jetbrains.python.debugger.PyDebuggerOptionsProvider"/>
     <applicationSettings service="com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings"/>
     <applicationSettings service="com.jetbrains.python.sdk.add.v2.poetry.PoetryConfigService"/>
-    <applicationSettings service="com.jetbrains.python.packaging.repository.PyPackageRepositories"/>
     <projectSettings service="com.jetbrains.python.statistics.PyPackageUsageStatistics"/>
 
     <projectConfigurable groupId="python.group.settings"
@@ -287,7 +285,6 @@
                     serviceImplementation="com.jetbrains.python.codeInsight.completion.runtime.patProvider.DummyRemoteFilePathRetrievalService"
                     testServiceImplementation="com.jetbrains.python.codeInsight.completion.runtime.patProvider.DummyRemoteFilePathRetrievalService"/>
 
-    <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationService serviceInterface="com.jetbrains.python.sdk.add.v2.FileSystemFactory"
                         serviceImplementation="com.jetbrains.python.sdk.add.v2.FileSystemFactoryImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.psi.resolve.PackageAvailabilityService"
@@ -722,14 +719,6 @@
 
     <extensionPoint qualifiedName="Pythonid.connectionCredentialsToTargetConfigurationConverter"
                     interface="com.jetbrains.python.run.target.ConnectionCredentialsToTargetConfigurationConverter"
-                    dynamic="true"/>
-
-    <extensionPoint qualifiedName="Pythonid.pythonPackageManagerProvider"
-                    interface="com.jetbrains.python.packaging.management.PythonPackageManagerProvider"
-                    dynamic="true"/>
-
-    <extensionPoint qualifiedName="Pythonid.pythonSdkReadOnlyProvider"
-                    interface="com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider"
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="com.jetbrains.python.testing.pyTestLineMarkerContributorCustomizer"

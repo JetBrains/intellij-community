@@ -3,11 +3,9 @@ package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.testFramework.replaceService
-import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.pip.PyPiPackageCache
@@ -60,10 +58,6 @@ internal class TestPythonPackageManagerService(
                                                      TestPackageRepository(repoPackageNames.toSet()))).also {
         Disposer.register(project, it)
       }
-  }
-
-  override fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
-    return PythonPackageManagementServiceBridge(project, sdk)
   }
 
     companion object {

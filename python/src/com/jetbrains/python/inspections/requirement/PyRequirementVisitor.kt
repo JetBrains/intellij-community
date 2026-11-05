@@ -1,11 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.requirement
 
-import com.intellij.python.sdk.backend.evolution.EvoPyProject
-import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.evolution.EvoPyProject
+import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.PyInspectionExtension
@@ -23,9 +24,7 @@ import com.jetbrains.python.psi.PyImportStatement
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.sdk.isSdkConfigurationInProgress
-import org.jetbrains.annotations.ApiStatus
 
 internal class PyRequirementVisitor(
   holder: ProblemsHolder?,
