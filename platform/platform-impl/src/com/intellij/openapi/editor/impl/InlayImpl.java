@@ -173,6 +173,8 @@ interface EditorInlay<R extends EditorCustomElementRenderer> extends Inlay<R>, R
 }
 
 interface InlineInlay<R extends EditorCustomElementRenderer> extends EditorInlay<R> {
+  boolean isSoftWrappable();
+
   int getPriority();
 
   int getOrder();
@@ -231,6 +233,7 @@ interface InlineInlay<R extends EditorCustomElementRenderer> extends EditorInlay
   default @NotNull InlayProperties getProperties() {
     return new InlayProperties()
       .relatesToPrecedingText(isRelatedToPrecedingText())
+      .disableSoftWrapping(!isSoftWrappable())
       .priority(getPriority());
   }
 }

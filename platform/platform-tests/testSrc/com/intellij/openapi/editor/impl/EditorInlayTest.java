@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCustomElementRenderer;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.InlayProperties;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -599,6 +600,22 @@ public class EditorInlayTest {
       myFixture.addInlay(9, TEST_CHAR_WIDTH * 3);
       myFixture.configureSoftWraps(10);
       myFixture.verifySoftWrapPositions(5);
+    });
+  }
+
+  @Test
+  public void testInlayWithDisabledSoftWrappingDoesNotCauseSoftWrapping() {
+    myFixture.runTest(() -> {
+      myFixture.initText("abcd efgh");
+      EditorCustomElementRenderer renderer = new EditorCustomElementRenderer() {
+        @Override
+        public int calcWidthInPixels(@NotNull Inlay inlay) {
+          return TEST_CHAR_WIDTH * 3;
+        }
+      };
+      myFixture.getEditor().getInlayModel().addInlineElement(9, new InlayProperties().disableSoftWrapping(true), renderer);
+      myFixture.configureSoftWraps(10);
+      myFixture.verifySoftWrapPositions();
     });
   }
 

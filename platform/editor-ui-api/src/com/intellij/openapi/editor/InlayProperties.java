@@ -93,11 +93,16 @@ public final class InlayProperties {
   }
 
   /**
-   * For after-line-end inlays that have this property set to {@code true},
-   * the inlay is not moved to the next visual line,
-   * even if it doesn't fit the editor's visible area.
+   * {@code true} means that the inlay's width is not taken into account when soft wrapping the text
+   * (applies to inline and after-line-end inlays).
    * <p>
-   * They also will be displayed to the left of inlays with enabled soft wrapping,
+   * For inline inlays, the width of an inlay with this property set to {@code true}
+   * doesn't participate in the soft wrap calculations, so the text following the inlay
+   * is not pushed to the next visual line by it; the line can extend beyond the visible area.
+   * <p>
+   * For after-line-end inlays, the inlay with this property set to {@code true}
+   * is not moved to the next visual line, even if it doesn't fit the editor's visible area.
+   * Such inlays are also displayed to the left of inlays with enabled soft wrapping,
    * regardless of their {@link #priority(int) priorities}.
    */
   public InlayProperties disableSoftWrapping(boolean value) {

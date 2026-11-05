@@ -17,15 +17,23 @@ import static com.intellij.openapi.editor.impl.InlayKeys.ORDER_BEFORE_DISPOSAL;
  * @see InlayModel#addInlineElement
  */
 final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, InlineInlayImpl<?>> implements InlineInlay<R> {
+  private final boolean mySoftWrappable;
   private final int myPriority;
 
   InlineInlayImpl(@NotNull EditorImpl editor,
                   int offset,
                   boolean relatesToPrecedingText,
+                  boolean softWrappable,
                   int priority,
                   @NotNull R renderer) {
     super(editor, offset, relatesToPrecedingText, renderer);
+    mySoftWrappable = softWrappable;
     myPriority = priority;
+  }
+
+  @Override
+  public boolean isSoftWrappable() {
+    return mySoftWrappable;
   }
 
   @Override

@@ -108,6 +108,8 @@ internal class TerminalInputMethodSupportTest : BasePlatformTestCase() {
       assertEquals(1, allInlays.size)
       val inlay = allInlays.first()
       assertEquals(expectedComposedTextInlayOffset, inlay.offset)
+      assertTrue(inlay.properties.isRelatedToPrecedingText)
+      assertTrue(inlay.properties.isSoftWrappingDisabled)
       val renderer = assertInstanceOf<InputMethodInlayRenderer>(inlay.renderer)
       assertEquals(expectedComposedText, renderer.text)
     }
