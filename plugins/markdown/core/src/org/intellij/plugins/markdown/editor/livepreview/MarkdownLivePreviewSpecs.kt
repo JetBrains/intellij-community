@@ -39,6 +39,8 @@ private val NoDescendTypes: Set<IElementType> = setOf(
   MarkdownElementTypes.AUTOLINK,
 )
 
+private val QuoteTypes: Set<IElementType> = setOf(MarkdownElementTypes.BLOCK_QUOTE, MarkdownElementTypes.ALERT)
+
 /**
  * The leaf autolink tokens, which the parser does not wrap in an element of their own.
  *
@@ -258,11 +260,16 @@ private fun PsiElement.isInsideTable(): Boolean = PsiTreeUtil.getParentOfType(th
 
 private fun MarkdownHeader.toHeadingSpec(editor: Editor): MarkdownLivePreviewSpec.Heading? {
   val content = contentElement
-  if (parent !is MarkdownFile || content == null) return null
+  if (content == null || !isTopLevelOrQuoted()) return null
   val range = logicalLineRange(editor)
   val html = HeadingHtmlGenerator.generate(content, range.startOffset)
   return MarkdownLivePreviewSpec.Heading(range.toMarkdownLivePreviewRange(), level, html)
 }
+
+private fun PsiElement.isTopLevelOrQuoted(): Boolean =
+  generateSequence(parent) { it.parent }
+    .takeWhile { it !is MarkdownFile }
+    .all { PsiUtilCore.getElementType(it) in QuoteTypes }
 
 private fun PsiElement.toImageSpec(editor: Editor): MarkdownLivePreviewSpec.Image? {
   val image = this as? MarkdownImage ?: return null

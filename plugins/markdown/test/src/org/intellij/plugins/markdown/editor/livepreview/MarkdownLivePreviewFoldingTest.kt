@@ -66,8 +66,10 @@ import javax.imageio.ImageIO
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import kotlin.math.abs
 
 class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
+
 
   override fun setUp() {
     super.setUp()
@@ -500,6 +502,76 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertTrue("$middle", middle in start + 1 until start + "code".length)
     // A click right of the code text puts the caret after the code text, before the closing backtick.
     assertEquals(start + "code".length, clickHeading { it.widthInPixels - 1 })
+  }
+
+  fun testBodySizeHeadingTextSitsInItsLineAsRegularText() {
+    val content = "###### Title\nTitle\n\ntail"
+    configure("$content<caret>")
+    val editor = myFixture.editor as EditorImpl
+    val fold = headingFolds().single()
+    val background = editor.colorsScheme.defaultBackground
+    val headingRows = paintHeading(fold, background).paintedRows(background)
+    val lineY = editor.offsetToXY(content.indexOf("\nTitle") + 1).y
+    val editorImage = BufferedImage(fold.widthInPixels, lineY + editor.lineHeight, BufferedImage.TYPE_INT_RGB)
+    val graphics = editorImage.createGraphics()
+    try {
+      editor.contentComponent.setSize(editorImage.width, editorImage.height)
+      editor.contentComponent.paint(graphics)
+    }
+    finally {
+      graphics.dispose()
+    }
+    val lineRows = editorImage.getSubimage(0, lineY, editorImage.width, editor.lineHeight).paintedRows(background)
+
+    assertEquals("An h6 has the body font size, so it takes one line", editor.lineHeight, fold.heightInPixels)
+    assertTrue("The heading paints rows $headingRows, the line below paints rows $lineRows",
+               abs(headingRows.first - lineRows.first) <= 1 && abs(headingRows.last - lineRows.last) <= 1)
+  }
+
+  fun testQuotedHeadingTextStartsWhereQuotedTextStarts() {
+    configure("# Title\n\ntail<caret>")
+    val bearing = paintedHeadingColumns().first
+    val content = "> # Title\n> text\n\ntail"
+    configure("$content<caret>")
+    val editor = myFixture.editor
+    val fold = headingFolds().single()
+    val textX = editor.offsetToXY(content.indexOf("text")).x - editor.offsetToXY(content.indexOf("> text")).x
+    val headingX = paintedHeadingColumns().first - bearing
+
+    assertEquals(0 to content.indexOf('\n'), fold.startOffset to fold.endOffset)
+    assertTrue("The heading text starts at $headingX, the quoted text at $textX", abs(headingX - textX) <= 1)
+  }
+
+  fun testNestedQuoteRulesKeepTheirXOnAHeadingLine() {
+    val content = "> > # Title\n> > text\n\ntail"
+    configure("$content<caret>")
+    val textLine = content.indexOf("> > text")
+    val rules = paintedRules()
+
+    assertEquals(1, headingFolds().size)
+    for (marker in listOf(0, 2)) {
+      val headingX = rules.getValue(marker).x
+      val textX = rules.getValue(textLine + marker).x
+      assertTrue("The rule of the marker at $marker is at $headingX, the rule below it at $textX", abs(headingX - textX) <= 1)
+    }
+  }
+
+  fun testClickOnAQuotedHeadingPlacesTheCaretAtTheClickedSource() {
+    val content = "before\n> > # Title\n\nafter"
+    configure("$content<caret>")
+    EditorTestUtil.setEditorVisibleSize(myFixture.editor, 80, 12)
+    val text = paintedHeadingColumns()
+
+    assertEquals(content.indexOf("Title"), clickHeading { text.first + 1 })
+    val last = clickHeading { text.last }
+    assertTrue("$last", last in content.indexOf("\n\n") - 1..content.indexOf("\n\n"))
+  }
+
+  fun testQuoteRuleCoversTheWholeHeadingHeight() {
+    configure("> # Title\n\ntail<caret>")
+    val fold = headingFolds().single()
+
+    assertEquals(fold.heightInPixels, paintedRules().values.single().height + 1)
   }
 
   fun testImageInAHeadingStaysBelowTheHeadingWhenTheHeadingShowsItsSource() {
@@ -1945,6 +2017,12 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val columns = (0 until bitmap.width).filter { x -> (0 until bitmap.height).any { y -> bitmap.getRGB(x, y) != background.rgb } }
     assertNotEmpty(columns)
     return columns.first()..columns.last()
+  }
+
+  private fun BufferedImage.paintedRows(background: Color): IntRange {
+    val rows = (0 until height).filter { y -> (0 until width).any { x -> getRGB(x, y) != background.rgb } }
+    assertNotEmpty(rows)
+    return rows.first()..rows.last()
   }
 
   private fun paintHeading(fold: CustomFoldRegion, background: Color): BufferedImage {

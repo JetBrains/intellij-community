@@ -58,7 +58,7 @@ internal object HeadingHtmlGenerator {
    */
   fun generate(content: MarkdownHeaderContent, lineStart: Int): String {
     val range = content.textRange
-    val line = content.parent.text
+    val line = content.containingFile.viewProvider.contents.substring(lineStart, range.endOffset)
     val lineEnd = range.endOffset - lineStart
     val type = if (content.isSetextContent) MarkdownTokenTypes.SETEXT_CONTENT else MarkdownTokenTypes.ATX_CONTENT
     val root = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR)

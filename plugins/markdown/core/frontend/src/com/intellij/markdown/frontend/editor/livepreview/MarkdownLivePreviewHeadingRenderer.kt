@@ -35,6 +35,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+import com.intellij.util.text.CharArrayUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
@@ -166,10 +167,11 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
     override fun create(editor: EditorEx): FoldRegion? {
       val foldingModel = editor.foldingModel
       // The folding model refuses a custom fold that shares a boundary with a larger fold, such as the section fold that
-      // starts at a heading. An expanded fold hides nothing, so the heading replaces it.
+      // starts at a heading. It also refuses a custom fold that crosses a fold, such as the fold of a nested quote.
+      // An expanded fold hides nothing, so the heading replaces it.
       for (region in foldingModel.getRegionsOverlappingWith(range.startOffset, range.endOffset)) {
-        if (region !is CustomFoldRegion && region.isExpanded && !range.contains(region.textRange) &&
-            (region.startOffset == range.startOffset || region.endOffset == range.endOffset)) {
+        val surrounds = region.startOffset < range.startOffset && region.endOffset > range.endOffset
+        if (region !is CustomFoldRegion && region.isExpanded && !range.contains(region.textRange) && !surrounds) {
           foldingModel.removeFoldRegion(region)
         }
       }
@@ -203,7 +205,18 @@ internal class MarkdownLivePreviewHeadingRenderer(private val editor: EditorEx) 
         foreground = if (heading.level == 6) NamedColorUtil.getInactiveTextColor() else scheme.defaultForeground,
         linkColor = scheme.getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES)?.foregroundColor ?: scheme.defaultForeground,
         highlightBackground = scheme.getAttributes(MarkdownHighlighterColors.HIGHLIGHT)?.backgroundColor,
+        indent = getQuoteIndent(),
       )
+    }
+
+    /** The width of the quote markers before a quoted heading, as on a quoted text line. A top-level heading has none. */
+    private fun getQuoteIndent(): Int {
+      val text = editor.document.charsSequence
+      val start = range.startOffset
+      val lastMarker = text.lastIndexOf('>', CharArrayUtil.shiftForward(text, start, range.endOffset, " \t>") - 1)
+      if (lastMarker < start) return 0
+      val markerEnd = if (text.getOrNull(lastMarker + 1)?.let { it in " \t" } == true) lastMarker + 2 else lastMarker + 1
+      return getQuotePrefixWidth(editor, start, markerEnd)
     }
   }
 }
@@ -215,6 +228,7 @@ private data class HeadingLook(
   val foreground: Color,
   val linkColor: Color,
   val highlightBackground: Color?,
+  val indent: Int,
 )
 
 /**
@@ -231,14 +245,14 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
 
   fun height(): Int = maxOf(editor.lineHeight, layout().height)
 
-  override fun calcWidthInPixels(region: CustomFoldRegion): Int = layout().width
+  override fun calcWidthInPixels(region: CustomFoldRegion): Int = look.indent + layout().width
 
   override fun calcHeightInPixels(region: CustomFoldRegion): Int = height()
 
   override fun paint(region: CustomFoldRegion, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {
     val graphics = g.create() as Graphics2D
     try {
-      graphics.translate(targetRegion.x, targetRegion.y + paneY(targetRegion.height.toInt()))
+      graphics.translate(targetRegion.x + look.indent, targetRegion.y + paneY(targetRegion.height.toInt()))
       if (pane.height > editor.lineHeight && (editor as? EditorImpl)?.isStickyLinePainting == true) {
         // A sticky line shows exactly one line, so the size of the header needs to be adjusted to fit
         val scale = editor.lineHeight.toDouble() / pane.height
@@ -258,7 +272,7 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
    */
   fun sourceOffsetAt(region: CustomFoldRegion, point: Point): Int? {
     val document = pane.document as? HTMLDocument ?: return null
-    val position = pane.viewToModel2D(Point(point.x, point.y - paneY(region.heightInPixels)))
+    val position = pane.viewToModel2D(Point(point.x - look.indent, point.y - paneY(region.heightInPixels)))
     if (position < 0) return null
     // A point after the last character of a run lands on the next element, so it falls back to the run before it.
     val element = document.getCharacterElement(position).takeIf { it.sourceKey() != null }
@@ -281,9 +295,10 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
   }
 
   private fun layout(width: Int?) {
-    pane.setSize(width ?: 10_000_000, 10_000_000)
+    val paneWidth = width?.let { (it - look.indent).coerceAtLeast(1) }
+    pane.setSize(paneWidth ?: 10_000_000, 10_000_000)
     val preferred = pane.preferredSize
-    pane.setSize(width ?: preferred.width.coerceAtLeast(1), preferred.height)
+    pane.setSize(paneWidth ?: preferred.width.coerceAtLeast(1), preferred.height)
     layoutWidth = width
   }
 
@@ -296,6 +311,7 @@ private class HeadingPainter(private val editor: EditorEx, val look: HeadingLook
               "font-weight: $weight; font-style: $style } " +
               // The heading sizes of the JCEF preview style sheet, relative to the body font.
               "h1 { font-size: 2.2em } h2 { font-size: 1.8em } h3 { font-size: 1.3em } h4, h5, h6 { font-size: 1em } " +
+              "h1, h2, h3, h4, h5, h6 { margin: 0 } " +
               "a { color: #${ColorUtil.toHex(look.linkColor)}; text-decoration: underline } " +
               ".user-del { text-decoration: line-through }" +
               (look.highlightBackground?.let { " font.user-mark { background-color: #${ColorUtil.toHex(it)} }" } ?: "")
