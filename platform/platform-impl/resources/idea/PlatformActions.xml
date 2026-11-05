@@ -993,6 +993,7 @@
 
     <group id="WelcomeScreenRecentProjectActionGroup" searchable="false">
       <reference ref="WelcomeScreen.OpenSelected"/>
+      <reference ref="WelcomeScreen.OpenInTerminal"/>
       <reference ref="WelcomeScreen.RevealIn"/>
       <reference ref="WelcomeScreen.CopyProjectPath"/>
       <separator/>
