@@ -2,11 +2,18 @@
 package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.python.community.testFramework.fixme
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.TypeEvalContext
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -2037,4 +2044,20 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
     # └ WARNING Expected type 'type[T ≤: A | B]', got 'type[C]' instead
     """.trimIndent())
 
+  @Test
+  @TestFor(issues = ["PY-92768"], classes = [PyTypeChecker::class])
+  fun `generic definition type of a class object is the class form`() {
+    val file = myFixture.configureByText("a.py", """
+      class Box[T]:
+          pass
+    """.trimIndent()) as PyFile
+    runReadActionBlocking {
+      val context = TypeEvalContext.codeAnalysis(file.project, file)
+      val box = file.findTopLevelClass("Box")!!
+      assertFalse(PyTypeChecker.findGenericDefinitionType(box, false, context)!!.isDefinition)
+      fixme<AssertionError>("PY-92768 findGenericDefinitionType drops the class form", "expected: <true> but was: <false>") {
+        assertTrue(PyTypeChecker.findGenericDefinitionType(box, true, context)!!.isDefinition)
+      }
+    }
+  }
 }

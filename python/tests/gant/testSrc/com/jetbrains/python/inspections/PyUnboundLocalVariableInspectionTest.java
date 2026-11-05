@@ -15,13 +15,26 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInsight.dataflow.DFALimitExceededException;
 import com.intellij.idea.TestFor;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
+import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.ref.Reference;
+import java.util.List;
 
 @Subsystems.Inspections
 @Layers.Functional
@@ -591,6 +604,55 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
           print(result)
       """);
   }
+
+  @TestFor(issues = "PY-92729")
+  public void testCallOfRaisingFunctionFromOtherFile() {
+    myFixture.addFileToProject("other.py", RAISING_FUNCTION);
+    doTestByText("""
+      from other import fail
+
+      def func(flag: bool) -> None:
+          if flag:
+              val = 1
+          else:
+              fail()
+          print(<warning descr="Local variable 'val' might be referenced before assignment">val</warning>)
+      """);
+  }
+
+  @SuppressWarnings("deprecation")
+  @TestFor(issues = "PY-92729", classes = ScopeImpl.class)
+  public void testCallOfRaisingFunctionFromOtherFileAfterUserInitiatedQuery() throws DFALimitExceededException {
+    myFixture.addFileToProject("other.py", RAISING_FUNCTION);
+    PyFile file = (PyFile)myFixture.configureByText(PythonFileType.INSTANCE, """
+      from other import fail
+
+      def func(flag: bool) -> None:
+          if flag:
+              val = 1
+          else:
+              fail()
+          print(<caret>val)
+      """);
+    PyReferenceExpression read = PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getCaretOffset()), PyReferenceExpression.class);
+    Scope scope = ControlFlowCache.getScope(file.findTopLevelFunction("func"));
+    scope.getDeclaredVariable(read, "val", TypeEvalContext.userInitiated(myFixture.getProject(), file));
+
+    myFixture.enableInspections(getInspectionClass());
+    // javac cannot load the members of HighlightInfo in this module, so an info is matched by its text
+    List<?> infos = myFixture.doHighlighting();
+    // ControlFlowCache holds the scope by a soft reference
+    Reference.reachabilityFence(scope);
+    fixme("PY-92729 ScopeImpl caches the reaching definitions of the first context", AssertionError.class, "Highlighting: ", () -> {
+      assertTrue("Highlighting: " + infos, ContainerUtil.exists(
+        infos, info -> info.toString().contains("Local variable 'val' might be referenced before assignment")));
+    });
+  }
+
+  private static final String RAISING_FUNCTION = """
+    def fail():
+        raise RuntimeError()
+    """;
 
   @NotNull
   @Override
