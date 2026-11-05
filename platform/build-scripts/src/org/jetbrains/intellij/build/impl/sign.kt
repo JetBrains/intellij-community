@@ -34,7 +34,6 @@ import java.nio.channels.SeekableByteChannel
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.PathMatcher
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
@@ -52,39 +51,14 @@ fun isMacLibrary(name: String): Boolean =
   name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so") || name.endsWith(".tbd")
 
 /** Signs the binaries under [root] and repacks the archives under it whose binaries are not signed. */
-internal fun recursivelySignMacBinaries(
-  root: Path,
-  context: BuildContext,
-  executableFileMatchers: Collection<PathMatcher> = emptyList(),
-) {
-  val archives = mutableListOf<Path>()
-  val binaries = mutableListOf<Path>()
-
-  Files.walkFileTree(root, object : SimpleFileVisitor<Path>() {
-    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-      val relativePath = root.relativize(file)
-      val name = file.fileName.toString()
-      if (name.endsWith(".jar") || name.endsWith(".zip")) {
-        archives.add(file)
-      }
-      else if (
-        isMacLibrary(name) ||
-        executableFileMatchers.any { it.matches(relativePath) } ||
-        (SystemInfoRt.isUnix && Files.isExecutable(file))
-      ) {
-        binaries.add(file)
-      }
-      return FileVisitResult.CONTINUE
-    }
-  })
-
+internal fun recursivelySignMacBinaries(root: Path, context: BuildContext) {
+  val inputs = collectMacSigningInputs(root)
   taskScope {
     fork("signing macOS binaries") {
-      val binariesToSign = binaries.filter { isMacBinary(it) && !isSigned(it) }
-      signMacBinaries(binariesToSign, context)
+      signMacBinaries(inputs.binaries.filter { !isSigned(it) }, context)
     }
 
-    for (file in archives) {
+    for (file in inputs.archives) {
       fork("signing macOS binaries in ${file.relativeTo(root)}") {
         signAndRepackZipIfMacSignaturesAreMissing(file, context)
       }
@@ -92,6 +66,30 @@ internal fun recursivelySignMacBinaries(
     join()
   }
 }
+
+/** The files under a directory that macOS signing reads: the `.jar` and `.zip` [archives], and the Mach-O [binaries]. */
+internal class MacSigningInputs(@JvmField val archives: List<Path>, @JvmField val binaries: List<Path>)
+
+/** Collects the [MacSigningInputs] under [root]. The content of a file decides a Mach-O binary, not its name or its mode. */
+internal fun collectMacSigningInputs(root: Path): MacSigningInputs {
+  val archives = mutableListOf<Path>()
+  val binaries = mutableListOf<Path>()
+  Files.walkFileTree(root, object : SimpleFileVisitor<Path>() {
+    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+      val name = file.fileName.toString()
+      if (name.endsWith(".jar") || name.endsWith(".zip")) {
+        archives.add(file)
+      }
+      else if (attrs.isRegularFile && attrs.size() >= MACH_O_MAGIC_SIZE && isMacBinary(file)) {
+        binaries.add(file)
+      }
+      return FileVisitResult.CONTINUE
+    }
+  })
+  return MacSigningInputs(archives = archives, binaries = binaries)
+}
+
+private const val MACH_O_MAGIC_SIZE = 4L
 
 private fun signAndRepackZipIfMacSignaturesAreMissing(zip: Path, context: BuildContext) {
   val filesToBeSigned = LinkedHashMap<String, Path>()

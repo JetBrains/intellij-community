@@ -268,12 +268,11 @@ class MacDistributionBuilder(
 
   private fun signMacBinaries(osAndArchSpecificDistPath: Path, runtimeDist: Path, arch: JvmArchitecture) {
     val binariesToSign = customizer.getBinariesToSign(context, arch).map(osAndArchSpecificDistPath::resolve)
-    val matchers = generateExecutableFilesMatchers(includeRuntime = false, arch).keys
     signMacBinaries(binariesToSign, context)
     taskScope {
       for (dir in listOf(osAndArchSpecificDistPath, runtimeDist)) {
         fork("recursively signing macOS binaries in $dir") {
-          recursivelySignMacBinaries(dir, context, matchers)
+          recursivelySignMacBinaries(dir, context)
         }
       }
       join()
