@@ -137,6 +137,9 @@ public final class Restarter {
         problem = checkRestarter("restarter");
       }
     }
+    else if (OS.CURRENT == OS.OHOS) {
+      problem = null;
+    }
     else {
       problem = OS.CURRENT + " (" + System.getProperty("os.name") + ')';
     }
@@ -178,8 +181,32 @@ public final class Restarter {
     else if (OS.CURRENT == OS.Linux) {
       restartOnLinux(beforeRestartCommands, mainAppArgs);
     }
+    else if (OS.CURRENT == OS.OHOS) {
+      restartOnOhos(beforeRestartCommands);
+    }
     else {
       throw new IOException("Cannot restart application: not supported.");
+    }
+  }
+
+  private static void restartOnOhos(List<List<String>> beforeRestart) throws IOException {
+    if (!beforeRestart.isEmpty()) {
+      throw new UnsupportedOperationException("Restart on OHOS doesn't support 'before restart' commands");
+    }
+    if (!mainAppArgs.isEmpty()) {
+      throw new UnsupportedOperationException("Restart on OHOS doesn't support setting main app args");
+    }
+    if (!restarterEnv.isEmpty()) {
+      throw new UnsupportedOperationException("Restart on OHOS doesn't support setting environment variables");
+    }
+    try {
+      var toolkit = Class.forName("sun.awt.oh.OHToolkit");
+      if (!Boolean.TRUE.equals(toolkit.getMethod("scheduleRestart").invoke(null))) {
+        throw new IOException("Cannot arm OHOS application restart");
+      }
+    }
+    catch (ReflectiveOperationException e) {
+      throw new IOException("Cannot restart application on OHOS", e);
     }
   }
 
