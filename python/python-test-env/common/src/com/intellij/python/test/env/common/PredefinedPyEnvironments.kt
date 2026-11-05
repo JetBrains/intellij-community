@@ -201,8 +201,8 @@ enum class PredefinedPyEnvironments(val spec: PyEnvironmentSpec<*>) {
    * The `conda-env-tests` skill tells you how to move the pin.
    * Tags: conda
    */
-  CONDA(condaEnvironment("py312_26.7.1-1") {
-    pythonVersion = pythonVersion("3.12")
+  CONDA(condaEnvironment("py314_26.9.4-0") {
+    pythonVersion = pythonVersion("3.14")
   }),
 
   /**

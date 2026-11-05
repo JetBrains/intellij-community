@@ -122,6 +122,7 @@ class PyEnvDownloadCache(
    */
   private suspend fun downloadFile(url: String, destination: Path): Path = withContext(Dispatchers.IO) {
     val tempFile = Files.createTempFile(cacheDir, "download_", ".tmp")
+    LOG.info("Downloading $url to $tempFile")
 
     try {
       connectionFactory.open(url).use { connection ->
