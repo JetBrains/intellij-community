@@ -23,6 +23,7 @@ import com.intellij.codeInspection.dataFlow.lang.ir.FlushFieldsInstruction
 import com.intellij.codeInspection.dataFlow.lang.ir.ReturnInstruction
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.types.DfType
+import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.psi.CommonClassNames
@@ -634,7 +635,7 @@ class J2KDataflowNullability(private val file: PsiFile) {
         runner.checkAtReturn = false
         val checkedFields = aClass.fields.filter { it in nodes && !NullabilityUtil.isImplicitlyInitializedNotNull(it) }
         runner.fieldsToCheck = checkedFields.filter { it.hasModifierProperty(PsiModifier.STATIC) }
-        if (runner.analyzeBlockRecursively(aClass, listOf(runner.freshState()), classDataflow) != RunnerResult.OK) return
+        if (runner.analyzeBlockRecursively(aClass, listOf(runner.defaultState(checkedFields)), classDataflow) != RunnerResult.OK) return
         classDataflow.commit()
 
         val instanceFields = checkedFields.filter { !it.hasModifierProperty(PsiModifier.STATIC) }
@@ -661,6 +662,15 @@ class J2KDataflowNullability(private val file: PsiFile) {
         val nullAtEnd = HashSet<PsiField>()
 
         fun freshState(): DfaMemoryState = createMemoryState()
+
+        // The data flow analysis gives no default value to a field that something outside the code writes,
+        // but right after `new` such a field still holds its default value
+        fun defaultState(fields: List<PsiField>): DfaMemoryState = freshState().also { state ->
+            for (field in fields) {
+                if (field.hasInitializer() || field.hasModifierProperty(PsiModifier.FINAL) || field.hasModifierProperty(PsiModifier.STATIC)) continue
+                state.setVarValue(PlainDescriptor.createVariableValue(factory, field), factory.fromDfType(DfTypes.defaultValue(field.type)))
+            }
+        }
 
         fun check(state: DfaMemoryState, fields: List<PsiField>) {
             for (field in fields) {
