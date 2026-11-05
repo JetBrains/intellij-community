@@ -1567,8 +1567,8 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
 
   private static final AtomicInteger occupiedFlavorFlags = new AtomicInteger();
   protected static byte nextAvailableFlavorFlag() {
-    int bits = occupiedFlavorFlags.incrementAndGet();
-    if (bits > 8) {
+    int bits = occupiedFlavorFlags.getAndIncrement();
+    if (bits >= 8) {
       throw new IncorrectOperationException("No more available flags left: " + occupiedFlavorFlags);
     }
     return (byte)(1 << bits);
