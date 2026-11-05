@@ -441,6 +441,16 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
     return overlappingIterator(startOffset, endOffset, RangeHighlighterTree.RENDER_IN_GUTTER_FLAVOR_FLAG);
   }
 
+  /**
+   * Visits only the tree nodes with {@link RangeHighlighterTree#FONT_FAMILIES_FLAVOR_FLAG}.
+   * So a markup model without such highlighters gives an empty iterator at once.
+   */
+  @Override
+  @ApiStatus.Internal
+  public MarkupIterator<RangeHighlighterEx> overlappingFontFamiliesIterator(int startOffset, int endOffset) {
+    return overlappingIterator(startOffset, endOffset, RangeHighlighterTree.FONT_FAMILIES_FLAVOR_FLAG);
+  }
+
   public static @NotNull TextRange roundToLineBoundaries(@NotNull Document document, int startOffset, int endOffset) {
     int textLength = document.getTextLength();
     int lineStartOffset = startOffset <= 0 ? 0 : startOffset > textLength ? textLength : document.getLineStartOffset(document.getLineNumber(startOffset));

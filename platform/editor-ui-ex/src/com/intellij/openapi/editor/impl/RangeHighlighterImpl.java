@@ -122,7 +122,8 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
   @Override
   public byte getFlavorFlags() {
     return (byte)((getErrorStripeMarkColor(null) != null ? RangeHighlighterTree.ERROR_STRIPE_FLAVOR_FLAG : 0) |
-                  (isRenderedInGutter() ? RangeHighlighterTree.RENDER_IN_GUTTER_FLAVOR_FLAG : 0));
+                  (isRenderedInGutter() ? RangeHighlighterTree.RENDER_IN_GUTTER_FLAVOR_FLAG : 0) |
+                  (hasForcedFontFamilies() ? RangeHighlighterTree.FONT_FAMILIES_FLAVOR_FLAG : 0));
   }
 
   @Override

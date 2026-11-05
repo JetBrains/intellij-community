@@ -115,6 +115,41 @@ public class MarkupModelTest {
     });
   }
 
+  @Test
+  public void testFontFamiliesIteratorFindsHighlightersWithForcedFontFamilies() {
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef");
+      Document document = getDocument(myFixture.getFile());
+      MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myFixture.getProject(), true);
+      assertIteratorEmpty(markupModel.overlappingFontFamiliesIterator(0, document.getTextLength()));
+      TextAttributes withFontFamilies = attributes(Color.RED, FontFamilies.of("Noto Serif"));
+      TextAttributes withoutFontFamilies = new TextAttributes(null, Color.RED, null, null, Font.PLAIN);
+      RangeHighlighterEx exact =
+        (RangeHighlighterEx)markupModel.addRangeHighlighter(0, 1, 0, withFontFamilies, HighlighterTargetArea.EXACT_RANGE);
+      RangeHighlighterEx lines =
+        (RangeHighlighterEx)markupModel.addRangeHighlighter(4, 5, 0, withFontFamilies, HighlighterTargetArea.LINES_IN_RANGE);
+      markupModel.addRangeHighlighter(2, 3, 0, withoutFontFamilies, HighlighterTargetArea.EXACT_RANGE);
+      assertThat(fontFamiliesHighlighters(markupModel, document)).containsExactlyInAnyOrder(exact, lines);
+
+      exact.setTextAttributes(withoutFontFamilies);
+      assertThat(fontFamiliesHighlighters(markupModel, document)).containsExactly(lines);
+
+      markupModel.changeAttributesInBatch(exact, highlighter -> highlighter.setTextAttributes(withFontFamilies));
+      assertThat(fontFamiliesHighlighters(markupModel, document)).containsExactlyInAnyOrder(exact, lines);
+
+      lines.dispose();
+      assertThat(fontFamiliesHighlighters(markupModel, document)).containsExactly(exact);
+    });
+  }
+
+  private static List<RangeHighlighterEx> fontFamiliesHighlighters(MarkupModelEx markupModel, Document document) {
+    try (MarkupIterator<RangeHighlighterEx> iterator = markupModel.overlappingFontFamiliesIterator(0, document.getTextLength())) {
+      List<RangeHighlighterEx> result = new ArrayList<>();
+      iterator.forEachRemaining(result::add);
+      return result;
+    }
+  }
+
   private static TextAttributes attributes(Color background, FontFamilies fontFamilies) {
     TextAttributes attributes = new TextAttributes(null, background, null, null, Font.PLAIN);
     attributes.setFontFamilies(fontFamilies);

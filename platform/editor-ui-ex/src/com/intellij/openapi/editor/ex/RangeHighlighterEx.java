@@ -36,6 +36,18 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
     return null;
   }
 
+  /**
+   * Tells whether the forced text attributes have font families.
+   * The attributes of a text attributes key do not count, because they depend on the scheme.
+   *
+   * @see MarkupModelEx#overlappingFontFamiliesIterator
+   */
+  @ApiStatus.Internal
+  default boolean hasForcedFontFamilies() {
+    TextAttributes attributes = getForcedTextAttributes();
+    return attributes != null && attributes.getFontFamilies() != null;
+  }
+
   @ApiStatus.Internal
   default @Nullable Color getForcedErrorStripeMarkColor() {
     return null;

@@ -84,7 +84,8 @@ internal class SnapshotRangeHighlighterImpl private constructor(
 
   override fun getFlavorFlags(): Byte {
     return ((if (getErrorStripeMarkColor(null) != null) RangeHighlighterTree.ERROR_STRIPE_FLAVOR_FLAG.toInt() else 0) or
-      (if (isRenderedInGutter) RangeHighlighterTree.RENDER_IN_GUTTER_FLAVOR_FLAG.toInt() else 0)).toByte()
+      (if (isRenderedInGutter) RangeHighlighterTree.RENDER_IN_GUTTER_FLAVOR_FLAG.toInt() else 0) or
+      (if (hasForcedFontFamilies()) RangeHighlighterTree.FONT_FAMILIES_FLAVOR_FLAG.toInt() else 0)).toByte()
   }
 
   override fun getTextAttributesKey(): TextAttributesKey? = textAttributesKey

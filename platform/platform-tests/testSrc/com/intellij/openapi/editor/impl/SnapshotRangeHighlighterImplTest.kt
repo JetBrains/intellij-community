@@ -174,6 +174,40 @@ class SnapshotRangeHighlighterImplTest {
     }
   }
 
+  @Test
+  fun `the font families iterator finds the highlighters with forced font families`() {
+    val document = DocumentImpl("abc\ndef", true)
+    val model = MarkupModelImpl(document)
+    try {
+      Assertions.assertThat(fontFamiliesHighlighters(model, document)).isEmpty()
+      val withFontFamilies = attributes(Color.RED, FontFamilies.of("Noto Serif"))
+      val withoutFontFamilies = TextAttributes(null, Color.RED, null, null, Font.PLAIN)
+      val exact = model.addRangeHighlighter(0, 1, 0, withFontFamilies, HighlighterTargetArea.EXACT_RANGE) as RangeHighlighterEx
+      val lines = model.addRangeHighlighter(4, 5, 0, withFontFamilies, HighlighterTargetArea.LINES_IN_RANGE) as RangeHighlighterEx
+      model.addRangeHighlighter(2, 3, 0, withoutFontFamilies, HighlighterTargetArea.EXACT_RANGE)
+      Assertions.assertThat(exact.javaClass.simpleName).isEqualTo("SnapshotRangeHighlighterImpl")
+      Assertions.assertThat(fontFamiliesHighlighters(model, document)).containsExactlyInAnyOrder(exact, lines)
+
+      exact.setTextAttributes(withoutFontFamilies)
+      Assertions.assertThat(fontFamiliesHighlighters(model, document)).containsExactly(lines)
+
+      model.changeAttributesInBatch(exact) { it.setTextAttributes(withFontFamilies) }
+      Assertions.assertThat(fontFamiliesHighlighters(model, document)).containsExactlyInAnyOrder(exact, lines)
+
+      lines.dispose()
+      Assertions.assertThat(fontFamiliesHighlighters(model, document)).containsExactly(exact)
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  private fun fontFamiliesHighlighters(model: MarkupModelImpl, document: DocumentImpl): List<RangeHighlighterEx> {
+    model.overlappingFontFamiliesIterator(0, document.textLength).use { iterator ->
+      return iterator.asSequence().toList()
+    }
+  }
+
   private fun attributes(background: Color, fontFamilies: FontFamilies): TextAttributes {
     val attributes = TextAttributes(null, background, null, null, Font.PLAIN)
     attributes.fontFamilies = fontFamilies

@@ -76,6 +76,15 @@ public interface MarkupModelEx extends MarkupModel {
     return FilteringMarkupIterator.create(overlappingIterator(startOffset, endOffset), h->h.isRenderedInGutter());
   }
 
+  /**
+   * Makes an iterator which enumerates only the {@link RangeHighlighterEx}s whose forced text attributes have font families,
+   * see {@link RangeHighlighterEx#hasForcedFontFamilies}.
+   */
+  @ApiStatus.Internal // TODO: promote to public after FontFamilies stabilization
+  default MarkupIterator<RangeHighlighterEx> overlappingFontFamiliesIterator(int startOffset, int endOffset) {
+    return FilteringMarkupIterator.create(overlappingIterator(startOffset, endOffset), RangeHighlighterEx::hasForcedFontFamilies);
+  }
+
   // optimization: creates highlighter and fires only one event: highlighterCreated
   @NotNull
   RangeHighlighterEx addRangeHighlighterAndChangeAttributes(@Nullable TextAttributesKey textAttributesKey,
