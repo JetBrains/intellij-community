@@ -7,6 +7,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.productMode.IdeProductMode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -90,11 +91,13 @@ class ProjectViewFrontendState(private val project: Project) : PersistentStateCo
       return
     }
     val legacyState = ProjectViewState.getInstance(project)
-    mutableOptions.value = Options(
+    val migratedOptions = Options(
       autoscrollToSource = legacyState.autoscrollToSource,
       openDirectoriesWithSingleClick = legacyState.openDirectoriesWithSingleClick,
       autoscrollFromSource = legacyState.autoscrollFromSource,
     )
+    mutableOptions.value = migratedOptions
+    LOG.info("Migrated the frontend PV options from the legacy state: $migratedOptions")
   }
 }
 
@@ -105,3 +108,5 @@ private fun ProjectViewFrontendState.State.toOptions(): ProjectViewFrontendState
     autoscrollFromSource = autoscrollFromSource,
   )
 }
+
+private val LOG = logger<ProjectViewFrontendState>()
