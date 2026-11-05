@@ -1,7 +1,6 @@
 package com.intellij.mcpserver.frontend.widget
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.setToolTipText
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.frontend.settings.McpServerSettingsConfigurable
 import com.intellij.mcpserver.frontend.settings.McpToolFilterConfigurable
@@ -15,13 +14,12 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.platform.compose.swing.composeSwingPanel
 import com.intellij.ui.BadgeIconSupplier
-import com.intellij.ui.components.IconLabelButton
 import com.intellij.ui.popup.PopupState
+import com.intellij.util.Consumer
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
@@ -39,28 +37,37 @@ import org.jetbrains.compose.swing.modifier.listener.componentListener
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.event.MouseEvent
 import javax.swing.Icon
 import javax.swing.JComponent
 
-internal class McpServerStatusBarWidget(private val project: Project, private val coroutineScope: CoroutineScope) : CustomStatusBarWidget {
+internal class McpServerStatusBarWidget(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) : StatusBarWidget, StatusBarWidget.IconPresentation {
   private val popupState = PopupState.forPopup()
+  private var statusBar: StatusBar? = null
 
-  companion object {
+  internal companion object {
     private val MCP_LOGO: Icon = AllIcons.Nodes.McpServerWidget
     private val BADGE_ICON_SUPPLIER = BadgeIconSupplier(MCP_LOGO)
     const val POPUP_WIDTH: Int = 450
     private const val POPUP_HEIGHT = 180 //approx size of the content
   }
 
-  private val widgetComponent by lazy { createComponent() }
+  override fun ID(): String = MCP_WIDGET_ID
 
-  private fun createComponent(): IconLabelButton {
-    return IconLabelButton(getCurrentIcon()) {
-      if (!popupState.isRecentlyHidden) {
-        createAndShowPopup(widgetComponent)
+  override fun getPresentation(): StatusBarWidget.WidgetPresentation = this
+
+  override fun install(statusBar: StatusBar) {
+    this.statusBar = statusBar
+    if (McpServerService.getInstanceIfCreated() == null) { // do not init McpServerService on EDT
+      coroutineScope.launch { // update icon once available
+        serviceAsync<McpServerService>()
+        withContext(Dispatchers.EDT) {
+          updatePresentation()
+        }
       }
-    }.also {
-      it.setToolTipText(HtmlChunk.text(getCurrentTooltip()))
     }
   }
 
@@ -68,34 +75,31 @@ internal class McpServerStatusBarWidget(private val project: Project, private va
   fun updatePresentation() {
     ThreadingAssertions.softAssertAwtOperationsThread()
 
-    widgetComponent.icon = getCurrentIcon()
-    widgetComponent.setToolTipText(HtmlChunk.text(getCurrentTooltip()))
+    statusBar?.updateWidget(ID())
   }
 
-  private fun getCurrentIcon(): Icon {
+  override fun getIcon(): Icon {
     val service = McpServerService.getInstanceIfCreated() // do not init McpServerService on EDT
-    if (service == null) {
-      coroutineScope.launch { // update icon once available, if not yet
-        serviceAsync<McpServerService>()
-        withContext(Dispatchers.EDT) {
-          updatePresentation()
-        }
-      }
-
-      return BADGE_ICON_SUPPLIER.originalIcon
-    }
+                  ?: return BADGE_ICON_SUPPLIER.originalIcon
 
     return if (service.isRunning) BADGE_ICON_SUPPLIER.successIcon
     else BADGE_ICON_SUPPLIER.errorIcon
   }
 
   @Nls
-  private fun getCurrentTooltip(): String {
+  override fun getTooltipText(): String {
     val service = McpServerService.getInstanceIfCreated() // do not init McpServerService on EDT
     if (service == null) return McpServerBundle.message("mcp.server.status.bar.widget.tooltip.starting")
 
     return if (service.isRunning) McpServerBundle.message("mcp.server.status.bar.widget.tooltip.enabled")
     else McpServerBundle.message("mcp.server.status.bar.widget.tooltip.disabled")
+  }
+
+  override fun getClickConsumer(): Consumer<MouseEvent> = Consumer { event ->
+    val component = event.component as? JComponent ?: return@Consumer
+    if (!popupState.isRecentlyHidden) {
+      createAndShowPopup(component)
+    }
   }
 
   private fun createAndShowPopup(component: JComponent) {
@@ -149,13 +153,8 @@ internal class McpServerStatusBarWidget(private val project: Project, private va
     popup.showInCorner(component)
   }
 
-  override fun getComponent(): JComponent = widgetComponent
-
-  override fun ID(): String = MCP_WIDGET_ID
-
-  override fun install(statusBar: StatusBar) {}
-
   override fun dispose() {
+    statusBar = null
     coroutineScope.cancel()
   }
 }
