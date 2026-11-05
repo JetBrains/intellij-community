@@ -4,11 +4,13 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.editor.CustomWrap;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.Inlay;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.WrapElementIterator;
 import com.intellij.openapi.editor.markup.FontFamilies;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -19,27 +21,6 @@ import java.util.List;
  */
 @ApiStatus.Internal
 public final class WrapElementMeasuringIterator extends WrapElementIterator {
-  private final EditorView myView;
-  private final EditorFontResolver fontResolver;
-  private final List<Inlay<?>> inlineInlays;
-  private final List<Inlay<?>> afterLineEndInlays;
-
-  private int inlineInlayIndex;
-  private int afterLineEndInlayIndex;
-  private FontFamilies lastFontFamilies;
-  private TextFonts lastFonts;
-
-  public WrapElementMeasuringIterator(@NotNull EditorView view, int startOffset, int endOffset,
-                                      List<Inlay<?>> inlineInlays,
-                                      List<Inlay<?>> afterLineEndInlays,
-                                      List<? extends CustomWrap> customWraps) {
-    super(view.getEditor(), customWraps, startOffset, endOffset);
-    myView = view;
-    fontResolver = view.getFontResolver();
-    lastFonts = fontResolver.editorFonts();
-    this.inlineInlays = inlineInlays;
-    this.afterLineEndInlays = afterLineEndInlays;
-  }
 
   /**
    * Checks that the text in the range fits into the width, and does not measure each character for that.
@@ -51,21 +32,25 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
    * @param startX the x coordinate at the start of the range
    * @return {@code true} if {@link #getElementEndX} stays within the width for each character in the range
    */
-  public static boolean surelyFits(@NotNull EditorView view, @NotNull CharSequence text, int startOffset, int endOffset,
-                                   float startX, float width) {
-    float charWidth = view.getMaxPrintableAsciiWidth();
-    float plainSpaceWidth = view.getPlainSpaceWidth();
-    int tabSize = view.getTabSize();
+  public static boolean surelyFits(
+    @NotNull EditorViewSnapshot viewSnapshot,
+    @NotNull CharSequence text,
+    int startOffset,
+    int endOffset,
+    float startX,
+    float width
+  ) {
+    float charWidth = viewSnapshot.fontResolver().maxPrintableAsciiWidth();
+    float plainSpaceWidth = viewSnapshot.plainSpaceWidth();
+    int tabSize = viewSnapshot.tabSize();
     float x = startX;
     for (int offset = startOffset; offset < endOffset; offset++) {
       char c = text.charAt(offset);
       if (c == '\t') {
         x = EditorUtil.nextTabStop(x, plainSpaceWidth, tabSize);
-      }
-      else if (TextFonts.isPrintableAscii(c)) {
+      } else if (TextFonts.isPrintableAscii(c)) {
         x += charWidth;
-      }
-      else {
+      } else {
         return false;
       }
       if (x > width) {
@@ -75,25 +60,63 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
     return true;
   }
 
+  private final EditorView view;
+  private final EditorViewSnapshot viewSnapshot;
+  private final EditorFontResolver fontResolver;
+  private final @Nullable CharacterGrid grid;
+  private final List<Inlay<?>> inlineInlays;
+  private final List<Inlay<?>> afterLineEndInlays;
+
+  private int inlineInlayIndex;
+  private int afterLineEndInlayIndex;
+  private FontFamilies lastFontFamilies;
+  private TextFonts lastFonts;
+
+  public WrapElementMeasuringIterator(
+    @NotNull EditorView view,
+    @NotNull EditorViewSnapshot viewSnapshot,
+    @NotNull DocumentText document,
+    int startOffset,
+    int endOffset,
+    List<Inlay<?>> inlineInlays,
+    List<Inlay<?>> afterLineEndInlays,
+    List<? extends CustomWrap> customWraps
+  ) {
+    super(view.getEditor(), document, customWraps, startOffset, endOffset);
+    this.view = view;
+    this.viewSnapshot = viewSnapshot;
+    fontResolver = viewSnapshot.fontResolver();
+    lastFonts = fontResolver.editorFonts();
+    grid = view.getEditor().getCharacterGrid();
+    this.inlineInlays = inlineInlays;
+    this.afterLineEndInlays = afterLineEndInlays;
+  }
+
   public float getElementEndX(float startX) {
     FoldRegion fold = getCurrentFold();
     if (fold == null) {
       int codePoint = getCodePoint();
       if (codePoint == '\t') {
-        return EditorUtil.nextTabStop(startX + getInlaysPrefixWidth(), myView.getPlainSpaceWidth(), myView.getTabSize()) +
-               getInlaysSuffixWidth();
-      }
-      else if (codePoint == '\r') { // can only happen when \n part of \r\n line break is folded
+        return EditorUtil.nextTabStop(startX + getInlaysPrefixWidth(), viewSnapshot.plainSpaceWidth(), viewSnapshot.tabSize()) + getInlaysSuffixWidth();
+      } else if (codePoint == '\r') { // can only happen when \n part of \r\n line break is folded
         return startX;
+      } else {
+        return startX + getInlaysPrefixWidth() + getCodePointWidth(codePoint) + getInlaysSuffixWidth();
       }
-      else {
-        float codePointWidth = myView.getCodePointWidth(codePoint, getFontStyle(), getFonts());
-        return startX + getInlaysPrefixWidth() + codePointWidth + getInlaysSuffixWidth();
-      }
+    } else {
+      return startX + view.getFoldRegionLayout(fold).getWidth();
     }
-    else {
-      return startX + myView.getFoldRegionLayout(fold).getWidth();
+  }
+
+  /**
+   * Returns the width of the code point of the current element.
+   * A character grid gives its own width and ignores the fonts, as the text layout does.
+   */
+  private float getCodePointWidth(int codePoint) {
+    if (grid != null) {
+      return grid.codePointWidth(codePoint);
     }
+    return getFonts().codePointWidth(codePoint, getFontStyle());
   }
 
   /**
@@ -114,14 +137,23 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
 
   private float getInlaysSuffixWidth() {
     int nextOffset = getElementEndOffset();
-    if (nextOffset < myText.length() && "\r\n".indexOf(myText.charAt(nextOffset)) == -1 || nextIsFoldRegion()) return 0;
+    if (nextOffset < chars.length() && "\r\n".indexOf(chars.charAt(nextOffset)) == -1 || nextIsFoldRegion()) {
+      return 0;
+    }
     int afterLineEndInlaysWidth = getAfterLineEndInlaysWidth(getLogicalLine());
-    return getInlaysWidthForOffset(nextOffset) + (afterLineEndInlaysWidth == 0 ? 0 : myView.getPlainSpaceWidth() + afterLineEndInlaysWidth);
+    if (afterLineEndInlaysWidth == 0) {
+      return getInlaysWidthForOffset(nextOffset);
+    }
+    return getInlaysWidthForOffset(nextOffset) + viewSnapshot.plainSpaceWidth() + afterLineEndInlaysWidth;
   }
 
   private int getInlaysWidthForOffset(int offset) {
-    while (inlineInlayIndex < inlineInlays.size() && inlineInlays.get(inlineInlayIndex).getOffset() < offset) inlineInlayIndex++;
-    while (inlineInlayIndex > 0 && inlineInlays.get(inlineInlayIndex - 1).getOffset() >= offset) inlineInlayIndex--;
+    while (inlineInlayIndex < inlineInlays.size() && inlineInlays.get(inlineInlayIndex).getOffset() < offset) {
+      inlineInlayIndex++;
+    }
+    while (inlineInlayIndex > 0 && inlineInlays.get(inlineInlayIndex - 1).getOffset() >= offset) {
+      inlineInlayIndex--;
+    }
     int width = 0;
     while (inlineInlayIndex < inlineInlays.size() && inlineInlays.get(inlineInlayIndex).getOffset() == offset) {
       width += inlineInlays.get(inlineInlayIndex++).getWidthInPixels();
@@ -130,10 +162,10 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
   }
 
   private int getAfterLineEndInlaysWidth(int logicalLine) {
-    int startOffset = myDocument.getLineStartOffset(logicalLine);
-    int endOffset = myDocument.getLineEndOffset(logicalLine);
-    while (afterLineEndInlayIndex < afterLineEndInlays.size()
-           && afterLineEndInlays.get(afterLineEndInlayIndex).getOffset() < startOffset) {
+    int startOffset = document.lineStartOffset(logicalLine);
+    int endOffset = document.lineEndOffset(logicalLine);
+    while (afterLineEndInlayIndex < afterLineEndInlays.size() &&
+           afterLineEndInlays.get(afterLineEndInlayIndex).getOffset() < startOffset) {
       afterLineEndInlayIndex++;
     }
     while (afterLineEndInlayIndex > 0 && afterLineEndInlays.get(afterLineEndInlayIndex - 1).getOffset() >= startOffset) {

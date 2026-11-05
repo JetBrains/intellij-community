@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
@@ -67,12 +68,13 @@ public final class SoftWrapHelper {
   }
 
   public static int getEndOffsetUpperEstimate(@NotNull Editor editor,
-                                              @NotNull Document document,
+                                              @NotNull DocumentText document,
                                               @NotNull IncrementalCacheUpdateEvent event) {
-    int endOffsetUpperEstimate = EditorUtil.getNotFoldedLineEndOffset(editor, event.getMandatoryEndOffset());
-    int line = document.getLineNumber(endOffsetUpperEstimate);
-    if (line < document.getLineCount() - 1) {
-      endOffsetUpperEstimate = document.getLineStartOffset(line + 1);
+    int offset = event.getMandatoryEndOffset();
+    int endOffsetUpperEstimate = EditorUtil.getNotFoldedLineEndOffset(document, editor.getFoldingModel(), offset, false);
+    int line = document.lineNumber(endOffsetUpperEstimate);
+    if (line < document.lineCount() - 1) {
+      endOffsetUpperEstimate = document.lineStartOffset(line + 1);
     }
     return endOffsetUpperEstimate;
   }

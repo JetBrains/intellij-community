@@ -2,13 +2,14 @@
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.CustomWrap;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.FontFamilies;
-import com.intellij.util.ui.JdkConstants;
+import com.intellij.util.ui.JdkConstants.FontStyle;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -21,104 +22,66 @@ import java.util.List;
  */
 @ApiStatus.Internal
 public class WrapElementIterator {
-  protected final Document myDocument;
-  protected final CharSequence myText;
-  private final IterationState myIterationState;
-  // sorted by offset, starting from startOffset (inclusive)
-  protected final List<? extends CustomWrap> myCustomWraps;
-  // points at the next custom wrap to be considered by setCustomWrap
-  protected int myNextCustomWrapIndex;
+  protected final DocumentText document;
+  protected final CharSequence chars;
+  private final IterationState iterationState;
+  protected final List<? extends CustomWrap> customWraps; // sorted by offset, starting from startOffset (inclusive)
+  protected int nextCustomWrapIndex; // points at the next custom wrap to be considered by setCustomWrap
 
-  private int myElementStartOffset;
-  private int myElementEndOffset;
-  private boolean myLineBreak;
-  private int myCodePoint;
-  private int myLogicalLine;
-  private CustomWrap myCurrentCustomWrap;
+  private int elementStartOffset;
+  private int elementEndOffset;
+  private boolean lineBreak;
+  private int codePoint;
+  private int logicalLine;
+  private CustomWrap currentCustomWrap;
 
-  public WrapElementIterator(EditorEx editor, List<? extends CustomWrap> customWraps, int startOffset, int endOffset) {
-    myDocument = editor.getElfDocument();
-    myText = myDocument.getImmutableCharSequence();
-    myIterationState = new IterationState(editor, startOffset, endOffset, null, false, true, true, false);
-    myCustomWraps = customWraps;
-    myNextCustomWrapIndex = 0;
-    myLogicalLine = myDocument.getLineNumber(startOffset);
+  public WrapElementIterator(
+    @NotNull EditorEx editor,
+    @NotNull DocumentText document,
+    List<? extends CustomWrap> customWraps,
+    int startOffset,
+    int endOffset
+  ) {
+    this.iterationState = new IterationState(
+      editor,
+      startOffset,
+      endOffset,
+      null,
+      false,
+      true,
+      true,
+      false
+    );
+    this.document = document;
+    this.chars = document.luckyChars();
+    this.customWraps = customWraps;
+    this.nextCustomWrapIndex = 0;
+    this.logicalLine = document.lineNumber(startOffset);
     setElementOffsets();
   }
 
   public boolean atEnd() {
-    return myIterationState.atEnd();
+    return iterationState.atEnd();
   }
 
   public void advance() {
-    if (myLineBreak) {
-      myLogicalLine++;
-    }
-    else if (isFoldRegion()) {
+    if (lineBreak) {
+      logicalLine++;
+    } else if (isFoldRegion()) {
       // skip custom wraps inside the fold region
-      while (myNextCustomWrapIndex < myCustomWraps.size() && myCustomWraps.get(myNextCustomWrapIndex).getOffset() < getElementEndOffset()) {
-        ++myNextCustomWrapIndex;
+      while (nextCustomWrapIndex < customWraps.size() &&
+             customWraps.get(nextCustomWrapIndex).getOffset() < elementEndOffset) {
+        ++nextCustomWrapIndex;
       }
-      myLogicalLine = myDocument.getLineNumber(getElementEndOffset());
+      logicalLine = document.lineNumber(elementEndOffset);
     }
-    if (myElementEndOffset < myIterationState.getEndOffset()) {
-      myElementStartOffset = myElementEndOffset;
+    if (elementEndOffset < iterationState.getEndOffset()) {
+      elementStartOffset = elementEndOffset;
       setCustomWrap();
       setCharElement();
-    }
-    else {
-      myIterationState.advance();
+    } else {
+      iterationState.advance();
       setElementOffsets();
-    }
-  }
-
-  private void setCustomWrap() {
-    if (myNextCustomWrapIndex < myCustomWraps.size() && myCustomWraps.get(myNextCustomWrapIndex).getOffset() == myElementStartOffset) {
-      myCurrentCustomWrap = myCustomWraps.get(myNextCustomWrapIndex);
-      // skip other custom wraps at the same offset
-      do {
-        ++myNextCustomWrapIndex;
-      }
-      while (myNextCustomWrapIndex < myCustomWraps.size() &&
-             myCustomWraps.get(myNextCustomWrapIndex).getOffset() == myCurrentCustomWrap.getOffset());
-    }
-    else {
-      myCurrentCustomWrap = null;
-    }
-  }
-
-  private void setElementOffsets() {
-    if (myIterationState.atEnd()) return;
-
-    myElementStartOffset = myIterationState.getStartOffset();
-
-    setCustomWrap();
-
-    if (myIterationState.getCurrentFold() == null) {
-      setCharElement();
-    }
-    else {
-      myElementEndOffset = myIterationState.getEndOffset();
-      myLineBreak = false;
-    }
-  }
-
-  private void setCharElement() {
-    myElementEndOffset = Character.offsetByCodePoints(myText, myElementStartOffset, 1);
-    myCodePoint = Character.codePointAt(myText, myElementStartOffset);
-    myLineBreak = false;
-    if (myCodePoint == '\n') {
-      myLineBreak = true;
-    }
-    else if (myCodePoint == '\r') {
-      char secondChar = myElementEndOffset < myText.length() ? myText.charAt(myElementEndOffset) : 0;
-      if (secondChar != '\n') {
-        myLineBreak = true;
-      }
-      else if (myElementEndOffset < myIterationState.getEndOffset()) {
-        myLineBreak = true;
-        myElementEndOffset++;
-      }
     }
   }
 
@@ -126,9 +89,9 @@ public class WrapElementIterator {
    * Moves the iterator forward to the start of a line. The skipped text must hold no fold region and no custom wrap.
    */
   public void advanceTo(int lineStartOffset) {
-    assert myNextCustomWrapIndex >= myCustomWraps.size() || myCustomWraps.get(myNextCustomWrapIndex).getOffset() >= lineStartOffset;
-    myIterationState.advanceTo(lineStartOffset);
-    myLogicalLine = myDocument.getLineNumber(lineStartOffset);
+    assert nextCustomWrapIndex >= customWraps.size() || customWraps.get(nextCustomWrapIndex).getOffset() >= lineStartOffset;
+    iterationState.advanceTo(lineStartOffset);
+    logicalLine = document.lineNumber(lineStartOffset);
     setElementOffsets();
   }
 
@@ -136,51 +99,49 @@ public class WrapElementIterator {
    * Offset should be the one returned previously from {@link #getElementStartOffset()}, otherwise behaviour is unspecified.
    */
   public void retreat(int offset) {
-    if (offset > myElementStartOffset) {
+    if (offset > elementStartOffset) {
       // todo log an error: cannot retreat forward!
       return;
-    }
-    else if (offset == myElementStartOffset) {
+    } else if (offset == elementStartOffset) {
       // no-op
       return;
     }
-    if (offset >= myIterationState.getStartOffset()) {
-      myElementStartOffset = offset;
+    if (offset >= iterationState.getStartOffset()) {
+      elementStartOffset = offset;
       do {
-        --myNextCustomWrapIndex; // max possible value for myNextCustomWrapIndex is myCustomWraps.size()
-      }
-      while (myNextCustomWrapIndex >= 0 && myCustomWraps.get(myNextCustomWrapIndex).getOffset() > myElementStartOffset);
-      if (myNextCustomWrapIndex < 0) {
-        myNextCustomWrapIndex = 0;
-      }
-      else if (myNextCustomWrapIndex < myCustomWraps.size() && myCustomWraps.get(myNextCustomWrapIndex).getOffset() < offset) {
-        // no custom wrap at offset, we retreated too much, myNextCustomWrapIndex should point to the next one (or past the last one)
-        myNextCustomWrapIndex++;
+        --nextCustomWrapIndex; // max possible value for nextCustomWrapIndex is customWraps.size()
+      } while (nextCustomWrapIndex >= 0 &&
+               customWraps.get(nextCustomWrapIndex).getOffset() > elementStartOffset);
+      if (nextCustomWrapIndex < 0) {
+        nextCustomWrapIndex = 0;
+      } else if (nextCustomWrapIndex < customWraps.size() &&
+                 customWraps.get(nextCustomWrapIndex).getOffset() < offset) {
+        // no custom wrap at offset, we retreated too much, nextCustomWrapIndex should point to the next one (or past the last one)
+        nextCustomWrapIndex++;
       }
       // else: there is a wrap at this offset, or there are no custom wraps; setCustomWrap will pick it up
       setCustomWrap();
       setCharElement();
-    }
-    else {
-      myIterationState.retreat(offset);
+    } else {
+      iterationState.retreat(offset);
       setElementOffsets();
     }
   }
 
   public int getElementStartOffset() {
-    return myElementStartOffset;
+    return elementStartOffset;
   }
 
   public int getElementEndOffset() {
-    return myElementEndOffset;
+    return elementEndOffset;
   }
 
   public boolean isLineBreak() {
-    return myLineBreak;
+    return lineBreak;
   }
 
   public FoldRegion getCurrentFold() {
-    return myIterationState.getCurrentFold();
+    return iterationState.getCurrentFold();
   }
 
   public boolean isFoldRegion() {
@@ -188,38 +149,82 @@ public class WrapElementIterator {
   }
 
   public boolean isAtCustomWrap() {
-    return myCurrentCustomWrap != null;
+    return currentCustomWrap != null;
   }
 
   public CustomWrap getCurrentCustomWrap() {
-    return myCurrentCustomWrap;
+    return currentCustomWrap;
   }
 
   public int getCodePoint() {
-    return myCodePoint;
+    return codePoint;
   }
 
   public boolean isWhitespace() {
-    return !isFoldRegion() && (myCodePoint == ' ' || myCodePoint == '\t');
+    return !isFoldRegion() && (codePoint == ' ' || codePoint == '\t');
   }
 
   public int getLogicalLine() {
-    return myLogicalLine;
+    return logicalLine;
   }
 
   public boolean nextIsFoldRegion() {
-    return myElementEndOffset == myIterationState.getEndOffset() && myIterationState.nextIsFoldRegion();
+    return elementEndOffset == iterationState.getEndOffset() && iterationState.nextIsFoldRegion();
   }
 
-  @JdkConstants.FontStyle
-  public int getFontStyle() {
-    return myIterationState.getMergedAttributes().getFontType();
+  public @FontStyle int getFontStyle() {
+    return iterationState.getMergedAttributes().getFontType();
   }
 
   /**
    * Returns the font families of the current element, or {@code null} when the element has the editor fonts.
    */
   public @Nullable FontFamilies getFontFamilies() {
-    return myIterationState.getMergedAttributes().getFontFamilies();
+    return iterationState.getMergedAttributes().getFontFamilies();
+  }
+
+  private void setElementOffsets() {
+    if (iterationState.atEnd()) {
+      return;
+    }
+    elementStartOffset = iterationState.getStartOffset();
+    setCustomWrap();
+    if (iterationState.getCurrentFold() == null) {
+      setCharElement();
+    } else {
+      elementEndOffset = iterationState.getEndOffset();
+      lineBreak = false;
+    }
+  }
+
+  private void setCharElement() {
+    elementEndOffset = Character.offsetByCodePoints(chars, elementStartOffset, 1);
+    codePoint = Character.codePointAt(chars, elementStartOffset);
+    lineBreak = false;
+    if (codePoint == '\n') {
+      lineBreak = true;
+    } else if (codePoint == '\r') {
+      char secondChar = elementEndOffset < chars.length() ? chars.charAt(elementEndOffset) : 0;
+      if (secondChar != '\n') {
+        lineBreak = true;
+      } else if (elementEndOffset < iterationState.getEndOffset()) {
+        lineBreak = true;
+        elementEndOffset++;
+      }
+    }
+  }
+
+  private void setCustomWrap() {
+    if (nextCustomWrapIndex < customWraps.size() &&
+        customWraps.get(nextCustomWrapIndex).getOffset() == elementStartOffset) {
+      currentCustomWrap = customWraps.get(nextCustomWrapIndex);
+      // skip other custom wraps at the same offset
+      do {
+        ++nextCustomWrapIndex;
+      } while (nextCustomWrapIndex < customWraps.size() &&
+               customWraps.get(nextCustomWrapIndex).getOffset() == currentCustomWrap.getOffset());
+    } else {
+      currentCustomWrap = null;
+    }
   }
 }

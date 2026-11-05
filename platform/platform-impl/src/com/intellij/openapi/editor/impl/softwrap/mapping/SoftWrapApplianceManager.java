@@ -5,7 +5,6 @@ import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.AttachmentFactory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.FoldRegion;
@@ -14,6 +13,8 @@ import com.intellij.openapi.editor.LineWrapPositionStrategy;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.DocumentText;
+import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -115,7 +116,7 @@ public final class SoftWrapApplianceManager implements Dumpable {
     myDataMapper = dataMapper;
     mySoftWrapNotifier = softWrapNotifier;
     myWidthProvider = new DefaultVisibleAreaWidthProvider();
-    myEditor.getScrollingModel().addVisibleAreaListener(e -> EditorThreading.run(() -> {
+    myEditor.getScrollingModel().addVisibleAreaListener(_ -> EditorThreading.run(() -> {
       updateAvailableArea();
       updateLastTopLeftCornerOffset();
     }));
@@ -214,15 +215,25 @@ public final class SoftWrapApplianceManager implements Dumpable {
     }
     myInProgress = true;
     try {
+      DocumentText documentText = myDocument.getDocumentText();
       myEventBeingProcessed = event;
       mySoftWrapNotifier.notifyRegionReparseStart(event);
-      int endOffsetUpperEstimate = SoftWrapHelper.getEndOffsetUpperEstimate(myEditor, myDocument, event);
+      int endOffsetUpperEstimate = SoftWrapHelper.getEndOffsetUpperEstimate(myEditor, documentText, event);
       if (myVisibleAreaWidth == QUICK_DUMMY_WRAPPING) {
-        doRecalculateSoftWrapsRoughly(event);
+        doRecalculateSoftWrapsRoughly(documentText, event);
       }
       else {
-        new SoftWrapEngine(myEditor, myPainter, myStorage, myDataMapper, event, myLineWrapPositionStrategy, myVisibleAreaWidth,
-                           myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1, myAllowGridModeOptimizations).generate();
+        new SoftWrapEngine(
+          myEditor,
+          documentText,
+          myPainter,
+          myStorage,
+          myDataMapper,
+          event,
+          myLineWrapPositionStrategy,
+          myVisibleAreaWidth,
+          myCustomIndentUsedLastTime ? myCustomIndentValueUsedLastTime : -1, myAllowGridModeOptimizations
+        ).generate();
       }
       if (LOG.isDebugEnabled()) {
         LOG.debug("Soft wrap recalculation done: " + event + ". " + (event.getActualEndOffset() - event.getStartOffset()) + " characters processed");
@@ -253,29 +264,28 @@ public final class SoftWrapApplianceManager implements Dumpable {
 
   // this method generates soft-wraps at some places just to ensure visual lines have limited width, to avoid related performance problems
   // correct procedure is not used to speed up editor opening
-  private void doRecalculateSoftWrapsRoughly(IncrementalCacheUpdateEvent event) {
-    Document document = myDocument;
-    int lineCount = document.getLineCount();
+  private void doRecalculateSoftWrapsRoughly(DocumentText document, IncrementalCacheUpdateEvent event) {
+    int lineCount = document.lineCount();
     int offset = event.getStartOffset();
-    int line = document.getLineNumber(offset);
+    int line = document.lineNumber(offset);
     int mandatoryEnd = event.getMandatoryEndOffset();
     while (true) {
-      if ((offset += QUICK_WRAP_CHAR_COUNT) >= document.getLineEndOffset(line)) {
+      if ((offset += QUICK_WRAP_CHAR_COUNT) >= document.lineEndOffset(line)) {
         if (++line >= lineCount) {
-          offset = document.getTextLength();
+          offset = document.length();
           break;
         }
-        offset = document.getLineStartOffset(line);
+        offset = document.lineStartOffset(line);
         if (offset > mandatoryEnd && myEditor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1) == null) break;
         else continue;
       }
       FoldRegion foldRegion = myEditor.getFoldingModel().getCollapsedRegionAtOffset(offset);
       if (foldRegion != null) {
         offset = foldRegion.getEndOffset();
-        line = document.getLineNumber(offset);
+        line = document.lineNumber(offset);
       }
-      if (DocumentUtil.isInsideSurrogatePair(document, offset)) offset++;
-      if (offset < document.getLineEndOffset(line)) {
+      if (DocumentTextUtil.isInsideSurrogatePair(document, offset)) offset++;
+      if (offset < document.lineEndOffset(line)) {
         SoftWrapImpl wrap = new SoftWrapImpl(new TextChangeImpl("\n", offset), 1, 1);
         myStorage.storeOrReplace(wrap);
         if (offset > mandatoryEnd && myDataMapper.matchesOldSoftWrap(wrap, event.getLengthDiff())) break;

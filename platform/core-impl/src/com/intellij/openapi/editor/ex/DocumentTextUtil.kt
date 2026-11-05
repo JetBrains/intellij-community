@@ -59,3 +59,10 @@ fun DocumentText.isSurrogatePair(offset: Int): Boolean {
          Character.isHighSurrogate(chars[offset]) &&
          Character.isLowSurrogate(chars[offset + 1])
 }
+
+@Contract(pure = true)
+fun DocumentText.isAtLineStart(offset: Int): Boolean {
+  return offset >= 0 &&
+         offset <= length() &&
+         offset == lineStartOffset(lineNumber(offset))
+}
