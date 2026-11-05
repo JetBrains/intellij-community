@@ -1171,7 +1171,6 @@ f:com.intellij.ide.browsers.WebBrowserManager
 - addBrowser(java.util.UUID,com.intellij.ide.browsers.BrowserFamily,java.lang.String,java.lang.String,Z,com.intellij.ide.browsers.BrowserSpecificSettings):com.intellij.ide.browsers.WebBrowser
 - getBrowsers(com.intellij.openapi.util.Condition):java.util.List
 - getBrowsers(com.intellij.openapi.util.Condition,Z):java.util.List
-- getFirstBrowserOrNull(com.intellij.ide.browsers.BrowserFamily):com.intellij.ide.browsers.WebBrowser
 - getWebServerReloadMode():com.intellij.ide.browsers.ReloadMode
 - s:isEdge(com.intellij.ide.browsers.WebBrowser):Z
 - s:isOpera(com.intellij.ide.browsers.WebBrowser):Z

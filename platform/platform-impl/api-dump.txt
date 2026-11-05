@@ -1012,6 +1012,7 @@ f:com.intellij.ide.browsers.WebBrowserManager
 - findBrowserById(java.lang.String):com.intellij.ide.browsers.WebBrowser
 - getActiveBrowsers():java.util.List
 - getBrowsers():java.util.List
+- getChromiumBasedBrowser():com.intellij.ide.browsers.WebBrowser
 - getDefaultBrowserPolicy():com.intellij.ide.browsers.DefaultBrowserPolicy
 - getFirstActiveBrowser():com.intellij.ide.browsers.WebBrowser
 - getFirstBrowser(com.intellij.ide.browsers.BrowserFamily):com.intellij.ide.browsers.WebBrowser
