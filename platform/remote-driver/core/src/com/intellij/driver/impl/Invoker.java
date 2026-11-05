@@ -306,7 +306,7 @@ public class Invoker implements InvokerMBean {
       }
       case READ_ACTION -> {
         if (call.getDispatcher() == OnDispatcher.EDT) {
-          return WriteIntentReadAction.compute((Computable<Object>)() -> call(call, supplier));
+          return WriteIntentReadAction.compute(() -> call(call, supplier));
         }
         else {
           return ReadAction.compute(() -> call(call, supplier));

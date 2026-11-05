@@ -468,7 +468,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       if (myContents == null) {
         myContents = new HashMap<>(1);
       }
-      Set<RefEntity> content = myContents.computeIfAbsent(packageName, k -> new HashSet<>());
+      Set<RefEntity> content = myContents.computeIfAbsent(packageName, _ -> new HashSet<>());
       content.add(element);
     }
   }

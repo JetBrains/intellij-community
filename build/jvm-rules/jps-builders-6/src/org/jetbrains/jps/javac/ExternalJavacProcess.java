@@ -212,7 +212,8 @@ public final class ExternalJavacProcess {
     try {
       JavaCompilingTool tool = getCompilingTool();
       final boolean rc = JavacMain.compile(
-        options, files, classpath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnostic, outputSink, canceledStatus, tool, (InputFileDataProvider)null
+        options, files, classpath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnostic, outputSink, canceledStatus, tool,
+        null
       );
       return JavacProtoUtil.toMessage(sessionId, JavacProtoUtil.createBuildCompletedResponse(rc));
     }

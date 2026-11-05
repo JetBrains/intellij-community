@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +67,7 @@ final class EditorTransferHandler extends TransferHandler {
 
   @Override
   public boolean importData(@NotNull TransferSupport support) {
-    return WriteIntentReadAction.compute((Computable<Boolean>)() -> {
+    return WriteIntentReadAction.compute(() -> {
       if (!(support.getComponent() instanceof JComponent jComp)) {
         return false;
       }

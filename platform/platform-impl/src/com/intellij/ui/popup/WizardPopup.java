@@ -503,7 +503,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
       final Action action = myActionMap.get(myInputMap.get(stroke));
       if (action != null && action.isEnabled()) {
         WriteIntentReadAction.run(
-          (Runnable)() -> action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()))
+          () -> action.actionPerformed(new ActionEvent(getContent(), event.getID(), "", event.getWhen(), event.getModifiers()))
         );
         event.consume();
         return true;
@@ -522,11 +522,11 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-    if (step instanceof ListPopupStep) {
-      return new ListPopupImpl(getProject(), parent, (ListPopupStep)step, parentValue);
+    if (step instanceof ListPopupStep listPopupStep) {
+      return new ListPopupImpl(getProject(), parent, listPopupStep, parentValue);
     }
-    else if (step instanceof TreePopupStep) {
-      return new TreePopupImpl(getProject(), parent, (TreePopupStep)step, parentValue);
+    else if (step instanceof TreePopupStep treePopupStep) {
+      return new TreePopupImpl(getProject(), parent, treePopupStep, parentValue);
     }
     else {
       throw new IllegalArgumentException(step.getClass().toString());

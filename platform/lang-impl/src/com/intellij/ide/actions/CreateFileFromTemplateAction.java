@@ -112,7 +112,7 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
       }
     }
     catch (ParseException e) {
-      throw new IncorrectOperationException("Error parsing Velocity template: " + e.getMessage(), (Throwable)e);
+      throw new IncorrectOperationException("Error parsing Velocity template: " + e.getMessage(), e);
     }
     catch (IncorrectOperationException e) {
       throw e;

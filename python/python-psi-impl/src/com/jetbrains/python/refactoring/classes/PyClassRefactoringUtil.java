@@ -115,8 +115,8 @@ public final class PyClassRefactoringUtil {
       final PyElement value = pyAssignmentStatement.getAssignedValue();
       final PyAssignmentStatement newDeclaration = (PyAssignmentStatement)pyAssignmentStatement.copy();
 
-      if (value instanceof PyReferenceExpression && dequalifyIfDeclaredInClass != null) {
-        final String newValue = getNewValueToAssign((PyReferenceExpression)value, dequalifyIfDeclaredInClass);
+      if (value instanceof PyReferenceExpression ref && dequalifyIfDeclaredInClass != null) {
+        final String newValue = getNewValueToAssign(ref, dequalifyIfDeclaredInClass);
 
         setNewAssigneeValue(newDeclaration, newValue);
       }
@@ -156,8 +156,7 @@ public final class PyClassRefactoringUtil {
   private static @NotNull String getNewValueToAssign(final @NotNull PyReferenceExpression currentValue,
                                                      final @NotNull PyClass dequalifyIfDeclaredInClass) {
     final PyExpression qualifier = currentValue.getQualifier();
-    if ((qualifier instanceof PyReferenceExpression) &&
-        ((PyReferenceExpression)qualifier).getReference().isReferenceTo(dequalifyIfDeclaredInClass)) {
+    if ((qualifier instanceof PyReferenceExpression ref) && ref.getReference().isReferenceTo(dequalifyIfDeclaredInClass)) {
       final String name = currentValue.getName();
       return ((name != null) ? name : currentValue.getText());
     }
@@ -286,8 +285,8 @@ public final class PyClassRefactoringUtil {
                                        @NotNull PsiElement targetNode,
                                        PsiElement @NotNull [] otherMovedElements) {
     try {
-      if (sourceNode instanceof PyReferenceExpression) {
-        doRestoreReference((PyReferenceExpression)sourceNode, targetNode, otherMovedElements);
+      if (sourceNode instanceof PyReferenceExpression ref) {
+        doRestoreReference(ref, targetNode, otherMovedElements);
       }
       else if (sourceNode instanceof PsiLanguageInjectionHost) {
         var injectionReferences = sourceNode.getCopyableUserData(INJECTION_REFERENCES);
@@ -365,8 +364,8 @@ public final class PyClassRefactoringUtil {
    */
   public static void rememberNamedReferences(final @NotNull PsiElement element, final String @NotNull ... namesToSkip) {
     PsiFile containingFile = element.getContainingFile();
-    if (containingFile instanceof PyFile) {
-      Set<FutureFeature> fromFutureImports = collectFromFutureImports((PyFile)containingFile);
+    if (containingFile instanceof PyFile file) {
+      Set<FutureFeature> fromFutureImports = collectFromFutureImports(file);
       element.putCopyableUserData(ENCODED_FROM_FUTURE_IMPORTS, fromFutureImports);
     }
 
@@ -389,8 +388,8 @@ public final class PyClassRefactoringUtil {
       @Override
       public void visitComment(@NotNull PsiComment comment) {
         super.visitComment(comment);
-        if (comment instanceof PsiLanguageInjectionHost) {
-          rememberInjectionReferences((PsiLanguageInjectionHost)comment, element, namesToSkip);
+        if (comment instanceof PsiLanguageInjectionHost host) {
+          rememberInjectionReferences(host, element, namesToSkip);
         }
       }
 
@@ -454,10 +453,10 @@ public final class PyClassRefactoringUtil {
       if (!PyUtil.inSameFile(element, target) && importElement == null && !(target instanceof PsiFileSystemItem)) {
         return;
       }
-      if (target instanceof PyTargetExpression && PyNames.ALL.equals(((PyTargetExpression)target).getName())) {
+      if (target instanceof PyTargetExpression targetExpr && PyNames.ALL.equals(targetExpr.getName())) {
         for (PsiElement result : allResolveResults) {
-          if (result instanceof PyImportElement) {
-            final QualifiedName importedQName = ((PyImportElement)result).getImportedQName();
+          if (result instanceof PyImportElement pyImport) {
+            final QualifiedName importedQName = pyImport.getImportedQName();
             if (importedQName != null) {
               target = new DynamicNamedElement(target.getContainingFile(), importedQName.toString());
               break;
@@ -466,8 +465,8 @@ public final class PyClassRefactoringUtil {
         }
       }
       node.putCopyableUserData(ENCODED_IMPORT, (PsiNamedElement)target);
-      if (importElement instanceof PyImportElement) {
-        node.putCopyableUserData(ENCODED_IMPORT_AS, ((PyImportElement)importElement).getAsName());
+      if (importElement instanceof PyImportElement pyImport) {
+        node.putCopyableUserData(ENCODED_IMPORT_AS, pyImport.getAsName());
       }
       node.putCopyableUserData(ENCODED_USE_FROM_IMPORT, qualifier == null);
     }
@@ -476,19 +475,19 @@ public final class PyClassRefactoringUtil {
   private static @Nullable PyImportedNameDefiner getImportElement(PyReferenceExpression expr) {
     for (ResolveResult result : expr.getReference().multiResolve(false)) {
       final PsiElement e = result.getElement();
-      if (e instanceof PyImportElement) {
-        return (PyImportElement)e;
+      if (e instanceof PyImportElement pyImport) {
+        return pyImport;
       }
-      if (e instanceof PyStarImportElement) {
-        return (PyStarImportElement)e;
+      if (e instanceof PyStarImportElement pyStarImport) {
+        return pyStarImport;
       }
     }
     return null;
   }
 
   private static @Nullable PsiElement resolveExpression(@NotNull PyExpression expr) {
-    if (expr instanceof PyReferenceExpression) {
-      return ((PyReferenceExpression)expr).getReference().resolve();
+    if (expr instanceof PyReferenceExpression ref) {
+      return ref.getReference().resolve();
     }
     return null;
   }
@@ -526,7 +525,7 @@ public final class PyClassRefactoringUtil {
 
   /**
    * Updates the import statement if the given PSI element <em>has the same name</em> as one of the import elements of that statement.
-   * It means that you should be careful it you actually want to update the source part of a "from import" statement, because in cases
+   * It means that you should be careful if you actually want to update the source part of a "from import" statement, because in cases
    * like {@code from foo import foo} this method may do not what you expect.
    *
    * @param importStatement parent import statement that contains reference to given element
@@ -705,17 +704,17 @@ public final class PyClassRefactoringUtil {
         );
       }
       catch (IOException e) {
-        throw new IncorrectOperationException(String.format("Cannot create file '%s'", path), (Throwable)e);
+        throw new IncorrectOperationException(String.format("Cannot create file '%s'", path), e);
       }
     }
     else {
       psi = PsiManager.getInstance(project).findFile(vfile);
     }
-    if (!(psi instanceof PyFile)) {
+    if (!(psi instanceof PyFile pyFile)) {
       throw new IncorrectOperationException(PyPsiBundle.message(
         "refactoring.move.module.members.error.cannot.place.elements.into.nonpython.file"));
     }
-    return (PyFile)psi;
+    return pyFile;
   }
 
   /**

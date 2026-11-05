@@ -345,7 +345,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private void beforeInit() {
     //readaction is not enough
     getBrowser().setInclusionChangedListener(() -> WriteIntentReadAction.run(
-      (Runnable)() -> myInclusionEventDispatcher.getMulticaster().inclusionChanged()
+      () -> myInclusionEventDispatcher.getMulticaster().inclusionChanged()
     ));
 
     addInclusionListener(() -> updateButtons(), this);
