@@ -1,11 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -54,4 +57,11 @@ interface ComposeResourcesDataProvider {
    * Should support both nested folders (such as drawable, font, etc.) and resources root.
    */
   fun getComposeDataForResourceFolder(folder: PsiDirectory): ComposeResourcesData?
+
+  /**
+   * Returns `true` if [getComposeDataForResourceFolder] provides data for [folder].
+   */
+  fun isComposeResourceFolder(project: Project, folder: VirtualFile): Boolean = runReadActionBlocking {
+    PsiManager.getInstance(project).findDirectory(folder)?.let(::getComposeDataForResourceFolder) != null
+  }
 }

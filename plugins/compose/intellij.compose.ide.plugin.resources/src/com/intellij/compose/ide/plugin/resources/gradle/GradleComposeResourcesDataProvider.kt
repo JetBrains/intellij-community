@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
@@ -41,6 +42,12 @@ internal class GradleComposeResourcesDataProvider : ComposeResourcesDataProvider
       .getAllComposeResourcesDirs()
       .firstOrNull { folderPath?.startsWith(it.directoryPath) == true }
       ?.toResourcesData(folder.project)
+  }
+
+  /** Uses only the cached Gradle model, so it needs no lock. */
+  override fun isComposeResourceFolder(project: Project, folder: VirtualFile): Boolean {
+    val folderPath = folder.toNioPathOrNull() ?: return false
+    return project.getAllComposeResourcesDirs().any { folderPath.startsWith(it.directoryPath) }
   }
 
   private fun GradleComposeResourcesDir.toResourcesData(project: Project): ComposeResourcesData? {
