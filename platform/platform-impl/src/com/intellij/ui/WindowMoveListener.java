@@ -15,12 +15,14 @@ public class WindowMoveListener extends WindowMouseListener {
   public WindowMoveListener installTo(@NotNull Component component) {
     component.addMouseListener(this);
     component.addMouseMotionListener(this);
+    support.installForMoveListener(component);
     return this;
   }
 
   public void uninstallFrom(@NotNull Component component) {
     component.removeMouseListener(this);
     component.removeMouseMotionListener(this);
+    support.uninstall();
   }
 
   public WindowMoveListener() {

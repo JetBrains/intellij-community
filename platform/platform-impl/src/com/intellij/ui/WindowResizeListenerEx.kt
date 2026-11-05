@@ -48,11 +48,13 @@ class WindowResizeListenerEx(private val glassPane: IdeGlassPane, content: Compo
   fun install(parent: Disposable): WindowResizeListenerEx {
     glassPane.addMousePreprocessor(this, parent)
     glassPane.addMouseMotionPreprocessor(this, parent)
+    support.installForResizeListener(glassPane)
     return this
   }
 
   fun install(coroutineScope: CoroutineScope): WindowResizeListenerEx {
     glassPane.addMouseListener(this, coroutineScope)
+    support.installForResizeListener(glassPane)
     return this
   }
 

@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
+import com.intellij.util.ui.JdkConstants;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.JBR;
-import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,17 +113,17 @@ public abstract class WindowMouseListener extends MouseAdapter implements MouseI
 
   @Override
   public void mouseDragged(MouseEvent event) {
-    support.process(event, true);
+    support.process(event);
   }
 
   @Override
   public void mouseReleased(MouseEvent event) {
-    support.process(event, false);
+    support.process(event);
   }
 
   @Override
   public void mouseClicked(MouseEvent event) {
-    support.process(event, false);
+    support.process(event);
   }
 
   /**
