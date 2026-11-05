@@ -15,8 +15,6 @@ import com.intellij.xray.impl.action.xrayStageChoices
 import com.intellij.xray.impl.service.XRayStageStore
 import org.jetbrains.annotations.Nls
 
-private const val CHANGE_VISIBILITY_ACTION_ID = "!XRayChangeVisibility"
-
 private const val OPEN_SETTINGS_ACTION_ID = "!XRayOpenSettings"
 
 private const val XRAY_STAGE_PREFIX = "!XRayStage:"
@@ -36,7 +34,7 @@ internal class XRayCodeVisionEntryExtraActionContributor : CodeVisionEntryExtraA
     }.toMutableList()
     children.add(CodeVisionEntryExtraActionModel(XRayBundle.message("action.open.in.settings.text"),
                                                  OPEN_SETTINGS_ACTION_ID))
-    return listOf(CodeVisionEntryExtraActionModel(XRayBundle.message("xray.inlay.menu.change"), CHANGE_VISIBILITY_ACTION_ID, children))
+    return listOf(CodeVisionEntryExtraActionModel(XRayBundle.message("xray.inlay.menu.change"), children))
   }
 
   override fun handle(

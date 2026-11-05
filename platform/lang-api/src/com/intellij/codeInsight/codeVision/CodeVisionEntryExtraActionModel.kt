@@ -11,9 +11,12 @@ data class CodeVisionEntryExtraActionModel(@Nls val displayText: String,
   var children: List<CodeVisionEntryExtraActionModel> = emptyList()
     private set
 
+  /**
+   * Creates an item that opens a sub-menu with [children].
+   * The item has no [actionId], so the provider gets no call when the user selects it.
+   */
   constructor(@Nls displayText: String,
-              actionId: String?,
-              children: List<CodeVisionEntryExtraActionModel>) : this(displayText, actionId) {
+              children: List<CodeVisionEntryExtraActionModel>) : this(displayText, null) {
     this.children = children
   }
 }

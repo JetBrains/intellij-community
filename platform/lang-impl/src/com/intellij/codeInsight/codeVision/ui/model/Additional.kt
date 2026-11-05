@@ -10,4 +10,4 @@ internal fun CodeVisionEntry.tooltipText(): String = this@tooltipText.tooltip
 
 internal fun CodeVisionEntry.contextAvailable(): Boolean = this@contextAvailable.extraActions.isNotEmpty()
 
-internal fun CodeVisionEntryExtraActionModel.isEnabled(): Boolean = this@isEnabled.actionId != null
+internal fun CodeVisionEntryExtraActionModel.isEnabled(): Boolean = this@isEnabled.actionId != null || children.isNotEmpty()
