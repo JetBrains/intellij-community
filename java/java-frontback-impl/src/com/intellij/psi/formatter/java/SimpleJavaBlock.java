@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter.java;
 
 import com.intellij.formatting.Alignment;
@@ -91,6 +91,7 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
         }
         if (myCurrentIndent != null &&
             !(myNode.getPsi() instanceof PsiFile) &&
+            myNode.getElementType() != JavaElementType.IMPLICIT_CLASS &&
             myCurrentChild != null && myCurrentChild.getElementType() != JavaElementType.MODIFIER_LIST) {
           myCurrentIndent = Indent.getContinuationIndent(myIndentSettings.USE_RELATIVE_INDENTS);
         }

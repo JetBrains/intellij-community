@@ -4209,6 +4209,62 @@ public enum LevelCode {
     )
   }
 
+  fun testFormattingImplicitClassWithCommentAfterImports() {
+    doTextTest(
+      """
+      import jdk.incubator.vector.ByteVector;
+      import jdk.incubator.vector.VectorSpecies;
+
+      // this comment is messing up the code formatting
+      VectorSpecies<Byte> SPECIES = ByteVector.SPECIES_PREFERRED;
+
+          void main() {
+          }
+      """.trimIndent(),
+
+      """
+      import jdk.incubator.vector.ByteVector;
+      import jdk.incubator.vector.VectorSpecies;
+
+      // this comment is messing up the code formatting
+      VectorSpecies<Byte> SPECIES = ByteVector.SPECIES_PREFERRED;
+
+      void main() {
+      }
+      """.trimIndent()
+    )
+  }
+
+  fun testFormattingImplicitClassWithCommentBetweenMethods() {
+    doTextTest(
+      """
+      import static java.lang.System.out;
+
+      void main() {
+          out.println("Hello");
+      }
+
+      // Comment between methods
+              void test() {
+                  test();
+              }
+      """.trimIndent(),
+
+      """
+      import static java.lang.System.out;
+
+      void main() {
+          out.println("Hello");
+      }
+
+      // Comment between methods
+      void test() {
+          test();
+      }
+      """.trimIndent()
+    )
+  }
+
   fun testDoNotFormatLongChains() {
     settings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     doTest()
