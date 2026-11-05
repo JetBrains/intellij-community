@@ -27,9 +27,8 @@ internal class CondaSdkDataProvider : PySdkDataProvider {
   ): PythonSdkAdditionalData {
     // The env ref is the name of a named env, or the path of an unnamed one.
     val home = fileSystem.resolvePythonHome(pythonBinary)
-    val envPath = home.toStringOnRemoteMachine()
-    val identity = if (isCondaPathEnvRef(envRef)) PyCondaEnvIdentity.UnnamedEnv(envPath, isBase = isCondaRoot(fileSystem, home))
-    else PyCondaEnvIdentity.NamedEnv(envRef.value, envPath)
+    val identity = if (isCondaPathEnvRef(envRef)) PyCondaEnvIdentity.UnnamedEnv(home, isBase = isCondaRoot(fileSystem, home))
+    else PyCondaEnvIdentity.NamedEnv(envRef.value, home.toStringOnRemoteMachine())
     // conda is found before this runs: the env was listed with it, and its binary was found with it.
     val condaPath = fileSystem.resolveExecutable(CondaPyTool.getInstance())?.toStringOnRemoteMachine().orEmpty()
     return condaSdkDataOf(PyCondaEnv(identity, condaPath), pyProject.baseDir).also { it.requirementsPath = requirementsFile }

@@ -25,7 +25,7 @@ suspend fun createCondaEnv(
   ).getOrThrow()
 
   val env = PyCondaEnv(
-    envIdentity = PyCondaEnvIdentity.UnnamedEnv(pathToCreateNewEnvIn.pathString, false),
+    envIdentity = PyCondaEnvIdentity.UnnamedEnv(pathToCreateNewEnvIn, false),
     fullCondaPathOnTarget = existingEnv.fullCondaPathOnTarget,
   )
   return env

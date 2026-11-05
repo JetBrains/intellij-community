@@ -645,6 +645,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kaml",
         "//platform/analysis-api:analysis",
         "//platform/code-style-api:codeStyle",
         "//platform/util/concurrency",

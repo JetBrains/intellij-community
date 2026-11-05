@@ -3,7 +3,10 @@ package com.jetbrains.python.sdk.flavors.conda
 
 import com.google.gson.annotations.JsonAdapter
 import com.intellij.execution.target.FullPathOnTarget
+import com.jetbrains.python.PathShortener
 import com.jetbrains.python.sdk.SealedClassAdapter
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.venvReader.Directory
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -14,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @JsonAdapter(SealedClassAdapter::class)
 sealed class PyCondaEnvIdentity(val userReadableName: String) {
+  abstract val envPath: FullPathOnTarget?
 
   /**
    * @param envPath the directory the environment stands in, as conda reported it, or `null` when nothing reported one.
@@ -25,11 +29,20 @@ sealed class PyCondaEnvIdentity(val userReadableName: String) {
    * carries no path, and so does one built from a request that only knows a name. A caller that needs the directory
    * must handle `null`.
    */
-  data class NamedEnv(val envName: String, val envPath: FullPathOnTarget? = null) : PyCondaEnvIdentity(envName) {
+  data class NamedEnv(val envName: String, override val envPath: FullPathOnTarget? = null) : PyCondaEnvIdentity(envName) {
     override fun toString(): String = envName
   }
 
-  data class UnnamedEnv(val envPath: FullPathOnTarget, val isBase: Boolean) : PyCondaEnvIdentity(envPath) {
+  data class UnnamedEnv(override val envPath: FullPathOnTarget, val isBase: Boolean) : PyCondaEnvIdentity(envPath) {
+    companion object {
+      suspend operator fun invoke(envDir: Directory, isBase: Boolean): UnnamedEnv = UnnamedEnv(PathShortener.shorten(envDir), isBase)
+      suspend operator fun invoke(envDir: PathHolder, isBase: Boolean): UnnamedEnv =
+        when (envDir) {
+          is PathHolder.Eel -> invoke(envDir.path, isBase)
+          is PathHolder.Target -> UnnamedEnv(envDir.toStringOnRemoteMachine(), isBase)
+        }
+    }
+
     override fun toString(): String = envPath
   }
 }

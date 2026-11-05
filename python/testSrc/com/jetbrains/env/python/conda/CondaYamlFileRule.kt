@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.python.conda
 
+import com.charleskorn.kaml.Yaml
+import com.intellij.python.junit5Tests.framework.winLockedFile.deleteCheckLocking
 import com.intellij.util.io.delete
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
@@ -10,14 +12,17 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.Serializable
 import org.junit.rules.ExternalResource
 import java.io.File
 import java.nio.file.Path
 
 /**
  */
-internal class CondaYamlFileRule(private val condaRule: LocalCondaRule,
-                                 private val languageLevel: LanguageLevel = LanguageLevel.PYTHON39) : ExternalResource() {
+internal class CondaYamlFileRule(
+  private val condaRule: LocalCondaRule,
+  private val languageLevel: LanguageLevel = LanguageLevel.PYTHON39,
+) : ExternalResource() {
 
   lateinit var yamlFilePath: Path
     private set
@@ -38,9 +43,14 @@ internal class CondaYamlFileRule(private val condaRule: LocalCondaRule,
     val file = File.createTempFile("ijconda", ".yaml")
     file.writeText(yamlFileText)
     yamlFilePath = file.toPath()
+    val path = Path.of(Yaml.default.decodeFromString(CondaEnvYaml.serializer(), yamlFileText).prefix)
+    deleteCheckLocking(path)
   }
 
   override fun after() {
     yamlFilePath.delete()
   }
 }
+
+@Serializable // TODO: Create KSerializer<Path> in the platform, use it instead of String for prefix
+private data class CondaEnvYaml(val name: String, val prefix: String, val channels: List<String>, val dependencies: List<String>)

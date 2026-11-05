@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env.python.conda
 
-import com.jetbrains.python.sdk.ModuleOrProject
 import com.google.gson.Gson
 import com.intellij.execution.processTools.getBareExecutionResult
 import com.intellij.execution.target.local.LocalTargetEnvironment
@@ -21,6 +20,7 @@ import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonScriptExecution
 import com.jetbrains.python.run.buildTargetedCommandLine
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.conda.createCondaSdkAlongWithNewEnv
 import com.jetbrains.python.sdk.conda.createCondaSdkFromExistingEnvironment
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
@@ -34,7 +34,6 @@ import org.hamcrest.Matchers
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -92,7 +91,7 @@ internal class PyCondaSdkTest {
    * When we create fresh local SDK on Windows, it must be patched with the conda activation env vars.
    */
   @Test
-  fun testLocalActivationFix(): Unit =  timeoutRunBlocking(10.minutes) { 
+  fun testLocalActivationFix(): Unit = timeoutRunBlocking(10.minutes) {
 
     val script = tempDirRule.newFile()
     script.writeText("""
@@ -102,7 +101,7 @@ internal class PyCondaSdkTest {
     """.trimIndent())
 
     Assume.assumeTrue("Windows only", SystemInfoRt.isWindows)
-    val condaEnvs = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow()
+    val condaEnvs = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec(), forceRefresh = true).getOrThrow()
     val baseEnv = condaEnvs.first { (it.envIdentity as? PyCondaEnvIdentity.UnnamedEnv)?.isBase == true }
     val nonBaseEnv = condaEnvs.firstOrNull { it.envIdentity is PyCondaEnvIdentity.NamedEnv } ?: createCondaEnv()
 
@@ -135,9 +134,8 @@ internal class PyCondaSdkTest {
   }
 
   @Test
-  @Ignore("AT-3959")
   fun testExecuteCommandOnSdk(): Unit = timeoutRunBlocking(60.seconds) {
-    val condaEnv = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow().first()
+    val condaEnv = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec(), forceRefresh = true).getOrThrow().first()
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
       moduleOrProject = ModuleOrProject.ProjectOnly(projectRule.project),
       condaIdentity = condaEnv.envIdentity,
@@ -152,7 +150,7 @@ internal class PyCondaSdkTest {
   }
 
   @Test
-  fun createSdkByFile() =  timeoutRunBlocking(120.seconds) {
+  fun createSdkByFile() = timeoutRunBlocking(120.seconds) {
     val newCondaInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath, emptyList())
     val sdk = condaRule.condaCommand.createCondaSdkAlongWithNewEnv(
       ModuleOrProject.ProjectOnly(projectRule.project),
@@ -165,10 +163,9 @@ internal class PyCondaSdkTest {
     ensureHomePathCorrect(sdk)
   }
 
-  @Test
-  @Ignore("AT-3959")
-  fun testCreateFromExisting() =  timeoutRunBlocking(10.minutes) { 
-    val env = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow().first()
+  @Test //TODO: Test fails because we use python path instead of conda name com.jetbrains.python.sdk.conda.PyAddCondaToolsKt#createCondaSdkFromExistingEnvironment
+  fun testCreateFromExisting(): Unit = timeoutRunBlocking(10.minutes) {
+    val env = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec(), forceRefresh = true).getOrThrow().first()
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
       moduleOrProject = ModuleOrProject.ProjectOnly(projectRule.project),
       condaIdentity = env.envIdentity,
@@ -180,12 +177,11 @@ internal class PyCondaSdkTest {
 
     Assert.assertTrue("Bad home path", Files.isExecutable(Path.of(sdk.homePath!!)))
     ensureHomePathCorrect(sdk)
-    Assert.assertEquals("Wrong name", env.envIdentity.userReadableName, sdk.name)
+    Assert.assertEquals("Wrong name", Path.of(env.envIdentity.userReadableName), Path.of(sdk.name))
   }
 
   private suspend fun ensureHomePathCorrect(sdk: Sdk) {
     val homePath = Path.of(sdk.homePath!!)
     Assert.assertEquals("Wrong home path", homePath, Path.of(sdk.getPythonBinaryPath(projectRule.project).getOrThrow()))
   }
-
 }

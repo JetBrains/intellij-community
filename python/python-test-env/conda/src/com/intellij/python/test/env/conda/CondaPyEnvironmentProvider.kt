@@ -360,9 +360,9 @@ class CondaPyEnvironment(
     return condaEnv().createSdkFromThisEnv(ModuleOrProject.ProjectOnly(project), null, envPath).getOrThrow()
   }
 
-  private fun condaEnv(): PyCondaEnv {
+  private suspend fun condaEnv(): PyCondaEnv {
     return PyCondaEnv(
-      envIdentity = PyCondaEnvIdentity.UnnamedEnv(envPath.pathString, isBase = true),
+      envIdentity = PyCondaEnvIdentity.UnnamedEnv(envPath, isBase = true),
       fullCondaPathOnTarget = condaExecutable.toString(),
     )
   }

@@ -6,6 +6,7 @@ import com.intellij.python.test.env.conda.CondaPyEnvironment
 import com.intellij.python.test.env.junit5.RunOnEnvironmentsExtension
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.extension.ParameterContext
@@ -25,17 +26,19 @@ internal class CondaPythonEnvExtension : ParameterResolver {
 
   override fun resolveParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): PyCondaEnv {
     val pyEnv = RunOnEnvironmentsExtension.getPythonEnvironment(extensionContext)
-    
+
     // Unwrap cached environment to get the real CondaPyEnvironment
     val condaEnv = pyEnv.unwrap<CondaPyEnvironment>()
-      ?: throw IllegalStateException(
-        "Environment is not a Conda environment (actual type: ${pyEnv::class.qualifiedName}). " +
-        "Make sure @PyEnvTestCaseWithConda or @PyEnvTestCase(tags=[\"conda\"]) is used."
+                   ?: throw IllegalStateException(
+                     "Environment is not a Conda environment (actual type: ${pyEnv::class.qualifiedName}). " +
+                     "Make sure @PyEnvTestCaseWithConda or @PyEnvTestCase(tags=[\"conda\"]) is used."
+                   )
+
+    return runBlocking {
+      PyCondaEnv(
+        envIdentity = PyCondaEnvIdentity.UnnamedEnv(condaEnv.envPath, isBase = false),
+        fullCondaPathOnTarget = condaEnv.condaExecutable.toString()
       )
-    
-    return PyCondaEnv(
-      envIdentity = PyCondaEnvIdentity.UnnamedEnv(condaEnv.envPath.toString(), isBase = false),
-      fullCondaPathOnTarget = condaEnv.condaExecutable.toString()
-    )
+    }
   }
 }
