@@ -25,6 +25,9 @@ import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.platform.eel.fs.getPath
+import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
@@ -625,7 +628,11 @@ class MavenStaticSyncTest(mavenVersion: String, modelVersion: String) {
                     """.trimIndent())
 
     readAction {
-      val expectedValue = "${System.getProperty("user.home")}/some/path"
+      val rawPath = "${System.getProperty("user.home")}/some/path"
+      val expectedValue =  maven.project.getEelDescriptor()
+        .getPath(rawPath)
+        .asNioPath()
+        .toString()
       maven.assertContentRootSources("project", expectedValue, "")
     }
   }

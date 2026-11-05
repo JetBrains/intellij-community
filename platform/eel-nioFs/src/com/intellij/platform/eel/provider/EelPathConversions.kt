@@ -314,6 +314,7 @@ private val LOG = Logger.getLogger("com.intellij.platform.eel.provider.EelNioBri
     "org.rust.cargo.toolchain.flavors.RsUnixToolchainFlavor",
     "org.rust.cargo.toolchain.flavors.RsWinToolchainFlavor",
     "org.rust.debugger.RsDebuggerToolchainService",
+    "org.jetbrains.idea.maven.importing.MavenStaticSyncTest"
 )
 fun EelPath.asNioPath(): Path {
   if (descriptor === LocalEelDescriptor) {
