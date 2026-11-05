@@ -1,5 +1,6 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.newFileDialog
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.actions.CreateFileAction
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.fileTemplates.FileTemplateUtil
@@ -81,6 +82,7 @@ object WelcomeScreenNewFileHandler {
       }
     }
     catch (e: Exception) {
+      rethrowControlFlowException(e)
       showErrorMessage(project, NonModalWelcomeScreenBundle.message("welcome.screen.error.dialog.message.cannot.create.file", fileName, e.message ?: "Unknown error"))
     }
   }
