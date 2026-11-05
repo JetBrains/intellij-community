@@ -1093,10 +1093,12 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     val project = workspace.project
     val interpreter = pyProject.interpreter ?: return null
     val file = PythonPackageManager.forPythonInterpreter(project, interpreter).getRootDependenciesFile()?.virtualFile ?: return null
-    // PythonPackageManagerAction.actionPerformed bails out without a PSI file (it restarts the daemon on it).
-    val psiFile = readAction { PsiManager.getInstance(project).findFile(file) }
-    return SimpleDataContext.builder().add(CommonDataKeys.PROJECT, project).add(CommonDataKeys.VIRTUAL_FILE, file)
-      .apply { if (psiFile != null) add(CommonDataKeys.PSI_FILE, psiFile) }.build()
+    return readAction {
+      // PythonPackageManagerAction.actionPerformed bails out without a PSI file (it restarts the daemon on it).
+      val psiFile = PsiManager.getInstance(project).findFile(file)
+      SimpleDataContext.builder().add(CommonDataKeys.PROJECT, project).add(CommonDataKeys.VIRTUAL_FILE, file)
+        .apply { if (psiFile != null) add(CommonDataKeys.PSI_FILE, psiFile) }.build()
+    }
   }
 
   /**
