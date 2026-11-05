@@ -54,5 +54,8 @@
     <orderEntry type="module" module-name="intellij.python.community.services.systemPython" />
     <orderEntry type="module" module-name="intellij.python.processOutput.common" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.python.packaging" />
+    <orderEntry type="module" module-name="intellij.python.requirements.backend" />
+    <orderEntry type="module" module-name="intellij.python.venv" />
   </component>
 </module>

@@ -7,7 +7,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.system.windowsPathString
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -15,16 +14,16 @@ import com.jetbrains.python.mapError
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCacheService
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.management.PythonRepositoryManager.PythonRepositoryIOError
-import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
 @Service(Service.Level.PROJECT)
-internal class PipRepositoryManager(override val project: Project) : PythonRepositoryManagerBase() {
+@ApiStatus.Internal
+class PipRepositoryManager(override val project: Project) : PythonRepositoryManagerBase() {
   override val allRepositories: List<PyPackageRepository>
     get() = listOf(PyPiPackageRepository) + service<PythonSimpleRepositoryCacheService>().repositories
 

@@ -6,7 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.PyPackagingBundle
 import org.jetbrains.annotations.ApiStatus
 
 internal object RequirementsTxtManipulationHelper {
@@ -20,7 +20,7 @@ internal object RequirementsTxtManipulationHelper {
     val document = FileDocumentManager.getInstance().getDocument(requirementsTxt) ?: return false
     // Write the modified content back to the file
     @Suppress("DialogTitleCapitalization")
-    WriteCommandAction.runWriteCommandAction(project, PyBundle.message("command.name.add.package.to.requirements.txt"), null, {
+    WriteCommandAction.runWriteCommandAction(project, PyPackagingBundle.message("command.name.add.package.to.requirements.txt"), null, {
       document.insertString(document.textLength, "\n" + requirementName)
       FileDocumentManager.getInstance().saveDocument(document)
     }, PsiManager.getInstance(project).findFile(requirementsTxt))

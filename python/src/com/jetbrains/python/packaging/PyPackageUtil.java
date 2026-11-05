@@ -47,9 +47,9 @@ import static com.jetbrains.python.packaging.setupPy.SetupPyHelpers.SETUP_PY;
 
 @ApiStatus.Internal
 public final class PyPackageUtil {
-  public static final String SETUPTOOLS = "setuptools";
-  public static final String PIP = "pip";
-  public static final String DISTRIBUTE = "distribute";
+  public static final String SETUPTOOLS = PyPackageNames.SETUPTOOLS;
+  public static final String PIP = PyPackageNames.PIP;
+  public static final String DISTRIBUTE = PyPackageNames.DISTRIBUTE;
   private static final Logger LOG = Logger.getInstance(PyPackageUtil.class);
 
   private static class InterpreterChangeEvents {

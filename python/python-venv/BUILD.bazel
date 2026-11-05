@@ -58,6 +58,12 @@ jvm_library(
         "//platform/eel-provider",
         "//python/common",
         "//platform/analysis-api:analysis",
+        "//python/python-packaging:packaging",
+        "//python/python-pyproject:pyproject",
+        "//platform/platform-api:ide",
+        "//platform/credential-store",
+        "//platform/util-ex",
+        "//python/python-requirements/common",
     ],
 )
 ### auto-generated section `build intellij.python.venv` end

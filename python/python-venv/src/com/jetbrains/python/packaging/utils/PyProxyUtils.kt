@@ -4,8 +4,10 @@ package com.jetbrains.python.packaging.utils
 import com.intellij.util.net.ProxyConfiguration
 import com.intellij.util.net.ProxyCredentialStore
 import com.intellij.util.net.ProxySettings
+import org.jetbrains.annotations.ApiStatus
 
-internal object PyProxyUtils {
+@ApiStatus.Internal
+object PyProxyUtils {
   val proxyString: String?
     get() {
       val configuration = ProxySettings.getInstance().getProxyConfiguration()

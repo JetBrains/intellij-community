@@ -5,6 +5,7 @@ import com.intellij.python.sdk.backend.associatedModuleDir
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.requirements.PyDependenciesFile
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * A provider that runs [fetchOutput] once per state of the files the tree is built from, however many callers ask.
@@ -21,7 +22,8 @@ import com.jetbrains.python.requirements.PyDependenciesFile
  * The state is `null` when nothing was resolved, rather than an empty map: two empty maps are equal, so a failure
  * held under one would never expire.
  */
-internal fun PythonPackageManager.cachedDependencyTree(
+@ApiStatus.Internal
+fun PythonPackageManager.cachedDependencyTree(
   lockFileName: String? = null,
   parse: (String) -> List<PackageTreeNode> = { TreeParser.parseTrees(it.lines()) },
   dependencyFiles: suspend () -> List<PyDependenciesFile>,

@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip
 
-import com.intellij.python.sdk.backend.PythonInterpreter
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
@@ -14,11 +12,11 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.pyproject.PyDependencyGroup
-import com.intellij.python.requirements.parser.PyRequirementParser
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.venv.MINIMUM_SUPPORTED_VENV_PYTHON_VERSION
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.PyPackageNames
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -31,14 +29,15 @@ import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.hasInstalledPackage
 import com.jetbrains.python.packaging.pip.PipPackageManagerEngine.Companion.PACKAGING_TOOL_NAME
+import com.jetbrains.python.packaging.requirementsTxt.PyRequirementsSyncService
 import com.jetbrains.python.packaging.requirementsTxt.addRequirement
 import com.jetbrains.python.packaging.requirementsTxt.readDeclaredPackages
-import com.jetbrains.python.packaging.syncWithImports
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.executeHelper
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.statistics.version
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -58,7 +57,7 @@ open class PipPythonPackageManager(project: Project, interpreter: PythonInterpre
     get() = object : DependenciesExporter {
       override fun export(file: PsiFile) {
         val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return
-        PyPackageCoroutine.launch(module.project) { syncWithImports(module) }
+        PyPackageCoroutine.launch(module.project) { PyRequirementsSyncService.getInstance().syncWithImports(module) }
       }
     }
 
@@ -114,7 +113,7 @@ open class PipPythonPackageManager(project: Project, interpreter: PythonInterpre
 
 @ApiStatus.Internal
 class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPackageManager) {
-  private val languageLevel: LanguageLevel = sdk.version
+  private val languageLevel: LanguageLevel = PySdkUtil.getLanguageLevelForSdk(sdk)
 
   /**
    * This method is for local SDK only. It does nothing for remote SDK.
@@ -153,12 +152,12 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
     return ExecService().executeHelper(manager.interpreter, PyHelper(PACKAGING_TOOL_NAME), args).mapSuccess { }
   }
 
-  private suspend fun hasPip(): Boolean = manager.hasInstalledPackage(PyPackageUtil.PIP)
+  private suspend fun hasPip(): Boolean = manager.hasInstalledPackage(PyPackageNames.PIP)
 
   private suspend fun hasSetuptools(): Boolean =
     languageLevel >= LanguageLevel.PYTHON312 ||
-    manager.hasInstalledPackage(PyPackageUtil.SETUPTOOLS) ||
-    manager.hasInstalledPackage(PyPackageUtil.DISTRIBUTE)
+    manager.hasInstalledPackage(PyPackageNames.SETUPTOOLS) ||
+    manager.hasInstalledPackage(PyPackageNames.DISTRIBUTE)
 
   /**
    * pip and setuptools wheels bundled under `community/python/helpers`, used to bootstrap package

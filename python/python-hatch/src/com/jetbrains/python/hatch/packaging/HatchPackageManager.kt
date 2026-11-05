@@ -2,7 +2,6 @@
 package com.jetbrains.python.hatch.packaging
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.eel.EelApi
 import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.HatchService
@@ -23,10 +22,12 @@ import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
 import com.jetbrains.python.packaging.pip.PipPythonPackageManager
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.add.v2.toFileSystem
-import java.nio.file.Path
 import kotlinx.coroutines.Deferred
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
-internal class HatchPackageManager(
+@ApiStatus.Internal
+class HatchPackageManager(
   project: Project,
   interpreter: PythonInterpreter,
   hatchServiceDeferred: Deferred<PyResult<HatchService<*>>>,

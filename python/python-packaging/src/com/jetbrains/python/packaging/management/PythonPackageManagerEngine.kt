@@ -9,7 +9,7 @@ import com.jetbrains.python.packaging.common.PythonRepositoryPackageSpecificatio
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal interface PythonPackageManagerEngine {
+interface PythonPackageManagerEngine {
   suspend fun installPackageCommand(installRequest: PythonPackageInstallRequest, options: List<String>): PyResult<Unit>
 
   suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit>

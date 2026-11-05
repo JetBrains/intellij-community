@@ -16,12 +16,15 @@
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.hatch.common"/>
+    <module name="intellij.python.packaging"/>
     <module name="intellij.python.processOutput.common"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.pytools.backend.runtime"/>
+    <module name="intellij.python.requirements.backend"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.sdk.common"/>
+    <module name="intellij.python.venv"/>
   </dependencies>
   <!-- endregion -->
 
@@ -35,6 +38,7 @@
     <pySdkProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkProvider"/>
     <pySdkDataProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkDataProvider"/>
     <pythonFlavorProvider implementation="com.intellij.python.hatch.impl.sdk.HatchSdkFlavorProvider"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.hatch.packaging.HatchPackageManagerProvider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <python.pytools.pyTool implementation="com.intellij.python.hatch.HatchPyTool"/>

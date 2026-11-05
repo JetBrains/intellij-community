@@ -16,8 +16,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
+import org.jetbrains.annotations.ApiStatus
 
-internal val Sdk.isHatch: Boolean
+@get:ApiStatus.Internal
+val Sdk.isHatch: Boolean
   get() = hatchFlavorData != null
 
 /** Whether this interpreter is a Hatch environment. */

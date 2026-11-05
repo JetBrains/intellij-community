@@ -1,24 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.jetbrains.python.sdk.ModuleOrProject
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.util.PathUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -97,13 +93,6 @@ internal suspend fun <P : PathHolder> createPoetrySdk(
     suggestedSdkName = null,
   )
 }
-
-internal val Sdk.isPoetry: Boolean
-  get() = PythonSdkUtil.isPythonSdk(this) && pySdkAdditionalData.flavor == PyPoetrySdkFlavor
-
-/** Whether this interpreter is a Poetry environment. */
-internal val PythonInterpreter.isPoetry: Boolean
-  get() = getSdkAPI().isPoetry
 
 private suspend fun <P : PathHolder> setUpPoetry(
   moduleBasePath: Path,

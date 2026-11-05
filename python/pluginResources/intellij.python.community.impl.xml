@@ -220,7 +220,6 @@
     <statistics.validation.customValidationRule implementation="com.jetbrains.python.run.features.PyRunToolIdValidator"/>
 
     <postStartupActivity implementation="com.jetbrains.python.formatter.PyCodeStyleMigrationActivity"/>
-    <projectSettings service="com.jetbrains.python.packaging.PyPackagingSettings"/>
     <applicationSettings service="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
     <projectSettings service="com.jetbrains.python.console.PyConsoleOptions"/>
     <applicationSettings service="com.jetbrains.python.testing.TestRunnerService$AppService"/>
@@ -278,7 +277,6 @@
     <completion.contributor language="Python" id="pythonConsoleCompletionBlocking" order="first"
                             implementationClass="com.jetbrains.python.console.completion.PythonConsoleCompletionBlockingContributor"/>
 
-    <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>
 
     <projectService serviceInterface="com.jetbrains.python.codeInsight.completion.runtime.patProvider.RemoteFilePathRetrievalService"
                     open="true"
@@ -453,6 +451,8 @@
 
     <!-- Packaging -->
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$AppService"/>
+    <applicationService serviceInterface="com.jetbrains.python.packaging.requirementsTxt.PyRequirementsSyncService"
+                        serviceImplementation="com.jetbrains.python.packaging.PyRequirementsSyncServiceImpl"/>
     <workspaceModel.customImlComponentNameContributor
       implementation="com.jetbrains.python.packaging.PyPackageRequirementsSettingsImlComponentNameContributor"/>
 
@@ -811,7 +811,6 @@
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
 
 
-    <pythonPackageManagerProvider implementation="com.jetbrains.python.hatch.packaging.HatchPackageManagerProvider"/>
 
     <!-- SDK Flavors -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavorProvider"/>
@@ -837,7 +836,6 @@
     <pySdkDataProvider implementation="com.jetbrains.python.sdk.conda.CondaSdkDataProvider"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.sdk.uv.UvPackageManagerProvider"/>
 
-    <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
     <packageInstalledIconProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageInstalledIconProvider"/>
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pipenv.PipEnvPackageManagerProvider"/>

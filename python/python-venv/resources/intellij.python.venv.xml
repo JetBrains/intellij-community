@@ -5,13 +5,19 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.credentialStore"/>
     <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.ide"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ex"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
+    <module name="intellij.python.packaging"/>
+    <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools.backend"/>
+    <module name="intellij.python.requirements.common"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.sdk.common"/>
     <module name="intellij.python.venv.common"/>
@@ -28,5 +34,6 @@
     <pythonSdkFlavor implementation="com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor"/>
     <pythonEnvironmentProvider id="venv"
                                implementation="com.intellij.python.venv.environment.VenvEnvironmentProvider"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>
   </extensions>
 </idea-plugin>

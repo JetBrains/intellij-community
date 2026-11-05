@@ -34,5 +34,7 @@
     <applicationSettings service="com.jetbrains.python.packaging.PyPackageService"/>
     <applicationSettings service="com.jetbrains.python.packaging.repository.PyPackageRepositories"/>
     <applicationService serviceImplementation="com.jetbrains.python.packaging.PyPackageService"/>
+    <projectSettings service="com.jetbrains.python.packaging.PyPackagingSettings"/>
+    <projectService serviceImplementation="com.jetbrains.python.packaging.PyPackagingSettings"/>
   </extensions>
 </idea-plugin>
