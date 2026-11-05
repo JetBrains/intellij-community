@@ -119,17 +119,6 @@ private suspend fun <P : PathHolder> setUpPoetry(
   return PyResult.success(pythonBinaryPath)
 }
 
-internal fun parsePoetryShowOutdated(input: String): Map<String, PythonOutdatedPackage> {
-  return input
-    .lines()
-    .map { it.trim() }
-    .filter { it.isNotBlank() }
-    .mapNotNull { line ->
-      line.split(Pattern.compile(" +"))
-        .takeIf { it.size > 3 }?.let { it[0] to PythonOutdatedPackage(it[0], it[1], it[2]) }
-    }.toMap()
-}
-
 private suspend fun findInRoot(moduleBasePath: Path): Path? = withContext(Dispatchers.IO) {
   moduleBasePath.resolve(PY_PROJECT_TOML).takeIf { it.isRegularFile() }
 }

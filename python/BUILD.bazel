@@ -309,7 +309,10 @@ jvm_library(
         "//platform/ide-core-impl",
         "//RegExpSupport:regexp",
         "//python/python-psi-impl:psi-impl",
+        "//python/python-venv:venv",
+        "//python/python-hatch:hatch",
         "//python/python-requirements/backend",
+        "//python/python-poetry/backend",
         "//python/python-packaging:packaging",
     ],
     runtime_deps = [

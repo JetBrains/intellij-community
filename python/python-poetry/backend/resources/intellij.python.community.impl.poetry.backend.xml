@@ -4,15 +4,22 @@
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.semver"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ex"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.impl.poetry.common"/>
+    <module name="intellij.python.packaging"/>
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools.backend"/>
+    <module name="intellij.python.requirements.backend"/>
+    <module name="intellij.python.requirements.common"/>
     <module name="intellij.python.sdk.common"/>
   </dependencies>
   <!-- endregion -->
@@ -20,6 +27,7 @@
     <pySdkProvider implementation="com.intellij.python.community.impl.poetry.backend.sdk.PoetrySdkProvider"/>
     <pySdkDataProvider implementation="com.intellij.python.community.impl.poetry.backend.sdk.PoetrySdkDataProvider"/>
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetrySdkFlavorProvider"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PoetryPackageManagerProvider"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <python.pytools.pyTool implementation="com.intellij.python.community.impl.poetry.backend.PoetryPyTool"/>

@@ -33,7 +33,6 @@
     <module name="intellij.python.requirements.common"/>
     <module name="intellij.python.sdk.backend"/>
     <module name="intellij.python.sdk.common"/>
-    <module name="intellij.python.venv"/>
     <module name="intellij.toml.core"/>
   </dependencies>
   <!-- endregion -->

@@ -14,15 +14,14 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.toEelFileSystem
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.intellij.python.pytools.runTool
 import com.jetbrains.python.sdk.add.v2.EelOrJustPath
-import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.toEelFileSystem
-import com.jetbrains.python.sdk.add.v2.toFileSystem
+import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.toFileSystem
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -53,14 +52,14 @@ internal suspend fun <P : PathHolder> runPipEnv(
 @PyInternalExecApi
 suspend fun runPipEnv(dirPath: Path, vararg args: String): PyResult<String> =
   runPipEnv(
-    fileSystem = dirPath.toEelFileSystem(),
+    fileSystem = dirPath.toFileSystem(),
     dirPath = dirPath,
     args = args,
   )
 
 internal suspend fun <T> runPipEnv(dirPath: EelOrJustPath, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> =
   PipEnvPyTool.getInstance().runTool(
-    fileSystem = dirPath.toEelFileSystem(),
+    fileSystem = dirPath.toFileSystem(),
     pathFromSdk = null,
     dirPath = dirPath.path,
     args = args,
@@ -152,7 +151,7 @@ internal suspend fun setupPipEnv(
 ): PyResult<Path> =
   setupPipEnv(
     projectPath = projectPath,
-    fileSystem = projectPath.toEelFileSystem(),
+    fileSystem = projectPath.toFileSystem(),
     pipenvExecutable = null,
     basePythonBinaryPath = basePythonBinaryPath?.let(PathHolder::Eel),
     installPackages = installPackages,

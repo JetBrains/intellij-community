@@ -3,6 +3,8 @@ package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.toEelApi
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**
@@ -10,13 +12,15 @@ import java.nio.file.Path
  * This class *always* has an [eel] and optionally has a [path].
  * If [path] is not `null`, it is *guaranteed* to reside on the same [eel].
  *
- * Use [asEelOrJustPath] to create it, and [toEelFileSystem] to get [FileSystem].
+ * Use [asEelOrJustPath] to create it, and [toFileSystem] to get [FileSystem].
  *
  * A caller that holds a [com.jetbrains.python.project.PyProject] always has a path, so it needs no such wrapper.
  */
-internal class EelOrJustPath private constructor(val path: Path?, private val eel: EelDescriptor) {
-  internal companion object {
-    suspend fun EelOrJustPath.toEelFileSystem(): EelFileSystem = eel.toEelFileSystem()
+@ApiStatus.Internal
+class EelOrJustPath private constructor(val path: Path?, val eel: EelDescriptor) {
+  companion object {
+    /** The [FileSystem] of the Eel machine of this path. */
+    suspend fun EelOrJustPath.toFileSystem(): FileSystemWithEel = eel.toEelApi().toFileSystem()
     fun Path.asEelOrJustPath(): EelOrJustPath = EelOrJustPath(this, getEelDescriptor())
   }
 }

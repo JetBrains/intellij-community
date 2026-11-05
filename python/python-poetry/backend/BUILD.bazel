@@ -53,6 +53,13 @@ jvm_library(
         "//python/python-pytools/backend",
         "//platform/core-api:core",
         "//platform/util",
+        "//python/python-packaging:packaging",
+        "//python/python-requirements/backend",
+        "//python/python-requirements/common",
+        "//platform/analysis-api:analysis",
+        "//python/python-exec-service/execService.python",
+        "//libraries/semver",
+        "//platform/util-ex",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl.poetry.backend` end

@@ -67,7 +67,6 @@ jvm_library(
         "//python/python-pytools/backend",
         "//python/python-pytools-runtime/backend:python-pytools-backend-runtime",
         "//python/python-pytools/common",
-        "//python/python-venv:venv",
         "//platform/backend",
         "//platform/util:util-ui",
     ],

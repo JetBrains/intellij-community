@@ -56,3 +56,7 @@ fun EelApi.toFileSystem(): FileSystemWithEel = FileSystemFactory.getInstance().c
  */
 @ApiStatus.Internal
 suspend fun Sdk.toFileSystem(): FileSystem<*> = FileSystemFactory.createForSdk(this)
+
+/** The [FileSystem] of the Eel machine of this path. Equivalent to `getEelDescriptor().toEelApi().toFileSystem()`. */
+@ApiStatus.Internal
+suspend fun Path.toFileSystem(): FileSystemWithEel = getEelDescriptor().toEelApi().toFileSystem()

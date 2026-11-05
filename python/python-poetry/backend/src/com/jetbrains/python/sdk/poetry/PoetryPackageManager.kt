@@ -37,7 +37,7 @@ import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.packageRequirements.packagesUnavailable
 import com.jetbrains.python.packaging.pip.PipRepositoryManager
 import com.jetbrains.python.poetry.POETRY_LOCK
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -50,12 +50,13 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import kotlin.io.path.readText
 
-internal class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
+@ApiStatus.Internal
+class PoetryPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
   override val workspaceSupport: PythonWorkspaceSupport = PoetryWorkspaceSupport(project, interpreter)
   override val installedPackagesIncludeTransitive: Boolean = true
   override val repositoryManager: PythonRepositoryManager = PipRepositoryManager.getInstance(project)
   override fun getCliSpecs(eelApi: EelApi): List<PythonManagerCliSpec> = listOf(
-    PythonManagerCliSpec("poetry", { PoetryPyTool.getInstance().resolveExecutable(EelFileSystem(eelApi))?.path })
+    PythonManagerCliSpec("poetry", { PoetryPyTool.getInstance().resolveExecutable(eelApi.toFileSystem())?.path })
   )
 
   override val treeProvider = cachedDependencyTree(
