@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview.Layout
 import com.intellij.openapi.fileEditor.TextEditorWithPreview.MyFileEditorState
@@ -30,6 +31,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
+import java.awt.Insets
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.roundToInt
@@ -219,6 +221,33 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     assertFalse("The soft-wrap toggle must work above the IntelliSense limit", editorWithPreview.editor.settings.isUseSoftWraps)
   }
 
+  fun testLivePreviewLayoutAddsTextMargins() {
+    val editorWithPreview = createEditor()
+    val contentComponent = editorWithPreview.editor.contentComponent
+    assertEquals(Insets(0, 0, 0, 0), contentComponent.insets)
+
+    editorWithPreview.setLivePreviewLayout()
+    editorWithPreview.waitForFont(StartupUiUtil.labelFont.fontName)
+    assertEquals(editorWithPreview.expectedTextMargins(), contentComponent.insets)
+
+    editorWithPreview.setLayout(Layout.SHOW_EDITOR)
+    editorWithPreview.waitForFont(EditorColorsManager.getInstance().globalScheme.editorFontName)
+    assertEquals("Editor Only must remove the text margins", Insets(0, 0, 0, 0), contentComponent.insets)
+  }
+
+  fun testEditorZoomUpdatesTheTextMargins() {
+    val editorWithPreview = createEditor()
+    editorWithPreview.setLivePreviewLayout()
+    editorWithPreview.waitForFont(StartupUiUtil.labelFont.fontName)
+    val marginBeforeZoom = editorWithPreview.editor.contentComponent.insets.left
+
+    // The editor zoom calls this.
+    (editorWithPreview.editor as EditorEx).setFontSize(editorWithPreview.editor.colorsScheme.editorFontSize2D * 2)
+
+    assertEquals(editorWithPreview.expectedTextMargins(), editorWithPreview.editor.contentComponent.insets)
+    assertTrue("The zoom must widen the text margins", editorWithPreview.editor.contentComponent.insets.left > marginBeforeZoom)
+  }
+
   fun testLivePreviewLayoutHidesAndRestoresGuides() {
     val editorWithPreview = createEditor()
     val editor = editorWithPreview.editor
@@ -311,6 +340,14 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     val fontSize = EditorColorsManager.getInstance().globalScheme.editorFontSize2D.roundToInt() + 6
     settings.update { it.state.fontSize = fontSize }
     return fontSize
+  }
+
+  /** Two font sizes at both sides, and the vertical scroll bar width in addition at the right side. */
+  private fun MarkdownEditorWithPreview.expectedTextMargins(): Insets {
+    val margin = (2 * editor.colorsScheme.editorFontSize2D).roundToInt()
+    val scrollBar = (editor as EditorEx).scrollPane.verticalScrollBar
+    val scrollBarWidth = scrollBar.width.takeIf { it > 0 } ?: scrollBar.preferredSize.width
+    return Insets(0, margin, 0, margin + scrollBarWidth)
   }
 
   private fun MarkdownEditorWithPreview.waitForFont(fontName: String) {
