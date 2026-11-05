@@ -299,8 +299,8 @@ abstract class ParallelIndexWriter(val workersCount: Int = TOTAL_WRITERS_NUMBER)
    */
   abstract fun totalTimeIndexersSlept(unit: TimeUnit): Long
 
-  /** @return number of writes queued at this moment. (Contrary to other monitoring methods, this is not an aggregate value, but instant value) */
-  open fun writesQueued(): Int = 0
+  /** @return number of scheduled writes that haven't finished yet */
+  abstract fun writesQueued(): Int
 }
 
 
@@ -581,6 +581,8 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
   override fun totalTimeIndexersSlept(unit: TimeUnit): Long {
     return unit.convert(totalTimeSleptNs.get(), NANOSECONDS)
   }
+
+  override fun writesQueued(): Int = indexWritesQueued.get()
 }
 
 /**
@@ -911,6 +913,9 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
     AtomicLong()
   }
 
+  /** Number of asynchronous updates scheduled by [scheduleIndexWriting] (total, across all writing channels). */
+  private val indexWritesQueued: AtomicInteger = AtomicInteger()
+
   init {
     for (workerIndex in 0..<workersCount) {
       val channel = channels[workerIndex]
@@ -961,7 +966,7 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
       if (workersToSchedule[workerIndex]) {
         //Schedule applyModifications() on all the writers that are applicable. Inside the method each
         // SingleIndexValueApplier/Remover decides for itself on which writer it is ready to run.
-        channels[workerIndex].send {
+        scheduleIndexWriting(workerIndex) {
           otelTelemetryContext.makeCurrent().use {
             TRACER.spanBuilder("applyModificationsToIndex").setAttribute("i", workerIndex.toLong()).use {
 
@@ -970,6 +975,27 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
             }
           }
         }
+      }
+    }
+  }
+
+  private suspend fun scheduleIndexWriting(workerIndex: Int, runnable: () -> Unit) {
+    indexWritesQueued.incrementAndGet()
+    var scheduled = false
+    try {
+      channels[workerIndex].send {
+        try {
+          runnable()
+        }
+        finally {
+          indexWritesQueued.decrementAndGet()
+        }
+      }
+      scheduled = true
+    }
+    finally {
+      if (!scheduled) {
+        indexWritesQueued.decrementAndGet()
       }
     }
   }
@@ -994,6 +1020,8 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
    * off-scheduled because of backpressure from the channels being filled up
    */
   override fun totalTimeIndexersSlept(unit: TimeUnit): Long = 0
+
+  override fun writesQueued(): Int = indexWritesQueued.get()
 
   private fun applyModificationsInCoroutine(
     fileIndexingResult: FileIndexingResult,
@@ -1092,4 +1120,6 @@ object FakeIndexWriter : ParallelIndexWriter() {
   override fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long = 0
 
   override fun totalTimeIndexersSlept(unit: TimeUnit): Long = 0
+
+  override fun writesQueued(): Int = 0
 }
