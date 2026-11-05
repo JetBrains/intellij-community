@@ -24,9 +24,14 @@ import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.GraphicsUtil
+import org.intellij.plugins.markdown.editor.tables.TableSelectionAxis
+import org.intellij.plugins.markdown.editor.tables.TableSelectionMode
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionPlaces
+import org.intellij.plugins.markdown.editor.tables.isMacControlClick
+import org.intellij.plugins.markdown.editor.tables.prepareTableSelectionForMousePress
 import org.intellij.plugins.markdown.editor.tables.selectColumn
+import org.intellij.plugins.markdown.editor.tables.toTableSelectionMode
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearOvalOverEditor
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
@@ -86,10 +91,21 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
   override fun toString() = "HorizontalBarPresentation"
 
   override fun mouseClicked(event: MouseEvent, translated: Point) {
+    if (event.isMacControlClick()) return
+    val leftClick = SwingUtilities.isLeftMouseButton(event)
+    val doubleClick = event.clickCount.mod(2) == 0
+    val multipleSelection = event.toTableSelectionMode() != TableSelectionMode.REPLACE
+    if (!leftClick) return
     when {
-      SwingUtilities.isLeftMouseButton(event) && event.clickCount.mod(2) == 0 -> handleMouseLeftDoubleClick(event, translated)
-      SwingUtilities.isLeftMouseButton(event) -> handleMouseLeftClick(event, translated)
+      multipleSelection -> handleMouseLeftClick(event, translated)
+      doubleClick -> handleMouseLeftDoubleClick(event, translated)
+      else -> handleMouseLeftClick(event, translated)
     }
+  }
+
+  override fun mousePressed(event: MouseEvent, translated: Point) {
+    if (!SwingUtilities.isLeftMouseButton(event)) return
+    editor.prepareTableSelectionForMousePress(table, TableSelectionAxis.COLUMN, event.toTableSelectionMode())
   }
 
   override fun mouseMoved(event: MouseEvent, translated: Point) {
@@ -221,14 +237,25 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     val columnIndex = determineColumnIndex(translated) ?: return
     invokeLater {
       executeCommand {
-        table.selectColumn(editor, columnIndex, withHeader = true, withSeparator = true, withBorders = true)
+        table.selectColumn(
+          editor,
+          columnIndex,
+          withHeader = true,
+          withSeparator = true,
+          withBorders = true,
+          selectionMode = event.toTableSelectionMode()
+        )
       }
     }
+    event.consume()
   }
 
   private fun handleMouseLeftClick(event: MouseEvent, translated: Point) {
     val columnIndex = determineColumnIndex(translated) ?: return
-    showToolbar(columnIndex)
+    when (event.toTableSelectionMode()) {
+      TableSelectionMode.REPLACE -> showToolbar(columnIndex)
+      else -> handleMouseLeftDoubleClick(event, translated)
+    }
   }
 
   private fun actuallyPaintBars(graphics: Graphics2D, rect: Rectangle, hover: Boolean, accent: Boolean) {

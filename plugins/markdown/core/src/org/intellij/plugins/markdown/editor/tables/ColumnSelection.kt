@@ -1,12 +1,11 @@
 package org.intellij.plugins.markdown.editor.tables
 
-import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
-import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
+import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
@@ -18,30 +17,39 @@ internal fun MarkdownTable.selectColumn(
   columnIndex: Int,
   withHeader: Boolean = false,
   withSeparator: Boolean = false,
-  withBorders: Boolean = false
+  withBorders: Boolean = false,
+  selectionMode: TableSelectionMode = TableSelectionMode.REPLACE
 ) {
-  val cells = getColumnCells(columnIndex, withHeader)
-  val caretModel = editor.caretModel
-  caretModel.removeSecondaryCarets()
-  caretModel.currentCaret.apply {
-    val textRange = obtainCellSelectionRange(cells.first(), withBorders)
-    moveToOffset(textRange.startOffset)
-    setSelectionFromRange(textRange)
-  }
-  if (withSeparator) {
-    val range = when {
-      withBorders -> separatorRow?.getCellRangeWithPipes(columnIndex)
-      else -> separatorRow?.getCellRange(columnIndex)
+  if (columnIndex !in columnsIndices) return
+  editor.selectTableParts(this, TableSelectionAxis.COLUMN, columnIndex, selectionMode) { indices ->
+    val groups = indices.toContiguousRanges()
+    val cellRanges = getRows(withHeader).flatMap { row ->
+      groups.mapNotNull { group ->
+        val selectedCells = row.cells.filter { it.columnIndex in group }
+        val firstCell = selectedCells.firstOrNull() ?: return@mapNotNull null
+        val lastCell = selectedCells.last()
+        val firstRange = obtainCellSelectionRange(firstCell, withBorders)
+        val lastRange = obtainCellSelectionRange(lastCell, withBorders)
+        TextRange(firstRange.startOffset, lastRange.endOffset)
+      }
     }
-    range?.let { textRange ->
-      val caret = caretModel.addCaret(editor.offsetToVisualPosition(textRange.startOffset))
-      caret?.setSelectionFromRange(textRange)
+    val separatorRanges = if (withSeparator) {
+      groups.mapNotNull { group ->
+        val ranges = group.mapNotNull { columnIndex ->
+          when {
+            withBorders -> separatorRow?.getCellRangeWithPipes(columnIndex)
+            else -> separatorRow?.getCellRange(columnIndex)
+          }
+        }
+        val firstRange = ranges.firstOrNull()
+        val lastRange = ranges.lastOrNull()
+        if (firstRange == null || lastRange == null) null else TextRange(firstRange.startOffset, lastRange.endOffset)
+      }
     }
-  }
-  for (cell in cells.asSequence().drop(1)) {
-    val textRange = obtainCellSelectionRange(cell, withBorders)
-    val caret = caretModel.addCaret(editor.offsetToVisualPosition(textRange.startOffset))
-    caret?.setSelectionFromRange(textRange)
+    else {
+      emptyList()
+    }
+    cellRanges + separatorRanges
   }
 }
 
@@ -59,8 +67,4 @@ private fun obtainCellSelectionRange(cell: MarkdownTableCell, withBorders: Boole
   val left = leftPipe?.startOffset ?: range.startOffset
   val right = rightPipe?.endOffset ?: range.endOffset
   return TextRange(left, right)
-}
-
-private fun Caret.setSelectionFromRange(textRange: TextRange) {
-  setSelection(textRange.startOffset, textRange.endOffset)
 }

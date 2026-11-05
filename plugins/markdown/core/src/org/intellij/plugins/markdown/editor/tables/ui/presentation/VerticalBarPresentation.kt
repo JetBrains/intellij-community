@@ -24,10 +24,16 @@ import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.GraphicsUtil
-import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
-import org.intellij.plugins.markdown.editor.tables.TableUtils.isLast
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionPlaces
+import org.intellij.plugins.markdown.editor.tables.TableSelectionAxis
+import org.intellij.plugins.markdown.editor.tables.TableSelectionMode
+import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
+import org.intellij.plugins.markdown.editor.tables.TableUtils.isLast
+import org.intellij.plugins.markdown.editor.tables.isMacControlClick
+import org.intellij.plugins.markdown.editor.tables.prepareTableSelectionForMousePress
+import org.intellij.plugins.markdown.editor.tables.selectRow
+import org.intellij.plugins.markdown.editor.tables.toTableSelectionMode
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearHalfOvalOverEditor
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.fillHalfOval
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
@@ -172,25 +178,44 @@ class VerticalBarPresentation private constructor(
   }
 
   override fun mouseClicked(event: MouseEvent, translated: Point) {
+    if (event.isMacControlClick()) return
+    val leftClick = SwingUtilities.isLeftMouseButton(event)
+    val doubleClick = event.clickCount.mod(2) == 0
+    val multipleSelection = event.toTableSelectionMode() != TableSelectionMode.REPLACE
+    if (!leftClick) return
     when {
-      SwingUtilities.isLeftMouseButton(event) && event.clickCount.mod(2) == 0 -> handleMouseLeftDoubleClick(event, translated)
-      SwingUtilities.isLeftMouseButton(event) -> handleMouseLeftClick(event, translated)
+      multipleSelection -> handleMouseLeftClick(event)
+      doubleClick -> handleMouseLeftDoubleClick(event)
+      else -> handleMouseLeftClick(event)
     }
   }
 
-  private fun handleMouseLeftClick(event: MouseEvent, translated: Point) {
-    showToolbar()
+  override fun mousePressed(event: MouseEvent, translated: Point) {
+    if (!SwingUtilities.isLeftMouseButton(event)) return
+    val table = when (row) {
+      is MarkdownTableRow -> row.parentTable
+      is MarkdownTableSeparatorRow -> row.parentTable
+      else -> null
+    } ?: return
+    editor.prepareTableSelectionForMousePress(table, TableSelectionAxis.ROW, event.toTableSelectionMode())
   }
 
-  private fun handleMouseLeftDoubleClick(event: MouseEvent, translated: Point) {
+  private fun handleMouseLeftClick(event: MouseEvent) {
+    when (event.toTableSelectionMode()) {
+      TableSelectionMode.REPLACE -> showToolbar()
+      else -> handleMouseLeftDoubleClick(event)
+    }
+  }
+
+  private fun handleMouseLeftDoubleClick(event: MouseEvent) {
     event.consume()
-    // select row
     executeCommand(row.project) {
-      val textRange = row.textRange
-      with(editor.caretModel.currentCaret) {
-        moveToOffset(textRange.startOffset)
-        setSelection(textRange.startOffset, textRange.endOffset)
+      val table = when (row) {
+        is MarkdownTableRow -> row.parentTable
+        is MarkdownTableSeparatorRow -> row.parentTable
+        else -> null
       }
+      table?.selectRow(editor, row, event.toTableSelectionMode())
     }
   }
 

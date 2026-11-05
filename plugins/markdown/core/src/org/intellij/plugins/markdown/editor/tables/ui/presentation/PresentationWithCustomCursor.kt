@@ -10,6 +10,10 @@ import java.awt.Point
 import java.awt.event.MouseEvent
 
 internal class PresentationWithCustomCursor(private val editor: Editor, delegate: InlayPresentation): DynamicDelegatePresentation(delegate) {
+  override fun mousePressed(event: MouseEvent, translated: Point) {
+    delegate.mousePressed(event, translated)
+  }
+
   override fun mouseMoved(event: MouseEvent, translated: Point) {
     super.mouseMoved(event, translated)
     val handCursor = Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR)
