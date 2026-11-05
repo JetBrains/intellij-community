@@ -105,7 +105,7 @@ internal class EditorFontFamiliesSoftWrapTest {
   }
 
   @Test
-  fun `unresolved font families measure with the editor fonts`() {
+  fun `the first soft wraps of unresolved font families measure with the editor fonts`() {
     val softWraps = softWraps(SHORT_LINE, measureEachLine = true) { editor ->
       highlightAllTextWithoutKey(editor, wide)
     }

@@ -18,6 +18,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -26,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference
  * The repainter joins the changes into the repaint request and applies it on the EDT.
  *
  * An added highlighter and an attributes change resolve the font families of the highlighter at once, on the thread of the change.
+ * The layout and the soft wraps record the values that no source resolved, see [recordUnresolvedFontFamilies].
  * So the fonts of the families exist before the request lays out the text again,
  * see [com.intellij.openapi.editor.impl.view.EditorView.resolveFontFamilies].
  */
@@ -44,6 +47,8 @@ internal class EditorMarkupRepainter(
    * When another thread changed the field in the meantime, the access starts again.
    */
   private val repaintRequest = AtomicReference<RepaintRequest?>()
+
+  private val unresolvedFontFamiliesRecords = AtomicInteger()
 
   override fun afterAdded(highlighter: RangeHighlighterEx) {
     val attributes = highlighter.getTextAttributes(editor.colorsScheme)
@@ -160,7 +165,8 @@ internal class EditorMarkupRepainter(
    * So a highlighter that another thread adds meanwhile reaches the editor here or in [afterAdded].
    * The pass visits only the highlighters with forced font families, see [MarkupModelEx.overlappingFontFamiliesIterator].
    * When a value is new, it joins a request that lays out the text of these highlighters again.
-   * The editor can have laid out that text already.
+   * The editor can have laid out that text already, and that layout can have recorded the value, see [recordUnresolvedFontFamilies].
+   * So on the EDT it applies the pending request at once, and the new editor keeps no layout from before the resolution.
    */
   fun resolveExistingFontFamilies(documentMarkup: MarkupModelEx) {
     val values = ArrayList<FontFamilies>()
@@ -183,8 +189,39 @@ internal class EditorMarkupRepainter(
         fontStyleChanged = true,
         foregroundColorChanged = false,
         hasAccessibleGutterElement = false,
+        fontFamilies = emptySet(),
       )
+      if (EDT.isCurrentThreadEdt()) {
+        applyPendingRequest()
+      }
     }
+  }
+
+  /**
+   * Records a value that the layout or the soft wraps meet unresolved,
+   * see [com.intellij.openapi.editor.impl.view.EditorFontResolver.resolvedFonts].
+   * The text of [start, end) gets the editor fonts until a request resolves the value on the EDT.
+   * The request then lays out that text again and recalculates its soft wraps.
+   * It is safe to call on any thread, also during a layout or a paint, because the request never runs at once.
+   */
+  fun recordUnresolvedFontFamilies(value: FontFamilies, start: Int, end: Int) {
+    unresolvedFontFamiliesRecords.incrementAndGet()
+    joinRequest(
+      RepaintArea(start, end),
+      canImpactGutterSize = false,
+      fontStyleChanged = true,
+      foregroundColorChanged = false,
+      hasAccessibleGutterElement = false,
+      fontFamilies = setOf(value),
+    )
+  }
+
+  /**
+   * Returns how many times [recordUnresolvedFontFamilies] ran.
+   */
+  @TestOnly
+  fun unresolvedFontFamiliesRecordCount(): Int {
+    return unresolvedFontFamiliesRecords.get()
   }
 
   /**
@@ -214,12 +251,14 @@ internal class EditorMarkupRepainter(
       fontStyleChanged,
       foregroundColorChanged,
       AccessibleGutterLine.isAccessibleGutterElement(highlighter.gutterIconRenderer),
+      fontFamilies = emptySet(),
     )
   }
 
   /**
    * Joins the request for the change of [affectedArea] into the pending request.
    * With [fontStyleChanged], the font style area is [affectedArea], and otherwise [RepaintArea.NONE].
+   * The request resolves [fontFamilies] before it applies the change. A request with font families always waits for the coroutine.
    *
    * On the EDT, the editor applies the change at once when no request is pending and [canApplyNow] is true.
    * This fast path makes no [RepaintRequest] and writes nothing to [repaintRequest].
@@ -234,6 +273,7 @@ internal class EditorMarkupRepainter(
     fontStyleChanged: Boolean,
     foregroundColorChanged: Boolean,
     hasAccessibleGutterElement: Boolean,
+    fontFamilies: Set<FontFamilies>,
   ) {
     val fontStyleArea = if (fontStyleChanged) {
       affectedArea
@@ -241,7 +281,7 @@ internal class EditorMarkupRepainter(
       RepaintArea.NONE
     }
     val onEdt = EDT.isCurrentThreadEdt()
-    val deferToCoroutine = !onEdt || recalculatesSoftWraps(fontStyleChanged)
+    val deferToCoroutine = !onEdt || recalculatesSoftWraps(fontStyleChanged) || fontFamilies.isNotEmpty()
     val canApply = onEdt && canApplyNow()
     var request: RepaintRequest? = null
     while (true) {
@@ -263,6 +303,7 @@ internal class EditorMarkupRepainter(
           canImpactGutterSize,
           foregroundColorChanged,
           hasAccessibleGutterElement,
+          fontFamilies,
           blocked = onEdt && !canApply,
         )
       }
@@ -301,6 +342,9 @@ internal class EditorMarkupRepainter(
 
   @RequiresEdt
   private fun applyRequest(request: RepaintRequest) {
+    if (request.fontFamilies.isNotEmpty()) {
+      editor.view.resolveFontFamilies(request.fontFamilies)
+    }
     applyChange(
       request.affectedArea,
       request.fontStyleArea,
@@ -414,6 +458,7 @@ internal class EditorMarkupRepainter(
    * @property canImpactGutterSize whether a changed highlighter can change the gutter size
    * @property foregroundColorChanged whether a changed highlighter changed the color of the text
    * @property hasAccessibleGutterElement whether a changed highlighter has an accessible gutter element
+   * @property fontFamilies the values that the layout or the soft wraps met unresolved. The request resolves them first.
    * @property blocked whether the editor could not apply the request, so the end of the batch applies it
    */
   private data class RepaintRequest(
@@ -422,6 +467,7 @@ internal class EditorMarkupRepainter(
     val canImpactGutterSize: Boolean,
     val foregroundColorChanged: Boolean,
     val hasAccessibleGutterElement: Boolean,
+    val fontFamilies: Set<FontFamilies>,
     val blocked: Boolean,
   ) {
     fun movedBy(change: DocumentEvent): RepaintRequest {
@@ -443,6 +489,7 @@ internal class EditorMarkupRepainter(
         canImpactGutterSize || other.canImpactGutterSize,
         foregroundColorChanged || other.foregroundColorChanged,
         hasAccessibleGutterElement || other.hasAccessibleGutterElement,
+        unite(fontFamilies, other.fontFamilies),
         blocked || other.blocked,
       )
     }
@@ -454,4 +501,14 @@ internal class EditorMarkupRepainter(
       return copy(blocked = true)
     }
   }
+}
+
+private fun unite(first: Set<FontFamilies>, second: Set<FontFamilies>): Set<FontFamilies> {
+  if (first.isEmpty()) {
+    return second
+  }
+  if (second.isEmpty() || first.containsAll(second)) {
+    return first
+  }
+  return first + second
 }

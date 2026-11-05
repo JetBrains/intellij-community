@@ -132,6 +132,7 @@ import com.intellij.openapi.editor.impl.view.CharacterGridImpl;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -5917,6 +5918,26 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @ApiStatus.Internal
   public EditorView getView() {
     return myView;
+  }
+
+  /**
+   * Records font families that the layout or the soft wraps meet unresolved, so the editor resolves them later.
+   * It is safe to call on any thread, also during a layout or a paint.
+   *
+   * @see EditorMarkupRepainter#recordUnresolvedFontFamilies
+   */
+  @ApiStatus.Internal
+  public void recordUnresolvedFontFamilies(FontFamilies value, int start, int end) {
+    myMarkupRepainter.recordUnresolvedFontFamilies(value, start, end);
+  }
+
+  /**
+   * Returns how many times {@link #recordUnresolvedFontFamilies} ran.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public int getUnresolvedFontFamiliesRecordCount() {
+    return myMarkupRepainter.unresolvedFontFamiliesRecordCount();
   }
 
   @ApiStatus.Experimental

@@ -53,10 +53,19 @@ internal class EditorFontResolver private constructor(
    * each value gives the editor fonts.
    */
   fun fonts(fontFamilies: FontFamilies?): TextFonts {
+    return resolvedFonts(fontFamilies) ?: editorFonts
+  }
+
+  /**
+   * Returns the fonts of text with [fontFamilies], or `null` when the value is not resolved.
+   * Returns the editor fonts for `null` and for a resolved value without installed families, see [fonts].
+   * A reader that gets `null` uses the editor fonts and asks the editor to resolve the value later.
+   */
+  fun resolvedFonts(fontFamilies: FontFamilies?): TextFonts? {
     if (fontFamilies == null) {
       return editorFonts
     }
-    return find(resolved, fontFamilies)?.fonts ?: editorFonts
+    return find(resolved, fontFamilies)?.fonts
   }
 
   /**

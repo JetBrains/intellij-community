@@ -53,7 +53,7 @@ internal class EditorFontFamiliesLayoutTest {
   }
 
   @Test
-  fun `text with unresolved font families gets the widths of the editor fonts`(): Unit = withEditor("aaaa") { editor ->
+  fun `the first layout of unresolved font families gets the widths of the editor fonts`(): Unit = withEditor("aaaa") { editor ->
     highlightAllTextWithoutKey(editor, FontFamilies.of(family))
 
     assertThat(width(editor, 0, 4)).isEqualTo(4 * OTHER_WIDTH)

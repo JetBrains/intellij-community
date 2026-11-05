@@ -23,7 +23,8 @@ internal fun highlightAllText(editor: EditorEx, key: TextAttributesKey) {
 
 /**
  * Makes the editor highlighter of [editor] give all text attributes with the font families [value], without a key.
- * No source resolves the font families of such attributes, so the text gets them only after another source resolves them.
+ * No source resolves the font families of such attributes in advance.
+ * So the first layout uses the editor fonts, and the editor resolves the value later, see `EditorImpl.recordUnresolvedFontFamilies`.
  */
 internal fun highlightAllTextWithoutKey(editor: EditorEx, value: FontFamilies) {
   val attributes = TextAttributes()

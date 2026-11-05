@@ -121,11 +121,22 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
 
   /**
    * Returns the fonts of the current element. The search runs only when the font families change.
+   * An unresolved value gets the editor fonts, and the editor resolves it later and measures its logical line again.
    */
   private TextFonts getFonts() {
     FontFamilies fontFamilies = getFontFamilies();
     if (fontFamilies != lastFontFamilies) {
-      lastFonts = fontResolver.fonts(fontFamilies);
+      TextFonts fonts = fontFamilies == null ? fontResolver.editorFonts() : fontResolver.resolvedFonts(fontFamilies);
+      if (fonts == null) {
+        int line = getLogicalLine();
+        view.getEditor().recordUnresolvedFontFamilies(
+          fontFamilies,
+          document.lineStartOffset(line),
+          document.lineEndOffset(line)
+        );
+        fonts = fontResolver.editorFonts();
+      }
+      lastFonts = fonts;
       lastFontFamilies = fontFamilies;
     }
     return lastFonts;

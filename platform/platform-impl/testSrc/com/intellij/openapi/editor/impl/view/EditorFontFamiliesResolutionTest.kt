@@ -33,6 +33,7 @@ private const val FAMILY_WIDTH = 20
 private const val OTHER_WIDTH = 10
 private const val VISIBLE_WIDTH = 400
 private const val KEY_NAME = "EDITOR_FONT_FAMILIES_RESOLUTION_TEST"
+private const val MISSING_FAMILY = "No Such Font Family"
 
 /**
  * 29 characters: the line fits into [VISIBLE_WIDTH] with the editor fonts and does not fit with the font family.
@@ -187,6 +188,69 @@ internal class EditorFontFamiliesResolutionTest {
     editor.reinitSettings()
 
     assertThat(editor.view.fontResolver.isResolved(value)).isTrue()
+  }
+
+  @Test
+  fun `the layout records a value that no source resolved, and the request lays out the text again`(): Unit = withEditor("aaaa") { editor ->
+    highlightAllTextWithoutKey(editor, value)
+    assertThat(width(editor, 0, 4)).isEqualTo(4 * OTHER_WIDTH)
+    assertThat(editor.unresolvedFontFamiliesRecordCount).isEqualTo(1)
+
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+
+    assertThat(editor.view.fontResolver.isResolved(value)).isTrue()
+    assertThat(width(editor, 0, 4)).isEqualTo(4 * FAMILY_WIDTH)
+  }
+
+  @Test
+  fun `the soft wraps of a value that no source resolved use the widths of the families after the request`(): Unit = withEditor(LINE) { editor ->
+    highlightAllTextWithoutKey(editor, value)
+    editor.settings.isUseSoftWraps = true
+    EditorTestUtil.setEditorVisibleSizeInPixels(editor, VISIBLE_WIDTH, 1000)
+    assertThat(softWrapCount(editor)).isZero()
+
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+
+    assertThat(softWrapCount(editor)).isPositive()
+  }
+
+  @Test
+  fun `the soft wrap measuring records a value that no source resolved`(): Unit = withEditor("aaaa") { editor ->
+    highlightAllTextWithoutKey(editor, value)
+    val before = editor.unresolvedFontFamiliesRecordCount
+    val view = editor.view
+    val iterator = WrapElementMeasuringIterator(view, view.snapshot, editor.document.documentText, 0, 4, listOf(), listOf(), listOf())
+
+    var x = 0f
+    while (!iterator.atEnd()) {
+      x = iterator.getElementEndX(x)
+      iterator.advance()
+    }
+
+    assertThat(x).isEqualTo(4f * OTHER_WIDTH)
+    assertThat(editor.unresolvedFontFamiliesRecordCount - before).isEqualTo(1)
+  }
+
+  @Test
+  fun `a value without installed families is recorded once`(): Unit = withEditor("aaaa") { editor ->
+    highlightAllTextWithoutKey(editor, FontFamilies.of(MISSING_FAMILY))
+    width(editor, 0, 4)
+
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    width(editor, 0, 4)
+    editor.reinitSettings()
+    width(editor, 0, 4)
+
+    assertThat(editor.unresolvedFontFamiliesRecordCount).isEqualTo(1)
+  }
+
+  @Test
+  fun `a resolved value is not recorded`(): Unit = withEditor("aaaa") { editor ->
+    editor.view.resolveFontFamilies(listOf(value))
+    highlightAllTextWithoutKey(editor, value)
+
+    assertThat(width(editor, 0, 4)).isEqualTo(4 * FAMILY_WIDTH)
+    assertThat(editor.unresolvedFontFamiliesRecordCount).isZero()
   }
 
   /**

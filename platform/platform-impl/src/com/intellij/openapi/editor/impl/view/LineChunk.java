@@ -117,7 +117,7 @@ class LineChunk {
       Color color = attributes.getForegroundColor();
       FontFamilies fontFamilies = attributes.getFontFamilies();
       if (fontFamilies != lastFontFamilies) {
-        lastFonts = fontResolver.fonts(fontFamilies);
+        lastFonts = fontsOf(fontFamilies, fontResolver, editor, start, end);
         lastFontFamilies = fontFamilies;
       }
       if (fontType != currentFontType || !color.equals(currentColor) || lastFonts != currentFonts) {
@@ -200,6 +200,28 @@ class LineChunk {
       offset = endOffset;
     }
     return chunk0;
+  }
+
+  /**
+   * Returns the fonts of the font families. An unresolved value gets the editor fonts, and the editor resolves it later.
+   * The chunk from {@code start} to {@code end} is the text that the editor lays out again then.
+   */
+  private static TextFonts fontsOf(
+    @Nullable FontFamilies fontFamilies,
+    EditorFontResolver fontResolver,
+    EditorImpl editor,
+    int start,
+    int end
+  ) {
+    if (fontFamilies == null) {
+      return fontResolver.editorFonts();
+    }
+    TextFonts fonts = fontResolver.resolvedFonts(fontFamilies);
+    if (fonts == null) {
+      editor.recordUnresolvedFontFamilies(fontFamilies, start, end);
+      return fontResolver.editorFonts();
+    }
+    return fonts;
   }
 
   private void addFragments(
