@@ -25825,6 +25825,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueToList1.kt");
             }
 
+            @TestMetadata("FilterTrueWithArrayReceiver.kt")
+            public void testFilterTrueWithArrayReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithArrayReceiver.kt");
+            }
+
             @TestMetadata("FilterTrueWithLabeledReturn.kt")
             public void testFilterTrueWithLabeledReturn() throws Exception {
                 runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithLabeledReturn.kt");
@@ -25848,6 +25853,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("FilterTrueWithNonTemporaryReceiver.kt")
             public void testFilterTrueWithNonTemporaryReceiver() throws Exception {
                 runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithNonTemporaryReceiver.kt");
+            }
+
+            @TestMetadata("FilterTrueWithSetReceiver.kt")
+            public void testFilterTrueWithSetReceiver() throws Exception {
+                runTest("testData/inspectionsLocal/uselessCallOnCollection/FilterTrueWithSetReceiver.kt");
             }
 
             @TestMetadata("FilterTrueWithTemporaryReceiverCollectionLiteral.kt")
