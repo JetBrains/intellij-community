@@ -210,23 +210,22 @@ open class EventLogSystemCollector(eventLoggerProvider: StatisticsEventLoggerPro
   }
 
   companion object {
-    private const val STAGE_METADATA_LOAD_FAILED_DESCRIPTION = "Indicates if metadata load was failed during loading stage (loading) or loaded " +
+    private const val STAGE_METADATA_LOAD_FAILED_DESCRIPTION = "Indicates if metadata load has failed during loading stage (loading) or loaded " +
                                                                "metadata was invalid (parsing)."
-    private const val ERROR_METADATA_LOAD_FAILED_DESCRIPTION = "The error name in case the metadata load was failed. The error may occur during " +
+    private const val ERROR_METADATA_LOAD_FAILED_DESCRIPTION = "The error name in case metadata load has failed. The error may occur during " +
                                                                "parsing metadata from local cache."
-    private const val STAGE_METADATA_UPDATE_FAILED_DESCRIPTION = "Indicates if metadata update was failed during loading stage (loading) or " +
+    private const val STAGE_METADATA_UPDATE_FAILED_DESCRIPTION = "Indicates if metadata update has failed during loading stage (loading) or " +
                                                                  "loaded metadata was invalid (parsing)."
-    private const val ERROR_METADATA_UPDATE_FAILED_DESCRIPTION = "The error name in case the metadata update was failed, an error may occur on " +
+    private const val ERROR_METADATA_UPDATE_FAILED_DESCRIPTION = "The error name in case metadata update has failed. An error may occur on " +
                                                                  "loading or parsing stages."
-    private const val CODE_METADATA_UPDATE_FAILED_DESCRIPTION = "In case loading request failed - the metric is recorded response code if it " +
-                                                                "was different from 200."
+    private const val CODE_METADATA_UPDATE_FAILED_DESCRIPTION = "Response code if it was different from 200 (loading request failed)"
     private const val TOTAL_LOGS_SEND_DESCRIPTION = "Total amount of event log files ready to be sent"
     private const val SEND_LOGS_SEND_DESCRIPTION = "Amount of event log files attempted to send"
     private const val FAILED_LOGS_SEND_DESCRIPTION = "Amount of event log files which failed to send"
     private const val EXTERNAL_LOGS_SEND_DESCRIPTION = "Indicates if logs were being sent from external process or not."
     private const val SUCCEED_LOGS_SEND_DESCRIPTION = "The amount of successfully sent files"
-    private const val ERRORS_LOGS_SEND_DESCRIPTION = "List of error codes. If the code is less than 100, the problem is in data structure " +
-                                                     "(e.g. invalid recorder code); if the code is between 100 and 600, it's an HTTP response code."
+    private const val ERRORS_LOGS_SEND_DESCRIPTION = "The list of integers which identify error codes. If error is less than 100, the problem is in data structure " +
+                                                     "(e.g. invalid recorder code), if error is between 100 and 600 it's error code from an HTTP request."
     private const val SEND_TS_EXTERNAL_SEND_STARTED_DESCRIPTION = "Actual time when sending was started"
     private const val SEND_TS_EXTERNAL_SEND_FINISHED_DESCRIPTION = "Actual time when sending was finished"
     private const val SUCCEED_EXTERNAL_SEND_FINISHED_DESCRIPTION = "Shows if external process has sent data successfully or not"
