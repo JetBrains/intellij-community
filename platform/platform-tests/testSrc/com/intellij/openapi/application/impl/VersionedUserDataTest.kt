@@ -23,11 +23,13 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.application
 import com.intellij.util.keyFMap.ArrayBackedFMap
 import com.intellij.util.keyFMap.KeyFMap
+import com.intellij.util.ref.GCUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
+import java.lang.ref.WeakReference
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotEquals
@@ -46,18 +48,17 @@ internal class VersionedUserDataTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
     val key = Key.create<UserDataPayload>("automatic overwrite cleanup")
-    val initial = UserDataPayload("initial")
     val replacement = UserDataPayload("replacement")
     val leaf = createVersionedLeaf()
-    runVersionedWriteAction { leaf.putUserData(key, initial) }
+    val initial = trackedPayload("initial") { runVersionedWriteAction { leaf.putUserData(key, it) } }
 
     retainCurrentPsiVersion {
       runVersionedWriteAction { leaf.putUserData(key, replacement) }
-      assertReferenced(leaf, initial)
+      assertReferenced(leaf, initial.get()!!)
     }
 
     application.service<PsiVersioningGarbageCollector>().awaitCleanup()
-    assertNotReferenced(leaf, initial)
+    assertCollected(initial)
     assertSame(replacement, leaf.getUserData(key))
   }
 
@@ -67,17 +68,16 @@ internal class VersionedUserDataTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
     val key = Key.create<UserDataPayload>("automatic removal cleanup")
-    val payload = UserDataPayload("payload")
     val leaf = createVersionedLeaf()
-    runVersionedWriteAction { leaf.putUserData(key, payload) }
+    val payload = trackedPayload("payload") { runVersionedWriteAction { leaf.putUserData(key, it) } }
 
     retainCurrentPsiVersion {
       runVersionedWriteAction { leaf.putUserData(key, null) }
-      assertReferenced(leaf, payload)
+      assertReferenced(leaf, payload.get()!!)
     }
 
     application.service<PsiVersioningGarbageCollector>().awaitCleanup()
-    assertNotReferenced(leaf, payload)
+    assertCollected(payload)
     assertTrue(leaf.userMap.isEmpty)
   }
 
@@ -87,19 +87,18 @@ internal class VersionedUserDataTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
     val key = Key.create<UserDataPayload>("frozen cleanup safety")
-    val initial = UserDataPayload("initial")
     val replacement = UserDataPayload("replacement")
     val leaf = createVersionedLeaf()
-    runVersionedWriteAction { leaf.putUserData(key, initial) }
+    val initial = trackedPayload("initial") { runVersionedWriteAction { leaf.putUserData(key, it) } }
 
     retainCurrentPsiVersion {
       runVersionedWriteAction { leaf.putUserData(key, replacement) }
       application.service<PsiVersioningGarbageCollector>().cleanupNow()
-      assertReferenced(leaf, initial)
+      assertReferenced(leaf, initial.get()!!)
     }
 
     application.service<PsiVersioningGarbageCollector>().awaitCleanup()
-    assertNotReferenced(leaf, initial)
+    assertCollected(initial)
   }
 
   @Test
@@ -125,20 +124,19 @@ internal class VersionedUserDataTest {
   ): Unit = timeoutRunBlocking(context = Dispatchers.Default) {
     installVersioningListeners(disposable)
     val key = Key.create<UserDataPayload>("immediate cleanup registration")
-    val initial = UserDataPayload("initial")
     val leaf = createVersionedLeaf()
-    runVersionedWriteAction { leaf.putUserData(key, initial) }
+    val initial = trackedPayload("initial") { runVersionedWriteAction { leaf.putUserData(key, it) } }
 
     retainCurrentPsiVersion {
       advancePsiVersion()
       InternalPsiVersioning.runModificationOfVersionedPsi {
         leaf.putUserData(key, UserDataPayload("replacement"))
       }
-      assertReferenced(leaf, initial)
+      assertReferenced(leaf, initial.get()!!)
     }
 
     application.service<PsiVersioningGarbageCollector>().awaitCleanup()
-    assertNotReferenced(leaf, initial)
+    assertCollected(initial)
   }
 
   @Test
@@ -206,15 +204,13 @@ internal class VersionedUserDataTest {
 
     val plusKey = Key.create<UserDataPayload>("versioned user data plus cleanup test")
     val minusKey = Key.create<UserDataPayload>("versioned user data minus cleanup test")
-    val plusInitial = UserDataPayload("plusInitial")
     val plusReplacement = UserDataPayload("plusReplacement")
-    val minusInitial = UserDataPayload("minusInitial")
     val plusLeaf = createVersionedLeaf()
     val minusLeaf = createVersionedLeaf()
 
-    PsiVersioningService.freezePsiVersion {
-      plusLeaf.putUserData(plusKey, plusInitial)
-      minusLeaf.putUserData(minusKey, minusInitial)
+    val (plusInitial, minusInitial) = PsiVersioningService.freezePsiVersion {
+      trackedPayload("plusInitial") { plusLeaf.putUserData(plusKey, it) } to
+        trackedPayload("minusInitial") { minusLeaf.putUserData(minusKey, it) }
     }
 
     retainCurrentPsiVersion {
@@ -223,21 +219,21 @@ internal class VersionedUserDataTest {
         plusLeaf.putUserData(plusKey, plusReplacement)
         minusLeaf.putUserData(minusKey, null)
       }
-      assertReferenced(plusLeaf, plusInitial)
-      assertReferenced(minusLeaf, minusInitial)
+      assertReferenced(plusLeaf, plusInitial.get()!!)
+      assertReferenced(minusLeaf, minusInitial.get()!!)
     }
 
     PsiVersioningService.freezePsiVersion {
       plusLeaf.putUserData(plusKey, plusReplacement)
       assertSame(plusReplacement, plusLeaf.getUserData(plusKey))
     }
-    assertNotReferenced(plusLeaf, plusInitial)
+    assertCollected(plusInitial)
 
     PsiVersioningService.freezePsiVersion {
       minusLeaf.putUserData(minusKey, null)
       assertNull(minusLeaf.getUserData(minusKey))
     }
-    assertNotReferenced(minusLeaf, minusInitial)
+    assertCollected(minusInitial)
   }
 
   @Test
@@ -510,11 +506,10 @@ internal class VersionedUserDataTest {
     installVersioningListeners(disposable)
 
     val key = Key.create<UserDataPayload>("versioned user data removal marker test")
-    val initial = UserDataPayload("initial")
     val leaf = createVersionedLeaf()
 
-    PsiVersioningService.freezePsiVersion {
-      leaf.putUserData(key, initial)
+    val initial = PsiVersioningService.freezePsiVersion {
+      trackedPayload("initial") { leaf.putUserData(key, it) }
     }
 
     retainCurrentPsiVersion {
@@ -523,7 +518,7 @@ internal class VersionedUserDataTest {
         leaf.putUserData(key, null)
       }
       assertEquals("VersionedUserDataFMap1", leaf.userMap.javaClass.simpleName)
-      assertReferenced(leaf, initial)
+      assertReferenced(leaf, initial.get()!!)
     }
 
     // the version that could see the value is gone, so the removal marker does not have to be kept anymore
@@ -533,7 +528,7 @@ internal class VersionedUserDataTest {
     }
     assertEquals("VersionedUserDataFMap0", leaf.userMap.javaClass.simpleName)
     assertTrue(leaf.userMap.isEmpty)
-    assertNotReferenced(leaf, initial)
+    assertCollected(initial)
   }
 
   @Test
@@ -619,6 +614,21 @@ internal class VersionedUserDataTest {
     2 -> "VersionedUserDataFMap2"
     in 3..ArrayBackedFMap.ARRAY_THRESHOLD -> "ArrayVersionedUserDataFMap"
     else -> "MapVersionedUserDataFMap"
+  }
+
+  /**
+   * Creates a payload, passes it to [store], and returns only a weak reference to it.
+   * The caller then has no strong reference that could keep the payload alive, a coroutine frame included.
+   */
+  private fun trackedPayload(debugName: String, store: (UserDataPayload) -> Unit): WeakReference<UserDataPayload> {
+    val payload = UserDataPayload(debugName)
+    store(payload)
+    return WeakReference(payload)
+  }
+
+  private fun assertCollected(reference: WeakReference<UserDataPayload>) {
+    GCUtil.tryGcSoftlyReachableObjects { reference.refersTo(null) }
+    assertTrue(reference.refersTo(null), "The obsolete user data value must be garbage-collected")
   }
 
   private fun installVersioningListeners(disposable: Disposable) {
