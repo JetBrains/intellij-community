@@ -12,7 +12,10 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbols
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.allOverriddenSymbols
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
@@ -22,7 +25,9 @@ import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSign
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinMethodDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.checkSuperMethods
+import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.util.resolveSuccessfulExpressionCall
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -60,6 +65,22 @@ object ContextParameterUtils {
         val ownerFunction = valueParameterList.ownerFunction ?: return false
         val namedFunction = ownerFunction as? KtNamedFunction ?: return false
         return namedFunction.nameIdentifier != null
+    }
+
+    /**
+     * Checks that the whole override hierarchy of [function] can be modified by the refactoring.
+     * Returns `false` if the function overrides a declaration from a library (compiled, read-only)
+     * or a non-Kotlin declaration, because the Change Signature refactoring targets the root
+     * overridden declaration, which must be writable Kotlin source.
+     */
+    context(session: KaSession)
+    fun overridesOnlyModifiableDeclarations(function: KtNamedFunction): Boolean {
+        if (!function.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return true
+        val symbol = function.symbol as? KaCallableSymbol ?: return false
+        return symbol.allOverriddenSymbols.all { overridden ->
+            val psi = overridden.psi
+            psi is KtCallableDeclaration && psi.canRefactorElement()
+        }
     }
 
     /**
@@ -119,6 +140,7 @@ object ContextParameterUtils {
      */
     fun createChangeInfo(ktCallable: KtCallableDeclaration): KotlinChangeInfo? {
         val callableWithOverridden = checkSuperMethods(ktCallable, emptyList(), RefactoringBundle.message("to.refactor"))
+        if (callableWithOverridden.any { it !is KtCallableDeclaration || !it.canRefactorElement() }) return null
         val rootOverriddenOrSelf = callableWithOverridden.lastIsInstanceOrNull<KtCallableDeclaration>() ?: return null
         val methodDescriptor = KotlinMethodDescriptor(rootOverriddenOrSelf)
         return KotlinChangeInfo(methodDescriptor)

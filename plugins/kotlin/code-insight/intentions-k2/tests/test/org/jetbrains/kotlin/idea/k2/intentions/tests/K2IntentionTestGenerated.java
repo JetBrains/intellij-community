@@ -16216,6 +16216,36 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/onlyParameterBecomesContext.kt");
             }
 
+            @TestMetadata("overrideAnyEquals.kt")
+            public void testOverrideAnyEquals() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/overrideAnyEquals.kt");
+            }
+
+            @TestMetadata("overrideJDK.kt")
+            public void testOverrideJDK() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/overrideJDK.kt");
+            }
+
+            @TestMetadata("overrideJava.kt")
+            public void testOverrideJava() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/overrideJava.kt");
+            }
+
+            @TestMetadata("overrideStdlib.kt")
+            public void testOverrideStdlib() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/overrideStdlib.kt");
+            }
+
+            @TestMetadata("overrideTraversal.kt")
+            public void testOverrideTraversal() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/overrideTraversal.kt");
+            }
+
+            @TestMetadata("overrideWritable.kt")
+            public void testOverrideWritable() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/overrideWritable.kt");
+            }
+
             @TestMetadata("parametersContextsAndReceiver.kt")
             public void testParametersContextsAndReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/contextParameters/regularParameterToContextParameter/parametersContextsAndReceiver.kt");

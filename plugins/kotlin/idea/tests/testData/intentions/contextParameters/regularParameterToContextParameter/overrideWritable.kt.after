@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+open class Base {
+    context(x: Int)
+    open fun foo() {}
+}
+
+class Derived : Base() {
+    context(x: Int)
+    override fun foo() {}
+}
