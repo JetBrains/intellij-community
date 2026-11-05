@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
+import com.intellij.debugger.engine.DebuggerThreadExecutor
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.IncorrectCodeFragmentException
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
@@ -32,6 +34,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllo
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.computeKotlinStackFrameInfos
 import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinEvaluator.Companion.logCompilation
@@ -87,9 +90,11 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
             patchCodeFragment(context, codeFragment, stats)
 
             val errors = mutableListOf<CompilationError>()
-            val result = stats.startAndMeasureAnalysisUnderReadAction {
-                errors.clear()
-                compiledCodeFragmentDataK2Impl(context, codeFragment, errors)
+            val result = DebuggerThreadExecutor.runInBackground { debuggerThreadExecutor ->
+                stats.startAndMeasureAnalysisUnderReadAction {
+                    errors.clear()
+                    compiledCodeFragmentDataK2Impl(context, codeFragment, errors, debuggerThreadExecutor)
+                }
             }
             result.exceptionOrNull()?.let { rethrowControlFlowException(unwrapEvaluationException(it)) }
             for (error in errors) {
@@ -121,19 +126,28 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         }
     }
 
-    private class ExecutionStack(val context: ExecutionContext) : Sequence<PsiElement?> {
+    private class ExecutionStack(val context: ExecutionContext, val debuggerThreadExecutor: DebuggerThreadExecutor) : Sequence<PsiElement?> {
+        @RequiresReadLock
         override fun iterator(): Iterator<PsiElement?> = object : Iterator<PsiElement?> {
             private var rollbackFramesCount = 0
-            private val frames by lazy { context.frameProxy.stackFrame.computeKotlinStackFrameInfos(alwaysComputeCallLocations = true) }
+            private val frames by lazy {
+                debuggerThreadExecutor.execute { context.frameProxy.stackFrame.computeKotlinStackFrameInfos(alwaysComputeCallLocations = true) }
+            }
 
+            @RequiresReadLock
             override fun next(): PsiElement? {
                 rollbackFramesCount++
                 val currentLocation = frames[frames.size - rollbackFramesCount].callLocation ?: return null
+                val [currentPosition, currentLine, methodName] = debuggerThreadExecutor.execute {
+                    val position = context.debugProcess.positionManager.getSourcePosition(currentLocation) ?: return@execute null
+                    Triple(position, DebuggerUtilsEx.getLineNumber(currentLocation, true), currentLocation.safeMethod()?.name())
+                } ?: return null
                 val executingFunctionDeclaration =
-                    getCurrentDeclaration(context.debugProcess.positionManager, currentLocation) ?: return null
+                    getCurrentDeclaration(currentPosition, currentLine, methodName) ?: return null
                 val locationAtPreviousFrame = frames[frames.size - rollbackFramesCount - 1].callLocation ?: return null
-                val sourcePositionAtPreviousFrame =
-                    context.debugProcess.positionManager.getSourcePosition(locationAtPreviousFrame) ?: return null
+                val sourcePositionAtPreviousFrame = debuggerThreadExecutor.execute {
+                    context.debugProcess.positionManager.getSourcePosition(locationAtPreviousFrame)
+                } ?: return null
                 // NB: that is not completely correct when the line contains more than one calls, delimited by ';'.
                 // For such cases, we will get an incomplete list of invocations, namely only the first one.
                 // Due to the same reason, the smart-stepping does work at the moment for such cases.
@@ -163,16 +177,19 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                         locationAtPreviousFrame
                     )
                 val notExecuted =
-                    runBlockingCancellable {
-                        callsInPreviousFrameContainingExpr.filterAlreadyExecuted(
-                            filteringContext,
-                            specificLocation = locationAtPreviousFrame
-                        )
+                    debuggerThreadExecutor.execute {
+                        runBlockingCancellable {
+                            callsInPreviousFrameContainingExpr.filterAlreadyExecuted(
+                                filteringContext,
+                                specificLocation = locationAtPreviousFrame
+                            )
+                        }
                     }
                 if (notExecuted.isEmpty()) return null
                 return notExecuted.first().highlightElement
             }
 
+            @RequiresReadLock
             override fun hasNext(): Boolean {
                 return frames.size > rollbackFramesCount + 1
             }
@@ -185,7 +202,8 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
     private fun compiledCodeFragmentDataK2Impl(
         context: ExecutionContext,
         codeFragment: KtCodeFragment,
-        errors: MutableList<CompilationError>
+        errors: MutableList<CompilationError>,
+        debuggerThreadExecutor: DebuggerThreadExecutor
     ): CompiledCodeFragmentData {
         val module = codeFragment.module
 
@@ -196,7 +214,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
             try {
                 val options: KaCompilationOptions = createCompilationOptions {
                     target(KaCompilationTarget.JVM)
-                    jvmExecutionStack(ExecutionStack(context))
+                    jvmExecutionStack(ExecutionStack(context, debuggerThreadExecutor))
 
                     if (module != null) {
                         moduleName(module.name)

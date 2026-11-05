@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
-import com.intellij.debugger.PositionManager
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
@@ -20,6 +19,7 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.request.StepRequest
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -158,13 +158,8 @@ private fun Method.isIntrinsicEquals(): Boolean =
     isIntrinsicEquals(declaringType().name().fqnToInternalName(), name(), signature())
 
 @RequiresReadLock
-fun getCurrentDeclaration(positionManager: PositionManager, location: Location): KtDeclaration? {
-    val sourcePosition = positionManager.getSourcePosition(location) ?: return null
-    return getCurrentDeclaration(sourcePosition, DebuggerUtilsEx.getLineNumber(location, true), location.safeMethod()?.name())
-}
-
-@RequiresReadLock
-private fun getCurrentDeclaration(sourcePosition: SourcePosition, currentLine: Int, methodName: String?): KtDeclaration? {
+@ApiStatus.Internal
+fun getCurrentDeclaration(sourcePosition: SourcePosition, currentLine: Int, methodName: String?): KtDeclaration? {
     val elementAt = sourcePosition.elementAt
     // This filtering is a bit complicated, we already skip local properties and destructuring.
     // Consider restricting a parent type instead (e.g., only function, class, property, ...).

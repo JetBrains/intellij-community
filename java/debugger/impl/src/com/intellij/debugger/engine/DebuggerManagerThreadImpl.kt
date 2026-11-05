@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine
 
+import com.intellij.concurrency.currentThreadContext
 import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl
 import com.intellij.debugger.engine.managerThread.DebuggerCommand
@@ -138,6 +139,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
 
   override fun invokeAndWait(managerCommand: DebuggerCommandImpl) {
     LOG.assertTrue(!isManagerThread(), "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.schedule(...)")
+    DebuggerThreadExecutor.checkCanDispatch(this, currentThreadContext())
     checkBlockingDebuggerOperation()
     super.invokeAndWait(managerCommand)
   }
@@ -635,6 +637,7 @@ suspend fun <T> withDebugContext(
   priority: PrioritizedTask.Priority? = null,
   block: suspend CoroutineScope.() -> T,
 ): T {
+  DebuggerThreadExecutor.checkCanDispatch(suspendContext.managerThread, currentCoroutineContext())
   val resultPriority = priority ?: priorityInContextOrDefault()
   return runWithContext(
     context = Dispatchers.Debugger(suspendContext.managerThread) + SuspendContextCommandProvider(suspendContext, resultPriority),
@@ -685,6 +688,7 @@ suspend fun <T> withDebugContext(
   priority: PrioritizedTask.Priority? = null,
   block: suspend CoroutineScope.() -> T,
 ): T {
+  DebuggerThreadExecutor.checkCanDispatch(managerThread, currentCoroutineContext())
   val resultPriority = priority ?: priorityInContextOrDefault()
   return runWithContext(
     context = Dispatchers.Debugger(managerThread) + DebuggerCommandProvider(resultPriority),
@@ -738,6 +742,7 @@ suspend fun <T> withDebugContext(
   block: suspend CoroutineScope.() -> T,
 ): T {
   val managerThread = debuggerContext.managerThread!!
+  DebuggerThreadExecutor.checkCanDispatch(managerThread, currentCoroutineContext())
   val resultPriority = priority ?: priorityInContextOrDefault()
   val provider = DebuggerContextCommandProvider(debuggerContext, resultPriority)
   val scope = provider.findScope() ?: throw CancellationException()
@@ -765,7 +770,7 @@ private suspend fun <T> runWithContext(
   // Ensure the job is canceled when the corresponding CoroutineScope is closed.
   // For example, cancellation of the work performed in Dispatchers.Default within the debugger context
   // is ensured by this scope attachment.
-  val task = parentScope.async(context, block = block)
+  val task = parentScope.async(context + DebuggerThreadExecutor.waitingThreadsContext(), block = block)
   try {
     return task.await()
   }

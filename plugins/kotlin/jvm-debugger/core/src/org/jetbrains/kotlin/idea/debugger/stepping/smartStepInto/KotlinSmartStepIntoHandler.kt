@@ -27,6 +27,9 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.parents
 import com.intellij.util.Range
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.OrderedSet
 import com.sun.jdi.Location
 import kotlinx.coroutines.async
@@ -147,6 +150,7 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
     }
 }
 
+@RequiresReadLock
 fun findSmartStepTargets(element: KtElement, lines: Range<Int>): List<SmartStepTarget> {
     val targets = OrderedSet<SmartStepTarget>()
     val visitor = SmartStepTargetVisitor(lines, targets)
@@ -163,10 +167,12 @@ private suspend fun calculateSmartStepTargetsToShow(targets: List<SmartStepTarge
     return targetsToShow
 }
 
+@RequiresReadLockAbsence
 suspend fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
     context: SmartStepIntoContext,
     specificLocation: Location? = null
 ): List<KotlinMethodSmartStepTarget> {
+    ThreadingAssertions.assertNoReadAccess()
     DebuggerManagerThreadImpl.assertIsManagerThread()
     val debugProcess = context.debugProcess
     if (isEmpty()) {
