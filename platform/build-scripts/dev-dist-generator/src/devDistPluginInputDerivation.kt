@@ -6,7 +6,7 @@ import org.jetbrains.intellij.build.dev.DEV_PLUGIN_PREPARATION_FORMAT
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
 import org.jetbrains.intellij.build.dev.sourceReferences
-import org.jetbrains.intellij.build.dev.validateDevPluginLayoutAssetConsumers
+import org.jetbrains.intellij.build.dev.validateLayoutAssetConsumers
 import org.jetbrains.intellij.build.dev.validatePreparationOperation
 import org.jetbrains.intellij.build.dev.validatePreparationPath
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
@@ -70,7 +70,7 @@ internal fun validateDevDistPluginOperations(
     val planned = requireNotNull(required.get(operation.id)) { "Unexpected preparation operation '${operation.id}'" }
     require(planned == operation) { "Preparation operation '${operation.id}' differs from the operation of the plan" }
     operation.sourceReferences().forEach(inputs::requireReference)
-    validateDevPluginLayoutAssetConsumers(operation, plan)
+    validateLayoutAssetConsumers(operation, plan)
   }
   val missing = required.keys - seen
   require(missing.isEmpty()) { "Missing preparation operations: $missing" }

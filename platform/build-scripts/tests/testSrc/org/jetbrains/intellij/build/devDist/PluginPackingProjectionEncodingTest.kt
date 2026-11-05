@@ -3,10 +3,10 @@ package org.jetbrains.intellij.build.devDist
 
 import kotlinx.serialization.json.Json
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetPreparation
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
+import org.jetbrains.intellij.build.dev.LayoutAsset
+import org.jetbrains.intellij.build.dev.LayoutAssetPreparation
 import org.junit.jupiter.api.Test
 
 /** The compact projection encoding round-trips, and the full form still decodes; see `PluginPackingProjectionEncoding.kt`. */
@@ -96,7 +96,7 @@ class PluginPackingProjectionEncodingTest {
     inputs = listOf(DevPluginReference("raw")),
     output = "filtered",
     manifest = "keep",
-    layoutAssets = DevPluginLayoutAssetPreparation(format = "entries", assets = listOf(DevPluginLayoutAsset(destination = "raw.txt", sources = listOf(0)))),
+    layoutAssets = LayoutAssetPreparation(format = "entries", assets = listOf(LayoutAsset(destination = "raw.txt", sources = listOf(0)))),
   )
 
   @Test

@@ -128,7 +128,7 @@ data class BuildOptions(
    *
    * It decides two things. The build date stamped into `ApplicationInfo.xml`: a dev distribution stamps none, so that
    * the IDE resolves its build time at startup and no EAP expiration period can run out on it. And the layout callbacks
-   * of a plugin: a dev distribution skips a callback whose `DevPluginLayoutAssetSpec.runsInClassicDev` is false.
+   * of a plugin: a dev distribution skips a callback whose `LayoutAssetSpec.runsInClassicDev` is false.
    */
   @JvmField internal val isDevDistribution: Boolean = false,
 

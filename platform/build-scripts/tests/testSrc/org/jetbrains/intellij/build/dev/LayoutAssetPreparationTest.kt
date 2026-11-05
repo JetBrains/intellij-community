@@ -14,14 +14,14 @@ import org.junit.jupiter.api.Test
  * The generation-time rules of a layout-assets operation and of its consumers in the plan. The packer executes every
  * operation; the executor cases of every transform live in `tests/layout.rs` of the `pluginpack` crate.
  */
-internal class DevPluginLayoutAssetPreparationTest {
+internal class LayoutAssetPreparationTest {
   @Test
   fun `a removed transform is refused`() {
     for (kind in listOf("gzip-xml-archive", "tree-map")) {
-      val asset = DevPluginLayoutAsset(destination = "resources", sources = listOf(0), transform = DevPluginLayoutAssetTransform(kind = kind))
+      val asset = LayoutAsset(destination = "resources", sources = listOf(0), transform = LayoutAssetTransform(kind = kind))
       val operation = DevPluginPreparationOperation(
         id = "layout-assets:$kind", kind = "layout-assets", inputs = listOf(DevPluginReference("archive")), output = "layout-assets:$kind:output",
-        manifest = "keep", layoutAssets = DevPluginLayoutAssetPreparation(format = "entries", assets = listOf(asset)),
+        manifest = "keep", layoutAssets = LayoutAssetPreparation(format = "entries", assets = listOf(asset)),
       )
       assertThat(isPackerExecutedOperation(operation)).isFalse()
       assertThatThrownBy { validatePreparationOperation(operation) }
@@ -31,11 +31,11 @@ internal class DevPluginLayoutAssetPreparationTest {
 
   @Test
   fun `every packer-executed operation binds its consumers in the plan`() {
-    val treeAssets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = DevPluginLayoutAssetTransform.archiveTree(stripComponents = 1)))
+    val treeAssets = listOf(LayoutAsset(destination = "", sources = listOf(0), transform = LayoutAssetTransform.archiveTree(stripComponents = 1)))
     val operations = listOf(
       DevPluginPreparationOperation(
         id = "layout-assets:tree", kind = "layout-assets", inputs = listOf(DevPluginReference("archive")), output = "layout-assets:tree:output",
-        manifest = "keep", layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "payload", assets = treeAssets),
+        manifest = "keep", layoutAssets = LayoutAssetPreparation(format = "tree", root = "payload", assets = treeAssets),
       ),
       DevPluginPreparationOperation(
         id = "layout-assets:entries", kind = "layout-assets", inputs = listOf(DevPluginReference("resources")), output = "layout-assets:entries:output",
@@ -59,10 +59,10 @@ internal class DevPluginLayoutAssetPreparationTest {
     )
 
     for (operation in operations) {
-      validateDevPluginLayoutAssetConsumers(operation, plan)
+      validateLayoutAssetConsumers(operation, plan)
     }
-    val misplacedTree = operations[0].copy(layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "other", assets = treeAssets))
-    assertThatThrownBy { validateDevPluginLayoutAssetConsumers(misplacedTree, plan) }.hasMessageContaining("one tree asset at 'other'")
+    val misplacedTree = operations[0].copy(layoutAssets = LayoutAssetPreparation(format = "tree", root = "other", assets = treeAssets))
+    assertThatThrownBy { validateLayoutAssetConsumers(misplacedTree, plan) }.hasMessageContaining("one tree asset at 'other'")
   }
 
   @Test
@@ -76,9 +76,9 @@ internal class DevPluginLayoutAssetPreparationTest {
     )
     val file = DevPluginPreparationOperation(
       id = "file", kind = "layout-assets", inputs = listOf(DevPluginReference("build")), output = "file:output", manifest = "keep",
-      layoutAssets = DevPluginLayoutAssetPreparation(
+      layoutAssets = LayoutAssetPreparation(
         format = "file", root = "jre-build.txt",
-        assets = listOf(DevPluginLayoutAsset(destination = "jre-build.txt", sources = listOf(0))),
+        assets = listOf(LayoutAsset(destination = "jre-build.txt", sources = listOf(0))),
       ),
     )
     val presigned = DevPluginPreparationOperation(
@@ -99,27 +99,27 @@ internal class DevPluginLayoutAssetPreparationTest {
 
   @Test
   fun `a plain copy of a directory writes the output root and takes one source`() {
-    validateLayoutAssets(DevPluginLayoutAssetPreparation(
+    validateLayoutAssets(LayoutAssetPreparation(
       format = "entries",
-      assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0)), DevPluginLayoutAsset(destination = "", sources = listOf(1))),
+      assets = listOf(LayoutAsset(destination = "", sources = listOf(0)), LayoutAsset(destination = "", sources = listOf(1))),
     ), listOf(DevPluginReference("properties"), DevPluginReference("descriptions")))
     assertThatThrownBy {
-      validateLayoutAssets(DevPluginLayoutAssetPreparation(
+      validateLayoutAssets(LayoutAssetPreparation(
         format = "entries",
-        assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0, 1))),
+        assets = listOf(LayoutAsset(destination = "", sources = listOf(0, 1))),
       ), listOf(DevPluginReference("properties"), DevPluginReference("descriptions")))
     }.hasMessageContaining("A direct layout asset requires one source")
   }
 
   @Test
   fun `archive includes and executable patterns change the operation text`() {
-    val archive = DevPluginLayoutAssetTransform.archiveTree()
-    fun text(value: DevPluginLayoutAssetTransform, input: String): String {
+    val archive = LayoutAssetTransform.archiveTree()
+    fun text(value: LayoutAssetTransform, input: String): String {
       val operation = DevPluginPreparationOperation(
         id = "layout-assets:native", kind = "layout-assets", inputs = listOf(DevPluginReference(input)), output = "native:output", manifest = "keep",
-        layoutAssets = DevPluginLayoutAssetPreparation(
+        layoutAssets = LayoutAssetPreparation(
           format = "tree", root = "bin",
-          assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = value)),
+          assets = listOf(LayoutAsset(destination = "", sources = listOf(0), transform = value)),
         ),
       )
       validatePreparationOperation(operation)
@@ -128,13 +128,13 @@ internal class DevPluginLayoutAssetPreparationTest {
 
     assertThat(text(archive.copy(includes = listOf("bin/**", "!bin/LLDBFrontend")), "archive")).isNotEqualTo(text(archive, "archive"))
     assertThat(text(archive.copy(executables = listOf("bin/*")), "archive")).isNotEqualTo(text(archive, "archive"))
-    assertThat(text(DevPluginLayoutAssetTransform.archiveTree(includes = listOf("!x"), executables = listOf("y")), "archive"))
+    assertThat(text(LayoutAssetTransform.archiveTree(includes = listOf("!x"), executables = listOf("y")), "archive"))
       .isEqualTo(text(archive.copy(includes = listOf("!x"), executables = listOf("y")), "archive"))
   }
 
   @Test
   fun `archive-tree accepts valid includes and executable patterns`() {
-    val archive = DevPluginLayoutAssetTransform.archiveTree()
+    val archive = LayoutAssetTransform.archiveTree()
     val invalid = listOf(
       archive.copy(includes = listOf("")) to "archive",
       archive.copy(includes = listOf("!")) to "archive",
@@ -144,36 +144,36 @@ internal class DevPluginLayoutAssetPreparationTest {
     )
     for ((transform, input) in invalid) {
       assertThatThrownBy {
-        validateLayoutAssets(DevPluginLayoutAssetPreparation(
+        validateLayoutAssets(LayoutAssetPreparation(
           format = "tree", root = "bin",
-          assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = transform)),
+          assets = listOf(LayoutAsset(destination = "", sources = listOf(0), transform = transform)),
         ), listOf(DevPluginReference(input)))
       }.isInstanceOf(IllegalArgumentException::class.java)
     }
-    validateLayoutAssets(DevPluginLayoutAssetPreparation(
+    validateLayoutAssets(LayoutAssetPreparation(
       format = "tree", root = "bin",
-      assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = archive.copy(includes = listOf("!bin/LLDBFrontend"), executables = listOf("bin/*")))),
+      assets = listOf(LayoutAsset(destination = "", sources = listOf(0), transform = archive.copy(includes = listOf("!bin/LLDBFrontend"), executables = listOf("bin/*")))),
     ), listOf(DevPluginReference("archive")))
   }
 
   @Test
   fun `a payload asset carries no host platforms and the encoding omits them`() {
-    val asset = DevPluginLayoutAsset(destination = "bin/tool", sources = listOf(0), hostPlatforms = listOf("darwin_aarch64"))
-    assertThat(Json.encodeToString(DevPluginLayoutAsset.serializer(), asset)).isEqualTo("""{"destination":"bin/tool","sources":[0]}""")
+    val asset = LayoutAsset(destination = "bin/tool", sources = listOf(0), hostPlatforms = listOf("darwin_aarch64"))
+    assertThat(Json.encodeToString(LayoutAsset.serializer(), asset)).isEqualTo("""{"destination":"bin/tool","sources":[0]}""")
     assertThatThrownBy {
-      validateLayoutAssets(DevPluginLayoutAssetPreparation(format = "tree", root = "bin", assets = listOf(asset.copy(destination = ""))), listOf(DevPluginReference("archive")))
+      validateLayoutAssets(LayoutAssetPreparation(format = "tree", root = "bin", assets = listOf(asset.copy(destination = ""))), listOf(DevPluginReference("archive")))
     }.hasMessageContaining("host platforms")
   }
 
-  private fun plainCopyEntriesPreparation(sources: List<Int>): DevPluginLayoutAssetPreparation {
-    return DevPluginLayoutAssetPreparation(
+  private fun plainCopyEntriesPreparation(sources: List<Int>): LayoutAssetPreparation {
+    return LayoutAssetPreparation(
       format = "entries",
-      assets = listOf(DevPluginLayoutAsset(destination = "resources", sources = sources)),
+      assets = listOf(LayoutAsset(destination = "resources", sources = sources)),
     )
   }
 
   /** Runs the generation-time validation of one layout-assets operation. */
-  private fun validateLayoutAssets(preparation: DevPluginLayoutAssetPreparation, inputs: List<DevPluginReference>) {
+  private fun validateLayoutAssets(preparation: LayoutAssetPreparation, inputs: List<DevPluginReference>) {
     val operation = DevPluginPreparationOperation(
       id = "layout-assets:test", kind = "layout-assets", inputs = inputs, output = "layout-assets:test:output", manifest = "keep", layoutAssets = preparation,
     )

@@ -9,9 +9,9 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants.INTE
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.archiveCacheKey
 import org.jetbrains.intellij.build.dependencies.extractToCacheLocation
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.dev.LayoutAsset
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
+import org.jetbrains.intellij.build.dev.LayoutAssetSpec
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.SupportedDistribution
@@ -39,28 +39,28 @@ private const val PYREFLY_BINARY_NAME: String = "pyrefly"
  * The license report as the dev distribution copies it: the `license` tree of the unpacked license archive, which the
  * dev-launch extension declares from the same `pyreflyBuild` value.
  */
-private val PYREFLY_LICENSE_DEV_SPEC: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec(
-  sources = listOf(DevPluginLayoutAssetSource.BazelTarget(
+private val PYREFLY_LICENSE_DEV_SPEC: LayoutAssetSpec = LayoutAssetSpec(
+  sources = listOf(LayoutAssetSource.BazelTarget(
     label = "@pyrefly_license_extracted//:files",
     kind = "directory",
     fileName = "license",
     prefix = "license",
   )),
-  assets = listOf(DevPluginLayoutAsset(destination = "$PYREFLY_DIR_NAME/license", sources = listOf(0))),
+  assets = listOf(LayoutAsset(destination = "$PYREFLY_DIR_NAME/license", sources = listOf(0))),
 )
 
 /** The binary of one platform as the dev distribution copies it, out of the unpacked platform archive. */
-private fun pyreflyBinaryDevSpec(os: OsFamily, arch: JvmArchitecture): DevPluginLayoutAssetSpec {
+private fun pyreflyBinaryDevSpec(os: OsFamily, arch: JvmArchitecture): LayoutAssetSpec {
   val platformDirName = pyreflyPlatformDirName(os, arch)
   val binaryName = os.binaryName(PYREFLY_BINARY_NAME)
   val hostPlatform = "${if (os == OsFamily.MACOS) "darwin" else os.osId}_${arch.name}"
-  return DevPluginLayoutAssetSpec(
-    sources = listOf(DevPluginLayoutAssetSource.BazelTarget(
+  return LayoutAssetSpec(
+    sources = listOf(LayoutAssetSource.BazelTarget(
       label = "@pyrefly_${hostPlatform}_extracted//:$platformDirName/$binaryName",
       kind = "file",
       fileName = binaryName,
     )),
-    assets = listOf(DevPluginLayoutAsset(
+    assets = listOf(LayoutAsset(
       destination = "$PYREFLY_DIR_NAME/$platformDirName/$binaryName",
       sources = listOf(0),
       mode = 493,
@@ -96,7 +96,7 @@ fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
 
 fun PluginLayout.PluginLayoutSpec.withPublishedPyrefly(dist: SupportedDistribution) {
   val (os, arch, _) = dist
-  withGeneratedResources(DevPluginLayoutAssetSpec.OMITTED) { targetDir, context ->
+  withGeneratedResources(LayoutAssetSpec.OMITTED) { targetDir, context ->
     copyPyreflyLicenseReport(targetDir, context)
     copyPyreflyBinary(targetDir, context, os, arch)
   }

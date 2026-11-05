@@ -7,17 +7,17 @@ import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPrepared
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPreparedSourceManifest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetPreparation
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
+import org.jetbrains.intellij.build.dev.LayoutAsset
+import org.jetbrains.intellij.build.dev.LayoutAssetOwner
+import org.jetbrains.intellij.build.dev.LayoutAssetPreparation
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 
-data class GeneratedDevPluginLayoutAssetBindings(
+data class GeneratedLayoutAssetBindings(
   @JvmField val facts: PluginSymbolicPreparationFacts,
   @JvmField val catalogueFacts: DevDistPluginCatalogueFacts,
   @JvmField val operations: List<DevPluginPreparationOperation>,
@@ -26,22 +26,22 @@ data class GeneratedDevPluginLayoutAssetBindings(
 /**
  * Binds the layout assets of [owner] for one plan record. [hostPlatform] is the `HOST_PLATFORMS` entry of the record's
  * distribution, or null for a record without one. An asset that names host platforms stays only in the plan of a named
- * platform, see [DevPluginLayoutAsset.hostPlatforms]. A callback whose every asset leaves the plan is an omitted slot of it.
+ * platform, see [LayoutAsset.hostPlatforms]. A callback whose every asset leaves the plan is an omitted slot of it.
  * [binder] binds the closed asset sources of the half, see [DevDistAssetBinder].
  */
 @ApiStatus.Internal
-fun generateDevPluginLayoutAssetBindings(
+fun generateLayoutAssetBindings(
   key: String,
-  owner: DevPluginLayoutAssetOwner,
+  owner: LayoutAssetOwner,
   requestedFormat: String,
   index: DevDistBazelIndex,
   outputProvider: ModuleOutputProvider,
   binder: DevDistAssetBinder,
   resources: DevDistResourceSources = DevDistResourceSources(index, outputProvider),
   hostPlatform: String? = null,
-): GeneratedDevPluginLayoutAssetBindings {
-  val spec = owner.devPluginLayoutAssetSpec
-  val omitted = GeneratedDevPluginLayoutAssetBindings(
+): GeneratedLayoutAssetBindings {
+  val spec = owner.layoutAssetSpec
+  val omitted = GeneratedLayoutAssetBindings(
     facts = PluginSymbolicPreparationFacts(omittedSlots = setOf(key)),
     catalogueFacts = DevDistPluginCatalogueFacts(),
     operations = emptyList(),
@@ -54,7 +54,7 @@ fun generateDevPluginLayoutAssetBindings(
   if (selectedAssets.isEmpty()) {
     return omitted
   }
-  val resolver = DevPluginLayoutAssetSourceResolver(key, spec.sources, index, outputProvider, resources, binder)
+  val resolver = LayoutAssetSourceResolver(key, spec.sources, index, outputProvider, resources, binder)
   val concreteAssets = ArrayList<ConcreteLayoutAsset>()
   val operationInputs = ArrayList<DevPluginReference>()
   val libraryInputs = HashSet<Int>()
@@ -97,7 +97,7 @@ fun generateDevPluginLayoutAssetBindings(
     val asset = concreteAssets.single().asset
     val source = operationInputs.single()
     require(source.path.isEmpty() && 0 !in libraryInputs) { "Declared layout file '$key' must bind a complete Bazel file" }
-    return GeneratedDevPluginLayoutAssetBindings(
+    return GeneratedLayoutAssetBindings(
       facts = PluginSymbolicPreparationFacts(declaredAssets = mapOf(key to listOf(PluginPackingAsset(
         destination = asset.destination,
         inputs = listOf(source.artifact),
@@ -111,7 +111,7 @@ fun generateDevPluginLayoutAssetBindings(
 
   if (isDirectDeclaredTree(requestedFormat, concreteAssets, operationInputs, libraryInputs, resolver::rawInput)) {
     val asset = concreteAssets.single().asset
-    return GeneratedDevPluginLayoutAssetBindings(
+    return GeneratedLayoutAssetBindings(
       facts = PluginSymbolicPreparationFacts(declaredAssets = mapOf(key to listOf(PluginPackingAsset(
         destination = asset.destination,
         inputs = listOf(operationInputs.single().artifact),
@@ -142,7 +142,7 @@ fun generateDevPluginLayoutAssetBindings(
     inputs = operationInputs,
     output = output,
     manifest = "keep",
-    layoutAssets = DevPluginLayoutAssetPreparation(format = requestedFormat, root = root, assets = payloadAssets),
+    layoutAssets = LayoutAssetPreparation(format = requestedFormat, root = root, assets = payloadAssets),
   )
   val effect = when (requestedFormat) {
     "entries" -> PluginSymbolicPreparedEffect(
@@ -160,7 +160,7 @@ fun generateDevPluginLayoutAssetBindings(
     )
     else -> error("Unknown layout callback format '$requestedFormat' for '$key'")
   }
-  return GeneratedDevPluginLayoutAssetBindings(
+  return GeneratedLayoutAssetBindings(
     facts = PluginSymbolicPreparationFacts(
       effects = mapOf(key to effect),
       preparedSourceManifests = if (requestedFormat == "entries") {
@@ -179,7 +179,7 @@ fun generateDevPluginLayoutAssetBindings(
  * The assets of [assets] that serve [hostPlatform], with their platform lists removed: the payload of one plan record
  * never carries them. Every named platform must be a `HOST_PLATFORMS` entry, so a typo omits no asset in silence.
  */
-private fun selectHostPlatformAssets(key: String, assets: List<DevPluginLayoutAsset>, hostPlatform: String?): List<DevPluginLayoutAsset> {
+private fun selectHostPlatformAssets(key: String, assets: List<LayoutAsset>, hostPlatform: String?): List<LayoutAsset> {
   require(hostPlatform == null || hostPlatform in HOST_PLATFORMS) { "Layout callback '$key' is bound for an unknown host platform '$hostPlatform'" }
   return assets.mapNotNull { asset ->
     val platforms = asset.hostPlatforms
@@ -202,7 +202,7 @@ internal fun moduleDirectoryRawInput(
   id: String,
   key: String,
   mainModule: String,
-  source: DevPluginLayoutAssetSource.ModuleDirectory,
+  source: LayoutAssetSource.ModuleDirectory,
   index: DevDistBazelIndex,
   resources: DevDistResourceSources,
 ): DevDistPluginRawInput {
@@ -226,7 +226,7 @@ internal fun moduleDirectoryRawInput(
 }
 
 private data class ConcreteLayoutAsset(
-  @JvmField val asset: DevPluginLayoutAsset,
+  @JvmField val asset: LayoutAsset,
   @JvmField val directory: Boolean,
 )
 
@@ -242,9 +242,9 @@ private data class ResolvedLayoutAssetReference(
   @JvmField val library: Boolean = false,
 )
 
-private class DevPluginLayoutAssetSourceResolver(
+private class LayoutAssetSourceResolver(
   private val key: String,
-  private val sources: List<DevPluginLayoutAssetSource>,
+  private val sources: List<LayoutAssetSource>,
   private val index: DevDistBazelIndex,
   private val outputProvider: ModuleOutputProvider,
   private val resources: DevDistResourceSources,
@@ -258,14 +258,14 @@ private class DevPluginLayoutAssetSourceResolver(
   fun resolve(sourceIndex: Int): ResolvedLayoutAssetSource {
     return resolved.getOrPut(sourceIndex) {
       when (val source = sources.get(sourceIndex)) {
-        is DevPluginLayoutAssetSource.ModuleDirectory -> resolveModuleDirectory(sourceIndex, source)
-        is DevPluginLayoutAssetSource.BazelTarget -> resolveBazelTarget(sourceIndex, source)
-        is DevPluginLayoutAssetSource.ProjectLibrary -> resolveProjectLibrary(source)
-        is DevPluginLayoutAssetSource.ModuleLibrary -> resolveModuleLibrary(source)
-        is DevPluginLayoutAssetSource.OptionalLocalDirectory -> resolveOptionalLocalDirectory(source)
-        is DevPluginLayoutAssetSource.DebuggerEgg,
-        is DevPluginLayoutAssetSource.JupyterFrontend,
-        is DevPluginLayoutAssetSource.CidrDependency -> resolveBoundSource(source)
+        is LayoutAssetSource.ModuleDirectory -> resolveModuleDirectory(sourceIndex, source)
+        is LayoutAssetSource.BazelTarget -> resolveBazelTarget(sourceIndex, source)
+        is LayoutAssetSource.ProjectLibrary -> resolveProjectLibrary(source)
+        is LayoutAssetSource.ModuleLibrary -> resolveModuleLibrary(source)
+        is LayoutAssetSource.OptionalLocalDirectory -> resolveOptionalLocalDirectory(source)
+        is LayoutAssetSource.DebuggerEgg,
+        is LayoutAssetSource.JupyterFrontend,
+        is LayoutAssetSource.CidrDependency -> resolveBoundSource(source)
       }
     }
   }
@@ -280,7 +280,7 @@ private class DevPluginLayoutAssetSourceResolver(
     )
   }
 
-  private fun resolveModuleDirectory(sourceIndex: Int, source: DevPluginLayoutAssetSource.ModuleDirectory): ResolvedLayoutAssetSource {
+  private fun resolveModuleDirectory(sourceIndex: Int, source: LayoutAssetSource.ModuleDirectory): ResolvedLayoutAssetSource {
     val input = moduleDirectoryRawInput(
       id = "module-resource:$key:$sourceIndex:source",
       key = key,
@@ -294,14 +294,14 @@ private class DevPluginLayoutAssetSourceResolver(
   }
 
   /** A closed source: the binder of the half binds it to one raw input, see [DevDistAssetBinder]. */
-  private fun resolveBoundSource(source: DevPluginLayoutAssetSource): ResolvedLayoutAssetSource {
+  private fun resolveBoundSource(source: LayoutAssetSource): ResolvedLayoutAssetSource {
     val input = binder.bind(source, index)
     registerRawInput(input)
     return ResolvedLayoutAssetSource(listOf(ResolvedLayoutAssetReference(DevPluginReference(input.id), input.fileName, input.kind)))
   }
 
   /** The one root filegroup lists the local parts that a preceding build made below `out/`. */
-  private fun resolveOptionalLocalDirectory(source: DevPluginLayoutAssetSource.OptionalLocalDirectory): ResolvedLayoutAssetSource {
+  private fun resolveOptionalLocalDirectory(source: LayoutAssetSource.OptionalLocalDirectory): ResolvedLayoutAssetSource {
     val path = source.path
     require(path.startsWith("out/bundle-plugins/") || Regex("out/[^/]+/bundle-plugins/[^/]+(?:/[^/]+)*").matches(path)) {
       "Layout callback '$key' names unsupported optional local directory '$path'"
@@ -321,7 +321,7 @@ private class DevPluginLayoutAssetSourceResolver(
     return ResolvedLayoutAssetSource(listOf(ResolvedLayoutAssetReference(DevPluginReference(id), path.substringAfterLast('/'), "directory")))
   }
 
-  private fun resolveBazelTarget(sourceIndex: Int, source: DevPluginLayoutAssetSource.BazelTarget): ResolvedLayoutAssetSource {
+  private fun resolveBazelTarget(sourceIndex: Int, source: LayoutAssetSource.BazelTarget): ResolvedLayoutAssetSource {
     require(source.kind in setOf("archive", "directory", "file")) {
       "Layout callback '$key' has an unsupported Bazel source kind '${source.kind}'"
     }
@@ -348,14 +348,14 @@ private class DevPluginLayoutAssetSourceResolver(
     )))
   }
 
-  private fun resolveProjectLibrary(source: DevPluginLayoutAssetSource.ProjectLibrary): ResolvedLayoutAssetSource {
+  private fun resolveProjectLibrary(source: LayoutAssetSource.ProjectLibrary): ResolvedLayoutAssetSource {
     val description = requireNotNull(index.targets.projectLibraries.get(source.name)) {
       "Project library '${source.name}' has no Bazel target record"
     }
     return ResolvedLayoutAssetSource(listOf(libraryReference(DevDistPluginLibraryInput(source.name), description, "project library '${source.name}'")))
   }
 
-  private fun resolveModuleLibrary(source: DevPluginLayoutAssetSource.ModuleLibrary): ResolvedLayoutAssetSource {
+  private fun resolveModuleLibrary(source: LayoutAssetSource.ModuleLibrary): ResolvedLayoutAssetSource {
     val module = requireNotNull(outputProvider.findModule(source.module)) {
       "Layout callback '$key' found no module '${source.module}'"
     }

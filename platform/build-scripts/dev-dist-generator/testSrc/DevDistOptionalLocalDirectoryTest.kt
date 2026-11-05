@@ -4,10 +4,10 @@ package com.intellij.platform.buildScripts.devDistGenerator
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.assertj.core.api.Assertions.entry
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.dev.LayoutAsset
+import org.jetbrains.intellij.build.dev.LayoutAssetOwner
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
+import org.jetbrains.intellij.build.dev.LayoutAssetSpec
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.jetbrains.jps.model.JpsElementFactory
 import org.junit.jupiter.api.Test
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
 /**
- * The binding of [DevPluginLayoutAssetSource.OptionalLocalDirectory]: a local backend part below `out/bundle-plugins`
+ * The binding of [LayoutAssetSource.OptionalLocalDirectory]: a local backend part below `out/bundle-plugins`
  * becomes one optional source tree of the root filegroup. The Bazel rule materializes an absent tree as empty.
  */
 class DevDistOptionalLocalDirectoryTest {
@@ -75,16 +75,16 @@ class DevDistOptionalLocalDirectoryTest {
 
   @Test
   fun `two callbacks of one directory share the input and two directories have their own`(@TempDir checkout: Path) {
-    val spec = DevPluginLayoutAssetSpec(
+    val spec = LayoutAssetSpec(
       sources = listOf(
-        DevPluginLayoutAssetSource.OptionalLocalDirectory("out/bundle-plugins/backend-a"),
-        DevPluginLayoutAssetSource.OptionalLocalDirectory("out/bundle-plugins/backend-a"),
-        DevPluginLayoutAssetSource.OptionalLocalDirectory("out/bundle-plugins/backend-b"),
+        LayoutAssetSource.OptionalLocalDirectory("out/bundle-plugins/backend-a"),
+        LayoutAssetSource.OptionalLocalDirectory("out/bundle-plugins/backend-a"),
+        LayoutAssetSource.OptionalLocalDirectory("out/bundle-plugins/backend-b"),
       ),
       assets = listOf(
-        DevPluginLayoutAsset(destination = "backend/fsharp", sources = listOf(0)),
-        DevPluginLayoutAsset(destination = "backend/fsharp-copy", sources = listOf(1)),
-        DevPluginLayoutAsset(destination = "backend/unity", sources = listOf(2)),
+        LayoutAsset(destination = "backend/fsharp", sources = listOf(0)),
+        LayoutAsset(destination = "backend/fsharp-copy", sources = listOf(1)),
+        LayoutAsset(destination = "backend/unity", sources = listOf(2)),
       ),
     )
 
@@ -102,14 +102,14 @@ class DevDistOptionalLocalDirectoryTest {
 
   @Test
   fun `a tree at the plugin root cannot share the callback with another destination`(@TempDir checkout: Path) {
-    val spec = DevPluginLayoutAssetSpec(
+    val spec = LayoutAssetSpec(
       sources = listOf(
-        DevPluginLayoutAssetSource.OptionalLocalDirectory("out/bundle-plugins/backend-a"),
-        DevPluginLayoutAssetSource.OptionalLocalDirectory("out/bundle-plugins/backend-b"),
+        LayoutAssetSource.OptionalLocalDirectory("out/bundle-plugins/backend-a"),
+        LayoutAssetSource.OptionalLocalDirectory("out/bundle-plugins/backend-b"),
       ),
       assets = listOf(
-        DevPluginLayoutAsset(destination = "", sources = listOf(0)),
-        DevPluginLayoutAsset(destination = "backend", sources = listOf(1)),
+        LayoutAsset(destination = "", sources = listOf(0)),
+        LayoutAsset(destination = "backend", sources = listOf(1)),
       ),
     )
 
@@ -118,18 +118,18 @@ class DevDistOptionalLocalDirectoryTest {
       .hasMessageStartingWith("Prepared layout assets cannot mix the plugin root with another destination")
   }
 
-  private fun bind(checkout: Path, path: String): GeneratedDevPluginLayoutAssetBindings {
-    return bind(checkout, DevPluginLayoutAssetSpec(
-      sources = listOf(DevPluginLayoutAssetSource.OptionalLocalDirectory(path)),
-      assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0))),
+  private fun bind(checkout: Path, path: String): GeneratedLayoutAssetBindings {
+    return bind(checkout, LayoutAssetSpec(
+      sources = listOf(LayoutAssetSource.OptionalLocalDirectory(path)),
+      assets = listOf(LayoutAsset(destination = "", sources = listOf(0))),
     ))
   }
 
-  private fun bind(checkout: Path, spec: DevPluginLayoutAssetSpec): GeneratedDevPluginLayoutAssetBindings {
-    val owner = object : DevPluginLayoutAssetOwner {
-      override val devPluginLayoutAssetSpec: DevPluginLayoutAssetSpec = spec
+  private fun bind(checkout: Path, spec: LayoutAssetSpec): GeneratedLayoutAssetBindings {
+    val owner = object : LayoutAssetOwner {
+      override val layoutAssetSpec: LayoutAssetSpec = spec
     }
-    return generateDevPluginLayoutAssetBindings(
+    return generateLayoutAssetBindings(
       key = KEY,
       owner = owner,
       requestedFormat = "tree",

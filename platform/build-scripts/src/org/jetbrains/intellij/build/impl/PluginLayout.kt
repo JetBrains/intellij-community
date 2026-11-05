@@ -19,9 +19,9 @@ import org.jetbrains.intellij.build.LazySource
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import org.jetbrains.intellij.build.CompatibleBuildRange
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.dev.LayoutAssetOwner
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
+import org.jetbrains.intellij.build.dev.LayoutAssetSpec
 import org.jetbrains.intellij.build.impl.BuildUtils.checkedReplace
 import java.nio.file.Path
 
@@ -121,7 +121,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
    * [PluginLayoutSpec.withDevDistSourceTree]. Production packs none of them.
    */
   @Internal
-  var devDistSourceTrees: PersistentList<DevPluginLayoutAssetSource.ModuleDirectory> = persistentListOf()
+  var devDistSourceTrees: PersistentList<LayoutAssetSource.ModuleDirectory> = persistentListOf()
     private set
 
   /**
@@ -220,7 +220,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     private set
 
   /**
-   * The platform resource generators. The dev-distribution generator plans each one from its [DevPluginLayoutAssetSpec],
+   * The platform resource generators. The dev-distribution generator plans each one from its [LayoutAssetSpec],
    * and the spec states whether the classic dev build runs it. See [PluginLayoutBuilder.withGeneratedPlatformResources].
    */
   @ApiStatus.Internal
@@ -410,18 +410,18 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     /**
      * A resource generator that states its own development layout, such as `CidrDependencyResource`.
-     * A generator that is code only takes the overload with a [DevPluginLayoutAssetSpec].
+     * A generator that is code only takes the overload with a [LayoutAssetSpec].
      */
-    fun <T> withGeneratedResources(resource: T) where T : ResourceGenerator, T : DevPluginLayoutAssetOwner {
+    fun <T> withGeneratedResources(resource: T) where T : ResourceGenerator, T : LayoutAssetOwner {
       layout.resourceGenerators += resource
     }
 
     /**
      * A resource generator. The dev-distribution generator plans it from [layoutAssetSpec], and
-     * [DevPluginLayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
-     * [DevPluginLayoutAssetSpec.runsInClassicDev] states whether the classic dev build also runs [generator].
+     * [LayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
+     * [LayoutAssetSpec.runsInClassicDev] states whether the classic dev build also runs [generator].
      */
-    fun withGeneratedResources(layoutAssetSpec: DevPluginLayoutAssetSpec, generator: ResourceGenerator) {
+    fun withGeneratedResources(layoutAssetSpec: LayoutAssetSpec, generator: ResourceGenerator) {
       layout.resourceGenerators += DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator)
     }
 
@@ -431,7 +431,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
      * filegroup of the directory in the package of the module. Production packs nothing for it.
      */
     @Internal
-    fun withDevDistSourceTree(tree: DevPluginLayoutAssetSource.ModuleDirectory) {
+    fun withDevDistSourceTree(tree: LayoutAssetSource.ModuleDirectory) {
       require(tree.exclusions.isEmpty()) { "A dev-distribution source tree states no exclusions: $tree" }
       layout.devDistSourceTrees += tree
     }
@@ -455,13 +455,13 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
       layout.resourceGenerators += LibraryResourceGenerator(libraryName = libraryName, targetPath = relativeOutputPath)
     }
 
-    fun withCustomAsset(layoutAssetSpec: DevPluginLayoutAssetSpec, lazySourceSupplier: (context: BuildContext) -> LazySource?) {
+    fun withCustomAsset(layoutAssetSpec: LayoutAssetSpec, lazySourceSupplier: (context: BuildContext) -> LazySource?) {
       layout.customAssets += DeclaredPluginLayoutCustomAsset(layoutAssetSpec, customAsset(platform = null, lazySourceSupplier))
     }
 
     fun withCustomAsset(
       platform: SupportedDistribution,
-      layoutAssetSpec: DevPluginLayoutAssetSpec,
+      layoutAssetSpec: LayoutAssetSpec,
       lazySourceSupplier: (context: BuildContext) -> LazySource?,
     ) {
       layout.customAssets += DeclaredPluginLayoutCustomAsset(layoutAssetSpec, customAsset(platform, lazySourceSupplier))
@@ -480,13 +480,13 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
     /**
      * A platform resource generator. The dev-distribution generator plans it from [layoutAssetSpec], and
-     * [DevPluginLayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
-     * [DevPluginLayoutAssetSpec.runsInClassicDev] states whether the classic dev build also runs [generator].
+     * [LayoutAssetSpec.OMITTED] states that the dev distribution leaves its files out.
+     * [LayoutAssetSpec.runsInClassicDev] states whether the classic dev build also runs [generator].
      * See [platformResourceGenerators].
      */
     fun withGeneratedPlatformResources(
       platform: SupportedDistribution,
-      layoutAssetSpec: DevPluginLayoutAssetSpec,
+      layoutAssetSpec: LayoutAssetSpec,
       generator: ResourceGenerator,
     ) {
       val declared = DeclaredPluginLayoutResourceGenerator(layoutAssetSpec, generator)
@@ -526,7 +526,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
     }
 
     fun withDeprecatedPostProcessor(
-      layoutAssetSpec: DevPluginLayoutAssetSpec,
+      layoutAssetSpec: LayoutAssetSpec,
       layoutPatcher: LayoutPatcher,
       pluginXmlPatcher: DeprecatedPostScrambleProcessor,
     ) {

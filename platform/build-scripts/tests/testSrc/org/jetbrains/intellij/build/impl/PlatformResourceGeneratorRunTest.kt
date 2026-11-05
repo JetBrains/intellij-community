@@ -9,8 +9,8 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dev.ClassicDevRun
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.dev.LayoutAsset
+import org.jetbrains.intellij.build.dev.LayoutAssetSpec
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.Mockito.mock
@@ -18,29 +18,29 @@ import org.mockito.Mockito.`when`
 import java.nio.file.Path
 
 /**
- * The one omission statement of a layout callback. [DevPluginLayoutAssetSpec.runsInClassicDev] decides whether the
+ * The one omission statement of a layout callback. [LayoutAssetSpec.runsInClassicDev] decides whether the
  * classic dev build runs a resource generator, a platform resource generator, a custom asset or a layout patcher.
  * A bundled build runs every callback.
  */
 class PlatformResourceGeneratorRunTest {
   private val distribution = SupportedDistribution(OsFamily.LINUX, JvmArchitecture.x64, LinuxLibcImpl.GLIBC)
 
-  private val declared = DevPluginLayoutAssetSpec(assets = listOf(DevPluginLayoutAsset(destination = "lib")))
+  private val declared = LayoutAssetSpec(assets = listOf(LayoutAsset(destination = "lib")))
 
   @Test
   fun `the spec derives the classic dev run from the omission`() {
-    assertThat(DevPluginLayoutAssetSpec.OMITTED.runsInClassicDev()).isFalse()
+    assertThat(LayoutAssetSpec.OMITTED.runsInClassicDev()).isFalse()
     assertThat(declared.runsInClassicDev()).isTrue()
-    assertThat(DevPluginLayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN).runsInClassicDev()).isTrue()
+    assertThat(LayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN).runsInClassicDev()).isTrue()
     assertThat(declared.copy(classicDev = ClassicDevRun.SKIP).runsInClassicDev()).isFalse()
   }
 
   @Test
   fun `the classic dev build selects the ordinary generators by their spec`() {
     val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
-      spec.withGeneratedResources(DevPluginLayoutAssetSpec.OMITTED) { _, _ -> }
+      spec.withGeneratedResources(LayoutAssetSpec.OMITTED) { _, _ -> }
       spec.withGeneratedResources(declared) { _, _ -> }
-      spec.withGeneratedResources(DevPluginLayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { _, _ -> }
+      spec.withGeneratedResources(LayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { _, _ -> }
       spec.withGeneratedResources(declared.copy(classicDev = ClassicDevRun.SKIP)) { _, _ -> }
       spec.withResourceTree(moduleName = "test.plugin", resourcePath = "resources", relativeOutputPath = "resources")
       spec.withLibraryResources(libraryName = "test.library", relativeOutputPath = "library")
@@ -85,7 +85,7 @@ class PlatformResourceGeneratorRunTest {
   @Test
   fun `an omitted platform generator makes the layout platform-specific`() {
     val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
-      spec.withGeneratedPlatformResources(platform = distribution, layoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED) { _, _ -> }
+      spec.withGeneratedPlatformResources(platform = distribution, layoutAssetSpec = LayoutAssetSpec.OMITTED) { _, _ -> }
     }
 
     assertThat(layout.hasPlatformSpecificResources).isTrue()
@@ -96,8 +96,8 @@ class PlatformResourceGeneratorRunTest {
   @Test
   fun `the classic dev build selects the layout patchers by their spec`() {
     val plain: LayoutPatcher = { _, _, _ -> }
-    val omitted = DeclaredPluginLayoutPatcher(DevPluginLayoutAssetSpec.OMITTED) { _, _, _ -> }
-    val omittedRun = DeclaredPluginLayoutPatcher(DevPluginLayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { _, _, _ -> }
+    val omitted = DeclaredPluginLayoutPatcher(LayoutAssetSpec.OMITTED) { _, _, _ -> }
+    val omittedRun = DeclaredPluginLayoutPatcher(LayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { _, _, _ -> }
     val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { }
     layout.withPatch(omitted)
     layout.withPatch(plain)
@@ -110,9 +110,9 @@ class PlatformResourceGeneratorRunTest {
   @Test
   fun `the classic dev build selects the custom assets by their spec`() {
     val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
-      spec.withCustomAsset(DevPluginLayoutAssetSpec.OMITTED) { null }
+      spec.withCustomAsset(LayoutAssetSpec.OMITTED) { null }
       spec.withCustomAsset(declared) { null }
-      spec.withCustomAsset(distribution, DevPluginLayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { null }
+      spec.withCustomAsset(distribution, LayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { null }
     }
     val all = layout.customAssets
 
@@ -122,9 +122,9 @@ class PlatformResourceGeneratorRunTest {
 
   private fun createPlatformLayout(invocations: MutableList<String>): PluginLayout {
     return PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
-      spec.withGeneratedPlatformResources(distribution, DevPluginLayoutAssetSpec.OMITTED) { _, _ -> invocations.add("omitted") }
+      spec.withGeneratedPlatformResources(distribution, LayoutAssetSpec.OMITTED) { _, _ -> invocations.add("omitted") }
       spec.withGeneratedPlatformResources(distribution, declared) { _, _ -> invocations.add("declared") }
-      spec.withGeneratedPlatformResources(distribution, DevPluginLayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { _, _ ->
+      spec.withGeneratedPlatformResources(distribution, LayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)) { _, _ ->
         invocations.add("omitted-run")
       }
       spec.withGeneratedPlatformResources(distribution, declared.copy(classicDev = ClassicDevRun.SKIP)) { _, _ ->

@@ -9,10 +9,10 @@ import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicVariant
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.entry
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetPreparation
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
+import org.jetbrains.intellij.build.dev.LayoutAsset
+import org.jetbrains.intellij.build.dev.LayoutAssetPreparation
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.devDist.JarWriterRecipe
@@ -300,7 +300,7 @@ class DevDistSimplePackagingTest {
       inputs = listOf(DevPluginReference(plugin)),
       output = output,
       manifest = "keep",
-      layoutAssets = DevPluginLayoutAssetPreparation(format = "tree", root = "jcef", assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0)))),
+      layoutAssets = LayoutAssetPreparation(format = "tree", root = "jcef", assets = listOf(LayoutAsset(destination = "", sources = listOf(0)))),
     )
     val assets = listOf(mainJar(), PluginPackingAsset(destination = "jcef", inputs = listOf(output), kind = "tree", classPath = false))
 

@@ -6,7 +6,7 @@ package com.intellij.platform.buildScripts.devDistGenerator
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
 import org.jetbrains.intellij.build.dev.devBuildPathIdentity
 import org.jetbrains.intellij.build.impl.DevPlatformEntryPatch
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -280,14 +280,14 @@ fun checkSplitDistributionsExtend(upstream: DevDistHalf, half: DevDistHalf) {
 /**
  * The binder of the closed layout asset sources of a half.
  *
- * A closed source is a [DevPluginLayoutAssetSource] that only a product of one half reads: the debugger egg, the Jupyter
+ * A closed source is a [LayoutAssetSource] that only a product of one half reads: the debugger egg, the Jupyter
  * frontend and a native dependency archive. The binder binds each one to a raw input of the plan, and it writes the
  * targets that produce the input. A binder that cannot bind a source fails, and the message names the source.
  */
 @ApiStatus.Internal
 interface DevDistAssetBinder {
   /** The raw input that [source] reads. The plan refers to it by its ID, its file name and its kind. */
-  fun bind(source: DevPluginLayoutAssetSource, index: DevDistBazelIndex): DevDistPluginRawInput
+  fun bind(source: LayoutAssetSource, index: DevDistBazelIndex): DevDistPluginRawInput
 
   /** The statements that the targets of the sources of [requests] add to the `dev` sections. */
   fun sectionStatements(requests: List<DevDistPluginRequest>, index: DevDistBazelIndex): DevDistHalfSectionStatements
@@ -306,7 +306,7 @@ class DevDistHalfSectionStatements(
 
 /** A binder that binds no closed source. The half of such a binder has no product that reads one. */
 internal class RefusingDevDistAssetBinder(private val halfName: String) : DevDistAssetBinder {
-  override fun bind(source: DevPluginLayoutAssetSource, index: DevDistBazelIndex): DevDistPluginRawInput {
+  override fun bind(source: LayoutAssetSource, index: DevDistBazelIndex): DevDistPluginRawInput {
     throw DevDistUnplannableLayoutException("The $halfName half cannot bind the layout source $source")
   }
 

@@ -5,8 +5,8 @@ package com.intellij.platform.buildScripts.devDistGenerator
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicVariant
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
 import org.jetbrains.intellij.build.dev.DevPluginPreparationRecipe
+import org.jetbrains.intellij.build.dev.LayoutAssetOwner
 import org.jetbrains.intellij.build.dev.snapshotDevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.snapshotDevPluginPreparationRecipe
 import org.jetbrains.intellij.build.devDist.CanonicalJarRecipe
@@ -175,7 +175,7 @@ private fun canonicalLayoutValue(value: Any?): Any? {
       value
     }
     else {
-      LayoutCallbackKey(value.javaClass, (value as? DevPluginLayoutAssetOwner)?.devPluginLayoutAssetSpec)
+      LayoutCallbackKey(value.javaClass, (value as? LayoutAssetOwner)?.layoutAssetSpec)
     }
   }
 }

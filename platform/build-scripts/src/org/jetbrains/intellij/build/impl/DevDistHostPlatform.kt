@@ -22,6 +22,6 @@ fun devDistHostPlatformArch(arch: JvmArchitecture): String = when (arch) {
 
 /**
  * The `HOST_PLATFORMS` entry of a dev distribution for [os] and [arch], such as `darwin_aarch64`. A layout names it
- * in `DevPluginLayoutAsset.hostPlatforms` when an asset serves one host platform only.
+ * in `LayoutAsset.hostPlatforms` when an asset serves one host platform only.
  */
 fun devDistHostPlatform(os: OsFamily, arch: JvmArchitecture): String = "${devDistHostPlatformOs(os)}_${devDistHostPlatformArch(arch)}"

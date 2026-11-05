@@ -2,11 +2,11 @@
 package com.intellij.platform.buildScripts.devDistGenerator
 
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
 import org.jetbrains.intellij.build.dev.DevPluginResourceExclusions
+import org.jetbrains.intellij.build.dev.LayoutAsset
+import org.jetbrains.intellij.build.dev.LayoutAssetOwner
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
+import org.jetbrains.intellij.build.dev.LayoutAssetSpec
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.util.JpsPathUtil
@@ -102,12 +102,12 @@ class DevDistResourceResolverTest {
     checkout: Path,
     resourcePath: String,
     exclusions: DevPluginResourceExclusions = DevPluginResourceExclusions.NONE,
-  ) = generateDevPluginLayoutAssetBindings(
+  ) = generateLayoutAssetBindings(
     key = "resource-generator:0",
-    owner = object : DevPluginLayoutAssetOwner {
-      override val devPluginLayoutAssetSpec = DevPluginLayoutAssetSpec(
-        sources = listOf(DevPluginLayoutAssetSource.ModuleDirectory("intellij.x", resourcePath, exclusions)),
-        assets = listOf(DevPluginLayoutAsset(destination = "resources", sources = listOf(0))),
+    owner = object : LayoutAssetOwner {
+      override val layoutAssetSpec = LayoutAssetSpec(
+        sources = listOf(LayoutAssetSource.ModuleDirectory("intellij.x", resourcePath, exclusions)),
+        assets = listOf(LayoutAsset(destination = "resources", sources = listOf(0))),
       )
     },
     requestedFormat = "tree",

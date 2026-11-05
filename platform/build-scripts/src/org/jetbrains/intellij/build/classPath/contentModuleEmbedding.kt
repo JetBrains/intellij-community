@@ -33,7 +33,7 @@ import org.jetbrains.intellij.build.JarPackagerDependencyHelper
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.dev.ClassicDevRun
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.dev.LayoutAssetSpec
 import org.jetbrains.intellij.build.findFileInModuleDependenciesRecursive
 import org.jetbrains.intellij.build.findFileInModuleLibraryDependencies
 import org.jetbrains.intellij.build.findUnprocessedDescriptorContent
@@ -121,7 +121,7 @@ internal fun embedContentModules(
 }
 
 /** The dev distribution states the embedded product descriptor patch as an omitted slot. The classic dev build runs the patch. */
-private val EMBEDDED_PRODUCT_DESCRIPTOR_DEV_SPEC: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)
+private val EMBEDDED_PRODUCT_DESCRIPTOR_DEV_SPEC: LayoutAssetSpec = LayoutAssetSpec.OMITTED.copy(classicDev = ClassicDevRun.RUN)
 
 /**
  * Instructs the build scripts to resolve xi:include tags and inline content modules for the core plugin descriptor of a separate product embedded in an IDE.

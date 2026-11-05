@@ -6,7 +6,7 @@ import org.jetbrains.intellij.build.BuildHttpSession
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dev.ClassicDevRun
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.dev.LayoutAssetSpec
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.resolveAndExtractToCacheLocation
 import java.nio.file.Files
@@ -62,7 +62,7 @@ private val ATTACH_BINARIES_TREES: List<AttachBinariesTree> = listOf(
  * [setupPythonAttachBinaries], so the classic dev build also runs this: it reads the helpers from the checkout.
  */
 fun PluginLayout.PluginLayoutSpec.withBundledPydevdNativeDeps() {
-  withGeneratedResources(DevPluginLayoutAssetSpec(omitted = true, classicDev = ClassicDevRun.RUN)) { targetDir, context ->
+  withGeneratedResources(LayoutAssetSpec(omitted = true, classicDev = ClassicDevRun.RUN)) { targetDir, context ->
     copyPythonAttachBinaries(targetDir, context)
   }
 }

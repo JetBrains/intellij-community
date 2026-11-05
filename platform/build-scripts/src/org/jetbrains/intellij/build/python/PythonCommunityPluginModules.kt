@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.python
 
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 object PythonCommunityPluginModules {
@@ -16,7 +16,7 @@ object PythonCommunityPluginModules {
    * Python plugin reads the whole tree, so the community Python layout declares it as a dev-distribution source tree.
    */
   @JvmField
-  val pydevSourceTree: DevPluginLayoutAssetSource.ModuleDirectory = DevPluginLayoutAssetSource.ModuleDirectory(
+  val pydevSourceTree: LayoutAssetSource.ModuleDirectory = LayoutAssetSource.ModuleDirectory(
     moduleName = "intellij.python.helpers",
     path = "pydev",
   )

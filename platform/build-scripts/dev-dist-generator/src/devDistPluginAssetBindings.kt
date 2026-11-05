@@ -6,13 +6,13 @@ import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPreparat
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPreparedEffect
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetPreparation
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetTransform
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
+import org.jetbrains.intellij.build.dev.LayoutAsset
+import org.jetbrains.intellij.build.dev.LayoutAssetOwner
+import org.jetbrains.intellij.build.dev.LayoutAssetPreparation
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
+import org.jetbrains.intellij.build.dev.LayoutAssetTransform
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
 import org.jetbrains.intellij.build.impl.LibraryResourceGenerator
 import org.jetbrains.intellij.build.impl.ModuleResourceTree
@@ -56,10 +56,10 @@ fun generateDevPluginAssetBindings(
   val hostPlatform = request.variant.distribution?.let(::devDistHostPlatform)
 
   fun addCallback(key: String, callback: Any, format: String) {
-    val owner = callback as? DevPluginLayoutAssetOwner ?: throw DevDistUnplannableLayoutException(
+    val owner = callback as? LayoutAssetOwner ?: throw DevDistUnplannableLayoutException(
       "Plugin '${layout.mainModule}' has an undeclared layout callback '$key': ${callback.javaClass.name}"
     )
-    val bindings = generateDevPluginLayoutAssetBindings(key, owner, format, index, outputProvider, binder, resources, hostPlatform)
+    val bindings = generateLayoutAssetBindings(key, owner, format, index, outputProvider, binder, resources, hostPlatform)
     callbackFacts = mergeGeneratedPreparationFacts(callbackFacts, bindings.facts)
     callbackCatalogueFacts = mergeGeneratedCatalogueFacts(callbackCatalogueFacts, bindings.catalogueFacts)
     operations.addAll(bindings.operations)
@@ -77,7 +77,7 @@ fun generateDevPluginAssetBindings(
     }
     for ((assetIndex, asset) in layout.customAssets.filter { it.platformSpecific == distribution }.withIndex()) {
       val key = "platform-custom-asset:$assetIndex"
-      val owner = asset as? DevPluginLayoutAssetOwner ?: throw DevDistUnplannableLayoutException(
+      val owner = asset as? LayoutAssetOwner ?: throw DevDistUnplannableLayoutException(
         "Plugin '${layout.mainModule}' has an undeclared layout callback '$key': ${asset.javaClass.name}"
       )
       addCallback(key, owner, "tree")
@@ -99,7 +99,7 @@ fun generateDevPluginAssetBindings(
 
   for ((assetIndex, asset) in layout.customAssets.withIndex()) {
     if (asset.platformSpecific != null) continue
-    val owner = asset as? DevPluginLayoutAssetOwner ?: error(
+    val owner = asset as? LayoutAssetOwner ?: error(
       "Plugin '${layout.mainModule}' has an undeclared layout callback 'custom-asset:$assetIndex': ${asset.javaClass.name}",
     )
     addCallback("custom-asset:$assetIndex", owner, customAssetPreparationFormat(owner))
@@ -142,14 +142,14 @@ fun generateDevPluginAssetBindings(
     if (candidate is ModuleResourceTree) {
       // A declared tree is a plain copy of its directory, or of the filtered filegroup when it states exclusions.
       // It joins the `withResource*` directories, so a second tree over its destination is refused as theirs is.
-      val spec = candidate.devPluginLayoutAssetSpec
-      val source = spec.sources.single() as DevPluginLayoutAssetSource.ModuleDirectory
+      val spec = candidate.layoutAssetSpec
+      val source = spec.sources.single() as LayoutAssetSource.ModuleDirectory
       val inputId = "module-resource:$key:0:source"
       additionalInputs.add(moduleDirectoryRawInput(id = inputId, key = key, mainModule = layout.mainModule, source = source, index = index, resources = resources))
       directResourceTrees.add(DirectResourceTree(key, spec.assets.single().destination, inputId))
       continue
     }
-    if (candidate is DevPluginLayoutAssetOwner) {
+    if (candidate is LayoutAssetOwner) {
       addCallback(key, candidate, "tree")
       continue
     }
@@ -188,10 +188,10 @@ fun generateDevPluginAssetBindings(
       inputs = listOf(DevPluginReference(inputId)),
       output = output,
       manifest = "keep",
-      layoutAssets = DevPluginLayoutAssetPreparation(
+      layoutAssets = LayoutAssetPreparation(
         format = "tree",
         root = generator.targetPath,
-        assets = listOf(DevPluginLayoutAsset(destination = "", sources = listOf(0), transform = DevPluginLayoutAssetTransform.archiveTree())),
+        assets = listOf(LayoutAsset(destination = "", sources = listOf(0), transform = LayoutAssetTransform.archiveTree())),
       ),
     )
     effects.put(
@@ -242,8 +242,8 @@ private fun bindDirectResourceTrees(
 }
 
 /** A custom asset of the main jar: a tree when it extracts an archive, else the entries the jar takes. */
-private fun customAssetPreparationFormat(owner: DevPluginLayoutAssetOwner): String {
-  return if (owner.devPluginLayoutAssetSpec.assets.any { it.transform?.kind == "archive-tree" }) "tree" else "entries"
+private fun customAssetPreparationFormat(owner: LayoutAssetOwner): String {
+  return if (owner.layoutAssetSpec.assets.any { it.transform?.kind == "archive-tree" }) "tree" else "entries"
 }
 
 private fun mergeGeneratedCatalogueFacts(

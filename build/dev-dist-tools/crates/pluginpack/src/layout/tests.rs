@@ -118,7 +118,7 @@ fn tar_gz_reads_only_the_first_gzip_member() {
     require_absent(written.output.join("payload/second.txt"));
 }
 
-/// One case per executor case of `DevPluginLayoutAssetPreparationTest`, under the same name.
+/// One case per executor case of `LayoutAssetPreparationTest`, under the same name.
 #[test]
 fn archive_mappings_select_the_first_matching_candidate_and_preserve_the_file_mode() {
     let root = temp();

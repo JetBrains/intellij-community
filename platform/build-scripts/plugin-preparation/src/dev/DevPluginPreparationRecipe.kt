@@ -33,7 +33,7 @@ data class DevPluginPreparationOperation(
   @JvmField val output: String,
   @JvmField val manifest: String,
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val filter: String = "",
-  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val layoutAssets: DevPluginLayoutAssetPreparation? = null,
+  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val layoutAssets: LayoutAssetPreparation? = null,
 )
 
 /** The layout-assets transforms the remainder packer executes, with the plain copy of a `null` transform. */
@@ -59,7 +59,7 @@ fun isPackerExecutedOperation(operation: DevPluginPreparationOperation): Boolean
  * An `entries` output is a prepared jar source, which the jar recipe validation checks.
  */
 @ApiStatus.Internal
-fun validateDevPluginLayoutAssetConsumers(operation: DevPluginPreparationOperation, plan: PluginPackingPlan) {
+fun validateLayoutAssetConsumers(operation: DevPluginPreparationOperation, plan: PluginPackingPlan) {
   val layoutAssets = requireNotNull(operation.layoutAssets)
   if (layoutAssets.format == "entries") return
   val consumers = plan.assets.filter { operation.output in it.asset.inputs }
@@ -96,7 +96,7 @@ fun validatePreparationOperation(operation: DevPluginPreparationOperation, versi
   require(operation.manifest == "keep" && operation.filter.isEmpty()) {
     "A layout-assets operation requires its original layout policy"
   }
-  validateDevPluginLayoutAssetPreparation(requireNotNull(operation.layoutAssets) { "A layout-assets operation requires layout assets" }, operation.inputs)
+  validateLayoutAssetPreparation(requireNotNull(operation.layoutAssets) { "A layout-assets operation requires layout assets" }, operation.inputs)
 }
 
 /** Copies mutable recipe values before they cross the generation and execution boundary. */

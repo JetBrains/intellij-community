@@ -6,7 +6,7 @@ import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.dev.LayoutAssetSpec
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.archiveDir
 import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
@@ -25,7 +25,7 @@ const val BUILT_IN_HELP_MODULE_NAME: String = "intellij.builtInHelp"
  * The dev distribution omits the help assets jar. A `HelpIndexer` run builds it from `help/plugin-resources`, which only
  * a help build fills, and only the non-bundled plugin step builds this plugin.
  */
-private val HELP_ASSETS_DEV_SPEC: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec.OMITTED
+private val HELP_ASSETS_DEV_SPEC: LayoutAssetSpec = LayoutAssetSpec.OMITTED
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Pair<PluginLayout, String>? {
   val productName = context.applicationInfo.fullProductName

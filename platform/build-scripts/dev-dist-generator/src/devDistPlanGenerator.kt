@@ -28,7 +28,7 @@ import org.jetbrains.intellij.build.buildSpan
 import org.jetbrains.intellij.build.classPath.bundledPluginsWithIdeaClassloader
 import org.jetbrains.intellij.build.classPath.platformLibraryJarDestination
 import org.jetbrains.intellij.build.classPath.splitDistributionCoreClassPathJarNames
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
 import org.jetbrains.intellij.build.devDist.isNativeTreeAsset
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.jetbrains.intellij.build.impl.DevPlatformPatchOwner
@@ -2254,7 +2254,7 @@ internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductPr
           "A platform dist file on $hostPlatform must be one archive-tree asset with no strip count: ${asset.destination}"
         }
         require(asset.mode != 0) { "A platform dist file on $hostPlatform must state its mode: ${asset.destination}" }
-        val source = requireNotNull(spec.sources.get(asset.sources.single()) as? DevPluginLayoutAssetSource.BazelTarget) {
+        val source = requireNotNull(spec.sources.get(asset.sources.single()) as? LayoutAssetSource.BazelTarget) {
           "A platform dist file on $hostPlatform must read a download repository as a Bazel target: ${asset.destination}"
         }
         val repository = requireNotNull(DOWNLOAD_ARCHIVE_LABEL.matchEntire(source.label)?.groupValues?.get(1)) {

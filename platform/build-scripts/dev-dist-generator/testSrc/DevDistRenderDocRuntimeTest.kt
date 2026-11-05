@@ -5,14 +5,14 @@ import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPreparat
 import com.intellij.platform.buildScripts.pluginModelTool.PluginSymbolicPreparedEffect
 import com.intellij.util.io.jarFile
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetPreparation
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetTransform
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginReference
+import org.jetbrains.intellij.build.dev.LayoutAsset
+import org.jetbrains.intellij.build.dev.LayoutAssetOwner
+import org.jetbrains.intellij.build.dev.LayoutAssetPreparation
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
+import org.jetbrains.intellij.build.dev.LayoutAssetSpec
+import org.jetbrains.intellij.build.dev.LayoutAssetTransform
 import org.jetbrains.intellij.build.devDist.PluginPackingAsset
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.jetbrains.jps.model.JpsElementFactory
@@ -42,13 +42,13 @@ class DevDistRenderDocRuntimeTest {
       inputs = listOf(DevPluginReference(libraryLabel)),
       output = output,
       manifest = "keep",
-      layoutAssets = DevPluginLayoutAssetPreparation(
+      layoutAssets = LayoutAssetPreparation(
         format = "tree",
         root = "runtime",
-        assets = listOf(DevPluginLayoutAsset(
+        assets = listOf(LayoutAsset(
           destination = "",
           sources = listOf(0),
-          transform = DevPluginLayoutAssetTransform.archiveTree(stripComponents = 1, includes = listOf("runtime/**")),
+          transform = LayoutAssetTransform.archiveTree(stripComponents = 1, includes = listOf("runtime/**")),
         )),
       ),
     )
@@ -95,12 +95,12 @@ class DevDistRenderDocRuntimeTest {
     libraryName: String,
     libraryLabel: String,
     libraryRoots: Boolean = true,
-  ) = generateDevPluginLayoutAssetBindings(
+  ) = generateLayoutAssetBindings(
     key = KEY,
-    owner = object : DevPluginLayoutAssetOwner {
-      override val devPluginLayoutAssetSpec: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec(
-        sources = listOf(DevPluginLayoutAssetSource.ModuleLibrary(module = LIBRARY_MODULE, name = libraryName)),
-        assets = listOf(DevPluginLayoutAsset(destination = "runtime", sources = listOf(0), transform = DevPluginLayoutAssetTransform.archiveTree(stripComponents = 1, includes = listOf("runtime/**")))),
+    owner = object : LayoutAssetOwner {
+      override val layoutAssetSpec: LayoutAssetSpec = LayoutAssetSpec(
+        sources = listOf(LayoutAssetSource.ModuleLibrary(module = LIBRARY_MODULE, name = libraryName)),
+        assets = listOf(LayoutAsset(destination = "runtime", sources = listOf(0), transform = LayoutAssetTransform.archiveTree(stripComponents = 1, includes = listOf("runtime/**")))),
       )
     },
     requestedFormat = "tree",

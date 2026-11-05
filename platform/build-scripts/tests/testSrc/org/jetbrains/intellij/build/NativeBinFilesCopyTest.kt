@@ -3,11 +3,11 @@ package org.jetbrains.intellij.build
 
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetMapping
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetTransform
+import org.jetbrains.intellij.build.dev.LayoutAsset
+import org.jetbrains.intellij.build.dev.LayoutAssetMapping
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
+import org.jetbrains.intellij.build.dev.LayoutAssetSpec
+import org.jetbrains.intellij.build.dev.LayoutAssetTransform
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.copyDeclaredOsSpecificFiles
 import org.jetbrains.intellij.build.impl.copyDistFiles
@@ -151,13 +151,13 @@ class NativeBinFilesCopyTest {
 }
 
 /** One executable named [fileName] out of a test archive, at `lib/test/<fileName>`: the smallest valid platform dist file declaration. */
-internal fun testDistFileSpec(fileName: String): DevPluginLayoutAssetSpec {
-  return DevPluginLayoutAssetSpec(
-    sources = listOf(DevPluginLayoutAssetSource.BazelTarget(label = "@dev_launch_test//:files", kind = "archive", fileName = "test.tar.gz")),
-    assets = listOf(DevPluginLayoutAsset(
+internal fun testDistFileSpec(fileName: String): LayoutAssetSpec {
+  return LayoutAssetSpec(
+    sources = listOf(LayoutAssetSource.BazelTarget(label = "@dev_launch_test//:files", kind = "archive", fileName = "test.tar.gz")),
+    assets = listOf(LayoutAsset(
       destination = "lib/test",
       sources = listOf(0),
-      transform = DevPluginLayoutAssetTransform.archiveTree(mappings = listOf(DevPluginLayoutAssetMapping(pattern = fileName))),
+      transform = LayoutAssetTransform.archiveTree(mappings = listOf(LayoutAssetMapping(pattern = fileName))),
       mode = 493,
     )),
   )

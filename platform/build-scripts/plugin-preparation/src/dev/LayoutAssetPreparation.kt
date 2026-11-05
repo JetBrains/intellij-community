@@ -13,13 +13,13 @@ import java.nio.file.FileSystems
  * repository, so a version bump changes no plan file.
  */
 @ApiStatus.Internal
-sealed interface DevPluginLayoutAssetSource {
+sealed interface LayoutAssetSource {
   /** A checkout directory of a module. The generator gives a directory with [exclusions] a filegroup of its own. */
   data class ModuleDirectory(
     @JvmField val moduleName: String,
     @JvmField val path: String,
     @JvmField val exclusions: DevPluginResourceExclusions = DevPluginResourceExclusions.NONE,
-  ) : DevPluginLayoutAssetSource
+  ) : LayoutAssetSource
 
   /** A debugger egg prepared in Kotlin from two raw checkout directories. Paths are relative to the project root. */
   data class DebuggerEgg(
@@ -29,7 +29,7 @@ sealed interface DevPluginLayoutAssetSource {
     @JvmField val metadataPath: String,
     @JvmField val buildNumber: String,
     @JvmField val fileName: String,
-  ) : DevPluginLayoutAssetSource
+  ) : LayoutAssetSource
 
   /** Declares Jupyter configuration and frontend inputs. Paths are relative to the project root. */
   data class JupyterFrontend(
@@ -46,7 +46,7 @@ sealed interface DevPluginLayoutAssetSource {
     @JvmField val licenseMetadataFileName: String,
     @JvmField val skipStep: String,
     @JvmField val operation: JupyterFrontendOperation,
-  ) : DevPluginLayoutAssetSource
+  ) : LayoutAssetSource
 
   data class BazelTarget(
     @JvmField val label: String,
@@ -54,16 +54,16 @@ sealed interface DevPluginLayoutAssetSource {
     /** A concrete name without a version. */
     @JvmField val fileName: String,
     @JvmField val prefix: String? = null,
-  ) : DevPluginLayoutAssetSource
+  ) : LayoutAssetSource
 
   data class ProjectLibrary(
     @JvmField val name: String,
-  ) : DevPluginLayoutAssetSource
+  ) : LayoutAssetSource
 
   data class ModuleLibrary(
     @JvmField val module: String,
     @JvmField val name: String,
-  ) : DevPluginLayoutAssetSource
+  ) : LayoutAssetSource
 
   /**
    * One CIDR dependency archive, as a `<name>-dependencies.json` file under `CIDR/` declares it for one platform and architecture.
@@ -78,7 +78,7 @@ sealed interface DevPluginLayoutAssetSource {
     @JvmField val name: String,
     @JvmField val platform: String,
     @JvmField val arch: String,
-  ) : DevPluginLayoutAssetSource
+  ) : LayoutAssetSource
 
   /**
    * A directory below `out/bundle-plugins` that a local backend build may create. The dev distribution declares its
@@ -86,7 +86,7 @@ sealed interface DevPluginLayoutAssetSource {
    */
   data class OptionalLocalDirectory(
     @JvmField val path: String,
-  ) : DevPluginLayoutAssetSource
+  ) : LayoutAssetSource
 }
 
 /**
@@ -162,9 +162,9 @@ enum class ClassicDevRun {
  * callback, see [runsInClassicDev].
  */
 @ApiStatus.Internal
-data class DevPluginLayoutAssetSpec(
-  @JvmField val sources: List<DevPluginLayoutAssetSource> = emptyList(),
-  @JvmField val assets: List<DevPluginLayoutAsset> = emptyList(),
+data class LayoutAssetSpec(
+  @JvmField val sources: List<LayoutAssetSource> = emptyList(),
+  @JvmField val assets: List<LayoutAsset> = emptyList(),
   @JvmField val omitted: Boolean = false,
   @JvmField val classicDev: ClassicDevRun = ClassicDevRun.DERIVED,
 ) {
@@ -185,14 +185,14 @@ data class DevPluginLayoutAssetSpec(
 
   companion object {
     @JvmField
-    val OMITTED: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec(omitted = true)
+    val OMITTED: LayoutAssetSpec = LayoutAssetSpec(omitted = true)
   }
 }
 
 /** Exposes the typed development layout while its wrapper retains the production callback. */
 @ApiStatus.Internal
-interface DevPluginLayoutAssetOwner {
-  val devPluginLayoutAssetSpec: DevPluginLayoutAssetSpec
+interface LayoutAssetOwner {
+  val layoutAssetSpec: LayoutAssetSpec
 }
 
 /**
@@ -208,10 +208,10 @@ interface DevPluginLayoutAssetOwner {
 @ApiStatus.Internal
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-data class DevPluginLayoutAsset(
+data class LayoutAsset(
   @JvmField val destination: String,
   @JvmField val sources: List<Int> = emptyList(),
-  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val transform: DevPluginLayoutAssetTransform? = null,
+  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val transform: LayoutAssetTransform? = null,
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val mode: Int = 0,
   @Transient @JvmField val hostPlatforms: List<String> = emptyList(),
 )
@@ -219,7 +219,7 @@ data class DevPluginLayoutAsset(
 /** One ordered path mapping. The first contribution to a destination wins. */
 @ApiStatus.Internal
 @Serializable
-data class DevPluginLayoutAssetMapping(
+data class LayoutAssetMapping(
   @JvmField val pattern: String = "**",
   @JvmField val stripComponents: Int = 0,
   @JvmField val destination: String = "",
@@ -237,21 +237,21 @@ data class DevPluginLayoutAssetMapping(
 @ApiStatus.Internal
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-data class DevPluginLayoutAssetTransform(
+data class LayoutAssetTransform(
   @JvmField val kind: String,
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val stripComponents: Int = 0,
-  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val mappings: List<DevPluginLayoutAssetMapping> = emptyList(),
+  @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val mappings: List<LayoutAssetMapping> = emptyList(),
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val includes: List<String> = emptyList(),
   @EncodeDefault(EncodeDefault.Mode.NEVER) @JvmField val executables: List<String> = emptyList(),
 ) {
   companion object {
     fun archiveTree(
       stripComponents: Int = 0,
-      mappings: List<DevPluginLayoutAssetMapping> = emptyList(),
+      mappings: List<LayoutAssetMapping> = emptyList(),
       includes: List<String> = emptyList(),
       executables: List<String> = emptyList(),
-    ): DevPluginLayoutAssetTransform {
-      return DevPluginLayoutAssetTransform(
+    ): LayoutAssetTransform {
+      return LayoutAssetTransform(
         kind = "archive-tree",
         stripComponents = stripComponents,
         mappings = mappings,
@@ -265,17 +265,17 @@ data class DevPluginLayoutAssetTransform(
 /** The concrete operation payload after the generator resolves semantic sources. */
 @ApiStatus.Internal
 @Serializable
-data class DevPluginLayoutAssetPreparation(
+data class LayoutAssetPreparation(
   @JvmField val format: String,
   @JvmField val root: String = "",
-  @JvmField val assets: List<DevPluginLayoutAsset>,
+  @JvmField val assets: List<LayoutAsset>,
 )
 
 /**
  * Validates one layout-assets payload at generation time. The packer ports these rules to `plan.rs` of the `pluginpack` crate.
  */
-internal fun validateDevPluginLayoutAssetPreparation(
-  preparation: DevPluginLayoutAssetPreparation,
+internal fun validateLayoutAssetPreparation(
+  preparation: LayoutAssetPreparation,
   inputs: List<DevPluginReference>,
 ) {
   require(preparation.format in setOf("entries", "tree")) { "Unknown layout asset format '${preparation.format}'" }

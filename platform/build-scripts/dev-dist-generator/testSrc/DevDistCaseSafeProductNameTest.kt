@@ -5,7 +5,7 @@ package com.intellij.platform.buildScripts.devDistGenerator
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatCode
 import org.assertj.core.api.Assertions.assertThatThrownBy
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
+import org.jetbrains.intellij.build.dev.LayoutAssetSource
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -80,7 +80,7 @@ class DevDistCaseSafeProductNameTest {
     assertThat(CommunityDevDistHalf.capabilities).isEmpty()
     assertThat(CommunityDevDistHalf.embeddedFrontend).isNull()
     assertThat(CommunityDevDistHalf.platformPatches).isNull()
-    val source = DevPluginLayoutAssetSource.CidrDependency(name = "cmake", platform = "mac", arch = "aarch64")
+    val source = LayoutAssetSource.CidrDependency(name = "cmake", platform = "mac", arch = "aarch64")
     val index = DevDistBazelIndex(
       targets = BazelTargetsInfo.TargetsFile(modules = emptyMap(), projectLibraries = emptyMap(), pluginDistributionTargets = emptyMap()),
       projectRoot = Path.of("/nonexistent"),

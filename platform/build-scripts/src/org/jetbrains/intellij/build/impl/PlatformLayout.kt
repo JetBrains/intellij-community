@@ -12,7 +12,7 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DistFile
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSpec
+import org.jetbrains.intellij.build.dev.LayoutAssetSpec
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_BACKEND_JAR
 import java.nio.file.Path
 
@@ -45,7 +45,7 @@ sealed interface PlatformDistFilePlacement {
  */
 @ApiStatus.Internal
 class PlatformDistFileDeclaration(
-  @JvmField val layoutAssetSpec: DevPluginLayoutAssetSpec,
+  @JvmField val layoutAssetSpec: LayoutAssetSpec,
   @JvmField val placement: PlatformDistFilePlacement,
 )
 
@@ -97,7 +97,7 @@ class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheCont
   fun withDistFiles(
     os: OsFamily,
     arch: JvmArchitecture,
-    layoutAssetSpec: DevPluginLayoutAssetSpec,
+    layoutAssetSpec: LayoutAssetSpec,
     distFiles: (BuildContext) -> List<DistFile>,
   ) {
     declareDistFiles(os, arch, layoutAssetSpec, PlatformDistFilePlacement.RegisteredDistFiles(distFiles))
@@ -113,13 +113,13 @@ class PlatformLayout(@JvmField val descriptorCacheContainer: DescriptorCacheCont
   fun withOsSpecificFiles(
     os: OsFamily,
     arch: JvmArchitecture,
-    layoutAssetSpec: DevPluginLayoutAssetSpec,
+    layoutAssetSpec: LayoutAssetSpec,
     copy: (Path, BuildContext) -> List<Path>,
   ) {
     declareDistFiles(os, arch, layoutAssetSpec, PlatformDistFilePlacement.OsSpecificFiles(copy))
   }
 
-  private fun declareDistFiles(os: OsFamily, arch: JvmArchitecture, layoutAssetSpec: DevPluginLayoutAssetSpec, placement: PlatformDistFilePlacement) {
+  private fun declareDistFiles(os: OsFamily, arch: JvmArchitecture, layoutAssetSpec: LayoutAssetSpec, placement: PlatformDistFilePlacement) {
     require(!layoutAssetSpec.omitted && layoutAssetSpec.assets.isNotEmpty()) {
       "A platform dist file declaration for ${os.osId}/${arch.name} must name its assets"
     }

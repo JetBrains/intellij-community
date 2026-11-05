@@ -17,14 +17,14 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.dev.DEV_PLUGIN_PREPARATION_FORMAT
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAsset
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetMapping
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetOwner
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetPreparation
-import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetTransform
 import org.jetbrains.intellij.build.dev.DevPluginPreparationOperation
 import org.jetbrains.intellij.build.dev.DevPluginPreparationRecipe
 import org.jetbrains.intellij.build.dev.DevPluginReference
+import org.jetbrains.intellij.build.dev.LayoutAsset
+import org.jetbrains.intellij.build.dev.LayoutAssetMapping
+import org.jetbrains.intellij.build.dev.LayoutAssetOwner
+import org.jetbrains.intellij.build.dev.LayoutAssetPreparation
+import org.jetbrains.intellij.build.dev.LayoutAssetTransform
 import org.jetbrains.intellij.build.dev.devBuildPathIdentity
 import org.jetbrains.intellij.build.devDist.JarSourceRecipe
 import org.jetbrains.intellij.build.impl.LibraryEntriesLayoutPatcher
@@ -511,8 +511,8 @@ private fun generatedLayoutPatcherFacts(layout: PluginLayout, boundSlots: Set<St
   val omittedSlots = layout.patchers.withIndex().mapNotNullTo(LinkedHashSet()) { (index, patcher) ->
     val key = "layout-patcher:$index"
     if (key in boundSlots) return@mapNotNullTo null
-    val owner = patcher as? DevPluginLayoutAssetOwner ?: return@mapNotNullTo null
-    require(owner.devPluginLayoutAssetSpec.omitted) { "Layout patcher $index has an unsupported development asset declaration" }
+    val owner = patcher as? LayoutAssetOwner ?: return@mapNotNullTo null
+    require(owner.layoutAssetSpec.omitted) { "Layout patcher $index has an unsupported development asset declaration" }
     key
   }
   return PluginSymbolicPreparationFacts(omittedSlots = omittedSlots)
@@ -611,12 +611,12 @@ private fun libraryEntriesLayoutBinding(
     inputs = listOf(DevPluginReference(input)),
     output = output,
     manifest = "keep",
-    layoutAssets = DevPluginLayoutAssetPreparation(
+    layoutAssets = LayoutAssetPreparation(
       format = "entries",
-      assets = listOf(DevPluginLayoutAsset(
+      assets = listOf(LayoutAsset(
         destination = "",
         sources = listOf(0),
-        transform = DevPluginLayoutAssetTransform.archiveTree(mappings = listOf(DevPluginLayoutAssetMapping(pattern = "${callback.prefix}**"))),
+        transform = LayoutAssetTransform.archiveTree(mappings = listOf(LayoutAssetMapping(pattern = "${callback.prefix}**"))),
       )),
     ),
   )
@@ -653,7 +653,7 @@ private fun embeddedFrontendLayoutBinding(
   home: String,
 ): EmbeddedFrontendLayoutBinding {
   val layout = request.layout
-  require(layout.patchers.size == 2 && layout.patchers.all { (it as? DevPluginLayoutAssetOwner)?.devPluginLayoutAssetSpec?.omitted == true }) {
+  require(layout.patchers.size == 2 && layout.patchers.all { (it as? LayoutAssetOwner)?.layoutAssetSpec?.omitted == true }) {
     "The layout that embeds the frontend declares the embedded product descriptor and the frontend patcher, both with an omitted asset slot"
   }
   val product = request.product
@@ -688,9 +688,9 @@ private fun embeddedFrontendLayoutBinding(
     inputs = support.iconPatches.map { (source, _) -> DevPluginReference(brandingInput.id, source) },
     output = output,
     manifest = "keep",
-    layoutAssets = DevPluginLayoutAssetPreparation(
+    layoutAssets = LayoutAssetPreparation(
       format = "entries",
-      assets = support.iconPatches.mapIndexed { index, (_, destination) -> DevPluginLayoutAsset(destination = destination, sources = listOf(index)) },
+      assets = support.iconPatches.mapIndexed { index, (_, destination) -> LayoutAsset(destination = destination, sources = listOf(index)) },
     ),
   )
   return EmbeddedFrontendLayoutBinding(
