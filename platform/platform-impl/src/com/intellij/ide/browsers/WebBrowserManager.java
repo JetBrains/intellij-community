@@ -72,6 +72,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   private static final String BROWSERS_TAG = "browsers";
   private static final String ACTIVE_TAG = "active";
   private static final String INACTIVE_TAG = "inactive";
+  private static final String CHROMIUM_BASED_BROWSER_ATTR = "chromiumBasedBrowser";
 
   /**
    * The order of the inactive browsers: the predefined browsers in their default order, then the custom browsers by name.
@@ -116,6 +117,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   private boolean showBrowserHoverXml = false;
   /** The id of the default browser of the list, or {@code null} for {@link SystemDefaultBrowser}. */
   private @Nullable UUID defaultBrowserId;
+  /** The id of the Chromium-based browser that the developer picked, see {@link #getChromiumBasedBrowser()}. */
+  private @NotNull UUID chromiumBasedBrowserId = PREDEFINED_CHROME_ID;
   ReloadMode webServerReloadMode = BROWSER_RELOAD_MODE_DEFAULT;
   ReloadMode webPreviewReloadMode = PREVIEW_RELOAD_MODE_DEFAULT;
 
@@ -253,7 +256,10 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
       state.setAttribute("showHoverXml", "true");
     }
 
-    writeBrowsers(state);
+    // the migration in loadState() needs the attribute when the state has a browser list, also for the predefined Chrome
+    if (writeBrowsers(state) || !PREDEFINED_CHROME_ID.equals(chromiumBasedBrowserId)) {
+      state.setAttribute(CHROMIUM_BASED_BROWSER_ATTR, chromiumBasedBrowserId.toString());
+    }
     return state;
   }
 
@@ -262,8 +268,10 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
    * {@code active} is the ordered list of active browsers, written only when it differs from the default.
    * {@code inactive} lists the predefined browsers that are active by default but the user turned off.
    * {@code browsers} holds the custom browsers and the changed attributes of the predefined browsers.
+   *
+   * @return {@code true} if it wrote an element
    */
-  private void writeBrowsers(@NotNull Element state) {
+  private boolean writeBrowsers(@NotNull Element state) {
     List<ConfigurableWebBrowser> predefinedBrowsers = getPredefinedBrowsers();
     Map<UUID, ConfigurableWebBrowser> idToPredefined = ContainerUtil.newMapFromValues(predefinedBrowsers.iterator(), it -> it.getId());
 
@@ -301,6 +309,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     if (!definitions.getChildren().isEmpty()) {
       state.addContent(definitions);
     }
+    return !state.getChildren().isEmpty();
   }
 
   private static @NotNull List<UUID> getDefaultActiveIds(@NotNull List<ConfigurableWebBrowser> predefinedBrowsers,
@@ -443,6 +452,25 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     if (defaultBrowser == null) {
       migrateDefaultBrowser(element.getAttributeValue("default"));
     }
+    chromiumBasedBrowserId = readChromiumBasedBrowserId(element);
+  }
+
+  /**
+   * Reads the Chromium-based browser.
+   * The older IDE versions write no attribute and use the first browser of the {@link BrowserFamily#CHROME} family.
+   * {@link #getState()} writes the attribute for each state with a browser list, so the migration runs only once.
+   * A state without a browser list has the default list, and there the first browser of the family is the predefined Chrome.
+   */
+  private @NotNull UUID readChromiumBasedBrowserId(@NotNull Element element) {
+    String value = element.getAttributeValue(CHROMIUM_BASED_BROWSER_ATTR);
+    if (value != null) {
+      UUID id = parseUuid(value);
+      return id == null ? PREDEFINED_CHROME_ID : id;
+    }
+    if (element.getChildren().isEmpty()) {
+      return PREDEFINED_CHROME_ID;
+    }
+    return getFirstBrowser(BrowserFamily.CHROME).getId();
   }
 
   @Override
@@ -811,12 +839,40 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   }
 
   /**
-   * Returns the first active browser of the {@link BrowserFamily#CHROME} family in the list order.
-   * Without an active browser of this family, it returns the first inactive one.
+   * Returns the Chromium-based browser that the developer picked in the settings, also when it is inactive.
+   * If the list has no browser of the {@link BrowserFamily#CHROME} family with this id, it returns the predefined Chrome.
    * The returned browser is not always installed in the OS.
    */
   public @NotNull WebBrowser getChromiumBasedBrowser() {
-    return getFirstBrowser(BrowserFamily.CHROME);
+    ConfigurableWebBrowser chrome = null;
+    for (ConfigurableWebBrowser browser : browsers) {
+      if (browser.getId().equals(chromiumBasedBrowserId) && browser.getFamily() == BrowserFamily.CHROME) {
+        return browser;
+      }
+      if (browser.getId().equals(PREDEFINED_CHROME_ID)) {
+        chrome = browser;
+      }
+    }
+    if (chrome == null) {
+      // normally unreachable: the user cannot remove the predefined Chrome
+      LOG.error("No predefined Chrome browser");
+      return Objects.requireNonNull(ContainerUtil.find(getPredefinedBrowsers(), it -> PREDEFINED_CHROME_ID.equals(it.getId())));
+    }
+    return chrome;
+  }
+
+  /**
+   * Returns the id of the Chromium-based browser that the developer picked. {@link #getChromiumBasedBrowser()} resolves it.
+   */
+  @ApiStatus.Internal
+  public @NotNull UUID getChromiumBasedBrowserId() {
+    return chromiumBasedBrowserId;
+  }
+
+  @ApiStatus.Internal
+  public void setChromiumBasedBrowserId(@NotNull UUID id) {
+    chromiumBasedBrowserId = id;
+    incModificationCount();
   }
 
   /**
@@ -837,7 +893,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     }
 
     // normally unreachable: each family has a predefined browser that the user cannot remove
-    throw new IllegalStateException("Must be at least one browser per family");
+    LOG.error("No browser of the family " + family);
+    return Objects.requireNonNull(ContainerUtil.find(getPredefinedBrowsers(), it -> family.equals(it.getFamily())));
   }
 
   public boolean isActive(@NotNull WebBrowser browser) {

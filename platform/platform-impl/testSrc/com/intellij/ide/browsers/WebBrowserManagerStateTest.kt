@@ -51,7 +51,7 @@ class WebBrowserManagerStateTest {
     manager.setBrowserPath(firefox, firefox.path, false)
 
     val expected = """
-      <state>
+      <state chromiumBasedBrowser="$chromeId">
         <inactive>
           <browser id="$firefoxId" />
         </inactive>
@@ -81,7 +81,7 @@ class WebBrowserManagerStateTest {
     manager.loadState(legacy)
 
     assertEquals("""
-      <state>
+      <state chromiumBasedBrowser="$chromeId">
         <inactive>
           <browser id="$firefoxId" />
         </inactive>
@@ -130,7 +130,7 @@ class WebBrowserManagerStateTest {
   @Test
   fun `predefined browser keeps changed name and cleared path`() {
     val state = """
-      <state>
+      <state chromiumBasedBrowser="$chromeId">
         <browsers>
           <browser id="$chromeId" name="My Chrome" path="" />
         </browsers>
@@ -216,7 +216,7 @@ class WebBrowserManagerStateTest {
     """)
 
     assertEquals(firefoxId, manager.defaultBrowser.id)
-    assertEquals("""<state defaultBrowser="$firefoxId">""", write(manager).lineSequence().first())
+    assertEquals("""<state defaultBrowser="$firefoxId" chromiumBasedBrowser="$chromeId">""", write(manager).lineSequence().first())
   }
 
   @Test
@@ -331,6 +331,51 @@ class WebBrowserManagerStateTest {
     manager.noStateLoaded()
 
     assertEquals("/opt/my-browser/run", manager.defaultBrowser.path)
+  }
+
+  @Test
+  fun `Chromium-based browser is the predefined Chrome by default`() {
+    val manager = WebBrowserManager()
+    assertEquals(chromeId, manager.chromiumBasedBrowser.id)
+    assertEquals(chromeId, load("""<state defaultBrowser="$firefoxId" />""").chromiumBasedBrowser.id)
+  }
+
+  @Test
+  fun `old state migrates the first Chromium-based browser once`() {
+    val manager = load("""
+      <state>
+        <active>
+          <browser id="$edgeId" />
+          <browser id="$chromeId" />
+        </active>
+      </state>
+    """)
+    assertEquals(edgeId, manager.chromiumBasedBrowser.id)
+    assertEquals("""<state chromiumBasedBrowser="$edgeId">""", write(manager).lineSequence().first())
+
+    manager.chromiumBasedBrowserId = chromeId
+    // the attribute stops a second migration, which would give Edge again
+    assertEquals(chromeId, reload(manager).chromiumBasedBrowser.id)
+  }
+
+  @Test
+  fun `default list writes no Chromium-based browser for the predefined Chrome`() {
+    val manager = WebBrowserManager()
+    manager.chromiumBasedBrowserId = edgeId
+    assertEquals("""<state chromiumBasedBrowser="$edgeId" />""", write(manager))
+
+    manager.chromiumBasedBrowserId = chromeId
+    assertEquals("<state />", write(manager))
+  }
+
+  @Test
+  fun `inactive Chromium-based browser stays, unknown one becomes the predefined Chrome`() {
+    val inactive = load("""<state chromiumBasedBrowser="$operaId" />""")
+    assertFalse(inactive.isActive(inactive.browser(operaId)))
+    assertEquals(operaId, inactive.chromiumBasedBrowser.id)
+
+    assertEquals(chromeId, load("""<state chromiumBasedBrowser="$firefoxId" />""").chromiumBasedBrowser.id)
+    assertEquals(chromeId, load("""<state chromiumBasedBrowser="${UUID.randomUUID()}" />""").chromiumBasedBrowser.id)
   }
 
   @Suppress("DEPRECATION")
