@@ -1,13 +1,158 @@
 package org.intellij.plugins.markdown.editor.lists
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
+import org.intellij.plugins.markdown.lang.MarkdownLanguage
+import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
+import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 class ListItemTabHandlerAdditionalTest: LightPlatformCodeInsightTestCase() {
+  // Tests use the list marker width by default. Tests with fixed indentation enable that setting explicitly.
+  override fun setUp() {
+    super.setUp()
+    val settings = CodeStyle.getSettings(project)
+    settings.getCommonSettings(MarkdownLanguage.INSTANCE).indentOptions!!.INDENT_SIZE = 4
+    settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).USE_FIXED_INDENTS_FOR_SUBLISTS = false
+  }
+
+  @Test
+  fun `test tab handles a list item becoming code with renumbering enabled`() {
+    enableFixedSublistIndent()
+    val settings = MarkdownCodeInsightSettings.getInstance().state
+    val renumberListsOnType = settings.renumberListsOnType
+    settings.renumberListsOnType = true
+    try {
+      configureFromFileText("some.md", "- first<caret>")
+      executeAction(IdeActions.ACTION_EDITOR_TAB)
+      checkResultByText("    - first<caret>")
+    }
+    finally {
+      settings.renumberListsOnType = renumberListsOnType
+    }
+  }
+
+  @Test
+  fun `test tab indents a new empty item according to fixed settings`() {
+    enableFixedSublistIndent()
+    val content = """
+        - hello
+        - <caret>
+    """.trimIndent()
+    val expected = """
+        - hello
+            - <caret>
+    """.trimIndent()
+    configureFromFileText("some.md", content)
+    executeAction(IdeActions.ACTION_EDITOR_TAB)
+    checkResultByText(expected)
+  }
+
+  @Test
+  fun `test tab uses configured fixed sublist indent`() {
+    enableFixedSublistIndent()
+    val content = """
+        - first
+        - second<caret>
+    """.trimIndent()
+    val afterFirstTab = """
+        - first
+            - second<caret>
+    """.trimIndent()
+    val afterSecondTab = """
+        - first
+                - second<caret>
+    """.trimIndent()
+    configureFromFileText("some.md", content)
+    executeAction(IdeActions.ACTION_EDITOR_TAB)
+    checkResultByText(afterFirstTab)
+    executeAction(IdeActions.ACTION_EDITOR_TAB)
+    checkResultByText(afterSecondTab)
+    executeAction(IdeActions.ACTION_EDITOR_UNINDENT_SELECTION)
+    checkResultByText(afterFirstTab)
+    executeAction(IdeActions.ACTION_EDITOR_UNINDENT_SELECTION)
+    checkResultByText(content)
+  }
+
+  @Test
+  fun `test tab uses marker width when fixed sublist indent is disabled`() {
+    val content = """
+        - first
+        - second<caret>
+    """.trimIndent()
+    val expected = """
+        - first
+          - second<caret>
+    """.trimIndent()
+    configureFromFileText("some.md", content)
+    executeAction(IdeActions.ACTION_EDITOR_TAB)
+    checkResultByText(expected)
+  }
+
+  @Test
+  fun `test fixed sublist indent does not go before parent content`() {
+    enableFixedSublistIndent()
+    val content = """
+        1000. first
+        1000. second<caret>
+    """.trimIndent()
+    val expected = """
+        1000. first
+              1000. second<caret>
+    """.trimIndent()
+    configureFromFileText("some.md", content)
+    executeAction(IdeActions.ACTION_EDITOR_TAB)
+    checkResultByText(expected)
+  }
+
+  @Test
+  fun `test repeated tab and shift tab only move the new empty unordered item`() {
+    enableFixedSublistIndent()
+    val content = """
+        - hello<caret>
+    """.trimIndent()
+    val afterEnter = """
+        - hello
+        - <caret>
+    """.trimIndent()
+    val afterFirstTab = """
+        - hello
+            - <caret>
+    """.trimIndent()
+    val afterSecondTab = """
+        - hello
+                - <caret>
+    """.trimIndent()
+    val afterUnindent = """
+        - hello
+            - <caret>
+    """.trimIndent()
+    configureFromFileText("some.md", content)
+    executeAction(IdeActions.ACTION_EDITOR_ENTER)
+    checkResultByText(afterEnter)
+
+    executeAction(IdeActions.ACTION_EDITOR_TAB)
+    checkResultByText(afterFirstTab)
+
+    executeAction(IdeActions.ACTION_EDITOR_TAB)
+    checkResultByText(afterSecondTab)
+
+    executeAction(IdeActions.ACTION_EDITOR_UNINDENT_SELECTION)
+    checkResultByText(afterUnindent)
+  }
+
+  private fun enableFixedSublistIndent() {
+    val settings = CodeStyle.getSettings(project)
+    val indentOptions = settings.getCommonSettings(MarkdownLanguage.INSTANCE).indentOptions!!
+    indentOptions.TAB_SIZE = 4
+    indentOptions.CONTINUATION_INDENT_SIZE = 8
+    settings.getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).USE_FIXED_INDENTS_FOR_SUBLISTS = true
+  }
+
   /**
    * Checks that list item is indented with 2 tabs (4 spaces) after pressing tab 2 times.
    */

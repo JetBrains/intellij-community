@@ -63,7 +63,7 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
       if (MarkdownCodeInsightSettings.getInstance().state.renumberListsOnType) {
         psiDocumentManager.commitDocument(document)
         @Suppress("name_shadowing") // item is not valid anymore, but line didn't change
-        val item = file.getListItemAtLine(line, document)!!
+        val item = file.getListItemAtLine(line, document) ?: continue
         updateNumbering(item, file, document)
       }
     }

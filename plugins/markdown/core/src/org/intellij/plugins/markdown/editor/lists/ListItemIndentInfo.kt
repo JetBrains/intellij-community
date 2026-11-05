@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.lists
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentInnerSpacesLength
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
+import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 
 /**
  * An immutable class, that represents some abstract contents inside a list in Markdown,
@@ -14,6 +16,16 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
  */
 internal data class ListItemIndentInfo(val indent: Int, val markerLength: Int) {
   fun subItemIndent() = indent + markerLength
+
+  fun subItemIndent(file: PsiFile): Int {
+    val fixedIndents = CodeStyle.getSettings(file).getCustomSettings(
+      MarkdownCustomCodeStyleSettings::class.java
+    ).USE_FIXED_INDENTS_FOR_SUBLISTS
+    val indentSize = CodeStyle.getIndentOptions(file).INDENT_SIZE
+
+    val step = if (fixedIndents) maxOf(markerLength, indentSize) else markerLength
+    return indent + step
+  }
 
   fun subItem(markerLength: Int) = ListItemIndentInfo(subItemIndent(), markerLength)
 
