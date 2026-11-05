@@ -11,7 +11,6 @@ import com.jetbrains.python.conda.savePythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.SdkCreationRequest
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.createSdk
@@ -59,9 +58,8 @@ internal suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
     SdkCreationRequest.TargetSdk(interpreterPath, addData)
   }
 
-  val sdkType = PythonSdkType.getInstance()
   // The registry makes the name unique.
-  val name = sdkType.suggestSdkName(null, interpreterPath)
+  val name = condaEnv.envIdentity.userReadableName
   val pythonInterpreter = creationRequest.createSdk(moduleOrProject, name).getOr { return it }
 
   if (targetConfig == null) {

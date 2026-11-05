@@ -135,7 +135,7 @@ internal class PyCondaSdkTest {
 
   @Test
   fun testExecuteCommandOnSdk(): Unit = timeoutRunBlocking(60.seconds) {
-    val condaEnv = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec(), forceRefresh = true).getOrThrow().first()
+    val condaEnv = getOwnBaseEnv()
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
       moduleOrProject = ModuleOrProject.ProjectOnly(projectRule.project),
       condaIdentity = condaEnv.envIdentity,
@@ -163,9 +163,9 @@ internal class PyCondaSdkTest {
     ensureHomePathCorrect(sdk)
   }
 
-  @Test //TODO: Test fails because we use python path instead of conda name com.jetbrains.python.sdk.conda.PyAddCondaToolsKt#createCondaSdkFromExistingEnvironment
+  @Test
   fun testCreateFromExisting(): Unit = timeoutRunBlocking(10.minutes) {
-    val env = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec(), forceRefresh = true).getOrThrow().first()
+    val env = getOwnBaseEnv()
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
       moduleOrProject = ModuleOrProject.ProjectOnly(projectRule.project),
       condaIdentity = env.envIdentity,
@@ -179,6 +179,20 @@ internal class PyCondaSdkTest {
     ensureHomePathCorrect(sdk)
     Assert.assertEquals("Wrong name", Path.of(env.envIdentity.userReadableName), Path.of(sdk.name))
   }
+
+  /**
+   * Returns the base env of the conda under test.
+   * The env list can also contain envs of other conda installations on the machine (from `~/.conda/environments.txt`),
+   * so do not take the first env from the list.
+   */
+  private suspend fun getOwnBaseEnv(): PyCondaEnv =
+    PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec(), forceRefresh = true).getOrThrow()
+      .first {
+        when (val identity = it.envIdentity) {
+          is PyCondaEnvIdentity.NamedEnv -> false
+          is PyCondaEnvIdentity.UnnamedEnv -> identity.isBase
+        }
+      }
 
   private suspend fun ensureHomePathCorrect(sdk: Sdk) {
     val homePath = Path.of(sdk.homePath!!)
