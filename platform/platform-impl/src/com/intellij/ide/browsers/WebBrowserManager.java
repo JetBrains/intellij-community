@@ -111,7 +111,7 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     );
   }
 
-  private List<ConfigurableWebBrowser> browsers;
+  private List<@NotNull ConfigurableWebBrowser> browsers;
   private boolean showBrowserHover = true;
   private boolean showBrowserHoverXml = false;
   /** The id of the default browser of the list, or {@code null} for {@link SystemDefaultBrowser}. */
@@ -810,7 +810,20 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     return ContainerUtil.find(WebBrowserProvider.getAvailableBrowsers(), it -> it.getId().equals(id));
   }
 
-  public @Nullable WebBrowser getFirstBrowserOrNull(@NotNull BrowserFamily family) {
+  /**
+   * Returns the first active browser of the {@link BrowserFamily#CHROME} family in the list order.
+   * Without an active browser of this family, it returns the first inactive one.
+   * The returned browser is not always installed in the OS.
+   */
+  public @NotNull WebBrowser getChromiumBasedBrowser() {
+    return getFirstBrowser(BrowserFamily.CHROME);
+  }
+
+  /**
+   * For a Chromium-based browser use {@link #getChromiumBasedBrowser()}.
+   * It is not guaranteed that returned browser is available and installed in the OS.
+   */
+  public @NotNull WebBrowser getFirstBrowser(@NotNull BrowserFamily family) {
     for (ConfigurableWebBrowser browser : browsers) {
       if (browser.isActive() && family.equals(browser.getFamily())) {
         return browser;
@@ -823,19 +836,12 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
       }
     }
 
-    return null;
-  }
-
-  public @NotNull WebBrowser getFirstBrowser(@NotNull BrowserFamily family) {
-    WebBrowser result = getFirstBrowserOrNull(family);
-    if (result == null) {
-      throw new IllegalStateException("Must be at least one browser per family");
-    }
-    return result;
+    // normally unreachable: each family has a predefined browser that the user cannot remove
+    throw new IllegalStateException("Must be at least one browser per family");
   }
 
   public boolean isActive(@NotNull WebBrowser browser) {
-    return !(browser instanceof ConfigurableWebBrowser) || ((ConfigurableWebBrowser)browser).isActive();
+    return !(browser instanceof ConfigurableWebBrowser webBrowser) || webBrowser.isActive();
   }
 
   public @Nullable WebBrowser getFirstActiveBrowser() {
