@@ -18,7 +18,12 @@ package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.markup.FontFamilies;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.Set;
 
 public interface EditorHighlighter extends DocumentListener {
   @NotNull
@@ -30,5 +35,17 @@ public interface EditorHighlighter extends DocumentListener {
   void setEditor(@NotNull HighlighterClient editor);
 
   default void setColorScheme(@NotNull EditorColorsScheme scheme) {
+  }
+
+  /**
+   * Returns the font families that the text attributes of this highlighter can have,
+   * see {@link com.intellij.openapi.editor.markup.TextAttributes#getFontFamilies()}.
+   * The set can have values that no token has now. The attributes of the keys of the colors scheme do not count.
+   * The set contains a value before the highlighter reports a change of text with that value, see {@link HighlighterClient#repaint}.
+   * It is safe to call on any thread, and it returns quickly.
+   */
+  @ApiStatus.Experimental
+  default @Unmodifiable Set<FontFamilies> getTextAttributesFontFamilies() {
+    return Set.of();
   }
 }

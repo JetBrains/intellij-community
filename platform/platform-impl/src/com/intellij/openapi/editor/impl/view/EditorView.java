@@ -690,9 +690,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   /**
    * Creates the font resolver of the current font settings for the render context.
-   * It resolves the font families, and the font families of the text attributes of the scheme,
-   * see {@link EditorColorsScheme#getTextAttributesFontFamilies()}.
-   * So the text that the editor highlighter colors with the keys of the scheme gets the fonts of their families.
+   * It resolves the font families, the font families of the text attributes of the scheme, and the font families of the editor highlighter.
+   * See {@link EditorColorsScheme#getTextAttributesFontFamilies()} and {@link EditorHighlighter#getTextAttributesFontFamilies()}.
+   * So the text of the editor highlighter gets the fonts of its font families.
    * Like {@link #createNewMetrics}, it can run on any thread.
    */
   private @NotNull EditorFontResolver createFontResolver(FontRenderContext context, Collection<FontFamilies> fontFamilies) {
@@ -704,17 +704,19 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       context,
       specialCharacterFont,
       fontFamiliesEnabled,
-      withSchemeFontFamilies(fontFamilies, colorsScheme)
+      withSourceFontFamilies(fontFamilies, colorsScheme)
     );
   }
 
-  private static Collection<FontFamilies> withSchemeFontFamilies(Collection<FontFamilies> fontFamilies, EditorColorsScheme scheme) {
+  private Collection<FontFamilies> withSourceFontFamilies(Collection<FontFamilies> fontFamilies, EditorColorsScheme scheme) {
     Set<FontFamilies> schemeFontFamilies = scheme.getTextAttributesFontFamilies();
-    if (schemeFontFamilies.isEmpty()) {
+    Set<FontFamilies> highlighterFontFamilies = myEditor.getHighlighter().getTextAttributesFontFamilies();
+    if (schemeFontFamilies.isEmpty() && highlighterFontFamilies.isEmpty()) {
       return fontFamilies;
     }
     List<FontFamilies> result = new ArrayList<>(fontFamilies);
     result.addAll(schemeFontFamilies);
+    result.addAll(highlighterFontFamilies);
     return result;
   }
 

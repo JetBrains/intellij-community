@@ -297,6 +297,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TooManyListenersException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
@@ -2073,6 +2074,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void repaint(int startOffset, int endOffset) {
+    if (myView != null) {
+      Set<FontFamilies> fontFamilies = myHighlighter.getTextAttributesFontFamilies();
+      if (!fontFamilies.isEmpty()) {
+        myView.resolveFontFamilies(fontFamilies);
+      }
+    }
     if (myDocumentChangeInProgress) {
       mySoftWrapModel.onHighlighterRepaint(endOffset);
     }

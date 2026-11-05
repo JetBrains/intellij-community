@@ -88,13 +88,17 @@ internal class EditorFontResolver private constructor(
    * A value without installed families gets the editor fonts. It is resolved too, so that a reader does not report it again.
    */
   fun withFontFamilies(values: Collection<FontFamilies>): EditorFontResolver {
-    val added = ArrayList<ResolvedFontFamilies>()
+    var added: ArrayList<ResolvedFontFamilies>? = null
     for (value in values) {
-      if (find(resolved, value) == null && find(added, value) == null) {
-        added.add(createResolvedFontFamilies(value, added))
+      if (find(resolved, value) == null) {
+        val current = added ?: ArrayList()
+        if (find(current, value) == null) {
+          current.add(createResolvedFontFamilies(value, current))
+          added = current
+        }
       }
     }
-    if (added.isEmpty()) {
+    if (added == null) {
       return this
     }
     return EditorFontResolver(

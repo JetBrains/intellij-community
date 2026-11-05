@@ -231,6 +231,9 @@ c:com.intellij.openapi.editor.colors.FontPreferences
 a:com.intellij.openapi.editor.colors.ModifiableFontPreferences
 - com.intellij.openapi.editor.colors.FontPreferences
 - *:runBatchUpdate(java.util.function.Consumer):V
+com.intellij.openapi.editor.highlighter.EditorHighlighter
+- com.intellij.openapi.editor.event.DocumentListener
+- *:getTextAttributesFontFamilies():java.util.Set
 com.intellij.openapi.editor.highlighter.HighlighterIterator
 - *:getTextAttributesKeys():com.intellij.openapi.editor.colors.TextAttributesKey[]
 *e:com.intellij.openapi.editor.markup.CustomHighlighterOrder
