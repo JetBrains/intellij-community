@@ -1,6 +1,19 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "tests.benchmark_test",
+    jvm_flags = [
+        "-Didea.performance.tests=true",
+        "-Dintellij.build.test.dedicated.runtime=class",
+    ],
+    tags = [
+        "gradle-benchmark-tests",
+    ],
+    runtime_deps = [":tests.benchmark_test_lib"],
+)
+### skip generation section `test intellij.gradle.tests.benchmark`
+
 ### auto-generated section `build intellij.gradle.tests.benchmark` start
 jvm_library(
     name = "tests.benchmark_test_lib",
@@ -54,10 +67,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.gradle.tests.benchmark` end
-
-### auto-generated section `test intellij.gradle.tests.benchmark` start
-jps_test(
-    name = "tests.benchmark_test",
-    runtime_deps = [":tests.benchmark_test_lib"],
-)
-### auto-generated section `test intellij.gradle.tests.benchmark` end

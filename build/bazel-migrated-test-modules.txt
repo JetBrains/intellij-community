@@ -36,6 +36,7 @@ intellij.gradle.backend.tests
 intellij.gradle.completion.tests
 intellij.gradle.java.maven.tests
 intellij.gradle.java.tests.benchmark
+intellij.gradle.tests.benchmark
 intellij.gradle.toolingExtension.tests
 intellij.grazie.markdown.specification.tests
 intellij.grazie.tests
