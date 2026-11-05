@@ -788,7 +788,8 @@ private class ClassConverter(
 
         // If getter & setter do not have backing fields we should remove initializer
         // As we already know that property is not directly used in the code
-        if (getter.target == null && setter?.target == null) {
+        // A setter without a body uses the backing field
+        if (getter.target == null && (setter == null || setter.target == null && setter.body != null)) {
             ktProperty.setPropertyInitializer(null)
             retargetAnnotationsToGetter(propertyWithAccessors.fieldAnnotationsToRetargetToGetter)
         }

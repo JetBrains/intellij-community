@@ -1929,6 +1929,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/detectProperties/OverridesOfExternalCode.java");
         }
 
+        @TestMetadata("PersistentFieldOnComputedProperty.java")
+        public void testPersistentFieldOnComputedProperty() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/PersistentFieldOnComputedProperty.java");
+        }
+
         @TestMetadata("privateNestedClass.java")
         public void testPrivateNestedClass() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/privateNestedClass.java");
@@ -2022,6 +2027,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("UnresolvedType.java")
         public void testUnresolvedType() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/UnresolvedType.java");
+        }
+
+        @TestMetadata("VolatileFieldOnComputedProperty.java")
+        public void testVolatileFieldOnComputedProperty() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/VolatileFieldOnComputedProperty.java");
         }
     }
 
