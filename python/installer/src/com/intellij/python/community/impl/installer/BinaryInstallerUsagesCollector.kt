@@ -131,7 +131,7 @@ object BinaryInstallerUsagesCollector : CounterUsagesCollector() {
     }
   }
 
-  private val GROUP = EventLogGroup("python.sdk.installer.events", 2)
+  private val GROUP = EventLogGroup("python.sdk.installer.events", 3)
 
   private val downloadEvent = GROUP.registerVarargEvent(
     eventId = "download.finished", fields = DownloadEventFields.getFields().toTypedArray()
