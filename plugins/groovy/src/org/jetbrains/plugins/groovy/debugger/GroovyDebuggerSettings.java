@@ -20,7 +20,6 @@ public final class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebugg
     super("groovy_debugger");
   }
 
-  @SuppressWarnings("EnumSwitchStatementWhichMissesCases")
   @Override
   public @NotNull Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
     return switch (category) {

@@ -6,16 +6,16 @@ package org.jetbrains.kotlin.idea.debugger
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.util.Getter
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory
 import com.intellij.xdebugger.settings.XDebuggerSettings
-import org.jetbrains.kotlin.idea.debugger.core.KotlinDelegatedPropertyRendererConfigurableUi
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDelegatedPropertyRendererConfigurable
 import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingConfigurable
 
 @State(name = "KotlinDebuggerSettings", storages = [Storage("kotlin_debug.xml")])
-class KotlinDebuggerSettings : XDebuggerSettings<KotlinDebuggerSettings>("kotlin_debugger"), Getter<KotlinDebuggerSettings> {
+class KotlinDebuggerSettings : XDebuggerSettings<KotlinDebuggerSettings>("kotlin_debugger") {
+
     var renderDelegatedProperties: Boolean = false
     var disableKotlinInternalClasses: Boolean = true
     var debugDisableCoroutineAgent: Boolean = false
@@ -29,12 +29,11 @@ class KotlinDebuggerSettings : XDebuggerSettings<KotlinDebuggerSettings>("kotlin
 
     override fun createConfigurables(category: DebuggerSettingsCategory): Collection<Configurable?> = when (category) {
         DebuggerSettingsCategory.STEPPING -> listOf(KotlinSteppingConfigurable(this))
-        DebuggerSettingsCategory.GENERAL -> listOf(KotlinDelegatedPropertyRendererConfigurableUi(this))
+        DebuggerSettingsCategory.GENERAL -> listOf(KotlinDelegatedPropertyRendererConfigurable(this))
         else -> listOf()
     }
 
     override fun getState(): KotlinDebuggerSettings = this
-    override fun get(): KotlinDebuggerSettings = this
 
     override fun loadState(state: KotlinDebuggerSettings) {
         XmlSerializerUtil.copyBean<KotlinDebuggerSettings>(state, this)

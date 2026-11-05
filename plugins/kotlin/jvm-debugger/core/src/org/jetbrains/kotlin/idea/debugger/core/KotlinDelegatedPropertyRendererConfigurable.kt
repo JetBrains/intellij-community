@@ -7,7 +7,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
 
-internal class KotlinDelegatedPropertyRendererConfigurableUi(private val settings: KotlinDebuggerSettings) : BoundSearchableConfigurable(
+internal class KotlinDelegatedPropertyRendererConfigurable(private val settings: KotlinDebuggerSettings) : BoundSearchableConfigurable(
     KotlinDebuggerCoreBundle.message("configurable.name.kotlin"), "reference.idesettings.debugger.kotlin.data.view"
 ) {
 
