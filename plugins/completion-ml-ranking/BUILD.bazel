@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -67,6 +68,20 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.completionMlRanking` end
+
+### auto-generated section `plugin intellij.completionMlRanking` start
+ij_plugin(
+    name = "completion-ml-ranking_plugin",
+    descriptor_module = ":completion-ml-ranking",
+    content_modules = [] + select({
+        "@community//build:is_inside_ultimate": [
+            "@@//plugins/completion-ml-ranking/experiments",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.completionMlRanking` end
 
 ### auto-generated section `iml intellij.completionMlRanking` start
 exports_files(
