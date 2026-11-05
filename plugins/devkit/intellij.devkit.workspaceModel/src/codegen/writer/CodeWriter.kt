@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel.codegen.writer
 
 import com.intellij.application.options.CodeStyle
@@ -113,7 +113,7 @@ object CodeWriter {
       withModalProgress(project, commandName) {
         reportRawProgress { reporter ->
           reporter.text(DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata"))
-          val (objModules, metaProblems) = readAction {
+          val [objModules, metaProblems] = readAction {
             WorkspaceMetaModelProvider().loadObjModules(ktClasses, module, processAbstractTypes, isTestSourceFolder)
           }
           if (metaProblems.isNotEmpty()) {
@@ -164,7 +164,7 @@ object CodeWriter {
             }
           }
           writeCommandActionWithGroupId(project, commandName) {
-            importsByFile.forEach { (file, imports) ->
+            for ([file, imports] in importsByFile) {
               addImports(file, imports)
             }
           }
@@ -176,14 +176,14 @@ object CodeWriter {
 
           reporter.text(DevKitWorkspaceModelBundle.message("progress.title.reformatting.code"))
 
-          for ((i, file) in generatedFiles.withIndex()) {
+          for ([i, file] in generatedFiles.withIndex()) {
             reporter.fraction(0.25 + 0.7 * i / generatedFiles.size)
             DumbService.getInstance(project).waitForSmartMode()
             // this has to be invoked outside EDT because the callback scheduleWhenSettingsComputed is invoked on EDT
             file.awaitCodeStyleCalculation()
 
             writeCommandActionWithGroupId(project, commandName) {  // same groupId chains them
-              addCopyright(file, ktClasses)
+              copyHeaderFromSourceFile(file, ktClasses)
               LanguageImportStatements.INSTANCE.forFile(file).forEach { it.processFile(file).run() }
               PsiDocumentManager.getInstance(file.project).doPostponedOperationsAndUnblockDocument(file.viewProvider.document!!)
               CodeStyleManager.getInstance(project).reformat(file)
@@ -204,7 +204,7 @@ object CodeWriter {
     latch.await()
   }
 
-  private fun addCopyright(file: KtFile, ktClasses: HashMap<String, KtClassOrObject>) {
+  private fun copyHeaderFromSourceFile(file: KtFile, ktClasses: HashMap<String, KtClassOrObject>) {
     if (file.name == GENERATED_METADATA_STORAGE_FILE) {
       val someEntitySourceFile = ktClasses.values.firstOrNull { it.name?.contains("Entity") ?: false }?.containingKtFile
       val anySourceFile = someEntitySourceFile ?: ktClasses.values.firstOrNull()?.containingKtFile ?: return
@@ -320,7 +320,7 @@ object CodeWriter {
     try {
       val stringVersion = readApiVersionFromFile(fileAbsolutePath)
       if (stringVersion != null) {
-        val (major, minor, patch) = stringVersion.split(".", "-").take(3).map { it.toInt() }
+        val [major, minor, patch] = stringVersion.split(".", "-").take(3).map { it.toInt() }
         apiVersion = ApiVersion(major, minor, patch)
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.devkit.workspaceModel.codegen.writer.CodeWriter
@@ -15,7 +15,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.storeAndGet
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -73,19 +73,18 @@ abstract class AbstractEntityCodeGenTest {
     }
 
     val wsm = project.get().workspaceModel
+    val vfuManager = wsm.getVirtualFileUrlManager()
     wsm.update("Setup project roots") {
       val module = ModuleEntity("${this@AbstractEntityCodeGenTest.javaClass.simpleName}_${testName}_module",
                                 listOf(ModuleSourceDependency),
                                 NonPersistentEntitySource)
-      val contentRoot =
-        ContentRootEntity(projectRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()), emptyList(), NonPersistentEntitySource)
+      val contentRoot = ContentRootEntity(vfuManager.storeAndGet(projectRoot), emptyList(), NonPersistentEntitySource)
       module.contentRoots += contentRoot
-      contentRoot.sourceRoots += SourceRootEntity(actualSrcRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()),
+      contentRoot.sourceRoots += SourceRootEntity(vfuManager.storeAndGet(actualSrcRoot),
                                                   JAVA_SOURCE_ROOT_ENTITY_TYPE_ID,
                                                   NonPersistentEntitySource)
-      val genSourceRoot = SourceRootEntity(actualGenRoot.toVirtualFileUrl(wsm.getVirtualFileUrlManager()),
-                                           JAVA_SOURCE_ROOT_ENTITY_TYPE_ID,
-                                           NonPersistentEntitySource)
+      val genSourceRoot =
+        SourceRootEntity(vfuManager.storeAndGet(actualGenRoot), JAVA_SOURCE_ROOT_ENTITY_TYPE_ID, NonPersistentEntitySource)
       genSourceRoot.javaSourceRoots += JavaSourceRootPropertiesEntity(generated = true,
                                                                       packagePrefix = "",
                                                                       entitySource = NonPersistentEntitySource)
