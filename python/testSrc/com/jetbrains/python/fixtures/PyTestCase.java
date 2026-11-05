@@ -60,14 +60,15 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.CommonProcessors.CollectProcessor;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
+import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -378,19 +379,13 @@ public abstract class PyTestCase extends UsefulTestCase {
   public static void enablePyiStubsForPackages(@NotNull Module module,
                                                @NotNull Disposable parentDisposable,
                                                String @NotNull ... packageNames) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    assertNotNull(sdk);
-    List<VirtualFile> stubPackageRoots = new ArrayList<>();
-    for (String packageName : packageNames) {
-      VirtualFile stubPackageRoot = PyTypeShed.INSTANCE.getStubRootForPackage(packageName);
-      if (stubPackageRoot == null) {
-        stubPackageRoot = PyBundledStubs.INSTANCE.getStubRootForPackage(packageName);
-      }
-      assertNotNull("Stub package root for " + packageName + " not found", stubPackageRoot);
-      stubPackageRoots.add(stubPackageRoot);
-    }
-    addSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES);
-    Disposer.register(parentDisposable, () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
+    Disposer.register(parentDisposable, enablePyiStubs(module, packageNames)::run);
+  }
+
+  /** Adds the bundled stubs of {@code packageNames} to the SDK of {@code module}, and returns the removal. */
+  private static @NotNull Runnable enablePyiStubs(@NotNull Module module, String @NotNull ... packageNames) {
+    final List<PythonPackage> packages = ContainerUtil.map(packageNames, name -> new PythonPackage(name, "", false));
+    return PyProjectStructureTestUtilKt.installPackagesWithBundledStubsForTests(module, packages);
   }
 
   protected String getTestDataPath() {

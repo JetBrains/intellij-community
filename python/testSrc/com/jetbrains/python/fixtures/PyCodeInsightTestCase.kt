@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.idea.TestFor
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
@@ -182,7 +183,8 @@ import kotlin.time.measureTimedValue
  * For every subclass of [PyCodeInsightTestCase], a new fixture [myFixture] is created. However, for
  * performance reasons, all test cases of the same subclass share the same [myFixture] instance, ensuring
  * consistent setup and teardown across tests within the same test class. Note that instances of [myFixture]
- * cannot be used in parallel, e.g., for parallel test execution.
+ * cannot be used in parallel, e.g., for parallel test execution. A test whose [fixtureKey] differs from the key of
+ * the shared fixture gets a new fixture.
  */
 abstract class PyCodeInsightTestCase {
   protected val logger = thisLogger()
@@ -273,8 +275,34 @@ abstract class PyCodeInsightTestCase {
   private lateinit var myTestInspections: TestInspections
   private lateinit var myTestCaseOptions: TestCaseOptions
 
+  /**
+   * Creates and sets up the fixture for [testCaseOptions]. The default is a light project with a mock SDK of
+   * [TestCaseOptions.languageLevel].
+   */
+  protected open fun createFixture(testCaseOptions: TestCaseOptions): CodeInsightTestFixture {
+    val factory = IdeaTestFixtureFactory.getFixtureFactory()
+    val projectDescriptor = PyLightProjectDescriptor(testCaseOptions.languageLevel)
+    val builder = factory.createLightFixtureBuilder(projectDescriptor, testClassName)
+    val fixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
+    fixture.testDataPath = PythonTestUtil.getTestDataPath()
+    fixture.setUp()
+    return fixture
+  }
+
+  /** Tears down a [fixture] of [createFixture]. */
+  protected open fun disposeFixture(fixture: CodeInsightTestFixture) {
+    fixture.tearDown()
+  }
+
+  /**
+   * The values that the fixture of [createFixture] depends on. A test gets a new fixture when its key is not equal to
+   * the key of the shared fixture. A subclass with its own fixture option adds the option to the key of the superclass.
+   */
+  protected open fun fixtureKey(testCaseOptions: TestCaseOptions): List<Any?> =
+    listOf(testCaseOptions.languageLevel, testCaseOptions.enablePyAnyType, testCaseOptions.assertSdkRootsNotParsed)
+
   companion object {
-    private data class CachedFixture(val options: TestCaseOptions, val fixture: CodeInsightTestFixture)
+    private data class CachedFixture(val key: List<Any?>, val fixture: CodeInsightTestFixture, val dispose: () -> Unit)
 
     private lateinit var testClassName: String
     private var cachedFixture: CachedFixture? = null
@@ -298,35 +326,18 @@ abstract class PyCodeInsightTestCase {
       testClassName = testClass.simpleName
     }
 
-    private fun ensureFixture(testCaseOptions: TestCaseOptions) {
-      if (!isAffectingFixture(testCaseOptions)) return
+    private fun ensureFixture(testCase: PyCodeInsightTestCase, testCaseOptions: TestCaseOptions) {
+      val key = testCase.fixtureKey(testCaseOptions)
+      if (cachedFixture?.key == key) return
 
-      cachedFixture?.fixture?.tearDown()
-      val fixture = createFixture(testCaseOptions)
-      cachedFixture = CachedFixture(testCaseOptions, fixture)
-    }
-
-    private fun isAffectingFixture(testCaseOptions: TestCaseOptions): Boolean {
-      val cachedTestOptions = cachedFixture?.options
-      return cachedTestOptions == null
-             || cachedTestOptions.languageLevel != testCaseOptions.languageLevel
-             || cachedTestOptions.enablePyAnyType != testCaseOptions.enablePyAnyType
-             || cachedTestOptions.assertSdkRootsNotParsed != testCaseOptions.assertSdkRootsNotParsed
-    }
-
-    private fun createFixture(testCaseOptions: TestCaseOptions): CodeInsightTestFixture {
-      val factory = IdeaTestFixtureFactory.getFixtureFactory()
-      val projectDescriptor = PyLightProjectDescriptor(testCaseOptions.languageLevel)
-      val builder = factory.createLightFixtureBuilder(projectDescriptor, testClassName)
-      val fixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
-      fixture.testDataPath = PythonTestUtil.getTestDataPath()
-      fixture.setUp()
+      disposeCachedFixture()
+      val fixture = testCase.createFixture(testCaseOptions)
+      cachedFixture = CachedFixture(key, fixture) { testCase.disposeFixture(fixture) }
       // The setup registers a new SDK, and the Python project structure follows it in the background. A test that
       // highlights before that lands sees the old structure, and the restart that follows cancels its highlighting.
       awaitPythonInterpreters(fixture.project)
       InspectionProfileImpl.INIT_INSPECTIONS = true
       Registry.get(PyAnyType.REGISTRY_KEY).setValue(testCaseOptions.enablePyAnyType)
-      return fixture
     }
 
     @AfterAll
@@ -336,9 +347,14 @@ abstract class PyCodeInsightTestCase {
         { IntentionalUnstubbing.resetForciblyUnstubbedFileSet() },
         { Registry.get(PyAnyType.REGISTRY_KEY).resetToDefault() },
         { InspectionProfileImpl.INIT_INSPECTIONS = false },
-        { cachedFixture?.fixture?.tearDown() },
-        { cachedFixture = null },
+        { disposeCachedFixture() },
       )
+    }
+
+    private fun disposeCachedFixture() {
+      val cached = cachedFixture ?: return
+      cachedFixture = null
+      cached.dispose()
     }
   }
 
@@ -346,19 +362,26 @@ abstract class PyCodeInsightTestCase {
   @BeforeEach
   fun setUpPerTest(testInfo: TestInfo) {
     testCallCount = 0
-    myTestInspections = findTestInspections(testInfo.testMethod.orNull())
-    myTestCaseOptions = testInfo.testMethod.orNull()?.getAnnotation(TestCaseOptions::class.java) ?: TestCaseOptions()
-    ensureFixture(myTestCaseOptions)
+    myTestMethod = testInfo.testMethod.orNull()
+    myTestClass = testInfo.testClass.orNull()
+    myTestInspections = findTestAnnotation(TestInspections::class.java) ?: TestInspections()
+    myTestCaseOptions = myTestMethod?.getAnnotation(TestCaseOptions::class.java) ?: TestCaseOptions()
+    ensureFixture(this, myTestCaseOptions)
   }
 
-  private fun findTestInspections(testMethod: Method?): TestInspections {
-    if (testMethod == null) return TestInspections()
-    val atMethod = testMethod.getAnnotation(TestInspections::class.java)
-    if (atMethod != null) return atMethod
-    val atClass = generateSequence(testMethod.declaringClass) { it.enclosingClass }
-        .firstNotNullOfOrNull { it.getAnnotation(TestInspections::class.java) }
-    if (atClass != null) return atClass
-    return TestInspections()
+  private var myTestMethod: Method? = null
+  private var myTestClass: Class<*>? = null
+
+  /**
+   * Finds [annotationClass] on the current test method, then on the running test class and its superclasses, then on
+   * each enclosing class and its superclasses. The value is available from [fixtureKey] and [createFixture] on.
+   */
+  protected fun <A : Annotation> findTestAnnotation(annotationClass: Class<A>): A? {
+    myTestMethod?.getAnnotation(annotationClass)?.let { return it }
+    val testClass = myTestClass ?: myTestMethod?.declaringClass ?: return null
+    return generateSequence(testClass) { it.enclosingClass }
+      .flatMap { enclosing -> generateSequence(enclosing) { it.superclass } }
+      .firstNotNullOfOrNull { it.getAnnotation(annotationClass) }
   }
 
   @AfterEach
@@ -1955,4 +1978,84 @@ class PyCodeInsightTestCaseFixtureReuseTest : PyCodeInsightTestCase() {
     Assertions.assertNotNull(myFixture.file, "Fixture should still be usable in a subsequent test")
   }
 
+}
+
+/**
+ * Verifies that an option that a subclass adds to [PyCodeInsightTestCase.fixtureKey] gives a test a new fixture, and that
+ * the options of the superclass stay in the key.
+ */
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+@Subsystems.CodeInsight
+@Layers.Functional
+@TestFor(classes = [PyCodeInsightTestCase::class])
+class PyCodeInsightTestCaseFixtureKeyTest : PyCodeInsightTestCase() {
+
+  @Target(AnnotationTarget.FUNCTION)
+  @Retention(AnnotationRetention.RUNTIME)
+  annotation class Flavor(val name: String)
+
+  override fun fixtureKey(testCaseOptions: TestCaseOptions): List<Any?> =
+    super.fixtureKey(testCaseOptions) + findTestAnnotation(Flavor::class.java)?.name
+
+  companion object {
+    private var previousFixture: CodeInsightTestFixture? = null
+  }
+
+  @Test
+  @Order(1)
+  @Flavor("first")
+  fun `the first flavor sets up a fixture`() {
+    previousFixture = myFixture
+  }
+
+  @Test
+  @Order(2)
+  @Flavor("first")
+  fun `the same flavor keeps the fixture`() {
+    Assertions.assertSame(previousFixture, myFixture)
+  }
+
+  @Test
+  @Order(3)
+  @Flavor("second")
+  fun `another flavor sets up a new fixture`() {
+    Assertions.assertNotNull(previousFixture, "The first test must run before this one")
+    Assertions.assertNotSame(previousFixture, myFixture)
+    previousFixture = myFixture
+  }
+
+  @Test
+  @Order(4)
+  @Flavor("second")
+  @TestCaseOptions(languageLevel = LanguageLevel.PYTHON312)
+  fun `another language level with the same flavor sets up a new fixture`() {
+    Assertions.assertNotNull(previousFixture, "The third test must run before this one")
+    Assertions.assertNotSame(previousFixture, myFixture)
+  }
+}
+
+/** Verifies that [PyCodeInsightTestCase.findTestAnnotation] reads the class annotation of the running test class. */
+@Subsystems.CodeInsight
+@Layers.Functional
+@TestFor(classes = [PyCodeInsightTestCase::class])
+open class PyCodeInsightTestCaseClassAnnotationTest : PyCodeInsightTestCase() {
+
+  @Target(AnnotationTarget.CLASS)
+  @Retention(AnnotationRetention.RUNTIME)
+  annotation class Mark(val name: String)
+
+  protected open val expectedMark: String? = null
+
+  @Test
+  fun `the annotation of the running test class is found for an inherited test method`() {
+    Assertions.assertEquals(expectedMark, findTestAnnotation(Mark::class.java)?.name)
+  }
+}
+
+@Subsystems.CodeInsight
+@Layers.Functional
+@TestFor(classes = [PyCodeInsightTestCase::class])
+@PyCodeInsightTestCaseClassAnnotationTest.Mark("subclass")
+class PyCodeInsightTestCaseSubclassAnnotationTest : PyCodeInsightTestCaseClassAnnotationTest() {
+  override val expectedMark: String = "subclass"
 }
