@@ -167,3 +167,13 @@ More details can be found
 in [com.intellij.testFramework.BenchmarkTestInfo#start()](https://github.com/JetBrains/intellij-community/blob/7fe480df8be14f0c7de59fcdb56ac5bf056b24b6/platform/testFramework/src/com/intellij/testFramework/BenchmarkTestInfo.java#L66),
 [com.intellij.testFramework.BenchmarkTestInfo#startAsSubtest()](https://github.com/JetBrains/intellij-community/blob/7fe480df8be14f0c7de59fcdb56ac5bf056b24b6/platform/testFramework/src/com/intellij/testFramework/BenchmarkTestInfo.java#L76),
 [com.intellij.testFramework.BenchmarkTestInfoImpl#withMetricsCollector()](https://github.com/JetBrains/intellij-community/blob/7fe480df8be14f0c7de59fcdb56ac5bf056b24b6/tools/intellij.tools.ide.metrics.benchmark/src/com/intellij/tools/ide/metrics/benchmark/BenchmarkTestInfoImpl.java#L207),
+
+#### Screen recording and performance tests
+
+Starter records the screen while a JUnit 5 test runs an IDE. A recording can distort performance metrics, so mark each
+performance test with `@com.intellij.ide.starter.junit5.PerformanceTest` on the test method or the test class.
+
+On a local run, a test that publishes metrics through `MetricsPublisher.publish` without the annotation gets an extra failed
+`TestInfraException` test. This synthetic test names the missing annotation. The real test still passes.
+With the default `NoCIServer`, the reminder is only a log message.
+Metrics published from `@BeforeAll` or `@AfterAll`, or without `MetricsPublisher.publish`, get no reminder.
