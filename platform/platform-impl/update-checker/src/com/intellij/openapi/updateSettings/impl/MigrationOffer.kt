@@ -3,9 +3,13 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.IdeBundle
 import com.intellij.l10n.LocalizationUtil
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.ui.svg.getSvgDocumentSize
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -13,6 +17,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
+import java.nio.file.Path
+import kotlin.io.path.isDirectory
 
 private val LOG = logger<MigrationOfferContent>()
 
@@ -121,11 +127,60 @@ private fun doLoadMigrationOffer(update: PlatformUpdates.Loaded, indicator: Prog
   }
 }
 
-/** The action of the primary button of the migration dialog. It opens the download page in the browser. */
+private var isMigrationInstallRunning = false
+
+@Volatile
+private var installedMigrationApp: Path? = null
+
+/**
+ * The action of the primary button of the migration dialog. It installs the distribution in the background.
+ * It does nothing while the install runs, or when the install of this session is done.
+ */
 @RequiresEdt
 internal fun startMigrationUpdate(project: Project?, content: MigrationOfferContent) {
+  val installed = installedMigrationApp
+  if (installed != null && installed.isDirectory()) {
+    LOG.info("the migration distribution is already installed: ${installed}")
+    return
+  }
+  if (isMigrationInstallRunning) {
+    LOG.info("the migration install is already running")
+    return
+  }
+
+  isMigrationInstallRunning = true
+  val distribution = content.distribution
   val update = content.update
-  BrowserUtil.browse(downloadUrl(update.newBuild, update.updatedChannel), project)
+  @Suppress("UsagesOfObsoleteApi")
+  object : Task.Backgroundable(project, IdeBundle.message("updates.migration.progress.title"), true) {
+    override fun run(indicator: ProgressIndicator) {
+      val app = installMigrationDistribution(distribution, indicator)
+      installedMigrationApp = app
+      LOG.info("the migration distribution is installed: ${app}")
+    }
+
+    override fun onThrowable(error: Throwable) {
+      val message = if (error is MigrationInstallException) {
+        LOG.warn("the migration install failed: ${error.message}")
+        error.userMessage
+      }
+      else {
+        LOG.warn("the migration install failed", error)
+        IdeBundle.message("updates.migration.error.install")
+      }
+      UpdateChecker.getNotificationGroupForIdeUpdateResults()
+        .createNotification(IdeBundle.message("updates.migration.error.title"), message, NotificationType.ERROR)
+        .addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.downloading.patch.open")) {
+          BrowserUtil.browse(downloadUrl(update.newBuild, update.updatedChannel), project)
+        })
+        .setDisplayId("ide.migration.install.failed")
+        .notify(project)
+    }
+
+    override fun onFinished() {
+      isMigrationInstallRunning = false
+    }
+  }.queue()
 }
 
 private var isMigrationOfferShown = false
@@ -172,7 +227,7 @@ private fun loadSvg(url: String, indicator: ProgressIndicator?): ByteArray {
   return data
 }
 
-private fun download(url: String, indicator: ProgressIndicator?): ByteArray {
+internal fun download(url: String, indicator: ProgressIndicator?): ByteArray {
   indicator?.checkCanceled()
   val data = HttpRequests.request(url)
     .productNameAsUserAgent()

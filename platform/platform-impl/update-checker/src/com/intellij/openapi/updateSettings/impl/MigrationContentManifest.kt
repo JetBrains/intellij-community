@@ -10,7 +10,7 @@ import java.net.URISyntaxException
 import java.util.Locale
 import kotlin.math.floor
 
-/** The system property that lets the manifest and its images use `file:` URLs. It is for local debugging only. */
+/** The system property that lets the manifest, its images and the distribution use `file:` URLs. It is for local debugging only. */
 private const val ALLOW_FILE_CONTENT_URLS_PROPERTY = "ide.update.migration.allow.file.urls"
 
 private const val SUPPORTED_SCHEMA_MAJOR = 1
@@ -96,7 +96,7 @@ fun isAllowedContentUrl(url: String, allowFileUrls: Boolean = isFileContentUrlAl
   }
 }
 
-private fun isFileContentUrlAllowed(): Boolean = System.getProperty(ALLOW_FILE_CONTENT_URLS_PROPERTY).toBoolean()
+internal fun isFileContentUrlAllowed(): Boolean = System.getProperty(ALLOW_FILE_CONTENT_URLS_PROPERTY).toBoolean()
 
 private fun resolveOffer(
   locales: Map<String, LocaleDto>,

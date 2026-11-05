@@ -55,5 +55,6 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.productMode" />
+    <orderEntry type="module" module-name="intellij.platform.buildData" />
   </component>
 </module>
