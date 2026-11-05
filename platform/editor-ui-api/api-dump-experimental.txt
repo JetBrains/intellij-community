@@ -181,6 +181,25 @@ com.intellij.openapi.editor.Editor
 - com.intellij.openapi.util.UserDataHolder
 - *:getCustomWrapModel():com.intellij.openapi.editor.CustomWrapModel
 - *:getStickyLinesPanelHeight():I
+*:com.intellij.openapi.editor.EditorProjection
+- com.intellij.openapi.editor.Editor
+- *sf:Companion:com.intellij.openapi.editor.EditorProjection$Companion
+- sf:EDITOR_PROJECTION:com.intellij.openapi.actionSystem.DataKey
+- *s:findAt(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.editor.EditorProjection
+- a:fromHostOffset(I):I
+- a:getHostEditor():com.intellij.openapi.editor.Editor
+- *s:registerProvider(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.EditorProjection$Provider):V
+- *s:resolveAt(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.editor.Editor
+- *s:resolveAtCaret(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.Editor
+- a:toHostOffset(I):I
+- a:toHostRange(com.intellij.openapi.util.TextRange):com.intellij.openapi.util.TextRange
+*f:com.intellij.openapi.editor.EditorProjection$Companion
+- f:findAt(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.editor.EditorProjection
+- f:registerProvider(com.intellij.openapi.editor.Editor,com.intellij.openapi.editor.EditorProjection$Provider):V
+- f:resolveAt(com.intellij.openapi.editor.Editor,I):com.intellij.openapi.editor.Editor
+- f:resolveAtCaret(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.Editor
+*:com.intellij.openapi.editor.EditorProjection$Provider
+- a:getProjection(I):com.intellij.openapi.editor.EditorProjection
 com.intellij.openapi.editor.EditorSettings
 - *a:getCaretEasing():com.intellij.openapi.editor.EditorSettings$CaretEasing
 - *a:isSmoothCaretBlinking():Z

@@ -844,6 +844,12 @@ c:com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 - transferLineFromOnesideStrict(com.intellij.diff.util.Side,I):I
 - transferLineToOneside(com.intellij.diff.util.Side,I):I
 - transferLineToOnesideStrict(com.intellij.diff.util.Side,I):I
+- transferOffsetFromOneside(I):com.intellij.openapi.util.Pair
+- transferOffsetFromOneside(com.intellij.diff.util.Side,I):I
+- transferOffsetFromOnesideStrict(com.intellij.diff.util.Side,I):I
+- transferOffsetToOneside(com.intellij.diff.util.Side,I):I
+- transferOffsetToOnesideStrict(com.intellij.diff.util.Side,I):I
+- transferRangeToOnesideStrict(com.intellij.diff.util.Side,com.intellij.openapi.util.TextRange):com.intellij.openapi.util.TextRange
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateContextHints():V
 - p:updateEditorCanBeTyped():V
