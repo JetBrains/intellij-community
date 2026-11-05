@@ -2,12 +2,10 @@
 package org.jetbrains.plugins.groovy.debugger;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.SimpleConfigurable;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,9 +24,7 @@ public final class GroovyDebuggerSettings extends XDebuggerSettings<GroovyDebugg
   @Override
   public @NotNull Collection<? extends Configurable> createConfigurables(@NotNull DebuggerSettingsCategory category) {
     return switch (category) {
-      case STEPPING ->
-        singletonList(SimpleConfigurable.create("reference.idesettings.debugger.groovy", GroovyBundle.message("groovy.debug.caption"),
-                                                "reference.idesettings.debugger.groovy", GroovySteppingConfigurableUi.class, () -> this));
+      case STEPPING -> singletonList(new GroovySteppingConfigurable(this));
       case HOTSWAP -> singletonList(new GroovyHotSwapConfigurable(this));
       default -> Collections.emptyList();
     };
