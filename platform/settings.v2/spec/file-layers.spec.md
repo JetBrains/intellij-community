@@ -98,6 +98,11 @@ file layer holds the settings of a directory and of each file in it, in one conf
   [@test] ../test/src/com/intellij/platform/settings/v2/FileLayerIndexLookupTest.kt
 - The wait for the index must block no other startup activity and no indexing. The platform runs the load of a
   project open in its own coroutine, and indexing does not wait for it.
+- The file layer must be absent in the light mode. A write at a file context then lands in the project layer, and
+  a read at a file context sees the project value. After the move to the full mode, the file layer loads, and a
+  write at a file context lands in the directory config. See
+  [ADR 0164](../adr/0164-file-settings-are-off-in-the-light-mode-until-the-move-to-the-full-mode.md). No test
+  covers it yet.
 - The file layer must find only the configs in the project content. A config in an excluded directory never loads.
   [@test] ../test/src/com/intellij/platform/settings/v2/FileLayerIndexLookupTest.kt
 - A project that closes while the file layer waits for its index must end the wait, and it must give no configs.
