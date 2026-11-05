@@ -3,7 +3,9 @@ package org.intellij.plugins.markdown.wrap
 
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.SlowOperations
@@ -67,4 +69,67 @@ class MarkdownSoftWrapTest : BasePlatformTestCase() {
     assertTrue("expected the first visual row to wrap at or before the link start $linkStart: $wrapOffsets",
                wrapOffsets.any { it in (lineStart + 1)..linkStart })
   }
+
+  fun `test soft wrap goes in front of a bare URL`() {
+    assertSoftWraps(
+      "- `[#q-1]` — Since we changed direction to ⏎https://git.example.com/group/project/-/merge_requests/1234",
+      "- [ ] [#bl-1] see the notes in the tracker before you start, then ⏎https://git.example.com/group/project/-/issues/42",
+      "- See [the notes](#notes) before you start, then ⏎https://git.example.com/group/project/-/issues/42",
+      "Since we changed direction to the plan, see ⏎https://git.example.com/group/project/-/merge_requests/1234",
+      // The second wrap is on a continuation line, after the `[` of the line.
+      "- [#q-1] the plan changed after the review, so we start again with an ⏎internationalization see the notes in " +
+      "⏎https://git.example.com/group/project/-/merge_requests/1234",
+    )
+  }
+
+  fun `test soft wrap goes in front of a link token`() {
+    assertSoftWraps(
+      "- See [the notes in the tracker]( ⏎https://git.example.com/group/project/-/issues/42 )",
+      "- [#id] Run the smoke test of the build as described in the runbook ⏎(procedure-for-the-nightly-build), install (a)",
+      "See the notes in the tracker before you start working on it, then ⏎[the-notes-about-the-migration](#notes)",
+      "- `[#q-1]` — Since we changed direction to ⏎<https://git.example.com/group/project/-/merge_requests/1234>",
+      "- [#q-1] For the access to the tracker, write a message to ⏎<first.last.with-a-long-name@git.example.com>",
+    )
+  }
+
+  fun `test soft wrap goes inside link text, titles and definitions`() {
+    assertSoftWraps(
+      "See the notes in the tracker before you start, [then read ⏎the-notes-about-the-migration](#notes)",
+      "See [the notes](#notes \"the notes about ⏎the-migration-of-the-tracker-to-the-new-host\") before you start",
+      "[the notes about the migration of the tracker]: ⏎https://git.example.com/group/project/-/merge_requests/1234",
+      "[notes]: #notes \"the notes about the migration of the tracker to ⏎the-new-host-of-the-group-and-project\"",
+    )
+  }
+
+  /**
+   * Puts each line in its own block and checks its soft wraps at 80 columns.
+   * The mock font gives each character the width that [EditorTestUtil.configureSoftWraps] expects.
+   */
+  private fun assertSoftWraps(vararg markedLines: String) {
+    try {
+      FontLayoutService.setInstance(MockFontLayoutService(10, 10, 2))
+      myFixture.configureByText("softWrap.md", markedLines.joinToString("\n\n") { line -> line.filterNot { it == WRAP } })
+      assertTrue(EditorTestUtil.configureSoftWraps(myFixture.editor, 80))
+
+      val document = myFixture.editor.document
+      val actual = markedLines.indices.map { index ->
+        val line = index * 2
+        val lineStart = document.getLineStartOffset(line)
+        val wraps = myFixture.editor.softWrapModel.getSoftWrapsForLine(line).map { it.start - lineStart }
+        buildString {
+          document.charsSequence.subSequence(lineStart, document.getLineEndOffset(line)).forEachIndexed { offset, char ->
+            if (offset in wraps) append(WRAP)
+            append(char)
+          }
+        }
+      }
+      assertEquals(markedLines.joinToString("\n"), actual.joinToString("\n"))
+    }
+    finally {
+      FontLayoutService.setInstance(null)
+    }
+  }
 }
+
+// Symbol that indicates the wrap position.
+private const val WRAP = '⏎'

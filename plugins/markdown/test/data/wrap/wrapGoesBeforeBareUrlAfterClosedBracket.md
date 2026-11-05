@@ -1,0 +1,1 @@
+- See [the notes](#notes) before you start, then https://git.example.com/group/project/-/issues/4<caret>

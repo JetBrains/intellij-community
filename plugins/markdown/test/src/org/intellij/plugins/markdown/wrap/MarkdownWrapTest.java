@@ -114,6 +114,11 @@ public class MarkdownWrapTest extends BasePlatformTestCase {
     doTest("X");
   }
 
+  /** A closed `[` before a bare URL keeps the wrap in front of the URL, so the list marker stays on its line. */
+  public void testWrapGoesBeforeBareUrlAfterClosedBracket() {
+    doTest("2");
+  }
+
   /** Markdown has no string literals, so the word before the wrap stays on the line while it fits in the right margin. */
   public void testWrapKeepsPrecedingWordThatFits() {
     doTest("t");
