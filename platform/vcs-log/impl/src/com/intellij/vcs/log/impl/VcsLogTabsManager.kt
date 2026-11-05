@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.impl.IdeFrameGuests
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -75,7 +76,13 @@ internal class VcsLogTabsManager(
       if (logManager.isDisposed) return@invokeLater
 
       val toolWindow = getToolWindow(project) ?: run {
-        LOG.error("Could not find tool window by id ${ChangesViewContentManager.TOOLWINDOW_ID}")
+        // a frame guest registers no tool window of the extension point
+        if (IdeFrameGuests.isFrameGuest(project)) {
+          LOG.debug("No tool window ${ChangesViewContentManager.TOOLWINDOW_ID} in a frame guest, the saved tabs are not reopened")
+        }
+        else {
+          LOG.error("Could not find tool window by id ${ChangesViewContentManager.TOOLWINDOW_ID}")
+        }
         return@invokeLater
       }
 
