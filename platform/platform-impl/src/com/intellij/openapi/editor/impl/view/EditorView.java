@@ -813,11 +813,16 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return mySnapshot.prefixAttributes();
   }
 
+  /**
+   * Returns the current snapshot with all its lazy values: the metrics, the tab size, the font resolver and the prefix layout.
+   * It computes the values that the snapshot does not have yet.
+   */
   public @NotNull EditorViewSnapshot getSnapshot() {
     while (true) {
       EditorViewSnapshot snapshot = mySnapshot;
       if (snapshot.metrics() != EditorViewMetrics.UNINITIALIZED &&
           snapshot.tabSize() != -1 &&
+          snapshot.fontResolver() != EditorFontResolver.UNINITIALIZED &&
           snapshot.prefixLayout() != NOT_INITIALIZED_PREFIX) {
         return snapshot;
       }
