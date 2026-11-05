@@ -126,7 +126,9 @@ def _add_non_classpath_data(args, inputs, module_info, root_output_directory = "
         if root_output_directory:
             relative_path = root_output_directory + "/" + relative_path
         args.add("--non_classpath_data")
-        args.add(data.file, format = relative_path + ":%s")
+
+        # A directory is one argument: the packager copies its tree.
+        args.add_all([data.file], expand_directories = False, format_each = relative_path + ":%s")
         inputs.append(data.file)
 
 _build_number_from_file = "$build_number_from_file"

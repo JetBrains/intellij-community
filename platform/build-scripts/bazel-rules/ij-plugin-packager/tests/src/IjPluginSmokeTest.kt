@@ -31,6 +31,13 @@ internal class IjPluginSmokeTest {
         file("first.txt", "first")
         file("third.bin", "third")
       }
+      dir("descriptor-data-tree") {
+        dir("subdir") {
+          file("second.txt", "second")
+        }
+        file("first.txt", "first")
+        file("third.bin", "third")
+      }
       dir("grouped-data") {
         dir("descriptor-data-txt-files") {
           dir("subdir") {

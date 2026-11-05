@@ -1,7 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix")
+load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
 load("//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
+load("//platform/build-scripts/bazel-rules:unpack_archive.bzl", "unpack_archive")
 load(":build_settings_test.bzl", "ij_plugin_settings_test_target")
 load(":non_classpath_data_test.bzl", "non_classpath_data_attribute_tests")
 
@@ -13,6 +15,7 @@ ij_plugin_module(
         ":descriptor-data-dir",
         ":descriptor-data-root",
         ":descriptor-data",
+        ":descriptor-data-tree-files",
     ],
     resource_strip_prefix = "descriptor/resources",
     resources = glob(["descriptor/resources/**/*"]),
@@ -47,6 +50,28 @@ pkg_files(
     name = "descriptor-data-root",
     srcs = ["descriptor/data"],
     renames = {"descriptor/data": ""},
+)
+
+pkg_files(
+    name = "descriptor-data-archive-files",
+    srcs = glob(["descriptor/data/**"]),
+    strip_prefix = strip_prefix.from_pkg("descriptor/data"),
+)
+
+pkg_zip(
+    name = "descriptor-data-archive",
+    srcs = [":descriptor-data-archive-files"],
+)
+
+# a directory that an action writes, not a source directory
+unpack_archive(
+    name = "descriptor-data-tree",
+    archive = ":descriptor-data-archive",
+)
+
+pkg_files(
+    name = "descriptor-data-tree-files",
+    srcs = [":descriptor-data-tree"],
 )
 
 pkg_filegroup(
