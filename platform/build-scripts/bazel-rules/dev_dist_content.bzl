@@ -7,7 +7,7 @@ one product, as the plugin components publish it.
 """
 
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "DevDistPlatformJarInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_PRODUCT_INFO_ATTR", "dev_dist_check_product_stamp_class", "dev_dist_product_info_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS", "dev_dist_stamp_class_consumer_transition")
 
 DevDistContentInfo = provider(
     doc = "The module and library jars one slice of a dev distribution is made of.",
@@ -165,7 +165,6 @@ dev_dist_platform_payload = rule(
 )
 
 def _dev_dist_plugin_content_impl(ctx):
-    dev_dist_check_product_stamp_class(ctx)
     module_jars = []
     library_jars = []
     for target in ctx.attr.plugins + ctx.attr.deps:
@@ -195,8 +194,8 @@ dev_dist_plugin_content = rule(
     rule unions them. Raw jars only: no packed plugin jar and no descriptor is in here, so a plugin source edit
     re-keys no reference through this target.
 
-    `plugins` are the components of the product's own bundled plugins. They need the product configuration, which
-    `product_info` sets on the way down, exactly as `intellij_dev_fragments_dist` does. The module jars below them
+    `plugins` are the components of the product's own bundled plugins. They need the mode of the product, which
+    `stamp_class` sets on the way down, exactly as `intellij_dev_fragments_dist` does. The module jars below them
     still come from the neutral configuration through each component's inputs target, so no module compiles twice.
     `deps` are other content targets, already configured: the content of the embedded frontend's own bundled plugins,
     collected under the frontend's product.
@@ -208,18 +207,17 @@ dev_dist_plugin_content = rule(
     attrs = {
         "plugins": attr.label_list(
             doc = "The plugin components this product bundles. Each one publishes `DevDistContentInfo`.",
-            cfg = dev_dist_product_info_transition,
+            cfg = dev_dist_stamp_class_consumer_transition,
             providers = [DevDistContentInfo],
         ),
         "deps": attr.label_list(
             doc = "Other content targets, merged as they are.",
             providers = [DevDistContentInfo],
         ),
-    } | DEV_DIST_PRODUCT_INFO_ATTR,
+    } | DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS,
 )
 
 def _dev_dist_plugin_components_impl(ctx):
-    dev_dist_check_product_stamp_class(ctx)
     return [DefaultInfo(files = depset(transitive = [target[OutputGroupInfo].dev_dist_plugin_outputs for target in ctx.attr.plugins]))]
 
 dev_dist_plugin_components = rule(
@@ -227,34 +225,27 @@ dev_dist_plugin_components = rule(
 
     A component is `manual`, because it builds only under a product. A distribution is `manual` too, and it reaches
     only the variant of the host platform. This target is not `manual`, so `bazel build //...` builds each listed
-    component with its descriptor. `product_info` sets the product on the way down, as `dev_dist_plugin_content` does.
+    component with its descriptor. `stamp_class` sets the mode on the way down, as `dev_dist_plugin_content` does.
     """,
     implementation = _dev_dist_plugin_components_impl,
     attrs = {
         "plugins": attr.label_list(
             doc = "The plugin components to build. Each one publishes the `dev_dist_plugin_outputs` output group.",
-            cfg = dev_dist_product_info_transition,
+            cfg = dev_dist_stamp_class_consumer_transition,
             mandatory = True,
         ),
-    } | DEV_DIST_PRODUCT_INFO_ATTR,
+    } | DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS,
 )
 
-def dev_dist_plugin_component_builds(components, product_info, modes, community_products = [], community_product_info = None):
+def dev_dist_plugin_component_builds(components, modes):
     """Declares one `<product>_plugin_components` target per product, so that each component builds once.
 
-    A component serves every product that states it alike, so the first product that names a component builds it.
-    The additional tier of a community product builds under the community product info, as a distribution of it does.
+    A component serves every product of its stamp class, so the first product that names a component builds it.
 
     Args:
         components: The component map, `{product: {tier: {main module: label or {platform: label}}}}`.
-        product_info: The label pattern of a product's `dev_dist_product_info`, with `%s` for the product key.
         modes: The mode of each product of the map, keyed by the product key. It is the stamp class of the product.
-        community_products: The community products of the map. The other half declares their product info.
-        community_product_info: The label pattern of a community product's `dev_dist_product_info`, with `%s` for the
-            product key. Required when `community_products` is not empty.
     """
-    if community_products and community_product_info == None:
-        fail("community_products needs community_product_info")
     claimed = {}
     for product, tiers in components.items():
         plugins = []
@@ -268,6 +259,5 @@ def dev_dist_plugin_component_builds(components, product_info, modes, community_
             dev_dist_plugin_components(
                 name = product + "_plugin_components",
                 plugins = plugins,
-                product_info = (community_product_info if product in community_products else product_info) % product,
                 stamp_class = modes[product],
             )

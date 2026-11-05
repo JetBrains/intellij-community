@@ -51,7 +51,6 @@ def _community_product(tables, product):
     - `build_package`: the package of the community platform sets, `@community//build`.
     - `bundled_components(product)`: the bundled tier of the community component map, with every label spelled for
       the ultimate checkout.
-    - `product_info_label(product)`: the label of the community product info of `product`.
     - `product_mode(product)`: the mode of the community product `product`, its stamp class.
     """
     community = tables.community
@@ -371,13 +370,6 @@ def _plan(tables, product):
         fail("No generated dev-distribution plan for product '%s'" % product)
     return plan
 
-def _product_info_label(tables, product):
-    """The label of the product info of `product`: the community one for a community product."""
-    community = _community_product(tables, product)
-    if community != None:
-        return community.product_info_label(product)
-    return tables.product_info_label(product)
-
 def _product_mode(tables, product):
     """The mode of `product`, the stamp class its plugin components are configured with."""
     community = _community_product(tables, product)
@@ -475,14 +467,13 @@ def _platform_set(tables, product, name, target_platform, visibility):
         dev_dist_runtime_layout_parts(
             name = repository + "_parts",
             plugins = _plugin_components(target_platform, catalogue.bundled).labels,
-            product_info = tables.product_info_label(product),
             stamp_class = tables.product_mode(product),
             tags = ["manual"],
         )
 
         # The embedded frontend is a frontend-only plugin of the product, and so are the plugins that only the frontend
-        # bundles. Their components are the frontend product's. The parts target configures them for this product
-        # through `product_info`, because the repository of this product lists them.
+        # bundles. Their components are the frontend product's. The parts target configures them for the mode of this
+        # product through `stamp_class`, because the repository of this product lists them.
         frontend_attrs = {}
         frontend = getattr(plan, "embedded_frontend", "")
         if frontend:
@@ -493,7 +484,6 @@ def _platform_set(tables, product, name, target_platform, visibility):
             dev_dist_runtime_layout_parts(
                 name = repository + "_frontend_parts",
                 plugins = _plugin_components(target_platform, frontend_catalogue.bundled, selected_modules = frontend_only).labels,
-                product_info = tables.product_info_label(product),
                 stamp_class = tables.product_mode(product),
                 tags = ["manual"],
             )
@@ -764,7 +754,6 @@ def _declare_fragments_dist(
             fragments = fragments,
             platform_prefix = product,
             plugin_components = plugin_components,
-            product_info = _product_info_label(tables, product),
             stamp_class = _product_mode(tables, product),
             expect_fragments = expect_fragments,
             additional_modules = additional_modules,
@@ -1075,7 +1064,6 @@ def intellij_dev_dist_declarations(tables):
     - `bazel_targets_json`, `project_model_tree`, `runtime_module_facts`, `collector`, `composer`: the labels of the
       shared inputs and tools.
     - `build_package`: the package that declares the platform sets, for example `//build`.
-    - `product_info_label(product)`: the label of the product info of `product`.
     - `product_mode(product)`: the mode of `product`, its stamp class.
     - `launcher_jvm_flags(product, additional_modules, jvm_flags)`: the `jvm_flags` of a launcher, or `None`.
     - `check_before_run(name, jvm_flags, compile_clion_backend_before_run)`: checks the before-run step of a row, or

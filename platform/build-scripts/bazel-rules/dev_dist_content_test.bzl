@@ -7,7 +7,7 @@ load(":content_module_jar.bzl", "ContentModuleJarInfo", "DevDistPlatformJarInfo"
 load(":content_module_jar_test.bzl", "content_module_jar_test_suite")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo", "dev_dist_platform_payload", "dev_dist_plugin_content")
 load(":dev_dist_plugin.bzl", "dev_dist_plugin")
-load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info")
+load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor_target_name")
 load(":dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_module_repository")
 load(
     ":intellij_dev_dist.bzl",
@@ -27,9 +27,6 @@ load(
 # The fixture of an unpacked archive, with the files `bin/tool`, `lib/helper` and `lib/sub/data.txt`.
 _UNPACKED_ARCHIVE = Label("//platform/build-scripts/bazel-rules/testdata/unpacked_archive:files")
 _UNPACKED_ARCHIVE_EXECUTABLE_LIST = Label("//platform/build-scripts/bazel-rules/testdata/unpacked_archive:executables.json")
-
-# The application info of the fixture product, an EAP product without a release date.
-_FIXTURE_APPLICATION_INFO = Label("//platform/build-scripts/bazel-rules:testdata/ApplicationInfo.xml")
 
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
 _TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
@@ -860,13 +857,8 @@ def dev_dist_content_test_suite(name):
             expected_message = expected_message,
         )
 
-    # The union of the bundled plugins' raw content. `plugins` go through the product transition, `deps` come as they
+    # The union of the bundled plugins' raw content. `plugins` go through the stamp class transition, `deps` come as they
     # are, and both land in one provider. A target without `DevDistContentInfo` is refused at the attribute.
-    product_info = name + "_product_info"
-    dev_dist_product_info(
-        name = product_info,
-        application_info = _FIXTURE_APPLICATION_INFO,
-    )
     second_library = name + "_second_library"
     _fake_library(name = second_library)
     plugin_contents = [name + "_plugin_content_first", name + "_plugin_content_second", name + "_plugin_content_frontend"]
@@ -878,7 +870,6 @@ def dev_dist_content_test_suite(name):
         name = plugin_content,
         plugins = [":" + plugin_contents[0], ":" + plugin_contents[1]],
         deps = [":" + plugin_contents[2]],
-        product_info = ":" + product_info,
         stamp_class = "",
     )
     tests.append(plugin_content + "_test")
@@ -891,7 +882,6 @@ def dev_dist_content_test_suite(name):
     dev_dist_plugin_content(
         name = refused_plugin_content,
         plugins = [":" + raw_owner],
-        product_info = ":" + product_info,
         stamp_class = "",
         tags = ["manual"],
     )

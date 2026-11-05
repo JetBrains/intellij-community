@@ -5,7 +5,7 @@ through the manifest that the `context_plugin_manifest` output group holds, so a
 with no distribution compose. The Air lane daemon and the UI agent of ide-starter both read this rule.
 """
 
-load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_PRODUCT_INFO_ATTR", "dev_dist_check_product_stamp_class", "dev_dist_product_info_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS", "dev_dist_stamp_class_consumer_transition")
 load(":intellij_dev_dist.bzl", "DevDistPlacementInfo")
 
 ContextPluginInfo = provider(
@@ -42,7 +42,6 @@ def _placed_directory(plugin):
     return directories.keys()[0]
 
 def _context_plugin_dir_impl(ctx):
-    dev_dist_check_product_stamp_class(ctx)
     owners = {}
     for plugin in ctx.attr.plugins:
         directory = _placed_directory(plugin)
@@ -76,19 +75,19 @@ context_plugin_dir = rule(
 
 Each entry of `plugins` is the generated `dev_plugin` component of one plugin, and it places one plugin directory. Two
 plugins never place the same directory. The components are platform-neutral, so one target serves every guest. The
-product transition gives the components the product configuration they require, and `product_info` names that product.
+stamp class transition gives the components the mode they require, and `stamp_class` names that mode.
 Each output is a link to the packed file, at `<name>/<destination below plugins/>`. The manifest
 `<name>.context-plugins.txt` names the files of every plugin. It is a runfile beside them and the
 `context_plugin_manifest` output group.""",
     implementation = _context_plugin_dir_impl,
     attrs = dict(
-        DEV_DIST_PRODUCT_INFO_ATTR,
+        DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS,
         plugins = attr.label_list(
             doc = "The `dev_plugin` component of each plugin.",
             mandatory = True,
             allow_empty = False,
             providers = [DevDistPlacementInfo],
-            cfg = dev_dist_product_info_transition,
+            cfg = dev_dist_stamp_class_consumer_transition,
         ),
     ),
 )

@@ -14,5 +14,4 @@ load(":dev_dist_content_sets.bzl", "DEV_DIST_PLUGIN_COMPONENTS")
 dev_dist_plugin_component_builds(
     components = DEV_DIST_PLUGIN_COMPONENTS,
     modes = {product: info.mode for product, info in DEV_DIST_PRODUCT_INFO.items()},
-    product_info = "//build/dev-dist-descriptors:%s_product_info",
 )

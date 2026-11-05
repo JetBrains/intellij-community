@@ -46,9 +46,6 @@ def _platform_lib_payload(product):
         fail("No generated dev-distribution product info for product '%s', so its product mode is unknown" % product)
     return dev_dist_packed_labels(DEV_DIST_FRAGMENT_INPUTS, DEV_DIST_MODULE_SETS, product, info.mode)
 
-def _product_info_label(product):
-    return "//build/dev-dist-descriptors:%s_product_info" % product
-
 def _product_mode(product):
     return DEV_DIST_PRODUCT_INFO[product].mode
 
@@ -71,7 +68,6 @@ _DECLARATIONS = intellij_dev_dist_declarations(struct(
     collector = "//build:dev_dist_packed_jars",
     composer = "//build:dev_dist_composer",
     build_package = "//build",
-    product_info_label = _product_info_label,
     product_mode = _product_mode,
     launcher_jvm_flags = None,
     check_before_run = None,

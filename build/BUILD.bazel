@@ -9,7 +9,6 @@ load("//build:dev_dist_products.bzl", "DEV_DIST_PRODUCTS")
 load("//build:intellij_dev_community.bzl", "intellij_dev_launch_assembles_test", "intellij_dev_platform_set_community")
 load("//build:jps_to_bazel_targets_json.bzl", "jps_to_bazel_targets_json")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
-load("//platform/build-scripts/bazel-rules:dev_dist_plugin_descriptor.bzl", "dev_dist_product_info")
 load(":dev_run_configuration_test.bzl", "dev_run_configuration_test_suite")
 load(":downloads_test.bzl", "downloads_test_suite")
 load(":intellij_add_opens_test.bzl", "intellij_add_opens_test_suite")
@@ -74,22 +73,9 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-# The two flags of the stamp class of a plugin component. The consumer of a component sets both for its product. A
-# component keeps only what changes its bytes, so one component serves every product of one stamp class.
-#
-# `dev_dist_stamp_class` is the product mode, such as `frontend`. A component keeps it only when its descriptor refuses
-# content modules for that mode. `dev_dist_product_info` names the product. No leaf reads it, so every component resets
-# it, and the mode that its descriptor does not refuse, to the default. Bazel trims a default from the configuration.
-#
-# The default states no product.
-dev_dist_product_info(name = "no_dev_dist_product_info")
-
-label_flag(
-    name = "dev_dist_product_info",
-    build_setting_default = ":no_dev_dist_product_info",
-    visibility = ["//visibility:public"],
-)
-
+# The flag of the stamp class of a plugin component: the product mode, such as `frontend`. The consumer of a component
+# sets it for its product. A component keeps it only when its descriptor refuses content modules for that mode, so one
+# component serves every product of one stamp class. Bazel trims the default from the configuration.
 string_flag(
     name = "dev_dist_stamp_class",
     build_setting_default = "",

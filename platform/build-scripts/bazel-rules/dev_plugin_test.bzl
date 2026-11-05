@@ -6,19 +6,15 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin.bzl", "dev_dist_plugin", "dev_dist_plugin_component_target_name")
-load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info")
+load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_plugin")
 load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo")
 
 # The application info of the fixture product, an EAP product without a release date.
-_FIXTURE_APPLICATION_INFO = Label("//platform/build-scripts/bazel-rules:testdata/ApplicationInfo.xml")
 
 # The suite's package and name are fixed: a test rule's configuration names the product info target by label.
 _PACKAGE = "//platform/build-scripts/bazel-rules/dev-plugin-tests"
 _SUITE = "dev_plugin_tests"
-_PRODUCT_INFO = str(Label(_PACKAGE + ":" + _SUITE + "_product_info"))
-_FRONTEND_PRODUCT_INFO = str(Label(_PACKAGE + ":" + _SUITE + "_frontend_product_info"))
-_PRODUCT_INFO_FLAG = str(Label("//build:dev_dist_product_info"))
 _STAMP_CLASS_FLAG = str(Label("//build:dev_dist_stamp_class"))
 _TRACE_SPANS = str(Label("//platform/build-scripts/bazel-rules:trace_spans"))
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
@@ -296,13 +292,13 @@ _DESCRIPTOR_JARS_ATTRS = {
 _dev_plugin_descriptor_jars_test = analysistest.make(
     _dev_plugin_descriptor_jars_test_impl,
     attrs = _DESCRIPTOR_JARS_ATTRS,
-    config_settings = {_PRODUCT_INFO_FLAG: _PRODUCT_INFO},
+    config_settings = {_STAMP_CLASS_FLAG: "monolith"},
 )
 
 _dev_plugin_descriptor_jars_spans_test = analysistest.make(
     _dev_plugin_descriptor_jars_test_impl,
     attrs = _DESCRIPTOR_JARS_ATTRS,
-    config_settings = {_PRODUCT_INFO_FLAG: _PRODUCT_INFO, _TRACE_SPANS: True},
+    config_settings = {_STAMP_CLASS_FLAG: "monolith", _TRACE_SPANS: True},
 )
 
 def _dev_plugin_inputs_test_impl(ctx):
@@ -340,7 +336,7 @@ _dev_plugin_inputs_test = analysistest.make(
         "component_name": attr.string(mandatory = True),
         "test_jar": attr.label(mandatory = True, allow_single_file = [".jar"]),
     },
-    config_settings = {_PRODUCT_INFO_FLAG: _PRODUCT_INFO},
+    config_settings = {_STAMP_CLASS_FLAG: "monolith"},
 )
 
 _DEV_PLUGIN_ATTRS = {
@@ -359,13 +355,13 @@ _DEV_PLUGIN_ATTRS = {
 _dev_plugin_test = analysistest.make(
     _dev_plugin_test_impl,
     attrs = _DEV_PLUGIN_ATTRS,
-    config_settings = {_PRODUCT_INFO_FLAG: _PRODUCT_INFO},
+    config_settings = {_STAMP_CLASS_FLAG: "monolith"},
 )
 
 _dev_plugin_spans_test = analysistest.make(
     _dev_plugin_test_impl,
     attrs = _DEV_PLUGIN_ATTRS,
-    config_settings = {_PRODUCT_INFO_FLAG: _PRODUCT_INFO, _TRACE_SPANS: True},
+    config_settings = {_STAMP_CLASS_FLAG: "monolith", _TRACE_SPANS: True},
 )
 
 def _tree_test_impl(ctx):
@@ -396,7 +392,7 @@ def _tree_test_impl(ctx):
 _tree_test = analysistest.make(
     _tree_test_impl,
     attrs = {"tree": attr.label(mandatory = True)},
-    config_settings = {_PRODUCT_INFO_FLAG: _PRODUCT_INFO},
+    config_settings = {_STAMP_CLASS_FLAG: "monolith"},
 )
 
 def _mode_test_impl(ctx):
@@ -427,7 +423,7 @@ _mode_test = analysistest.make(
     attrs = {
         "expected_destinations": attr.string_list(mandatory = True),
     },
-    config_settings = {_PRODUCT_INFO_FLAG: _FRONTEND_PRODUCT_INFO, _STAMP_CLASS_FLAG: "frontend"},
+    config_settings = {_STAMP_CLASS_FLAG: "frontend"},
 )
 
 def _expected_failure_test_impl(ctx):
@@ -441,7 +437,7 @@ _failure_test = analysistest.make(
     _expected_failure_test_impl,
     expect_failure = True,
     attrs = _FAILURE_ATTRS,
-    config_settings = {_PRODUCT_INFO_FLAG: _PRODUCT_INFO},
+    config_settings = {_STAMP_CLASS_FLAG: "monolith"},
 )
 
 def _declaration_test_impl(ctx):
@@ -518,19 +514,10 @@ def dev_plugin_test_suite(name):
     """Declares the packed plugin component tests.
 
     Args:
-        name: the suite's name. It must be `dev_plugin_tests`, because the test configurations name its product info.
+        name: the suite's name. It must be `dev_plugin_tests`, because the tests name targets of its package.
     """
     if name != _SUITE or native.package_name() != _PACKAGE.lstrip("/"):
         fail("dev_plugin_test_suite must be declared as '%s' in package '%s'" % (_SUITE, _PACKAGE))
-    dev_dist_product_info(
-        name = name + "_product_info",
-        application_info = _FIXTURE_APPLICATION_INFO,
-    )
-    dev_dist_product_info(
-        name = name + "_frontend_product_info",
-        application_info = _FIXTURE_APPLICATION_INFO,
-        mode = "frontend",
-    )
 
     owner = name + "_owner"
     split = name + "_split"

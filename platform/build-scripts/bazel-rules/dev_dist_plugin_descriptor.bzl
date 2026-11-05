@@ -45,83 +45,27 @@ DevDistPluginDescriptorInfo = provider(
     },
 )
 
-DevDistProductInfo = provider(
-    doc = """The product facts of one product, and the mode of the product, read through the `label_flag` `dev_dist_product_info`.
-
-    The consumer of a plugin component sets the flag and `dev_dist_stamp_class` for its product. No leaf reads the
-    product, so `dev_dist_stamp_class_transition` resets it, and one leaf serves every product of one mode. The
-    descriptor writer stamps a retained `product-descriptor` from the build number and the pinned build date.""",
-    fields = {
-        "application_info": "The product's application info source as a `File`, or None in the flag's default.",
-        "host_application_info": "The application info of the host product as a `File`, for a frontend. None for every other product.",
-        "replacements": "The markers of the application info as `KEY=VALUE`, in the order that the writer replaces them.",
-        "mode": "The product mode in lower case, `monolith` or `frontend` for example. The consumer states it as `stamp_class`.",
-        "_producer": "The actual provider declaration, not the forwarding label flag or a consumer label.",
-    },
-)
-
-def _dev_dist_product_info_impl(ctx):
-    return [DevDistProductInfo(
-        application_info = ctx.file.application_info,
-        host_application_info = ctx.file.host_application_info,
-        replacements = tuple(ctx.attr.replacements),
-        mode = ctx.attr.mode,
-        _producer = _descriptor_producer_identity(ctx),
-    )]
-
-dev_dist_product_info = rule(
-    doc = """One product's descriptor stamps, as the target `@community//build:dev_dist_product_info` points at.
-
-    Public because two packages declare one: `@community//build` declares the empty default of the flag, and the
-    descriptor macro declares the product's own.""",
-    implementation = _dev_dist_product_info_impl,
-    fragments = ["platform"],
-    attrs = {
-        "application_info": attr.label(
-            doc = "The product's application info source, the `source` of its `DEV_DIST_APPLICATION_INFOS` entry. None in the flag's default.",
-            allow_single_file = [".xml"],
-        ),
-        "host_application_info": attr.label(
-            doc = "The application info of the host product, the `host` of that entry. Set for a frontend only.",
-            allow_single_file = [".xml"],
-        ),
-        "replacements": attr.string_list(
-            doc = "The markers of the application info as `KEY=VALUE`, the `replacements` of that entry.",
-        ),
-        "mode": attr.string(
-            doc = """The product mode in lower case, such as `monolith` or `frontend`. Empty in the flag's default.
-
-A consumer of a plugin component states the same mode as `stamp_class`, and the rule checks that the two agree.""",
-        ),
-    },
-)
-
-# The two flags of the stamp class. Canonical, because a transition resolves neither an apparent repository name nor a
+# The flag of the stamp class. Canonical, because a transition resolves neither an apparent repository name nor a
 # relative label.
-_PRODUCT_INFO_FLAG = str(Label("//build:dev_dist_product_info"))
 _STAMP_CLASS_FLAG = str(Label("//build:dev_dist_stamp_class"))
-
-# The default of the product flag. A `Label` and not its string: Bazel trims a flag that equals its default from the
-# configuration only when the two values compare equal, and the default is a `Label`.
-_NO_PRODUCT_INFO = Label("//build:no_dev_dist_product_info")
 
 # The default of the stamp class flag: no mode.
 _NO_STAMP_CLASS = ""
 
-def _dev_dist_product_info_transition_impl(settings, attr):
-    product_info = getattr(attr, "product_info", None)
-    if product_info == None:
-        # The consumer names no product, so the leaf keeps the configuration it is reached in.
-        return {_PRODUCT_INFO_FLAG: settings[_PRODUCT_INFO_FLAG], _STAMP_CLASS_FLAG: settings[_STAMP_CLASS_FLAG]}
-    return {_PRODUCT_INFO_FLAG: str(product_info), _STAMP_CLASS_FLAG: getattr(attr, "stamp_class", _NO_STAMP_CLASS)}
+def _dev_dist_stamp_class_consumer_transition_impl(settings, attr):
+    stamp_class = getattr(attr, "stamp_class", None)
+    if not stamp_class:
+        # The consumer states no mode, so the target keeps the configuration it is reached in.
+        return {_STAMP_CLASS_FLAG: settings[_STAMP_CLASS_FLAG]}
+    return {_STAMP_CLASS_FLAG: stamp_class}
 
-# What names the product on the way down to a plugin component. The component declares no product, so the target that
-# collects components per product states it. The component then keeps only its stamp class, see
+# What names the mode on the way down to a plugin component. The component declares no product, so the target that
+# collects components per product states the mode of that product. The component then keeps only its stamp class, see
 # `dev_dist_stamp_class_transition`.
-dev_dist_product_info_transition = transition(
-    implementation = _dev_dist_product_info_transition_impl,
-    inputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
-    outputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
+dev_dist_stamp_class_consumer_transition = transition(
+    implementation = _dev_dist_stamp_class_consumer_transition_impl,
+    inputs = [_STAMP_CLASS_FLAG],
+    outputs = [_STAMP_CLASS_FLAG],
 )
 
 def _refusing_modes(attr):
@@ -139,23 +83,20 @@ def _stamp_class_modes(attr):
 
 def _dev_dist_stamp_class_transition_impl(settings, attr):
     mode = settings[_STAMP_CLASS_FLAG]
-    return {
-        _STAMP_CLASS_FLAG: mode if mode in _stamp_class_modes(attr) else _NO_STAMP_CLASS,
-        _PRODUCT_INFO_FLAG: _NO_PRODUCT_INFO,
-    }
+    return {_STAMP_CLASS_FLAG: mode if mode in _stamp_class_modes(attr) else _NO_STAMP_CLASS}
 
 # The incoming transition of a plugin component, of a descriptor leaf and of the target that packs the descriptor jar. It
 # keeps the mode only when the plugin refuses content modules for that mode. A leaf that embeds every content module
-# keeps no mode. No leaf reads a product, so the product goes back to its default too, which Bazel trims. So the
-# components of every product of one mode share one configuration, and one action packs them for all.
+# keeps no mode. The default is trimmed from the configuration. So the components of every product of one mode share
+# one configuration, and one action packs them for all.
 dev_dist_stamp_class_transition = transition(
     implementation = _dev_dist_stamp_class_transition_impl,
-    inputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
-    outputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
+    inputs = [_STAMP_CLASS_FLAG],
+    outputs = [_STAMP_CLASS_FLAG],
 )
 
 def _dev_dist_neutral_product_transition_impl(_settings, _attr):
-    return {_PRODUCT_INFO_FLAG: _NO_PRODUCT_INFO, _STAMP_CLASS_FLAG: _NO_STAMP_CLASS}
+    return {_STAMP_CLASS_FLAG: _NO_STAMP_CLASS}
 
 # The reset. A compiled module jar is the same file for every product, so a rule that collects module jars under a
 # stamp class resets both flags to their defaults. The defaults are trimmed from the configuration, so the jars come
@@ -163,7 +104,7 @@ def _dev_dist_neutral_product_transition_impl(_settings, _attr):
 dev_dist_neutral_product_transition = transition(
     implementation = _dev_dist_neutral_product_transition_impl,
     inputs = [],
-    outputs = [_PRODUCT_INFO_FLAG, _STAMP_CLASS_FLAG],
+    outputs = [_STAMP_CLASS_FLAG],
 )
 
 # The attributes of a plugin component rule: the facts its incoming transition reads, and the allowlist. The descriptor
@@ -214,18 +155,11 @@ def dev_dist_check_stamp_class(ctx, descriptor):
 
 # The attributes a rule that collects per-product components declares, with the allowlist the transition needs.
 # Public, because `dev_dist_plugin_content` of `dev_dist_content.bzl` collects plugin components the same way.
-DEV_DIST_PRODUCT_INFO_ATTR = {
-    "product_info": attr.label(
-        doc = """This product's `dev_dist_product_info`, which every component below is configured with.
-
-The transition on the component attribute reads this label, so a component serves the product that asked for it.""",
-        mandatory = True,
-        providers = [DevDistProductInfo],
-    ),
+DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS = {
     "stamp_class": attr.string(
-        doc = """The mode of the product, the value of `dev_dist_stamp_class` below this target.
+        doc = """The mode of the product, such as `monolith` or `frontend`: the value of `dev_dist_stamp_class` below this target.
 
-It must equal the `mode` of `product_info`. A transition cannot read a provider, so the consumer states it.""",
+The generated `DEV_DIST_PRODUCT_INFO` states the mode of each product.""",
         mandatory = True,
     ),
     "_allowlist_function_transition": attr.label(
@@ -233,26 +167,7 @@ It must equal the `mode` of `product_info`. A transition cannot read a provider,
     ),
 }
 
-def dev_dist_check_product_stamp_class(ctx):
-    """Fails unless `stamp_class` of a consumer equals the mode of its `product_info`.
-
-    Args:
-        ctx: the rule context of a consumer with `DEV_DIST_PRODUCT_INFO_ATTR`.
-    """
-    product_info = ctx.attr.product_info
-    if product_info == None:
-        return
-    mode = product_info[DevDistProductInfo].mode
-    if ctx.attr.stamp_class != mode:
-        fail("%s states the stamp class '%s', and the mode of %s is '%s'" % (
-            ctx.label,
-            ctx.attr.stamp_class,
-            product_info.label,
-            mode,
-        ), attr = "stamp_class")
-
 def _dev_dist_plugin_descriptor_group_impl(ctx):
-    dev_dist_check_product_stamp_class(ctx)
     return [
         DefaultInfo(files = depset(transitive = [
             target[DefaultInfo].files
@@ -265,23 +180,19 @@ def _dev_dist_plugin_descriptor_group_impl(ctx):
     ]
 
 dev_dist_plugin_descriptor_group = rule(
-    doc = """Produced descriptors of one product, as one target that names the product.
+    doc = """Produced descriptors of one product, as one target that states the mode of the product.
 
-    A rule and not a `filegroup`, because the product scalars arrive through a transition and a `filegroup` states none.
+    A rule and not a `filegroup`, because the mode arrives through a transition and a `filegroup` states none.
     `//build:idea_dev_descriptor_leaf_build_test` builds one such group, and the produced descriptors are its
-    `DefaultInfo` files.
-
-    Public, because a leaf no longer builds on its own: the flag's default states no product and the leaf fails at
-    analysis. So anything that wants to build a leaf names it through a group, and `//build:*_descriptor_build_test` is
-    the guard that does.""",
+    `DefaultInfo` files. `//build:*_descriptor_build_test` is the guard that builds a group.""",
     implementation = _dev_dist_plugin_descriptor_group_impl,
     attrs = {
         "descriptors": attr.label_list(
             doc = "Every `dev_dist_plugin_descriptor` target of this product, every layout variant included.",
-            cfg = dev_dist_product_info_transition,
+            cfg = dev_dist_stamp_class_consumer_transition,
             providers = [DevDistPluginDescriptorInfo],
         ),
-    } | DEV_DIST_PRODUCT_INFO_ATTR,
+    } | DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS,
 )
 
 def _os_arch_stamps(ctx):
@@ -768,7 +679,7 @@ here. A refusal that reaches no `<module/>` fails the action.""",
 
 A fact of the plugin's modules: a frontend refuses the content modules that reach a backend root, and that rule reads
 the module alone. The descriptor keeps every module, and the run time excludes a refused one. The provider states the
-list of the mode `dev_dist_product_info` names, and the rules place no jar of such a module under that product.""",
+list of the mode `dev_dist_stamp_class` names, and the rules place no jar of such a module under that mode.""",
         ),
         "separate_jar": attr.string_list(
             doc = "Which content module's embedded descriptor takes `separate-jar=\"true\"`. A deviation, normally empty.",

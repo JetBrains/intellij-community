@@ -844,7 +844,11 @@ def _dev_plugin_remainder_from_plan_impl(ctx):
         if not ctx.attr.descriptor_remainder:
             fail("%s has a neutral part and no descriptor part" % ctx.label, attr = "descriptor_remainder")
         descriptor_part = ctx.attr.descriptor_remainder[DevPluginDescriptorRemainderInfo]
+
+        # A mode that the leaf does not refuse reads the rows of the default, as `dev_dist_mode_refusals` does.
         mode = ctx.attr._stamp_class[BuildSettingInfo].value
+        if not descriptor_target[DevDistPluginDescriptorInfo].mode_refusals.get(mode):
+            mode = ""
         rows = descriptor_part.rows.get(mode)
         if rows == None:
             fail("%s: the descriptor part %s writes no rows of the mode '%s', only of %s" % (
@@ -1482,7 +1486,7 @@ def dev_dist_complex_plugin(
     """Declares the execution chains of one complex plugin: one chain per platform it is bundled on, or one for all.
 
     One call serves every product whose rendered call is the same. The call states no product. The consumer of the
-    component sets the product and the mode through `dev_dist_product_info_transition`. The component keeps only its
+    component sets the mode through `dev_dist_stamp_class_consumer_transition`. The component keeps only its
     stamp class, which `stamp_class_modes` states.
 
     The generator states the facts that vary per plugin. The macro derives everything that follows from them: the chain

@@ -5,30 +5,31 @@ load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_product_info", "dev_dist_product_info_transition")
+load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_stamp_class_consumer_transition")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo")
 load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "platform_values_error")
 load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
 
 # The application info of the fixture product, an EAP product without a release date.
-_FIXTURE_APPLICATION_INFO = Label("//platform/build-scripts/bazel-rules:testdata/ApplicationInfo.xml")
-
 _EMPTY_JAR = "PK\005\006" + ("\000" * 18)
 
 _PACKAGE = "//platform/build-scripts/bazel-rules/dev-plugin-remainder-tests"
 _SUITE = "dev_plugin_remainder_tests"
 
-# A chain states no product, so a test of a remainder or a component sets the product the way a consumer does.
-_PRODUCT_CONFIG = {str(Label("//build:dev_dist_product_info")): str(Label(_PACKAGE + ":" + _SUITE + "_product_info"))}
+_STAMP_CLASS_FLAG = str(Label("//build:dev_dist_stamp_class"))
+
+# A chain states no product, so a test of a remainder or a component sets the mode the way a consumer of a monolith
+# product does.
+_PRODUCT_CONFIG = {_STAMP_CLASS_FLAG: "monolith"}
 
 def _short_paths(files):
     """The configuration-independent paths of [files]. A target under `config_settings` and a target reached through
-    `dev_dist_product_info_transition` state one product in two output roots, so a test compares these."""
+    `dev_dist_stamp_class_consumer_transition` state one mode in two output roots, so a test compares these."""
     return [file.short_path for file in files]
 
-# The attributes of a test that reads a chain target beside the one under test, in the product configuration.
+# The attributes of a test that reads a chain target beside the one under test, in the configuration of the consumer.
 _PRODUCT_ATTRS = {
-    "product_info": attr.label(default = Label(_PACKAGE + ":" + _SUITE + "_product_info"), providers = [DevDistProductInfo]),
+    "stamp_class": attr.string(default = "monolith"),
     "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
 }
 
@@ -80,25 +81,13 @@ _file = rule(
     attrs = {"content": attr.string(default = "{}\n")},
 )
 
-def _stamp_class_scoped_file_impl(ctx):
-    product = ctx.attr._product_info[DevDistProductInfo]
-    if product.application_info != None:
-        fail("expected the default product info, got the application info %s" % product.application_info.owner)
+def _descriptor_source_file_impl(ctx):
     output = ctx.actions.declare_file(ctx.label.name + ".xml")
     ctx.actions.write(output, "<idea-plugin/>\n")
     return [DefaultInfo(files = depset([output]))]
 
-# A descriptor source that fails unless the default product info reaches it. No descriptor of this suite retains its
-# `product-descriptor`, so its stamp class drops the product that a test or a consumer sets.
-_stamp_class_scoped_file = rule(
-    implementation = _stamp_class_scoped_file_impl,
-    attrs = {
-        "_product_info": attr.label(
-            default = Label("//build:dev_dist_product_info"),
-            providers = [DevDistProductInfo],
-        ),
-    },
-)
+# A descriptor source of the fixture leaves.
+_descriptor_source_file = rule(implementation = _descriptor_source_file_impl)
 
 def _source_files_impl(ctx):
     first = ctx.actions.declare_file(ctx.label.name + ".source-root/first.txt")
@@ -164,7 +153,7 @@ _graph_resolution_test = analysistest.make(
         "platform": attr.string(mandatory = True),
         "platform_values": attr.string_dict(),
         "execution_version": attr.int(mandatory = True),
-        "consumer": attr.label(mandatory = True, cfg = dev_dist_product_info_transition, doc = "The from-plan remainder target of the chain."),
+        "consumer": attr.label(mandatory = True, cfg = dev_dist_stamp_class_consumer_transition, doc = "The from-plan remainder target of the chain."),
     } | _PRODUCT_ATTRS,
 )
 
@@ -410,7 +399,7 @@ _component_test = analysistest.make(
     _component_test_impl,
     config_settings = _PRODUCT_CONFIG,
     attrs = {
-        "remainder": attr.label(mandatory = True, cfg = dev_dist_product_info_transition, providers = [DevPluginRemainderInfo]),
+        "remainder": attr.label(mandatory = True, cfg = dev_dist_stamp_class_consumer_transition, providers = [DevPluginRemainderInfo]),
         "neutral": attr.bool(doc = "Whether the component states no target platform."),
         "kind": attr.string(default = "plugin-test", doc = "The component name the collector receives as `--kind`."),
     } | _PRODUCT_ATTRS,
@@ -436,15 +425,15 @@ _derived_remainder_test = analysistest.make(
     attrs = {
         "catalogue": attr.label(
             mandatory = True,
-            cfg = dev_dist_product_info_transition,
+            cfg = dev_dist_stamp_class_consumer_transition,
             providers = [DevPluginArtifactCatalogueInfo],
         ),
         "raw": attr.label(
             mandatory = True,
             allow_single_file = True,
-            cfg = dev_dist_product_info_transition,
+            cfg = dev_dist_stamp_class_consumer_transition,
         ),
-        "product_info": attr.label(mandatory = True, providers = [DevDistProductInfo]),
+        "stamp_class": attr.string(default = "monolith"),
         "descriptor_id": attr.string(mandatory = True),
         "plugin_directory": attr.string(mandatory = True),
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
@@ -559,23 +548,23 @@ _remainder_from_plan_test = analysistest.make(
     _remainder_from_plan_test_impl,
     config_settings = _PRODUCT_CONFIG,
     attrs = {
-        "graph": attr.label(mandatory = True, cfg = dev_dist_product_info_transition, providers = [DevPluginGraphInfo]),
+        "graph": attr.label(mandatory = True, cfg = dev_dist_stamp_class_consumer_transition, providers = [DevPluginGraphInfo]),
         "catalogue": attr.label(
             mandatory = True,
-            cfg = dev_dist_product_info_transition,
+            cfg = dev_dist_stamp_class_consumer_transition,
             providers = [DevPluginArtifactCatalogueInfo],
         ),
         "descriptor": attr.label(
             mandatory = True,
-            cfg = dev_dist_product_info_transition,
+            cfg = dev_dist_stamp_class_consumer_transition,
             providers = [DevDistPluginDescriptorInfo],
         ),
         "raw": attr.label(
             mandatory = True,
             allow_single_file = True,
-            cfg = dev_dist_product_info_transition,
+            cfg = dev_dist_stamp_class_consumer_transition,
         ),
-        "product_info": attr.label(mandatory = True, providers = [DevDistProductInfo]),
+        "stamp_class": attr.string(default = "monolith"),
         "separate_classpath_descriptor": attr.bool(),
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
     },
@@ -782,7 +771,7 @@ _reused_component_test = analysistest.make(
     _reused_component_test_impl,
     config_settings = _PRODUCT_CONFIG,
     attrs = {
-        "remainder": attr.label(mandatory = True, cfg = dev_dist_product_info_transition, providers = [DevPluginRemainderInfo]),
+        "remainder": attr.label(mandatory = True, cfg = dev_dist_stamp_class_consumer_transition, providers = [DevPluginRemainderInfo]),
         "content_jar": attr.label(mandatory = True, providers = [ContentModuleJarInfo]),
     } | _PRODUCT_ATTRS,
 )
@@ -836,7 +825,6 @@ _remainder_outputs_test = analysistest.make(_remainder_outputs_test_impl, config
 
 # The product of the refusal case: its mode is `frontend`, so a descriptor that refuses a module for that mode omits it.
 _FRONTEND_PRODUCT_CONFIG = {
-    str(Label("//build:dev_dist_product_info")): str(Label(_PACKAGE + ":" + _SUITE + "_frontend_product_info")),
     str(Label("//build:dev_dist_stamp_class")): "frontend",
 }
 
@@ -889,12 +877,7 @@ def dev_plugin_remainder_test_suite(name):
     raw = name + "_raw"
     for target in [projection, raw]:
         _file(name = target)
-    product_info = name + "_product_info"
-    dev_dist_product_info(
-        name = product_info,
-        application_info = _FIXTURE_APPLICATION_INFO,
-    )
-    _stamp_class_scoped_file(
+    _descriptor_source_file(
         name = descriptor_source,
         tags = ["manual"],
     )
@@ -1172,7 +1155,6 @@ def dev_plugin_remainder_test_suite(name):
             graph = ":" + plan_graph,
             catalogue = ":" + catalogue,
             descriptor = ":" + descriptor,
-            product_info = ":" + product_info,
             raw = ":" + raw,
             separate_classpath_descriptor = separate_classpath_descriptor,
         )
@@ -1182,12 +1164,6 @@ def dev_plugin_remainder_test_suite(name):
     # The declared outputs. A tree holds the assets below it, so only the outermost tree and the files outside a tree
     # are outputs. A tree at the plugin root is the root itself. A file whose every module the mode refuses is omitted.
     outputs_tests = []
-    frontend_product_info = name + "_frontend_product_info"
-    dev_dist_product_info(
-        name = frontend_product_info,
-        application_info = _FIXTURE_APPLICATION_INFO,
-        mode = "frontend",
-    )
     refusing_main_module = "test.%s.refusing" % name
     refusing_descriptor = dev_dist_plugin_descriptor_target_name(refusing_main_module)
     dev_dist_plugin_descriptor(
@@ -1469,7 +1445,6 @@ def dev_plugin_remainder_test_suite(name):
         catalogue = ":" + plan_chain + "_catalogue",
         descriptor = ":" + normal_descriptor,
         raw = ":" + raw,
-        product_info = ":" + product_info,
     )
     plan_chain_component_test = plan_chain + "_component_test"
     _component_test(
@@ -1601,7 +1576,6 @@ def dev_plugin_remainder_test_suite(name):
             target_under_test = ":" + stem + "_remainder",
             catalogue = ":" + stem + "_catalogue",
             raw = ":" + name + "_derived_raw_" + platform,
-            product_info = ":" + product_info,
             descriptor_id = "descriptor:" + derived_module,
             plugin_directory = "plugins/" + derived_module.replace(".", "-"),
         )
@@ -1751,7 +1725,6 @@ def dev_plugin_remainder_test_suite(name):
             target_under_test = ":" + stem + "_remainder",
             catalogue = ":" + stem + "_catalogue",
             raw = ":" + name + "_plan_class_raw_" + platform,
-            product_info = ":" + product_info,
             descriptor_id = "descriptor:" + class_module,
             plugin_directory = "plugins/" + class_module.replace(".", "-"),
         )

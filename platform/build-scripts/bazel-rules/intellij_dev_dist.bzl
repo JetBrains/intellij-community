@@ -13,7 +13,7 @@ load("@community//build:project_model_manifest.bzl", "write_project_model_manife
 load("//build:host_platforms.bzl", "platform_parts")
 load(":dev_dist_build_date.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DevDistProductInfo", "dev_dist_check_product_stamp_class", "dev_dist_product_info_transition")
+load(":dev_dist_plugin_descriptor.bzl", "dev_dist_stamp_class_consumer_transition")
 
 IntellijDevBuildInputsInfo = provider(
     doc = "The exact Bazel inputs and label-to-path manifest made available to one reference.",
@@ -1072,9 +1072,8 @@ def _compose(ctx, fragment_targets):
     ]
 
 def _compose_fragments_impl(ctx):
-    if ctx.attr.plugin_components and ctx.attr.product_info == None:
-        fail("%s composes plugin components and names no product_info" % ctx.label, attr = "product_info")
-    dev_dist_check_product_stamp_class(ctx)
+    if ctx.attr.plugin_components and not ctx.attr.stamp_class:
+        fail("%s composes plugin components and states no stamp_class" % ctx.label, attr = "stamp_class")
 
     # The plugin components follow the platform components. The composer checks the set of kinds, not their order.
     return _compose(ctx, ctx.attr.fragments + ctx.attr.plugin_components)
@@ -1091,18 +1090,14 @@ and the fingerprint hashes it. No component manifest states a product, so a plug
         ),
         "plugin_components": attr.label_list(
             providers = [IntellijDevFragmentInfo],
-            cfg = dev_dist_product_info_transition,
+            cfg = dev_dist_stamp_class_consumer_transition,
             doc = """The plugin components of this product, composed after the components of `fragments`.
 
-Transitioned onto `product_info` and `stamp_class`. Each component keeps only its stamp class, so one component target
-per plugin serves every product of one stamp class.""",
-        ),
-        "product_info": attr.label(
-            providers = [DevDistProductInfo],
-            doc = "This product's `dev_dist_product_info`, which `plugin_components` are configured with. Required when that list is not empty.",
+Transitioned onto `stamp_class`. Each component keeps only its stamp class, so one component target per plugin serves
+every product of one stamp class.""",
         ),
         "stamp_class": attr.string(
-            doc = "The mode of the product, the value of `dev_dist_stamp_class` for `plugin_components`. It must equal the `mode` of `product_info`.",
+            doc = "The mode of the product, the value of `dev_dist_stamp_class` for `plugin_components`. Required when that list is not empty.",
         ),
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
         "local_launch": attr.bool(default = False, doc = "Compose metadata that refers to component runfiles instead of copying their contents."),

@@ -1364,10 +1364,8 @@ internal fun descriptorLabel(descriptor: ReachedDescriptor, index: DevDistBazelI
 internal fun renderProductInfo(plans: List<PluginDescriptorPlan>, half: DevDistHalf): String = buildString {
   append(half.generatedByHeader)
   append("#\n")
-  append("# The product mode of every product. `build/dev-dist-descriptors/BUILD.bazel` declares one `<product>_product_info`\n")
-  append("# target per key. A consumer of a plugin component sets `@community//build:dev_dist_product_info` to it and\n")
-  append("# `@community//build:dev_dist_stamp_class` to its mode. No leaf reads the product, so no plugin component keeps\n")
-  append("# it in its configuration.\n")
+  append("# The product mode of every product. A consumer of a plugin component sets `@community//build:dev_dist_stamp_class`\n")
+  append("# to the mode of its product. A component keeps the mode only when its descriptor refuses modules for it.\n")
   append("#\n")
   append("# No descriptor reads an application info. The descriptor writer stamps a retained `product-descriptor` from the\n")
   append("# build number and the pinned build date. So an edit of an application info changes no generated file.\n")
