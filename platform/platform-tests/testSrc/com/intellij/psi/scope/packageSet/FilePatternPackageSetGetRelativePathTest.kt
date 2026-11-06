@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.rules.TempDirectory
@@ -159,6 +160,33 @@ internal class FilePatternPackageSetGetRelativePathTest() {
   }
 
   @Test
+  fun `returns path relative to the outermost workspace content file set root`() = runBlocking {
+    val projectRoot = tempDir.newVirtualDirectory("project")
+    val nestedRoot = tempDir.newVirtualDirectory("project/api")
+    val file = tempDir.newVirtualFile("project/api/subdir.py")
+    registerProjectRoot(project, projectRoot.toNioPath())
+    registerFileSet(nestedRoot, PlainFileSetData)
+
+    assertNull(contentRootForFile(file))
+    assertNull(moduleForFile(file))
+    assertEquals("api/subdir.py", getRelativePath(file, projectBaseDir = null))
+  }
+
+  @Test
+  @RegistryKey(key = "psi.scope.file.pattern.outermost.content.root", value = "false")
+  fun `returns path relative to the nearest workspace content file set root when the outermost root is off`() = runBlocking {
+    val projectRoot = tempDir.newVirtualDirectory("project")
+    val nestedRoot = tempDir.newVirtualDirectory("project/api")
+    val file = tempDir.newVirtualFile("project/api/subdir.py")
+    registerProjectRoot(project, projectRoot.toNioPath())
+    registerFileSet(nestedRoot, PlainFileSetData)
+
+    assertNull(contentRootForFile(file))
+    assertNull(moduleForFile(file))
+    assertEquals("subdir.py", getRelativePath(file, projectBaseDir = null))
+  }
+
+  @Test
   fun `returns path relative to a library root`(): Unit = runBlocking {
     val module = projectModel.createModule()
     val libraryRoot = tempDir.newVirtualDirectory("library")
@@ -224,4 +252,6 @@ internal class FilePatternPackageSetGetRelativePathTest() {
   private class ParentedLightVirtualFile(name: String, private val parent: VirtualFile) : LightVirtualFile(name) {
     override fun getParent(): VirtualFile = parent
   }
+
+  private object PlainFileSetData : WorkspaceFileSetData
 }
