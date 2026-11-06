@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SettingsImpl;
+import com.intellij.openapi.editor.impl.SettingsImplKt;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,7 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction impl
       Editor editor = getEditor(e);
       if (editor != null) {
         EditorSettings settings = editor.getSettings();
-        if (settings instanceof SettingsImpl && ((SettingsImpl)settings).getSoftWrapAppliancePlace() != myAppliancePlace) {
+        if (settings instanceof SettingsImpl && SettingsImplKt.softWrapAppliancePlaceOf(editor.getEditorKind()) != myAppliancePlace) {
           e.getPresentation().setEnabledAndVisible(false);
           return;
         }

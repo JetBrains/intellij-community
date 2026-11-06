@@ -36,17 +36,12 @@ class SettingsImpl internal constructor(
   kind: EditorKind?,
   project: Project?,
 ) : EditorSettings {
-  private val state: EditorSettingsState
+  private val state: EditorSettingsState = EditorSettingsState(editor, project, softWrapAppliancePlaceOf(kind))
   private var doNotRefreshEditorFlag: Boolean = false
-
-  @get:Deprecated("use {@link EditorKind}")
-  val softWrapAppliancePlace: SoftWrapAppliancePlaces = softWrapAppliancePlaceOf(kind)
 
   constructor() : this(null, null, null)
 
   init {
-    @Suppress("DEPRECATION")
-    state = EditorSettingsState(editor, project, softWrapAppliancePlace)
     state.refreshAll()
     // A read computes nothing, so the first computation of the inputs starts here. Settings without an editor have no
     // file, so their seeds are the computed values already.
@@ -595,7 +590,10 @@ private val PROPERTIES_WITHOUT_EDITOR_REFRESH: Set<String> = setOf(
   EditorSettingsState::caretStopOptions.name,
 )
 
-private fun softWrapAppliancePlaceOf(kind: EditorKind?): SoftWrapAppliancePlaces {
+/**
+ * The place whose soft wrap setting an editor of [kind] uses. Without a kind, it is the main editor.
+ */
+internal fun softWrapAppliancePlaceOf(kind: EditorKind?): SoftWrapAppliancePlaces {
   return when (kind) {
     EditorKind.CONSOLE -> SoftWrapAppliancePlaces.CONSOLE
     EditorKind.PREVIEW -> SoftWrapAppliancePlaces.PREVIEW
