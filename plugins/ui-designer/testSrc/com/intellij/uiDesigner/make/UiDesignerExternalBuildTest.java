@@ -87,7 +87,7 @@ public class UiDesignerExternalBuildTest extends ArtifactCompilerTestCase {
     assertFalse(isInstrumented(module, "A.class"));
     assertTrue(isInstrumented(module, "B.class"));
 
-    List<CompileServerPlugin> withoutUiDesigner = ContainerUtil.filter(CompileServerPlugin.EP_NAME.getExtensionList(), e -> !e.getClasspath().contains("java-guiForms-jps.jar"));
+    List<CompileServerPlugin> withoutUiDesigner = ContainerUtil.filter(CompileServerPlugin.EP_NAME.getExtensionList(), e -> !e.getClasspath().contains("intellij.java.guiForms.jps.jar"));
     Disposable disableUiDesigner = Disposer.newDisposable();
     try {
       ExtensionTestUtil.maskExtensions(CompileServerPlugin.EP_NAME, withoutUiDesigner, disableUiDesigner);

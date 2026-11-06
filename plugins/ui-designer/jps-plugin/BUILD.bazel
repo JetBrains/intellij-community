@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.java.guiForms.jps` start
+content_module_jar(module = ":java-guiForms-jps")
+### auto-generated section `dev intellij.java.guiForms.jps` end
 
 ### auto-generated section `build intellij.java.guiForms.jps` start
 jvm_library(
@@ -40,6 +45,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.guiForms.jps.iml",
+        "resources/intellij.java.guiForms.jps.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -75,9 +75,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     plugin("intellij.laf.win10") { spec ->
       spec.bundlingRestrictions.supportedOs = persistentListOf(OsFamily.WINDOWS)
     },
-    plugin("intellij.java.guiForms.designer") { spec ->
-      spec.withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar")
-    },
     CommunityKotlinPluginBuilder.kotlinPlugin(),
     pluginAuto(listOf("intellij.vcs.git")) { spec ->
       spec.withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
