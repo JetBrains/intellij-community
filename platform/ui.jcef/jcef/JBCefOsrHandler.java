@@ -41,6 +41,7 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -72,6 +73,7 @@ class JBCefOsrHandler implements CefRenderHandler {
   private volatile double myScaleFactor = 1;
 
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
+  private final @NotNull CompletableFuture<Void> myFirstFrameFuture = new CompletableFuture<>();
 
   private @Nullable Timer myResizePusherAlarm = null;
   private @Nullable Instant resizePushStarted = null;
@@ -130,6 +132,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     else {
       drawByteBuffer(image, buffer, dirtyRects);
       myImage = image;
+      markFrameReceived();
     }
 
     myContentOutdated = true;
@@ -156,6 +159,24 @@ class JBCefOsrHandler implements CefRenderHandler {
   protected Dimension getCurrentFrameSize() {
     JBHiDPIScaledImage image = myImage;
     return image == null ? null : new Dimension(image.getWidth(), image.getHeight());
+  }
+
+  /**
+   * Returns the future that completes when the handler receives the first frame of the browser view.
+   *
+   * @see JBCefBrowserBase#getFirstFrameReadyFuture()
+   */
+  @NotNull CompletableFuture<Void> getFirstFrameFuture() {
+    return myFirstFrameFuture;
+  }
+
+  /**
+   * Completes {@link #getFirstFrameFuture()}. Call it when the handler receives a frame of the browser view, not of a popup.
+   */
+  protected final void markFrameReceived() {
+    if (!myFirstFrameFuture.isDone()) {
+      myFirstFrameFuture.complete(null);
+    }
   }
 
   public void paint(Graphics2D g) {

@@ -78,6 +78,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
       }
     } else {
       myCurrentFrame = mem;
+      markFrameReceived();
     }
 
     // TODO: calculate outerRect
