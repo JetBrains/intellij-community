@@ -124,7 +124,7 @@ internal class PyLspTypeEngineTest {
   private fun engineServing(vararg servedProjects: PyProject): FakeLspTypeEngine =
     FakeLspTypeEngine(servedProjects.first().residesOnModule, fakePyToolClient(*servedProjects))
 
-  /** A `PyReferenceExpression` in a new `main.py` under [directory]. [LspIsSupportedTypesVisitor] accepts it. */
+  /** A `PyReferenceExpression` in a new `main.py` under [directory]. */
   private suspend fun referenceIn(directory: Path): PyReferenceExpression {
     val file = directory.resolve("main.py")
     withContext(Dispatchers.IO) {
@@ -146,6 +146,8 @@ internal class PyLspTypeEngineTest {
     override val lspClient: LspClient,
   ) : PyLspTypeEngine {
     override val name: String = "fake"
+
+    override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean = isVisibleToServer(pyTypedElement)
 
     override fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? = null
   }

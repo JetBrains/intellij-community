@@ -13,8 +13,12 @@ internal class TyLspTypeEngine(override val module: Module, override val lspClie
   override val name: String = PyTypeEngineType.TY.name
 
   override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean {
-    // First check the base class conditions
-    if (!super.isSupportedForResolve(pyTypedElement)) {
+    if (!isVisibleToServer(pyTypedElement)) {
+      return false
+    }
+    val isSupportedTypesVisitor = TyIsSupportedTypesVisitor()
+    pyTypedElement.accept(isSupportedTypesVisitor)
+    if (!isSupportedTypesVisitor.isSupported) {
       return false
     }
 

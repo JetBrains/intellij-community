@@ -36,7 +36,7 @@ import org.junit.jupiter.api.Test
  * fragments live in a `VirtualFileWindow` over a `DocumentWindow`, and handing those coordinates to the
  * LSP client trips `Lsp4jUtil.getLsp4jPosition`'s "DocumentWindow is not expected here" assertion.
  *
- * [PyLspTypeEngine.isSupportedForResolve] rejects such an element through two independent guards, one for
+ * [PyLspTypeEngine.isVisibleToServer] rejects such an element through two independent guards, one for
  * code fragments and one for injected fragments. Each test below states which guard carries its case.
  */
 @TestFor(classes = [PyLspTypeEngine::class], issues = ["PY-91410"])
@@ -47,6 +47,7 @@ class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
     override val lspClient: LspClient,
   ) : PyLspTypeEngine {
     override val name: String get() = "test"
+    override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean = isVisibleToServer(pyTypedElement)
     override fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? = null
   }
 
@@ -124,11 +125,7 @@ class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
     assertFalse(testTypeEngine().isSupportedForResolve(target))
   }
 
-  /**
-   * A light element such as [PyImportedModule] has no text range, so the server cannot be told where it is.
-   * Pyrefly overrides [PyLspTypeEngine.isSupportedForResolve] without the supported-types visitor and relies on
-   * [PyLspTypeEngine.isVisibleToServer] alone, so the guard has to live there.
-   */
+  /** A light element such as [PyImportedModule] has no text range, so the server cannot be told where it is. */
   @Test
   @TestFor(issues = ["PY-92969"])
   fun `light element without a text range is not visible to the server`() = runInEdtAndWait {

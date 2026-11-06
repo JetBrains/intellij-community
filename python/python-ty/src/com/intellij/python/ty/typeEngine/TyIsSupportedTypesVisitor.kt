@@ -1,4 +1,4 @@
-package com.intellij.python.lsp.core.type
+package com.intellij.python.ty.typeEngine
 
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
@@ -25,8 +25,8 @@ import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyWildcardPattern
 import com.jetbrains.python.psi.PyYieldExpression
 
-class LspIsSupportedTypesVisitor : PyElementVisitor() {
-  var isSupported = false
+class TyIsSupportedTypesVisitor : PyElementVisitor() {
+  var isSupported: Boolean = false
     private set
 
   override fun visitPyMappingPattern(node: PyMappingPattern) {

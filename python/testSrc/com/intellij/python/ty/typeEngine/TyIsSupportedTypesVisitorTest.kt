@@ -1,4 +1,4 @@
-package com.intellij.python.lsp.core.type
+package com.intellij.python.ty.typeEngine
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -26,7 +26,7 @@ import com.jetbrains.python.psi.PyWildcardPattern
 import com.jetbrains.python.psi.PyYieldExpression
 import kotlin.reflect.KClass
 
-class LspIsSupportedTypesVisitorTest : PyTestCase() {
+class TyIsSupportedTypesVisitorTest : PyTestCase() {
 
   private fun <T : PsiElement> testElementSupported(elementClass: KClass<T>, code: String) {
     myFixture.configureByText("test.py", code.trimIndent())
@@ -34,7 +34,7 @@ class LspIsSupportedTypesVisitorTest : PyTestCase() {
     val element = PsiTreeUtil.findChildOfType(myFixture.file, elementClass.java)
     assertNotNull("Should find ${elementClass.simpleName} in file", element)
     
-    val visitor = LspIsSupportedTypesVisitor()
+    val visitor = TyIsSupportedTypesVisitor()
     element!!.accept(visitor)
     assertTrue("Should detect ${elementClass.simpleName} as supported", visitor.isSupported)
   }
@@ -127,7 +127,7 @@ class LspIsSupportedTypesVisitorTest : PyTestCase() {
   fun `test unsupported file returns false`() {
     myFixture.configureByText("empty.py", "# Just a comment")
 
-    val visitor = LspIsSupportedTypesVisitor()
+    val visitor = TyIsSupportedTypesVisitor()
     myFixture.file.accept(visitor)
     assertFalse("Should not detect supported types in comment-only file", visitor.isSupported)
   }

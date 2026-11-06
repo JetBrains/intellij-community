@@ -30,8 +30,7 @@ internal class PyreflyLspTypeEngine(private val pyProject: PyProject) : PyLspTyp
     get() = findLspClientFor(pyProject, PyreflyLspIntegrationProvider::class.java)
 
   /**
-   * Pyrefly answers for every element its server sees. The visitor of [PyLspTypeEngine] lists what a
-   * plain LSP server answers, and Pyrefly answers more through its own requests.
+   * Pyrefly answers for every element its server sees.
    */
   override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean {
     if (!isVisibleToServer(pyTypedElement)) return false

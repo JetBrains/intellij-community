@@ -38,14 +38,6 @@ interface PyLspTypeEngine : PyTypeEngine {
   override val isReady: Boolean
     get() = lspClient?.isUsable == true
 
-  override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean {
-    if (!isVisibleToServer(pyTypedElement))
-      return false
-    val isSupportedTypesVisitor = LspIsSupportedTypesVisitor()
-    pyTypedElement.accept(isSupportedTypesVisitor)
-    return isSupportedTypesVisitor.isSupported
-  }
-
   /**
    * Whether the server sees the file of [pyTypedElement] at all. The answer does not depend on the
    * state of the server, so it is the same before and after the server starts.
