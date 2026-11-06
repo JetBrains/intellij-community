@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated please don't use this class for simple abbreviation expansion tests anymore. It is too complicated.
- * Use {@link EmmetAbbreviationTestSuite} or {@link EmmetAbbreviationTestCase} for abbreviation testing.
+ * Use {@link EmmetAbbreviationTestSuite} or {@link EmmetAbbreviationTestFixture} for abbreviation testing.
  */
 @Deprecated
 public class XmlZenCodingTest extends LightJavaCodeInsightTestCase {

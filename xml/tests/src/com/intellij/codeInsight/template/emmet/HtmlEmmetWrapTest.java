@@ -7,26 +7,39 @@ import com.intellij.codeInsight.template.impl.TemplateContext;
 import com.intellij.codeInsight.template.impl.TemplateContextTypes;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class HtmlEmmetWrapTest extends EmmetAbbreviationTestCase {
+import static com.intellij.codeInsight.template.emmet.EmmetAbbreviationTestFixture.emmetAbbreviationFixture;
+
+@TestApplication
+public class HtmlEmmetWrapTest {
+  private final TestFixture<EmmetAbbreviationTestFixture> emmet = emmetAbbreviationFixture("html");
+
+  @Test
   public void testText() {
-    emmetWrap("Hello world!", "a", "<a href=\"\">Hello world!</a>");
+    emmet.get().emmetWrap("Hello world!", "a", "<a href=\"\">Hello world!</a>");
   }
 
+  @Test
   public void testWrapTag() {
-    emmetWrap("<h3>Hello world!</h3>", "a", "<a href=\"\"><h3>Hello world!</h3></a>");
+    emmet.get().emmetWrap("<h3>Hello world!</h3>", "a", "<a href=\"\"><h3>Hello world!</h3></a>");
   }
 
+  @Test
   public void testWrapComment() {
-    emmetWrap("<h3><selection><!--Hello world!--></selection></h3>", "a", "<h3><a href=\"\"><!--Hello world!--></a></h3>");
+    emmet.get().emmetWrap("<h3><selection><!--Hello world!--></selection></h3>", "a", "<h3><a href=\"\"><!--Hello world!--></a></h3>");
   }
 
+  @Test
   public void testWrapText() {
-    emmetWrap("<span><selection>SA.</selection></span>", "div", "<span><div>SA.</div></span>");
+    emmet.get().emmetWrap("<span><selection>SA.</selection></span>", "div", "<span><div>SA.</div></span>");
   }
 
+  @Test
   public void testFormatting() {
-    emmetWrap("""
+    emmet.get().emmetWrap("""
                 <selection>one
                 two
                 three
@@ -37,12 +50,13 @@ public class HtmlEmmetWrapTest extends EmmetAbbreviationTestCase {
                 </div>""");
   }
 
+  @Test
   public void testDoNoTrimSelection() {
-    emmetWrap("<selection>hello </selection>world", "b", "<b>hello </b>world");
+    emmet.get().emmetWrap("<selection>hello </selection>world", "b", "<b>hello </b>world");
   }
 
   public void _testFormattingWeb6563() {
-    emmetWrap("""
+    emmet.get().emmetWrap("""
                 <div id="testid">
                 <selection>    <p>par</p>
                 </selection></div>""", "first>span.cls>h1{text}+span.cls2", """
@@ -54,28 +68,33 @@ public class HtmlEmmetWrapTest extends EmmetAbbreviationTestCase {
   }
 
   //see IDEA-112134
+  @Test
   public void testExpandAbbreviationWithSelectionAndEndVariables() {
     addSelectionTemplate("dquo", "&ldquo;$SELECTION$&rdquo;$END$");
-    expandAndCheck("dquo", "&ldquo;<caret>&rdquo;");
+    emmet.get().expandAndCheck("dquo", "&ldquo;<caret>&rdquo;");
   }
 
+  @Test
   public void testWrapAbbreviationWithSelectionAndEndVariables() {
     final TemplateImpl template = addSelectionTemplate("dquo", "&ldquo;$SELECTION$&rdquo;$END$");
-    templateWrap("text", template, "&ldquo;text&rdquo;<caret>");
+    emmet.get().templateWrap("text", template, "&ldquo;text&rdquo;<caret>");
   }
 
+  @Test
   public void testExpandAbbreviationWithSelectionVariable() {
     addSelectionTemplate("dquo", "&ldquo;$SELECTION$&rdquo;");
-    expandAndCheck("dquo", "&ldquo;<caret>&rdquo;");
+    emmet.get().expandAndCheck("dquo", "&ldquo;<caret>&rdquo;");
   }
 
+  @Test
   public void testWrapAbbreviationWithSelectionVariable() {
     final TemplateImpl template = addSelectionTemplate("dquo", "&ldquo;$SELECTION$&rdquo;");
-    templateWrap("text", template, "<caret>&ldquo;text&rdquo;");
+    emmet.get().templateWrap("text", template, "<caret>&ldquo;text&rdquo;");
   }
 
+  @Test
   public void testMultiCaretWrapping() {
-    emmetWrap("""
+    emmet.get().emmetWrap("""
                 <selection><caret><div></div></selection>
 
                 <selection><caret><div></div></selection>""", "div", """
@@ -88,8 +107,9 @@ public class HtmlEmmetWrapTest extends EmmetAbbreviationTestCase {
                 </div>""");
   }
 
+  @Test
   public void testMultiCaretWrappingShouldStopAtFirstVariable() {
-    emmetWrap("""
+    emmet.get().emmetWrap("""
                 <selection><caret>link text</selection>
 
                 <selection><caret>other link text</selection>""", "a", """
@@ -98,25 +118,21 @@ public class HtmlEmmetWrapTest extends EmmetAbbreviationTestCase {
                 <a href="<caret>">other link text</a>""");
   }
 
+  @Test
   public void testWrapUrlLikeContent() {
-    emmetWrap("http://emmet.io", "a", "<a href=\"http://emmet.io\">http://emmet.io</a>");
-    emmetWrap("www.emmet.io", "a", "<a href=\"http://www.emmet.io\">www.emmet.io</a>");
-    emmetWrap("emmet.io", "a", "<a href=\"\">emmet.io</a>");
-    emmetWrap("info@emmet.io", "a", "<a href=\"mailto:info@emmet.io\">info@emmet.io</a>");
-  }
-
-  @Override
-  protected String getExtension() {
-    return "html";
+    emmet.get().emmetWrap("http://emmet.io", "a", "<a href=\"http://emmet.io\">http://emmet.io</a>");
+    emmet.get().emmetWrap("www.emmet.io", "a", "<a href=\"http://www.emmet.io\">www.emmet.io</a>");
+    emmet.get().emmetWrap("emmet.io", "a", "<a href=\"\">emmet.io</a>");
+    emmet.get().emmetWrap("info@emmet.io", "a", "<a href=\"mailto:info@emmet.io\">info@emmet.io</a>");
   }
 
   private TemplateImpl addSelectionTemplate(String key, String text) {
-    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final TemplateManager manager = TemplateManager.getInstance(emmet.get().getProject());
     TemplateImpl templateImpl = (TemplateImpl)manager.createTemplate(key, "html", text);
     templateImpl.addVariable(TemplateImpl.SELECTION, "", "", false);
     TemplateContext context = templateImpl.getTemplateContext();
     context.setEnabled(TemplateContextTypes.getByClass(HtmlContextType.class), true);
-    CodeInsightTestUtil.addTemplate(templateImpl, getTestRootDisposable());
+    CodeInsightTestUtil.addTemplate(templateImpl, emmet.get().getFixture().getTestRootDisposable());
     return templateImpl;
   }
 }

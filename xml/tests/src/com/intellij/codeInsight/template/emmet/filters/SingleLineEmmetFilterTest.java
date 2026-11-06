@@ -1,28 +1,29 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet.filters;
 
-public class SingleLineEmmetFilterTest extends EmmetFilterTestCase {
-  private final ZenCodingFilter myFilter = new SingleLineEmmetFilter();
+import com.intellij.codeInsight.template.emmet.EmmetAbbreviationTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.codeInsight.template.emmet.EmmetAbbreviationTestFixture.emmetAbbreviationFixture;
+
+@TestApplication
+public class SingleLineEmmetFilterTest {
+  private final TestFixture<EmmetAbbreviationTestFixture> emmet = emmetAbbreviationFixture("html");
+
+  @Test
   public void testSingleLineFilter() {
-    expandAndCheck("div>p|s", "<div><p></p></div>");
+    emmet.get().expandAndCheck("div>p|s", "<div><p></p></div>");
   }
 
+  @Test
   public void testSingleLineFilter2() {
-    expandAndCheck("ul>li*4|s", "<ul><li></li><li></li><li></li><li></li></ul>");
+    emmet.get().expandAndCheck("ul>li*4|s", "<ul><li></li><li></li><li></li><li></li></ul>");
   }
 
+  @Test
   public void testSingleLineFilterWithClimbUpOperation() {
-    expandAndCheck(".g>.gg>.ggg^^.gggg|s", "<div class=\"g\"><div class=\"gg\"><div class=\"ggg\"></div></div></div><div class=\"gggg\"></div>");
-  }
-
-  @Override
-  protected ZenCodingFilter getFilter() {
-    return myFilter;
-  }
-
-  @Override
-  protected String getExtension() {
-    return "html";
+    emmet.get().expandAndCheck(".g>.gg>.ggg^^.gggg|s", "<div class=\"g\"><div class=\"gg\"><div class=\"ggg\"></div></div></div><div class=\"gggg\"></div>");
   }
 }
