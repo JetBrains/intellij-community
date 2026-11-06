@@ -84,7 +84,7 @@ public final class JBCefNotifications {
         () -> {
           RegistryManager.getInstance().get("ide.browser.jcef.sandbox.enable").setValue(false);
           notification.expire();
-          ApplicationManager.getApplication().restart();
+          JBCefAppArmorUtils.suggestRestart(null);
         })
     );
 

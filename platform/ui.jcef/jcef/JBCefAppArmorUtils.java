@@ -15,6 +15,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Messages;
@@ -24,6 +27,7 @@ import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -78,7 +82,7 @@ final class JBCefAppArmorUtils {
           break;
         case 1:
           RegistryManager.getInstance().get("ide.browser.jcef.sandbox.enable").setValue(false);
-          ApplicationManager.getApplication().restart();
+          suggestRestart(parentComponent);
           break;
       }
     });
@@ -202,7 +206,31 @@ final class JBCefAppArmorUtils {
         Notifications.Bus.notify(notification);
         return;
       }
-      ApplicationManager.getApplication().restart();
+      suggestRestart(null);
+    });
+  }
+
+  static void suggestRestart(@Nullable Component parentComponent) {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+
+      String title = IdeBundle.message("dialog.title.restart.required");
+      String message = IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
+                                         ApplicationNamesInfo.getInstance().getFullProductName());
+      String okText = IdeBundle.message("button.now", app.isRestartCapable() ? 0 : 1);
+      String cancelText = IdeBundle.message("button.later", app.isRestartCapable() ? 0 : 1);
+
+      int result;
+      if (parentComponent != null && parentComponent.isShowing()) {
+        result = Messages.showOkCancelDialog(parentComponent, message, title, okText, cancelText, Messages.getQuestionIcon());
+      }
+      else {
+        result = Messages.showOkCancelDialog(message, title, okText, cancelText, Messages.getQuestionIcon());
+      }
+
+      if (result == Messages.OK) {
+        ApplicationManager.getApplication().invokeLater(() -> app.restart(true), ModalityState.nonModal());
+      }
     });
   }
 
@@ -270,7 +298,7 @@ final class JBCefAppArmorUtils {
           return;
         }
         onComplete.run();
-        ApplicationManager.getApplication().restart();
+        suggestRestart(null);
       });
     }
   }
