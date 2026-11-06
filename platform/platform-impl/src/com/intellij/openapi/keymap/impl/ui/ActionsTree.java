@@ -602,7 +602,8 @@ public final class ActionsTree {
           text = actionId;
         }
         else {
-          text = StringUtil.notNullize(presentation.getText(), actionId);
+          String presentationText = presentation.getText();
+          text = StringUtil.isEmpty(presentationText) ? actionId : presentationText;
           icon = presentation.getIcon();
           tooltipText = presentation.getDescription();
         }
@@ -666,7 +667,8 @@ public final class ActionsTree {
           append(" ");
 
           Presentation boundPresentation = ActionsTreeUtil.getTemplatePresentation(boundId, actionId);
-          String boundText = StringUtil.notNullize(boundPresentation == null ? null : boundPresentation.getText(), boundId);
+          String boundPresentationText = boundPresentation == null ? null : boundPresentation.getText();
+          String boundText = StringUtil.isEmpty(boundPresentationText) ? boundId : boundPresentationText;
           append(boundText, GRAY_LINK, new SelectActionRunnable(boundId));
         }
       }

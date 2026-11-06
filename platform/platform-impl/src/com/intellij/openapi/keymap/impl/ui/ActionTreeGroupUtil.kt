@@ -169,8 +169,7 @@ private fun createPluginActionsGroup(
 ): Group {
   val actionManager = ActionManagerEx.getInstanceEx()
   val pluginGroup = Group(name, null as String?)
-  Arrays.sort(pluginActions, Comparator.comparing(ActionsTreeUtil::getTextToCompare))
-  for (actionId in pluginActions) {
+  for (actionId in sortByTextToCompare(pluginActions.asList())) {
     val action = actionManager.getActionOrStub(actionId)
     if (isNonExecutableActionGroup(actionId, action)) {
       continue
@@ -349,13 +348,20 @@ private fun createOtherGroup(project: Project?, filtered: ActionFilter, mainGrou
     logUnexpectedNonGroupChildren(otherGroup, unexpectedChildren)
   }
 
-  for (id in result.sortedBy(ActionsTreeUtil::getTextToCompare)) {
+  for (id in sortByTextToCompare(result)) {
     val actionOrStub = actionManager.getActionOrStub(id)
     if ((actionOrStub == null || isSearchable(actionOrStub)) && filtered(actionOrStub)) {
       otherGroup.addActionId(id)
     }
   }
   return otherGroup
+}
+
+private fun sortByTextToCompare(actionIds: Iterable<String>): List<String> {
+  return actionIds.associateWith(ActionsTreeUtil::getTextToCompare)
+    .entries
+    .sortedBy { it.value }
+    .map { it.key }
 }
 
 private fun sortChildGroupsByName(group: Group): List<String> {

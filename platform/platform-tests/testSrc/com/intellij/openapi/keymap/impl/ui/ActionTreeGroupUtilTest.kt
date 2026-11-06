@@ -15,6 +15,8 @@ import com.intellij.testFramework.junit5.RunMethodInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Supplier
 
 @RunInEdt(allMethods = false)
 @TestApplication
@@ -85,6 +87,45 @@ internal class ActionTreeGroupUtilTest {
     }
   }
 
+  @Test
+  @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.True)
+  fun `getTextToCompare uses action id for empty text consistently`() {
+    val actionManager = ActionManagerEx.getInstanceEx()
+    actionManager.registerAction(EMPTY_TEXT_ACTION_ID, TestAction(""))
+
+    try {
+      assertThat(ActionsTreeUtil.getTextToCompare(EMPTY_TEXT_ACTION_ID)).isEqualTo(EMPTY_TEXT_ACTION_ID)
+      assertThat(ActionsTreeUtil.getTextToCompare(EMPTY_TEXT_ACTION_ID)).isEqualTo(EMPTY_TEXT_ACTION_ID)
+    }
+    finally {
+      unregisterIfPresent(actionManager, EMPTY_TEXT_ACTION_ID)
+    }
+  }
+
+  @Test
+  @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.True)
+  fun `create main group sorts actions whose text changes on each read`() {
+    val actionManager = ActionManagerEx.getInstanceEx()
+    val textReadsById = (0 until 300).associate { index ->
+      "$UNSTABLE_SORT_ACTION_PREFIX$index" to AtomicInteger()
+    }
+
+    try {
+      for ((actionId, textReads) in textReadsById) {
+        actionManager.registerAction(actionId, DynamicTextAction(Supplier { "text-${textReads.incrementAndGet()}" }))
+      }
+
+      val mainGroup = ActionTreeGroupUtil.createMainGroup(null, null, emptyArray<QuickList>())
+      val otherGroup = requireNotNull(findGroup(mainGroup, KeyMapBundle.message("other.group.title")))
+      assertThat(otherGroup.children).containsAll(textReadsById.keys)
+    }
+    finally {
+      for (actionId in textReadsById.keys) {
+        unregisterIfPresent(actionManager, actionId)
+      }
+    }
+  }
+
   private fun findGroup(parent: Group, groupName: String): Group? {
     for (child in parent.children) {
       if (child is Group && child.name == groupName) {
@@ -105,6 +146,11 @@ internal class ActionTreeGroupUtilTest {
     }
   }
 
+  private class DynamicTextAction(text: Supplier<String>) : AnAction(text) {
+    override fun actionPerformed(e: AnActionEvent) {
+    }
+  }
+
   companion object {
     private const val ACTION_TREE_GROUP_UTIL_LOG_CATEGORY = "#com.intellij.openapi.keymap.impl.ui.ActionTreeGroupUtil"
     private const val OTHER_KEYMAP_GROUP_ID = "Other.KeymapGroup"
@@ -115,5 +161,7 @@ internal class ActionTreeGroupUtilTest {
     private const val OTHER_GROUP_OMEGA_ACTION_ID = "DummyOtherGroupOmegaAction"
     private const val OTHER_GROUP_OMEGA_NAME = "ZZZ Dummy Other Group"
     private const val OTHER_GROUP_PLAIN_ACTION_ID = "DummyOtherPlainAction"
+    private const val EMPTY_TEXT_ACTION_ID = "DummyEmptyTextActionForSort"
+    private const val UNSTABLE_SORT_ACTION_PREFIX = "DummyUnstableSortAction"
   }
 }
