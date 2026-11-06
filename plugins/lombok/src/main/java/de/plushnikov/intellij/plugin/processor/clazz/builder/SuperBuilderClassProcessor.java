@@ -26,7 +26,7 @@ import java.util.Optional;
 public final class SuperBuilderClassProcessor extends AbstractClassProcessor {
 
   public SuperBuilderClassProcessor() {
-    super(PsiClass.class, LombokClassNames.SUPER_BUILDER);
+    super(PsiClass.class, LombokClassNames.SUPER_BUILDER, LombokClassNames.EXPERIMENTAL_SUPER_BUILDER);
   }
 
   private static SuperBuilderHandler getBuilderHandler() {

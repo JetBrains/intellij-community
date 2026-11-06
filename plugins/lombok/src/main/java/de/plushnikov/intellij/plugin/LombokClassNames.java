@@ -43,7 +43,8 @@ public interface LombokClassNames {
   @NonNls String SINGULAR = "lombok.Singular";
   @NonNls String SLF_4_J = "lombok.extern.slf4j.Slf4j";
   @NonNls String SNEAKY_THROWS = "lombok.SneakyThrows";
-  @NonNls String SUPER_BUILDER = "lombok.experimental.SuperBuilder";
+  @NonNls String SUPER_BUILDER = "lombok.SuperBuilder";
+  @NonNls String EXPERIMENTAL_SUPER_BUILDER = "lombok.experimental.SuperBuilder";
   @NonNls String STANDARD_EXCEPTION = "lombok.experimental.StandardException";
   @NonNls String SYNCHRONIZED = "lombok.Synchronized";
   @NonNls String TOLERATE = "lombok.experimental.Tolerate";
@@ -62,11 +63,14 @@ public interface LombokClassNames {
   @NonNls String LOCKED = "lombok.Locked";
   @NonNls String WITH_BY = "lombok.experimental.WithBy";
 
+  /**
+   * The annotations that the "add Lombok" fix knows. When two annotations have the same short name, put the preferred one first.
+   */
   List<String> MAIN_LOMBOK_CLASSES = List.of(ALL_ARGS_CONSTRUCTOR, REQUIRED_ARGS_CONSTRUCTOR, NO_ARGS_CONSTRUCTOR,
                                              DATA, GETTER, SETTER, EQUALS_AND_HASHCODE, TO_STRING,
                                              LOG_4_J, LOG_4_J_2, SLF_4_J, JAVA_LOG, JBOSS_LOG, FLOGGER, COMMONS_LOG,
                                              CUSTOM_LOG,
-                                             BUILDER, SUPER_BUILDER, FIELD_DEFAULTS, VALUE,
+                                             BUILDER, SUPER_BUILDER, EXPERIMENTAL_SUPER_BUILDER, FIELD_DEFAULTS, VALUE,
                                              UTILITY_CLASS, WITH, WITHER, EXPERIMENTAL_DELEGATE,
                                              SNEAKY_THROWS, CLEANUP, SYNCHRONIZED, EXTENSION_METHOD);
 

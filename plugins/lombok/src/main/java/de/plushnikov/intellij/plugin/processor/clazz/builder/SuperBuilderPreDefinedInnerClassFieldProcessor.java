@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public final class SuperBuilderPreDefinedInnerClassFieldProcessor extends AbstractSuperBuilderPreDefinedInnerClassProcessor {
 
   public SuperBuilderPreDefinedInnerClassFieldProcessor() {
-    super(PsiField.class, LombokClassNames.SUPER_BUILDER);
+    super(PsiField.class, LombokClassNames.SUPER_BUILDER, LombokClassNames.EXPERIMENTAL_SUPER_BUILDER);
   }
 
   @Override

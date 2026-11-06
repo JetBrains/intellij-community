@@ -4,6 +4,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.RemoveAnnotationQuickFix;
 import com.intellij.psi.JavaElementVisitor;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementVisitor;
@@ -89,16 +90,25 @@ public final class LombokInspection extends LombokJavaInspectionBase {
         final PsiClass parentOfAnnotation = PsiTreeUtil.getParentOfType(annotation, PsiClass.class);
         if (null != parentOfAnnotation) {
           if (!PsiAnnotationSearchUtil.isAnnotatedWith(parentOfAnnotation, LombokClassNames.BUILDER) &&
-              !PsiAnnotationSearchUtil.isAnnotatedWith(parentOfAnnotation, LombokClassNames.SUPER_BUILDER)) {
+              !PsiAnnotationSearchUtil.isAnnotatedWith(parentOfAnnotation, LombokClassNames.SUPER_BUILDER,
+                                                       LombokClassNames.EXPERIMENTAL_SUPER_BUILDER)) {
             final LombokProblemInstance problemInstance = new LombokProblemInstance(
               LombokBundle.message("inspection.message.builder.default.requires.builder.annotation"), ProblemHighlightType.GENERIC_ERROR);
             problemInstance.withLocalQuickFixes(
               () -> PsiQuickFixFactory.createAddAnnotationFix(LombokClassNames.BUILDER, parentOfAnnotation),
-              () -> PsiQuickFixFactory.createAddAnnotationFix(LombokClassNames.SUPER_BUILDER, parentOfAnnotation));
+              () -> PsiQuickFixFactory.createAddAnnotationFix(getSuperBuilderName(parentOfAnnotation), parentOfAnnotation));
             problems.add(problemInstance);
           }
         }
       }
+    }
+
+    /**
+     * Returns {@code lombok.SuperBuilder} when the Lombok of the class has it, and {@code lombok.experimental.SuperBuilder} otherwise.
+     */
+    private static @NotNull String getSuperBuilderName(@NotNull PsiClass psiClass) {
+      PsiClass superBuilder = JavaPsiFacade.getInstance(psiClass.getProject()).findClass(LombokClassNames.SUPER_BUILDER, psiClass.getResolveScope());
+      return superBuilder != null ? LombokClassNames.SUPER_BUILDER : LombokClassNames.EXPERIMENTAL_SUPER_BUILDER;
     }
 
     private static void verifySneakyThrows(@NotNull PsiAnnotation annotation, @NotNull Collection<LombokProblem> problems) {
