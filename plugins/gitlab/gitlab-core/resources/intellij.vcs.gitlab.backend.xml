@@ -287,6 +287,10 @@
       <reference ref="GitLab.Merge.Request.Copy.Link"/>
     </group>
 
+    <action id="GitLab.Merge.Request.Changes.HideTestSources"
+            class="org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestHideTestSourcesAction">
+      <add-to-group group-id="Diff.ViewerSettings" anchor="after" relative-to-action="GitLab.Merge.Request.Diff.Discussions.View.Options"/>
+    </action>
     <group id="GitLab.Merge.Request.Diff.Discussions.View.Options"
            class="org.jetbrains.plugins.gitlab.mergerequest.ui.diff.action.GitLabMergeRequestDiffReviewDiscussionsToggleAction"
            icon="AllIcons.Actions.Show"
