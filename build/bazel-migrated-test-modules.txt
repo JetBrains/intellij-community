@@ -55,6 +55,7 @@ intellij.findUsagesMl.tests
 intellij.golsp.performanceTests
 intellij.gradle.backend.tests
 intellij.gradle.codeInsight.kotlin.backend.tests.integration
+intellij.gradle.completion.kotlin.tests
 intellij.gradle.completion.kotlin.tests.benchmark
 intellij.gradle.completion.tests
 intellij.gradle.java.maven.tests
