@@ -50,6 +50,7 @@ jvm_library(
 exports_files(
     [
         "intellij.gradle.jps.iml",
+        "resources/intellij.gradle.jps.xml",
     ],
     visibility = ["//visibility:public"],
 )

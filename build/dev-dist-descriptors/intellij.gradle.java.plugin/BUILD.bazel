@@ -30,6 +30,7 @@ dev_dist_plugin_descriptor(
         "intellij.gradle.java.performance",
         "intellij.gradle.java.properties",
         "intellij.gradle.java.toml",
+        "intellij.gradle.jps",
     ],
     descriptor = "//plugins/gradle/java/plugin:resources/META-INF/plugin.xml",
     main_module = "intellij.gradle.java.plugin",
@@ -69,12 +70,12 @@ dev_plugin(
     ],
     descriptor = "//build/dev-dist-descriptors/intellij.gradle.java.plugin:intellij.gradle.java.plugin_dev_descriptor",
     jars = {
-        "lib/gradle-java-plugin.jar": [
-            "intellij.gradle.java.plugin",
-        ],
-        "lib/gradle-jps.jar": [
+        "lib/intellij.gradle.jps.jar": [
             "intellij.gradle.jps",
             "@lib//:gradle-jps-ant",
+        ],
+        "lib/gradle-java-plugin.jar": [
+            "intellij.gradle.java.plugin",
         ],
     },
     libraries = [

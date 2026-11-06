@@ -4,6 +4,7 @@
     <module name="intellij.gradle"/>
     <module name="intellij.gradle.toolingExtension.impl"/>
     <module name="intellij.java.debugger.impl.shared"/>
+    <module name="intellij.gradle.jps"/>
     <module name="intellij.gradle.properties"/>
     <module name="intellij.java"/>
     <module name="intellij.java.compiler"/>
@@ -117,7 +118,7 @@
     <projectViewNodeDecorator implementation="org.jetbrains.plugins.gradle.projectView.GradleModuleDirectoryDecorator" order="first"/>
     <attachSourcesProviderFilter implementation="org.jetbrains.plugins.gradle.editor.GradleAttachSourcesProviderFilter"/>
 
-    <compileServer.plugin classpath="gradle-jps.jar"/>
+    <compileServer.plugin classpath="intellij.gradle.jps.jar"/>
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.startup.GradleJvmStartupActivity"/>
     <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner" id="gradle" order="first"/>
     <externalSystem.debuggerBackend implementation="org.jetbrains.plugins.gradle.service.debugger.GradleJvmDebuggerBackend" />

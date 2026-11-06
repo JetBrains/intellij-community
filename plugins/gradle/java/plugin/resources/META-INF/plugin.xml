@@ -13,6 +13,7 @@
 
   <content namespace="jetbrains">
     <module name="intellij.gradle.java" loading="embedded"/>
+    <module name="intellij.gradle.jps" loading="embedded"/>
     <module name="intellij.gradle.profiler"/>
     <module name="intellij.gradle.java.maven"/>
     <module name="intellij.gradle.analysis"/>

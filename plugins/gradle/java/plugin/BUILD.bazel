@@ -6,6 +6,7 @@ dev_dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.gradle.java",
+        "intellij.gradle.jps",
         "intellij.gradle.java.maven",
         "intellij.gradle.analysis",
         "intellij.gradle.dependencyUpdater",
@@ -16,7 +17,6 @@ dev_dist_plugin(
         "intellij.gradle.java.groovy.ml",
         "intellij.gradle.java.coverage",
         "intellij.gradle.java.properties",
-        "intellij.gradle.jps",
     ],
     main_module = "intellij.gradle.java.plugin",
 )

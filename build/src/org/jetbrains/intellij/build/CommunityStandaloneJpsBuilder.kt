@@ -98,7 +98,7 @@ fun buildCommunityStandaloneJpsBuilder(
 
   layout.withModule("intellij.maven.jps", "maven-jps.jar")
   layout.withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
-  layout.withModule("intellij.gradle.jps", "gradle-jps.jar")
+  layout.withModule("intellij.gradle.jps", "intellij.gradle.jps.jar")
 
   layout.withModule("intellij.eclipse.jps", "intellij.eclipse.jps.jar")
   layout.withModule("intellij.eclipse.common", "intellij.eclipse.common.jar")

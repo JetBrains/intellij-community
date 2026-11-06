@@ -4,6 +4,7 @@
     <module name="intellij.gradle.java"/>
     <module name="intellij.properties.psi"/>
     <plugin id="org.intellij.groovy"/>
+    <module name="intellij.gradle.jps"/>
     <module name="intellij.gradle.properties"/>
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.execution"/>
