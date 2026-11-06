@@ -200,8 +200,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withModule("intellij.testng.rt", "testng-rt.jar")
     },
     pluginAuto(listOf("intellij.devkit")) { spec ->
-      spec.withModule("intellij.devkit.jps", "devkit-jps.jar")
-
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },
     pluginAuto(listOf("intellij.eclipse")) { spec ->

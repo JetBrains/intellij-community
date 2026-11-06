@@ -30,9 +30,9 @@ dev_dist_plugin(
         "intellij.devkit.mcp.inspections",
         "intellij.devkit.threading",
         "intellij.devkit.smartupdate",
+        "intellij.devkit.jps",
         "intellij.platform.jewel.samples.showcase",
         "intellij.libraries.workspace.model.codegen",
-        "intellij.devkit.jps",
     ],
     main_module = "intellij.devkit",
 )

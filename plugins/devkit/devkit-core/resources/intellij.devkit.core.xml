@@ -193,7 +193,7 @@
     <moduleBuilder builderClass="org.jetbrains.idea.devkit.module.IdePluginModuleBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.idea.devkit.module.webstarter.IdePluginModuleWebBasedBuilder"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
-    <compileServer.plugin classpath="devkit-jps.jar"/>
+    <compileServer.plugin classpath="modules/intellij.devkit.jps.jar"/>
 
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
     <lang.documentationProvider language="XML"

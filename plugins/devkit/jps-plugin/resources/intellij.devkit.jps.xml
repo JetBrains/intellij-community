@@ -1,0 +1,11 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.compiler.instrumentationUtil"/>
+    <module name="intellij.libraries.asm"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.jps.build"/>
+    <module name="intellij.platform.jps.build.javac.rt"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

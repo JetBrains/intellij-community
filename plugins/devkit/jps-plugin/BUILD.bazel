@@ -1,6 +1,7 @@
 load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 BAZEL_TARGETS_JSON = current_bazel_targets_json()
 
@@ -23,6 +24,10 @@ filegroup(
     name = "testData",
     srcs = glob(["testData/**"]),
 )
+
+### auto-generated section `dev intellij.devkit.jps` start
+content_module_jar(module = ":jps")
+### auto-generated section `dev intellij.devkit.jps` end
 
 ### auto-generated section `build intellij.devkit.jps` start
 jvm_library(
@@ -65,6 +70,7 @@ jvm_library(
 exports_files(
     [
         "intellij.devkit.jps.iml",
+        "resources/intellij.devkit.jps.xml",
     ],
     visibility = ["//visibility:public"],
 )

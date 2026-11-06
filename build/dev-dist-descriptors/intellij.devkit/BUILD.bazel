@@ -30,6 +30,7 @@ dev_dist_plugin_descriptor(
         "intellij.devkit.gradle.tooling",
         "intellij.devkit.i18n",
         "intellij.devkit.intelliLang",
+        "intellij.devkit.jps",
         "intellij.devkit.mcp",
         "intellij.devkit.mcp.inspections",
         "intellij.devkit.modules",
@@ -71,6 +72,7 @@ dev_dist_plugin_descriptor(
             "intellij.devkit.mcp.inspections",
             "intellij.devkit.threading",
             "intellij.devkit.smartupdate",
+            "intellij.devkit.jps",
         ],
     },
     refused_content_modules = [
@@ -108,20 +110,17 @@ dev_plugin(
         "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel_content_module_jar",
         "//plugins/devkit/intellij.kotlin.devkit/k2:k2_content_module_jar",
         "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit_content_module_jar",
+        "//plugins/devkit/jps-plugin:jps_content_module_jar",
     ],
     descriptor = "//build/dev-dist-descriptors/intellij.devkit:intellij.devkit_dev_descriptor",
     jars = {
         "lib/devkit.jar": [
             "intellij.devkit",
         ],
-        "lib/devkit-jps.jar": [
-            "intellij.devkit.jps",
-        ],
     },
     main_module = "intellij.devkit",
     modules = {
         "//plugins/devkit": "intellij.devkit",
-        "//plugins/devkit/jps-plugin:jps": "intellij.devkit.jps",
     },
     plugin_directory = "plugins/devkit",
     stamp_class_modes = [
