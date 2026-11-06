@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.storeAndGet
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.storage.EntityPointer
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -100,8 +101,10 @@ internal class NonIncrementalContributors(private val project: Project) {
           excludedUrls.forEach {
             nonExistingFilesRegistry.unregisterUrl(it, NonIncrementalMarker, EntityStorageKind.MAIN)
           }
+          val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
           val newRoots = HashSet<VirtualFile>()
           Object2IntMaps.fastForEach(newExcludedRoots) {
+            virtualFileUrlManager.storeAndGet(it.key)
             fileSets.putValue(it.key, ExcludedFileSet.ByFileKind(it.key, it.intValue, NonIncrementalMarker))
             newRoots.add(it.key)
           }
@@ -112,6 +115,7 @@ internal class NonIncrementalContributors(private val project: Project) {
             )
           }
           newFileSets.forEach { (root, sets) ->
+            virtualFileUrlManager.storeAndGet(root)
             sets.forEach { set ->
               fileSets.putValue(root, set)
               val fileSet = set as? WorkspaceFileSetImpl
