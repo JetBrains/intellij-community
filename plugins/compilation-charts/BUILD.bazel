@@ -7,9 +7,11 @@ dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/compilation-charts.jar": ["intellij.compilation.charts"],
-        "lib/compilation-charts-jps.jar": ["intellij.compilation.charts.jps"],
     },
     main_module = "intellij.compilation.charts",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.compilation.charts.jps"],
+    },
 )
 ### auto-generated section `dev intellij.compilation.charts` end
 

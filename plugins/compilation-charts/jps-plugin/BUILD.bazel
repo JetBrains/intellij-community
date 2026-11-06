@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.compilation.charts.jps` start
+content_module_jar(module = ":compilation-charts-jps")
+### auto-generated section `dev intellij.compilation.charts.jps` end
 
 ### auto-generated section `build intellij.compilation.charts.jps` start
 jvm_library(
@@ -34,6 +39,7 @@ jvm_library(
 exports_files(
     [
         "intellij.compilation.charts.jps.iml",
+        "resources/intellij.compilation.charts.jps.xml",
     ],
     visibility = ["//visibility:public"],
 )

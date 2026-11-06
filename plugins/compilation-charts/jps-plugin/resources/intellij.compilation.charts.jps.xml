@@ -1,0 +1,8 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.gson"/>
+    <module name="intellij.platform.jps.build"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>
