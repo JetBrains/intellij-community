@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
+import com.intellij.ide.actions.WelcomeFilesRootType;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -12,6 +13,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,9 +86,14 @@ final class OverrideFileTypeAction extends DumbAwareAction {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files == null) return VirtualFile.EMPTY_ARRAY;
     return Arrays.stream(files)
-      .filter(file -> file != null && ChangeToThisFileTypeAction.isOverridableFile(file))
+      .filter(file -> file != null && ChangeToThisFileTypeAction.isOverridableFile(file) && !isWelcomeFile(e, file))
       .filter(additionalPredicate)
       .toArray(count -> VirtualFile.ARRAY_FACTORY.create(count));
+  }
+
+  private static boolean isWelcomeFile(@NotNull AnActionEvent e, @NotNull VirtualFile file) {
+    Project project = e.getProject();
+    return project != null && WelcomeFilesRootType.Util.INSTANCE.isWelcomeFile(project, file);
   }
 
   private static final class ChangeToThisFileTypeAction extends DumbAwareAction {
