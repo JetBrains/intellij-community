@@ -7,7 +7,6 @@ import com.intellij.debugger.ui.impl.watch.ThisDescriptorImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.xdebugger.frame.XValue
 import com.intellij.xdebugger.frame.XValueChildrenList
-import org.jetbrains.kotlin.utils.getSafe
 import java.lang.reflect.Modifier
 
 // Very Dirty Work-around.
@@ -67,8 +66,9 @@ class ExistingInstanceThisRemapper(
         for (field in XValueChildrenList::class.java.declaredFields) {
             val mods = field.modifiers
             if (Modifier.isPrivate(mods) && Modifier.isFinal(mods) && !Modifier.isStatic(mods) && field.type == List::class.java) {
+                field.isAccessible = true
                 @Suppress("UNCHECKED_CAST")
-                val list = (field.getSafe(children) as? MutableList<Any?>)?.takeIf { it.size == size } ?: continue
+                val list = (field.get(children) as? MutableList<Any?>)?.takeIf { it.size == size } ?: continue
 
                 if (list[index] == THIS_NAME) {
                     namesList = list
