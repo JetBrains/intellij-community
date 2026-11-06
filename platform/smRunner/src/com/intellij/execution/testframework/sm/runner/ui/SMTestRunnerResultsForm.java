@@ -33,6 +33,7 @@ import com.intellij.execution.testframework.sm.runner.history.actions.AbstractIm
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.ui.TestResultsPanel;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.history.ActivityId;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.Disposable;
@@ -55,7 +56,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
@@ -102,9 +102,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
   private static final @NonNls String DEFAULT_SM_RUNNER_SPLITTER_PROPERTY = "SMTestRunner.Splitter.Proportion";
 
   private static final Logger LOG = Logger.getInstance(SMTestRunnerResultsForm.class);
-  private static final Color RED = new JBColor(new Color(250, 220, 220), new Color(104, 67, 67));
-  private static final Color GREEN = new JBColor(new Color(220, 250, 220), new Color(44, 66, 60));
-
   private SMTRunnerTestTreeView myTreeView;
 
   /**
@@ -870,21 +867,20 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     String configName = consoleProperties.getConfiguration().getName();
 
     String name;
-    int color;
-
+    ActivityId activity;
     if (root.isPassed() || root.isIgnored()) {
-      color = GREEN.getRGB();
+      activity = TestActivity.TestsPassed;
       name = ExecutionBundle.message("junit.running.info.tests.passed.with.test.name.label", configName);
     }
     else {
-      color = RED.getRGB();
+      activity = TestActivity.TestsFailed;
       name = ExecutionBundle.message("junit.running.info.tests.failed.with.test.name.label", configName);
     }
 
     Project project = consoleProperties.getProject();
     if (project.isDisposed()) return;
 
-    LocalHistory.getInstance().putSystemLabel(project, name, color);
+    LocalHistory.getInstance().putEventLabel(project, name, activity);
   }
 
   private static class MySaveHistoryTask extends Task.Backgroundable implements Disposable {
