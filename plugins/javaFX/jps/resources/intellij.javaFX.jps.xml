@@ -1,0 +1,9 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.javaFX.common"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.jps.build"/>
+  </dependencies>
+  <!-- endregion -->
+</idea-plugin>

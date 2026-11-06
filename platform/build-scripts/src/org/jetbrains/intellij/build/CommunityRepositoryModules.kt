@@ -210,8 +210,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withModule("intellij.java.decompiler.engine", spec.mainJarName)
     },
     pluginAuto("intellij.javaFX.community") { spec ->
-      spec.withModule("intellij.javaFX.jps")
-      spec.withModule("intellij.javaFX.common", "javaFX-common.jar")
       spec.withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
     },
     pluginAuto("intellij.terminal") { spec ->

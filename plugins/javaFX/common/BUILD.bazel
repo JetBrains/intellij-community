@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.javaFX.common` start
+content_module_jar(module = ":common")
+### auto-generated section `dev intellij.javaFX.common` end
 
 ### auto-generated section `build intellij.javaFX.common` start
 jvm_library(
@@ -30,6 +35,7 @@ jvm_library(
 exports_files(
     [
         "intellij.javaFX.common.iml",
+        "resources/intellij.javaFX.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

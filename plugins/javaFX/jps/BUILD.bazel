@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.javaFX.jps` start
+content_module_jar(module = ":jps")
+### auto-generated section `dev intellij.javaFX.jps` end
 
 ### auto-generated section `build intellij.javaFX.jps` start
 jvm_library(
@@ -41,6 +46,7 @@ jvm_library(
 exports_files(
     [
         "intellij.javaFX.jps.iml",
+        "resources/intellij.javaFX.jps.xml",
     ],
     visibility = ["//visibility:public"],
 )
