@@ -507,6 +507,7 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
     override val sessionState: StateFlow<TerminalViewSessionState> get() = notUsedInTest()
     override val keyEventsFlow: Flow<TerminalKeyEvent> get() = notUsedInTest()
     override val workingDirectoryFlow: StateFlow<Path?> get() = notUsedInTest()
+    override val bracketedPasteMode: StateFlow<Boolean> get() = notUsedInTest()
     override val shellIntegrationDeferred: Deferred<TerminalShellIntegration> get() = notUsedInTest()
     override val startupOptionsDeferred: Deferred<TerminalStartupOptions> get() = notUsedInTest()
     override val sessionDeferred: Deferred<TerminalSession> get() = notUsedInTest()

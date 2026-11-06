@@ -109,6 +109,13 @@ interface TerminalView {
   val workingDirectoryFlow: StateFlow<Path?>
 
   /**
+   * Tracks the bracketed paste mode that the shell requests.
+   * The value can remain `false` if the shell does not enable the mode.
+   */
+  @get:ApiStatus.Internal
+  val bracketedPasteMode: StateFlow<Boolean>
+
+  /**
    * Can be used to get or await the shell integration initialization.
    *
    * Note that **it may never complete** because the shell integration may be not available
@@ -165,6 +172,8 @@ interface TerminalView {
 
   /**
    * Creates the builder with additional options for sending text to the shell process.
+   * Sending text uses the current terminal modes and does not wait for shell initialization.
+   * Callers that need a ready shell must wait before sending text.
    */
   fun createSendTextBuilder(): TerminalSendTextBuilder
 

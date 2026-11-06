@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -22,10 +23,17 @@ import com.intellij.sh.run.terminal.ShTerminalRunRequest
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.toolwindow.getTerminalTab
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.ui.content.Content
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.getNow
@@ -33,6 +41,8 @@ import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
 import java.awt.Component
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * The single frontend implementation of "run this shell command in the Terminal tool window".
@@ -91,7 +101,7 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     @NlsContexts.TabTitle title: String,
   ): Boolean {
     val terminalView = content.getTerminalTab()?.view ?: return false
-    terminalView.createSendTextBuilder().shouldExecute().send(command)
+    enqueueCommand(content, terminalView, command)
     terminalView.title.change {
       if (userDefinedTitle == null || userDefinedTitle == content.getUserData(LAST_AUTOMATIC_TITLE)) {
         userDefinedTitle = title
@@ -177,7 +187,46 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
       .createTab()
     if (sourceFileUrl != null) associateTerminal(tab.content, sourceFileUrl)
     markAutomaticTitle(tab.content, title)
-    tab.view.createSendTextBuilder().shouldExecute().send(command)
+    enqueueCommand(tab.content, tab.view, command)
+  }
+
+  private fun enqueueCommand(content: Content, terminalView: TerminalView, command: String) {
+    val sendMutex = content.getUserData(COMMAND_SEND_MUTEX) ?: Mutex().also { content.putUserData(COMMAND_SEND_MUTEX, it) }
+    // Start immediately so commands reach the mutex in submission order
+    terminalView.coroutineScope.launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+      sendMutex.withLock {
+        val builder = terminalView.createSendTextBuilder().shouldExecute()
+        val isMultiline = '\n' in command
+        if (isMultiline && awaitBracketedPasteMode(terminalView)) {
+          builder.useBracketedPasteMode()
+        }
+        else if (isMultiline) {
+          LOG.warn("Cannot confirm bracketed paste mode. Sending the command without paste markers.")
+        }
+        builder.send(command)
+      }
+    }
+  }
+
+  private suspend fun awaitBracketedPasteMode(terminalView: TerminalView): Boolean {
+    if (terminalView.bracketedPasteMode.value) return true
+    return withTimeoutOrNull(10.seconds) {
+      val startupOptions = terminalView.startupOptionsDeferred.await()
+      when (startupOptions.processType) {
+        TerminalProcessType.SHELL -> Unit
+        TerminalProcessType.NON_SHELL -> return@withTimeoutOrNull terminalView.bracketedPasteMode.value
+      }
+      val shellIntegration = terminalView.shellIntegrationDeferred.getNow()
+                             ?: if (startupOptions.envVariables["INTELLIJ_TERMINAL_COMMAND_BLOCKS_REWORKED"] == "1") {
+                               terminalView.shellIntegrationDeferred.await()
+                             }
+                             else return@withTimeoutOrNull terminalView.bracketedPasteMode.value
+      shellIntegration.outputStatus.first { it == TerminalOutputStatus.TypingCommand }
+      withTimeoutOrNull(100.milliseconds) {
+        terminalView.bracketedPasteMode.first { it }
+      }
+      terminalView.bracketedPasteMode.value
+    } ?: false
   }
 
   @RequiresEdt(generateAssertion = false)
@@ -240,6 +289,8 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
   }
 
   companion object {
+    private val LOG = logger<ShFrontendTerminalRunner>()
+    private val COMMAND_SEND_MUTEX: Key<Mutex> = Key.create("Shell.Command.Send.Mutex")
     internal val MARKDOWN_SOURCE_FILE_URL: Key<String> = Key.create("Shell.Markdown.Source.File.Url")
     internal val LAST_AUTOMATIC_TITLE: Key<@NlsContexts.TabTitle String> = Key.create("Shell.Markdown.Last.Automatic.Title")
   }

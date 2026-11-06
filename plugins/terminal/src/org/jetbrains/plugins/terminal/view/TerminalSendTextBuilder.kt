@@ -19,6 +19,7 @@ interface TerminalSendTextBuilder {
    * Specifies to wrap the provided text into a bracketed paste mode escape sequences (if it is supported by the shell).
    * It makes the shell treat the text like it was pasted from the clipboard.
    * And also ensure that the text won't be interpreted as a shell key binding.
+   * Uses the current mode and does not wait for the shell to enable it.
    */
   fun useBracketedPasteMode(): TerminalSendTextBuilder
 

@@ -216,6 +216,7 @@ class TerminalViewImpl(
   }
 
   override val workingDirectoryFlow: StateFlow<Path?>
+  override val bracketedPasteMode: StateFlow<Boolean>
 
   override val shellIntegrationDeferred: CompletableDeferred<TerminalShellIntegration> =
     CompletableDeferred(coroutineScope.coroutineContext.job)
@@ -230,6 +231,9 @@ class TerminalViewImpl(
       val directoryString = it.currentDirectory ?: return@mapStateIn null
       val eelDescriptor = sessionDeferred.getNow()?.eelDescriptor ?: return@mapStateIn null
       convertNativePathToNioPath(directoryString, eelDescriptor)
+    }
+    bracketedPasteMode = sessionModel.terminalState.mapStateIn(coroutineScope.childScope("bracketedPasteMode")) {
+      it.isBracketedPasteMode
     }
 
     encodingManager = TerminalKeyEncodingManager(sessionModel)
