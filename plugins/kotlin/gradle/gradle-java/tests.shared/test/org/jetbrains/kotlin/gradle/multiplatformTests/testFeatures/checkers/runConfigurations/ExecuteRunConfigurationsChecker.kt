@@ -101,33 +101,15 @@ object ExecuteRunConfigurationsChecker : AbstractTestChecker<ExecuteRunConfigura
             This listener will also be able to determine when the execution is over (using the processTerminated callback)
              */
             fun processListener(processHandler: ExternalSystemProcessHandler) = object : ProcessListener {
-                /**
-                 * Quirk in [com.intellij.openapi.externalSystem.service.internal.AbstractExternalSystemTask.execute]:
-                 * In case of a build failure, the 'onFailure' call will terminate the process and invoke
-                 * the 'processTerminated' listeners first.
-                 *
-                 * However, in the 'onEnd' callback will be invoked afterward with the 'farewell message'
-                 * (see [ExternalSystemRunnableState])
-                 *
-                 * On the happy path (no failure), this farewell message will be sent first and
-                 * will be available in 'onTextAvailable' before the 'processTerminated' is called.
-                 */
-                val farewellMessageReceived = Job()
-
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
                     launch {
                         output.add(event.text.trim())
-                        if (event.processHandler.isProcessTerminated) {
-                            farewellMessageReceived.complete()
-                        }
                     }
                 }
 
                 override fun processTerminated(event: ProcessEvent) {
                     launch {
                         if (event.exitCode != 0) {
-                            farewellMessageReceived.join()
-
                             val task = processHandler.task ?: fail("Missing task")
 
                             /* Await the task getting updated */
