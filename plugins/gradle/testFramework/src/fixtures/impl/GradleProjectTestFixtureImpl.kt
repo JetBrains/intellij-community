@@ -15,8 +15,12 @@ import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.findOrCreateDirectory
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestObservation.awaitOpenProjectActivity
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
@@ -29,6 +33,8 @@ import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
+import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
 
@@ -94,6 +100,8 @@ internal class GradleProjectTestFixtureImpl(
         openProjectAsync(fileFixture.projectRoot)
       }
     }
+    val gradleUserHome = gradleUserHomeDir(project.getEelDescriptor()).findOrCreateDirectory().toRealPath()
+    VfsRootAccess.allowRootAccess(testDisposable, gradleUserHome.toString())
   }
 
   override fun tearDown() {
