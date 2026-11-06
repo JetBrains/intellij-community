@@ -6,6 +6,13 @@ import java.util.EventListener
 
 /**
  * Gets each change of a property value of an [ObservableState], and each change of an override.
+ *
+ * An event comes on the thread that made the change, when [ObservableState.getSnapshot] already shows the change. The
+ * listener runs without a lock of the state, so it can change the state again. A batch gives its events after it ends,
+ * in their order.
+ *
+ * The events of changes on two threads can come in another order than the changes. So a listener that needs the
+ * current value reads it from the state, and not from the event.
  */
 interface ObservableStateListener : EventListener {
   fun propertyChanged(event: PropertyChangeEvent)

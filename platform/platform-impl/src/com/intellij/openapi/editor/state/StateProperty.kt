@@ -5,9 +5,21 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 /**
- * A property of an [ObservableState]. The state declares it as a delegate, with `by property(...)`.
+ * A property of an [ObservableState]. The state declares it as a Kotlin delegate, with `by property(...)`.
+ *
+ * The property holds no value. It reads and changes the value in its state. A read inside a [ObservableState.batch]
+ * sees the changes of the batch.
  */
-abstract class StateProperty<T> : ReadWriteProperty<ObservableState, T> {
+abstract class StateProperty<T> internal constructor(
+  /**
+   * The position of the property in the declaration order of its state.
+   */
+  internal val index: Int,
+  /**
+   * The value before the first change of the property.
+   */
+  internal val initialValue: T,
+) : ReadWriteProperty<ObservableState, T> {
   /**
    * The name of the Kotlin property that delegates to this one. It is `null` until the delegation binds it.
    */
@@ -28,6 +40,9 @@ abstract class StateProperty<T> : ReadWriteProperty<ObservableState, T> {
     setValue(thisRef, value)
   }
 
+  /**
+   * The current value.
+   */
   abstract fun getValue(thisRef: ObservableState): T
 
   /**
@@ -41,7 +56,7 @@ abstract class StateProperty<T> : ReadWriteProperty<ObservableState, T> {
   abstract fun clearOverriding(thisRef: ObservableState)
 
   /**
-   * Computes the value again: the override, or else the default.
+   * Computes the value again: from the override, or else from the default.
    */
   abstract fun recalculate(thisRef: ObservableState)
 }

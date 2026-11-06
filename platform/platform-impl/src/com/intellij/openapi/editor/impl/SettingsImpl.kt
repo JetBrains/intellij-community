@@ -656,8 +656,8 @@ class SettingsImpl internal constructor(
   /**
    * Publishes a snapshot of the current state values, unless the current snapshot has them already.
    *
-   * A batch of the state counts each change at once, and it gives the events at its end. So the first event publishes
-   * all the changes of the batch, and the other events publish nothing.
+   * A batch of the state counts its changes when it publishes them, before it gives the events. So the first event
+   * publishes all the changes of the batch, and the other events publish nothing.
    *
    * A publication on another thread makes the CAS fail, and the loop then reads the state again. So an old snapshot
    * never replaces a newer one.

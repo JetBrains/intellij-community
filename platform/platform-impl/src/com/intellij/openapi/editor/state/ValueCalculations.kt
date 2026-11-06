@@ -2,7 +2,10 @@
 package com.intellij.openapi.editor.state
 
 /**
- * Computes the default of a [StateProperty]. It runs on the calling thread, so it must not take the RW lock.
+ * Computes the default of a [StateProperty].
+ *
+ * It runs inside a change of the state, on the thread of the change, and other changes of the state wait for it. So it
+ * must be fast, it must not take the RW lock, and it must not change a state.
  */
 fun interface SyncDefaultValueCalculator<T> {
   fun calculate(): T
@@ -19,6 +22,8 @@ class FixedDefaultValue<T>(private val value: T) : SyncDefaultValueCalculator<T>
 
 /**
  * Changes the value of a [StateProperty] before the property stores it. It applies to the override and to the default.
+ *
+ * It runs inside a change of the state, so it follows the rules of [SyncDefaultValueCalculator].
  */
 fun interface CustomOutValueModifier<T> {
   fun modifyOutValue(calculated: T): T

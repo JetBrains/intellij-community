@@ -11,14 +11,16 @@ import kotlin.reflect.KType
  * [customPropertySerializer] encodes the value. Without it, the kotlinx serializer of [type] does, so [type] must have
  * one. The backend sends the value when it has an override, and always when [alwaysTransfer] is set.
  */
-class TransferableObjectStateProperty<T>(
+class TransferableObjectStateProperty<T> internal constructor(
+  state: ObservableState,
+  index: Int,
   val type: KType,
   initialValue: T,
   defaultValueCalculator: SyncDefaultValueCalculator<T>,
   customOutValueModifier: CustomOutValueModifier<T>?,
   val customPropertySerializer: CustomPropertySerializer<T>?,
   val alwaysTransfer: Boolean = false,
-) : ObjectStateProperty<T>(initialValue, defaultValueCalculator, customOutValueModifier), TransferableProperty<T> {
+) : ObjectStateProperty<T>(state, index, initialValue, defaultValueCalculator, customOutValueModifier), TransferableProperty<T> {
   private val defaultSerializer: KSerializer<Any?> by lazy { serializer(type) }
 
   override fun encodeToString(): String {

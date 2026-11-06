@@ -67,20 +67,22 @@ class ObservableStateBatchTest {
   }
 
   /**
-   * A first override changes the value and the override, so it counts twice. The count grows before the batch ends.
+   * A batch counts once, when it publishes its changes. The count does not grow before the batch ends.
    */
   @Test
-  fun testEachChangeCountsAtOnce() {
+  fun testABatchCountsOnceWhenItEnds() {
     val state = TestState()
     val before = state.getModificationCount()
 
     state.batch {
       state.width = 2
-      assertEquals(before + 2, state.getModificationCount())
+      state.height = 3
+      assertEquals(before, state.getModificationCount())
     }
-    state.clearOverriding(state::width)
+    assertEquals(before + 1, state.getModificationCount())
 
-    assertEquals(before + 4, state.getModificationCount())
+    state.clearOverriding(state::width)
+    assertEquals(before + 2, state.getModificationCount())
   }
 
   @Test

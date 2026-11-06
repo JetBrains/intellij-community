@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -24,15 +25,27 @@ fun <T : ObservableState> T.init(): T {
 }
 
 /**
- * A set of observable properties. Each property has a default, and it can have an override.
+ * A set of named properties that any thread can read and change. A subclass declares each property with
+ * `by property(...)`.
  *
- * A setter stores an override, and the value then stays fixed until [clearOverriding]. Without an override, the
- * property holds the result of its [SyncDefaultValueCalculator], and [refresh] or [refreshAll] runs the calculator
- * again. A [CustomOutValueModifier] can change the value in both cases. Each change of a value notifies the listeners
- * of [addPropertyChangeListener], at once or at the end of a [batch].
+ * Each property has a default, which its [SyncDefaultValueCalculator] gives. A setter stores an override, and the
+ * property then holds the override until [clearOverriding]. A [CustomOutValueModifier] can change the value in both
+ * cases. The state does not watch the sources of a default, so its owner calls [refresh] or [refreshAll] after a change
+ * of a source.
  *
- * A subclass declares each property with `by property(...)`. An initial value is only a placeholder, so the owner of
- * the state must call [refreshAll] after the construction.
+ * Features:
+ * - [getSnapshot] gives all values and overrides at one moment, as an immutable [StateSnapshot]. A read takes no lock.
+ * - A [batch] changes several properties at once. Another thread sees all the changes of a batch, or none of them.
+ * - Changes on different threads run one after another, so no change gets lost.
+ * - A listener of [addPropertyChangeListener] gets each change of a value and each change of an override. The rules
+ *   for the events are in [ObservableStateListener].
+ * - [findProperty] finds a property by its name.
+ *
+ * Rules for a subclass and its owner:
+ * - The owner calls [refreshAll] after the construction, because an initial value is only a placeholder.
+ * - The subclass must not read a property while it is built. A property that registers after the first read fails.
+ * - Each value must be immutable, because a snapshot keeps only the reference.
+ * - A calculator and a modifier follow the rules of [SyncDefaultValueCalculator].
  */
 // Inspired by com.intellij.openapi.components.BaseState.
 abstract class ObservableState {
@@ -44,24 +57,36 @@ abstract class ObservableState {
    */
   private val propertiesByName: HashMap<String, StateProperty<Any>> = HashMap()
 
-  private var dispatcher: EventDispatcher<ObservableStateListener>? = null
+  /**
+   * The current values, or `null` before the first read.
+   */
+  @Volatile private var snapshot: StateSnapshot? = null
 
   /**
-   * The number of changes of a value or of an override. Each change counts at once, also inside [batch].
+   * The number of batches that changed the state.
    */
   @Volatile private var modificationCount: Long = 0
 
   /**
-   * The events of the open [batch], in their order, or `null` outside a batch. Only the thread that changes the state
-   * uses it.
+   * Makes the batches on different threads run one after another.
    */
-  private var batchEvents: MutableList<() -> Unit>? = null
+  private val writeLock: ReentrantLock = ReentrantLock()
 
   /**
-   * A property whose initial value comes from [defaultValueCalculator].
+   * The outermost open [batch], or `null`. Only the thread that holds [writeLock] uses it.
+   */
+  private var openBatch: StateBatch? = null
+
+  /**
+   * The listeners of [addPropertyChangeListener], or `null` before the first listener.
+   */
+  @Volatile private var dispatcher: EventDispatcher<ObservableStateListener>? = null
+
+  /**
+   * A property whose initial value also comes from [defaultValueCalculator].
    *
-   * The calculator runs while the state is built, so it must not read another property of the state. That property
-   * may not be initialized yet. Use the overload with an initial value then.
+   * So the calculator runs while the state is built, and it must not read a property of the state. Use the overload
+   * with an initial value then.
    */
   inline fun <reified T> property(noinline defaultValueCalculator: () -> T): StateProperty<T> {
     return property(defaultValueCalculator(), SyncDefaultValueCalculator(defaultValueCalculator))
@@ -109,6 +134,9 @@ abstract class ObservableState {
     customPropertySerializer: CustomPropertySerializer<T>? = null,
     alwaysTransfer: Boolean = false,
   ): StateProperty<T> {
+    check(snapshot == null) {
+      "A property registers after the first read of the state"
+    }
     val property = createProperty(
       type = type,
       initialValue = initialValue,
@@ -135,30 +163,52 @@ abstract class ObservableState {
   }
 
   /**
-   * Runs [action], and then gives its events to the listeners, in their order. So each listener sees all the values that
-   * [action] changes. A nested call gives its events at the end of the outermost call. The events also come when
-   * [action] fails.
+   * Runs [action] as one change of the state.
+   *
+   * - This thread sees each change of [action] at once.
+   * - Another thread sees all the changes of [action] when the batch ends, or none of them before.
+   * - A change on another thread waits until the batch ends.
+   * - The listeners get the events after the batch ends, in their order.
+   * - A nested batch is a part of the outermost batch.
+   * - When [action] fails, the changes before the failure stay, and their events come.
    */
   fun batch(action: () -> Unit) {
-    if (batchEvents != null) {
-      action()
+    writeLock.lock()
+    if (openBatch != null) {
+      try {
+        action()
+      } finally {
+        writeLock.unlock()
+      }
       return
     }
-    val events = ArrayList<() -> Unit>()
-    batchEvents = events
+    val batch = StateBatch(getSnapshot())
+    openBatch = batch
     try {
       action()
     } finally {
-      batchEvents = null
-      for (event in events) {
+      openBatch = null
+      try {
+        publish(batch)
+      } finally {
+        writeLock.unlock()
+      }
+      for (event in batch.events()) {
         event()
       }
     }
   }
 
   /**
-   * The number of changes of a value or of an override so far. A reader that reads this number before the values knows
-   * that the values include each counted change.
+   * The current values and overrides. Inside a [batch], the snapshot does not show the changes of the batch yet.
+   */
+  fun getSnapshot(): StateSnapshot {
+    return snapshot ?: createFirstSnapshot()
+  }
+
+  /**
+   * The number of batches that changed the state. A reader that reads this number before the values knows that the
+   * values include each counted batch.
    */
   fun getModificationCount(): Long {
     return modificationCount
@@ -178,9 +228,12 @@ abstract class ObservableState {
     propertiesByName[property.name]?.clearOverriding(this)
   }
 
+  /**
+   * Whether [property] has an override.
+   */
   fun isOverridden(property: KProperty<*>): Boolean {
-    val stateProperty = propertiesByName[property.name]
-    return stateProperty is ObjectStateProperty<*> && stateProperty.isValueOverridden
+    val stateProperty = propertiesByName[property.name] ?: return false
+    return isOverriddenAt(stateProperty.index)
   }
 
   /**
@@ -190,12 +243,11 @@ abstract class ObservableState {
     return propertiesByName[name]
   }
 
+  /**
+   * Adds [listener]. With [parentDisposable], the listener goes away when [parentDisposable] is disposed.
+   */
   fun addPropertyChangeListener(listener: ObservableStateListener, parentDisposable: Disposable? = null) {
-    var dispatcher = this.dispatcher
-    if (dispatcher == null) {
-      dispatcher = EventDispatcher.create(ObservableStateListener::class.java)
-      this.dispatcher = dispatcher
-    }
+    val dispatcher = getOrCreateDispatcher()
     if (parentDisposable != null) {
       dispatcher.addListener(listener, parentDisposable)
     } else {
@@ -204,10 +256,10 @@ abstract class ObservableState {
   }
 
   /**
-   * Notifies the listeners that the value of [propertyName] changed. A property of this state calls it.
+   * Notifies the listeners that the value of [propertyName] changed. A property of this state calls it. Inside a
+   * [batch], the event comes after the batch ends.
    */
   fun propertyChanged(propertyName: String?, oldValueRef: Ref<Any?>?, newValue: Any?) {
-    MODIFICATION_COUNT_UPDATER.incrementAndGet(this)
     if (propertyName != null) {
       val event = ObservableStateListener.PropertyChangeEvent(this, propertyName, oldValueRef, newValue)
       deliver { dispatcher?.multicaster?.propertyChanged(event) }
@@ -215,24 +267,12 @@ abstract class ObservableState {
   }
 
   /**
-   * Tells the listeners that the property with [propertyName] got an override, or that it lost its override.
+   * Tells the listeners that the property with [propertyName] got an override, or that it lost its override. A property
+   * of this state calls it. Inside a [batch], the event comes after the batch ends.
    */
   fun overridingChanged(propertyName: String?) {
-    MODIFICATION_COUNT_UPDATER.incrementAndGet(this)
     if (propertyName != null) {
       deliver { dispatcher?.multicaster?.overridingChanged(this, propertyName) }
-    }
-  }
-
-  /**
-   * Gives [event] to the listeners at once, or at the end of the open [batch].
-   */
-  private fun deliver(event: () -> Unit) {
-    val events = batchEvents
-    if (events == null) {
-      event()
-    } else {
-      events.add(event)
     }
   }
 
@@ -255,6 +295,134 @@ abstract class ObservableState {
     propertiesByName.putIfAbsent(name, property as StateProperty<Any>)
   }
 
+  /**
+   * The value at [index] for this thread: the value in the open batch of this thread, or else in the snapshot.
+   */
+  internal fun valueAt(index: Int): Any? {
+    val batch = batchOfThisThread()
+    if (batch != null) {
+      return batch.valueAt(index)
+    }
+    return getSnapshot().valueAt(index)
+  }
+
+  /**
+   * Whether the property at [index] has an override, for this thread. See [valueAt].
+   */
+  internal fun isOverriddenAt(index: Int): Boolean {
+    return overrideAt(index) !== NoOverride
+  }
+
+  /**
+   * The override at [index] for this thread, or [NoOverride]. See [valueAt].
+   */
+  internal fun overrideAt(index: Int): Any? {
+    val batch = batchOfThisThread()
+    if (batch != null) {
+      return batch.overrideAt(index)
+    }
+    return getSnapshot().overrideAt(index)
+  }
+
+  /**
+   * Stores [value] at [index] in the open batch of this thread.
+   */
+  internal fun storeValue(index: Int, value: Any?) {
+    requireBatchOfThisThread().storeValue(index, value)
+  }
+
+  /**
+   * Stores [override] at [index] in the open batch of this thread.
+   */
+  internal fun storeOverride(index: Int, override: Any?) {
+    requireBatchOfThisThread().storeOverride(index, override)
+  }
+
+  /**
+   * Removes the override at [index] in the open batch of this thread.
+   */
+  internal fun clearOverrideAt(index: Int) {
+    requireBatchOfThisThread().storeOverride(index, NoOverride)
+  }
+
+  /**
+   * Gives [event] to the listeners at the end of the open batch of this thread, or at once without a batch.
+   */
+  private fun deliver(event: () -> Unit) {
+    val batch = batchOfThisThread()
+    if (batch == null) {
+      event()
+    } else {
+      batch.addEvent(event)
+    }
+  }
+
+  /**
+   * The open batch, when this thread runs it. Another thread must not read [openBatch], so the lock owner is checked
+   * first.
+   */
+  private fun batchOfThisThread(): StateBatch? {
+    if (!writeLock.isHeldByCurrentThread) {
+      return null
+    }
+    return openBatch
+  }
+
+  private fun requireBatchOfThisThread(): StateBatch {
+    return checkNotNull(batchOfThisThread()) { "A state changes only inside a batch" }
+  }
+
+  /**
+   * Publishes the changes of [batch] in a new snapshot, and then counts them. The caller holds [writeLock], so no other
+   * publication runs at the same time.
+   */
+  private fun publish(batch: StateBatch) {
+    if (!batch.hasChanges()) {
+      return
+    }
+    snapshot = StateSnapshot(batch.values(), batch.overrides())
+    MODIFICATION_COUNT_UPDATER.incrementAndGet(this)
+  }
+
+  /**
+   * Creates the snapshot with the initial values and without overrides, unless another thread has created it.
+   */
+  private fun createFirstSnapshot(): StateSnapshot {
+    writeLock.lock()
+    try {
+      val current = snapshot
+      if (current != null) {
+        return current
+      }
+      val values = Array<Any?>(properties.size) { properties[it].initialValue }
+      val overrides = Array<Any?>(properties.size) { NoOverride }
+      val first = StateSnapshot(values, overrides)
+      snapshot = first
+      return first
+    } finally {
+      writeLock.unlock()
+    }
+  }
+
+  private fun getOrCreateDispatcher(): EventDispatcher<ObservableStateListener> {
+    val current = dispatcher
+    if (current != null) {
+      return current
+    }
+    writeLock.lock()
+    try {
+      val created = dispatcher
+      if (created != null) {
+        return created
+      }
+      val newDispatcher = EventDispatcher.create(ObservableStateListener::class.java)
+      dispatcher = newDispatcher
+      return newDispatcher
+    } finally {
+      writeLock.unlock()
+    }
+  }
+
   private fun <T> createProperty(
     type: KType,
     initialValue: T,
@@ -263,10 +431,19 @@ abstract class ObservableState {
     customPropertySerializer: CustomPropertySerializer<T>?,
     alwaysTransfer: Boolean,
   ): ObjectStateProperty<T> {
+    val index = properties.size
     if (customPropertySerializer == null && !hasDefaultSerializer(type)) {
-      return ObjectStateProperty(initialValue, defaultValueCalculator, outValueModifier)
+      return ObjectStateProperty(
+        this,
+        index,
+        initialValue,
+        defaultValueCalculator,
+        outValueModifier,
+      )
     }
     return TransferableObjectStateProperty(
+      state = this,
+      index = index,
       type = type,
       initialValue = initialValue,
       defaultValueCalculator = defaultValueCalculator,
