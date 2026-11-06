@@ -276,6 +276,10 @@ open class FileEditorManagerImpl(
     }
   }
 
+  private val renamedFileChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 50.milliseconds) { files ->
+    refreshFileEditorProviders(serviceAsync<FileEditorProviderManager>(), files)
+  }
+
   private val fileTitleUpdateChannel: MergingUpdateChannel<VirtualFile?> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
     val allSplitters = getAllSplitters()
     val clientFileEditorManagers = allClientFileEditorManagers
@@ -403,6 +407,7 @@ open class FileEditorManagerImpl(
     }
 
     closeFilesOnFileEditorRemoval()
+    listenForFileRenames()
 
     if (ApplicationManager.getApplication().isUnitTestMode || forceUseUiInHeadlessMode()) {
       initJob = CompletableDeferred(value = Unit)
@@ -550,6 +555,21 @@ open class FileEditorManagerImpl(
     }, this)
   }
 
+  private fun listenForFileRenames() {
+    coroutineScope.launch(CoroutineName("FileEditorManagerImpl provider update on rename")) {
+      renamedFileChannel.start(receiveFilter = ::isFileOpen)
+    }
+    project.messageBus.connect(coroutineScope).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+      override fun after(events: List<VFileEvent>) {
+        for (event in events) {
+          if (event is VFilePropertyChangeEvent && event.isRename) {
+            renamedFileChannel.queue(event.file)
+          }
+        }
+      }
+    })
+  }
+
   override fun dispose() {
     try {
       coroutineScope.cancel()
@@ -604,16 +624,17 @@ open class FileEditorManagerImpl(
     scheduleUpdateFileName(file = null)
   }
 
-  private suspend fun rootsChanged(fileEditorProviderManager: FileEditorProviderManager) {
+  private suspend fun refreshFileEditorProviders(fileEditorProviderManager: FileEditorProviderManager, files: Collection<VirtualFile>? = null) {
     val fileToProviders = IdentityHashMap<VirtualFile, List<FileEditorProvider>>()
-    val providerChanges = openedComposites.toList().mapNotNull { composite ->
+    val composites = openedComposites.filter { files == null || files.contains(it.file) }.toList()
+    val providerChanges = composites.mapNotNull { composite ->
       withContext(composite.clientId.asContextElement()) {
         val file = composite.file
         val providers = fileToProviders.getOrPut(file) { fileEditorProviderManager.getProvidersAsync(project, file) }
         val editorTypeIds = providers.mapTo(LinkedHashSet()) { it.editorTypeId }
         val oldEditorTypeIds = getEditorTypeIds(composite)
-        if (oldEditorTypeIds.isEmpty()) {
-          // not initialized or invalid
+        if (oldEditorTypeIds.isEmpty() || editorTypeIds.isEmpty()) {
+          // not initialized or invalid, or no provider accepts the file: keep the old editors instead of an empty composite
           return@withContext null
         }
 
@@ -2340,7 +2361,7 @@ open class FileEditorManagerImpl(
               }
             }
 
-            fileEditorManager.rootsChanged(serviceAsync<FileEditorProviderManager>())
+            fileEditorManager.refreshFileEditorProviders(serviceAsync<FileEditorProviderManager>())
           }
       }
       flow

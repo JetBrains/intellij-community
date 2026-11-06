@@ -1503,6 +1503,27 @@ class FileEditorManagerTest {
   }
 
   @Test
+  fun testRenameUpdatesEditorsOfOpenFile(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    registerProvider(MyDefaultEditorProvider("t_default", "default"))
+    registerProvider(object : MockFileEditorProvider("t_baz", "baz", FileEditorPolicy.HIDE_DEFAULT_EDITOR), DumbAware {
+      override fun accept(project: Project, file: VirtualFile): Boolean = file.extension == "baz"
+    })
+    val file = createTempFooBar()
+    manager.openFile(file, false)
+    assertOpenedFileEditorsNames(file, "default")
+
+    HeavyPlatformTestCase.rename(file, "foo.baz")
+    waitUntil("the renamed file must get the editor of its new extension") {
+      manager.getEditors(file).map { it.name } == listOf("baz")
+    }
+
+    HeavyPlatformTestCase.rename(file, "foo.bar")
+    waitUntil("the file renamed back must get its old editor") {
+      manager.getEditors(file).map { it.name } == listOf("default")
+    }
+  }
+
+  @Test
   fun testOpenInRightSplitLeavesNoEmptySplitForFileWithoutProviders(): Unit = timeoutRunBlocking {
     val fileWithoutProviders = withContext(Dispatchers.UiWithModelAccess) {
       // a window to split has to exist, and its editor has to be loaded before the test ends, or it outlives the closed composite
