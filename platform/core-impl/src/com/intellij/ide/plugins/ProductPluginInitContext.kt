@@ -323,14 +323,12 @@ class ProductPluginInitContext(
           }
           yieldIfResolves(DependencyRef.of(COLLABORATION_TOOLS_MODULE_ID))
         }
-        if (descriptor !is PluginMainDescriptor || descriptor.pluginId != CORE_ID) { // FIXME violator: DesignedCorePlugin.xml which is xi:included from IdeaPlugin.xml
-          for (depends in descriptor.pluginDependencies) {
-            if (depends.subDescriptor != null) { // will be processed when invoked for the sub-descriptor
-              continue
-            }
-            if ((depends.pluginId == PLATFORM_PLUGIN_ALIAS_ID || depends.pluginId == LANG_PLUGIN_ALIAS_ID) && remainingCandidates.resolvePluginId(depends.pluginId) != null) {
-              yieldPlatformAliasCompatibilityDependencies()
-            }
+        for (depends in descriptor.pluginDependencies) {
+          if (depends.subDescriptor != null) { // will be processed when invoked for the sub-descriptor
+            continue
+          }
+          if ((depends.pluginId == PLATFORM_PLUGIN_ALIAS_ID || depends.pluginId == LANG_PLUGIN_ALIAS_ID) && remainingCandidates.resolvePluginId(depends.pluginId) != null) {
+            yieldPlatformAliasCompatibilityDependencies()
           }
         }
 
