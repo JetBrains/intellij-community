@@ -6,7 +6,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.awaitProcessResult
@@ -146,13 +148,25 @@ class LocalTerminalTtyConnector internal constructor(
     catch (e: ExecuteProcessException) {
       throw LocalTtyConnectorClosingException("Failed to send SIGHUP to ${processInfo(process)}", e)
     }
+    catch (e: EelUnavailableException) {
+      throw LocalTtyConnectorClosingException("Cannot send SIGHUP to ${processInfo(process)}: the environment is unavailable", e)
+    }
     catch (_: TimeoutCancellationException) {
       throw LocalTtyConnectorClosingException("Failed to send SIGHUP to ${processInfo(process)}: timeout exceeded")
     }
 
     if (ptyProcess.awaitExit(5.seconds) == null) {
-      val killProcessResult = withTimeoutOrNull(1.seconds) {
-        killProcess.awaitProcessResult()
+      val killProcessResult = try {
+        withTimeoutOrNull(1.seconds) {
+          killProcess.awaitProcessResult()
+        }
+      }
+      catch (_: EelUnavailableException) {
+        null
+      }
+      catch (e: SafeDeferred.FailedDeferred) {
+        if (e.cause !is EelUnavailableException) throw e
+        null
       }
       if (ptyProcess.isAlive) {
         LOG.warn("${processInfo(process)} hasn't been terminated by SIGHUP, performing forceful termination (SIGKILL!!!)\n" +

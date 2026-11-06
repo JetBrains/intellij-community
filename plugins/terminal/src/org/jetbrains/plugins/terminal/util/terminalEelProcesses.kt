@@ -20,8 +20,10 @@ import com.intellij.platform.eel.EelPosixProcess
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelResult.Error
 import com.intellij.platform.eel.EelResult.Ok
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.EelWindowsProcess
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.stat
@@ -33,6 +35,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import com.intellij.util.io.awaitExit
 import com.intellij.util.ui.EDT
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.coroutineScope
@@ -81,6 +84,27 @@ private suspend fun hasRunningCommandsCatching(shellEelProcess: ShellEelProcess)
     LOG.warn("Cannot determine running commands, assuming none ($shellEelProcess)", e)
     false
   }
+  catch (e: EelUnavailableException) {
+    hasRunningCommandsInUnavailableEel(shellEelProcess, e)
+  }
+  catch (e: SafeDeferred.FailedDeferred) {
+    hasRunningCommandsInUnavailableEel(shellEelProcess, e.cause as? EelUnavailableException ?: throw e)
+  }
+}
+
+/**
+ * A communication failure does not prove the shell is dead: a reconnecting Eel may keep it alive.
+ * The IJent PTY adapter reports the shell dead once its session is gone, so wait a bit for that.
+ */
+private suspend fun hasRunningCommandsInUnavailableEel(shellEelProcess: ShellEelProcess, e: EelUnavailableException): Boolean {
+  val exited = withTimeoutOrNull(1.seconds) { shellEelProcess.ptyProcess.awaitExit() } != null
+  if (exited) {
+    LOG.info("Cannot determine running commands, the environment is unavailable and the shell has exited, assuming none ($shellEelProcess): ${e.message}")
+  }
+  else {
+    LOG.info("Cannot determine running commands, the environment is unavailable but the shell is alive, assuming some ($shellEelProcess): ${e.message}")
+  }
+  return !exited
 }
 
 /**
