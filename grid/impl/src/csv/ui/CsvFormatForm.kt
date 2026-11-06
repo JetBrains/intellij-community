@@ -90,10 +90,6 @@ class CsvFormatForm(parent: Disposable, settings: CsvFormatUISettings) : CsvForm
     eventDispatcher.addListener(listener)
   }
 
-  fun addChangeListener(listener: ChangeListener, parent: Disposable) {
-    eventDispatcher.addListener(listener, parent)
-  }
-
   private fun fireFormatChangedEvent() {
     if (!resetting) {
       eventDispatcher.multicaster.formatChanged(this)
