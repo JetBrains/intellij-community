@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.completion.modcommand;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -48,35 +48,38 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType
   private final String myLocationString;
   private final boolean myStrikeout;
   private final @Nullable String myForcedPresentableName;
+  private final double myPriority;
 
   private PsiTypeCompletionItem(PsiType type, boolean indicateAnonymous, boolean addArrayInitializer, String locationString,
-                                @NonNls String lookupString) {
+                                @NonNls String lookupString, double priority) {
     super(lookupString, type);
     myIndicateAnonymous = indicateAnonymous;
     myAddArrayInitializer = addArrayInitializer;
     myLocationString = locationString;
     myForcedPresentableName = null;
+    myPriority = priority;
     PsiClass psiClass = PsiUtil.resolveClassInType(type);
     myStrikeout = psiClass != null && psiClass.isDeprecated();
   }
 
   public PsiTypeCompletionItem(PsiType type, @NonNls String lookupString) {
-    this(type, false, false, "", lookupString);
+    this(type, false, false, "", lookupString, 0);
   }
 
   @Contract(pure = true)
   public PsiTypeCompletionItem withPresentableName(@Nullable String forcedPresentableName) {
-    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, myAddArrayInitializer, myLocationString, mainLookupString());
+    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, myAddArrayInitializer, myLocationString, mainLookupString(),
+                                     myPriority);
   }
 
   @Contract(pure = true)
   public PsiTypeCompletionItem indicateAnonymous() {
-    return new PsiTypeCompletionItem(getType(), true, myAddArrayInitializer, myLocationString, mainLookupString());
+    return new PsiTypeCompletionItem(getType(), true, myAddArrayInitializer, myLocationString, mainLookupString(), myPriority);
   }
 
   @Contract(pure = true)
   public PsiTypeCompletionItem addArrayInitializer() {
-    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, true, myLocationString, mainLookupString());
+    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, true, myLocationString, mainLookupString(), myPriority);
   }
 
   @Contract(pure = true)
@@ -84,9 +87,20 @@ public final class PsiTypeCompletionItem extends PsiUpdateCompletionItem<PsiType
     PsiClass psiClass = PsiUtil.resolveClassInType(getType());
     if (psiClass != null) {
       return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, myAddArrayInitializer,
-                                       " (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", mainLookupString());
+                                       " (" + PsiFormatUtil.getPackageDisplayName(psiClass) + ")", mainLookupString(), myPriority);
     }
     return this;
+  }
+
+  @Contract(pure = true)
+  public PsiTypeCompletionItem withPriority(double priority) {
+    return new PsiTypeCompletionItem(getType(), myIndicateAnonymous, myAddArrayInitializer, myLocationString, mainLookupString(),
+                                     priority);
+  }
+
+  @Override
+  public double priority() {
+    return myPriority;
   }
 
   public PsiType getType() {

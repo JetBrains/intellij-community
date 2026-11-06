@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.modcompletion.ModCompletionItem;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * A wrapper for {@link ModCompletionItemProvider} to be used as a {@link CompletionContributor}.
@@ -33,12 +34,13 @@ final class CompletionItemContributor extends CompletionContributor implements R
       parameters.getProcess(),
       parameters.getOriginalFile(), parameters.getOffset(), parameters.getOriginalPosition(), parameters.getPosition(), 
       result.getPrefixMatcher(), parameters.getInvocationCount(), parameters.getCompletionType(), parameters);
+    List<Predicate<ModCompletionItem>> itemFilters = ContainerUtil.mapNotNull(myFilters, f -> f.createFilter(myProvider, context));
     ModCompletionResult consumer = new ModCompletionResult() {
       @Nullable CompletionResultSet myResultSet = null;
 
       @Override
       public void accept(ModCompletionItem item) {
-        if (ContainerUtil.exists(myFilters, f -> !f.test(context, item))) return;
+        if (ContainerUtil.exists(itemFilters, f -> !f.test(item))) return;
         CompletionResultSet res = myResultSet;
         if (res == null) {
           res = myResultSet = result.withRelevanceSorter(myProvider.getSorter(context));

@@ -281,7 +281,7 @@ public abstract class CompletionContributor implements PossiblyDumbAware {
       .stream()
       .filter(ModCompletionItemProvider::isEnabled)
       .map(provider -> Map.entry(order.getOrDefault(provider.getAnchorContributor(), -1),
-                                 new CompletionItemContributor(provider, ContainerUtil.filter(filters, f -> f.isApplicableFor(provider)))));
+                                 new CompletionItemContributor(provider, filters)));
     return Stream.concat(
       modContributors, IntStream.range(0, contributors.size()).mapToObj(idx -> Map.entry(idx, contributors.get(idx))))
       .sorted(Map.Entry.comparingByKey())

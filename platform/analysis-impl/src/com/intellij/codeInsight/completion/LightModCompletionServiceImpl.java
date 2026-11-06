@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
@@ -9,6 +9,7 @@ import com.intellij.codeInsight.lookup.WeighingContext;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcompletion.ModCompletionItem;
+import com.intellij.modcompletion.ModCompletionItemFilter;
 import com.intellij.modcompletion.ModCompletionItemProvider;
 import com.intellij.modcompletion.ModCompletionResult;
 import com.intellij.openapi.editor.Document;
@@ -19,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
@@ -30,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * A lightweight implementation of completion using ModCompletion providers 
@@ -87,6 +90,7 @@ public final class LightModCompletionServiceImpl {
       element = Objects.requireNonNullElse(original, file);
     }
     List<ModCompletionItemProvider> providers = ModCompletionItemProvider.forLanguage(file.getLanguage());
+    List<ModCompletionItemFilter> filters = ModCompletionItemFilter.EP_NAME.allForLanguage(file.getLanguage());
     String prefix = file.getFileDocument().getText(TextRange.create(startOffset, caretOffset));
     var matcher = new CamelHumpMatcher(prefix);
     ModCompletionItemProvider.CompletionContext context = new ModCompletionItemProvider.CompletionContext(
@@ -96,11 +100,13 @@ public final class LightModCompletionServiceImpl {
     Map<CompletionSorterImpl, Set<LookupElement>> allItems = new LinkedHashMap<>();
     for (ModCompletionItemProvider provider : providers) {
       CompletionSorterImpl sorter = (CompletionSorterImpl)provider.getSorter(context);
+      List<Predicate<ModCompletionItem>> itemFilters = ContainerUtil.mapNotNull(filters, f -> f.createFilter(provider, context));
       provider.provideItems(context, new ModCompletionResult() {
         @Nullable Classifier<LookupElement> classifier;
 
         @Override
         public void accept(ModCompletionItem item) {
+          if (ContainerUtil.exists(itemFilters, f -> !f.test(item))) return;
           CompletionItemLookupElement le = new CompletionItemLookupElement(item);
           // matches every lookup string, as CompletionResult.wrap does in the IDE
           if (matcher.prefixMatches(le)) {

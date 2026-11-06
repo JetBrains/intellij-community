@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package de.plushnikov.intellij.plugin.completion;
 
 import com.intellij.java.completion.modcommand.AnnotationAttributeItemProvider;
@@ -12,9 +13,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.function.Predicate;
 
 /**
  * A completion contributor filter for Lombok onX-Annotations, and they default onX-Methods without underscore (_) at the end.
@@ -23,16 +26,13 @@ import java.util.Collection;
  */
 public final class LombokOnXCompletionContributorFilter implements ModCompletionItemFilter {
   @Override
-  public boolean isApplicableFor(@NotNull ModCompletionItemProvider provider) {
-    return provider instanceof AnnotationAttributeItemProvider;
-  }
-
-  @Override
-  public boolean test(ModCompletionItemProvider.@NotNull CompletionContext context, @NotNull ModCompletionItem item) {
-    if (PsiUtil.getLanguageLevel(context.getPosition().getProject()).isLessThan(LanguageLevel.JDK_1_8)) {
-      return true;
+  public @Nullable Predicate<ModCompletionItem> createFilter(@NotNull ModCompletionItemProvider provider,
+                                                             ModCompletionItemProvider.@NotNull CompletionContext context) {
+    if (!(provider instanceof AnnotationAttributeItemProvider) ||
+        PsiUtil.getLanguageLevel(context.getPosition().getProject()).isLessThan(LanguageLevel.JDK_1_8)) {
+      return null;
     }
-    return shouldKeepItem(item);
+    return LombokOnXCompletionContributorFilter::shouldKeepItem;
   }
 
   private static boolean shouldKeepItem(ModCompletionItem item) {

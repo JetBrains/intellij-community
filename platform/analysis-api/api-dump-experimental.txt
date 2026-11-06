@@ -335,8 +335,7 @@ com.intellij.modcommand.ModTemplateBuilder
 - s:values():com.intellij.modcompletion.ModCompletionItem$InsertionMode[]
 *:com.intellij.modcompletion.ModCompletionItemFilter
 - sf:EP_NAME:com.intellij.lang.LanguageExtension
-- a:isApplicableFor(com.intellij.modcompletion.ModCompletionItemProvider):Z
-- a:test(com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext,com.intellij.modcompletion.ModCompletionItem):Z
+- a:createFilter(com.intellij.modcompletion.ModCompletionItemProvider,com.intellij.modcompletion.ModCompletionItemProvider$CompletionContext):java.util.function.Predicate
 *f:com.intellij.modcompletion.ModCompletionItemPresentation
 - <init>(com.intellij.openapi.util.text.MarkupText):V
 - detailIcon():javax.swing.Icon
