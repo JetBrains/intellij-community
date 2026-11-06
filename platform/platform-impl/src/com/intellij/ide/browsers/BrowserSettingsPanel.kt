@@ -372,12 +372,6 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
           }
         })
 
-      row {
-        browsersTable = cell(browsersEditor.createComponent())
-          .align(Align.FILL)
-          .component
-      }.resizableRow()
-
       browserChoiceRow(IdeBundle.message("settings.browsers.default.browser"), defaultBrowserModel)
       browserChoiceRow(IdeBundle.message("settings.browsers.chromium.based.browser"), chromiumBasedBrowserModel)
 
@@ -389,6 +383,17 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
           showBrowserHoverXml = checkBox(IdeBundle.message("settings.browsers.show.browser.popup.xml")).component
         }
       }
+
+      collapsibleGroup(IdeBundle.message("settings.browsers.installed.browsers")) {
+        row {
+          comment(IdeBundle.message("settings.browsers.installed.browsers.comment"))
+        }
+        row {
+          browsersTable = cell(browsersEditor.createComponent())
+            .align(Align.FILL)
+            .component
+        }.resizableRow()
+      }.resizableRow()
     }
     startDetection()
     return root
