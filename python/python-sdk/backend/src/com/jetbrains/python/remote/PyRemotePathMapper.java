@@ -7,9 +7,11 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyInternalExecApi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.Map;
 
 /**
@@ -69,6 +71,21 @@ public class PyRemotePathMapper extends AbstractPathMapper implements Cloneable 
   @Override
   protected @NotNull Collection<PathMappingSettings.PathMapping> getAvailablePathMappings() {
     return Collections.unmodifiableCollection(myPathMappings.values());
+  }
+
+  /**
+   * The mappings of each type. The map iterates the types in the order of {@link PyPathMappingType}, and it has no type without mappings.
+   * The mappings of one type are in no defined order.
+   * To convert a path, use {@link #convertToLocal(String)} or {@link #convertToRemote(String)}. They apply the priority of the types.
+   * Use this method only to give the mappings to a consumer that requires full path mappings collection.
+   */
+  public @NotNull @Unmodifiable Map<@NotNull PyPathMappingType, @NotNull @Unmodifiable Collection<PathMappingSettings.@NotNull PathMapping>>
+  getPathMappingsByType() {
+    Map<PyPathMappingType, Collection<PathMappingSettings.PathMapping>> result = new EnumMap<>(PyPathMappingType.class);
+    for (Map.Entry<PyPathMappingType, Collection<PathMappingSettings.PathMapping>> entry : myPathMappings.entrySet()) {
+      result.put(entry.getKey(), Collections.unmodifiableCollection(entry.getValue()));
+    }
+    return Collections.unmodifiableMap(result);
   }
 
   public enum PyPathMappingType {
