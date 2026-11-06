@@ -67,24 +67,69 @@ class TakeScreenshotCommand(text: String, line: Int) : PlaybackCommandCoroutineA
 }
 
 fun takeScreenshotWithAwtRobot(fullPathToFile: String, formatName: String = "jpg") {
-  val rectangle = Rectangle(Toolkit.getDefaultToolkit().screenSize)
-  try {
-    val robot = Robot()
-    val img = robot.createScreenCapture(rectangle)
-    val screenshotFile = File(fullPathToFile)
+  val image = captureScreenWithAwtRobot() ?: return
+  writeScreenshot(image, formatName, File(fullPathToFile))
+}
 
-    ImageIO.write(img, formatName, screenshotFile)
-    if (screenshotFile.exists()) {
-      LOG.info("Screenshot saved: $fullPathToFile")
-    }
+private fun captureScreenWithAwtRobot(): BufferedImage? {
+  try {
+    return Robot().createScreenCapture(Rectangle(Toolkit.getDefaultToolkit().screenSize))
   }
   catch (e: AWTException) {
     LOG.info("Exceptions occurs at attempt to create Robot for taking screenshot")
     LOG.info(e)
+    return null
+  }
+}
+
+private fun writeScreenshot(image: BufferedImage, formatName: String, file: File) {
+  try {
+    ImageIO.write(image, formatName, file)
+    if (file.exists()) {
+      LOG.info("Screenshot saved: ${file.absolutePath}")
+    }
   }
   catch (e: IOException) {
     LOG.info("Exceptions occurs at attempt to write screenshot to file")
     LOG.info(e)
+  }
+}
+
+private fun isBlack(image: BufferedImage): Boolean {
+  val row = IntArray(image.width)
+  for (y in 0 until image.height) {
+    image.getRGB(0, y, image.width, 1, row, 0, image.width)
+    if (row.any { (it and 0xFFFFFF) != 0 }) return false
+  }
+  return true
+}
+
+// paints each showing window at its place on the screen
+private fun paintShowingWindows(width: Int, height: Int): BufferedImage {
+  val image = BufferedImage(width, height, BufferedImage.TYPE_INT_RGB)
+  // on the EDT, invokeAndWait paints at once
+  ApplicationManager.getApplication().invokeAndWait({ paintShowingWindowsInto(image) }, ModalityState.any())
+  return image
+}
+
+private fun paintShowingWindowsInto(image: BufferedImage) {
+  val graphics = image.createGraphics()
+  try {
+    // the order of creation, so that a dialog or a popup is usually painted over its frame
+    for (window in Window.getWindows()) {
+      if (!window.isShowing || window.width == 0 || window.height == 0) continue
+      val location = window.locationOnScreen
+      val windowGraphics = graphics.create(location.x, location.y, window.width, window.height)
+      try {
+        window.paint(windowGraphics)
+      }
+      finally {
+        windowGraphics.dispose()
+      }
+    }
+  }
+  finally {
+    graphics.dispose()
   }
 }
 
@@ -131,7 +176,10 @@ internal fun takeFullScreenshot(childFolder: String? = null): String? {
   var screenshotPath = LogDirHandler.currentLogDir().resolve("screenshots").resolve(childFolder ?: "default").toFile()
   screenshotPath = getNextFolder(screenshotPath)
   val screenshotPathWithFile = screenshotPath.resolve("full_screen.png")
-  takeScreenshotWithAwtRobot(screenshotPathWithFile.absolutePath, "png")
+  val screenCapture = captureScreenWithAwtRobot() ?: return null
+  // the screen capture is black when the IDE runs on a desktop that is not on the screen, such as a hidden Windows desktop
+  val image = if (isBlack(screenCapture)) paintShowingWindows(screenCapture.width, screenCapture.height) else screenCapture
+  writeScreenshot(image, "png", screenshotPathWithFile)
   if (screenshotPathWithFile.exists()) {
     return screenshotPathWithFile.absolutePath
   }
