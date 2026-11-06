@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -187,6 +188,38 @@ internal class MarkdownTableSelectionTest {
   }
 
   @Test
+  fun `column bar stays over its column when the content has a left inset`(): Unit = timeoutRunBlocking {
+    val source = """
+      | h1 | h2 | h3 |
+      |----|----|----|
+      | a  | b  | c  |
+    """.trimIndent()
+    val file = readAction {
+      PsiFileFactory.getInstance(project).createFileFromText("table.md", MarkdownFileType.INSTANCE, source)
+    }
+    val table = readAction { requireNotNull(PsiTreeUtil.findChildOfType(file, MarkdownTable::class.java)) }
+    val document = EditorFactory.getInstance().createDocument(source)
+
+    withContext(Dispatchers.EDT) {
+      val editor = EditorFactory.getInstance().createEditor(document, project)
+      editor.contentComponent.border = JBUI.Borders.emptyLeft(100)
+      val presentation = HorizontalBarPresentation.create(PresentationFactory(editor), editor, table)
+      val graphics = BufferedImage(500, 30, BufferedImage.TYPE_INT_ARGB).createGraphics()
+      try {
+        presentation.paint(graphics, TextAttributes())
+
+        presentation.mouseClicked(mouseClickEvent(editor, 0, clickCount = 2), columnBarPoint(editor, table, 1))
+        UIUtil.dispatchAllInvocationEvents()
+        assertThat(editor.selectionTexts().joinToString()).contains("h2").doesNotContain("h1", "h3")
+      }
+      finally {
+        graphics.dispose()
+        EditorFactory.getInstance().releaseEditor(editor)
+      }
+    }
+  }
+
+  @Test
   fun `column range selects available cells in a short row`(): Unit = timeoutRunBlocking {
     val source = """
       | h1 | h2 | h3 |
@@ -242,7 +275,7 @@ internal class MarkdownTableSelectionTest {
   private fun columnBarPoint(editor: Editor, table: MarkdownTable, columnIndex: Int): Point {
     val offset = requireNotNull(table.headerRow?.getCell(columnIndex)).textRange.startOffset
     return editor.offsetToXY(offset).apply {
-      translate(HorizontalBarPresentation.leftPadding, TableInlayProperties.topDownPadding + 1)
+      translate(HorizontalBarPresentation.leftPadding - editor.contentComponent.insets.left, TableInlayProperties.topDownPadding + 1)
     }
   }
 

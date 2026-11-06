@@ -176,7 +176,7 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     val separatorWidth = fontMetrics.charWidth('|')
     val firstOffset = separators.firstOrNull() ?: return emptyList()
     val result = ArrayList<Int>()
-    var position = editorOffsetToXY.getValue(firstOffset).x + separatorWidth / 2
+    var position = editorOffsetToXY.getValue(firstOffset).x - editor.contentComponent.insets.left + separatorWidth / 2
     var lastOffset = firstOffset
     result.add(position)
     for (offset in separators.drop(1)) {
