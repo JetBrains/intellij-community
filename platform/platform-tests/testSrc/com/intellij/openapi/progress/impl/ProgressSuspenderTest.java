@@ -11,15 +11,24 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 
 import java.util.concurrent.Future;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 
 public class ProgressSuspenderTest extends LightPlatformTestCase {
   public void testSuspendResumeWork() {
+    assertSuspendResumeWork(false);
+  }
+
+  public void testSuspendResumeVirtualThread() {
+    assertSuspendResumeWork(true);
+  }
+
+  private static void assertSuspendResumeWork(boolean virtual) {
     Semaphore mayStop = new Semaphore(1);
     ProgressIndicatorBase progress = new ProgressIndicatorBase();
     Future<?> task = startBackgroundProcess(progress,
                                             () -> ProgressSuspender.markSuspendable(progress, ""),
-                                            () -> workUntilStopped(mayStop, progress));
+                                            () -> workUntilStopped(mayStop, progress), virtual);
 
     suspendProgressAndRun(progress, () -> {
       mayStop.up();
@@ -28,6 +37,28 @@ public class ProgressSuspenderTest extends LightPlatformTestCase {
     });
 
     assertThreadCompleted(task);
+  }
+
+  public void testMonitorPreventsSuspension() {
+    assertMonitorPreventsSuspension(false);
+    assertMonitorPreventsSuspension(true);
+  }
+
+  @SuppressWarnings("resource")
+  private static void assertMonitorPreventsSuspension(boolean virtual) {
+    var mayCheck = new Semaphore(1);
+    var progress = new ProgressIndicatorBase();
+    var monitor = new Object();
+    var task = startBackgroundProcess(progress, () -> ProgressSuspender.markSuspendable(progress, ""), () -> {
+      assertTrue(mayCheck.waitFor(1000));
+      synchronized (monitor) {
+        progress.checkCanceled();
+      }
+    }, virtual);
+    suspendProgressAndRun(progress, () -> {
+      mayCheck.up();
+      assertThreadCompleted(task);
+    });
   }
 
   public void testForkedThreadsAreSuspendedIfCheckCanceledIsCalledOnSuspendedIndicator() {
@@ -102,13 +133,14 @@ public class ProgressSuspenderTest extends LightPlatformTestCase {
   }
 
   private static void suspendProgressAndRun(ProgressIndicatorBase progress, Runnable runnable) {
-    ProgressSuspender suspender = ProgressSuspender.getSuspender(progress);
-    suspender.suspendProcess("");
-    try {
-      runnable.run();
-    }
-    finally {
-      suspender.resumeProcess();
+    try (ProgressSuspender suspender = ProgressSuspender.getSuspender(progress)) {
+      suspender.suspendProcess("");
+      try {
+        runnable.run();
+      }
+      finally {
+        suspender.resumeProcess();
+      }
     }
   }
 
@@ -123,12 +155,22 @@ public class ProgressSuspenderTest extends LightPlatformTestCase {
   }
 
   private static Future<?> startBackgroundProcess(ProgressIndicator progress, Runnable beforeReturn, Runnable runnable) {
+    return startBackgroundProcess(progress, beforeReturn, runnable, false);
+  }
+
+  private static Future<?> startBackgroundProcess(ProgressIndicator progress, Runnable beforeReturn, Runnable runnable, boolean virtual) {
     Semaphore mayReturn = new Semaphore(1);
-    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ProgressManager.getInstance().runProcess(() -> {
+    var future = new FutureTask<Void>(() -> ProgressManager.getInstance().runProcess(() -> {
       beforeReturn.run();
       mayReturn.up();
       runnable.run();
-    }, progress));
+    }, progress), null);
+    if (virtual) {
+      Thread.ofVirtual().start(future);
+    }
+    else {
+      ApplicationManager.getApplication().executeOnPooledThread(future);
+    }
     assertTrue(mayReturn.waitFor(1000));
     return future;
   }

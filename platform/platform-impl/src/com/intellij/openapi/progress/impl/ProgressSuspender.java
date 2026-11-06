@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorListener;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.messages.Topic;
@@ -17,16 +16,18 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+
 @ApiStatus.Internal
 public final class ProgressSuspender implements AutoCloseable {
-  private static final Key<ProgressSuspender> PROGRESS_SUSPENDER = Key.create("PROGRESS_SUSPENDER");
-
   @Topic.AppLevel
   public static final Topic<SuspenderListener> TOPIC = new Topic<>("ProgressSuspender", SuspenderListener.class, Topic.BroadcastDirection.NONE);
 
@@ -185,8 +186,45 @@ public final class ProgressSuspender implements AutoCloseable {
       return true;
     }
 
-    ThreadInfo[] infos = ManagementFactory.getThreadMXBean().getThreadInfo(new long[]{Thread.currentThread().getId()}, true, false);
-    return infos.length > 0 && infos[0].getLockedMonitors().length > 0;
+    var thread = Thread.currentThread();
+    if (thread.isVirtual()) {
+      return VirtualThreadMonitors.ownsMonitors(thread);
+    }
+    ThreadInfo[] infos = ManagementFactory.getThreadMXBean().getThreadInfo(new long[]{thread.threadId()}, true, false);
+    return infos.length > 0 && infos[0] != null && infos[0].getLockedMonitors().length > 0;
+  }
+
+  private static final class VirtualThreadMonitors {
+    private static final @Nullable MethodHandle OWNS_MONITORS = findOwnsMonitors();
+
+    private static @Nullable MethodHandle findOwnsMonitors() {
+      try {
+        var snapshotClass = Class.forName("jdk.internal.vm.ThreadSnapshot");
+        var snapshot = snapshotClass.getDeclaredMethod("of", Thread.class);
+        var ownsMonitors = snapshotClass.getDeclaredMethod("ownsMonitors");
+        snapshot.setAccessible(true);
+        ownsMonitors.setAccessible(true);
+        var lookup = MethodHandles.lookup();
+        return MethodHandles.filterReturnValue(lookup.unreflect(snapshot), lookup.unreflect(ownsMonitors));
+      }
+      catch (ReflectiveOperationException | RuntimeException e) {
+        rethrowControlFlowException(e);
+        return null;
+      }
+    }
+
+    private static boolean ownsMonitors(Thread thread) {
+      if (OWNS_MONITORS != null) {
+        try {
+          return (boolean)OWNS_MONITORS.invokeExact(thread);
+        }
+        catch (Throwable e) {
+          rethrowControlFlowException(e);
+        }
+      }
+      // Suspend only when the runtime confirms that the thread holds no monitors.
+      return true;
+    }
   }
 
   public interface SuspenderListener {
