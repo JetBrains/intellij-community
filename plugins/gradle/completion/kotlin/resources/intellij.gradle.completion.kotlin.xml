@@ -30,7 +30,7 @@
                             implementationClass="com.intellij.gradle.completion.kotlin.KotlinGradleCleanupCompletionContributor"/>
     <completion.contributor language="kotlin"
                             id="KotlinGradleScriptCompletionContributor"
-                            order="first, after KotlinGradleCleanupCompletionContributor"
+                            order="first, after KotlinGradleCleanupCompletionContributor, before KotlinCompletionContributor"
                             implementationClass="com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor"/>
     <typedHandler implementation="com.intellij.gradle.completion.kotlin.KotlinGradleDependenciesAutoPopupHandler"
                   id="KotlinGradleDependenciesAutoPopupHandler"/>
