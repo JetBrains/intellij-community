@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -72,6 +73,15 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.compilation.charts` end
+
+### auto-generated section `plugin intellij.compilation.charts` start
+ij_plugin(
+    name = "compilation-charts_plugin",
+    descriptor_module = ":compilation-charts",
+    content_modules = ["//plugins/compilation-charts/jps-plugin:compilation-charts-jps"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.compilation.charts` end
 
 ### auto-generated section `iml intellij.compilation.charts` start
 exports_files(
