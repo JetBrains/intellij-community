@@ -26,7 +26,7 @@ class StoreNewLayoutAction : DumbAwareAction() {
     if (name.isNullOrBlank()) {
       return
     }
-    ToolWindowDefaultLayoutManager.getInstance().setLayout(name, ToolWindowManagerEx.getInstanceEx(project).getLayout())
+    ToolWindowDefaultLayoutManager.getInstance().saveLayout(name, ToolWindowManagerEx.getInstanceEx(project).getLayout())
   }
 
   override fun update(e: AnActionEvent) {

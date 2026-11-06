@@ -3,6 +3,7 @@
 
 package com.intellij.toolWindow
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.RoamingType
@@ -11,11 +12,13 @@ import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.UnifiedToolWindowWeights
 import com.intellij.openapi.wm.impl.WindowInfoImpl
@@ -68,6 +71,26 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   fun getLayoutCopy(): DesktopLayout = state.getActiveLayoutCopy(isNewUi)
 
+  /** Saves the layout and the current appearance settings at the user's request. */
+  @Internal
+  fun saveLayout(name: String, layout: DesktopLayout) {
+    val appearanceSettings = UISettings.getInstance().takeIf { ToolWindowsAppearanceSettings.isEnabled }
+    setLayout(name, layout, appearanceSettings?.let(ToolWindowsAppearanceSettings::fromSettings))
+  }
+
+  /** Makes the layout [name] active and restores it with its appearance settings at the user's request. */
+  @Internal
+  @JvmOverloads
+  fun restoreLayout(project: Project, name: String = activeLayoutName) {
+    if (name != activeLayoutName) {
+      activeLayoutName = name
+    }
+    if (ToolWindowsAppearanceSettings.isEnabled) {
+      state.getAppearanceSettings(name, isNewUi).applyTo(UISettings.getInstance())
+    }
+    ToolWindowManagerEx.getInstanceEx(project).setLayout(getLayoutCopy())
+  }
+
   fun getFactoryDefaultLayoutCopy(): DesktopLayout = state.getLayoutCopy(FACTORY_DEFAULT_LAYOUT_NAME, isNewUi)
 
   /**
@@ -83,6 +106,11 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
   }
 
   fun setLayout(name: String, layout: DesktopLayout) {
+    setLayout(name, layout, appearanceSettings = null)
+  }
+
+  /** A null [appearanceSettings] keeps the stored appearance settings of the layout. */
+  private fun setLayout(name: String, layout: DesktopLayout, appearanceSettings: ToolWindowsAppearanceSettings?) {
     tracker.incModificationCount()
     var layoutName = name
     if (layoutName == FACTORY_DEFAULT_LAYOUT_NAME) {
@@ -93,7 +121,8 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     }
     val list = layout.getSortedList().map(::convertWindowStateToDescriptor)
     val weights = convertUnifiedWeightsToDescriptor(layout.unifiedWeights)
-    state = state.withUpdatedLayout(layoutName, list, isNewUi, weights)
+    val newState = state.withUpdatedLayout(layoutName, list, isNewUi, weights)
+    state = if (appearanceSettings == null) newState else newState.withAppearanceSettings(layoutName, appearanceSettings)
   }
 
   fun renameLayout(oldName: String, newName: String) {
@@ -238,6 +267,15 @@ data class ToolWindowLayoutStorageManagerState(
 
   fun withoutLayout(name: String): ToolWindowLayoutStorageManagerState = copy(layouts = layouts - name)
 
+  internal fun withAppearanceSettings(name: String, appearanceSettings: ToolWindowsAppearanceSettings): ToolWindowLayoutStorageManagerState {
+    return copy(layouts = layouts + (name to layouts.getValue(name).copy(toolWindowsAppearanceSettings = appearanceSettings)))
+  }
+
+  internal fun getAppearanceSettings(layoutName: String, isNewUi: Boolean): ToolWindowsAppearanceSettings {
+    return if (layoutName == ToolWindowDefaultLayoutManager.FACTORY_DEFAULT_LAYOUT_NAME) ToolWindowsAppearanceSettings.factoryDefault(isNewUi)
+    else layouts.get(layoutName)?.toolWindowsAppearanceSettings ?: ToolWindowsAppearanceSettings()
+  }
+
   /**
    * Returns the state where both variants of the layout [name] show the Project view, or `null` if nothing changes.
    *
@@ -269,6 +307,7 @@ data class ToolWindowLayoutDescriptor(
   val v1: List<ToolWindowDescriptor> = emptyList(),
   val v2: List<ToolWindowDescriptor> = emptyList(),
   val unifiedWeights: Map<String, Float> = DEFAULT_UNIFIED_WEIGHTS_DESCRIPTOR,
+  val toolWindowsAppearanceSettings: ToolWindowsAppearanceSettings = ToolWindowsAppearanceSettings(),
 ) {
   fun withUpdatedLayout(
     layout: List<ToolWindowDescriptor>,

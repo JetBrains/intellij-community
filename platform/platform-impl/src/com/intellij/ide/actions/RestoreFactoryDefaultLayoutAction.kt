@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import org.jetbrains.annotations.ApiStatus
 
@@ -27,9 +26,7 @@ class RestoreFactoryDefaultLayoutAction : DumbAwareToggleAction() {
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val project = e.project ?: return
-    val layoutManager = ToolWindowDefaultLayoutManager.getInstance()
-    layoutManager.activeLayoutName = ToolWindowDefaultLayoutManager.FACTORY_DEFAULT_LAYOUT_NAME
-    ToolWindowManagerEx.getInstanceEx(project).setLayout(layoutManager.getLayoutCopy())
+    ToolWindowDefaultLayoutManager.getInstance().restoreLayout(project, ToolWindowDefaultLayoutManager.FACTORY_DEFAULT_LAYOUT_NAME)
   }
 
 }

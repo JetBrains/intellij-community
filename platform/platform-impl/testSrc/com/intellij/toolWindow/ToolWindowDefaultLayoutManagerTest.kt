@@ -1,14 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.UI
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.impl.DesktopLayout
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager.Companion.INITIAL_LAYOUT_NAME
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -26,6 +33,46 @@ internal class ToolWindowDefaultLayoutManagerTest {
   @AfterEach
   fun clearLocalMarker() {
     PropertiesComponent.getInstance().unsetValue(MIGRATION_PROPERTY)
+  }
+
+  @Test
+  @RegistryKey(key = "toolwindow.layout.save.appearance", value = "true")
+  fun `saving a layout stores the current appearance settings`(): Unit = timeoutRunBlocking {
+    val manager = ToolWindowDefaultLayoutManager(isNewUi = true)
+    val savedAppearance = withContext(Dispatchers.UI) {
+      val settings = UISettings.getInstance()
+      val originalWideScreenSupport = settings.wideScreenSupport
+      try {
+        settings.wideScreenSupport = true
+
+        manager.saveLayout(NAMED_LAYOUT, DesktopLayout())
+
+        manager.state.layouts.getValue(NAMED_LAYOUT).toolWindowsAppearanceSettings
+      }
+      finally {
+        settings.wideScreenSupport = originalWideScreenSupport
+      }
+    }
+
+    assertThat(savedAppearance.wideScreenSupport).isTrue()
+  }
+
+  @Test
+  @RegistryKey(key = "toolwindow.layout.save.appearance", value = "true")
+  fun `loading a layout preserves its appearance settings`() {
+    val appearanceSettings = ToolWindowsAppearanceSettings(wideScreenSupport = true)
+    val stored = ToolWindowLayoutStorageManagerState(
+      activeLayoutName = NAMED_LAYOUT,
+      layouts = mapOf(NAMED_LAYOUT to ToolWindowLayoutDescriptor(
+        v2 = layoutWithHiddenProjectView(),
+        toolWindowsAppearanceSettings = appearanceSettings,
+      )),
+    )
+    val manager = ToolWindowDefaultLayoutManager(isNewUi = true)
+
+    manager.loadState(stored)
+
+    assertThat(manager.state.getAppearanceSettings(NAMED_LAYOUT, isNewUi = true)).isEqualTo(appearanceSettings)
   }
 
   @Test

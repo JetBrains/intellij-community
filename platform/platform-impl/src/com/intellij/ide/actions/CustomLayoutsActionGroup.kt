@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import org.jetbrains.annotations.ApiStatus
 
@@ -86,9 +85,7 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware, ActionRemoteBehaviorS
 
       override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val layoutManager = ToolWindowDefaultLayoutManager.getInstance()
-        layoutManager.activeLayoutName = layoutName
-        ToolWindowManagerEx.getInstanceEx(project).setLayout(layoutManager.getLayoutCopy())
+        ToolWindowDefaultLayoutManager.getInstance().restoreLayout(project, layoutName)
       }
     }
 

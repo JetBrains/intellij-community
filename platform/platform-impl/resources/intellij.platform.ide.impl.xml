@@ -481,6 +481,10 @@
     <applicationService serviceImplementation="com.intellij.ui.WaylandAppIconPatcher"
                         preload="notHeadless"
                         os="linux"/>
+    <registryKey key="toolwindow.layout.save.appearance"
+                 defaultValue="true"
+                 description="Save and restore the appearance settings for tool windows with each layout"
+                 restartRequired="false"/>
     <registryKey
       key="universal.file.chooser.is.enabled"
       defaultValue="true"

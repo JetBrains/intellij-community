@@ -13,7 +13,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader.createLazy
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -37,9 +36,7 @@ class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
 
     override fun actionPerformed(e: AnActionEvent) {
       val project = e.project ?: return
-      val layoutManager = ToolWindowDefaultLayoutManager.getInstance()
-      layoutManager.activeLayoutName = layoutName
-      ToolWindowManagerEx.getInstanceEx(project).setLayout(layoutManager.getLayoutCopy())
+      ToolWindowDefaultLayoutManager.getInstance().restoreLayout(project, layoutName)
     }
 
     override fun update(e: AnActionEvent) {

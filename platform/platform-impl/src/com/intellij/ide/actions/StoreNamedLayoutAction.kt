@@ -16,7 +16,7 @@ abstract class StoreNamedLayoutAction(protected val layoutNameSupplier: () -> @N
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    ToolWindowDefaultLayoutManager.getInstance().setLayout(layoutNameSupplier(), ToolWindowManagerEx.getInstanceEx(project).getLayout())
+    ToolWindowDefaultLayoutManager.getInstance().saveLayout(layoutNameSupplier(), ToolWindowManagerEx.getInstanceEx(project).getLayout())
   }
 
   override fun update(e: AnActionEvent) {

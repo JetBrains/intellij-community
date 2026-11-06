@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,6 +36,6 @@ public final class RestoreDefaultLayoutAction extends DumbAwareAction {
     if (project == null) {
       return;
     }
-    ToolWindowManagerEx.getInstanceEx(project).setLayout(ToolWindowDefaultLayoutManager.Companion.getInstance().getLayoutCopy());
+    ToolWindowDefaultLayoutManager.Companion.getInstance().restoreLayout(project);
   }
 }
