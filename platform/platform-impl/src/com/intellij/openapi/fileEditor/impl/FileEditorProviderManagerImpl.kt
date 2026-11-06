@@ -28,7 +28,6 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -117,23 +116,13 @@ class FileEditorProviderManagerImpl
     return postProcessResult(sharedProviders)
   }
 
-  @Suppress("DuplicatedCode")
   override suspend fun getProvidersAsync(project: Project, file: VirtualFile): List<FileEditorProvider> {
-    return getProviders(project, file, dumUnawareOnly = false, excludeIds = emptySet())
-  }
-
-  override suspend fun getDumbUnawareProviders(project: Project, file: VirtualFile, excludeIds: Set<String>): List<FileEditorProvider> {
-    return getProviders(project = project, file = file, dumUnawareOnly = true, excludeIds = excludeIds)
+    return getProvidersAsync(project = project, file = file, openEditorTypeIds = emptySet())
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   @Suppress("DuplicatedCode")
-  private suspend fun getProviders(
-    project: Project,
-    file: VirtualFile,
-    dumUnawareOnly: Boolean,
-    excludeIds: Set<String>,
-  ): List<FileEditorProvider> {
+  override suspend fun getProvidersAsync(project: Project, file: VirtualFile, openEditorTypeIds: Set<String>): List<FileEditorProvider> {
     // collect all possible editors
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
 
@@ -150,9 +139,6 @@ class FileEditorProviderManagerImpl
       var hasDocument: Boolean? = null
 
       FileEditorProviderBean.EP_NAME.extensionList.mapNotNull { bean ->
-        if (excludeIds.contains(bean.id)) {
-          return@mapNotNull null
-        }
         if (!TechnologyFilter.getInstance().isApplicable(bean.pluginDescriptor, project)) {
           return@mapNotNull null
         }
@@ -163,13 +149,6 @@ class FileEditorProviderManagerImpl
         }
 
         async {
-          if (dumUnawareOnly) {
-            val aClass = bean.loadImplementationClass()
-            if (aClass != null && DumbAware::class.java.isAssignableFrom(aClass)) {
-              return@async null
-            }
-          }
-
           if (!isAcceptedByFileType(bean = bean, fileType = fileType, file = file)) {
             return@async null
           }
@@ -188,17 +167,14 @@ class FileEditorProviderManagerImpl
           try {
             withTimeout(30.seconds) {
               val provider = bean.instanceOrLogError() ?: return@withTimeout null
-              if (excludeIds.contains(provider.editorTypeId)) {
-                return@withTimeout null
-              }
-
               getProviderIfApplicable(
                 provider = provider,
                 project = project,
                 file = file,
                 suppressors = suppressors,
                 pluginDescriptor = bean.pluginDescriptor,
-              )?.takeIf { !dumUnawareOnly || !DumbService.isDumbAware(it) }
+                isEditorOpened = openEditorTypeIds.contains(provider.editorTypeId),
+              )
             }
           }
           catch (e: TimeoutCancellationException) {
@@ -297,8 +273,13 @@ private suspend fun getProviderIfApplicable(
   file: VirtualFile,
   suppressors: List<FileEditorProviderSuppressor>,
   pluginDescriptor: PluginDescriptor,
+  isEditorOpened: Boolean,
 ): FileEditorProvider? {
   if (!DumbService.getInstance(project).isUsableInCurrentContext(provider)) {
+    if (isEditorOpened) {
+      // the open editor of the provider stays: we can't ask provider if the file should be still opened in the dumb mode
+      return provider
+    }
     LOG.warn("Please make ${provider.javaClass} dumb-aware")
     return null
   }

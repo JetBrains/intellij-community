@@ -70,6 +70,8 @@ import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.awaitWithCheckCanceled
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Disposer
@@ -108,6 +110,7 @@ import com.intellij.testFramework.BinaryLightVirtualFile
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.VfsTestUtil
@@ -1509,6 +1512,81 @@ class FileEditorManagerTest {
     manager.waitForAsyncUpdateOnProvidersChanged()
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
     assertThat(manager.getAllEditorList(createdFile)).hasSize(2)
+  }
+
+  @Test
+  fun testProvidersUpdateInDumbModeKeepsDumbUnawareEditors(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    // a dumb-unaware provider opens no editor while the project indexes after its start
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    registerProvider(MockFileEditorProvider())
+    registerProvider(MyDumbAwareProvider())
+    val file = createTempFooBar()
+    assertThat(manager.openFile(file, false)).hasSize(2)
+
+    // an update in the dumb mode, as after a roots change: the open dumb-unaware provider still accepts the file, and its editor stays
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+      manager.waitForAsyncUpdateOnProvidersChanged()
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+      assertThat(manager.getAllEditorList(file)).hasSize(2)
+    }
+
+    // the end of the dumb mode and a later update add no second editor of a provider
+    manager.waitForAsyncUpdateOnProvidersChanged()
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+    assertThat(manager.getAllEditorList(file)).hasSize(2)
+  }
+
+  @Test
+  fun testProvidersUpdateInDumbModeAsksNoDumbUnawareProvider(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    // a dumb-unaware provider opens no editor while the project indexes after its start
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    registerProvider(MyDumbAwareProvider())
+    // a dumb-unaware provider may need the indexes to accept a file; the open editor stays without the question
+    registerProvider(object : MockFileEditorProvider("needsIndexes", "needs indexes", FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR) {
+      override fun accept(project: Project, file: VirtualFile): Boolean {
+        if (DumbService.isDumb(project)) {
+          throw IndexNotReadyException.create()
+        }
+        return true
+      }
+    })
+    val file = createTempFooBar()
+    assertThat(manager.openFile(file, false)).hasSize(2)
+
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+      manager.waitForAsyncUpdateOnProvidersChanged()
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+      assertThat(manager.getAllEditorList(file).map { it.name }).containsExactlyInAnyOrder(MockFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, "needs indexes")
+    }
+  }
+
+  @Test
+  fun testProvidersUpdateInDumbModeFollowsTheTechOfADumbUnawareProvider(): Unit = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    // a dumb-unaware provider opens no editor while the project indexes after its start
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    val filter = installTechnologyFilter()
+    registerProvider(MyDumbAwareProvider())
+    registerProvider(MockFileEditorProvider("ofTech", "of tech", FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR), module = filter.module)
+    val file = createTempFooBar()
+    assertThat(manager.openFile(file, false)).hasSize(2)
+
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+      // the module stops to apply in the dumb mode: the editor of its dumb-unaware provider is removed at once
+      filter.setBlocked(true)
+      manager.waitForAsyncUpdateOnProvidersChanged()
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+      assertThat(manager.getAllEditorList(file).map { it.name }).containsExactly(MockFileEditorProvider.DEFAULT_FILE_EDITOR_NAME)
+
+      // the module applies again in the dumb mode: a dumb-unaware provider opens no editor before the dumb mode ends
+      filter.setBlocked(false)
+      manager.waitForAsyncUpdateOnProvidersChanged()
+      executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+      assertThat(manager.getAllEditorList(file).map { it.name }).containsExactly(MockFileEditorProvider.DEFAULT_FILE_EDITOR_NAME)
+    }
+
+    manager.waitForAsyncUpdateOnProvidersChanged()
+    executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
+    assertThat(manager.getAllEditorList(file).map { it.name }).containsExactlyInAnyOrder(MockFileEditorProvider.DEFAULT_FILE_EDITOR_NAME, "of tech")
   }
 
   @Test

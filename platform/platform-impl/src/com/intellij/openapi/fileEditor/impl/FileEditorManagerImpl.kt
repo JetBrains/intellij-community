@@ -203,7 +203,6 @@ import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.util.EventListener
-import java.util.IdentityHashMap
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
@@ -613,12 +612,15 @@ open class FileEditorManagerImpl(
     }
   }
 
-  /** Computes the providers of each open file again and adds or removes editors so that the open editors match them. */
+  /**
+   * Computes the providers of each open file again and adds or removes editors so that the open editors match them.
+   * The provider of an open editor is checked in the dumb mode too, see [FileEditorProviderManager.getProvidersAsync].
+   */
   private suspend fun updateProvidersOfOpenFiles(fileEditorProviderManager: FileEditorProviderManager) {
     // the icons of dumb-unaware icon providers follow the dumb mode and the roots alike
     refreshIcons()
 
-    val fileToProviders = IdentityHashMap<VirtualFile, List<FileEditorProvider>>()
+    val fileToProviders = HashMap<kotlin.Pair<VirtualFile, Set<String>>, List<FileEditorProvider>>()
     val filesToClose = mutableListOf<VirtualFile>()
     val providerChanges = openedComposites.toList().mapNotNull { composite ->
       withContext(composite.clientId.asContextElement()) {
@@ -629,7 +631,9 @@ open class FileEditorManagerImpl(
           return@withContext null
         }
 
-        val providers = fileToProviders.getOrPut(file) { fileEditorProviderManager.getProvidersAsync(project, file) }
+        val providers = fileToProviders.getOrPut(file to oldEditorTypeIds) {
+          fileEditorProviderManager.getProvidersAsync(project = project, file = file, openEditorTypeIds = oldEditorTypeIds)
+        }
         val editorTypeIds = providers.mapTo(HashSet()) { it.editorTypeId }
         val newProviders = providers.filter { !oldEditorTypeIds.contains(it.editorTypeId) }
         val editorTypeIdsToRemove = oldEditorTypeIds.filter { !editorTypeIds.contains(it) }

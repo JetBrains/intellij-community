@@ -5,7 +5,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.NonExtendable
 interface FileEditorProviderManager {
   companion object {
     @JvmStatic
@@ -23,7 +25,14 @@ interface FileEditorProviderManager {
 
   suspend fun getProvidersAsync(project: Project, file: VirtualFile): List<FileEditorProvider>
 
-  suspend fun getDumbUnawareProviders(project: Project, file: VirtualFile, excludeIds: Set<String>): List<FileEditorProvider>
+  /**
+   * @param openEditorTypeIds The list of [com.intellij.openapi.fileEditor.FileEditorProvider.getEditorTypeId] that are currently opened.
+   *
+   * This is used to keep already opened editors available during the dumb mode, as non-dumb-aware editor provider
+   * cannot be questioned until the dumb mode end.
+   */
+  @ApiStatus.Internal
+  suspend fun getProvidersAsync(project: Project, file: VirtualFile, openEditorTypeIds: Set<String>): List<FileEditorProvider>
 
   /**
    * @return `null` if no provider with specified `editorTypeId` exists.
