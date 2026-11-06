@@ -41,6 +41,7 @@ public abstract class CsvFormatsUI implements Disposable {
 
   private final JBLabel myFormatsLabel;
   private final CsvFormatForm myFormatForm;
+  private final JComponent myFormatFormComponent;
 
   private final JBScrollPane myFormatFormScrollPane;
 
@@ -51,6 +52,7 @@ public abstract class CsvFormatsUI implements Disposable {
     mySettings = settings;
     {
       myFormatForm = new CsvFormatForm(this, mySettings);
+      myFormatFormComponent = myFormatForm.getComponent();
       myFormatsList = new CsvFormatsListComponent(this);
       myFormatFormScrollPane = (JBScrollPane)ScrollPaneFactory.createScrollPane();
       myFormatFormScrollPane.setBorder(JBUI.Borders.empty());
@@ -72,7 +74,7 @@ public abstract class CsvFormatsUI implements Disposable {
       panel1.setBorder(
         BorderFactory.createTitledBorder(BorderFactory.createEmptyBorder(0, 0, 0, 20), null, TitledBorder.DEFAULT_JUSTIFICATION,
                                          TitledBorder.DEFAULT_POSITION, null, null));
-      panel1.add(myFormatForm.$$$getRootComponent$$$(),
+      panel1.add(myFormatFormComponent,
                  new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_WEST, GridConstraints.FILL_VERTICAL,
                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
                                      GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0,

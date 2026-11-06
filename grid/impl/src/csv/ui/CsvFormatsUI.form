@@ -27,11 +27,12 @@
               <size top="0" left="0" bottom="0" right="20"/>
             </border>
             <children>
-              <nested-form id="ee8c1" form-file="com/intellij/database/csv/ui/CsvFormatForm.form" binding="myFormatForm" custom-create="true">
+              <component id="ee8c1" class="javax.swing.JComponent" binding="myFormatFormComponent" custom-create="true">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
-              </nested-form>
+                <properties/>
+              </component>
             </children>
           </grid>
         </children>
