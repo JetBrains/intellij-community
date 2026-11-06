@@ -3,6 +3,7 @@
 
 package com.intellij.platform.projectView.frontend.pane
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
