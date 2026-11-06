@@ -29,6 +29,7 @@ import com.intellij.platform.searchEverywhere.SeSession
 import com.intellij.platform.searchEverywhere.SeTypeVisibilityStateProvider
 import com.intellij.platform.searchEverywhere.composedWeight
 import com.intellij.platform.searchEverywhere.providers.commands.SeCommandItem
+import com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilterProvider
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -73,6 +74,22 @@ fun SeItemsProvider.isPreviewEnabled(): Boolean {
 fun SeItemsProvider.isExtendedInfoEnabled(): Boolean {
   return this is SeExtendedInfoProvider
 }
+
+@ApiStatus.Internal
+suspend fun SeItemsProvider.findSearchScopesInfo(): SearchScopesInfo? =
+  when (this) {
+    is SeSearchScopesProvider -> getSearchScopesInfo()
+    is SeTargetsFilterProvider -> targetItemsProvider.getSearchScopesInfo()
+    else -> null
+  }
+
+@ApiStatus.Internal
+suspend fun SeItemsProvider.findTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation>? =
+  when (this) {
+    is SeTypeVisibilityStateProvider -> getTypeVisibilityStates(key)
+    is SeTargetsFilterProvider -> targetItemsProvider.getTypeVisibilityStates(key)
+    else -> null
+  }
 
 @ApiStatus.Internal
 fun SeItemsProvider.areCommandsSupported(): Boolean {
@@ -264,12 +281,9 @@ class SeLocalItemDataProvider(
     return provider.itemSelected(item, modifiers, searchText)
   }
 
-  suspend fun getSearchScopesInfo(): SearchScopesInfo? {
-    return (provider as? SeSearchScopesProvider)?.getSearchScopesInfo()
-  }
+  suspend fun getSearchScopesInfo(): SearchScopesInfo? = provider.findSearchScopesInfo()
 
-  suspend fun getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation>? =
-    (provider as? SeTypeVisibilityStateProvider)?.getTypeVisibilityStates(key)
+  suspend fun getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation>? = provider.findTypeVisibilityStates(key)
 
   /**
    * Defines if results can be shown in <i>Find</i> toolwindow.

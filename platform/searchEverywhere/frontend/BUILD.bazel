@@ -190,6 +190,8 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
         "//platform/ide-core",
+        "//platform/scopes",
+        "//platform/scopes:scopes_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend.tests` end
