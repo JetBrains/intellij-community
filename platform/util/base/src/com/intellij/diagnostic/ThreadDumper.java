@@ -16,9 +16,14 @@ import java.lang.invoke.MethodType;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.intellij.diagnostic.CoroutineDumperKt.COROUTINE_DUMP_HEADER;
 import static com.intellij.diagnostic.CoroutineDumperKt.COROUTINE_DUMP_HEADER_STRIPPED;
@@ -38,6 +43,7 @@ public final class ThreadDumper {
   public static @NotNull String dumpThreadsToString() {
     StringWriter writer = new StringWriter();
     dumpThreadInfos(getThreadInfos(), writer);
+    dumpVirtualThreads(writer);
     return writer.toString();
   }
 
@@ -52,6 +58,9 @@ public final class ThreadDumper {
     return writer.toString();
   }
 
+  /**
+   * Returns information about platform threads. Use {@link #dumpThreadsToString()} to include virtual threads.
+   */
   @ApiStatus.Internal
   public static @NotNull ThreadInfo @NotNull [] getThreadInfos() {
     return getThreadInfos(ManagementFactory.getThreadMXBean(), true);
@@ -66,6 +75,7 @@ public final class ThreadDumper {
     sort(threadInfos);
     StringWriter writer = new StringWriter();
     StackTraceElement[] edtStack = dumpThreadInfos(threadInfos, writer);
+    dumpVirtualThreads(writer);
     String coroutineDump = CoroutineDumperKt.dumpCoroutines(null, stripCoroutineDump, true);
     if (coroutineDump != null) {
       if (stripCoroutineDump) {
@@ -218,10 +228,20 @@ public final class ThreadDumper {
 
   @ApiStatus.Internal
   public static void dumpCallStack(@NotNull Thread thread, @NotNull Writer f, StackTraceElement @NotNull [] stackTraceElements) {
+    dumpCallStack(thread, f, stackTraceElements, false);
+  }
+
+  private static void dumpCallStack(Thread thread, Writer f, StackTraceElement[] stackTraceElements, boolean virtual) {
     try {
-      StringBuilder sb = new StringBuilder("\"").append(thread.getName()).append("\"");
-      sb.append(" prio=0 tid=0x0 nid=0x0 ").append(getReadableState(thread.getState())).append("\n");
-      sb.append("     java.lang.Thread.State: ").append(thread.getState()).append("\n");
+      Thread.State state = thread.getState();
+      StringBuilder sb = new StringBuilder();
+      if (virtual) {
+        sb.append('#').append(thread.getId()).append(" \"").append(thread.getName()).append("\" virtual ").append(state);
+      }
+      else {
+        sb.append('"').append(thread.getName()).append("\" prio=0 tid=0x0 nid=0x0 ").append(getReadableState(state));
+      }
+      sb.append("\n     java.lang.Thread.State: ").append(state).append("\n");
 
       f.write(sb + "\n");
       printStackTrace(f, stackTraceElements);
@@ -229,6 +249,83 @@ public final class ThreadDumper {
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Appends the stacks of tracked virtual threads. The runtime must open {@code java.base/jdk.internal.vm}.
+   */
+  @ApiStatus.Internal
+  public static void dumpVirtualThreads(@NotNull Writer writer) {
+    VirtualThreads.dump(writer);
+  }
+
+  private static final class VirtualThreads {
+    private static Method root;
+    private static Method threads;
+    private static Method children;
+    private static Method isVirtual;
+    private static String initializationFailure;
+
+    static {
+      try {
+        isVirtual = Thread.class.getMethod("isVirtual");
+        Class<?> containers = Class.forName("jdk.internal.vm.ThreadContainers");
+        Class<?> container = Class.forName("jdk.internal.vm.ThreadContainer");
+        root = containers.getMethod("root");
+        threads = container.getMethod("threads");
+        children = container.getMethod("children");
+        root.setAccessible(true);
+        threads.setAccessible(true);
+        children.setAccessible(true);
+      }
+      catch (NoSuchMethodException | ClassNotFoundException e) {
+        if (isVirtual != null) initializationFailure = e.toString();
+      }
+      catch (RuntimeException e) {
+        initializationFailure = e.toString();
+      }
+    }
+
+    private static void dump(Writer writer) {
+      if (isVirtual == null) return;
+      if (initializationFailure != null) {
+        writeFailure(writer, initializationFailure);
+        return;
+      }
+      try {
+        dumpContainer(root.invoke(null), writer, new HashSet<>());
+      }
+      catch (ReflectiveOperationException e) {
+        writeFailure(writer, e.toString());
+      }
+    }
+
+    private static void writeFailure(Writer writer, String failure) {
+      try {
+        writer.write("\nVirtual thread dump is unavailable: " + failure + "\n");
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    private static void dumpContainer(Object container, Writer writer, Set<? super Thread> dumped) throws ReflectiveOperationException {
+      try (Stream<?> stream = (Stream<?>)threads.invoke(container)) {
+        Iterator<?> iterator = stream.iterator();
+        while (iterator.hasNext()) {
+          Thread thread = (Thread)iterator.next();
+          if ((boolean)isVirtual.invoke(thread) && dumped.add(thread)) {
+            dumpCallStack(thread, writer, thread.getStackTrace(), true);
+          }
+        }
+      }
+      try (Stream<?> stream = (Stream<?>)children.invoke(container)) {
+        Iterator<?> iterator = stream.iterator();
+        while (iterator.hasNext()) {
+          dumpContainer(iterator.next(), writer, dumped);
+        }
+      }
     }
   }
 
