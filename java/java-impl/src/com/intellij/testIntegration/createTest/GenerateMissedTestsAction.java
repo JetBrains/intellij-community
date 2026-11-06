@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -6,13 +6,14 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
-import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
+import com.intellij.ide.util.PsiClassRenderingInfo;
+import com.intellij.ide.util.PsiElementRenderingInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -24,7 +25,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 
 public final class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
@@ -73,13 +73,12 @@ public final class GenerateMissedTestsAction extends PsiElementBaseIntentionActi
       return;
     }
 
-    JBPopupFactory.getInstance()
-      .createPopupChooserBuilder(new ArrayList<>(testClasses))
-      .setRenderer(new PsiClassListCellRenderer())
-      .setItemChosenCallback((selectedClass) -> generateMissedTests((PsiClass)selectedClass, srcClass, editor))
-      .setTitle(JavaBundle.message("popup.title.choose.test"))
-      .createPopup()
-      .showInBestPositionFor(editor);
+    PsiTargetNavigator<PsiClass> navigator = new PsiTargetNavigator<>(ContainerUtil.map(testClasses, PsiClass.class::cast));
+    navigator.presentationProvider(aClass -> PsiElementRenderingInfo.targetPresentation(aClass, PsiClassRenderingInfo.INSTANCE));
+    navigator.navigate(editor, JavaBundle.message("popup.title.choose.test"), selectedClass -> {
+      generateMissedTests(selectedClass, srcClass, editor);
+      return false;
+    });
   }
 
   private static void generateMissedTests(final PsiClass testClass, final PsiClass srcClass, Editor srcEditor) {
