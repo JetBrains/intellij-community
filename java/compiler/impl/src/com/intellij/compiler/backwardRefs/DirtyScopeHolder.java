@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.impl.scopes.ModuleWithDependentsScope;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -203,8 +204,7 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     if (dirtyModules.size() == ModuleManager.getInstance(myProject).getModules().length) {
       return ProjectScope.getContentScope(myProject);
     }
-    return GlobalSearchScope.union(
-      ContainerUtil.append(ContainerUtil.map(dirtyModules, Module::getModuleWithDependentsScope), myExcludedFilesScope));
+    return GlobalSearchScope.union(new GlobalSearchScope[]{new ModuleWithDependentsScope(myProject, dirtyModules), myExcludedFilesScope});
   }
 
   @ApiStatus.Internal
