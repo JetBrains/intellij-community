@@ -3,7 +3,6 @@ package com.intellij.python.lsp.core.type
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.lsp.api.LspClient
@@ -15,7 +14,6 @@ import com.intellij.python.lsp.core.fakePyToolClient
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
@@ -28,64 +26,11 @@ import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.writeText
 
-/**
- * An LSP server answers for the interpreters and the content roots of the modules it serves, so an
- * engine must refuse an element of any other module. A file of no module goes to any server. A
- * library file reaches that case, and so does a file outside every content root.
- */
 @TestApplication
-@TestFor(issues = ["PY-91402"])
 internal class PyLspTypeEngineTest {
   private val projectFixture = projectFixture(openAfterCreation = true)
   private val mainPath = tempPathFixture()
-  private val secondPath = tempPathFixture()
-  private val outsidePath = tempPathFixture()
   private val mainPyProject = projectFixture.pyProjectFixture(mainPath)
-  private val secondPyProject = projectFixture.pyProjectFixture(secondPath)
-
-  @Test
-  fun `an element of a served module is supported`() = runBlocking {
-    val engine = engineServing(mainPyProject.get())
-
-    assertTrue(engine.supports(referenceIn(mainPath.get())))
-  }
-
-  @Test
-  fun `an element of a module the server does not serve is not supported`() = runBlocking {
-    val engine = engineServing(mainPyProject.get())
-    secondPyProject.get().residesOnModule
-
-    assertFalse(engine.supports(referenceIn(secondPath.get())))
-  }
-
-  @Test
-  fun `one server that serves both modules answers for both`() = runBlocking {
-    val engine = engineServing(mainPyProject.get(), secondPyProject.get())
-
-    assertTrue(engine.supports(referenceIn(mainPath.get())))
-    assertTrue(engine.supports(referenceIn(secondPath.get())))
-  }
-
-  @Test
-  fun `the answer does not change when it is asked twice`() = runBlocking {
-    val engine = engineServing(mainPyProject.get())
-    secondPyProject.get().residesOnModule
-    val ownReference = referenceIn(mainPath.get())
-    val otherReference = referenceIn(secondPath.get())
-
-    repeat(2) {
-      assertTrue(engine.supports(ownReference))
-      assertFalse(engine.supports(otherReference))
-    }
-  }
-
-  @Test
-  fun `an element of no module is supported`() = runBlocking {
-    val engine = engineServing(mainPyProject.get())
-    secondPyProject.get().residesOnModule
-
-    assertTrue(engine.supports(referenceIn(outsidePath.get())))
-  }
 
   /**
    * A restart replaces the client, and a cached `TypeEvalContext` still holds this engine. A stopped
@@ -96,7 +41,7 @@ internal class PyLspTypeEngineTest {
   @TestFor(issues = ["PY-92008", "PY-92254"])
   fun `an engine behind a stopped server is not ready`() = runBlocking {
     val stopped = fakePyToolClient(mainPyProject.get(), serverState = LspServerState.ShutdownNormally)
-    val engine = FakeLspTypeEngine(mainPyProject.get().residesOnModule, stopped)
+    val engine = FakeLspTypeEngine(stopped)
 
     assertFalse(engine.isReady)
     assertTrue(engine.supports(referenceIn(mainPath.get())))
@@ -110,7 +55,7 @@ internal class PyLspTypeEngineTest {
   @TestFor(issues = ["PY-92008", "PY-92254"])
   fun `an engine behind an initializing server is not ready`() = runBlocking {
     val initializing = fakePyToolClient(mainPyProject.get(), serverState = LspServerState.Initializing)
-    val engine = FakeLspTypeEngine(mainPyProject.get().residesOnModule, initializing)
+    val engine = FakeLspTypeEngine(initializing)
 
     assertFalse(engine.isReady)
     assertTrue(engine.supports(referenceIn(mainPath.get())))
@@ -119,10 +64,6 @@ internal class PyLspTypeEngineTest {
   /** [PyLspTypeEngine.isSupportedForResolve] reads the PSI, so it runs in a read action. */
   private suspend fun PyLspTypeEngine.supports(element: PyTypedElement): Boolean =
     readAction { isSupportedForResolve(element) }
-
-  /** An engine for the first of [servedProjects], behind a server that answers for all of them. */
-  private fun engineServing(vararg servedProjects: PyProject): FakeLspTypeEngine =
-    FakeLspTypeEngine(servedProjects.first().residesOnModule, fakePyToolClient(*servedProjects))
 
   /** A `PyReferenceExpression` in a new `main.py` under [directory]. */
   private suspend fun referenceIn(directory: Path): PyReferenceExpression {
@@ -142,12 +83,9 @@ internal class PyLspTypeEngineTest {
   }
 
   private class FakeLspTypeEngine(
-    override val module: Module,
     override val lspClient: LspClient,
   ) : PyLspTypeEngine {
     override val name: String = "fake"
-
-    override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean = isVisibleToServer(pyTypedElement)
 
     override fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? = null
   }

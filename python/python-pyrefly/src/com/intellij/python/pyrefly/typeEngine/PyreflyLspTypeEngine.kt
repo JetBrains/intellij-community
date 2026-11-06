@@ -1,6 +1,5 @@
 package com.intellij.python.pyrefly.typeEngine
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.psi.util.parents
@@ -21,8 +20,6 @@ import com.jetbrains.python.psi.types.PyType
  * answers nothing until the server runs, see [isReady].
  */
 internal class PyreflyLspTypeEngine(private val pyProject: PyProject) : PyLspTypeEngine {
-  override val module: Module get() = pyProject.residesOnModule
-
   override val name: String = PyTypeEngineType.PYREFLY.name
   override val allowsBuiltInTypeEngineFallbackWhenUnavailable: Boolean = false
 
@@ -33,7 +30,7 @@ internal class PyreflyLspTypeEngine(private val pyProject: PyProject) : PyLspTyp
    * Pyrefly answers for every element its server sees.
    */
   override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean {
-    if (!isVisibleToServer(pyTypedElement)) return false
+    if (!super.isSupportedForResolve(pyTypedElement)) return false
     // when there is `from x.y`, for `y` pyrefly will return `Module[x]`, so we do it ourselves
     if (
       pyTypedElement.parents(false).any { it is PyFromImportStatement }
@@ -48,7 +45,7 @@ internal class PyreflyLspTypeEngine(private val pyProject: PyProject) : PyLspTyp
 
   override fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? {
     val client = lspClient ?: return null
-    val context = PyreflyTypeEvalContextCache.getInstance(module.project).getContext(client)
+    val context = PyreflyTypeEvalContextCache.getInstance(pyProject.residesOnModule.project).getContext(client)
     return context.provideType(pyTypedElement)
   }
 }

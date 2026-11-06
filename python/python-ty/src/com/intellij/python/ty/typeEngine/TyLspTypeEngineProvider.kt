@@ -30,7 +30,7 @@ class TyLspTypeEngineProvider : PyTypeEngineProvider {
     // reads the snapshot and does not wait. A module with no Python project has no ty server.
     val pyProject = module.findEvoPyProjectIfReady()?.pyProject ?: return null
     val lspClient = findLspClientFor(pyProject, TyLspIntegrationProvider::class.java) ?: return null
-    return TyLspTypeEngine(module, lspClient)
+    return TyLspTypeEngine(lspClient)
   }
 
 }

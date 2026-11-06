@@ -3,7 +3,6 @@ package com.intellij.python.lsp.core.type
 
 import com.intellij.idea.TestFor
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Ref
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.psi.PsiFile
@@ -36,25 +35,22 @@ import org.junit.jupiter.api.Test
  * fragments live in a `VirtualFileWindow` over a `DocumentWindow`, and handing those coordinates to the
  * LSP client trips `Lsp4jUtil.getLsp4jPosition`'s "DocumentWindow is not expected here" assertion.
  *
- * [PyLspTypeEngine.isVisibleToServer] rejects such an element through two independent guards, one for
+ * [PyLspTypeEngine.isSupportedForResolve] rejects such an element through two independent guards, one for
  * code fragments and one for injected fragments. Each test below states which guard carries its case.
  */
 @TestFor(classes = [PyLspTypeEngine::class], issues = ["PY-91410"])
 class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
 
   private class TestTypeEngine(
-    override val module: Module,
     override val lspClient: LspClient,
   ) : PyLspTypeEngine {
     override val name: String get() = "test"
-    override fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean = isVisibleToServer(pyTypedElement)
     override fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>? = null
   }
 
-  /** An engine whose server serves the module of the fixture, so only the two guards can reject an element. */
   private fun testTypeEngine(): TestTypeEngine {
     val pyProject = runBlocking { checkNotNull(myFixture.module.asPyProject()) { "The fixture module is not a Python project" } }
-    return TestTypeEngine(myFixture.module, fakePyToolClient(pyProject))
+    return TestTypeEngine(fakePyToolClient(pyProject))
   }
 
   @Test
@@ -132,7 +128,7 @@ class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
     myFixture.configureByText("a.py", "import os")
     val importedModule = PyImportedModule(null, myFixture.file as PyFile, QualifiedName.fromDottedString("os"))
     assertNull(importedModule.textRange)
-    assertFalse(testTypeEngine().isVisibleToServer(importedModule))
+    assertFalse(testTypeEngine().isSupportedForResolve(importedModule))
   }
 
   private fun injectedDocstringFiles(): List<PsiFile> {
