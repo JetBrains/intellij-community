@@ -30,6 +30,7 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -42,6 +43,7 @@ import com.intellij.util.StartupUiGate
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.io.delete
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.cio.CIO
@@ -70,12 +72,28 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.attribute.AclEntry
+import java.nio.file.attribute.AclEntryPermission
+import java.nio.file.attribute.AclEntryType
+import java.nio.file.attribute.AclFileAttributeView
+import java.nio.file.attribute.PosixFilePermissions
+import java.security.MessageDigest
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
+import kotlin.io.path.exists
+import kotlin.io.path.fileStore
+import kotlin.io.path.readText
+import kotlin.io.path.writeText
 
 private val logger = logger<McpServerService>()
-internal const val IJ_MCP_AUTH_TOKEN: String = "IJ_MCP_AUTH_TOKEN"
+@ApiStatus.Internal
+const val IJ_MCP_AUTH_TOKEN: String = "IJ_MCP_AUTH_TOKEN"
 internal const val IJ_MCP_CLIENT_TAGS: String = "IJ_MCP_CLIENT_TAGS"
 
 internal fun parseMcpClientTags(value: String?): Set<String> {
@@ -137,6 +155,9 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
   @TestOnly
   internal fun isToolsStateProviderInitialized(): Boolean = toolsStateProviderOrNull != null
 
+  // Declared before [server]: the start of the global server reads the token file.
+  override val globalAuthTokenFile: Path = PathManager.getConfigDir().resolve("global_mcp_server_token.txt")
+  internal val globalToken: String by lazy { getGlobalToken() }
   private val server = MutableStateFlow(startGlobalServerIfEnabled())
 
   /**
@@ -152,6 +173,10 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
   private val privateServerMutex = Mutex()
 
   private val activeAuthorizedSessions = ConcurrentHashMap<String, McpSessionOptions>()
+
+  override fun getGlobalAuthToken(): Pair<String, String> {
+    return IJ_MCP_AUTH_TOKEN to globalToken
+  }
 
   override val isRunning: Boolean
     get() = server.value != null
@@ -206,7 +231,7 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
       if (privateServer.server == null) {
         logger.trace { "No active private server. Starting private MCP server..." }
         privateServer.server =
-          startServer(desiredPort = McpServerSettings.DEFAULT_MCP_PRIVATE_PORT, authCheck = true, elicitationKind = IDE)
+          startServer(desiredPort = McpServerSettings.DEFAULT_MCP_PRIVATE_PORT, isPrivateServer = true, elicitationKind = IDE)
       }
       privateServer.userCount++
       logger.trace { "Current private server user count before session $uuid: ${privateServer.userCount}" }
@@ -328,6 +353,8 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
 
   private fun startGlobalServer(): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration>? {
     val settings = McpServerSettings.getInstance()
+    // Make sure the token is loaded
+    this.getGlobalAuthToken()
     val forcePortState = getForcedMcpServerPortState()
     val desiredPort = when (forcePortState) {
       ForcedPortState.Absent -> settings.mcpServerPort
@@ -339,7 +366,7 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
     }
     val requireExactPort = forcePortState is ForcedPortState.Valid
     val server = try {
-      startServer(desiredPort = desiredPort, authCheck = false, elicitationKind = CLI, requireExactPort = requireExactPort)
+      startServer(desiredPort = desiredPort, isPrivateServer = false, elicitationKind = CLI, requireExactPort = requireExactPort)
     }
     catch (t: Throwable) {
       if (!hasMcpServerRuntimeOverrides()) throw t
@@ -400,7 +427,7 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
 
   private fun startServer(
     desiredPort: Int,
-    authCheck: Boolean,
+    isPrivateServer: Boolean,
     elicitationKind: McpElicitationKind,
     requireExactPort: Boolean = false,
   ): EmbeddedServer<CIOApplicationEngine, CIOApplicationEngine.Configuration> {
@@ -415,19 +442,31 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
     }
 
     return cs.embeddedServer(CIO, host = "127.0.0.1", port = resolvedPort) {
-      logger.trace { "Starting embedded MCP server on port $resolvedPort, authCheck=$authCheck" }
+      logger.trace { "Starting embedded MCP server on port $resolvedPort, isPrivateServer=$isPrivateServer" }
       installHostValidation()
       installHttpRequestPropagation()
 
       mcpPatched(prePhase = prePhase@{
+        if (!isPrivateServer) {
+          // for global server
+          logger.trace("Checking authorization token for global MCP server")
+          val authToken = call.request.headers[IJ_MCP_AUTH_TOKEN]
+          // compare tokens in constant time, to avoid security breaches based on the response time of
+          // normal string comparison
+          if (!MessageDigest.isEqual(authToken?.toByteArray(), globalToken.toByteArray())) {
+            call.respond(HttpStatusCode.Unauthorized, McpServerBundle.message("mcp.server.global.auth.token.invalid", IJ_MCP_AUTH_TOKEN))
+            finish()
+            return@prePhase
+          }
+        }
         // The global server may run before the user agreed to it, so the first call asks. The private server is
         // started by the IDE itself for a flow the user already began, so it needs no consent.
-        if (!authCheck && !serviceAsync<McpServerConsentGate>().awaitConsent()) {
+        if (!isPrivateServer && !serviceAsync<McpServerConsentGate>().awaitConsent()) {
           call.respond(HttpStatusCode.Forbidden, McpServerBundle.message("mcp.server.consent.not.granted"))
           finish()
           return@prePhase
         }
-        if (authCheck) {
+        if (isPrivateServer) {
           val authToken = call.request.headers[IJ_MCP_AUTH_TOKEN]
           if (authToken == null || !isKnownToken(authToken)) {
             call.respond(HttpStatusCode.Unauthorized, "MCP server is running in restricted mode. Please, provide valid authorization token")
@@ -439,7 +478,7 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
 
         // this is added because now a Kotlin MCP client doesn't support header adjusting for each request, only for initial one, see McpStdioRunner
         val projectPath = applicationCall.request.headers[IJ_MCP_SERVER_PROJECT_PATH]
-        val authToken = if (authCheck) applicationCall.request.headers[IJ_MCP_AUTH_TOKEN] else null
+        val authToken = if (isPrivateServer) applicationCall.request.headers[IJ_MCP_AUTH_TOKEN] else null
         val clientTagsHeader = applicationCall.request.headers[IJ_MCP_CLIENT_TAGS]
 
         val baseSessionOptions = getSessionOptions(authToken)
@@ -660,5 +699,78 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
   fun scheduleResetToSettings(after: Collection<Job> = emptyList()): Job = cs.launch {
     after.joinAll()
     settingsChanged(McpServerSettings.getInstance().enableMcpServer)
+  }
+
+  // TODO: move trySetWindowsAcl and setPermissionsToOwnerOnly to a shared util; Junie, Fleet and DiscoveryService have copies.
+  private fun trySetWindowsAcl(path: Path, permissions: Set<AclEntryPermission>) {
+    val aclView = Files.getFileAttributeView(path, AclFileAttributeView::class.java)
+    if (aclView == null) {
+      logger.warn("Failed to set ACL on path: $path")
+      return
+    }
+    val owner = aclView.owner
+    val entry = AclEntry.newBuilder().setType(AclEntryType.ALLOW).setPrincipal(owner).setPermissions(permissions).build()
+    try {
+      aclView.acl = listOf(entry)
+    }
+    catch (e: IOException) {
+      logger.warn("Failed to set ACL on path: $path", e)
+    }
+  }
+
+  private fun setPermissionsToOwnerOnly(path: Path) {
+    try {
+      // only the owner can read/write
+      Files.setPosixFilePermissions(path, PosixFilePermissions.fromString("rw-------"))
+    }
+    catch (_: UnsupportedOperationException) {
+      trySetWindowsAcl(path,
+                       setOf(
+                         AclEntryPermission.READ_DATA,
+                         AclEntryPermission.WRITE_DATA,
+                         AclEntryPermission.APPEND_DATA,
+                         AclEntryPermission.READ_ATTRIBUTES,
+                         AclEntryPermission.WRITE_ATTRIBUTES,
+                         AclEntryPermission.READ_NAMED_ATTRS,
+                         AclEntryPermission.WRITE_NAMED_ATTRS,
+                         AclEntryPermission.DELETE,
+                         AclEntryPermission.READ_ACL,
+                         AclEntryPermission.SYNCHRONIZE,
+                       ))
+    }
+  }
+
+  private fun getGlobalToken(): String {
+    val path = globalAuthTokenFile
+    logger.trace("Global MCP server token file: ${path}")
+    if (path.exists()) {
+      val token = path.readText().trim()
+      if (token.isNotEmpty()) {
+        // defensive mechanism, to ensure permissions were not manipulated.
+        setPermissionsToOwnerOnly(path)
+        return token
+      }
+      // if the file is empty, we delete it and fall onto fresh start
+      path.delete()
+    }
+    // generate a token
+    val uuid = UUID.randomUUID().toString()
+    // make sure the path exists
+    path.parent.createDirectories()
+    // Create the file with owner-only permissions
+    if (path.parent.fileStore().supportsFileAttributeView("posix")) {
+      val permissions = PosixFilePermissions.fromString("rw-------")
+      val attr = PosixFilePermissions.asFileAttribute(permissions)
+      path.createFile(attr)
+    }
+    else {
+      // Windows: the ACL is set after creation. The empty file is briefly open to others,
+      // which the user-only config folder already prevents.
+      path.createFile()
+      setPermissionsToOwnerOnly(path)
+    }
+    path.writeText(uuid)
+    logger.trace("Global MCP server token generated and written to ${path}")
+    return uuid
   }
 }

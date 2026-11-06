@@ -2,7 +2,9 @@
 
 package com.intellij.mcpserver
 
+import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.stdio.IJ_MCP_ALLOWED_TOOLS
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.testFramework.junit5.TestApplication
@@ -251,6 +253,7 @@ class McpToolFilterIntegrationTest {
       connectToServer(
         port = port,
         extraHeaders = {
+          header(IJ_MCP_AUTH_TOKEN, McpServerServiceImpl.getInstance().globalToken)
           header(IJ_MCP_ALLOWED_TOOLS, allowedToolsHeader)
         },
         action = action

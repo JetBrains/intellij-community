@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
 import com.intellij.icons.AllIcons
+import com.intellij.ide.actions.RevealFileAction
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.clients.McpClient
@@ -20,6 +21,7 @@ import com.intellij.mcpserver.createStdioMcpServerJsonConfiguration
 import com.intellij.mcpserver.createStreamableServerJsonEntry
 import com.intellij.mcpserver.frontend.util.getConsentDialog
 import com.intellij.mcpserver.icons.McpserverIcons
+import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
 import com.intellij.mcpserver.impl.McpClientDetector
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.McpServerServiceImpl
@@ -42,8 +44,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.compose.swing.ComposeSwingSearchableConfigurable
+import com.intellij.platform.compose.swing.components.ActionLink
 import com.intellij.platform.compose.swing.components.BrowserLink
 import com.intellij.platform.compose.swing.components.Comment
 import com.intellij.platform.compose.swing.components.FormGap
@@ -56,6 +60,8 @@ import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.JBColor
 import com.intellij.util.io.createParentDirectories
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.intellij.util.ui.ColorizeProxyIcon
 import com.intellij.util.ui.TextTransferable
 import kotlinx.coroutines.CoroutineScope
@@ -251,6 +257,8 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
       )
     }
     if (enabled) {
+      val tokenFile = McpServerService.getInstance().globalAuthTokenFile
+      @NlsSafe val tokenFileStr = tokenFile.toString()
       FormGroup(McpServerBundle.message("mcp.server.global.configuration"), indent = true) {
         FormRow(McpServerBundle.message("mcp.server.global.port.label")) {
           TextField(
@@ -279,14 +287,46 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
           )
           BrowserLink(text = streamUrl, url = streamUrl, modifier = SwingModifier.styleable { toolTip(streamUrl) })
         }
+        FormRow(McpServerBundle.message("mcp.server.global.token")) {
+          ActionLink(
+            text = tokenFileStr,
+            onClick = { RevealFileAction.openFile(tokenFile) },
+            modifier = SwingModifier.styleable { toolTip(RevealFileAction.getActionName()) },
+          )
+        }
+        FormRow(comment = McpServerBundle.message("mcp.server.global.token.comment", IJ_MCP_AUTH_TOKEN)) {
+          ActionLink(
+            text = McpServerBundle.message("copy.mcp.server.token.file.path"),
+            onClick = { CopyPasteManager.getInstance().setContents(TextTransferable(tokenFileStr as CharSequence)) },
+          )
+        }
       }
     }
   }
 
+  @OptIn(LowLevelLocalMachineAccess::class)
+  private fun exportEnvToken(tokenFile: Path): String =
+    if (OS.CURRENT == OS.Windows) {
+      $$"$env:$$IJ_MCP_AUTH_TOKEN = Get-Content \"$$tokenFile\""
+    }
+    else {
+      $$"export $$IJ_MCP_AUTH_TOKEN=\"$(cat \"$$tokenFile\")\""
+    }
+
   @Composable
   private fun FormScope.ProjectClientsGroup(projectClients: ProjectClientsState) {
+    val tokenFile = McpServerService.getInstance().globalAuthTokenFile
     FormGroup(McpServerBundle.message("settings.client.project.group", projectClients.projectName), indent = false) {
-      FormComment(McpServerBundle.message("settings.client.project.setup.description"))
+      FormComment(McpServerBundle.message("settings.client.project.setup.description", IJ_MCP_AUTH_TOKEN))
+      FormIndent {
+        FormRow {
+          ActionLink(
+            text = McpServerBundle.message("settings.client.project.setup.copy.env.cmd"),
+            onClick = { CopyPasteManager.getInstance().setContents(TextTransferable(exportEnvToken(tokenFile) as CharSequence)) },
+            modifier = SwingModifier.styleable { toolTip(McpServerBundle.message("settings.client.project.setup.copy.env.cmd.tooltip")) },
+          )
+        }
+      }
       FormIndent {
         projectClients.clients.forEach { key(it.displayName) { ClientRows(it) } }
       }
@@ -305,6 +345,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
 
   @Composable
   private fun FormScope.ManualConfigGroup() {
+    val server = McpServerService.getInstance()
     FormGroup(McpServerBundle.message("mcp.general.client"), indent = false) {
       FormComment(McpServerBundle.message("settings.comment.manual.config"))
       FormIndent {
@@ -314,21 +355,27 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
             McpServerBundle.message("copy.mcp.server.sse.configuration"),
             style = { enabled(serverRunning) },
             onClick = {
-              copyJsonToClipboard(createSseServerJsonEntry(McpServerService.getInstance().port, mcpPath()))
+              copyJsonToClipboard(createSseServerJsonEntry(server.port,
+                                                           mcpPath(),
+                                                           server.getGlobalAuthToken()))
             },
           )
           Button(
             McpServerBundle.message("copy.mcp.server.stdio.configuration"),
             style = { enabled(serverRunning) },
             onClick = {
-              copyJsonToClipboard(createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, mcpPath()))
+              copyJsonToClipboard(createStdioMcpServerJsonConfiguration(server.port,
+                                                                        mcpPath(),
+                                                                        server.getGlobalAuthToken()))
             },
           )
           Button(
             McpServerBundle.message("copy.mcp.server.stream.configuration"),
             style = { enabled(serverRunning) },
             onClick = {
-              copyJsonToClipboard(createStreamableServerJsonEntry(McpServerService.getInstance().port, mcpPath()))
+              copyJsonToClipboard(createStreamableServerJsonEntry(server.port,
+                                                                  mcpPath(),
+                                                                  server.getGlobalAuthToken()))
             },
           )
         }

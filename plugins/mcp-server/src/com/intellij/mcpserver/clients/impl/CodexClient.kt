@@ -12,6 +12,7 @@ import com.intellij.mcpserver.clients.configs.CodexStreamableHttpConfig
 import com.intellij.mcpserver.clients.configs.ExistingConfig
 import com.intellij.mcpserver.clients.configs.STDIOServerConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
+import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
 import com.intellij.util.io.createParentDirectories
 import java.io.StringWriter
 import java.nio.file.Path
@@ -28,12 +29,27 @@ open class CodexClient(scope: McpClientInfo.McpClientScope, configPath: Path) : 
     val network = isSSEOrStreamConfigured() ?: return null
     return stdio || network
   }
+  /**
+   * Codex expands no variables in `http_headers`, so a project configuration gets no placeholder. It gets
+   * `IJ_MCP_AUTH_TOKEN` in `env_http_headers` instead: Codex reads that header from the variable of the same name
+   * in its environment. A global configuration carries the literal token in `http_headers`.
+   */
+  override val projectScopeTokenPlaceholder: String? get() = null
+
+  /** A project configuration carries the token in `env_http_headers`, see [projectScopeTokenPlaceholder]. */
+  override fun carriesExpectedToken(serverConfig: ExistingConfig): Boolean = when (mcpClientInfo.scope) {
+    is McpClientInfo.McpClientScope.McpClientGlobalScope -> super.carriesExpectedToken(serverConfig)
+    else -> serverConfig.envHttpHeaders?.get(IJ_MCP_AUTH_TOKEN) == IJ_MCP_AUTH_TOKEN
+  }
 
   // Codex sends the header only when its environment has the variable.
   override suspend fun getStreamableHttpConfig(): ServerConfig = CodexStreamableHttpConfig(
     url = streamableHttpUrl,
     headers = buildScopeHeaders(),
-    envHttpHeaders = mapOf(McpLaunchOrigin.NAME to McpLaunchOrigin.NAME),
+    envHttpHeaders = buildMap {
+      put(McpLaunchOrigin.NAME, McpLaunchOrigin.NAME)
+      if (mcpClientInfo.scope !is McpClientInfo.McpClientScope.McpClientGlobalScope) put(IJ_MCP_AUTH_TOKEN, IJ_MCP_AUTH_TOKEN)
+    }
   )
 
   override fun readMcpServers(): Map<String, ExistingConfig>? {
@@ -78,6 +94,8 @@ open class CodexClient(scope: McpClientInfo.McpClientScope, configPath: Path) : 
           env = table.readStringMap("env"),
           url = url,
           type = if (command != null) "stdio" else "http",
+          headers = table.readStringMap("http_headers"),
+          envHttpHeaders = table.readStringMap("env_http_headers"),
         )
       }
       return result
@@ -130,7 +148,7 @@ open class CodexClient(scope: McpClientInfo.McpClientScope, configPath: Path) : 
       val table = newTomlConfig()
       when (this) {
         is CodexStreamableHttpConfig -> table.set<Any?>(listOf("url"), url)
-          .also { headers?.takeIf { it.isNotEmpty() }?.let { table.set(listOf("headers"), it.toTomlConfig()) } }
+          .also { headers?.takeIf { it.isNotEmpty() }?.let { table.set(listOf("http_headers"), it.toTomlConfig()) } }
           .also { envHttpHeaders?.takeIf { it.isNotEmpty() }?.let { table.set(listOf("env_http_headers"), it.toTomlConfig()) } }
         is STDIOServerConfig -> {
           command?.let { table.set<Any?>(listOf("command"), it) }

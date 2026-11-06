@@ -6,6 +6,7 @@ import com.intellij.mcpserver.clients.configs.ExistingConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.mcpserver.clients.configs.VSCodeConfig
 import com.intellij.mcpserver.clients.configs.VSCodeNetworkConfig
+import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
 import com.intellij.openapi.components.service
 import com.intellij.util.application
 import com.intellij.util.text.SemVer
@@ -26,6 +27,9 @@ open class VSCodeClient(scope: McpClientInfo.McpClientScope, configPath: Path) :
     val network = isSSEOrStreamConfigured() ?: return null
     return stdio || network
   }
+
+  override val projectScopeTokenPlaceholder: String
+    get() = $$"${env:$$IJ_MCP_AUTH_TOKEN}"
 
   private val vsCodeVersion: Deferred<SemVer?> = application.service<McpServiceScope>().scope.getSemVerOfVscodeFork("code")
 

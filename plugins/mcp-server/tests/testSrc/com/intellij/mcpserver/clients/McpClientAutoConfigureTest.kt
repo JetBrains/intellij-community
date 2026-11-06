@@ -11,6 +11,7 @@ import com.intellij.mcpserver.clients.impl.TestMcpServerService
 import com.intellij.mcpserver.clients.impl.VSCodeClient
 import com.intellij.mcpserver.clients.impl.WindsurfClient
 import com.intellij.mcpserver.clients.impl.readServers
+import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
@@ -23,8 +24,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -210,6 +213,26 @@ class McpClientAutoConfigureTest {
 
   @OptIn(ExperimentalSerializationApi::class)
   @Test
+  fun `Air autoConfigure in a project writes the token placeholder`() {
+    val configPath = tempDir.resolve("mcp.json")
+    configPath.writeText("""{"mcpServers": {}}""")
+
+    McpClient.overrideProductSpecificServerKeyForTests("test")
+
+    val client = AirClient(McpClientInfo.McpClientScope.McpClientProjectScope("/my/project"), configPath)
+    runBlocking(Dispatchers.Default) {
+      client.autoConfigure()
+    }
+
+    // Air replaces `${NAME}` in a header value from its environment, see fleet/plugins/ai/.../mcp/McpEnvironment.kt
+    val config = McpClient.json.decodeFromStream<JsonObject>(configPath.inputStream())
+    val headers = config["mcpServers"]?.jsonObject?.get("test")?.jsonObject?.get("headers")?.jsonObject
+    requireNotNull(headers)
+    assertEquals($$"${$$IJ_MCP_AUTH_TOKEN}", headers[IJ_MCP_AUTH_TOKEN]?.jsonPrimitive?.contentOrNull)
+  }
+
+  @OptIn(ExperimentalSerializationApi::class)
+  @Test
   fun `autoConfigure preserves projects section in JSON config`() {
     val configPath = tempDir.resolve("config.json")
     configPath.writeText(
@@ -339,20 +362,24 @@ class McpClientAutoConfigureTest {
     val serverEntry = config["mcpServers"]?.jsonObject?.get("test")?.jsonObject
     requireNotNull(serverEntry)
     val headers = serverEntry["headers"]?.jsonObject
-    //requireNotNull(headers)
-    //assertEquals("/my/project", headers[IJ_MCP_SERVER_PROJECT_PATH]?.jsonPrimitive?.contentOrNull)
+    requireNotNull(headers)
+    assertEquals($$"${$$IJ_MCP_AUTH_TOKEN}", headers[IJ_MCP_AUTH_TOKEN]?.jsonPrimitive?.contentOrNull)
   }
 
   @Test
-  fun `autoConfigure without project path omits headers from JSON config`() {
+  fun `autoConfigure without project path has auth token in the headers from JSON config`() {
     val serverEntry = autoConfigureClaudeCodeInGlobalScope()
-    assertFalse(serverEntry["headers"]?.jsonObject?.keys.orEmpty().contains(IJ_MCP_SERVER_PROJECT_PATH))
+    // we expect to have a header with auth token for the global server
+    assertTrue(serverEntry.containsKey("headers"))
+    val headers = serverEntry["headers"]!!.jsonObject
+    assertFalse(headers.containsKey(IJ_MCP_SERVER_PROJECT_PATH))
+    assertTrue(headers.containsKey(IJ_MCP_AUTH_TOKEN))
   }
 
   @Test
   fun `autoConfigure writes the launch origin header to JSON config`() {
     val serverEntry = autoConfigureClaudeCodeInGlobalScope()
-    assertEquals(setOf(McpLaunchOrigin.NAME), serverEntry["headers"]?.jsonObject?.keys)
+    assertEquals(setOf(McpLaunchOrigin.NAME, IJ_MCP_AUTH_TOKEN), serverEntry["headers"]?.jsonObject?.keys)
   }
 
   @OptIn(ExperimentalSerializationApi::class)

@@ -153,13 +153,20 @@ internal class McpServerPopupModelImpl(
   }
 
   override fun copySseConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createSseServerJsonEntry(McpServerService.getInstance().port, project.getPathForMcp())))
+    copyToClipboard(McpClient.json.encodeToString(createSseServerJsonEntry(McpServerService.getInstance().port,
+                                                                           project.getPathForMcp(),
+                                                                           McpServerServiceImpl.getInstance().getGlobalAuthToken())))
 
   override fun copyStdioConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port, project.getPathForMcp())))
+    copyToClipboard(McpClient.json.encodeToString(createStdioMcpServerJsonConfiguration(McpServerService.getInstance().port,
+                                                                                        project.getPathForMcp(),
+                                                                                        McpServerServiceImpl.getInstance()
+                                                                                          .getGlobalAuthToken())))
 
   override fun copyStreamConfig(): Boolean =
-    copyToClipboard(McpClient.json.encodeToString(createStreamableServerJsonEntry(McpServerService.getInstance().port, project.getPathForMcp())))
+    copyToClipboard(McpClient.json.encodeToString(createStreamableServerJsonEntry(McpServerService.getInstance().port,
+                                                                                  project.getPathForMcp(),
+                                                                                  McpServerServiceImpl.getInstance().getGlobalAuthToken())))
 
   override fun copySseUrl(): Boolean = sseUrl?.let { copyToClipboard(it) } ?: false
 

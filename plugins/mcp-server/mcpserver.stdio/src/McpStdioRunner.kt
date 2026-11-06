@@ -17,6 +17,8 @@ val IJ_MCP_SERVER_PORT: String = ::IJ_MCP_SERVER_PORT.name
 val IJ_MCP_ALLOWED_TOOLS: String = ::IJ_MCP_ALLOWED_TOOLS.name
 val IJ_MCP_SERVER_PROJECT_PATH: String = ::IJ_MCP_SERVER_PROJECT_PATH.name
 private val IJ_MCP_DEBUG: String = ::IJ_MCP_DEBUG.name
+// Must match IJ_MCP_AUTH_TOKEN in McpServerServiceImpl.kt
+private const val IJ_MCP_AUTH_TOKEN: String = "IJ_MCP_AUTH_TOKEN"
 
 /**
  * Environment variables for tool filtering:
@@ -50,10 +52,10 @@ suspend fun main() {
   }
 
   val envsToPass = System.getenv().filter { (key, _) -> key != IJ_MCP_DEBUG && key.startsWith(IJ_MCP_PREFIX) }
-  debug("Passing the following headers to the server: ${envsToPass.entries.joinToString { (key, value) -> "$key=$value"}}")
+  debug("Passing the following headers to the server: ${envsToPass.entries.joinToString { (key, value) -> if (key == IJ_MCP_AUTH_TOKEN) "$key=***" else "$key=$value" }}")
 
   val sseClientTransport = SseClientTransport(httpClient, "http://localhost:$port/sse") {
-    envsToPass.forEach { (key, value) -> header(key.removePrefix(IJ_MCP_HEADER_PREFIX), value)}
+    envsToPass.forEach { (key, value) -> header(key.removePrefix(IJ_MCP_HEADER_PREFIX), value) }
   }
 
   stdioServerTransport.onMessage {

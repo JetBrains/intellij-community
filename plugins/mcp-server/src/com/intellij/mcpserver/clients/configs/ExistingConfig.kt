@@ -16,4 +16,7 @@ class ExistingConfig(
   @JsonNames("url", "serverUrl")
   val url: String? = null,
   val type: String? = null,
+  val headers: Map<String, String>? = null,
+  /** Codex only: maps a header name to the environment variable that Codex reads for the header value. */
+  val envHttpHeaders: Map<String, String>? = null,
 )

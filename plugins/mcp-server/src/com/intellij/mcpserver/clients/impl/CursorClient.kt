@@ -4,6 +4,7 @@ import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.configs.CursorNetworkConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
+import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
 import com.intellij.openapi.components.service
 import com.intellij.util.application
 import com.intellij.util.text.SemVer
@@ -21,6 +22,9 @@ class CursorClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpC
     val network = isSSEOrStreamConfigured() ?: return null
     return stdio || network
   }
+
+  override val projectScopeTokenPlaceholder: String
+    get() = $$"${env:$$IJ_MCP_AUTH_TOKEN}"
 
   private val cursorVersion: Deferred<SemVer?> = application.service<McpServiceScope>().scope.getSemVerOfVscodeFork("cursor")
 

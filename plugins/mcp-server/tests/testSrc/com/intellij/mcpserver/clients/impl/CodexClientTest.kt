@@ -5,6 +5,7 @@ import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClient.Companion.TransportType
 import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.configs.CodexStreamableHttpConfig
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
@@ -18,6 +19,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
+@TestApplication
 class CodexClientTest {
   @TempDir
   lateinit var tempDir: Path
@@ -363,7 +365,7 @@ class CodexClientTest {
   }
 
   @Test
-  fun `configure with headers produces TOML headers sub-table`() {
+  fun `configure with headers produces the http_headers table`() {
     val configPath = tempDir.resolve("config.toml")
     configPath.writeText("")
 
@@ -383,8 +385,44 @@ class CodexClientTest {
     val result = configPath.readText()
     assertTrue(result.contains("[mcp_servers.codextest]"))
     assertTrue(result.contains("""url = "http://localhost:5555/stream""""))
+    assertTrue(result.contains("[mcp_servers.codextest.http_headers]"))
     assertTrue(result.contains("IJ_MCP_SERVER_PROJECT_PATH"))
     assertTrue(result.contains(""""/my/project""""))
+  }
+
+  @Test
+  fun `project config with the token in env_http_headers is up to date`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      [mcp_servers.codextest]
+      url = "http://localhost:5555/stream"
+
+      [mcp_servers.codextest.env_http_headers]
+      IJ_MCP_AUTH_TOKEN = "IJ_MCP_AUTH_TOKEN"
+
+      """.trimIndent()
+    )
+    McpClient.overrideProductSpecificServerKeyForTests("codextest")
+
+    val client = CodexClient(McpClientInfo.McpClientScope.McpClientProjectScope("/my/project"), configPath)
+    assertTrue(client.isConfigUpToDate(expectedPort = 5555))
+  }
+
+  @Test
+  fun `project config without the token in env_http_headers is outdated`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText(
+      """
+      [mcp_servers.codextest]
+      url = "http://localhost:5555/stream"
+
+      """.trimIndent()
+    )
+    McpClient.overrideProductSpecificServerKeyForTests("codextest")
+
+    val client = CodexClient(McpClientInfo.McpClientScope.McpClientProjectScope("/my/project"), configPath)
+    assertFalse(client.isConfigUpToDate(expectedPort = 5555))
   }
 }
 

@@ -10,6 +10,7 @@ class AirClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpClie
   mcpClientInfo = McpClientInfo(McpClientInfo.Name.AIR, scope),
   configPath = configPath
 ) {
+
   override fun isConfigured(): Boolean = isSSEOrStreamConfigured() == true || isStdIOConfigured() == true
 
   override suspend fun getStreamableHttpConfig(): ServerConfig = AirNetworkConfig(url = streamableHttpUrl, type = "http", headers = buildScopeHeaders())

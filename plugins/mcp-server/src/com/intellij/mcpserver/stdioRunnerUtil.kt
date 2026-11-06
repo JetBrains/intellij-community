@@ -163,12 +163,17 @@ private fun buildTransportJson(type: String, url: String, projectBasePath: Strin
  *   "args": ["<mcp runner args>"],
  *   "env": {
  *     "IJ_MCP_SERVER_PORT": "<ide server port>",
- *     "IJ_MCP_SERVER_PROJECT_PATH": "<project path>"
+ *     "IJ_MCP_SERVER_PROJECT_PATH": "<project path>",
+ *     "IJ_MCP_AUTH_TOKEN": "<ide server auth token>"
  *   }
  * }
  * ```
  */
-fun createStdioMcpServerJsonConfiguration(ideServerPort: Int, projectBasePath: String?): JsonObject {
-  val commandLine = createStdioMcpServerCommandLine(ideServerPort, projectBasePath)
+fun createStdioMcpServerJsonConfiguration(
+  ideServerPort: Int,
+  projectBasePath: String?,
+  authToken: Pair<String, String>? = null,
+): JsonObject {
+  val commandLine = createStdioMcpServerCommandLine(ideServerPort, projectBasePath, authToken)
   return createStdioServerJsonEntry(commandLine)
 }

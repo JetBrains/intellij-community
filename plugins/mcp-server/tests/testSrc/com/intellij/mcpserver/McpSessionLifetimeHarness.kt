@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mcpserver
 
+import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
+import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.impl.util.network.MCP_SESSION_ID_HEADER
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
 import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
@@ -189,6 +192,7 @@ internal class McpTestClient(
     append("${HttpHeaders.Accept}: ${ContentType.Text.EventStream}\r\n")
     projectBasePath?.let { append("$IJ_MCP_SERVER_PROJECT_PATH: $it\r\n") }
     assignedSessionId?.let { append("$MCP_SESSION_ID_HEADER: $it\r\n") }
+    append("$IJ_MCP_AUTH_TOKEN: ${McpServerServiceImpl.getInstance().globalToken}\r\n")
     append("\r\n")
   }
 
@@ -203,6 +207,7 @@ internal class McpTestClient(
   private fun HttpRequestBuilder.mcpHeaders() {
     projectBasePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
     assignedSessionId?.let { header(MCP_SESSION_ID_HEADER, it) }
+    header(IJ_MCP_AUTH_TOKEN, McpServerServiceImpl.getInstance().globalToken)
   }
 }
 
@@ -274,6 +279,7 @@ internal class LegacySseStream(
     client.post(messageUrl) {
       contentType(ContentType.Application.Json)
       projectBasePath?.let { header(IJ_MCP_SERVER_PROJECT_PATH, it) }
+      header(IJ_MCP_AUTH_TOKEN, McpServerServiceImpl.getInstance().globalToken)
       setBody(body)
     }
 }

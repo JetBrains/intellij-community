@@ -10,6 +10,10 @@ class JunieClient(scope: McpClientInfo.McpClientScope, configPath: Path) : McpCl
   mcpClientInfo = McpClientInfo(McpClientInfo.Name.JUNIE, scope),
   configPath = configPath
 ) {
+
+  override val projectScopeTokenPlaceholder: String?
+    get() = null
+
   override fun isConfigured(): Boolean = isSSEOrStreamConfigured() == true || isStdIOConfigured() == true
 
   override suspend fun getStreamableHttpConfig(): ServerConfig = JunieNetworkConfig(url = streamableHttpUrl, type = "http", headers = buildScopeHeaders())

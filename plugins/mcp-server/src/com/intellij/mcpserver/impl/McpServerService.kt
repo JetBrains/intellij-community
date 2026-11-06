@@ -8,6 +8,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 @ApiStatus.NonExtendable
 interface McpServerService {
@@ -123,6 +124,14 @@ interface McpServerService {
   fun start()
 
   fun stop()
+
+  /** The header name and the token that a request to the global server must carry. */
+  @ApiStatus.Internal
+  fun getGlobalAuthToken(): Pair<String, String>
+
+  /** The file that holds the token of the global server. Only the user can read it. */
+  @get:ApiStatus.Internal
+  val globalAuthTokenFile: Path
 
   /**
    * Starts an isolated MCP on a separate port that doesn't interfere with the main MCP server,

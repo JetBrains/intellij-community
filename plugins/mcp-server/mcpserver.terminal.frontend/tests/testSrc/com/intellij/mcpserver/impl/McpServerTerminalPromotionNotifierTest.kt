@@ -162,7 +162,10 @@ internal class McpServerTerminalPromotionNotifierTest {
                  linkedMapOf("idea" to ExistingConfig(url = "http://localhost:63000/stream", type = "http")))
     val globalClient =
       FakeClient(McpClientInfo.McpClientScope.McpClientGlobalScope,
-                 linkedMapOf("idea" to ExistingConfig(url = "http://127.0.0.1:64000/stream", type = "http")))
+                 linkedMapOf("idea" to ExistingConfig(url = "http://127.0.0.1:64000/stream",
+                                                      type = "http",
+                                                      headers = mapOf(McpServerService.getInstance().getGlobalAuthToken()))
+                 ))
 
     val reconfigureClients =
       McpServerTerminalPromotionCandidates(projectClient, globalClient).reconfigureClients(expectedPort = 64000)

@@ -4,6 +4,7 @@ import com.intellij.mcpserver.McpLaunchOrigin
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.configs.ClaudeCodeNetworkConfig
+import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -43,7 +44,8 @@ class ClaudeCodeClientTest : VscodeForkMcpClientTest() {
   @Test
   fun `network configs send the launch origin from the agent environment`() {
     val client = createClient(McpClientInfo.McpClientScope.McpClientGlobalScope, tempDir.resolve(".claude.json"))
-    val expected = mapOf(McpLaunchOrigin.NAME to $$"${IJ_MCP_LAUNCH_ORIGIN:-}")
+    val expected =
+      mapOf(McpLaunchOrigin.NAME to $$"${IJ_MCP_LAUNCH_ORIGIN:-}", McpServerService.getInstance().getGlobalAuthToken())
     runBlocking(Dispatchers.Default) {
       assertThat((client.getStreamableHttpConfig() as ClaudeCodeNetworkConfig).headers).isEqualTo(expected)
       assertThat((client.getSSEConfig() as ClaudeCodeNetworkConfig).headers).isEqualTo(expected)

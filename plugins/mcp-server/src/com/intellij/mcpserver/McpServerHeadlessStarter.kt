@@ -4,6 +4,7 @@ package com.intellij.mcpserver
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.settings.McpServerSettings
 import com.intellij.mcpserver.settings.McpToolFilterSettings
@@ -131,6 +132,7 @@ internal class McpServerHeadlessStarter : ModernApplicationStarter() {
       System.err.println("*".repeat(30))
       System.err.println("* MCP Server started on port $actualPort")
       System.err.println("* SSE URL: $sseUrl")
+      System.err.println("* Send the header $IJ_MCP_AUTH_TOKEN with the token in ${McpServerService.getInstance().globalAuthTokenFile}")
       projects.forEach { project ->
         System.err.println("* Project: ${project.name} (${project.basePath})")
       }

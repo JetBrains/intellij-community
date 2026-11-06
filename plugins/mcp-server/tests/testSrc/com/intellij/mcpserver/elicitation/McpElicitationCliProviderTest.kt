@@ -9,6 +9,7 @@ import com.intellij.mcpserver.elicitation.ElicitationResult.Accept
 import com.intellij.mcpserver.elicitation.ElicitationResult.Cancel
 import com.intellij.mcpserver.elicitation.ElicitationResult.Decline
 import com.intellij.mcpserver.impl.McpServerService
+import com.intellij.mcpserver.impl.McpServerServiceImpl
 import com.intellij.mcpserver.impl.util.asTool
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
@@ -249,7 +250,7 @@ class McpElicitationCliProviderTest : McpToolsetTestBase() {
     elicitHandler: ((ElicitRequest) -> ElicitResult)?,
     action: suspend Client.() -> Unit,
   ) = runBlocking(Dispatchers.Default) {
-    val transportHolder = HttpTransportHolder(project)
+    val transportHolder = HttpTransportHolder(project) { McpServerServiceImpl.getInstance().globalToken }
     try {
       McpServerService.getInstance().start()
       val client = Client(

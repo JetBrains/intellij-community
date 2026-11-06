@@ -7,6 +7,7 @@ import com.intellij.mcpserver.clients.configs.ExistingConfig
 import com.intellij.mcpserver.clients.configs.STDIOServerConfig
 import com.intellij.mcpserver.clients.configs.ServerConfig
 import com.intellij.mcpserver.createStdioMcpServerCommandLine
+import com.intellij.mcpserver.impl.IJ_MCP_AUTH_TOKEN
 import com.intellij.mcpserver.impl.McpServerService
 import com.intellij.mcpserver.impl.getForcedMcpServerPortOrNull
 import com.intellij.mcpserver.impl.util.network.McpServerConnectionAddressProvider
@@ -66,6 +67,13 @@ abstract class McpClient(
   protected val sseUrl: String
     get() = connectionAddressProvider?.serverSseUrl ?: defaultSseUrl
 
+  /**
+   * The value that a project config gets for the token header. The client expands it from its environment at start.
+   * `null` when the client cannot expand a variable, so the project config gets no token header.
+   */
+  protected open val projectScopeTokenPlaceholder: String?
+    get() = $$"${$$IJ_MCP_AUTH_TOKEN}"
+
   protected open val streamableHttpUrl: String
     get() = connectionAddressProvider?.serverStreamUrl ?: defaultStreamUrl
 
@@ -112,7 +120,9 @@ abstract class McpClient(
   open suspend fun getSSEConfig(): ServerConfig? = null
 
   fun getStdioConfig(): ServerConfig {
-    val cmd = createStdioMcpServerCommandLine(McpServerService.getInstance().port, null)
+    val authToken = expectedToken(inStdioConfig = true)?.let { IJ_MCP_AUTH_TOKEN to it }
+    val cmd =
+      createStdioMcpServerCommandLine(McpServerService.getInstance().port, null, authToken)
     return STDIOServerConfig(command = cmd.exePath, args = cmd.parametersList.parameters, env = cmd.environment)
   }
 
@@ -150,7 +160,7 @@ abstract class McpClient(
 
   fun isPortCorrect(expectedPort: Int = expectedPromotionPort()): Boolean {
     val candidates = promotionCandidateServers(expectedPort)
-    return candidates.isEmpty() || candidates.any { serverConfig -> isPortMatching(serverConfig, expectedPort) }
+    return candidates.isEmpty() || candidates.any { serverConfig -> reachesThisIde(serverConfig, expectedPort) }
   }
 
   fun hasAnyMcpServerNamed(names: Set<String>): Boolean =
@@ -190,24 +200,44 @@ abstract class McpClient(
   }
 
   open fun buildScopeHeaders(): Map<String, String>? {
-    return null
-    //val projectPath = (mcpClientInfo.scope as? McpClientInfo.Scope.Project)?.projectPath ?: return null
-    //return mapOf(IJ_MCP_SERVER_PROJECT_PATH to projectPath)
+    return expectedToken(inStdioConfig = false)?.let { mapOf(IJ_MCP_AUTH_TOKEN to it) }
   }
 
-  private fun isPortMatching(serverConfig: ExistingConfig, targetPort: Int): Boolean {
+  /**
+   * Whether [serverConfig] reaches this IDE: the port matches, a global configuration carries the current token,
+   * and a project URL configuration carries the token placeholder. A project stdio configuration carries no token.
+   * A configuration that an earlier IDE version wrote has no token, so it does not match.
+   */
+  private fun reachesThisIde(serverConfig: ExistingConfig, targetPort: Int): Boolean {
     serverConfig.url?.let { url ->
-      val parsed = parseServerUrl(url) ?: return false
-      return parsed.path in STREAM_PATHS && hostMatchesCurrent(parsed.host) && parsed.port == targetPort
+      (val host, val port, val path) = parseServerUrl(url) ?: return false
+      return path in STREAM_PATHS && hostMatchesCurrent(host) && port == targetPort && carriesExpectedToken(serverConfig)
     }
 
     if (serverConfig.command?.contains("java") == true &&
         serverConfig.env?.containsKey(::IJ_MCP_SERVER_PORT.name) == true &&
         serverConfig.args?.contains(::main.javaMethod!!.declaringClass.name) == true) {
       val configuredPort = serverConfig.env[::IJ_MCP_SERVER_PORT.name]?.toIntOrNull()
-      return configuredPort == targetPort
+      return configuredPort == targetPort && serverConfig.env[IJ_MCP_AUTH_TOKEN] == expectedToken(inStdioConfig = true)
     }
     return true
+  }
+
+  /**
+   * Whether the URL configuration [serverConfig] carries the token that this client expects in its headers.
+   * A client that gets the token another way overrides it.
+   */
+  protected open fun carriesExpectedToken(serverConfig: ExistingConfig): Boolean =
+    serverConfig.headers?.get(IJ_MCP_AUTH_TOKEN) == expectedToken(inStdioConfig = false)
+
+  /**
+   * The token that a configuration of this client carries: the current token in the global scope,
+   * [projectScopeTokenPlaceholder] in a project URL configuration, and nothing in a project stdio configuration.
+   */
+  private fun expectedToken(inStdioConfig: Boolean): String? = when {
+    mcpClientInfo.scope is McpClientInfo.McpClientScope.McpClientGlobalScope -> McpServerService.getInstance().getGlobalAuthToken().second
+    inStdioConfig -> null
+    else -> projectScopeTokenPlaceholder
   }
 
   private fun promotionCandidateServers(expectedPort: Int): List<ExistingConfig> {
