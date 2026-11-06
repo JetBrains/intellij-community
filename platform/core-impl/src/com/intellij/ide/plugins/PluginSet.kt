@@ -132,6 +132,24 @@ class PluginSet internal constructor(
     return result
   }
 
+  @Volatile
+  private var descriptorsRequiredForEssentialPlugins: Set<PluginMainDescriptor>? = null
+
+  /**
+   * Returns the set of main descriptors required by essential plugins, computing it with [compute] on first use and
+   * caching it for this [PluginSet]. A [PluginSet] is immutable and is replaced when plugins load or unload, so the
+   * cache is discarded together with the old instance and needs no separate invalidation.
+   * See [PluginManagerCore.isRequiredForEssentialPlugin].
+   */
+  internal fun getOrComputeDescriptorsRequiredForEssentialPlugins(
+    compute: () -> Set<PluginMainDescriptor>,
+  ): Set<PluginMainDescriptor> {
+    descriptorsRequiredForEssentialPlugins?.let { return it }
+    return synchronized(this) {
+      descriptorsRequiredForEssentialPlugins ?: compute().also { descriptorsRequiredForEssentialPlugins = it }
+    }
+  }
+
   fun getModulesOrderedForClassLoaderConfiguration(): Sequence<PluginModuleDescriptor> {
     return resolvedPluginSet.runtimeModuleGroupGraph.sortedGroups.asSequence()
       .flatMap { it.sortedDescriptors }.filterIsInstance<PluginModuleDescriptor>()

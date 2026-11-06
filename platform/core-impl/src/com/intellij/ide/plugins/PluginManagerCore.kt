@@ -34,6 +34,8 @@ import java.lang.ref.WeakReference
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Collections
+import java.util.IdentityHashMap
 import java.util.concurrent.CompletableFuture
 import kotlin.io.path.name
 
@@ -549,27 +551,33 @@ object PluginManagerCore {
    */
   @ApiStatus.Internal
   fun isRequiredForEssentialPlugin(pluginDescriptor: PluginMainDescriptor): Boolean {
-    // FIXME id map building should be lifted out (likewise in other methods too)
-    //  this method should actually be an extension on ActivePluginSet or something
-    val initContext = PluginInitContextFactory.getInstance().createActualContext()
-    val pluginIdMap = buildPluginIdMap()
-    val contentModuleIdMap = getPluginSet().buildContentModuleIdMap()
-    for (essentialPluginId in initContext.essentialPlugins) {
-      val essentialPlugin = pluginIdMap[essentialPluginId] ?: continue
-      val isRequiredDependency = !processAllNonOptionalDependencies(essentialPlugin, pluginIdMap, contentModuleIdMap) { dependency ->
-        if (dependency.getMainDescriptor() === pluginDescriptor) {
-          logger.debug { "Plugin ${pluginDescriptor.pluginId} is required for essential plugin $essentialPluginId" }
-          FileVisitResult.TERMINATE
-        }
-        else {
+    return pluginDescriptor in getDescriptorsRequiredForEssentialPlugins()
+  }
+
+  /**
+   * The main descriptors that are a non-optional (transitive) dependency of some essential plugin. The answer is the
+   * same for every plugin in a given [PluginSet], so it is computed once and cached on the [PluginSet] instance, which
+   * is replaced when plugins load or unload. This lifts the per-plugin rebuild of the id maps and the walk of the
+   * essential plugins' dependencies out of [isRequiredForEssentialPlugin], as its former
+   * `FIXME id map building should be lifted out` asked for.
+   */
+  private fun getDescriptorsRequiredForEssentialPlugins(): Set<PluginMainDescriptor> {
+    val pluginSet = getPluginSet()
+    return pluginSet.getOrComputeDescriptorsRequiredForEssentialPlugins {
+      val initContext = PluginInitContextFactory.getInstance().createActualContext()
+      val pluginIdMap = buildPluginIdMap()
+      val contentModuleIdMap = pluginSet.buildContentModuleIdMap()
+      // Identity set so membership matches the previous `===` check exactly, independent of equals/hashCode.
+      val required = Collections.newSetFromMap(IdentityHashMap<PluginMainDescriptor, Boolean>())
+      for (essentialPluginId in initContext.essentialPlugins) {
+        val essentialPlugin = pluginIdMap[essentialPluginId] ?: continue
+        processAllNonOptionalDependencies(essentialPlugin, pluginIdMap, contentModuleIdMap) { dependency ->
+          required.add(dependency.getMainDescriptor())
           FileVisitResult.CONTINUE
         }
       }
-      if (isRequiredDependency) {
-        return true
-      }
+      required
     }
-    return false
   }
 
   @ApiStatus.Internal
