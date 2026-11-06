@@ -329,6 +329,7 @@ class ProductPluginInitContext(
           }
           if ((depends.pluginId == PLATFORM_PLUGIN_ALIAS_ID || depends.pluginId == LANG_PLUGIN_ALIAS_ID) && remainingCandidates.resolvePluginId(depends.pluginId) != null) {
             yieldPlatformAliasCompatibilityDependencies()
+            break
           }
         }
 
