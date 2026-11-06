@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.tabs.utils
 
-import com.intellij.ide.actions.bigPopup.ShowFilterAction
 import com.intellij.platform.searchEverywhere.SeFilter
 import com.intellij.platform.searchEverywhere.SeFilterState
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
@@ -20,8 +19,4 @@ abstract class SeFilterEditorBase<T : SeFilter>(initialFilter: T) : SeFilterEdit
 
   private val _resultFlow: MutableStateFlow<SeFilterState> = MutableStateFlow(initialFilter.toState())
   override val resultFlow: StateFlow<SeFilterState> = _resultFlow.asStateFlow()
-
-  override fun closeFilterPopup() {
-    getHeaderActions().filterIsInstance<ShowFilterAction>().forEach { it.closeFilterPopup() }
-  }
 }

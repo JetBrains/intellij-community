@@ -3,6 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.vm
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SearchTopHitProvider.Companion.getTopHitAccelerator
+import com.intellij.ide.actions.bigPopup.ShowFilterAction
 import com.intellij.ide.actions.searcheverywhere.HistoryIterator
 import com.intellij.ide.actions.searcheverywhere.PREVIEW_ACTION_ID
 import com.intellij.ide.actions.searcheverywhere.PreviewExperiment
@@ -315,7 +316,9 @@ class SePopupVm(
     SeLog.log(SeLog.PATTERN) { "SePopupVm: setting text: ['$text']" }
     _searchPattern.value = text
     coroutineScope.launch(Dispatchers.UI) {
-      currentTab.filterEditor.getValue()?.closeFilterPopup()
+      currentTab.filterEditor.getValue()?.getHeaderActions()?.filterIsInstance<ShowFilterAction>()?.forEach {
+        it.closeFilterPopup()
+      }
     }
   }
 
