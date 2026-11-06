@@ -334,7 +334,10 @@ class SuggestedRefactoringChangeListener(
           }
         }
         is SignatureUpdate.NextSignature -> {
-          if (!editingState.isRefactoringSuppressed) {
+          if (!update.anchor.isValid) {
+            reset()
+          }
+          else if (!editingState.isRefactoringSuppressed) {
             SlowOperations.knownIssue("IDEA-322957, EA-765399").use {
               watcher.nextSignature(update.anchor, update.refactoringSupport)
             }
