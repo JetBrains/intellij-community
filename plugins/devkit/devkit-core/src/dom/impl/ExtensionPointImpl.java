@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -40,7 +40,8 @@ public abstract class ExtensionPointImpl implements ExtensionPoint {
     "implementationClass", "implementation", "instance",
     "factoryClass", // ToolWindowEP
     "extenderClass", // DomExtenderEP
-    "className" // ChangesViewContentEP
+    "className", // ChangesViewContentEP
+    "serviceImplementation" // HLanguageServiceEP
   );
 
   @Override
