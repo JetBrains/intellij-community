@@ -3,6 +3,7 @@ package com.intellij.psi.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -68,10 +69,12 @@ internal class PsiDocumentManagerIsCommittedPerformanceTest {
   }
 
   private fun documentWithPsi(file: VirtualFile): Document {
-    assertNotNull(PsiManager.getInstance(project).findFile(file))
-    val document = FileDocumentManager.getInstance().getDocument(file)
-    assertNotNull(document)
-    return document
+    return ReadAction.computeBlocking<Document, Exception> {
+      assertNotNull(PsiManager.getInstance(project).findFile(file))
+      val document = FileDocumentManager.getInstance().getDocument(file)
+      assertNotNull(document)
+      document
+    }
   }
 
   private fun benchmark(name: String, committed: Document) {
