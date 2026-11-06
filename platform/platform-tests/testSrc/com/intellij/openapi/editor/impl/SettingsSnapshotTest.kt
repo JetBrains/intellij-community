@@ -3,21 +3,27 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorSettings.CaretEasing
 import com.intellij.openapi.editor.EditorSettings.LineNumerationType
 import com.intellij.openapi.editor.actions.CaretStopOptions
 import com.intellij.openapi.editor.actions.CaretStopPolicy
 import com.intellij.openapi.editor.ex.BidiTextDirection
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.state.ObservableStateListener
 import com.intellij.openapi.editor.state.TransferableProperty
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.util.xmlb.XmlSerializerUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
@@ -240,6 +246,71 @@ class SettingsSnapshotTest {
   }
 
   /**
+   * In unit-test mode, the inputs compute at once.
+   */
+  @Test
+  fun testEachInputResultPublishesOneSnapshot(): Unit = fixture.runTest {
+    assertEachInputResultPublishesOneSnapshot()
+  }
+
+  /**
+   * In production, each input computes in the background, and its result comes in a later EDT event.
+   */
+  @Test
+  fun testEachBackgroundInputResultPublishesOneSnapshot(): Unit = fixture.runTest {
+    EditorSettingsState.computeInputsInBackgroundInTests(testRootDisposable)
+    assertEachInputResultPublishesOneSnapshot()
+  }
+
+  /**
+   * Column mode shows the virtual space and the caret inside tabs, so a change of the mode changes both in one snapshot.
+   */
+  @Test
+  fun testAColumnModeChangePublishesOneSnapshot(): Unit = fixture.runTest {
+    initText("abc")
+    val editorImpl = editor as EditorImpl
+    val settings = editorImpl.settings as SettingsImpl
+    val state = settings.getState()
+    settings.isVirtualSpace = false
+    settings.isCaretInsideTabs = false
+    val snapshots = recordSnapshots(settings, testRootDisposable)
+    try {
+      editorImpl.isColumnMode = true
+      val published = requireNotNull(snapshots[state::myIsVirtualSpace.name])
+      assertSame(published, snapshots[state::myIsCaretInsideTabs.name])
+      assertTrue(published.isVirtualSpace())
+      assertTrue(published.isCaretInsideTabs())
+    } finally {
+      editorImpl.isColumnMode = false
+    }
+  }
+
+  /**
+   * A reload of the stored options refreshes all the properties in one snapshot.
+   */
+  @Test
+  fun testAReloadPublishesOneSnapshot(): Unit = fixture.runTest {
+    initText("abc")
+    val settings = editor.settings as SettingsImpl
+    val state = settings.getState()
+    val snapshots = recordSnapshots(settings, testRootDisposable)
+    val global = EditorSettingsExternalizable.getInstance()
+    val original = XmlSerializerUtil.createCopy(global.state)
+    val reloaded = XmlSerializerUtil.createCopy(global.state)
+    reloaded.ARE_LINE_NUMBERS_SHOWN = !original.ARE_LINE_NUMBERS_SHOWN
+    reloaded.IS_FOLDING_ENDINGS_SHOWN = !original.IS_FOLDING_ENDINGS_SHOWN
+    try {
+      loadOnAPooledThread(global, reloaded)
+      val published = requireNotNull(snapshots[state::myAreLineNumbersShown.name])
+      assertSame(published, snapshots[state::foldingEndingsShown.name])
+      assertEquals(reloaded.ARE_LINE_NUMBERS_SHOWN, published.isLineNumbersShown())
+      assertEquals(reloaded.IS_FOLDING_ENDINGS_SHOWN, published.isFoldingEndingsShown())
+    } finally {
+      loadOnAPooledThread(global, original)
+    }
+  }
+
+  /**
    * A reset changes the value back to the global setting, so it must publish a new snapshot too.
    */
   @Test
@@ -314,6 +385,75 @@ class SettingsSnapshotTest {
     assertNotSame(before, after)
     assertEquals(original, before.isLineNumbersShown())
     assertEquals(!original, after.isLineNumbersShown())
+  }
+
+  /**
+   * Changes the indent values and the margins of the code style. The result of each input changes two properties, and
+   * both events must see one snapshot with both new values.
+   */
+  private fun EditorModelFixture.assertEachInputResultPublishesOneSnapshot() {
+    val editorFactory = EditorFactory.getInstance()
+    val created = editorFactory.createEditor(editorFactory.createDocument("abc"), project)
+    try {
+      val settings = created.settings as SettingsImpl
+      val state = settings.getState()
+      val snapshots = recordSnapshots(settings, testRootDisposable)
+      val tabSize = state.tabSize + 3
+      val useTabCharacter = !state.myUseTabCharacter
+      val rightMargin = state.rightMargin + 7
+      val wrapOnTyping = !state.myWrapWhenTypingReachesRightMargin
+      val manager = CodeStyleSettingsManager.getInstance(project)
+      val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
+      temporary.indentOptions.TAB_SIZE = tabSize
+      temporary.indentOptions.USE_TAB_CHARACTER = useTabCharacter
+      temporary.defaultRightMargin = rightMargin
+      temporary.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = wrapOnTyping
+
+      CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
+        manager.fireCodeStyleSettingsChanged()
+        PlatformTestUtil.waitWithEventsDispatching(
+          "The input results did not reach the state",
+          { state.tabSize == tabSize && state.rightMargin == rightMargin },
+          TIMEOUT_SECONDS.toInt(),
+        )
+      })
+
+      val indentSnapshot = requireNotNull(snapshots[state::tabSize.name])
+      assertSame(indentSnapshot, snapshots[state::myUseTabCharacter.name])
+      assertEquals(tabSize, indentSnapshot.getTabSize())
+      assertEquals(useTabCharacter, indentSnapshot.isUseTabCharacter())
+      val marginsSnapshot = requireNotNull(snapshots[state::rightMargin.name])
+      assertSame(marginsSnapshot, snapshots[state::myWrapWhenTypingReachesRightMargin.name])
+      assertEquals(rightMargin, marginsSnapshot.getRightMargin())
+      assertEquals(wrapOnTyping, marginsSnapshot.isWrapWhenTypingReachesRightMargin())
+    }
+    finally {
+      editorFactory.releaseEditor(created)
+    }
+  }
+
+  /**
+   * Records the snapshot that each value event of [settings] sees, by the property name. The listener comes after the
+   * listener of [settings], so it sees the snapshot that [settings] published for the event.
+   */
+  private fun recordSnapshots(settings: SettingsImpl, disposable: Disposable): Map<String, SettingsSnapshot> {
+    val snapshots = HashMap<String, SettingsSnapshot>()
+    settings.getState().addPropertyChangeListener(object : ObservableStateListener {
+      override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
+        snapshots[event.propertyName] = settings.getSnapshot()
+      }
+    }, disposable)
+    return snapshots
+  }
+
+  /**
+   * Loads [options] on a pooled thread, as a reload of the stored settings can do, and then runs the events on the EDT.
+   */
+  private fun loadOnAPooledThread(global: EditorSettingsExternalizable, options: EditorSettingsExternalizable.OptionSet) {
+    ApplicationManager.getApplication().executeOnPooledThread {
+      global.loadState(options)
+    }.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
 
   /**

@@ -9,6 +9,7 @@ import kotlinx.serialization.serializer
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -28,7 +29,7 @@ fun <T : ObservableState> T.init(): T {
  * A setter stores an override, and the value then stays fixed until [clearOverriding]. Without an override, the
  * property holds the result of its [SyncDefaultValueCalculator], and [refresh] or [refreshAll] runs the calculator
  * again. A [CustomOutValueModifier] can change the value in both cases. Each change of a value notifies the listeners
- * of [addPropertyChangeListener].
+ * of [addPropertyChangeListener], at once or at the end of a [batch].
  *
  * A subclass declares each property with `by property(...)`. An initial value is only a placeholder, so the owner of
  * the state must call [refreshAll] after the construction.
@@ -44,6 +45,17 @@ abstract class ObservableState {
   private val propertiesByName: HashMap<String, StateProperty<Any>> = HashMap()
 
   private var dispatcher: EventDispatcher<ObservableStateListener>? = null
+
+  /**
+   * The number of changes of a value or of an override. Each change counts at once, also inside [batch].
+   */
+  @Volatile private var modificationCount: Long = 0
+
+  /**
+   * The events of the open [batch], in their order, or `null` outside a batch. Only the thread that changes the state
+   * uses it.
+   */
+  private var batchEvents: MutableList<() -> Unit>? = null
 
   /**
    * A property whose initial value comes from [defaultValueCalculator].
@@ -111,13 +123,45 @@ abstract class ObservableState {
   }
 
   /**
-   * Runs the calculator of each property without an override. Call it after the construction, and after a change of a
-   * source that no listener reports.
+   * Runs the calculator of each property without an override, in one [batch]. Call it after the construction, and after
+   * a change of a source that no listener reports.
    */
   fun refreshAll() {
-    for (property in properties) {
-      property.recalculate(this)
+    batch {
+      for (property in properties) {
+        property.recalculate(this)
+      }
     }
+  }
+
+  /**
+   * Runs [action], and then gives its events to the listeners, in their order. So each listener sees all the values that
+   * [action] changes. A nested call gives its events at the end of the outermost call. The events also come when
+   * [action] fails.
+   */
+  fun batch(action: () -> Unit) {
+    if (batchEvents != null) {
+      action()
+      return
+    }
+    val events = ArrayList<() -> Unit>()
+    batchEvents = events
+    try {
+      action()
+    } finally {
+      batchEvents = null
+      for (event in events) {
+        event()
+      }
+    }
+  }
+
+  /**
+   * The number of changes of a value or of an override so far. A reader that reads this number before the values knows
+   * that the values include each counted change.
+   */
+  fun getModificationCount(): Long {
+    return modificationCount
   }
 
   /**
@@ -163,9 +207,10 @@ abstract class ObservableState {
    * Notifies the listeners that the value of [propertyName] changed. A property of this state calls it.
    */
   fun propertyChanged(propertyName: String?, oldValueRef: Ref<Any?>?, newValue: Any?) {
+    MODIFICATION_COUNT_UPDATER.incrementAndGet(this)
     if (propertyName != null) {
       val event = ObservableStateListener.PropertyChangeEvent(this, propertyName, oldValueRef, newValue)
-      dispatcher?.multicaster?.propertyChanged(event)
+      deliver { dispatcher?.multicaster?.propertyChanged(event) }
     }
   }
 
@@ -173,8 +218,21 @@ abstract class ObservableState {
    * Tells the listeners that the property with [propertyName] got an override, or that it lost its override.
    */
   fun overridingChanged(propertyName: String?) {
+    MODIFICATION_COUNT_UPDATER.incrementAndGet(this)
     if (propertyName != null) {
-      dispatcher?.multicaster?.overridingChanged(this, propertyName)
+      deliver { dispatcher?.multicaster?.overridingChanged(this, propertyName) }
+    }
+  }
+
+  /**
+   * Gives [event] to the listeners at once, or at the end of the open [batch].
+   */
+  private fun deliver(event: () -> Unit) {
+    val events = batchEvents
+    if (events == null) {
+      event()
+    } else {
+      events.add(event)
     }
   }
 
@@ -258,6 +316,12 @@ abstract class ObservableState {
     }
 
     return Modifier.isAbstract(javaClass.modifiers)
+  }
+
+  private companion object {
+    @JvmStatic
+    private val MODIFICATION_COUNT_UPDATER: AtomicLongFieldUpdater<ObservableState> =
+      AtomicLongFieldUpdater.newUpdater(ObservableState::class.java, "modificationCount")
   }
 }
 

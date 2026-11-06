@@ -97,6 +97,8 @@ class SettingsSnapshot private constructor(
   private val tabCharacterOverridden: Boolean,
   private val tabSize: Int,
   private val tabSizeOverridden: Boolean,
+
+  private val stateModificationCount: Long,
 ) {
   fun isLineNumbersShown(): Boolean = lineNumbersShown
   fun isLineNumbersAfterIcons(): Boolean = lineNumbersAfterIcons
@@ -176,11 +178,15 @@ class SettingsSnapshot private constructor(
   fun getTabSize(): Int = tabSize
   fun isTabSizeOverridden(): Boolean = tabSizeOverridden
 
+  internal fun stateModificationCount(): Long = stateModificationCount
+
   companion object {
     /**
-     * Reads the current values of [state].
+     * Reads the current values of [state], and the modification count of [state] before them. A change during the read
+     * thus leaves the count of the snapshot behind the count of the state, and the next publication reads again.
      */
     internal fun read(state: EditorSettingsState): SettingsSnapshot {
+      val modificationCount = state.getModificationCount()
       return SettingsSnapshot(
         lineNumbersShown = state.myAreLineNumbersShown,
         lineNumbersAfterIcons = state.myAreLineNumbersAfterIcons,
@@ -260,6 +266,8 @@ class SettingsSnapshot private constructor(
         tabCharacterOverridden = state.isOverridden(state::myUseTabCharacter),
         tabSize = state.tabSize,
         tabSizeOverridden = state.isOverridden(state::tabSize),
+
+        stateModificationCount = modificationCount,
       )
     }
   }

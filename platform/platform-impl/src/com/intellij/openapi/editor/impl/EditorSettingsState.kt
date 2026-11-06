@@ -304,8 +304,10 @@ class EditorSettingsState(
         override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
           when (event.propertyName) {
             EditorState::isColumnMode.name -> {
-              refresh(::myIsVirtualSpace)
-              refresh(::myIsCaretInsideTabs)
+              batch {
+                refresh(::myIsVirtualSpace)
+                refresh(::myIsCaretInsideTabs)
+              }
             }
             // A viewer takes its tab size from the file type, and it stores no options on the document.
             EditorState::isViewer.name, EditorState::isRendererMode.name -> {
@@ -392,11 +394,18 @@ class EditorSettingsState(
     }
   }
 
+  /**
+   * Stores [newMargins], and refreshes the properties that read them in one batch. The right margin decides whether the
+   * margin is shown, so the batch also refreshes [myIsRightMarginShown].
+   */
   private fun updateMargins(newMargins: Margins) {
     margins = newMargins
-    refresh(::myWrapWhenTypingReachesRightMargin)
-    refresh(::softMargins)
-    refresh(::rightMargin)
+    batch {
+      refresh(::myWrapWhenTypingReachesRightMargin)
+      refresh(::softMargins)
+      refresh(::rightMargin)
+      refresh(::myIsRightMarginShown)
+    }
   }
 
   /**
@@ -442,8 +451,8 @@ class EditorSettingsState(
   }
 
   /**
-   * Stores [newFileIndent], and refreshes the two properties that read it. An editor that is not a viewer also stores
-   * the per-file options on its document.
+   * Stores [newFileIndent], and refreshes the two properties that read it in one batch. An editor that is not a viewer
+   * also stores the per-file options on its document.
    */
   private fun updateFileIndent(newFileIndent: FileIndent) {
     val fileOptions = newFileIndent.fileOptions
@@ -451,9 +460,10 @@ class EditorSettingsState(
       fileOptions.associateWithDocument(editor.document)
     }
     fileIndent = newFileIndent
-    // The tab size event refreshes the editor, so the tab character must have its new value before that event.
-    refresh(::myUseTabCharacter)
-    refresh(::tabSize)
+    batch {
+      refresh(::myUseTabCharacter)
+      refresh(::tabSize)
+    }
   }
 
   /**
