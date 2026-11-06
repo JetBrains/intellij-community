@@ -12,6 +12,7 @@ import org.intellij.images.scientific.utils.ImageTransformationData
 import org.intellij.images.scientific.utils.ImageTransformationData.Companion.ORIGINAL_IMAGE_KEY
 import org.intellij.images.scientific.utils.ScientificUtils
 import org.intellij.images.scientific.utils.launchBackground
+import kotlinx.coroutines.Job
 import java.awt.image.BufferedImage
 
 abstract class BaseImageAction : DumbAwareAction() {
@@ -19,7 +20,10 @@ abstract class BaseImageAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val imageFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-    e.presentation.isEnabledAndVisible = imageFile != null && imageFile.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null && isActionEnabled(imageFile)
+    e.presentation.isEnabledAndVisible = imageFile?.getUserData(ScientificUtils.SCIENTIFIC_MODE_KEY) != null &&
+                                         imageFile.getUserData(ORIGINAL_IMAGE_KEY) != null &&
+                                         e.getData(ImageDocument.IMAGE_DOCUMENT_DATA_KEY)?.value != null &&
+                                         isActionEnabled(imageFile)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -27,13 +31,14 @@ abstract class BaseImageAction : DumbAwareAction() {
     val originalImage = imageFile.getUserData(ORIGINAL_IMAGE_KEY) ?: return
     val document = e.getData(ImageDocument.IMAGE_DOCUMENT_DATA_KEY) ?: return
     val currentImage = document.value ?: return
-    launchBackground {
+    imageFile.getUserData(TRANSFORMATION_JOB_KEY)?.cancel()
+    imageFile.putUserData(TRANSFORMATION_JOB_KEY, launchBackground {
       val resultImage = performImageTransformation(originalImage, currentImage, imageFile, ImageTransformationData.getInstance(imageFile))
       if (resultImage != null) {
         ScientificUtils.saveImageToFile(imageFile, resultImage)
         document.value = resultImage
       }
-    }
+    })
   }
 
   protected abstract suspend fun performImageTransformation(originalImage: BufferedImage, currentImage: BufferedImage, imageFile: VirtualFile, transformationData: ImageTransformationData): BufferedImage?
@@ -42,3 +47,5 @@ abstract class BaseImageAction : DumbAwareAction() {
 }
 
 internal val CURRENT_OPERATION_MODE_KEY: Key<ImageOperationMode> = Key("CURRENT_OPERATION_MODE")
+
+private val TRANSFORMATION_JOB_KEY: Key<Job> = Key("SCIENTIFIC_IMAGE_TRANSFORMATION_JOB")

@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.scientific.utils
 
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeBytes
@@ -17,10 +20,17 @@ object ScientificUtils {
   val DATA_TYPE_KEY: Key<String> = Key("DATA_TYPE")
   const val DEFAULT_IMAGE_FORMAT: String = "png"
 
-  internal suspend fun saveImageToFile(imageFile: VirtualFile, image: BufferedImage) = withContext(Dispatchers.IO) {
-    ByteArrayOutputStream().use { outputStream ->
-      ImageIO.write(image, DEFAULT_IMAGE_FORMAT, outputStream)
-      imageFile.writeBytes(outputStream.toByteArray())
+  internal suspend fun saveImageToFile(imageFile: VirtualFile, image: BufferedImage) {
+    val bytes = withContext(Dispatchers.IO) {
+      ByteArrayOutputStream().use { outputStream ->
+        ImageIO.write(image, DEFAULT_IMAGE_FORMAT, outputStream)
+        outputStream.toByteArray()
+      }
+    }
+    withContext(ModalityState.any().asContextElement()) {
+      edtWriteAction {
+        imageFile.writeBytes(bytes)
+      }
     }
   }
 
