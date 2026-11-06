@@ -211,6 +211,8 @@ internal class OhosDistributionBuilder(
 
       // there is no splash window on OHOS; overrides -Dsplash=true from product-info.json
       "-Dnosplash=true",
+      // Skiko has no OHOS natives, so the IDE must not preload them
+      "-Dskiko.preload.native.lib=false",
       "-Dsun.awt.disablegrab=true",
       "-Dapple.laf.useScreenMenuBar=true",
       "-DjbScreenMenuBar.enabled=true",
