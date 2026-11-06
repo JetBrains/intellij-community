@@ -815,8 +815,7 @@ open class ExecutionManagerImpl(private val project: Project, coroutineScope: Co
               environment.executor.id, environment.runner.runnerId)
             inProgress.update { it + inProgressEntry }
             AppExecutorUtil.getAppExecutorService().execute {
-              // RunTab reads RunnerLayoutSettings on the EDT; create it here, outside the read action
-              RunnerLayoutSettings.getInstance()
+              createServicesOfRunStart(environment)
               ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
                 .finishOnUiThread(ModalityState.nonModal()) { canRun ->
                   inProgress.update { it - inProgressEntry }
@@ -1050,6 +1049,16 @@ fun RunnerAndConfigurationSettings.isOfSameType(runnerAndConfigurationSettings: 
     return true
   }
   return false
+}
+
+/**
+ * Creates the state services that the run start reads on the EDT, outside a read action.
+ * The services are [RunnerLayoutSettings] for the run tab, and the run dashboard manager for [triggerUsage].
+ */
+private fun createServicesOfRunStart(environment: ExecutionEnvironment) {
+  RunnerLayoutSettings.getInstance()
+  val runConfiguration = environment.runnerAndConfigurationSettings?.configuration ?: return
+  RunContentManagerExtension.isShownInServicesIfAvailable(environment.project, runConfiguration)
 }
 
 private fun triggerUsage(environment: ExecutionEnvironment): StructuredIdeActivity? {
