@@ -16,19 +16,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDirectory;
@@ -55,7 +50,6 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
@@ -95,7 +89,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import javax.swing.JComponent;
 import java.io.IOException;
@@ -1086,88 +1079,6 @@ public final class PyUtil {
       }
     }
     return selfName;
-  }
-
-  @RequiresEdt
-  public static void addSourceRoots(@NotNull Module module, @NotNull Collection<VirtualFile> roots) {
-    if (roots.isEmpty()) {
-      return;
-    }
-
-    ApplicationManager.getApplication().runWriteAction(
-      () -> {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        for (VirtualFile root : roots) {
-          for (ContentEntry entry : model.getContentEntries()) {
-            final VirtualFile file = entry.getFile();
-            if (file != null && VfsUtilCore.isAncestor(file, root, true)) {
-              entry.addSourceFolder(root.getUrl(), JavaSourceRootType.SOURCE, true);
-            }
-          }
-        }
-        model.commit();
-      }
-    );
-  }
-
-  @RequiresEdt
-  public static void addModuleDependencies(@NotNull Module module, @NotNull Collection<Module> dependencies) {
-    if (dependencies.isEmpty()) {
-      return;
-    }
-
-    ApplicationManager.getApplication().runWriteAction(
-      () -> {
-        ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        for (Module dependency : dependencies) {
-          if (dependency != module && model.findModuleOrderEntry(dependency) == null) {
-            model.addModuleOrderEntry(dependency);
-          }
-        }
-        model.commit();
-      }
-    );
-  }
-
-  @RequiresEdt
-  public static void removeSourceRoots(@NotNull Module module, @NotNull Collection<VirtualFile> roots) {
-    if (roots.isEmpty()) {
-      return;
-    }
-
-    ApplicationManager.getApplication().runWriteAction(
-      () -> {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        for (ContentEntry entry : model.getContentEntries()) {
-          for (SourceFolder folder : entry.getSourceFolders()) {
-            if (roots.contains(folder.getFile())) {
-              entry.removeSourceFolder(folder);
-            }
-          }
-        }
-        model.commit();
-      }
-    );
-  }
-
-  @RequiresEdt
-  public static void removeModuleDependencies(@NotNull Module module, @NotNull Collection<Module> dependencies) {
-    if (dependencies.isEmpty()) {
-      return;
-    }
-
-    ApplicationManager.getApplication().runWriteAction(
-      () -> {
-        final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-        for (Module dependency : dependencies) {
-          ModuleOrderEntry moduleOrderEntry = model.findModuleOrderEntry(dependency);
-          if (moduleOrderEntry != null) {
-            model.removeOrderEntry(moduleOrderEntry);
-          }
-        }
-        model.commit();
-      }
-    );
   }
 
   /**

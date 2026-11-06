@@ -1,19 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.ide.projectView.actions.MarkRootsManager
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterResult
 import com.intellij.python.sdk.backend.remoteSourcesLocalPath
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
@@ -66,19 +61,6 @@ val Project.pythonSdk: Sdk?
   @Deprecated("An interpreter belongs to a Python project. Use the interpreter of the PyProject.")
   @Suppress("DEPRECATION") // It still answers an SDK.
   get() = mainPythonInterpreterIfReady()?.getSdkAPI()
-
-@Internal
-fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
-  val root = sdk.pythonInterpreterResult().successOrNull?.detectedEnvironment?.pythonHomePath?.let {
-    VirtualFileManager.getInstance().findFileByNioPath(it)
-  } ?: return
-
-  runInEdt {
-    MarkRootsManager.modifyRoots(this, arrayOf(root)) { vFile, entry ->
-      entry.addExcludeFolder(vFile)
-    }
-  }
-}
 
 internal fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
   val binary = sdk.homeDirectory ?: return

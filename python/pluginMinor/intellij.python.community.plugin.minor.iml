@@ -19,5 +19,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.python.community.core.impl" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" />
   </component>
 </module>

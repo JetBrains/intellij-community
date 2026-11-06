@@ -251,8 +251,6 @@
   </projectListeners>
 
   <applicationListeners>
-    <listener class="com.jetbrains.python.sdk.PySdkTransferredRootsListener"
-              topic="com.jetbrains.python.sdk.PySdkListener"/>
     <listener class="com.jetbrains.python.formatter.PyNewFormatterDefaultsReformatListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
@@ -745,8 +743,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">
-    <interpreterUpdateStep id="sdkLegacySourceRoots" order="after probe" implementation="com.jetbrains.python.sdk.PythonSdkLegacySourceRootsStep"/>
-    <interpreterUpdateStep id="sdkSources" order="after sdkLegacySourceRoots, before environmentBackground" implementation="com.jetbrains.python.sdk.PythonSdkSourcesStep"/>
+    <interpreterUpdateStep id="sdkSources" order="after probe, before environmentBackground" implementation="com.jetbrains.python.sdk.PythonSdkSourcesStep"/>
     <environmentUpdateStep id="skeletons" order="after probe" implementation="com.jetbrains.python.sdk.PythonEnvironmentSkeletonsStep"/>
     <interpreterUpdateStep id="sdkSkeletonsFailure" order="after environmentBackground" implementation="com.jetbrains.python.sdk.PythonSdkSkeletonsFailureStep"/>
     <interpreterUpdateStep id="sdkPackages" order="after sdkSkeletonsFailure" implementation="com.jetbrains.python.sdk.PythonSdkPackagesStep"/>

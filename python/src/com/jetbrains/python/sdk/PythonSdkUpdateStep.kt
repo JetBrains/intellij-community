@@ -14,27 +14,23 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsContexts.NotificationTitle
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.python.sdk.backend.PythonEnvironmentContext
 import com.intellij.python.sdk.backend.PythonEnvironmentFacts
 import com.intellij.python.sdk.backend.PythonEnvironmentKey
 import com.intellij.python.sdk.backend.PythonEnvironmentStep
 import com.intellij.python.sdk.backend.PythonEnvironments
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateStep
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.reloadPackagesBlocking
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException
-import com.jetbrains.python.sdk.impl.findSdkOwnerModuleAndRoots
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher
 import com.jetbrains.python.sdk.targetsFacade.PyTargetsIntrospectionFacade
@@ -44,51 +40,6 @@ import java.io.IOException
 
 // The steps of an interpreter update that this plugin gives, see PythonInterpreterUpdater. They run in the order of the
 // registration in the plugin descriptor.
-
-/**
- * Transfers the source roots that the facts of a local interpreter give in its owner module to that module. Only the
- * legacy flow does it: the interpreter library flow derives them from the interpreter, so no `.iml` stores them. It runs
- * after the probe, which gives the roots.
- */
-internal class PythonSdkLegacySourceRootsStep : PythonInterpreterUpdateStep {
-  override val awaited: Boolean get() = true
-
-  override suspend fun update(
-    project: Project,
-    interpreter: PythonInterpreter,
-    request: PythonInterpreterUpdateRequest,
-    failure: (PyError) -> Unit,
-  ): Boolean {
-    // A target interpreter gets its local roots after its skeletons, see [PythonEnvironmentSkeletonsStep].
-    if (!isInterpreterLibraryFlowEnabled() && !PythonSdkUtil.isRemote(interpreter.getSdkAPI())) {
-      coroutineToIndicator { transferSourceRoots(project, interpreter) }
-    }
-    return true
-  }
-
-  @RequiresBackgroundThread
-  private fun transferSourceRoots(project: Project, interpreter: PythonInterpreter) {
-    val sdk = interpreter.getSdkAPI()
-    // PY-86494: the owner module of the SDK, among the open projects. Only an open owner gets the transferred roots.
-    val [ownerModule, moduleRoots] = findSdkOwnerModuleAndRoots(sdk)
-    if (ownerModule == null) return
-    val sourceRoots = HashSet(PythonInterpreterRoots.getInstance(project).sourceRoots(interpreter))
-
-    if (Registry.`is`("python.detect.cross.module.dependencies")) {
-      updateTransferredRoots(ownerModule.project, sdk, sourceRoots)
-      return
-    }
-    // Presumably source and content roots that were configured manually by user, not set up automatically as "transferred"
-    sourceRoots.removeAll(moduleRoots - getPathsToTransfer(sdk))
-    if (sourceRoots == getPathsToTransfer(sdk)) return
-    // The owner gets the roots only while its Python project uses the SDK. The paths are recorded anyway: a new
-    // interpreter has its paths set up before the module gets it, and `PySdkTransferredRootsListener` transfers them then.
-    val ownerUsesSdk = ownerModule in awaitSnapshot(ownerModule.project).modulesUsing(sdk)
-    if (ownerUsesSdk) removeTransferredRoots(ownerModule, sdk)
-    setPathsToTransfer(sdk, sourceRoots)
-    if (ownerUsesSdk) transferRoots(ownerModule, sdk)
-  }
-}
 
 /** Synchronizes the sources of a target interpreter. It does nothing for a local interpreter. */
 internal class PythonSdkSourcesStep : PythonInterpreterUpdateStep {

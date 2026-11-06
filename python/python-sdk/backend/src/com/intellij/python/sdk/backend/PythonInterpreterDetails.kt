@@ -23,6 +23,8 @@ import com.intellij.platform.workspace.jps.entities.SdkEntity
 import com.intellij.python.community.helpersLocator.PythonBundledPyiStubsLocator
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.getPathsToTransfer
+import com.jetbrains.python.sdk.updateTransferredRoots
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.awaitClose
@@ -47,10 +49,11 @@ import java.nio.file.Path
  * The flow decides where the facts live, see [isInterpreterLibraryFlowEnabled]:
  * * the interpreter library flow keeps them in the record of the interpreter, see [PythonInterpreterRecords], which the
  *   project saves;
- * * the legacy flow keeps them in the SDK of the SDK table, in its own form: the version, the class roots that come from
- *   `sys.path` and the added paths, and the user paths in the SDK data. Its `sys.path` is the one its class roots state,
- *   see [sysPathOfRoots]. A write keeps the other class roots of the SDK, such as the skeletons: they are no facts, and
- *   [PythonInterpreterRoots] gives them.
+ * * the legacy flow keeps them in the SDK of the SDK table, in its own form: the version and the user paths in the SDK
+ *   data, the class roots that come from `sys.path`, and the paths of `sys.path` inside the owner module as the paths to
+ *   transfer to the module. Its `sys.path` is the one that these roots state, see [sysPathOfRoots]. A path of the module
+ *   is no class root of the SDK (PY-93817). A write keeps the other class roots of the SDK, such as the skeletons: they
+ *   are no facts, and [PythonInterpreterRoots] gives them.
  */
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
@@ -91,7 +94,7 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
    */
   fun writeFacts(interpreter: PythonInterpreter, facts: PythonInterpreterFacts): Boolean {
     val written = facts.withVersionOf(facts(interpreter))
-    val changed = if (isInterpreterLibraryFlowEnabled()) writeRecordFacts(interpreter, written) else writeSdkFacts(interpreter.sdk, written)
+    val changed = if (isInterpreterLibraryFlowEnabled()) writeRecordFacts(interpreter, written) else writeTableSdkFacts(interpreter, written)
     if (changed) {
       // The roots follow before the writer goes on, so a reader after the write sees them.
       PythonInterpreterRoots.getInstance(project).refresh(interpreter)
@@ -141,6 +144,24 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
   }
 
   /**
+   * Writes [facts] into the SDK of [interpreter] in the legacy flow, see [PythonInterpreterDetails]. The paths of the owner
+   * module become the paths to transfer, and the modules that use the SDK get them as source roots. A root that the owner
+   * module has from the user, such as its content root, is no path to transfer: a change of the SDK must not remove it.
+   * Returns whether a fact changed.
+   */
+  private fun writeTableSdkFacts(interpreter: PythonInterpreter, facts: PythonInterpreterFacts): Boolean {
+    val sdk = interpreter.sdk
+    val roots = PythonInterpreterRoots.getInstance(project)
+    val [modulePaths, libraryPaths] = roots.splitFactRootPaths(interpreter, facts)
+    val transferredBefore = getPathsToTransfer(sdk)
+    val ownerRoots = roots.ownerModuleRoots(interpreter).mapNotNullTo(HashSet(), ::toRoot)
+    val toTransfer = modulePaths.mapNotNull(::toRoot).filterTo(LinkedHashSet()) { it !in ownerRoots || it in transferredBefore }
+    val sdkChanged = writeSdkFacts(sdk, facts, libraryPaths.mapNotNull(::toRoot), toTransfer)
+    if (toTransfer != transferredBefore) updateTransferredRoots(project, sdk, transferredBefore, toTransfer)
+    return sdkChanged
+  }
+
+  /**
    * An event for each change of the SDK table and of an SDK in it, which the legacy flow reads. A commit of an SDK reports
    * no table event, only a change of its entity. Only the legacy flow follows it.
    */
@@ -178,7 +199,10 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
     fun writeLegacySdk(sdk: Sdk, version: String?, sysPath: List<String>): Boolean {
       if (isInterpreterLibraryFlowEnabled()) return false
       val facts = sdkFacts(sdk).let { it.copy(version = version ?: it.version, sysPath = sysPath.distinct().mapNotNull(::toPathOrNull)) }
-      return writeSdkFacts(sdk, facts)
+      // No project gives the owner module. The paths to transfer stay, and every other path of the facts is a class root
+      // until an update in a project moves the paths of the module.
+      val toTransfer = getPathsToTransfer(sdk)
+      return writeSdkFacts(sdk, facts, sdkFactRoots(facts).filter { it !in toTransfer }, toTransfer)
     }
 
     /** The class roots that the SDK of [interpreter] holds, for a test that checks what the writes leave there. */
@@ -199,31 +223,35 @@ private fun sdkFacts(sdk: Sdk): PythonInterpreterFacts {
 }
 
 /**
- * Writes [facts] into [sdk], in its legacy form: the version, the user paths in its data, and the class roots of
- * `sys.path` and the added paths. The other class roots of [sdk], which [PythonInterpreterRoots] gives, stay, see
- * [isDerivedRoot]. Returns whether the SDK changed.
+ * Writes [facts] into [sdk], in its legacy form: the version, the user paths in its data, [classRoots] as the class
+ * roots of `sys.path` and the added paths, and [toTransfer] as the paths to transfer. The other class roots of [sdk],
+ * which [PythonInterpreterRoots] gives, stay, see [isDerivedRoot]. Returns whether the SDK changed.
  */
-private fun writeSdkFacts(sdk: Sdk, facts: PythonInterpreterFacts): Boolean {
+private fun writeSdkFacts(sdk: Sdk, facts: PythonInterpreterFacts, classRoots: List<VirtualFile>, toTransfer: Set<VirtualFile>): Boolean {
   val userPathsChanged = sdkFacts(sdk).let { it.addedPaths != facts.addedPaths || it.excludedPaths != facts.excludedPaths }
-  val roots = sdkFactRoots(facts) + PythonSdkUtil.getPythonClassRoots(sdk).filter(::isDerivedRoot)
+  val roots = classRoots + PythonSdkUtil.getPythonClassRoots(sdk).filter(::isDerivedRoot)
   val versionChanged = facts.version != sdk.versionString
   val rootsChanged = roots != PythonSdkUtil.getPythonClassRoots(sdk).toList()
-  if (!userPathsChanged && !versionChanged && !rootsChanged) return false
-  // One commit: a reader of the SDK between two commits reads a root of a removed user path as a path of `sys.path`.
+  val transferChanged = toTransfer != getPathsToTransfer(sdk)
+  if (!userPathsChanged && !versionChanged && !rootsChanged && !transferChanged) return false
+  // One commit: a reader of the SDK between two commits reads a `sys.path` that misses a path, or has a removed one.
   commit(sdk) { modificator ->
-    if (userPathsChanged) setUserPaths(modificator, facts)
+    if (userPathsChanged || transferChanged) {
+      val data = modificator.sdkAdditionalData as? PythonSdkAdditionalData
+      if (data != null) {
+        if (userPathsChanged) setUserPaths(data, facts)
+        if (transferChanged) data.setPathsToTransferFromVirtualFiles(toTransfer)
+        modificator.sdkAdditionalData = data
+      }
+    }
     if (versionChanged) modificator.versionString = facts.version
     if (rootsChanged) setClassRoots(modificator, roots)
   }
   return true
 }
 
-/**
- * The class roots that an SDK holds for [facts] in the legacy flow: `sys.path` and the added paths, without the excluded
- * ones. The facts are read back from them, see [sdkFacts], so they include the paths that the module gets as source
- * roots.
- */
-internal fun sdkFactRoots(facts: PythonInterpreterFacts): List<VirtualFile> =
+/** `sys.path` and the added paths of [facts], without the excluded ones, as roots. */
+private fun sdkFactRoots(facts: PythonInterpreterFacts): List<VirtualFile> =
   (facts.sysPath + facts.addedPaths).filter { it !in facts.excludedPaths }.distinct().mapNotNull(::toRoot)
 
 /**
@@ -299,15 +327,17 @@ private fun PythonSdkAdditionalData?.excludedPaths(): Set<Path> = this?.excluded
  */
 internal fun commitUserPaths(sdk: Sdk, facts: PythonInterpreterFacts) {
   if (sdkFacts(sdk).let { it.addedPaths == facts.addedPaths && it.excludedPaths == facts.excludedPaths }) return
-  commit(sdk) { modificator -> setUserPaths(modificator, facts) }
+  commit(sdk) { modificator ->
+    val data = modificator.sdkAdditionalData as? PythonSdkAdditionalData ?: return@commit
+    setUserPaths(data, facts)
+    modificator.sdkAdditionalData = data
+  }
 }
 
-private fun setUserPaths(modificator: SdkModificator, facts: PythonInterpreterFacts) {
-  val data = modificator.sdkAdditionalData as? PythonSdkAdditionalData ?: return
+private fun setUserPaths(data: PythonSdkAdditionalData, facts: PythonInterpreterFacts) {
   val files = LocalFileSystem.getInstance()
   data.setAddedPathsFromVirtualFiles(facts.addedPaths.mapNotNullTo(LinkedHashSet()) { files.findFileByNioFile(it) })
   data.setExcludedPathsFromVirtualFiles(facts.excludedPaths.mapNotNullTo(LinkedHashSet()) { files.findFileByNioFile(it) })
-  modificator.sdkAdditionalData = data
 }
 
 private fun pathToUrl(path: Path): String = VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path.toString()))

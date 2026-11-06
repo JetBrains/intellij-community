@@ -9,6 +9,8 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.workspaceModel.ide.toPath
+import com.jetbrains.python.sdk.getPathsToTransfer
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -98,26 +100,28 @@ class PythonInterpreterRoots(private val project: Project, private val scope: Co
   fun sourceRoots(interpreter: PythonInterpreter): Set<VirtualFile> = rootsOf(interpreter).sourceRoots
 
   /**
-   * Derives the roots of [interpreter] again, commits them into its SDK, and reports a change when they differ from the
-   * ones before. A test calls it after it changes what a contributor gives, so the roots change before it goes on.
+   * Derives the roots of [interpreter] again, commits the class roots into its SDK, and reports a change when they differ
+   * from the ones before. A test calls it after it changes what a contributor gives, so the roots change before it goes on.
    *
    * The SDK of the interpreter library flow gets the class roots, because it holds no fact. The SDK of the legacy flow
-   * holds the facts in its roots, so it keeps every root of the facts, also a source root of the module, and gets the
-   * other class roots after them. Else a source root would vanish from the facts.
+   * holds the facts in its roots and in its paths to transfer, see [PythonInterpreterDetails]. It keeps the class roots
+   * of the facts, and gets the other class roots after them. A path that it transfers to the module is no class root of
+   * the SDK, else the module is a library, and the editor opens its files in reader mode (PY-93817).
    */
   fun refresh(interpreter: PythonInterpreter) {
     val derived = derive(interpreter)
     val before = roots.put(interpreter.key, derived)
-    val facts = PythonInterpreterDetails.getInstance(project).facts(interpreter)
+    val sdk = interpreter.sdk
     if (isInterpreterLibraryFlowEnabled()) {
-      commitSdk(interpreter.sdk, interpreter.sdk.versionString, derived.classRoots)
+      commitSdk(sdk, sdk.versionString, derived.classRoots)
       // The SDK of the interpreter library flow holds no fact, but the code that reads an SDK, such as the `PYTHONPATH`
       // of a run, reads the user paths from it. Nothing reads them back.
-      commitUserPaths(interpreter.sdk, facts)
+      commitUserPaths(sdk, PythonInterpreterDetails.getInstance(project).facts(interpreter))
     }
     else {
-      val factRoots = sdkFactRoots(facts)
-      commitSdk(interpreter.sdk, interpreter.sdk.versionString, (factRoots + derived.classRoots).distinct())
+      val transferred = getPathsToTransfer(sdk)
+      val factRoots = PythonSdkUtil.getPythonClassRoots(sdk).filterNot(::isDerivedRoot)
+      commitSdk(sdk, sdk.versionString, (factRoots + derived.classRoots).filter { it !in transferred }.distinct())
     }
     if (before != derived) changeCount.update { it + 1 }
   }
@@ -140,6 +144,24 @@ class PythonInterpreterRoots(private val project: Project, private val scope: Co
 
   private fun derive(interpreter: PythonInterpreter): PythonInterpreterRootFiles {
     val facts = PythonInterpreterDetails.getInstance(project).facts(interpreter)
+    val [sourcePaths, classPaths] = splitFactRootPaths(interpreter, facts)
+    val excluded = facts.excludedPaths.mapTo(HashSet(), ::canonicalPath)
+    // A contributed root, such as the skeletons under a content root, is always a class root (PY-90400).
+    val contributed = PythonInterpreterRootsContributor.EP_NAME.extensionList
+      .flatMap { it.classRoots(project, interpreter) }
+      .map { it.normalize() }
+      .filter { it !in excluded }
+    val classRoots = (classPaths + contributed).distinct().mapNotNull(::toRoot)
+    return PythonInterpreterRootFiles(classRoots, sourcePaths.mapNotNullTo(LinkedHashSet(), ::toRoot))
+  }
+
+  /**
+   * The root paths of [facts], see [factRootPaths], split in two: the paths inside the owner module of [interpreter],
+   * which are source roots of the module, and the other paths, which are class roots. A path under the environment of
+   * [interpreter] or under an excluded folder of the module is a class root, such as an environment inside the project
+   * (PY-17241, PY-18970).
+   */
+  internal fun splitFactRootPaths(interpreter: PythonInterpreter, facts: PythonInterpreterFacts): Pair<List<Path>, List<Path>> {
     // The paths are compared as the file system names them: a link, such as `/var` on macOS, leads to one path only.
     val canonical = facts.copy(
       sysPath = facts.sysPath.map(::canonicalPath),
@@ -147,29 +169,30 @@ class PythonInterpreterRoots(private val project: Project, private val scope: Co
       excludedPaths = facts.excludedPaths.mapTo(HashSet(), ::canonicalPath),
     )
     val home = interpreter.detectedHomePath?.let(::canonicalPath)
-    // A path of the facts inside the module and outside the environment is a source root of the module.
+    val module = ownerModule(interpreter)
     val moduleRoots = ownerModuleRoots(interpreter).map { it.normalize() }
-    val [sourcePaths, classPaths] = factRootPaths(canonical, home).partition { path ->
-      moduleRoots.any { path.startsWith(it) } && (home == null || !path.startsWith(home))
+    val moduleExcluded = module?.contentRoots.orEmpty().flatMap { it.excludedUrls }.map { canonicalPath(it.url.toPath()).normalize() }
+    return factRootPaths(canonical, home).partition { path ->
+      moduleRoots.any { path.startsWith(it) } &&
+      (home == null || !path.startsWith(home)) &&
+      moduleExcluded.none { path.startsWith(it) }
     }
-    // A contributed root, such as the skeletons under a content root, is always a class root (PY-90400).
-    val contributed = PythonInterpreterRootsContributor.EP_NAME.extensionList
-      .flatMap { it.classRoots(project, interpreter) }
-      .map { it.normalize() }
-      .filter { it !in canonical.excludedPaths }
-    val classRoots = (classPaths + contributed).distinct().mapNotNull(::toRoot)
-    return PythonInterpreterRootFiles(classRoots, sourcePaths.mapNotNullTo(LinkedHashSet(), ::toRoot))
   }
 
   /**
    * The content and source roots of the module whose content root is the owner directory of [interpreter], or the owner
    * directory alone when this project has no such module. A path inside them is a source root of the module.
    */
-  private fun ownerModuleRoots(interpreter: PythonInterpreter): Set<Path> {
-    val ownerDir = interpreter.ownerDir.normalize()
-    val module = project.workspaceModel.currentSnapshot.entities<ModuleEntity>()
-      .firstOrNull { entity -> entity.contentRoots.any { it.url.toPath().normalize() == ownerDir } } ?: return setOf(ownerDir)
+  internal fun ownerModuleRoots(interpreter: PythonInterpreter): Set<Path> {
+    val module = ownerModule(interpreter) ?: return setOf(interpreter.ownerDir.normalize())
     return module.contentRoots.flatMap { root -> listOf(root.url) + root.sourceRoots.map { it.url } }.mapTo(HashSet()) { it.toPath() }
+  }
+
+  /** The module whose content root is the owner directory of [interpreter], or `null` when this project has none. */
+  private fun ownerModule(interpreter: PythonInterpreter): ModuleEntity? {
+    val ownerDir = interpreter.ownerDir.normalize()
+    return project.workspaceModel.currentSnapshot.entities<ModuleEntity>()
+      .firstOrNull { entity -> entity.contentRoots.any { it.url.toPath().normalize() == ownerDir } }
   }
 
   companion object {

@@ -121,9 +121,11 @@ public class PyOptimizeImportsTest extends PyTestCase {
   public void testLibraryRootInsideProject() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");
+    // An environment inside the project is excluded, so its paths stay library roots.
+    addExcludedRoot("lib");
     final VirtualFile libDir = myFixture.findFileInTempDir("lib");
     assertNotNull(libDir);
-    
+
     runWithAdditionalClassEntryInSdkRoots(libDir, () -> {
       myFixture.configureByFile("main.py");
       OptimizeImportsAction.actionPerformedImpl(DataManager.getInstance().getDataContext(myFixture.getEditor().getContentComponent()));
