@@ -15,3 +15,7 @@ import junit.framework.TestCase
 fun TestCase.runTest(test: () -> Unit) {
     test.invoke()
 }
+
+// empty stubs to resolve the annotation of BaseKotlinJpsBuildTestCase in kotlin-jps-plugin-tests-for-ide.jar
+// copied from https://github.com/JetBrains/kotlin/blob/master/compiler/tests-mutes/mutes-junit4/src/org/jetbrains/kotlin/test/muteWithDatabaseJunit4.kt
+annotation class WithMutedInDatabaseRunTest
