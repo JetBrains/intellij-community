@@ -380,7 +380,8 @@ class SoftwareBillOfMaterialsImpl(
         generate(
           document = document,
           rootPackage = rootPackage,
-          runtimePackage = document.runtimePackage(os, arch, libc),
+          // an OHOS distribution has no bundled runtime
+          runtimePackage = if (os == OsFamily.OHOS) null else document.runtimePackage(os, arch, libc),
           distributionDir = distributionDir,
           // distributions weren't built
           claimContainedFiles = false,

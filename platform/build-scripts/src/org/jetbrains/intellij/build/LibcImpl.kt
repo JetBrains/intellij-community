@@ -43,3 +43,12 @@ enum class LinuxLibcImpl : LibcImpl {
     val current: LinuxLibcImpl = if (JdkDownloader.isLinuxMusl()) MUSL else GLIBC
   }
 }
+
+enum class OhosLibcImpl : LibcImpl {
+  DEFAULT;
+
+  companion object {
+    @JvmField
+    val ALL: List<OhosLibcImpl> = listOf(*OhosLibcImpl.entries.toTypedArray())
+  }
+}

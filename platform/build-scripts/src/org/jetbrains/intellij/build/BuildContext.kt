@@ -34,6 +34,7 @@ interface BuildContext : CompilationContext {
   val windowsDistributionCustomizer: WindowsDistributionCustomizer?
   val macDistributionCustomizer: MacDistributionCustomizer?
   val linuxDistributionCustomizer: LinuxDistributionCustomizer?
+  val ohosDistributionCustomizer: OhosDistributionCustomizer?
   val proprietaryBuildTools: ProprietaryBuildTools
 
   val applicationInfo: ApplicationInfoProperties

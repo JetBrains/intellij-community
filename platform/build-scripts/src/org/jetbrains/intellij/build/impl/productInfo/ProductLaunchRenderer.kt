@@ -58,16 +58,18 @@ fun renderAdditionalJvmArguments(
   result.add("-Didea.vendor.name=$vendorName")
   result.add("-Didea.paths.selector=$pathsSelector")
 
-  jvm.jnaNativeDir?.let {
+  // JNA and pty4j have no OHOS natives, so the OHOS distribution has no JNA and pty4j native trees
+  jvm.jnaNativeDir?.takeIf { os != OsFamily.OHOS }?.let {
     result.add("-Djna.boot.library.path=$macroName/$it/${arch.dirName}".quoteIfNeeded())
     result.add("-Djna.nosys=true")
     result.add("-Djna.noclasspath=true")
   }
-  jvm.pty4jNativeDir?.let {
+  jvm.pty4jNativeDir?.takeIf { os != OsFamily.OHOS }?.let {
     result.add("-Dpty4j.preferred.native.folder=$macroName/$it".quoteIfNeeded())
   }
   result.add("-Dio.netty.allocator.type=pooled")
-  jvm.skikoNativeDir?.let {
+  // Skiko has no OHOS natives, so the OHOS distribution has no Skiko native tree
+  jvm.skikoNativeDir?.takeIf { os != OsFamily.OHOS }?.let {
     result.add("-Dskiko.library.path=$macroName/$it".quoteIfNeeded())
   }
 

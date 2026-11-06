@@ -31,6 +31,7 @@ import org.jetbrains.intellij.build.LinuxLibcImpl
 import org.jetbrains.intellij.build.LocalDistFileContent
 import org.jetbrains.intellij.build.MacLibcImpl
 import org.jetbrains.intellij.build.ModuleOutputProvider
+import org.jetbrains.intellij.build.OhosLibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.PLUGIN_XML_RELATIVE_PATH
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
@@ -975,6 +976,9 @@ internal fun getOsDistributionBuilder(os: OsFamily, libcImpl: LibcImpl, ideaProp
     }
     OsFamily.LINUX -> context.linuxDistributionCustomizer?.let {
       LinuxDistributionBuilder(customizer = it, ideaProperties = ideaProperties, targetLibcImpl = libcImpl as LinuxLibcImpl, context = context)
+    }
+    OsFamily.OHOS -> context.ohosDistributionCustomizer?.let {
+      OhosDistributionBuilder(customizer = it, ideaProperties = ideaProperties, context = context)
     }
   }
 }

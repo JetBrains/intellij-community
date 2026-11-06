@@ -65,7 +65,7 @@
           "os": {
             "description": "Operation system this launch method is supposed to be used for",
             "type": "string",
-            "enum": ["Windows", "Linux", "macOS"]
+            "enum": ["Windows", "Linux", "macOS", "OHOS"]
           },
           "arch": {
             "description": "CPU Architecture this launch method is supposed to be used for",
