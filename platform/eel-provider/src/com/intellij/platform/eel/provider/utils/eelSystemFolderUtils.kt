@@ -47,6 +47,33 @@ object EelSystemFolderUtils {
     return EelPath.parse(remotePath, eel.descriptor).asNioPath()
   }
 
+  /**
+   * Returns the default settings directory that an IDE with the path selector of this process uses on the machine of [eel].
+   * An IDE that started with a custom config path writes elsewhere.
+   */
+  @JvmStatic
+  suspend fun getConfigFolder(eel: EelApi): Path {
+    if (eel.descriptor === LocalEelDescriptor) return PathManager.getOriginalConfigDir()
+
+    val selector = PathManager.getPathsSelector() ?: "IJ-Platform"
+    // Compose the path in the host's own form: `getDefaultCommonDataPathFor` may return a raw environment value
+    // (XDG_DATA_HOME, APPDATA), which is a host-native string that `Path.of` would misroute to the local file system.
+    val optionsBuilder = EnvironmentVariablesOptionsBuilder().apply {
+      if (eel.platform.isPosix) {
+        loginInteractiveViaShell()
+      }
+    }
+    val options = optionsBuilder.build()
+    val envs = withContext(Dispatchers.IO) { eel.exec.environmentVariables(options).await() }
+    val configPath = PathManager.getDefaultConfigPathFor(
+      eel.platform.toOs(),
+      eel.userInfo.home.toString(),
+      selector,
+      envs,
+    )
+    return EelPath.parse(configPath, eel.descriptor).asNioPath()
+  }
+
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false)
   fun getSystemFolder(project: Project): Path = getSystemFolder(project.getEelDescriptor().toEelApiBlocking())

@@ -520,7 +520,15 @@ public final class PathManager {
    * Returns the path to the directory where settings are stored by default for an IDE with the given path selector.
    */
   public static @NotNull String getDefaultConfigPathFor(@NotNull String selector) {
-    return platformPath(selector, "Application Support", "", "APPDATA", "", "XDG_CONFIG_HOME", ".config", "");
+    return getDefaultConfigPathFor(OS.CURRENT, System.getProperty("user.home"), selector, System.getenv());
+  }
+
+  /**
+   * Returns the default settings directory of an IDE with the given path selector on a machine with the given OS, home and environment.
+   */
+  @ApiStatus.Internal
+  public static @NotNull String getDefaultConfigPathFor(@NotNull OS os, @NotNull String userHome, @NotNull String selector, @NotNull Map<String, String> env) {
+    return platformPath(os, env, userHome, selector, "Application Support", "", "APPDATA", "", "XDG_CONFIG_HOME", ".config", "");
   }
 
   /** Use {@link #getOptionsDir()} instead */

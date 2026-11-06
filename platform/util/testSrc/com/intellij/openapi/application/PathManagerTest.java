@@ -130,6 +130,28 @@ public class PathManagerTest {
     );
   }
 
+  @Test
+  public void testDefaultConfigPathOfAnotherMachine() {
+    var vendorName = System.getProperty("idea.vendor.name", "JetBrains");
+
+    assertEquals(
+      "C:\\Data\\" + vendorName + "\\IntelliJIdea2026.3",
+      PathManager.getDefaultConfigPathFor(OS.Windows, "C:\\Users\\test", "IntelliJIdea2026.3", Map.of("APPDATA", "C:\\Data"))
+    );
+    assertEquals(
+      "/Users/test/Library/Application Support/" + vendorName + "/IntelliJIdea2026.3",
+      PathManager.getDefaultConfigPathFor(OS.macOS, "/Users/test", "IntelliJIdea2026.3", Map.of())
+    );
+    assertEquals(
+      "/home/test/.config/" + vendorName + "/IntelliJIdea2026.3",
+      PathManager.getDefaultConfigPathFor(OS.Linux, "/home/test", "IntelliJIdea2026.3", Map.of())
+    );
+    assertEquals(
+      "/var/config/" + vendorName + "/IntelliJIdea2026.3",
+      PathManager.getDefaultConfigPathFor(OS.Linux, "/home/test", "IntelliJIdea2026.3", Map.of("XDG_CONFIG_HOME", "/var/config"))
+    );
+  }
+
   @Contract("null -> null")
   private static String substituteVars(String s) {
     return PathManager.substituteVars(s, PathManager.getHomeDir().toString());
