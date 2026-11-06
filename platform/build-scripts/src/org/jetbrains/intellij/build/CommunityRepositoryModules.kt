@@ -282,9 +282,6 @@ private fun androidDesignPlugin(mainModuleName: String = "intellij.android.desig
 }
 
 fun getContribRepositoryPlugins(): List<PluginLayout> = java.util.List.of(
-  pluginAuto("intellij.errorProne") { spec ->
-    spec.withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
-  },
   pluginAuto("intellij.cucumber.java") { spec ->
     spec.withModule("intellij.cucumber.jvmFormatter", "cucumber-jvmFormatter.jar")
     spec.withModule("intellij.cucumber.jvmFormatter3", "cucumber-jvmFormatter3.jar")
