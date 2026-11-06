@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImplKt.toVirtualFileUrl;
 import static com.intellij.workspaceModel.ide.ProjectRootEntityKt.unregisterProjectRootBlocking;
 
 @ApiStatus.Internal
@@ -115,8 +115,10 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
       }
 
       var vfuManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager();
-      var externalProjectVfu = toVirtualFileUrl(Path.of(externalProjectPath), vfuManager);
-      unregisterProjectRootBlocking(project, externalProjectVfu);
+      var externalProjectVfu = vfuManager.get(VfsUtilCore.pathToUrl(Path.of(externalProjectPath).toAbsolutePath().toString()));
+      if (externalProjectVfu != null) {
+        unregisterProjectRootBlocking(project, externalProjectVfu);
+      }
     });
   }
 
