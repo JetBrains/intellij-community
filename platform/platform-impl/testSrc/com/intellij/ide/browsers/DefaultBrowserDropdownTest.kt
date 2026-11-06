@@ -58,7 +58,8 @@ class DefaultBrowserDropdownTest {
     withPage { _, comboBox ->
       val items = (0 until comboBox.itemCount).map { comboBox.getItemAt(it) }
       assertEquals(canUseSystemDefaultBrowserPolicy(), items.any { it.id == SystemDefaultBrowser.id })
-      val listedIds = items.map { it.id }.filter { it != SystemDefaultBrowser.id }
+      assertTrue(items.last().isAddItem)
+      val listedIds = items.dropLast(1).map { it.id }.filter { it != SystemDefaultBrowser.id }
       val manager = WebBrowserManager.getInstance()
       assertEquals(manager.activeBrowsers.filter { it.path != null }.map { it.id }, listedIds)
       assertEquals(firefoxId, (comboBox.selectedItem as BrowserChoice).id)
