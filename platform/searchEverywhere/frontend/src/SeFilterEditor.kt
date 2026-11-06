@@ -19,9 +19,6 @@ interface SeFilterEditor {
   fun getHeaderActions(): List<AnAction>
 
   fun getSearchFieldActions(): List<AnAction> = emptyList()
-
-  @ApiStatus.Internal
-  fun closeFilterPopup() {}
 }
 
 @ApiStatus.Experimental

@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.tabs
 
-import com.intellij.ide.actions.bigPopup.ShowFilterAction
 import com.intellij.ide.actions.searcheverywhere.PreviewAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
@@ -83,10 +82,6 @@ class SeAdaptedTabFilterEditor(val contributor: SearchEverywhereContributor<Any>
   }
 
   override fun getHeaderActions(): List<AnAction> = actions
-
-  override fun closeFilterPopup() {
-    actions.filterIsInstance<ShowFilterAction>().forEach { it.closeFilterPopup() }
-  }
 
   override fun autoToggle(everywhere: Boolean): Boolean {
     toggleAction ?: return false
