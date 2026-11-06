@@ -10,6 +10,7 @@ import com.jetbrains.python.inspections.PyUnreachableCodeInspection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.types.PySelfType
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -191,12 +192,76 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
-    @TestFor(classes = [PyCallExpressionHelper::class])
+    @TestFor(issues = ["PY-93828"], classes = [PyCallExpressionHelper::class])
     fun `type of self is the type of Self`() = test("""
       class Cls:
           def meth(self) -> None:
               res = type(self)
-      #        └ TYPE type[Cls] FIXME type[Self@Cls]
+      #        └ TYPE type[Self@Cls]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93828"], classes = [PyCallExpressionHelper::class])
+    fun `calling the type of self gives Self`() = test("""
+      class Cls:
+          def meth(self) -> None:
+              res = type(self)()
+      #        └ TYPE Self@Cls
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93828"], classes = [PyCallExpressionHelper::class])
+    fun `type of self in a generic class`() = test("""
+      class Box[T]:
+          def __init__(self, item: T) -> None: ...
+
+          def meth(self, item: T) -> None:
+              cls = type(self)
+      #        └ TYPE type[Self@Box]
+              res = cls(item)
+      #        └ TYPE Self@Box
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93828"], classes = [PyCallExpressionHelper::class])
+    fun `a call of the type of self in a base class gives the subclass`() = test("""
+      class Base:
+          def clone(self):
+              return type(self)()
+
+      class Sub(Base):
+          pass
+
+      res = Sub().clone()
+      #└ TYPE Sub
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93828"], classes = [PyCallExpressionHelper::class])
+    fun `calling the type of self uses a metaclass __call__ with another return type`() = test("""
+      class Meta(type):
+          def __call__(cls) -> int: ...
+
+      class Cls(metaclass=Meta):
+          def meth(self) -> None:
+              res = type(self)()
+      #        └ TYPE int
+
+          @classmethod
+          def create(cls) -> None:
+              res = cls()
+      #        └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93828"], classes = [PyCallExpressionHelper::class])
+    fun `calling the type of self uses a __new__ with another return type`() = test("""
+      class Cls:
+          def __new__(cls) -> int: ...
+
+          def meth(self) -> None:
+              res = type(self)()
+      #        └ TYPE int
       """.trimIndent())
 
     @Test
@@ -1659,6 +1724,33 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
               return self.__class__() # OK
           def clone_cls(self) -> type[Self]:
               return self.__class__ # OK
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93828"])
+    fun `Self vs type of self`() = test("""
+      from typing import Self
+      class ConcreteComparable:
+          def clone(self) -> Self:
+              return type(self)() # OK
+          def clone_cls(self) -> type[Self]:
+              return type(self) # OK
+          def clone_instance(self) -> Self:
+              return type(self) # E
+      #              ^^^^^^^^^^ WARNING Expected type 'Self@ConcreteComparable', got 'type[Self@ConcreteComparable]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93828"], classes = [PySelfType::class])
+    fun `the type of self is checked against the parameters of a Callable`() = test("""
+      from typing import Callable
+      class C:
+          def __init__(self, x: int) -> None: ...
+
+          def meth(self) -> None:
+              ok: Callable[[int], C] = type(self)
+              bad: Callable[[str], C] = type(self) # E
+      #                                 ^^^^^^^^^^ WARNING Expected type '(str) -> C', got 'type[Self@C]' instead
       """.trimIndent())
 
     @Test
