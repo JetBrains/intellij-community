@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.WebBrowser;
@@ -24,20 +25,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.util.CachedValueImpl;
+import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 @ApiStatus.Internal
 public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implements DumbAware {
   private static final String OPEN_HTML_IN_EMBEDDED_BROWSER_ACTION_ID = "OpenHtmlInEmbeddedBrowser";
 
-  private CachedValue<AnAction[]> myChildren;
+  private final ConcurrentMap<WebBrowser, AnAction> myBrowserActions =
+    ConcurrentCollectionFactory.createConcurrentWeakKeyWeakValueMap(HashingStrategy.canonical());
+  private final AnAction myDefaultBrowserAction = createDefaultBrowserAction();
 
   protected OpenInBrowserBaseGroupAction(boolean popup) {
     Presentation p = getTemplatePresentation();
@@ -48,6 +51,13 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     p.setIconSupplier(() -> AllIcons.Nodes.PpWeb);
   }
 
+  private static @NotNull AnAction createDefaultBrowserAction() {
+    OpenFileInDefaultBrowserAction action = new OpenFileInDefaultBrowserAction();
+    action.getTemplatePresentation().setText(IdeBundle.messagePointer("default"));
+    action.getTemplatePresentation().setIconSupplier(() -> AllIcons.Nodes.PpWeb);
+    return action;
+  }
+
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
@@ -56,42 +66,19 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    CachedValue<AnAction[]> children = myChildren;
-    if (children == null) {
-      children = new CachedValueImpl<>(() -> {
-        AnAction[] actions = computeChildren();
-        return CachedValueProvider.Result.create(actions, WebBrowserManager.getInstance());
-      });
-      myChildren = children;
-    }
-    return children.getValue();
-  }
-
-  private AnAction @NotNull [] computeChildren() {
     List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
-    boolean addDefaultBrowser = isPopup();
+    List<AnAction> actions = new ArrayList<>(browsers.size() + 2);
     AnAction localBrowserAction = getLocalBrowserAction();
-    boolean hasLocalBrowser = localBrowserAction != null;
-    int offset = 0;
-    if (addDefaultBrowser) offset++;
-    if (hasLocalBrowser) offset++;
-    AnAction[] actions = new AnAction[browsers.size() + offset];
-
-    if (hasLocalBrowser) {
-      actions[0] = localBrowserAction;
+    if (localBrowserAction != null) {
+      actions.add(localBrowserAction);
     }
-
-    if (addDefaultBrowser) {
-      OpenFileInDefaultBrowserAction defaultBrowserAction = new OpenFileInDefaultBrowserAction();
-      defaultBrowserAction.getTemplatePresentation().setText(IdeBundle.messagePointer("default"));
-      defaultBrowserAction.getTemplatePresentation().setIconSupplier(() -> AllIcons.Nodes.PpWeb);
-      actions[hasLocalBrowser ? 1 : 0] = defaultBrowserAction;
+    if (isPopup()) {
+      actions.add(myDefaultBrowserAction);
     }
-
-    for (int i = 0, size = browsers.size(); i < size; i++) {
-      actions[i + offset] = new BaseOpenInBrowserAction(browsers.get(i));
+    for (WebBrowser browser : browsers) {
+      actions.add(myBrowserActions.computeIfAbsent(browser, BaseOpenInBrowserAction::new));
     }
-    return actions;
+    return actions.toArray(EMPTY_ARRAY);
   }
 
   @Override
