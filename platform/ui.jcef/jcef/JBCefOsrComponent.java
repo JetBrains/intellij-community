@@ -30,6 +30,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.im.InputMethodRequests;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -302,6 +303,10 @@ class JBCefOsrComponent extends JPanel {
 
   Color getColorAt(int x, int y) {
     return myRenderHandler.getColorAt(x, y);
+  }
+
+  @NotNull CompletableFuture<Void> getFirstFrameFuture() {
+    return myRenderHandler.getFirstFrameFuture();
   }
 
   double getPixelDensity() {

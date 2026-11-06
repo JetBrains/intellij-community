@@ -566,6 +566,27 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     return myIsOffScreenRendering;
   }
 
+  /**
+   * Returns the future that completes when the off-screen browser receives the first frame.
+   * <p>
+   * The future completes exceptionally with {@link UnsupportedOperationException} when the browser is not OSR.
+   * The future is canceled when the browser is disposed before the first frame.
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public @NotNull CompletableFuture<Void> getFirstFrameReadyFuture() {
+    JBCefOsrComponent osrComponent = getOsrComponent();
+    if (osrComponent == null) {
+      return CompletableFuture.failedFuture(
+        new UnsupportedOperationException("The browser is not in the off-screen mode"));
+    }
+    return osrComponent.getFirstFrameFuture();
+  }
+
+  private @Nullable JBCefOsrComponent getOsrComponent() {
+    return myCefBrowser.getUIComponent() instanceof JBCefOsrComponent osrComponent ? osrComponent : null;
+  }
+
   @VisibleForTesting
   @ApiStatus.Internal
   public final boolean isCefBrowserCreated() {
@@ -612,6 +633,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       if (myHrefProcessingRequestHandler != null) getJBCefClient().removeRequestHandler(myHrefProcessingRequestHandler, getCefBrowser());
       if (myContextMenuHandler != null) getJBCefClient().removeContextMenuHandler(myContextMenuHandler, getCefBrowser());
       // There is also a CefLifeSpanHandler(see the class constructor) that has to remove himself at onBeforeClose()
+
+      JBCefOsrComponent osrComponent = getOsrComponent();
+      if (osrComponent != null) osrComponent.getFirstFrameFuture().cancel(false);
 
       myCefBrowser.stopLoad();
       myCefBrowser.setCloseAllowed();
