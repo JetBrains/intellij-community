@@ -132,12 +132,9 @@ internal object CondaExecutor {
     argsBeforeEnv: List<String>, argsAfterEnv: List<String>, condaEnvIdentity: PyCondaEnvIdentity?,
   ): List<String> {
     val condaEnv = when (condaEnvIdentity) {
-      is PyCondaEnvIdentity.UnnamedEnv -> {
-        if (condaEnvIdentity.isBase)
-          emptyList()
-        else
-          listOf("-p", condaEnvIdentity.envPath)
-      }
+      // Always give the prefix, also for the base env. Without a prefix, conda uses the active env from
+      // `CONDA_PREFIX`. If the IDE was started from a shell with another conda activated, that is a foreign env.
+      is PyCondaEnvIdentity.UnnamedEnv -> listOf("-p", condaEnvIdentity.envPath)
       is PyCondaEnvIdentity.NamedEnv -> {
         listOf("-n", condaEnvIdentity.envName)
       }
