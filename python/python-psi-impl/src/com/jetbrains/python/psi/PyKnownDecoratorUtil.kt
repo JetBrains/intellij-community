@@ -108,31 +108,8 @@ object PyKnownDecoratorUtil {
   private fun computeKnownDecoratorsInFile(qualifiedName: QualifiedName, file: PyFile): List<PyKnownDecorator> {
     val firstName = qualifiedName.firstComponent ?: return emptyList()
     val tail = qualifiedName.removeHead(1)
-    val importedNames = mutableListOf<QualifiedName>()
-
-    for (importElement in file.importTargets) {
-      val importedQName = importElement.importedQName ?: continue
-      val asName = importElement.asName
-      if (asName != null) {
-        if (asName == firstName) importedNames.add(importedQName.append(tail))
-      }
-      else if (importedQName.firstComponent == firstName) {
-        // "import a.b" binds "a", so the name of the decorator is already absolute.
-        importedNames.add(qualifiedName)
-      }
-    }
-    for (fromImport in file.fromImports) {
-      // A star import keeps the name, so the short name still finds the decorator further down.
-      if (fromImport.isStarImport) continue
-      if (fromImport.importElements.none { it.visibleName == firstName }) continue
-      if (fromImport.relativeLevel != 0) return emptyList()
-      val source = fromImport.importSourceQName ?: continue
-      for (importElement in fromImport.importElements) {
-        if (importElement.visibleName == firstName) {
-          importElement.importedQName?.let { importedNames.add(source.append(it).append(tail)) }
-        }
-      }
-    }
+    // A star import keeps the name and gives no imported name, so the short name still finds the decorator further down.
+    val importedNames = importedQualifiedNames(qualifiedName, file) ?: return emptyList()
 
     if (importedNames.isNotEmpty()) {
       return importedNames.flatMap { importedName ->
@@ -149,6 +126,43 @@ object PyKnownDecoratorUtil {
       return listOfNotNull(findByQualifiedName(QualifiedName.fromDottedString(name).append(tail)))
     }
     return findByShortName(qualifiedName.lastComponent!!)
+  }
+
+  /**
+   * Returns the absolute names that the top-level imports of [file] give to [qualifiedName], as it is written in [file].
+   * Returns `null` when a relative import binds the first component of [qualifiedName].
+   * The method reads the import statements of the file and resolves nothing, so it stays inside the stubs of the file.
+   */
+  @ApiStatus.Internal
+  @JvmStatic
+  fun importedQualifiedNames(qualifiedName: QualifiedName, file: PyFile): List<QualifiedName>? {
+    val firstName = qualifiedName.firstComponent ?: return emptyList()
+    val tail = qualifiedName.removeHead(1)
+    val importedNames = mutableListOf<QualifiedName>()
+
+    for (importElement in file.importTargets) {
+      val importedQName = importElement.importedQName ?: continue
+      val asName = importElement.asName
+      if (asName != null) {
+        if (asName == firstName) importedNames.add(importedQName.append(tail))
+      }
+      else if (importedQName.firstComponent == firstName) {
+        // "import a.b" binds "a", so the name is already absolute.
+        importedNames.add(qualifiedName)
+      }
+    }
+    for (fromImport in file.fromImports) {
+      if (fromImport.isStarImport) continue
+      if (fromImport.importElements.none { it.visibleName == firstName }) continue
+      if (fromImport.relativeLevel != 0) return null
+      val source = fromImport.importSourceQName ?: continue
+      for (importElement in fromImport.importElements) {
+        if (importElement.visibleName == firstName) {
+          importElement.importedQName?.let { importedNames.add(source.append(it).append(tail)) }
+        }
+      }
+    }
+    return importedNames
   }
 
   private fun definedName(file: PyFile, name: String): PsiElement? {

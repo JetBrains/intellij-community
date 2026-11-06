@@ -21,6 +21,8 @@ import com.jetbrains.python.psi.PyCallSiteExpression;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyDecoratable;
+import com.jetbrains.python.psi.PyDecorator;
+import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
@@ -56,15 +58,18 @@ import com.jetbrains.python.psi.types.PyEnumMemberDeclarationProvider;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -119,8 +124,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
       return getEnumMemberValueTypeInClassBody(referenceExpression, context);
     }
-
-    return null;
+    return getEnumValueTypeOfStubOverride(referenceExpression, context);
   }
 
   /**
@@ -233,6 +237,67 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (enumType == null || !isCustomEnum(enumType.getPyClass(), context)) return null;
     String memberName = enumType instanceof PyLiteralType literalType ? literalType.getEnumMemberName() : null;
     return getEnumMemberValueType(enumType.getPyClass(), memberName, context);
+  }
+
+  private static final Set<String> ENUM_PROPERTY_DECORATORS = Set.of("enum.property", "types.DynamicClassAttribute");
+
+  /**
+   * The value type of the enum member that qualifies {@code referenceExpression}, when the expression accesses {@code value}
+   * and {@code value} resolves to an override in a stub. The stub declares the override as an enum property.
+   * The qualifier is a member or an instance of the enum, not the enum class.
+   * The member value type is used only when it is known and matches the declared return type of the override.
+   * Otherwise, returns {@code null}.
+   * The overrides in the {@code enum} module are out of scope, because {@link #getEnumType} gives their types.
+   */
+  private static @Nullable PyType getEnumValueTypeOfStubOverride(@NotNull PyReferenceExpression referenceExpression,
+                                                                 @NotNull TypeEvalContext context) {
+    if (!"value".equals(referenceExpression.getReferencedName()) || AccessDirection.of(referenceExpression) != AccessDirection.READ) {
+      return null;
+    }
+    List<PsiElement> resolved = PyUtil.multiResolveTopPriority(referenceExpression, PyResolveContext.defaultContext(context));
+    if (!(ContainerUtil.getOnlyItem(resolved) instanceof PyFunction function) ||
+        !(function.getContainingFile() instanceof PyiFile stubFile)) {
+      return null;
+    }
+    PyClass cls = function.getContainingClass();
+    if (cls == null || !isCustomEnum(cls, context) || isInEnumModule(cls) || !isEnumProperty(function, stubFile, context)) return null;
+    PyType memberValueType = getEnumValueTypeFromQualifier(referenceExpression, context);
+    if (memberValueType == null || hasAnyOrUnknownMember(memberValueType)) return null;
+    if (context.getType(Objects.requireNonNull(referenceExpression.getQualifier())) instanceof PyClassType qualifierType &&
+        qualifierType.isDefinition()) {
+      return null;
+    }
+    return PyTypeChecker.match(context.getReturnType(function), memberValueType, context) ? memberValueType : null;
+  }
+
+  private static boolean hasAnyOrUnknownMember(@NotNull PyType type) {
+    Collection<PyType> members = type instanceof PyUnionType unionType ? unionType.getMembers() : List.of(type);
+    return ContainerUtil.exists(members, member -> member == null || member instanceof PyAnyType);
+  }
+
+  private static boolean isInEnumModule(@NotNull PyClass cls) {
+    String qualifiedName = cls.getQualifiedName();
+    return qualifiedName != null && qualifiedName.startsWith("enum.");
+  }
+
+  private static boolean isEnumProperty(@NotNull PyFunction function, @NotNull PyiFile stubFile, @NotNull TypeEvalContext context) {
+    PyDecoratorList decoratorList = function.getDecoratorList();
+    if (decoratorList == null) return false;
+    for (PyDecorator decorator : decoratorList.getDecorators()) {
+      QualifiedName qualifiedName = decorator.getQualifiedName();
+      if (qualifiedName == null) continue;
+      // The imports name the decorator also where it does not resolve, as `enum.property` before Python 3.11
+      List<QualifiedName> importedNames = PyKnownDecoratorUtil.importedQualifiedNames(qualifiedName, stubFile);
+      if (importedNames != null && ContainerUtil.exists(importedNames, name -> ENUM_PROPERTY_DECORATORS.contains(name.toString()))) {
+        return true;
+      }
+      for (PsiElement resolved : PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, stubFile, context)) {
+        if (resolved instanceof PyQualifiedNameOwner owner && ENUM_PROPERTY_DECORATORS.contains(owner.getQualifiedName())) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   // Returns the type of enum attribute value transformed by 'EnumType' metaclass or null, if the attribute value is not transformed

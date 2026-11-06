@@ -721,6 +721,143 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
       take(Color.__members__)
       """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93792"])
+    fun `value override in a stub gives the member value type when it matches the declared type`() = test("""
+      from stubpkg import AnyBase, DynamicBase, IntBase, NarrowBase, PlainPropertyBase
+
+      class A(AnyBase):
+          X = "x"
+          Y = 1
+          T = 2, "two"
+
+      class D(DynamicBase):
+          X = "x"
+
+      class I(IntBase):
+          ONE = 1
+          TWO = 2
+
+      class N(NarrowBase):
+          S = "s"
+
+      class P(PlainPropertyBase):
+          X = "x"
+
+      class U(IntBase):
+          ONE = 1
+          TWO = undefined
+      #         ^^^^^^^^^ ERROR Unresolved reference 'undefined'
+
+      expr = A.X.value
+      # └ TYPE Literal["x"]
+      expr = A.T.value
+      # └ TYPE tuple[Literal[2], Literal["two"]]
+      expr = D.X.value
+      # └ TYPE Literal["x"]
+      expr = I.ONE.value
+      # └ TYPE Literal[1]
+      expr = N.S.value
+      # └ TYPE int
+      expr = P.X.value
+      # └ TYPE Any
+      expr = A.value
+      # └ TYPE property
+
+      def f(a: A, i: I, n: N, u: U):
+          expr = a.value
+      #   └ TYPE Literal["x", 1] | tuple[Literal[2], Literal["two"]]
+          expr = i.value
+      #   └ TYPE Literal[1, 2]
+          expr = n.value
+      #   └ TYPE int
+          expr = u.value
+      #   └ TYPE int
+      """.trimIndent(),
+      "stubpkg/__init__.pyi" to """
+        import enum
+        import types
+        from enum import property as enum_property
+        from typing import Any, override
+
+
+        class AnyBase(enum.Enum):
+            @enum.property
+            def value(self) -> Any: ...
+
+
+        class DynamicBase(enum.Enum):
+            @types.DynamicClassAttribute
+            def value(self) -> Any: ...
+
+
+        class IntBase(enum.IntEnum):
+            @enum_property
+            @override
+            def value(self) -> int: ...
+
+
+        class NarrowBase(enum.Enum):
+            @enum.property
+            def value(self) -> int: ...
+
+
+        class PlainPropertyBase(enum.Enum):
+            @property
+            def value(self) -> Any: ...
+        """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93792"])
+    @TestCaseOptions(languageLevel = LanguageLevel.PYTHON310)
+    // typeshed defines enum.property only from Python 3.11, so the stub import does not resolve here
+    fun `value override in a stub gives the member value type in Python 3_10`() = test("""
+      from stubpkg import AliasBase, AnyBase
+
+      class A(AnyBase):
+          X = "x"
+
+      class L(AliasBase):
+          ONE = 1
+
+      expr = A.X.value
+      # └ TYPE Literal["x"]
+      expr = L.ONE.value
+      # └ TYPE Literal[1]
+      """.trimIndent(),
+      "stubpkg/__init__.pyi" to """
+        import enum
+        from enum import property as enum_property
+        from typing import Any
+
+
+        class AnyBase(enum.Enum):
+            @enum.property
+            def value(self) -> Any: ...
+
+
+        class AliasBase(enum.IntEnum):
+            @enum_property
+            def value(self) -> int: ...
+        """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-93792"])
+    fun `value override in source code keeps the declared type`() = test("""
+      import enum
+
+      class IntBase(enum.IntEnum):
+          @enum.property
+          def value(self) -> int:
+              return 0
+
+      class I(IntBase):
+          ONE = 1
+
+      expr = I.ONE.value
+      # └ TYPE Unknown FIXME int # PY-92631
+      """.trimIndent())
   }
 
   @Nested
