@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.EditorSettings;
+import com.intellij.openapi.editor.impl.SettingsSnapshot;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +21,7 @@ final class LineWhitespacePaintingStrategy {
   private int currentLeadingEdge;
   private int currentTrailingEdge;
 
-  LineWhitespacePaintingStrategy(@NotNull EditorSettings settings) {
+  LineWhitespacePaintingStrategy(@NotNull SettingsSnapshot settings) {
     whitespaceShown = settings.isWhitespacesShown();
     leadingWhitespaceShown = settings.isLeadingWhitespaceShown();
     innerWhitespaceShown = settings.isInnerWhitespaceShown();

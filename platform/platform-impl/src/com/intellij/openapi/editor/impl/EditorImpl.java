@@ -1361,6 +1361,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return mySettings;
   }
 
+  @ApiStatus.Internal
+  public @NotNull SettingsSnapshot getSettingsSnapshot() {
+    return mySettings.getSnapshot();
+  }
+
   public void resetSizes() {
     myView.reset();
   }

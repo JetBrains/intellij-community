@@ -34,6 +34,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FocusModeModel;
 import com.intellij.openapi.editor.impl.FoldingKeys;
 import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.openapi.editor.impl.SettingsSnapshot;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.caret.model.CaretCursor;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
@@ -124,11 +125,11 @@ public final class EditorPainter implements TextDrawingCallback {
 
   @ApiStatus.Internal
   public static boolean isMarginShown(@NotNull Editor editor) {
-    return isMarginShown(editor, EditorRegistry.current());
+    return isMarginShown(editor, editor.getSettings().isRightMarginShown(), EditorRegistry.current());
   }
 
-  private static boolean isMarginShown(@NotNull Editor editor, @NotNull EditorRegistry registry) {
-    return editor.getSettings().isRightMarginShown() &&
+  static boolean isMarginShown(@NotNull Editor editor, boolean rightMarginShown, @NotNull EditorRegistry registry) {
+    return rightMarginShown &&
            editor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR) != null &&
            (registry.isRightMarginShownInReadOnlyFiles() || editor.getDocument().isWritable());
   }
@@ -174,9 +175,8 @@ public final class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  static float getBaseMarginWidth(@NotNull EditorView view) {
-    Editor editor = view.getEditor();
-    return editor.getSettings().getRightMargin(editor.getProject()) * view.getPlainSpaceWidth();
+  static float getBaseMarginWidth(@NotNull EditorView view, @NotNull SettingsSnapshot settings) {
+    return settings.getRightMargin() * view.getPlainSpaceWidth();
   }
 
   private final EditorView myView;
@@ -237,6 +237,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final EditorCaretPainter myCaretPainter ;
     private final EditorImpl myEditor;
     private final EditorRegistry myRegistry;
+    private final SettingsSnapshot mySettings;
     private final DocumentText myDocument;
     private final MarkupModelEx myDocMarkup;
     private final MarkupModelEx myEditorMarkup;
@@ -283,6 +284,7 @@ public final class EditorPainter implements TextDrawingCallback {
       myCaretPainter = caretPainter;
       myEditor = myView.getEditor();
       myRegistry = EditorRegistry.current();
+      mySettings = myEditor.getSettingsSnapshot();
       myDocument = myView.getDocument().getDocumentText();
       myDocMarkup = myView.getFilteredDocumentMarkupModel();
       myEditorMarkup = myView.getMarkupModel();
@@ -293,7 +295,7 @@ public final class EditorPainter implements TextDrawingCallback {
       mySoftWrapModel = view.getSoftWrapModel();
       myFocusModeModel = view.getFocusModel();
       myInsets = myView.getInsets();
-      myCorrector = XCorrector.create(myView, myInsets);
+      myCorrector = XCorrector.create(myView, myInsets, mySettings, myRegistry);
       myGraphics = g;
       myClip = myGraphics.getClipBounds();
       myYShift = -myClip.y;
@@ -311,7 +313,7 @@ public final class EditorPainter implements TextDrawingCallback {
       myDescent = myView.getDescent();
       myDefaultBackgroundColor = myEditor.getColorsScheme().getDefaultBackground();
       myBackgroundColor = myEditor.getBackgroundColor();
-      myMarginColumns = myEditor.getSettings().getRightMargin(myEditor.getProject());
+      myMarginColumns = mySettings.getRightMargin();
       myScaleContext = ScaleContext.create(myGraphics);
       myCaretDataInView = myEditor.isPaintSelection()? new CaretDataInView(myCaretModel, myStartOffset, myEndOffset) : null;
     }
@@ -405,7 +407,7 @@ public final class EditorPainter implements TextDrawingCallback {
         // suppress hard wrap and visual guides vertical lines on sticky lines panel
         return;
       }
-      if (myEditor.getSettings().isRightMarginShown()) {
+      if (mySettings.isRightMarginShown()) {
         Color visualGuidesColor = myEditor.getColorsScheme().getColor(EditorColors.VISUAL_INDENT_GUIDE_COLOR);
         if (visualGuidesColor != null) {
           myGraphics.setColor(visualGuidesColor);
@@ -417,7 +419,7 @@ public final class EditorPainter implements TextDrawingCallback {
 
       if (!isMarginShown()) return;
       myGraphics.setColor(myEditor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR));
-      float baseMarginWidth = getBaseMarginWidth(myView);
+      float baseMarginWidth = getBaseMarginWidth(myView, mySettings);
       int baseMarginX = myCorrector.marginX(baseMarginWidth);
       if (myMarginPositions == null) {
         LinePainter2D.paint(myGraphics, baseMarginX, 0, baseMarginX, myClip.height);
@@ -468,7 +470,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private boolean isMarginShown() {
-      return EditorPainter.isMarginShown(myEditor, myRegistry);
+      return EditorPainter.isMarginShown(myEditor, mySettings.isRightMarginShown(), myRegistry);
     }
 
     private float visualLineEnd(int visualLine) {
@@ -508,8 +510,8 @@ public final class EditorPainter implements TextDrawingCallback {
       boolean calculateMarginWidths = myRegistry.isRightMarginAdjusted() && isMarginShown() && myStartVisualLine < lineCount;
       myMarginPositions = calculateMarginWidths ? new MarginPositions(Math.min(myEndVisualLine, lineCount - 1) - myStartVisualLine + 2)
                                                 : null;
-      final LineWhitespacePaintingStrategy whitespacePaintingStrategy = new LineWhitespacePaintingStrategy(myEditor.getSettings());
-      boolean paintAllSoftWraps = myEditor.getSettings().isAllSoftWrapsShown();
+      LineWhitespacePaintingStrategy whitespacePaintingStrategy = new LineWhitespacePaintingStrategy(mySettings);
+      boolean paintAllSoftWraps = mySettings.isAllSoftWrapsShown();
       float whiteSpaceScale = getWhiteSpaceScale(myEditor);
       final BasicStroke whiteSpaceStroke = new BasicStroke(calcFeatureSize(1, whiteSpaceScale));
 

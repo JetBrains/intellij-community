@@ -3,10 +3,11 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretVisualAttributes;
-import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.SettingsSnapshot;
 import com.intellij.openapi.editor.impl.caret.model.CaretCursor;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
 import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
@@ -86,6 +87,8 @@ public final class EditorCaretPainter {
 
   private final class Session {
     private final DocumentText myDocument;
+    private final SettingsSnapshot mySettings;
+    private final EditorColorsScheme myColorsScheme;
     private final Graphics2D myGraphics;
     private final Insets myInsets;
     private final int myYShift;
@@ -93,6 +96,8 @@ public final class EditorCaretPainter {
 
     Session(Graphics2D graphics, int yShift) {
       myDocument = myView.getDocument().getDocumentText();
+      mySettings = myEditor.getSettingsSnapshot();
+      myColorsScheme = myEditor.getColorsScheme();
       myInsets = myView.getInsets();
       myGraphics = graphics;
       myYShift = yShift;
@@ -101,8 +106,7 @@ public final class EditorCaretPainter {
 
     void paintCaret(CaretCursor caretCursor) {
       Graphics2D g = IdeBackgroundUtil.getOriginalGraphics(myGraphics);
-      EditorSettings settings = myEditor.getSettings();
-      Color caretColor = myEditor.getColorsScheme().getColor(EditorColors.CARET_COLOR);
+      Color caretColor = myColorsScheme.getColor(EditorColors.CARET_COLOR);
       if (caretColor == null) {
         caretColor = new JBColor(CARET_DARK, CARET_LIGHT);
       }
@@ -123,8 +127,8 @@ public final class EditorCaretPainter {
         CaretVisualAttributes.Shape shape = attr.getShape();
         switch (shape) {
           case DEFAULT -> {
-            if (myEditor.isInsertMode() != settings.isBlockCursor()) {
-              float lineWidth = JBUIScale.scale(attr.getWidth(settings.getLineCursorWidth())) * myEditor.getScale();
+            if (myEditor.isInsertMode() != mySettings.isBlockCursor()) {
+              float lineWidth = JBUIScale.scale(attr.getWidth(mySettings.getLineCursorWidth())) * myEditor.getScale();
               // fully cover extra character's pixel which can appear due to antialiasing
               // see IDEA-148843 for more details
               if (x > minX && lineWidth > 1) {
@@ -144,7 +148,7 @@ public final class EditorCaretPainter {
             // Don't draw if thickness is zero. This allows a plugin to "hide" carets, e.g. to visually emulate a block selection as a
             // selection rather than as multiple carets with discrete selections
             if (attr.getThickness() > 0) {
-              int barWidth = Math.max((int)(width * attr.getThickness()), JBUIScale.scale(settings.getLineCursorWidth()));
+              int barWidth = Math.max((int)(width * attr.getThickness()), JBUIScale.scale(mySettings.getLineCursorWidth()));
               if (!isRtl && x > minX && barWidth > 1 && barWidth < (width / 2)) x -= 1 / JBUIScale.sysScale(g);
               paintCaretBar(g, caret, isRtl ? x - barWidth : x, y, barWidth, caretHeight, isRtl);
               Shape savedClip = g.getClip();

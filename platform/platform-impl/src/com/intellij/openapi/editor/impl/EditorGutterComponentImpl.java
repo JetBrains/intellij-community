@@ -397,7 +397,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
             }
           }
         }
-        else if (attachedObject instanceof DnDNativeTarget.EventInfo dndEventInfo && myEditor.getSettings().isDndEnabled()) {
+        else if (attachedObject instanceof DnDNativeTarget.EventInfo dndEventInfo && settings().isDndEnabled()) {
           Transferable transferable = dndEventInfo.getTransferable();
           if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
             success = EditorImpl.handleDrop(myEditor, transferable, e.getAction().getActionId());
@@ -420,7 +420,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
             }
           }
         }
-        else if (attachedObject instanceof DnDNativeTarget.EventInfo dragEventInfo && myEditor.getSettings().isDndEnabled()) {
+        else if (attachedObject instanceof DnDNativeTarget.EventInfo dragEventInfo && settings().isDndEnabled()) {
           Transferable transferable = dragEventInfo.getTransferable();
           if (transferable != null && transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
             int line = convertPointToLineNumber(e.getPoint());
@@ -485,7 +485,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private void updateFoldingOutlineVisibility() {
-    var isFoldingOutlineShownOnlyOnHover = myEditor.getSettings().isFoldingOutlineShownOnlyOnHover();
+    var isFoldingOutlineShownOnlyOnHover = settings().isFoldingOutlineShownOnlyOnHover();
 
     myAlphaContext.setVisible(
       !ExperimentalUI.isNewUI() ||
@@ -811,7 +811,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private Color getCaretRowColor() {
-    if (!myEditor.getSettings().isCaretRowShown()) {
+    if (!settings().isCaretRowShown()) {
       return null;
     }
     if (!EditorRegistry.current().isCaretLineHighlightedAtCustomFold() && isCaretAtCustomFolding()) {
@@ -821,7 +821,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
       // suppress the gutter caret row background on the sticky lines panel
       return null;
     }
-    if (myEditor.getSettings().isLineNumbersAfterIcons()) {
+    if (settings().isLineNumbersAfterIcons()) {
       // don't show for jupyter notebooks
       return null;
     }
@@ -1181,10 +1181,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     Component outerContainer = ComponentUtil.findParentByCondition(myEditor.getComponent(), c -> EditorCompositeKt.isEditorComposite(c));
     if (outerContainer == null) return;
 
-    EditorSettings settings = myEditor.getSettings();
     Project project = myEditor.getProject();
     if (project != null && project.isDisposed()) return;
-    int rightMargin = settings.getRightMargin(project);
+    int rightMargin = settings().getRightMargin();
     if (rightMargin <= 0) return;
 
     JComponent editorComponent = myEditor.getComponent();
@@ -1891,7 +1890,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     double[] dyPoints = {y + baseHeight, y, y, y + baseHeight, y + height + (height < 0 ? 1 : 0)};
 
     if (ExperimentalUI.isNewUI()) {
-      if (height <= 0 && !myEditor.getSettings().isFoldingEndingsShown()) {
+      if (height <= 0 && !settings().isFoldingEndingsShown()) {
         //do not paint folding endings in the new UI by default
         return;
       }
@@ -2014,26 +2013,26 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   boolean isLineMarkersShown() {
-    return myEditor.getSettings().isLineMarkerAreaShown();
+    return settings().isLineMarkerAreaShown();
   }
 
   boolean isLineNumbersAfterIcons() {
-    return myEditor.getSettings().isLineNumbersAfterIcons();
+    return settings().isLineNumbersAfterIcons();
   }
 
   boolean areIconsShown() {
-    return myEditor.getSettings().areGutterIconsShown();
+    return settings().areGutterIconsShown();
   }
 
   boolean isLineNumbersShown() {
-    return myEditor.getSettings().isLineNumbersShown();
+    return settings().isLineNumbersShown();
   }
 
   @Override
   public @NotNull LineNumberConverter getPrimaryLineNumberConverter() {
     if (myLineNumberConverter != null) return myLineNumberConverter;
 
-    EditorSettings.LineNumerationType type = myEditor.getSettings().getLineNumerationType();
+    EditorSettings.LineNumerationType type = settings().getLineNumerationType();
     return getStandardLineNumberConverter(type);
   }
 
@@ -2047,8 +2046,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     return !myTextAnnotationGutterProviders.isEmpty();
   }
 
+  private @NotNull SettingsSnapshot settings() {
+    return myEditor.getSettingsSnapshot();
+  }
+
   private boolean isFoldingOutlineShown() {
-    return myEditor.getSettings().isFoldingOutlineShown() &&
+    return settings().isFoldingOutlineShown() &&
            myEditor.getFoldingModel().isFoldingEnabled() &&
            !myEditor.isInPresentationMode();
   }
@@ -2207,7 +2210,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
 
   @Override
   public @Nullable FoldRegion findFoldingAnchorAt(int x, int y) {
-    if (!myEditor.getSettings().isFoldingOutlineShown()) return null;
+    if (!settings().isFoldingOutlineShown()) return null;
 
     int anchorX = getFoldingAreaOffset();
     int anchorWidth = getFoldingAnchorWidth();
