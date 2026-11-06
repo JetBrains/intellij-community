@@ -6,6 +6,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.EnableTracingFor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import kotlinx.coroutines.CompletableDeferred
@@ -19,7 +20,9 @@ import java.awt.Graphics2D
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
+// Trace logging makes the tests also run the logging code of the override.
 @TestApplication
+@EnableTracingFor(categories = ["#com.intellij.openapi.wm.impl.GlassPaneCursorOverride"])
 class IdeGlassPaneImplCursorOverrideTest {
   @Test
   fun `an override makes the pane visible and enabled with the cursor`(): Unit = timeoutRunBlocking {

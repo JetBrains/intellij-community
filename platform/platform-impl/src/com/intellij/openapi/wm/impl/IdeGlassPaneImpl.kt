@@ -712,6 +712,9 @@ private class IdePaneLoadingLayer(
 /**
  * The cursor override of a glass pane, see [IdeGlassPaneImpl.setCursorOverride].
  *
+ * Debug logging shows each change of a request and each cursor change.
+ * Trace logging adds the stack trace of the call to each message.
+ *
  * @param updateVisibility shows or hides the pane; the pane must be visible while [isActive] is `true`
  */
 private class GlassPaneCursorOverride(private val glassPane: JComponent, private val updateVisibility: () -> Unit) {
@@ -726,15 +729,24 @@ private class GlassPaneCursorOverride(private val glassPane: JComponent, private
 
   fun set(cursor: Cursor?, requestor: Any) {
     val wasActive = isActive
-    requests.remove(requestor)
+    val previousCursor = requests.remove(requestor)
     if (cursor != null) {
       requests.put(requestor, cursor)
+    }
+    log {
+      when {
+        previousCursor == null && cursor == null -> "No request of $requestor to remove"
+        previousCursor == null -> "Added the request of $requestor: ${cursorName(cursor)}, ${requests.size} request(s) now"
+        cursor == null -> "Removed the request of $requestor: ${cursorName(previousCursor)}, ${requests.size} request(s) left"
+        else -> "Replaced the request of $requestor: ${cursorName(previousCursor)} -> ${cursorName(cursor)}"
+      }
     }
     val activeCursor = requests.values.lastOrNull()
     if (activeCursor != null) {
       if (!wasActive) {
         start()
       }
+      log { "Setting the cursor ${cursorName(activeCursor)} on the pane and on ${describe(window)}" }
       UIUtil.setCursor(glassPane, activeCursor)
       window?.let { UIUtil.setCursor(it, activeCursor) }
       updateVisibility()
@@ -752,9 +764,17 @@ private class GlassPaneCursorOverride(private val glassPane: JComponent, private
     val window = SwingUtilities.getWindowAncestor(glassPane)
     this.window = window
     windowCursorBefore = window?.let { ownCursor(it) }
+    log {
+      "Started the override: the pane cursor was ${cursorName(paneCursorBefore)}, the pane was enabled: $paneEnabledBefore, " +
+      "the cursor of ${describe(window)} was ${cursorName(windowCursorBefore)}"
+    }
   }
 
   private fun stop() {
+    log {
+      "Stopping the override: restoring the pane cursor ${cursorName(paneCursorBefore)}, the pane enabled state $paneEnabledBefore, " +
+      "the cursor ${cursorName(windowCursorBefore)} of ${describe(window)}"
+    }
     glassPane.isEnabled = paneEnabledBefore
     UIUtil.setCursor(glassPane, paneCursorBefore)
     window?.let { UIUtil.setCursor(it, windowCursorBefore) }
@@ -764,6 +784,27 @@ private class GlassPaneCursorOverride(private val glassPane: JComponent, private
   }
 
   private fun ownCursor(component: Component): Cursor? = if (component.isCursorSet) component.cursor else null
+
+  private inline fun log(message: () -> String) {
+    if (LOG.isTraceEnabled) {
+      LOG.trace(Throwable("$this: ${message()}"))
+    }
+    else if (LOG.isDebugEnabled) {
+      LOG.debug("$this: ${message()}")
+    }
+  }
+
+  override fun toString(): String =
+    "The cursor override of the glass pane @${System.identityHashCode(glassPane)} in ${describe(SwingUtilities.getWindowAncestor(glassPane))}"
+
+  private companion object {
+    val LOG = logger<GlassPaneCursorOverride>()
+
+    fun cursorName(cursor: Cursor?): String = cursor?.name ?: "inherited"
+
+    fun describe(component: Component?): String =
+      if (component == null) "no window" else "${component.javaClass.name}@${System.identityHashCode(component)}"
+  }
 }
 
 internal interface FrameLoadingState {
