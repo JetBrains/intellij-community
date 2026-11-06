@@ -38,7 +38,7 @@ public final class CsvTableFileEditorProvider extends WeighedFileEditorProvider 
 
   @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
-    return isCsvFile(file);
+    return isCsvFile(file) && !isEmptyFileWithTableFirst(file);
   }
 
   @Override
@@ -100,6 +100,10 @@ public final class CsvTableFileEditorProvider extends WeighedFileEditorProvider 
 
   private static @Nullable CsvFormat getFormatFast(@NotNull Project project, @NotNull VirtualFile file) {
     return CsvFormatResolver.getFormat(project, file, true, null, CsvFormatResolver.FormatGetter.FILE, CsvFormatResolver.FormatGetter.STATE);
+  }
+
+  private boolean isEmptyFileWithTableFirst(@NotNull VirtualFile file) {
+    return getPolicy() == FileEditorPolicy.PLACE_BEFORE_DEFAULT_EDITOR && file.getLength() == 0;
   }
 
   private static boolean isCsvFile(@NotNull VirtualFile file) {
