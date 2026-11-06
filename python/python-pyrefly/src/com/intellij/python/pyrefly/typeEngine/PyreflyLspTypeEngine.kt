@@ -21,7 +21,6 @@ import com.jetbrains.python.psi.types.PyType
  */
 internal class PyreflyLspTypeEngine(private val pyProject: PyProject) : PyLspTypeEngine {
   override val name: String = PyTypeEngineType.PYREFLY.name
-  override val allowsBuiltInTypeEngineFallbackWhenUnavailable: Boolean = false
 
   override val lspClient: LspClient?
     get() = findLspClientFor(pyProject, PyreflyLspIntegrationProvider::class.java)

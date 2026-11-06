@@ -11,14 +11,6 @@ interface PyTypeEngine {
   val name: String
 
   /**
-   * Whether the built-in engine may answer for an element while this engine is not [isReady].
-   *
-   * When false, the context answers `Unknown` for such an element and does not cache the answer.
-   */
-  val allowsBuiltInTypeEngineFallbackWhenUnavailable: Boolean
-    get() = true
-
-  /**
    * Whether the engine answers a request now.
    *
    * An engine that runs a server exists before the server runs, and it returns false until then.
@@ -29,8 +21,7 @@ interface PyTypeEngine {
   /**
    * Whether the engine can see [pyTypedElement] at all.
    *
-   * The built-in engine answers for an element this engine cannot see, whatever
-   * [allowsBuiltInTypeEngineFallbackWhenUnavailable] says.
+   * The built-in engine answers for an element this engine cannot see.
    */
   fun isSupportedForResolve(pyTypedElement: PyTypedElement): Boolean
   fun resolveType(pyTypedElement: PyTypedElement, isUserInitiated: Boolean): Ref<PyType?>?

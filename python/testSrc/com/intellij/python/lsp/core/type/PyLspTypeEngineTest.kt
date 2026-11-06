@@ -35,7 +35,7 @@ internal class PyLspTypeEngineTest {
   /**
    * A restart replaces the client, and a cached `TypeEvalContext` still holds this engine. A stopped
    * server answers nothing, so the engine is not ready. The engine still sees the element, so the
-   * context does not give it to the built-in engine when the engine forbids that.
+   * context does not give it to the built-in engine.
    */
   @Test
   @TestFor(issues = ["PY-92008", "PY-92254"])

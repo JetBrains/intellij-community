@@ -18,8 +18,7 @@ interface PyLspTypeEngine : PyTypeEngine {
 
   /**
    * A stopped or starting server answers nothing, see [isUsable]. The context then answers `Unknown`
-   * or asks the built-in engine, see [allowsBuiltInTypeEngineFallbackWhenUnavailable], and it does
-   * not cache the gap.
+   * and does not cache the gap.
    */
   override val isReady: Boolean
     get() = lspClient?.isUsable == true

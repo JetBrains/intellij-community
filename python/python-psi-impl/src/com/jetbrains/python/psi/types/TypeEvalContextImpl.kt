@@ -311,9 +311,6 @@ open class TypeEvalContextImpl internal constructor(
           if (resolvedType == null) evaluateWithBuiltInEngine(element) else resolvedType.get()
         }
       }
-      else if (engine.allowsBuiltInTypeEngineFallbackWhenUnavailable) {
-        evaluateWithBuiltInEngine(element)
-      }
       else {
         // The engine answers after its server starts, and the start drops this context. Do not cache the gap.
         return@doPreventingRecursion PyAnyType.unknown
