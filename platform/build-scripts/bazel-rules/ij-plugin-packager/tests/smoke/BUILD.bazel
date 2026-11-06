@@ -3,7 +3,7 @@ load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix
 load("@rules_pkg//pkg:zip.bzl", "pkg_zip")
 load("//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
-load("//platform/build-scripts/bazel-rules:unpack_archive.bzl", "unpack_archive")
+load("//platform/build-scripts/bazel-rules:unpack_archive.bzl", "unpack_zip_archive")
 load(":build_settings_test.bzl", "ij_plugin_settings_test_target")
 load(":non_classpath_data_test.bzl", "non_classpath_data_attribute_tests")
 
@@ -64,7 +64,7 @@ pkg_zip(
 )
 
 # a directory that an action writes, not a source directory
-unpack_archive(
+unpack_zip_archive(
     name = "descriptor-data-tree",
     archive = ":descriptor-data-archive",
 )
