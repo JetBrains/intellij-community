@@ -1,8 +1,8 @@
-"""Writes one plugin's patched `META-INF/plugin.xml` in an action of its own.
+"""Writes one plugin's patched `META-INF/plugin.xml` and its classpath descriptor.
 
-The rule runs one action per plugin. Its declared inputs are the descriptors the patch reads. Its output is the text
-the plugin's main jar receives. Both plugin tiers read that output through `DevDistPluginDescriptorInfo`. The plugin
-descriptor writer is the one producer of the text.
+The leaf writes the descriptor that the plugin's main jar receives. A leaf that embeds no content module gets its
+classpath descriptor from a separate target in the neutral product configuration. Both plugin tiers read the files
+through `DevDistPluginDescriptorInfo`. The plugin descriptor writer is the one producer of the text.
 
 Modelled on two neighbours, each for what it already settled. `ij_plugin` for the per-plugin grain and for the build
 number arriving as a declared file. `content_module_jar` for the provider, for the `manual` tag and for a packer named
@@ -42,6 +42,15 @@ DevDistPluginDescriptorInfo = provider(
         A component of the plugin states the same list, so its stamp class matches the class of this leaf.""",
         "_declaration": "Private versioned metadata with the declared File objects and action parameters.",
         "_declaration_file": "The private metadata file. It is not a default output or an action input.",
+    },
+)
+
+DevDistPluginClasspathDescriptorInfo = provider(
+    doc = "The classpath descriptor written in the neutral product configuration.",
+    fields = {
+        "descriptor": "The classpath descriptor as a `File`.",
+        "stamp_class": "The stamp class of the classpath descriptor target.",
+        "_declaration": "The private versioned metadata of this target's action.",
     },
 )
 
@@ -173,8 +182,8 @@ def _dev_dist_plugin_descriptor_group_impl(ctx):
             target[DefaultInfo].files
             for target in ctx.attr.descriptors
         ])),
-        OutputGroupInfo(_dev_dist_descriptor_metadata = depset([
-            target[DevDistPluginDescriptorInfo]._declaration_file
+        OutputGroupInfo(_dev_dist_descriptor_metadata = depset(transitive = [
+            target[OutputGroupInfo]._dev_dist_descriptor_metadata
             for target in ctx.attr.descriptors
         ])),
     ]
@@ -511,12 +520,15 @@ def _dev_dist_plugin_descriptor_impl(ctx):
     directory = ctx.attr.variant + "/" if ctx.attr.variant else ""
     descriptor = ctx.actions.declare_file(directory + module_name + ".plugin.xml")
 
-    # The classpath descriptor is always a file of its own, in its final byte form. An ordinary plugin gets it from the
-    # primary action as a second output. A plugin that embeds no content module gets it from a second action, which
-    # embeds them and normalizes the XML first.
-    classpath_descriptor = ctx.actions.declare_file(directory + module_name + ".plugin.classpath.xml")
+    classpath_descriptor_target = ctx.attr.classpath_descriptor_target
+    if ctx.attr.embed_content_modules:
+        classpath_descriptor = ctx.actions.declare_file(directory + module_name + ".plugin.classpath.xml")
+    else:
+        if classpath_descriptor_target == None:
+            fail("a plugin that embeds no content modules must state its classpath descriptor target", attr = "classpath_descriptor_target")
+        classpath_descriptor = classpath_descriptor_target[DevDistPluginClasspathDescriptorInfo].descriptor
     request = _descriptor_request(ctx, module_name)
-    actions = [_descriptor_action(
+    action = _descriptor_action(
         ctx,
         request,
         descriptor,
@@ -525,23 +537,7 @@ def _dev_dist_plugin_descriptor_impl(ctx):
         mnemonic = "DevDistPluginDescriptor",
         progress_message = "Patching the plugin descriptor of %{label}",
         reserialized_output = classpath_descriptor if ctx.attr.embed_content_modules else None,
-    )]
-
-    if not ctx.attr.embed_content_modules:
-        classpath_request = _descriptor_request(
-            ctx,
-            module_name,
-            embed_content_modules = True,
-            reserialize_before_content_embedding = True,
-        )
-        actions.append(_descriptor_action(
-            ctx,
-            classpath_request,
-            classpath_descriptor,
-            ctx.attr._writer,
-            mnemonic = "DevDistPluginClasspathDescriptor",
-            progress_message = "Embedding the classpath descriptor of %{label}",
-        ))
+    )
 
     files = [descriptor]
 
@@ -561,15 +557,18 @@ def _dev_dist_plugin_descriptor_impl(ctx):
             "version_suffix": request.stamps.version_suffix,
         },
         sources = request.sources,
-        actions = tuple(actions),
+        actions = (action,),
         primary_output = descriptor,
         default_outputs = tuple(files),
     )
     metadata = ctx.actions.declare_file(ctx.label.name + ".declaration.json")
     ctx.actions.write(metadata, _descriptor_declaration_json(declaration))
+    classpath_metadata = []
+    if classpath_descriptor_target != None:
+        classpath_metadata = [classpath_descriptor_target[OutputGroupInfo]._dev_dist_descriptor_metadata]
     return [
         DefaultInfo(files = depset(files)),
-        OutputGroupInfo(_dev_dist_descriptor_metadata = depset([metadata])),
+        OutputGroupInfo(_dev_dist_descriptor_metadata = depset([metadata], transitive = classpath_metadata)),
         DevDistPluginDescriptorInfo(
             plugin_main_module = module_name,
             descriptor = descriptor,
@@ -710,6 +709,102 @@ critical path of the build.""",
             providers = [BuildSettingInfo],
         ),
         "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
+        "classpath_descriptor_target": attr.label(
+            doc = "Set by the macro to the separate classpath descriptor target when the leaf embeds no content modules.",
+            providers = [DevDistPluginClasspathDescriptorInfo],
+        ),
+    },
+)
+
+def _dev_dist_plugin_classpath_descriptor_impl(ctx):
+    module_name = ctx.attr.main_module
+    if not module_name:
+        fail("The plugin must state its main module", attr = "main_module")
+
+    stamp_class = ctx.attr._stamp_class[BuildSettingInfo].value
+    directory = ctx.attr.variant + "/" if ctx.attr.variant else ""
+    classpath_descriptor = ctx.actions.declare_file(directory + module_name + ".plugin.classpath.xml")
+    request = _descriptor_request(
+        ctx,
+        module_name,
+        embed_content_modules = True,
+        reserialize_before_content_embedding = True,
+    )
+    action = _descriptor_action(
+        ctx,
+        request,
+        classpath_descriptor,
+        ctx.attr._writer,
+        mnemonic = "DevDistPluginClasspathDescriptor",
+        progress_message = "Embedding the classpath descriptor of %{label}",
+    )
+    platforms = _resolved_platforms(ctx)
+    declaration = struct(
+        version = 3,
+        producer = _descriptor_producer_identity(ctx),
+        scope = {
+            "main_module": module_name,
+            "stamp_class": stamp_class,
+            "variant": ctx.attr.variant,
+            "declared_platforms": ctx.attr.platforms,
+            "platforms": platforms,
+            "declared_markers": ctx.attr.markers,
+            "declared_version_suffix": ctx.attr.version_suffix,
+            "markers": request.stamps.markers,
+            "version_suffix": request.stamps.version_suffix,
+        },
+        sources = request.sources,
+        actions = (action,),
+        primary_output = classpath_descriptor,
+        default_outputs = (classpath_descriptor,),
+    )
+    metadata = ctx.actions.declare_file(ctx.label.name + ".declaration.json")
+    ctx.actions.write(metadata, _descriptor_declaration_json(declaration))
+    return [
+        DefaultInfo(files = depset([classpath_descriptor])),
+        OutputGroupInfo(_dev_dist_descriptor_metadata = depset([metadata])),
+        DevDistPluginClasspathDescriptorInfo(
+            descriptor = classpath_descriptor,
+            stamp_class = stamp_class,
+            _declaration = declaration,
+        ),
+    ]
+
+_dev_dist_plugin_classpath_descriptor = rule(
+    doc = "Writes one plugin's classpath descriptor in the neutral product configuration.",
+    implementation = _dev_dist_plugin_classpath_descriptor_impl,
+    cfg = dev_dist_neutral_product_transition,
+    fragments = ["platform"],
+    attrs = {
+        "main_module": attr.string(
+            doc = "The main JPS module that identifies this descriptor.",
+            mandatory = True,
+        ),
+        "descriptor": attr.label(allow_single_file = [".xml"]),
+        "jar_inputs": attr.label(providers = [_DevDistDescriptorJarsInfo]),
+        "descriptor_entry": attr.string(),
+        "descriptors": attr.label_keyed_string_dict(allow_files = [".xml"]),
+        "variant": attr.string(),
+        "platforms": attr.string_list(),
+        "markers": attr.string_list(),
+        "version_suffix": attr.string(),
+        "compatible_build_range": attr.string(),
+        "refused_content_modules": attr.string_list(),
+        "mode_refused_content_modules": attr.string_list_dict(),
+        "separate_jar": attr.string_list(),
+        "exact_version": attr.bool(),
+        "retain_product_descriptor": attr.bool(),
+        "_build_number_file": attr.label(
+            allow_single_file = True,
+            default = Label("@community//:build.txt"),
+        ),
+        "_writer": attr.label(
+            default = Label("//platform/build-scripts/bazel-rules:plugin_descriptor_writer"),
+            executable = True,
+            cfg = "exec",
+        ),
+    } | DEV_DIST_STAMP_CLASS_FLAG_ATTR | {
+        "_allowlist_function_transition": attr.label(default = Label("@bazel_tools//tools/allowlists/function_transition_allowlist")),
     },
 )
 
@@ -829,6 +924,9 @@ def dev_dist_plugin_descriptor(
     merged member, a `sub/module` name or a module whose row the caller states. The macro skips it. An explicit row wins
     by label and by load path, because the descriptor writer refuses a load path declared twice.
 
+    A leaf that embeds no content module also gets a `<name>_classpath` target. That target writes the classpath
+    descriptor in the neutral product configuration.
+
     Args:
         main_module: the plugin's main JPS module, which names the target.
         descriptor: the label of the plugin's `META-INF/plugin.xml`, package-relative or full.
@@ -869,6 +967,25 @@ def dev_dist_plugin_descriptor(
             visibility = ["//visibility:private"],
             **{key: kwargs[key] for key in ["testonly"] if key in kwargs}
         )
+    if not kwargs.get("embed_content_modules", True):
+        classpath_kwargs = {
+            key: value
+            for key, value in kwargs.items()
+            if key != "embed_content_modules"
+        }
+        classpath_name = name + "_classpath"
+        _dev_dist_plugin_classpath_descriptor(
+            name = classpath_name,
+            main_module = main_module,
+            descriptor = source,
+            jar_inputs = ":" + jar_inputs if jar_inputs else None,
+            descriptor_entry = descriptor_entry,
+            variant = variant,
+            tags = ["manual"],
+            visibility = ["//visibility:private"],
+            **classpath_kwargs
+        )
+        kwargs["classpath_descriptor_target"] = ":" + classpath_name
     _dev_dist_plugin_descriptor(
         name = name,
         main_module = main_module,

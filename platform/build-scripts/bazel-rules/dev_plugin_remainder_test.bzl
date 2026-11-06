@@ -5,7 +5,14 @@ load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
-load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name", "dev_dist_stamp_class_consumer_transition")
+load(
+    ":dev_dist_plugin_descriptor.bzl",
+    "DevDistPluginClasspathDescriptorInfo",
+    "DevDistPluginDescriptorInfo",
+    "dev_dist_plugin_descriptor",
+    "dev_dist_plugin_descriptor_target_name",
+    "dev_dist_stamp_class_consumer_transition",
+)
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo")
 load(":dev_plugin_remainder.bzl", "DevPluginArtifactCatalogueInfo", "DevPluginGraphInfo", "DevPluginRemainderInfo", "dev_dist_complex_plugin", "dev_dist_complex_plugin_variant", "dev_plugin_artifact_catalogue", "dev_plugin_component", "dev_plugin_file_graph", "dev_plugin_remainder_from_plan", "platform_values_error")
 load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
@@ -462,13 +469,23 @@ def _remainder_from_plan_test_impl(ctx):
     asserts.equals(env, descriptor, catalogue.artifacts["descriptor"])
 
     # The classpath descriptor is always a file of its own. An ordinary plugin gets it from the primary action as its
-    # reserialized second output. A plugin that embeds no content module gets it from a second action.
+    # reserialized second output. A plugin that embeds no content module gets it from a neutral target.
     asserts.true(env, descriptor != classpath_descriptor)
     asserts.equals(env, [descriptor], descriptor_target[DefaultInfo].files.to_list())
     descriptor_actions = descriptor_info._declaration.actions
-    asserts.equals(env, 2 if ctx.attr.separate_classpath_descriptor else 1, len(descriptor_actions))
+    asserts.equals(env, 1, len(descriptor_actions))
     primary_actions = [candidate for candidate in descriptor_actions if descriptor in candidate.outputs]
-    classpath_actions = [candidate for candidate in descriptor_actions if classpath_descriptor in candidate.outputs]
+    if ctx.attr.separate_classpath_descriptor:
+        classpath_info = ctx.attr.classpath_descriptor_target[DevDistPluginClasspathDescriptorInfo]
+        classpath_actions = classpath_info._declaration.actions
+        asserts.equals(env, [_short_paths([classpath_descriptor])[0]], _short_paths([classpath_info.descriptor]))
+        asserts.equals(
+            env,
+            sorted(_short_paths(primary_actions[0].inputs)),
+            sorted(_short_paths(classpath_actions[0].inputs)),
+        )
+    else:
+        classpath_actions = [candidate for candidate in descriptor_actions if classpath_descriptor in candidate.outputs]
     asserts.equals(env, 1, len(primary_actions))
     asserts.equals(env, 1, len(classpath_actions))
     primary_embed = [value for flag, value in primary_actions[0].parameters if flag == "--embed-content-modules"]
@@ -559,6 +576,7 @@ _remainder_from_plan_test = analysistest.make(
             cfg = dev_dist_stamp_class_consumer_transition,
             providers = [DevDistPluginDescriptorInfo],
         ),
+        "classpath_descriptor_target": attr.label(providers = [DevDistPluginClasspathDescriptorInfo]),
         "raw": attr.label(
             mandatory = True,
             allow_single_file = True,
@@ -1164,6 +1182,7 @@ def dev_plugin_remainder_test_suite(name):
             graph = ":" + plan_graph,
             catalogue = ":" + catalogue,
             descriptor = ":" + descriptor,
+            classpath_descriptor_target = ":" + descriptor + "_classpath" if separate_classpath_descriptor else None,
             raw = ":" + raw,
             separate_classpath_descriptor = separate_classpath_descriptor,
         )

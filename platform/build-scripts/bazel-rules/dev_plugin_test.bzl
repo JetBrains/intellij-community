@@ -6,7 +6,14 @@ load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "content_module_jar", "content_module_jar_target_name")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin.bzl", "dev_dist_plugin", "dev_dist_plugin_component_target_name")
-load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name")
+load(
+    ":dev_dist_plugin_descriptor.bzl",
+    "DevDistPluginClasspathDescriptorInfo",
+    "DevDistPluginDescriptorInfo",
+    "dev_dist_plugin_descriptor",
+    "dev_dist_plugin_descriptor_group",
+    "dev_dist_plugin_descriptor_target_name",
+)
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_plugin")
 load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
 
@@ -433,6 +440,38 @@ _mode_test = analysistest.make(
     config_settings = {_STAMP_CLASS_FLAG: "frontend"},
 )
 
+def _classpath_descriptor_test_impl(ctx):
+    env = analysistest.begin(ctx)
+    classpath = analysistest.target_under_test(env)[DevDistPluginClasspathDescriptorInfo]
+    leaf = ctx.attr.leaf[DevDistPluginDescriptorInfo]
+    group = ctx.attr.descriptor_group
+    actions = [action for action in analysistest.target_actions(env) if action.mnemonic == "DevDistPluginClasspathDescriptor"]
+    asserts.equals(env, "", classpath.stamp_class)
+    asserts.equals(env, classpath.descriptor.owner, leaf.classpath_descriptor.owner)
+    asserts.equals(env, classpath.descriptor.basename, leaf.classpath_descriptor.basename)
+    asserts.equals(env, 1, len(actions))
+    asserts.equals(env, [classpath.descriptor], actions[0].outputs.to_list())
+    asserts.equals(env, 2, len(group[OutputGroupInfo]._dev_dist_descriptor_metadata.to_list()))
+    asserts.equals(env, [leaf.descriptor.basename], [file.basename for file in group[DefaultInfo].files.to_list()])
+    return analysistest.end(env)
+
+_CLASSPATH_DESCRIPTOR_TEST_ATTRS = {
+    "descriptor_group": attr.label(mandatory = True),
+    "leaf": attr.label(mandatory = True, providers = [DevDistPluginDescriptorInfo]),
+}
+
+_classpath_descriptor_frontend_test = analysistest.make(
+    _classpath_descriptor_test_impl,
+    attrs = _CLASSPATH_DESCRIPTOR_TEST_ATTRS,
+    config_settings = {_STAMP_CLASS_FLAG: "frontend"},
+)
+
+_classpath_descriptor_monolith_test = analysistest.make(
+    _classpath_descriptor_test_impl,
+    attrs = _CLASSPATH_DESCRIPTOR_TEST_ATTRS,
+    config_settings = {_STAMP_CLASS_FLAG: "monolith"},
+)
+
 def _expected_failure_test_impl(ctx):
     env = analysistest.begin(ctx)
     asserts.expect_failure(env, ctx.attr.expected_message)
@@ -558,6 +597,28 @@ def dev_plugin_test_suite(name):
     descriptor = ":" + dev_dist_plugin_descriptor_target_name(_MAIN_MODULE)
     modules = {":" + owner: _MAIN_MODULE, ":" + split: _SPLIT_MODULE}
 
+    classpath_main_module = "test.dev.plugin.classpath"
+    dev_dist_plugin_descriptor(
+        main_module = classpath_main_module,
+        descriptor = ":" + source,
+        embed_content_modules = False,
+        mode_refused_content_modules = {"frontend": [_MAIN_MODULE]},
+    )
+    classpath_leaf = ":" + dev_dist_plugin_descriptor_target_name(classpath_main_module)
+    classpath_target = classpath_leaf + "_classpath"
+    classpath_groups = {}
+
+    # These groups are only for analysis tests, because a frontend build embeds a module absent from this fixture XML.
+    for mode in ["frontend", "monolith"]:
+        group_name = name + "_classpath_" + mode + "_group"
+        classpath_groups[mode] = ":" + group_name
+        dev_dist_plugin_descriptor_group(
+            name = group_name,
+            descriptors = [classpath_leaf],
+            stamp_class = mode,
+            tags = ["manual"],
+        )
+
     # A single file copy and a directory copy. The filegroup stands for the package's `:dev_dist_resources`, and the
     # prefix is the repository-relative directory the copy takes, as `source_tree_prefixes` of the chain states it.
     helper = name + "_helper"
@@ -604,6 +665,18 @@ def dev_plugin_test_suite(name):
         executables = ["bin/*.sh", "helpers/{nested/**,none}"],
     )
     tests = []
+    for mode, test_rule in [
+        ("frontend", _classpath_descriptor_frontend_test),
+        ("monolith", _classpath_descriptor_monolith_test),
+    ]:
+        test = name + "_classpath_" + mode + "_test"
+        tests.append(test)
+        test_rule(
+            name = test,
+            target_under_test = classpath_target,
+            descriptor_group = classpath_groups[mode],
+            leaf = classpath_leaf,
+        )
     for suffix, test_rule, spans in [("_test", _dev_plugin_test, False), ("_spans_test", _dev_plugin_spans_test, True)]:
         tests.append(component + suffix)
         test_rule(
