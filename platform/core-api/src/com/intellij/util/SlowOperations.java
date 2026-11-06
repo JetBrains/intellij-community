@@ -24,6 +24,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
@@ -89,7 +90,14 @@ public final class SlowOperations {
   private static String ourTargetClass;
   private static final Set<String> ourReportedClasses = new HashSet<>();
 
+  private static @Nullable Predicate<@NotNull Throwable> automaticallyReportedFilter;
+
   private SlowOperations() { }
+
+  @ApiStatus.Internal
+  public static void setAutomaticallyReportedFilter(@Nullable Predicate<@NotNull Throwable> automaticallyReportedFilter) {
+    SlowOperations.automaticallyReportedFilter = automaticallyReportedFilter;
+  }
 
   /**
    * If you get an exception from this method, then you need to move the computation to a background thread (BGT)
@@ -181,7 +189,7 @@ public final class SlowOperations {
     }
 
     if (message != null && REPORTED_NON_CANCELLABLE_EXECUTIONS.add(ExceptionUtil.currentStackTrace())) {
-      logError(message);
+      logErrorNoDoubts(message);
     }
   }
 
@@ -234,10 +242,24 @@ public final class SlowOperations {
     return false;
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static void logError(@NotNull String message) {
-    if (!isAlreadyReported()) {
+    if (isAlreadyReported()) return;
+
+    if (isStandardProductionRun()) {
+      if (automaticallyReportedFilter != null && automaticallyReportedFilter.test(new Throwable(message))) {
+        Holder.LOG.error(message);
+      }
+    }
+    else {
       Holder.LOG.error(message);
     }
+  }
+
+  private static void logErrorNoDoubts(@NotNull String message) {
+    if (isAlreadyReported()) return;
+
+    Holder.LOG.error(message);
   }
 
   private static boolean isAlreadyReported() {
@@ -278,13 +300,22 @@ public final class SlowOperations {
     }
 
     Application application = ApplicationManager.getApplication();
-    boolean result = System.getenv("TEAMCITY_VERSION") != null ||
-                     application.isUnitTestMode() ||
-                     application.isCommandLine() ||
-                     !application.isEAP() && !application.isInternal() && !SystemProperties
-                       .getBooleanProperty(IDEA_PLUGIN_SANDBOX_MODE, false);
+    boolean result = System.getenv("TEAMCITY_VERSION") != null
+                     || application.isHeadlessEnvironment()
+                     || application.isCommandLine();
     ourAlwaysAllow = result ? 1 : 0;
     return result;
+  }
+
+  private static boolean isStandardProductionRun() {
+    Application application = ApplicationManager.getApplication();
+    if (application.isHeadlessEnvironment()) return false;
+
+    return !application.isEAP() && !application.isInternal() && !isDevelopmentSandbox();
+  }
+
+  private static boolean isDevelopmentSandbox() {
+    return SystemProperties.getBooleanProperty(IDEA_PLUGIN_SANDBOX_MODE, false);
   }
 
   /**
