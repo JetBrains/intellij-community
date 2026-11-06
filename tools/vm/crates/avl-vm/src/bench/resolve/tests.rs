@@ -27,8 +27,8 @@ fn finds_the_dist_and_its_config_among_the_cquery_files() {
 #[test]
 fn finds_the_profiler_jar_among_the_cquery_files() {
     let files = "bazel-out/x/idea-async-profiler.jar\n\
-                 external/lib+http/file/async-profiler-4.5-0.jar\n\
-                 external/lib+http/file/async-profiler-4.5-0-sources.jar\n";
-    assert_eq!(profiler_jar(files), Some("external/lib+http/file/async-profiler-4.5-0.jar"));
+                 external/lib+http/file/async-profiler-4.6-0.jar\n\
+                 external/lib+http/file/async-profiler-4.6-0-sources.jar\n";
+    assert_eq!(profiler_jar(files), Some("external/lib+http/file/async-profiler-4.6-0.jar"));
     assert_eq!(profiler_jar("bazel-out/x/idea-async-profiler.jar\n"), None);
 }

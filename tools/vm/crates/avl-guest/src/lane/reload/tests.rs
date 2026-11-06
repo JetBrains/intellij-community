@@ -58,7 +58,7 @@ fn only_a_change_of_the_bridge_directory_alone_is_a_reload() {
     );
     let without_bridge: String = manifest
         .lines()
-        .filter(|line| !line.contains(BRIDGE_DIRECTORY))
+        .filter(|line| !line.contains(&format!(" {BRIDGE_DIRECTORY}/")))
         .map(|line| format!("{line}\n"))
         .collect();
     assert_eq!(

@@ -187,7 +187,7 @@ impl IdeSection {
 }
 
 /// One file of a plugin of the IDE context: `destination` is its slash path below the plugin directory of the
-/// context, such as `air-integrationTests-bridge-plugin/lib/x.jar`, and `file` is the runfile that holds its bytes.
+/// context, such as `air-integrationTests-bridge/lib/x.jar`, and `file` is the runfile that holds its bytes.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IdePluginFile {

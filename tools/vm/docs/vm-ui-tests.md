@@ -708,6 +708,25 @@ budget and the hard stop each write a build problem with the identity `lane-run-
 of a run that is not green and the hard stop also keep its evidence in `lane/` of `TEST_UNDECLARED_OUTPUTS_DIR`, as
 the next section states.
 
+`lane-run` runs each failed scenario of the lane IDE once more, on a recycled IDE, after the last suite of the lane
+IDE. A pass of the rerun makes the run green, and the JUnit XML keeps both attempts, so TeamCity shows the test as
+flaky when the build has the failure condition "Support test retry". More than 3 failures rerun nothing. The lane
+daemon of a worker reruns nothing, so `vm.cmd run` shows each flake.
+`env AIR_LANE_INJECT_FAILURE='first:<scenario>'` (or `every:`) with `--test_env` fails a scenario on purpose, to
+see the rerun. [lane-run reruns each failed scenario once](decisions/2026-10-29-lane-run-reruns-each-failed-scenario-once.md)
+records why.
+
+A TeamCity UI job splits a lane across its runners with `-Didea.test.runner.index` and `-Didea.test.runners.count`.
+With `-Didea.tests.duration.bucketing.enabled=true`, `lane-run` splits the selected suites by the durations of the
+season of `-Didea.bucketing.season`. It reads them from `tests/classes-duration/seasons/<season>.csv`, the file that
+the JVM duration bucketing reads, and `air_lane_test` names that directory as `--season-dir`. The longest suite goes
+first, to the runner with the least expected total. A suite that the file does not name takes the median of the
+selected suites that it names. Without the file, or when it names no selected suite, a runner takes each suite whose
+position in the lane order is its index modulo the count. Each runner computes the same split, so the job runs each
+suite once. A note at the start of the run names the split and the expected total of each runner. The season files
+`AirPluginUiTests.csv` and `AirPluginGuiChatTests.csv` hold the 75th percentile of the duration of each test class
+over the last green master builds of the two runners.
+
 **The versioned JSON report is the contract, and the run stream is its one source.** The report, the
 JUnit XML and the TeamCity service messages are three readers of that stream. The controller writes
 the XML of each iteration beside its report, and the XML of the command to the file that
@@ -865,7 +884,7 @@ that could not be pulled leaves a green run green.
 | launcher | where the bundles land | who cleans up |
 | --- | --- | --- |
 | the lane daemon on a worker | `$AIR_VM_DATA/daemon/iterations/<iterationId>/air-traces` in the guest, then pulled after each test to `<runtime root>/runs/<runId>/traces/<iterationId>/<NNN>.zip` | the guest's iteration retention; the run directory on the host |
-| a `vm.cmd` run with `AIR_VM_EXPORT`, such as a run on the Mac Studio through yonder | a copy of the run's journal, its reports and the zips of the scenarios that did not pass (`all`: every zip) in `out/air/vm-export/runs/<runId>/` of the checkout. `.yonder.toml` sets the variable and names the directory in its `outputs`, so yonder copies it back. Under `failed`, a run that failed nothing exports nothing | the next yonder run with an export, which replaces the directory |
+| a `vm.cmd` run with `AIR_VM_EXPORT`, such as a run on the Mac Studio through `bd-host` | a copy of the run's journal, its reports and the zips of the scenarios that did not pass (`all`: every zip) in `out/air/vm-export/runs/<runId>/` of the checkout. `[host]` of `.branchdeck.toml` sets the variable and names the directory in its `outputs`, so `bd-host` copies it back. Under `failed`, a run that failed nothing exports nothing | the next `bd-host` run with an export, which replaces the directory |
 | a Bazel test, host `bt.cmd` included | `air-traces/` in the target's `bazel-testlogs/.../test.outputs/`, with `lane/` beside it for a run that is not green. A local Bazel packs them into `outputs.zip` there, and the TeamCity build keeps them as files in `bazel.logs.zip` | Bazel |
 
 A bundle is `<root>/<runId>/<TestClass>/<scenario>/`. A second attempt of the same scenario in one run is
@@ -937,11 +956,12 @@ shard that failed to download is a root with its error. For the server of `--tea
 uses the login of `teamcity auth login`. A server is `https`, or `http` on a loopback host. `--teamcity` does not go
 with `--detach`, so pick a free `--port` when a detached server runs.
 
-**On TeamCity.** `bazel run @community//tools/vm:air-trace -- teamcity-publish` is the step after `bazel test`. It
-writes one archive and publishes it as the artifact `air-traces.zip`. The archive holds `runs.json`, then one zip for
-each bundle at `<lane>/<runId>/<TestClass>/<scenario>.zip`. TeamCity serves an entry of an archive artifact itself, with
-byte ranges. A loose artifact would not work: TeamCity redirects it to a signed address, where its siblings are refused.
-Each test of the Tests tab gets its trace and a `trace viewer` link to the CI page of the hosted site,
+**On TeamCity.** `air-trace teamcity-publish` is the step after `bazel test`. A lane test holds `air-trace` in its
+runfiles, so the step runs the binary from the output tree of the test, with no Bazel command. It writes one archive and
+publishes it as the artifact `air-traces.zip`. The archive holds `runs.json`, then one zip for each bundle at
+`<lane>/<runId>/<TestClass>/<scenario>.zip`. TeamCity serves an entry of an archive artifact itself, with byte ranges. A
+loose artifact would not work: TeamCity redirects it to a signed address, where its siblings are refused. Each test of
+the Tests tab gets its trace and a `trace viewer` link to the CI page of the hosted site,
 `https://ij-void-docs.labs.jb.gg/air/ci/<buildId>/trace?zip=<zip>`. A portal proxy of the site reads `runs.json` and the
 zip of that build from TeamCity. The build log names the CI page of the build, `…/air/ci/<buildId>`, with all its runs.
 `--site URL` or `AIR_TRACE_SITE` names another site, such as a staging portal. A failed scenario also gets its last
@@ -953,6 +973,8 @@ step before the Bazel step streams one file into the build log and gives its pat
 `ui 12/46: <scenario> failed (3.2 s)`. For a failed or aborted scenario it also publishes the video and the last
 picture into `air-traces-failed/` as soon as the bundle is there. The paths are the ones of `teamcity-publish`, which
 publishes the same files again after the test. Off TeamCity, or without the variable, `lane-run` writes no such file.
+The Bazel runner of an Air UI build does not stream the `.log` outputs of a test into the build log, because each
+bundle holds an `idea.log`. The publish step prints the `test.log` of each lane instead.
 
 The step builds no viewer and never starts a Bazel, so it needs no node and no pnpm.
 

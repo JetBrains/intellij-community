@@ -171,8 +171,8 @@ fn written(document: &LaneDocument) -> (Prepared, LaneIdentity, ServicePorts) {
     (prepared, identity, ports)
 }
 
-// A bare IDE gets the option files of every lane IDE and the token of the bridge, in its private directory. It gets no
-// file of the lane services, of the control server or of an agent, and its home stays empty.
+// A bare IDE gets the option files of every lane IDE, its own option files and the token of the bridge, in its private
+// directory. It gets no file of the lane services, of the control server or of an agent, and its home stays empty.
 #[test]
 fn a_bare_context_holds_the_option_files_and_the_token_alone() {
     let prepared = prepared();
@@ -185,6 +185,7 @@ fn a_bare_context_holds_the_option_files_and_the_token_alone() {
         .collect();
     let options: Vec<String> = OPTION_FILE_TEMPLATES
         .iter()
+        .chain(BARE_OPTION_FILES.iter())
         .map(|(name, _)| format!("config/{OPTIONS_DIR}/{name}"))
         .collect();
     let mut expected: Vec<String> = options;
@@ -203,6 +204,10 @@ fn a_bare_context_holds_the_option_files_and_the_token_alone() {
         fs::read_to_string(prepared.context.join("config").join(OPTIONS_DIR).join(ADVANCED_SETTINGS_FILE)).unwrap(),
         NO_README_SETTINGS
     );
+    // A bare IDE starts with the Air onboarding completed, in the form that Air writes.
+    let other = fs::read_to_string(prepared.context.join("config").join(OPTIONS_DIR).join("other.xml")).unwrap();
+    assert!(other.contains(r#"<component name="AirOnboardingLifecycle"><![CDATA[{"#), "{other}");
+    assert!(other.contains(r#""phase": "COMPLETED""#), "{other}");
 }
 
 // The IDE of a lane opens no README either: no lane tests the opening of one, and its editor area starts empty.

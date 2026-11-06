@@ -62,6 +62,7 @@ fn payload() -> JsonPayload {
             frames_omitted: 0,
         }],
         flaky: Vec::new(),
+        shard_timeouts: Vec::new(),
         errors: Vec::new(),
         degraded: false,
     }

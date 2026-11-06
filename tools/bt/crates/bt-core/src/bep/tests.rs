@@ -269,3 +269,27 @@ fn a_windows_bep_path_loads_the_report_and_keeps_the_log_in_the_checkout() {
         Some("out/bazel-testlogs/pkg/target/test.log")
     );
 }
+
+/// The two invocations of a planned run read as one run: the attempts of both, and success and events only when each
+/// invocation had them.
+#[test]
+fn the_bep_of_a_second_invocation_merges_into_the_first() {
+    let mut first = posix_bep(&[test_result_event(&attempt("//p:heavy_test"))]);
+    first.overall_success = Some(true);
+    let mut second = posix_bep(&[test_result_event(&attempt("//p:light_test"))]);
+    second.overall_success = Some(false);
+    second.failed_to_build.push("//p:broken_test".to_owned());
+    first.merge(second);
+    assert_eq!(
+        first.attempts.iter().map(|attempt| attempt.label.as_str()).collect::<Vec<_>>(),
+        ["//p:heavy_test", "//p:light_test"]
+    );
+    assert_eq!(first.failed_to_build, ["//p:broken_test"]);
+    assert_eq!(first.overall_success, Some(false));
+    assert!(first.saw_any_event);
+
+    let mut seen = posix_bep(&[test_result_event(&attempt("//p:heavy_test"))]);
+    seen.merge(BepSummary::default());
+    assert!(!seen.saw_any_event, "an invocation without events degrades the run");
+    assert_eq!(seen.overall_success, None);
+}

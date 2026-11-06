@@ -539,7 +539,8 @@ impl fmt::Display for PoolRule {
 
 /// What a run copies into the export directory of the checkout, [`VM_EXPORT_DIR`] (`AIR_VM_EXPORT`).
 ///
-/// The export is for a run on another host: `.yonder.toml` sets the variable, and yonder copies the directory back.
+/// The export is for a run on another host: `[host]` of `.branchdeck.toml` sets the variable, and `bd-host` copies the
+/// directory back.
 /// The runtime root of this host keeps the same files, so a run here exports nothing by default.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Export {

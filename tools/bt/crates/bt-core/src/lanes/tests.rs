@@ -169,6 +169,32 @@ fn the_target_precedes_caller_passthrough() {
     assert_eq!(args[args.len() - 2..], ["//p:t", "--test_arg=--jvm_flag=-Dfoo=bar"]);
 }
 
+/// Bazel reads a word that starts with `-` as an option before `--`, so the negative patterns come after one `--`.
+#[test]
+fn the_excluded_targets_are_negative_patterns_after_the_caller_args() {
+    let plan = RunPlan {
+        passthrough: vec!["--test_output=all".to_owned()],
+        excluded: vec!["//p/a:heavy_test".to_owned(), "//p/b:heavy_test".to_owned()],
+        ..base_plan(labelled("//p/..."))
+    };
+    let args = build_bazel_args(&plan);
+    assert_eq!(
+        args[args.len() - 5..],
+        ["//p/...", "--test_output=all", "--", "-//p/a:heavy_test", "-//p/b:heavy_test"]
+    );
+
+    let separated = RunPlan {
+        passthrough: vec!["--".to_owned(), "//q:t".to_owned()],
+        ..plan
+    };
+    let args = build_bazel_args(&separated);
+    assert_eq!(args.iter().filter(|argument| *argument == "--").count(), 1, "{args:?}");
+    assert_eq!(args[args.len() - 4..], ["--", "//q:t", "-//p/a:heavy_test", "-//p/b:heavy_test"]);
+
+    let plain = build_bazel_args(&base_plan(labelled("//p/...")));
+    assert!(!has(&plain, "--"), "{plain:?}");
+}
+
 /// About forwarding, not about the flags themselves: the lane's own extras are the expectation, so the exclusion
 /// value stays spelled once rather than restated here to drift.
 #[test]

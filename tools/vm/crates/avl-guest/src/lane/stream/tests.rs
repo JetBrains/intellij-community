@@ -110,3 +110,41 @@ fn the_records_of_a_case_name_its_class_and_method_and_the_counts_add_up() {
     "#]]
     .assert_eq(&records.iter().map(|record| format!("{record}\n")).collect::<String>());
 }
+
+/// One attempt of the scenario `name` with `status`.
+fn attempt(stream: &Stream<'_>, name: &str, status: CaseStatus) {
+    stream.started(&case(name));
+    let failure = (status != CaseStatus::Successful).then(|| TypedFailure {
+        kind: Some("lane_bridge".to_owned()),
+        message: Some(format!("{name} timed out")),
+        detail: None,
+    });
+    stream.finished(&case(name), status, Duration::from_secs(2), failure, ScenarioReport::default());
+}
+
+// A rerun is a second case of the same id. Its pass takes the failure of the first attempt out of the counts, so the
+// summary of a run whose every failure passed on its rerun has no failure. A scenario that fails twice counts once,
+// and the JUnit XML keeps every attempt.
+#[test]
+fn a_later_pass_of_a_failed_scenario_clears_its_failure_in_the_counts() {
+    let mut out = Vec::new();
+    let stream = Stream::new(&mut out);
+    attempt(&stream, "flaky", CaseStatus::Failed);
+    attempt(&stream, "broken", CaseStatus::Failed);
+    assert_eq!(stream.counts().failed, 2);
+    attempt(&stream, "flaky", CaseStatus::Successful);
+    attempt(&stream, "broken", CaseStatus::Failed);
+    attempt(&stream, "passes", CaseStatus::Successful);
+    assert_eq!(
+        stream.counts(),
+        Counts {
+            started: 5,
+            failed: 1,
+            skipped: 0,
+            container_failures: 0,
+        }
+    );
+    let xml = stream.junit_xml();
+    assert_eq!(xml.matches(r#"name="flaky""#).count(), 2, "{xml}");
+    assert_eq!(xml.matches(r#"name="broken""#).count(), 2, "{xml}");
+}

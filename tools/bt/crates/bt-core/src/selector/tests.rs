@@ -122,6 +122,60 @@ fn as_filter_or_package_routes_by_what_the_field_can_express() {
     assert_eq!(as_filter_or_package(None), (None, None));
 }
 
+fn hint_of(filter: &str) -> String {
+    no_tests_hint(Some(filter)).unwrap_or_else(|| panic!("no hint for {filter}"))
+}
+
+/// The agents gave `pkg.*`, `pkg.(A|B)`, a simple `Class#method` and `Outer.Inner`. Each ran no test, and the digest
+/// named no fix.
+#[test]
+fn a_no_tests_hint_names_the_form_of_the_filter_that_works() {
+    assert_eq!(
+        hint_of("com.intellij.air.backend.worktree.*"),
+        "--filter takes no wildcard. To run every class of the package, pass --filter com.intellij.air.backend.worktree"
+    );
+    for regex in ["com.intellij.air.(ATest|BTest)", "a.ATest,a.BTest", "a.*Test"] {
+        assert!(hint_of(regex).contains("no wildcard, no regex and no list"), "{regex}");
+    }
+    assert!(
+        hint_of("FooTest#testBar").starts_with("a Class#method needs the FQN of the class"),
+        "{}",
+        hint_of("FooTest#testBar")
+    );
+    assert_eq!(
+        hint_of("a.b.Outer$Inner"),
+        "the runner finds an @Nested class only through its outer class. To run it, pass --filter a.b.Outer"
+    );
+    assert_eq!(
+        hint_of("a.b.Outer.Inner#test"),
+        "a nested class takes $ after its outer class. If a.b.Outer.Inner is a nested class, pass --filter 'a.b.Outer$Inner#test'"
+    );
+    // The prefix `a.b.Outer$Inner` runs no @Nested test either, so the hint names the outer class.
+    assert_eq!(
+        hint_of("a.b.Outer.Inner"),
+        "the runner finds an @Nested class only through its outer class. If a.b.Outer.Inner is a nested class, pass \
+         --filter a.b.Outer"
+    );
+    // A package segment of a Spring test starts with an upper-case letter and has no lower-case letter.
+    assert!(hint_of("a.IDEA_355419.FooTest").starts_with("a class filter is a prefix"));
+    assert!(hint_of("a.b.FooTest").contains("package line of the file"));
+    assert!(hint_of("a.b").starts_with("a package filter runs the classes of that package and its subpackages"));
+    assert_eq!(no_tests_hint(None), None);
+}
+
+/// The cause line of the digest names the `#method` part of an FQN `Class#method`. The runner selects
+/// `a.Outer$Inner#method` as a method, so that form runs a nested class. A hint about the class would contradict both.
+#[test]
+fn an_fqn_method_filter_gets_no_hint() {
+    for filter in [
+        "a.b.FooTest#testBar",
+        "a.b.FooTest#testBar(java.lang.String)",
+        "a.b.Outer$Inner#test",
+    ] {
+        assert_eq!(no_tests_hint(Some(filter)), None, "{filter}");
+    }
+}
+
 #[test]
 fn suggest_names_offers_only_near_names_closest_first() {
     let known = ["AgentThreadCliTest", "AgentThreadIdentityTest", "ZzzTest"];

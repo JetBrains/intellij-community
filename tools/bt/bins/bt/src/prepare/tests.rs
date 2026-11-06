@@ -7,9 +7,9 @@ use super::*;
 use bt_core::fake::{FakeRuntime, HOME_DIR, refusal};
 
 use crate::execute::execute_with;
-use crate::remote::fake::{FakeLink, agent_info, yonder_refusal};
+use crate::remote::fake::{FakeLink, hello, host_refused};
+use crate::remote::{HostRefusal, code};
 use crate::ssh::SSH_OPTIONS;
-use yonder_client::Prepared;
 
 const LOCAL_MASTER: &str = "1111111111111111111111111111111111111111";
 const HOST_MASTER: &str = "2222222222222222222222222222222222222222";
@@ -24,12 +24,6 @@ const LOCAL_NETRC: &str = "machine cache.example.test login me password fake-loc
 const LOCAL_SETTINGS: &str = "<settings>\n  <servers>\n    <server>\n      <id>intellij-dependencies</id>\n      <password>fake-token-secret</password>\n    </server>\n  </servers>\n</settings>\n";
 /// The marker name that the fake hash gives the fake token.
 const MARKER: &str = "c60dbf6914b9127db260";
-/// The build event file of the agent build, and the binary that it names.
-const AGENT_EVENTS: &str = "/tmp/bt-yonderd-events.json";
-const AGENT_BINARY: &str = "/out/bazel-out/darwin_arm64-opt/bin/external/community+/tools/yonder/yonderd";
-/// The fake SHA-256 of the local bd, and of another build with the same version.
-const BD_SHA: &str = "e2fdb7dcbca387455e7012e3e1f46c7dc2a6f3070412a54239a8de133ce1254b";
-const OTHER_BD_SHA: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 fn answered(exit_code: i32, output: &str) -> SpawnResult {
     SpawnResult {
@@ -45,15 +39,9 @@ fn ready() -> FakeRuntime {
         ("build/remote_cache.bazelrc", CACHE_RC_TEXT),
         (".idea/jarRepositories.xml", JAR_REPOSITORIES_TEXT),
     ]);
-    fake.put_absolute(&format!("{HOME_DIR}/.local/bin/bd"), "a binary");
     fake.put_absolute(&format!("{HOME_DIR}/.m2/settings.xml"), LOCAL_SETTINGS);
     fake.put_absolute(&format!("{HOME_DIR}/.netrc"), LOCAL_NETRC);
-    fake.put_absolute(
-        AGENT_EVENTS,
-        &format!("{{\"namedSetOfFiles\":{{\"files\":[{{\"name\":\"yonderd\",\"uri\":\"file://{AGENT_BINARY}\"}}]}}}}\n"),
-    );
     let rules = [
-        ("tools/yonder:yonderd", answered(0, "")),
         ("LogLevel=ERROR studio true", answered(0, "")),
         ("if [ -d", answered(0, &format!("{LOCAL_MASTER}\n"))),
         ("config --type=bool --get core.fsmonitor", answered(0, "true\n")),
@@ -61,8 +49,6 @@ fn ready() -> FakeRuntime {
             "git rev-parse --verify -q refs/heads/master",
             answered(0, &format!("{LOCAL_MASTER}\n")),
         ),
-        ("uname -sm", answered(0, "Darwin arm64\n")),
-        (".local/bin/bd --version", answered(0, "{\"schema\":2,\"version\":\"0.29.0\"}\n")),
         ("case \":$PATH:\"", answered(0, "on\n")),
         (
             "command -v git",
@@ -80,22 +66,7 @@ fn ready() -> FakeRuntime {
     fake.state()
         .spawn_rules
         .extend(rules.into_iter().map(|(text, result)| (text.to_owned(), result)));
-    answer_first(&fake, "uname -sm; ", answered(0, &host_bd_probe("0.29.0", Some(BD_SHA))));
-    answer_first(
-        &fake,
-        &format!("shasum -a 256 {HOME_DIR}/.local/bin/bd"),
-        answered(0, &format!("{BD_SHA}  {HOME_DIR}/.local/bin/bd\n")),
-    );
     fake
-}
-
-/// The answer of the bd probe of a macOS host with bd `version`, and the hash of its binary when `sha` is given.
-fn host_bd_probe(version: &str, sha: Option<&str>) -> String {
-    let mut text = format!("Darwin arm64\n{{\"schema\":2,\"version\":\"{version}\"}}\n");
-    if let Some(sha) = sha {
-        let _ = writeln!(text, "{sha}  /Users/me/.local/bin/bd");
-    }
-    text
 }
 
 /// Puts a rule before the rules of [`ready`].
@@ -103,16 +74,11 @@ fn answer_first(fake: &FakeRuntime, text: &str, result: SpawnResult) {
     fake.state().spawn_rules.insert(0, (text.to_owned(), result));
 }
 
-/// A link to an agent that answers, and that `yonder prepare` installs.
+/// A link to an agent that answers, and that `bd-host setup` installs.
 fn ready_link() -> FakeLink {
     let link = FakeLink::default();
-    link.answer_hello(Ok(agent_info()));
-    link.answer_prepare(Ok(Prepared {
-        copied: true,
-        launchd: "restarted".to_owned(),
-        agent: agent_info(),
-        host_file: format!("{HOME_DIR}/.config/yonder/hosts/studio.json").into(),
-    }));
+    link.answer_hello(Ok(hello()));
+    link.answer_setup(Ok("copied bd-host to studio\nlaunchd restarted\n".to_owned()));
     link
 }
 
@@ -146,14 +112,13 @@ fn a_ready_host_reports_ok_for_each_step_and_changes_nothing() {
             "ok      ssh: studio answers in batch mode",
             "ok      repository: master of ~/projects/idea-1 is at 111111111111",
             "ok      repository: core.fsmonitor is on in ~/projects/idea-1",
-            "ok      bd: bd 0.29.0 (e2fdb7dcbca3)",
             "ok      PATH: ~/.local/bin is on the PATH of the login shell",
             "ok      tool: git is there",
             "ok      tool: Xcode is there",
             "ok      tool: rustup is there",
             "absent  tool: docker is not there; only some lanes need it",
             "absent  tool: tmux is not there; only some lanes need it",
-            "ok      agent: yonderd 0.1.0 answers on 192.168.1.24:7741 (macos aarch64)",
+            "ok      agent: bd-host 0.37.0 answers on 192.168.1.24:7742 (macos aarch64)",
             "ok      netrc: ~/.netrc on studio has an entry for cache.example.test: true",
             "ok      Maven: ~/.m2/settings.xml on studio has all 1 Space servers",
             "ok      token markers: studio has the expiry marker of the token of intellij-dependencies",
@@ -295,69 +260,6 @@ fn a_clean_master_that_is_an_ancestor_moves_and_another_one_stays() {
 }
 
 #[test]
-fn another_bd_version_is_replaced_by_the_local_binary() {
-    let fake = ready();
-    answer_first(&fake, "uname -sm; ", answered(0, &host_bd_probe("0.28.1", None)));
-    let outcome = prepare(&[], &fake);
-    assert!(
-        outcome
-            .text
-            .contains("done    bd: copied bd 0.29.0 (e2fdb7dcbca3) to ~/.local/bin/bd (was 0.28.1)"),
-        "{}",
-        outcome.text
-    );
-    assert_spawned(
-        &fake,
-        &format!(
-            "scp -q {} {HOME_DIR}/.local/bin/bd studio:.local/bin/bd.bt-new",
-            SSH_OPTIONS.join(" ")
-        ),
-    );
-    assert_spawned(&fake, "chmod 755 .local/bin/bd.bt-new && mv -f .local/bin/bd.bt-new .local/bin/bd");
-
-    let linux = ready();
-    answer_first(&linux, "uname -sm; ", answered(0, "Linux x86_64\n"));
-    let outcome = prepare(&[], &linux);
-    assert!(
-        outcome.text.contains("missing bd: studio has bd none on Linux x86_64"),
-        "{}",
-        outcome.text
-    );
-}
-
-#[test]
-fn another_build_of_the_same_bd_version_is_replaced_and_the_same_build_is_kept() {
-    let fake = ready();
-    answer_first(&fake, "uname -sm; ", answered(0, &host_bd_probe("0.29.0", Some(OTHER_BD_SHA))));
-    let outcome = prepare(&[], &fake);
-    assert!(
-        outcome
-            .text
-            .contains("done    bd: copied bd 0.29.0 (e2fdb7dcbca3) to ~/.local/bin/bd (was 0.29.0 (0123456789ab))"),
-        "{}",
-        outcome.text
-    );
-    assert_spawned(&fake, "chmod 755 .local/bin/bd.bt-new && mv -f .local/bin/bd.bt-new .local/bin/bd");
-
-    let dry = ready();
-    answer_first(&dry, "uname -sm; ", answered(0, &host_bd_probe("0.29.0", Some(OTHER_BD_SHA))));
-    let outcome = prepare(&["--dry-run"], &dry);
-    assert!(
-        outcome
-            .text
-            .contains("missing bd: studio has bd 0.29.0 (0123456789ab); --prepare copies 0.29.0 (e2fdb7dcbca3)"),
-        "{}",
-        outcome.text
-    );
-
-    let same = ready();
-    let outcome = prepare(&[], &same);
-    assert!(outcome.text.contains("ok      bd: bd 0.29.0 (e2fdb7dcbca3)"), "{}", outcome.text);
-    let spawned = spawned_text(&same);
-    assert!(!spawned.iter().any(|command| command.contains("bd.bt-new")), "{spawned:#?}");
-}
-
-#[test]
 fn a_path_without_the_local_bin_gets_it_in_zshenv() {
     let fake = ready();
     answer_first(&fake, "case \":$PATH:\"", answered(0, "off\n"));
@@ -484,86 +386,84 @@ fn a_missing_local_entry_is_reported_by_name() {
     assert_eq!(fake.state().inputs, ["fake-token-secret"], "no file was written");
 }
 
-/// The agent step builds `yonderd` with the Bazel launcher of bt and gives the built binary to `yonder prepare`.
+/// The agent step runs `bd-host setup` with the repository and the name of this client, then asks for a hello. bt
+/// copies no binary itself: the host needs no `bd`, and `bd-host setup` copies `bd-host`.
 #[test]
-fn the_agent_is_built_here_and_installed_through_yonder() {
+fn the_agent_is_installed_through_bd_host_setup() {
     let fake = ready();
     let link = ready_link();
     let outcome = prepare_with(&[], &fake, &link);
     assert!(
-        outcome.text.contains(&format!(
-            "done    agent: copied to ~/.local/bin/yonderd; yonderd 0.1.0 answers on 192.168.1.24:7741 (macos aarch64), launchd restarted, host file {HOME_DIR}/.config/yonder/hosts/studio.json"
-        )),
+        outcome.text.contains(
+            "done    agent: copied bd-host to studio; launchd restarted; bd-host 0.37.0 answers on 192.168.1.24:7742 (macos aarch64)"
+        ),
         "{}",
         outcome.text
     );
-    assert_spawned(
-        &fake,
-        &format!(
-            "/bin/sh {}/bazel.cmd build --config=bt --build_event_json_file={AGENT_EVENTS} --nobuild_event_json_file_path_conversion //tools/yonder:yonderd",
-            bt_core::fake::REPO_ROOT
-        ),
-    );
-    let prepares = link.prepares();
-    assert_eq!(prepares.len(), 1);
-    assert_eq!(prepares[0].agent, std::path::Path::new(AGENT_BINARY));
+    assert_eq!(outcome.exit_code, exit::GREEN);
+    assert_eq!(link.calls(), ["setup studio", "hello studio"]);
+    let setups = link.setups();
     assert_eq!(
-        (
-            prepares[0].alias.as_str(),
-            prepares[0].port,
-            prepares[0].repo.as_str(),
-            prepares[0].name.as_str()
-        ),
-        ("studio", 7741, "~/projects/idea-1", "bt on dev-mac")
+        (setups[0].alias.as_str(), setups[0].repo.as_str(), setups[0].name.as_str()),
+        ("studio", "~/projects/idea-1", "bt on dev-mac")
     );
-    assert!(fake.state().removed.contains(&AGENT_EVENTS.to_owned()), "the event file is removed");
+    let spawned = spawned_text(&fake);
+    assert!(
+        !spawned
+            .iter()
+            .any(|command| command.contains(".local/bin/bd") || command.contains("bazel")),
+        "{spawned:#?}"
+    );
+
+    let link = ready_link();
+    let outcome = prepare_with(&["--host-repo", "/w/idea"], &ready(), &link);
+    assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+    assert_eq!(link.setups()[0].repo, "/w/idea");
 }
 
 #[test]
-fn a_failed_agent_build_or_prepare_is_missing() {
-    let fake = ready();
-    answer_first(&fake, "tools/yonder:yonderd", answered(1, "ERROR: no such target\n"));
+fn a_failed_setup_or_a_silent_agent_is_missing() {
     let link = ready_link();
-    let outcome = prepare_with(&[], &fake, &link);
-    let command = format!(
-        "/bin/sh {}/bazel.cmd build --config=bt --build_event_json_file={AGENT_EVENTS} --nobuild_event_json_file_path_conversion //tools/yonder:yonderd",
-        bt_core::fake::REPO_ROOT
-    );
-    assert!(
-        outcome
-            .text
-            .contains(&format!("missing agent: `{command}` failed:\nERROR: no such target")),
-        "{}",
-        outcome.text
-    );
-    assert_eq!(link.prepares(), []);
-    assert_eq!(outcome.exit_code, exit::INFRA);
-
-    let stalled = ready();
-    answer_first(&stalled, "tools/yonder:yonderd", answered(STOPPED_IDLE, ""));
-    let outcome = prepare_with(&[], &stalled, &ready_link());
-    assert!(
-        outcome
-            .text
-            .contains(&format!("missing agent: `{command}` wrote nothing for 30 min and was stopped")),
-        "{}",
-        outcome.text
-    );
-    assert!(
-        stalled.state().idle_limits.contains(&std::time::Duration::from_mins(30)),
-        "the build is a watched child"
-    );
-
-    let link = ready_link();
-    link.answer_prepare(Err(yonder_refusal(
-        yonder_client::code::SSH_FAILED,
-        "cannot copy the agent on studio over ssh: exit 255",
+    link.answer_setup(Err(host_refused(
+        code::NOT_INSTALLED,
+        "no bd-host on the PATH and none at ~/.local/bin/bd-host; run `bd install` of Branch Deck",
     )));
     let outcome = prepare_with(&[], &ready(), &link);
     assert!(
         outcome
             .text
-            .contains("missing agent: cannot copy the agent on studio over ssh: exit 255"),
+            .contains("missing agent: no bd-host on the PATH and none at ~/.local/bin/bd-host; run `bd install`"),
+        "{}",
+        outcome.text
+    );
+    assert_eq!(outcome.exit_code, exit::INFRA);
+    assert_eq!(link.calls(), ["setup studio"]);
+
+    let link = ready_link();
+    link.answer_hello(Err(HostRefusal::new("unreachable", 255, "no address of studio answers")));
+    let outcome = prepare_with(&[], &ready(), &link);
+    assert!(
+        outcome.text.contains(
+            "missing agent: copied bd-host to studio; launchd restarted, but the agent does not answer: no address of studio answers"
+        ),
+        "{}",
+        outcome.text
+    );
+}
+
+/// An agent of another build answers, and the report names the upgrade.
+#[test]
+fn an_agent_of_another_build_names_the_upgrade() {
+    let link = ready_link();
+    link.answer_hello(Ok(HostHello {
+        same_build: false,
+        ..hello()
+    }));
+    let outcome = prepare_with(&["--dry-run"], &ready(), &link);
+    assert!(
+        outcome.text.contains(
+            "ok      agent: bd-host 0.37.0 answers on 192.168.1.24:7742 (macos aarch64), another build than here; `bd-host upgrade studio` replaces it"
+        ),
         "{}",
         outcome.text
     );
@@ -574,7 +474,7 @@ fn a_failed_agent_build_or_prepare_is_missing() {
 fn a_dry_run_without_an_agent_says_that_prepare_installs_it() {
     let fake = ready();
     let link = FakeLink::default();
-    link.answer_hello(Err(yonder_refusal(yonder_client::code::NO_HOST, "no host file for studio")));
+    link.answer_hello(Err(host_refused("no_host", "no host file for studio")));
     let outcome = prepare_with(&["--dry-run"], &fake, &link);
     assert!(
         outcome
@@ -583,7 +483,7 @@ fn a_dry_run_without_an_agent_says_that_prepare_installs_it() {
         "{}",
         outcome.text
     );
-    assert!(!spawned_text(&fake).iter().any(|command| command.contains("yonderd")));
+    assert_eq!(link.calls(), ["hello studio"]);
 }
 
 #[test]

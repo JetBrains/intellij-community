@@ -132,16 +132,15 @@ fn the_jcp_routes_answer_the_organization_and_the_record_counts_the_discoveries(
         ),
         ("gateways", r#"{"gateways":[]}"#),
         ("agents", r#"{"items":[]}"#),
+        ("acp", r#"{"registry":"","allowAcpAgentManagement":true}"#),
     ] {
         assert_eq!(
             testing::get(address, &format!("/jcp/ai-management/api/provisioning/v1/{path}")).text(),
             body
         );
     }
-    for path in ["acp", "mcp"] {
-        let answer = testing::get(address, &format!("/jcp/ai-management/api/provisioning/v1/{path}"));
-        assert_eq!((answer.status, answer.raw_body.len()), (404, 0), "{path}");
-    }
+    let mcp = testing::get(address, "/jcp/ai-management/api/provisioning/v1/mcp");
+    assert_eq!((mcp.status, mcp.raw_body.len()), (404, 0));
     let access = testing::get(
         address,
         "/jcp/repo-connections/tokens/state/meta?repositoryUrl=https%3A%2F%2Fgithub.com%2Fo%2Fr.git",
@@ -172,6 +171,26 @@ fn the_jcp_routes_answer_the_organization_and_the_record_counts_the_discoveries(
     let none = start_cloud(Organization::None);
     let options = testing::get(none.address(), "/jcp/user-management/api/ai-access-options");
     assert_eq!(options.text(), r#"{"aiAccessOptions":[]}"#);
+}
+
+#[test]
+fn the_agreement_routes_answer_404_and_the_record_lists_them_as_served() {
+    let service = start_cloud(Organization::CloudWorkspace);
+    let address = service.address();
+    let targets = [
+        "/lservice/rpc/obtainAgreement.action?productCode=AI&fileName=aiEuaPlatform&existingVersion=unknown",
+        "/lservice/rpc/obtainAgreement.action?productCode=II&fileName=privacy&existingVersion=999.999",
+        "/lservice/rpc/fetchData.action?productCode=II",
+    ];
+    for target in targets {
+        let answer = testing::get(address, target);
+        assert_eq!((answer.status, answer.raw_body.len()), (404, 0), "{target}");
+    }
+    let record = testing::control(address, "GET", "/_lane/cloud/record", "").json();
+    assert_eq!(
+        record,
+        json!({ "discoveries": 0, "served": targets.map(|target| format!("GET {target}")), "unexpected": [] })
+    );
 }
 
 #[test]

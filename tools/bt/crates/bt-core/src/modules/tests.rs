@@ -181,14 +181,14 @@ fn an_unknown_module_is_refused_with_the_nearest_names() {
     );
 }
 
+/// Without exactly one unfiltered `jps_test` in the `BUILD.bazel`, the refusal names no label.
 #[test]
 fn a_module_without_its_own_jps_test_is_refused() {
     let fake = ultimate(
         &[
             "community/plugins/none/intellij.none.tests.iml",
             "community/plugins/plain/intellij.plain.tests.iml",
-            "community/plugins/x/intellij.x.iml",
-            "community/plugins/x/intellij.x.tests.iml",
+            "community/plugins/two/intellij.two.iml",
         ],
         &["intellij.*"],
     );
@@ -196,11 +196,12 @@ fn a_module_without_its_own_jps_test_is_refused() {
         "community/plugins/plain/BUILD.bazel",
         "load(\"@rules_jvm//:jvm.bzl\", \"jvm_library\")\n\njvm_library(name = \"plain\")\n",
     );
-    // The production module of the directory has its own library, and no target runs it.
-    let production = "jvm_library(\n    name = \"x\",\n    module_name = \"intellij.x\",\n)\n";
     fake.put(
-        "community/plugins/x/BUILD.bazel",
-        &format!("{production}\n{}", module_build("intellij.x.tests", "x-tests_test")),
+        "community/plugins/two/BUILD.bazel",
+        &format!(
+            "{}\njps_test(name = \"again_test\", runtime_deps = [\":other_test_lib\"])\n",
+            module_build("intellij.two.tests", "two-tests_test")
+        ),
     );
     for (module, reason) in [
         (
@@ -212,11 +213,10 @@ fn a_module_without_its_own_jps_test_is_refused() {
             "module intellij.plain.tests has no test target: community/plugins/plain/BUILD.bazel declares no jps_test that \
              runs the module",
         ),
-        // The production module of a directory must not run the tests of the test module beside it.
         (
-            "intellij.x",
-            "module intellij.x has no test target: community/plugins/x/BUILD.bazel declares no jps_test that runs the \
-             module",
+            "intellij.two",
+            "module intellij.two has no test target: community/plugins/two/BUILD.bazel declares no jps_test that runs \
+             the module",
         ),
     ] {
         let failure = refusal(resolve_module(&fake, &Areas::default(), module));
@@ -230,7 +230,33 @@ fn a_module_without_its_own_jps_test_is_refused() {
             format!("{reason}. Run: ./tests.cmd --module {module} --test <FQN>"),
             "{module}"
         );
+        assert_eq!(failure.details_json_text(), None, "{module}");
     }
+}
+
+/// The production module of a directory must not run the tests of the test module beside it. The refusal names the
+/// only `jps_test` of the directory, so the caller can run it by its label.
+#[test]
+fn a_refusal_names_the_only_jps_test_of_the_build_file() {
+    let fake = ultimate(
+        &["community/plugins/x/intellij.x.iml", "community/plugins/x/intellij.x.tests.iml"],
+        &["intellij.*"],
+    );
+    fake.put("community/plugins/x/BUILD.bazel", &module_build("intellij.x.tests", "x-tests_test"));
+    let failure = refusal(resolve_module(&fake, &Areas::default(), "intellij.x"));
+    assert_eq!((failure.code.as_ref(), failure.exit), (MODULE_WITHOUT_TEST_TARGET, USAGE));
+    assert_eq!(
+        failure.message,
+        "module intellij.x has no test target: community/plugins/x/BUILD.bazel declares no jps_test that runs the \
+         module. Run: ./tests.cmd --module intellij.x --test <FQN>. The only jps_test of community/plugins/x/BUILD.bazel \
+         is @community//plugins/x:x-tests_test: ./community/tools/bt.cmd @community//plugins/x:x-tests_test --filter <FQN>"
+    );
+    let details: serde_json::Value =
+        serde_json::from_str(failure.details_json_text().unwrap_or_default()).unwrap_or_else(|error| panic!("{error}"));
+    assert_eq!(
+        details,
+        json!({ "module": "intellij.x", "label": "@community//plugins/x:x-tests_test" })
+    );
 }
 
 #[test]

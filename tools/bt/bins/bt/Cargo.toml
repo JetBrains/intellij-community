@@ -14,11 +14,10 @@ workspace = true
 bt-core.workspace = true
 bt-junit.workspace = true
 clap.workspace = true
+ctrlc.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-yonder-client.workspace = true
-yonder-link.workspace = true
+tempfile.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
-tempfile.workspace = true
