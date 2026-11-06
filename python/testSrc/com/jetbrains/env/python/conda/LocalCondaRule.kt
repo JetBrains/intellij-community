@@ -40,10 +40,11 @@ class LocalCondaRule : ExternalResource() {
 
   override fun before() {
     super.before()
-    val env = runBlocking {
-      JUnit4FactoryHolder.getOrCreate().createEnvironment(PredefinedPyEnvironments.CONDA).unwrap<CondaPyEnvironment>() ?: error("No conda found")
-    }
-    condaPath = env.condaExecutable
+    // Close the environment that the factory gives, not the unwrapped one. A cached environment comes in a wrapper with
+    // a no-op close, and other tests use it too. The unwrapped one would remove the env from the disk.
+    val env = runBlocking { JUnit4FactoryHolder.getOrCreate().createEnvironment(PredefinedPyEnvironments.CONDA) }
+    val condaEnv = env.unwrap<CondaPyEnvironment>() ?: error("No conda found")
+    condaPath = condaEnv.condaExecutable
     if (!condaPath.isExecutable()) {
       throw AssumptionViolatedException("$condaPath is not executable")
     }
