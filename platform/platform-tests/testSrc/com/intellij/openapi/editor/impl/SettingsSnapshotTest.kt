@@ -1,0 +1,350 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.impl
+
+import com.intellij.application.options.CodeStyle
+import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.EditorSettings.CaretEasing
+import com.intellij.openapi.editor.EditorSettings.LineNumerationType
+import com.intellij.openapi.editor.actions.CaretStopOptions
+import com.intellij.openapi.editor.actions.CaretStopPolicy
+import com.intellij.openapi.editor.ex.BidiTextDirection
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.state.TransferableProperty
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+
+/**
+ * The getters of [SettingsImpl] read its [SettingsSnapshot], so each change of the state must publish a new snapshot.
+ */
+@TestApplication
+class SettingsSnapshotTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+    private const val CHANGES = 10_000
+    private const val TIMEOUT_SECONDS = 30L
+  }
+
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
+  /**
+   * A wrong field in [SettingsSnapshot.read] gives a getter the value of another setting, so each setter must reach its
+   * own getter.
+   */
+  @Test
+  fun testEachSetterReachesItsGetter(): Unit = fixture.runTest {
+    initText("abc")
+    val settings = editor.settings as SettingsImpl
+    val booleans: List<Accessors<Boolean>> = listOf(
+      Accessors(settings::isLineNumbersShown, settings::setLineNumbersShown),
+      Accessors(settings::isLineNumbersAfterIcons, settings::setLineNumbersAfterIcons),
+      Accessors(settings::isLineMarkerAreaShown, settings::setLineMarkerAreaShown),
+      Accessors(settings::areGutterIconsShown, settings::setGutterIconsShown),
+      Accessors(settings::isFoldingOutlineShown, settings::setFoldingOutlineShown),
+      Accessors(settings::isAutoCodeFoldingEnabled, settings::setAutoCodeFoldingEnabled),
+      Accessors(settings::isAllowSingleLogicalLineFolding, settings::setAllowSingleLogicalLineFolding),
+      Accessors(settings::isRightMarginShown, settings::setRightMarginShown),
+      Accessors(settings::isHighlightSelectionOccurrences, settings::setHighlightSelectionOccurrences),
+      Accessors(settings::isWhitespacesShown, settings::setWhitespacesShown),
+      Accessors(settings::isLeadingWhitespaceShown, settings::setLeadingWhitespaceShown),
+      Accessors(settings::isInnerWhitespaceShown, settings::setInnerWhitespaceShown),
+      Accessors(settings::isTrailingWhitespaceShown, settings::setTrailingWhitespaceShown),
+      Accessors(settings::isSelectionWhitespaceShown, settings::setSelectionWhitespaceShown),
+      Accessors(settings::isIndentGuidesShown, settings::setIndentGuidesShown),
+      Accessors(settings::isCaretRowShown, settings::setCaretRowShown),
+      Accessors(settings::isShowIntentionBulb, settings::setShowIntentionBulb),
+      Accessors(settings::isRtlEnabled, settings::setRtlEnabled),
+      Accessors(settings::isShowingSpecialChars, settings::setShowingSpecialChars),
+      Accessors(settings::isBlockCursor, settings::setBlockCursor),
+      Accessors(settings::isFullLineHeightCursor, settings::setFullLineHeightCursor),
+      Accessors(settings::isSmoothCaretMovement, settings::setSmoothCaretMovement),
+      Accessors(settings::isBlinkCaret, settings::setBlinkCaret),
+      Accessors(settings::isSmoothCaretBlinking, settings::setSmoothCaretBlinking),
+      Accessors(settings::isVirtualSpace, settings::setVirtualSpace),
+      Accessors(settings::isCaretInsideTabs, settings::setCaretInsideTabs),
+      Accessors(settings::isSmartHome, settings::setSmartHome),
+      Accessors(settings::isCamelWords, settings::setCamelWords),
+      Accessors(settings::isMouseClickSelectionHonorsCamelWords, settings::setMouseClickSelectionHonorsCamelWords),
+      Accessors(settings::isUseSoftWraps, settings::setUseSoftWraps),
+      Accessors(settings::isPaintSoftWraps, settings::setPaintSoftWraps),
+      Accessors(settings::isUseCustomSoftWrapIndent, settings::setUseCustomSoftWrapIndent),
+      Accessors(settings::isAnimatedScrolling, settings::setAnimatedScrolling),
+      Accessors(settings::isRefrainFromScrolling, settings::setRefrainFromScrolling),
+      Accessors(settings::isAdditionalPageAtBottom, settings::setAdditionalPageAtBottom),
+      Accessors(settings::isDndEnabled, settings::setDndEnabled),
+      Accessors(settings::isWheelFontChangeEnabled, settings::setWheelFontChangeEnabled),
+      Accessors(settings::isVariableInplaceRenameEnabled, settings::setVariableInplaceRenameEnabled),
+      Accessors(settings::isPreselectRename, settings::setPreselectRename),
+      Accessors({ settings.isWrapWhenTypingReachesRightMargin(project) }, settings::setWrapWhenTypingReachesRightMargin),
+      Accessors({ settings.isUseTabCharacter(project) }, settings::setUseTabCharacter),
+    )
+    for (accessors in booleans) {
+      assertSetterReachesGetter(accessors, !accessors.getter())
+    }
+
+    val ints: List<Accessors<Int>> = listOf(
+      Accessors(settings::getAdditionalLinesCount, settings::setAdditionalLinesCount),
+      Accessors(settings::getAdditionalColumnsCount, settings::setAdditionalColumnsCount),
+      Accessors(settings::getLineCursorWidth, settings::setLineCursorWidth),
+      Accessors(settings::getCaretBlinkPeriod, settings::setCaretBlinkPeriod),
+      Accessors(settings::getCustomSoftWrapIndent, settings::setCustomSoftWrapIndent),
+      Accessors(settings::getVerticalScrollOffset, settings::setVerticalScrollOffset),
+      Accessors(settings::getVerticalScrollJump, settings::setVerticalScrollJump),
+      Accessors(settings::getHorizontalScrollOffset, settings::setHorizontalScrollOffset),
+      Accessors(settings::getHorizontalScrollJump, settings::setHorizontalScrollJump),
+      Accessors({ settings.getRightMargin(project) }, settings::setRightMargin),
+      Accessors({ settings.getTabSize(project) }, settings::setTabSize),
+    )
+    for (accessors in ints) {
+      assertSetterReachesGetter(accessors, accessors.getter() + 3)
+    }
+
+    val lineNumeration = LineNumerationType.entries.first { it != settings.lineNumerationType }
+    settings.lineNumerationType = lineNumeration
+    assertEquals(lineNumeration, settings.lineNumerationType)
+
+    settings.characterGridWidthMultiplier = 1.5f
+    assertEquals(1.5f, settings.characterGridWidthMultiplier)
+
+    settings.setSoftMargins(listOf(17, 42))
+    assertEquals(listOf(17, 42), settings.softMargins)
+  }
+
+  /**
+   * A global-only setting has no setter, so only the global setting can show that it reaches its getter.
+   * `SettingsImplTest.testGlobalOnlySettingsFollowTheGlobalSetting` covers the other global-only settings.
+   */
+  @Test
+  fun testEachGlobalOnlySettingReachesItsGetter(): Unit = fixture.runTest {
+    initText("abc")
+    val settings = editor.settings
+    val global = EditorSettingsExternalizable.getInstance()
+
+    assertFollowsTheGlobalSetting(
+      { global.areStickyLinesShown() },
+      { global.setStickyLinesShown(it) },
+      settings::areStickyLinesShown,
+      !global.areStickyLinesShown(),
+    )
+    assertFollowsTheGlobalSetting(
+      global::getStickyLineLimit,
+      global::setStickyLineLimit,
+      settings::getStickyLinesLimit,
+      global.stickyLineLimit + 3,
+    )
+    assertFollowsTheGlobalSetting(
+      global::getCaretEasing,
+      global::setCaretEasing,
+      settings::getCaretEasing,
+      CaretEasing.entries.first { it != global.caretEasing },
+    )
+    assertFollowsTheGlobalSetting(
+      global::getBidiTextDirection,
+      global::setBidiTextDirection,
+      settings::getBidiTextDirection,
+      BidiTextDirection.entries.first { it != global.bidiTextDirection },
+    )
+    val caretStops = listOf(
+      CaretStopOptions(CaretStopPolicy.BOTH, CaretStopPolicy.NONE),
+      CaretStopOptions(CaretStopPolicy.NONE, CaretStopPolicy.BOTH),
+    )
+    assertFollowsTheGlobalSetting(
+      global::getCaretStopOptions,
+      global::setCaretStopOptions,
+      settings::getCaretStopOptions,
+      caretStops.first { it != global.caretStopOptions },
+    )
+  }
+
+  /**
+   * The sticky lines need the global setting and the setting for the language of the editor file.
+   */
+  @Test
+  fun testTheStickyLinesOfTheLanguageReachTheGetter(): Unit = fixture.runTest {
+    initText("abc")
+    val settings = editor.settings
+    val global = EditorSettingsExternalizable.getInstance()
+    val originalShown = global.areStickyLinesShown()
+    settings.setLanguageSupplier { Language.ANY }
+    try {
+      global.setStickyLinesShown(true)
+      assertTrue(settings.areStickyLinesShown())
+      global.setStickyLinesShownFor(Language.ANY.id, false)
+      assertFalse(settings.areStickyLinesShown())
+    } finally {
+      global.setStickyLinesShownFor(Language.ANY.id, true)
+      global.setStickyLinesShown(originalShown)
+    }
+  }
+
+  /**
+   * An override with the current value changes no value, so only the override event can publish the override flag.
+   * Settings without an editor have no project, so without the flag a caller with a project gets the code style value.
+   * The two indent values get different code style values, so a swap of the two flags fails too.
+   */
+  @Test
+  fun testAnOverrideWithTheCurrentValueReachesTheGetter(): Unit = fixture.runTest {
+    val settings = SettingsImpl()
+    val tabSize = settings.getTabSize(null)
+    val useTabCharacter = settings.isUseTabCharacter(null)
+    val manager = CodeStyleSettingsManager.getInstance(project)
+    val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
+    temporary.indentOptions.TAB_SIZE = tabSize + 3
+    temporary.indentOptions.USE_TAB_CHARACTER = !useTabCharacter
+
+    CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
+      settings.setTabSize(tabSize)
+      assertEquals(tabSize, settings.getTabSize(project))
+      assertEquals(!useTabCharacter, settings.isUseTabCharacter(project))
+
+      settings.setUseTabCharacter(useTabCharacter)
+      assertEquals(useTabCharacter, settings.isUseTabCharacter(project))
+    })
+  }
+
+  /**
+   * Two threads change two settings at the same time, and each thread ends with its own last value. A publication that
+   * loses the CAS reads the state again, so the last snapshot has both last values. Settings without an editor refresh
+   * no editor, so a change off the EDT is safe here.
+   */
+  @Test
+  fun testConcurrentChangesEndInTheLastValues(): Unit = fixture.runTest {
+    val settings = SettingsImpl()
+    val start = CountDownLatch(1)
+    val application = ApplicationManager.getApplication()
+    val lineNumbers = application.executeOnPooledThread {
+      start.await()
+      repeat(CHANGES) { settings.isLineNumbersShown = it % 2 == 0 }
+      settings.isLineNumbersShown = true
+    }
+    val caretRow = application.executeOnPooledThread {
+      start.await()
+      repeat(CHANGES) { settings.isCaretRowShown = it % 2 == 0 }
+      settings.isCaretRowShown = false
+    }
+    start.countDown()
+    lineNumbers.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    caretRow.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+
+    assertTrue(settings.isLineNumbersShown)
+    assertFalse(settings.isCaretRowShown)
+  }
+
+  /**
+   * A reset changes the value back to the global setting, so it must publish a new snapshot too.
+   */
+  @Test
+  fun testAResetReachesTheGetter(): Unit = fixture.runTest {
+    initText("abc")
+    val settings = editor.settings
+    val global = EditorSettingsExternalizable.getInstance().isCamelWords
+
+    settings.isCamelWords = !global
+    settings.resetCamelWords()
+    assertEquals(global, settings.isCamelWords)
+  }
+
+  /**
+   * The quiet switch refreshes no editor, and it must still publish a new snapshot.
+   */
+  @Test
+  fun testAQuietSoftWrapChangeReachesTheGetter(): Unit = fixture.runTest {
+    initText("abc")
+    val settings = editor.settings as SettingsImpl
+    settings.isUseSoftWraps = false
+
+    settings.setUseSoftWrapsQuiet()
+    assertTrue(settings.isUseSoftWraps)
+  }
+
+  /**
+   * The Remote Development frontend writes a value of the backend to the state directly, as
+   * `FrontendEditorSettingsUtils.applyValue` does.
+   */
+  @Test
+  fun testAValueThatTheFrontendAppliesReachesTheGetter(): Unit = fixture.runTest {
+    initText("abc")
+    val settings = editor.settings as SettingsImpl
+    val state = settings.getState()
+    val property = requireNotNull(state.findProperty(state::tabSize.name))
+    val transferable = property as TransferableProperty<*>
+    val backendValue = settings.getTabSize(project) + 5
+
+    property.setValue(state, requireNotNull(transferable.decodeFromString(backendValue.toString())))
+    assertEquals(backendValue, settings.getTabSize(project))
+  }
+
+  /**
+   * A snapshot is immutable, so a later change of the list of a caller must not reach it.
+   */
+  @Test
+  fun testASnapshotKeepsItsSoftMargins(): Unit = fixture.runTest {
+    initText("abc")
+    val settings = editor.settings as SettingsImpl
+    val margins = mutableListOf(17, 42)
+
+    settings.setSoftMargins(margins)
+    val before = settings.getSnapshot()
+    margins.add(80)
+    assertEquals(listOf(17, 42), before.getSoftMargins())
+    assertEquals(listOf(17, 42), settings.softMargins)
+  }
+
+  /**
+   * Each change publishes a new snapshot, and an older snapshot keeps its values.
+   */
+  @Test
+  fun testAChangePublishesANewSnapshot(): Unit = fixture.runTest {
+    initText("abc")
+    val settings = editor.settings as SettingsImpl
+    val before = settings.getSnapshot()
+    val original = before.isLineNumbersShown()
+
+    settings.isLineNumbersShown = !original
+    val after = settings.getSnapshot()
+    assertNotSame(before, after)
+    assertEquals(original, before.isLineNumbersShown())
+    assertEquals(!original, after.isLineNumbersShown())
+  }
+
+  /**
+   * Calls the setter of [accessors] with [changed], and checks that the getter returns it.
+   */
+  private fun <T> assertSetterReachesGetter(accessors: Accessors<T>, changed: T) {
+    accessors.setter(changed)
+    assertEquals(changed, accessors.getter())
+  }
+
+  /**
+   * Sets the global setting to [changed], checks that [editorValue] follows it, and then restores the global setting.
+   */
+  private fun <T> assertFollowsTheGlobalSetting(
+    globalValue: () -> T,
+    setGlobalValue: (T) -> Unit,
+    editorValue: () -> T,
+    changed: T,
+  ) {
+    val original = globalValue()
+    try {
+      setGlobalValue(changed)
+      assertEquals(changed, editorValue())
+    } finally {
+      setGlobalValue(original)
+    }
+    assertEquals(original, editorValue())
+  }
+}
+
+/**
+ * The getter and the setter of one setting.
+ */
+private class Accessors<T>(val getter: () -> T, val setter: (T) -> Unit)
