@@ -1,27 +1,24 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.ide.util.PsiElementRenderingInfo;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.PsiShortNamesCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -81,41 +78,30 @@ public class YourkitFilter implements Filter{
 
     @Override
     public void navigate(@NotNull Project project) {
-      DefaultPsiElementListCellRenderer renderer = new DefaultPsiElementListCellRenderer();
       final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
       if (editor != null) {
-        final IPopupChooserBuilder<PsiFile> builder = JBPopupFactory.getInstance()
-          .createPopupChooserBuilder(List.of(myPsiFiles))
-          .setRenderer(renderer)
-          .setTitle(ExecutionBundle.message("choose.file"))
-          .setItemsChosenCallback((selectedElements) -> {
-            for (PsiFile element : selectedElements) {
-              Navigatable descriptor = EditSourceUtil.getDescriptor(element);
-              if (descriptor != null && descriptor.canNavigate()) {
-                descriptor.navigate(true);
-              }
+        new PsiTargetNavigator<>(myPsiFiles)
+          .presentationProvider(file -> PsiElementRenderingInfo.targetPresentation(file, new PsiElementRenderingInfo<>() {
+            @Override
+            public @NotNull String getPresentableText(@NotNull PsiFile element) {
+              return element.getName();
             }
+
+            @Override
+            public @Nullable String getContainerText(@NotNull PsiFile element) {
+              PsiDirectory parent = element.getParent();
+              PsiPackage psiPackage = parent == null ? null : JavaDirectoryService.getInstance().getPackage(parent);
+              return psiPackage == null ? null : psiPackage.getQualifiedName();
+            }
+          }))
+          .navigate(editor, ExecutionBundle.message("choose.file"), element -> {
+            Navigatable descriptor = EditSourceUtil.getDescriptor(element);
+            if (descriptor != null && descriptor.canNavigate()) {
+              descriptor.navigate(true);
+            }
+            return true;
           });
-        renderer.installSpeedSearch(builder);
-        builder.createPopup().showInBestPositionFor(editor);
       }
-    }
-  }
-
-
-  private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
-    @Override
-    public String getElementText(final PsiElement element) {
-      return element.getContainingFile().getName();
-    }
-
-    @Override
-    protected @Nullable String getContainerText(final PsiElement element, final String name) {
-      final PsiDirectory parent = ((PsiFile)element).getParent();
-      if (parent == null) return null;
-      final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(parent);
-      if (psiPackage == null) return null;
-      return "(" + psiPackage.getQualifiedName() + ")";
     }
   }
 }
