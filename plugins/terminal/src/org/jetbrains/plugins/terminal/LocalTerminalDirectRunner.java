@@ -17,6 +17,7 @@ import com.jediterm.terminal.TtyConnector;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer;
@@ -34,6 +35,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.shouldUseEelApi;
@@ -159,6 +161,15 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<Process> {
     return TerminalOptionsProvider.getInstance().getShellIntegration();
   }
 
+  private static final Pattern SECRET_ENV_KEY = Pattern.compile("TOKEN|SECRET|PASSWORD|API_KEY", Pattern.CASE_INSENSITIVE);
+
+  @VisibleForTesting
+  static @NotNull Map<String, String> maskSecrets(@NotNull Map<String, String> env) {
+    Map<String, String> masked = new LinkedHashMap<>(env);
+    masked.replaceAll((key, value) -> SECRET_ENV_KEY.matcher(key).find() ? "***" : value);
+    return masked;
+  }
+
   private static @NotNull String stringifyProcessInfo(@NotNull List<String> command,
                                                       @NotNull String workingDirectory,
                                                       @Nullable TermSize initialTermSize,
@@ -167,9 +178,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<Process> {
     String info = command + " in " + workingDirectory + (isDirectory(workingDirectory) ? "" : " [no such directory]") +
                   ", [" + initialTermSize + "]";
     if (envDiff) {
-      return info + ", diff_envs=" + getEnvironmentDiff(environment, System.getenv());
+      return info + ", diff_envs=" + maskSecrets(getEnvironmentDiff(environment, System.getenv()));
     }
-    return info + ", envs=" + environment;
+    return info + ", envs=" + maskSecrets(environment);
   }
 
   private static @NotNull Map<String, String> getEnvironmentDiff(@NotNull Map<String, String> environment,
