@@ -30,6 +30,7 @@ def test_could_load_extensions():
         'pydevd_plugins.extensions.pydevd_plugin_test_events',
         'pydevd_plugins.extensions.pydevd_plugin_test_exttype',
         'pydevd_plugins.extensions.types.pydevd_plugin_numpy_types',
+        'pydevd_plugins.extensions.types.pydevd_plugin_torch_types',
         'pydevd_plugins.extensions.types.pydevd_plugins_django_form_str',
     }
 
