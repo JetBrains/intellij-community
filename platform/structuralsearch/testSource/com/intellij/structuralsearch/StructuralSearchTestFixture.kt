@@ -4,7 +4,6 @@ package com.intellij.structuralsearch
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readActionBlocking
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
@@ -99,7 +98,7 @@ class StructuralSearchTestFixture internal constructor(val project: Project, pri
    */
   fun checkPredefinedConfiguration(template: Configuration?, source: String, fileType: LanguageFileType, vararg results: String) {
     checkPredefinedConfiguration(template, source, fileType, { e ->
-      BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation<String> { StructuralSearchUtil.getPresentableElement(e).text }
+      StructuralSearchUtil.getPresentableElement(e).text
     }, *results)
   }
 
@@ -147,7 +146,7 @@ class StructuralSearchTestFixture internal constructor(val project: Project, pri
         val nodes = compiledPattern.getVariableNodes(varName)
         val constraint = options.getVariableConstraint(varName)
         val usedConstraints = mutableListOf<String>()
-        if (!constraint.regExp.isNullOrEmpty()) {
+        if (constraint.regExp.isNotEmpty()) {
           usedConstraints.add(UIUtil.TEXT)
         }
         if (constraint.isWithinHierarchy) {
@@ -159,13 +158,13 @@ class StructuralSearchTestFixture internal constructor(val project: Project, pri
         if (constraint.maxCount > 1) {
           usedConstraints.add(UIUtil.MAXIMUM_UNLIMITED)
         }
-        if (!constraint.nameOfExprType.isNullOrEmpty()) {
+        if (constraint.nameOfExprType.isNotEmpty()) {
           usedConstraints.add(UIUtil.TYPE)
         }
-        if (!constraint.nameOfFormalArgType.isNullOrEmpty()) {
+        if (constraint.nameOfFormalArgType.isNotEmpty()) {
           usedConstraints.add(UIUtil.EXPECTED_TYPE)
         }
-        if (!constraint.referenceConstraint.isNullOrEmpty()) {
+        if (constraint.referenceConstraint.isNotEmpty()) {
           usedConstraints.add(UIUtil.REFERENCE)
         }
         for (usedConstraint in usedConstraints) {
