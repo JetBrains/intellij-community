@@ -2,10 +2,13 @@
 package com.intellij.testFramework.common
 
 import com.intellij.diagnostic.ThreadDumper
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.findOrCreateFile
+import com.intellij.testFramework.TeamCityLogger
 import com.intellij.util.DebugAttachDetectorArgs
 import com.intellij.util.io.blockingDispatcher
+import com.sun.management.HotSpotDiagnosticMXBean
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -15,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.TestOnly
+import java.lang.management.ManagementFactory
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.io.path.writeText
@@ -56,11 +60,25 @@ fun <T> timeoutRunBlocking(
       }
       catch (e: TimeoutCancellationException) {
         val threadDump = ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false).rawDump
+        val dumpFilePrefix = "threadDump-timeoutRunBlocking-${System.currentTimeMillis()}"
         val dumpFile = PathManager.getLogDir()
-          .findOrCreateFile("threadDump-timeoutRunBlocking-${System.currentTimeMillis()}.log")
+          .findOrCreateFile("$dumpFilePrefix.log")
           .apply { writeText(threadDump) }
         coroutineName?.let { println("\u001B[33m$it job timed out\u001B[0m") }
         println("\u001B[33mCaptured thread dump: file:${dumpFile.toAbsolutePath()}\u001B[0m")
+        TeamCityLogger.publishArtifact(dumpFile.toAbsolutePath(), "thread-dumps")
+        try {
+          val virtualThreadDumpFile = dumpFile.resolveSibling("$dumpFilePrefix-virtual-threads.log").toAbsolutePath()
+          ManagementFactory.getPlatformMXBean(HotSpotDiagnosticMXBean::class.java)
+            .dumpThreads(virtualThreadDumpFile.toString(), HotSpotDiagnosticMXBean.ThreadDumpFormat.TEXT_PLAIN)
+          println("\u001B[33mCaptured virtual thread dump: file:$virtualThreadDumpFile\u001B[0m")
+          TeamCityLogger.publishArtifact(virtualThreadDumpFile, "thread-dumps")
+        }
+        catch (dumpError: Exception) {
+          rethrowControlFlowException(dumpError)
+          e.addSuppressed(dumpError)
+        }
+        System.out.flush()
         job.cancel(e)
         Result.failure(AssertionError(e))
       }
