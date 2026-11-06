@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks-and-extensions
+// PROBLEM: Non-canonical modifiers order
+class Column
+
+// Keep this comment.
+public inline companion fun Column.bar(): Int = 5

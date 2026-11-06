@@ -73,6 +73,19 @@ public abstract class K2SharedQuickFixTestGenerated extends AbstractK2SharedQuic
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/sortModifiers")
+        public static class SortModifiers extends AbstractK2SharedQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionFixAll.kt")
+            public void testCompanionBlocksAndExtensionsOptionFixAll() throws Exception {
+                runTest("testData/quickfix/sortModifiers/companionBlocksAndExtensionsOptionFixAll.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/unresolvedInvocation")
         public static class UnresolvedInvocation extends AbstractK2SharedQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {

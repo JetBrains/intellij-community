@@ -24833,6 +24833,96 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/sortModifiers/combination3.kt");
             }
 
+            @TestMetadata("companionBlocksAndExtensionsOptionAnnotation.kt")
+            public void testCompanionBlocksAndExtensionsOptionAnnotation() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionAnnotation.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionCombination.kt")
+            public void testCompanionBlocksAndExtensionsOptionCombination() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionCombination.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionContextParameters.kt")
+            public void testCompanionBlocksAndExtensionsOptionContextParameters() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionContextParameters.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionFunctionNoWarn.kt")
+            public void testCompanionBlocksAndExtensionsOptionFunctionNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionFunctionNoWarn.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionFunctionOrder.kt")
+            public void testCompanionBlocksAndExtensionsOptionFunctionOrder() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionFunctionOrder.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionKDoc.kt")
+            public void testCompanionBlocksAndExtensionsOptionKDoc() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionKDoc.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionLineComment.kt")
+            public void testCompanionBlocksAndExtensionsOptionLineComment() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionLineComment.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionMember.kt")
+            public void testCompanionBlocksAndExtensionsOptionMember() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionMember.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionMemberExtensionNoWarn.kt")
+            public void testCompanionBlocksAndExtensionsOptionMemberExtensionNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionMemberExtensionNoWarn.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionMutableProperty.kt")
+            public void testCompanionBlocksAndExtensionsOptionMutableProperty() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionMutableProperty.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionOtherModifiers.kt")
+            public void testCompanionBlocksAndExtensionsOptionOtherModifiers() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionOtherModifiers.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionPropertyNoWarn.kt")
+            public void testCompanionBlocksAndExtensionsOptionPropertyNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionPropertyNoWarn.kt");
+            }
+
+            @TestMetadata("companionBlocksAndExtensionsOptionPropertyOrder.kt")
+            public void testCompanionBlocksAndExtensionsOptionPropertyOrder() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksAndExtensionsOptionPropertyOrder.kt");
+            }
+
+            @TestMetadata("companionBlocksOptionAnnotationNoWarn.kt")
+            public void testCompanionBlocksOptionAnnotationNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksOptionAnnotationNoWarn.kt");
+            }
+
+            @TestMetadata("companionBlocksOptionOrderNoWarn.kt")
+            public void testCompanionBlocksOptionOrderNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionBlocksOptionOrderNoWarn.kt");
+            }
+
+            @TestMetadata("companionExtensionsOptionDisabledOrderNoWarn.kt")
+            public void testCompanionExtensionsOptionDisabledOrderNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionExtensionsOptionDisabledOrderNoWarn.kt");
+            }
+
+            @TestMetadata("companionExtensionsOptionFunctionOrder.kt")
+            public void testCompanionExtensionsOptionFunctionOrder() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionExtensionsOptionFunctionOrder.kt");
+            }
+
+            @TestMetadata("companionExtensionsOptionNoWarn.kt")
+            public void testCompanionExtensionsOptionNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/sortModifiers/companionExtensionsOptionNoWarn.kt");
+            }
+
             @TestMetadata("contextParameters.kt")
             public void testContextParameters() throws Exception {
                 runTest("testData/inspectionsLocal/sortModifiers/contextParameters.kt");

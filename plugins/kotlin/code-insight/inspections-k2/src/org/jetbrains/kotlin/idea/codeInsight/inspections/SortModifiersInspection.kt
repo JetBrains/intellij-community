@@ -14,6 +14,8 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.childrenOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.psi.addModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -25,7 +27,9 @@ import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtAnnotation
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtContextParameterList
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -47,7 +51,8 @@ class SortModifiersInspection : KotlinApplicableInspectionBase<KtModifierListOwn
         val modifiersInWrongOrder: Boolean = false, //visibility/modality modifiers
         val modifiersNotAtTheEnd: Boolean = false, // they precede annotations or context parameters
         val contextParametersBeforeAnnotations: Boolean = false,
-        val kDocIsMisplaced: Boolean = false // should precede annotations/modifiers/context parameters
+        val kDocIsMisplaced: Boolean = false, // should precede annotations/modifiers/context parameters
+        val companionModifierLast: Boolean = false
     )
 
     context(session: KaSession)
@@ -55,14 +60,18 @@ class SortModifiersInspection : KotlinApplicableInspectionBase<KtModifierListOwn
         modifiersInWrongOrder = element.modifiersInWrongOrder(),
         modifiersNotAtTheEnd = element.modifiersNotAtTheLastPlace(),
         contextParametersBeforeAnnotations = element.contextParametersBeforeAnnotations(),
-        kDocIsMisplaced = element.misplacedKDoc() != null
+        kDocIsMisplaced = element.misplacedKDoc() != null,
+        companionModifierLast = element.isCompanionExtension() && element.isCompanionExtensionEnabled()
     )
 
-    override fun isApplicableByPsi(element: KtModifierListOwner): Boolean =
-        element.misplacedKDoc() != null ||
+    override fun isApplicableByPsi(element: KtModifierListOwner): Boolean {
+        if (element.isUnsupportedCompanionCallable()) return false
+
+        return element.misplacedKDoc() != null ||
                 element.modifiersInWrongOrder() ||
                 element.modifiersNotAtTheLastPlace() ||
                 element.contextParametersBeforeAnnotations()
+    }
 
     override fun InspectionManager.createProblemDescriptor(
         element: KtModifierListOwner,
@@ -130,7 +139,7 @@ private class SortModifiersQuickFix(val context: SortModifiersInspection.Context
             element.moveContextParametersAfterAnnotations()
         }
         if (context.modifiersInWrongOrder || context.modifiersNotAtTheEnd) {
-            element.moveModifiersToRightPlace()
+            element.moveModifiersToRightPlace(context.companionModifierLast)
         }
         element.modifierList?.addLineBreakBeforeFirstModifierIfMissing(project)
     }
@@ -145,9 +154,24 @@ private fun KtModifierListOwner.modifierKeywordTokens(): List<KtModifierKeywordT
 }
 
 private fun KtModifierListOwner.modifiersInWrongOrder(): Boolean {
-    val modifierTokens = modifierKeywordTokens()
+    var modifierTokens = modifierKeywordTokens()
+
+    if (isCompanionExtension()) {
+        if (isCompanionExtensionEnabled() && modifierTokens.lastOrNull() != KtTokens.COMPANION_KEYWORD) return true
+        modifierTokens = modifierTokens.filter { it != KtTokens.COMPANION_KEYWORD }
+    }
     return modifierTokens.isNotEmpty() && modifierTokens != sortModifiers(modifierTokens)
 }
+
+private fun KtModifierListOwner.isUnsupportedCompanionCallable(): Boolean =
+    this is KtCallableDeclaration && hasModifier(KtTokens.COMPANION_KEYWORD) &&
+            (!isCompanionExtension() || !isCompanionExtensionEnabled())
+
+private fun KtModifierListOwner.isCompanionExtension(): Boolean =
+    this is KtCallableDeclaration && parent is KtFile && receiverTypeReference != null && hasModifier(KtTokens.COMPANION_KEYWORD)
+
+private fun KtModifierListOwner.isCompanionExtensionEnabled(): Boolean =
+    languageVersionSettings.supportsFeature(LanguageFeature.CompanionExtensions)
 
 private fun KtModifierListOwner.modifiersNotAtTheLastPlace(): Boolean {
     val ktModifierList = childrenOfType<KtModifierList>().first()
@@ -208,13 +232,23 @@ private fun KtModifierListOwner.moveContextParametersAfterAnnotations() {
     relevantChildren.forEach { it.delete() }
 }
 
-private fun KtModifierListOwner.moveModifiersToRightPlace() {
+private fun KtModifierListOwner.moveModifiersToRightPlace(companionModifierLast: Boolean) {
     val sortedModifiers = sortModifiers(modifierKeywordTokens())
     sortedModifiers.forEach { removeModifierKeyword(it) }
     sortedModifiers
         .partition { it in KtTokens.VISIBILITY_MODIFIERS || it in KtTokens.MODALITY_MODIFIERS }
         .let { it.second + it.first }
         .forEach { addModifierKeyword(it) }
+
+    if (!companionModifierLast) return
+    val modifierList = modifierList ?: return
+    val companionModifier = modifierList.getModifier(KtTokens.COMPANION_KEYWORD) ?: return
+
+    val lastModifier = modifierList.allChildren.lastOrNull { it.isModifierKeyword() } ?: return
+    if (companionModifier != lastModifier) {
+        modifierList.addAfter(companionModifier, lastModifier)
+        companionModifier.delete()
+    }
 }
 
 private fun KtModifierList.addLineBreakBeforeFirstModifierIfMissing(project: Project) {

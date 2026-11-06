@@ -1,0 +1,8 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks-and-extensions -XXLanguage:+ContextParameters
+// PROBLEM: KDoc should precede the modifiers
+class Column
+
+/** Returns the context value. */
+@Suppress("unused")
+context(value: Int)
+public inline companion fun Column.bar(): Int = value
