@@ -54,24 +54,17 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache
 
-open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : PositionManagerEx(), PositionManagerAsync {
-  open fun getDebugProcess(): DebugProcess = myDebugProcess
-
-  @get:JvmName("getDebugProcessForKotlin")
-  @get:JvmSynthetic
-  val debugProcess: DebugProcess
-    get() = getDebugProcess()
-
+class GroovyPositionManager(val debugProcess: DebugProcess) : PositionManagerEx(), PositionManagerAsync {
   @Throws(NoDataException::class)
   override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
     checkGroovyFile(position)
     try {
-      if (LOG.isDebugEnabled()) {
+      if (LOG.isDebugEnabled) {
         LOG.debug("locationsOfLine: $type; $position")
       }
-      val line = position.getLine() + 1
+      val line = position.line + 1
       val locations = DebuggerUtilsAsync.locationsOfLineSync(type, DebugProcess.JAVA_STRATUM, null, line)
-      if (locations == null || locations.isEmpty()) throw NoDataException.INSTANCE
+      if (locations.isNullOrEmpty()) throw NoDataException.INSTANCE
       return locations
     }
     catch (_: AbsentInformationException) {
@@ -97,26 +90,25 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
 
   @Throws(NoDataException::class)
   override fun createPrepareRequest(requestor: ClassPrepareRequestor, position: SourcePosition): ClassPrepareRequest? {
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled) {
       LOG.debug("createPrepareRequest: $position")
     }
     checkGroovyFile(position)
 
-    var qName: String? = getOuterClassName(position)
-    if (qName != null) {
-      return myDebugProcess.getRequestsManager().createClassPrepareRequest(requestor, qName)
+    val outerClassName = getOuterClassName(position)
+    if (outerClassName != null) {
+      return debugProcess.requestsManager.createClassPrepareRequest(requestor, outerClassName)
     }
 
-    qName = findEnclosingName(position)
-
+    val qName = findEnclosingName(position)
     if (qName == null) throw NoDataException.INSTANCE
     val waitRequestor = ClassPrepareRequestor { debuggerProcess, referenceType ->
       val positionManager = (debuggerProcess as DebugProcessImpl).positionManager
-      if (!positionManager.locationsOfLine(referenceType, position).isEmpty()) {
+      if (positionManager.locationsOfLine(referenceType, position).isNotEmpty()) {
         requestor.processClassPrepare(debuggerProcess, referenceType)
       }
     }
-    return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor, "$qName$*")
+    return debugProcess.requestsManager.createClassPrepareRequest(waitRequestor, "$qName$*")
   }
 
   @RequiresBackgroundThread
@@ -125,22 +117,21 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
     if (location == null) throw NoDataException.INSTANCE
     if (isInGroovyFile(location) == ThreeState.NO) throw NoDataException.INSTANCE
 
-    val lineNumber = calcLineIndex(location)
+    val lineNumber = DebuggerUtilsEx.getLineNumber(location, true)
     if (lineNumber < 0) throw NoDataException.INSTANCE
 
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled) {
       LOG.debug("getSourcePosition: $location")
     }
     val refType = location.declaringType()
     if (refType == null) throw NoDataException.INSTANCE
 
     val originalQName = refType.name().replace('/', '.')
-    val dollar = originalQName.indexOf('$')
-    val runtimeName = if (dollar >= 0) originalQName.substring(0, dollar) else originalQName
-    val qName: String = getOriginalQualifiedName(refType, runtimeName)
+    val runtimeName = originalQName.substringBefore('$')
+    val qName = getOriginalQualifiedName(refType, runtimeName)
 
     val project = debugProcess.project
-    val searchScope = myDebugProcess.searchScope
+    val searchScope = debugProcess.searchScope
     val sourcePosition = try {
       readAction {
         findPsiFile(project, qName, searchScope)?.let { SourcePosition.createFromLine(it, lineNumber) }
@@ -159,12 +150,6 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
     }
   }
 
-  @RequiresBackgroundThread
-  private fun calcLineIndex(location: Location?): Int {
-    if (location == null) return -1
-    return DebuggerUtilsEx.getLineNumber(location, true)
-  }
-
   @RequiresReadLock
   private fun findPsiFile(project: Project, qName: String, searchScope: GlobalSearchScope): PsiFile? {
     val cache = GroovyShortNamesCache.getGroovyShortNamesCache(project)
@@ -180,44 +165,39 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
     }
     if (classes.isEmpty()) return null
     classes.sortWith(PsiClassUtil.createScopeComparator(searchScope))
-    return classes.firstOrNull()?.containingFile
+    return classes.first().containingFile
   }
 
   @Throws(NoDataException::class)
   override fun getAllClasses(position: SourcePosition): List<ReferenceType> {
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled) {
       LOG.debug("getAllClasses: $position")
     }
 
     checkGroovyFile(position)
     val result = ReadAction.computeBlocking<List<ReferenceType>?, RuntimeException> {
-      val sourceImage: GroovyPsiElement? = findReferenceTypeSourceImage(position)
-      if (sourceImage is GrTypeDefinition && !sourceImage.isAnonymous()) {
-        val qName: String? = getClassNameForJvm(sourceImage)
+      val sourceImage = findReferenceTypeSourceImage(position)
+      if (sourceImage is GrTypeDefinition && !sourceImage.isAnonymous) {
+        val qName = getClassNameForJvm(sourceImage)
         if (qName != null) return@computeBlocking VirtualMachineProxy.getCurrent().classesByName(qName)
       }
       else if (sourceImage == null) {
-        val scriptName: String? = getScriptQualifiedName(position)
+        val scriptName = getScriptQualifiedName(position)
         if (scriptName != null) return@computeBlocking VirtualMachineProxy.getCurrent().classesByName(scriptName)
       }
       else {
-        val enclosingName: String? = findEnclosingName(position)
+        val enclosingName = findEnclosingName(position)
         if (enclosingName == null) return@computeBlocking null
 
         val outers = VirtualMachineProxy.getCurrent().classesByName(enclosingName)
-        val result1: MutableList<ReferenceType> = ArrayList(outers.size)
-        for (outer in outers) {
-          val nested = findNested(outer, sourceImage, position)
-          if (nested != null) {
-            result1.add(nested)
-          }
+        return@computeBlocking outers.mapNotNull { outer ->
+          findNested(outer, sourceImage, position)
         }
-        return@computeBlocking result1
       }
       null
     }
 
-    if (LOG.isDebugEnabled()) {
+    if (LOG.isDebugEnabled) {
       LOG.debug("getAllClasses = $result")
     }
     if (result == null) throw NoDataException.INSTANCE
@@ -226,33 +206,29 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
 
   private fun findNested(fromClass: ReferenceType, toFind: GroovyPsiElement, classPosition: SourcePosition): ReferenceType? {
     val vmProxy = VirtualMachineProxy.getCurrent()
-    if (fromClass.isPrepared) {
-      val nestedTypes = vmProxy.nestedTypes(fromClass)
+    if (!fromClass.isPrepared) return null
 
-      for (nested in nestedTypes) {
-        val found = findNested(nested, toFind, classPosition)
-        if (found != null) {
-          return found
-        }
+    for (nested in vmProxy.nestedTypes(fromClass)) {
+      val found = findNested(nested, toFind, classPosition)
+      if (found != null) {
+        return found
       }
+    }
 
-      try {
-        val lineNumber = classPosition.getLine() + 1
-        if (!DebuggerUtilsAsync.locationsOfLineSync(fromClass, lineNumber).isEmpty()) {
+    try {
+      val lineNumber = classPosition.line + 1
+      if (DebuggerUtilsAsync.locationsOfLineSync(fromClass, lineNumber).isNotEmpty()) {
+        return fromClass
+      }
+      val location = DebuggerUtilsAsync.allLineLocationsSync(fromClass).firstOrNull()
+      if (location != null) {
+        val candidateFirstPosition = SourcePosition.createFromLine(toFind.containingFile, location.lineNumber() - 1)
+        if (toFind == findReferenceTypeSourceImage(candidateFirstPosition)) {
           return fromClass
         }
-        for (location in DebuggerUtilsAsync.allLineLocationsSync(fromClass)) {
-          val candidateFirstPosition = SourcePosition.createFromLine(
-            toFind.getContainingFile(), location.lineNumber() - 1
-          )
-          if (toFind == findReferenceTypeSourceImage(candidateFirstPosition)) {
-            return fromClass
-          }
-          break // isApplicable only the first location
-        }
       }
-      catch (_: AbsentInformationException) {
-      }
+    }
+    catch (_: AbsentInformationException) {
     }
     return null
   }
@@ -267,30 +243,27 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
 
     @RequiresBackgroundThread
     private fun isInGroovyFile(location: Location?): ThreeState {
-      if (location != null) {
-        val refType = location.declaringType()
-        try {
-          val safeName = refType.sourceName()
-          val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(safeName)
-          if (fileType === UnknownFileType.INSTANCE) {
-            return ThreeState.UNSURE
-          }
-          if (fileType is LanguageFileType) {
-            if (fileType.language === GroovyLanguage) {
-              return ThreeState.YES
-            }
-          }
+      if (location == null) return ThreeState.NO
+      val refType = location.declaringType()
+      try {
+        val safeName = refType.sourceName()
+        val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(safeName)
+        if (fileType === UnknownFileType.INSTANCE) {
+          return ThreeState.UNSURE
         }
-        catch (_: AbsentInformationException) {
+        if (fileType is LanguageFileType && fileType.language === GroovyLanguage) {
+          return ThreeState.YES
         }
+      }
+      catch (_: AbsentInformationException) {
       }
       return ThreeState.NO
     }
 
     private fun findReferenceTypeSourceImage(position: SourcePosition): GroovyPsiElement? {
-      val file = position.getFile()
+      val file = position.file
       if (file !is GroovyFileBase) return null
-      val element = file.findElementAt(position.getOffset())
+      val element = file.findElementAt(position.offset)
       if (element == null) return null
       return getEnclosingPsiForElement(element)
     }
@@ -336,22 +309,20 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
         if (!(parent is GrSwitchElement && PsiUtil.isPlainSwitchStatement(parent))) {
           return parent
         }
-        else {
-          element = parent
-        }
+        element = parent
       }
     }
 
     private fun findEnclosingTypeDefinition(position: SourcePosition): PsiClass? {
-      val file = position.getFile()
+      val file = position.file
       if (file !is GroovyFileBase) return null
-      var element = file.findElementAt(position.getOffset())
+      var element = file.findElementAt(position.offset)
       while (true) {
         element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition::class.java, GroovyFileBase::class.java)
         if (element is GroovyFileBase) {
-          return element.getScriptClass()
+          return element.scriptClass
         }
-        else if (element is GrTypeDefinition && !element.isAnonymous()) {
+        else if (element is GrTypeDefinition && !element.isAnonymous) {
           return element
         }
       }
@@ -359,44 +330,45 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
 
     @Throws(NoDataException::class)
     private fun checkGroovyFile(position: SourcePosition) {
-      if (position.getFile() !is GroovyFileBase) {
+      if (position.file !is GroovyFileBase) {
         throw NoDataException.INSTANCE
       }
     }
 
     private fun findEnclosingName(position: SourcePosition): String? {
-      return ReadAction.compute<String?, RuntimeException> {
-        val typeDefinition: PsiClass? = findEnclosingTypeDefinition(position)
+      return ReadAction.computeBlocking<String?, RuntimeException> {
+        val typeDefinition = findEnclosingTypeDefinition(position)
         if (typeDefinition != null) {
-          return@compute getClassNameForJvm(typeDefinition)
+          return@computeBlocking getClassNameForJvm(typeDefinition)
         }
         getScriptQualifiedName(position)
       }
     }
 
     private fun getOuterClassName(position: SourcePosition): String? {
-      return ReadAction.compute<String?, RuntimeException> {
-        val sourceImage: GroovyPsiElement? = findReferenceTypeSourceImage(position)
+      return ReadAction.computeBlocking<String?, RuntimeException> {
+        val sourceImage = findReferenceTypeSourceImage(position)
         if (sourceImage is GrTypeDefinition) {
-          return@compute getClassNameForJvm(sourceImage)
+          return@computeBlocking getClassNameForJvm(sourceImage)
         }
         else if (sourceImage == null) {
-          return@compute getScriptQualifiedName(position)
+          return@computeBlocking getScriptQualifiedName(position)
         }
         null
       }
     }
 
     private fun getClassNameForJvm(typeDefinition: PsiClass): String? {
-      val suffix = if (typeDefinition is GrTypeDefinition && typeDefinition.isTrait()) $$"$Trait$Helper" else ""
-      val psiClass = typeDefinition.getContainingClass()
+      val suffix = if (typeDefinition is GrTypeDefinition && typeDefinition.isTrait) $$"$Trait$Helper" else ""
+      val psiClass = typeDefinition.containingClass
       if (psiClass != null) {
-        val parent: String? = getClassNameForJvm(psiClass)
-        return if (parent == null) null else parent + "$" + typeDefinition.getName() + suffix
+        val parent = getClassNameForJvm(psiClass)
+        if (parent == null) return null
+        return "$parent$${typeDefinition.name}$suffix"
       }
 
-      val file = typeDefinition.getContainingFile()
-      if (file is GroovyFile && file.isScript()) {
+      val file = typeDefinition.containingFile
+      if (file is GroovyFile && file.isScript) {
         for (helper in ScriptPositionManagerHelper.EP_NAME.extensions) {
           val s = if (helper.isAppropriateScriptFile(file)) helper.customizeClassName(typeDefinition) else null
           if (s != null) {
@@ -405,12 +377,12 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
         }
       }
 
-      val qname = typeDefinition.getQualifiedName()
-      return if (qname == null) null else qname + suffix
+      val qname = typeDefinition.qualifiedName
+      return qname?.plus(suffix)
     }
 
     private fun getScriptQualifiedName(position: SourcePosition): String? {
-      val file = position.getFile()
+      val file = position.file
       if (file is GroovyFile) {
         return getScriptFQName(file)
       }
@@ -437,8 +409,8 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
     private fun addModuleContent(scope: GlobalSearchScope): GlobalSearchScope {
       if (scope is ModuleWithDependenciesScope) {
         val module = scope.module
-        if (!module.isDisposed()) {
-          return scope.uniteWith(module.getModuleContentWithDependenciesScope())
+        if (!module.isDisposed) {
+          return scope.uniteWith(module.moduleContentWithDependenciesScope)
         }
       }
       return scope
@@ -456,13 +428,13 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
     }
 
     private fun getScriptFQName(groovyFile: GroovyFile): String {
-      val packageName = groovyFile.getPackageName()
-      val fileName: String = getRuntimeScriptName(groovyFile)
+      val packageName = groovyFile.packageName
+      val fileName = getRuntimeScriptName(groovyFile)
       return StringUtil.getQualifiedName(packageName, fileName)
     }
 
     private fun getRuntimeScriptName(groovyFile: GroovyFile): String {
-      if (groovyFile.isScript()) {
+      if (groovyFile.isScript) {
         for (helper in ScriptPositionManagerHelper.EP_NAME.extensions) {
           if (helper.isAppropriateScriptFile(groovyFile)) {
             val runtimeScriptName = helper.getRuntimeScriptName(groovyFile)
@@ -470,7 +442,7 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
           }
         }
       }
-      val vFile = checkNotNull(groovyFile.getVirtualFile())
+      val vFile = checkNotNull(groovyFile.virtualFile)
       return vFile.nameWithoutExtension
     }
   }
