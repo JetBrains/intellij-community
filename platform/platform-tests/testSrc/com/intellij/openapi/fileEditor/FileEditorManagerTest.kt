@@ -463,10 +463,22 @@ class FileEditorManagerTest {
     val file = LightVirtualFile("published.txt", PlainTextFileType.INSTANCE, "text")
     val progress = captureFilePreparation(file)
     val targetFile = file
+    val nextEdtEvent = CompletableDeferred<Unit>()
+    val openedAfterNextEdtEvent = CompletableDeferred<Boolean>()
     project.messageBus.connect(disposable).subscribe(FileOpenedSyncListener.TOPIC, object : FileOpenedSyncListener {
       override fun fileOpenedSync(source: FileEditorManager, file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>) {
         // The editors are published here, and the opening is not finished yet
-        if (file == targetFile) progress.started.getCompleted().cancel()
+        if (file == targetFile) {
+          ApplicationManager.getApplication().invokeLater { nextEdtEvent.complete(Unit) }
+          progress.started.getCompleted().cancel()
+        }
+      }
+    })
+    project.messageBus.connect(disposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+        if (file == targetFile) {
+          openedAfterNextEdtEvent.complete(nextEdtEvent.isCompleted)
+        }
       }
     })
     val scope = childScope("Published model flow")
@@ -488,6 +500,7 @@ class FileEditorManagerTest {
     try {
       composite.shownDeferred.await()
       progress.started.await().join()
+      assertThat(openedAfterNextEdtEvent.await()).isTrue()
       // A cancellation of the preparation would also stop the model collection
       assertThat(collectionFinished.isCompleted).isFalse()
       assertThat(composite.isAvailable()).isTrue()

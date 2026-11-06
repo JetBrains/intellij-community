@@ -420,7 +420,7 @@ open class EditorComposite internal constructor(
 
       beforeFileOpen(this, model)
       // cannot be before use as fileOpenedSync by contract should be called in the same EDT event
-      val (goodPublisher, deprecatedPublisher) = deferredPublishers.await()
+      val [goodPublisher, immediateSyncPublisher] = deferredPublishers.await()
       span("file opening in EDT and repaint", Dispatchers.EDT) {
         span("beforeFileOpened event executing") {
           computeOrLogException(
@@ -443,7 +443,7 @@ open class EditorComposite internal constructor(
 
         goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
         @Suppress("DEPRECATION")
-        deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+        immediateSyncPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
 
         triggerStatOpen(
           project = project,
@@ -452,10 +452,10 @@ open class EditorComposite internal constructor(
           composite = this@EditorComposite,
           coroutineScope = coroutineScope,
         )
+      }
 
-        span("fileOpened event executing", Dispatchers.EDT) {
-          deprecatedPublisher.fileOpened(fileEditorManager, file)
-        }
+      span("fileOpened event executing", Dispatchers.EDT) {
+        immediateSyncPublisher.fileOpened(fileEditorManager, file)
       }
     }
   }
