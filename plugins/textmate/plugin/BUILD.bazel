@@ -1,5 +1,6 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.textmate.plugin` start
 dev_dist_plugin(
@@ -17,13 +18,15 @@ dev_dist_plugin(
 ### auto-generated section `dev intellij.textmate.plugin` end
 
 ### auto-generated section `build intellij.textmate.plugin` start
-jvm_library(
+ij_plugin_module(
     name = "plugin",
     srcs = glob(
         [],
         allow_empty = True,
     ),
     module_name = "intellij.textmate.plugin",
+    # manually written attribute
+    non_classpath_data = ["//plugins/textmate:bundles_resources"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -31,6 +34,28 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.textmate.plugin` end
+
+### auto-generated section `plugin intellij.textmate.plugin` start
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin_plugin_module",
+    content_modules = [
+        # do not sort,
+        "//plugins/textmate",
+        "//plugins/textmate/common",
+        "//plugins/textmate/core",
+        "//plugins/textmate/joni",
+        "//plugins/textmate/backend",
+        "//libraries/joni:joni_plugin_module",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            "@@//remote-dev/cwm-guest/plugins/textmate.split.frontend:textmate-frontend-split",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.textmate.plugin` end
 
 ### auto-generated section `iml intellij.textmate.plugin` start
 exports_files(

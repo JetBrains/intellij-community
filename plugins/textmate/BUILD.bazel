@@ -1,10 +1,19 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 filegroup(
     name = "textmate_bundle_files",
     srcs = glob(["lib/bundles/**"]),
     visibility = ["//visibility:public"],
+)
+
+# used from org.jetbrains.plugins.textmate.TextMateServiceImpl class
+pkg_files(
+    name = "bundles_resources",
+    srcs = glob(["lib/bundles/**"]),
+    strip_prefix = strip_prefix.from_pkg(),
+    visibility = ["//plugins/textmate/plugin:__pkg__"],
 )
 
 ### auto-generated section `dev intellij.textmate` start
