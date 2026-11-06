@@ -8,7 +8,6 @@ import com.intellij.platform.searchEverywhere.frontend.SeEmptyResultInfoProvider
 import com.intellij.platform.searchEverywhere.frontend.SeFilterEditor
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate
 import com.intellij.platform.searchEverywhere.frontend.tabs.SeDefaultTabBase
-import com.intellij.platform.searchEverywhere.frontend.tabs.target.SeTargetsFilterEditor
 import com.intellij.platform.searchEverywhere.utils.SuspendLazyProperty
 import com.intellij.platform.searchEverywhere.utils.initAsync
 import org.jetbrains.annotations.ApiStatus
@@ -21,12 +20,7 @@ class SeClassesTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val priority: Int get() = PRIORITY
 
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
-    SeTargetsFilterEditor(delegate.project,
-                          tabId = id,
-                          delegate.getSearchScopesInfos().firstOrNull(),
-                          delegate.getTypeVisibilityStates(),
-                          hasPreviewAction = true,
-                          persistScopeIfAvailable = true)
+    delegate.createTargetsFilterEditor(tabId = id)
   }
 
   override suspend fun getFilterEditor(): SeFilterEditor = filterEditor.getValue()

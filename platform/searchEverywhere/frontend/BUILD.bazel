@@ -119,6 +119,7 @@ jvm_library(
         "//platform/ide-core",
         "//platform/credential-store",
         "//libraries/snakeyaml",
+        "//platform/scopes",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend.tests` end

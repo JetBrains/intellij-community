@@ -9,7 +9,7 @@ interface SeTypeVisibilityStateProvider {
   suspend fun getTypeVisibilityStates(key: String = SeTypeFilterKeys.DEFAULT): List<SeTypeVisibilityStatePresentation>
 }
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 object SeTypeFilterKeys {
   /** The only type filter of a provider that shows one. Every default in this area uses it. */
   const val DEFAULT: String = "default"

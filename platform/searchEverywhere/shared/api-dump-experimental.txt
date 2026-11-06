@@ -200,6 +200,9 @@
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeSession$Companion
 *f:com.intellij.platform.searchEverywhere.SeSession$Companion
 - f:serializer():kotlinx.serialization.KSerializer
+*f:com.intellij.platform.searchEverywhere.SeTypeFilterKeys
+- sf:DEFAULT:java.lang.String
+- sf:INSTANCE:com.intellij.platform.searchEverywhere.SeTypeFilterKeys
 *:com.intellij.platform.searchEverywhere.SeUiInspectorInfo
 - *sf:Companion:com.intellij.platform.searchEverywhere.SeUiInspectorInfo$Companion
 - a:getProperties():java.util.List
@@ -336,6 +339,8 @@
 - a:findProjectScope(com.intellij.openapi.project.Project,java.util.List,com.intellij.ide.util.scopeChooser.ScopeDescriptor):com.intellij.ide.util.scopeChooser.ScopeDescriptor
 *f:com.intellij.platform.searchEverywhere.providers.target.SeTargetScopesProvider$Companion
 - f:getDEFAULT():com.intellij.platform.searchEverywhere.providers.target.SeTargetScopesProvider
+*:com.intellij.platform.searchEverywhere.providers.target.SeTargetsFilterProvider
+- a:getTargetItemsProvider():com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider
 *:com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider
 - *sf:Companion:com.intellij.platform.searchEverywhere.providers.target.presentation.SeTargetPresentationProvider$Companion
 - a:appliesTo(java.lang.Object):Z
