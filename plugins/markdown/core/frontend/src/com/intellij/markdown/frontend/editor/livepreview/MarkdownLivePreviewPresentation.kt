@@ -104,6 +104,7 @@ internal interface MarkdownLivePreviewMountedDecoration : Disposable {
 /** Adapts backend elements to editor presentations and owns resources that survive source reveal. */
 internal class MarkdownLivePreviewPresentationFactory(project: Project, editor: EditorEx) : Disposable {
   private val elementRenderers: Map<Class<out MarkdownLivePreviewSpec>, MarkdownLivePreviewElementRenderer> = mapOf(
+    MarkdownLivePreviewSpec.CodeFont::class.java to MarkdownLivePreviewCodeFontRenderer(editor),
     MarkdownLivePreviewSpec.Conceal::class.java to MarkdownLivePreviewConcealRenderer(editor),
     MarkdownLivePreviewSpec.Bullet::class.java to MarkdownLivePreviewBulletRenderer(),
     MarkdownLivePreviewSpec.ListIndent::class.java to MarkdownLivePreviewListIndentRenderer(editor),
@@ -128,11 +129,11 @@ internal class MarkdownLivePreviewPresentationFactory(project: Project, editor: 
   }
 
   fun documentChanged() {
-    elementRenderers.forEach { (_, renderer) -> renderer.documentChanged() }
+    elementRenderers.forEach { [_, renderer] -> renderer.documentChanged() }
   }
 
   fun reconcile(presentation: MarkdownLivePreviewPresentation?) {
-    elementRenderers.forEach { (_, renderer) -> renderer.reconcile(presentation) }
+    elementRenderers.forEach { [_, renderer] -> renderer.reconcile(presentation) }
   }
 
   override fun dispose() = Unit

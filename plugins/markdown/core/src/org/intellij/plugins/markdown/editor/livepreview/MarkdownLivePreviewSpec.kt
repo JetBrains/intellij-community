@@ -181,6 +181,13 @@ sealed interface MarkdownLivePreviewSpec {
     val source: String,
   ) : MarkdownLivePreviewSpec
 
+  /** Shows [codeRanges] in the code font. The ranges leave out the line prefixes of a list or a blockquote. */
+  @Serializable
+  data class CodeFont(
+    override val range: MarkdownLivePreviewRange,
+    val codeRanges: List<MarkdownLivePreviewRange>,
+  ) : MarkdownLivePreviewSpec
+
   /** Replaces a list marker with a depth-aware bullet placeholder until a caret touches the marker. */
   @Serializable
   data class Bullet(

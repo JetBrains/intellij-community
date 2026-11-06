@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.editor.livepreview
 
 import com.intellij.ide.trustedProjects.TrustedProjects
+import com.intellij.lang.ASTNode
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
@@ -10,21 +11,25 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.tree.IElementType
+import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.fence.collectCodeSpanBackground
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlertTitle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver
+import org.intellij.plugins.markdown.util.isFootnoteContinuationBlock
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -55,12 +60,21 @@ private val LeafAutolinkTypes: Set<IElementType> = setOf(
   MarkdownTokenTypes.GFM_AUTOLINK,
 )
 
+private val CodeFontTokenTypes: TokenSet = TokenSet.create(
+  MarkdownTokenTypes.CODE_FENCE_START,
+  MarkdownTokenTypes.FENCE_LANG,
+  MarkdownTokenTypes.CODE_FENCE_CONTENT,
+  MarkdownTokenTypes.CODE_FENCE_END,
+  MarkdownTokenTypes.CODE_LINE,
+)
+
 private const val BULLET_PLACEHOLDERS = "•◦▪"
 
 /**
  * The live-preview spec set for [file] in [editor], sorted by element start offset.
  *
- * Collects the markup to hide and the lines of nested list items, skipping the subtrees named in [NoDescendTypes].
+ * Collects the markup to hide, the lines of nested list items and the code for the code font.
+ * Skips the subtrees named in [NoDescendTypes].
  */
 @ApiStatus.Internal
 fun computeLivePreviewSpecs(file: PsiFile, editor: Editor): MarkdownLivePreviewSpecSet {
@@ -73,6 +87,8 @@ fun computeLivePreviewSpecs(file: PsiFile, editor: Editor): MarkdownLivePreviewS
         MarkdownElementTypes.BLOCK_QUOTE -> lines.blockQuoteSpecs(it.textRange)
         MarkdownElementTypes.ALERT -> lines.blockQuoteSpecs(it.textRange, it.alertType())
         MarkdownElementTypes.LIST_ITEM -> lines.listIndentSpecs(it)
+        MarkdownElementTypes.CODE_SPAN, MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.CODE_BLOCK ->
+          listOfNotNull(it.toDecorationSpecs(editor), it.toCodeFontSpec())
         else -> listOfNotNull(it.toDecorationSpecs(editor))
       }
     }
@@ -291,6 +307,23 @@ private fun MarkdownCodeFence.toCodeFenceSpec(): MarkdownLivePreviewSpec.CodeFen
   if (node.findChildByType(MarkdownTokenTypes.CODE_FENCE_END) == null) return null
   val source = MarkdownCodeFence.obtainFenceContent(this, withWhitespaces = false)?.joinToString("") { it.text } ?: return null
   return MarkdownLivePreviewSpec.CodeFence(textRange.toMarkdownLivePreviewRange(), language, source)
+}
+
+private fun PsiElement.toCodeFontSpec(): MarkdownLivePreviewSpec.CodeFont? {
+  val codeRanges = when {
+    this is MarkdownCodeSpan -> listOfNotNull(collectCodeSpanBackground(this))
+    PsiUtilCore.getElementType(this) == MarkdownElementTypes.CODE_BLOCK && isFootnoteContinuationBlock(this) -> emptyList()
+    else -> node.getChildren(CodeFontTokenTypes).map { codeFontRange(it) }
+  }
+  if (codeRanges.isEmpty()) return null
+  return MarkdownLivePreviewSpec.CodeFont(textRange.toMarkdownLivePreviewRange(), codeRanges.map { it.toMarkdownLivePreviewRange() })
+}
+
+private fun codeFontRange(token: ASTNode): TextRange {
+  if (token.elementType != MarkdownTokenTypes.CODE_FENCE_END) return token.textRange
+  val markerStart = token.text.indexOfFirst { it == '`' || it == '~' }
+  if (markerStart <= 0) return token.textRange
+  return TextRange(token.startOffset + markerStart, token.textRange.endOffset)
 }
 
 /** Paints the `===` or `---` line under a Setext heading as a horizontal rule. */

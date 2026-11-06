@@ -59,11 +59,11 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
   fun testStandaloneLocalImageConcealsItsCompleteLine() {
     val content = "  ![alt text](images/img.png)  "
-    val image = elements(content).single() as MarkdownLivePreviewSpec.Image
+    (val range, val destination, val placeholderText) = elements(content).single() as MarkdownLivePreviewSpec.Image
 
-    assertEquals(content, content.substring(image.range.startOffset, image.range.endOffset))
-    assertEquals("images/img.png", image.destination)
-    assertEquals("alt text", image.placeholderText)
+    assertEquals(content, content.substring(range.startOffset, range.endOffset))
+    assertEquals("images/img.png", destination)
+    assertEquals("alt text", placeholderText)
   }
 
   fun testImagePlaceholderIsTheAltTextOnOneLine() {
@@ -83,12 +83,12 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     val content = "Some `mermaid` code\n\n```\nval a = 1\n```\n\n$fence\n\n```mermaid\nopen\n"
     myFixture.configureByText("test.md", content)
 
-    val spec = computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements
+    (val range, val source) = computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements
       .filterIsInstance<MarkdownLivePreviewSpec.CodeFence>()
       .single()
 
-    assertEquals(fence, content.substring(spec.range.startOffset, spec.range.endOffset))
-    assertEquals("graph LR\n  A --> B", spec.source)
+    assertEquals(fence, content.substring(range.startOffset, range.endOffset))
+    assertEquals("graph LR\n  A --> B", source)
   }
 
   fun testImagesBetweenHeadersAreBothSpecs() {
@@ -158,10 +158,10 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
   }
 
   fun testFileUriIsALocalImageDestination() {
-    val image = images("![alt](file:///project/image.png)").single()
+    (val destination, val isBrowserOwned) = images("![alt](file:///project/image.png)").single()
 
-    assertEquals("file:///project/image.png", image.destination)
-    assertFalse(image.isBrowserOwned)
+    assertEquals("file:///project/image.png", destination)
+    assertFalse(isBrowserOwned)
   }
 
   fun testReferenceLinksAreConcealed() {
@@ -256,7 +256,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
     assertEmpty(body.select("kbd"))
     val tag = body.select("span[md-src-pos]").first { it.wholeText() == "<kbd>" }
-    val (start, end) = tag.attr("md-src-pos").split("..").map(String::toInt)
+    val [start, end] = tag.attr("md-src-pos").split("..").map(String::toInt)
     assertEquals("<kbd>", content.substring(start, end))
     assertTrue(body.text(), body.text().startsWith("Use <kbd>Ctrl</kbd> if "))
     assertTrue(body.text(), body.text().contains("a<b"))
@@ -278,7 +278,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
 
     assertEquals("Hello big (world): yes & *no*", spans.joinToString("") { it.wholeText() })
     for (span in spans.filter { it.wholeText().none { char -> char == '&' || char == '*' } }) {
-      val (start, end) = span.attr("md-src-pos").split("..").map(String::toInt)
+      val [start, end] = span.attr("md-src-pos").split("..").map(String::toInt)
       assertEquals(span.toString(), span.wholeText(), line.substring(start, end))
     }
   }
@@ -313,7 +313,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals("  Hello **big** (world)", lines)
     assertEquals("Hello big (world)", spans.joinToString("") { it.wholeText() }.trim())
     for (span in spans) {
-      val (start, end) = span.attr("md-src-pos").split("..").map(String::toInt)
+      val [start, end] = span.attr("md-src-pos").split("..").map(String::toInt)
       assertEquals(span.toString(), span.wholeText(), lines.substring(start, end))
     }
   }
@@ -337,10 +337,10 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
       |
       |# top-level heading
     """.trimMargin()
-    val heading = headings(content).single()
+    (val range, val level) = headings(content).single()
 
-    assertEquals(1, heading.level)
-    assertEquals("# top-level heading", content.substring(heading.range.startOffset, heading.range.endOffset))
+    assertEquals(1, level)
+    assertEquals("# top-level heading", content.substring(range.startOffset, range.endOffset))
   }
 
   fun testQuotedAndAlertHeadingsCoverTheirLines() {
@@ -616,6 +616,69 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     )
   }
 
+  fun testCodeFontCoversCodeButNotItsMarkupOrFootnoteContinuations() {
+    val content = """
+      |Call `foo()` here
+      |
+      |    indented
+      |
+      |```kotlin
+      |val a = 1
+      |```
+      |
+      |~~~python
+      |print(1)
+      |~~~
+      |
+      |```
+      |plain
+      |```
+      |
+      |~~~
+      |plain tilde
+      |~~~
+      |
+      |> ```java
+      |> quoted
+      |> ```
+      |
+      |> ~~~yaml
+      |> quoted: tilde
+      |> ~~~
+      |
+      |- item
+      |  ```sh
+      |  listed
+      |  ```
+      |
+      |- item
+      |  ~~~ruby
+      |  listed tilde
+      |  ~~~
+      |
+      |[^note]: First paragraph.
+      |
+      |    continuation
+    """.trimMargin()
+    val codeRanges = elements(content).filterIsInstance<MarkdownLivePreviewSpec.CodeFont>().flatMap { it.codeRanges }
+
+    assertEquals(
+      listOf(
+        "foo()",
+        "    indented",
+        "```", "kotlin", "val a = 1", "```",
+        "~~~", "python", "print(1)", "~~~",
+        "```", "plain", "```",
+        "~~~", "plain tilde", "~~~",
+        "```", "java", "quoted", "```",
+        "~~~", "yaml", "quoted: tilde", "~~~",
+        "```", "sh", "listed", "```",
+        "~~~", "ruby", "listed tilde", "~~~",
+      ),
+      codeRanges.map { [start, end] -> content.substring(start, end) },
+    )
+  }
+
   fun testDocumentVersionUsesLocalStampWithoutPatchVersion() {
     myFixture.configureByText("test.md", "text")
     val document = myFixture.editor.document as DocumentEx
@@ -645,6 +708,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     is MarkdownLivePreviewSpec.Heading -> listOf(range)
     is MarkdownLivePreviewSpec.Image -> listOf(range)
     is MarkdownLivePreviewSpec.CodeFence -> emptyList()
+    is MarkdownLivePreviewSpec.CodeFont -> emptyList()
     is MarkdownLivePreviewSpec.Bullet -> listOf(range)
     is MarkdownLivePreviewSpec.TaskCheckbox -> listOf(range)
     is MarkdownLivePreviewSpec.ListIndent -> emptyList()
@@ -659,7 +723,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
         val offset = element.range.startOffset
         assertTrue("An indent must be empty and sit at a line start: $element", element.range.isEmpty && (offset == 0 || content[offset - 1] == '\n'))
       }
-      else if (element !is MarkdownLivePreviewSpec.CodeFence) {
+      else if (element !is MarkdownLivePreviewSpec.CodeFence && element !is MarkdownLivePreviewSpec.CodeFont) {
         assertFalse("An element with nothing to conceal must not be reported: $element", conceals.isEmpty())
       }
       assertTrue("An element must contain the markup it conceals: $element", conceals.all { element.range.contains(it) })
@@ -673,15 +737,17 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
   }
 
   private fun concealed(content: String): List<String> =
-    elements(content).flatMap { it.concealedRanges() }.map { content.substring(it.startOffset, it.endOffset) }
+    elements(content).flatMap { it.concealedRanges() }.map { (val startOffset, val endOffset) -> content.substring(startOffset, endOffset) }
 
   private fun revealRanges(content: String): List<String> =
-    elements(content).filterNot { it is MarkdownLivePreviewSpec.ListIndent }.map { content.substring(it.range.startOffset, it.range.endOffset) }
+    elements(content)
+      .filterNot { it is MarkdownLivePreviewSpec.ListIndent || it is MarkdownLivePreviewSpec.CodeFont }
+      .map { content.substring(it.range.startOffset, it.range.endOffset) }
 
   /** The line number and the depth of each list indent, in document order. */
   private fun listIndents(content: String): List<Pair<Int, Int>> =
-    elements(content).filterIsInstance<MarkdownLivePreviewSpec.ListIndent>().map {
-      myFixture.editor.document.getLineNumber(it.range.startOffset) to it.depth
+    elements(content).filterIsInstance<MarkdownLivePreviewSpec.ListIndent>().map { (val range, val depth) ->
+      myFixture.editor.document.getLineNumber(range.startOffset) to depth
     }
 
   private fun ruleSegments(content: String): List<String> =

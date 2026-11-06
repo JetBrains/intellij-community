@@ -16,7 +16,6 @@ import com.intellij.psi.tree.OuterLanguageElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.parents
-import com.intellij.psi.util.siblings
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.highlighting.MarkdownSyntaxHighlighter
@@ -27,6 +26,9 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.alertTitleColorKey
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.parentOfType
+import org.intellij.plugins.markdown.util.isFootnoteContinuationBlock
+import org.intellij.plugins.markdown.util.isFootnoteDefinitionLinkDef
+import org.intellij.plugins.markdown.util.isFootnoteDefinitionParagraph
 import org.intellij.plugins.markdown.util.isFootnoteLabelText
 
 @Suppress("RegExpRedundantEscape")
@@ -335,44 +337,14 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
     }
   }
 
-  private fun isFootnoteDefinitionParagraph(paragraph: PsiElement): Boolean {
-    val firstChild = paragraph.firstChild ?: return false
-    val linkLabel: PsiElement? = when (firstChild.elementType) {
-      MarkdownElementTypes.SHORT_REFERENCE_LINK -> firstChild.firstChild
-      MarkdownElementTypes.LINK_LABEL -> firstChild
-      else -> null
-    }
-    if (linkLabel == null || !linkLabel.hasType(MarkdownElementTypes.LINK_LABEL)) return false
-    return isFootnoteLabelText(linkLabel.text)
-  }
-
   private fun isConsecutiveFootnoteReferenceLink(fullReferenceLink: PsiElement): Boolean {
     val linkText = fullReferenceLink.children.firstOrNull { it.elementType == MarkdownElementTypes.LINK_TEXT }
     val linkLabel = fullReferenceLink.children.firstOrNull { it.elementType == MarkdownElementTypes.LINK_LABEL }
     return isFootnoteLabelText(linkText?.text.orEmpty()) && isFootnoteLabelText(linkLabel?.text.orEmpty())
   }
 
-  private fun isFootnoteContinuationBlock(codeBlock: PsiElement): Boolean {
-    for (sibling in codeBlock.siblings(forward = false, withSelf = false)) {
-      when {
-        sibling.hasType(MarkdownElementTypes.PARAGRAPH) -> return isFootnoteDefinitionParagraph(sibling)
-        sibling.hasType(MarkdownElementTypes.LINK_DEFINITION) -> return isFootnoteDefinitionLinkDef(sibling)
-        sibling.hasType(MarkdownElementTypes.CODE_BLOCK) -> continue
-        sibling.firstChild == null -> continue  // skip leaf tokens (EOL, whitespace)
-        else -> return false
-      }
-    }
-    return false
-  }
-
   private fun getAlertAttributeKey(element: MarkdownAlertTitle): TextAttributesKey? {
     return element.getType()?.let(::alertTitleColorKey)
-  }
-
-  private fun isFootnoteDefinitionLinkDef(linkDef: PsiElement): Boolean {
-    val linkLabel = linkDef.firstChild ?: return false
-    if (!linkLabel.hasType(MarkdownElementTypes.LINK_LABEL)) return false
-    return isFootnoteLabelText(linkLabel.text)
   }
 
   private fun PsiElement.isHtmlInCodeSpan(): Boolean =

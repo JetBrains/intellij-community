@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.impl.view.IterationState
+import com.intellij.openapi.editor.markup.FontFamilies
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -1148,12 +1149,34 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val content = "`---`\n---\ntail"
     configure("$content<caret>")
 
-    assertEquals(listOf("`---`", "`---`", "---"), computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements.map {
-      content.substring(it.range.startOffset, it.range.endOffset)
-    })
+    assertEquals(listOf("`---`", "`---`", "---"), computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements
+      .filterNot { it is MarkdownLivePreviewSpec.CodeFont }
+      .map { content.substring(it.range.startOffset, it.range.endOffset) })
     assertEquals(content.indexOf('\n'), headingFolds().single().endOffset)
     assertEquals(listOf(content.lastIndexOf("---")), thematicBreakHighlighters().map { it.startOffset })
     assertEquals("---", concealed().last())
+  }
+
+  fun testCodeFontHighlightersFollowLivePreview() {
+    val content = "Call `foo()` here\n\n```\nval a = 1\n```\n\ntail"
+    configure("$content<caret>")
+    assertEquals(listOf("foo()", "```", "val a = 1", "```"), codeFontTexts())
+    val highlighters = codeFontHighlighters()
+
+    moveCaretTo(content.indexOf("foo"))
+    assertEmpty(concealed())
+    assertEquals(highlighters, codeFontHighlighters())
+
+    moveCaretTo(content.indexOf("= 1") + 3)
+    myFixture.type("0")
+    assertEquals(listOf("foo()", "```", "val a = 10", "```"), codeFontTexts())
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    assertEquals(listOf("foo()", "```", "val a = 10", "```"), codeFontTexts())
+
+    myFixture.editor.setLivePreviewEnabledness(false)
+    MarkdownLivePreviewReconciler.getExisting(myFixture.editor)!!.reconcileNow()
+    assertEmpty(codeFontHighlighters())
   }
 
   fun testFrontMatterDelimitersAndThematicBreakUseRuleDecorations() {
@@ -2296,6 +2319,16 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     myFixture.editor.markupModel.allHighlighters
       .filter { it.isValid && it.customRenderer != null && it.textAttributesKey == MarkdownHighlighterColors.HRULE }
       .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
+
+  private fun codeFontHighlighters(): List<RangeHighlighter> =
+    myFixture.editor.markupModel.allHighlighters
+      .filter { it.isValid && it.getTextAttributes(null)?.fontFamilies == FontFamilies.of("JetBrains Mono") }
+      .sortedWith(compareBy({ it.startOffset }, { it.endOffset }))
+
+  private fun codeFontTexts(): List<String> {
+    val text = myFixture.editor.document.charsSequence
+    return codeFontHighlighters().map { text.subSequence(it.startOffset, it.endOffset).toString() }
+  }
 
   private fun imageInlays(): List<Inlay<out MarkdownLivePreviewImageInlayRenderer>> {
     val editor = myFixture.editor
