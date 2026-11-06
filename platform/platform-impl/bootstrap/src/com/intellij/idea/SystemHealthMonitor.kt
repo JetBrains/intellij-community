@@ -341,7 +341,10 @@ internal object SystemHealthMonitor {
 
     val wslgPageUrl = HelpManagerImpl.getHelpUrl("WSL")?.let { "$it#wslg" }
     val action = wslgPageUrl?.let { url ->
-      NotificationAction.createSimpleExpiring(IdeBundle.message("unsupported.wslg.read.more")) { BrowserUtil.browse(url) }
+      NotificationAction.create(IdeBundle.message("unsupported.wslg.read.more")) { _, notification ->
+        BrowserUtil.browse(url)
+        notification.hideBalloon()
+      }
     }
     showNotification("unsupported.wslg", suppressable = true, action)
   }
