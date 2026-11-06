@@ -206,6 +206,10 @@ internal fun signMacBinaries(
   }
 }
 
+/**
+ * Returns whether [path] is a Mach-O executable, dynamic library or bundle. Only these types carry a code signature, so a
+ * Mach-O object file (`MH_OBJECT`) is not a binary to sign.
+ */
 @org.jetbrains.annotations.ApiStatus.Internal
 fun isMacBinary(path: Path): Boolean = isMacBinary(Files.newByteChannel(path))
 
@@ -232,8 +236,13 @@ internal fun isSigned(path: Path): Boolean {
   }
 }
 
-private fun isMacBinary(byteChannel: SeekableByteChannel): Boolean =
-  detectFileType(byteChannel).first == FileType.MachO
+private fun isMacBinary(byteChannel: SeekableByteChannel): Boolean {
+  val (type, properties) = detectFileType(byteChannel)
+  return type == FileType.MachO && properties.any { it in SIGNED_MACH_O_TYPES }
+}
+
+private val SIGNED_MACH_O_TYPES: Set<FileProperties> =
+  EnumSet.of(FileProperties.ExecutableType, FileProperties.SharedLibraryType, FileProperties.BundleType)
 
 private fun detectFileType(byteChannel: SeekableByteChannel): Pair<FileType, EnumSet<FileProperties>> = byteChannel.use {
   it.DetectFileType()
