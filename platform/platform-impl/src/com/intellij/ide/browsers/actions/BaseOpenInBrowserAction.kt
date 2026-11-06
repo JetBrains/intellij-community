@@ -8,6 +8,7 @@ import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.browsers.OpenInBrowserRequest
 import com.intellij.ide.browsers.WebBrowser
 import com.intellij.ide.browsers.WebBrowserManager
+import com.intellij.ide.browsers.WebBrowserProvider
 import com.intellij.ide.browsers.WebBrowserService
 import com.intellij.ide.browsers.WebBrowserUrlProvider
 import com.intellij.ide.browsers.WebBrowserXmlService
@@ -74,8 +75,14 @@ class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction
     }
   }
 
-  private fun getBrowser(): WebBrowser? =
-    if (WebBrowserManager.getInstance().isActive(browser) && browser.path != null) browser else null
+  /**
+   * Returns [browser] while it can open a page.
+   * A browser of the list needs a path. A browser of a [WebBrowserProvider] has no path and must be available.
+   */
+  private fun getBrowser(): WebBrowser? {
+    val canOpen = browser.path != null || WebBrowserProvider.getAvailableBrowsers().contains(browser)
+    return if (canOpen && WebBrowserManager.getInstance().isActive(browser)) browser else null
+  }
 
   override fun update(e: AnActionEvent) {
     val browser = getBrowser()
