@@ -4,6 +4,7 @@ package com.intellij.ide.browsers.actions;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.browsers.SystemDefaultBrowser;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.ide.browsers.WebBrowserXmlService;
@@ -53,8 +54,8 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
 
   private static @NotNull AnAction createDefaultBrowserAction() {
     OpenFileInDefaultBrowserAction action = new OpenFileInDefaultBrowserAction();
-    action.getTemplatePresentation().setText(IdeBundle.messagePointer("default"));
-    action.getTemplatePresentation().setIconSupplier(() -> AllIcons.Nodes.PpWeb);
+    action.getTemplatePresentation().setText(() -> SystemDefaultBrowser.INSTANCE.getName());
+    action.getTemplatePresentation().setIconSupplier(() -> SystemDefaultBrowser.INSTANCE.getIcon());
     return action;
   }
 
@@ -72,7 +73,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     if (localBrowserAction != null) {
       actions.add(localBrowserAction);
     }
-    if (isPopup()) {
+    if (usesSystemDefaultBrowser()) {
       actions.add(myDefaultBrowserAction);
     }
     for (WebBrowser browser : browsers) {
@@ -88,6 +89,23 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
 
   public static boolean hasLocalBrowser() {
     return getLocalBrowserAction() != null;
+  }
+
+  /**
+   * Returns {@code true} when the group has an action to show.
+   * Such an action opens the local browser, the system default browser, or an active browser.
+   */
+  public static boolean hasBrowserActions() {
+    return hasLocalBrowser() || usesSystemDefaultBrowser() || !WebBrowserManager.getInstance().getActiveBrowsers().isEmpty();
+  }
+
+  /**
+   * Returns {@code true} when the default browser of the IDE is {@link SystemDefaultBrowser}.
+   * That browser is not in the browser list, so the group adds an action for it.
+   * For any other default browser, the group already has the action of that browser.
+   */
+  private static boolean usesSystemDefaultBrowser() {
+    return OpenFileInDefaultBrowserActionKt.findUsingBrowser() == null;
   }
 
   private static @Nullable AnAction getLocalBrowserAction() {
@@ -126,7 +144,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
               ? browserManager.isShowBrowserHoverXml()
               : browserManager.isShowBrowserHover();
       boolean enabled = needShowOnHover &&
-                        (!browserManager.getActiveBrowsers().isEmpty() || hasLocalBrowser())
+                        hasBrowserActions()
                         && editor != null && !DiffUtil.isDiffEditor(editor);
       e.getPresentation().setEnabledAndVisible(enabled);
     }
