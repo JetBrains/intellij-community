@@ -3930,14 +3930,9 @@ f:com.intellij.openapi.keymap.impl.ui.KeymapPanel
 - s:addKeyboardShortcut(java.lang.String,com.intellij.openapi.keymap.impl.ShortcutRestrictions,com.intellij.openapi.keymap.Keymap,java.awt.Component,com.intellij.openapi.actionSystem.KeyboardShortcut,com.intellij.openapi.keymap.impl.SystemShortcuts,com.intellij.openapi.actionSystem.ex.QuickList[]):V
 - s:addKeyboardShortcut(java.lang.String,com.intellij.openapi.keymap.impl.ShortcutRestrictions,com.intellij.openapi.keymap.Keymap,java.awt.Component,com.intellij.openapi.actionSystem.ex.QuickList[]):V
 - s:createTreeExpander(com.intellij.openapi.keymap.impl.ui.ActionsTree):com.intellij.ide.TreeExpander
-- dispose():V
 - getCurrentShortcuts(java.lang.String):com.intellij.openapi.actionSystem.Shortcut[]
 - getDisplayName():java.lang.String
 - getId():java.lang.String
-- processCurrentKeymapChanged():V
-- processCurrentKeymapChanged(com.intellij.openapi.actionSystem.ex.QuickList[]):V
-- quickListRenamed(com.intellij.openapi.actionSystem.ex.QuickList,com.intellij.openapi.actionSystem.ex.QuickList):V
-- updateUI():V
 c:com.intellij.openapi.module.GeneralModuleType
 - sf:INSTANCE:com.intellij.openapi.module.GeneralModuleType
 - sf:TYPE_ID:java.lang.String
