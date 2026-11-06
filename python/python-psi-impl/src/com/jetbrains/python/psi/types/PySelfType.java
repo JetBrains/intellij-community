@@ -182,6 +182,11 @@ public final class PySelfType implements PyTypeParameterType, PyClassType {
   }
 
   @Override
+  public @Nullable PyCallableParameterVariadicType getParametersType(@NotNull TypeEvalContext context) {
+    return myScopeClassType.getParametersType(context);
+  }
+
+  @Override
   public @Nullable PyCallable getCallable() {
     return myScopeClassType.getCallable();
   }

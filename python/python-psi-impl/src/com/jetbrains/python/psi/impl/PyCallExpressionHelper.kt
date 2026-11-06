@@ -221,7 +221,15 @@ object PyCallExpressionHelper {
       // Otherwise, we will delegate to __init__() of its scope class and return a concrete type class
       // as a call result, losing Self.
       // See e.g. PyTypeAliasAndFormsTest.SelfTypeCheckerInspections.`Self in class methods`
-      else if (type is PyClassType && type !is PySelfType) {
+      else if (type is PySelfType) {
+        if (type.isDefinition && constructsAnotherType(type.scopeClassType, resolveContext)) {
+          createCallableFromClass(type.scopeClassType, resolveContext)
+        }
+        else {
+          type
+        }
+      }
+      else if (type is PyClassType) {
         createCallableFromClass(type, resolveContext)
       }
       else {
@@ -417,8 +425,7 @@ object PyCallExpressionHelper {
           val argType = context.getType(arg)
           if (argType is PyClassType) {
             if (!argType.isDefinition()) {
-              val cls = argType.pyClass
-              return context.getType(cls)
+              return if (argType is PySelfType) argType.toClass() else context.getType(argType.pyClass)
             }
           }
           else {
@@ -1088,6 +1095,22 @@ object PyCallExpressionHelper {
     val context = resolveContext.typeEvalContext
     val memberType = PyTypeUtil.getTypeOfMember(resolveResults, context)
     return Ref.create(PyTypeUtil.specializeMemberType(type, type, memberType, context))
+  }
+
+  /**
+   * Returns true if a call of [classType] gives no instance of it,
+   * because a metaclass `__call__` or a `__new__` declares another return type.
+   */
+  private fun constructsAnotherType(classType: PyClassType, resolveContext: PyResolveContext): Boolean {
+    val context = resolveContext.typeEvalContext
+    val metaClassCall = resolveMetaClassCallMethod(classType, resolveContext)
+    if (metaClassCall != null && isMethodReturnTypeIncompatibleWithClass(classType, metaClassCall.get(), context)) {
+      return true
+    }
+    if (!classType.pyClass.isNewStyleClass(context)) return false
+    val objectType = PyBuiltinCache.getInstance(classType.pyClass).objectType
+    val new = resolveMemberSkippingClass(classType, PyNames.NEW, objectType, resolveContext) ?: return false
+    return isMethodReturnTypeIncompatibleWithClass(classType, new.get(), context)
   }
 
   private fun isMethodReturnTypeIncompatibleWithClass(
