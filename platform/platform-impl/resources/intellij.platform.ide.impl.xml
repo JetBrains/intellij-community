@@ -285,6 +285,10 @@
                     beanClass="com.intellij.ide.browsers.BuiltInServerConfigurableEP" dynamic="true">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.webBrowserSettingsSection"
+                    beanClass="com.intellij.ide.browsers.WebBrowserSettingsSectionEP" dynamic="true">
+      <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webBrowserProvider" interface="com.intellij.ide.browsers.WebBrowserProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.tipAndTrick" beanClass="com.intellij.ide.util.TipAndTrickBean" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.remote.customDataContextSerializer"
