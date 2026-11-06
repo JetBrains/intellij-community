@@ -46,6 +46,7 @@
         "-Dide.do.not.check.ls.on.startup=true",
         "-Dqodana.product.name=Qodana Community for JVM",
         "-Dqodana.build.number=QDJVMC-@@build_number@@",
+        "-Dqodana.build.date=@@build_date@@",
         "-Dqodana.eap=true"
       ]
     },

@@ -117,12 +117,14 @@ impl Fixture {
     ) -> anyhow::Result<LaunchFiles> {
         let application_info = self.read_application_info();
         let build_number = self.build_number();
+        let build_date = appinfo::format_build_date_time(PINNED_BUILD_DATE_SECONDS);
         // A classic-loader launch reads the core classpath, as the action passes it for such a model only.
         let core_class_path = test_core_class_path();
         let product = Product {
             model,
             application_info: &application_info,
             build_number: &build_number,
+            build_date: &build_date,
             core_class_path: model
                 .launch
                 .boot_class_path_jar_names
@@ -424,6 +426,7 @@ fn launch_boot_class_path_follows_the_production_order() {
             model,
             application_info,
             build_number: "263.SNAPSHOT",
+            build_date: "202601010000",
             core_class_path: core,
             dev_jvm_arguments: &[],
         }
@@ -529,6 +532,7 @@ fn dev_jvm_arguments_follow_each_list_of_its_own() {
             model: &model,
             application_info: &application_info,
             build_number: &build_number,
+            build_date: "202601010000",
             core_class_path: None,
             dev_jvm_arguments,
         };
@@ -611,6 +615,19 @@ fn custom_commands_resolve_the_jvm_arguments_block() {
     assert_eq!(
         error.to_string(),
         r#"the custom command ["qodana", "inspect"] names the frontend JVM arguments, but the model states no frontendJvmArguments"#
+    );
+}
+
+#[test]
+fn qodana_custom_command_renders_the_pinned_build_date() {
+    let mut model = test_model(SERVER.model);
+    model.custom_commands[0].extra_jvm_arguments = strings(&["-Dqodana.build.date=@@build_date@@"]);
+    let files = SERVER.render(&model, "linux_x64", "", "").unwrap();
+    let info: Value = serde_json::from_str(&files.product_info).unwrap();
+    let arguments = json_strings(&info, "/launch/0/customCommands/0/additionalJvmArguments");
+    assert!(
+        arguments.iter().any(|argument| argument == "-Dqodana.build.date=202601010000"),
+        "{arguments:?}"
     );
 }
 

@@ -4,7 +4,7 @@
 
 use std::path::Path;
 
-use crate::{ApplicationInfo, format_major_release_date, format_version, linux_frame_class, shorten_company_name};
+use crate::{ApplicationInfo, format_build_date_time, format_major_release_date, format_version, linux_frame_class, shorten_company_name};
 
 /// `DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS`: 2026-01-01T00:00:00Z.
 const PINNED: i64 = 1_767_225_600;
@@ -186,6 +186,18 @@ fn the_release_date_formats() {
             error.to_string(),
             format!("the major release date {raw:?} is neither yyyyMMdd nor yyyyMMddHHmm")
         );
+    }
+}
+
+#[test]
+fn the_build_date_time_formats_in_utc() {
+    for (seconds, expected) in [
+        (PINNED, "202601010000"),
+        (PINNED + 3_660, "202601010101"),
+        (PINNED - 60, "202512312359"),
+        (-60, "196912312359"),
+    ] {
+        assert_eq!(format_build_date_time(seconds), expected, "{seconds}");
     }
 }
 

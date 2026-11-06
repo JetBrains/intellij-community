@@ -11,4 +11,6 @@ mod document;
 mod facts;
 
 pub use document::{APPLICATION_INFO_NAMESPACE, ApplicationInfoElements, Replacement, merge_host_application_info, replace_markers};
-pub use facts::{ApplicationInfo, format_major_release_date, format_version, linux_frame_class, shorten_company_name};
+pub use facts::{
+    ApplicationInfo, format_build_date_time, format_major_release_date, format_version, linux_frame_class, shorten_company_name,
+};

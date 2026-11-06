@@ -171,6 +171,7 @@ fn render_to_files(options: &Options) -> anyhow::Result<()> {
         options.build_date_seconds,
     )?;
     let build_number = read_build_number(&options.build_number)?;
+    let build_date = appinfo::format_build_date_time(options.build_date_seconds);
     let opened_packages = read_text(&options.opened_packages)?;
     // The base file that the model names by `languageServerBase`. The caller passes it, so an action reads only its
     // own base file.
@@ -192,6 +193,7 @@ fn render_to_files(options: &Options) -> anyhow::Result<()> {
         model: &model,
         application_info: &application_info,
         build_number: &build_number,
+        build_date: &build_date,
         core_class_path: core_class_path.as_deref(),
         dev_jvm_arguments: &options.dev_jvm_arguments,
     };

@@ -131,8 +131,9 @@ data class ProductLaunchCommand(
  * One custom command of the launch, such as `thinClient`.
  *
  * Its JVM arguments are the block that [jvmArguments] names, rendered for the OS and architecture, then
- * [macJvmArguments] on macOS, then [extraJvmArguments]. The tool replaces [BUILD_NUMBER_TOKEN] in [extraJvmArguments]
- * with the build number. A command that states [envVarBaseName] also states the data directory name of the product.
+ * [macJvmArguments] on macOS, then [extraJvmArguments]. The tool replaces [BUILD_NUMBER_TOKEN] and [BUILD_DATE_TOKEN]
+ * in [extraJvmArguments] with the build number and the pinned build date. A command that states [envVarBaseName] also
+ * states the data directory name of the product.
  */
 @ApiStatus.Internal
 @Serializable
@@ -258,6 +259,9 @@ private const val FRONTEND_ENV_VAR_BASE_NAME = "JETBRAINS_CLIENT"
 /** The text in a custom command argument that the tool replaces with the build number of `build.txt`. */
 private const val BUILD_NUMBER_TOKEN = "@@build_number@@"
 
+/** The text in a custom command argument that the tool replaces with the pinned build date in UTC. */
+private const val BUILD_DATE_TOKEN = "@@build_date@@"
+
 private const val FRONTEND_MAC_ICON_JVM_ARGUMENT = $$"-Dapple.awt.application.icon=$APP_PACKAGE/Contents/Resources/frontend.icns"
 
 /**
@@ -338,7 +342,7 @@ fun computeProductLaunchModel(
         additionalBootClassPathJarNames = listOf(PLATFORM_CORE_NIO_FS),
         jvmArguments = JvmArgumentsRef.LAUNCH,
         qodana = true,
-        extraJvmArguments = qodana.getAdditionalVmOptions(BUILD_NUMBER_TOKEN, null),
+        extraJvmArguments = qodana.getAdditionalVmOptions(BUILD_NUMBER_TOKEN, BUILD_DATE_TOKEN),
       ))
     }
     add(ProductLaunchCustomCommand(

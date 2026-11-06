@@ -302,6 +302,15 @@ pub fn format_major_release_date(raw: Option<&str>, build_date_seconds: i64) -> 
     Ok(raw[..8].to_owned())
 }
 
+/// Formats the pinned build date and time in UTC as `yyyyMMddHHmm`.
+pub fn format_build_date_time(build_date_seconds: i64) -> String {
+    let (year, month, day) = civil_date(build_date_seconds.div_euclid(86_400));
+    let seconds_of_day = build_date_seconds.rem_euclid(86_400);
+    let hour = seconds_of_day / 3_600;
+    let minute = seconds_of_day % 3_600 / 60;
+    format!("{year:04}{month:02}{day:02}{hour:02}{minute:02}")
+}
+
 const fn days_in_month(year: u32, month: u32) -> u32 {
     match month {
         2 if year.is_multiple_of(4) && (!year.is_multiple_of(100) || year.is_multiple_of(400)) => 29,

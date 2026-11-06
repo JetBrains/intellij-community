@@ -55,6 +55,7 @@ impl ApplicationInfo {
 }
 pub fn format_version(pattern: &str, parts: [&str; 4]) -> anyhow::Result<String>;
 pub fn format_major_release_date(raw: Option<&str>, build_date_seconds: i64) -> anyhow::Result<String>;
+pub fn format_build_date_time(build_date_seconds: i64) -> String;
 pub fn linux_frame_class(product_name_with_edition: &str) -> String;
 pub fn shorten_company_name(name: &str) -> &str;
 ```
@@ -82,6 +83,7 @@ pub fn shorten_company_name(name: &str) -> &str;
   `{` or `}`.
 - `format_major_release_date` accepts `yyyyMMdd` and `yyyyMMddHHmm` of a valid date and time. No value or a `__`
   marker gives the build date in UTC.
+- `format_build_date_time` formats the pinned build date and time in UTC as `yyyyMMddHHmm`.
 
 ## Kotlin mapping
 

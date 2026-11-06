@@ -42,21 +42,24 @@ private const val IS_EAP = true
  * @property customVmOptions Distribution-specific vm options required for Qodana application.
  */
 class QodanaProductProperties(val productCode: String, val productName: String, private val customVmOptions: List<String> = emptyList()) {
-  fun getAdditionalVmOptions(buildNumber: String, buildDateInSeconds: Long?): List<String> {
+  fun getAdditionalVmOptions(buildNumber: String, buildDate: String?): List<String> {
     val appInfoOptions = buildList {
       add("-Dqodana.product.name=$productName")
       add("-Dqodana.build.number=$productCode-$buildNumber")
-      if (buildDateInSeconds != null) {
-        val buildDate = ZonedDateTime.ofInstant(
-          Instant.ofEpochSecond(buildDateInSeconds),
-          ZoneOffset.UTC
-        ).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
+      if (buildDate != null) {
         add("-Dqodana.build.date=$buildDate")
       }
       add("-Dqodana.eap=${isEap(productCode)}")
     }
     return COMMON_ADDITIONAL_VM_OPTIONS + customVmOptions + appInfoOptions
   }
+}
+
+internal fun formatQodanaBuildDate(buildDateInSeconds: Long): String {
+  return ZonedDateTime.ofInstant(
+    Instant.ofEpochSecond(buildDateInSeconds),
+    ZoneOffset.UTC
+  ).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
 }
 
 private fun isEap(productCode: String): Boolean = when (productCode) {

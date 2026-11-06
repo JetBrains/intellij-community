@@ -96,7 +96,7 @@ pub(crate) struct CustomCommand {
     pub qodana: bool,
     #[serde(default)]
     pub mac_jvm_arguments: Vec<String>,
-    /// The tool replaces [`BUILD_NUMBER_TOKEN`] in each argument with the build number.
+    /// The tool replaces [`BUILD_NUMBER_TOKEN`] and [`BUILD_DATE_TOKEN`] in each argument with the build number and the pinned build date.
     #[serde(default)]
     pub extra_jvm_arguments: Vec<String>,
     pub main_class: Option<String>,
@@ -106,6 +106,9 @@ pub(crate) struct CustomCommand {
 
 /// The text in an extra JVM argument of a custom command that the tool replaces with the build number.
 pub(crate) const BUILD_NUMBER_TOKEN: &str = "@@build_number@@";
+
+/// The text in an extra JVM argument of a custom command that the tool replaces with the pinned build date in UTC.
+pub(crate) const BUILD_DATE_TOKEN: &str = "@@build_date@@";
 
 /// The block of JVM arguments that a custom command renders.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Deserialize)]

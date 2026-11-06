@@ -5,7 +5,8 @@ use appinfo::{ApplicationInfo, linux_frame_class};
 use serde::Serialize;
 
 use crate::model::{
-    BUILD_NUMBER_TOKEN, CustomCommand, IdeaProperties, JvmArguments, JvmArgumentsRef, LaunchModel, LaunchProperty, VmOptions,
+    BUILD_DATE_TOKEN, BUILD_NUMBER_TOKEN, CustomCommand, IdeaProperties, JvmArguments, JvmArgumentsRef, LaunchModel, LaunchProperty,
+    VmOptions,
 };
 
 // OS names are `OsFamily.osName`, and architecture names are `JvmArchitecture.dirName`.
@@ -57,6 +58,7 @@ pub(crate) struct Product<'a> {
     pub model: &'a LaunchModel,
     pub application_info: &'a ApplicationInfo,
     pub build_number: &'a str,
+    pub build_date: &'a str,
     /// The `lib/` jars of the core classpath. A classic-loader launch needs them, and a modular-loader launch reads none.
     pub core_class_path: Option<&'a [String]>,
     /// The JVM arguments that mark a dev distribution, such as `-Didea.use.dev.build.server=true`. Production states
@@ -524,12 +526,11 @@ fn render_custom_command<'a>(
     if target.os == OS_MAC {
         arguments.extend(command.mac_jvm_arguments.iter().cloned());
     }
-    arguments.extend(
-        command
-            .extra_jvm_arguments
-            .iter()
-            .map(|argument| argument.replace(BUILD_NUMBER_TOKEN, product.build_number)),
-    );
+    arguments.extend(command.extra_jvm_arguments.iter().map(|argument| {
+        argument
+            .replace(BUILD_NUMBER_TOKEN, product.build_number)
+            .replace(BUILD_DATE_TOKEN, product.build_date)
+    }));
     if !arguments.is_empty() {
         arguments.extend(product.dev_jvm_arguments.iter().cloned());
     }
