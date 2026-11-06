@@ -71,7 +71,7 @@ public class CoreJavaPsiImplementationHelper extends JavaPsiImplementationHelper
     return PsiUtil.getLanguageLevel(myProject);
   }
 
-  public boolean setEffectiveLanguageLevel(@NotNull VirtualFile file, @Nullable LanguageLevel level) {
+  public static boolean setEffectiveLanguageLevel(@NotNull VirtualFile file, @Nullable LanguageLevel level) {
     synchronized (file) {
       LanguageLevel previousHolder = file.getUserData(FORCED_LANGUAGE_LEVEL_KEY);
       if (Objects.equals(previousHolder, level)) return false;
