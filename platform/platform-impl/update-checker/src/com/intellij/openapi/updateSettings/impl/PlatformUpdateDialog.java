@@ -324,7 +324,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
         }
 
         if (ApplicationManager.getApplication().isRestartCapable()) {
-          IdeUpdateWidgetState.getInstance().onRestartReady(command);
+          IdeUpdateWidgetState.getInstance().onRestartReady(() -> restartLaterAndRunCommand(command));
 
           if (!IdeUpdateWidgetState.isWidgetShown()) {
             if (indicator.isShowing()) {

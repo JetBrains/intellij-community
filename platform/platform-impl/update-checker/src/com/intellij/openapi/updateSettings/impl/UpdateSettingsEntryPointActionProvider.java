@@ -61,6 +61,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   static final class LifecycleListener implements AppLifecycleListener {
     @Override
     public void appStarted() {
+      MigrationOfferKt.restoreMigrationRestartState();
       preparePrevPlatformUpdate();
       initPluginsListeners();
     }
@@ -298,7 +299,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         @Override
         protected @NotNull ReloadResult compute(@NotNull ProgressIndicator indicator) {
           PlatformUpdates platformUpdates = UpdateChecker.getPlatformUpdates(UpdateSettings.getInstance(), indicator);
-          PlatformUpdateDecision decision = MigrationOfferKt.decidePlatformUpdate(platformUpdates, true, false);
+          PlatformUpdateDecision decision = MigrationOfferKt.decidePlatformUpdate(platformUpdates, true, false, getMigrationStatus());
           PlatformUpdates.Loaded announced = decision.getAnnounced();
           PluginUpdatesModel pluginResults = announced != null ? getInternalPluginUpdates(announced, indicator) : null;
           return new ReloadResult(platformUpdates, decision, pluginResults);
@@ -347,6 +348,10 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   @Override
   public @NotNull Collection<UpdateAction> getUpdateActions(@NotNull DataContext context) {
     Collection<UpdateAction> actions = new ArrayList<>();
+
+    if (MigrationOfferKt.isMigrationRestartInMenu()) {
+      actions.add(new MigrationRestartAction());
+    }
 
     // when the update is announced by IdeUpdateToolbarWidget, only plugin updates are left for the Settings menu
     boolean ideUpdateInToolbar = IdeUpdateWidgetState.isUpdateAvailable();
@@ -413,6 +418,33 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     }
 
     return actions;
+  }
+
+  private static @Nullable MigrationStatus getMigrationStatus() {
+    MigrationState state = MigrationStateKt.migrationStateStore().get();
+    return state != null ? state.getStatus() : null;
+  }
+
+  /** "Restart to Update" for the installed migration distribution, while the widget is not shown. */
+  private static final class MigrationRestartAction extends UpdateAction {
+    private MigrationRestartAction() {
+      super(IdeBundle.message("update.toolbar.widget.restart.text"));
+    }
+
+    @Override
+    public boolean isIdeUpdate() {
+      return true;
+    }
+
+    @Override
+    public boolean isRestartRequired() {
+      return true;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      MigrationLaunchKt.restartToMigration();
+    }
   }
 
   private static class IdeUpdateAction extends UpdateAction {

@@ -85,7 +85,7 @@ class IdeUpdateWidgetState {
   val status: StateFlow<Status> = mutableStatus.asStateFlow()
 
   @Volatile
-  var restartCommand: Array<String>? = null
+  var restartAction: Runnable? = null
     private set
 
   fun onUpdateFound(found: Boolean) {
@@ -125,16 +125,16 @@ class IdeUpdateWidgetState {
   }
 
   /**
-   * The [command] is `null` when restart is not available
+   * The widget runs [action] on a click. The [action] is `null` when restart is not available
    */
-  fun onRestartReady(command: Array<String>?) {
+  fun onRestartReady(action: Runnable?) {
     if (!isUpdateAvailable()) {
       return
     }
 
-    LOG.info("onRestartReady, restart capable: ${command != null}")
+    LOG.info("onRestartReady, restart capable: ${action != null}")
 
-    restartCommand = command
+    restartAction = action
     updateStatus(Status.RESTART)
   }
 
@@ -150,7 +150,7 @@ class IdeUpdateWidgetState {
 
   fun isClickable(): Boolean = when (status.value) {
     Status.DOWNLOADING -> false
-    Status.RESTART -> restartCommand != null
+    Status.RESTART -> restartAction != null
     else -> true
   }
 

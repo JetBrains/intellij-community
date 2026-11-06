@@ -38,17 +38,25 @@ class MigrationOfferTexts(
   val secondaryButton: @NlsSafe String,
 )
 
+/**
+ * The texts of the notification after the install, in one locale. Each text is plain text, not HTML.
+ */
+@ApiStatus.Internal
+class MigrationReadyTexts(val title: @NlsSafe String, val action: @NlsSafe String)
+
 @ApiStatus.Internal
 sealed interface MigrationManifestParseResult {
-  class Valid(val offer: MigrationOfferTexts, val images: MigrationImages) : MigrationManifestParseResult
+  /** [ready] is `null` when no locale has a valid `ready` section. The client then uses its generic texts. */
+  class Valid(
+    val offer: MigrationOfferTexts,
+    val ready: MigrationReadyTexts?,
+    val images: MigrationImages,
+  ) : MigrationManifestParseResult
 
   class Invalid(val reason: String) : MigrationManifestParseResult
 }
 
-/**
- * Parses the content manifest of the migration and selects the offer texts for [locale].
- * The locale match tries the full tag, then the language, then `defaultLocale`.
- */
+/** Parses the content manifest of the migration and selects the offer and the ready texts for [locale]. */
 @ApiStatus.Internal
 fun parseMigrationManifest(
   text: String,
@@ -67,8 +75,11 @@ fun parseMigrationManifest(
     if (floor(schemaVersion).toInt() != SUPPORTED_SCHEMA_MAJOR) invalid("unsupported 'schemaVersion': ${schemaVersion}")
     val defaultLocale = manifest.defaultLocale?.takeIf { it.isNotBlank() } ?: invalid("no 'defaultLocale'")
     val images = manifest.images?.toModel(allowFileUrls) ?: invalid("no 'images'")
-    val offer = resolveOffer(manifest.locales, locale, defaultLocale, allowFileUrls) ?: invalid("no valid 'offer' for ${locale.toLanguageTag()}")
-    MigrationManifestParseResult.Valid(offer, images)
+    val candidates = localeCandidates(manifest.locales, locale, defaultLocale)
+    val offer = candidates.firstNotNullOfOrNull { it.offer?.toModel(allowFileUrls) }
+                ?: invalid("no valid 'offer' for ${locale.toLanguageTag()}")
+    val ready = candidates.firstNotNullOfOrNull { it.ready?.toModel() }
+    MigrationManifestParseResult.Valid(offer, ready, images)
   }
   catch (e: InvalidManifestException) {
     MigrationManifestParseResult.Invalid(e.message!!)
@@ -98,19 +109,12 @@ fun isAllowedContentUrl(url: String, allowFileUrls: Boolean = isFileContentUrlAl
 
 internal fun isFileContentUrlAllowed(): Boolean = System.getProperty(ALLOW_FILE_CONTENT_URLS_PROPERTY).toBoolean()
 
-private fun resolveOffer(
-  locales: Map<String, LocaleDto>,
-  locale: Locale,
-  defaultLocale: String,
-  allowFileUrls: Boolean,
-): MigrationOfferTexts? {
-  val candidates = listOf(locale.toLanguageTag(), locale.language, defaultLocale).filter { it.isNotBlank() }.distinct()
-  for (candidate in candidates) {
-    val entry = locales.entries.find { it.key.replace('_', '-').equals(candidate, ignoreCase = true) } ?: continue
-    val offer = entry.value.offer?.toModel(allowFileUrls)
-    if (offer != null) return offer
-  }
-  return null
+/** The locale sections in the match order: the full tag, then the language, then [defaultLocale]. */
+private fun localeCandidates(locales: Map<String, LocaleDto>, locale: Locale, defaultLocale: String): List<LocaleDto> {
+  return listOf(locale.toLanguageTag(), locale.language, defaultLocale)
+    .filter { it.isNotBlank() }
+    .distinct()
+    .mapNotNull { candidate -> locales.entries.find { it.key.replace('_', '-').equals(candidate, ignoreCase = true) }?.value }
 }
 
 private fun ImagesDto.toModel(allowFileUrls: Boolean): MigrationImages {
@@ -146,6 +150,14 @@ private fun OfferDto.toModel(allowFileUrls: Boolean): MigrationOfferTexts? {
   )
 }
 
+/** Returns `null` when a text is missing, so that the next locale applies. */
+private fun ReadyDto.toModel(): MigrationReadyTexts? {
+  return MigrationReadyTexts(
+    title = title?.takeIf { it.isNotBlank() } ?: return null,
+    action = action?.takeIf { it.isNotBlank() } ?: return null,
+  )
+}
+
 private fun checkedUrl(url: String, allowFileUrls: Boolean): String {
   if (!isAllowedContentUrl(url, allowFileUrls)) invalid("URL is not allowed: ${url}")
   return url
@@ -172,7 +184,7 @@ private class ImagesDto(val sourceLogo: ImageDto? = null, val targetLogo: ImageD
 private class ImageDto(val light: String? = null, val dark: String? = null)
 
 @Serializable
-private class LocaleDto(val offer: OfferDto? = null)
+private class LocaleDto(val offer: OfferDto? = null, val ready: ReadyDto? = null)
 
 @Serializable
 private class OfferDto(
@@ -183,6 +195,9 @@ private class OfferDto(
   val primaryButton: String? = null,
   val secondaryButton: String? = null,
 )
+
+@Serializable
+private class ReadyDto(val title: String? = null, val action: String? = null)
 
 @Serializable
 private class LinkDto(val text: String? = null, val url: String? = null)

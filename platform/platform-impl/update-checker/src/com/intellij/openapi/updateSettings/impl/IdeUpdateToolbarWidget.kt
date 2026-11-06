@@ -90,10 +90,12 @@ internal class IdeUpdateToolbarWidget :
     when (status) {
       IdeUpdateWidgetState.Status.AVAILABLE -> showUpdatePopup(e)
       IdeUpdateWidgetState.Status.RESTART -> {
-        // restartCommand is available only when ApplicationManager.getApplication().isRestartCapable()
-        IdeUpdateWidgetState.getInstance().restartCommand?.let { command ->
-          IdeUpdateUsageTriggerCollector.UPDATE_WIDGET_RESTART_CLICKED.log(e.project)
-          PlatformUpdateDialog.restartLaterAndRunCommand(command)
+        // a patch has restartAction only when ApplicationManager.getApplication().isRestartCapable()
+        IdeUpdateWidgetState.getInstance().restartAction?.let { action ->
+          if (action !== MIGRATION_RESTART_ACTION) {
+            IdeUpdateUsageTriggerCollector.UPDATE_WIDGET_RESTART_CLICKED.log(e.project)
+          }
+          action.run()
         }
       }
       else -> return

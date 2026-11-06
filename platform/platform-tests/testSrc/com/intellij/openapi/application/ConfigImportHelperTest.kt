@@ -207,6 +207,19 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     assertThat(newConfigDir.resolve(otherFile.fileName)).hasSameBinaryContentAs(otherFile)
   }
 
+  @Test fun `migration files are not imported`() {
+    val oldConfigDir = createConfigDir("2026.3")
+    val newConfigDir = createConfigDir("2027.1")
+
+    val stateFile = oldConfigDir.resolve("migration.json").apply { writeText("{}") }
+    val otherFile = oldConfigDir.resolve("other.xml").apply { writeText("...") }
+
+    doImport(oldConfigDir, newConfigDir, options)
+
+    assertThat(newConfigDir.resolve(stateFile.fileName)).doesNotExist()
+    assertThat(newConfigDir.resolve(otherFile.fileName)).hasSameBinaryContentAs(otherFile)
+  }
+
   @Test fun `nested files should be passed to the settings filter`() {
     val oldConfigDir = createConfigDir("2022.3")
     val newConfigDir = createConfigDir("2023.1")

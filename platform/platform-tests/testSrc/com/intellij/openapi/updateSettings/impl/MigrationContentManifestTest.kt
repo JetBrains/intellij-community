@@ -45,6 +45,31 @@ class MigrationContentManifestTest {
   }
 
   @Test
+  fun `ready fields are parsed`() {
+    val ready = valid(manifest(), Locale.ENGLISH).ready!!
+    assertEquals("Unified IDE is ready", ready.title)
+    assertEquals("Restart to Update", ready.action)
+  }
+
+  @Test
+  fun `manifest without a valid ready section is valid`() {
+    assertNull(valid(manifest(locales = mapOf("en" to offer("English", ready = null))), Locale.ENGLISH).ready)
+    val partial = offer("English", ready = """{ "title": "Unified IDE is ready", "action": " " }""")
+    assertNull(valid(manifest(locales = mapOf("en" to partial)), Locale.ENGLISH).ready)
+  }
+
+  @Test
+  fun `ready section follows the locale match`() {
+    val japanese = offer("Japanese", ready = """{ "title": "Japanese ready", "action": "Japanese action" }""")
+    val korean = offer("Korean", ready = """{ "title": "Korean ready" }""")
+    val manifest = manifest(locales = mapOf("en" to offer("English"), "ja" to japanese, "ko" to korean))
+    assertEquals("Japanese ready", valid(manifest, Locale.JAPANESE).ready!!.title)
+    val koreanResult = valid(manifest, Locale.KOREAN)
+    assertEquals("Korean", koreanResult.offer.title)
+    assertEquals("Unified IDE is ready", koreanResult.ready!!.title)
+  }
+
+  @Test
   fun `no offer in any locale is invalid`() {
     invalid(manifest(locales = mapOf("en" to """{ "ready": { "title": "x" } }""")), Locale.ENGLISH)
   }
@@ -142,7 +167,11 @@ class MigrationContentManifestTest {
   private fun image(name: String, base: String = "https://www.jetbrains.com"): String =
     """{ "light": "${base}/${name}.svg", "dark": "${base}/${name}_dark.svg" }"""
 
-  private fun offer(title: String, learnMoreUrl: String = "https://www.jetbrains.com/unified/"): String = """
+  private fun offer(
+    title: String,
+    learnMoreUrl: String = "https://www.jetbrains.com/unified/",
+    ready: String? = """{ "title": "Unified IDE is ready", "action": "Restart to Update" }""",
+  ): String = """
     {
       "offer": {
         "title": "${title}",
@@ -151,7 +180,6 @@ class MigrationContentManifestTest {
         "learnMore": { "text": "Learn more", "url": "${learnMoreUrl}" },
         "primaryButton": "Update to Unified IDE",
         "secondaryButton": "Remind Me Later"
-      },
-      "ready": { "title": "Unified IDE is ready", "action": "Restart to Update" }
+      }${ready?.let { """, "ready": ${it}""" } ?: ""}
     }"""
 }

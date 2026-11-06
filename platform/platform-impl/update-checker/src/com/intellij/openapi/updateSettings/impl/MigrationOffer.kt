@@ -7,18 +7,20 @@ import com.intellij.ide.IdeBundle
 import com.intellij.l10n.LocalizationUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.svg.getSvgDocumentSize
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.io.IOException
-import java.nio.file.Path
-import kotlin.io.path.isDirectory
+import javax.swing.plaf.basic.BasicHTML
 
 private val LOG = logger<MigrationOfferContent>()
 
@@ -26,7 +28,7 @@ private const val MAX_CONTENT_SIZE = 512 * 1024
 
 /**
  * The result of a platform update check, split by the UI that shows it.
- * At most one of the two values is not `null`.
+ * At most one of the two updates is not `null`.
  */
 @ApiStatus.Internal
 class PlatformUpdateDecision(
@@ -34,19 +36,31 @@ class PlatformUpdateDecision(
   val announced: PlatformUpdates.Loaded?,
   /** The migration to another product: only the migration dialog shows it. */
   val migration: PlatformUpdates.Loaded?,
+  /** A manual check shows "Restart to Update" for the installed migration distribution, and not "no updates". */
+  val migrationReady: Boolean,
 )
 
-/** A background check gives no update while "Remind Me Later" is active. */
+/**
+ * A background check gives no update while "Remind Me Later" is active.
+ * A migration build gives no offer when [migrationStatus] is not `null`, because the distribution is already installed.
+ */
 @ApiStatus.Internal
-fun decidePlatformUpdate(updates: PlatformUpdates, userInitiated: Boolean, remindLaterActive: Boolean): PlatformUpdateDecision {
+fun decidePlatformUpdate(
+  updates: PlatformUpdates,
+  userInitiated: Boolean,
+  remindLaterActive: Boolean,
+  migrationStatus: MigrationStatus?,
+): PlatformUpdateDecision {
   val loaded = when (updates) {
     is PlatformUpdates.Loaded -> updates
     PlatformUpdates.Empty, is PlatformUpdates.ConnectionError -> null
   }
   val isShown = userInitiated || !remindLaterActive
   val announced = loaded?.takeIf { isShown && it.newBuild.distribution == null }
-  val migration = loaded?.takeIf { isShown && it.newBuild.distribution != null }
-  return PlatformUpdateDecision(announced, migration)
+  val migration = loaded?.takeIf { isShown && it.newBuild.distribution != null && migrationStatus == null }
+  val migrationReady = userInitiated && migrationStatus == MigrationStatus.INSTALLED && announced == null &&
+                       updates !is PlatformUpdates.ConnectionError
+  return PlatformUpdateDecision(announced, migration, migrationReady)
 }
 
 /** The SVG data of the light and the dark variant of one image. */
@@ -58,6 +72,7 @@ internal class MigrationOfferContent(
   val update: PlatformUpdates.Loaded,
   val distribution: DistributionInfo,
   val offer: MigrationOfferTexts,
+  val ready: MigrationReadyTexts?,
   val sourceLogo: MigrationImageData,
   val targetLogo: MigrationImageData,
   val background: MigrationImageData?,
@@ -114,6 +129,7 @@ private fun doLoadMigrationOffer(update: PlatformUpdates.Loaded, indicator: Prog
       update = update,
       distribution = distribution,
       offer = manifest.offer,
+      ready = manifest.ready,
       sourceLogo = loadImage(images.sourceLogo, indicator),
       targetLogo = loadImage(images.targetLogo, indicator),
       background = images.background?.let { loadImage(it, indicator) },
@@ -129,18 +145,16 @@ private fun doLoadMigrationOffer(update: PlatformUpdates.Loaded, indicator: Prog
 
 private var isMigrationInstallRunning = false
 
-@Volatile
-private var installedMigrationApp: Path? = null
-
 /**
- * The action of the primary button of the migration dialog. It installs the distribution in the background.
- * It does nothing while the install runs, or when the install of this session is done.
+ * The action of the primary button of the migration dialog.
+ * It installs the distribution in the background, then shows "Restart to Update".
+ * It does nothing while the install runs, or when a valid migration state exists.
  */
 @RequiresEdt
 internal fun startMigrationUpdate(project: Project?, content: MigrationOfferContent) {
-  val installed = installedMigrationApp
-  if (installed != null && installed.isDirectory()) {
-    LOG.info("the migration distribution is already installed: ${installed}")
+  val state = migrationStateStore().get()
+  if (state != null) {
+    LOG.info("the migration distribution is already installed: ${state.app}, ${state.status.id}")
     return
   }
   if (isMigrationInstallRunning) {
@@ -155,8 +169,17 @@ internal fun startMigrationUpdate(project: Project?, content: MigrationOfferCont
   object : Task.Backgroundable(project, IdeBundle.message("updates.migration.progress.title"), true) {
     override fun run(indicator: ProgressIndicator) {
       val app = installMigrationDistribution(distribution, indicator)
-      installedMigrationApp = app
       LOG.info("the migration distribution is installed: ${app}")
+      try {
+        migrationStateStore().set(MigrationState(MigrationStatus.INSTALLED, app, distribution.product))
+      }
+      catch (e: IOException) {
+        LOG.warn("cannot write the migration state", e)
+      }
+    }
+
+    override fun onSuccess() {
+      showMigrationReady(project, content.ready)
     }
 
     override fun onThrowable(error: Throwable) {
@@ -182,6 +205,60 @@ internal fun startMigrationUpdate(project: Project?, content: MigrationOfferCont
     }
   }.queue()
 }
+
+/**
+ * Shows "Restart to Update" for the installed migration distribution in the widget.
+ * The notification shows only when the widget is not shown, or when [forceNotification] is true.
+ * Without [ready] texts, the notification uses the generic texts.
+ */
+@RequiresEdt
+internal fun showMigrationReady(project: Project?, ready: MigrationReadyTexts?, forceNotification: Boolean = false) {
+  setMigrationRestartState()
+  if (!forceNotification && IdeUpdateWidgetState.isWidgetShown()) {
+    return
+  }
+
+  val title = ready?.title?.let { StringUtil.escapeXmlEntities(it) } ?: IdeBundle.message("update.ready.message")
+  UpdateChecker.getNotificationGroupForIdeUpdateResults()
+    .createNotification(title, "", NotificationType.INFORMATION)
+    .addAction(NotificationAction.createSimpleExpiring(migrationReadyActionText(ready), MIGRATION_RESTART_ACTION))
+    .setDisplayId("ide.migration.suggest.restart")
+    .notify(project)
+}
+
+/** The text of the notification action. A text with the `<html>` prefix gives the generic text, and `&` and `_` are not mnemonics. */
+@ApiStatus.Internal
+fun migrationReadyActionText(ready: MigrationReadyTexts?): @Nls String {
+  val action = ready?.action?.takeUnless { BasicHTML.isHTMLString(it) } ?: return IdeBundle.message("update.toolbar.widget.restart.text")
+  return StringUtil.escapeMnemonics(action)
+}
+
+/**
+ * At startup, a valid installed state gives "Restart to Update" in the widget, with no update check and no notification.
+ */
+internal fun restoreMigrationRestartState() {
+  val app = ApplicationManager.getApplication()
+  if (app.isHeadlessEnvironment || app.isCommandLine) {
+    return
+  }
+  if (migrationStateStore().get()?.status == MigrationStatus.INSTALLED) {
+    setMigrationRestartState()
+  }
+}
+
+/** Whether the settings menu shows "Restart to Update": the state is installed, and the widget is not shown. */
+internal fun isMigrationRestartInMenu(): Boolean =
+  !IdeUpdateWidgetState.isWidgetShown() && migrationStateStore().get()?.status == MigrationStatus.INSTALLED
+
+private fun setMigrationRestartState() {
+  val widget = IdeUpdateWidgetState.getInstance()
+  // the restart state needs an update first
+  widget.onUpdateFound(true)
+  widget.onRestartReady(MIGRATION_RESTART_ACTION)
+}
+
+/** "Restart to Update" of the migration. The widget does not count it as the restart of a patch. */
+internal val MIGRATION_RESTART_ACTION: Runnable = Runnable { restartToMigration() }
 
 private var isMigrationOfferShown = false
 

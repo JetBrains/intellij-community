@@ -757,7 +757,8 @@ private suspend fun doUpdateAndShowResult(
     UpdateSettingsEntryPointActionProvider.clearPlatformUpdateInfo()
   }
 
-  val decision = decidePlatformUpdate(platformUpdates, userInitiated, IdeUpdateWidgetState.isRemindLaterActive())
+  val decision = decidePlatformUpdate(platformUpdates, userInitiated, IdeUpdateWidgetState.isRemindLaterActive(),
+                                      migrationStateStore().get()?.status)
   val announcedUpdate = decision.announced
   val migrationOffer = decision.migration?.takeIf { showResults }?.let { loadMigrationOffer(it, indicator) }
   val apiVersion = announcedUpdate?.newBuild?.apiVersion
@@ -839,6 +840,9 @@ private suspend fun doUpdateAndShowResult(
       }
       null -> {}
     }
+    if (decision.migrationReady) {
+      showMigrationReady(project, ready = null, forceNotification = true)
+    }
 
     if (announcedUpdate != null) {
       showResults(
@@ -861,7 +865,7 @@ private suspend fun doUpdateAndShowResult(
         userInitiated = userInitiated,
         forceDialog = forceDialog,
         showSettingsLink = showSettingsLink,
-        platformOffered = migrationOffer != null,
+        platformOffered = migrationOffer != null || decision.migrationReady,
       )
     }
     callback?.setDone()

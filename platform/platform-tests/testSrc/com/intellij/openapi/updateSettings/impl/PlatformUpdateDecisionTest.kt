@@ -2,8 +2,10 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.util.io.IoTestUtil
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
 
@@ -30,6 +32,7 @@ class PlatformUpdateDecisionTest {
     val decision = decide(migrationBuild, userInitiated = false)
     assertNull(decision.announced)
     assertSame(migrationBuild, decision.migration)
+    assertFalse(decision.migrationReady)
   }
 
   @Test
@@ -53,13 +56,54 @@ class PlatformUpdateDecisionTest {
     assertNothing(decide(connectionError))
   }
 
+  @Test
+  fun `installed or moved migration gives no migration offer`() {
+    for (status in MigrationStatus.entries) {
+      for (userInitiated in listOf(true, false)) {
+        val decision = decide(migrationBuild, userInitiated, status = status)
+        assertNull(decision.announced)
+        assertNull(decision.migration)
+      }
+    }
+  }
+
+  @Test
+  fun `installed migration keeps a usual update`() {
+    val decision = decide(usualBuild, status = MigrationStatus.INSTALLED)
+    assertSame(usualBuild, decision.announced)
+    assertFalse(decision.migrationReady)
+  }
+
+  @Test
+  fun `manual check shows the installed migration instead of no updates`() {
+    val installed = MigrationStatus.INSTALLED
+    assertTrue(decide(PlatformUpdates.Empty, status = installed).migrationReady)
+    assertFalse(decide(connectionError, status = installed).migrationReady)
+    assertFalse(decide(PlatformUpdates.Empty, status = MigrationStatus.MOVED).migrationReady)
+    assertFalse(decide(PlatformUpdates.Empty, userInitiated = false, status = installed).migrationReady)
+  }
+
+  @Test
+  fun `manual check of a migration build shows the installed migration`() {
+    val installed = MigrationStatus.INSTALLED
+    assertTrue(decide(migrationBuild, status = installed).migrationReady)
+    assertFalse(decide(migrationBuild, userInitiated = false, status = installed).migrationReady)
+    assertFalse(decide(migrationBuild, status = MigrationStatus.MOVED).migrationReady)
+    assertFalse(decide(migrationBuild, status = null).migrationReady)
+  }
+
   private fun assertNothing(decision: PlatformUpdateDecision) {
     assertNull(decision.announced)
     assertNull(decision.migration)
+    assertFalse(decision.migrationReady)
   }
 
-  private fun decide(updates: PlatformUpdates, userInitiated: Boolean = true, remindLaterActive: Boolean = false): PlatformUpdateDecision =
-    decidePlatformUpdate(updates, userInitiated, remindLaterActive)
+  private fun decide(
+    updates: PlatformUpdates,
+    userInitiated: Boolean = true,
+    remindLaterActive: Boolean = false,
+    status: MigrationStatus? = null,
+  ): PlatformUpdateDecision = decidePlatformUpdate(updates, userInitiated, remindLaterActive, status)
 
   private fun loaded(buildXml: String): PlatformUpdates.Loaded {
     val channel = parseUpdateData("""
