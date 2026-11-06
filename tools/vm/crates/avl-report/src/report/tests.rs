@@ -486,24 +486,18 @@ fn the_suites_a_run_never_reached_are_named() {
     assert_eq!(document.skipped_containers[0].reason, "no agent CLI");
 }
 
+/// A whole plan that ran names no unreported class, by the FQN and by the simple name. The lane daemon plans by simple
+/// names and records by FQNs. Measured on 2026-10-15: the first daemon run read every class as unreported, though 76
+/// scenarios finished.
 #[test]
 fn a_whole_plan_that_ran_names_no_unreported_class() {
-    let mut events = vec![plan(&[CLASS])];
-    events.extend(scenario("1", "SUCCESSFUL", None));
-    let document = built(input(Some(summary(1, 0, 0, 0, 0)), events));
-    assert_eq!(document.unreported_classes, Vec::<String>::new());
-    assert_eq!(document.status, Status::Passed, "{}", diagnostic(&document));
-}
-
-/// The lane daemon plans by simple names and records by FQNs. Measured on 2026-10-15: the first daemon run read every
-/// class as unreported, though 76 scenarios finished.
-#[test]
-fn a_plan_of_simple_names_is_covered_by_records_of_fqns() {
-    let mut events = vec![plan(&["AirFlowSmokeUiTest"])];
-    events.extend(scenario("1", "SUCCESSFUL", None));
-    let document = built(input(Some(summary(1, 0, 0, 0, 0)), events));
-    assert_eq!(document.unreported_classes, Vec::<String>::new());
-    assert_eq!(document.status, Status::Passed, "{}", diagnostic(&document));
+    for planned in [CLASS, "AirFlowSmokeUiTest"] {
+        let mut events = vec![plan(&[planned])];
+        events.extend(scenario("1", "SUCCESSFUL", None));
+        let document = built(input(Some(summary(1, 0, 0, 0, 0)), events));
+        assert_eq!(document.unreported_classes, Vec::<String>::new(), "{planned}");
+        assert_eq!(document.status, Status::Passed, "{planned}: {}", diagnostic(&document));
+    }
 }
 
 /// A daemon from before the record existed, or one that died in discovery: nothing selected to compare against.

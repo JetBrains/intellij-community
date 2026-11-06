@@ -513,6 +513,11 @@ impl Ran {
         self.records.iter().filter(|record| record["event"] == event).collect()
     }
 
+    /// The status of each finished case, in the order of the stream.
+    fn statuses(&self) -> Vec<&Value> {
+        self.events("testFinished").iter().map(|finished| &finished["status"]).collect()
+    }
+
     /// The display name and the status of each finished case, in the order of the stream.
     fn finished_statuses(&self) -> Vec<(String, String)> {
         self.events("testFinished")
@@ -705,9 +710,14 @@ fn green_story() -> (Value, Value) {
 }
 
 fn green_fake() -> Fake {
+    green_fake_with(Script::default())
+}
+
+/// The fake of [`green_fake`], with the rest of `script`.
+fn green_fake_with(script: Script) -> Fake {
     Fake::new(Script {
         answers: BTreeMap::from([("action/rename-session-select".to_owned(), json!({"session": {"id": "s-1"}}))]),
-        ..Script::default()
+        ..script
     })
 }
 
@@ -752,8 +762,7 @@ fn a_recorder_that_refuses_the_scenarios_is_one_trace_failure_of_the_stream() {
         "the recorder refused the scenario 'rename-closed-project-session': a command line is not a JSON object"
     );
     assert_eq!(ran.trace.len(), 3, "{:#?}", ran.trace);
-    let statuses: Vec<&Value> = ran.events("testFinished").iter().map(|finished| &finished["status"]).collect();
-    assert_eq!(statuses, [&json!("SUCCESSFUL"), &json!("SUCCESSFUL")]);
+    assert_eq!(ran.statuses(), [&json!("SUCCESSFUL"), &json!("SUCCESSFUL")]);
 }
 
 // The reset after a passed scenario leaves the IDE clean, and nothing runs on it before the next scenario of the
@@ -773,29 +782,24 @@ fn a_scenario_after_a_passed_one_of_its_suite_sends_no_reset_before() {
 
     let fake = green_fake();
     let ran = run(&fake, &[story(&vocabulary, &json!([profile, second]))], None);
-    let statuses: Vec<&Value> = ran.events("testFinished").iter().map(|finished| &finished["status"]).collect();
-    assert_eq!(statuses, [&json!("SUCCESSFUL"), &json!("SUCCESSFUL")]);
+    assert_eq!(ran.statuses(), [&json!("SUCCESSFUL"), &json!("SUCCESSFUL")]);
     assert_eq!(resets_of(&fake), [json!(false), json!(true), json!(true)]);
 
     let failure = json!({"type": "java.lang.AssertionError", "message": "expected the title 'Renamed'", "stack": []});
-    let fake = Fake::new(Script {
-        answers: BTreeMap::from([("action/rename-session-select".to_owned(), json!({"session": {"id": "s-1"}}))]),
+    let fake = green_fake_with(Script {
         failures: BTreeMap::from([("assertion/rename-session-title".to_owned(), failure)]),
         ..Script::default()
     });
     let ran = run(&fake, &[story(&vocabulary, &json!([profile, second]))], None);
-    let statuses: Vec<&Value> = ran.events("testFinished").iter().map(|finished| &finished["status"]).collect();
-    assert_eq!(statuses, [&json!("FAILED"), &json!("FAILED")]);
+    assert_eq!(ran.statuses(), [&json!("FAILED"), &json!("FAILED")]);
     assert_eq!(resets_of(&fake), [json!(false), json!(true), json!(false), json!(true)]);
 
-    let fake = Fake::new(Script {
-        answers: BTreeMap::from([("action/rename-session-select".to_owned(), json!({"session": {"id": "s-1"}}))]),
+    let fake = green_fake_with(Script {
         resets: VecDeque::from([Value::Null, json!("a session tab survived")]),
         ..Script::default()
     });
     let ran = run(&fake, &[story(&vocabulary, &json!([profile, second]))], None);
-    let statuses: Vec<&Value> = ran.events("testFinished").iter().map(|finished| &finished["status"]).collect();
-    assert_eq!(statuses, [&json!("SUCCESSFUL"), &json!("SUCCESSFUL")]);
+    assert_eq!(ran.statuses(), [&json!("SUCCESSFUL"), &json!("SUCCESSFUL")]);
     assert_eq!(*fake.relaunches.lock().unwrap(), [Relaunch::Recycle]);
     assert_eq!(
         resets_of(&fake),
