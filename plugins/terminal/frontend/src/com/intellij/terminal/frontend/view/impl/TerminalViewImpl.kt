@@ -505,7 +505,10 @@ class TerminalViewImpl(
     })
     // Moving terminal between different displays changes the cell size in device pixels.
     terminalPanel.layeredPane.addPropertyChangeListener("graphicsConfiguration") {
-      sendResizeEvent()
+      // Container.remove sets the graphicsConfiguration of the removed component to null, skip it.
+      if (it.newValue != null) {
+        sendResizeEvent()
+      }
     }
   }
 
