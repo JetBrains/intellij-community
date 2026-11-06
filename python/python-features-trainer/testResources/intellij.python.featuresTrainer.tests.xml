@@ -4,7 +4,6 @@
     <module name="intellij.featuresTrainer.tests"/>
     <module name="intellij.python.community.junit5Tests.framework"/>
     <module name="intellij.python.featuresTrainer"/>
-    <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit6"/>
     <module name="intellij.libraries.junit6.params"/>
     <module name="intellij.platform.analysis"/>
@@ -15,6 +14,7 @@
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.testFramework.junit5.codeInsight"/>
     <module name="intellij.python.test.env.junit5"/>
   </dependencies>
   <!-- endregion -->

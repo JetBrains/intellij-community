@@ -1,21 +1,23 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ifs
 
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import training.featuresSuggester.FeatureSuggesterTestUtils.insertNewLineAt
 import training.featuresSuggester.FeatureSuggesterTestUtils.moveCaretRelatively
 import training.featuresSuggester.FeatureSuggesterTestUtils.moveCaretToLogicalPosition
 import training.featuresSuggester.FeatureSuggesterTestUtils.testInvokeLater
 import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
 import training.featuresSuggester.NoSuggestion
-import training.featuresSuggester.SurroundWithSuggesterTest
+import training.featuresSuggester.featureSuggesterFixture
 
-class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
-  override val testingCodeFileName = "JavaCodeExample.java"
+@TestApplication
+class SurroundWithSuggesterJavaTest {
+  private val suggester by featureSuggesterFixture(JavaSuggestersTestUtils.testDataPath, "JavaCodeExample.java", "Surround with")
 
-  override fun getTestDataPath() = JavaSuggestersTestUtils.testDataPath
-
-  override fun `testSurround one statement with IF and get suggestion`() {
+  @Test
+  fun `testSurround one statement with IF and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       insertNewLineAt(6)
       typeAndCommit("if () {")
@@ -28,7 +30,8 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
     }
   }
 
-  override fun `testSurround 2 statements with IF and add '}' at the line with second statement and get suggestion`() {
+  @Test
+  fun `testSurround 2 statements with IF and add '}' at the line with second statement and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       insertNewLineAt(5)
       typeAndCommit("if (true){")
@@ -41,7 +44,8 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
     }
   }
 
-  override fun `testSurround all statements in block with IF and get suggestion`() {
+  @Test
+  fun `testSurround all statements in block with IF and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       insertNewLineAt(5)
       typeAndCommit("if(){")
@@ -54,7 +58,8 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
     }
   }
 
-  override fun `testSurround one statement with IF in one line and get suggestion`() {
+  @Test
+  fun `testSurround one statement with IF in one line and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       moveCaretToLogicalPosition(6, 8)
       typeAndCommit("if(1 > 2 ){")
@@ -67,7 +72,8 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
     }
   }
 
-  override fun `testSurround statements with FOR and get suggestion`() {
+  @Test
+  fun `testSurround statements with FOR and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       insertNewLineAt(6)
       typeAndCommit("for (int i = 0; i < 10; i++) {")
@@ -80,7 +86,8 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
     }
   }
 
-  override fun `testSurround statements with WHILE and get suggestion`() {
+  @Test
+  fun `testSurround statements with WHILE and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       insertNewLineAt(7)
       typeAndCommit("while(false && true){")
@@ -93,7 +100,8 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
     }
   }
 
-  fun `testSurround IfStatement with IF and get suggestion`() {
+  @Test
+  fun `testSurround IfStatement with IF and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       insertNewLineAt(9)
       typeAndCommit("if (false && true){")
@@ -109,7 +117,8 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
   /**
    * This case must throw suggestion but not working now
    */
-  fun `testSurround statements with FOREACH and don't get suggestion`() {
+  @Test
+  fun `testSurround statements with FOREACH and don't get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       insertNewLineAt(6)
       typeAndCommit("for (int a: list) {")
@@ -118,22 +127,24 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
     }
 
     testInvokeLater(project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
-  override fun `testSurround 0 statements with IF and don't get suggestion`() {
+  @Test
+  fun `testSurround 0 statements with IF and don't get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       insertNewLineAt(6)
       typeAndCommit("if (true) {    }")
     }
 
     testInvokeLater(project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
-  override fun `testWrite if() but add braces in another place and don't get suggestion`() {
+  @Test
+  fun `testWrite if() but add braces in another place and don't get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       insertNewLineAt(6)
       typeAndCommit("if() ")
@@ -144,7 +155,7 @@ class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
     }
 
     testInvokeLater(project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 }

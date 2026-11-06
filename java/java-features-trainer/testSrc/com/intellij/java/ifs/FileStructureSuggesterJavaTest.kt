@@ -1,20 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ifs
 
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import training.featuresSuggester.FeatureSuggesterTestUtils.focusEditor
 import training.featuresSuggester.FeatureSuggesterTestUtils.logicalPositionToOffset
 import training.featuresSuggester.FeatureSuggesterTestUtils.performFindInFileAction
 import training.featuresSuggester.FeatureSuggesterTestUtils.testInvokeLater
-import training.featuresSuggester.FileStructureSuggesterTest
 import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.featureSuggesterFixture
 
-class FileStructureSuggesterJavaTest : FileStructureSuggesterTest() {
-  override val testingCodeFileName = "JavaCodeExample.java"
+@TestApplication
+class FileStructureSuggesterJavaTest {
+  private val suggester by featureSuggesterFixture(JavaSuggestersTestUtils.testDataPath, "JavaCodeExample.java", "File structure")
 
-  override fun getTestDataPath() = JavaSuggestersTestUtils.testDataPath
-
-  override fun `testFind field and get suggestion`() {
+  @Test
+  fun `testFind field and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       val fromOffset = logicalPositionToOffset(1, 0)
       performFindInFileAction("field", fromOffset)
@@ -26,7 +28,8 @@ class FileStructureSuggesterJavaTest : FileStructureSuggesterTest() {
     }
   }
 
-  override fun `testFind method and get suggestion`() {
+  @Test
+  fun `testFind method and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       val fromOffset = logicalPositionToOffset(4, 0)
       performFindInFileAction("mai", fromOffset)
@@ -38,7 +41,8 @@ class FileStructureSuggesterJavaTest : FileStructureSuggesterTest() {
     }
   }
 
-  fun `testFind class and get suggestion`() {
+  @Test
+  fun `testFind class and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       val fromOffset = logicalPositionToOffset(14, 0)
       performFindInFileAction("staticCl", fromOffset)
@@ -50,7 +54,8 @@ class FileStructureSuggesterJavaTest : FileStructureSuggesterTest() {
     }
   }
 
-  override fun `testFind function parameter and don't get suggestion`() {
+  @Test
+  fun `testFind function parameter and don't get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       val fromOffset = logicalPositionToOffset(4, 0)
       performFindInFileAction("args", fromOffset)
@@ -58,11 +63,12 @@ class FileStructureSuggesterJavaTest : FileStructureSuggesterTest() {
     }
 
     testInvokeLater(project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
-  override fun `testFind local variable declaration and don't get suggestion`() {
+  @Test
+  fun `testFind local variable declaration and don't get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       val fromOffset = logicalPositionToOffset(4, 0)
       performFindInFileAction("abc", fromOffset)
@@ -70,11 +76,12 @@ class FileStructureSuggesterJavaTest : FileStructureSuggesterTest() {
     }
 
     testInvokeLater(project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
-  override fun `testFind variable usage and don't get suggestion`() {
+  @Test
+  fun `testFind variable usage and don't get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       val fromOffset = logicalPositionToOffset(7, 0)
       performFindInFileAction("fiel", fromOffset)
@@ -82,11 +89,12 @@ class FileStructureSuggesterJavaTest : FileStructureSuggesterTest() {
     }
 
     testInvokeLater(project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
-  override fun `testFind method usage and don't get suggestion`() {
+  @Test
+  fun `testFind method usage and don't get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       val fromOffset = logicalPositionToOffset(5, 0)
       performFindInFileAction("main", fromOffset)
@@ -94,11 +102,12 @@ class FileStructureSuggesterJavaTest : FileStructureSuggesterTest() {
     }
 
     testInvokeLater(project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 
-  override fun `testFind type usage and don't get suggestion`() {
+  @Test
+  fun `testFind type usage and don't get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       val fromOffset = logicalPositionToOffset(5, 0)
       performFindInFileAction("Static", fromOffset)
@@ -106,7 +115,7 @@ class FileStructureSuggesterJavaTest : FileStructureSuggesterTest() {
     }
 
     testInvokeLater(project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 }

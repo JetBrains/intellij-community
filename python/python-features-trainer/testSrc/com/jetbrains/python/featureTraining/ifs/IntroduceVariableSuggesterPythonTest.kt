@@ -1,10 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.featureTraining.ifs
 
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
-
+import org.junit.jupiter.api.Test
 import training.featuresSuggester.FeatureSuggesterTestUtils.copyCurrentSelection
 import training.featuresSuggester.FeatureSuggesterTestUtils.cutBetweenLogicalPositions
 import training.featuresSuggester.FeatureSuggesterTestUtils.deleteSymbolAtCaret
@@ -14,8 +16,7 @@ import training.featuresSuggester.FeatureSuggesterTestUtils.pasteFromClipboard
 import training.featuresSuggester.FeatureSuggesterTestUtils.selectBetweenLogicalPositions
 import training.featuresSuggester.FeatureSuggesterTestUtils.testInvokeLater
 import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
-import com.intellij.openapi.util.registry.Registry
-import training.featuresSuggester.IntroduceVariableSuggesterTest
+import training.featuresSuggester.featureSuggesterFixture
 
 /**
  * Note: when user is declaring variable and it's name starts with any language keyword suggestion will not be thrown
@@ -24,33 +25,17 @@ import training.featuresSuggester.IntroduceVariableSuggesterTest
 @Subsystems.IDE
 @Components.FeatureTrainer
 @Layers.Functional
-class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
-  override val testingCodeFileName = "PythonCodeExample.py"
+// Incremental reparse of PyStatementList produces the same PSI tree as full reparse, but the
+// platform DiffTree algorithm generates a different sequence of ChildAdded/ChildReplaced events
+// when diffing a replaced statement list vs a fully reparsed file. The IFS state machine is
+// sensitive to event ordering, so disable incremental reparse to get the same events as full reparse.
+@RegistryKey(key = "python.statement.lists.incremental.reparse", value = "false")
+@TestApplication
+class IntroduceVariableSuggesterPythonTest {
+  private val suggester by featureSuggesterFixture(PythonSuggestersTestUtils.testDataPath, "PythonCodeExample.py", "Introduce variable")
 
-  override fun getTestDataPath() = PythonSuggestersTestUtils.testDataPath
-
-  override fun setUp() {
-    super.setUp()
-    // Incremental reparse of PyStatementList produces the same PSI tree as full reparse, but the
-    // platform DiffTree algorithm generates a different sequence of ChildAdded/ChildReplaced events
-    // when diffing a replaced statement list vs a fully reparsed file. The IFS state machine is
-    // sensitive to event ordering, so disable incremental reparse to get the same events as full reparse.
-    Registry.get("python.statement.lists.incremental.reparse").setValue(false)
-  }
-
-  override fun tearDown() {
-    try {
-      Registry.get("python.statement.lists.incremental.reparse").resetToDefault()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
-
-  override fun `testIntroduce expression from IF and get suggestion`() {
+  @Test
+  fun `testIntroduce expression from IF and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       cutBetweenLogicalPositions(lineStartIndex = 3, columnStartIndex = 2, lineEndIndex = 3, columnEndIndex = 12)
       insertNewLineAt(3)
@@ -65,7 +50,8 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
     }
   }
 
-  override fun `testIntroduce full expression from method call and get suggestion`() {
+  @Test
+  fun `testIntroduce full expression from method call and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       cutBetweenLogicalPositions(lineStartIndex = 27, columnStartIndex = 25, lineEndIndex = 27, columnEndIndex = 57)
       insertNewLineAt(27, 8)
@@ -80,7 +66,8 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
     }
   }
 
-  override fun `testIntroduce part of expression from method call and get suggestion`() {
+  @Test
+  fun `testIntroduce part of expression from method call and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       cutBetweenLogicalPositions(lineStartIndex = 27, columnStartIndex = 56, lineEndIndex = 27, columnEndIndex = 46)
       insertNewLineAt(27, 8)
@@ -95,7 +82,8 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
     }
   }
 
-  override fun `testIntroduce part of string expression from method call and get suggestion`() {
+  @Test
+  fun `testIntroduce part of string expression from method call and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       cutBetweenLogicalPositions(lineStartIndex = 36, columnStartIndex = 18, lineEndIndex = 36, columnEndIndex = 37)
       insertNewLineAt(36, 4)
@@ -110,7 +98,8 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
     }
   }
 
-  override fun `testIntroduce full expression from return statement and get suggestion`() {
+  @Test
+  fun `testIntroduce full expression from return statement and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       cutBetweenLogicalPositions(lineStartIndex = 37, columnStartIndex = 11, lineEndIndex = 37, columnEndIndex = 42)
       insertNewLineAt(37, 4)
@@ -125,7 +114,8 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
     }
   }
 
-  override fun `testIntroduce expression from method body using copy and backspace and get suggestion`() {
+  @Test
+  fun `testIntroduce expression from method body using copy and backspace and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       selectBetweenLogicalPositions(
         lineStartIndex = 27,
@@ -153,7 +143,8 @@ class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
     }
   }
 
-  fun `testIntroduce part of string declaration expression and get suggestion`() {
+  @Test
+  fun `testIntroduce part of string declaration expression and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       cutBetweenLogicalPositions(lineStartIndex = 35, columnStartIndex = 13, lineEndIndex = 35, columnEndIndex = 24)
       insertNewLineAt(35, 4)

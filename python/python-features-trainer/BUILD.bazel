@@ -112,7 +112,7 @@ jvm_library(
         "//python/python-test-env/junit5:junit5_test_lib",
         "//python/python-test-env/common:common_test_lib",
         "//plugins/ide-features-trainer:featuresTrainer-tests_test_lib",
-        "//libraries/junit4",
+        "//platform/testFramework/junit5/codeInsight",
         "//libraries/junit6",
         "//libraries/junit6-params",
         "//platform/scratch/plugin",

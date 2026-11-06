@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ifs
 
-import com.intellij.testFramework.NeedsIndex
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import training.featuresSuggester.FeatureSuggesterTestUtils.chooseCompletionItem
+import training.featuresSuggester.FeatureSuggesterTestUtils.deleteAndTypeDot
 import training.featuresSuggester.FeatureSuggesterTestUtils.deleteTextBetweenLogicalPositions
 import training.featuresSuggester.FeatureSuggesterTestUtils.invokeCodeCompletion
 import training.featuresSuggester.FeatureSuggesterTestUtils.moveCaretToLogicalPosition
@@ -11,15 +13,14 @@ import training.featuresSuggester.FeatureSuggesterTestUtils.testInvokeLater
 import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
 import training.featuresSuggester.FeatureSuggesterTestUtils.typeDelete
 import training.featuresSuggester.NoSuggestion
-import training.featuresSuggester.ReplaceCompletionSuggesterTest
+import training.featuresSuggester.featureSuggesterFixture
 
-class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
-  override val testingCodeFileName = "JavaCodeExample.java"
+@TestApplication
+class ReplaceCompletionSuggesterJavaTest {
+  private val suggester by featureSuggesterFixture(JavaSuggestersTestUtils.testDataPath, "JavaCodeExample.java", "Completion with replace")
 
-  override fun getTestDataPath() = JavaSuggestersTestUtils.testDataPath
-
-  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
-  override fun `testDelete and type dot, complete method call, remove previous identifier and get suggestion`() {
+  @Test
+  fun `testDelete and type dot, complete method call, remove previous identifier and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       moveCaretToLogicalPosition(12, 20)
       deleteAndTypeDot()
@@ -33,8 +34,8 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
   }
 
-  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
-  override fun `testCall completion, complete method call, remove previous identifier and get suggestion`() {
+  @Test
+  fun `testCall completion, complete method call, remove previous identifier and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 60)
       val completionItem = invokeCodeCompletion()?.find { it.lookupString == "cyclesFunction" } ?: error("Not found lookup elements")
@@ -52,8 +53,8 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
   }
 
-  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
-  override fun `testCall completion, complete with method call, add parameter to method call, remove previous identifier and get suggestion`() {
+  @Test
+  fun `testCall completion, complete with method call, add parameter to method call, remove previous identifier and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 60)
       val completionItem = invokeCodeCompletion()?.find { it.lookupString == "cyclesFunction" } ?: error("Not found lookup elements")
@@ -72,8 +73,8 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
   }
 
-  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
-  override fun `testCall completion, complete with property, remove previous identifier and get suggestion`() {
+  @Test
+  fun `testCall completion, complete with property, remove previous identifier and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 33)
       val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
@@ -86,8 +87,8 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
   }
 
-  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
-  override fun `testCall completion inside arguments list, complete method call, remove previous identifier and get suggestion`() {
+  @Test
+  fun `testCall completion inside arguments list, complete method call, remove previous identifier and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 91)
       val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
@@ -100,8 +101,8 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
   }
 
-  @NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
-  override fun `testCall completion, type additional characters, complete, remove previous identifier and get suggestion`() {
+  @Test
+  fun `testCall completion, type additional characters, complete, remove previous identifier and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 33)
       invokeCodeCompletion()
@@ -116,7 +117,8 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
   }
 
-  override fun `testCall completion, complete method call, remove another equal identifier and don't get suggestion`() {
+  @Test
+  fun `testCall completion, complete method call, remove another equal identifier and don't get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 60)
       val variants = invokeCodeCompletion() ?: error("Not found lookup elements")
@@ -130,7 +132,7 @@ class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
     }
 
     testInvokeLater(project) {
-      TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+      assertTrue(expectedSuggestion is NoSuggestion)
     }
   }
 }

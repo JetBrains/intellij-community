@@ -206,6 +206,11 @@ object FeatureSuggesterTestUtils {
     }
   }
 
+  fun CodeInsightTestFixture.deleteAndTypeDot() {
+    deleteSymbolAtCaret()
+    typeAndCommit(".")
+  }
+
   fun CodeInsightTestFixture.deleteSymbolsAtCaret(symbolsNumber: Int) {
     (0 until symbolsNumber).forEach { _ -> deleteSymbolAtCaret() }
   }

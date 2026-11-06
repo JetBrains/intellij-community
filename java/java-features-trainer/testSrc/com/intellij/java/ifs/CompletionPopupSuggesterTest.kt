@@ -1,44 +1,22 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.ifs
 
-import com.intellij.testFramework.NeedsIndex
-import com.intellij.testFramework.TestIndexingModeSupporter
-import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
-import training.featuresSuggester.FeatureSuggesterTest
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
 import training.featuresSuggester.FeatureSuggesterTestUtils.chooseCompletionItem
 import training.featuresSuggester.FeatureSuggesterTestUtils.deleteSymbolAtCaret
 import training.featuresSuggester.FeatureSuggesterTestUtils.invokeCodeCompletion
 import training.featuresSuggester.FeatureSuggesterTestUtils.moveCaretToLogicalPosition
 import training.featuresSuggester.FeatureSuggesterTestUtils.testInvokeLater
 import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
+import training.featuresSuggester.featureSuggesterFixture
 
-@NeedsIndex.SmartMode(reason = "BeforeCompletionChooseItemAction is not DumbAware")
-class CompletionPopupSuggesterTest : FeatureSuggesterTest(), TestIndexingModeSupporter {
-  private var indexingModeShutdownToken: IndexingMode.ShutdownToken? = null
-  override val testingCodeFileName = "JavaCodeExample.java"
-  override val testingSuggesterId = "Completion"
-  private var indexingSupporterMode: IndexingMode = IndexingMode.SMART
+@TestApplication
+class CompletionPopupSuggesterTest {
+  private val suggester by featureSuggesterFixture(JavaSuggestersTestUtils.testDataPath, "JavaCodeExample.java", "Completion")
 
-  override fun getTestDataPath() = JavaSuggestersTestUtils.testDataPath
-
-  override fun setUp() {
-    super.setUp()
-    indexingModeShutdownToken = indexingSupporterMode.setUpTest(myFixture.project, myFixture.testRootDisposable)
-  }
-
-  override fun tearDown() {
-    try {
-      indexingModeShutdownToken?.let { indexingSupporterMode.tearDownTest(myFixture.project, it) }
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
-  }
-
-  fun `testDelete and type dot, complete method call and get suggestion`() {
+  @Test
+  fun `testDelete and type dot, complete method call and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       moveCaretToLogicalPosition(12, 20)
       deleteSymbolAtCaret()
@@ -52,7 +30,8 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest(), TestIndexingModeSup
     }
   }
 
-  fun `testDelete and type dot inside arguments list, complete with property and get suggestion`() {
+  @Test
+  fun `testDelete and type dot inside arguments list, complete with property and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 91)
       deleteSymbolAtCaret()
@@ -66,7 +45,8 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest(), TestIndexingModeSup
     }
   }
 
-  fun `testDelete and type dot, type additional characters, complete and get suggestion`() {
+  @Test
+  fun `testDelete and type dot, type additional characters, complete and get suggestion`(): Unit = suggester.runTest {
     with(myFixture) {
       moveCaretToLogicalPosition(61, 33)
       deleteSymbolAtCaret()
@@ -81,10 +61,4 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest(), TestIndexingModeSup
       assertSuggestedCorrectly()
     }
   }
-
-  override fun setIndexingMode(mode: IndexingMode) {
-    indexingSupporterMode = mode
-  }
-
-  override fun getIndexingMode(): IndexingMode = indexingSupporterMode
 }

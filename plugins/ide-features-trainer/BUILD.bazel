@@ -181,6 +181,7 @@ jvm_library(
         "//platform/testRunner",
         "//platform/testRunner/plugin",
         "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/codeInsight",
         "//libraries/mockito-kotlin",
         "//libraries/mockito",
         "//platform/execution",

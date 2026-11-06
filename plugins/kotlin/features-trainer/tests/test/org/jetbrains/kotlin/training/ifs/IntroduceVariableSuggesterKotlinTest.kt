@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.training.ifs
 
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import training.featuresSuggester.FeatureSuggesterTestUtils.copyCurrentSelection
 import training.featuresSuggester.FeatureSuggesterTestUtils.cutBetweenLogicalPositions
 import training.featuresSuggester.FeatureSuggesterTestUtils.deleteSymbolAtCaret
@@ -11,18 +13,18 @@ import training.featuresSuggester.FeatureSuggesterTestUtils.pasteFromClipboard
 import training.featuresSuggester.FeatureSuggesterTestUtils.selectBetweenLogicalPositions
 import training.featuresSuggester.FeatureSuggesterTestUtils.testInvokeLater
 import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
-import training.featuresSuggester.IntroduceVariableSuggesterTest
 import training.featuresSuggester.NoSuggestion
+import training.featuresSuggester.featureSuggesterFixture
 
 /**
  * Note: when user is declaring variable and it's name starts with any language keyword suggestion will not be thrown
  */
-class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
-    override val testingCodeFileName = "KotlinCodeExample.kt"
+@TestApplication
+class IntroduceVariableSuggesterKotlinTest {
+    private val suggester by featureSuggesterFixture(KotlinSuggestersTestUtils.testDataPath, "KotlinCodeExample.kt", "Introduce variable")
 
-    override fun getTestDataPath() = KotlinSuggestersTestUtils.testDataPath
-
-    override fun `testIntroduce expression from IF and get suggestion`() {
+    @Test
+    fun `testIntroduce expression from IF and get suggestion`(): Unit = suggester.runTest {
         with(myFixture) {
             cutBetweenLogicalPositions(lineStartIndex = 9, columnStartIndex = 24, lineEndIndex = 9, columnEndIndex = 39)
             insertNewLineAt(9, 8)
@@ -37,7 +39,8 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         }
     }
 
-    override fun `testIntroduce full expression from method call and get suggestion`() {
+    @Test
+    fun `testIntroduce full expression from method call and get suggestion`(): Unit = suggester.runTest {
         with(myFixture) {
             cutBetweenLogicalPositions(lineStartIndex = 10, columnStartIndex = 37, lineEndIndex = 10, columnEndIndex = 20)
             insertNewLineAt(10, 12)
@@ -52,7 +55,8 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         }
     }
 
-    override fun `testIntroduce part of expression from method call and get suggestion`() {
+    @Test
+    fun `testIntroduce part of expression from method call and get suggestion`(): Unit = suggester.runTest {
         with(myFixture) {
             cutBetweenLogicalPositions(lineStartIndex = 10, columnStartIndex = 29, lineEndIndex = 10, columnEndIndex = 20)
             insertNewLineAt(10, 12)
@@ -67,7 +71,8 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         }
     }
 
-    override fun `testIntroduce part of string expression from method call and get suggestion`() {
+    @Test
+    fun `testIntroduce part of string expression from method call and get suggestion`(): Unit = suggester.runTest {
         with(myFixture) {
             cutBetweenLogicalPositions(lineStartIndex = 37, columnStartIndex = 35, lineEndIndex = 37, columnEndIndex = 46)
             insertNewLineAt(37, 12)
@@ -82,7 +87,8 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         }
     }
 
-    override fun `testIntroduce full expression from return statement and get suggestion`() {
+    @Test
+    fun `testIntroduce full expression from return statement and get suggestion`(): Unit = suggester.runTest {
         with(myFixture) {
             cutBetweenLogicalPositions(lineStartIndex = 50, columnStartIndex = 23, lineEndIndex = 50, columnEndIndex = 67)
             insertNewLineAt(50, 16)
@@ -97,7 +103,8 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         }
     }
 
-    override fun `testIntroduce expression from method body using copy and backspace and get suggestion`() {
+    @Test
+    fun `testIntroduce expression from method body using copy and backspace and get suggestion`(): Unit = suggester.runTest {
         with(myFixture) {
             selectBetweenLogicalPositions(
                 lineStartIndex = 28,
@@ -128,7 +135,8 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
     /**
      * This case must throw suggestion but not working now
      */
-    fun `testIntroduce part of string declaration expression and don't get suggestion`() {
+    @Test
+    fun `testIntroduce part of string declaration expression and don't get suggestion`(): Unit = suggester.runTest {
         with(myFixture) {
             cutBetweenLogicalPositions(lineStartIndex = 40, columnStartIndex = 22, lineEndIndex = 40, columnEndIndex = 46)
             insertNewLineAt(40, 12)
@@ -139,7 +147,7 @@ class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
         }
 
         testInvokeLater(project) {
-            TestCase.assertTrue(expectedSuggestion is NoSuggestion)
+            assertTrue(expectedSuggestion is NoSuggestion)
         }
     }
 }
