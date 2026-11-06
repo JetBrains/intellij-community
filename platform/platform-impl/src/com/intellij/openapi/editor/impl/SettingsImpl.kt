@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Supplier
 import kotlin.math.max
@@ -42,6 +43,8 @@ class SettingsImpl internal constructor(
 ) : EditorSettings {
   private val state: EditorSettingsState = EditorSettingsState(editor, project, softWrapAppliancePlaceOf(kind))
   private var doNotRefreshEditorFlag: Boolean = false
+  private var editorRefreshDepth = 0
+  private var editorRefreshPending = false
 
   constructor() : this(null, null, null)
 
@@ -98,6 +101,22 @@ class SettingsImpl internal constructor(
       state.myUseSoftWraps = true
     } finally {
       doNotRefreshEditorFlag = false
+    }
+  }
+
+  /** Applies each state change immediately and refreshes the editor after the outermost action. */
+  @RequiresEdt
+  fun runWithDeferredEditorRefresh(action: Runnable) {
+    editorRefreshDepth++
+    try {
+      action.run()
+    }
+    finally {
+      editorRefreshDepth--
+      if (editorRefreshDepth == 0 && editorRefreshPending) {
+        editorRefreshPending = false
+        editor?.reinitSettings(true, false)
+      }
     }
   }
 
@@ -673,7 +692,12 @@ class SettingsImpl internal constructor(
     if (reinit) {
       // The state holds the new values already, so the editor needs no reinit of the settings. That reinit would
       // recalculate every default and compute the inputs again.
-      editor.reinitSettings(true, false)
+      if (editorRefreshDepth > 0) {
+        editorRefreshPending = true
+      }
+      else {
+        editor.reinitSettings(true, false)
+      }
     }
     for (event in events) {
       when (event.propertyName) {
