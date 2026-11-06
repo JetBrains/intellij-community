@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.SystemDefaultBrowser;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
+import com.intellij.ide.browsers.WebBrowserProvider;
 import com.intellij.ide.browsers.WebBrowserXmlService;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.lang.Language;
@@ -67,8 +68,12 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+    List<WebBrowser> providedBrowsers = WebBrowserProvider.getAvailableBrowsers();
     List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
-    List<AnAction> actions = new ArrayList<>(browsers.size() + 2);
+    List<AnAction> actions = new ArrayList<>(providedBrowsers.size() + browsers.size() + 2);
+    for (WebBrowser browser : providedBrowsers) {
+      actions.add(getBrowserAction(browser));
+    }
     AnAction localBrowserAction = getLocalBrowserAction();
     if (localBrowserAction != null) {
       actions.add(localBrowserAction);
@@ -77,9 +82,13 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
       actions.add(myDefaultBrowserAction);
     }
     for (WebBrowser browser : browsers) {
-      actions.add(myBrowserActions.computeIfAbsent(browser, BaseOpenInBrowserAction::new));
+      actions.add(getBrowserAction(browser));
     }
     return actions.toArray(EMPTY_ARRAY);
+  }
+
+  private @NotNull AnAction getBrowserAction(@NotNull WebBrowser browser) {
+    return myBrowserActions.computeIfAbsent(browser, BaseOpenInBrowserAction::new);
   }
 
   @Override
@@ -93,10 +102,13 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
 
   /**
    * Returns {@code true} when the group has an action to show.
-   * Such an action opens the local browser, the system default browser, or an active browser.
+   * Such an action opens a browser of a {@link WebBrowserProvider}, the local browser, the system default browser, or an active browser.
    */
   public static boolean hasBrowserActions() {
-    return hasLocalBrowser() || usesSystemDefaultBrowser() || !WebBrowserManager.getInstance().getActiveBrowsers().isEmpty();
+    return !WebBrowserProvider.getAvailableBrowsers().isEmpty() ||
+           hasLocalBrowser() ||
+           usesSystemDefaultBrowser() ||
+           !WebBrowserManager.getInstance().getActiveBrowsers().isEmpty();
   }
 
   /**
