@@ -79,11 +79,13 @@ object EelPathUtils {
     return eelDescriptor.getPath(userHome.toString() + path.substring(1)).asNioPath()
   }
 
-  private fun isRelativePath(path: String, osFamily: EelOsFamily): Boolean =
-    when (osFamily) {
-      EelOsFamily.Posix -> !path.startsWith("/")
-      EelOsFamily.Windows -> !path.startsWith("\\") && !path.startsWith("/") && path.getOrNull(1) != ':'
+  private fun isRelativePath(path: String, osFamily: EelOsFamily): Boolean {
+    val hasRoot = when (osFamily) {
+      EelOsFamily.Posix -> path.startsWith("/")
+      EelOsFamily.Windows -> path.startsWith("\\") || path.startsWith("/") || path.getOrNull(1) == ':'
     }
+    return !hasRoot && !Path(path).isAbsolute
+  }
 
   private suspend fun createTemporaryDirectoryImpl(
     eelApi: EelApi,
