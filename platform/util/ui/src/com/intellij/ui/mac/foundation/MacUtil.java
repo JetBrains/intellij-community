@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.foundation;
 
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +20,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JComponent;
 import javax.swing.JRootPane;
@@ -199,8 +203,25 @@ public final class MacUtil {
     private static final Selector retainSel = createSelector("retain");
     private static final Selector releaseSel = createSelector("release");
 
+    // The native calls can block for an unpredictable duration. Keep these calls off the EDT and preserve their order.
+    private static final ExecutorService executor =
+      SequentialTaskExecutor.createSequentialApplicationPoolExecutor("macOS App Nap Activity");
+    private static final int MAX_PENDING_ACTIVITIES = 10_000;
+    private static final AtomicInteger pendingActivities = new AtomicInteger();
+
+    private final boolean queued;
+
     private ActivityImpl(@NotNull Object reason) {
-      super(begin(reason));
+      String reasonText = reason.toString();
+      queued = pendingActivities.incrementAndGet() <= MAX_PENDING_ACTIVITIES;
+      if (!queued) {
+        pendingActivities.decrementAndGet();
+        return;
+      }
+      execute(() -> {
+        pendingActivities.decrementAndGet();
+        set(begin(reasonText));
+      });
     }
 
     /**
@@ -208,7 +229,21 @@ public final class MacUtil {
      */
     @Override
     public void run() {
-      end(getAndSet(null));
+      if (queued) {
+        execute(() -> end(getAndSet(null)));
+      }
+    }
+
+    private static void execute(@NotNull Runnable task) {
+      executor.execute((ContextAwareRunnable)() -> {
+        var pool = new Foundation.NSAutoreleasePool();
+        try {
+          task.run();
+        }
+        finally {
+          pool.drain();
+        }
+      });
     }
 
     private static ID getProcessInfo() { return invoke(processInfoCls, processInfoSel); }
