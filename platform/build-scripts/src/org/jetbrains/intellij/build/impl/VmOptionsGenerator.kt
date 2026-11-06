@@ -107,6 +107,7 @@ internal fun osVmOptions(os: OsFamily, platformPrefix: String?): List<String> = 
     "-Dsun.java2d.vulkan=true".takeIf { platformPrefix != "JetBrainsClient" }, // disabled for rem-dev due to IJPL-259757
   )
   OsFamily.WINDOWS -> emptyList()
+  OsFamily.OHOS -> emptyList()
 }
 
 internal fun writeVmOptions(file: Path, vmOptions: List<String>, separator: String) {

@@ -34,6 +34,7 @@ fun renderAdditionalJvmArguments(
     OsFamily.WINDOWS -> "%IDE_HOME%"
     OsFamily.MACOS -> $$"$APP_PACKAGE$${if (isPortableDist) "" else "/Contents"}"
     OsFamily.LINUX -> $$"$IDE_HOME"
+    OsFamily.OHOS -> $$"$IDE_HOME"
   }
 
   val bootClassPathJarNames = jvm.xBootClassPathJarNames + if (!isQodana && jvm.multiRoutingFileSystem) listOf(PLATFORM_CORE_NIO_FS) else emptyList()

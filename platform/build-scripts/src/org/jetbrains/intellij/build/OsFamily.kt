@@ -24,7 +24,8 @@ enum class OsFamily(
 ) {
   WINDOWS(osId = BuildOptions.OS_WINDOWS, osName = "Windows", dirName = "win", distSuffix = "win", jbrArchiveSuffix = "windows"),
   MACOS(osId = BuildOptions.OS_MAC, osName = "macOS", dirName = "mac", distSuffix = "mac", jbrArchiveSuffix = "osx"),
-  LINUX(osId = BuildOptions.OS_LINUX, osName = "Linux", dirName = "linux", distSuffix = "unix", jbrArchiveSuffix = "linux");
+  LINUX(osId = BuildOptions.OS_LINUX, osName = "Linux", dirName = "linux", distSuffix = "unix", jbrArchiveSuffix = "linux"),
+  OHOS(osId = BuildOptions.OS_OHOS, osName = "OHOS", dirName = "ohos", distSuffix = "ohos", jbrArchiveSuffix = "ohos");
 
   fun binaryName(baseName: String): String = if (this == WINDOWS) "${baseName}.exe" else baseName
 
@@ -32,6 +33,7 @@ enum class OsFamily(
     WINDOWS -> "${baseName}.dll"
     MACOS -> "lib${baseName}.dylib"
     LINUX -> "lib${baseName}.so"
+    OHOS -> "lib${baseName}.so"
   }
 
   companion object {

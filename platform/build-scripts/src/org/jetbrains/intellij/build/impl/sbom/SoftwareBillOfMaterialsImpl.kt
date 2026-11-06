@@ -312,6 +312,7 @@ class SoftwareBillOfMaterialsImpl(
         JvmArchitecture.aarch64 -> "windowsarm64"
         JvmArchitecture.x64 -> "windows64"
       }
+      OsFamily.OHOS -> error("An OHOS distribution has no bundled runtime")
     }
     val cefArchive = "cef_binary_${cefVersion}_$cefSuffix.tar.bz2"
     val cefPackage = spdxPackage(this, name = cefArchive) {

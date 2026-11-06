@@ -12,6 +12,7 @@ fun devDistHostPlatformOs(os: OsFamily): String = when (os) {
   OsFamily.MACOS -> "darwin"
   OsFamily.LINUX -> "linux"
   OsFamily.WINDOWS -> "windows"
+  OsFamily.OHOS -> error("There is no dev distribution for OHOS")
 }
 
 /** How the same list spells [arch]: `aarch64` or `x64`. */

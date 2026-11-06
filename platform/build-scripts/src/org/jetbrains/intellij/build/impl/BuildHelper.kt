@@ -65,6 +65,7 @@ internal fun openedPackagesArguments(file: Path, target: OsFamily?): List<String
     OsFamily.WINDOWS -> OS.Windows
     OsFamily.MACOS -> OS.macOS
     OsFamily.LINUX -> OS.Linux
+    OsFamily.OHOS -> OS.OHOS
     null -> OS.CURRENT
   }
   return JavaModuleOptions.readOptions(file, os)

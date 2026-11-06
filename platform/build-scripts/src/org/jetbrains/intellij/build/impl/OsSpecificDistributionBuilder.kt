@@ -47,6 +47,7 @@ fun commonExecutableFilePatterns(os: OsFamily): List<String> {
     OsFamily.MACOS -> listOf("bin/*.sh", "bin/fsnotifier", "bin/printenv", "bin/restarter", "MacOS/*")
     OsFamily.LINUX -> listOf("bin/*.sh", "bin/fsnotifier", "bin/restarter")
     OsFamily.WINDOWS -> emptyList()
+    OsFamily.OHOS -> emptyList()
   }
 }
 
@@ -71,6 +72,7 @@ fun nativeBinFiles(
     OsFamily.LINUX -> listOf(binDir.resolve("linux/${arch.dirName}/fsnotifier"))
     // the architecture directory, then the top-level files of `bin/win`: the other architecture's directory is not ours
     OsFamily.WINDOWS -> listNativeBinDir(binDir.resolve("win/${arch.dirName}")) + listNativeBinDir(binDir.resolve("win"))
+    OsFamily.OHOS -> emptyList()
   }
 }
 

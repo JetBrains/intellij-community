@@ -21,6 +21,7 @@ class PluginLayoutExecutableFilesTest {
         OsFamily.WINDOWS -> listOf("bin/everywhere")
         OsFamily.MACOS -> listOf("bin/tool", "bin/everywhere")
         OsFamily.LINUX -> listOf("bin/tool", "bin/linux/*", "bin/everywhere")
+        OsFamily.OHOS -> error("SUPPORTED_DISTRIBUTIONS has no OHOS distribution")
       }
       assertThat(layout.executableFiles(distribution)).describedAs("$distribution").containsExactlyElementsOf(expected)
     }

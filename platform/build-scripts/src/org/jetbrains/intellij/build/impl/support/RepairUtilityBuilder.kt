@@ -231,6 +231,7 @@ private class Binary(
       OsFamily.LINUX -> "tar.gz"
       OsFamily.MACOS -> "dmg"
       OsFamily.WINDOWS -> "exe"
+      OsFamily.OHOS -> error("There is no repair utility for OHOS")
     }
 }
 

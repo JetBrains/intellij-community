@@ -9,6 +9,7 @@ interface LibcImpl {
       OsFamily.MACOS -> MacLibcImpl.DEFAULT
       OsFamily.WINDOWS -> WindowsLibcImpl.DEFAULT
       OsFamily.LINUX -> LinuxLibcImpl.GLIBC
+      OsFamily.OHOS -> OhosLibcImpl.DEFAULT
     }
   }
 }
