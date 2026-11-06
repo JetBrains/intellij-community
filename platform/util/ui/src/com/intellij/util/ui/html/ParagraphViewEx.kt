@@ -15,6 +15,7 @@ import javax.swing.text.View
 import javax.swing.text.ViewFactory
 import javax.swing.text.html.CSS
 import javax.swing.text.html.HTML
+import javax.swing.text.html.HTMLDocument
 import javax.swing.text.html.ParagraphView
 import kotlin.math.max
 
@@ -125,6 +126,16 @@ open class ParagraphViewEx(elem: Element) : ParagraphView(elem) {
 
     override fun layoutMinorAxis(targetSpan: Int, axis: Int, offsets: IntArray, spans: IntArray) {
       baselineLayout(targetSpan, axis, offsets, spans)
+      val topInset = topInset.toInt()
+      if (topInset == 0) return
+
+      // CSS top includes the space added above the text for line-height.
+      for (index in 0 until viewCount) {
+        val child = getView(index)
+        if (child.element.name == "img" && child.getImageCssAlignment(document as HTMLDocument) == "top") {
+          offsets[index] -= topInset
+        }
+      }
     }
 
     override fun calculateMinorAxisRequirements(axis: Int, r: SizeRequirements?): SizeRequirements =
