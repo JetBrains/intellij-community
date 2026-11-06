@@ -35,7 +35,6 @@
 
   <actions resource-bundle="messages.ActionsBundle">
     <action id="OpenHtmlInEmbeddedBrowser" class="com.intellij.ide.browsers.actions.OpenHtmlInEmbeddedBrowserAction"/>
-    <action id="BrowseWeb" internal="true" class="com.intellij.internal.BrowseWebAction"/>
     <action id="TestRubberDuckDebuggerAction" internal="true" class="com.intellij.openapi.wm.impl.status.TestRubberDuckDebuggerAction"/>
   </actions>
 </idea-plugin>
