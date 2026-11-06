@@ -1,5 +1,6 @@
 // "Add type 'Array<String>' to parameter 'value'" "true"
 // LANGUAGE_VERSION: 1.2
+// K2_ERROR: SYNTAX
 // K2_ERROR: VALUE_PARAMETER_WITHOUT_EXPLICIT_TYPE
 
 annotation class CollectionDefault(val value = ["alpha", "beta"]<caret>)

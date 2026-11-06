@@ -238,7 +238,7 @@ Directives for a local inspection test:
 | `// HIGHLIGHT: <type>` | The expected `ProblemHighlightType`, for example `INFORMATION`. |
 | `// FIX: <text>` | The fix to apply when there is more than one. `// FIX: none` means no fix. |
 | `// NO_FIX: <text>` | A fix that must not be offered. |
-| `// K2_ERROR: <text>` / `// K2_AFTER_ERROR: <text>` | The expected compiler errors before and after the fix. |
+| `// K2_ERROR: <text>` / `// K2_AFTER_ERROR: <text>` | The expected compiler errors before and after the fix. A syntax error is `SYNTAX`. |
 | `// COMPILER_ARGUMENTS: <args>` | Compiler arguments, for example `-XXLanguage:+Feature`. |
 | `// LANGUAGE_VERSION: <v>` / `// API_VERSION: <v>` | The language and API versions. |
 | `// WITH_COROUTINES`, `// RUNTIME_WITH_FULL_JDK`, `// JS` | Other project descriptors. The standard library is on by default. |
@@ -466,7 +466,7 @@ Directives for a quick fix test:
 |---|---|
 | `// "<text>" "true\|false"` | The action that must be available or not available. Use `/regex/` for a text pattern. |
 | `// FUS_QUICKFIX_NAME: <class>` | The class in the FUS event, for example `...RemoveUnnamedPropertyFixFactory$RemoveUnnamedPropertyFix`. Required for `"true"`. Not allowed for `"false"`. |
-| `// K2_ERROR: <FACTORY_NAME>` | An expected compiler error before the fix, for example `UNRESOLVED_REFERENCE`. Use one line for each error. |
+| `// K2_ERROR: <FACTORY_NAME>` | An expected compiler error before the fix, for example `UNRESOLVED_REFERENCE`. Use one line for each error. A syntax error is `SYNTAX`. |
 | `// K2_AFTER_ERROR: <FACTORY_NAME>` | An expected compiler error after the fix. |
 | `// DISABLE_K2_ERRORS` | Turns off the error checks. Use it only with a reason. |
 | `// ENABLE_WARNINGS`, `// WARNING:`, `// AFTER_WARNING:` | Checks warnings before and after the fix. |

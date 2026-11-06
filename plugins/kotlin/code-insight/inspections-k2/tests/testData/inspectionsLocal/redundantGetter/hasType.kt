@@ -1,5 +1,6 @@
 // ERROR: This property must either have a type annotation, be initialized or be delegated
 // K2_ERROR: ABSTRACT_PROPERTY_WITHOUT_TYPE
+// K2_ERROR: SYNTAX
 interface Test {
     val foo
         <caret>get(): Int

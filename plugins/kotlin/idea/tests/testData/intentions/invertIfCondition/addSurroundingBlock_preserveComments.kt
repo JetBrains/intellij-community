@@ -3,7 +3,6 @@ fun foo(list: List<String>) {
         <caret>if (s.length > 0 /* check it */) /* then */ {
             bar() // bar()
         }
-    }
 }
 
 fun bar(){}

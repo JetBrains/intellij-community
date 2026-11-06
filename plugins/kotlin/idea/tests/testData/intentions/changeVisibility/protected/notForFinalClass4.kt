@@ -1,2 +1,4 @@
 // IS_APPLICABLE: false
-inline class InlineClass(val a: Int) <caret>private constructor()
+inline class InlineClass(val a: Int) {
+    <caret>private constructor() : this(1)
+}

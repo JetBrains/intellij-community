@@ -1,5 +1,7 @@
 // IS_APPLICABLE: true
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+// K2_ERROR: SYNTAX
+// K2_AFTER_ERROR: SYNTAX
 
 fun test() {
     "foo${}<caret>"

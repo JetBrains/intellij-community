@@ -1,5 +1,6 @@
 // PROBLEM: none
 // COMPILER_ARGUMENTS: -Xwhen-guards
+// K2_ERROR: SYNTAX
 
 fun test(param: Any) {
     when (param) {

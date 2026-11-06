@@ -12,7 +12,7 @@ abstract class Base2 : Base1() {
 
 object Obj : Base2()
 
-fun usage {
+fun usage() {
     10.<caret>based()
 }
 

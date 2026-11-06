@@ -1,3 +1,4 @@
+// K2_ERROR: SYNTAX
 fun test(): String {
     return (1 + 1).toString() + "abc"
 }

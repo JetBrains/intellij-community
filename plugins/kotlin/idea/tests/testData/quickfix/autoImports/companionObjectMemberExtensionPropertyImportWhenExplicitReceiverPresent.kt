@@ -4,7 +4,7 @@ package p
 
 class T {
     companion object {
-        val T.foobar get = 10
+        val T.foobar get() = 10
     }
 }
 

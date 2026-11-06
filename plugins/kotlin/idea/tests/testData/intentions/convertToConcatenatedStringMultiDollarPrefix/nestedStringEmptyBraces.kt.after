@@ -1,6 +1,5 @@
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
-//TODO: KTIJ-33598
-// K2_ERROR:
+// K2_ERROR: SYNTAX
 
 fun test() {
     "fooboo"

@@ -1,6 +1,7 @@
 // "Add type 'Int' to parameter 'value'" "true"
 // LANGUAGE_VERSION: 1.7
 // K2_ERROR: INVALID_TYPE_OF_ANNOTATION_MEMBER
+// K2_ERROR: SYNTAX
 // K2_ERROR: VALUE_PARAMETER_WITHOUT_EXPLICIT_TYPE
 
 annotation class CollectionDefault(vararg val value = [1, 2]<caret>)

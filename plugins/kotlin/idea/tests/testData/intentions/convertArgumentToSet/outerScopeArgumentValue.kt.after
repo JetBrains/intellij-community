@@ -6,4 +6,7 @@
 fun <T> f(a: Iterable<T>, b: Iterable<T>) {
     val c = a - b.toSet()
 }
-f(listOf("a", "b"), listOf("b", "c"))
+
+fun usage() {
+    f(listOf("a", "b"), listOf("b", "c"))
+}

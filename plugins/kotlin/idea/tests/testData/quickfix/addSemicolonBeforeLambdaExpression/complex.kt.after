@@ -10,7 +10,7 @@
 fun foo() {}
 fun String.withLambda(lambda: (String) -> Unit) {}
 
-fun test {
+fun test() {
     { { "test" } }.invoke()().toString().withLambda()
     // comment and formatting
     {}; // correct trailing lambda

@@ -1,4 +1,5 @@
 // IS_APPLICABLE: false
+// K2_ERROR: SYNTAX
 
 // See KT-7929: exception
 class C {

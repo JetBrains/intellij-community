@@ -6,7 +6,7 @@ import p.T.Companion.foobar
 
 class T {
     companion object {
-        val T.foobar get = 10
+        val T.foobar get() = 10
     }
 }
 

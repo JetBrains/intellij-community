@@ -7,7 +7,7 @@ open class A {
 }
 
 class B : A(){
-    annon <caret>override fun f(a: String) {}
+    @annon <caret>override fun f(a: String) {}
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeMemberFunctionSignatureFixFactory$ChangeMemberFunctionSignatureFix

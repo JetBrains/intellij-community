@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.fir
 
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
@@ -22,6 +23,8 @@ object K2DirectiveBasedActionUtils {
 
     const val K2_ERROR_DIRECTIVE: String = "// K2_ERROR:"
     const val K2_AFTER_ERROR_DIRECTIVE: String = "// K2_AFTER_ERROR:"
+
+    const val SYNTAX_ERROR_NAME: String = "SYNTAX"
 
     private fun isErrorChecksSuppressed(fileText: String): Boolean =
         InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, DISABLE_ERRORS_DIRECTIVE, DISABLE_K2_ERRORS_DIRECTIVE).isNotEmpty()
@@ -87,20 +90,31 @@ object K2DirectiveBasedActionUtils {
             .sorted()
             .map { "$directive $it" }
 
-        val actual =
+        val diagnosticNames =
             allowAnalysisOnEdt {
                 analyze(file) {
                     val diagnostics =
                         // filter level has to be consistent with
                         // [org.jetbrains.kotlin.idea.highlighting.visitor.KotlinDiagnosticHighlightVisitor#analyzeFile]
                         file.diagnostics()
-                    diagnostics
-                        .filter { it.severity == severity }
-                        .map { "$directive ${it.factoryName}" }
-                        .sorted()
-                        .toList()
+                    buildList {
+                        val names = diagnostics
+                            .filter { it.severity == severity }
+                            .map { it.factoryName }
+                        addAll(names)
+                        // We don't want to report FIR SYNTAX errors twice, but some syntax errors are not reported by FIR
+                        if (severity == KaSeverity.ERROR
+                            && SYNTAX_ERROR_NAME !in names
+                            && PsiTreeUtil.hasErrorElements(file)
+                        ) {
+                            add(SYNTAX_ERROR_NAME)
+                        }
+                    }
                 }
             }
+        val actual = diagnosticNames
+            .map { "$directive $it" }
+            .sorted()
 
         if (actual == expected) return
 

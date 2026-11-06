@@ -4,5 +4,5 @@
 // K2_ERROR: VALUE_PARAMETER_WITHOUT_EXPLICIT_TYPE
 // K2_ERROR: VALUE_PARAMETER_WITHOUT_EXPLICIT_TYPE
 fun main() {
-    val sum = { x, <caret>y -> x + y  // Type of x and y cannot be inferred, so intention can't be used
+    val sum = { x, <caret>y -> x + y }  // Type of x and y cannot be inferred, so intention can't be used
 }

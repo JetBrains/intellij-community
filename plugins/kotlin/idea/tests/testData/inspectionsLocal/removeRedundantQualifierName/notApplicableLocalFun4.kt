@@ -1,10 +1,9 @@
 // PROBLEM: none
-// K2_ERROR: NONE_APPLICABLE
 package my.simple.name
 
 fun <T, E, D> foo(a: T, b: E, c: D) = a!!.hashCode() + b!!.hashCode() + c!!.hashCode()
 
-fun <E> E.foo() = this.!!hashCode()
+fun <E> E.foo() = this!!.hashCode()
 
 class Outer {
     fun <E> E.foo(x: E, y: E, z: E) = x!!.hashCode() + y!!.hashCode() + z!!.hashCode()

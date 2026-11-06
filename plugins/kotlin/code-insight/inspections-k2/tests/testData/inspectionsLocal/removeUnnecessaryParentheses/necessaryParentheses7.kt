@@ -1,3 +1,6 @@
 // PROBLEM: none
-var x = 0
--<caret>(--x)
+
+fun test() {
+    var x = 0
+    -<caret>(--x)
+}

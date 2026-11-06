@@ -1,5 +1,7 @@
 // "Replace '&&' with 'if'" "false"
 // WITH_STDLIB
+// K2_ERROR: SYNTAX
+// K2_AFTER_ERROR: SYNTAX
 
 fun test(a: Any) {
     when (a) {<caret>

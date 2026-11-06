@@ -3,4 +3,6 @@ fun test(x: Any): Any? {
     return y
 }
 
-test(3)
+fun usage() {
+    test(3)
+}

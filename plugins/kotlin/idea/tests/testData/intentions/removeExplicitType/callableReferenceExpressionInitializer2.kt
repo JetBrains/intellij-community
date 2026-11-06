@@ -5,4 +5,3 @@
 fun <T> foo(): T = t
 
 fun test(): <caret>Function0<String> = ::foo
-}

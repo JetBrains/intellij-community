@@ -3,7 +3,7 @@
 
 fun foo() {}
 
-fun test {
+fun test() {
     { { { foo() } } }()()()
     // comment and formatting
     {<caret>}

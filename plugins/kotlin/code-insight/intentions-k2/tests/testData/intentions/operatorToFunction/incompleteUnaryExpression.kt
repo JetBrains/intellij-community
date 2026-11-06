@@ -1,4 +1,5 @@
 // IS_APPLICABLE: false
+// K2_ERROR: SYNTAX
 // K2_ERROR: UNRESOLVED_REFERENCE
 
 val x = <caret>+

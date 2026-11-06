@@ -1,5 +1,6 @@
 // "Add 'constructor' keyword" "true"
 // K2_ERROR: MISSING_CONSTRUCTOR_KEYWORD
+// K2_ERROR: SYNTAX
 annotation class Ann
 
 class A @Ann() constructor() {

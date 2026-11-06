@@ -2,6 +2,7 @@
 // WITH_STDLIB
 // PROBLEM: none
 enum class EnumClass {
+    ;
     companion object {
         fun values(p: Int): Array<EnumClass> = emptyArray()
     }

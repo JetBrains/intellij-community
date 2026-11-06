@@ -3,5 +3,5 @@
 
 fun main() {
     val x: MutableList<Int?> = [1, null]
-    x.mapNotNullTo(hashSetOf()) { it }.ifEmpty { empty<caret>Set() }}
+    x.mapNotNullTo(hashSetOf()) { it }.ifEmpty { empty<caret>Set() }
 }

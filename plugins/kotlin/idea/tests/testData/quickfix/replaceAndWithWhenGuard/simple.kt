@@ -1,5 +1,5 @@
-
 // "Replace '&&' with 'if'" "true"
+// K2_ERROR: SYNTAX
 // WITH_STDLIB
 
 fun test(a: Any) {

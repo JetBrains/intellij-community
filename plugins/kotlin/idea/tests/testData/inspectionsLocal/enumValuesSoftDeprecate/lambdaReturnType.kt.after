@@ -3,5 +3,5 @@
 enum class EnumClass
 
 fun test() {
-    val res: Array<EnumClass> = run { EnumClass.entries.toTypedArray() })
+    val res: Array<EnumClass> = run { EnumClass.entries.toTypedArray() }
 }

@@ -3,12 +3,12 @@
 // PROBLEM: none
 package kotlin.test
 
-// imitates real assertNotNull function from kotlin.test
-fun <T : Any> assertNotNull(value: T?): T = value!!
-
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.Deferred
+
+// imitates real assertNotNull function from kotlin.test
+fun <T : Any> assertNotNull(value: T?): T = value!!
 
 suspend fun CoroutineScope.asyncWithAssertNotNull() {
     val d: Deferred<Int>? = async { 42 }

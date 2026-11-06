@@ -1,6 +1,8 @@
 // "Add remaining branches" "true"
 // WITH_STDLIB
 // K2_ERROR: NO_ELSE_IN_WHEN
+// K2_ERROR: SYNTAX
+// K2_AFTER_ERROR: SYNTAX
 
 sealed class A
 class B : A()

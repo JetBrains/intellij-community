@@ -1,5 +1,6 @@
 // "Remove @ from annotation argument" "true"
 // K2_ERROR: ANNOTATION_USED_AS_ANNOTATION_ARGUMENT
+// K2_ERROR: SYNTAX
 
 annotation class Y()
 annotation class X(val value: Y)

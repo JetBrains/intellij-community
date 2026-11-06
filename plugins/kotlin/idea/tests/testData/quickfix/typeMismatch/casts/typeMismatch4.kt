@@ -7,5 +7,5 @@ open class A
 class B : A()
 
 fun foo(a: A): B {
-    return a: A<caret>
+    return a<caret>
 }
