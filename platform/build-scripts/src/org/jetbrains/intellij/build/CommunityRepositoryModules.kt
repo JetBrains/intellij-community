@@ -49,8 +49,6 @@ import java.util.Locale
 fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
   return persistentListOf(
     plugin("intellij.ant") { spec ->
-      spec.withModule("intellij.ant.jps", "ant-jps.jar")
-
       spec.withGeneratedResources(ANT_DISTRIBUTION_DEV_SPEC) { dir, buildContext ->
         copyAnt(mainModule = spec.mainModule, pluginDir = dir, context = buildContext)
       }

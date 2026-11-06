@@ -15,10 +15,12 @@ dev_dist_plugin(
     content_modules = ["intellij.ant.jps"],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
-        "lib/ant-jps.jar": ["intellij.ant.jps"],
         "lib/ant.jar": ["intellij.ant"],
     },
     main_module = "intellij.ant",
+    module_jar_paths = {
+        "intellij.ant.jps": "lib/intellij.ant.jps.jar",
+    },
 )
 ### auto-generated section `dev intellij.ant` end
 

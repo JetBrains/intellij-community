@@ -116,7 +116,7 @@ fun buildCommunityStandaloneJpsBuilder(
     layout.withProjectLibrary(it, LibraryPackMode.STANDALONE_MERGED)
   }
 
-  layout.withModule("intellij.ant.jps", "ant-jps.jar")
+  layout.withModule("intellij.ant.jps", "intellij.ant.jps.jar")
 
   layoutCustomizer(layout)
 
