@@ -45,11 +45,10 @@ abstract class AbstractKotlinCompilerRefHelperTest : CompilerReferencesTestBase(
         assertFullCompilerProject()
 
         myFixture.renameElement(kotlinFile, "KotlinClass1.kt")
-        val scope = findScope()
-        assertTrue(secondJavaFile.virtualFile in scope) // dirty
-        assertTrue(javaFile.virtualFile in scope) // dirty and with reference
-        assertTrue("non-java files must be presented in scope", kotlinFile.virtualFile in scope) // not java and dirty
-        assertTrue("non-java files must be presented in scope", textFile.virtualFile in scope) // not java and dirty
+        assertNull(
+            "the only module is dirty, so the index does not restrict the search",
+            CompilerReferenceService.getInstance(project).getScopeWithCodeReferences(myFixture.findClass(CommonClassNames.JAVA_UTIL_ARRAY_LIST))
+        )
     }
 
     fun `test enum scope`() {

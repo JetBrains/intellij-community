@@ -216,10 +216,8 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
     try {
       return CachedValuesManager.getCachedValue(element, () -> {
-        return CachedValueProvider.Result.create(
-          buildScopeWithReferences(getReferentFiles(element), element),
-          PsiModificationTracker.MODIFICATION_COUNT,
-          this);
+        GlobalSearchScope scope = myDirtyScopeHolder.isMostlyDirty() ? null : buildScopeWithReferences(getReferentFiles(element), element);
+        return CachedValueProvider.Result.create(scope, PsiModificationTracker.MODIFICATION_COUNT, this);
       });
     }
     catch (RuntimeException e1) {

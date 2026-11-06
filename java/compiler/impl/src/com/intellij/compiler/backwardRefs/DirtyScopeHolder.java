@@ -57,6 +57,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -65,6 +66,11 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 
 public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileListener {
+  /**
+   * The share of modules from which {@link #isMostlyDirty()} returns true.
+   */
+  private static final double MAX_DIRTY_MODULE_SHARE = 0.75;
+
   private final Project myProject;
   private final Set<FileType> myFileTypes;
   private final ProjectFileIndex myProjectFileIndex;
@@ -205,6 +211,25 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
       return ProjectScope.getContentScope(myProject);
     }
     return GlobalSearchScope.union(new GlobalSearchScope[]{new ModuleWithDependentsScope(myProject, dirtyModules), myExcludedFilesScope});
+  }
+
+  /**
+   * Returns true when at least the share {@link #MAX_DIRTY_MODULE_SHARE} of the project modules are dirty or depend on a dirty module.
+   * The compiler reference index cannot exclude a file of such a module from a search.
+   * Then a search scope of the index costs more time than it saves.
+   */
+  @ApiStatus.Internal
+  public boolean isMostlyDirty() {
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    if (modules.length == 0) return false;
+    synchronized (myLock) {
+      if (myCompilationPhase) return true;
+    }
+    Set<Module> dirtyModules = getAllDirtyModules();
+    if (dirtyModules.isEmpty()) return false;
+    ModuleWithDependentsScope dirtyModulesWithDependents = new ModuleWithDependentsScope(myProject, dirtyModules);
+    long affectedModules = Arrays.stream(modules).filter(dirtyModulesWithDependents::isSearchInModuleContent).count();
+    return affectedModules >= modules.length * MAX_DIRTY_MODULE_SHARE;
   }
 
   @ApiStatus.Internal

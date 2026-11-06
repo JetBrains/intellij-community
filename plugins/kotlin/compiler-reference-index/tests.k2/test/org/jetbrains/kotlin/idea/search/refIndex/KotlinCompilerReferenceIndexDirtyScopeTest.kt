@@ -89,7 +89,7 @@ internal class KotlinCompilerReferenceIndexDirtyScopeTest {
 
     @Test
     fun `skips index queries at the dirty module threshold`() {
-        compile(modules.take(2))
+        compile(modules.take(1))
         runReadActionBlocking {
             assertNull(service.scopeWithCodeReferences(target()))
         }
@@ -113,9 +113,9 @@ internal class KotlinCompilerReferenceIndexDirtyScopeTest {
 
     @Test
     fun `resumes index queries after more modules compile`() {
-        compile(modules.take(2))
+        compile(modules.take(1))
         runReadActionBlocking { assertNull(service.scopeWithCodeReferences(target())) }
-        compile(listOf(modules[2]))
+        compile(listOf(modules[1]))
         runReadActionBlocking { assertNotNull(service.scopeWithCodeReferences(target())) }
         assertEquals(1, storage.usageQueries)
     }
@@ -133,7 +133,7 @@ internal class KotlinCompilerReferenceIndexDirtyScopeTest {
 
     @Test
     fun `checks the threshold after an unsaved edit`() = timeoutRunBlocking {
-        compile(modules.take(3))
+        compile(modules.take(2))
         readAction { assertNotNull(service.scopeWithCodeReferences(target())) }
         edtWriteAction {
             WriteCommandAction.runWriteCommandAction(project) {
@@ -159,7 +159,10 @@ internal class KotlinCompilerReferenceIndexDirtyScopeTest {
         compile(modules.take(3))
         val indexedUsages = readAction { usageFiles() }
         assertEquals(files.drop(1).toSet(), indexedUsages)
-        edtWriteAction { VfsUtil.saveText(files[1], "val value: Target? = null\n// Edited") }
+        edtWriteAction {
+            VfsUtil.saveText(files[1], "val value: Target? = null\n// Edited")
+            VfsUtil.saveText(files[2], "val value: Target? = null\n// Edited")
+        }
         IndexingTestUtil.suspendUntilIndexesAreReady(project)
         readAction {
             assertNull(service.scopeWithCodeReferences(target()))

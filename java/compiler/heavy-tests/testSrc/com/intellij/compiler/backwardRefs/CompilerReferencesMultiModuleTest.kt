@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.util.registry.Registry
@@ -23,6 +24,8 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.testFramework.IdeaTestUtil
@@ -87,6 +90,46 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesFixtureTestCase() {
     assertEquals("A", assertOneElement(dirtyModules()))
     FileDocumentManager.getInstance().saveAllDocuments()
     assertEquals("A", assertOneElement(dirtyModules()))
+  }
+
+  fun testNoScopeRestrictionWhenMostModulesAreDirty() {
+    val moduleC = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "C", myFixture.tempDirFixture.findOrCreateDir("C"))
+    IdeaTestUtil.setModuleLanguageLevel(moduleC, LanguageLevel.JDK_11)
+    ModuleRootModificationUtil.setModuleSdk(moduleC, ModuleRootManager.getInstance(module).sdk)
+    ModuleRootModificationUtil.addDependency(moduleC, module)
+    addClass("BaseClass.java", "public interface BaseClass{}")
+    val classA = addClass("A/ClassA.java", "public class ClassA implements BaseClass{}")
+    val classB = addClass("B/ClassB.java", "public class ClassB implements BaseClass{}")
+    val classC = addClass("C/ClassC.java", "public class ClassC implements BaseClass{}")
+    val unrelatedB = addClass("B/UnrelatedB.java", "public class UnrelatedB {}")
+    val textB = myFixture.addFileToProject("B/notes.txt", "BaseClass")
+    rebuildProject()
+    val service = CompilerReferenceService.getInstance(project)
+    val baseClass = myFixture.findClass("BaseClass")
+    assertNotNull(service.getScopeWithCodeReferences(baseClass))
+
+    edit(classA)
+    assertEquals(setOf("A"), dirtyModules().toSet())
+    val scope = service.getScopeWithCodeReferences(baseClass)
+    assertNotNull("1 of 4 modules is dirty", scope)
+    assertTrue("dirty file", classA.virtualFile in scope!!)
+    assertTrue("clean file with a reference", classB.virtualFile in scope)
+    assertTrue("file that is not Java", textB.virtualFile in scope)
+    assertFalse("clean file without a reference", unrelatedB.virtualFile in scope)
+
+    edit(classB)
+    assertEquals(setOf("A", "B"), dirtyModules().toSet())
+    assertNotNull("2 of 4 modules are dirty", service.getScopeWithCodeReferences(baseClass))
+
+    edit(classC)
+    assertEquals(setOf("A", "B", "C"), dirtyModules().toSet())
+    assertNull("3 of 4 modules are dirty", service.getScopeWithCodeReferences(baseClass))
+  }
+
+  private fun edit(file: PsiFile) {
+    myFixture.openFileInEditor(file.virtualFile)
+    myFixture.type("/*edit*/")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
   }
 
   private fun addClass(relativePath: String, @Language("JAVA") text: String) = myFixture.addFileToProject(relativePath, text)
