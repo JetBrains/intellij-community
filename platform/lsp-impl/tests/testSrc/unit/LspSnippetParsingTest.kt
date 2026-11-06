@@ -2,19 +2,17 @@ package com.intellij.platform.lsp.unit
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionContributorEP
-import com.intellij.codeInsight.completion.CompletionInitializationContext
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionUtil
-import com.intellij.codeInsight.completion.InsertionContext
-import com.intellij.codeInsight.completion.OffsetMap
 import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.template.Template
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.platform.lsp.impl.features.completion.LspCompletionItemInsertHandler
-import com.intellij.platform.lsp.impl.features.completion.SnippetToTemplateConverter
+import com.intellij.platform.lsp.impl.util.LspSnippetParser
+import com.intellij.platform.lsp.impl.util.LspSnippetTemplate
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -47,23 +45,15 @@ internal class LspSnippetParsingTest {
   }
 
   @Test
-  fun `snippet recognition`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    codeInsightFixture.configureByText("test.txt", "<caret>")
-    val context = createInsertionContext()
-
-    val converter = SnippetToTemplateConverter(project, $$"Hello ${1: a place for the world}!")
-    assertEquals("Hello !", converter.computeEffectiveLookup())
-    assertEquals("VAR_1", converter.computeTemplate(context).variables.single().name)
+  fun `snippet recognition`() {
+    val template = toTemplate($$"Hello ${1: a place for the world}!")
+    assertEquals("Hello !", template.templateText)
+    assertEquals("TAB_1", template.variables.single().name)
   }
 
   @Test
-  fun `snippet with completion items recognition`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    codeInsightFixture.configureByText("test.txt", "<caret>")
-    val context = createInsertionContext()
-
-    val converter = SnippetToTemplateConverter(project, $$"Hello from IJ ${1:|LSP,language server protocol|}!")
-
-    val completionVariants = converter.computeTemplate(context)
+  fun `snippet with completion items recognition`() {
+    val completionVariants = toTemplate($$"Hello from IJ ${1|LSP,language server protocol|}!")
       .variables.single()
       .expression.calculateLookupItems(null)
       ?.map { it.lookupString }
@@ -72,12 +62,8 @@ internal class LspSnippetParsingTest {
   }
 
   @Test
-  fun `several snippet kinds in a completion item`() = timeoutRunBlocking(context = Dispatchers.EDT) {
-    codeInsightFixture.configureByText("test.txt", "<caret>")
-    val context = createInsertionContext()
-
-    val converter = SnippetToTemplateConverter(project, $$"VAR_1: ${1:|1,2|}, VAR_2: ${2:|3,4|}")
-    assertEquals(2, converter.computeTemplate(context).variables.size)
+  fun `several snippet kinds in a completion item`() {
+    assertEquals(2, toTemplate($$"VAR_1: ${1|1,2|}, VAR_2: ${2|3,4|}").variables.size)
   }
 
   @Test
@@ -147,6 +133,14 @@ internal class LspSnippetParsingTest {
     expectedText = "current line: current line: "
   )
 
+  @Test
+  fun `multi-line snippet keeps the indentation from the server`() = timeoutRunBlocking(context = Dispatchers.EDT) {
+    codeInsightFixture.configureByText("test.txt", "  multi line: <caret>")
+    codeInsightFixture.completeBasic()
+    codeInsightFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
+    codeInsightFixture.checkResult("  multi line: first\n  second x\n<caret>third")
+  }
+
   private fun doCompleteAndAssert(
     fileName: String = "test.txt",
     initialText: String,
@@ -159,35 +153,17 @@ internal class LspSnippetParsingTest {
     codeInsightFixture.checkResult(expectedText)
   }
 
-  private fun createInsertionContext(completionChar: Char = Lookup.NORMAL_SELECT_CHAR): InsertionContext {
-    val editor = codeInsightFixture.editor
-    val psiFile = codeInsightFixture.file
-
-    val offsetMap = OffsetMap(editor.document)
-    val context = InsertionContext(
-      offsetMap,
-      completionChar,
-      LookupElement.EMPTY_ARRAY,
-      psiFile,
-      editor,
-      InsertionContext.shouldAddCompletionChar(completionChar)
-    )
-
-    val caretOffset = editor.caretModel.offset
-    offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, caretOffset)
-    offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, caretOffset)
-    offsetMap.addOffset(CompletionInitializationContext.IDENTIFIER_END_OFFSET, caretOffset)
-
-    return context
-  }
+  private fun toTemplate(snippet: String): Template =
+    LspSnippetTemplate.of(LspSnippetParser.parse(snippet)) { null }.toTemplate(project)
 
   private class FakeCompletionContributor : CompletionContributor() {
     override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
       val effectiveInsertText = when (CompletionUtil.getOriginalOrSelf(parameters.position).text) {
-        "completion available: " -> $$"Hello ${2:|world,jetbrains|} from ${1:|lsp|}"
-        "completion order: " -> $$"last var-${2:|last|}, first var-${1:|first|}"
+        "completion available: " -> $$"Hello ${2|world,jetbrains|} from ${1|lsp|}"
+        "completion order: " -> $$"last var-${2|last|}, first var-${1|first|}"
         "placeholder: " -> $$"${1:singleValue}"
         "zero index: " -> $$">>>$0<<<"
+        "  multi line: " -> $$"first\n  second ${1:x}\n$0third"
         "line number: " -> $$"${1:$TM_LINE_NUMBER}"
         "line index: " -> $$"${1:$TM_LINE_INDEX}"
         "file name: " -> $$"${1:$TM_FILENAME}"

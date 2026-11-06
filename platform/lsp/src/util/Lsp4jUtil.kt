@@ -14,6 +14,7 @@ import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.SnippetTextEdit
 import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
 fun getLsp4jPosition(document: Document, offset: Int): Position {
@@ -78,36 +79,41 @@ fun getRangeInDocument(document: Document, range: Range): TextRange? {
 }
 
 /**
- * Applies the `edits` of one `TextDocumentEdit`.
- *
- * This function applies the [TextEdit] side only. It does not apply a [SnippetTextEdit],
- * a snippet needs an `Editor` to expand its placeholders, which this signature cannot supply.
- *
- * By default, the IDE does not request `snippetEditSupport`, so a server must not send a [SnippetTextEdit].
- * This function logs such an edit and returns `false`.
- *
- * @return `true` if all `edits` were applied successfully;
- * or `false` as soon as some edit failed to get applied to the `document`
+ * @return `true` if `textEdit` was applied successfully;
+ * `false` if the `textEdit` can't be applied to the `document` because `textEdit.range` is outside the `document` text range
  */
-fun applySimpleTextEdits(document: Document, edits: List<Either<TextEdit, SnippetTextEdit>>): Boolean {
-  val textEdits = ArrayList<TextEdit>(edits.size)
-  for (edit in edits) {
-    val textEdit = edit.left
-    if (textEdit == null) {
-      fileLogger().warn("Ignoring SnippetTextEdit, the IDE does not support it: ${edit.right}")
-      return false
-    }
-    textEdits.add(textEdit)
-  }
-  return applyTextEdits(document, textEdits)
-}
+fun applyTextEdit(document: Document, textEdit: TextEdit): Boolean =
+  applyTextEdits(document, listOf(Either.forLeft(textEdit)))
+
+@Deprecated("Use applyTextEdits(document, edits)", ReplaceWith("applyTextEdits(document, edits)"))
+fun applySimpleTextEdits(document: Document, edits: List<Either<TextEdit, SnippetTextEdit>>): Boolean =
+  applyTextEdits(document, edits)
 
 /**
  * @return `true` if all `textEdits` were applied successfully;
  * or `false` as soon as some `textEdit` failed to get applied to the `document`
  * because `textEdit.range` was outside the `document` text range
  */
-fun applyTextEdits(document: Document, textEdits: List<TextEdit>): Boolean {
+fun applyTextEdits(document: Document, textEdits: List<TextEdit>): Boolean =
+  applyTextEdits(document, textEdits.map { Either.forLeft(it) })
+
+/**
+ * Applies the `edits` of one `TextDocumentEdit`.
+ *
+ * A [SnippetTextEdit] is applied as plain text: the snippet with its syntax removed.
+ * The spec requires this for a document that is not open in the active editor.
+ *
+ * @param onApplied is called with each `edit` and the range of its new text, immediately after the edit is applied
+ * @return `true` if all `edits` were applied successfully;
+ * or `false` as soon as some `textEdit` failed to get applied to the `document`
+ * because `textEdit.range` was outside the `document` text range
+ */
+@ApiStatus.Experimental
+fun applyTextEdits(
+  document: Document,
+  edits: List<Either<TextEdit, SnippetTextEdit>>,
+  onApplied: (Either<TextEdit, SnippetTextEdit>, TextRange) -> Unit = { _, _ -> },
+): Boolean {
   // Spec:
   // > All text edits ranges refer to positions in the document they are computed on. Text edits ranges must never overlap.
   // > However, it is possible that multiple edits have the same start position: multiple inserts, ...
@@ -115,33 +121,35 @@ fun applyTextEdits(document: Document, textEdits: List<TextEdit>): Boolean {
   //
   // The edits must be applied from bottom to top.
   // Edits that have the same position must be applied in the reversed order - this way the resulting text will get inserted strings in the original order.
-  textEdits
-    .sortedWith { edit1, edit2 ->
-      (edit1.range.start.line - edit2.range.start.line).takeIf { it != 0 }
-      ?: (edit1.range.start.character - edit2.range.start.character)
-    }
+  edits
+    .sortedWith(compareBy({ it.range.start.line }, { it.range.start.character }))
     .reversed()
-    .forEach { if (!applyTextEdit(document, it)) return@applyTextEdits false }
-
+    .forEach { edit ->
+      val newText = edit.left?.newText ?: Lsp4jService.getInstance().getSnippetText(edit.right!!.snippet.value)
+      val newRange = applyEditAndGetRange(document, edit.range, newText) ?: return false
+      onApplied(edit, newRange)
+    }
   return true
 }
 
+private val Either<TextEdit, SnippetTextEdit>.range: Range
+  get() = left?.range ?: right!!.range
+
 /**
- * @return `true` if `textEdit` was applied successfully;
- * `false` if the `textEdit` can't be applied to the `document` because `textEdit.range` is outside the `document` text range
+ * @return the range of the new text; `null` if the `range` is outside the `document` text range
  */
-fun applyTextEdit(document: Document, textEdit: TextEdit): Boolean {
-  val startOffset = getOffsetInDocument(document, textEdit.range.start)
-  val endOffset = getOffsetInDocument(document, textEdit.range.end)
+private fun applyEditAndGetRange(document: Document, range: Range, text: String): TextRange? {
+  val startOffset = getOffsetInDocument(document, range.start)
+  val endOffset = getOffsetInDocument(document, range.end)
   if (startOffset == null || endOffset == null) {
     fileLogger().warn("Ignoring TextEdit, its text range is outside the document text range.\n" +
-                      "document.lineCount = ${document.lineCount}, document.textLength = ${document.textLength}, range: ${textEdit.range}")
-    return false
+                      "document.lineCount = ${document.lineCount}, document.textLength = ${document.textLength}, range: $range")
+    return null
   }
 
-  val newText = StringUtilRt.convertLineSeparators(textEdit.newText)
+  val newText = StringUtilRt.convertLineSeparators(text)
   document.replaceString(startOffset, endOffset, newText)
-  return true
+  return TextRange(startOffset, startOffset + newText.length)
 }
 
 /**

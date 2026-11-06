@@ -42,6 +42,7 @@ import org.eclipse.lsp4j.HoverCapabilities
 import org.eclipse.lsp4j.ImplementationCapabilities
 import org.eclipse.lsp4j.InlayHintCapabilities
 import org.eclipse.lsp4j.InlayHintWorkspaceCapabilities
+import org.eclipse.lsp4j.InsertTextMode
 import org.eclipse.lsp4j.MarkupKind
 import org.eclipse.lsp4j.OnTypeFormattingCapabilities
 import org.eclipse.lsp4j.ParameterInformationCapabilities
@@ -85,6 +86,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       resourceOperations = listOf(ResourceOperationKind.Create, ResourceOperationKind.Rename, ResourceOperationKind.Delete)
       failureHandling = FailureHandlingKind.Abort
       normalizesLineEndings = true
+      snippetEditSupport = true
     }
     didChangeWatchedFiles = DidChangeWatchedFilesCapabilities(true).apply {
       relativePatternSupport = true
@@ -142,6 +144,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
         insertReplaceSupport = true
         labelDetailsSupport = true
         snippetSupport = true
+        insertTextMode = InsertTextMode.AsIs
         resolveSupport = CompletionItemResolveSupportCapabilities().apply {
           properties = listOf("documentation")
         }

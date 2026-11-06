@@ -3,7 +3,10 @@ package com.intellij.platform.lsp.util
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.TextRange
 import org.eclipse.lsp4j.Location
+import org.jetbrains.annotations.ApiStatus
 
 abstract class Lsp4jService {
 
@@ -43,6 +46,19 @@ abstract class Lsp4jService {
    * @see org.eclipse.lsp4j.Command.arguments
    */
   abstract fun extractLocationsFromJson(arguments: List<Any>?): List<Location>?
+
+  /**
+   * The text a snippet edit inserts when it does not go live;
+   * a tab stop or placeholder is its default (a mirror repeats it), `$0` and a variable without a default are empty.
+   */
+  @ApiStatus.Internal
+  abstract fun getSnippetText(snippet: String): String
+
+  /**
+   * Replaces the text at [range] of the [editor] document with the live template of [snippet].
+   */
+  @ApiStatus.Internal
+  abstract fun startSnippet(editor: Editor, range: TextRange, snippet: String)
 
   companion object {
     @JvmStatic

@@ -8,14 +8,16 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServer
-import com.intellij.platform.lsp.util.applySimpleTextEdits
+import com.intellij.platform.lsp.util.Lsp4jService
 import com.intellij.platform.lsp.util.applyTextEdits
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -29,7 +31,10 @@ import org.eclipse.lsp4j.Command
 import org.eclipse.lsp4j.CreateFile
 import org.eclipse.lsp4j.DeleteFile
 import org.eclipse.lsp4j.RenameFile
+import org.eclipse.lsp4j.SnippetTextEdit
+import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.WorkspaceEdit
+import org.eclipse.lsp4j.jsonrpc.messages.Either
 import java.io.IOException
 
 /**
@@ -151,26 +156,64 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
     }
 
     val uriToCreatedDocumentMap = mutableMapOf<String, Document>()
+    var liveSnippet: LspLiveSnippet? = null
 
-    workspaceEdit.documentChanges?.let { documentChanges ->
-      documentChanges.forEach { editOrResourceOperation ->
-        editOrResourceOperation.left?.let { textDocumentEdit ->
-          val document = uriToDocumentMap[textDocumentEdit.textDocument.uri] ?: uriToCreatedDocumentMap[textDocumentEdit.textDocument.uri]
-          if (document == null) {
-            thisLogger().error("No Document for ${textDocumentEdit.textDocument.uri}")
-            return@applyWorkspaceEdit
+    try {
+      workspaceEdit.documentChanges?.let { documentChanges ->
+        documentChanges.forEach { editOrResourceOperation ->
+          editOrResourceOperation.left?.let { textDocumentEdit ->
+            val document = uriToDocumentMap[textDocumentEdit.textDocument.uri] ?: uriToCreatedDocumentMap[textDocumentEdit.textDocument.uri]
+            if (document == null) {
+              thisLogger().error("No Document for ${textDocumentEdit.textDocument.uri}")
+              return@applyWorkspaceEdit
+            }
+            val liveEdit = if (liveSnippet == null) findLiveSnippetEdit(document, textDocumentEdit.edits) else null
+            val applied = applyTextEdits(document, textDocumentEdit.edits) { edit, range ->
+              if (liveEdit != null && edit.right === liveEdit.second) {
+                liveSnippet = LspLiveSnippet(liveEdit.first, document.createRangeMarker(range), liveEdit.second.snippet.value)
+              }
+            }
+            if (!applied) return@applyWorkspaceEdit
           }
-          if (!applySimpleTextEdits(document, textDocumentEdit.edits)) return@applyWorkspaceEdit
-        }
 
-        editOrResourceOperation.right?.let { resourceOperation ->
-          when (resourceOperation) {
-            is CreateFile -> createFile(resourceOperation)?.let { uriToCreatedDocumentMap[resourceOperation.uri] = it }
-            is DeleteFile -> if (deleteFile(resourceOperation)) uriToCreatedDocumentMap.remove(resourceOperation.uri)
-            is RenameFile -> renameFile(resourceOperation)?.let { uriToCreatedDocumentMap[resourceOperation.newUri] = it }
+          editOrResourceOperation.right?.let { resourceOperation ->
+            when (resourceOperation) {
+              is CreateFile -> createFile(resourceOperation)?.let { uriToCreatedDocumentMap[resourceOperation.uri] = it }
+              is DeleteFile -> if (deleteFile(resourceOperation)) uriToCreatedDocumentMap.remove(resourceOperation.uri)
+              is RenameFile -> renameFile(resourceOperation)?.let { uriToCreatedDocumentMap[resourceOperation.newUri] = it }
+            }
           }
         }
       }
+
+      // The live template starts after all the changes, so that a later change of the document does not break it.
+      liveSnippet?.start()
+    }
+    finally {
+      liveSnippet?.marker?.dispose()
+    }
+  }
+
+  /**
+   * Spec: interactive snippets are only applied to the file opened in the active editor.
+   * The IDE runs only the first [SnippetTextEdit] of that file as a live template; every other snippet edit gets plain text.
+   * The spec allows a server to send more than one [SnippetTextEdit] for a document, but this is rare,
+   * and the current Live Templates API makes it difficult to support.
+   *
+   * @return the active editor and the snippet edit that goes live in it; `null` if none of the [edits] goes live
+   */
+  private fun findLiveSnippetEdit(document: Document, edits: List<Either<TextEdit, SnippetTextEdit>>): Pair<Editor, SnippetTextEdit>? {
+    val snippetEdit = edits.firstNotNullOfOrNull { it.right } ?: return null
+    val editor = FileEditorManager.getInstance(lspClient.project).selectedTextEditor ?: return null
+    if (editor.document != document || editor.isViewer) return null
+    return editor to snippetEdit
+  }
+
+  /** A snippet edit that goes live: its plain text is already in the document at [marker]. */
+  private class LspLiveSnippet(val editor: Editor, val marker: RangeMarker, val snippet: String) {
+    /** Replaces the plain text with the live template, see [Lsp4jService.startSnippet]. */
+    fun start() {
+      if (marker.isValid) Lsp4jService.getInstance().startSnippet(editor, marker.textRange, snippet)
     }
   }
 
@@ -366,7 +409,7 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
       documentChanges.forEach { editOrResourceOperation ->
         editOrResourceOperation.left?.let { textDocumentEdit ->
           if (physicalDocument != uriToDocumentMap[textDocumentEdit.textDocument.uri]) return@forEach
-          if (!applySimpleTextEdits(nonPhysicalDocument, textDocumentEdit.edits)) return@invokeForPreview
+          if (!applyTextEdits(nonPhysicalDocument, textDocumentEdit.edits)) return@invokeForPreview
         }
       }
     }

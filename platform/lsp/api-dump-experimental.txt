@@ -51,3 +51,6 @@ c:com.intellij.platform.lsp.api.customization.LspCompletionSupport
 c:com.intellij.platform.lsp.api.customization.LspDiagnosticsSupport
 - com.intellij.platform.lsp.api.customization.LspDiagnosticsCustomizer
 - *:getEnforcedTextAttributes(org.eclipse.lsp4j.Diagnostic):com.intellij.openapi.editor.markup.TextAttributes
+f:com.intellij.platform.lsp.util.Lsp4jUtilKt
+- *sf:applyTextEdits(com.intellij.openapi.editor.Document,java.util.List,kotlin.jvm.functions.Function2):Z
+- *bs:applyTextEdits$default(com.intellij.openapi.editor.Document,java.util.List,kotlin.jvm.functions.Function2,I,java.lang.Object):Z
