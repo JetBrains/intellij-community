@@ -74,9 +74,11 @@ public final class ActionsTreeUtil {
         Presentation presentation2 = action2 == null ? null : action2.getTemplatePresentation();
         String text2 = presentation2 == null ? null : presentation2.getText();
         if (StringUtil.isEmpty(text2)) {
-          LOG.warn("No text in '" + actionId + "' template presentation" +
-                   (boundSourceId != null ? " (bound by " + boundSourceId + ")" : "") +
-                   ". Showing its action-id instead");
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("No text in '" + actionId + "' template presentation" +
+                      (boundSourceId != null ? " (bound by " + boundSourceId + ")" : "") +
+                      ". Showing its action-id instead");
+          }
         }
         else {
           LOG.info("No text in '" + actionId + "' stub template presentation" +
