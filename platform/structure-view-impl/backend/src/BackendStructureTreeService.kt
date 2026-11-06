@@ -15,7 +15,6 @@ import com.intellij.ide.structureView.newStructureView.StructureViewUtil
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper
 import com.intellij.ide.structureView.newStructureView.getElementInfoProvider
 import com.intellij.ide.util.FileStructureFilter
-import com.intellij.ide.util.FileStructureNodeProvider
 import com.intellij.ide.util.FileStructurePopup
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.smartTree.SmartTreeStructure
@@ -341,7 +340,8 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
 
     val mainNodes = mutableListOf<StructureViewTreeElementDto>()
     //todo for not a popup these don't have to implement FileStructureNodeProvider
-    val nodeProvidersMap = getNodeProviders(entry.treeModel)?.filter { it !is DelegatingNodeProvider<*> }?.associate { it to mutableListOf<StructureViewTreeElementDto>() } ?: emptyMap()
+    val providers = getNodeProviders(entry.treeModel)?.filter { it !is DelegatingNodeProvider<*> } ?: emptyList()
+    val nodeProvidersMap = providers.associate { it.name to mutableListOf<StructureViewTreeElementDto>() }
     val expandInfoProvider = entry.treeModel as? ExpandInfoProvider
     val elementInfoProvider = getElementInfoProvider(entry.treeModel)
     val rootNode = createRootModel(entry.wrapper.rootElement as TreeElementWrapper, expandInfoProvider, elementInfoProvider)
@@ -378,13 +378,13 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
       "selectionId=$selection, selectedKeyPresent=${selectedKey != null}"
     }
 
-    val nodeProviders = nodeProvidersMap.entries.mapNotNull { (provider, nodes) ->
+    val nodeProviders = providers.mapNotNull { provider ->
       val nodesLoaded = entry.backendActionOwner.isActionActive(provider)
 
       if (!nodesLoaded) return@mapNotNull null
       NodeProviderNodesDto(
         provider.name,
-        nodes,
+        nodeProvidersMap.getValue(provider.name),
       )
     }
 
@@ -392,7 +392,7 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
 
     val deferredNodeProviders = CompletableFuture<DeferredNodesDto>()
 
-    if (nodeProvidersMap.keys.any { !entry.backendActionOwner.isActionActive(it) }) {
+    if (providers.any { !entry.backendActionOwner.isActionActive(it) }) {
       entry.structureTreeModel.invoker.invokeLater {
         val entry = structureViews[entryId] ?: return@invokeLater
         // Check if any providers don't have their nodes loaded yet
@@ -454,7 +454,8 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
 
     val computeStartTime = System.nanoTime()
     //all node providers are enabled anyway
-    val providerNodesMap = getNodeProviders(entry.treeModel)?.filter { it !is DelegatingNodeProvider<*> }?.associateWith { mutableListOf<StructureViewTreeElementDto>() } ?: return null
+    val providerNodesMap = getNodeProviders(entry.treeModel)?.filter { it !is DelegatingNodeProvider<*> }
+      ?.associate { it.name to mutableListOf<StructureViewTreeElementDto>() } ?: return null
     val expandInfoProvider = entry.treeModel as? ExpandInfoProvider
     val elementInfoProvider = getElementInfoProvider(entry.treeModel)
     val filters = entry.treeModel.filters.filterIsInstance<FileStructureFilter>()
@@ -468,8 +469,8 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
       false
     }
 
-    val nodeProviderDtos = providerNodesMap.map { (provider, nodes) ->
-      NodeProviderNodesDto(provider.name, nodes)
+    val nodeProviderDtos = providerNodesMap.map { (providerName, nodes) ->
+      NodeProviderNodesDto(providerName, nodes)
     }
     logger.trace {
       "computeAllProviderNodes: completed in ${(System.nanoTime() - computeStartTime).asTraceDuration()}; " +
@@ -507,7 +508,7 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
     elementInfoProvider: ElementInfoProvider?,
     path: TreePath,
     nodes: MutableList<StructureViewTreeElementDto>,
-    nodeProvidersMap: Map<FileStructureNodeProvider<*>, MutableList<StructureViewTreeElementDto>>?,
+    nodeProvidersMap: Map<String, MutableList<StructureViewTreeElementDto>>?,
     filters: List<FileStructureFilter>,
     structureViewEntry: StructureViewEntry,
   ) {
@@ -536,8 +537,9 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
       filters.map { it.isVisible(element) }
     )
 
-    if (wrapper.provider != null) {
-      nodeProvidersMap?.get(wrapper.provider)?.add(model) ?: nodes.add(model)
+    val provider = wrapper.provider
+    if (provider != null) {
+      nodeProvidersMap?.get(provider.name)?.add(model) ?: nodes.add(model)
     }
     else {
       nodes.add(model)
