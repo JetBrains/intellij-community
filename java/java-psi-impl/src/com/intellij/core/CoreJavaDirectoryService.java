@@ -29,7 +29,7 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
-    return ((CoreJavaFileManager)JavaOptionalServices.getJavaFileManager(dir.getProject())).getPackage(dir);
+    return JavaOptionalServices.getJavaFileManager(dir.getProject()).getPackage(dir);
   }
 
   @Override

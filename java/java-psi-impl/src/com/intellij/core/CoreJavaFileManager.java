@@ -68,7 +68,8 @@ public class CoreJavaFileManager implements JavaFileManager {
     return result;
   }
 
-  public @Nullable PsiPackage getPackage(PsiDirectory dir) {
+  @Override
+  public @Nullable PsiPackage getPackage(@NotNull PsiDirectory dir) {
     final VirtualFile file = dir.getVirtualFile();
     for (VirtualFile root : myClasspath) {
       if (VfsUtilCore.isAncestor(root, file, false)) {
