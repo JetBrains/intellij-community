@@ -98,6 +98,15 @@ object ExceptionAutoReportUtil {
     return getRelevantData(message) != null
   }
 
+  fun isAutoReportableDiagnostic(th: Throwable) : Boolean {
+    if (getForcedAutoReportLevel() == ForcedReportLevel.FREEZES && !isFreeze(th)) return false
+
+    val pluginId = PluginUtil.getInstance().findPluginId(th)
+    val localPlugin = PluginManagerCore.getPlugin(pluginId)
+    val submitter = DefaultIdeaErrorLogger.findSubmitter(th, localPlugin) as? ITNReporter ?: return false
+    return isSubmitterCompatible(localPlugin?.vendor, submitter)
+  }
+
   suspend fun getRelevantData(message: AbstractMessage): Pair<ITNReporter, ProblematicPluginInfo?>? {
     val throwable = message.throwable
     if (throwable is JBRCrash) return null
@@ -119,13 +128,7 @@ object ExceptionAutoReportUtil {
     val pluginInfo = ErrorMessageClustering.getInstance().createPluginInfo(pluginId)
     val submitter = DefaultIdeaErrorLogger.findSubmitterByPluginInfo(throwable, pluginInfo)
     val itnReporter = submitter as? ITNReporter ?: return null
-
-    val isErrorSendable = if (pluginInfo == null || PluginManagerCore.isDevelopedByJetBrains(pluginInfo.vendor)) {
-      isDefaultSubmitter(submitter)
-    }
-    else {
-      submitter.javaClass == JetBrainsMarketplaceErrorReportSubmitter::class.java
-    }
+    val isErrorSendable = isSubmitterCompatible(pluginInfo?.vendor, submitter)
 
     if (isErrorSendable) {
       return Pair(itnReporter, pluginInfo)
@@ -135,9 +138,17 @@ object ExceptionAutoReportUtil {
     }
   }
 
+  private fun isSubmitterCompatible(vendor: String?, submitter: ITNReporter): Boolean {
+    if ((vendor == null || PluginManagerCore.isDevelopedByJetBrains(vendor))
+        && isDefaultSubmitter(submitter)) {
+      return true
+    }
+
+    return submitter.javaClass == JetBrainsMarketplaceErrorReportSubmitter::class.java
+  }
+
   private fun isDefaultSubmitter(submitter: ITNReporter): Boolean {
-    val cls = submitter.javaClass
-    return cls == ITNReporter::class.java
+    return submitter.javaClass == ITNReporter::class.java
   }
 
   fun isFreeze(throwable: Throwable): Boolean {
