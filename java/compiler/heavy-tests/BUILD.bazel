@@ -67,6 +67,7 @@ jvm_library(
         "//platform/util:util-ui",
         "//libraries/asm",
         "//libraries/junit4",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
     ],
 )
 ### auto-generated section `build intellij.java.compiler.heavy.tests` end
