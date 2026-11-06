@@ -399,6 +399,7 @@ jvm_library(
         "//jps/model-impl:model-tests_test_lib",
         "//platform/diff-impl/tests:tests_test_lib",
         "//platform/built-in-server:builtInServer-tests_test_lib",
+        "//plugins/built-in-help:builtInHelp-tests_test_lib",
         "//platform/script-debugger/debugger-ui:scriptDebugger-ui",
         "//platform/build-scripts/icons:images-build",
         "//plugins/stats-collector:statsCollector-tests_test_lib",
