@@ -4,14 +4,19 @@ package com.intellij.openapi.keymap.impl
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 
@@ -23,14 +28,39 @@ private class KeymapFlagsStorageListener : KeymapManagerListener {
       return
     }
 
-    val storage = service<KeymapFlagsStorage>()
-    for (actionId in actionIds) {
-      storage.removeOutdatedFlags(keymap, actionId, fromSettings)
+    withKeymapFlagsStorage { storage ->
+      for (actionId in actionIds) {
+        storage.removeOutdatedFlags(keymap, actionId, fromSettings)
+      }
     }
   }
 
   override fun keymapRemoved(keymap: Keymap) {
-    service<KeymapFlagsStorage>().removeFlagsForKeymap(keymap)
+    withKeymapFlagsStorage { it.removeFlagsForKeymap(keymap) }
+  }
+}
+
+/**
+ * Runs [action] at once if [KeymapFlagsStorage] is loaded.
+ * Otherwise, loads the storage in the background and then runs [action] in the same background coroutine.
+ * So the listener does not load `keymapFlags.xml` on the EDT.
+ */
+private fun withKeymapFlagsStorage(action: (KeymapFlagsStorage) -> Unit) {
+  val storage = serviceIfCreated<KeymapFlagsStorage>()
+  if (storage == null) {
+    service<KeymapFlagsStorageLoader>().loadAndRun(action)
+  }
+  else {
+    action(storage)
+  }
+}
+
+@Service(Service.Level.APP)
+internal class KeymapFlagsStorageLoader(private val coroutineScope: CoroutineScope) {
+  fun loadAndRun(action: (KeymapFlagsStorage) -> Unit) {
+    coroutineScope.launch {
+      action(serviceAsync<KeymapFlagsStorage>())
+    }
   }
 }
 
