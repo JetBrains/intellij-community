@@ -24,10 +24,14 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
@@ -48,12 +52,13 @@ import kotlin.system.exitProcess
 
 private const val COMMAND = "psiUnused"
 
-private const val USAGE = """Usage: $COMMAND --project=<dir> --jdk=<JDK home> --output=<unused.json>
+private const val USAGE = """Usage: $COMMAND --project=<dir> --jdk=<JDK home> --output=<unused.json> [--scope=<dir>,...]
   --project=<dir>        the project to open; a directory with .idea opens without import
   --jdk=<JDK home>       a full JDK with lib/src.zip; it is registered under every JDK name that the project asks for
-  --output=<unused.json> the declarations with the answer of the unused-declaration analysis"""
+  --output=<unused.json> the declarations with the answer of the unused-declaration analysis
+  --scope=<dir>,...      analyze only the modules whose content roots lie under these directories of the project"""
 
-private class UnusedOptions(@JvmField val project: Path, @JvmField val jdk: Path, @JvmField val output: Path) {
+private class UnusedOptions(@JvmField val project: Path, @JvmField val jdk: Path, @JvmField val output: Path, @JvmField val scope: List<Path>) {
   companion object {
     fun parse(args: List<String>): UnusedOptions {
       val values = HashMap<String, String>()
@@ -61,13 +66,15 @@ private class UnusedOptions(@JvmField val project: Path, @JvmField val jdk: Path
         require(arg.startsWith("--") && arg.contains('=')) { "unknown argument: $arg" }
         values[arg.substring(2, arg.indexOf('='))] = arg.substring(arg.indexOf('=') + 1)
       }
-      val unknown = values.keys - setOf("project", "jdk", "output")
+      val unknown = values.keys - setOf("project", "jdk", "output", "scope")
       require(unknown.isEmpty()) { "unknown options: $unknown" }
       val project = Path.of(requireNotNull(values["project"]) { "--project is required" }).absolute().normalize()
       val jdk = Path.of(requireNotNull(values["jdk"]) { "--jdk is required" }).absolute().normalize()
       require(Files.isRegularFile(jdk.resolve("lib/src.zip"))) { "--jdk must be a full JDK with lib/src.zip: $jdk" }
       val output = Path.of(requireNotNull(values["output"]) { "--output is required" }).absolute().normalize()
-      return UnusedOptions(project, jdk, output)
+      val scope = values["scope"].orEmpty().split(',').filter { it.isNotBlank() }.map { project.resolve(it.trim()).normalize() }
+      require(scope.all { it.startsWith(project) }) { "--scope must name directories of the project: $scope" }
+      return UnusedOptions(project, jdk, output, scope)
     }
   }
 }
@@ -77,7 +84,8 @@ private class UnusedOptions(@JvmField val project: Path, @JvmField val jdk: Path
  * inspection, [UnusedDeclarationInspection]) for every class, method and field of its Java and Kotlin sources, the
  * Kotlin ones through UAST: the oracle of accio's `unused`.
  *
- * The analysis runs twice over the whole project, tests included, with the inspection's defaults otherwise:
+ * The analysis runs twice over the whole project, or over the modules under the `--scope` directories, tests included,
+ * with the inspection's defaults otherwise:
  * - with test entry points (`dead`): a JUnit or TestNG test is an entry, so what only tests use is reachable;
  * - without them (`dead_in_production`): what only tests use is dead too.
  *
@@ -151,8 +159,9 @@ private suspend fun exportUnused(options: UnusedOptions) {
   val openMs = System.currentTimeMillis() - startedAt
   log("project is ready after $openMs ms")
 
-  val withTests = analyze(project, options.project, testEntryPoints = true)
-  val inProduction = analyze(project, options.project, testEntryPoints = false).associateBy { it.key }
+  val modules = if (options.scope.isEmpty()) null else scopeModules(project, options.scope)
+  val withTests = analyze(project, options.project, modules, testEntryPoints = true)
+  val inProduction = analyze(project, options.project, modules, testEntryPoints = false).associateBy { it.key }
   log("${withTests.size} declarations, ${withTests.count { it.dead }} dead with test entry points, " +
       "${inProduction.values.count { it.dead }} without them")
 
@@ -177,15 +186,32 @@ private suspend fun exportUnused(options: UnusedOptions) {
   log("wrote ${options.output}; total ${System.currentTimeMillis() - startedAt} ms")
 }
 
+/** The modules with a content root under one of [dirs]; each directory must hold one. */
+private suspend fun scopeModules(project: Project, dirs: List<Path>): List<Module> {
+  val byDir = readAction {
+    val roots = ModuleManager.getInstance(project).modules.associateWith { module ->
+      ModuleRootManager.getInstance(module).contentRoots.map { Path.of(it.path) }
+    }
+    dirs.associateWith { dir -> roots.filterValues { paths -> paths.any { it.startsWith(dir) } }.keys }
+  }
+  for ((dir, modules) in byDir) {
+    require(modules.isNotEmpty()) { "no module under $dir" }
+  }
+  val modules = byDir.values.flatten().distinct().sortedBy { it.name }
+  log("scope: ${modules.size} modules under ${dirs.joinToString()}: ${modules.joinToString { it.name }}")
+  return modules
+}
+
 /**
  * Runs the unused-declaration analysis over the whole project ([AnalysisScope] of the project: production and test
- * sources) and reads every class, method and field of the graph before the context is cleaned up, which disposes it.
+ * sources), or over [modules] when the options name a scope (a use from outside them counts as `external`), and reads
+ * every class, method and field of the graph in the scope before the context is cleaned up, which disposes it.
  * [GlobalInspectionContextImpl.performInspectionsWithProgress] runs on a pooled thread without a read lock, under an
  * indicator that is both a [com.intellij.openapi.wm.ex.ProgressIndicatorEx] and a
  * [ProgressIndicatorWithDelayedPresentation], as the headless `inspect` application runs it; calling it directly opens
  * no results view.
  */
-private suspend fun analyze(project: Project, root: Path, testEntryPoints: Boolean): List<UnusedDeclaration> {
+private suspend fun analyze(project: Project, root: Path, modules: List<Module>?, testEntryPoints: Boolean): List<UnusedDeclaration> {
   val wrapper = GlobalInspectionToolWrapper(UnusedDeclarationInspection())
   val profile = createSimple("psiUnused", project, listOf(wrapper))
   // the profile's tool is the instance the context runs (a wrapper copy would start from the defaults again)
@@ -193,7 +219,7 @@ private suspend fun analyze(project: Project, root: Path, testEntryPoints: Boole
   tool.isTestEntryPoints = testEntryPoints
   val context = (InspectionManager.getInstance(project) as InspectionManagerEx).createNewGlobalContext()
   context.setExternalProfile(profile)
-  val scope = AnalysisScope(project)
+  val scope = if (modules == null) AnalysisScope(project) else AnalysisScope(modules.toTypedArray())
   context.currentScope = scope
   val startedAt = System.currentTimeMillis()
   val declarations = ArrayList<UnusedDeclaration>()
@@ -202,7 +228,7 @@ private suspend fun analyze(project: Project, root: Path, testEntryPoints: Boole
       ProgressManager.getInstance().runProcess({ context.performInspectionsWithProgress(scope, true, true) }, AnalysisIndicator())
       ProgressManager.getInstance().runProcess({
         ReadAction.run<Throwable> {
-          context.refManager.iterate(DeclarationCollector(project, root, tool, declarations))
+          context.refManager.iterate(DeclarationCollector(project, root, scope.takeIf { modules != null }, tool, declarations))
         }
       }, ProgressIndicatorBase())
     }
@@ -221,10 +247,11 @@ private class AnalysisIndicator : ProgressIndicatorBase(), ProgressIndicatorWith
   override fun setDelayInMillis(delayInMillis: Int) {}
 }
 
-/** Reads each class, method and field of the graph that has a name and lies in a file under [root]. */
+/** Reads each class, method and field of the graph that has a name and lies in a file under [root] and in [scope]. */
 private class DeclarationCollector(
   private val project: Project,
   private val root: Path,
+  private val scope: AnalysisScope?,
   private val tool: UnusedDeclarationInspectionBase,
   private val out: MutableList<UnusedDeclaration>,
 ) : RefJavaVisitor() {
@@ -269,7 +296,7 @@ private class DeclarationCollector(
     val file = psi.containingFile ?: return
     val virtualFile = file.virtualFile ?: return
     val path = runCatching { root.relativize(Path.of(virtualFile.path)) }.getOrNull()?.toString() ?: return
-    if (path.startsWith("..") || !fileIndex.isInSourceContent(virtualFile)) return
+    if (path.startsWith("..") || !fileIndex.isInSourceContent(virtualFile) || scope?.contains(virtualFile) == false) return
     val name = (psi as? PsiNamedElement)?.name ?: return
     val nameElement = (psi as? PsiNameIdentifierOwner)?.nameIdentifier ?: psi
     val text = file.viewProvider.contents
