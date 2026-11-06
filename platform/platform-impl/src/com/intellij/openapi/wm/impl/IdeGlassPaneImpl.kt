@@ -94,11 +94,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
   private val namedPainters = HashMap<String, PainterHelper>()
   private var isPreprocessorActive = false
   private val listenerToCursor = LinkedHashMap<Any, Cursor>()
-  private val cursorOverrides = LinkedHashMap<Any, Cursor>()
-  private var cursorBeforeOverride: Cursor? = null
-  private var enabledBeforeOverride = false
-  private var overriddenWindow: Window? = null
-  private var windowCursorBeforeOverride: Cursor? = null
+  private val cursorOverride = GlassPaneCursorOverride(this, ::applyActivationState)
   private var lastCursorComponent: Component? = null
   private var lastOriginalCursor: Cursor? = null
   private var prevPressEvent: MouseEvent? = null
@@ -323,7 +319,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
         dispatched = target is DnDAware && dispatchForDnDAware(event, point, target)
       }
     }
-    if (isVisible && componentCount == 0 && cursorOverrides.isEmpty()) {
+    if (isVisible && componentCount == 0 && !cursorOverride.isActive) {
       var cursorSet = false
       if (meComponent != null) {
         val parent = pane.contentPane.parent
@@ -524,34 +520,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
    */
   @RequiresEdt
   internal fun setCursorOverride(cursor: Cursor?, requestor: Any) {
-    val wasActive = cursorOverrides.isNotEmpty()
-    cursorOverrides.remove(requestor)
-    if (cursor != null) {
-      cursorOverrides.put(requestor, cursor)
-    }
-    val activeCursor = cursorOverrides.values.lastOrNull()
-    if (activeCursor != null) {
-      if (!wasActive) {
-        cursorBeforeOverride = if (isCursorSet) this.cursor else null
-        enabledBeforeOverride = isEnabled
-        isEnabled = true
-        val window = SwingUtilities.getWindowAncestor(this)
-        overriddenWindow = window
-        windowCursorBeforeOverride = if (window != null && window.isCursorSet) window.cursor else null
-      }
-      UIUtil.setCursor(this, activeCursor)
-      overriddenWindow?.let { UIUtil.setCursor(it, activeCursor) }
-      applyActivationState()
-    }
-    else if (wasActive) {
-      applyActivationState()
-      isEnabled = enabledBeforeOverride
-      UIUtil.setCursor(this, cursorBeforeOverride)
-      cursorBeforeOverride = null
-      overriddenWindow?.let { UIUtil.setCursor(it, windowCursorBeforeOverride) }
-      overriddenWindow = null
-      windowCursorBeforeOverride = null
-    }
+    cursorOverride.set(cursor, requestor)
   }
 
   override fun addMousePreprocessor(listener: MouseListener, parent: Disposable) {
@@ -604,7 +573,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
 
   private fun applyActivationState() {
     val wasVisible = isVisible
-    val hasWork = loadingIndicator != null || painters.hasPainters() || componentCount > 0 || cursorOverrides.isNotEmpty()
+    val hasWork = loadingIndicator != null || painters.hasPainters() || componentCount > 0 || cursorOverride.isActive
     if (wasVisible != hasWork) {
       isVisible = hasWork
     }
@@ -738,6 +707,63 @@ private class IdePaneLoadingLayer(
       else -> false
     }
   }
+}
+
+/**
+ * The cursor override of a glass pane, see [IdeGlassPaneImpl.setCursorOverride].
+ *
+ * @param updateVisibility shows or hides the pane; the pane must be visible while [isActive] is `true`
+ */
+private class GlassPaneCursorOverride(private val glassPane: JComponent, private val updateVisibility: () -> Unit) {
+  private val requests = LinkedHashMap<Any, Cursor>()
+  private var paneCursorBefore: Cursor? = null
+  private var paneEnabledBefore = false
+  private var window: Window? = null
+  private var windowCursorBefore: Cursor? = null
+
+  val isActive: Boolean
+    get() = requests.isNotEmpty()
+
+  fun set(cursor: Cursor?, requestor: Any) {
+    val wasActive = isActive
+    requests.remove(requestor)
+    if (cursor != null) {
+      requests.put(requestor, cursor)
+    }
+    val activeCursor = requests.values.lastOrNull()
+    if (activeCursor != null) {
+      if (!wasActive) {
+        start()
+      }
+      UIUtil.setCursor(glassPane, activeCursor)
+      window?.let { UIUtil.setCursor(it, activeCursor) }
+      updateVisibility()
+    }
+    else if (wasActive) {
+      updateVisibility()
+      stop()
+    }
+  }
+
+  private fun start() {
+    paneCursorBefore = ownCursor(glassPane)
+    paneEnabledBefore = glassPane.isEnabled
+    glassPane.isEnabled = true
+    val window = SwingUtilities.getWindowAncestor(glassPane)
+    this.window = window
+    windowCursorBefore = window?.let { ownCursor(it) }
+  }
+
+  private fun stop() {
+    glassPane.isEnabled = paneEnabledBefore
+    UIUtil.setCursor(glassPane, paneCursorBefore)
+    window?.let { UIUtil.setCursor(it, windowCursorBefore) }
+    paneCursorBefore = null
+    window = null
+    windowCursorBefore = null
+  }
+
+  private fun ownCursor(component: Component): Cursor? = if (component.isCursorSet) component.cursor else null
 }
 
 internal interface FrameLoadingState {
