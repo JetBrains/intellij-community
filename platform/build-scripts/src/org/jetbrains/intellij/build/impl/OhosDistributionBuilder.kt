@@ -213,6 +213,8 @@ internal class OhosDistributionBuilder(
       "-Dnosplash=true",
       // Skiko has no OHOS natives, so the IDE must not preload them
       "-Dskiko.preload.native.lib=false",
+      // libghostty-vt has no OHOS natives, so the reworked terminal uses the JediTerm emulator
+      "-Dterminal.use.ghostty.emulator=false",
       "-Dsun.awt.disablegrab=true",
       "-Dapple.laf.useScreenMenuBar=true",
       "-DjbScreenMenuBar.enabled=true",
