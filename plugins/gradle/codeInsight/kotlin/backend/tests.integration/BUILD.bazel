@@ -1,6 +1,22 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "tests.integration_test",
+    data = [
+        "@kotlin_test_deps//:kotlin-dist-for-ide.jar",
+    ],
+    jvm_flags = [
+        "-Didea.gradle.mavenRepositoryUrl=https://repo1.maven.org/maven2",
+        "-Didea.gradle.servicesUrl=https://services.gradle.org",
+    ],
+    tags = [
+        "gradle-kts-code-insight-integration-tests",
+    ],
+    runtime_deps = [":tests.integration_test_lib"],
+)
+### skip generation section `test intellij.gradle.codeInsight.kotlin.backend.tests.integration`
+
 ### auto-generated section `build intellij.gradle.codeInsight.kotlin.backend.tests.integration` start
 jvm_library(
     name = "tests.integration_test_lib",
@@ -51,10 +67,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.gradle.codeInsight.kotlin.backend.tests.integration` end
-
-### auto-generated section `test intellij.gradle.codeInsight.kotlin.backend.tests.integration` start
-jps_test(
-    name = "tests.integration_test",
-    runtime_deps = [":tests.integration_test_lib"],
-)
-### auto-generated section `test intellij.gradle.codeInsight.kotlin.backend.tests.integration` end
