@@ -53,12 +53,15 @@
     <module name="intellij.java.impl"/>
     <!-- endregion -->
   </dependencies>
-  <content namespace="jetbrains"/>
+  <content namespace="jetbrains">
+    <module name="intellij.eclipse.common" loading="embedded"/>
+    <module name="intellij.eclipse.jps" loading="embedded"/>
+  </content>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
     <workspaceModel.customModuleRootsSerializer implementation="org.jetbrains.idea.eclipse.config.EclipseModuleRootsSerializer"/>
     <workspaceModel.customModuleComponentSerializer implementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerSerializer"/>
-    <compileServer.plugin classpath="eclipse-jps.jar;eclipse-common.jar"/>
+    <compileServer.plugin classpath="intellij.eclipse.jps.jar;intellij.eclipse.common.jar"/>
     <projectImportProvider implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider"/>
     <projectOpenProcessor id="EclipseProjectOpenProcessor" implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder"/>

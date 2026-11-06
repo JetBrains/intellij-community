@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.eclipse.jps` start
+content_module_jar(module = ":jps")
+### auto-generated section `dev intellij.eclipse.jps` end
 
 ### auto-generated section `build intellij.eclipse.jps` start
 jvm_library(
@@ -34,6 +39,7 @@ jvm_library(
 exports_files(
     [
         "intellij.eclipse.jps.iml",
+        "resources/intellij.eclipse.jps.xml",
     ],
     visibility = ["//visibility:public"],
 )

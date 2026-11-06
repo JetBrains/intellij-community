@@ -20,10 +20,12 @@ dev_dist_plugin(
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/eclipse.jar": ["intellij.eclipse"],
-        "lib/eclipse-jps.jar": ["intellij.eclipse.jps"],
-        "lib/eclipse-common.jar": ["intellij.eclipse.common"],
     },
     main_module = "intellij.eclipse",
+    module_jar_paths = {
+        "intellij.eclipse.common": "lib/intellij.eclipse.common.jar",
+        "intellij.eclipse.jps": "lib/intellij.eclipse.jps.jar",
+    },
 )
 ### auto-generated section `dev intellij.eclipse` end
 

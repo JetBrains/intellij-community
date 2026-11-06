@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.eclipse.common` start
+content_module_jar(module = ":common")
+### auto-generated section `dev intellij.eclipse.common` end
 
 ### auto-generated section `build intellij.eclipse.common` start
 jvm_library(
@@ -13,6 +18,10 @@ jvm_library(
     ),
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.eclipse.common",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
@@ -28,6 +37,7 @@ jvm_library(
 exports_files(
     [
         "intellij.eclipse.common.iml",
+        "resources/intellij.eclipse.common.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -202,10 +202,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },
-    pluginAuto(listOf("intellij.eclipse")) { spec ->
-      spec.withModule("intellij.eclipse.jps", "eclipse-jps.jar")
-      spec.withModule("intellij.eclipse.common", "eclipse-common.jar")
-    },
     plugin("intellij.java.coverage") { spec ->
       // explicitly pack JaCoCo as a separate JAR
       spec.withModuleLibrary(libraryName = "JaCoCo", moduleName = "intellij.java.coverage", relativeOutputPath = "jacoco.jar")
