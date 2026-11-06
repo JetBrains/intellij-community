@@ -18,25 +18,29 @@ import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Expirable
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.ui.JBColor
 import com.intellij.util.text.allOccurrencesOf
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.cancel
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.awt.Font
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
-import kotlinx.coroutines.cancel
 import kotlin.test.assertFalse
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -488,6 +492,46 @@ class EditorHyperlinkSupportTest(private val trackDocumentChangesManually: Boole
     assertNotNull(hyperlinkSupport.getLinkNavigationRunnable(LogicalPosition(1, 0)))
     // no invisible link navigation without mouse event
     assertNull(hyperlinkSupport.getLinkNavigationRunnable(LogicalPosition(0, 0)))
+  }
+
+  @Test
+  fun `test copied hyperlink keeps the target, the effects, and the visibility`() {
+    val linkText = "hidden-foo"
+    document.setText(linkText)
+    val hyperlinkInfo = MyInvisibleHyperlinkFilter.InvisibleHyperlinkInfo(linkText)
+    val followedAttributes = TextAttributes(JBColor.BLUE, null, null, null, Font.PLAIN)
+    val hoveredAttributes = TextAttributes(null, null, JBColor.RED, EffectType.LINE_UNDERSCORE, Font.PLAIN)
+    val source = addHighlighter()
+    hyperlinkSupport.createHyperlink(source, hyperlinkInfo, followedAttributes, hoveredAttributes, true)
+    val target = addHighlighter()
+
+    EditorHyperlinkSupport.copyHyperlink(source, target)
+    editor.markupModel.removeHighlighter(source)
+
+    assertSame(hyperlinkInfo, EditorHyperlinkSupport.getHyperlinkInfo(target))
+    assertSame(followedAttributes, EditorHyperlinkSupport.getFollowedHyperlinkAttributes(target))
+    assertSame(hoveredAttributes, EditorHyperlinkSupport.getHoveredHyperlinkAttributes(target))
+    assertTrue(EditorHyperlinkSupport.isInvisibleLink(target))
+    assertEquals(listOf(target), collectAllHyperlinks())
+    // no invisible link navigation without mouse event
+    assertNull(hyperlinkSupport.getLinkNavigationRunnable(LogicalPosition(0, 0)))
+  }
+
+  @Test
+  fun `test copy of a plain highlighter adds no hyperlink`() {
+    document.setText("foo")
+    val source = addHighlighter()
+    val target = addHighlighter()
+
+    EditorHyperlinkSupport.copyHyperlink(source, target)
+
+    assertNull(EditorHyperlinkSupport.getHyperlinkInfo(target))
+    assertFalse(EditorHyperlinkSupport.isInvisibleLink(target))
+    assertEmpty(collectAllHyperlinks())
+  }
+
+  private fun addHighlighter(): RangeHighlighter {
+    return editor.markupModel.addRangeHighlighter(null, 0, document.textLength, HighlighterLayer.HYPERLINK, HighlighterTargetArea.EXACT_RANGE)
   }
 
   @Test

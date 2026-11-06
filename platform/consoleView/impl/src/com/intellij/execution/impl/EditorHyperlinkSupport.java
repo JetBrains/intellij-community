@@ -325,6 +325,27 @@ public final class EditorHyperlinkSupport {
     return attributes != null ? attributes.hyperlinkInfo() : null;
   }
 
+  /**
+   * Returns {@code true} if {@code range} is an invisible link, see {@link Filter.ResultItem#isInvisibleLink()}.
+   */
+  @ApiStatus.Internal
+  public static boolean isInvisibleLink(@NotNull RangeHighlighter range) {
+    HyperlinkData data = getHyperlinkData(range);
+    return data != null && data.isInvisibleLink();
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable TextAttributes getHoveredHyperlinkAttributes(@NotNull RangeHighlighter range) {
+    HyperlinkData data = getHyperlinkData(range);
+    return data == null ? null : data.hoveredHyperlinkAttributes();
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighter range) {
+    HyperlinkData data = getHyperlinkData(range);
+    return data == null ? null : data.followedHyperlinkAttributes();
+  }
+
   private static @Nullable HyperlinkData getHyperlinkData(@NotNull RangeHighlighter range) {
     return range.getUserData(HYPERLINK);
   }
@@ -445,6 +466,33 @@ public final class EditorHyperlinkSupport {
 
   public void createHyperlink(@NotNull RangeHighlighter highlighter, @NotNull HyperlinkInfo hyperlinkInfo) {
     associateHyperlink(highlighter, hyperlinkInfo, null, null, true, false);
+  }
+
+  /**
+   * Makes the existing {@code highlighter} a hyperlink with the given hover and follow effects.
+   * A {@code null} effect keeps the default one. An invisible link looks like plain text until
+   * the pointer is over it, see {@link Filter.ResultItem#isInvisibleLink()}.
+   */
+  @ApiStatus.Internal
+  public void createHyperlink(@NotNull RangeHighlighter highlighter,
+                              @NotNull HyperlinkInfo hyperlinkInfo,
+                              @Nullable TextAttributes followedHyperlinkAttributes,
+                              @Nullable TextAttributes hoveredHyperlinkAttributes,
+                              boolean isInvisibleLink) {
+    associateHyperlink(highlighter, hyperlinkInfo, followedHyperlinkAttributes, hoveredHyperlinkAttributes, true, isInvisibleLink);
+  }
+
+  /**
+   * Makes {@code target} a hyperlink equal to {@code source}: the same navigation target,
+   * hover and follow effects, and visibility. Does nothing if {@code source} is not a hyperlink.
+   */
+  @ApiStatus.Internal
+  public static void copyHyperlink(@NotNull RangeHighlighter source, @NotNull RangeHighlighter target) {
+    HyperlinkData data = getHyperlinkData(source);
+    if (data != null) {
+      associateHyperlink(target, data.hyperlinkInfo(), data.followedHyperlinkAttributes(), data.hoveredHyperlinkAttributes(),
+                         true, data.isInvisibleLink());
+    }
   }
 
   public @NotNull RangeHighlighter createHyperlink(int highlightStartOffset,
@@ -592,20 +640,17 @@ public final class EditorHyperlinkSupport {
   private static class MyEffectSupplier implements EditorHyperlinkEffectSupplier {
     @Override
     public @Nullable TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighterEx highlighter) {
-      HyperlinkData data = getHyperlinkData(highlighter);
-      return data == null ? null : data.followedHyperlinkAttributes();
+      return EditorHyperlinkSupport.getFollowedHyperlinkAttributes(highlighter);
     }
 
     @Override
     public @Nullable TextAttributes getHoveredHyperlinkAttributes(@NotNull RangeHighlighterEx highlighter) {
-      HyperlinkData data = getHyperlinkData(highlighter);
-      return data == null ? null : data.hoveredHyperlinkAttributes();
+      return EditorHyperlinkSupport.getHoveredHyperlinkAttributes(highlighter);
     }
 
     @Override
     public boolean isInvisibleLink(@NotNull RangeHighlighterEx highlighter) {
-      HyperlinkData data = getHyperlinkData(highlighter);
-      return data != null && data.isInvisibleLink;
+      return EditorHyperlinkSupport.isInvisibleLink(highlighter);
     }
   }
 
