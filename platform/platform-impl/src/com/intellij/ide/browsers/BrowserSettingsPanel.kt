@@ -375,11 +375,9 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
       browserChoiceRow(IdeBundle.message("settings.browsers.default.browser"), defaultBrowserModel)
       browserChoiceRow(IdeBundle.message("settings.browsers.chromium.based.browser"), chromiumBasedBrowserModel)
 
-      group(IdeBundle.message("settings.browsers.show.browser.popup.in.the.editor")) {
-        row {
+      group(IdeBundle.message("settings.browsers.editor")) {
+        row(IdeBundle.message("settings.browsers.show.browser.popup.in")) {
           showBrowserHover = checkBox(IdeBundle.message("settings.browsers.show.browser.popup.html")).component
-        }
-        row {
           showBrowserHoverXml = checkBox(IdeBundle.message("settings.browsers.show.browser.popup.xml")).component
         }
       }
