@@ -40,6 +40,11 @@ public final class TemplateContext {
   public static @Nullable LiveTemplateContext getDifference(@NotNull LiveTemplateContextsSnapshot allContexts,
                                                      @NotNull TemplateContext thisContext,
                                                      @NotNull TemplateContext defaultContext) {
+    // isEnabled() depends only on the own context states and the shared snapshot. When both contexts have the
+    // same own states, no context type can differ, so the per-context-type comparison below can be skipped.
+    if (thisContext.myContextStates.equals(defaultContext.myContextStates)) {
+      return null;
+    }
     for (LiveTemplateContext value : allContexts.getLiveTemplateContexts()) {
       if (thisContext.isEnabled(allContexts, value) != defaultContext.isEnabled(allContexts, value)) {
         return value;
