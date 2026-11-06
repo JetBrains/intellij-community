@@ -71,7 +71,6 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.FileEditorNavigatable
 import com.intellij.openapi.fileEditor.FileEditorOpenRequest
-import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditorProviderBean
 import com.intellij.openapi.fileEditor.FileEditorState
@@ -226,12 +225,11 @@ open class FileEditorManagerImpl(
   override val project: Project,
   @JvmField protected val coroutineScope: CoroutineScope,
 ) : FileEditorManagerEx(), PersistentStateComponent<Element>, Disposable {
-  private val dumbModeFinished: MutableSharedFlow<Unit> = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
-  private val dumbModeFinishedEventCount: AtomicInteger = AtomicInteger()
-
   /**
-   * A change of the providers applicable to the project: its techs changed, see [com.intellij.openapi.extensions.TechnologyFilter],
-   * or a plugin got loaded or unloaded. The editors of the open files follow it, see [providersChanged].
+   * A change of the providers applicable to the open files: the techs of the project changed, see [com.intellij.openapi.extensions.TechnologyFilter], a plugin got loaded
+   * or unloaded, the roots changed, an open file got renamed, or the dumb mode ended. The editors of the open files follow it, see
+   * [updateProvidersOfOpenFiles].
+   * The one flow serializes the updates: a new change cancels the update in flight, and the next update starts from the current editors.
    */
   private val providersChanged = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
   private val providersChangedEventCount = AtomicInteger()
@@ -288,8 +286,8 @@ open class FileEditorManagerImpl(
     }
   }
 
-  private val renamedFileChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 50.milliseconds) { files ->
-    updateProvidersOfOpenFiles(serviceAsync<FileEditorProviderManager>(), files)
+  private val renamedFileChannel: MergingUpdateChannel<VirtualFile> = MergingUpdateChannel(delay = 50.milliseconds) {
+    providersChanged.emit(Unit)
   }
 
   private val fileTitleUpdateChannel: MergingUpdateChannel<VirtualFile?> = MergingUpdateChannel(delay = 50.milliseconds) { toUpdate ->
@@ -412,14 +410,6 @@ open class FileEditorManagerImpl(
 
     coroutineScope.launch {
       val providerManager = serviceAsync<FileEditorProviderManager>()
-      dumbModeFinished.collectLatest {
-        dumbModeFinished(project = project, fileEditorProviderManager = providerManager)
-        dumbModeFinishedEventCount.incrementAndGet()
-      }
-    }
-
-    coroutineScope.launch {
-      val providerManager = serviceAsync<FileEditorProviderManager>()
       providersChanged.collectLatest {
         updateProvidersOfOpenFiles(fileEditorProviderManager = providerManager)
         providersChangedEventCount.incrementAndGet()
@@ -437,7 +427,7 @@ open class FileEditorManagerImpl(
       project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
         override fun exitDumbMode() {
           // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
-          dumbModeFinished.tryEmit(Unit)
+          providersChanged.tryEmit(Unit)
         }
       })
     }
@@ -491,7 +481,7 @@ open class FileEditorManagerImpl(
     connection.subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       override fun exitDumbMode() {
         // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
-        dumbModeFinished.tryEmit(Unit)
+        providersChanged.tryEmit(Unit)
       }
     })
 
@@ -623,81 +613,35 @@ open class FileEditorManagerImpl(
     }
   }
 
-  // need to open additional non-dumb-aware editors
-  private suspend fun dumbModeFinished(project: Project, fileEditorProviderManager: FileEditorProviderManager) {
+  /** Computes the providers of each open file again and adds or removes editors so that the open editors match them. */
+  private suspend fun updateProvidersOfOpenFiles(fileEditorProviderManager: FileEditorProviderManager) {
+    // the icons of dumb-unaware icon providers follow the dumb mode and the roots alike
     refreshIcons()
 
-    val fileToNewProviders = openedComposites.toList().mapNotNull { composite ->
-      val oldProviders = composite.providerSequence.toList()
-      if (oldProviders.isEmpty()) {
-        // not initialized or invalid
-        return@mapNotNull null
-      }
-
-      val newProviders = fileEditorProviderManager.getDumbUnawareProviders(
-        project = project,
-        file = composite.file,
-        excludeIds = oldProviders.mapTo(HashSet()) { it.editorTypeId },
-      )
-      if (newProviders.isEmpty()) {
-        return@mapNotNull null
-      }
-
-      // HIDE_OTHER_EDITORS applies to the editors opened in dumb mode and to the ones added after it, as if the file was opened in smart mode
-      if ((oldProviders.asSequence() + newProviders).none { it.policy == FileEditorPolicy.HIDE_OTHER_EDITORS }) {
-        return@mapNotNull ProviderChange(composite = composite, newProviders = newProviders, editorTypeIdsToRemove = emptyList())
-      }
-
-      val providersToAdd = newProviders.filter { it.policy == FileEditorPolicy.HIDE_OTHER_EDITORS }
-      val editorTypeIdsToRemove = oldProviders.filter { it.policy != FileEditorPolicy.HIDE_OTHER_EDITORS }.map { it.editorTypeId }
-      if (providersToAdd.isEmpty() && editorTypeIdsToRemove.isEmpty()) {
-        null
-      }
-      else {
-        ProviderChange(composite = composite, newProviders = providersToAdd, editorTypeIdsToRemove = editorTypeIdsToRemove)
-      }
-    }
-
-    for (item in fileToNewProviders) {
-      updateFileEditorProviders(item)
-    }
-
-    // update for non-dumb-aware EditorTabTitleProviders
-    scheduleUpdateFileName(file = null)
-  }
-
-  /** Computes the providers of each open file again and adds or removes editors so that the open editors match them. */
-  private suspend fun updateProvidersOfOpenFiles(fileEditorProviderManager: FileEditorProviderManager, files: Collection<VirtualFile>? = null) {
     val fileToProviders = IdentityHashMap<VirtualFile, List<FileEditorProvider>>()
     val filesToClose = mutableListOf<VirtualFile>()
-    val composites = openedComposites.filter { files == null || files.contains(it.file) }.toList()
-    val providerChanges = composites.mapNotNull { composite ->
+    val providerChanges = openedComposites.toList().mapNotNull { composite ->
       withContext(composite.clientId.asContextElement()) {
         val file = composite.file
-        val providers = fileToProviders.getOrPut(file) { fileEditorProviderManager.getProvidersAsync(project, file) }
-        val editorTypeIds = providers.mapTo(LinkedHashSet()) { it.editorTypeId }
         val oldEditorTypeIds = getEditorTypeIds(composite)
         if (oldEditorTypeIds.isEmpty()) {
           // not initialized or invalid
           return@withContext null
         }
-        if (providers.isEmpty()) {
-          filesToClose.add(file)
-          return@withContext null
-        }
 
+        val providers = fileToProviders.getOrPut(file) { fileEditorProviderManager.getProvidersAsync(project, file) }
+        val editorTypeIds = providers.mapTo(HashSet()) { it.editorTypeId }
         val newProviders = providers.filter { !oldEditorTypeIds.contains(it.editorTypeId) }
         val editorTypeIdsToRemove = oldEditorTypeIds.filter { !editorTypeIds.contains(it) }
-        if (newProviders.isEmpty() && editorTypeIdsToRemove.isEmpty()) {
-          null
-        }
-        else {
-          ProviderChange(composite = composite, newProviders = newProviders, editorTypeIdsToRemove = editorTypeIdsToRemove)
+        when {
+          providers.isEmpty() -> {
+            filesToClose.add(file)
+            null
+          }
+          newProviders.isEmpty() && editorTypeIdsToRemove.isEmpty() -> null
+          else -> ProviderChange(composite = composite, newProviders = newProviders, editorTypeIdsToRemove = editorTypeIdsToRemove)
         }
       }
-    }
-    if (providerChanges.isEmpty() && filesToClose.isEmpty()) {
-      return
     }
 
     for (item in providerChanges) {
@@ -711,6 +655,7 @@ open class FileEditorManagerImpl(
       }
     }
 
+    // the tab titles of dumb-unaware EditorTabTitleProviders follow the dumb mode too
     scheduleUpdateFileName(file = null)
   }
 
@@ -2497,7 +2442,7 @@ open class FileEditorManagerImpl(
               }
             }
 
-            fileEditorManager.updateProvidersOfOpenFiles(serviceAsync<FileEditorProviderManager>())
+            fileEditorManager.providersChanged.tryEmit(Unit)
           }
       }
       flow
@@ -2822,19 +2767,6 @@ open class FileEditorManagerImpl(
 
   @ApiStatus.Internal
   open fun forceUseUiInHeadlessMode(): Boolean = false
-
-  @TestOnly
-  fun waitForAsyncUpdateOnDumbModeFinished() {
-    runBlockingMaybeCancellable {
-      val eventCountBeforeEmit = dumbModeFinishedEventCount.get()
-      dumbModeFinished.emit(Unit)
-      while (dumbModeFinishedEventCount.get() == eventCountBeforeEmit) {
-        UIUtil.dispatchAllInvocationEvents()
-        yield()
-      }
-      UIUtil.dispatchAllInvocationEvents()
-    }
-  }
 
   @TestOnly
   fun waitForAsyncUpdateOnProvidersChanged() {

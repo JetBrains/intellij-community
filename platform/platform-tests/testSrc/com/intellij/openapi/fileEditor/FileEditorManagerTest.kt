@@ -1506,7 +1506,7 @@ class FileEditorManagerTest {
       file
     }
 
-    manager.waitForAsyncUpdateOnDumbModeFinished()
+    manager.waitForAsyncUpdateOnProvidersChanged()
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
     assertThat(manager.getAllEditorList(createdFile)).hasSize(2)
   }
@@ -1515,7 +1515,7 @@ class FileEditorManagerTest {
   fun testProviderUpdateSkipsCompositeClosedDuringLookup(): Unit = timeoutRunBlocking {
     val targetFile = getSourceFile("1.txt")
     val composite = manager.openFile(targetFile, FileEditorOpenOptions()) as EditorComposite
-    withContext(Dispatchers.EDT) { manager.waitForAsyncUpdateOnDumbModeFinished() }
+    withContext(Dispatchers.EDT) { manager.waitForAsyncUpdateOnProvidersChanged() }
     val started = CompletableDeferred<Unit>()
     val release = CountDownLatch(1)
     registerProvider(object : MockFileEditorProvider("late-provider") {
@@ -1530,7 +1530,7 @@ class FileEditorManagerTest {
         error("The composite closed before the provider lookup finished")
       }
     })
-    val update = async(Dispatchers.EDT) { manager.waitForAsyncUpdateOnDumbModeFinished() }
+    val update = async(Dispatchers.EDT) { manager.waitForAsyncUpdateOnProvidersChanged() }
     try {
       started.await()
       withContext(Dispatchers.EDT) { manager.closeFile(targetFile) }
@@ -1640,7 +1640,7 @@ class FileEditorManagerTest {
       file
     }
 
-    manager.waitForAsyncUpdateOnDumbModeFinished()
+    manager.waitForAsyncUpdateOnProvidersChanged()
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
     assertOpenedFileEditorsNames(file, "hide_others")
   }
@@ -1657,7 +1657,7 @@ class FileEditorManagerTest {
       file
     }
 
-    manager.waitForAsyncUpdateOnDumbModeFinished()
+    manager.waitForAsyncUpdateOnProvidersChanged()
     executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project)
     assertOpenedFileEditorsNames(file, "hide_others")
     assertThat(manager.getSelectedEditor(file)?.name).isEqualTo("hide_others")
