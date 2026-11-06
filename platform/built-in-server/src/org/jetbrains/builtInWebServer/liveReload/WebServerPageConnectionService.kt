@@ -239,7 +239,7 @@ class WebServerPageConnectionService {
     gotItTooltip.withLink(CommonBundle.message("action.text.configure.ellipsis")) {
       ShowSettingsUtil.getInstance().showSettingsDialog(
         editorComponent.editor.project,
-        { (it as? ConfigurableWrapper)?.id == "reference.settings.ide.settings.web.browsers" },
+        { (it as? ConfigurableWrapper)?.id == "reference.settings.ide.settings.web.browsers.live.preview" },
         null)
     }
 

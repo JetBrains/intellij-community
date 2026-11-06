@@ -1155,7 +1155,6 @@ c:com.intellij.ide.browsers.BrowserSelector
 f:com.intellij.ide.browsers.BrowserSettings
 - createConfigurables():java.util.List
 - createPanel():com.intellij.openapi.ui.DialogPanel
-- getDependencies():java.util.Collection
 - getId():java.lang.String
 - f:selectBrowser(com.intellij.ide.browsers.WebBrowser):V
 e:com.intellij.ide.browsers.DefaultBrowserPolicy

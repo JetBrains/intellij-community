@@ -281,8 +281,8 @@
       <with attribute="schemeClass" implements="com.intellij.openapi.options.Scheme"/>
       <with attribute="implementationClass" implements="com.intellij.openapi.options.SchemeExporter"/>
     </extensionPoint>
-    <extensionPoint qualifiedName="com.intellij.browsersConfigurableProvider"
-                    beanClass="com.intellij.ide.browsers.BrowserSettingsConfigurableEP" dynamic="true">
+    <extensionPoint qualifiedName="com.intellij.builtInServerConfigurableProvider"
+                    beanClass="com.intellij.ide.browsers.BuiltInServerConfigurableEP" dynamic="true">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.webBrowserProvider" interface="com.intellij.ide.browsers.WebBrowserProvider" dynamic="true"/>
@@ -1371,6 +1371,10 @@
     <applicationConfigurable groupId="tools" instance="com.intellij.ide.browsers.BrowserSettings"
                              id="reference.settings.ide.settings.web.browsers"
                              key="browsers.settings" bundle="messages.IdeBundle"/>
+    <applicationConfigurable parentId="reference.settings.ide.settings.web.browsers"
+                             instance="com.intellij.ide.browsers.LivePreviewAndBuiltInServerSettings"
+                             id="reference.settings.ide.settings.web.browsers.live.preview"
+                             key="browsers.live.preview.settings" bundle="messages.IdeBundle"/>
     <selectInTarget implementation="com.intellij.ide.browsers.actions.SelectInDefaultBrowserTarget"/>
     <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserService"
                         serviceImplementation="com.intellij.ide.browsers.impl.WebBrowserServiceImpl"/>

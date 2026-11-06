@@ -18,7 +18,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
-import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.Function
 import com.intellij.util.PathUtil
@@ -74,8 +73,6 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   private var installedBrowsers: List<InstalledBrowser> = emptyList()
   private val defaultBrowserModel = CollectionComboBoxModel<BrowserChoice>()
   private val chromiumBasedBrowserModel = CollectionComboBoxModel<BrowserChoice>()
-  private lateinit var serverReloadModeComboBox: ComboBox<ReloadMode>
-  private lateinit var previewReloadModeComboBox: ComboBox<ReloadMode>
   private lateinit var showBrowserHover: JBCheckBox
   private lateinit var showBrowserHoverXml: JBCheckBox
 
@@ -309,17 +306,6 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
           showBrowserHoverXml = checkBox(IdeBundle.message("settings.browsers.show.browser.popup.xml")).component
         }
       }
-
-      group(IdeBundle.message("settings.browsers.reload.behavior")) {
-        row(IdeBundle.message("setting.value.reload.mode.server")) {
-          serverReloadModeComboBox = comboBox(ReloadMode.entries, textListCellRenderer("") { it.title })
-            .component
-        }
-        row(IdeBundle.message("setting.value.reload.mode.preview")) {
-          previewReloadModeComboBox = comboBox(ReloadMode.entries, textListCellRenderer("") { it.title })
-            .component
-        }
-      }
     }
     startDetection()
     return root
@@ -334,9 +320,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
     if (defaultBrowserChoice != storedChoice(browserManager) ||
         chromiumBasedBrowserChoice != storedChromiumBasedChoice(browserManager) ||
         browserManager.isShowBrowserHover != showBrowserHover.isSelected ||
-        browserManager.isShowBrowserHoverXml != showBrowserHoverXml.isSelected ||
-        browserManager.getWebPreviewReloadMode() !== previewReloadModeComboBox.item ||
-        browserManager.getWebServerReloadMode() !== serverReloadModeComboBox.item) {
+        browserManager.isShowBrowserHoverXml != showBrowserHoverXml.isSelected) {
       return true
     }
     return browsersEditor.isModified
@@ -355,8 +339,6 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
     val chromiumBasedBrowserId = idOf(chromiumBasedChoice)
     browserManager.isShowBrowserHover = showBrowserHover.isSelected
     browserManager.isShowBrowserHoverXml = showBrowserHoverXml.isSelected
-    browserManager.webPreviewReloadMode = previewReloadModeComboBox.item
-    browserManager.webServerReloadMode = serverReloadModeComboBox.item
     browserManager.list = browsersEditor.apply()
     // the manager resolves the default browser in the new list
     browserManager.setDefaultBrowserId(defaultBrowserId)
@@ -369,8 +351,6 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
   override fun reset() {
     val browserManager = WebBrowserManager.getInstance()
-    previewReloadModeComboBox.item = browserManager.getWebPreviewReloadMode()
-    serverReloadModeComboBox.item = browserManager.getWebServerReloadMode()
     showBrowserHover.isSelected = browserManager.isShowBrowserHover
     showBrowserHoverXml.isSelected = browserManager.isShowBrowserHoverXml
     browsersEditor.reset(browserManager.list)

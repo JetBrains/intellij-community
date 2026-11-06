@@ -57,7 +57,7 @@
     <applicationActivity implementation="org.jetbrains.ide.BuiltInServerManagerLauncher"/>
 
     <applicationService serviceImplementation="org.jetbrains.builtInWebServer.BuiltInServerOptions"/>
-    <browsersConfigurableProvider instance="org.jetbrains.builtInWebServer.BuiltInServerConfigurable"/>
+    <builtInServerConfigurableProvider instance="org.jetbrains.builtInWebServer.BuiltInServerConfigurable"/>
     <webBrowserUrlProvider implementation="org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider" order="last"/>
 
     <httpRequestHandler implementation="org.jetbrains.ide.AboutHttpService"/>
