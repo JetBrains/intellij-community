@@ -152,6 +152,19 @@ community_build_target(
     runtime_deps = [":build"],
 )
 
+# Use this target for local development only. Do not use it for CI builds.
+# It builds installers for the current OS and architecture.
+community_build_target(
+    name = "intellij_community_installers_local",
+    jvm_flags = [
+        "-Dintellij.build.target.os=current",
+        "-Dintellij.build.target.arch=current",
+        "-Dintellij.build.skip.build.steps=search_index,sources_archive,scramble,maven_artifacts,mac_dmg,windows_exe_installer,linux_tar_gz_without_jre,repair_utility_bundle_step",
+    ],
+    main_class = "OpenSourceCommunityInstallersBuildTarget",
+    runtime_deps = [":build"],
+)
+
 # Temporary alias until TeamCity config is migrated to the new target
 alias(
     name = "i_build_target",

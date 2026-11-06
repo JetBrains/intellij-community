@@ -37,3 +37,4 @@ import_run_configurations:
   tools/bazelRunConfigurations/Run___build_intellij_community_installers.xml
   tools/bazelRunConfigurations/Run___build_idea_community.xml
   tools/bazelRunConfigurations/Run___build_jewel_standalone_sample.xml
+  tools/bazelRunConfigurations/Run___build_pycharm_community_installers.xml

@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Run //build:intellij_community_installers" type="BazelRunConfigurationType">
     <bsp-state handler-provider-id="IntellijDevLaunchRunHandlerProvider" check-visibility="true">
-      <bsp-target>@//build:intellij_community_installers</bsp-target>
+      <bsp-target>@//build:intellij_community_installers_local</bsp-target>
       <handler-state />
     </bsp-state>
     <method v="2">

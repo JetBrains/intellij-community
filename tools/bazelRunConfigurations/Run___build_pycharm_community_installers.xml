@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run //python/build:pycharm_community_installers" type="BazelRunConfigurationType">
+    <bsp-state handler-provider-id="IntellijDevLaunchRunHandlerProvider" check-visibility="true">
+      <bsp-target>@//python/build:pycharm_community_installers_local</bsp-target>
+      <handler-state />
+    </bsp-state>
+    <method v="2">
+      <option name="BuildScriptBeforeRunTaskProvider" enabled="false" />
+    </method>
+  </configuration>
+</component>
