@@ -252,5 +252,48 @@ class GraphUtilTests {
     assertExclusiveNodes(1, intSetOf(1), intSetOf(0, 1, 5), graphBuilder)
   }
 
+  private fun assertRecentNodes(startNodes: Collection<Int>, limit: Int, expectedRecentNodes: List<Int>,
+                                graphBuilder: TestGraphBuilder.() -> Unit) {
+    val graph = graph(graphBuilder)
+    val actualExclusiveNodes = graph.recentNodes(startNodes, limit)
+    assertThat(actualExclusiveNodes)
+      .describedAs("Incorrect recent nodes for ${startNodes} in graph ${graph.asString(true)}")
+      .isEqualTo(expectedRecentNodes)
+  }
+
+  /*
+   0
+   |   1
+   2   |
+   |\  |
+   3 | |
+   | 4 |
+   |/  5
+   6  /
+   | /
+   7
+   8
+   */
+  @Test
+  fun `recent nodes`() {
+    val graphBuilder: TestGraphBuilder.() -> Unit = {
+      0(2)
+      1(5)
+      2(3, 4)
+      3(6)
+      4(6)
+      5(7)
+      6(7)
+      7(8)
+      8()
+    }
+    assertRecentNodes(intSetOf(0), 3, listOf(0, 2, 3), graphBuilder)
+    assertRecentNodes(intSetOf(1), 2, listOf(1, 5), graphBuilder)
+    assertRecentNodes(intSetOf(1), 10, listOf(1, 5, 7, 8), graphBuilder)
+    for (limit in 0..9) {
+      assertRecentNodes(intSetOf(0, 1), limit, (0 until limit).toList(), graphBuilder)
+    }
+  }
+
   private fun intSetOf(vararg elements: Int) = IntOpenHashSet(intArrayOf(*elements))
 }
