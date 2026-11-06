@@ -230,8 +230,8 @@ pub struct Resolution {
 
 /// Splits an explicit `--filter` value into the field that can express it: `(filter, include_package)`.
 ///
-/// `--test_filter` understands a class FQN or `FQN#method` only, so an all-lowercase dotted value is a package and
-/// has to go through `JB_TEST_JUNIT5_FILTERS=include-package=` instead; otherwise it would match no class and the
+/// `--test_filter` understands a class FQN or `FQN#method` only, so a dotted value whose segments start with a
+/// lower-case letter is a package and has to go through `JB_TEST_JUNIT5_FILTERS=include-package=` instead; otherwise it would match no class and the
 /// run would land on the "filter matched nothing" exit.
 pub fn as_filter_or_package(value: Option<&str>) -> (Option<String>, Option<String>) {
     match value {
@@ -239,6 +239,73 @@ pub fn as_filter_or_package(value: Option<&str>) -> (Option<String>, Option<Stri
         Some(value) if is_package_name(value) => (None, Some(value.to_owned())),
         Some(value) => (Some(value.to_owned()), None),
     }
+}
+
+/// The hint of a run that found no test, from the `--filter` value of the caller. It names the form of the filter that
+/// the JUnit runner reads. It changes nothing of the run. `None` for a run without `--filter`, and for an FQN
+/// `Class#method`, because the cause line of the digest already names the `#method` part.
+///
+/// The runner reads `--test_filter` as a class name prefix whose last segment starts with an upper-case letter, or as
+/// one `Class#method`. It throws on a wildcard and a regex, and a list matches no class. It loads the class of a
+/// `Class#method` by its name, so the class needs its FQN. Jupiter finds an `@Nested` class only through its outer
+/// class, so the prefix `a.Outer$Inner` runs no test, but `a.Outer$Inner#method` runs. The runner names a nested
+/// class `a.Outer$Inner`, so `a.Outer.Inner` matches no class. A package filter also runs the subpackages.
+pub fn no_tests_hint(filter: Option<&str>) -> Option<String> {
+    const PACKAGE_LINE: &str = "take the package from the package line of the file, not from its directory";
+    const OUTER_CLASS: &str = "the runner finds an @Nested class only through its outer class";
+    let value = filter?;
+    if is_package_name(value) {
+        return Some(format!(
+            "a package filter runs the classes of that package and its subpackages: {PACKAGE_LINE}"
+        ));
+    }
+    let (class, method) = value.split_once('#').map_or((value, None), |(class, method)| (class, Some(method)));
+    if !regex!(r"^(?:[A-Za-z_][A-Za-z0-9_]*\.)*[A-Z][A-Za-z0-9_$]*$").is_match(class) {
+        if let Some(package) = value.strip_suffix(".*").filter(|package| is_package_name(package)) {
+            return Some(format!(
+                "--filter takes no wildcard. To run every class of the package, pass --filter {package}"
+            ));
+        }
+        return Some(
+            "--filter takes a class, a Class#method or a package. It takes no wildcard, no regex and no list. Run each \
+             class in its own call, or pass the package of the classes"
+                .to_owned(),
+        );
+    }
+    let nested = nested_class_with_dots(class);
+    match method {
+        Some(_) if !class.contains('.') => Some(format!(
+            "a Class#method needs the FQN of the class, because the runner loads the class by its name: {PACKAGE_LINE}"
+        )),
+        Some(method) => nested.map(|nested| {
+            format!("a nested class takes $ after its outer class. If {class} is a nested class, pass --filter '{nested}#{method}'")
+        }),
+        None => {
+            if let Some((outer, _)) = class.split_once('$') {
+                return Some(format!("{OUTER_CLASS}. To run it, pass --filter {outer}"));
+            }
+            if let Some((outer, _)) = nested.as_deref().and_then(|nested| nested.split_once('$')) {
+                return Some(format!("{OUTER_CLASS}. If {class} is a nested class, pass --filter {outer}"));
+            }
+            Some(format!("a class filter is a prefix of the class names: {PACKAGE_LINE}"))
+        }
+    }
+}
+
+/// The `$` form of a class with a dot after its outer class, as `a.Outer$Inner` for `a.Outer.Inner`. `None` for every
+/// other value.
+///
+/// The outer class is the first segment that starts with an upper-case letter and has a lower-case letter. A package
+/// segment can start with an upper-case letter too, but it has no lower-case letter, as `IDEA_355419` of a Spring test.
+fn nested_class_with_dots(class: &str) -> Option<String> {
+    let segments: Vec<&str> = class.split('.').collect();
+    let outer = segments.iter().position(|segment| {
+        segment.starts_with(|first: char| first.is_ascii_uppercase()) && segment.contains(|letter: char| letter.is_ascii_lowercase())
+    })?;
+    if outer == segments.len() - 1 {
+        return None;
+    }
+    Some(format!("{}${}", segments[..=outer].join("."), segments[outer + 1..].join("$")))
 }
 
 /// The class simple name a name selector asks for.

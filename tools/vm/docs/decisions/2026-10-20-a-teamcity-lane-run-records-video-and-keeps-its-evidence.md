@@ -57,7 +57,7 @@ wallpaper, its dock and its icons around the IDE frame of 1280x800. The agent pa
 parameter names fluxbox. The agent is an AWS image that infra owns, and every UI build of the monorepo shares it.
 
 The host probe of `lane-run` refuses a display without a window manager. It reads `_NET_SUPPORTING_WM_CHECK` on the
-root and on the window that it names, as `XorgWindowManagerHandler` of the driver does. The driver raises the frame of
+root and on the window that it names, as the script of `LinuxIdeDistribution.linuxCommandLine` does. The driver raises the frame of
 a project with `toFront()` and activates it through `ProjectUtil.focusProjectWindow`. A keyboard scenario needs the
 X input focus on the frame, because the key goes to the focus owner.
 

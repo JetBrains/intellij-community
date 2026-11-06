@@ -15,7 +15,8 @@
 //! | `home/.codex/config.toml` | the Codex mock model, when the lane serves it |
 //! | `project/<name>/.git`, `project/<name>-origin.git` | the Git remote of the project, when the lane has a Cloud agent |
 //!
-//! A bare IDE gets the option files and the token of the bridge only, see [`write_bare`].
+//! A bare IDE gets the option files, the files of [`BARE_OPTION_FILES`] and the token of the bridge only, see
+//! [`write_bare`].
 //!
 //! The directory `config/air-ui-test` and its three files are private to the account. The runtime in the IDE owns
 //! [`NEXT_START_CONTROL_FILE`], so this writer never writes or deletes it.
@@ -124,6 +125,11 @@ pub(crate) const OPTION_FILE_TEMPLATES: [(&str, &str); 6] = [
     ("trusted-paths.xml", include_str!("context/options/trusted-paths.xml")),
     (ADVANCED_SETTINGS_FILE, NO_README_SETTINGS),
 ];
+
+/// The option files that only a bare IDE gets, by name, after [`OPTION_FILE_TEMPLATES`]. `other.xml` holds the Air
+/// onboarding as completed, in the bytes that Air writes when its user completes it. So a bare IDE starts as the IDE
+/// of a user who used Air before, and the first-start work of the onboarding is no part of what it measures.
+pub(crate) const BARE_OPTION_FILES: [(&str, &str); 1] = [("other.xml", include_str!("context/options/other.bare.xml"))];
 
 /// The hex SHA-256 of the templates: each one as `<name>\n<template>\n`, in write order. The config key reads it as
 /// `optionFiles`.
@@ -403,11 +409,16 @@ impl LaneContext<'_> {
 
 /// Writes the option files into `options`, and creates `new_projects`, an absolute path. `ide.general.xml` is written only when it is
 /// missing. The trusted paths are the absolute project path and its real path.
-/// Writes the context files of a bare IDE into the prepared context `paths`: the option files and `bridge_token` as the
-/// token of the bridge. A bare IDE gets no file of the lane services, of the control server or of an agent, so its
-/// home holds nothing of the machine or of the lane.
+/// Writes the context files of a bare IDE into the prepared context `paths`: the option files, the files of
+/// [`BARE_OPTION_FILES`], and `bridge_token` as the token of the bridge. A bare IDE gets no file of the lane services,
+/// of the control server or of an agent, so its home holds nothing of the machine or of the lane.
 pub(crate) fn write_bare(paths: &IdePrepared, bridge_token: &str) -> Result<(), AgentRefusal> {
-    write_options_and_token(paths, bridge_token).map(|_| ())
+    write_options_and_token(paths, bridge_token)?;
+    let options = Path::new(&paths.config_dir).join(OPTIONS_DIR);
+    for (name, text) in BARE_OPTION_FILES {
+        write_file(&options.join(name), text.as_bytes())?;
+    }
+    Ok(())
 }
 
 /// Writes the option files and the token of the bridge, which every lane IDE gets, and answers the private directory

@@ -18,9 +18,8 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 
 `bt_rust_crate` in `defs.bzl` declares each crate: its library or binary, its `<crate>_test` and its `<crate>-clippy`.
 It binds `rust_tool_crate`, the shared macro core in `community/build/rust-tools/defs.bzl`, to the `@bt` hub. bt-core
-takes the slash-path rules from `distpath` of the dev-dist tools, and `bt` takes `yonder-client` and `yonder-link` of
-yonder, through path dependencies. `_CROSS_MODULE_CRATES` in `defs.bzl` maps each to its target in this module, so
-Bazel builds it once.
+takes the slash-path rules from `distpath` of the dev-dist tools through a path dependency. `_CROSS_MODULE_CRATES` in
+`defs.bzl` maps it to its target in this module, so Bazel builds it once.
 `optimized_binary` of the core declares a shipped binary: one file, and always optimized. `defs.bzl` re-exports it for
 the Air UI-lane workspace. The spec of a Rust tool workspace is `community/build/rust-tools/README.md`.
 
@@ -40,18 +39,30 @@ refuses. The ultimate checkout names `plugins/air`, with its lane table `plugins
 
 ## Shards
 
-A run over many targets forces two shards on each target and passes the shard plan `out/bt/shard-plan.tsv` to the
-tests. The JUnit runner gives each target its planned count and splits the classes of the target by their recorded
-seconds. bt records the class times of each run in the plan. `crates/bt-core/src/shard_plan.rs` gives the rules. The
-same run writes the Bazel profile to `out/bt/profile.json.gz`.
+A run over many targets passes the shard plan `out/bt/shard-plan.tsv` to the tests. The JUnit runner gives each target
+its planned count and splits the classes of the target by their recorded seconds. bt records the class times of each
+run in the plan. `crates/bt-core/src/shard_plan.rs` gives the rules.
+
+Bazel forces one shard count on a whole invocation, so such a run has two `bazel test` invocations. The first one runs
+the heavy targets, the targets whose recorded seconds want more than two shards, and forces eight shards. The second
+one runs the patterns of the run less the heavy targets, and forces two shards. `--dry-run` shows the first one as
+`heavy` and the second one as `argv`. The two invocations write the Bazel profiles `out/bt/profile-heavy.json.gz` and
+`out/bt/profile.json.gz`. An explicit `--shards` and a BEP file of the caller give one invocation.
+
+A shard that hits the Bazel timeout of its target is a shard timeout. The digest names the shard and the test where it
+stopped, and that test is not a failure. The `--json` payload lists the shard in `shardTimeouts`. When the times of
+such a target in the run want more than two shards, bt raises its record in the plan, so the next run makes it a
+heavy target.
 
 ## Modules
 
 `--module <jps module>` runs the `jps_test` target of a JPS module. `crates/bt-core/src/modules.rs` resolves it:
 
 1. `.idea/modules.xml` at the checkout root gives the directory of the module's `.iml`.
-2. The `BUILD.bazel` of that directory gives the `jps_test` whose `runtime_deps` name the module's library or its
-   `_test_lib`. One directory can hold several modules, so each module gets its own target, or none.
+2. The `BUILD.bazel` of that directory gives the `jps_test` whose `runtime_deps` name a library of the module or its
+   `_test_lib`. A library belongs to the module when its `module_name` is the module, or when it sits in the
+   `build <module>` section that the BUILD generator writes. One directory can hold several modules, so each module
+   gets its own target, or none.
 3. The label is `//<dir>:<name>`. In an ultimate root, a directory under `community/` gives
    `@community//<rest>:<name>`.
 
@@ -60,7 +71,14 @@ The module runs when the migrated list names it, or when an area owns its direct
 checkout. `tests.cmd` reads the same list. bt refuses every other module with exit 2 and the code
 `module_not_migrated`. The message gives the `./tests.cmd --module <module> --test <FQN>` command, and it gives the
 label for an explicit run. A module without a target of its own gets the code `module_without_test_target` and the same
-`tests.cmd` command. `--filter` takes an FQN, `FQN#method` or a package, as for a label.
+`tests.cmd` command. When the `BUILD.bazel` declares exactly one unfiltered `jps_test`, this refusal also gives the
+label of that target for an explicit run.
+
+`--filter` takes an FQN, `FQN#method` or a package, as for a label. A package is a dotted name whose segments start
+with a lower-case letter. bt gives every other value to bazel too. The JUnit runner reads `--test_filter` as one class
+name prefix or one `Class#method`, so a wildcard, a regex and a list run no test. For a NO TESTS run with `--filter`,
+the `hint` line of the digest names the form that works, see `no_tests_hint` in `bt-core`. The hint does not change the
+status or the exit code.
 
 ## Builds
 
@@ -92,7 +110,7 @@ bt is the only writer. `bins/bt/src/check.rs` holds the rules:
    are the same tree. A red run, a dry run and a run during which the files changed record nothing.
 4. A record of a tree with local changes names those paths on the stderr. The pick finds the record only for a commit
    of the same files, so commit or delete scratch files before the last check.
-5. A `--host` run records the tree of the commit that yonder names as the one that ran.
+5. A `--host` run records the tree of the commit that the report of `bd-host` names as the one that ran.
 6. The file is `bd-checks.jsonl` in the git directory (`git rev-parse --git-path bd-checks.jsonl`), so each linked work
    tree has its own. Each write replaces the file in one step. It keeps the last 100 records, one JSON object a line:
 
@@ -108,29 +126,39 @@ that took only some classes. For a `--host` run it holds the arguments of bt on 
 ## Runs on another machine
 
 `--host <alias>` runs the same command on another machine, such as `bt --host studio --lane fast`. The flag can stand
-before or after the selector. `bins/bt/src/remote.rs` calls the client of yonder (`community/tools/yonder`), and the
-agent `yonderd` on the host does the rest. No step of a run uses ssh.
+before or after the selector. `bins/bt/src/remote.rs` starts `bd-host` of Branch Deck, and the agent `bd-host serve`
+on the host does the rest. bt finds `bd-host` on the PATH, else at `~/.local/bin/bd-host`, where `bd install` links
+it. Without it, bt refuses with 6 and `host_not_installed`, and the message names `bd install`. The contract of
+`bd-host` is `spec/cli/host.spec.md` of Branch Deck. No step of a run uses ssh. The command line is:
 
-1. bt refuses a checkout with local changes, untracked files included, because only the commit reaches the host.
-2. The client sends the git objects that the host lacks, as a thin pack, to the main repository of the host.
+```sh
+bd-host run <alias> --head --fetch out/bt-runs [--repo <path>] --report-fd 3 -- ./community/tools/bt.cmd <args>
+```
+
+1. `bd-host` refuses a checkout with local changes, untracked files included, because only the commit reaches the
+   host.
+2. `bd-host` sends the git objects that the host lacks, as a thin pack, to the main repository of the host.
    `--host-repo` or `BT_HOST_REPO` names that repository. Without them, the host file of `--prepare` names it.
-3. The agent checks out the commit in the Branch Deck lease of this checkout, and runs `./community/tools/bt.cmd`
-   there with the same arguments, less `--host`. Its stderr streams here as it comes. Its stdout is the digest or the
-   `--json` payload. Its exit code is the exit code here. A refusal of yonder is 6, with the code `host_<code>`, and
-   local changes are 2.
+3. The agent checks out the commit in a host slot, and runs `./community/tools/bt.cmd` there with the same arguments,
+   less `--host`. Its stderr and the lines of `bd-host` stream here as they come. The stdout of `bd-host` is the
+   digest or the `--json` payload, and bt reads it. `bd-host` writes one JSON report of the run to the descriptor 3:
+   the exit code of the command, the commit, the fetched files, or a refusal code. The exit code of the command is the
+   exit code here. A refusal of `bd-host` is 6, with the code `host_<code>` and the exit code of `bd-host` in the
+   details (`{"bd_host_exit": 75}` when the command did not run). Local changes are 2.
 4. The new run directories of `out/bt-runs` come back to `out/bt-runs` here, and the digest names each local copy.
-5. The run lives on the agent, not on the connection. A connection that is quiet for 60 s is lost, and the client
-   follows the run again for up to 10 min. Ctrl+C cancels the run on the host and shows its output to the end. A
-   second Ctrl+C leaves at once with 6, and with `--json` it writes the payload of an infrastructure outcome.
+5. The run lives on the agent, not on the connection, and `bd-host` follows it again after a lost connection.
+   `bd-host` stays in the process group of bt, so Ctrl+C reaches it, and bt only waits. Ctrl+C cancels the run on the
+   host and shows its output to the end. A second Ctrl+C leaves at once with 6, and with `--json` it writes the payload
+   of an infrastructure outcome.
 6. A host that has none of the commits near HEAD would need the whole history. bt refuses that with `host_behind`,
    and `--prepare` moves the master of the host.
 
 ### The host slots
 
-The host lends each run a host slot of Branch Deck for that run only (`bd lease host`, the yonder README): the slot
-that this checkout (`bt-remote-<hash of the checkout path>`) used last, else the one used longest ago, else the run
-waits in a queue, one line a minute. The host keeps a fixed set of warm slots, so two checkouts never make it clone
-and nothing returns a slot by hand.
+The host lends each run a host slot of Branch Deck for that run only: the slot that this checkout used last, else the
+one used longest ago, else the run waits in a queue, one line a minute. `bd-host` names the affinity of a checkout
+from its path. The host keeps a fixed set of warm slots, so two checkouts never make it clone and nothing returns a
+slot by hand.
 
 ### Prepare a host
 
@@ -146,13 +174,15 @@ nothing. `bins/bt/src/prepare.rs` holds the steps, and `bins/bt/src/ssh.rs` boun
    master moves to the local master only when it is clean and an ancestor. An existing repository without
    `core.fsmonitor=true` gets it, and the step says what the value was. The give-back of a host slot runs one
    `status` after each run, and without fsmonitor it reads every file: 18-19 s on the Studio, against 2.5 s.
-3. `bd`: the local `~/.local/bin/bd` replaces another build on a host of the same platform. The SHA-256 of the binary
-   tells the build, so a new build with the same version also goes over. `~/.local/bin` goes on the PATH in `~/.zshenv`.
+3. PATH: `~/.local/bin` goes on the PATH in `~/.zshenv`. `bd-host` lives there, and the agent reads the login
+   environment through it. The host needs no `bd`, because the agent links the lease pool of Branch Deck.
 4. Tools: git, Xcode, rustup, docker and tmux. The step only reports them, and it never installs one.
-5. The agent: bt builds `@community//tools/yonder:yonderd` with Bazel, and `yonder prepare` copies it to
-   `~/.local/bin/yonderd` on the host when its SHA-256 differs. `yonderd setup` adds this client to the allow list of
-   the agent and starts it as a LaunchAgent. The host file `~/.config/yonder/hosts/<alias>.json` here pins the agent.
-   With `--dry-run`, the step only asks the agent for its hello.
+5. The agent: `bd-host setup <alias> --repo <repo> --name 'bt on <host name>'`. Over ssh, it copies the local
+   `bd-host` to `~/.local/bin/bd-host` on the host when the host has another build, adds this client to the allow list
+   of the agent, and starts the LaunchAgent `com.jetbrains.bd-host`. The host file
+   `~/.config/bd-host/hosts/<alias>.json` here pins the agent. Then the agent must answer a hello, and an agent of
+   another build gets the hint `bd-host upgrade <alias>`. With `--dry-run`, the step only asks the agent for its
+   hello.
 6. Credentials: the host must have the `~/.netrc` entries of the Bazel remote services (the hosts that `.bazelrc` and
    its imports name), the `~/.m2/settings.xml` servers of the `.idea/jarRepositories.xml` repositories on the Space
    package host, and the expiry marker of the token of each such server. `IJPrivatePackagesAuthorizer` names that

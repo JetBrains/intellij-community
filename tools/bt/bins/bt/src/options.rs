@@ -2,10 +2,10 @@
 
 use std::ffi::OsString;
 
-use bt_core::selector::is_target_pattern;
+use bt_core::selector::{Selector, SelectorKind, is_target_pattern};
 use bt_core::{AREAS_FILE, Areas, Refusal, exit, fail_usage};
 use clap::Parser;
-use clap::error::ErrorKind;
+use clap::error::{ContextKind, ContextValue, ErrorKind};
 
 /// The help text, kept from the tool's first version so a caller reading either sees one tool. `{lanes}` is where
 /// [`usage`] lists the lanes of the areas.
@@ -25,7 +25,8 @@ Selectors (at most one):
   ClassName                  bare simple name; resolves the label and the FQN
   ClassName#method           bare simple name plus a single test method
   a.b.c.ClassName[#method]   fully-qualified name; resolves the label only
-  a.b.c                      all-lowercase dotted package; runs the whole package
+  a.b.c                      dotted package, each segment starts with a lower-case letter;
+                             runs the whole package
   plugins/air/backend/vcs    directory; every test target under it, as //<dir>/..., or as
                              @community//<rest>/... for community/<rest> in the ultimate root
   //pkg:target               explicit label, no resolution (works outside every area); in the
@@ -55,7 +56,8 @@ asks for --lane, which is then accepted beside the selector.
 Options:
   --filter <FQN[#method]|pkg>
                            filter for an explicit label or --module (not valid with a wildcard pattern);
-                           an all-lowercase dotted value runs that whole package
+                           a dotted value whose segments start with a lower-case letter runs that
+                           whole package; no wildcard, no regex, no list
   --shards <n>             shard count per target (default 2 for a run covering many targets,
                            6 for a single one; ignored when a filter pins one class, which
                            always runs unsharded)
@@ -66,15 +68,16 @@ Options:
   --dry-run                print the resolved label, filter, and argv; run nothing
   --list                   print the resolution candidates for the selector; run nothing
   --verbose                also echo bazel's own captured output
-  --host <ssh alias>       run the committed HEAD on that machine over yonder: send the missing git
-                           objects, check the commit out in a host slot that the machine lends to
-                           this run only, run the same command, stream its output, copy back the
-                           kept logs of out/bt-runs; Ctrl+C cancels the run there; refused when the
-                           checkout has local changes; --prepare installs the agent first
+  --host <ssh alias>       run the committed HEAD on that machine through bd-host of Branch Deck: send
+                           the missing git objects, check the commit out in a host slot that the
+                           machine lends to this run only, run the same command, stream its output,
+                           copy back the kept logs of out/bt-runs; Ctrl+C cancels the run there;
+                           refused when the checkout has local changes; --prepare installs the agent
+                           first; `bd install` puts bd-host into ~/.local/bin
   --host-repo <path>       the main repository on the --host machine (env BT_HOST_REPO, default
                            the one of the host file of --prepare, ~/projects/idea-1)
   --prepare                with --host: make that machine ready, step by step (ssh, the repository,
-                           bd and its PATH, the tools, the yonder agent, the credentials, the remote
+                           the PATH, the tools, the bd-host agent, the credentials, the remote
                            cache), and say ok, done or missing for each; --dry-run changes nothing.
                            Run it in a terminal: the credential copy asks y/N and refuses without a
                            terminal
@@ -345,20 +348,64 @@ fn help_or_refusal(error: &clap::Error, help: String) -> Result<Invocation, Refu
 
 /// clap's message without its `Usage:` tail, its `--help` hint and its `tip:` lines: the curated help is one flag
 /// away, the generated usage line would contradict it, and a tip such as "use '-- -k'" is wrong for bt, where
-/// everything after `--` goes to bazel.
+/// everything after `--` goes to bazel. The similar flags of clap stay, without a `tip:`, because they name the fix of
+/// a typo such as `--nocache`.
+///
+/// A second class name is a second selector, and a second `--filter` is a second filter. bt takes one of each, so the
+/// message tells to run each class in its own call, or to give the package of the classes. A class name beside
+/// `--module` gets the `--filter` form.
 fn usage_message(error: &clap::Error) -> String {
     let rendered = error.render().to_string();
     let message = rendered.split("\n\nUsage:").next().unwrap_or(&rendered);
     let message = message
         .lines()
         .filter(|line| {
-            let line = line.trim_start();
-            !line.starts_with("tip:") && !line.starts_with("For more information, try")
+            let text = line.trim_start();
+            !text.starts_with("tip: ") && !text.starts_with("For more information, try")
         })
         .collect::<Vec<_>>()
         .join("\n");
     let message = message.trim();
-    message.strip_prefix("error: ").unwrap_or(message).to_owned()
+    let message = message.strip_prefix("error: ").unwrap_or(message);
+    let names = |kind| match error.get(kind) {
+        Some(ContextValue::String(name)) => vec![name.as_str()],
+        Some(ContextValue::Strings(names)) => names.iter().map(String::as_str).collect(),
+        _ => Vec::new(),
+    };
+    let similar: Vec<String> = names(ContextKind::SuggestedArg).iter().map(|name| format!("'{name}'")).collect();
+    let message = match similar.as_slice() {
+        [] => message.to_owned(),
+        [one] => format!("{message}\n\n  a similar argument exists: {one}"),
+        _ => format!("{message}\n\n  similar arguments exist: {}", similar.join(", ")),
+    };
+    let invalid = names(ContextKind::InvalidArg);
+    let conflicting: Vec<&str> = invalid.iter().copied().chain(names(ContextKind::PriorArg)).collect();
+    match error.kind() {
+        ErrorKind::UnknownArgument if invalid.iter().copied().any(is_class_name) => format!(
+            "{message}\nbt takes one selector. Run each class in its own call: --module <module> --filter <FQN>. To run \
+             all the classes of a package, give the package: --module <module> --filter <package>"
+        ),
+        ErrorKind::ArgumentConflict
+            if conflicting.iter().any(|name| name.starts_with("--module")) && conflicting.contains(&"[SELECTOR]") =>
+        {
+            format!(
+                "{message}\n--module is the selector of the run. Give a class or a package with --filter: --module <module> \
+                 --filter <FQN|package>"
+            )
+        }
+        ErrorKind::ArgumentConflict if conflicting.iter().all(|name| name.starts_with("--filter")) => {
+            format!(
+                "{message}\n--filter takes one class, one Class#method or one package. Run each class in its own call, or \
+                 give the package of the classes: --filter <package>"
+            )
+        }
+        _ => message,
+    }
+}
+
+/// Whether a refused argument is a simple class name or an FQN, which bt reads as a selector.
+fn is_class_name(argument: &str) -> bool {
+    Selector::classify(argument).is_ok_and(|selector| matches!(selector.kind, SelectorKind::SimpleName | SelectorKind::Fqn))
 }
 
 #[cfg(test)]

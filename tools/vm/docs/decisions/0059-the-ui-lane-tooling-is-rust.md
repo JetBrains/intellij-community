@@ -176,7 +176,7 @@ it, and `src/trace/runJournal.test.ts` of the docs site reads it. The tests that
 | contract | far end | pinned by |
 |---|---|---|
 | the lane protocol NDJSON | Kotlin `AirTraceWire`, `AirTraceRecorderProcess` | the golden transcript `crates/avl-trace/testdata/lane-transcript.ndjson`, whose every line re-encodes byte for byte; `AirTraceTranscriptTest` reads the same file |
-| OTLP `spans.jsonl` and `logs.jsonl`, `bundle.json`, `video.index.json`, snapshot trees, viewer URLs, the `X-Air-Trace` header | the docs site: `src/trace/format.ts`, `src/router.ts`, `src/routeTable.ts` | the golden bundles in `crates/avl-trace/testdata`, read by `src/trace/goldenBundles.ts` |
+| OTLP `spans.jsonl` and `logs.jsonl`, `bundle.json`, `video.index.json`, snapshot trees, viewer URLs, the `X-Air-Trace` header | the docs site: `src/trace/format.ts`, `src/router.ts`, `src/routeTable.ts` | the golden bundles in `crates/avl-trace/testdata`, read by `src/trace/fixtures/goldenBundles.ts` |
 | the `air-trace serve` API and its SSE stream | the docs site: `src/trace/runJournal.ts` and the run pages | the `avl-trace-serve` tests, against the paths, shapes, headers and first frame the site reads |
 | the uiDaemon routes, `RunEvent` and the state file | Kotlin `AirUiDaemonProtocol`, `AirUiDaemonServer` | `avl-wire` tests and `AirUiDaemonProtocolTest` |
 | the daemon runtime descriptor and its `schemaVersion` | Starlark `air_ui_daemon_runtime.bzl` | the `avl_wire::runtime` tests, a refusal per way the descriptor can be wrong, and an `avl-daemon` test that reads the rule's `_SCHEMA_VERSION` |

@@ -281,11 +281,16 @@ pub(crate) struct LaneRunArgs {
     /// A JVM flag of the JUnit runner, -D<name>=<value>, as the UI job of TeamCity passes it with
     /// --test_arg=--jvm_flag=<flag>. Repeat it to name more. The values of idea.test.runner.index and
     /// idea.test.runners.count split the selected suites of the lane between the runners of the job.
-    /// -Dair.flow.trace.allure=on asks the recorder for the Allure results. java.awt.headless, idea.bucketing.season
-    /// and idea.tests.duration.bucketing.enabled are ignored, each with a note in the run stream. Another flag is refused
-    /// by name.
+    /// With idea.tests.duration.bucketing.enabled=true, the durations of the season of idea.bucketing.season split
+    /// them, from <season>.csv of --season-dir. -Dair.flow.trace.allure=on asks the recorder for the Allure results.
+    /// java.awt.headless is ignored, with a note in the run stream. Another flag is refused by name.
     #[arg(long = "jvm_flag", value_name = "FLAG", allow_hyphen_values = true)]
     pub jvm_flags: Vec<String>,
+    /// The directory of the season files of the duration bucketing, <season>.csv each, with one row
+    /// <test class>,<milliseconds> for each suite. Without it, or without the file of the season, the runners split
+    /// the lane by position.
+    #[arg(long, value_name = "DIR", value_parser = absolute_path)]
+    pub season_dir: Option<PathBuf>,
 }
 
 // --- the image and Linux worker verbs -----------------------------------------------------------------------

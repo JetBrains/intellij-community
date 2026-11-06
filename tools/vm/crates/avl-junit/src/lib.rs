@@ -57,13 +57,23 @@ pub struct FailedCase {
 
 /// Every case of the iteration that streamed `events` that fails its XML, in the order of the stream: a failed case,
 /// a case that never finished, and then a class of the plan that the run never reached. `lane-run` names them in the
-/// result of its run.
+/// result of its run. A failed attempt that a later pass of the same class and name follows is no failed case, because
+/// the rerun of `lane-run` passed it.
 pub fn failed_cases(events: &[RunEvent]) -> Vec<FailedCase> {
     let mut found = cases::cases(events);
     found.extend(cases::unreported_classes(events).into_iter().map(unreported));
+    let passed_later: Vec<bool> = (0..found.len())
+        .map(|index| {
+            found[index + 1..].iter().any(|later| {
+                later.outcome == CaseOutcome::Passed && later.class_name == found[index].class_name && later.name == found[index].name
+            })
+        })
+        .collect();
     found
         .into_iter()
-        .filter_map(|case| {
+        .zip(passed_later)
+        .filter(|(_, passed_later)| !passed_later)
+        .filter_map(|(case, _)| {
             let failure = match case.outcome {
                 CaseOutcome::Failed(failure) => failure,
                 CaseOutcome::Unfinished => unfinished(),
@@ -232,9 +242,7 @@ fn seconds(millis: i64) -> String {
 
 /// Whether XML 1.0 admits `character` at all. It admits a tab, a newline and a carriage return of the control
 /// characters, and it forbids `U+FFFE` and `U+FFFF`.
-// 263 only: this branch builds with Rust 1.93, which has no const `char::is_control`, so the function is not `const`.
-// See `plugins/air/BRANCH-263-DIVERGENCE.md` section 4.
-fn admitted(character: char) -> bool {
+const fn admitted(character: char) -> bool {
     matches!(character, '\t' | '\n' | '\r') || !(character.is_control() || matches!(character, '\u{fffe}' | '\u{ffff}'))
 }
 

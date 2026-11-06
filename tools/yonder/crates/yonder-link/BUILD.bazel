@@ -1,6 +1,0 @@
-load("//tools/yonder:defs.bzl", "yonder_rust_crate")
-
-yonder_rust_crate(name = "yonder-link")
-
-# A reference of the agent skill, which the `yonder` binary carries.
-exports_files(["API.md"])

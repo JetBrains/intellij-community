@@ -219,6 +219,39 @@ fn a_second_failed_attempt_publishes_under_the_next_stem() {
     );
 }
 
+// A rerun of a scenario names itself in its progress messages, and it takes no position of the plan.
+#[test]
+fn a_rerun_names_itself_in_the_progress_messages() {
+    let root = TempDir::new().unwrap();
+    let lines = Lines::default();
+    let (mut channel, _) = channel(root.path(), &lines);
+    channel.observe(&line(&plan(2)));
+    for (scenario, status) in [
+        ("flaky", CaseStatus::Failed),
+        ("passes", CaseStatus::Successful),
+        ("flaky", CaseStatus::Successful),
+    ] {
+        channel.observe(&line(&started(scenario)));
+        channel.observe(&line(&finished(scenario, status, 2_000)));
+    }
+    let text = lines.text();
+    let progress: Vec<&str> = text
+        .lines()
+        .map(|line| line.trim_start_matches("##teamcity[progressMessage '").trim_end_matches("']"))
+        .collect();
+    assert_eq!(
+        progress,
+        [
+            "ui 1/2: flaky",
+            "ui 1/2: flaky failed (2.0 s)",
+            "ui 2/2: passes",
+            "ui 2/2: passes passed (2.0 s)",
+            "ui rerun: flaky",
+            "ui rerun: flaky passed (2.0 s)",
+        ]
+    );
+}
+
 /// The environment of `pairs`.
 fn environment(pairs: &[(&str, String)]) -> impl Fn(&str) -> Option<String> {
     let map: HashMap<String, String> = pairs.iter().map(|(key, value)| ((*key).to_owned(), value.clone())).collect();

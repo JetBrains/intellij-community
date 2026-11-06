@@ -9,9 +9,9 @@
 //! - `runs/<runId>/traces/<iterationId>/<n>.zip`: the trace zips. `failed` takes each zip with a scenario that did
 //!   not pass, and `all` takes every zip.
 //!
-//! The export is for a run on another host. `.yonder.toml` of the repository sets `AIR_VM_EXPORT` and names the
-//! export directory in its `outputs`, so yonder copies the directory back into the checkout of the caller. yonder
-//! replaces the local directory when the first file of the output arrives. So `failed` removes the export of a run
+//! The export is for a run on another host. `[host]` of `.branchdeck.toml` sets `AIR_VM_EXPORT` and names the
+//! export directory in its `outputs`, so `bd-host` copies the directory back into the checkout of the caller.
+//! `bd-host` replaces the local directory when the first file of the output arrives. So `failed` removes the export of a run
 //! that failed nothing, and the export of the last red run stays in the checkout of the caller. The paths inside the
 //! copied files are the paths of the other host. `air-trace serve` maps the trace zips and the reports of the journal
 //! to their copies in the export.
@@ -326,7 +326,7 @@ fn copy_file(source: &Path, destination: &Path) -> io::Result<()> {
 }
 
 /// Removes the export of the run, then the directories above it up to the export root while they are empty. So a run
-/// that exports nothing leaves no output that yonder would copy back over the export of an earlier run.
+/// that exports nothing leaves no output that `bd-host` would copy back over the export of an earlier run.
 fn remove_export(root: &Path, run_dir: &Path) {
     let _ = fs::remove_dir_all(run_dir);
     let _ = fs::remove_dir(root.join(VM_RUNS_DIR));

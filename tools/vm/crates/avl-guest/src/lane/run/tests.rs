@@ -112,11 +112,13 @@ fn only_a_summary_without_failures_is_green() {
     assert!(!is_green(format!("{note}\nnot a record\n{}\n", summary(false)).as_bytes()));
 }
 
-/// The steps of an end, which each say that they ran. The end answers `green`, and the XML write fails on `refuse_xml`.
+/// The steps of an end, which each say that they ran. The end answers `green`, the XML write fails on `refuse_xml`, and
+/// the stream failed an attempt on `failed_an_attempt`.
 struct FakeEnding {
     ran: Vec<&'static str>,
     green: bool,
     refuse_xml: bool,
+    failed_an_attempt: bool,
 }
 
 impl Ending for FakeEnding {
@@ -138,9 +140,46 @@ impl Ending for FakeEnding {
         Ok(self.green && quit.is_ok())
     }
 
+    fn failed_an_attempt(&self) -> bool {
+        self.failed_an_attempt
+    }
+
     fn keep_evidence(&mut self) {
         self.ran.push("evidence");
     }
+}
+
+/// The steps that [`finish`] runs over a [`FakeEnding`]: its outcome, the steps that ran, and the `timing` records.
+fn finished_steps(green: bool, refuse_xml: bool, failed_an_attempt: bool) -> (Result<bool, String>, Vec<&'static str>, Vec<String>) {
+    let mut stream = format!("{}\n", summary(false)).into_bytes();
+    let mut ending = FakeEnding {
+        ran: Vec::new(),
+        green,
+        refuse_xml,
+        failed_an_attempt,
+    };
+    let outcome = finish(&mut stream, &mut ending);
+    let text = String::from_utf8(stream.clone()).unwrap();
+    let timed: Vec<String> = text
+        .lines()
+        .skip(1)
+        .map(|line| match decode_run_event(line.as_bytes()).unwrap().kind {
+            RunEventKind::Timing(timing) if timing.subject.is_none() => timing.step,
+            other => panic!("{other:?}"),
+        })
+        .collect();
+    assert!(is_green(&stream), "{text}");
+    (outcome.map_err(|refusal| refusal.code.into_owned()), ending.ran, timed)
+}
+
+// A run that its rerun made green keeps the evidence of the failed attempt, as a run that is not green does, and it
+// stays green.
+#[test]
+fn a_run_that_its_rerun_made_green_keeps_the_evidence_of_its_failed_attempt() {
+    let (outcome, ran, timed) = finished_steps(true, false, true);
+    assert_eq!(outcome, Ok(true));
+    assert_eq!(ran, ["xml", "quit", "end", "evidence"]);
+    assert_eq!(timed.last().map(String::as_str), Some("lane-run-evidence"));
 }
 
 // After the summary of its iteration, lane-run runs its own steps in order and writes the `timing` record of each after
@@ -148,26 +187,7 @@ impl Ending for FakeEnding {
 // with them is still green. A JUnit XML that cannot be written is the refusal of the run, after every step ran.
 #[test]
 fn the_steps_after_the_iteration_are_timing_records_after_the_summary() {
-    let steps = |green: bool, refuse_xml: bool| {
-        let mut stream = format!("{}\n", summary(false)).into_bytes();
-        let mut ending = FakeEnding {
-            ran: Vec::new(),
-            green,
-            refuse_xml,
-        };
-        let outcome = finish(&mut stream, &mut ending);
-        let text = String::from_utf8(stream.clone()).unwrap();
-        let timed: Vec<String> = text
-            .lines()
-            .skip(1)
-            .map(|line| match decode_run_event(line.as_bytes()).unwrap().kind {
-                RunEventKind::Timing(timing) if timing.subject.is_none() => timing.step,
-                other => panic!("{other:?}"),
-            })
-            .collect();
-        assert!(is_green(&stream), "{text}");
-        (outcome.map_err(|refusal| refusal.code.into_owned()), ending.ran, timed)
-    };
+    let steps = |green: bool, refuse_xml: bool| finished_steps(green, refuse_xml, false);
     assert_eq!(
         steps(true, false),
         (
@@ -277,24 +297,28 @@ fn lane_run_takes_the_jvm_flags_of_the_teamcity_ui_job_in_both_forms() {
     assert_eq!(args(&[]).jvm_flags, Vec::<String>::new());
 }
 
-// The runner index and count of the job split the lane, and each ignored flag gives one note in the order of the
-// flags. A run without flags is the whole lane, with no note.
+fn runner(index: u32, count: u32) -> RunnerSplit {
+    RunnerSplit {
+        index,
+        count,
+        durations: None,
+    }
+}
+
+// The runner index and count of the job split the lane, the two bucketing properties name the season of the duration
+// split, and each ignored flag gives one note in the order of the flags. A run without flags is the whole lane, with no
+// note.
 #[test]
 fn the_runner_flags_split_the_lane_and_each_ignored_flag_gives_one_note() {
     let flags = jvm_flags(&teamcity_flags(1)).unwrap();
 
-    assert_eq!(flags.split, RunnerSplit { index: 1, count: 2 });
+    assert_eq!(flags.split, runner(1, 2));
+    assert_eq!(flags.season.as_deref(), Some("AirPluginGuiChatTests"));
     assert_eq!(
         flags.notes,
-        [
-            "lane-run ignores the JVM flag -Djava.awt.headless=false: the lane IDE runs headed on the display of the run",
-            "lane-run ignores the JVM flag -Didea.bucketing.season=AirPluginGuiChatTests: lane-run splits the lane by the \
-             order of its suites, not by duration buckets",
-            "lane-run ignores the JVM flag -Didea.tests.duration.bucketing.enabled=true: lane-run splits the lane by the \
-             order of its suites, not by duration buckets",
-        ]
+        ["lane-run ignores the JVM flag -Djava.awt.headless=false: the lane IDE runs headed on the display of the run"]
     );
-    assert_eq!(jvm_flags(&teamcity_flags(0)).unwrap().split, RunnerSplit { index: 0, count: 2 });
+    assert_eq!(jvm_flags(&teamcity_flags(0)).unwrap().split, runner(0, 2));
     let one = ["-Didea.test.runner.index=0".to_owned(), "-Didea.test.runners.count=1".to_owned()];
     assert_eq!(jvm_flags(&one).unwrap().split, RunnerSplit::WHOLE);
     assert_eq!(
@@ -303,8 +327,82 @@ fn the_runner_flags_split_the_lane_and_each_ignored_flag_gives_one_note() {
             split: RunnerSplit::WHOLE,
             notes: Vec::new(),
             allure: false,
+            season: None,
         }
     );
+}
+
+// The duration split needs both bucketing properties, as the JVM duration bucketing does. A split run with one of them
+// splits by position and says why. The whole lane needs no season and gives no note.
+#[test]
+fn a_season_without_the_duration_flag_or_the_flag_without_a_season_splits_by_position_with_a_note() {
+    let flags = |extra: &[&str]| {
+        let mut flags = vec!["-Didea.test.runner.index=0".to_owned(), "-Didea.test.runners.count=2".to_owned()];
+        flags.extend(extra.iter().map(|flag| (*flag).to_owned()));
+        jvm_flags(&flags).unwrap()
+    };
+
+    let no_season = flags(&["-Didea.tests.duration.bucketing.enabled=true"]);
+    assert_eq!(no_season.season, None);
+    assert_eq!(
+        no_season.notes,
+        [
+            "lane-run splits the lane by position, because the run asks for idea.tests.duration.bucketing.enabled and names \
+             no idea.bucketing.season"
+        ]
+    );
+    let not_enabled = flags(&[
+        "-Didea.bucketing.season=AirPluginUiTests",
+        "-Didea.tests.duration.bucketing.enabled=false",
+    ]);
+    assert_eq!(not_enabled.season, None);
+    assert_eq!(
+        not_enabled.notes,
+        [
+            "lane-run splits the lane by position, because the run names the season AirPluginUiTests and does not set \
+             idea.tests.duration.bucketing.enabled to true"
+        ]
+    );
+    assert_eq!(flags(&[]).notes, Vec::<String>::new());
+    let whole = jvm_flags(&["-Didea.bucketing.season=AirPluginUiTests".to_owned()]).unwrap();
+    assert_eq!((whole.season, whole.notes), (None, Vec::new()));
+}
+
+// lane-run reads the durations of the season only for a split run. A run without --season-dir and a season without a
+// file split by position, each with a note, and never fail.
+#[test]
+fn the_durations_of_the_season_come_from_the_season_directory_and_their_absence_is_a_note() {
+    let directory = tempfile::TempDir::new().unwrap();
+    fs::write(
+        directory.path().join("AirPluginUiTests.csv"),
+        "com.intellij.air.integration.flow.AirGenUiHostUiTest,295990\n",
+    )
+    .unwrap();
+    let read = |split: RunnerSplit, season: Option<&str>, season_dir: Option<&Path>| {
+        let mut notes = Vec::new();
+        let split = split_with_durations(split, season, season_dir, &mut notes);
+        (
+            split.durations.map(|durations| durations.by_class.into_iter().collect::<Vec<_>>()),
+            notes,
+        )
+    };
+
+    let (durations, notes) = read(runner(1, 2), Some("AirPluginUiTests"), Some(directory.path()));
+    assert_eq!(durations, Some(vec![("AirGenUiHostUiTest".to_owned(), 295_990)]));
+    assert_eq!(notes.len(), 1, "{notes:?}");
+    let (durations, notes) = read(runner(1, 2), Some("AirPluginUiTests"), None);
+    assert_eq!(durations, None);
+    assert_eq!(
+        notes,
+        ["lane-run splits the lane by position, because the lane test names no --season-dir for the season AirPluginUiTests"]
+    );
+    let (durations, notes) = read(runner(1, 2), Some("AirPluginGuiChatTests"), Some(directory.path()));
+    assert_eq!((durations, notes.len()), (None, 1));
+    assert_eq!(
+        read(RunnerSplit::WHOLE, Some("AirPluginUiTests"), Some(directory.path())),
+        (None, Vec::new())
+    );
+    assert_eq!(read(runner(0, 2), None, Some(directory.path())), (None, Vec::new()));
 }
 
 // The lane flag of the Allure results is a JVM flag of lane-run too, so a person asks for them for one Bazel run. Only
@@ -315,10 +413,7 @@ fn the_allure_flag_asks_for_the_allure_results_of_one_run() {
     assert!(!jvm_flags(&flags).unwrap().allure);
     flags.push(inputs::ALLURE_FLAG.to_owned());
     let asked = jvm_flags(&flags).unwrap();
-    assert_eq!(
-        (asked.allure, asked.split, asked.notes.len()),
-        (true, RunnerSplit { index: 1, count: 2 }, 3)
-    );
+    assert_eq!((asked.allure, asked.split, asked.notes.len()), (true, runner(1, 2), 1));
     let refusal = jvm_flags(&["-Dair.flow.trace.allure=true".to_owned()]).unwrap_err();
     assert_eq!(refusal.code, JVM_FLAG_CODE);
     assert_eq!(refusal.message, "the JVM property air.flow.trace.allure takes only the value on");
@@ -341,7 +436,10 @@ fn an_unknown_jvm_flag_or_a_split_that_is_not_one_is_refused_by_name() {
         "{unknown}"
     );
     assert!(
-        unknown.contains("idea.test.runner.index, idea.test.runners.count and air.flow.trace.allure"),
+        unknown.contains(
+            "idea.test.runner.index, idea.test.runners.count, idea.bucketing.season, \
+             idea.tests.duration.bucketing.enabled and air.flow.trace.allure"
+        ),
         "{unknown}"
     );
     assert!(refusal(&["-Xmx2g"]).contains("the flag -Xmx2g is none"));

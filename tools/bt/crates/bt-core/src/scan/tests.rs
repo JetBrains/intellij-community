@@ -233,24 +233,215 @@ fn the_index_is_keyed_by_simple_name_only() {
     assert_eq!(index["AgentPromptChangesTreeContextContributorTest"].len(), 2);
 }
 
-/// One directory with two modules, as `community/platform/eel` has: each target runs the library of its own module.
+/// The shape of `community/platform/eel/BUILD.bazel`: its test libraries carry `module_name`.
+const EEL_BUILD: &str = r#"load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "eel-tests_test",
+    runtime_deps = [":eel-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.eel.tests`
+
+### auto-generated section `build intellij.platform.eel` start
+jvm_library(
+    name = "eel",
+    srcs = glob(["src/**/*.kt"], allow_empty = True),
+    module_name = "intellij.platform.eel",
+)
+### auto-generated section `build intellij.platform.eel` end
+
+### auto-generated section `build intellij.platform.eel.codegen` start
+jvm_library(
+    name = "eel-codegen_test_lib",
+    testonly = True,
+    srcs = glob(["codegen/**/*.kt"], allow_empty = True),
+    module_name = "intellij.platform.eel.codegen",
+)
+### auto-generated section `build intellij.platform.eel.codegen` end
+
+### auto-generated section `test intellij.platform.eel.codegen` start
+jps_test(
+    name = "eel-codegen_test",
+    runtime_deps = [":eel-codegen_test_lib"],
+)
+### auto-generated section `test intellij.platform.eel.codegen` end
+
+### auto-generated section `build intellij.platform.eel.tests` start
+jvm_library(
+    name = "eel-tests_test_lib",
+    testonly = True,
+    srcs = glob(["tests/**/*.kt"], allow_empty = True),
+    module_name = "intellij.platform.eel.tests",
+)
+### auto-generated section `build intellij.platform.eel.tests` end"#;
+
+/// One directory with several modules, as `community/platform/eel` has: each target runs the library of its own module.
 #[test]
 fn the_jps_test_of_a_module_is_the_one_that_runs_its_library() {
-    let build = format!(
-        "{}\n{}",
-        module_build_bazel_text("intellij.eel.tests", "eel-tests_test"),
-        module_build_bazel_text("intellij.eel.codegen", "eel-codegen_test")
-    );
-    assert_eq!(parse_jps_test_name(&build).map_err(|failure| failure.code), Err("bt_infra".into()));
     assert_eq!(
-        module_jps_test_name(&build, "intellij.eel.tests"),
+        parse_jps_test_name(EEL_BUILD).map_err(|failure| failure.code),
+        Err("bt_infra".into())
+    );
+    assert_eq!(
+        module_jps_test_name(EEL_BUILD, "intellij.platform.eel.tests"),
         Ok(Some("eel-tests_test".to_owned()))
     );
     assert_eq!(
-        module_jps_test_name(&build, "intellij.eel.codegen"),
+        module_jps_test_name(EEL_BUILD, "intellij.platform.eel.codegen"),
         Ok(Some("eel-codegen_test".to_owned()))
     );
-    assert_eq!(module_jps_test_name(&build, "intellij.eel"), Ok(None));
+    assert_eq!(module_jps_test_name(EEL_BUILD, "intellij.platform.eel"), Ok(None));
+}
+
+/// The shape of `plugins/air/frontend/loopback.proxy/BUILD.bazel`, without the source lists.
+const LOOPBACK_PROXY_BUILD: &str = r#"load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "air-frontend-loopback-proxy-tests_test",
+    # sandbox = True implies block-network.
+    jvm_flags = ["-Djava.net.preferIPv4Stack=true"],
+    sandbox = True,
+    tags = ["air-unit"],
+    runtime_deps = [":air-frontend-loopback-proxy-tests_test_lib"],
+)
+### skip generation section `test intellij.air.frontend.loopback.proxy.tests`
+
+### auto-generated section `dev intellij.air.frontend.loopback.proxy` start
+content_module_jar(module = ":loopback.proxy")
+### auto-generated section `dev intellij.air.frontend.loopback.proxy` end
+
+### auto-generated section `build intellij.air.frontend.loopback.proxy` start
+jvm_library(
+    name = "loopback.proxy",
+    srcs = glob(["src/**/*.kt"], allow_empty = True),
+    module_name = "intellij.air.frontend.loopback.proxy",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.air.frontend.loopback.proxy` end
+
+### auto-generated section `iml intellij.air.frontend.loopback.proxy` start
+exports_files(
+    ["intellij.air.frontend.loopback.proxy.iml"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.air.frontend.loopback.proxy` end
+
+### auto-generated section `build intellij.air.frontend.loopback.proxy.tests` start
+jvm_library(
+    name = "air-frontend-loopback-proxy-tests_test_lib",
+    testonly = True,
+    srcs = glob(["testSrc/**/*.kt"], allow_empty = True),
+    associates = ["//plugins/air/frontend/loopback.proxy"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.air.frontend.loopback.proxy.tests` end
+
+### auto-generated section `iml intellij.air.frontend.loopback.proxy.tests` start
+exports_files(
+    ["intellij.air.frontend.loopback.proxy.tests.iml"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.air.frontend.loopback.proxy.tests` end
+"#;
+
+/// The test library of `plugins/air/frontend/loopback.proxy` has no `module_name`, and its name has another stem than
+/// the main library. Only its `build` section names the tests module.
+#[test]
+fn a_test_library_without_module_name_belongs_to_the_module_of_its_build_section() {
+    assert_eq!(
+        module_jps_test_name(LOOPBACK_PROXY_BUILD, "intellij.air.frontend.loopback.proxy.tests"),
+        Ok(Some("air-frontend-loopback-proxy-tests_test".to_owned()))
+    );
+    assert_eq!(
+        module_jps_test_name(LOOPBACK_PROXY_BUILD, "intellij.air.frontend.loopback.proxy"),
+        Ok(None)
+    );
+
+    let build = module_build_bazel_text("intellij.air.backend.session.log.tests", "air-backend-session-log-tests_test");
+    assert!(
+        !build.contains("module_name = \"intellij.air.backend.session.log.tests\""),
+        "{build}"
+    );
+    assert_eq!(
+        module_jps_test_name(&build, "intellij.air.backend.session.log.tests"),
+        Ok(Some("air-backend-session-log-tests_test".to_owned()))
+    );
+    assert_eq!(module_jps_test_name(&build, "intellij.air.backend.session.log"), Ok(None));
+}
+
+/// A `build <module>` section without its end marker owns no rule, so it gives the module no target.
+#[test]
+fn a_build_section_without_its_end_marker_owns_nothing() {
+    let unterminated = LOOPBACK_PROXY_BUILD.replace(
+        "### auto-generated section `build intellij.air.frontend.loopback.proxy.tests` end",
+        "",
+    );
+    assert_eq!(
+        module_jps_test_name(&unterminated, "intellij.air.frontend.loopback.proxy.tests"),
+        Ok(None)
+    );
+}
+
+/// The shape of `plugins/full-line/cloud-impl/BUILD.bazel`, without the source and dependency lists.
+const CLOUD_IMPL_BUILD: &str = r#"load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+jps_test(
+    name = "ml-llm-completion-tests_test",
+    runtime_deps = [":ml-llm-completion-tests_test_lib"],
+)
+
+# JB_TEST_FILTER keeps the run to that one class. The other tests of this module need the AI Assistant plugin.
+jps_test(
+    name = "ml-llm-completion-tests-without-ai-assistant_test",
+    env = {
+        "JB_TEST_FILTER": "com.intellij.ml.llm.completion.cloud.CloudCompletionClientExtensionsTest",
+    },
+    jvm_flags = [
+        "-Dcompletion.test.without.ai.assistant=true",
+        "-Didea.suppressed.plugins.id=com.intellij.ml.llm",
+    ],
+    runtime_deps = [":ml-llm-completion-tests_test_lib"],
+)
+
+### skip generation section `test intellij.ml.llm.completion.tests`
+
+### auto-generated section `build intellij.ml.llm.completion` start
+jvm_library(
+    name = "ml-llm-completion",
+    srcs = glob(["src/**/*.kt"], allow_empty = True),
+    module_name = "intellij.ml.llm.completion",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.ml.llm.completion` end
+
+### auto-generated section `build intellij.ml.llm.completion.tests` start
+jvm_library(
+    name = "ml-llm-completion-tests_test_lib",
+    testonly = True,
+    srcs = glob(["test/**/*.kt"], allow_empty = True),
+    associates = ["//plugins/full-line/cloud-impl:ml-llm-completion"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.ml.llm.completion.tests` end
+"#;
+
+/// Two unfiltered targets of `plugins/full-line/cloud-impl` run the section-owned test library. Only
+/// `JB_TEST_JUNIT5_FILTERS` marks a target as filtered, so `JB_TEST_FILTER` does not, and the module is ambiguous.
+#[test]
+fn two_unfiltered_targets_of_a_section_owned_library_are_refused() {
+    let failure = refusal(module_jps_test_name(CLOUD_IMPL_BUILD, "intellij.ml.llm.completion.tests"));
+    assert_eq!(failure.code, "bt_infra");
+    assert_eq!(failure.exit, exit::INFRA);
+    assert_eq!(
+        failure.message,
+        "Expected one jps_test of module intellij.ml.llm.completion.tests per BUILD.bazel, found 2: \
+         ml-llm-completion-tests_test, ml-llm-completion-tests-without-ai-assistant_test"
+    );
+    assert_eq!(module_jps_test_name(CLOUD_IMPL_BUILD, "intellij.ml.llm.completion"), Ok(None));
 }
 
 /// `community/plugins/groovy` runs its module through a filtered target only, and that target is the answer. An

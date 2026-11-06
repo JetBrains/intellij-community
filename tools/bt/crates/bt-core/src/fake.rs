@@ -445,33 +445,45 @@ pub fn iml_text(source_folders: &[&str]) -> String {
     )
 }
 
-/// A BUILD.bazel of one module, as the BUILD generator writes it for a test module with `associates`: the main library
-/// carries the module name, the `_test_lib` does not, and the `jps_test` runs the `_test_lib`.
+/// A BUILD.bazel of a tests module and its main module, in the shape of `plugins/air/frontend/loopback.proxy/BUILD.bazel`.
+///
+/// The `jps_test` comes first, followed by the `skip generation section` marker of the tests module. The main library is
+/// named after the last part of the main module, and it carries `module_name` of the main module. The `_test_lib` has
+/// `associates` and no `module_name`. Only its `build <module>` section names the tests module.
 pub fn module_build_bazel_text(module: &str, target_name: &str) -> String {
-    let library = target_name.strip_suffix("_test").unwrap_or(target_name);
+    let main_module = module
+        .strip_suffix(".tests")
+        .unwrap_or_else(|| panic!("{module} is not a tests module"));
+    let main_library = main_module.rsplit('.').next().unwrap_or(main_module);
+    let test_library = format!("{}_test_lib", target_name.strip_suffix("_test").unwrap_or(target_name));
     format!(
-        r#"load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("@community//build:tests-options.bzl", "jps_test")
+        r#"load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
     name = "{target_name}",
-    runtime_deps = [":{library}_test_lib"],
+    runtime_deps = [":{test_library}"],
 )
 ### skip generation section `test {module}`
 
+### auto-generated section `build {main_module}` start
 jvm_library(
-    name = "{library}",
-    srcs = glob([], allow_empty = True),
-    module_name = "{module}",
+    name = "{main_library}",
+    srcs = glob(["src/**/*.kt"], allow_empty = True),
+    module_name = "{main_module}",
+    visibility = ["//visibility:public"],
 )
+### auto-generated section `build {main_module}` end
 
+### auto-generated section `build {module}` start
 jvm_library(
-    name = "{library}_test_lib",
+    name = "{test_library}",
     testonly = True,
-    srcs = glob(["testSrc/**/*.kt"]),
-    associates = ["//plugins/x:x"],
-    runtime_deps = [":{library}"],
-)"#
+    srcs = glob(["testSrc/**/*.kt"], allow_empty = True),
+    associates = [":{main_library}"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build {module}` end"#
     )
 }
 

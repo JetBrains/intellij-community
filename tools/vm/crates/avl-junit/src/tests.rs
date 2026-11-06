@@ -1,5 +1,5 @@
 use avl_testkit::environment_lookup;
-use avl_wire::daemon::{ExecutionIdentity, PlanStarted, RunEvent, RunEventKind, TestStarted};
+use avl_wire::daemon::{ExecutionIdentity, PlanStarted, RunEvent, RunEventKind, TestFinished, TestStarted, TypedFailure};
 use pretty_assertions::assert_eq;
 
 use super::*;
@@ -109,6 +109,70 @@ fn the_failed_cases_are_those_that_fail_the_xml_with_its_failure() {
     assert_eq!(
         failed[0].failure.headline(),
         "instruction 4 assert-chip-visible: the chip <a.txt> is not visible"
+    );
+}
+
+/// The records of one attempt of the scenario `name` of `AirCodeNotesGeneratedFlowUiTest` with `status`.
+fn attempt(name: &str, status: &str) -> [RunEvent; 2] {
+    let execution = ExecutionIdentity {
+        id: format!("[engine:lane-daemon]/[suite:code-notes]/[scenario:{name}]"),
+        display_name: name.to_owned(),
+        class_name: Some("AirCodeNotesGeneratedFlowUiTest".to_owned()),
+        method_name: None,
+    };
+    let failure = (status != cases::STATUS_SUCCESSFUL).then(|| TypedFailure {
+        kind: Some("lane_bridge".to_owned()),
+        message: Some(format!("{name} timed out")),
+        detail: None,
+    });
+    [
+        RunEventKind::TestStarted(TestStarted {
+            timestamp: "2026-10-29T12:00:00Z".to_owned(),
+            execution: execution.clone(),
+        }),
+        RunEventKind::TestFinished(TestFinished {
+            timestamp: "2026-10-29T12:00:02Z".to_owned(),
+            execution,
+            status: status.to_owned(),
+            duration_ms: 2_000,
+            failure: failure.unwrap_or_default(),
+            report: avl_wire::report::ScenarioReport::default(),
+        }),
+    ]
+    .map(|kind| RunEvent { raw: None, kind })
+}
+
+// A rerun of `lane-run` is a second case of the same class and name. A failed attempt that a later pass follows is no
+// failed case of the run result, and the XML keeps both attempts in the order of the stream: TeamCity reads a test
+// that failed and then passed.
+#[test]
+fn a_failure_that_a_later_pass_follows_is_no_failed_case_and_the_xml_keeps_both_attempts() {
+    let events: Vec<RunEvent> = [
+        attempt("flaky-note", cases::STATUS_FAILED),
+        attempt("broken-note", cases::STATUS_FAILED),
+        attempt("flaky-note", cases::STATUS_SUCCESSFUL),
+        attempt("broken-note", cases::STATUS_FAILED),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+    let failed = failed_cases(&events);
+    let names: Vec<&str> = failed.iter().map(|case| case.name.as_str()).collect();
+    assert_eq!(names, ["broken-note", "broken-note"]);
+    let parsed = bt_junit::parse_report(&render([events.as_slice()]));
+    let attempts: Vec<(&str, bool)> = parsed.suites[0]
+        .cases
+        .iter()
+        .map(|case| (case.name.as_str(), case.outcome == bt_junit::Outcome::Failed))
+        .collect();
+    assert_eq!(
+        attempts,
+        [
+            ("flaky-note", true),
+            ("broken-note", true),
+            ("flaky-note", false),
+            ("broken-note", true)
+        ]
     );
 }
 

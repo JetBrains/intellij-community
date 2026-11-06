@@ -6,12 +6,13 @@
 //! 2. The main repository on the host: created and given the master history when it is missing, and moved to the
 //!    local master when its master is clean and an ancestor. Its `core.fsmonitor` is on, also in a repository that
 //!    an older prepare created with it off.
-//! 3. `bd`: the local binary, copied when the host has another build, and `~/.local/bin` on the PATH of `~/.zshenv`.
-//!    The SHA-256 of the binary tells the build, because a new build can keep its version.
+//! 3. PATH: `~/.local/bin`, where `bd-host setup` puts `bd-host`, on the PATH of `~/.zshenv`. The agent finds itself
+//!    there from the login shell. The host needs no `bd`, because the agent links the lease pool of Branch Deck.
 //! 4. Tools: git, Xcode, rustup, docker, tmux. Reported only, never installed.
-//! 5. The agent: `yonderd`, built here with Bazel, goes to the host through `yonder prepare` of `yonder-client`. It
-//!    adds this client to the allow list of the agent and writes the host file, so a run needs no ssh. With
-//!    `--dry-run`, the step only asks the agent for its hello.
+//! 5. The agent: `bd-host setup <alias>` of Branch Deck. Over ssh, it copies the local `bd-host` to the host when the
+//!    host has another build, adds this client to the allow list of the agent, starts the LaunchAgent, and writes the
+//!    host file, so a run needs no ssh. Then the agent must answer a hello. With `--dry-run`, the step only asks the
+//!    agent for its hello.
 //! 6. Credentials: the netrc entries of the Bazel services, the Maven servers of the Space repositories, and the
 //!    expiry marker of the token of each server, which `IJPrivatePackagesAuthorizer` reads. An expired or missing local
 //!    marker asks for a renewed local token first. The copy needs a yes at the terminal or `--yes`, and it
@@ -19,21 +20,16 @@
 
 use std::ffi::OsString;
 use std::fmt::Write as _;
-use std::path::PathBuf;
 
 use bt_core::exit;
-use bt_core::lanes::bazel_command;
-use bt_core::runtime::{Platform, Runtime, STOPPED_IDLE, SpawnResult, repo_file};
-use yonder_client::{AGENT_BUILD_QUIET, AGENT_TARGET, PrepareRequest};
-use yonder_link::DEFAULT_PORT;
+use bt_core::runtime::{Runtime, SpawnResult};
 
 use crate::credentials::{
     Format, NETRC, NetrcFormat, REMOTE_CACHE_OPTION, SETTINGS_XML, SettingsFormat, copy_entries, service_hosts, services,
     space_repository_ids,
 };
-use crate::digest::tail_lines;
 use crate::execute::Outcome;
-use crate::remote::{DEFAULT_HOST_REPO, Host, HostLink};
+use crate::remote::{DEFAULT_HOST_REPO, Host, HostHello, HostLink, HostSetup};
 use crate::ssh::{COPY_IDLE, host_path_word, host_repo, push_url, remote_call, scp, ssh, ssh_git_config, watched_git};
 
 /// What `--prepare` may do.
@@ -89,12 +85,6 @@ impl Report {
     }
 }
 
-/// The base name of the agent binary.
-const AGENT_NAME: &str = "yonderd";
-
-/// How much of a failed agent build the report shows.
-const BUILD_TAIL_LINES: usize = 20;
-
 /// The empty key that the remote cache check asks for: a valid key that no cache holds.
 const ABSENT_CACHE_KEY: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 
@@ -115,7 +105,7 @@ pub(crate) fn prepare_host(host: &Host<'_>, prepare: &Prepare, runtime: &dyn Run
     let mut report = Report::default();
     if check_ssh(runtime, host.alias, &mut report) {
         prepare_repository(runtime, host, prepare, &mut report);
-        prepare_bd(runtime, host.alias, prepare, &mut report);
+        prepare_path(runtime, host.alias, prepare, &mut report);
         check_tools(runtime, host.alias, &mut report);
         prepare_agent(runtime, host, prepare, link, &mut report);
         prepare_credentials(runtime, host.alias, prepare, &mut report);
@@ -383,74 +373,9 @@ fn push_sync_and_move(
     true
 }
 
-fn prepare_bd(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, report: &mut Report) {
-    const STEP: &str = "bd";
-    let Some(home) = runtime.home_dir() else {
-        report.add(Status::Missing, STEP, "no home directory here");
-        return;
-    };
-    let local_bd: PathBuf = home.join(".local/bin/bd");
-    let local_version = runtime
-        .exists(&local_bd)
-        .then(|| version_of(&runtime.spawn(&[local_bd.clone().into_os_string(), "--version".into()], None).output))
-        .flatten();
-    let local_sha = sha_of(
-        &runtime
-            .spawn(
-                &["shasum".into(), "-a".into(), "256".into(), local_bd.clone().into_os_string()],
-                None,
-            )
-            .output,
-    );
-    let host_probe = remote_call(
-        runtime,
-        &ssh(
-            alias,
-            "uname -sm; ~/.local/bin/bd --version 2>/dev/null; shasum -a 256 ~/.local/bin/bd 2>/dev/null",
-        ),
-    );
-    let mut lines = host_probe.output.lines();
-    let host_platform = lines.next().unwrap_or_default().trim().to_owned();
-    let host_answer = lines.collect::<Vec<_>>().join("\n");
-    let host_version = version_of(&host_answer);
-    let host_sha = sha_of(&host_answer);
-    let Some(local_version) = local_version else {
-        report.add(Status::Missing, STEP, format!("no bd at {}", local_bd.display()));
-        return;
-    };
-    // Without a hash on one side, the version decides, as before the hash.
-    let same = match (&local_sha, &host_sha) {
-        (Some(local), Some(host)) => local == host,
-        _ => host_version.as_deref() == Some(local_version.as_str()),
-    };
-    let local_build = build_name(&local_version, local_sha.as_deref());
-    if same {
-        report.add(Status::Ok, STEP, format!("bd {local_build}"));
-    } else {
-        let local_platform = local_platform(runtime);
-        let had = host_version.map_or_else(|| "none".to_owned(), |version| build_name(&version, host_sha.as_deref()));
-        if host_platform != local_platform {
-            report.add(
-                Status::Missing,
-                STEP,
-                format!("{alias} has bd {had} on {host_platform}, and this {local_platform} bd does not run there; install bd there"),
-            );
-        } else if !prepare.change {
-            report.add(
-                Status::Missing,
-                STEP,
-                format!("{alias} has bd {had}; --prepare copies {local_build}"),
-            );
-        } else if copy_bd(runtime, alias, &local_bd) {
-            report.add(
-                Status::Done,
-                STEP,
-                format!("copied bd {local_build} to ~/.local/bin/bd (was {had})"),
-            );
-        } else {
-            report.add(Status::Missing, STEP, format!("cannot copy bd to {alias}"));
-        }
-    }
+/// `~/.local/bin` on the PATH of the login shell of the host. `bd-host setup` puts `bd-host` there, and the agent
+/// reads the login environment through it.
+fn prepare_path(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, report: &mut Report) {
     let path = remote_call(
         runtime,
         &ssh(alias, r#"case ":$PATH:" in *":$HOME/.local/bin:"*) echo on ;; *) echo off ;; esac"#),
@@ -473,55 +398,6 @@ fn prepare_bd(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, report: &mu
                 report.add(Status::Missing, "PATH", "cannot write ~/.zshenv");
             }
         }
-    }
-}
-
-fn copy_bd(runtime: &dyn Runtime, alias: &str, local_bd: &std::path::Path) -> bool {
-    let staged = ".local/bin/bd.bt-new";
-    let made = remote_call(runtime, &ssh(alias, "mkdir -p .local/bin"));
-    let mut copy = scp(&["-q"]);
-    copy.push(local_bd.as_os_str().to_owned());
-    copy.push(format!("{alias}:{staged}").into());
-    made.exit_code == 0
-        && runtime.spawn_watched(&copy, COPY_IDLE).exit_code == 0
-        && runtime
-            .spawn(&ssh(alias, &format!("chmod 755 {staged} && mv -f {staged} .local/bin/bd")), None)
-            .exit_code
-            == 0
-}
-
-/// The version of a `bd --version` answer: `{"schema":2,"version":"0.29.0",…}`.
-fn version_of(text: &str) -> Option<String> {
-    bt_core::regex!(r#""version":"([^"]+)""#)
-        .captures(text)
-        .map(|found| found[1].to_owned())
-}
-
-/// The SHA-256 of a `shasum -a 256` answer: the 64 hex digits at the start of a line.
-fn sha_of(text: &str) -> Option<String> {
-    bt_core::regex!(r"(?m)^([0-9a-f]{64})\s")
-        .captures(text)
-        .map(|found| found[1].to_owned())
-}
-
-/// A build of bd as the report names it: the version, and the first 12 hex digits of the hash when it is known.
-fn build_name(version: &str, sha: Option<&str>) -> String {
-    match sha {
-        Some(sha) => format!("{version} ({})", &sha[..12]),
-        None => version.to_owned(),
-    }
-}
-
-/// This machine as `uname -sm` names it.
-fn local_platform(runtime: &dyn Runtime) -> String {
-    let named = runtime.spawn(&["uname".into(), "-sm".into()], None);
-    if named.exit_code == 0 {
-        return named.output.trim().to_owned();
-    }
-    match runtime.platform() {
-        Platform::Windows => "Windows".to_owned(),
-        Platform::Darwin => "Darwin".to_owned(),
-        Platform::Linux => "Linux".to_owned(),
     }
 }
 
@@ -788,106 +664,55 @@ fn copy_markers(runtime: &dyn Runtime, alias: &str, markers: &[String]) -> Strin
     }
 }
 
-/// The agent step: a hello for `--dry-run`, else the build of `yonderd` here and `yonder prepare`.
+/// The agent step: a hello for `--dry-run`, else `bd-host setup <alias>` and a hello.
 fn prepare_agent(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare, link: &dyn HostLink, report: &mut Report) {
     const STEP: &str = "agent";
     if !prepare.change {
         match link.hello(host.alias) {
-            Ok(agent) => report.add(Status::Ok, STEP, agent_text(&agent)),
+            Ok(hello) => report.add(Status::Ok, STEP, agent_text(host.alias, &hello)),
             Err(refusal) => report.add(Status::Missing, STEP, format!("{}; --prepare installs it", refusal.message)),
         }
         return;
     }
-    let agent = match build_agent(runtime) {
-        Ok(agent) => agent,
-        Err(said) => {
-            report.add(Status::Missing, STEP, said);
-            return;
-        }
-    };
     let name = client_name(runtime);
-    let request = PrepareRequest {
+    let request = HostSetup {
         alias: host.alias,
-        agent: &agent,
-        port: DEFAULT_PORT,
         repo: host.repo.unwrap_or(DEFAULT_HOST_REPO),
         name: &name,
     };
-    match link.prepare(&request) {
-        Ok(prepared) => {
-            let (status, copied) = if prepared.copied {
-                (Status::Done, "copied to ~/.local/bin/yonderd; ")
-            } else {
-                (Status::Ok, "")
-            };
-            report.add(
-                status,
-                STEP,
-                format!(
-                    "{copied}{}, launchd {}, host file {}",
-                    agent_text(&prepared.agent),
-                    prepared.launchd,
-                    prepared.host_file.display()
-                ),
-            );
+    let said = match link.setup(&request) {
+        Ok(said) => said,
+        Err(refusal) => {
+            report.add(Status::Missing, STEP, refusal.message);
+            return;
         }
-        Err(refusal) => report.add(Status::Missing, STEP, refusal.message),
-    }
-}
-
-fn agent_text(agent: &yonder_client::AgentInfo) -> String {
-    format!(
-        "yonderd {} answers on {} ({} {})",
-        agent.version, agent.address, agent.os, agent.arch
-    )
-}
-
-/// Builds `yonderd` with the Bazel launcher of bt, and answers the binary that the build event file names. The target
-/// and the quiet limit are the ones of `yonder prepare`. The build goes through the runtime of bt, so the tests of bt
-/// script it.
-fn build_agent(runtime: &dyn Runtime) -> Result<PathBuf, String> {
-    let label = if runtime.exists(&repo_file(runtime, "community/tools/yonder")) {
-        format!("@community{AGENT_TARGET}")
-    } else {
-        AGENT_TARGET.to_owned()
     };
-    let events = runtime.temp_file("bt-yonderd-events");
-    let args: Vec<String> = [
-        "build",
-        "--config=bt",
-        &format!("--build_event_json_file={}", events.display()),
-        "--nobuild_event_json_file_path_conversion",
-        &label,
-    ]
-    .map(str::to_owned)
-    .to_vec();
-    let command = bazel_command(runtime.repo_root(), runtime.platform(), &args);
-    let shown = command.iter().map(|part| part.to_string_lossy()).collect::<Vec<_>>().join(" ");
-    runtime.write_error(&format!("> {shown}"));
-    let built = runtime.spawn_watched(&command, AGENT_BUILD_QUIET);
-    let binary = runtime.read_lines(&events).find_map(|line| built_file(&line, AGENT_NAME));
-    let _ = runtime.remove(&events);
-    if built.exit_code == STOPPED_IDLE {
-        return Err(format!(
-            "`{shown}` wrote nothing for {} min and was stopped",
-            AGENT_BUILD_QUIET.as_secs() / 60
-        ));
+    let setup = if said.is_empty() {
+        format!("bd-host setup {} ran", host.alias)
+    } else {
+        said.lines().map(str::trim).collect::<Vec<_>>().join("; ")
+    };
+    match link.hello(host.alias) {
+        Ok(hello) => report.add(Status::Done, STEP, format!("{setup}; {}", agent_text(host.alias, &hello))),
+        Err(refusal) => report.add(
+            Status::Missing,
+            STEP,
+            format!("{setup}, but the agent does not answer: {}", refusal.message),
+        ),
     }
-    if built.exit_code != 0 {
-        return Err(format!("`{shown}` failed:\n{}", tail_lines(&built.output, BUILD_TAIL_LINES)));
-    }
-    binary.ok_or_else(|| format!("the build of {label} named no {AGENT_NAME} file"))
 }
 
-/// The local file with the base name `name` that one line of a build event file names: the build names its outputs
-/// as `"uri":"file://<path>"`.
-fn built_file(line: &str, name: &str) -> Option<PathBuf> {
-    bt_core::regex!(r#""uri":"file://([^"]+)""#)
-        .captures_iter(line)
-        .map(|found| found[1].to_owned())
-        .filter(|path| path.rsplit('/').next() == Some(name))
-        .last()
-        .map(PathBuf::from)
+/// The agent of a hello as the report names it, with the upgrade hint when it runs another build than `bd-host` here.
+fn agent_text(alias: &str, hello: &HostHello) -> String {
+    let agent = &hello.agent;
+    let mut text = format!(
+        "bd-host {} answers on {} ({} {})",
+        agent.version, hello.address, agent.os, agent.arch
+    );
+    if !hello.same_build {
+        let _ = write!(text, ", another build than here; `bd-host upgrade {alias}` replaces it");
+    }
+    text
 }
 
 /// The name of this client in the allow list of the agent: `bt on <host name>`.

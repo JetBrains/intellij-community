@@ -813,11 +813,13 @@ The daemon's half and the IDE's half of supervision are in
   The steps are `bare-launch` and `bare-program` of a suite of a bare IDE, the `services-reset` of each reset, and
   the `recorder-close` of each recorded scenario. Its `subject` names the suite or the scenario. After the summary
   of its iteration, `lane-run` writes `lane-run-xml`, `lane-run-quit`, `lane-run-end` and, for a run that is not
-  green, `lane-run-evidence`. The JUnit XML and the TeamCity messages ignore every `timing` and `ideReady` record.
+  green or that failed an attempt, `lane-run-evidence`. The JUnit XML and the TeamCity messages ignore every `timing`
+  and `ideReady` record.
   [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_timing_record_names_its_step_its_duration_and_its_subject`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction`)
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_steps_after_the_iteration_are_timing_records_after_the_summary`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_run_that_its_rerun_made_green_keeps_the_evidence_of_its_failed_attempt`)
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`the_recorded_stream_renders_its_golden`)
 
 - The run journal holds each line that the daemon writes to its error stream during a run. Each line is an `output`
@@ -1637,6 +1639,47 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   so a write that fails fails the run.
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_junit_xml_goes_to_the_run_directory_and_to_the_file_of_the_bazel_test`)
 
+- `lane-run` runs each failed scenario of the lane IDE once more. The reruns start after the last suite of the lane
+  IDE and before the suites of a bare IDE. The IDE is recycled once before the first rerun. So each rerun runs on a
+  new IDE process on the same context, after the reset of its scenario. The prologue of a suite runs again before the
+  reruns of the suite. A note on the run stream names the scenarios, and a note at the end says how many passed. The
+  lane daemon of a worker reruns no scenario, so a run of the controller shows each flake.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_scenario_runs_once_more_on_a_recycled_ide_and_its_pass_clears_the_failure`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_scenario_that_fails_twice_stays_failed_after_one_rerun`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_runner_without_a_rerun_reruns_nothing_and_injects_nothing`)
+
+- No scenario reruns when more than 3 scenarios and suite prologues failed, because that is a break and not a flake.
+  No scenario reruns after the watchdog ended the run, on an exhausted isolation, or in the live lane. No scenario
+  reruns either when the budget left is shorter than what one recycle can take, 13 minutes. A note names the reason. A failed suite prologue, an aborted scenario, a skipped scenario and a
+  scenario of a bare IDE get no rerun. A recycle before the reruns that fails ends the reruns, and a prologue that
+  fails ends the reruns of its suite. A note names each, and the failures stay.
+  [@test] ../crates/avl-guest/src/lane/rerun/tests.rs (`no_rerun_past_the_limit_after_an_expiry_on_an_exhausted_isolation_in_the_live_lane_or_short_of_budget`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`more_failed_scenarios_than_the_limit_or_too_little_budget_rerun_none`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_recycle_that_fails_before_the_rerun_leaves_the_failure`)
+
+- A rerun is a second case of the same id on the run stream. A pass of the rerun takes the failure of the first
+  attempt out of the counts of the summary. So a run whose every failure passed on its rerun is green, and `lane-run`
+  exits 0. A scenario that fails both attempts counts as one failure. The JUnit XML keeps both attempts in the order
+  of the stream, under the same class and name. The result of the run names no test that passed on its rerun. A
+  failed case that a later case of the same class and name passed is flaky for bt, and not a failure.
+  [@test] ../crates/avl-guest/src/lane/stream/tests.rs (`a_later_pass_of_a_failed_scenario_clears_its_failure_in_the_counts`)
+  [@test] ../crates/avl-junit/src/tests.rs (`a_failure_that_a_later_pass_follows_is_no_failed_case_and_the_xml_keeps_both_attempts`)
+  [@test] ../../bt/crates/bt-core/src/result/tests.rs (`a_failed_case_that_a_later_case_of_its_name_passed_is_flaky`)
+
+- The rerun spends the budget of the run. The watchdog ends a rerun at the end of the budget as it ends any scenario.
+  The run then keeps its `lane-run-budget` build problem, and the hard stop writes the open rerun as unfinished.
+  [@test] ../crates/avl-guest/src/lane/watchdog/tests.rs (`the_run_budget_caps_every_deadline_and_ends_the_run_as_run_budget_timeout`)
+  [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`a_cut_off_run_gets_its_open_case_unfinished_and_its_planned_cases_skipped`)
+
+- `AIR_LANE_INJECT_FAILURE` fails named scenarios on purpose, so a run proves the rerun with a real lane IDE. Its
+  value is a list of `first:<scenario>` and `every:<scenario>`, separated by `;`. The scenario is a name or a key.
+  `first` fails the first attempt, and `every` fails each attempt. The injected failure has the type
+  `lane_injected_failure`, and it comes after the body of the scenario and before its reset after. A note at the
+  start of the run names each injection. Another value is refused with `lane_run_inject_failure`, and the refusal
+  names the part.
+  [@test] ../crates/avl-guest/src/lane/rerun/tests.rs (`the_injected_failures_come_from_the_variable_and_a_malformed_one_is_refused`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_scenario_runs_once_more_on_a_recycled_ide_and_its_pass_clears_the_failure`)
+
 - `lane-run` takes its run directory from `--runtime-root`, then `$AIR_LANE_RUNTIME_ROOT`, then
   `$TEST_TMPDIR/air-lane`. A Bazel `--test_filter` adds selectors, and `$JB_TEST_JUNIT5_FILTERS` adds JUnit5 filters.
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_run_directory_comes_from_the_flag_the_variable_or_the_test_directory`)
@@ -1646,15 +1689,34 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_run_of_more_than_one_shard_is_refused`)
 
 - `lane-run` takes the `--jvm_flag` arguments of a TeamCity UI job, in the joined and in the two-token form. The runner
-  index and count of the job split the selected suites of the lane. In the order of the lane, a runner takes each suite
-  whose position is its index modulo the count. So the runners of one job run each selected suite once. `lane-run`
-  ignores `java.awt.headless` and the two bucketing properties, with one note each in the run stream. It refuses
-  another flag with `lane_run_jvm_flag`, and the refusal names the property and never its value.
+  index and count of the job split the selected suites of the lane. `lane-run` ignores `java.awt.headless`, with a
+  note in the run stream. It refuses another flag with `lane_run_jvm_flag`, and the refusal names the property and
+  never its value.
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`lane_run_takes_the_jvm_flags_of_the_teamcity_ui_job_in_both_forms`)
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_runner_flags_split_the_lane_and_each_ignored_flag_gives_one_note`)
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`an_unknown_jvm_flag_or_a_split_that_is_not_one_is_refused_by_name`)
-  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_runners_of_a_split_run_each_selected_suite_once_and_one_runner_runs_the_whole_lane`)
   [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_notes_of_a_lane_run_follow_the_start_of_the_run`)
+
+- With `idea.tests.duration.bucketing.enabled=true` and the season of `idea.bucketing.season`, the runners split the
+  lane by the durations of `<season>.csv` of `--season-dir`. `air_lane_test` names `tests/classes-duration/seasons`, the
+  season files of the JVM duration bucketing. A row is `<test class>,<milliseconds>`, keyed by the simple class name.
+  `lane-run` skips a row in another form. The longest suite goes first, to the runner with the least expected total.
+  Equal durations go in the order of the class name, and equal totals to the lower index. A suite that the file does not
+  name takes the median of the selected suites that it names. A split run splits by position when it has one of the two
+  properties alone or no `--season-dir`. It also splits by position without the file, or with a file that names no
+  selected suite. In the order of the lane, a runner then takes each suite whose position is its index modulo the count.
+  Each case gives a note, and no case fails the run. Every runner computes the same split from the same selection and
+  file, so the runners of one job run each selected suite once. A runner keeps the lane order of its suites. A note at
+  the start of the run names the split, the share of the runner and the expected total of each runner.
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`a_season_file_keys_each_duration_by_the_simple_class_name_and_skips_a_malformed_row`)
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`reading_a_season_names_the_file_and_a_missing_or_empty_file_is_a_note_and_no_durations`)
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`the_greedy_split_gives_the_longest_suite_first_to_the_runner_with_the_least_total`)
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`a_suite_without_a_duration_takes_the_median_and_equal_durations_go_by_class_name`)
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`the_runners_of_a_duration_split_take_each_selected_suite_once_and_compute_the_same_split`)
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`the_position_split_runs_without_durations_and_when_the_season_names_no_selected_suite`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_season_without_the_duration_flag_or_the_flag_without_a_season_splits_by_position_with_a_note`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_durations_of_the_season_come_from_the_season_directory_and_their_absence_is_a_note`)
+  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_runners_of_a_split_run_each_selected_suite_once_and_one_runner_runs_the_whole_lane`)
   [@test] ../crates/avl-guest/tests/cli.rs (`lane_run_plan_only_writes_the_plan_and_launches_no_ide`)
 
 - Before the lane IDE starts, `lane-run` on a Linux host that no controller prepared proves the host. A TeamCity
@@ -1731,7 +1793,8 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
 
 - Under a Bazel test, `lane-run` keeps the evidence of a run that is not green in `$TEST_UNDECLARED_OUTPUTS_DIR/lane`,
   because Bazel deletes `$TEST_TMPDIR`. The run end does it, and the hard stop does it after its cancels. A green run
-  keeps nothing, and the lane daemon of a worker keeps nothing, because the controller pulls its iterations. The copy
+  that failed an attempt keeps its evidence too, because the rerun passed the scenario. Another green run keeps
+  nothing, and the lane daemon of a worker keeps nothing, because the controller pulls its iterations. The copy
   holds `ide/<launchKey>/<launchName>/`, the log directory of each affected IDE launch. That directory holds each
   `idea.log`, the thread dump of a kill, the other IDE logs and the heartbeat screenshots. Its `run/` holds `run.log`
   and `supervisor.log` of the IDE process, also when the log directory is gone. The copy also holds
@@ -1815,9 +1878,11 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
 - On a TeamCity build, `lane-run` appends service messages to the file that `AIR_LANE_LIVE_LOG` names. The build
   streams that file into its build log, so the messages show while the test runs. At the start of each scenario
   `lane-run` writes `progressMessage '<lane> <n>/<total>: <scenario>'`. At its end the message also names the
-  status and the duration. Each message is one line in one write, and its values are escaped as TeamCity reads them.
-  The file carries no test event, because the results come from the JUnit XML.
+  status and the duration. A rerun is `<lane> rerun: <scenario>`. Each message is one line in one write, and its
+  values are escaped as TeamCity reads them. The file carries no test event, because the results come from the JUnit
+  XML.
   [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`a_run_with_a_passed_and_a_failed_scenario_writes_the_golden_lines`)
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`a_rerun_names_itself_in_the_progress_messages`)
 
 - For a failed or aborted scenario, `lane-run` publishes the video and the last picture of the bundle with
   `publishArtifacts`. A scan of the trace root after each scenario and at the summary of the run finds the bundle.
@@ -1849,8 +1914,10 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`the_hello_keeps_the_videos_that_the_inputs_keep`)
 
 - `lane-run --plan-only` stages the inputs and selects the documents as a run does. It then writes the plan on
-  standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. It launches no IDE,
-  and a plan of suites of a bare IDE alone names no lane key.
+  standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. The plan also holds
+  the notes that the run stream gives before the first suite. The last note of a plan of a runner of a TeamCity job
+  names the split and the expected total of each runner. It launches no IDE, and a plan of suites of a bare IDE alone
+  names no lane key.
   [@test] ../crates/avl-guest/tests/cli.rs (`lane_run_plan_only_writes_the_plan_and_launches_no_ide`)
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_selectors_and_the_filters_come_from_the_flags_and_the_environment`)
 
@@ -2039,8 +2106,13 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   parse, so the verb never reads a field that it does not know as an absent field.
   [@test] ../crates/avl-wire/src/program/tests.rs (`a_document_of_another_schema_version_is_refused`)
 
-- A bare IDE gets the option files and the token of the bridge, and no other context file. It gets the stated launch
-  properties of the lane document without the internal mode, and no property of a requirement or a lane service.
+- A bare IDE gets the option files, its own `config/options/other.xml` and the token of the bridge, and no other
+  context file. It gets the stated launch properties of the lane document without the internal mode, and no property
+  of a requirement or a lane service.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_and_the_token_alone`)
+
+- The `other.xml` of a bare IDE holds the Air onboarding as completed, in the form that Air writes. A bare IDE measures
+  a normal start, and the first start of a new user does work that no later start does.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_and_the_token_alone`)
   [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`a_bare_ide_gets_the_stated_defaults_without_the_internal_mode_or_the_requirements`)
 

@@ -243,7 +243,7 @@ fn the_run_request_names_the_lane_inputs_for_the_lane_daemon_only() {
         progress_gap_timeout_sec: 300,
         run_budget_sec: None,
         ide_plugins: vec![IdePlugin {
-            destination: "air-integrationTests-bridge-plugin/lib/a.jar".to_owned(),
+            destination: "air-integrationTests-bridge/lib/a.jar".to_owned(),
             sha256: "s".to_owned(),
         }],
         lane: None,
@@ -253,7 +253,7 @@ fn the_run_request_names_the_lane_inputs_for_the_lane_daemon_only() {
     };
     assert_eq!(
         serde_json::to_string(&request).unwrap(),
-        r#"{"selectors":[],"junit5Filters":["include-tag=air-integration-ui"],"productStamp":"p","launchDigest":"l","activeExecutionTimeoutSec":1800,"progressGapTimeoutSec":300,"idePlugins":[{"destination":"air-integrationTests-bridge-plugin/lib/a.jar","sha256":"s"}]}"#
+        r#"{"selectors":[],"junit5Filters":["include-tag=air-integration-ui"],"productStamp":"p","launchDigest":"l","activeExecutionTimeoutSec":1800,"progressGapTimeoutSec":300,"idePlugins":[{"destination":"air-integrationTests-bridge/lib/a.jar","sha256":"s"}]}"#
     );
     request.lane = Some("ui".to_owned());
     request.lane_inputs = Some(LaneInputs {

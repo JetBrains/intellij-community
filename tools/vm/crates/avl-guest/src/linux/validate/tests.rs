@@ -757,8 +757,9 @@ fn a_property_that_goes_stale_during_the_wait_is_refused_on_that_pass() {
 
 // --- the window-manager probe ---------------------------------------------------------------------------------
 
-/// Both hops carry the display twice: in the environment and as `xprop`'s own `-display`, which is what
-/// `XorgWindowManagerHandler` passes. The display probe gets the environment alone, which is all `xdpyinfo` reads.
+/// Both hops carry the display twice: in the environment and as `xprop`'s own `-display`. The window manager script of
+/// `LinuxIdeDistribution.linuxCommandLine` passes the environment. The display probe gets the environment alone, which
+/// is all `xdpyinfo` reads.
 #[test]
 fn both_window_manager_hops_are_told_the_display_twice() {
     let mut fixture = Fixture::healthy();

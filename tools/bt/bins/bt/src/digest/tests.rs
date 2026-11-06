@@ -7,7 +7,7 @@ use super::*;
 use bt_core::bep::parse_bep;
 use bt_core::exit;
 use bt_core::fake::{AttemptSpec, FakeRuntime, attempt, bep_lines, case, suite, suite_xml, test_result_event, wrapper_xml};
-use bt_core::result::{FlakyRun, collect_results};
+use bt_core::result::{FlakyRun, ShardTimeout, collect_results};
 use bt_core::runtime::Runtime;
 
 #[test]
@@ -200,7 +200,9 @@ fn digest_result(apply: impl FnOnce(&mut RunResult)) -> RunResult {
         build_errors: Vec::new(),
         degraded: false,
         timings: Vec::new(),
+        lower_bounds: Vec::new(),
         mixed_shard_plans: Vec::new(),
+        timeouts: Vec::new(),
     };
     apply(&mut result);
     result
@@ -263,6 +265,51 @@ fn a_green_multi_target_run_summarises_counts() {
 fn the_cost_line_ignores_cache_hits_when_naming_the_slowest_target() {
     let cost = render_cost(&[target("//p:slow-but-cached", 6, true, 500_000), target("//p:ran", 6, false, 9_000)]);
     assert_eq!(cost.as_deref(), Some("cost   1 ran · 1 cached · slowest ran 9.0s"));
+}
+
+/// A shard timeout is named as one, with the test where the shard stopped, and the log of that target is the one shown.
+#[test]
+fn a_shard_timeout_is_named_as_the_cause_and_not_as_a_failure() {
+    let label = "//plugins/air/backend/session/acp:air-backend-session-acp-tests_test";
+    let timeout = |shard: u32, interrupted: &[&str]| ShardTimeout {
+        label: label.to_owned(),
+        shard,
+        shards: 2,
+        duration_ms: 300_000,
+        interrupted: interrupted.iter().map(|id| (*id).to_owned()).collect(),
+    };
+    let text = render(&digest_result(|result| {
+        result.status = RunStatus::Fail;
+        result.exit_code = exit::TEST_FAILED;
+        result.targets = vec![
+            digest_target(|target| {
+                target.label = "//p:green".to_owned();
+                target.log_path = Some("out/bazel-testlogs/p/green/test.log".to_owned());
+            }),
+            digest_target(|target| {
+                target.label = label.to_owned();
+                target.log_path = Some("out/bazel-testlogs/acp/shard_1_of_2/test.log".to_owned());
+            }),
+        ];
+        result.timeouts = vec![
+            timeout(
+                1,
+                &["com.intellij.air.acp.AcpSessionManagerBackgroundWorkRowTest#a close stops the row"],
+            ),
+            timeout(2, &["com.a.ATest#one", "com.a.BTest#two"]),
+        ];
+    }));
+    assert_eq!(
+        text.lines().take(4).collect::<Vec<_>>(),
+        [
+            "FAIL  0 of 94 tests, 2 shard timeouts  2 targets  12.3s",
+            "",
+            "shard timeout  air-backend-session-acp-tests_test shard 1 of 2 after 5m00s, stopped in \
+             AcpSessionManagerBackgroundWorkRowTest#a close stops the row",
+            "shard timeout  air-backend-session-acp-tests_test shard 2 of 2 after 5m00s, stopped in ATest#one (+1 more)",
+        ]
+    );
+    assert!(text.contains("log    out/bazel-testlogs/acp/shard_1_of_2/test.log\n"), "{text}");
 }
 
 #[test]
@@ -484,6 +531,26 @@ fn a_method_filtered_no_tests_run_blames_the_method_filter() {
     assert!(!skipped.contains("#method filter"), "{skipped}");
 }
 
+/// A wildcard filter ran no test, and the digest named no fix. The hint names the form of the filter that works.
+#[test]
+fn a_no_tests_run_gives_the_hint_of_its_filter() {
+    let hinted = RenderOptions {
+        no_tests_hint: Some("--filter takes no wildcard. To run every class of the package, pass --filter a.b".to_owned()),
+        ..RenderOptions::default()
+    };
+    let named = no_tests(|_| {}, &hinted);
+    assert!(
+        named.contains("\nhint      --filter takes no wildcard. To run every class of the package, pass --filter a.b"),
+        "{named}"
+    );
+    // A skipped test was matched, so the filter did its job.
+    let skipped = no_tests(|target| target.skipped = 1, &hinted);
+    assert!(!skipped.contains("hint "), "{skipped}");
+    // A passing run gives no hint.
+    let passed = render_digest(&digest_result(|_| {}), &hinted);
+    assert!(!passed.contains("hint "), "{passed}");
+}
+
 // --- the rerun selector ------------------------------------------------------------------------------------------
 
 /// [`test_case_id`] prints what test.xml carries and [`rerun_selector`] answers what `bt` can run. The two differ
@@ -670,4 +737,28 @@ fn a_run_with_mixed_shard_plans_names_the_target_and_the_rerun() {
         text.contains("the shards of //p:t read different shard plans") && text.contains("--no-cache"),
         "{text}"
     );
+}
+
+/// `//pkg:all --filter a.b.FooTest` is a label, so bt takes the filter. The target without the class exits 42 and
+/// makes the run NO TESTS, but the filter matched in the other target. The hint must not blame the filter.
+#[test]
+fn a_no_tests_run_where_a_target_ran_tests_gives_no_filter_hint() {
+    let hinted = RenderOptions {
+        no_tests_hint: Some("H".to_owned()),
+        ..RenderOptions::default()
+    };
+    let result = digest_result(|result| {
+        result.status = RunStatus::NoTests;
+        result.exit_code = exit::NO_TESTS;
+        result.targets = vec![
+            digest_target(|_| {}),
+            digest_target(|target| {
+                target.label = "//a:other_test".to_owned();
+                target.tests = 0;
+                target.wrapper_exit_code = Some(42);
+            }),
+        ];
+    });
+    let digest = render_digest(&result, &hinted);
+    assert!(!digest.contains("hint      H"), "{digest}");
 }

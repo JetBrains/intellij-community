@@ -44,9 +44,9 @@ pub(crate) fn wait_budget() -> String {
 // The guest tools the verb runs by bare name, resolved through the guest's own PATH.
 //
 // `xdpyinfo` and `xprop` come from `x11-utils`, which is in the controller's `GUEST_PACKAGES` for the second of them:
-// `XorgWindowManagerHandler` shells out to `xprop` to decide whether a window manager is registered and reads its
-// absence as no window manager at all. So the tool the verb probes the display with is the tool the driver will
-// probe it with.
+// the window manager script of `LinuxIdeDistribution.linuxCommandLine` shells out to `xprop` to decide whether a window
+// manager is registered. Without `xprop`, it starts no window manager. So the tool the verb probes the display with is
+// the tool the IDE launch will probe it with.
 pub(crate) const XDPYINFO_TOOL: &str = "xdpyinfo";
 pub(crate) const XPROP_TOOL: &str = "xprop";
 pub(crate) const LDD_TOOL: &str = "ldd";
@@ -97,9 +97,10 @@ pub(crate) const LOADERS: Loaders = if cfg!(target_arch = "x86_64") {
 
 /// The EWMH property that answers "is a window manager registered".
 ///
-/// Read on the root window and then on the window it names, which is how `XorgWindowManagerHandler.isWmRunning`
-/// reads it. Mirroring the driver's own probe is the point of the check: one that passed where the driver will
-/// fail would move the failure back into the lane while claiming the guest was validated.
+/// Read on the root window and then on the window it names, which is how the window manager script of
+/// `LinuxIdeDistribution.linuxCommandLine` reads it. Mirroring the launch's own probe is the point of the check: one
+/// that passed where the launch will fail would move the failure back into the lane while claiming the guest was
+/// validated.
 pub(crate) const SUPPORTING_WM_CHECK_PROPERTY: &str = "_NET_SUPPORTING_WM_CHECK";
 
 /// One step that talks to the X server on `display`.

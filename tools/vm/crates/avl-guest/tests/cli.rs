@@ -280,8 +280,8 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
         "selectors": [], "junit5Filters": [], "productStamp": "product-1", "launchDigest": "launch-1",
         "activeExecutionTimeoutSec": 1800, "progressGapTimeoutSec": 300,
         "idePlugins": [
-            {"destination": "air-integrationTests-bridge-plugin/lib/b.jar", "sha256": sha256(&bridge)},
-            {"destination": "air-integrationTests-bridge-resident-plugin/lib/r.jar", "sha256": sha256(&resident)},
+            {"destination": "air-integrationTests-bridge/lib/b.jar", "sha256": sha256(&bridge)},
+            {"destination": "air-integrationTests-bridge-resident/lib/r.jar", "sha256": sha256(&resident)},
         ],
         "lane": "ui",
         "laneInputs": {"fakeAgentJar": sha256(&agent_jar), "laneDocuments": sha256(&documents), "suiteDocuments": sha256(&documents)},
@@ -323,7 +323,8 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
 /// selects the documents, and writes the plan: the key of the lane IDE and the suites in run order, the suite of a bare
 /// IDE last. It launches no IDE, so no context of a launch key appears under the run directory. A selection of bare
 /// suites alone needs no lane IDE, so its plan names no lane key. The JVM flags of a TeamCity UI job split the lane
-/// between its runners, and an unknown flag is refused.
+/// between its runners, by position without `--season-dir` and by the durations of the season with it. An unknown flag
+/// is refused.
 #[test]
 fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
     let root = tempfile::tempdir().unwrap();
@@ -384,15 +385,25 @@ fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
     assert_eq!(bare_only["suites"].as_array().unwrap().len(), 1);
 
     // The argv of the UI job of TeamCity build 1097187017: each of its two runners plans its own share of the lane.
-    let runner = |index: &str| {
+    let seasons = root.path().join("seasons");
+    put(
+        &seasons.join("AirPluginGuiChatTests.csv"),
+        b"com.intellij.air.integration.flow.AirStartupClassLoadingBudgetUiTest,90000\n\
+          com.intellij.air.integration.flow.generated.ui.AirRenameSessionGeneratedFlowUiTest,30000\n",
+        false,
+    );
+    let season_dir = path(&seasons);
+    let runner_of = |index: &str, extra: &[&str]| {
         let index = format!("--jvm_flag=-Didea.test.runner.index={index}");
-        let shared = plan(&[
+        let mut args = vec![
             "--jvm_flag=-Djava.awt.headless=false",
             &index,
             "--jvm_flag=-Didea.test.runners.count=2",
             "--jvm_flag=-Didea.bucketing.season=AirPluginGuiChatTests",
             "--jvm_flag=-Didea.tests.duration.bucketing.enabled=true",
-        ]);
+        ];
+        args.extend(extra);
+        let shared = plan(&args);
         let classes: Vec<String> = shared["suites"]
             .as_array()
             .unwrap()
@@ -401,8 +412,43 @@ fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
             .collect();
         classes
     };
-    assert_eq!(runner("0"), ["AirRenameSessionGeneratedFlowUiTest"]);
-    assert_eq!(runner("1"), ["AirStartupClassLoadingBudgetUiTest"]);
+    assert_eq!(runner_of("0", &[]), ["AirRenameSessionGeneratedFlowUiTest"]);
+    assert_eq!(runner_of("1", &[]), ["AirStartupClassLoadingBudgetUiTest"]);
+    let by_duration = ["--season-dir", season_dir.as_str()];
+    assert_eq!(runner_of("0", &by_duration), ["AirStartupClassLoadingBudgetUiTest"]);
+    assert_eq!(runner_of("1", &by_duration), ["AirRenameSessionGeneratedFlowUiTest"]);
+    let notes = |plan: &serde_json::Value| -> Vec<String> {
+        plan["notes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|note| note.as_str().unwrap().to_owned())
+            .collect()
+    };
+    assert_eq!(notes(&whole), Vec::<String>::new(), "the whole lane has no note of a split");
+    let split_plan = plan(&[
+        "--jvm_flag=-Didea.test.runner.index=0",
+        "--jvm_flag=-Didea.test.runners.count=2",
+        "--jvm_flag=-Didea.bucketing.season=AirPluginGuiChatTests",
+        "--jvm_flag=-Didea.tests.duration.bucketing.enabled=true",
+        "--season-dir",
+        season_dir.as_str(),
+    ]);
+    let split_notes = notes(&split_plan);
+    assert!(
+        split_notes
+            .first()
+            .is_some_and(|note| note.contains("by the durations of 2 suite(s) of the season AirPluginGuiChatTests")),
+        "{split_notes:?}"
+    );
+    assert_eq!(
+        split_notes.last().map(String::as_str),
+        Some(
+            "lane ui: the runner with index 0 of 2 runners takes 1 of the 2 selected suite(s) by the duration split of the \
+             season AirPluginGuiChatTests: an expected 1.5 min of 2.0 min, and the runners expect 1.5 min, 0.5 min"
+        ),
+        "the last note of a plan names the split and the expected total of each runner"
+    );
     let mut args = vec!["lane-run", "--lane", "ui", "--plan-only", "--jvm_flag", "-Dunknown.property=1"];
     let descriptor = path(&descriptor);
     args.extend(["--descriptor", &descriptor]);
@@ -451,8 +497,8 @@ fn lane_run_writes_the_record_of_its_watchdog_thread_on_standard_output() {
         |logical: &str| serde_json::json!({"execPath": format!("bazel-out/bin/{logical}"), "logicalPath": logical, "owner": "//test"});
     let mut document: serde_json::Value = serde_json::from_slice(&std::fs::read(&descriptor).unwrap()).unwrap();
     document["ide"]["plugins"] = serde_json::json!([
-        {"destination": "air-integrationTests-bridge-plugin/lib/b.jar", "file": file("_main/bridge.jar")},
-        {"destination": "air-integrationTests-bridge-resident-plugin/lib/r.jar", "file": file("_main/resident.jar")},
+        {"destination": "air-integrationTests-bridge/lib/b.jar", "file": file("_main/bridge.jar")},
+        {"destination": "air-integrationTests-bridge-resident/lib/r.jar", "file": file("_main/resident.jar")},
     ]);
     document["ide"]["projectArchive"] = file("_main/project.zip");
     put(&descriptor, document.to_string().as_bytes(), false);

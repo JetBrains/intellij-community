@@ -702,7 +702,7 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/air-trace/src/serve/tests.rs
 
 - The defaults include the export directory of the checkout, `out/air/vm-export/runs`. A run of another host
-  exports its zips there with `AIR_VM_EXPORT`, and yonder copies them back.
+  exports its zips there with `AIR_VM_EXPORT`, and `bd-host` copies them back.
   [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`the_default_roots_find_the_exported_zips_of_the_checkout`)
   [@test] ../crates/avl-vm/src/daemon/export/tests.rs
 
