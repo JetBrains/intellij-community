@@ -105,7 +105,7 @@ fun buildCommunityStandaloneJpsBuilder(
   layout.withModule("intellij.devkit.jps", "intellij.devkit.jps.jar")
   layout.withModule("intellij.java.langInjection.jps", "java-langInjection-jps.jar")
 
-  layout.withModule("intellij.space.java.jps", "space-java-jps.jar")
+  layout.withModule("intellij.space.java.jps", "intellij.space.java.jps.jar")
 
   for (it in listOf(
     "Log4J",

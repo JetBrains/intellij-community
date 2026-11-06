@@ -31,6 +31,7 @@ jvm_library(
 exports_files(
     [
         "intellij.space.java.jps.iml",
+        "resources/intellij.space.java.jps.xml",
     ],
     visibility = ["//visibility:public"],
 )
