@@ -463,8 +463,8 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
     private fun doRestartBecauseOfWriteAction() {
       if (!indicator!!.lookup.isLookupDisposed && !indicator.isCanceled) {
         withExplicitClientId(ownerId) {
-          indicator.cancel()
           if (EDT.isCurrentThreadEdt()) {
+            indicator.cancel()
             indicator.scheduleRestart()
           }
           else {
@@ -477,6 +477,8 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
 
               /* expired = */ { CompletionServiceImpl.currentCompletionProgressIndicator != indicator }
             )
+            // Cancel after the restart is in the queue. The cancellation stops the indicator, and the stop event must not come before the restart.
+            indicator.cancel()
           }
         }
       }
