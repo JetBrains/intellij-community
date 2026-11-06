@@ -217,7 +217,7 @@ final class ReferenceItemProvider extends JavaModCompletionItemProvider {
     return null;
   }
 
-  private static boolean inCastContext(CompletionContext context) {
+  static boolean inCastContext(CompletionContext context) {
     PsiElement position = context.getPosition();
     PsiElement parent = getParenthesisOwner(position);
     if (parent instanceof PsiTypeCastExpression) return true;

@@ -223,10 +223,18 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   }
 
   @NeedsIndex.ForStandardLibrary
-  public void testClassLiteralInArrayAnnoInitializer() { doTest("\n"); }
+  public void testClassLiteralInArrayAnnoInitializer() {
+    configure();
+    selectItem(ContainerUtil.find(myItems, item -> item.getLookupString().endsWith(".class")));
+    checkResult();
+  }
 
   @NeedsIndex.ForStandardLibrary
-  public void testClassLiteralInArrayAnnoInitializer2() { doTest("\n"); }
+  public void testClassLiteralInArrayAnnoInitializer2() {
+    configure();
+    selectItem(ContainerUtil.find(myItems, item -> item.getLookupString().endsWith(".class")));
+    checkResult();
+  }
 
   public void testReferenceParameters() {
     configureByFile("ReferenceParameters.java");
@@ -1501,8 +1509,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
       @Anno(XInternal<caret>)
       """);
     myFixture.complete(CompletionType.BASIC, 2);
-    assertFirstStringItems("XInternalError.class", "XInternalError", "XInternalTimerServiceController.class",
-                           "XInternalTimerServiceController");
+    assertFirstStringItems("XInternalError", "XInternalError.class", "XInternalTimerServiceController",
+                           "XInternalTimerServiceController.class");
   }
 
   @NeedsIndex.Full

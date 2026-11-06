@@ -614,7 +614,7 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testPreferClassesOfExpectedClassType() {
     myFixture.addClass("class XException extends Exception {}");
-    checkPreferredItems(0, "XException.class", "XException", "XClass", "XIntf");
+    checkPreferredItems(0, "XException", "XException.class", "XClass", "XIntf");
   }
 
   public void testNoNumberValueOf() {

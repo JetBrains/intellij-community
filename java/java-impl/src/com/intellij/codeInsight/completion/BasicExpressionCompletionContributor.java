@@ -24,7 +24,6 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.ResolveState;
-import com.intellij.psi.filters.getters.ClassLiteralGetter;
 import com.intellij.psi.filters.getters.ThisGetter;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -61,7 +60,6 @@ public final class BasicExpressionCompletionContributor {
                                               parameters.getDefaultType(), result)
           .addCompletions(StringUtil.isNotEmpty(matcher.getPrefix()));
       }
-      ClassLiteralGetter.addCompletions(parameters, result, matcher);
 
       final PsiElement position = parameters.getPosition();
       final PsiType expectedType = parameters.getExpectedType();

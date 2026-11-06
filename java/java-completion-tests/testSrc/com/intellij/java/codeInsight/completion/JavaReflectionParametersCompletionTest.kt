@@ -51,7 +51,13 @@ class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() 
 
   fun testVariable() {
     addMoreClasses()
-    doTest(2, "Bar.class", "Foo.class", "aType")
+    addClasses()
+    configureByFile(getTestName(false) + ".java")
+
+    val lookupItems = lookup.items
+    assertOrderedEquals(lookupFirstItemsTexts(lookupItems, 3), "Bar.class", "Foo.class", "Baz foo.baz")
+    selectItem(lookupItems.first { it.lookupString == "aType" })
+    myFixture.checkResultByFile(getTestName(false) + "_after.java")
   }
 
   private fun doTest(index: Int, vararg expected: String) {

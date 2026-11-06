@@ -913,7 +913,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     LookupElementPresentation p = renderElement(item);
     assertEquals("String.class", p.getItemText());
     assertEquals(" (java.lang)", p.getTailText());
-    assertNull(p.getTypeText());
+    assertEquals("", p.getTypeText());
 
     assertInstanceOf(item.getPsiElement(), PsiClass.class);
   }

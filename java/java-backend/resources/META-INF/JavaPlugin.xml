@@ -711,6 +711,8 @@
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.ArgumentItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.ImportOnDemandItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.MethodReturnTypeItemProvider"/>
+    <modcompletion.completionItemProvider language="JAVA" order="last, after javaReflection, after javaMethodHandle"
+                                          implementationClass="com.intellij.java.completion.modcommand.ClassLiteralItemProvider"/>
     <modcompletion.completionItemFilter language="JAVA"
                                         implementationClass="com.intellij.java.completion.modcommand.MethodReturnTypeItemProvider$DuplicateFilter"/>
 

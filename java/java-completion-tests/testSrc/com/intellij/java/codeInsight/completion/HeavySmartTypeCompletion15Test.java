@@ -3,12 +3,14 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 
 import java.io.IOException;
@@ -21,11 +23,12 @@ public class HeavySmartTypeCompletion15Test extends JavaCodeInsightFixtureTestCa
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  @NeedsIndex.Full(reason = "ClassLiteralGetter provides option, but it's filtered out in TypeConversionUtil.isAssignable(com.intellij.psi.PsiType, com.intellij.psi.PsiType)")
+  @NeedsIndex.Full(reason = "ClassLiteralItemProvider provides option, but it's filtered out in TypeConversionUtil.isAssignable(com.intellij.psi.PsiType, com.intellij.psi.PsiType)")
   public void testGetInstance() throws Throwable {
     myFixture.configureFromExistingVirtualFile(
       myFixture.copyFileToProject(BASE_PATH + "/foo/" + getTestName(false) + ".java", "foo/" + getTestName(false) + ".java"));
-    myFixture.complete(CompletionType.SMART);
+    LookupElement[] items = myFixture.complete(CompletionType.SMART);
+    myFixture.getLookup().setCurrentItem(ContainerUtil.find(items, item -> item.getLookupString().equals("MyClass.class")));
     myFixture.type("\n");
     myFixture.checkResultByFile(BASE_PATH + "/foo/" + getTestName(false) + "-out.java");
   }
