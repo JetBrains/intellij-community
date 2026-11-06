@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectsGroupIt
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProviderRecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTreeItem
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.ui.UIBundle
 import com.intellij.util.containers.forEachLoggingErrors
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -520,7 +521,9 @@ private val EP_NAME: ExtensionPointName<RecentProjectsBranchesProvider> = Extens
 
 private const val RECENT_PROJECT_VCS_ACTIONS_ENABLED = "ide.welcome.screen.recent.project.vcs.actions"
 
+// The split mode frontend opens a frame for each project that the backend loads, also for a project without a frame of its own.
 private fun vcsActionsEnabled(projectPath: String): Boolean =
+  !IdeProductMode.isBackend &&
   Registry.`is`(RECENT_PROJECT_VCS_ACTIONS_ENABLED) && EP_NAME.findFirstSafe { it.hasRepository(projectPath) != false } != null
 
 private fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
