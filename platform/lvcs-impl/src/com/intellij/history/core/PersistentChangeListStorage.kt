@@ -3,7 +3,7 @@ package com.intellij.history.core
 
 import com.intellij.history.core.LocalHistoryStorageUtil.buildBrokenStorageMessage
 import com.intellij.history.core.LocalHistoryStorageUtil.getPurgePeriod
-import com.intellij.history.core.LocalHistoryStorageUtil.notifyStorageBroken
+import com.intellij.history.core.LocalHistoryStorageUtil.notifyStorageBrokenRebuild
 import com.intellij.history.core.LocalHistoryStorageUtil.openLocalHistoryStorage
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.utils.LocalHistoryLog
@@ -100,7 +100,7 @@ internal class PersistentChangeListStorage(
       }
     }
 
-    notifyStorageBroken()
+    notifyStorageBrokenRebuild()
   }
 
   override fun close(drop: Boolean) {

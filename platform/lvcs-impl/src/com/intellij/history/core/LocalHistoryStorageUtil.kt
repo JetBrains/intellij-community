@@ -15,6 +15,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.DateFormat
+import kotlin.io.path.absolutePathString
 import kotlin.time.Duration.Companion.days
 
 private const val DAYS_TO_KEEP_PROPERTY_KEY = "localHistory.daysToKeep"
@@ -108,11 +109,23 @@ internal object LocalHistoryStorageUtil {
   /**
    * Shows the notification that the local history storage is broken.
    */
-  fun notifyStorageBroken() {
+  fun notifyStorageBrokenRebuild() {
     getLocalHistoryNotificationGroup()
       .createNotification(
         LocalHistoryBundle.message("notification.title.local.history.broken"),
         LocalHistoryBundle.message("notification.content.local.history.broken"),
+        NotificationType.ERROR
+      )
+      .setDisplayId(LocalHistoryNotificationIdsHolder.STORAGE_CORRUPTED)
+      .notify(null)
+  }
+
+  fun notifyStorageBrokenWithFallback(storageDir: Path) {
+    val message = LocalHistoryBundle.message("notification.content.local.history.broken.completely", storageDir.absolutePathString())
+    getLocalHistoryNotificationGroup()
+      .createNotification(
+        LocalHistoryBundle.message("notification.title.local.history.broken"),
+        message,
         NotificationType.ERROR
       )
       .setDisplayId(LocalHistoryNotificationIdsHolder.STORAGE_CORRUPTED)

@@ -4,7 +4,6 @@ package com.intellij.history.core
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.history.core.LocalHistoryStorageUtil.buildBrokenStorageMessage
 import com.intellij.history.core.LocalHistoryStorageUtil.getPurgePeriod
-import com.intellij.history.core.LocalHistoryStorageUtil.notifyStorageBroken
 import com.intellij.history.core.LocalHistoryStorageUtil.openLocalHistoryStorage
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.utils.LocalHistoryLog
@@ -106,6 +105,7 @@ internal class BufferingPersistentChangeListStorage(
       rethrowControlFlowException(e)
       LocalHistoryLog.LOG.warn("cannot create storage, the change sets will be kept in memory", e)
       isPersistentStorageBroken = true
+      LocalHistoryStorageUtil.notifyStorageBrokenWithFallback(storageDir)
       null
     }
   }
@@ -135,22 +135,29 @@ internal class BufferingPersistentChangeListStorage(
     val fullMsg = buildBrokenStorageMessage(storageDir, timestamp, storageTimestamp, vfsTimestamp, message)
     logError(fullMsg, e)
 
-    synchronized(this) {
+    val rebuildSuccess = synchronized(this) {
       if (isClosed) return
       storage?.let { Disposer.dispose(it) }
       storage = null
       try {
         storageDir.delete()
         storage = initStorage()
+        true
       }
       catch (ex: Throwable) {
         rethrowControlFlowException(ex)
         logError("cannot recreate storage", ex)
         markPersistentStorageBroken()
+        false
       }
     }
 
-    notifyStorageBroken()
+    if (rebuildSuccess) {
+      LocalHistoryStorageUtil.notifyStorageBrokenRebuild()
+    }
+    else {
+      LocalHistoryStorageUtil.notifyStorageBrokenWithFallback(storageDir)
+    }
   }
 
   /**
