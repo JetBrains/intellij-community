@@ -31,6 +31,8 @@ import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.quickfix.QuickFixTest
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.TestFile
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import java.nio.file.Files
@@ -39,6 +41,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.CopyActionResult
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
+import kotlin.io.path.createDirectories
 import kotlin.io.path.createDirectory
 import kotlin.io.path.deleteRecursively
 import kotlin.io.path.isDirectory
@@ -56,6 +59,13 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
 
     open val afterTestDataDirectory: File
         get() = testDataDirectory().parentFile.resolve("after")
+
+    /**
+     * The test data in one file, as an alternative to the `before` and `after` directories.
+     * Each `// FILE: before/<path>` or `// FILE: after/<path>` part of the file holds one project file.
+     */
+    private val multiFileTestData: File?
+        get() = File(testDataDirectory().parentFile.path + ".test").takeIf { it.isFile }
 
     /*
     * Check unexpected diagnostics in the file.
@@ -212,6 +222,13 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
         val fileText: String
     )
 
+    override fun configureByFiles(properties: Map<String, String>?): List<VirtualFile> {
+        val testData = multiFileTestData ?: return super.configureByFiles(properties)
+        return testDataParts(testData, BEFORE_PREFIX).map { part ->
+            createProjectSubFile(part.name, configureKotlinVersionAndProperties(clearTextFromMarkup(part.content), properties))
+        }
+    }
+
     protected fun setupProjectAndReturnMainFile(afterDirectorySanitizer: (sourcePath: Path, text: String) -> String): MainClassInfo {
         configureByFiles()
         val projectPath = myProjectRoot.toNioPath()
@@ -241,6 +258,18 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
 
     @OptIn(ExperimentalPathApi::class)
     private fun copyAfterDirectory(afterDirectorySanitizer: (Path, String) -> String) {
+        val testData = multiFileTestData
+        if (testData != null) {
+            afterDirectory.createDirectories()
+            for (part in testDataParts(testData, AFTER_PREFIX)) {
+                val target = afterDirectory.resolve(part.name)
+                target.parent.createDirectories()
+                val sourcePath = afterTestDataDirectory.toPath().resolve(part.name)
+                target.writeText(afterDirectorySanitizer(sourcePath, configureKotlinVersionAndProperties(part.content)))
+            }
+            return
+        }
+
         afterTestDataDirectory.toPath().copyToRecursively(afterDirectory, followLinks = true, copyAction = { source, target ->
 
             if (source.isDirectory()) {
@@ -265,4 +294,14 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
     }
 
     protected open val actionPrefix: String? = null
+
+    private fun testDataParts(testData: File, prefix: String): List<TestFile> =
+        KotlinTestUtils.loadBeforeAfterAndDependenciesText(testData.path)
+            .filter { it.name.startsWith(prefix) }
+            .map { TestFile(it.name.removePrefix(prefix), it.content) }
+
+    private companion object {
+        const val BEFORE_PREFIX = "before/"
+        const val AFTER_PREFIX = "after/"
+    }
 }

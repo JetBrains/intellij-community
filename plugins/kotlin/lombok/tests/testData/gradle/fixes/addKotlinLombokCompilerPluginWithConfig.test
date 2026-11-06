@@ -1,0 +1,87 @@
+// FILE: before/build.gradle.kts
+plugins {
+    kotlin("jvm") version "2.4.0"
+}
+
+group = "org.example"
+version = "1.0-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly("org.projectlombok:lombok:1.18.36")
+    annotationProcessor("org.projectlombok:lombok:1.18.36")
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+// FILE: before/lombok.config
+// FILE: before/src/main/java/Person.java
+import lombok.Data;
+
+@Data
+public class Person {
+    private String name;
+    private int age;
+}
+// FILE: before/src/main/kotlin/Main.kt
+// "Add Kotlin Lombok compiler plugin" "true"
+// TOOL: org.jetbrains.kotlin.idea.lombok.inspections.LombokKotlinCompilerPluginInspection
+<caret>
+fun main() {
+    val p = Person()
+    p.name = "Test"
+}
+// FILE: after/build.gradle.kts
+plugins {
+    kotlin("jvm") version "2.4.0"
+    kotlin("plugin.lombok") version "2.4.0"
+}
+
+group = "org.example"
+version = "1.0-SNAPSHOT"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly("org.projectlombok:lombok:1.18.36")
+    annotationProcessor("org.projectlombok:lombok:1.18.36")
+    testImplementation(kotlin("test"))
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+tasks.test {
+    useJUnitPlatform()
+}
+kotlinLombok {
+    lombokConfigurationFile(file("lombok.config"))
+}
+// FILE: after/lombok.config
+// FILE: after/src/main/java/Person.java
+import lombok.Data;
+
+@Data
+public class Person {
+    private String name;
+    private int age;
+}
+// FILE: after/src/main/kotlin/Main.kt
+// "Add Kotlin Lombok compiler plugin" "true"
+// TOOL: org.jetbrains.kotlin.idea.lombok.inspections.LombokKotlinCompilerPluginInspection
+
+fun main() {
+    val p = Person()
+    p.name = "Test"
+}
