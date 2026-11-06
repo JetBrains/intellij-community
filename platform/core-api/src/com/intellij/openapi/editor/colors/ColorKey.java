@@ -4,8 +4,6 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,13 +96,22 @@ public final class ColorKey implements Comparable<ColorKey> {
   }
 
   private static void checkNoCycle(@NotNull ColorKey key, @Nullable ColorKey fallbackColorKey) {
-    if (fallbackColorKey != null) {
-      JBIterable<ColorKey> it = JBIterable.generate(fallbackColorKey, key0 -> key0 == key ? null : key0.fallbackColorKey);
-      ColorKey found = it.find(key0 -> key0 == key);
-      if (found == key) {
-        String cycle = StringUtil.join(it.map(ColorKey::getExternalName), "->");
-        LOG.error("Cycle detected: " + cycle);
+    for (ColorKey current = fallbackColorKey; current != null; current = current.fallbackColorKey) {
+      if (current.equals(key)) {
+        LOG.error("Cycle detected: " + describeCycle(key, fallbackColorKey));
+        return;
       }
     }
+  }
+
+  private static String describeCycle(ColorKey key, ColorKey fallbackColorKey) {
+    StringBuilder cycle = new StringBuilder(key.externalName);
+    for (ColorKey current = fallbackColorKey; current != null; current = current.fallbackColorKey) {
+      cycle.append("->").append(current.externalName);
+      if (current.equals(key)) {
+        break;
+      }
+    }
+    return cycle.toString();
   }
 }
