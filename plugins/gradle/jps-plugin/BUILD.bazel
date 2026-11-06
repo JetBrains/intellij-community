@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -10,7 +11,7 @@ jps_test(
 ### skip generation section `test intellij.gradle.jps.tests`
 
 ### auto-generated section `build intellij.gradle.jps` start
-jvm_library(
+ij_plugin_module(
     name = "jps",
     srcs = glob(
         [
@@ -22,6 +23,7 @@ jvm_library(
     ),
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.gradle.jps",
+    packed_deps = ["@lib//:gradle-jps-ant"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],

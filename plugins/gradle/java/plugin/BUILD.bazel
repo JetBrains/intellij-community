@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -37,6 +38,34 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.gradle.java.plugin` end
+
+### auto-generated section `plugin intellij.gradle.java.plugin` start
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//plugins/gradle/java",
+        "//plugins/gradle/jps-plugin:jps_plugin_module",
+        "//plugins/gradle-maven:gradle-java-maven",
+        "//plugins/gradle/intellij.gradle.analysis:analysis",
+        "//plugins/gradle/gradle-dependency-updater:dependencyUpdater",
+        "//plugins/gradle/java/performance",
+        "//plugins/gradle/java/toml",
+        "//plugins/gradle/java/groovy",
+        "//plugins/gradle/java/groovy/toml",
+        "//plugins/gradle/java/groovy/ml",
+        "//plugins/gradle/java/coverage",
+        "//plugins/gradle/java/properties",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            "@@//plugins/gradle/profiler",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.gradle.java.plugin` end
 
 ### auto-generated section `iml intellij.gradle.java.plugin` start
 exports_files(
