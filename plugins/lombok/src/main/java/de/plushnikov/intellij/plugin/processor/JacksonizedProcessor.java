@@ -55,7 +55,7 @@ public final class JacksonizedProcessor extends AbstractProcessor {
 
   public static boolean validateAnnotationOwner(@NotNull PsiModifierListOwner psiModifierListOwner, ProblemSink validationSink) {
     final boolean hasBuilder = PsiAnnotationSearchUtil.isAnnotatedWith(psiModifierListOwner, LombokClassNames.BUILDER);
-    final boolean hasSuperBuilder = PsiAnnotationSearchUtil.isAnnotatedWith(psiModifierListOwner, LombokClassNames.SUPER_BUILDER);
+    final boolean hasSuperBuilder = PsiAnnotationSearchUtil.isAnnotatedWith(psiModifierListOwner, LombokClassNames.SUPER_BUILDER, LombokClassNames.EXPERIMENTAL_SUPER_BUILDER);
     if (!hasBuilder && !hasSuperBuilder) {
       validationSink.addWarningMessage("inspection.message.jacksonized.requires.builder.superbuilder");
     }

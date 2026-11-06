@@ -30,7 +30,7 @@ import java.util.List;
 public final class SuperBuilderProcessor extends AbstractClassProcessor {
 
   public SuperBuilderProcessor() {
-    super(PsiMethod.class, LombokClassNames.SUPER_BUILDER);
+    super(PsiMethod.class, LombokClassNames.SUPER_BUILDER, LombokClassNames.EXPERIMENTAL_SUPER_BUILDER);
   }
 
   private static SuperBuilderHandler getBuilderHandler() {

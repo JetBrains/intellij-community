@@ -20,8 +20,9 @@ import java.util.Optional;
 public abstract class AbstractSuperBuilderPreDefinedInnerClassProcessor extends AbstractClassProcessor {
 
   AbstractSuperBuilderPreDefinedInnerClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
-                                                    @NotNull String supportedAnnotationClass) {
-    super(supportedClass, supportedAnnotationClass);
+                                                    @NotNull String supportedAnnotationClass,
+                                                    @NotNull String equivalentAnnotationClass) {
+    super(supportedClass, supportedAnnotationClass, equivalentAnnotationClass);
   }
 
   protected SuperBuilderHandler getBuilderHandler() {

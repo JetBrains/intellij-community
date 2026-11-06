@@ -52,7 +52,8 @@ public class LombokFlagUsageInspection extends LombokJavaInspectionBase {
         checkAnnotationAndFlagUsage(psiAnnotation, LombokClassNames.EQUALS_AND_HASHCODE, ConfigKey.EQUALS_AND_HASHCODE_FLAG_USAGE);
         checkAnnotationAndFlagUsage(psiAnnotation, LombokClassNames.TO_STRING, ConfigKey.TOSTRING_FLAG_USAGE);
 
-        checkAnnotationAndFlagUsage(psiAnnotation, LombokClassNames.SUPER_BUILDER, ConfigKey.SUPER_BUILDER_FLAG_USAGE,
+        checkAnnotationAndFlagUsage(psiAnnotation, LombokClassNames.SUPER_BUILDER, ConfigKey.SUPER_BUILDER_FLAG_USAGE);
+        checkAnnotationAndFlagUsage(psiAnnotation, LombokClassNames.EXPERIMENTAL_SUPER_BUILDER, ConfigKey.SUPER_BUILDER_FLAG_USAGE,
                                     ConfigKey.EXPERIMENTAL_FLAG_USAGE);
         checkAnnotationAndFlagUsage(psiAnnotation, LombokClassNames.HELPER, ConfigKey.HELPER_FLAG_USAGE,
                                     ConfigKey.EXPERIMENTAL_FLAG_USAGE);

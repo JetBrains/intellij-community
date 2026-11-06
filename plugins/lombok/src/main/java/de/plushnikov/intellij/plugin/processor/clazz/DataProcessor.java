@@ -141,7 +141,7 @@ public final class DataProcessor extends AbstractClassProcessor {
     final String staticName = getStaticConstructorNameValue(psiAnnotation);
     if (nameHint != null && !nameHint.equals(staticName) && !nameHint.equals(psiClass.getName())) return;
 
-    if (!hasLombokConstructorAnnotations(psiClass) && PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.SUPER_BUILDER)) {
+    if (!hasLombokConstructorAnnotations(psiClass) && PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.SUPER_BUILDER, LombokClassNames.EXPERIMENTAL_SUPER_BUILDER)) {
       target.addAll(
         getRequiredArgsConstructorProcessor().createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, true));
       // if there are no required fields, it will already have a default constructor without parameters

@@ -56,7 +56,8 @@ public final class BuilderHelper {
 
     List<String> result = getBuilderMethodNames(psiAnnotation, filter, containingClass, psiMethod, builderClass);
 
-    if (psiAnnotation.hasQualifiedName(LombokClassNames.SUPER_BUILDER)) {
+    if (psiAnnotation.hasQualifiedName(LombokClassNames.SUPER_BUILDER) ||
+        psiAnnotation.hasQualifiedName(LombokClassNames.EXPERIMENTAL_SUPER_BUILDER)) {
       PsiClass superClass = containingClass.getSuperClass();
       while (null != superClass && !CommonClassNames.JAVA_LANG_CLASS.equals(superClass.getQualifiedName())) {
         List<String> nextResult = getBuilderMethodNames(psiAnnotation, filter, superClass, psiMethod, builderClass);
@@ -105,7 +106,7 @@ public final class BuilderHelper {
   }
 
   public static @Nullable PsiAnnotation getBuilderAnnotation(@NotNull PsiModifierListOwner psiModifierListOwner) {
-    return PsiAnnotationSearchUtil.findAnnotation(psiModifierListOwner, LombokClassNames.BUILDER, LombokClassNames.SUPER_BUILDER);
+    return PsiAnnotationSearchUtil.findAnnotation(psiModifierListOwner, LombokClassNames.BUILDER, LombokClassNames.SUPER_BUILDER, LombokClassNames.EXPERIMENTAL_SUPER_BUILDER);
   }
 
   public static List<String> getAllMethodsInChainFromMiddle(@Nullable PsiMethodCallExpression methodCallExpression) {
