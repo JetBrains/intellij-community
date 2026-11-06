@@ -32,7 +32,6 @@ import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.impl.DistributionForOsTaskResult
 import org.jetbrains.intellij.build.impl.Docker
-import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
 import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
@@ -41,6 +40,7 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleLibraryFi
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.getIncludedModules
 import org.jetbrains.intellij.build.impl.sharedLazy
+import org.jetbrains.intellij.build.impl.supportedAndRequestedDistributions
 import org.jetbrains.intellij.build.io.ZipEntryProcessorResult
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.runProcess
@@ -365,7 +365,7 @@ class SoftwareBillOfMaterialsImpl(
    * but documents with every distribution content specified will be built anyway.
    */
   private fun generateFromContentReport(): List<Path> {
-    return SUPPORTED_DISTRIBUTIONS
+    return supportedAndRequestedDistributions(context)
       .filter { (os, arch) -> context.shouldBuildDistributionForOS(os, arch) }
       .map { (os, arch, libc) ->
         val distributionDir = getOsAndArchSpecificDistDirectory(osFamily = os, arch = arch, libc = libc, context = context)

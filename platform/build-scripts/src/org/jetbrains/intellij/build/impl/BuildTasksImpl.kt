@@ -182,6 +182,29 @@ val SUPPORTED_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
   SupportedDistribution(OsFamily.LINUX, JvmArchitecture.aarch64, LinuxLibcImpl.GLIBC),
 )
 
+/**
+ * The distributions that a build produces only when [BuildOptions.targetOs] names their OS, see [OsFamily.ALL].
+ *
+ * Plugin layouts declare their platform-specific content (native files, executables, OS-specific variants) for each
+ * entry of [SUPPORTED_DISTRIBUTIONS], and the build runs these declarations for all entries, regardless of the target OS.
+ * There is no such content for these distributions, so [SUPPORTED_DISTRIBUTIONS] does not list them.
+ */
+@JvmField
+val ON_REQUEST_DISTRIBUTIONS: List<SupportedDistribution> = listOf(
+  SupportedDistribution(OsFamily.OHOS, JvmArchitecture.aarch64, OhosLibcImpl.DEFAULT),
+)
+
+/**
+ * [SUPPORTED_DISTRIBUTIONS] and the [ON_REQUEST_DISTRIBUTIONS] that the build of [context] targets.
+ * The result is equal to [SUPPORTED_DISTRIBUTIONS] when the build targets no on-request OS.
+ *
+ * Use it where the build produces or fills an OS-specific distribution. Use [SUPPORTED_DISTRIBUTIONS] where a plugin
+ * layout declares platform-specific content.
+ */
+internal fun supportedAndRequestedDistributions(context: BuildContext): List<SupportedDistribution> {
+  return SUPPORTED_DISTRIBUTIONS + ON_REQUEST_DISTRIBUTIONS.filter { context.shouldBuildDistributionForOS(it.os, it.arch) }
+}
+
 fun createIdeaPropertyFile(context: BuildContext): CharSequence {
   val builder = StringBuilder(
     Files.readString(
@@ -336,7 +359,7 @@ private fun buildOsSpecificDistributions(context: BuildContext): List<Distributi
     updateExecutablePermissions(context.paths.distAllDir, executableFilesMatchers = emptyList())
 
     taskScope(joiner = Joiner.awaitAllOrThrow()) {
-      val tasks = SUPPORTED_DISTRIBUTIONS.mapNotNull { (os, arch, libcImpl) ->
+      val tasks = supportedAndRequestedDistributions(context).mapNotNull { (os, arch, libcImpl) ->
         if (!context.shouldBuildDistributionForOS(os, arch)) {
           return@mapNotNull null
         }

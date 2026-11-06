@@ -27,7 +27,6 @@ import org.jetbrains.intellij.build.impl.PLUGIN_CLASSPATH
 import org.jetbrains.intellij.build.impl.PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.SupportedDistribution
 import org.jetbrains.intellij.build.impl.buildBundledPlatformVariantResources
 import org.jetbrains.intellij.build.impl.buildPlatformSpecificPluginResources
@@ -35,6 +34,7 @@ import org.jetbrains.intellij.build.impl.copyAdditionalPlugins
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import org.jetbrains.intellij.build.impl.satisfiesBundlingRequirements
+import org.jetbrains.intellij.build.impl.supportedAndRequestedDistributions
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.block
 import org.jetbrains.intellij.build.telemetry.use
@@ -299,7 +299,7 @@ private fun getPluginDirs(context: BuildContext, isUpdateFromSources: Boolean): 
     )
   }
   else {
-    return SUPPORTED_DISTRIBUTIONS.map {
+    return supportedAndRequestedDistributions(context).map {
       it to getOsAndArchSpecificDistDirectory(osFamily = it.os, arch = it.arch, libc = it.libcImpl, context = context).resolve(PLUGINS_DIRECTORY)
     }
   }
