@@ -43,7 +43,8 @@ pub fn read_link_target(source: &Path) -> io::Result<String> {
 
 /// Returns the entry of the file, directory or link at `source`, with the path `relative_path`.
 ///
-/// The function does not follow a link. It hashes a file with [`xxh3::hash_file`] and rejects all other file types.
+/// The function does not follow a link. It hashes a file with [`crate::macho::hash_file`], which also gives its Mach-O
+/// kind, and rejects all other file types.
 /// It reads no mode: a directory gets [`DIRECTORY_MODE`], and a file gets [`file_mode`] of `false`. A caller that
 /// declares an executable file sets the mode and the flag of the entry.
 pub fn inspect(source: &Path, relative_path: &str) -> Result<Entry> {
@@ -60,7 +61,7 @@ pub fn inspect(source: &Path, relative_path: &str) -> Result<Entry> {
     } else if file_type.is_file() {
         entry.mode = file_mode(false);
         entry.size = metadata.len();
-        entry.hash = xxh3::hash_file(source).with_context(|| source.display().to_string())?;
+        (entry.hash, entry.mac_binary) = crate::macho::hash_file(source).with_context(|| source.display().to_string())?;
     } else if file_type.is_symlink() {
         entry.entry_type = EntryType::Symlink;
         entry.symlink_target = read_link_target(source).with_context(|| source.display().to_string())?;

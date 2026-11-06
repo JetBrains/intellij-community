@@ -1,0 +1,74 @@
+{
+  "vectors": [
+    {
+      "name": "thin executable",
+      "bytes": "cffaedfe0c000001000000000200000000000000000000000000000000000000",
+      "kind": "executable"
+    },
+    {
+      "name": "thin dylib",
+      "bytes": "cffaedfe0c000001000000000600000000000000000000000000000000000000",
+      "kind": "dylib"
+    },
+    {
+      "name": "thin bundle",
+      "bytes": "cffaedfe0c000001000000000800000000000000000000000000000000000000",
+      "kind": "bundle"
+    },
+    {
+      "name": "thin object file",
+      "bytes": "cffaedfe0c000001000000000100000000000000000000000000000000000000",
+      "kind": null
+    },
+    {
+      "name": "thin executable with a code signature command",
+      "bytes": "cffaedfe0c0000010000000002000000010000001000000000000000000000001d000000100000000000000000000000",
+      "kind": "executable"
+    },
+    {
+      "name": "thin executable with one load command and no command body",
+      "bytes": "cffaedfe0c000001000000000200000001000000000000000000000000000000",
+      "kind": null
+    },
+    {
+      "name": "thin 32-bit big-endian dylib",
+      "bytes": "feedface000000120000000000000006000000000000000000000000",
+      "kind": "dylib"
+    },
+    {
+      "name": "fat with two executables",
+      "bytes": "cafebabe00000002010000070000000000000030000000200000000c0100000c0000000000000050000000200000000ccffaedfe0c000001000000000200000000000000000000000000000000000000cffaedfe0c000001000000000200000000000000000000000000000000000000",
+      "kind": "executable"
+    },
+    {
+      "name": "fat with an executable and a dylib",
+      "bytes": "cafebabe00000002010000070000000000000030000000200000000c0100000c0000000000000050000000200000000ccffaedfe0c000001000000000200000000000000000000000000000000000000cffaedfe0c000001000000000600000000000000000000000000000000000000",
+      "kind": null
+    },
+    {
+      "name": "fat with no slice",
+      "bytes": "cafebabe00000000",
+      "kind": null
+    },
+    {
+      "name": "fat with a slice past the end",
+      "bytes": "cafebabe00000001010000070000000000100000000000200000000c00000000cffaedfe0c000001000000000200000000000000000000000000000000000000",
+      "kind": null
+    },
+    {
+      "name": "Java class file",
+      "bytes": "cafebabe00000041000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+      "kind": null
+    },
+    {
+      "name": "3-byte file",
+      "bytes": "cffaed",
+      "kind": null
+    },
+    {
+      "name": "shell script",
+      "bytes": "23212f62696e2f73680a6563686f2072756e0a",
+      "kind": null
+    }
+  ]
+}

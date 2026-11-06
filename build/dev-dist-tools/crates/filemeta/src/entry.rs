@@ -7,6 +7,7 @@ use distpath::{identity, parent_of};
 use serde::{Deserialize, Serialize};
 
 use crate::inventory::hash_symlink_target;
+use crate::macho::MacBinary;
 
 /// The type of an [`Entry`]. The JSON field `type` holds `file`, `directory` or `symlink`.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -35,6 +36,8 @@ pub struct Entry {
     pub executable: bool,
     /// The target of a link, in slash form. Empty for a file and a directory.
     pub symlink_target: String,
+    /// The Mach-O kind of a file, see [`crate::macho::detect`]. Always `None` for a directory and a link.
+    pub mac_binary: Option<MacBinary>,
 }
 
 /// The largest size that the format holds: the readers store the size in a signed 64-bit number.
@@ -46,6 +49,9 @@ pub(crate) fn validate_entry(entry: &Entry) -> Result<()> {
     let directory = entry.entry_type == EntryType::Directory;
     if entry.size > MAX_SIZE || entry.mode > 0o777 || entry.executable != (!directory && entry.mode & 0o111 != 0) {
         bail!("invalid size or mode for {path}");
+    }
+    if entry.entry_type != EntryType::File && entry.mac_binary.is_some() {
+        bail!("only a file has a Mach-O kind: {path}");
     }
     match entry.entry_type {
         EntryType::Directory => {

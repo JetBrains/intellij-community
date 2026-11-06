@@ -7,9 +7,10 @@ use serde::{Deserialize, Deserializer, Serialize};
 
 use crate::create_dir_all_0755;
 use crate::entry::{Entry, EntryType, merge};
+use crate::macho::MacBinary;
 
 /// The version of the inventory format.
-const VERSION: i64 = 1;
+const VERSION: i64 = 2;
 
 /// The inventory document. The serializer writes the fields in declaration order, `version` before `entries`.
 #[derive(Serialize, Deserialize)]
@@ -19,7 +20,8 @@ struct Document {
     entries: Vec<WireEntry>,
 }
 
-/// One entry of the document. A directory has no `hash`, and only a link has `symlinkTarget`.
+/// One entry of the document. A directory has no `hash`, only a link has `symlinkTarget`, and only a Mach-O file has
+/// `macBinary`.
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields, rename_all = "camelCase")]
 struct WireEntry {
@@ -36,12 +38,14 @@ struct WireEntry {
     executable: bool,
     #[serde(default, skip_serializing_if = "String::is_empty")]
     symlink_target: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    mac_binary: Option<MacBinary>,
 }
 
 /// Reads the inventory file `source` and returns its entries, merged and sorted.
 ///
 /// The function accepts only the shape that [`write`] writes. It rejects data after the document, an unknown, missing
-/// or `null` field, a field of the wrong type, and a version other than 1. A directory must not have the key `hash`,
+/// or `null` field, a field of the wrong type, and a version other than 2. A directory must not have the key `hash`,
 /// and every other entry must have a `hash` number. Then the entries must pass [`merge`].
 pub fn read(source: &Path) -> Result<Vec<Entry>> {
     let data = fs::read(source).with_context(|| source.display().to_string())?;
@@ -91,6 +95,7 @@ fn to_wire(entry: &Entry) -> WireEntry {
         mode: entry.mode,
         executable: entry.executable,
         symlink_target: entry.symlink_target.clone(),
+        mac_binary: entry.mac_binary,
     }
 }
 
@@ -114,6 +119,7 @@ fn from_wire(wire: WireEntry) -> Result<Entry> {
         mode: wire.mode,
         executable: wire.executable,
         symlink_target: wire.symlink_target,
+        mac_binary: wire.mac_binary,
     })
 }
 

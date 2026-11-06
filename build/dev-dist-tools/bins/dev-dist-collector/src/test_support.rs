@@ -30,7 +30,7 @@ pub(crate) fn write_inventory(name: &str, entries: &[Entry]) {
 #[cfg(unix)]
 pub(crate) fn write_raw_inventory(name: &str, entries: &[Entry]) {
     let entries: Vec<Value> = entries.iter().map(entry_json).collect();
-    write_json(name, &json!({"version": 1, "entries": entries}));
+    write_json(name, &json!({"version": 2, "entries": entries}));
 }
 
 #[cfg(unix)]
@@ -63,6 +63,7 @@ pub(crate) fn file_entry(relative_path: &str, hash: i64, size: u64, mode: u32) -
         mode,
         executable: mode & 0o111 != 0,
         symlink_target: String::new(),
+        mac_binary: None,
     }
 }
 

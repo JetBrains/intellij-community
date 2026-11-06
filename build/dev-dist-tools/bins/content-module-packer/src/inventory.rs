@@ -85,6 +85,7 @@ fn jar_entry(output: &Path, merged: &MergeReport) -> anyhow::Result<Entry> {
         mode: filemeta::file_mode(false),
         executable: false,
         symlink_target: String::new(),
+        mac_binary: None,
     })
 }
 

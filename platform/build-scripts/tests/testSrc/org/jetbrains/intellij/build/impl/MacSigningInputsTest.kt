@@ -1,7 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.ByteBuffer
@@ -31,29 +37,34 @@ class MacSigningInputsTest {
     assertThat(inputs.archives).containsExactly(archive)
   }
 
+  /**
+   * The dev dist collector reads the same vectors with its own reader (`filemeta::macho` of the dev dist tools), so the
+   * two readers keep one rule.
+   */
   @Test
-  fun `a Mach-O executable, library or bundle is a binary, and an object file is not`(@TempDir root: Path) {
-    val executable = root.resolve("bin/gdb").also { it.parent.createDirectories(); it.writeBytes(machOHeader(MH_EXECUTE)) }
-    val library = root.resolve("lib/libpython3.12.dylib").also { it.parent.createDirectories(); it.writeBytes(machOHeader(MH_DYLIB)) }
-    val bundle = root.resolve("lib/_ctypes.so").also { it.writeBytes(machOHeader(MH_BUNDLE)) }
-    root.resolve("lib/config-3.12-darwin/python.o").also { it.parent.createDirectories(); it.writeBytes(machOHeader(MH_OBJECT)) }
-
-    assertThat(collectMacSigningInputs(root).binaries).containsExactlyInAnyOrder(executable, library, bundle)
+  fun `each Mach-O vector of the dev dist tools is a binary exactly when it has a kind`(@TempDir root: Path) {
+    val vectors = Json.parseToJsonElement(Files.readString(MAC_BINARY_VECTORS)).jsonObject.getValue("vectors").jsonArray
+    assertThat(vectors).hasSize(14)
+    for (vector in vectors.map { it.jsonObject }) {
+      val name = vector.getValue("name").jsonPrimitive.content
+      val file = root.resolve("file")
+      file.writeBytes(vector.getValue("bytes").jsonPrimitive.content.hexToByteArray())
+      val binary = vector.getValue("kind") !is JsonNull
+      assertThat(isMacBinary(file)).describedAs(name).isEqualTo(binary)
+    }
   }
 }
 
-private const val MH_OBJECT = 1
-private const val MH_EXECUTE = 2
-private const val MH_DYLIB = 6
-private const val MH_BUNDLE = 8
+private val MAC_BINARY_VECTORS: Path =
+  COMMUNITY_ROOT.communityRoot.resolve("build/dev-dist-tools/crates/filemeta/testdata/mac-binary-vectors.json")
 
-/** The header of a thin 64-bit arm64 Mach-O file of [fileType] with no load commands. */
-private fun machOHeader(fileType: Int = MH_EXECUTE): ByteArray {
+/** The header of a thin 64-bit arm64 executable with no load commands. */
+private fun machOHeader(): ByteArray {
   val buffer = ByteBuffer.allocate(32).order(ByteOrder.LITTLE_ENDIAN)
   buffer.putInt(0xFEEDFACF.toInt()) // MH_MAGIC_64
   buffer.putInt(0x0100000C) // CPU_TYPE_ARM64
   buffer.putInt(0) // CPU_SUBTYPE_ARM64_ALL
-  buffer.putInt(fileType)
+  buffer.putInt(2) // MH_EXECUTE
   buffer.putInt(0) // ncmds
   buffer.putInt(0) // sizeofcmds
   buffer.putInt(0) // flags
