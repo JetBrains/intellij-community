@@ -1,0 +1,12 @@
+plugins {
+    kotlin("jvm")
+    id("org.jetbrains.kotlin.plugin.compose") version "{{kotlin_plugin_version}}"
+}
+
+repositories {
+    {{kts_kotlin_plugin_repositories}}
+}
+
+dependencies {
+    implementation("org.jetbrains.compose.runtime:runtime:1.11.0")
+}

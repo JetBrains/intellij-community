@@ -9,11 +9,11 @@ import org.jetbrains.kotlin.psi.KtFile
 
 internal class ComposePluginQuickFixTest : KotlinLightCodeInsightFixtureTestCase() {
 
-  private fun runQuickFixTest(initialCode: String, expectedCode: String) {
+  private fun runQuickFixTest(initialCode: String, expectedCode: String, version: String? = null) {
     val file = myFixture.configureByText("build.gradle.kts", initialCode.trimIndent()) as KtFile
 
     WriteCommandAction.runWriteCommandAction(project) {
-      val success = file.addComposeCompilerPlugin()
+      val success = file.addComposeCompilerPlugin(version)
       assertTrue("QuickFix failed to apply!", success)
     }
 
@@ -306,6 +306,66 @@ internal class ComposePluginQuickFixTest : KotlinLightCodeInsightFixtureTestCase
       
       tasks.register("clean") {
           delete(rootProject.buildDir)
+      }
+    """
+  )
+
+  fun `test add with version to completely empty file`() = runQuickFixTest(
+    version = "2.1.0",
+    initialCode = "",
+    expectedCode = """
+      plugins {
+          id("org.jetbrains.kotlin.plugin.compose") version "2.1.0"
+      }
+    """
+  )
+
+  fun `test add with version to file with no plugins block but other content`() = runQuickFixTest(
+    version = "2.1.0",
+    initialCode = """
+      dependencies {
+          implementation("androidx.core:core-ktx:1.9.0")
+      }
+    """,
+    expectedCode = """
+      plugins {
+          id("org.jetbrains.kotlin.plugin.compose") version "2.1.0"
+      }
+      
+      dependencies {
+          implementation("androidx.core:core-ktx:1.9.0")
+      }
+    """
+  )
+
+  fun `test add with version to existing plugins block with other plugins`() = runQuickFixTest(
+    version = "2.1.0",
+    initialCode = """
+      plugins {
+          id("com.android.application")
+          kotlin("android") version "2.1.0"
+      }
+    """,
+    expectedCode = """
+      plugins {
+          id("com.android.application")
+          kotlin("android") version "2.1.0"
+          id("org.jetbrains.kotlin.plugin.compose") version "2.1.0"
+      }
+    """
+  )
+
+  fun `test add with pre-release version to existing plugins block`() = runQuickFixTest(
+    version = "2.2.0-Beta1",
+    initialCode = """
+      plugins {
+          kotlin("jvm") version "2.2.0-Beta1"
+      }
+    """,
+    expectedCode = """
+      plugins {
+          kotlin("jvm") version "2.2.0-Beta1"
+          id("org.jetbrains.kotlin.plugin.compose") version "2.2.0-Beta1"
       }
     """
   )

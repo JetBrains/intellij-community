@@ -20,12 +20,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.psi.KtScriptInitializer
 
-/**
- * Adds the Compose compiler Gradle plugin to the `plugins` block of the module build script.
- *
- * @param dependencyManager the build system manager that syncs the project after the change.
- * @param version the plugin version to declare, or `null` to declare the plugin without a version.
- */
 internal class GradleAddComposePluginQuickFix(
   private val dependencyManager: KotlinBuildSystemDependencyManager,
   private val version: String?,
