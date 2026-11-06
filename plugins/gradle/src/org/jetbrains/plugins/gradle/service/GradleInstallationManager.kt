@@ -95,9 +95,16 @@ open class GradleInstallationManager : Disposable.Default {
       }
     }
     if (justCreated) {
-      if (project.isDisposed || !Disposer.tryRegister(project.service<BuildLayoutParametersCleanupService>(),
-                                                      Disposable { myBuildLayoutParametersCache.remove(cacheKey, params) })) {
-        myBuildLayoutParametersCache.remove(cacheKey, params)
+      var cleanupRegistered = false
+      try {
+        cleanupRegistered = !project.isDisposed && Disposer.tryRegister(project.service<BuildLayoutParametersCleanupService>()) {
+          myBuildLayoutParametersCache.remove(cacheKey, params)
+        }
+      }
+      finally {
+        if (!cleanupRegistered) {
+          myBuildLayoutParametersCache.remove(cacheKey, params)
+        }
       }
     }
     return params
