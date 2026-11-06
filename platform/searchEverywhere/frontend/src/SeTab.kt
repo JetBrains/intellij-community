@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.platform.searchEverywhere.SeItemData
@@ -59,7 +60,8 @@ interface SeTab : Disposable {
    */
   suspend fun itemSelected(item: SeItemData, modifiers: Int, searchText: String): Boolean
 
-  suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? = null
+  suspend fun getEmptyResultInfo(context: DataContext): SeEmptyResultInfo? =
+    SeEmptyResultInfo(listOf(SeEmptyResultInfoChunk(IdeBundle.message("searcheverywhere.nothing.found.for.all.anywhere") + ".")))
 
   suspend fun canBeShownInFindResults(): Boolean
 
