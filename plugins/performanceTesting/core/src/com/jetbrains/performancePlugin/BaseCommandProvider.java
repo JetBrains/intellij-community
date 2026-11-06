@@ -65,6 +65,7 @@ import com.jetbrains.performancePlugin.commands.MemoryDumpCommand;
 import com.jetbrains.performancePlugin.commands.MoveCaretCommand;
 import com.jetbrains.performancePlugin.commands.MoveDirectoryCommand;
 import com.jetbrains.performancePlugin.commands.MoveFilesCommand;
+import com.jetbrains.performancePlugin.commands.OpenEditorCommand;
 import com.jetbrains.performancePlugin.commands.OpenFileCommand;
 import com.jetbrains.performancePlugin.commands.OpenFileWithTerminateCommand;
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand;
@@ -127,6 +128,7 @@ public final class BaseCommandProvider implements CommandProvider {
     return Map.<String, CreateCommand>ofEntries(
       Map.entry(TakeScreenshotCommand.PREFIX, TakeScreenshotCommand::new),
       Map.entry(OpenFileCommand.PREFIX, OpenFileCommand::new),
+      Map.entry(OpenEditorCommand.PREFIX, OpenEditorCommand::new),
       Map.entry(StartProfileCommand.PREFIX, StartProfileCommand::new),
       Map.entry(StopProfileCommand.PREFIX, StopProfileCommand::new),
       Map.entry(InspectionCommand.PREFIX, InspectionCommand::new),

@@ -124,6 +124,10 @@ fun <T : CommandChain> T.openFile(
   addCommand(*command.toTypedArray())
 }
 
+fun <T : CommandChain> T.openEditor(path: String): T = apply {
+  addCommand("${CMD_PREFIX}openEditor", path)
+}
+
 fun <T : CommandChain> T.openRandomFile(extension: String): T = apply {
   addCommand("${CMD_PREFIX}openRandomFile", extension)
 }
