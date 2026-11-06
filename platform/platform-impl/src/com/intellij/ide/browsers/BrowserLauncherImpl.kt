@@ -2,12 +2,14 @@
 package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
+import com.intellij.ide.CommandLineProcessor
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.TrustedFiles
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -17,9 +19,11 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.Urls
+import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.ide.BuiltInServerManager
+import java.net.URI
 import java.nio.file.Path
 
 @ApiStatus.Internal
@@ -51,6 +55,18 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
   }
 
   override fun getDefaultBrowser(): WebBrowser = WebBrowserManager.getInstance().defaultBrowser
+
+  /**
+   * Runs a `jetbrains://` [uri] in this IDE when it has the command and the command
+   * [runs where it is clicked][JBProtocolCommand.runsWhereClicked]. Otherwise the link goes to a browser, so the
+   * operating system passes it to the JetBrains daemon or Toolbox, which picks the IDE.
+   */
+  override fun processWithProtocolCommand(uri: URI, project: Project?): Boolean {
+    if (!JBProtocolCommand.SCHEME.equals(uri.scheme, ignoreCase = true)) return false
+    if (!JBProtocolCommand.runsWhereClicked(uri.toString().substringAfter(URLUtil.SCHEME_SEPARATOR))) return false
+    runInBackground(project = null) { CommandLineProcessor.processProtocolCommand(uri.toString()) }
+    return true
+  }
 
   override fun canBrowse(project: Project?, uri: String): Boolean {
     if (project == null) {

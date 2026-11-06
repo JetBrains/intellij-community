@@ -28,30 +28,47 @@ abstract class JBProtocolCommand(private val command: String) {
 
     private val EP_NAME = ExtensionPointName<JBProtocolCommand>("com.intellij.jbProtocolCommand")
 
+    /**
+     * Whether this IDE runs [query], a `jetbrains://` URI without its scheme, itself.
+     * It does when it has the command and the command [runs where it is clicked][runsWhereClicked].
+     */
+    @ApiStatus.Internal
+    fun runsWhereClicked(query: String): Boolean {
+      val request = parse(query) ?: return false
+      val command = EP_NAME.lazySequence().find { it.command == request.commandName } ?: return false
+      return command.runsWhereClicked(request.target, request.parameters)
+    }
+
     @ApiStatus.Internal
     suspend fun execute(query: String): CliResult {
+      val request = requireNotNull(parse(query)) { query }  // expected: at least a platform prefix and a command name
+      val command = EP_NAME.lazySequence().find { it.command == request.commandName }
+                    ?: return CliResult(0, IdeBundle.message("jb.protocol.unknown.command", request.commandName))
+      return command.executeAndGetResult(request.target, request.parameters, request.fragment)?.let {
+        CliResult(if (!it.focusIdeWindow) ProtocolHandler.PLEASE_DO_NOT_FOCUS else 0, it.dialogMessage)
+      } ?: CliResult(0, null)
+    }
+
+    /** Returns `null` when [query] has no command name. */
+    private fun parse(query: String): Request? {
       val decoder = QueryStringDecoder(query)
       val parts = decoder.path().split('/').dropLastWhile { it.isEmpty() }
-      require(parts.size >= 2) { query }  // expected: at least a platform prefix and a command name
-      val commandName = parts[1]
-      val command = EP_NAME.lazySequence().find { it.command == commandName }
-      if (command == null) {
-        return CliResult(0, IdeBundle.message("jb.protocol.unknown.command", commandName))
+      if (parts.size < 2) return null
+      val parameters = LinkedHashMap<String, String>()
+      for ((key, list) in decoder.parameters()) {
+        parameters[key] = if (list.isEmpty()) "" else list[list.size - 1]
       }
-      else {
-        val target = if (parts.size > 2) parts[2] else null
-        val parameters = LinkedHashMap<String, String>()
-        for ((key, list) in decoder.parameters()) {
-          parameters[key] = if (list.isEmpty()) "" else list[list.size - 1]
-        }
-        val fragmentStart = query.lastIndexOf('#')
-        val fragment = if (fragmentStart > 0) query.substring(fragmentStart + 1) else null
-        return command.executeAndGetResult(target, parameters, fragment)?.let {
-          CliResult(if (!it.focusIdeWindow) ProtocolHandler.PLEASE_DO_NOT_FOCUS else 0, it.dialogMessage)
-        } ?: CliResult(0, null)
-      }
+      val fragmentStart = query.lastIndexOf('#')
+      return Request(
+        commandName = parts[1],
+        target = parts.getOrNull(2),
+        parameters = parameters,
+        fragment = if (fragmentStart > 0) query.substring(fragmentStart + 1) else null,
+      )
     }
   }
+
+  private class Request(val commandName: String, val target: String?, val parameters: Map<String, String>, val fragment: String?)
 
   @Suppress("unused")
   @Deprecated("please implement `perform(String, Map, String)`} instead", ReplaceWith("perform(String, Map, String)"))
@@ -70,6 +87,15 @@ abstract class JBProtocolCommand(private val command: String) {
     perform(target, mapOf(FRAGMENT_PARAM_NAME to fragment))
     return CompletableFuture.completedFuture(null)
   }
+
+  /**
+   * Whether a link of this command, clicked inside an IDE, runs in that IDE.
+   *
+   * By default it does, so the link opens where the reader clicked it. Otherwise the IDE passes the link to the
+   * operating system, and the JetBrains daemon or Toolbox picks the IDE. Return `false` when the link needs that
+   * route, for example when it carries a tool constraint or a smart link confirmation that only the daemon handles.
+   */
+  protected open fun runsWhereClicked(target: String?, parameters: Map<String, String>): Boolean = true
 
   protected open suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): @DialogMessage String? =
     when (val result = withContext(Dispatchers.EDT) { perform(target, parameters, fragment) }) {

@@ -82,7 +82,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       launcher.showError(message, project, browser) { launcher.browse(url, browser, project) }
     }
 
-    internal fun runInBackground(project: Project?, action: suspend CoroutineScope.() -> Unit) {
+    @ApiStatus.Internal
+    fun runInBackground(project: Project?, action: suspend CoroutineScope.() -> Unit) {
       @Suppress("UsagesOfObsoleteApi")
       val scope = ((project ?: ApplicationManager.getApplication()) as? ComponentManagerEx)?.getCoroutineScope() ?: MainScope()
       (scope + Dispatchers.IO).launch(block = action)
@@ -155,7 +156,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   private fun browse(uri: URI, browser: WebBrowser?, project: Project?) {
-    if (BrowserUrlHandler.EP_NAME.findFirstSafe { it.handle(uri.toString(), project) } != null) {
+    if (processWithProtocolCommand(uri, project)) {
       return
     }
 
@@ -220,6 +221,12 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
     return false
   }
+
+  /**
+   * Runs a `jetbrains://` [uri] in this IDE instead of a browser, and returns `true` when it took the URI.
+   * The launcher asks it after the side-effect check, the trust confirmation and the URL validation.
+   */
+  protected open fun processWithProtocolCommand(uri: URI, project: Project?): Boolean = false
 
   protected open fun signUrl(url: String): String = url
 

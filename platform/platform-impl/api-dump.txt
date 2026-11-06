@@ -2173,6 +2173,7 @@ a:com.intellij.openapi.application.ClipboardAnalyzeListener
 - applicationDeactivated(com.intellij.openapi.wm.IdeFrame):V
 a:com.intellij.openapi.application.JBProtocolCommand
 - <init>(java.lang.String):V
+- p:runsWhereClicked(java.lang.String,java.util.Map):Z
 f:com.intellij.openapi.application.PermanentInstallationID
 - <init>():V
 - s:get():java.lang.String
