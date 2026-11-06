@@ -35,9 +35,9 @@ import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.KotlinSdkCreationChecker
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.TestFile
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import java.nio.file.Files
@@ -124,7 +124,7 @@ abstract class AbstractMavenImportingTest(
     val file = KotlinRoot.DIR.resolve(testRoot).resolve(testName).path + ".test"
     val parts = KotlinTestUtils.loadBeforeAfterAndDependenciesText(file)
 
-    val (virtualFilesByName, mainFile) = configureBeforeDirectory(parts)
+    val [virtualFilesByName, mainFile] = configureBeforeDirectory(parts)
     val mainVirtualFile = virtualFilesByName[mainFile.name] ?: error("$mainFile not found")
 
     val afterDirectory = configureAfterDirectory(testName, parts)
