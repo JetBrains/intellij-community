@@ -1,12 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.ide.util.PsiElementRenderingInfo;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -14,8 +15,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Comparing;
@@ -178,32 +177,14 @@ public class CreateParameterFromUsageFix extends CreateFromUsageBaseFix {
   private static void chooseEnclosingMethod(Editor editor, PsiMethod method, Consumer<PsiMethod> consumer) {
     final List<PsiMethod> validEnclosingMethods = CommonJavaRefactoringUtil.getEnclosingMethods(method);
     if (validEnclosingMethods.size() > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
-      PsiElementListCellRenderer<PsiMethod> renderer = new PsiElementListCellRenderer<>() {
-        @Override
-        public String getElementText(PsiMethod method) {
-          return PsiFormatUtil.formatMethod(
-            method,
-            PsiSubstitutor.EMPTY,
-            PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-            PsiFormatUtilBase.SHOW_TYPE);
-        }
-
-        @Override
-        protected @Nullable String getContainerText(PsiMethod method, String name) {
-          return null;
-        }
-      };
+      PsiTargetNavigator<PsiMethod> navigator = createPsiTargetNavigator(validEnclosingMethods);
       ScopeHighlighter highlighter = new ScopeHighlighter(editor);
-      IPopupChooserBuilder<PsiMethod> builder = JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(validEnclosingMethods)
-        .setRenderer(renderer)
+      navigator.builderConsumer(builder -> builder
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-        .setTitle(QuickFixBundle.message("target.method.chooser.title"))
-        .setItemChosenCallback(consumer)
         .setItemSelectedCallback(i -> {
           highlighter.dropHighlight();
-          if (i == null) return;
-          PsiIdentifier identifier = i.getNameIdentifier();
+          if (i == null || !(i.dereference() instanceof PsiMethod selectedMethod)) return;
+          PsiIdentifier identifier = selectedMethod.getNameIdentifier();
           if (identifier == null) return;
           highlighter.highlight(identifier, Collections.singletonList(identifier));
         })
@@ -212,13 +193,30 @@ public class CreateParameterFromUsageFix extends CreateFromUsageBaseFix {
           public void onClosed(@NotNull LightweightWindowEvent event) {
             highlighter.dropHighlight();
           }
-        });
-      renderer.installSpeedSearch(builder);
-      builder.createPopup().showInBestPositionFor(editor);
+        }));
+      navigator.navigate(editor, QuickFixBundle.message("target.method.chooser.title"), selectedMethod -> {
+        consumer.consume(selectedMethod);
+        return false;
+      });
     }
     else {
       consumer.consume(validEnclosingMethods.getFirst());
     }
+  }
+
+  private static @NotNull PsiTargetNavigator<PsiMethod> createPsiTargetNavigator(List<PsiMethod> validEnclosingMethods) {
+    PsiElementRenderingInfo<PsiMethod> methodRenderingInfo = m -> PsiFormatUtil.formatMethod(
+      m,
+      PsiSubstitutor.EMPTY,
+      PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
+      PsiFormatUtilBase.SHOW_NAME |
+      PsiFormatUtilBase.SHOW_PARAMETERS,
+      PsiFormatUtilBase.SHOW_TYPE
+    );
+    return new PsiTargetNavigator<>(validEnclosingMethods)
+      .presentationProvider(
+        enclosingMethod -> PsiElementRenderingInfo.targetPresentation(enclosingMethod, methodRenderingInfo)
+      );
   }
 
   private @NotNull List<ParameterInfoImpl> getParameterInfos(PsiMethod method) {
