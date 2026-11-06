@@ -48,23 +48,29 @@ internal object LocalHistoryStorageUtil {
 
     val fsTimestamp = getCurrentFsTimestamp()
 
-    val storedVersion = storage.version
-    val versionMismatch = storedVersion != VERSION
-    val timestampMismatch = storage.fsTimestamp != fsTimestamp
-    if (versionMismatch || timestampMismatch) {
-      if (!fromScratch) {
-        if (versionMismatch) {
-          LocalHistoryLog.LOG.info("local history version mismatch (was: $storedVersion, expected: $VERSION), rebuilding...")
+    try {
+      val storedVersion = storage.version
+      val versionMismatch = storedVersion != VERSION
+      val timestampMismatch = storage.fsTimestamp != fsTimestamp
+      if (versionMismatch || timestampMismatch) {
+        if (!fromScratch) {
+          if (versionMismatch) {
+            LocalHistoryLog.LOG.info("local history version mismatch (was: $storedVersion, expected: $VERSION), rebuilding...")
+          }
+          if (timestampMismatch) {
+            LocalHistoryLog.LOG.info("FS has been rebuild, rebuilding local history...")
+          }
+          Disposer.dispose(storage)
+          storageDir.delete()
+          storage = openStorage(path)
         }
-        if (timestampMismatch) {
-          LocalHistoryLog.LOG.info("FS has been rebuild, rebuilding local history...")
-        }
-        Disposer.dispose(storage)
-        storageDir.delete()
-        storage = openStorage(path)
+        storage.version = VERSION
+        storage.fsTimestamp = fsTimestamp
       }
-      storage.version = VERSION
-      storage.fsTimestamp = fsTimestamp
+    }
+    catch (e: Exception) {
+      Disposer.dispose(storage)
+      throw e
     }
 
     return storage
