@@ -14,11 +14,11 @@ internal data class EditorViewSnapshot(
   private val prefix: EditorPrefix?,
   private val paintCallback: Runnable?,
 ) {
-  constructor(fontRenderContext: FontRenderContext, rtlEnabled: Boolean) : this(
+  constructor(fontRenderContext: FontRenderContext, tabSize: Int, rtlEnabled: Boolean) : this(
     fontRenderContext = fontRenderContext,
     metrics = EditorViewMetrics.UNINITIALIZED,
     fontResolver = EditorFontResolver.UNINITIALIZED,
-    tabSize = -1,
+    tabSize = tabSize,
     bidiFlags = 0,
     rtlEnabled = rtlEnabled,
     prefix = null,

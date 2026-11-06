@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.EditorModel;
 import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.CaretModelImpl;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -31,6 +30,7 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FocusModeModel;
 import com.intellij.openapi.editor.impl.FoldingModelInternal;
 import com.intellij.openapi.editor.impl.FontInfo;
+import com.intellij.openapi.editor.impl.SettingsSnapshot;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.caret.model.CaretCursor;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
@@ -106,9 +106,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     @NotNull EditorPainterCache painterCache
   ) {
     myEditor = editor;
+    SettingsSnapshot settings = editor.getSettingsSnapshot();
     mySnapshot = new EditorViewSnapshot(
       normalizeFontRenderContext(readFontRenderContext(), true),
-      editor.getSettings().isRtlEnabled()
+      readTabSize(settings),
+      settings.isRtlEnabled()
     );
     myEditorModel = editorModel;
     myDocument = myEditorModel.getDocument();
@@ -415,17 +417,18 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   @RequiresEdt
   public void reinitSettings() {
     invalidateAnimationCaches(null);
+    SettingsSnapshot settings = myEditor.getSettingsSnapshot();
+    int newBidiFlags = readBidiFlags(settings);
+    int newTabSize = readTabSize(settings);
     SNAPSHOT_UPDATER.updateAndGet(this, snapshot -> {
       FontRenderContext newFontRenderContext = readFontRenderContext(snapshot);
-      int newBidiFlags = readBidiFlags();
-      int newTabSize = readTabSize();
       return snapshot
         .withFontRenderContext(newFontRenderContext)
         .withMetrics(EditorViewMetrics.UNINITIALIZED)
         .withFontResolver(createFontResolver(newFontRenderContext, snapshot.fontResolver().resolvedFontFamilies()))
         .withTabSize(newTabSize)
         .withBidiFlags(newBidiFlags)
-        .withRtlEnabled(myEditor.getSettings().isRtlEnabled())
+        .withRtlEnabled(settings.isRtlEnabled())
         .withPrefixLayout(NOT_INITIALIZED_PREFIX);
     });
     myLogicalPositionCache.reset(false, getTabSize());
@@ -772,18 +775,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   public int getTabSize() {
-    while (true) {
-      EditorViewSnapshot snapshot = mySnapshot;
-      int tabSize = snapshot.tabSize();
-      if (tabSize != -1) {
-        return tabSize;
-      }
-      int newTabSize = readTabSize();
-      EditorViewSnapshot newSnapshot = snapshot.withTabSize(newTabSize);
-      if (SNAPSHOT_UPDATER.compareAndSet(this, snapshot, newSnapshot)) {
-        return newTabSize;
-      }
-    }
+    return mySnapshot.tabSize();
   }
 
   /**
@@ -814,14 +806,13 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   /**
-   * Returns the current snapshot with all its lazy values: the metrics, the tab size, the font resolver and the prefix layout.
+   * Returns the current snapshot with all its lazy values: the metrics, the font resolver and the prefix layout.
    * It computes the values that the snapshot does not have yet.
    */
   public @NotNull EditorViewSnapshot getSnapshot() {
     while (true) {
       EditorViewSnapshot snapshot = mySnapshot;
       if (snapshot.metrics() != EditorViewMetrics.UNINITIALIZED &&
-          snapshot.tabSize() != -1 &&
           snapshot.fontResolver() != EditorFontResolver.UNINITIALIZED &&
           snapshot.prefixLayout() != NOT_INITIALIZED_PREFIX) {
         return snapshot;
@@ -841,8 +832,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return newFontRenderContext;
   }
 
-  private int readBidiFlags() {
-    return switch (myEditor.getSettings().getBidiTextDirection()) {
+  private static int readBidiFlags(@NotNull SettingsSnapshot settings) {
+    return switch (settings.getBidiTextDirection()) {
       case LTR -> Bidi.DIRECTION_LEFT_TO_RIGHT;
       case RTL -> Bidi.DIRECTION_RIGHT_TO_LEFT;
       default -> Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;
@@ -850,20 +841,17 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   /**
-   * Reads the tab size, and keeps it positive.
-   * <p>
-   * A tab size of -1 marks a snapshot that holds none, so a non-positive answer must never reach the
-   * snapshot. {@link EditorSettings} is an interface, and an implementation can answer with any value.
+   * Reads the tab size, and keeps it positive, because a setter of the settings accepts any value.
    */
-  private int readTabSize() {
-    return Math.max(1, EditorUtil.getTabSize(myEditor));
+  private static int readTabSize(@NotNull SettingsSnapshot settings) {
+    return Math.max(1, settings.getTabSize());
   }
 
   /**
    * Returns the prefix layout, and computes it when the snapshot holds {@link #NOT_INITIALIZED_PREFIX}.
    */
   private @Nullable LineLayout getOrComputePrefixLayout() {
-    getTabSize(); // force tabSize, metrics and font resolver calculations to avoid nested CAS loop in createForStandaloneText
+    // force the metrics and font resolver calculations to avoid nested CAS loop in createForStandaloneText
     getSnapshotWithMetrics();
     getFontResolver();
     while (true) {
