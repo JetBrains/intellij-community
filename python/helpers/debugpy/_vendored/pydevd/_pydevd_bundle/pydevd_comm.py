@@ -137,6 +137,7 @@ from io import StringIO
 # CMD_XXX constants imported for backward compatibility
 from _pydevd_bundle.pydevd_comm_constants import *  # @UnusedWildImport
 from _pydevd_bundle.custom import pydevd_vars as pydevd_custom_vars
+from _pydevd_bundle.custom import pydevd_ipython_console
 
 # Socket import aliases:
 AF_INET, AF_INET6, SOCK_STREAM, SHUT_WR, SOL_SOCKET, IPPROTO_TCP, socket = (
@@ -1235,6 +1236,11 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
     expression = arguments.expression
     frame_id = arguments.frameId
     context = arguments.context
+    # The Debug Console sends its own context, so that the IPython cells do not take the evaluations
+    # of the IDE, which use the context "repl" too. Everything else treats it as "repl".
+    is_console_command = context == pydevd_ipython_console.CONSOLE_CONTEXT
+    if is_console_command:
+        context = "repl"
     fmt = arguments.format
     if hasattr(fmt, "to_dict"):
         fmt = fmt.to_dict()
@@ -1263,6 +1269,23 @@ def internal_evaluate_expression_json(py_db, request, thread_id):
             eval_result = None
         else:
             frame = py_db.find_frame(thread_id, frame_id)
+
+            if is_console_command and frame is not None and pydevd_ipython_console.is_enabled():
+                # IPython answers the whole cell, so the result is not sent as the value of the response.
+                try:
+                    needs_more = pydevd_ipython_console.run_cell(frame, expression)
+                except (Exception, KeyboardInterrupt):
+                    pydevd_ipython_console.reset_pending()
+                    _evaluate_response_return_exception(py_db, request, *sys.exc_info())
+                    return
+                if needs_more is not None:
+                    body = pydevd_schema.EvaluateResponseBody(
+                        result="",
+                        variablesReference=0,
+                        type=pydevd_ipython_console.MORE_RESPONSE_TYPE if needs_more else None,
+                    )
+                    _send_evaluate_response(py_db, request, pydevd_base_schema.build_response(request, kwargs={"body": body}))
+                    return
 
             eval_result = pydevd_vars.evaluate_expression(py_db, frame, expression, is_exec=False)
             is_error = isinstance_checked(eval_result, ExceptionOnEvaluate)

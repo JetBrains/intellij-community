@@ -166,6 +166,20 @@ enum class PredefinedPyEnvironments(val spec: PyEnvironmentSpec<*>) {
     }
   }),
 
+  /**
+   * Python 3.12 with IPython for the Debug Console tests
+   * ID: py312_ipython
+   * Tags: python3.12, ipython
+   * Packages: virtualenv, ipython
+   */
+  VENV_3_12_IPYTHON(venvEnvironment {
+    pythonVersion = pythonVersion("3.12")
+    libraries {
+      +"virtualenv"
+      +"ipython"
+    }
+  }),
+
   VANILLA_3_13(pythonEnvironment {
     pythonVersion = pythonVersion("3.13")
   }),
@@ -248,6 +262,7 @@ enum class PredefinedPyEnvironments(val spec: PyEnvironmentSpec<*>) {
         "pytest", "untangle"
       ),
       VENV_3_12_PANDAS to setOf("python3.12", "pandas", "numpy"),
+      VENV_3_12_IPYTHON to setOf("python3.12", "ipython"),
       VENV_3_13 to setOf("python3.13", "ruff"),
       VENV_3_14 to setOf("python3", "python3.14", "ruff"),
       VANILLA_3_14 to setOf("vanilla"),

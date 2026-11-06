@@ -35,6 +35,7 @@ from _pydevd_bundle._debug_adapter.pydevd_schema import (
     BreakpointEventBody,
     InitializedEvent,
 )
+from _pydevd_bundle.custom import pydevd_ipython_console
 from _pydevd_bundle.custom.pydevd_tables import TableCommandType
 from _pydevd_bundle.pydevd_api import PyDevdAPI
 from _pydevd_bundle.pydevd_breakpoints import get_exception_class, FunctionBreakpoint
@@ -1447,6 +1448,10 @@ class PyDevJsonCommandProcessor(object):
         if args.justMyCode is not None:
             self.api.set_use_libraries_filter(py_db, args.justMyCode)
             self._update_exception_breakpoints_ignore_libraries(py_db)
+
+        ipython_console = args.kwargs.get("ipythonConsole")
+        if ipython_console is not None:
+            pydevd_ipython_console.set_enabled(ipython_console)
 
         # TODO: Support other common settings. Note that not all of these might be relevant to python.
         # AllowOutOfProcessSymbols: 0 or 1
