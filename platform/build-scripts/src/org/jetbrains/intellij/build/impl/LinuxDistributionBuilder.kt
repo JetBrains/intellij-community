@@ -43,7 +43,6 @@ import java.util.concurrent.Semaphore
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.name
-import kotlin.io.path.readText
 import kotlin.time.Duration.Companion.minutes
 
 private const val EXECUTABLE_TEMPLATE_NAME = "executable-template.sh"
@@ -158,7 +157,7 @@ class LinuxDistributionBuilder(
 
       if (targetLibcImpl != LinuxLibcImpl.MUSL) {
         fork("build Snap package") {
-          buildSnapPackage(runtimeDir, osAndArchSpecificDistPath, arch, targetLibcImpl)
+          buildSnapPackage(tarGzPath, arch, targetLibcImpl)
         }
       }
 
@@ -256,17 +255,25 @@ class LinuxDistributionBuilder(
 
   private fun getSnapArtifactName(snapName: String, arch: JvmArchitecture): String = "${snapName}_${snapVersion}_${getSnapArchName(arch)}.snap"
 
-  private fun buildSnapPackage(runtimeDir: Path, unixDistPath: Path, arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl) {
-    if (!context.options.buildUnixSnaps) {
-      Span.current().addEvent("Linux .snap package build is disabled")
+  /**
+   * Packs each snap of [customizer] from [tarGzPath], the Linux `.tar.gz` with the bundled runtime.
+   *
+   * The `.tar.gz` holds the executable bits of the patterns, so the snap does not read the disk modes of the distribution
+   * directories.
+   */
+  private fun buildSnapPackage(tarGzPath: Path?, arch: JvmArchitecture, targetLibcImpl: LinuxLibcImpl) {
+    if (!context.options.buildUnixSnaps || customizer.snaps.isEmpty()) {
+      Span.current().addEvent("Linux .snap package build is disabled, or the product has no snap")
       return
+    }
+    checkNotNull(tarGzPath) {
+      "A Linux .snap package is built from the .tar.gz with the bundled runtime, but the build skips the step 'linux_tar_gz_${arch.name}'"
     }
     customizer.snaps.forEach {
       buildSnapPackage(
         snapName = it.name,
         snapDescription = it.description,
-        runtimeDir = runtimeDir,
-        unixDistPath = unixDistPath,
+        tarGzPath = tarGzPath,
         arch = arch,
         targetLibcImpl = targetLibcImpl,
       )
@@ -276,8 +283,7 @@ class LinuxDistributionBuilder(
   private fun buildSnapPackage(
     snapName: String,
     snapDescription: String,
-    runtimeDir: Path,
-    unixDistPath: Path,
+    tarGzPath: Path,
     arch: JvmArchitecture,
     targetLibcImpl: LinuxLibcImpl,
   ) = BuildSnapSemaphore.withPermit {
@@ -332,10 +338,6 @@ class LinuxDistributionBuilder(
           |# </${snapcraftConfig.name}>
         """.trimMargin()
         )
-        val productJsonDir = context.paths.tempDir.resolve("linux.dist.snap.$snapName.product-info.json.$architecture")
-        val productJsonFile = writeProductJsonFile(productJsonDir, arch, withRuntime = true)
-        val installationDirectories = listOf(context.paths.distAllDir, unixDistPath, runtimeDir)
-        validateProductJson(jsonText = productJsonFile.readText(), installationDirectories, installationArchives = emptyList(), context)
         val resultDir = snapDir.resolve("result")
         Files.createDirectories(resultDir)
 
@@ -347,10 +349,7 @@ class LinuxDistributionBuilder(
             "--volume=$snapDir/$snapName.desktop:/build/snap/gui/$snapName.desktop:ro",
             "--volume=$snapDir/$snapName.png:/build/prime/meta/gui/icon.png:ro",
             "--volume=$snapDir/result:/build/result",
-            "--volume=${context.paths.distAllDir}:/build/dist.all:ro",
-            "--volume=$productJsonDir:/build/dist.product-json:ro",
-            "--volume=$unixDistPath:/build/dist.unix:ro",
-            "--volume=$runtimeDir:/build/jre:ro",
+            "--volume=$tarGzPath:/build/dist.tar.gz:ro",
             "--workdir=/build",
             context.options.snapDockerImage,
             "snapcraft",
@@ -372,7 +371,7 @@ class LinuxDistributionBuilder(
         )
 
         val snapProductInfoJsonPath = snapArtifactPath.resolveProductInfoJsonSibling()
-        copyFile(productJsonFile, snapProductInfoJsonPath)
+        copyFile(tarGzPath.resolveProductInfoJsonSibling(), snapProductInfoJsonPath)
         context.notifyArtifactBuilt(snapProductInfoJsonPath)
       }
   }

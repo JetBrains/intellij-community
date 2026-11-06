@@ -21,19 +21,7 @@ apps:
     command: $LAUNCHER$
 
 parts:
-  common:
+  ide:
     plugin: dump
-    source: dist.all
-    build-attributes: [no-patchelf]
-  bins:
-    plugin: dump
-    source: dist.unix
-    build-attributes: [no-patchelf]
-  product-json:
-    plugin: dump
-    source: dist.product-json
-    build-attributes: [no-patchelf]
-  jre:
-    plugin: dump
-    source: jre
+    source: dist.tar.gz
     build-attributes: [no-patchelf]
