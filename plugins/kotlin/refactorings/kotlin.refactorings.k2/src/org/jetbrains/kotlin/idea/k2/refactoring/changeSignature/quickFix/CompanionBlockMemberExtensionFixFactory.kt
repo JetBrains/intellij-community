@@ -7,11 +7,13 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.scopes.staticDeclaredMemberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -26,57 +28,65 @@ import org.jetbrains.kotlin.idea.refactoring.conflicts.areSameSignatures
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isFromCompanionBlock
 
 object CompanionBlockMemberExtensionFixFactory {
     val companionBlockMemberExtension: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.CompanionBlockMemberExtension> =
         KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.CompanionBlockMemberExtension ->
-            val function = diagnostic.psi as? KtNamedFunction
-                ?: diagnostic.psi.getStrictParentOfType<KtNamedFunction>()
+            val declaration = diagnostic.psi.getParentOfType<KtCallableDeclaration>(strict = false)
+                ?.takeIf { it is KtNamedFunction || it is KtProperty }
                 ?: return@IntentionBased emptyList()
-            val receiverTypeReference = function.receiverTypeReference ?: return@IntentionBased emptyList()
+            val receiverTypeReference = declaration.receiverTypeReference ?: return@IntentionBased emptyList()
 
-            val [isReceiverUsed, hasClashWithoutReceiver] = analyze(function) {
+            val [isReceiverUsed, hasClashWithoutReceiver] = analyze(declaration) {
                 val usedReifiedTypeParametersInReceiver =
                     collectUsedTypeParameters(receiverTypeReference).filterTo(mutableSetOf()) { it.isReified }
-                isReceiverUsedInside(function, usedReifiedTypeParametersInReceiver) to function.hasCompanionBlockClashWithoutReceiver()
+                isReceiverUsedInside(declaration, usedReifiedTypeParametersInReceiver) to
+                        declaration.hasCompanionBlockClashWithoutReceiver()
             }
 
-            buildList<KotlinQuickFixAction<KtNamedFunction>> {
+            buildList<KotlinQuickFixAction<*>> {
                 if (isReceiverUsed) {
-                    add(ConvertReceiverToParameterFix(function))
-                    if (receiverTypeReference.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) {
-                        add(ConvertReceiverToContextParameterFix(function))
+                    if (declaration is KtNamedFunction) {
+                        add(ConvertReceiverToParameterFix(declaration))
+                        if (receiverTypeReference.languageVersionSettings.supportsFeature(LanguageFeature.ContextParameters)) {
+                            add(ConvertReceiverToContextParameterFix(declaration))
+                        }
                     }
                 } else if (!hasClashWithoutReceiver) {
-                    add(RemoveReceiverParameterFix(function))
+                    add(RemoveReceiverParameterFix(declaration))
                 }
             }
         }
 
     /**
-     * Returns whether another companion block member of the containing class has the signature of this function without its receiver.
+     * Returns whether another companion block member of the containing class has the signature of this declaration without its receiver.
      */
     context(_: KaSession)
-    private fun KtNamedFunction.hasCompanionBlockClashWithoutReceiver(): Boolean {
-        val functionSymbol = symbol as? KaNamedFunctionSymbol ?: return false
-        val classSymbol = functionSymbol.containingDeclaration as? KaClassSymbol ?: return false
-        return classSymbol.staticDeclaredMemberScope.callables(functionSymbol.name)
-            .filterIsInstance<KaNamedFunctionSymbol>()
+    private fun KtCallableDeclaration.hasCompanionBlockClashWithoutReceiver(): Boolean {
+        val declarationSymbol = symbol as? KaCallableSymbol ?: return false
+        val name = declarationSymbol.callableId?.callableName ?: return false
+        val classSymbol = declarationSymbol.containingDeclaration as? KaClassSymbol ?: return false
+        return classSymbol.staticDeclaredMemberScope.callables(name)
             .any { candidate ->
-                candidate != functionSymbol &&
+                candidate != declarationSymbol &&
+                        (candidate is KaFunctionSymbol) == (declarationSymbol is KaFunctionSymbol) &&
                         (candidate.psi as? KtCallableDeclaration)?.isFromCompanionBlock == true &&
                         areSameSignatures(
                             receiverType1 = null,
                             receiverType2 = candidate.receiverType,
-                            parameterTypes1 = functionSymbol.valueParameters.map { it.returnType },
-                            parameterTypes2 = candidate.valueParameters.map { it.returnType },
-                            c1 = functionSymbol.contextReceivers,
+                            parameterTypes1 = declarationSymbol.valueParameterTypes(),
+                            parameterTypes2 = candidate.valueParameterTypes(),
+                            c1 = declarationSymbol.contextReceivers,
                             c2 = candidate.contextReceivers,
                         )
             }
     }
+
+    private fun KaCallableSymbol.valueParameterTypes(): List<KaType> =
+        (this as? KaFunctionSymbol)?.valueParameters?.map { it.returnType }.orEmpty()
 
     private class ConvertReceiverToParameterFix(
         function: KtNamedFunction,

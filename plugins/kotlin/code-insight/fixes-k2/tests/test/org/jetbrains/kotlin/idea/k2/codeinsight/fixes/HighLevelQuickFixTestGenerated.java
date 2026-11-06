@@ -11185,6 +11185,21 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionConvertReceiverToParameter.kt");
             }
 
+            @TestMetadata("companionBlockMemberExtensionPropertyRemoveReceiver.kt")
+            public void testCompanionBlockMemberExtensionPropertyRemoveReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionPropertyRemoveReceiver.kt");
+            }
+
+            @TestMetadata("companionBlockMemberExtensionPropertyRemoveReceiverUnavailable.kt")
+            public void testCompanionBlockMemberExtensionPropertyRemoveReceiverUnavailable() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionPropertyRemoveReceiverUnavailable.kt");
+            }
+
+            @TestMetadata("companionBlockMemberExtensionPropertyRemoveReceiverUnavailableClash.kt")
+            public void testCompanionBlockMemberExtensionPropertyRemoveReceiverUnavailableClash() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionPropertyRemoveReceiverUnavailableClash.kt");
+            }
+
             @TestMetadata("companionBlockMemberExtensionRemoveReceiver.kt")
             public void testCompanionBlockMemberExtensionRemoveReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionRemoveReceiver.kt");
