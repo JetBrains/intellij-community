@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.JavaBundle;
@@ -84,7 +84,7 @@ public final class CreateAnnotationMethodFromUsageFix extends PsiUpdateModComman
 
     PsiElement guesserContext = PsiTreeUtil.getParentOfType(pair, PsiClass.class, PsiMethod.class);
     ExpectedTypeInfo[] expectedTypes =
-      {ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.noneType())};
+      {ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, ModNavigatorTailType.noneType())};
     RecordingTemplateBuilder fields = new RecordingTemplateBuilder();
     PsiTypeElement returnTypeElement = method.getReturnTypeElement();
     if (returnTypeElement != null) {

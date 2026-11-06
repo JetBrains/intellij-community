@@ -12,18 +12,18 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface TailTypeFactory {
-  fun noneType(): TailType
-  fun semicolonType(): TailType
-  fun spaceType(): TailType
-  fun insertSpaceType(): TailType
-  fun humbleSpaceBeforeWordType(): TailType
-  fun dotType(): TailType
-  fun caseColonType(): TailType
-  fun equalsType(): TailType
-  fun conditionalExpressionColonType(): TailType
-  fun charType(char: Char): TailType
-  fun charType(char: Char, overwrite: Boolean): TailType
-  fun unknownType(): TailType
+  fun noneType(): ModNavigatorTailType
+  fun semicolonType(): ModNavigatorTailType
+  fun spaceType(): ModNavigatorTailType
+  fun insertSpaceType(): ModNavigatorTailType
+  fun humbleSpaceBeforeWordType(): ModNavigatorTailType
+  fun dotType(): ModNavigatorTailType
+  fun caseColonType(): ModNavigatorTailType
+  fun equalsType(): ModNavigatorTailType
+  fun conditionalExpressionColonType(): ModNavigatorTailType
+  fun charType(char: Char): ModNavigatorTailType
+  fun charType(char: Char, overwrite: Boolean): ModNavigatorTailType
+  fun unknownType(): ModNavigatorTailType
 
   companion object {
     @JvmStatic

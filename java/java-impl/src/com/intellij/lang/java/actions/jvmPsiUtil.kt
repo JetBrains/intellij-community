@@ -6,7 +6,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo
 import com.intellij.codeInsight.ExpectedTypesProvider.createInfo
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
-import com.intellij.codeInsight.TailTypes
+import com.intellij.codeInsight.ModNavigatorTailType
 import com.intellij.java.impl.template.JavaTemplateCodeInsightSupport
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.request.ExpectedJavaType
@@ -88,7 +88,7 @@ private fun toExpectedTypeInfo(project: Project, expectedType: ExpectedType, con
       Nullability.UNKNOWN -> psiType
     }
   }
-  return createInfo(psiType, expectedType.theKind.infoKind(), psiType, TailTypes.noneType())
+  return createInfo(psiType, expectedType.theKind.infoKind(), psiType, ModNavigatorTailType.noneType())
 }
 
 private fun annotate(psiType: PsiType,
@@ -113,7 +113,7 @@ internal fun JvmSubstitutor.toPsiSubstitutor(project: Project): PsiSubstitutor {
   return JvmPsiConversionHelper.getInstance(project).convertSubstitutor(this)
 }
 
-internal fun PsiType.toExpectedType(): ExpectedTypeInfo = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, TailTypes.noneType())
+internal fun PsiType.toExpectedType(): ExpectedTypeInfo = createInfo(this, ExpectedTypeInfo.TYPE_STRICTLY, this, ModNavigatorTailType.noneType())
 
 internal fun List<ExpectedTypeInfo>.orObject(context: PsiElement): List<ExpectedTypeInfo> {
   if (isEmpty() || get(0).type == PsiTypes.voidType()) {

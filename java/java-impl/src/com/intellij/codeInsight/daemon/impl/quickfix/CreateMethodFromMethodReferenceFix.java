@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.syntax.parser.JavaKeywords;
@@ -279,7 +279,7 @@ public final class CreateMethodFromMethodReferenceFix extends PsiBasedModCommand
 
       PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, classResolveResult);
       ExpectedTypeInfo[] expectedTypes =
-        {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, TailTypes.noneType(), null,
+        {new ExpectedTypeInfoImpl(interfaceReturnType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, interfaceReturnType, ModNavigatorTailType.noneType(), null,
                                   ExpectedTypeInfoImpl.NULL)};
       PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
       List<Pair<PsiExpression, PsiType>> origArgs =

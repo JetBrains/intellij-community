@@ -28,7 +28,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   private final @NotNull PsiType myType;
   private final @NotNull PsiType myDefaultType;
   private final int myKind;
-  private final @NotNull TailType myTailType;
+  private final @NotNull ModNavigatorTailType myTailType;
   private final PsiMethod myCalledMethod;
   private final @NotNull Supplier<String> expectedNameComputable;
   private final @NotNull NullableLazyValue<String> expectedNameLazyValue;
@@ -36,7 +36,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   public ExpectedTypeInfoImpl(@NotNull PsiType type,
                               @Type int kind,
                               @NotNull PsiType defaultType,
-                              @NotNull TailType tailType,
+                              @NotNull ModNavigatorTailType tailType,
                               PsiMethod calledMethod,
                               @NotNull Supplier<String> expectedName) {
     myType = type;
@@ -58,7 +58,7 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   }
 
   @Override
-  public @NotNull TailType getTailType() {
+  public @NotNull ModNavigatorTailType getTailType() {
     return myTailType;
   }
 

@@ -52,7 +52,7 @@ public abstract class ModNavigatorTailType extends TailType {
    */
   @Contract(pure = true)
   public static @NotNull ModNavigatorTailType noneType() {
-    return (ModNavigatorTailType)TailTypes.noneType();
+    return TailTypeFactory.getInstance().noneType();
   }
 
   /**
@@ -60,7 +60,7 @@ public abstract class ModNavigatorTailType extends TailType {
    */
   @Contract(pure = true)
   public static @NotNull ModNavigatorTailType semicolonType() {
-    return (ModNavigatorTailType)TailTypes.semicolonType();
+    return TailTypeFactory.getInstance().semicolonType();
   }
 
   /**
@@ -68,7 +68,7 @@ public abstract class ModNavigatorTailType extends TailType {
    */
   @Contract(pure = true)
   public static @NotNull ModNavigatorTailType insertSpaceType() {
-    return (ModNavigatorTailType)TailTypes.insertSpaceType();
+    return TailTypeFactory.getInstance().insertSpaceType();
   }
 
   /**
@@ -76,7 +76,7 @@ public abstract class ModNavigatorTailType extends TailType {
    */
   @Contract(pure = true)
   public static @NotNull ModNavigatorTailType spaceType() {
-    return (ModNavigatorTailType)TailTypes.spaceType();
+    return TailTypeFactory.getInstance().spaceType();
   }
 
   /**
@@ -84,7 +84,7 @@ public abstract class ModNavigatorTailType extends TailType {
    */
   @Contract(pure = true)
   public static @NotNull ModNavigatorTailType dotType() {
-    return (ModNavigatorTailType)TailTypes.dotType();
+    return TailTypeFactory.getInstance().dotType();
   }
   
 
@@ -93,6 +93,14 @@ public abstract class ModNavigatorTailType extends TailType {
    */
   @Contract(pure = true)
   public static @NotNull ModNavigatorTailType humbleSpaceBeforeWordType() {
-    return (ModNavigatorTailType)TailTypes.humbleSpaceBeforeWordType();
+    return TailTypeFactory.getInstance().humbleSpaceBeforeWordType();
+  }
+
+  /**
+   * @return tail type that inserts a colon of a conditional expression
+   */
+  @Contract(pure = true)
+  public static @NotNull ModNavigatorTailType conditionalExpressionColonType() {
+    return TailTypeFactory.getInstance().conditionalExpressionColonType();
   }
 }

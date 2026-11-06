@@ -3,7 +3,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.CompletionUtil;
-import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaFrontendCompletionUtil;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
@@ -11,6 +10,7 @@ import com.intellij.codeInsight.lookup.CommaTailType;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NullableComputable;
@@ -176,23 +176,23 @@ public final class ExpectedTypesProvider {
   };
 
   public static @NotNull ExpectedTypeInfo createInfo(@NotNull  PsiType type, @ExpectedTypeInfo.Type int kind, PsiType defaultType,
-                                                     @NotNull TailType tailType) {
+                                                     @NotNull ModNavigatorTailType tailType) {
     return createInfoImpl(type, kind, defaultType, tailType);
   }
 
   private static @NotNull ExpectedTypeInfoImpl createInfoImpl(@NotNull PsiType type, PsiType defaultType) {
-    return createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, defaultType, TailTypes.noneType());
+    return createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, defaultType, ModNavigatorTailType.noneType());
   }
 
   private static @NotNull ExpectedTypeInfoImpl createInfoImpl(@NotNull PsiType type, @ExpectedTypeInfo.Type int kind, PsiType defaultType,
-                                                              @NotNull TailType tailType) {
+                                                              @NotNull ModNavigatorTailType tailType) {
     return new ExpectedTypeInfoImpl(type, kind, defaultType, tailType, null, ExpectedTypeInfoImpl.NULL);
   }
 
   private static @NotNull ExpectedTypeInfoImpl createInfoImpl(@NotNull PsiType type,
                                                               @ExpectedTypeInfo.Type int kind,
                                                               PsiType defaultType,
-                                                              @NotNull TailType tailType,
+                                                              @NotNull ModNavigatorTailType tailType,
                                                               PsiMethod calledMethod,
                                                               Supplier<String> expectedName) {
     return new ExpectedTypeInfoImpl(type, kind, defaultType, tailType, calledMethod, expectedName);
@@ -251,7 +251,7 @@ public final class ExpectedTypesProvider {
         int i = 0;
         for (PsiType type : types) {
           result[i++] =
-            new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_SAME_SHAPED, type, TailTypes.noneType(), null, ExpectedTypeInfoImpl.NULL);
+            new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_SAME_SHAPED, type, ModNavigatorTailType.noneType(), null, ExpectedTypeInfoImpl.NULL);
         }
         return result;
       }
@@ -426,7 +426,7 @@ public final class ExpectedTypesProvider {
       if (myExpr == method.getDefaultValue()) {
         final PsiType type = method.getReturnType();
         if (type != null) {
-          myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.semicolonType()));
+          myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, ModNavigatorTailType.semicolonType()));
         }
       }
     }
@@ -468,7 +468,7 @@ public final class ExpectedTypesProvider {
         }
       }
       if (myVoidable) {
-        myResult.add(createInfoImpl(PsiTypes.voidType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiTypes.voidType(), TailTypes.semicolonType()));
+        myResult.add(createInfoImpl(PsiTypes.voidType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE, PsiTypes.voidType(), ModNavigatorTailType.semicolonType()));
       }
     }
 
@@ -571,7 +571,7 @@ public final class ExpectedTypesProvider {
                                         : ExpectedTypeInfoImpl.NULL;
 
         myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type,
-                                    tailTypeSemicolon ? TailTypes.semicolonType() : TailTypes.noneType(), null, expectedName));
+                                    tailTypeSemicolon ? ModNavigatorTailType.semicolonType() : ModNavigatorTailType.noneType(), null, expectedName));
       }
     }
 
@@ -597,7 +597,7 @@ public final class ExpectedTypesProvider {
     public void visitForStatement(@NotNull PsiForStatement statement) {
       if (myExpr.equals(statement.getCondition())) {
         myResult.add(createInfoImpl(PsiTypes.booleanType(), ExpectedTypeInfo.TYPE_STRICTLY, PsiTypes.booleanType(),
-                                    TailTypes.semicolonType()));
+                                    ModNavigatorTailType.semicolonType()));
       }
     }
 
@@ -605,11 +605,11 @@ public final class ExpectedTypesProvider {
     public void visitAssertStatement(@NotNull PsiAssertStatement statement) {
       if (statement.getAssertDescription() == myExpr) {
         final PsiClassType stringType = PsiType.getJavaLangString(myExpr.getManager(), myExpr.getResolveScope());
-        myResult.add(createInfoImpl(stringType, ExpectedTypeInfo.TYPE_STRICTLY, stringType, TailTypes.semicolonType()));
+        myResult.add(createInfoImpl(stringType, ExpectedTypeInfo.TYPE_STRICTLY, stringType, ModNavigatorTailType.semicolonType()));
       }
       else {
         myResult.add(createInfoImpl(PsiTypes.booleanType(), ExpectedTypeInfo.TYPE_STRICTLY, PsiTypes.booleanType(),
-                                    TailTypes.semicolonType()));
+                                    ModNavigatorTailType.semicolonType()));
       }
     }
 
@@ -629,7 +629,7 @@ public final class ExpectedTypesProvider {
       }
       final PsiSwitchBlock switchBlock = statement.getEnclosingSwitchBlock();
       if (switchBlock != null) {
-        final TailType caseTail = JavaTailTypes.forSwitchLabel(switchBlock);
+        final ModNavigatorTailType caseTail = JavaTailTypes.forSwitchLabel(switchBlock);
         myResult.add(createInfoImpl(PsiTypes.booleanType(), ExpectedTypeInfo.TYPE_STRICTLY, PsiTypes.booleanType(), caseTail));
       }
     }
@@ -748,7 +748,7 @@ public final class ExpectedTypesProvider {
         lub = PsiIntersectionType.createIntersection(listWithoutRecords);
       }
       if (lub == null) return Collections.emptyList();
-      return Collections.singletonList(createInfo(lub, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, lub, TailTypes.noneType()));
+      return Collections.singletonList(createInfo(lub, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, lub, ModNavigatorTailType.noneType()));
     }
 
     private static @Nullable PsiType getLeastUpperBound(@NotNull List<PsiType> types, @NotNull PsiManager manager) {
@@ -863,9 +863,9 @@ public final class ExpectedTypesProvider {
         }
       }
       PsiType type = variable.getType();
-      TailType tail = variable instanceof PsiResourceVariable ? TailTypes.noneType() :
+      ModNavigatorTailType tail = variable instanceof PsiResourceVariable ? ModNavigatorTailType.noneType() :
                       PsiUtilCore.getElementType(PsiTreeUtil.nextCodeLeaf(variable)) == JavaTokenType.COMMA ? CommaTailType.INSTANCE :
-                      TailTypes.semicolonType();
+                      ModNavigatorTailType.semicolonType();
       myResult.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, tail, null, getPropertyName(variable)));
     }
 
@@ -875,7 +875,7 @@ public final class ExpectedTypesProvider {
         PsiExpression lExpr = assignment.getLExpression();
         PsiType type = lExpr.getType();
         if (type != null) {
-          TailType tailType = getAssignmentRValueTailType(assignment);
+          ModNavigatorTailType tailType = getAssignmentRValueTailType(assignment);
           Supplier<String> expectedName = ExpectedTypeInfoImpl.NULL;
           if (lExpr instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiVariable var) {
             expectedName = getPropertyName(var);
@@ -900,23 +900,23 @@ public final class ExpectedTypesProvider {
             final int kind = assignment.getOperationTokenType() != JavaTokenType.EQ
                              ? ExpectedTypeInfo.TYPE_STRICTLY
                              : ExpectedTypeInfo.TYPE_OR_SUPERTYPE;
-            myResult.add(createInfoImpl(type, kind, type, TailTypes.noneType()));
+            myResult.add(createInfoImpl(type, kind, type, ModNavigatorTailType.noneType()));
           }
         }
       }
     }
 
-    private static @NotNull TailType getAssignmentRValueTailType(@NotNull PsiAssignmentExpression assignment) {
+    private static @NotNull ModNavigatorTailType getAssignmentRValueTailType(@NotNull PsiAssignmentExpression assignment) {
       if (assignment.getParent() instanceof PsiExpressionStatement) {
         if (!(assignment.getParent().getParent() instanceof PsiForStatement forStatement)) {
-          return TailTypes.semicolonType();
+          return ModNavigatorTailType.semicolonType();
         }
 
         if (!assignment.getParent().equals(forStatement.getUpdate())) {
-          return TailTypes.semicolonType();
+          return ModNavigatorTailType.semicolonType();
         }
       }
-      return TailTypes.noneType();
+      return ModNavigatorTailType.noneType();
     }
 
     @Override
@@ -1036,7 +1036,7 @@ public final class ExpectedTypesProvider {
         myResult.addAll(visitor.myResult);
         if (!(expr.getParent() instanceof PsiExpressionList)) {
           myResult.replaceAll(
-            info -> createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), TailTypes.noneType(), info.getCalledMethod(),
+            info -> createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), ModNavigatorTailType.noneType(), info.getCalledMethod(),
                                    ((ExpectedTypeInfoImpl)info)::getExpectedName
             ));
         }
@@ -1074,17 +1074,17 @@ public final class ExpectedTypesProvider {
       }
       else if (op == JavaTokenType.LTLT || op == JavaTokenType.GTGT || op == JavaTokenType.GTGTGT) {
         if (anotherType != null) {
-          myResult.add(createInfoImpl(PsiTypes.longType(), ExpectedTypeInfo.TYPE_BETWEEN, PsiTypes.shortType(), TailTypes.noneType()));
+          myResult.add(createInfoImpl(PsiTypes.longType(), ExpectedTypeInfo.TYPE_BETWEEN, PsiTypes.shortType(), ModNavigatorTailType.noneType()));
         }
       }
       else if (op == JavaTokenType.OROR || op == JavaTokenType.ANDAND) {
-        myResult.add(createInfoImpl(PsiTypes.booleanType(), ExpectedTypeInfo.TYPE_STRICTLY, PsiTypes.booleanType(), TailTypes.noneType()));
+        myResult.add(createInfoImpl(PsiTypes.booleanType(), ExpectedTypeInfo.TYPE_STRICTLY, PsiTypes.booleanType(), ModNavigatorTailType.noneType()));
       }
       else if (op == JavaTokenType.OR || op == JavaTokenType.XOR || op == JavaTokenType.AND) {
         if (anotherType != null) {
           ExpectedTypeInfoImpl info;
           if (PsiTypes.booleanType().equals(anotherType)) {
-            info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, TailTypes.noneType());
+            info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, ModNavigatorTailType.noneType());
           }
           else {
             info = createInfoImpl(PsiTypes.longType(), anotherType);
@@ -1107,18 +1107,18 @@ public final class ExpectedTypesProvider {
       ExpectedTypeInfoImpl info;
       if (anotherType instanceof PsiPrimitiveType) {
         if (PsiTypes.booleanType().equals(anotherType)) {
-          info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, TailTypes.noneType(), null, expectedName);
+          info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, ModNavigatorTailType.noneType(), null, expectedName);
         }
         else if (PsiTypes.nullType().equals(anotherType)) {
           PsiType objectType = PsiType.getJavaLangObject(anotherExpr.getManager(), anotherExpr.getResolveScope());
-          info = createInfoImpl(objectType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, objectType, TailTypes.noneType(), null, expectedName);
+          info = createInfoImpl(objectType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, objectType, ModNavigatorTailType.noneType(), null, expectedName);
         }
         else {
-          info = createInfoImpl(PsiTypes.doubleType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE, anotherType, TailTypes.noneType(), null, expectedName);
+          info = createInfoImpl(PsiTypes.doubleType(), ExpectedTypeInfo.TYPE_OR_SUBTYPE, anotherType, ModNavigatorTailType.noneType(), null, expectedName);
         }
       }
       else {
-        info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, TailTypes.noneType(), null, expectedName);
+        info = createInfoImpl(anotherType, ExpectedTypeInfo.TYPE_STRICTLY, anotherType, ModNavigatorTailType.noneType(), null, expectedName);
       }
 
       return info;
@@ -1129,9 +1129,9 @@ public final class ExpectedTypesProvider {
       IElementType i = expr.getOperationTokenType();
       final PsiType type = expr.getType();
       final PsiElement parent = expr.getParent();
-      final TailType tailType = parent instanceof PsiAssignmentExpression assignment && assignment.getRExpression() == expr
+      final ModNavigatorTailType tailType = parent instanceof PsiAssignmentExpression assignment && assignment.getRExpression() == expr
                                 ? getAssignmentRValueTailType(assignment)
-                                : TailTypes.noneType();
+                                : ModNavigatorTailType.noneType();
       if (i == JavaTokenType.PLUSPLUS || i == JavaTokenType.MINUSMINUS || i == JavaTokenType.TILDE) {
         ExpectedTypeInfoImpl info;
         if (myUsedAfter && type != null) {
@@ -1168,12 +1168,12 @@ public final class ExpectedTypesProvider {
       PsiType type = expr.getType();
       ExpectedTypeInfoImpl info;
       if (myUsedAfter && type != null) {
-        info = createInfoImpl(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailTypes.noneType());
+        info = createInfoImpl(type, ExpectedTypeInfo.TYPE_STRICTLY, type, ModNavigatorTailType.noneType());
       }
       else {
         if (type != null) {
           info = createInfoImpl(type, type instanceof PsiPrimitiveType ? ExpectedTypeInfo.TYPE_OR_SUPERTYPE : ExpectedTypeInfo.TYPE_OR_SUBTYPE,
-                                PsiTypes.intType(), TailTypes.noneType());
+                                PsiTypes.intType(), ModNavigatorTailType.noneType());
         }
         else {
           info = createInfoImpl(PsiTypes.longType(), PsiTypes.intType());
@@ -1253,14 +1253,14 @@ public final class ExpectedTypesProvider {
           return;
         }
 
-        myResult.add(createInfoImpl(PsiTypes.booleanType(), ExpectedTypeInfo.TYPE_STRICTLY, PsiTypes.booleanType(), TailTypes.noneType()));
+        myResult.add(createInfoImpl(PsiTypes.booleanType(), ExpectedTypeInfo.TYPE_STRICTLY, PsiTypes.booleanType(), ModNavigatorTailType.noneType()));
       }
       else if (myExpr.equals(expr.getThenExpression())) {
         ExpectedTypeInfo[] types = getExpectedTypes(expr, myForCompletion, ourGlobalScopeClassProvider, false, false, myMaxCandidates);
         for (int i = 0; i < types.length; i++) {
           final ExpectedTypeInfo info = types[i];
           types[i] =
-            createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), TailTypes.conditionalExpressionColonType(),
+            createInfoImpl(info.getType(), info.getKind(), info.getDefaultType(), ModNavigatorTailType.conditionalExpressionColonType(),
                            info.getCalledMethod(), ((ExpectedTypeInfoImpl)info)::getExpectedName);
         }
         Collections.addAll(myResult, types);
@@ -1302,7 +1302,7 @@ public final class ExpectedTypesProvider {
             myExpr instanceof PsiTypeCastExpression && myForCompletion ? throwsType : throwableType,
             ExpectedTypeInfo.TYPE_OR_SUBTYPE,
             throwsType,
-            TailTypes.semicolonType()
+            ModNavigatorTailType.semicolonType()
           ));
         }
       }
@@ -1410,7 +1410,7 @@ public final class ExpectedTypesProvider {
               PsiTypesUtil.mentionsTypeParameters(paramType, ContainerUtil.newHashSet(method.getTypeParameters()))) {
             continue;
           }
-          TailType tailType = getMethodArgumentTailType(argument, index, method, substitutor, params);
+          ModNavigatorTailType tailType = getMethodArgumentTailType(argument, index, method, substitutor, params);
           ExpectedTypeInfoImpl info = createInfoImpl(paramType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, paramType,
                                                      tailType, method, getPropertyName(param));
           set.add(info);
@@ -1448,18 +1448,18 @@ public final class ExpectedTypesProvider {
       return candidates;
     }
 
-    private static @NotNull TailType getMethodArgumentTailType(@NotNull PsiExpression argument,
+    private static @NotNull ModNavigatorTailType getMethodArgumentTailType(@NotNull PsiExpression argument,
                                                                int index,
                                                                @NotNull PsiMethod method,
                                                                @NotNull PsiSubstitutor substitutor,
                                                                PsiParameter @NotNull [] params) {
       if (index >= params.length || index == params.length - 2 && params[index + 1].isVarArgs()) {
-        return TailTypes.noneType();
+        return ModNavigatorTailType.noneType();
       }
       if (index == params.length - 1) {
         final PsiElement call = argument.getParent().getParent();
         // ignore JspMethodCall
-        if (call instanceof SyntheticElement) return TailTypes.noneType();
+        if (call instanceof SyntheticElement) return ModNavigatorTailType.noneType();
 
         PsiType returnType = method.getReturnType();
         if (returnType != null) returnType = substitutor.substitute(returnType);
@@ -1503,7 +1503,7 @@ public final class ExpectedTypesProvider {
       PsiParameter parameter = parameters[Math.min(parameters.length - 1, index)];
       PsiType parameterType = getParameterType(parameter, substitutor);
 
-      TailType tailType = getMethodArgumentTailType(argument, index, method, substitutor, parameters);
+      ModNavigatorTailType tailType = getMethodArgumentTailType(argument, index, method, substitutor, parameters);
       PsiType defaultType = getDefaultType(method, substitutor, parameterType, argument, args, index);
 
       NullableComputable<String> propertyName = getPropertyName(parameter);
@@ -1594,7 +1594,7 @@ public final class ExpectedTypesProvider {
       ExpectedTypeInfo info = createInfoImpl(objType, objType);
       ExpectedTypeInfo info1 = createInfoImpl(PsiTypes.doubleType().createArrayType(), PsiTypes.intType().createArrayType());
       PsiType booleanType = PsiTypes.booleanType().createArrayType();
-      ExpectedTypeInfo info2 = createInfoImpl(booleanType, ExpectedTypeInfo.TYPE_STRICTLY, booleanType, TailTypes.noneType());
+      ExpectedTypeInfo info2 = createInfoImpl(booleanType, ExpectedTypeInfo.TYPE_STRICTLY, booleanType, ModNavigatorTailType.noneType());
       return Arrays.asList(info, info1, info2);
     }
 
@@ -1618,10 +1618,10 @@ public final class ExpectedTypesProvider {
           substitutor == null ? facade.getElementFactory().createType(aClass) : facade.getElementFactory().createType(aClass, substitutor);
 
         if (method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {
-          types.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailTypes.dotType()));
+          types.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_STRICTLY, type, ModNavigatorTailType.dotType()));
         }
         else {
-          types.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.dotType()));
+          types.add(createInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, ModNavigatorTailType.dotType()));
         }
       }
 
@@ -1662,7 +1662,7 @@ public final class ExpectedTypesProvider {
                    field.hasModifierProperty(PsiModifier.PRIVATE)
                    ? ExpectedTypeInfo.TYPE_STRICTLY
                    : ExpectedTypeInfo.TYPE_OR_SUBTYPE;
-        ExpectedTypeInfo info = createInfoImpl(type, kind, type, TailTypes.dotType());
+        ExpectedTypeInfo info = createInfoImpl(type, kind, type, ModNavigatorTailType.dotType());
         //Do not filter inheritors!
         types.add(info);
       }
@@ -1681,7 +1681,7 @@ public final class ExpectedTypesProvider {
     PsiMethod @NotNull [] findDeclaredMethods(@NotNull PsiManager manager, @NotNull String name);
   }
 
-  public static @NotNull TailType getFinalCallParameterTailType(@NotNull PsiElement call, @Nullable PsiType returnType,
+  public static @NotNull ModNavigatorTailType getFinalCallParameterTailType(@NotNull PsiElement call, @Nullable PsiType returnType,
                                                                 @NotNull PsiMethod method) {
     if (method.isConstructor() && call instanceof PsiMethodCallExpression e && e.getMethodExpression() instanceof PsiSuperExpression) {
       return JavaTailTypes.CALL_RPARENTH_SEMICOLON;
@@ -1701,14 +1701,14 @@ public final class ExpectedTypesProvider {
     return JavaTailTypes.CALL_RPARENTH;
   }
 
-  private static final class CommaTailTypeWithSyncHintUpdate extends TailType {
+  private static final class CommaTailTypeWithSyncHintUpdate extends ModNavigatorTailType {
     private final PsiCall myOriginalCall;
 
     private CommaTailTypeWithSyncHintUpdate(@NotNull PsiCall originalCall) {myOriginalCall = originalCall;}
 
     @Override
-    public boolean isApplicable(@NotNull InsertionContext context) {
-      return CommaTailType.INSTANCE.isApplicable(context);
+    public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
+      return CommaTailType.INSTANCE.processTail(navigator, tailOffset);
     }
 
     @Override

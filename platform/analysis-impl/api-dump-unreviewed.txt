@@ -720,10 +720,10 @@ Fa:com.intellij.codeInsight.lookup.ClassifierFactory
 - getId():java.lang.String
 - hashCode():I
 c:com.intellij.codeInsight.lookup.CommaTailType
-- com.intellij.codeInsight.TailType
-- sf:INSTANCE:com.intellij.codeInsight.TailType
+- com.intellij.codeInsight.ModNavigatorTailType
+- sf:INSTANCE:com.intellij.codeInsight.ModNavigatorTailType
 - <init>():V
-- processTail(com.intellij.openapi.editor.Editor,I):I
+- processTail(com.intellij.openapi.editor.ModNavigator,I):I
 f:com.intellij.codeInsight.lookup.DefaultLookupItemRenderer
 - com.intellij.codeInsight.lookup.LookupElementRenderer
 - sf:INSTANCE:com.intellij.codeInsight.lookup.DefaultLookupItemRenderer

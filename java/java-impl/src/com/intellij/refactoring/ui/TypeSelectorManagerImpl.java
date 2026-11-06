@@ -4,7 +4,7 @@ package com.intellij.refactoring.ui;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -223,7 +223,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
       private void checkIfAllowed(PsiType type) {
         if (expectedTypes.length > 0) {
           final ExpectedTypeInfo typeInfo = ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type,
-                                                                             TailTypes.noneType());
+                                                                             ModNavigatorTailType.noneType());
           for (ExpectedTypeInfo expectedType : expectedTypes) {
             if (expectedType.intersect(typeInfo).length != 0) {
               allowedTypes.add(type);

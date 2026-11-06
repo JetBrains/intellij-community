@@ -5,7 +5,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailTypes;
+import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
@@ -176,13 +176,13 @@ public final class JavaSmartCompletionContributor {
       final PsiClassType classType = factory
           .createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, position.getResolveScope());
       final List<ExpectedTypeInfo> result = new SmartList<>();
-      result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, classType, TailTypes.semicolonType(), null,
+      result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, classType, ModNavigatorTailType.semicolonType(), null,
                                           ExpectedTypeInfoImpl.NULL));
       final PsiMethod method = PsiTreeUtil.getContextOfType(position, PsiMethod.class, true);
       if (method != null) {
         for (final PsiClassType type : method.getThrowsList().getReferencedTypes()) {
           result.add(
-            new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.semicolonType(), null, ExpectedTypeInfoImpl.NULL));
+            new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, ModNavigatorTailType.semicolonType(), null, ExpectedTypeInfoImpl.NULL));
         }
       }
       return result.toArray(ExpectedTypeInfo.EMPTY_ARRAY);

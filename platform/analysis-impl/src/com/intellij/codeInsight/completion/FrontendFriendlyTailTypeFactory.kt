@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
-import com.intellij.codeInsight.TailType
+import com.intellij.codeInsight.ModNavigatorTailType
 import com.intellij.codeInsight.TailTypeFactory
 import org.jetbrains.annotations.ApiStatus
 
@@ -14,27 +14,27 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 class FrontendFriendlyTailTypeFactory : TailTypeFactory {
-  override fun noneType(): TailType = NoneTailType
+  override fun noneType(): ModNavigatorTailType = NoneTailType
 
-  override fun semicolonType(): TailType = FrontendFriendlyCharTailType(';')
+  override fun semicolonType(): ModNavigatorTailType = FrontendFriendlyCharTailType(';')
 
-  override fun spaceType(): TailType = FrontendFriendlyCharTailType(' ')
+  override fun spaceType(): ModNavigatorTailType = FrontendFriendlyCharTailType(' ')
 
-  override fun insertSpaceType(): TailType = FrontendFriendlyCharTailType(' ', false)
+  override fun insertSpaceType(): ModNavigatorTailType = FrontendFriendlyCharTailType(' ', false)
 
-  override fun unknownType(): TailType = FrontendFriendlyUnknownTailType
+  override fun unknownType(): ModNavigatorTailType = FrontendFriendlyUnknownTailType
 
-  override fun humbleSpaceBeforeWordType(): TailType = HumbleSpaceBeforeWordTailType
+  override fun humbleSpaceBeforeWordType(): ModNavigatorTailType = HumbleSpaceBeforeWordTailType
 
-  override fun dotType(): TailType = FrontendFriendlyCharTailType('.')
+  override fun dotType(): ModNavigatorTailType = FrontendFriendlyCharTailType('.')
 
-  override fun caseColonType(): TailType = FrontendFriendlyCharTailType(':')
+  override fun caseColonType(): ModNavigatorTailType = FrontendFriendlyCharTailType(':')
 
-  override fun equalsType(): TailType = FrontendFriendlyCharTailType('=')
+  override fun equalsType(): ModNavigatorTailType = FrontendFriendlyCharTailType('=')
 
-  override fun conditionalExpressionColonType(): TailType = CondExprColonTailType
+  override fun conditionalExpressionColonType(): ModNavigatorTailType = CondExprColonTailType
 
-  override fun charType(char: Char): TailType = FrontendFriendlyCharTailType(char)
+  override fun charType(char: Char): ModNavigatorTailType = FrontendFriendlyCharTailType(char)
 
-  override fun charType(char: Char, overwrite: Boolean): TailType = FrontendFriendlyCharTailType(char, overwrite)
+  override fun charType(char: Char, overwrite: Boolean): ModNavigatorTailType = FrontendFriendlyCharTailType(char, overwrite)
 }

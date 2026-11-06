@@ -2,26 +2,25 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.ModNavigatorTailType;
 import com.intellij.lang.Language;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsFacade;
-import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public class CommaTailType extends TailType {
-  public static final TailType INSTANCE = new CommaTailType();
+public class CommaTailType extends ModNavigatorTailType {
+  public static final ModNavigatorTailType INSTANCE = new CommaTailType();
 
   @Override
-  public int processTail(final @NotNull Editor editor, int tailOffset) {
-    PsiFile psiFile = PsiEditorUtil.getPsiFile(editor);
-    Language language = PsiUtilCore.getLanguageAtOffset(PsiEditorUtil.getPsiFile(editor), tailOffset);
+  public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
+    PsiFile psiFile = navigator.getPsiFile();
+    Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
     CodeStyleSettingsFacade codeStyleFacade = CodeStyle.getFacade(psiFile).withLanguage(language);
-    if (codeStyleFacade.isSpaceBeforeComma()) tailOffset = insertChar(editor, tailOffset, ' ');
-    tailOffset = insertChar(editor, tailOffset, ',');
-    if (codeStyleFacade.isSpaceAfterComma()) tailOffset = insertChar(editor, tailOffset, ' ');
+    if (codeStyleFacade.isSpaceBeforeComma()) tailOffset = insertChar(navigator, tailOffset, ' ');
+    tailOffset = insertChar(navigator, tailOffset, ',');
+    if (codeStyleFacade.isSpaceAfterComma()) tailOffset = insertChar(navigator, tailOffset, ' ');
     return tailOffset;
   }
 

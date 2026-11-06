@@ -65,5 +65,5 @@ public interface ExpectedTypeInfo {
   ExpectedTypeInfo @NotNull [] intersect(@NotNull ExpectedTypeInfo info);
 
   @NotNull
-  TailType getTailType();
+  ModNavigatorTailType getTailType();
 }
