@@ -1,5 +1,5 @@
 //! The ssh calls of `bt --host <alias> --prepare`: the repository, the PATH, the tools and the credentials of the
-//! host. A run needs no ssh: `bd-host` carries it.
+//! host. A run needs no ssh: `brd-host` carries it.
 
 use std::ffi::OsString;
 use std::time::Duration;

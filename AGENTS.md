@@ -35,8 +35,8 @@ This repository is too large for an ad hoc Git worktree or clone. Create one onl
 
 Branch Deck is optional. First check for the `branch-deck` skill: the skill list of the agent names it, or `~/.agents/skills/branch-deck/SKILL.md` exists.
 
-- With the skill, follow it before the first edit, build or commit. This applies to every agent. Run `bd workspace -C <repo>` and follow its output.
-- When `lease.on` is true, run `bd lease get` and edit, build and commit only in the lease `path`.
+- With the skill, follow it before the first edit, build or commit. This applies to every agent. Run `brd workspace -C <repo>` and follow its output.
+- When `lease.on` is true, run `brd lease get` and edit, build and commit only in the lease `path`.
 - A plan does not replace this check. With the skill, each plan that edits code starts with a workspace stage.
 - Without the skill, work in the current checkout. The plan then has no workspace stage.
 

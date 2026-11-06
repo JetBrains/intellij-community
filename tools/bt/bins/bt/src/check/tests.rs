@@ -59,7 +59,7 @@ fn stderr(fake: &FakeRuntime) -> String {
     fake.state().stderr.join("\n")
 }
 
-/// The line is the contract that `bd lease pick` reads, so the test pins it whole: the keys and their order.
+/// The line is the contract that `brd lease pick` reads, so the test pins it whole: the keys and their order.
 #[test]
 fn a_green_test_run_records_the_tree_that_it_saw() {
     let fake = checkout(&[tree("a"), tree("a")]);

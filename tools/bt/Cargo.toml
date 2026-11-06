@@ -142,7 +142,7 @@ strsim = "0.11.1"
 # Command line.
 clap = { version = "4.6.7", features = ["derive", "env", "wrap_help"] }
 
-# System. `bt --host` keeps a handler of Ctrl+C while `bd-host` runs, so bt waits for its end.
+# System. `bt --host` keeps a handler of Ctrl+C while `brd-host` runs, so bt waits for its end.
 ctrlc = "3.5.2"
 tempfile = "3.27.0"
 

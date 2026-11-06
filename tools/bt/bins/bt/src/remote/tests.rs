@@ -63,7 +63,7 @@ fn the_flags_of_the_host_stay_here_and_the_rest_goes_to_the_host() {
     assert_eq!(host_args(&after), ["--lane", "fast"]);
 }
 
-/// Each code of bt keeps its meaning; an interrupt, a refusal of bd-host and an unknown code are infrastructure.
+/// Each code of bt keeps its meaning; an interrupt, a refusal of brd-host and an unknown code are infrastructure.
 #[test]
 fn the_exit_code_of_the_host_maps_one_to_one() {
     for code in [0, 2, 3, 4, 5, 6] {
@@ -75,7 +75,7 @@ fn the_exit_code_of_the_host_maps_one_to_one() {
 }
 
 #[test]
-fn a_run_goes_to_bd_host_with_the_wrapper_and_answers_its_payload() {
+fn a_run_goes_to_brd_host_with_the_wrapper_and_answers_its_payload() {
     let fake = checkout();
     let link = link_ending(0, &format!("{PAYLOAD}\n"), &[]);
     let answer = outcome(&["AgentLaunchTokensTest", "--host", "studio", "--json"], &fake, &link);
@@ -102,7 +102,7 @@ fn a_run_goes_to_bd_host_with_the_wrapper_and_answers_its_payload() {
     assert_eq!(fake.state().stderr, ["> studio: bt AgentLaunchTokensTest --json"]);
 }
 
-/// bd-host writes the steps of the run to the stderr itself, so bt adds no line of them. Under `--json` the stdout
+/// brd-host writes the steps of the run to the stderr itself, so bt adds no line of them. Under `--json` the stdout
 /// stays the one payload of the host.
 #[test]
 fn the_payload_stays_alone_on_the_stdout() {
@@ -122,7 +122,7 @@ fn the_payload_stays_alone_on_the_stdout() {
 }
 
 #[test]
-fn the_repository_of_the_command_line_reaches_bd_host() {
+fn the_repository_of_the_command_line_reaches_brd_host() {
     let fake = checkout();
     let link = link_ending(0, "PASS\n", &[]);
     outcome(&["--host", "studio", "--host-repo", "/w/idea", "FooTest"], &fake, &link);
@@ -166,17 +166,17 @@ fn a_refusal_on_the_host_keeps_its_code() {
     assert_eq!((failure.code.as_ref(), failure.exit), ("host_run_failed", exit::USAGE));
 }
 
-/// A refusal of bd-host keeps its code under `host_`, and its details give the exit code of bd-host. Local changes are
+/// A refusal of brd-host keeps its code under `host_`, and its details give the exit code of brd-host. Local changes are
 /// a usage failure; the rest is infrastructure.
 #[test]
-fn a_refusal_of_bd_host_maps_by_its_meaning() {
+fn a_refusal_of_brd_host_maps_by_its_meaning() {
     let fake = checkout();
     let link = FakeLink::default();
     link.answer_run(Err(host_refused(code::LOCAL_CHANGES, "this checkout has local changes")));
     let failure = refusal(execute_with(["--host", "studio", "--lane", "fast"], &fake, &link));
     assert_eq!((failure.code.as_ref(), failure.exit), ("host_local_changes", exit::USAGE));
     assert_eq!(failure.message, "bt --host studio: this checkout has local changes");
-    assert_eq!(failure.details_json_text(), Some(r#"{"bd_host_exit":75}"#));
+    assert_eq!(failure.details_json_text(), Some(r#"{"brd_host_exit":75}"#));
 
     for code in ["unreachable", "untrusted", "lease_failed", code::NOT_INSTALLED] {
         let link = FakeLink::default();
@@ -192,7 +192,7 @@ fn a_refusal_of_bd_host_maps_by_its_meaning() {
     link.answer_run(Err(HostRefusal::new("fetch_failed", 255, "2 files did not come")));
     let failure = refusal(execute_with(["--host", "studio", "--lane", "fast"], &fake, &link));
     assert_eq!((failure.code.as_ref(), failure.exit), ("host_fetch_failed", exit::INFRA));
-    assert_eq!(failure.details_json_text(), Some(r#"{"bd_host_exit":255}"#));
+    assert_eq!(failure.details_json_text(), Some(r#"{"brd_host_exit":255}"#));
 }
 
 #[test]

@@ -18,7 +18,7 @@ Usage:
   bt build <pattern>... [options] [-- <raw bazel args>...]   (see bt build --help)
 
 A green run in a linked work tree, such as a lease, records the tree that it saw, for
-`bd lease pick`: one line in bd-checks.jsonl of the git directory. A run during which the files
+`brd lease pick`: one line in bd-checks.jsonl of the git directory. A run during which the files
 changed records nothing. A raw ./bazel.cmd run records nothing either.
 
 Selectors (at most one):
@@ -68,16 +68,16 @@ Options:
   --dry-run                print the resolved label, filter, and argv; run nothing
   --list                   print the resolution candidates for the selector; run nothing
   --verbose                also echo bazel's own captured output
-  --host <ssh alias>       run the committed HEAD on that machine through bd-host of Branch Deck: send
+  --host <ssh alias>       run the committed HEAD on that machine through brd-host of Branch Deck: send
                            the missing git objects, check the commit out in a host slot that the
                            machine lends to this run only, run the same command, stream its output,
                            copy back the kept logs of out/bt-runs; Ctrl+C cancels the run there;
                            refused when the checkout has local changes; --prepare installs the agent
-                           first; `bd install` puts bd-host into ~/.local/bin
+                           first; `brd install` puts brd-host into ~/.local/bin
   --host-repo <path>       the main repository on the --host machine (env BT_HOST_REPO, default
                            the one of the host file of --prepare, ~/projects/idea-1)
   --prepare                with --host: make that machine ready, step by step (ssh, the repository,
-                           the PATH, the tools, the bd-host agent, the credentials, the remote
+                           the PATH, the tools, the brd-host agent, the credentials, the remote
                            cache), and say ok, done or missing for each; --dry-run changes nothing.
                            Run it in a terminal: the credential copy asks y/N and refuses without a
                            terminal
@@ -107,7 +107,7 @@ Usage:
 
 Builds the target patterns with -k and the UI of bazel silenced, and answers one digest: BUILD OK,
 or BUILD FAILED with the compile errors. A green build in a linked work tree, such as a lease,
-records the tree that it saw, for `bd lease pick`: one line in bd-checks.jsonl of the git
+records the tree that it saw, for `brd lease pick`: one line in bd-checks.jsonl of the git
 directory. A build during which the files changed records nothing. A raw ./bazel.cmd build
 records nothing either.
 

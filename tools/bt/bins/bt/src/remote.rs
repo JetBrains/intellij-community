@@ -1,17 +1,17 @@
-//! `bt --host <alias>`: one run of bt on another machine, from the committed HEAD of this checkout, through `bd-host`
-//! of Branch Deck. The contract of `bd-host` is `spec/cli/host.spec.md` of Branch Deck.
+//! `bt --host <alias>`: one run of bt on another machine, from the committed HEAD of this checkout, through `brd-host`
+//! of Branch Deck. The contract of `brd-host` is `spec/cli/host.spec.md` of Branch Deck.
 //!
-//! bt starts `bd-host run <alias> --head --fetch out/bt-runs --report-fd 3 -- ./community/tools/bt.cmd <args>`, with
-//! the arguments of bt less the flags of this module. `bd-host` refuses a checkout with local changes, because only the
+//! bt starts `brd-host run <alias> --head --fetch out/bt-runs --report-fd 3 -- ./community/tools/bt.cmd <args>`, with
+//! the arguments of bt less the flags of this module. `brd-host` refuses a checkout with local changes, because only the
 //! commit reaches the host. It sends the git objects that the host lacks, and the agent there runs the command in a
-//! host slot that it lends to this run only. The stderr of the host and the lines of `bd-host` stream to the stderr
-//! here, the `bd-host: phases:` line at the end included. The stdout of `bd-host` is the digest or the `--json` payload
-//! of the host, and bt reads it. `bd-host` writes one JSON report of the run to the descriptor 3: the exit code of the
+//! host slot that it lends to this run only. The stderr of the host and the lines of `brd-host` stream to the stderr
+//! here, the `brd-host: phases:` line at the end included. The stdout of `brd-host` is the digest or the `--json` payload
+//! of the host, and bt reads it. `brd-host` writes one JSON report of the run to the descriptor 3: the exit code of the
 //! command, or a refusal code. The exit code of the host is the exit code here. The new run directories of
 //! `out/bt-runs` come back to `out/bt-runs` here.
 //!
-//! `bd-host` stays in the process group of bt, so the Ctrl+C of the terminal reaches it, and bt only waits for it. The
-//! first Ctrl+C cancels the run on the host, and `bd-host` follows the output to the end. A second Ctrl+C stops the
+//! `brd-host` stays in the process group of bt, so the Ctrl+C of the terminal reaches it, and bt only waits for it. The
+//! first Ctrl+C cancels the run on the host, and `brd-host` follows the output to the end. A second Ctrl+C stops the
 //! follow at once. Then bt exits with its infrastructure code, and under `--json` with the payload of an
 //! infrastructure outcome.
 
@@ -28,7 +28,7 @@ use bt_core::{Refusal, exit};
 use crate::check::{Check, CheckCommand, record_host_run};
 use crate::execute::{JsonPayload, Outcome};
 
-pub(crate) mod bd_host;
+pub(crate) mod brd_host;
 
 /// The main repository on the host for `--prepare` when `--host-repo` and `BT_HOST_REPO` name none. A run without
 /// them takes the repository of the host file, which `--prepare` writes.
@@ -43,21 +43,21 @@ const HOST_FLAGS: [&str; 2] = ["--host", "--host-repo"];
 /// The switches of this module, which the host run does not get.
 const HOST_SWITCHES: [&str; 2] = ["--prepare", "--yes"];
 
-/// The exit code of `bd-host` when the host did not run the command, so a caller can run it locally.
+/// The exit code of `brd-host` when the host did not run the command, so a caller can run it locally.
 pub(crate) const NOT_RUN: i32 = 75;
 
-/// The refusal codes of `bd-host` that bt acts on, and the codes of bt for a `bd-host` that gave no answer. The table
-/// of `bd-host` is "Refusal codes" of `spec/cli/host.spec.md` of Branch Deck.
+/// The refusal codes of `brd-host` that bt acts on, and the codes of bt for a `brd-host` that gave no answer. The table
+/// of `brd-host` is "Refusal codes" of `spec/cli/host.spec.md` of Branch Deck.
 pub(crate) mod code {
     /// A second Ctrl+C stopped the follow of the run.
     pub(crate) const INTERRUPTED: &str = "interrupted";
     /// `--head` found tracked or untracked changes.
     pub(crate) const LOCAL_CHANGES: &str = "local_changes";
-    /// A code of bt: no `bd-host` on the PATH and none in `~/.local/bin`.
+    /// A code of bt: no `brd-host` on the PATH and none in `~/.local/bin`.
     pub(crate) const NOT_INSTALLED: &str = "not_installed";
-    /// A code of bt: `bd-host` ended without a report, or with a report that bt cannot read.
+    /// A code of bt: `brd-host` ended without a report, or with a report that bt cannot read.
     pub(crate) const NO_REPORT: &str = "no_report";
-    /// A code of bt: `bd-host setup` exited with another code than 0.
+    /// A code of bt: `brd-host setup` exited with another code than 0.
     pub(crate) const SETUP_FAILED: &str = "setup_failed";
 }
 
@@ -69,11 +69,11 @@ pub(crate) struct Host<'a> {
     pub(crate) repo: Option<&'a str>,
 }
 
-/// A refusal of `bd-host`: the code and the message of its report, and its exit code.
+/// A refusal of `brd-host`: the code and the message of its report, and its exit code.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct HostRefusal {
     pub(crate) code: String,
-    /// The exit code of `bd-host`: [`NOT_RUN`] when the host did not run the command, 255 after the start, 130 for
+    /// The exit code of `brd-host`: [`NOT_RUN`] when the host did not run the command, 255 after the start, 130 for
     /// an interrupt.
     pub(crate) exit: i32,
     pub(crate) message: String,
@@ -91,9 +91,9 @@ impl HostRefusal {
 
 /// One run on the host, as bt asks for it.
 pub(crate) struct HostRun<'a> {
-    /// The local checkout. `bd-host` runs in it and finds the commit there.
+    /// The local checkout. `brd-host` runs in it and finds the commit there.
     pub(crate) checkout: &'a Path,
-    /// `--repo` of `bd-host run`: the main repository on the host.
+    /// `--repo` of `brd-host run`: the main repository on the host.
     pub(crate) repo: Option<&'a str>,
     pub(crate) command: &'a [String],
     /// The directories whose new entries come back, relative to the slot root.
@@ -113,13 +113,13 @@ pub(crate) struct HostOutcome {
     pub(crate) fetched: Vec<String>,
 }
 
-/// The answer of `bd-host hello <alias> --json`.
+/// The answer of `brd-host hello <alias> --json`.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Deserialize)]
 pub(crate) struct HostHello {
     /// The address that answered, such as `192.168.1.20:7742`.
     pub(crate) address: String,
     pub(crate) agent: HostAgent,
-    /// Whether `bd-host` here and the agent run the same build.
+    /// Whether `brd-host` here and the agent run the same build.
     pub(crate) same_build: bool,
 }
 
@@ -132,7 +132,7 @@ pub(crate) struct HostAgent {
     pub(crate) arch: String,
 }
 
-/// What `bd-host setup <alias>` gets from bt.
+/// What `brd-host setup <alias>` gets from bt.
 pub(crate) struct HostSetup<'a> {
     pub(crate) alias: &'a str,
     /// The main repository on the host, which the host file names.
@@ -141,13 +141,13 @@ pub(crate) struct HostSetup<'a> {
     pub(crate) name: &'a str,
 }
 
-/// The calls of bt to `bd-host`: the child process in production, a script in the tests.
+/// The calls of bt to `brd-host`: the child process in production, a script in the tests.
 pub(crate) trait HostLink {
     fn run(&self, alias: &str, request: &HostRun<'_>) -> Result<HostOutcome, HostRefusal>;
 
     fn hello(&self, alias: &str) -> Result<HostHello, HostRefusal>;
 
-    /// Prepares the host over ssh, and answers the stdout of `bd-host setup`.
+    /// Prepares the host over ssh, and answers the stdout of `brd-host setup`.
     fn setup(&self, request: &HostSetup<'_>) -> Result<String, HostRefusal>;
 }
 
@@ -246,8 +246,8 @@ pub(crate) fn host_args(argv: &[OsString]) -> Vec<String> {
     forwarded
 }
 
-/// A refusal of `bd-host` as a refusal of bt. The code keeps its meaning under the prefix `host_`, and the details
-/// give the exit code of `bd-host`, so a caller sees whether the command ran. Local changes are a usage failure, as a
+/// A refusal of `brd-host` as a refusal of bt. The code keeps its meaning under the prefix `host_`, and the details
+/// give the exit code of `brd-host`, so a caller sees whether the command ran. Local changes are a usage failure, as a
 /// selector that resolves to nothing is. Every other refusal says nothing about the tests, so it is infrastructure.
 pub(crate) fn host_refusal(alias: &str, refusal: &HostRefusal) -> Refusal {
     let exit = if refusal.code == code::LOCAL_CHANGES {
@@ -260,7 +260,7 @@ pub(crate) fn host_refusal(alias: &str, refusal: &HostRefusal) -> Refusal {
         exit,
         format!("bt --host {alias}: {}", refusal.message),
     )
-    .with_details(serde_json::json!({ "bd_host_exit": refusal.exit }))
+    .with_details(serde_json::json!({ "brd_host_exit": refusal.exit }))
 }
 
 /// The local copies of the run directories that came back: one per name under `out/bt-runs`.

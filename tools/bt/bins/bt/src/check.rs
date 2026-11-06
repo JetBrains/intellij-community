@@ -1,6 +1,6 @@
 //! The check record: the tree of the checkout that a green build or test saw.
 //!
-//! `bd lease pick` of Branch Deck reads it. In a repository whose `.branchdeck.toml` sets `pick_requires_check`, the
+//! `brd lease pick` of Branch Deck reads it. In a repository whose `.branchdeck.toml` sets `pick_requires_check`, the
 //! pick lands a lease only when a record names the tree of its HEAD. bt is the only writer. A record is one JSON line
 //! in `bd-checks.jsonl` of the git directory of a linked work tree, its own directory under `.git/worktrees/`. The
 //! main checkout records nothing, because no pick lands it. The file keeps the last [`KEPT_RECORDS`] lines, and each
@@ -9,7 +9,7 @@
 //! A local run takes the tree before its first bazel spawn and again after a green result. It writes the record only
 //! when both are the same tree, so an edit during the run leaves no record. A red run leaves none. A record of a tree
 //! with local changes names those paths on the stderr: the pick finds the record only when the commit holds the same
-//! files. A `--host` run records the tree of the commit that the host ran: `bd-host run --head` refuses a checkout
+//! files. A `--host` run records the tree of the commit that the host ran: `brd-host run --head` refuses a checkout
 //! with local changes, so that tree is the tree of the checkout.
 
 use bt_core::Runtime;
@@ -71,7 +71,7 @@ pub(crate) fn record_green_run(runtime: &dyn Runtime, before: Option<&CheckoutTr
     };
     if after.tree != before.tree {
         runtime.write_error(&format!(
-            "bt: the files changed during the run (tree {} before it, {} after it), so the run leaves no check record for bd lease pick",
+            "bt: the files changed during the run (tree {} before it, {} after it), so the run leaves no check record for brd lease pick",
             before.tree, after.tree
         ));
         return;
@@ -85,7 +85,7 @@ pub(crate) fn record_green_run(runtime: &dyn Runtime, before: Option<&CheckoutTr
         }
         runtime.write_error(&format!(
             "bt: the check record names the tree with the local changes of {}. Commit them, or delete the ones that \
-             are not part of the work, before bd lease pick: the pick finds the record only for a commit of these files",
+             are not part of the work, before brd lease pick: the pick finds the record only for a commit of these files",
             paths.join(", ")
         ));
     }
@@ -119,7 +119,7 @@ fn read_tree(runtime: &dyn Runtime) -> Option<CheckoutTree> {
 /// Appends one record, and drops the oldest ones past [`KEPT_RECORDS`]. Answers whether the record was written.
 ///
 /// [`Runtime::write_text_file`] writes a temporary file beside the record file and renames it over the file, so a
-/// concurrent reader such as `bd lease pick` sees the old records or the new ones, never a part.
+/// concurrent reader such as `brd lease pick` sees the old records or the new ones, never a part.
 fn append(runtime: &dyn Runtime, tree: &CheckoutTree, check: &Check<'_>) -> bool {
     match write_record(runtime, tree, check) {
         Ok(()) => true,
@@ -163,7 +163,7 @@ fn write_record(runtime: &dyn Runtime, tree: &CheckoutTree, check: &Check<'_>) -
 
 /// A record that cannot be written is a warning, not a refusal: the verdict of the run is already decided.
 fn warn(runtime: &dyn Runtime, reason: &str) {
-    runtime.write_error(&format!("bt: no check record for bd lease pick, because {reason}"));
+    runtime.write_error(&format!("bt: no check record for brd lease pick, because {reason}"));
 }
 
 #[cfg(test)]

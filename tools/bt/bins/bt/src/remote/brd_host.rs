@@ -1,10 +1,10 @@
-//! The production [`HostLink`]: the `bd-host` binary of Branch Deck as a child process, with the contract of
+//! The production [`HostLink`]: the `brd-host` binary of Branch Deck as a child process, with the contract of
 //! `spec/cli/host.spec.md` of Branch Deck.
 //!
-//! bt looks for `bd-host` on the PATH, else at `~/.local/bin/bd-host`, where `bd install` links it. The child gets the
+//! bt looks for `brd-host` on the PATH, else at `~/.local/bin/brd-host`, where `brd install` links it. The child gets the
 //! stdin and the stderr of bt, and bt reads its stdout. A run writes its report to the descriptor 3, which a shell
 //! opens on a temporary file, because std cannot give a child a descriptor of a chosen number. bt keeps a handler of
-//! Ctrl+C during a run, so the Ctrl+C of the terminal reaches only `bd-host` with its effect, and bt waits for the end.
+//! Ctrl+C during a run, so the Ctrl+C of the terminal reaches only `brd-host` with its effect, and bt waits for the end.
 
 use std::ffi::{OsStr, OsString};
 use std::io::Read as _;
@@ -18,7 +18,7 @@ use serde::Deserialize;
 use super::{HostHello, HostLink, HostOutcome, HostRefusal, HostRun, HostSetup, NOT_RUN, code};
 
 /// The file name of the binary.
-const BINARY: &str = "bd-host";
+const BINARY: &str = "brd-host";
 
 /// The descriptor of the report of a run, as `--report-fd` names it.
 const REPORT_FD: &str = "3";
@@ -26,21 +26,21 @@ const REPORT_FD: &str = "3";
 /// The schema of the report and of the hello that bt reads.
 const SCHEMA: u32 = 1;
 
-/// The shell line that opens the report file, `$0`, at the descriptor 3 and replaces itself with `bd-host`, `$@`.
+/// The shell line that opens the report file, `$0`, at the descriptor 3 and replaces itself with `brd-host`, `$@`.
 const WITH_REPORT_FD: &str = r#"exec "$@" 3>"$0""#;
 
-/// What bt says when it finds no `bd-host`.
-const INSTALL_HINT: &str = "run `bd install` of Branch Deck, which links ~/.local/bin/bd-host";
+/// What bt says when it finds no `brd-host`.
+const INSTALL_HINT: &str = "run `brd install` of Branch Deck, which links ~/.local/bin/brd-host";
 
-/// The link to one `bd-host` binary.
-pub(crate) struct BdHost<'r> {
+/// The link to one `brd-host` binary.
+pub(crate) struct BrdHost<'r> {
     runtime: &'r dyn Runtime,
-    /// `None` when neither the PATH nor `~/.local/bin` has `bd-host`.
+    /// `None` when neither the PATH nor `~/.local/bin` has `brd-host`.
     binary: Option<PathBuf>,
 }
 
-impl<'r> BdHost<'r> {
-    /// The link to the `bd-host` of the PATH, else of `~/.local/bin`.
+impl<'r> BrdHost<'r> {
+    /// The link to the `brd-host` of the PATH, else of `~/.local/bin`.
     pub(crate) fn new(runtime: &'r dyn Runtime) -> Self {
         let path = std::env::var_os("PATH");
         let binary = find_binary(path.as_deref(), runtime.home_dir().as_deref(), Path::is_file);
@@ -57,7 +57,7 @@ impl<'r> BdHost<'r> {
             return Err(HostRefusal::new(
                 code::NOT_INSTALLED,
                 NOT_RUN,
-                "bt --host runs on macOS and Linux only, because bd-host writes its report to a Unix descriptor",
+                "bt --host runs on macOS and Linux only, because brd-host writes its report to a Unix descriptor",
             ));
         }
         self.binary.as_deref().ok_or_else(|| {
@@ -69,7 +69,7 @@ impl<'r> BdHost<'r> {
         })
     }
 
-    /// Keeps bt alive on a Ctrl+C, so it waits for `bd-host`, which gets the Ctrl+C with the process group. Once per
+    /// Keeps bt alive on a Ctrl+C, so it waits for `brd-host`, which gets the Ctrl+C with the process group. Once per
     /// process: the handler only takes the signal.
     fn wait_through_ctrl_c(&self, alias: &str) {
         static INSTALLED: OnceLock<Result<(), String>> = OnceLock::new();
@@ -82,7 +82,7 @@ impl<'r> BdHost<'r> {
     }
 }
 
-impl HostLink for BdHost<'_> {
+impl HostLink for BrdHost<'_> {
     fn run(&self, alias: &str, request: &HostRun<'_>) -> Result<HostOutcome, HostRefusal> {
         let binary = self.binary()?;
         let report = tempfile::Builder::new()
@@ -129,7 +129,7 @@ impl HostLink for BdHost<'_> {
     }
 }
 
-/// The arguments of `bd-host run`, after the binary. The defaults of `run` are the ones of a person, so bt names its
+/// The arguments of `brd-host run`, after the binary. The defaults of `run` are the ones of a person, so bt names its
 /// options in full ("The report of a run" in `spec/cli/host.spec.md` of Branch Deck): niceness 0 keeps the CPU for the
 /// tests, and `--no-outputs` keeps the local copies of the outputs of `[host]`.
 fn run_args(alias: &str, request: &HostRun<'_>) -> Vec<OsString> {
@@ -156,7 +156,7 @@ fn run_args(alias: &str, request: &HostRun<'_>) -> Vec<OsString> {
     args
 }
 
-/// The first `bd-host` of the absolute directories of `path`, else the one of `~/.local/bin`.
+/// The first `brd-host` of the absolute directories of `path`, else the one of `~/.local/bin`.
 fn find_binary(path: Option<&OsStr>, home: Option<&Path>, is_file: impl Fn(&Path) -> bool) -> Option<PathBuf> {
     let on_path = path
         .into_iter()
@@ -205,7 +205,7 @@ fn exit_code(status: ExitStatus) -> i32 {
 #[derive(Deserialize)]
 struct RunReport {
     schema: u32,
-    /// The exit code of `bd-host`.
+    /// The exit code of `brd-host`.
     exit: i32,
     /// The exit code of the command, `None` when it did not run or its end is unknown.
     command_exit: Option<i32>,
@@ -222,7 +222,7 @@ struct ReportRefusal {
     message: String,
 }
 
-/// The outcome of `bd-host run` from its exit code, its stdout and the text of its report.
+/// The outcome of `brd-host run` from its exit code, its stdout and the text of its report.
 fn outcome_of(exit: i32, stdout: String, report: &str) -> Result<HostOutcome, HostRefusal> {
     let lost = |why: String| {
         HostRefusal::new(
@@ -253,7 +253,7 @@ fn outcome_of(exit: i32, stdout: String, report: &str) -> Result<HostOutcome, Ho
     })
 }
 
-/// The answer of `bd-host hello --json` from its exit code and its stdout: "hello" of `spec/cli/host.spec.md` of
+/// The answer of `brd-host hello --json` from its exit code and its stdout: "hello" of `spec/cli/host.spec.md` of
 /// Branch Deck.
 fn hello_of(exit: i32, stdout: &str) -> Result<HostHello, HostRefusal> {
     let lost = |why: String| HostRefusal::new(code::NO_REPORT, exit, format!("`{BINARY} hello` exited with {exit} and {why}"));
