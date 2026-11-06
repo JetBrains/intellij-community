@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 public abstract class StatefulEpInspectionTestBase extends PluginModuleTestCase {
@@ -13,6 +13,17 @@ public abstract class StatefulEpInspectionTestBase extends PluginModuleTestCase 
     myFixture.addClass("package com.intellij.codeInspection; public interface ProblemDescriptor {}");
     myFixture.addClass("package com.intellij.openapi.components; public interface ProjectComponent {}");
     myFixture.addClass("package com.intellij.openapi.util; public class Ref<T> {}");
+    myFixture.addClass("package com.intellij.util.xmlb.annotations; public @interface Attribute {}");
+    myFixture.addClass("""
+      import com.intellij.util.xmlb.annotations.Attribute;
+      public class SD {
+        @Attribute public String serviceInterface;
+        @Attribute public String serviceImplementation;
+        @Attribute public String instance;
+        @Attribute public String service;
+        @Attribute public String targetClass;
+        @Attribute public String implementationClass;
+      }""");
     myFixture.enableInspections(new StatefulEpInspection());
   }
 

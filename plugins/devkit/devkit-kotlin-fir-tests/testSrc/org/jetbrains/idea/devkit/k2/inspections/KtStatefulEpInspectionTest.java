@@ -58,6 +58,11 @@ public class KtStatefulEpInspectionTest extends StatefulEpInspectionTestBase {
     doTest();
   }
 
+  public void testPackagedExt() {
+    setPluginXml("packagedPlugin.xml");
+    doTest();
+  }
+
   public void testCapturedFromOuterClass() {
     doTest();
   }

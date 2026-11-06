@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiWildcardType
+import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
@@ -19,7 +20,9 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.util.processExtensionsByClassName
+import org.jetbrains.idea.devkit.inspections.ExtensionUtil.getClassNameDomValues
+import org.jetbrains.idea.devkit.inspections.ExtensionUtil.getNormalizedClassName
+import org.jetbrains.idea.devkit.util.processExtensionDeclarations
 import org.jetbrains.uast.UAnonymousClass
 import org.jetbrains.uast.UBlockExpression
 import org.jetbrains.uast.UClass
@@ -39,11 +42,12 @@ internal class StatefulEpInspection : DevKitUastInspectionBase(UField::class.jav
 
   override fun checkField(field: UField, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val uClass = field.getContainingUClass() ?: return ProblemDescriptor.EMPTY_ARRAY
-    val className = uClass.javaPsi.name ?: return ProblemDescriptor.EMPTY_ARRAY
+    if (uClass.javaPsi.name == null) return ProblemDescriptor.EMPTY_ARRAY
 
     val isQuickFix by lazy(LazyThreadSafetyMode.NONE) { InheritanceUtil.isInheritor(uClass.javaPsi, localQuickFixFqn) }
 
-    val targets = findEpCandidates(manager.project, className)
+    val binaryClassName = ClassUtil.getJVMClassName(uClass.javaPsi)
+    val targets = if (binaryClassName == null) emptyList() else findEpCandidates(manager.project, binaryClassName)
     if (targets.isEmpty() && !isQuickFix) {
       return ProblemDescriptor.EMPTY_ARRAY
     }
@@ -157,10 +161,11 @@ internal class StatefulEpInspection : DevKitUastInspectionBase(UField::class.jav
   @Suppress("DEPRECATION")
   private val projectComponentFqn = com.intellij.openapi.components.ProjectComponent::class.java.canonicalName
 
-  private fun findEpCandidates(project: Project, className: String): Collection<XmlTag> {
+  private fun findEpCandidates(project: Project, binaryClassName: String): Collection<XmlTag> {
     val result = Collections.synchronizedList(SmartList<XmlTag>())
-    processExtensionsByClassName(project, className) { tag, _ ->
-      if (tag.getAttributeValue("forClass")?.contains(className) != true) {
+    val className = getNormalizedClassName(binaryClassName)
+    processExtensionDeclarations(binaryClassName, project) { extension, tag ->
+      if (extension.getClassNameDomValues().any { getNormalizedClassName(it.stringValue) == className }) {
         result.add(tag)
       }
       true

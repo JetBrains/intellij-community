@@ -1,0 +1,24 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="ep" interface="EP"/>
+    <extensionPoint name="symbolProvider" beanClass="SD">
+      <with attribute="targetClass" implements="java.lang.Object"/>
+      <with attribute="implementationClass" implements="java.lang.Object"/>
+    </extensionPoint>
+    <extensionPoint name="languageService" beanClass="SD">
+      <with attribute="serviceInterface" implements="java.lang.Object"/>
+      <with attribute="serviceImplementation" implements="java.lang.Object"/>
+    </extensionPoint>
+    <extensionPoint name="projectSettings" beanClass="SD">
+      <with attribute="service" implements="java.lang.Object"/>
+    </extensionPoint>
+  </extensionPoints>
+  <extensions>
+    <ep implementation="pkg.PackagedExt"/>
+    <ep implementation="pkg.PackagedExt$Nested"/>
+    <ep forClass="pkg.PackagedForClass" implementation="pkg.PackagedExt"/>
+    <symbolProvider targetClass="pkg.PackagedTarget" implementationClass="pkg.PackagedProvider"/>
+    <projectSettings service="pkg.PackagedSettings"/>
+    <languageService serviceInterface="pkg.PackagedServiceApi" serviceImplementation="pkg.PackagedLanguageService"/>
+  </extensions>
+</idea-plugin>

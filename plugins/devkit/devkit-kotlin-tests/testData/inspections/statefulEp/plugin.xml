@@ -1,8 +1,12 @@
 <idea-plugin>
   <extensionPoints>
-    <extensionPoint name="ep" beanClass="EP"/>
-    <extensionPoint name="projectService" beanClass="SD"/>
-    <extensionPoint name="projectConfigurable" beanClass="SD"/>
+    <extensionPoint name="ep" interface="EP"/>
+    <extensionPoint name="projectService" beanClass="SD">
+      <with attribute="serviceImplementation" implements="java.lang.Object"/>
+    </extensionPoint>
+    <extensionPoint name="projectConfigurable" beanClass="SD">
+      <with attribute="instance" implements="java.lang.Object"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions>
     <ep implementation="Ext"/>
