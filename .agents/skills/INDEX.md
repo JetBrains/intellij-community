@@ -9,7 +9,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [actions](actions/SKILL.md) | Implement or change IntelliJ `AnAction` actions and registrations. |
 | [bazel-test-migration](bazel-test-migration/SKILL.md) | Migrate IntelliJ JPS module tests to Bazel; debug Bazel-only failures. |
 | [code-style](code-style/SKILL.md) | Apply IntelliJ Kotlin and Java code style when writing or reviewing. |
-| [commits](commits/SKILL.md) | Create, amend, or rename IntelliJ commits and write commit messages. |
+| [commits](commits/SKILL.md) | Read before each IntelliJ commit, amend or reword: the subject SafePush accepts, the body a review reads. |
 | [compare-python-typecheckers](compare-python-typecheckers/SKILL.md) | Compare Python type inference with ty, pyrefly, and basedpyright. |
 | [compose-ui](compose-ui/SKILL.md) | Write or audit Compose Desktop UI state, effects, and boundaries. |
 | [conda-env-tests](conda-env-tests/SKILL.md) | Bump the pinned Miniconda version for the Python conda env tests. |

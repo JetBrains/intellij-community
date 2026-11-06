@@ -47,6 +47,11 @@ Branch Deck is optional. First check for the `branch-deck` skill: the skill list
 - After you change a Bazel or Starlark source (`BUILD`, `BUILD.bazel`, `MODULE.bazel`, `WORKSPACE`, `WORKSPACE.bazel`, or `*.bzl`), run `./bazel.cmd run //:format.check`. If it reports a diff, run `./bazel.cmd run //:format`, inspect the changes, and run the check again.
 - After you change an `*.iml`, a `BUILD.bazel`, or a `.idea/` file, run `./build/jpsModelToBazelCommunityOnly.cmd`.
 
+### Before a Commit
+
+- Read the [commits](./.agents/skills/commits/SKILL.md) skill before each commit, amend or reword. It holds the subject form that SafePush checks and the form of the body.
+- With a Branch Deck prefix, the subject is `(branch) ` and then the form of the `commits` skill: `(dev-dist-cache) setup build: <sentence>`. Branch Deck removes the prefix at the push, and SafePush checks the rest.
+
 ## Tools
 
 Search the repository with `./tools/accio.cmd`, not with the `search_*` tools of an IDE MCP server. It answers from the working tree of the current checkout, a lease included. An answer that is not `exact` and `complete` is a lead: read the code it points to. Do not cut or filter the output of a search with `head`, `tail`, `grep`, `sed`, `awk`, `cut` or a similar tool. A cut output cannot prove that a match does not exist. For a log, build output, or a path outside the repository, use `./tools/rg.cmd` or `./tools/fd.cmd`. The `Glob` and `Grep` tools, `find`, a recursive `grep`, and `git grep` are denied. A rename or a move is a search too: `accio locate '<regex>' --mode regex --files` lists the files to change.
