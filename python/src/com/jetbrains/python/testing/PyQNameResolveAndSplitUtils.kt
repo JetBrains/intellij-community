@@ -27,6 +27,7 @@ import com.jetbrains.python.extensions.getRelativeNameTo
 import com.jetbrains.python.extensions.resolveToElement
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 
 /**
  * Utilities to find which part of [com.intellij.psi.util.QualifiedName] resolves to file and which one to the element
@@ -119,6 +120,7 @@ internal fun QualifiedName.tryResolveAndSplit(context: QNameResolveContext): Qua
     if (possibleFile is PsiDirectory) {
       // test class may be declared directly in init.py, so "module.Class" is not module.py but module/__init__.py
       possibleFile = possibleFile.files.firstOrNull { it.name == PyNames.INIT_DOT_PY }
+                     ?: findModuleDeclaring(possibleFileName, this.components.getOrNull(i), context)
     }
 
     if (possibleFile is PyFile) {
@@ -129,4 +131,16 @@ internal fun QualifiedName.tryResolveAndSplit(context: QNameResolveContext): Qua
     i--
   }
   return null
+}
+
+/**
+ * A module found by name, for a one-part file name that resolves to a folder without `__init__.py`:
+ * `tests.MyTestCase` with the folder `tests/` and the module `tests/subdir/tests.py` (PY-93409)
+ */
+private fun findModuleDeclaring(fileName: QualifiedName, firstElementName: String?, context: QNameResolveContext): PyFile? {
+  if (!context.allowInaccurateResult || fileName.componentCount != 1 || firstElementName == null) return null
+  return PyModuleNameIndex.find(fileName.lastComponent!!, context.contextAnchor.project, false).firstOrNull {
+    it.name != PyNames.INIT_DOT_PY &&
+    (it.findTopLevelClass(firstElementName) != null || it.findTopLevelFunction(firstElementName) != null)
+  }
 }

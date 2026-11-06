@@ -137,15 +137,19 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
 
   // Drill as deep, as we can
   while (currentName.componentCount > 0 && element == null) {
+    // A folder that matches only a prefix of the name drops the module, class and method parts (PY-93409)
+    val isPrefix = currentName.componentCount < componentCount
+    val acceptable: (PsiElement) -> Boolean = { !(isPrefix && it is PsiDirectory) }
+
     if (psiDirectory != null) { // Resolve against folder
       // There could be folder and module on the same level. Empty folder should be ignored in this case.
       element = resolveModuleAt(currentName, psiDirectory, resolveContext).filterNot {
         it is PsiDirectory && it.children.filterIsInstance<PyFile>().isEmpty()
-      }.firstOrNull()
+      }.firstOrNull(acceptable)
     }
 
     if (element == null) { // Resolve against roots
-      element = resolveQualifiedName(currentName, resolveContext).firstOrNull()
+      element = resolveQualifiedName(currentName, resolveContext).firstOrNull(acceptable)
     }
 
     if (element != null || stopOnFirstFail) {
@@ -207,16 +211,19 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
   if (element == null && this.firstComponent != null && context.allowInaccurateResult) {
     // If name starts with file which is not in root nor in folders -- use index.
     val nameToFind = this.firstComponent!!
-    val pyFile = PyModuleNameIndex.find(nameToFind, context.contextAnchor.project, false).firstOrNull() ?: return element
-
-    val folder =
-      if (pyFile.name == PyNames.INIT_DOT_PY) { // We are in folder
-        pyFile.virtualFile.parent.parent
-      }
-      else {
-        pyFile.virtualFile.parent
-      }
-    return getElementAndResolvableName(context.copy(folderToStart = folder))
+    for (pyFile in PyModuleNameIndex.find(nameToFind, context.contextAnchor.project, false)) {
+      val folder =
+        (if (pyFile.name == PyNames.INIT_DOT_PY) { // We are in folder
+          pyFile.virtualFile.parent.parent
+        }
+        else {
+          pyFile.virtualFile.parent
+        }) ?: continue
+      if (folder == context.folderToStart) continue
+      // allowInaccurateResult = false: a second index lookup returns the same files and recurses without end
+      getElementAndResolvableName(context.copy(folderToStart = folder, allowInaccurateResult = false))?.let { return it }
+    }
+    return null
   }
   return if (element != null) NameAndElement(currentName, element) else null
 }
