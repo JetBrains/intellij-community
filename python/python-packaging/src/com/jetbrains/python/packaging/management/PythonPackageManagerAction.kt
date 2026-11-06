@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.UserDataHolder
@@ -20,9 +21,11 @@ import com.intellij.python.sdk.backend.isReadOnly
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
-import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.errorProcessing.emit
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
+import org.jetbrains.annotations.ApiStatus
 import kotlin.text.Regex.Companion.escape
 
 /**
@@ -32,7 +35,8 @@ import kotlin.text.Regex.Companion.escape
  * @param T The type of the Python package manager this action operates on.
  * @param V The result type of the background jobs performed by this action.
  */
-internal abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwareAction() {
+@ApiStatus.Internal
+abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwareAction() {
   protected val errorSink: ErrorSink = ErrorSink()
 
   /**
@@ -79,14 +83,16 @@ internal abstract class PythonPackageManagerAction<T : PythonPackageManager, V> 
       val manager = runReadAction { getManager(e) } ?: return@launch
       val psiFile = runReadAction { e.getData(PSI_FILE) } ?: return@launch
 
-      PythonPackageManagerUI.forPackageManager(manager).executeCommand(e.presentation.text) {
+      // Save the documents so that the tool sees the current project files, such as pyproject.toml.
+      FileDocumentManager.getInstance().saveAllDocuments()
+      manager.runSynchronized(e.presentation.text) {
         execute(e, manager).mapSuccess {
           runReadAction {
             DaemonCodeAnalyzer.getInstance(psiFile.project).restart(psiFile, "PythonPackageManagerAction")
           }
           manager.interpreter.associatedModuleDir?.let { refreshAfterToolRun(it) }
         }
-      }
+      }.onFailure { errorSink.emit(it, manager.project) }
     }
   }
 
@@ -120,7 +126,8 @@ private fun refreshAfterToolRun(dir: VirtualFile) {
   VfsUtil.markDirtyAndRefresh(true, false, true, dir)
 }
 
-internal inline fun <reified T : PythonPackageManager> AnActionEvent.getPythonPackageManager(): T? {
+@ApiStatus.Internal
+inline fun <reified T : PythonPackageManager> AnActionEvent.getPythonPackageManager(): T? {
   val psiFile = getData(PSI_FILE) ?: return null
   val interpreter = psiFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return null
   return PythonPackageManager.forPythonInterpreter(psiFile.project, interpreter) as? T
@@ -131,7 +138,8 @@ internal fun PythonPackageManager.isRunLocked(): Boolean {
   return CancellableJobSerialRunner.isRunLocked(runLockHolder)
 }
 
-internal suspend fun <V> PythonPackageManager.runSynchronized(
+@ApiStatus.Internal
+suspend fun <V> PythonPackageManager.runSynchronized(
   title: @NlsContexts.ProgressTitle String,
   runnable: suspend () -> PyResult<V>,
 ): PyResult<V> {

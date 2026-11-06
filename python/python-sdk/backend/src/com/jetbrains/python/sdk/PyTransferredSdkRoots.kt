@@ -10,6 +10,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
@@ -92,6 +93,13 @@ fun Module.excludeInnerVirtualEnv(sdk: Sdk) {
       entry.addExcludeFolder(vFile)
     }
   }
+}
+
+/** Excludes the environment of [sdk] from the module that holds its binary, when there is one. */
+@ApiStatus.Internal
+fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
+  val binary = sdk.homeDirectory ?: return
+  ModuleUtil.findModuleForFile(binary, this)?.excludeInnerVirtualEnv(sdk)
 }
 
 /**

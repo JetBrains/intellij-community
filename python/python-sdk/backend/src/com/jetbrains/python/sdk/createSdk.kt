@@ -4,20 +4,18 @@ package com.jetbrains.python.sdk
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.SdkAdditionalData
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.registerTarget
-import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.project.project
-import com.jetbrains.python.sdk.add.v2.EelFileSystem
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
@@ -37,7 +35,8 @@ import java.nio.file.Path
  * Request to create a sdk either eel or target-based.
  * Once created, call [createSdk]
  */
-internal sealed interface SdkCreationRequest<P, D : SdkAdditionalData> {
+@ApiStatus.Internal
+sealed interface SdkCreationRequest<P, D : SdkAdditionalData> {
   val path: P
   val data: D
 
@@ -124,7 +123,8 @@ suspend fun createSdk(
 /**
  * Please use [com.jetbrains.python.sdk.add.v2.FileSystem.setupSdk] instead
  */
-internal suspend fun SdkCreationRequest<*, *>.createSdk(
+@ApiStatus.Internal
+suspend fun SdkCreationRequest<*, *>.createSdk(
   moduleOrProject: ModuleOrProject,
   suggestedSdkName: String? = null,
   advancedOpts: SdkCreationAdvancedOpts = SdkCreationAdvancedOpts.DEFAULT,
@@ -132,7 +132,7 @@ internal suspend fun SdkCreationRequest<*, *>.createSdk(
   val ownerDir = moduleOrProject.findPyProject()?.baseDir
                  ?: pythonData.workingDirectory.takeIf { pythonData.hasValidWorkingDirectory() }
                  ?: moduleOrProject.workingDirectory
-                 ?: return PyResult.localizedError(PyBundle.message("python.sdk.project.working.directory.not.found"))
+                 ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.project.working.directory.not.found"))
   return createSdkImpl(moduleOrProject.project, ownerDir, this, suggestedSdkName)
 }
 
@@ -150,7 +150,7 @@ suspend fun createLocalSdkGuessingTypeByPath(
   suggestedSdkName: String? = null,
 ): PyResult<PythonInterpreter> =
   createSdkGuessingTypeByPath(PathHolder.Eel(homePath),
-                              EelFileSystem(homePath.getEelDescriptor().toEelApi()),
+                              homePath.toFileSystem(),
                               moduleOrProject,
                               null,
                               suggestedSdkName)
@@ -170,7 +170,7 @@ suspend fun <P : PathHolder> createSdkGuessingTypeByPath(
   val flavorAndData = fileSystem.flavorAndDataOf(homePath)
 
   val workingDirectory = moduleOrProject.workingDirectory
-                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.project.working.directory.not.found"))
+                         ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.project.working.directory.not.found"))
 
   val newPythonInterpreter = fileSystem.setupSdk(
     moduleOrProject = moduleOrProject,
@@ -213,7 +213,7 @@ private suspend fun createSdkImpl(
     is SdkCreationRequest.EelSdk -> PathHolder.Eel(request.path)
     is SdkCreationRequest.TargetSdk -> {
       val target = request.data.targetEnvironmentConfiguration
-                   ?: return PyResult.localizedError(PyBundle.message("python.sdk.python.executable.not.found", request.path))
+                   ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.python.executable.not.found", request.path))
       registerTarget(project, target)
       PathHolder.Target(request.path)
     }
@@ -232,7 +232,8 @@ private val SdkCreationRequest<*, *>.pythonData: PythonSdkAdditionalData
  * The flavor of the local interpreter at [pythonBinary], guessed from its path. Only a flavor without data can be
  * guessed: a conda env, for example, needs the path to conda.
  */
-internal suspend fun guessLocalFlavorAndData(pythonBinary: Path): PyFlavorAndData<PyFlavorData.Empty, *> = withContext(Dispatchers.IO) {
+@ApiStatus.Internal
+suspend fun guessLocalFlavorAndData(pythonBinary: Path): PyFlavorAndData<PyFlavorData.Empty, *> = withContext(Dispatchers.IO) {
   val detectedFlavor = PythonSdkFlavor.tryDetectFlavorByLocalPath(pythonBinary)
   val flavor = if (detectedFlavor != null && detectedFlavor.flavorDataClass.isInstance(PyFlavorData.Empty)) {
     @Suppress("UNCHECKED_CAST") // Checked a line above

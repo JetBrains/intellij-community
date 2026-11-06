@@ -60,6 +60,10 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//python/python-syntax-core:syntax-core",
         "//platform/workspace/jps",
+        "//platform/progress/shared:ide-progress",
+        "//platform/platform-api:ide",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/core-ui",
     ],
 )
 ### auto-generated section `build intellij.python.packaging` end

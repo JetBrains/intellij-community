@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VfsUtil
@@ -61,11 +60,6 @@ val Project.pythonSdk: Sdk?
   @Deprecated("An interpreter belongs to a Python project. Use the interpreter of the PyProject.")
   @Suppress("DEPRECATION") // It still answers an SDK.
   get() = mainPythonInterpreterIfReady()?.getSdkAPI()
-
-internal fun Project.excludeInnerVirtualEnv(sdk: Sdk) {
-  val binary = sdk.homeDirectory ?: return
-  ModuleUtil.findModuleForFile(binary, this)?.excludeInnerVirtualEnv(sdk)
-}
 
 internal val Sdk.isSystemWide: Boolean
   get() = !PythonSdkUtil.isRemote(this) && !this.isNonToolVirtualEnv && !this.isCondaVirtualEnv
