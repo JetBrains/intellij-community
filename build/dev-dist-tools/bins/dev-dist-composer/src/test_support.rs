@@ -45,6 +45,7 @@ pub(crate) fn file_with_mode(relative_path: &str, source: &str, executable: bool
         executable,
         source: source.to_owned(),
         mode,
+        mac_binary: None,
     }
 }
 

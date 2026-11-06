@@ -1,7 +1,7 @@
 #![allow(clippy::unreadable_literal, reason = "the hash values are copied from the Kotlin output")]
 
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use testkit::{REFERENCE_CONTENT_HASHES, TempDir, WorkingDirectory, read_bytes, reference_bytes, require_error, write_file};
 
@@ -399,9 +399,9 @@ fn every_manifest_states_the_version_and_a_plugin_component_states_its_plugin() 
         &[],
     )
     .unwrap();
-    assert_eq!((manifest.version, manifest.plugin), (11, true));
+    assert_eq!((manifest.version, manifest.plugin), (12, true));
     let (manifest, _) = build_manifest(&header("files"), &[]).unwrap();
-    assert_eq!((manifest.version, manifest.plugin), (11, false));
+    assert_eq!((manifest.version, manifest.plugin), (12, false));
 }
 
 #[cfg(unix)]
@@ -735,4 +735,66 @@ fn collector_rejects_links_combined_across_inventories() {
     let result = write_manifest(&manifest_file, &header("files"), &attach_metadata(&files, &catalogue).unwrap());
     require_error(result, "unsupported symbolic link chain");
     assert!(!manifest_file.exists(), "a rejected graph produced a component manifest");
+}
+
+fn mac_binary(entry: &ComponentEntry) -> Option<MacBinary> {
+    match entry {
+        ComponentEntry::ComponentFile { mac_binary, .. } => *mac_binary,
+        _ => None,
+    }
+}
+
+/// The header of a thin 64-bit arm64 Mach-O file of `file_type` with no load commands.
+fn mach_o_header(file_type: u32) -> Vec<u8> {
+    [0xFEED_FACF_u32, 0x0100_000C, 0, file_type, 0, 0, 0, 0]
+        .iter()
+        .flat_map(|value| value.to_le_bytes())
+        .collect()
+}
+
+#[test]
+fn inventory_records_the_mac_binary_kind_of_a_hashed_file_and_of_an_inventory_entry() {
+    let directory = TempDir::new();
+    let tool = directory.join("inputs/gdb");
+    write_file(&tool, mach_o_header(2));
+    let object = directory.join("inputs/python.o");
+    write_file(&object, mach_o_header(1));
+    let library = directory.join("inputs/libpython.dylib");
+    write_file(&library, mach_o_header(6));
+    let mut metadata = filemeta::inspect(Path::new(&library), "lib/libpython.dylib").unwrap();
+    metadata.mode = 0o644;
+    let files = [
+        SourcedFile {
+            executable: true,
+            ..SourcedFile::new(&tool, "bin/gdb")
+        },
+        // The same source twice: the hash cache keeps the kind too.
+        SourcedFile::new(&tool, "bin/gdb-copy"),
+        SourcedFile::new(&object, "lib/python.o"),
+        SourcedFile {
+            metadata: Some(metadata),
+            ..SourcedFile::new("never/read/libpython.dylib", "lib/libpython.dylib")
+        },
+    ];
+    let (entries, stats) = inventory(&files).unwrap();
+    let kinds: Vec<(&str, Option<MacBinary>)> = entries.iter().map(|entry| (entry.relative_path(), mac_binary(entry))).collect();
+    assert_eq!(
+        kinds,
+        [
+            ("bin/gdb", Some(MacBinary::Executable)),
+            ("bin/gdb-copy", Some(MacBinary::Executable)),
+            ("lib/libpython.dylib", Some(MacBinary::Dylib)),
+            ("lib/python.o", None),
+        ]
+    );
+    assert_eq!(stats.hashed_file_count, 2);
+    let manifest = String::from_utf8(
+        ComponentManifest {
+            entries: entries[..1].to_vec(),
+            ..ComponentManifest::default()
+        }
+        .to_json(),
+    )
+    .unwrap();
+    assert!(manifest.contains(r#""macBinary": "executable""#), "{manifest}");
 }

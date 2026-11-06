@@ -393,7 +393,7 @@ fn prepared_component_uses_only_metadata() {
     args.push("--trace-file=component.spans.json".into());
     run_collector(&args).assert_success();
     let manifest = read_json("component.json");
-    assert_eq!((&manifest["version"], &manifest["plugin"]), (&json!(11), &json!(true)));
+    assert_eq!((&manifest["version"], &manifest["plugin"]), (&json!(12), &json!(true)));
     let entries = manifest_entries("component.json");
     assert_eq!(entries.len(), fixture.assets.len());
     for (destination, source, mode, hash) in [
@@ -718,7 +718,7 @@ fn packed_component_writes_the_manifest_and_the_classpath() {
     let manifest = read_json("component.json");
     assert_eq!(
         [&manifest["version"], &manifest["plugin"], &manifest["os"], &manifest["arch"]],
-        [&json!(11), &json!(true), &json!("linux"), &json!("x64")]
+        [&json!(12), &json!(true), &json!("linux"), &json!("x64")]
     );
     let copied_hash = xxh3::hash_file(Path::new("resources/helper.sh")).unwrap();
     let entries = manifest_entries("component.json");

@@ -4,7 +4,7 @@ use super::*;
 use crate::test_support::{directory_entry, file_entry, file_with_mode};
 
 const VALID: &str =
-    r#"{"version":11,"kind":"a","os":"linux","arch":"x64","plugin":false,"mainClass":null,"coreClassPath":[],"entries":[]}"#;
+    r#"{"version":12,"kind":"a","os":"linux","arch":"x64","plugin":false,"mainClass":null,"coreClassPath":[],"entries":[]}"#;
 
 const FILE: &str = r#"{"type":"component-file","relativePath":"a","hash":1,"source":"inputs/a"}"#;
 
@@ -26,7 +26,7 @@ fn decode(content: &str) -> serde_json::Result<ComponentManifest> {
 #[test]
 fn a_manifest_states_every_header_key() {
     let manifest = read(VALID).unwrap();
-    assert_eq!(manifest.version, 11);
+    assert_eq!(manifest.version, 12);
     assert_eq!(manifest.main_class, None);
     assert!(!manifest.plugin);
     // The composition spec states the product, so a manifest that states one is refused.
@@ -43,6 +43,7 @@ fn a_manifest_states_every_header_key() {
             executable: false,
             source: "inputs/a".into(),
             mode: None,
+            mac_binary: None,
         }]
     );
 }
@@ -60,9 +61,9 @@ fn the_reader_refuses_another_version_by_its_number() {
         read(&version_9.replace(r#""version":9,"#, "").replace(r#","pluginCount":1"#, "")),
         "Unsupported dev-build component manifest version 9",
     );
-    for version in ["8", "10", "12"] {
+    for version in ["8", "11", "13"] {
         require_error(
-            read(&VALID.replace(r#""version":11"#, &format!(r#""version":{version}"#))),
+            read(&VALID.replace(r#""version":12"#, &format!(r#""version":{version}"#))),
             &format!("Unsupported dev-build component manifest version {version}"),
         );
     }
@@ -76,7 +77,7 @@ fn the_reader_refuses_another_version_by_its_number() {
 #[test]
 fn quoted_numbers_and_booleans_are_refused() {
     for (from, to, message) in [
-        (r#""version":11"#, r#""version":"11""#, "invalid type: string \"11\", expected i32"),
+        (r#""version":12"#, r#""version":"12""#, "invalid type: string \"12\", expected i32"),
         (
             r#""plugin":false"#,
             r#""plugin":"false""#,
@@ -140,7 +141,7 @@ fn a_required_key_must_be_present() {
     for (key, removed) in [
         ("coreClassPath", r#""coreClassPath":[],"#),
         ("plugin", r#""plugin":false,"#),
-        ("version", r#""version":11,"#),
+        ("version", r#""version":12,"#),
     ] {
         let message = if key == "version" {
             "Unsupported dev-build component manifest version 9".to_owned()
@@ -363,6 +364,7 @@ fn the_writer_writes_indented_json() {
         executable: true,
         source: "inputs/a&b.jar".into(),
         mode: Some(0o750),
+        mac_binary: None,
     };
     let link = ComponentEntry::Symlink {
         relative_path: "lib/current".into(),
@@ -372,7 +374,7 @@ fn the_writer_writes_indented_json() {
     manifest.entries = vec![directory_entry("lib", 0o755), executable, link, file_entry("lib/a.jar")];
     let expected = concat!(
         "{\n",
-        "  \"version\": 11,\n",
+        "  \"version\": 12,\n",
         "  \"kind\": \"files<test>&\",\n",
         "  \"os\": \"linux\",\n",
         "  \"arch\": \"x64\",\n",
@@ -422,4 +424,13 @@ fn the_writer_creates_the_parent_directory() {
     let manifest = decode(VALID).unwrap();
     write_component_manifest(&file, &manifest).unwrap();
     assert_eq!(read_component_manifest(&file).unwrap(), manifest);
+}
+
+#[test]
+fn a_file_states_its_mac_binary_kind_and_an_unknown_kind_fails() {
+    let manifest = read(&with_entries(&FILE.replace(r#""source""#, r#""macBinary":"dylib","source""#))).unwrap();
+    assert_eq!(manifest.entries[0].to_metadata().mac_binary, Some(MacBinary::Dylib));
+    read(&with_entries(&FILE.replace(r#""source""#, r#""macBinary":"object","source""#))).unwrap_err();
+    let directory = r#"{"type":"directory","relativePath":"d","mode":493,"macBinary":"dylib"}"#;
+    require_error(read(&with_entries(directory)), "unknown field `macBinary`");
 }

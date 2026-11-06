@@ -1,4 +1,4 @@
-//! Component manifest v11: the collector writes it, and the composer reads it.
+//! Component manifest v12: the collector writes it, and the composer reads it.
 //!
 //! Only the composer reads a manifest, so the format has no reader outside this workspace. Each entry states its type
 //! in the JSON key `type`, and each type has only the keys that it needs.
@@ -8,10 +8,11 @@ use std::fs;
 use std::path::Path;
 
 use anyhow::{Context as _, Result, bail};
+use filemeta::macho::MacBinary;
 use serde::{Deserialize, Serialize};
 
 /// The only manifest version. The collector writes it in every manifest, and the composer refuses every other version.
-pub const MANIFEST_VERSION: i32 = 11;
+pub const MANIFEST_VERSION: i32 = 12;
 
 /// The manifest of one component. A `None` main class is a component that contributes files and nothing else.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
@@ -33,7 +34,8 @@ pub struct ComponentManifest {
 #[serde(tag = "type", rename_all = "kebab-case", rename_all_fields = "camelCase", deny_unknown_fields)]
 pub enum ComponentEntry {
     /// A file whose bytes are at `source`, a host path. `mode` is an exact mode, or `None` for the
-    /// [`conventional_mode`] of the executable flag.
+    /// [`conventional_mode`] of the executable flag. `mac_binary` is the [`filemeta::macho::MacBinary`] kind of the
+    /// bytes, or `None` for a file that is no such Mach-O file.
     ComponentFile {
         relative_path: String,
         hash: i64,
@@ -42,6 +44,8 @@ pub enum ComponentEntry {
         source: String,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         mode: Option<u32>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        mac_binary: Option<MacBinary>,
     },
     /// A directory with its mode.
     Directory { relative_path: String, mode: u32 },
@@ -116,13 +120,18 @@ impl ComponentEntry {
         let relative_path = self.relative_path().to_owned();
         match self {
             Self::ComponentFile {
-                hash, executable, mode, ..
+                hash,
+                executable,
+                mode,
+                mac_binary,
+                ..
             } => filemeta::Entry {
                 relative_path,
                 entry_type: filemeta::EntryType::File,
                 hash: *hash,
                 mode: mode.unwrap_or(conventional_mode(*executable)),
                 executable: *executable,
+                mac_binary: *mac_binary,
                 ..filemeta::Entry::default()
             },
             Self::Directory { mode, .. } => filemeta::Entry {

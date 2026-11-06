@@ -8,6 +8,7 @@ use anyhow::{Context as _, Result, bail};
 use component::json;
 use component::manifest::{self, ComponentEntry, ComponentManifest, MANIFEST_VERSION};
 use component::paths;
+use filemeta::macho::MacBinary;
 use filemeta::{Entry, EntryType};
 use serde::Deserialize;
 
@@ -99,7 +100,7 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
             bail!("conflicting destination: {}", file.relative_path);
         }
     }
-    let mut hashes: HashMap<PathBuf, i64> = HashMap::new();
+    let mut hashes: HashMap<PathBuf, (i64, Option<MacBinary>)> = HashMap::new();
     let mut entries = Vec::with_capacity(files.len());
     let mut byte_count = 0u64;
     for file in files {
@@ -128,6 +129,7 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
                         executable,
                         source: file.source_text()?,
                         mode,
+                        mac_binary: metadata.mac_binary,
                     }
                 }
             };
@@ -143,13 +145,13 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
             );
         };
         let absolute = paths::absolute_path(&file.source)?;
-        let hash = if let Some(&hash) = hashes.get(&absolute) {
-            hash
+        let (hash, mac_binary) = if let Some(&content) = hashes.get(&absolute) {
+            content
         } else {
-            let hash = xxh3::hash_file(&absolute).with_context(|| absolute.display().to_string())?;
-            hashes.insert(absolute, hash);
+            let content = filemeta::macho::hash_file(&absolute).with_context(|| absolute.display().to_string())?;
+            hashes.insert(absolute, content);
             byte_count += source_metadata.len();
-            hash
+            content
         };
         // A copied tree file states the mode of its source. A conventional mode is not written, as above.
         let mode = file
@@ -162,6 +164,7 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
             executable: file.executable,
             source: file.source_text()?,
             mode,
+            mac_binary,
         });
     }
     // One check of all entries together: the paths, the modes, the spellings, the ancestors and the link graph.

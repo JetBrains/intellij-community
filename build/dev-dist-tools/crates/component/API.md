@@ -40,17 +40,18 @@ the field order. No producer writes such an array.
 - `paths::absolute_path(value: impl AsRef<Path>) -> Result<PathBuf>`: the absolute path of a `host_path`. A relative
   path starts at the working directory. A path that is not UTF-8 fails.
 
-## Component manifest v11 (`manifest`)
+## Component manifest v12 (`manifest`)
 
 Only the composer reads a manifest. Every path of a manifest is ASCII after `distpath::validate_path`, so `str::cmp`
 gives the order of Java `String.compareTo` for the entries and the fingerprint.
 
-- `manifest::MANIFEST_VERSION: i32`: 11.
+- `manifest::MANIFEST_VERSION: i32`: 12.
 - `ComponentManifest { version, kind, os, arch, plugin, main_class, core_class_path, entries }`: one
   manifest. JSON states every key. `main_class` is an `Option<String>`. `plugin: bool` is true for a plugin
   component.
 - `ComponentEntry`: one entry, with the JSON `type` first. `ComponentFile { relative_path, hash, executable, source,
-  mode }` is `component-file`. JSON omits a `false` `executable` and a `None` `mode`. `Directory { relative_path,
+  mode, mac_binary }` is `component-file`. JSON omits a `false` `executable`, a `None` `mode` and a `None`
+  `mac_binary`. `mac_binary` is the `filemeta::macho::MacBinary` kind of the bytes, as the key `macBinary`. `Directory { relative_path,
   mode }` is `directory`, and `Symlink { relative_path, hash, symlink_target }` is `symlink`. Another type, a missing
   key and a key of another type fail.
 - `ComponentEntry::relative_path() -> &str`, `type_name() -> &'static str`, `hash() -> i64` (0 for a directory),

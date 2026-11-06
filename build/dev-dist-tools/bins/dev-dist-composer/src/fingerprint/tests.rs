@@ -20,7 +20,7 @@ use crate::test_support::test_manifest;
 /// order of `str::cmp` for them. Every real path is ASCII, so this manifest leaves them out. The three expected values
 /// with this manifest come from the UTF-16 order of the earlier code on this manifest.
 const GOLDEN_NEUTRAL_MANIFEST: &str = concat!(
-    r#"{"version":11,"kind":"plugins_json","os":"","arch":"","plugin":true,"mainClass":null,"#,
+    r#"{"version":12,"kind":"plugins_json","os":"","arch":"","plugin":true,"mainClass":null,"#,
     r#""coreClassPath":["plugins/json/lib/json.jar"],"entries":["#,
     r#"{"type":"component-file","relativePath":"plugins/json/lib/json.jar","hash":-5,"source":"inputs/json.jar"},"#,
     r#"{"type":"component-file","relativePath":"plugins/json/lib/ünïcode.jar","hash":1234567890123,"source":"inputs/unicode.jar"},"#,
@@ -33,7 +33,7 @@ const GOLDEN_NEUTRAL_MANIFEST: &str = concat!(
 
 /// The platform manifest repeats a path with other hashes and executable flags, so the sort needs every key.
 const GOLDEN_PLATFORM_MANIFEST: &str = concat!(
-    r#"{"version":11,"kind":"platform_core","os":"mac","arch":"aarch64","plugin":false,"#,
+    r#"{"version":12,"kind":"platform_core","os":"mac","arch":"aarch64","plugin":false,"#,
     r#""mainClass":"com.intellij.idea.Main","coreClassPath":["lib/app-backend.jar","lib/util.jar","lib/a/b.jar","lib/a-b.jar","#,
     r#""lib/platform-loader.jar","lib/product-backend.jar","lib/util-8.jar","lib/Z.jar","lib/é.jar","lib/util.jar"],"entries":["#,
     r#"{"type":"component-file","relativePath":"lib/app-backend.jar","hash":-9223372036854775808,"source":"inputs/app-backend.jar"},"#,
@@ -149,7 +149,7 @@ fn sourced_manifest_hashes_and_source_independence() {
         write_file(&content, reference_bytes(size));
         assert_eq!(xxh3::hash_file(&content).unwrap(), hash, "hash of {size} bytes");
         let sourced = read_golden_manifest(&format!(
-            r#"{{"version": 11, "kind": "files", "os": "linux", "arch": "x64", "plugin": false,
+            r#"{{"version": 12, "kind": "files", "os": "linux", "arch": "x64", "plugin": false,
             "mainClass": null, "coreClassPath": [],
             "entries": [{{"type": "component-file", "relativePath": "lib/content.jar", "hash": {hash}, "source": "inputs/content.jar"}}]}}"#
         ));
@@ -161,6 +161,7 @@ fn sourced_manifest_hashes_and_source_independence() {
             executable: false,
             source: "other/content.jar".to_owned(),
             mode: None,
+            mac_binary: None,
         }];
         assert_eq!(
             must_fingerprint(&[&launch, &relocated]),
@@ -178,6 +179,7 @@ fn single_file(hash: i64, executable: bool) -> ComponentManifest {
         executable,
         source: "inputs/air.jar".to_owned(),
         mode: None,
+        mac_binary: None,
     }];
     manifest
 }
@@ -234,6 +236,7 @@ fn fingerprint_of_exact_modes() {
             executable: true,
             source: "inputs/tool".to_owned(),
             mode,
+            mac_binary: None,
         }];
         manifest
     };

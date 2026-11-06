@@ -4,7 +4,8 @@
 //! Then it writes the files that start the IDE.
 //!
 //! The rule `intellij_dev_fragments_dist` runs it with `--composition-spec`, `--output-dir`, `--ide-config`,
-//! `--fingerprint` and an optional `--trace-file`, each in the `--key=value` form. Launch metadata can also name
+//! `--fingerprint` and an optional `--trace-file`, each in the `--key=value` form. A full distribution also needs
+//! `--mac-binaries`, which gets the Mach-O files of the home, see [`mac_binaries`]. Launch metadata can also name
 //! `--core-classpath-file` and `--plugin-classpath-file`, which get a copy of the two metadata files of the output.
 //! An optional `--home-prefix` names one directory below the output, such as `Contents` for a macOS app. Then the
 //! composer writes every file below that directory, and `DevIdeConfig` names it as the home. Every failure exits with 1.
@@ -31,6 +32,7 @@ mod compose;
 mod fingerprint;
 mod ide_config;
 mod local_layout;
+mod mac_binaries;
 mod merge;
 mod placement;
 mod plugin_classpath;
@@ -100,6 +102,7 @@ fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Re
     let output_dir = required_path(&mut options, "--output-dir")?;
     let ide_config = required_path(&mut options, "--ide-config")?;
     let fingerprint_file = required_path(&mut options, "--fingerprint")?;
+    let mac_binaries_file = optional_path(&mut options, "--mac-binaries")?;
     let core_classpath_file = optional_path(&mut options, "--core-classpath-file")?;
     let plugin_classpath_file = optional_path(&mut options, "--plugin-classpath-file")?;
     let home = home_directory(&output_dir, options.take("--home-prefix")?.as_deref())?;
@@ -120,6 +123,11 @@ fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Re
             );
         }
     };
+    match (&bindings, &mac_binaries_file) {
+        (Some(_), None) => bail!("A full distribution requires --mac-binaries"),
+        (None, Some(_)) => bail!("Local launch metadata must not name --mac-binaries"),
+        _ => {}
+    }
     let mut components = Vec::with_capacity(spec.components.len());
     for entry in &spec.components {
         // A component resolves the paths of its entries against the working directory. That is the execution root
@@ -167,6 +175,10 @@ fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Re
         (fingerprint_file, result.fingerprint.clone()),
     ] {
         fs::write(&file, content).with_context(|| file.display().to_string())?;
+    }
+    if let Some(file) = &mac_binaries_file {
+        let manifests: Vec<&manifest::ComponentManifest> = components.iter().map(|component| &component.manifest).collect();
+        mac_binaries::write_mac_binaries(file, &manifests)?;
     }
     for (copy, name) in [
         (core_classpath_file, "core-classpath.txt"),

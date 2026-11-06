@@ -201,6 +201,9 @@ IntellijDevReferenceInfo = provider(
 IntellijDevDistInfo = provider(
     fields = {
         "fingerprint": "The content fingerprint of the composed IDE distribution.",
+        "mac_binaries": "The `<name>.mac-binaries.json` of a full distribution: its Mach-O files below the home with their " +
+                        "kind, which the macOS signing reads. The list is empty when the platform is not macOS. None for " +
+                        "a local launch.",
         "home": "The output directory: the export `<name>.dist` or the local launch metadata `<name>.metadata`. The home of the IDE is this directory or its `home_prefix` child, see `dist_home_path`.",
         "home_prefix": "The directory below `home` that holds the home of the IDE: `Contents` for a macOS app, or `\"\"` for `home` itself. `home_prefix` of `dev_dist_product_files.bzl` states the rule.",
         "ide_config": "The config file used by PreBuiltDevMain.",
@@ -956,6 +959,7 @@ def _compose(ctx, fragment_targets):
     sibling_vm_options = _sibling_vm_options(ctx, home)
     ide_config = ctx.actions.declare_file(ctx.label.name + ".ide.config")
     fingerprint = ctx.actions.declare_file(ctx.label.name + ".fingerprint")
+    mac_binaries = None if local_launch else ctx.actions.declare_file(ctx.label.name + ".mac-binaries.json")
     fragments = [target[IntellijDevFragmentInfo] for target in fragment_targets]
     component_files = depset(transitive = [fragment.payload for fragment in fragments if fragment.payload])
     runtime_files = component_files if local_launch else depset()
@@ -1014,9 +1018,11 @@ def _compose(ctx, fragment_targets):
     args.add("--output-dir=" + home.path)
     args.add("--ide-config=" + ide_config.path)
     args.add("--fingerprint=" + fingerprint.path)
+    if mac_binaries:
+        args.add("--mac-binaries=" + mac_binaries.path)
     if ctx.attr.home_prefix:
         args.add("--home-prefix=" + ctx.attr.home_prefix)
-    metadata_files = [file for file in [core_classpath, plugin_classpath] if file]
+    metadata_files = [file for file in [core_classpath, plugin_classpath, mac_binaries] if file]
     if core_classpath:
         args.add("--core-classpath-file=" + core_classpath.path)
     if plugin_classpath:
@@ -1041,7 +1047,7 @@ def _compose(ctx, fragment_targets):
     return [
         DefaultInfo(
             # The sibling vmoptions file is no runfile: a consumer of the export reads the export, not the local file.
-            files = depset([home, ide_config, fingerprint] + ([sibling_vm_options] if sibling_vm_options else [])),
+            files = depset([home, ide_config, fingerprint] + [file for file in [mac_binaries, sibling_vm_options] if file]),
             runfiles = ctx.runfiles(files = [home, ide_config, fingerprint], transitive_files = runtime_files),
         ),
         IntellijDevDistInfo(
@@ -1049,6 +1055,7 @@ def _compose(ctx, fragment_targets):
             home_prefix = ctx.attr.home_prefix,
             ide_config = ide_config,
             fingerprint = fingerprint,
+            mac_binaries = mac_binaries,
             runtime_files = runtime_files,
             placement = placement,
             core_classpath = core_classpath,

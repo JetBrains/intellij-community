@@ -20,6 +20,13 @@ fn cli_args(extra: &[&str]) -> Vec<String> {
     args
 }
 
+/// [`cli_args`] of a full distribution, which also names the list of the Mach-O files.
+fn full_cli_args(extra: &[&str]) -> Vec<String> {
+    let mut args = cli_args(&["--mac-binaries=out/dist.mac-binaries.json"]);
+    args.extend(extra.iter().map(|arg| (*arg).to_owned()));
+    args
+}
+
 /// Writes two components, the sources that their manifests name, and the plugin classpath inputs. The paths are
 /// relative to the working directory, as Bazel gives them to an action.
 ///
@@ -35,7 +42,7 @@ fn write_cli_fixture(local_launch: bool) {
     write_file(
         "fragments/core.json",
         concat!(
-            r#"{"version":11,"kind":"platform_core","os":"linux","arch":"x64","plugin":false,"#,
+            r#"{"version":12,"kind":"platform_core","os":"linux","arch":"x64","plugin":false,"#,
             r#""mainClass":"com.intellij.idea.Main","coreClassPath":["lib/util.jar","lib/app.jar"],"entries":["#,
             r#"{"type":"component-file","relativePath":"bin/idea.properties","hash":1,"source":"fragments/core/bin/idea.properties"},"#,
             r#"{"type":"component-file","relativePath":"lib/app.jar","hash":4,"source":"fragments/core/lib/app.jar"},"#,
@@ -45,7 +52,7 @@ fn write_cli_fixture(local_launch: bool) {
     write_file(
         "fragments/plugins.json",
         concat!(
-            r#"{"version":11,"kind":"plugins","os":"","arch":"","plugin":true,"#,
+            r#"{"version":12,"kind":"plugins","os":"","arch":"","plugin":true,"#,
             r#""mainClass":null,"coreClassPath":[],"entries":["#,
             r#"{"type":"component-file","relativePath":"plugins/packed/lib/packed.jar","hash":3,"source":"inputs/packed.jar"}]}"#
         ),
@@ -97,7 +104,7 @@ fn compose_cli_writes_the_distribution_and_its_launch_files() {
     let _directory = WorkingDirectory::enter();
     write_cli_fixture(false);
     write_file("out/dist/stale.txt", "stale");
-    let (code, errors) = run_cli(&cli_args(&["--trace-file=out/spans.json"]));
+    let (code, errors) = run_cli(&full_cli_args(&["--trace-file=out/spans.json"]));
     assert_eq!(code, 0, "{errors}");
     require_absent("out/dist/stale.txt");
     let fingerprint = read_text("out/dist.fingerprint");
@@ -183,11 +190,11 @@ fn children(directory: &str) -> Vec<String> {
 fn compose_cli_writes_the_distribution_below_the_home_prefix() {
     let _directory = WorkingDirectory::enter();
     write_cli_fixture(false);
-    let (code, errors) = run_cli(&cli_args(&[]));
+    let (code, errors) = run_cli(&full_cli_args(&[]));
     assert_eq!(code, 0, "{errors}");
     let flat_fingerprint = read_text("out/dist.fingerprint");
 
-    let (code, errors) = run_cli(&cli_args(&["--home-prefix=Contents"]));
+    let (code, errors) = run_cli(&full_cli_args(&["--home-prefix=Contents"]));
     assert_eq!(code, 0, "{errors}");
     assert_eq!(children("out/dist"), ["Contents"]);
     assert_eq!(read_text("out/dist.fingerprint"), flat_fingerprint);
@@ -251,7 +258,7 @@ fn compose_cli_checks_the_product_info_below_the_home_prefix() {
     let launch = |names: &str| format!(r#"{{"launch":[{{"mainClass":"com.intellij.idea.Main","bootClassPathJarNames":[{names}]}}]}}"#);
 
     write_file("fragments/core/product-info.json", launch(r#""app.jar""#));
-    let (code, errors) = run_cli(&cli_args(&["--home-prefix=Contents"]));
+    let (code, errors) = run_cli(&full_cli_args(&["--home-prefix=Contents"]));
     assert_eq!(code, 1);
     assert!(
         errors.contains(r#"Resources/product-info.json: the bootClassPathJarNames of the main launch differ from the core classpath; missing: ["util.jar"]"#),
@@ -259,7 +266,7 @@ fn compose_cli_checks_the_product_info_below_the_home_prefix() {
     );
 
     write_file("fragments/core/product-info.json", launch(r#""app.jar","util.jar""#));
-    let (code, errors) = run_cli(&cli_args(&["--home-prefix=Contents"]));
+    let (code, errors) = run_cli(&full_cli_args(&["--home-prefix=Contents"]));
     assert_eq!(code, 0, "{errors}");
     assert!(read_text("out/dist/Contents/Resources/product-info.json").contains("util.jar"));
 }
@@ -362,7 +369,7 @@ fn compose_cli_refuses_a_version_9_manifest() {
             r#"{"relativePath":"plugins/packed/lib/packed.jar","type":"component-file","hash":3,"source":"inputs/packed.jar"}]}"#
         ),
     );
-    let (code, errors) = run_cli(&cli_args(&[]));
+    let (code, errors) = run_cli(&full_cli_args(&[]));
     assert_eq!(code, 1);
     let message = format!(
         "{}: Unsupported dev-build component manifest version 9\n",
@@ -381,7 +388,7 @@ fn compose_cli_refuses_an_invalid_manifest_before_it_removes_the_output() {
     write_file("out/dist/stale.txt", "stale");
     let core = read_text("fragments/core.json").replace(r#""hash":1,"#, r#""hash":1,"mode":493,"#);
     write_file("fragments/core.json", core);
-    let (code, errors) = run_cli(&cli_args(&[]));
+    let (code, errors) = run_cli(&full_cli_args(&[]));
     assert_eq!(code, 1);
     let message = format!(
         "{}: Dev-build component entry 'bin/idea.properties' has an invalid or conflicting file mode: 493\n",
@@ -389,4 +396,27 @@ fn compose_cli_refuses_an_invalid_manifest_before_it_removes_the_output() {
     );
     assert!(errors.starts_with("ERROR: ") && errors.ends_with(&message), "errors = {errors:?}");
     assert_eq!(read_text("out/dist/stale.txt"), "stale");
+}
+
+#[test]
+fn compose_cli_writes_the_mac_binaries_of_a_full_distribution() {
+    let _directory = WorkingDirectory::enter();
+    write_cli_fixture(false);
+    let (code, errors) = run_cli(&cli_args(&[]));
+    assert_eq!((code, errors.as_str()), (1, "ERROR: A full distribution requires --mac-binaries\n"));
+    let (code, errors) = run_cli(&full_cli_args(&[]));
+    assert_eq!(code, 0, "{errors}");
+    // The fixture is a Linux composition, so the list is empty.
+    assert_eq!(read_text("out/dist.mac-binaries.json"), "{\n  \"version\": 1,\n  \"files\": []\n}");
+}
+
+#[test]
+fn compose_cli_refuses_the_mac_binaries_for_local_launch_metadata() {
+    let _directory = WorkingDirectory::enter();
+    write_cli_fixture(true);
+    let (code, errors) = run_cli(&full_cli_args(&[]));
+    assert_eq!(
+        (code, errors.as_str()),
+        (1, "ERROR: Local launch metadata must not name --mac-binaries\n")
+    );
 }

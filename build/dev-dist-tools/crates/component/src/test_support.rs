@@ -14,6 +14,7 @@ pub(crate) fn file_with_mode(relative_path: &str, executable: bool, mode: Option
         executable,
         source: format!("inputs/{relative_path}"),
         mode,
+        mac_binary: None,
     }
 }
 
