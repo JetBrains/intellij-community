@@ -17,7 +17,9 @@ import static java.lang.Math.floor;
 
 /**
  * @author Alexander Lobas
+ * @deprecated this is a part of the old implementation of UI Designer, it shouldn't be used anymore (IDEA-395701)
  */
+@Deprecated(forRemoval = true)
 public final class ColorIcon extends EmptyIcon {
   private final int myColorSize;
   private Color myColor;

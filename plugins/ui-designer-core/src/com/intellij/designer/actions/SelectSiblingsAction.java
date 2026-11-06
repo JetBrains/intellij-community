@@ -27,6 +27,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * @deprecated this is a part of the old implementation of UI Designer, it shouldn't be used anymore (IDEA-395701)
+ */
+@Deprecated(forRemoval = true)
 public class SelectSiblingsAction extends AnAction {
   private final EditableArea myArea;
 

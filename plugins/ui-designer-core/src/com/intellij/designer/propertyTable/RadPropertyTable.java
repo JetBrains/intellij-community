@@ -37,6 +37,10 @@ import java.awt.datatransfer.Transferable;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * @deprecated this is a part of the old implementation of UI Designer, it shouldn't be used anymore (IDEA-395701)
+ */
+@Deprecated(forRemoval = true)
 public class RadPropertyTable extends PropertyTable implements UiDataProvider, ComponentSelectionListener {
   private final MyCopyProvider myCopyProvider = new MyCopyProvider();
 

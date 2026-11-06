@@ -36,7 +36,9 @@ import java.util.List;
 
 /**
  * @author Alexander Lobas
+ * @deprecated this is a part of the old implementation of UI Designer, it shouldn't be used anymore (IDEA-395701)
  */
+@Deprecated(forRemoval = true)
 public class DesignerActionPanel implements UiDataProvider {
   public static final String TOOLBAR = "DesignerToolbar";
 

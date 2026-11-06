@@ -17,7 +17,9 @@ import java.beans.PropertyChangeListener;
 
 /**
  * @author Alexander Lobas
+ * @deprecated this is a part of the old implementation of UI Designer, it shouldn't be used anymore (IDEA-395701)
  */
+@Deprecated(forRemoval = true)
 public abstract class DesignerEditor extends UserDataHolderBase implements FileEditor {
   protected final DesignerEditorPanel myDesignerPanel;
 

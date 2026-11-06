@@ -26,6 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated this is a part of the old implementation of UI Designer, it shouldn't be used anymore (IDEA-395701)
+ */
+@Deprecated(forRemoval = true)
 public class SelectSameTypeAction extends AnAction {
   private final EditableArea myArea;
 

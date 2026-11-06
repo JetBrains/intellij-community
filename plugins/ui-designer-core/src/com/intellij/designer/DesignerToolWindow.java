@@ -30,7 +30,9 @@ import java.util.List;
 
 /**
  * @author Alexander Lobas
+ * @deprecated this is a part of the old implementation of UI Designer, it shouldn't be used anymore (IDEA-395701)
  */
+@Deprecated(forRemoval = true)
 public final class DesignerToolWindow implements DesignerToolWindowContent {
   private final Splitter myToolWindowPanel;
   private ComponentTree myComponentTree;

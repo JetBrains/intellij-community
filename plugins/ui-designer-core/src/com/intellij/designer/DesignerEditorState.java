@@ -12,7 +12,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
+ * @deprecated this is a part of the old implementation of UI Designer, it shouldn't be used anymore (IDEA-395701)
  */
+@Deprecated(forRemoval = true)
 public class DesignerEditorState implements FileEditorState {
   private static final String DESIGNER_ZOOM = "ui-designer-zoom";
 

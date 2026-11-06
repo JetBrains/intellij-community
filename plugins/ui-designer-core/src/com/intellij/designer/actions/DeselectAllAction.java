@@ -21,6 +21,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated this is a part of the old implementation of UI Designer, it shouldn't be used anymore (IDEA-395701)
+ */
+@Deprecated(forRemoval = true)
 public class DeselectAllAction extends AnAction {
   private final EditableArea myArea;
 

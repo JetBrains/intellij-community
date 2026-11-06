@@ -9,6 +9,10 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
+/**
+ * @deprecated this is a part of the old implementation of UI Designer, it shouldn't be used anymore (IDEA-395701)
+ */
+@Deprecated(forRemoval = true)
 public final class DesignerBundle {
   private static final @NonNls String BUNDLE = "messages.DesignerBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(DesignerBundle.class, BUNDLE);

@@ -20,7 +20,9 @@ import com.intellij.openapi.project.Project;
 
 /**
  * @author Alexander Lobas
+ * @deprecated this is a part of the old implementation of UI Designer, it shouldn't be used anymore (IDEA-395701)
  */
+@Deprecated(forRemoval = true)
 public interface ModuleProvider {
   Module getModule();
 
