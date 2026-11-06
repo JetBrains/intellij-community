@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
@@ -40,7 +39,7 @@ internal class GitFsMonitorDaemonStopperTest {
 
       // The set lives as long as the application, so it can still hold the roots of other tests, whose directories are gone.
       val recentRoot = recentProject.toRealPath()
-      assertThat(service<GitFsMonitorDaemonStopper>().getFramelessProjectRoots()).anyMatch { it.toNioPath() == recentRoot }
+      assertThat(GitFsMonitorDaemonStopper.getInstance().getFramelessProjectRoots()).anyMatch { it.toNioPath() == recentRoot }
     }
   }
 

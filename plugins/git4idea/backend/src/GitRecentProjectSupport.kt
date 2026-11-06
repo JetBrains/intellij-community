@@ -3,7 +3,6 @@ package git4idea
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
@@ -29,12 +28,12 @@ internal fun findGitRoot(projectPath: Path): Path? =
  * so its roots are recorded for the stop at exit.
  */
 internal suspend fun prepareRecentGitProject(project: Project, projectPath: Path) {
-  project.serviceAsync<GitRecentProjectWatcher>().watch(projectPath)
+  GitRecentProjectWatcher.getInstance(project).watch(projectPath)
   val vcsManager = ProjectLevelVcsManager.getInstance(project)
   vcsManager.awaitInitialization()
   registerGitRoot(project, projectPath, vcsManager)
   val roots = GitRepositoryManager.getInstance(project).repositories.map { it.root }
-  serviceAsync<GitFsMonitorDaemonStopper>().registerFramelessProjectRoots(roots)
+  GitFsMonitorDaemonStopper.getInstance().registerFramelessProjectRoots(roots)
 }
 
 /** Registers the Git root of [projectPath] when the project has no repository yet. */

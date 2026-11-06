@@ -45,7 +45,7 @@ internal class GitFsMonitorProjectCloseListener : ProjectCloseListener, AppLifec
     val otherProjects = ProjectManager.getInstance().openProjects.filter { it != project }
     val rootsInOtherProjects = otherProjects.flatMapTo(mutableSetOf()) { other -> other.gitRoots() }
     val roots = (project.gitRoots() - rootsInOtherProjects).ifEmpty { return }
-    service<GitFsMonitorDaemonStopper>().launchStopDaemons(roots)
+    GitFsMonitorDaemonStopper.getInstance().launchStopDaemons(roots)
   }
 
   override fun beforeAppWillBeClosed(isRestart: Boolean) {
@@ -99,6 +99,10 @@ internal class GitFsMonitorDaemonStopper(private val cs: CoroutineScope) {
 
   suspend fun awaitBackgroundStops() {
     cs.coroutineContext.job.children.forEach { it.join() }
+  }
+
+  companion object {
+    fun getInstance(): GitFsMonitorDaemonStopper = service()
   }
 }
 

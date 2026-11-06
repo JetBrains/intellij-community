@@ -81,4 +81,8 @@ internal class GitRecentProjectWatcher(private val project: Project) {
       }
     })
   }
+
+  companion object {
+    fun getInstance(project: Project): GitRecentProjectWatcher = project.service()
+  }
 }
