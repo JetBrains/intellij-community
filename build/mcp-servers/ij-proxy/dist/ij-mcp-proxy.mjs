@@ -15426,7 +15426,7 @@ function addFile(value, result, seen) {
 }
 
 // ij-mcp-proxy.ts
-var explicitMcpUrl = env2.JETBRAINS_MCP_STREAM_URL || env2.MCP_STREAM_URL || env2.JETBRAINS_MCP_URL || env2.MCP_URL, defaultHost = "127.0.0.1", defaultPort = 64342, defaultPath = "/stream", defaultScanLimit = 10, portScanStartEnv = env2.JETBRAINS_MCP_PORT_START, portScanStart = parseEnvInt("JETBRAINS_MCP_PORT_START", defaultPort), portScanLimit = parseEnvInt("JETBRAINS_MCP_PORT_SCAN_LIMIT", defaultScanLimit), preferredPorts = portScanStartEnv ? [portScanStart] : [defaultPort, 64344], connectTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_CONNECT_TIMEOUT_S", 10), scanTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_SCAN_TIMEOUT_S", 1), queueLimit = parseEnvNonNegativeInt("JETBRAINS_MCP_QUEUE_LIMIT", 100), toolCallTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S", 60), buildTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_BUILD_TIMEOUT_S", 1200), queueWaitTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S", toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0), STREAM_RETRY_ATTEMPTS = 3, STREAM_RETRY_BASE_DELAY_MS = 200, IJ_MCP_CLIENT_TAGS = "IJ_MCP_CLIENT_TAGS", AIR_CONTAINER_CLIENT_TAG_PREFIX = "air-container:", PROJECT_MATCH_PROBE_TOOLS = [
+var explicitMcpUrl = env2.JETBRAINS_MCP_STREAM_URL || env2.MCP_STREAM_URL || env2.JETBRAINS_MCP_URL || env2.MCP_URL, IJ_MCP_AUTH_TOKEN = "IJ_MCP_AUTH_TOKEN", mcpAuthToken = env2.IJ_MCP_AUTH_TOKEN, defaultHost = "127.0.0.1", defaultPort = 64342, defaultPath = "/stream", defaultScanLimit = 10, portScanStartEnv = env2.JETBRAINS_MCP_PORT_START, portScanStart = parseEnvInt("JETBRAINS_MCP_PORT_START", defaultPort), portScanLimit = parseEnvInt("JETBRAINS_MCP_PORT_SCAN_LIMIT", defaultScanLimit), preferredPorts = portScanStartEnv ? [portScanStart] : [defaultPort, 64344], connectTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_CONNECT_TIMEOUT_S", 10), scanTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_SCAN_TIMEOUT_S", 1), queueLimit = parseEnvNonNegativeInt("JETBRAINS_MCP_QUEUE_LIMIT", 100), toolCallTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_TOOL_CALL_TIMEOUT_S", 60), buildTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_BUILD_TIMEOUT_S", 1200), queueWaitTimeoutMs = parseEnvSeconds("JETBRAINS_MCP_QUEUE_WAIT_TIMEOUT_S", toolCallTimeoutMs > 0 ? Math.round(toolCallTimeoutMs / 1000) : 0), STREAM_RETRY_ATTEMPTS = 3, STREAM_RETRY_BASE_DELAY_MS = 200, IJ_MCP_CLIENT_TAGS = "IJ_MCP_CLIENT_TAGS", AIR_CONTAINER_CLIENT_TAG_PREFIX = "air-container:", PROJECT_MATCH_PROBE_TOOLS = [
   { toolName: "get_all_open_file_paths", args: {} },
   { toolName: "get_project_dependencies", args: {} },
   { toolName: "get_project_modules", args: {} }
@@ -15549,10 +15549,18 @@ if (projectPathResolution.warning)
   warn(projectPathResolution.warning);
 if (containerSession)
   note(`Container session detected: id=${containerSession.sessionId}, workspace=${containerSession.workspacePath}`);
+function upstreamRequestHeaders() {
+  let headers = {};
+  if (containerSession)
+    headers[IJ_MCP_CLIENT_TAGS] = `${AIR_CONTAINER_CLIENT_TAG_PREFIX}${containerSession.sessionId}`;
+  if (mcpAuthToken)
+    headers[IJ_MCP_AUTH_TOKEN] = mcpAuthToken;
+  return Object.keys(headers).length > 0 ? headers : void 0;
+}
 function createUpstreamForUrl(url) {
   let transport = createStreamTransport({
     url,
-    requestHeaders: containerSession ? { [IJ_MCP_CLIENT_TAGS]: `${AIR_CONTAINER_CLIENT_TAG_PREFIX}${containerSession.sessionId}` } : void 0,
+    requestHeaders: upstreamRequestHeaders(),
     queueLimit,
     queueWaitTimeoutMs,
     retryAttempts: STREAM_RETRY_ATTEMPTS,

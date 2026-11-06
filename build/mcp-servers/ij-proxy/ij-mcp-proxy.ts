@@ -40,6 +40,8 @@ const explicitMcpUrl = env.JETBRAINS_MCP_STREAM_URL
   || env.MCP_STREAM_URL
   || env.JETBRAINS_MCP_URL
   || env.MCP_URL
+const IJ_MCP_AUTH_TOKEN = 'IJ_MCP_AUTH_TOKEN'
+const mcpAuthToken = env.IJ_MCP_AUTH_TOKEN
 const defaultHost = '127.0.0.1'
 const defaultPort = 64342
 const defaultPath = '/stream'
@@ -290,14 +292,23 @@ if (containerSession) {
   note(`Container session detected: id=${containerSession.sessionId}, workspace=${containerSession.workspacePath}`)
 }
 
+function upstreamRequestHeaders(): Record<string, string> | undefined {
+  const headers: Record<string, string> = {}
+  if (containerSession) {
+    headers[IJ_MCP_CLIENT_TAGS] = `${AIR_CONTAINER_CLIENT_TAG_PREFIX}${containerSession.sessionId}`
+  }
+  if (mcpAuthToken) {
+    headers[IJ_MCP_AUTH_TOKEN] = mcpAuthToken
+  }
+  return Object.keys(headers).length > 0 ? headers : undefined
+}
+
 // --- Discovery ---
 
 function createUpstreamForUrl(url: string): UpstreamConnection {
   const transport = createStreamTransport({
     url,
-    requestHeaders: containerSession
-      ? {[IJ_MCP_CLIENT_TAGS]: `${AIR_CONTAINER_CLIENT_TAG_PREFIX}${containerSession.sessionId}`}
-      : undefined,
+    requestHeaders: upstreamRequestHeaders(),
     queueLimit,
     queueWaitTimeoutMs,
     retryAttempts: STREAM_RETRY_ATTEMPTS,

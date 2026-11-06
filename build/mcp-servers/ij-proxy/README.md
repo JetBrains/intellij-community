@@ -49,6 +49,7 @@ Environment variables (optional):
 
 - `JETBRAINS_MCP_STREAM_URL` or `MCP_STREAM_URL`: use a specific streamable HTTP endpoint (disables scanning).
 - `JETBRAINS_MCP_URL` or `MCP_URL`: alias for `*_STREAM_URL`.
+- `IJ_MCP_AUTH_TOKEN`: the token that the IDE's global MCP server requires. The IDE writes it to `global_mcp_server_token.txt` in its config directory.
 - `JETBRAINS_MCP_PORT_START`: starting port for scan range when no explicit URL is set. Default: `64342`. When not explicitly set, the proxy also probes `64342` and `64344` before scanning.
 - `JETBRAINS_MCP_PORT_SCAN_LIMIT`: number of ports to probe in the scan range. Default: `10`.
 - `JETBRAINS_MCP_CONNECT_TIMEOUT_S`: timeout for the initial port probe or explicit stream URL (seconds). Default: `10`. Use `0` to disable.
