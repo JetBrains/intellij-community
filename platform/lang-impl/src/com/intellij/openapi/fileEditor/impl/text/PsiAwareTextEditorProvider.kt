@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
+import com.intellij.codeInsight.editorActions.warmup.TypingWarmUp
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
@@ -110,7 +111,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       var pendingEditor: EditorFactoryImpl.PendingMainEditor? = null
       var disposeUnclaimedEditor: (() -> Unit)? = null
 
-      try {
+      val fileEditor = try {
         if (canPrepareEditorShell() && !highlighterDeferred.isCompleted) {
           span("editor shell construction on EDT", Dispatchers.EDT) {
             if (highlighterDeferred.isCompleted) return@span
@@ -150,6 +151,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
           }
         }
       }
+      TypingWarmUp.getInstance().start(project, file, fileEditor.editor)
+      fileEditor
     }
   }
 
