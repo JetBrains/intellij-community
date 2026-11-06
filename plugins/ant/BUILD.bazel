@@ -1,6 +1,9 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files")
 
 jps_test(
     name = "ant-tests_test",
@@ -24,8 +27,29 @@ dev_dist_plugin(
 )
 ### auto-generated section `dev intellij.ant` end
 
+# the Ant distribution, in the same layout as `copyAnt` in CommunityRepositoryModules.kt creates it
+pkg_files(
+    name = "ant_distribution_root",
+    srcs = ["@lib//:ant_distribution_root_files"],
+    prefix = "dist",
+)
+
+pkg_files(
+    name = "ant_distribution_lib",
+    srcs = ["@lib//ant/lib:ant_distribution_lib_files"],
+    prefix = "dist/lib",
+)
+
+pkg_filegroup(
+    name = "ant_distribution",
+    srcs = [
+        ":ant_distribution_lib",
+        ":ant_distribution_root",
+    ],
+)
+
 ### auto-generated section `build intellij.ant` start
-jvm_library(
+ij_plugin_module(
     name = "ant",
     srcs = glob(
         [
@@ -36,6 +60,8 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.ant",
+    # manually written attribute
+    non_classpath_data = [":ant_distribution"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -106,6 +132,15 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.ant` end
+
+### auto-generated section `plugin intellij.ant` start
+ij_plugin(
+    name = "ant_plugin",
+    descriptor_module = ":ant_plugin_module",
+    content_modules = ["//plugins/ant/jps-plugin:jps"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.ant` end
 
 ### auto-generated section `iml intellij.ant` start
 exports_files(

@@ -17,6 +17,13 @@ kt_compiler_plugin(
     deps = ["@rules_jvm//:kotlin-compose-compiler-plugin-embeddable_import"],
 )
 
+# The files in the root directory of the Ant distribution. The Ant plugin puts them in its `dist` directory.
+filegroup(
+    name = "ant_distribution_root_files",
+    srcs = glob(["ant/*"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `local-libs` start
 java_import(
     name = "eclipse",

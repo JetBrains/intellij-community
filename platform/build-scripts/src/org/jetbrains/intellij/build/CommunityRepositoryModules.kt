@@ -31,7 +31,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryE
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
 import org.jetbrains.intellij.build.io.copyFileToDir
-import org.jetbrains.intellij.build.io.defaultLibrarySourcesNamesFilter
 import org.jetbrains.intellij.build.kotlin.CommunityKotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
 import org.jetbrains.intellij.build.python.withBundledPydevdNativeDeps
@@ -42,6 +41,7 @@ import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Locale
+import kotlin.io.path.invariantSeparatorsPathString
 
 /**
  * Specifies non-trivial layout for all plugins that sources are located in 'community' and 'contrib' repositories
@@ -936,42 +936,40 @@ private fun copyMavenLibraries(libraries: List<BundledMavenDownloader.MavenLibra
  */
 private val ANT_DISTRIBUTION_DEV_SPEC: LayoutAssetSpec = LayoutAssetSpec.OMITTED
 
+/**
+ * Copies the Ant distribution to the `dist` directory of the Ant plugin. The jars keep their names, and the `BUILD.bazel` file is
+ * left out. The `ant_distribution` target in `community/plugins/ant/BUILD.bazel` defines the same layout for the `ij_plugin` rule.
+ */
 private fun copyAnt(mainModule: String, pluginDir: Path, context: BuildContext): List<DistributionFileEntry> {
   val antDir = pluginDir.resolve("dist")
   return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).use {
-    val sources = ArrayList<ZipSource>()
-    val antTargetFile = antDir.resolve("ant.jar")
-    val antModuleItem = ModuleItem(mainModule, relativeOutputFile = antTargetFile.fileName.toString(), reason = "ant")
-    val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.STANDALONE_MERGED, reason = "ant", owner = antModuleItem)
+    val antHome = context.paths.communityHomeDir.resolve("lib/ant")
+    val jars = ArrayList<Path>()
     copyDir(
-      sourceDir = context.paths.communityHomeDir.resolve("lib/ant"),
+      sourceDir = antHome,
       targetDir = antDir,
-      dirFilter = { !it.endsWith("src") },
       fileFilter = { file ->
-        if (file.toString().endsWith(".jar")) {
-          sources.add(ZipSource(file = file, distributionFileEntryProducer = null, filter = ::defaultLibrarySourcesNamesFilter, moduleName = null))
-          false
+        val fileName = file.fileName.toString()
+        if (fileName.endsWith(".jar")) {
+          jars.add(file)
         }
-        else {
-          true
-        }
+        fileName != "BUILD.bazel"
       },
     )
-    sources.sort()
+    jars.sort()
 
-    checkForNoDiskSpace(context) {
-      buildJar(targetFile = antTargetFile, sources = sources)
-    }
-
-    sources.map { source ->
+    val antModuleItem = ModuleItem(mainModule, relativeOutputFile = "ant.jar", reason = "ant")
+    val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.STANDALONE_SEPARATE, reason = "ant", owner = antModuleItem)
+    jars.map { jar ->
+      val relativePath = antHome.relativize(jar).invariantSeparatorsPathString
       ProjectLibraryEntry(
-        path = antTargetFile,
+        path = antDir.resolve(relativePath),
         data = libraryData,
-        libraryFile = source.file,
-        canonicalLibraryPath = context.paths.communityHomeDir.relativize(source.file).toString(),
+        libraryFile = jar,
+        canonicalLibraryPath = context.paths.communityHomeDir.relativize(jar).invariantSeparatorsPathString,
         hash = 0,
         size = 0,
-        relativeOutputFile = "dist/ant.jar",
+        relativeOutputFile = "dist/$relativePath",
       )
     }
   }
