@@ -12,6 +12,11 @@
             <stringArg name="apiVersion" arg="2.5" />
             <stringArg name="languageVersion" arg="2.5" />
           </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+            </arrayArg>
+          </arrayArguments>
         </compilerArguments>
       </configuration>
     </facet>
@@ -46,5 +51,21 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
     <orderEntry type="module" module-name="intellij.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json.backend" />
+    <orderEntry type="module" module-name="intellij.python.packaging" />
+    <orderEntry type="module" module-name="intellij.python.pyproject" />
+    <orderEntry type="module" module-name="intellij.python.community.execService" />
+    <orderEntry type="module" module-name="intellij.python.community.execService.python" />
+    <orderEntry type="module" module-name="intellij.libraries.gson" />
+    <orderEntry type="module" module-name="intellij.python.requirements.common" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.libraries.caffeine" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.python.sdk.common" />
+    <orderEntry type="module" module-name="intellij.python.venv" />
+    <orderEntry type="module" module-name="intellij.platform.remote.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
   </component>
 </module>

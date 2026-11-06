@@ -4,7 +4,7 @@ package com.jetbrains.python.packaging.conda
 import com.intellij.openapi.components.service
 import com.intellij.python.requirements.PyPackageVersionComparator
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.jetbrains.python.PyBundle
+import com.intellij.python.community.impl.conda.PyCondaBundle
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
@@ -42,7 +42,7 @@ object CondaPackageRepository : PyPackageRepository("Conda", null, null) {
 
     if (versions.isEmpty()) {
       return PyResult.failure(
-        MessageError(PyBundle.message("python.packaging.cache.conda.no.versions.found", packageName))
+        MessageError(PyCondaBundle.message("python.packaging.cache.conda.no.versions.found", packageName))
       )
     }
 

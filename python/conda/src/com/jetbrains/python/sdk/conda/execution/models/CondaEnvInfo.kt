@@ -3,9 +3,7 @@ package com.jetbrains.python.sdk.conda.execution.models
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 @Serializable
 internal data class CondaEnvInfo(
   @SerialName("envs")
@@ -18,7 +16,6 @@ internal data class CondaEnvInfo(
   val envsDetails: Map<String, CondaEnvDetail>? = null,
 )
 
-@ApiStatus.Internal
 @Serializable
 internal data class CondaEnvDetail(
   @SerialName("name")

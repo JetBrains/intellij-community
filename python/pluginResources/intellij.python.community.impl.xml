@@ -805,9 +805,6 @@
 
 
 
-    <!-- SDK Flavors -->
-    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavorProvider"/>
-
     <!-- Other -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
     <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
@@ -825,9 +822,7 @@
     <pySdkProvider implementation="com.jetbrains.python.sdk.uv.UvSdkProvider"/>
     <pySdkDataProvider implementation="com.jetbrains.python.sdk.uv.UvSdkDataProvider"/>
     <pySdkDataProvider implementation="com.jetbrains.python.venv.sdk.VenvSdkDataProvider"/>
-    <pySdkDataProvider implementation="com.jetbrains.python.sdk.conda.CondaSdkDataProvider"/>
 
-    <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageManagerProvider"/>
     <packageInstalledIconProvider implementation="com.jetbrains.python.packaging.conda.CondaPackageInstalledIconProvider"/>
 
     <pyDependenciesFileProvider implementation="com.jetbrains.python.sdk.pipenv.PipfileFileProvider"/>

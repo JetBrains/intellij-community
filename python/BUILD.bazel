@@ -315,6 +315,7 @@ jvm_library(
         "//python/pipenv",
         "//python/python-venv:venv",
         "//python/python-hatch:hatch",
+        "//python/conda",
         "//python/python-requirements/backend",
         "//python/python-uv/backend",
         "//python/python-poetry/backend",

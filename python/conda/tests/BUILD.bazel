@@ -1,0 +1,83 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.python.community.impl.conda.tests` start
+create_kotlinc_options(
+    name = "custom_tests",
+    warn = "error",
+    x_warning_level = ["DEPRECATION:warning"],
+)
+
+jvm_library(
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//python/conda"],
+    kotlinc_opts = ":custom_tests",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/junit6",
+        "//libraries/junit6-params",
+        "//libraries/junit5-pioneer",
+        "//libraries/assertj-core",
+        "//libraries/hamcrest",
+        "//libraries/system-stubs-jupiter",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/projectModel-api:projectModel",
+        "//platform/eel",
+        "//platform/eel-provider",
+        "//platform/testFramework/common",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/eel",
+        "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
+        "//platform/execution",
+        "//platform/util-ex",
+        "//python/openapi:community",
+        "//python/common",
+        "//python/python-exec-service:community-execService",
+        "//python/services/system-python",
+        "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
+        "//python/python-test-env/junit5:junit5_test_lib",
+        "//python/python-packaging:packaging",
+        "//python/python-pyproject:pyproject",
+        "//python/python-psi-api:psi",
+        "//python/python-pytools/backend",
+        "//python/python-requirements/backend",
+        "//python/python-sdk/backend",
+        "//python/python-sdk/common",
+    ],
+)
+### auto-generated section `build intellij.python.community.impl.conda.tests` end
+
+### auto-generated section `iml intellij.python.community.impl.conda.tests` start
+exports_files(
+    [
+        "intellij.python.community.impl.conda.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.community.impl.conda.tests` end
+
+### auto-generated section `test intellij.python.community.impl.conda.tests` start
+jps_test(
+    name = "tests_test",
+    runtime_deps = [":tests_test_lib"],
+)
+### auto-generated section `test intellij.python.community.impl.conda.tests` end

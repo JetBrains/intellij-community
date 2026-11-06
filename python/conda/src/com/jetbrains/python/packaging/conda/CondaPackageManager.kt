@@ -2,9 +2,9 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.writeText
@@ -15,13 +15,15 @@ import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentY
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.intellij.python.community.impl.conda.environmentYml.format.EnvironmentYmlModifier
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.jetbrains.python.PyBundle
+import com.intellij.python.community.impl.conda.PyCondaBundle
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.getOrThrow
 import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.onFailure
-import com.jetbrains.python.packaging.PyPackageUtil
+import com.jetbrains.python.packaging.PyPackageNames
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -36,15 +38,18 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerEngine
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
-import com.jetbrains.python.packaging.management.ui.PythonPackageManagerUI
+import com.jetbrains.python.packaging.management.runSynchronized
 import com.jetbrains.python.packaging.pip.PipPackageManagerEngine
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.nio.file.Path
+import org.jetbrains.annotations.ApiStatus
 
-internal class CondaPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
+@ApiStatus.Internal
+
+class CondaPackageManager(project: Project, interpreter: PythonInterpreter) : PythonPackageManager(project, interpreter) {
   override val repositoryManager: PythonRepositoryManager = CondaRepositoryManger(project, sdk).also {
     Disposer.register(this, it)
   }
@@ -65,17 +70,18 @@ internal class CondaPackageManager(project: Project, interpreter: PythonInterpre
     get() = object : DependenciesExporter {
       override fun export(file: PsiFile) {
         PyPackageCoroutine.launch(project, Dispatchers.IO) {
-          PythonPackageManagerUI.forPackageManager(this@CondaPackageManager)
-            .executeCommand(PyBundle.message("action.CondaExportAction.text")) {
-              exportEnv(file.virtualFile)
-            }
+          // Save the documents so that conda sees the current project files.
+          FileDocumentManager.getInstance().saveAllDocuments()
+          runSynchronized(PyCondaBundle.message("action.CondaExportAction.text")) {
+            exportEnv(file.virtualFile)
+          }.onFailure { ErrorSink().emit(it, project) }
         }
       }
     }
 
   override suspend fun syncLockedCommand(): PyResult<Unit> {
     val requirementsFile = getRootDependenciesFile()
-                           ?: return PyResult.localizedError(PyBundle.message("python.sdk.conda.requirements.file.not.found"))
+                           ?: return PyResult.localizedError(PyCondaBundle.message("python.sdk.conda.requirements.file.not.found"))
     return updateEnv(requirementsFile.virtualFile)
   }
 
@@ -111,7 +117,7 @@ internal class CondaPackageManager(project: Project, interpreter: PythonInterpre
     val condaOutdated = async {
       condaPackageEngine.loadOutdatedPackagesCommand()
     }
-    val pipOutdated = if (listInstalledPackagesSnapshot().any { it.name == PyPackageUtil.PIP }) {
+    val pipOutdated = if (listInstalledPackagesSnapshot().any { it.name == PyPackageNames.PIP }) {
       async { pipPackageEngine.loadOutdatedPackagesCommand() }
     }
     else null

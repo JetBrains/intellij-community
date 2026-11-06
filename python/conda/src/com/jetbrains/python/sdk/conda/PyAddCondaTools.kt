@@ -24,11 +24,13 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import java.nio.file.Path
 import kotlin.io.path.Path
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Levels to be used for new conda envs
  */
-internal val condaSupportedLanguages: List<LanguageLevel>
+@get:ApiStatus.Internal
+val condaSupportedLanguages: List<LanguageLevel>
   get() = LanguageLevel.SUPPORTED_LEVELS
     .asReversed()
     .filter { it < LanguageLevel.PYTHON314 }
@@ -38,7 +40,8 @@ internal val condaSupportedLanguages: List<LanguageLevel>
 /**
  * See `com.jetbrains.env.python.conda.PyCondaSdkTest`
  */
-internal suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
+@ApiStatus.Internal
+suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
   moduleOrProject: ModuleOrProject,
   condaIdentity: PyCondaEnvIdentity,
   workingDirectory: Path,
@@ -94,7 +97,8 @@ private suspend fun getCondaPythonBinaryPath(
 /**
  * See `com.jetbrains.env.python.conda.PyCondaSdkTest`
  */
-internal suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
+@ApiStatus.Internal
+suspend fun PyCondaCommand.createCondaSdkAlongWithNewEnv(
   moduleOrProject: ModuleOrProject,
   newCondaEnvInfo: NewCondaEnvRequest,
   workingDirectory: Path,

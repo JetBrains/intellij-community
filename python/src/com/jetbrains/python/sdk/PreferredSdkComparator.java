@@ -9,7 +9,7 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 
 import java.util.Comparator;
 
-import static com.jetbrains.python.SdkUiUtilKt.isCondaVirtualEnv;
+import static com.jetbrains.python.CondaSdkUtil.isCondaVirtualEnv;
 import static com.jetbrains.python.SdkUiUtilKt.isNonToolVirtualEnv;
 
 public final class PreferredSdkComparator implements Comparator<Sdk> {

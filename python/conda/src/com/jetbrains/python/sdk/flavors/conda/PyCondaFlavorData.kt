@@ -4,8 +4,11 @@ package com.jetbrains.python.sdk.flavors.conda
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.sdk.flavors.PyFlavorData
+import org.jetbrains.annotations.ApiStatus
 
-internal data class PyCondaFlavorData(val env: PyCondaEnv) : PyFlavorData {
+@ApiStatus.Internal
+
+data class PyCondaFlavorData(val env: PyCondaEnv) : PyFlavorData {
   override fun prepareTargetCommandLine(sdk: Sdk, targetCommandLineBuilder: TargetedCommandLineBuilder) {
     addCondaPythonToTargetCommandLine(targetCommandLineBuilder, env, sdk)
   }

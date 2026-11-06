@@ -15,9 +15,13 @@ import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import java.nio.file.Path
 import javax.swing.Icon
+import org.jetbrains.annotations.ApiStatus
 
 
-internal object CondaEnvSdkFlavor : CPythonSdkFlavor<PyCondaFlavorData>() {
+@ApiStatus.Internal
+
+
+object CondaEnvSdkFlavor : CPythonSdkFlavor<PyCondaFlavorData>() {
   override fun getIcon(): Icon = PythonCommunityImplCondaCommonIcons.Anaconda
 
   override fun getFlavorDataClass(): Class<PyCondaFlavorData> = PyCondaFlavorData::class.java

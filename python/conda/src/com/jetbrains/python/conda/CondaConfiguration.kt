@@ -6,8 +6,11 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.pytools.backend.getCustomExecutablePath
 import com.intellij.python.pytools.backend.setCustomExecutablePath
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 fun savePythonCondaPath(condaPath: Path): Unit = CondaPyTool.getInstance().setCustomExecutablePath(condaPath.getEelDescriptor(), condaPath)
 
+@ApiStatus.Internal
 fun loadPythonCondaPath(eelDescriptor: EelDescriptor): Path? = CondaPyTool.getInstance().getCustomExecutablePath(eelDescriptor)

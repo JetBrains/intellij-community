@@ -10,6 +10,7 @@ import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.conda.execution.CondaExecutor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import org.jetbrains.annotations.ApiStatus
 
 /** Whether [envRef] names a conda env by its path, not by its name. A conda env name has no path separator. */
 internal fun isCondaPathEnvRef(envRef: PyEnvRef): Boolean = envRef.value.any { it == '/' || it == '\\' }
@@ -27,7 +28,8 @@ internal fun condaIdentityOf(envRef: PyEnvRef): PyCondaEnvIdentity =
  * env itself, so an env that was created a moment ago is found too. When there is no such env, the conda error is the
  * result.
  */
-internal suspend fun <P : PathHolder> condaPythonBinaryOf(fileSystem: FileSystem<P>, envRef: PyEnvRef): PyResult<P> {
+@ApiStatus.Internal
+suspend fun <P : PathHolder> condaPythonBinaryOf(fileSystem: FileSystem<P>, envRef: PyEnvRef): PyResult<P> {
   val conda = CondaPyTool.getInstance()
   val condaExecutable = fileSystem.resolveExecutable(conda) ?: return toolMissing(conda)
   val interpreterPath = CondaExecutor.runPythonInCondaEnv(

@@ -1909,6 +1909,7 @@ python/common
 python/conda
 python/conda/common
 python/conda/frontend
+python/conda/tests
 python/dbt/common
 python/django/common
 python/fastapi/common

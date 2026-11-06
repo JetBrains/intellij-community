@@ -2,7 +2,7 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.python.PyBundle
+import com.intellij.python.community.impl.conda.PyCondaBundle
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.repository.PyPackageRepository
@@ -36,7 +36,7 @@ fun PythonPackageDetails?.toCondaPackageDetails(packageName: String, availableVe
   null -> CondaPackageDetails(
     name = packageName,
     availableVersions = availableVersions,
-    summary = PyBundle.message("conda.packaging.empty.pypi.info")
+    summary = PyCondaBundle.message("conda.packaging.empty.pypi.info")
   )
   else -> CondaPackageDetails(
     availableVersions = availableVersions,
