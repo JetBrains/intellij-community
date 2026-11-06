@@ -135,7 +135,7 @@
       implementationClass="com.intellij.mermaid.lang.intention.TextAttributesHighlightingAnnotator"/>
 
     <localInspection language="Mermaid" shortName="UnusedAttribute"
-                     groupKey="unused.attribute.inspection.display.name"
+                     groupKey="mermaid.settings.name"
                      bundle="messages.MermaidBundle"
                      key="unused.attribute.inspection.display.name"
                      enabledByDefault="true"
@@ -145,7 +145,7 @@
                      implementationClass="com.intellij.mermaid.lang.intention.UnusedAttributesInspection"/>
 
     <localInspection language="Mermaid" shortName="UndeclaredGeneric"
-                     groupKey="generic.will.not.be.rendered"
+                     groupKey="mermaid.settings.name"
                      bundle="messages.MermaidBundle"
                      key="generic.will.not.be.rendered"
                      enabledByDefault="true"
@@ -154,7 +154,7 @@
                      implementationClass="com.intellij.mermaid.lang.intention.UndeclaredGenericUsageInspection"/>
 
     <localInspection language="Mermaid" shortName="ThemeInspection"
-                     groupKey="theme.inspection"
+                     groupKey="mermaid.settings.name"
                      bundle="messages.MermaidBundle"
                      key="theme.inspection"
                      enabledByDefault="true"
@@ -163,7 +163,7 @@
                      implementationClass="com.intellij.mermaid.lang.intention.ThemeInspection"/>
 
     <localInspection language="Mermaid" shortName="UnsupportedDirective"
-                     groupKey="annotator.unsupported.directive"
+                     groupKey="mermaid.settings.name"
                      bundle="messages.MermaidBundle"
                      key="annotator.unsupported.directive"
                      enabledByDefault="true"
@@ -173,7 +173,7 @@
                      implementationClass="com.intellij.mermaid.lang.intention.UnsupportedDirectiveInspection"/>
 
     <localInspection language="Mermaid" shortName="GitGraph"
-                     groupKey="git.graph.inspection.display.name"
+                     groupKey="mermaid.settings.name"
                      bundle="messages.MermaidBundle"
                      key="git.graph.inspection.display.name"
                      enabledByDefault="true"
