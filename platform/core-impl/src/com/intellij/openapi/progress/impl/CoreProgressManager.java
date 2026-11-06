@@ -1254,7 +1254,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
             break;
           }
         }
-        result.append(readableThreadInfo(threadInfos.get(threadId))).append('\n');
+        ThreadInfo threadInfo = threadInfos.get(threadId);
+        result.append(threadInfo == null ? thread.getName() + " Id=" + threadId + " " + thread.getState()
+                                         : readableThreadInfo(threadInfo)).append('\n');
         if (!readActionStatus.isEmpty() || writeActionPending || writeActionInProgress) {
           result.append("    rw action status:").append(readActionStatus);
           if (writeActionPending || writeActionInProgress) {
