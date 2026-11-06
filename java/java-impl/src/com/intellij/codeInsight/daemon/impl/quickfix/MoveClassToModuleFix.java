@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -7,8 +7,9 @@ import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.ide.util.PsiElementRenderingInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -22,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -45,7 +45,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.Icon;
@@ -111,26 +110,13 @@ public class MoveClassToModuleFix implements IntentionAction {
     }
     else {
       LOG.assertTrue(editor != null);
-      JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(new ArrayList<>(myModules.keySet()))
-        .setTitle(QuickFixBundle.message("choose.class.to.move.popup.title"))
-        .setRenderer(new PsiElementListCellRenderer<PsiClass>() {
-          @Override
-          public String getElementText(PsiClass psiClass) {
-            return psiClass.getQualifiedName();
-          }
-
-          @Override
-          protected @Nullable String getContainerText(PsiClass element, String name) {
-            return null;
-          }
-        })
-        .setMovable(false)
-        .setResizable(false)
-        .setRequestFocus(true)
-        .setItemChosenCallback(value -> moveClass(project, editor, psiFile, value))
-        .createPopup()
-        .showInBestPositionFor(editor);
+      PsiTargetNavigator<PsiClass> navigator = new PsiTargetNavigator<>(new ArrayList<>(myModules.keySet()));
+      navigator.presentationProvider(aClass -> PsiElementRenderingInfo.targetPresentation(aClass, PsiClass::getQualifiedName));
+      navigator.builderConsumer(builder -> builder.setMovable(false).setResizable(false).setRequestFocus(true));
+      navigator.navigate(editor, QuickFixBundle.message("choose.class.to.move.popup.title"), aClass -> {
+        moveClass(project, editor, psiFile, aClass);
+        return false;
+      });
     }
   }
 
