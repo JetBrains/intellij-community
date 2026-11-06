@@ -1,28 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.state
 
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Ref
 import com.intellij.util.EventDispatcher
-import kotlinx.serialization.serializer
-import org.jetbrains.annotations.ApiStatus.Internal
-import java.lang.reflect.Modifier
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
-
-/**
- * Calls [ObservableState.refreshAll], which each new state needs, and returns the state.
- */
-fun <T : ObservableState> T.init(): T {
-  refreshAll()
-  return this
-}
 
 /**
  * A set of named properties that any thread can read and change. A subclass declares each property with
@@ -78,9 +64,9 @@ abstract class ObservableState {
   private var openBatch: StateBatch? = null
 
   /**
-   * The listeners of [addPropertyChangeListener], or `null` before the first listener.
+   * The listeners of [addPropertyChangeListener].
    */
-  @Volatile private var dispatcher: EventDispatcher<ObservableStateListener>? = null
+  private val dispatcher: EventDispatcher<ObservableStateListener> = EventDispatcher.create(ObservableStateListener::class.java)
 
   /**
    * A property whose initial value also comes from [defaultValueCalculator].
@@ -126,7 +112,8 @@ abstract class ObservableState {
   /**
    * The part of [property] that needs no reified type. [type] is the type of the value, for its serializer.
    */
-  fun <T> property(
+  @PublishedApi
+  internal fun <T> property(
     type: KType,
     initialValue: T,
     defaultValueCalculator: SyncDefaultValueCalculator<T>? = null,
@@ -215,17 +202,19 @@ abstract class ObservableState {
   }
 
   /**
-   * Runs the calculator of [property] again, unless the property has an override.
+   * Runs the calculator of [property] again, unless the property has an override. [property] must be a property of
+   * this state.
    */
   fun refresh(property: KProperty<*>) {
-    propertiesByName[property.name]?.recalculate(this)
+    requireProperty(property).recalculate(this)
   }
 
   /**
-   * Removes the override of [property], so that the property holds its default again.
+   * Removes the override of [property], so that the property holds its default again. [property] must be a property of
+   * this state.
    */
   fun clearOverriding(property: KProperty<*>) {
-    propertiesByName[property.name]?.clearOverriding(this)
+    requireProperty(property).clearOverriding(this)
   }
 
   /**
@@ -247,7 +236,6 @@ abstract class ObservableState {
    * Adds [listener]. With [parentDisposable], the listener goes away when [parentDisposable] is disposed.
    */
   fun addPropertyChangeListener(listener: ObservableStateListener, parentDisposable: Disposable? = null) {
-    val dispatcher = getOrCreateDispatcher()
     if (parentDisposable != null) {
       dispatcher.addListener(listener, parentDisposable)
     } else {
@@ -259,10 +247,10 @@ abstract class ObservableState {
    * Notifies the listeners that the value of [propertyName] changed. A property of this state calls it. Inside a
    * [batch], the event comes after the batch ends.
    */
-  fun propertyChanged(propertyName: String?, oldValueRef: Ref<Any?>?, newValue: Any?) {
+  internal fun propertyChanged(propertyName: String?, oldValueRef: Ref<Any?>?, newValue: Any?) {
     if (propertyName != null) {
       val event = ObservableStateListener.PropertyChangeEvent(this, propertyName, oldValueRef, newValue)
-      deliver { dispatcher?.multicaster?.propertyChanged(event) }
+      deliver { dispatcher.multicaster.propertyChanged(event) }
     }
   }
 
@@ -270,9 +258,9 @@ abstract class ObservableState {
    * Tells the listeners that the property with [propertyName] got an override, or that it lost its override. A property
    * of this state calls it. Inside a [batch], the event comes after the batch ends.
    */
-  fun overridingChanged(propertyName: String?) {
+  internal fun overridingChanged(propertyName: String?) {
     if (propertyName != null) {
-      deliver { dispatcher?.multicaster?.overridingChanged(this, propertyName) }
+      deliver { dispatcher.multicaster.overridingChanged(this, propertyName) }
     }
   }
 
@@ -281,7 +269,6 @@ abstract class ObservableState {
    * frontend.
    */
   @Suppress("FunctionName")
-  @Internal
   fun __getProperties(): List<StateProperty<Any>> {
     return properties
   }
@@ -368,6 +355,10 @@ abstract class ObservableState {
     return openBatch
   }
 
+  private fun requireProperty(property: KProperty<*>): StateProperty<Any> {
+    return requireNotNull(propertiesByName[property.name]) { "The state has no property ${property.name}" }
+  }
+
   private fun requireBatchOfThisThread(): StateBatch {
     return checkNotNull(batchOfThisThread()) { "A state changes only inside a batch" }
   }
@@ -404,25 +395,6 @@ abstract class ObservableState {
     }
   }
 
-  private fun getOrCreateDispatcher(): EventDispatcher<ObservableStateListener> {
-    val current = dispatcher
-    if (current != null) {
-      return current
-    }
-    writeLock.lock()
-    try {
-      val created = dispatcher
-      if (created != null) {
-        return created
-      }
-      val newDispatcher = EventDispatcher.create(ObservableStateListener::class.java)
-      dispatcher = newDispatcher
-      return newDispatcher
-    } finally {
-      writeLock.unlock()
-    }
-  }
-
   private fun <T> createProperty(
     type: KType,
     initialValue: T,
@@ -432,7 +404,7 @@ abstract class ObservableState {
     alwaysTransfer: Boolean,
   ): ObjectStateProperty<T> {
     val index = properties.size
-    if (customPropertySerializer == null && !hasDefaultSerializer(type)) {
+    if (customPropertySerializer == null && !TransferableObjectStateProperty.hasDefaultSerializer(type)) {
       return ObjectStateProperty(
         this,
         index,
@@ -453,60 +425,10 @@ abstract class ObservableState {
     )
   }
 
-  /**
-   * Whether kotlinx can serialize a value of [type] without a custom serializer. The answer is cached per type.
-   */
-  private fun hasDefaultSerializer(type: KType): Boolean {
-    if (isNotRecommendedForSerialization(type)) {
-      return false
-    }
-    return DEFAULT_SERIALIZER_PRESENCE.computeIfAbsent(type) {
-      try {
-        serializer(type)
-        true
-      }
-      catch (e: Exception) {
-        rethrowControlFlowException(e)
-        false
-      }
-    }
-  }
-
-  private fun isNotRecommendedForSerialization(type: KType): Boolean {
-    val classifier = type.classifier
-    if (classifier !is KClass<*>) {
-      return true
-    }
-
-    // The plain java.lang.Class API is used on purpose. kotlin-reflect members like `isSubclassOf` and `isAbstract`
-    // deserialize the whole class metadata, and that can freeze the EDT (IJPL-251839).
-    val javaClass = classifier.java
-
-    // A list works, and a CharSequence does not.
-    if (JAVA_LIST_CLASS.isAssignableFrom(javaClass)) {
-      return false
-    }
-
-    // The JVM marks primitives, arrays, and enums with constant-specific bodies as abstract, but they are final in Kotlin.
-    if (javaClass.isPrimitive || javaClass.isArray || javaClass.isEnum) {
-      return false
-    }
-
-    return Modifier.isAbstract(javaClass.modifiers)
-  }
-
   private companion object {
-    @JvmStatic
-    private val MODIFICATION_COUNT_UPDATER: AtomicLongFieldUpdater<ObservableState> =
-      AtomicLongFieldUpdater.newUpdater(ObservableState::class.java, "modificationCount")
+    private val MODIFICATION_COUNT_UPDATER: AtomicLongFieldUpdater<ObservableState> = AtomicLongFieldUpdater.newUpdater(
+      ObservableState::class.java,
+      "modificationCount",
+    )
   }
 }
-
-private val DEFAULT_SERIALIZER_PRESENCE = ConcurrentHashMap<KType, Boolean>()
-
-/**
- * `kotlin.collections.List` has no runtime class of its own: it is a mapped type erased to [java.util.List],
- * so the raw Java interface is referenced here explicitly.
- */
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-private val JAVA_LIST_CLASS: Class<*> = java.util.List::class.java

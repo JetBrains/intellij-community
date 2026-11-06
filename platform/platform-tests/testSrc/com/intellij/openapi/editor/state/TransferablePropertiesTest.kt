@@ -51,7 +51,9 @@ class TransferablePropertiesTest {
       var mutableListInt1 by property(mutableListOf(1, 2, 3))
       var mutableListIntNullable1 by property(mutableListOf(1, 2, 3, null as Int?))
       var mutableListIntNullable2: List<Int?> by property(mutableListOf(1, 2, 3, null))
-    }.init()
+    }.apply {
+      refreshAll()
+    }
 
     for (property in state.__getProperties()) {
       try {
@@ -89,7 +91,9 @@ class TransferablePropertiesTest {
   fun testModifyingProperties() {
     val state = object : ObservableState() {
       var prop1: String? by property("initial", SyncDefaultValueCalculator { "default calculated" })
-    }.init()
+    }.apply {
+      refreshAll()
+    }
 
     assertEquals("default calculated", state.prop1)
 

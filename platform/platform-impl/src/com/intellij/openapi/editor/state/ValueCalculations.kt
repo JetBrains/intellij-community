@@ -14,7 +14,7 @@ fun interface SyncDefaultValueCalculator<T> {
 /**
  * A default that never changes.
  */
-class FixedDefaultValue<T>(private val value: T) : SyncDefaultValueCalculator<T> {
+internal class FixedDefaultValue<T>(private val value: T) : SyncDefaultValueCalculator<T> {
   override fun calculate(): T {
     return value
   }

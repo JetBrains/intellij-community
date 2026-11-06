@@ -15,6 +15,9 @@ import java.util.EventListener
  * current value reads it from the state, and not from the event.
  */
 interface ObservableStateListener : EventListener {
+  /**
+   * The property with [PropertyChangeEvent.propertyName] got a new value.
+   */
   fun propertyChanged(event: PropertyChangeEvent)
 
   /**

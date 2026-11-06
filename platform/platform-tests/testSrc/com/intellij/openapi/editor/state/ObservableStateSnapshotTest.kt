@@ -91,7 +91,9 @@ class ObservableStateSnapshotTest {
    */
   @Test
   fun testTheBatchThreadReadsTheChangesOfTheBatch() {
-    val state = DerivedState().init()
+    val state = DerivedState().apply {
+      refreshAll()
+    }
 
     state.batch {
       state.width = 5
