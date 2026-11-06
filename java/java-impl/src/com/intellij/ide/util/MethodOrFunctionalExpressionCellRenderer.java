@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.psi.NavigatablePsiElement;
@@ -12,6 +12,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 
+/**
+ * @deprecated It extends the obsolete {@link PsiElementListCellRenderer}, which reads PSI on the EDT.
+ * Use {@link com.intellij.codeInsight.navigation.PsiTargetNavigator} instead.
+ */
+@Deprecated(forRemoval = true)
 public class MethodOrFunctionalExpressionCellRenderer extends DelegatingPsiElementCellRenderer<NavigatablePsiElement> {
   public static class MethodOrFunctionalExpressionCellRenderingInfo
     implements PsiElementRenderingInfo<NavigatablePsiElement> {
