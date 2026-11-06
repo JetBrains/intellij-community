@@ -153,6 +153,7 @@ class PyCodeInsightScalingPerformanceTest : PyCodeInsightTestCase() {
   }
 
   @Test
+  @TestFor(issues = ["PY-93781"])
   fun `type inference of a generic call binds each type parameter`() {
     val typeParameters = TYPE_PARAMETER_SIZES.last()
     val (file, target) = configureGenericCall(typeParameters)

@@ -8,8 +8,8 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.LongAdder
 
 /**
- * Counts the work of the native Python code insight: type evaluations, type contexts, type matches, overload checks,
- * control flow builds and completion lookup items.
+ * Counts the work of the native Python code insight: type evaluations, type contexts, type matches, type walks,
+ * overload checks, control flow builds and completion lookup items.
  *
  * The counting is off by default. Then each hook costs one volatile read. A test turns the counting on with [enable],
  * runs an action, and compares two [snapshot] values. The hooks do not change a result.

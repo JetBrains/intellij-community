@@ -25,6 +25,7 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
 
   // The inspections share one context on several threads, so any of them can solve the call first
   @Test
+  @TestFor(issues = ["PY-93781"])
   fun `sequence in a call has its type also after the call is solved`() {
     val file = myFixture.configureByText("a.py", """
       from typing import TypeAliasType
