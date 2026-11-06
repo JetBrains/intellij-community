@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,6 +25,8 @@ import java.util.regex.Pattern;
 
 public final class FilePatternPackageSet extends PatternBasedPackageSet {
   private static final Logger LOG = Logger.getInstance(FilePatternPackageSet.class);
+
+  private static final @NonNls String OUTERMOST_CONTENT_ROOT_KEY = "psi.scope.file.pattern.outermost.content.root";
 
   public static final @NonNls String SCOPE_FILE = "file";
   public static final @NonNls String SCOPE_EXT = "ext";
@@ -195,7 +198,7 @@ public final class FilePatternPackageSet extends PatternBasedPackageSet {
       }
       return virtualFile.getPath();
     }
-    final VirtualFile contentFileSetRoot = index.getWorkspaceContentFileSetRoot(virtualFile);
+    final VirtualFile contentFileSetRoot = getScopeContentFileSetRoot(virtualFile, index);
     if (contentFileSetRoot != null) {
       return VfsUtilCore.getRelativePath(virtualFile, contentFileSetRoot, '/');
     }
@@ -203,6 +206,33 @@ public final class FilePatternPackageSet extends PatternBasedPackageSet {
       return getLibRelativePath(virtualFile, index);
     }
     return "";
+  }
+
+  /**
+   * Returns the workspace content file set root that contains {@code virtualFile}, or null if the file belongs to no
+   * such root.
+   *
+   * With {@code psi.scope.file.pattern.outermost.content.root} on, the method returns the outermost root. One
+   * content file set can lie under another one, for example one file set per CMakeLists.txt directory. A path from
+   * the inner root hides the outer part, so a pattern written from the project matches nothing.
+   */
+  private static @Nullable VirtualFile getScopeContentFileSetRoot(@NotNull VirtualFile virtualFile,
+                                                                  @NotNull ProjectFileIndex index) {
+    var root = index.getWorkspaceContentFileSetRoot(virtualFile);
+    if (root == null || !Registry.is(OUTERMOST_CONTENT_ROOT_KEY, true)) {
+      return root;
+    }
+    var parent = root.getParent();
+    while (parent != null) {
+      var outerRoot = index.getWorkspaceContentFileSetRoot(parent);
+      // Stop when no root above exists. Only a strict ancestor moves the search outward, so the loop ends.
+      if (outerRoot == null || !VfsUtilCore.isAncestor(outerRoot, root, false)) {
+        break;
+      }
+      root = outerRoot;
+      parent = root.getParent();
+    }
+    return root;
   }
 
   public static String getLibRelativePath(final VirtualFile virtualFile, final ProjectFileIndex index) {
