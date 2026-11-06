@@ -1060,7 +1060,9 @@ public @interface NotNull {
         newParameters[0].name = "a"
     }
 
-    fun testReceiverInSafeCall() = doTestConflict { receiverParameterInfo = null }
+    fun testReceiverInSafeCall() = doTest { receiverParameterInfo = null }
+
+    fun testReceiverInSafeCallWithImplicitLambdaParameter() = doTest { receiverParameterInfo = null }
 
 
     fun testConvertToExtensionAndRename() = doTest {

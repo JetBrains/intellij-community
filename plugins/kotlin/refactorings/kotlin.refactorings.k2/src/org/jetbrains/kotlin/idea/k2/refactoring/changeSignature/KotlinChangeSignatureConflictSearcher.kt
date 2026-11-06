@@ -379,7 +379,7 @@ class KotlinChangeSignatureConflictSearcher(
         if (originalReceiverInfo == null || originalReceiverInfo !in originalInfo.getNonReceiverParameters()) return
 
         for (usageInfo in usages) {
-            if (!(usageInfo is KotlinFunctionCallUsage || usageInfo is KotlinPropertyCallUsage)) continue
+            if (usageInfo !is KotlinPropertyCallUsage) continue
 
             val callElement = usageInfo.element as? KtElement ?: continue
             val qualifiedExpression = callElement.getQualifiedExpressionForSelector()

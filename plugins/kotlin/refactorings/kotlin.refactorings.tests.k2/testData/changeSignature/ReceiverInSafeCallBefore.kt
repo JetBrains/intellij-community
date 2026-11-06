@@ -1,3 +1,4 @@
+// CHECK_ERRORS_AFTER
 interface A {
     val parent: A?
 }

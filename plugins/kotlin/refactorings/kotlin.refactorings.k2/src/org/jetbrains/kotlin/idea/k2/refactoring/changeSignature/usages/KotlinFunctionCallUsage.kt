@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.toLightMethods
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -72,11 +73,13 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtOperationExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.KtSuperTypeListEntry
@@ -84,6 +87,7 @@ import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtUnaryExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
@@ -335,6 +339,21 @@ internal class KotlinFunctionCallUsage(
             ArgumentInfo(param, index, resolvedArgument, receiverValue)
         }.toList()
 
+        // `s?.bar()` becomes `s?.let { bar(it) }` when the receiver becomes a value argument
+        val safeCallReceiverArgument = if (fullCallElement is KtSafeQualifiedExpression && newReceiverInfo == null) {
+            newArgumentInfos.firstOrNull { it.receiverValue != null }
+        } else null
+        val implicitLambdaParameter = StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.asString()
+        val safeCallLambdaParameter = safeCallReceiverArgument?.let { argument ->
+            fun KtNameReferenceExpression.isImplicitLambdaParameter(): Boolean = getReferencedName() == implicitLambdaParameter
+            val usesImplicitLambdaParameter = element.valueArguments.any { valueArgument ->
+                val expression = valueArgument.getArgumentExpression() ?: return@any false
+                (expression as? KtNameReferenceExpression)?.isImplicitLambdaParameter() == true ||
+                        expression.anyDescendantOfType<KtNameReferenceExpression> { it.isImplicitLambdaParameter() }
+            }
+            if (usesImplicitLambdaParameter) argument.parameter.name else implicitLambdaParameter
+        }
+
         val lastParameterIndex = newParameters.lastIndex
         val canMixArguments = element.languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)
         var firstNamedIndex = newArgumentInfos.firstOrNull {
@@ -365,7 +384,8 @@ internal class KotlinFunctionCallUsage(
                 val name = argInfo.name?.let { Name.identifier(it) }
 
                 if (argInfo.receiverValue != null) {
-                    appendValueArgument(psiFactory.createArgument(psiFactory.createExpression(argInfo.receiverValue), name))
+                    val value = if (argInfo === safeCallReceiverArgument) safeCallLambdaParameter!! else argInfo.receiverValue
+                    appendValueArgument(psiFactory.createArgument(psiFactory.createExpression(value), name))
                     continue
                 }
 
@@ -437,6 +457,13 @@ internal class KotlinFunctionCallUsage(
             }
 
             newElement = fullCallElement.replace(replacingElement) as KtElement
+            if (safeCallReceiverArgument != null) {
+                val lambdaParameterPrefix =
+                    if (safeCallLambdaParameter == implicitLambdaParameter) "" else "$safeCallLambdaParameter -> "
+                newElement = newElement.replace(
+                    psiFactory.createExpressionByPattern("$0?.let { $lambdaParameterPrefix$1 }", safeCallReceiverArgument.receiverValue!!, newElement)
+                ) as KtElement
+            }
             if (dispatchReceiverToPreserve != null) {
                 newElement.qualifyNestedThisExpressions()
                 newElement = newElement.replace(psiFactory.createExpression("with(${dispatchReceiverToPreserve.text}) {\n${newElement.text}\n}")) as KtElement

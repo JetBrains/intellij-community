@@ -11185,6 +11185,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionConvertReceiverToParameter.kt");
             }
 
+            @TestMetadata("companionBlockMemberExtensionConvertReceiverToParameterSafeCall.kt")
+            public void testCompanionBlockMemberExtensionConvertReceiverToParameterSafeCall() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionConvertReceiverToParameterSafeCall.kt");
+            }
+
             @TestMetadata("companionBlockMemberExtensionPropertyRemoveReceiver.kt")
             public void testCompanionBlockMemberExtensionPropertyRemoveReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/modifiers/companionBlockMemberExtensionPropertyRemoveReceiver.kt");
