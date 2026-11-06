@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.browsers.OpenInBrowserRequest
+import com.intellij.ide.browsers.SystemDefaultBrowser
 import com.intellij.ide.browsers.WebBrowser
 import com.intellij.ide.browsers.WebBrowserManager
 import com.intellij.ide.browsers.WebBrowserProvider
@@ -36,7 +37,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.event.ActionEvent
 
-class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction({ browser.name }, null, { browser.icon }) {
+open class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction({ browser.name }, null, { browser.icon }) {
   object Handler {
     private val LOG = logger<BaseOpenInBrowserAction>()
 
@@ -77,10 +78,13 @@ class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction
 
   /**
    * Returns [browser] while it can open a page.
-   * A browser of the list needs a path. A browser of a [WebBrowserProvider] has no path and must be available.
+   * A browser of the list needs a path. [SystemDefaultBrowser] has no path.
+   * A browser of a [WebBrowserProvider] has no path and must be available.
    */
   private fun getBrowser(): WebBrowser? {
-    val canOpen = browser.path != null || WebBrowserProvider.getAvailableBrowsers().contains(browser)
+    val canOpen = browser.path != null ||
+                  browser === SystemDefaultBrowser ||
+                  WebBrowserProvider.getAvailableBrowsers().contains(browser)
     return if (canOpen && WebBrowserManager.getInstance().isActive(browser)) browser else null
   }
 
@@ -131,6 +135,18 @@ class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction
     }
   }
 }
+
+/**
+ * Opens the file in [SystemDefaultBrowser].
+ * It is a separate class, so the action statistics tell it apart from a browser of the list.
+ */
+internal class OpenInSystemDefaultBrowserAction : BaseOpenInBrowserAction(SystemDefaultBrowser)
+
+/**
+ * Opens the file in a browser of a [WebBrowserProvider], such as the IDE Browser.
+ * It is a separate class, so the action statistics tell it apart from a browser of the list.
+ */
+internal class OpenInProvidedBrowserAction(browser: WebBrowser) : BaseOpenInBrowserAction(browser)
 
 private fun createRequest(context: DataContext, isForceFileUrlIfNoUrlProvider: Boolean): OpenInBrowserRequest? {
   val editor = CommonDataKeys.EDITOR.getData(context)

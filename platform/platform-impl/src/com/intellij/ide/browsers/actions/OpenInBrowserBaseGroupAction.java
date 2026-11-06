@@ -42,7 +42,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
 
   private final ConcurrentMap<WebBrowser, AnAction> myBrowserActions =
     ConcurrentCollectionFactory.createConcurrentWeakKeyWeakValueMap(HashingStrategy.canonical());
-  private final AnAction myDefaultBrowserAction = createDefaultBrowserAction();
+  private final AnAction mySystemDefaultBrowserAction = new OpenInSystemDefaultBrowserAction();
 
   protected OpenInBrowserBaseGroupAction(boolean popup) {
     Presentation p = getTemplatePresentation();
@@ -51,13 +51,6 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     p.setText(IdeBundle.messagePointer("open.in.browser"));
     p.setDescription(IdeBundle.messagePointer("open.selected.file.in.browser"));
     p.setIconSupplier(() -> AllIcons.Nodes.PpWeb);
-  }
-
-  private static @NotNull AnAction createDefaultBrowserAction() {
-    OpenFileInDefaultBrowserAction action = new OpenFileInDefaultBrowserAction();
-    action.getTemplatePresentation().setText(() -> SystemDefaultBrowser.INSTANCE.getName());
-    action.getTemplatePresentation().setIconSupplier(() -> SystemDefaultBrowser.INSTANCE.getIcon());
-    return action;
   }
 
   @Override
@@ -72,23 +65,19 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     List<WebBrowser> browsers = WebBrowserManager.getInstance().getBrowsers();
     List<AnAction> actions = new ArrayList<>(providedBrowsers.size() + browsers.size() + 2);
     for (WebBrowser browser : providedBrowsers) {
-      actions.add(getBrowserAction(browser));
+      actions.add(myBrowserActions.computeIfAbsent(browser, OpenInProvidedBrowserAction::new));
     }
     AnAction localBrowserAction = getLocalBrowserAction();
     if (localBrowserAction != null) {
       actions.add(localBrowserAction);
     }
     if (usesSystemDefaultBrowser()) {
-      actions.add(myDefaultBrowserAction);
+      actions.add(mySystemDefaultBrowserAction);
     }
     for (WebBrowser browser : browsers) {
-      actions.add(getBrowserAction(browser));
+      actions.add(myBrowserActions.computeIfAbsent(browser, BaseOpenInBrowserAction::new));
     }
     return actions.toArray(EMPTY_ARRAY);
-  }
-
-  private @NotNull AnAction getBrowserAction(@NotNull WebBrowser browser) {
-    return myBrowserActions.computeIfAbsent(browser, BaseOpenInBrowserAction::new);
   }
 
   @Override

@@ -1022,7 +1022,7 @@ f:com.intellij.ide.browsers.WebBrowserManager
 - isActive(com.intellij.ide.browsers.WebBrowser):Z
 - loadState(org.jdom.Element):V
 - noStateLoaded():V
-f:com.intellij.ide.browsers.actions.BaseOpenInBrowserAction
+c:com.intellij.ide.browsers.actions.BaseOpenInBrowserAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>(com.intellij.ide.browsers.WebBrowser):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
