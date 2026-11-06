@@ -738,8 +738,8 @@ private suspend fun collectExcludedRoots(project: Project): List<VirtualFile> {
   val excludedUrls = readAction { ProjectManagerEx.getInstanceEx().getAllExcludedUrls(project) }
   @Suppress("SplitModeApiUsage") // the module already resolves VFS files in every toolset
   val virtualFileManager = VirtualFileManager.getInstance()
-  val roots = excludedUrls.mapNotNull { url -> virtualFileManager.findFileByUrl(url) }.distinct()
-  return roots.filter { root -> roots.none { other -> other != root && VfsUtilCore.isAncestor(other, root, true) } }
+  val roots = excludedUrls.mapNotNullTo(LinkedHashSet()) { url -> virtualFileManager.findFileByUrl(url) }
+  return roots.filter { root -> root.parent?.let { VfsUtilCore.isUnder(it, roots) } != true }
 }
 
 /**
