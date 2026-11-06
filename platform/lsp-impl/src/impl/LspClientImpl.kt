@@ -43,6 +43,7 @@ import org.eclipse.lsp4j.TextDocumentIdentifier
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.Collections
 import java.util.concurrent.CompletableFuture
@@ -256,6 +257,12 @@ class LspClientImpl internal constructor(
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
         synchronized(connectorLock) {
+          // A stop sets the state before it takes connectorLock. A stop that came before this point found no connector
+          // to shut down, so the process must not start. A later stop waits for the connection and then shuts it down.
+          if (state != LspServerState.Initializing) {
+            logInfo("LSP server stopped before its process started")
+            return@executeOnPooledThread
+          }
           lsp4jServerConnector = createLsp4jServerConnector()
           lsp4jServerConnector.connect { initializeParams, initializeResult ->
             this.initializeResult = initializeResult
@@ -296,6 +303,9 @@ class LspClientImpl internal constructor(
       }
     }
   }
+
+  @TestOnly
+  internal fun <T> holdingConnectorLock(action: () -> T): T = synchronized(connectorLock, action)
 
   private fun createLsp4jServerConnector(): Lsp4jServerConnector = when (descriptor.lspCommunicationChannel) {
     is StdIO -> Lsp4jServerConnectorStdio(this)
