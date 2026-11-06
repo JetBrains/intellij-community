@@ -7,6 +7,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.MigrationLaunchContract
+import com.intellij.openapi.application.MigrationLaunchReason
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
@@ -24,16 +26,16 @@ private val LOG = logger<MigrationOfferContent>()
 private const val OPEN_TIMEOUT_SECONDS = 5L
 
 /**
- * The arguments that start the Unified IDE after "Restart to Update".
- * [sourceProduct] is the product code of this IDE. [projects] are the open projects.
+ * The arguments of the [MigrationLaunchContract] that start the Unified IDE.
+ * [sourceProduct] is the product code of this IDE. [arguments] are the positional arguments.
  */
 @ApiStatus.Internal
-fun migrationLaunchArguments(sourceProduct: String, projects: List<Path>): List<String> =
+fun migrationLaunchArguments(reason: MigrationLaunchReason, sourceProduct: String, arguments: List<String>): List<String> =
   listOf(
-    "-Dide.migration.version=1",
-    "-Dide.migration.reason=migrate",
-    "-Dide.migration.source.product=${sourceProduct}",
-  ) + projects.map { it.toString() }
+    "-D${MigrationLaunchContract.VERSION_PROPERTY}=${MigrationLaunchContract.VERSION}",
+    "-D${MigrationLaunchContract.REASON_PROPERTY}=${reason.value}",
+    "-D${MigrationLaunchContract.SOURCE_PRODUCT_PROPERTY}=${sourceProduct}",
+  ) + arguments
 
 /** The macOS command that starts a new instance of [app] with [arguments]. Each value is a separate argument. */
 @ApiStatus.Internal
@@ -101,8 +103,8 @@ private fun startMigrationApp(state: MigrationState) {
     }
 
     val sourceProduct = ApplicationInfo.getInstance().build.productCode
-    startMigrationProcess(macOpenCommand(state.app, migrationLaunchArguments(sourceProduct, projects)))
-      ?.let { waitForMigrationOpen(it, OPEN_TIMEOUT_SECONDS) }
+    val arguments = migrationLaunchArguments(MigrationLaunchReason.MIGRATE, sourceProduct, projects.map { it.toString() })
+    startMigrationProcess(macOpenCommand(state.app, arguments))?.let { waitForMigrationOpen(it, OPEN_TIMEOUT_SECONDS) }
   }
   catch (e: Exception) {
     rethrowControlFlowException(e)
