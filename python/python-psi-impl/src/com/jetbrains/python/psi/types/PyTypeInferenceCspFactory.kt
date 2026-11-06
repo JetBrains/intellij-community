@@ -108,8 +108,8 @@ object PyTypeInferenceCspFactory {
 
     val cachedSubstitutionsTopCsp = context.getKnownSubstitutions(topCsp)
     if (cachedSubstitutionsTopCsp != null) {
-      // The solved top CSP has no solution for this expression, so use the old approach as the solving thread does
-      return null
+      // suspicious: ensure that `findParentCsp()` and `findChildCsp()` are round-tripable
+      return null // fallback to old approach
     }
 
     val temporarySubstitutions = GenericSubstitutions()
