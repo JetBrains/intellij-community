@@ -396,14 +396,27 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   private @Nullable GlobalSearchScope buildScopeWithReferences(@Nullable Set<VirtualFile> referentFiles, @NotNull PsiElement element) {
     if (referentFiles == null) return null;
 
-    GlobalSearchScope referencesScope = GlobalSearchScope.filesWithoutLibrariesScope(project, referentFiles);
-
-    GlobalSearchScope knownDirtyScope = myDirtyScopeHolder.getDirtyScope();
-    GlobalSearchScope wholeClearScope = GlobalSearchScope.notScope(knownDirtyScope);
-    GlobalSearchScope knownCleanScope = GlobalSearchScope.getScopeRestrictedByFileTypes(wholeClearScope, myFileTypes.toArray(FileType.EMPTY_ARRAY));
-    GlobalSearchScope wholeDirtyScope = GlobalSearchScope.notScope(knownCleanScope);
-    GlobalSearchScope mayContainReferencesScope = referencesScope.uniteWith(wholeDirtyScope);
+    GlobalSearchScope mayContainReferencesScope =
+      mayContainReferencesScope(project, referentFiles, myDirtyScopeHolder.getDirtyScope(), myFileTypes);
     return scopeWithLibraryIfNeeded(project, myProjectFileIndex, mayContainReferencesScope, element);
+  }
+
+  /**
+   * Returns the files that may contain references: the {@code referentFiles} that the index knows,
+   * the files of the {@code dirtyScope}, and every file whose type is not in {@code fileTypes}.
+   * The index has no data for those, so the search must check them.
+   */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @NotNull GlobalSearchScope mayContainReferencesScope(@NotNull Project project,
+                                                                     @NotNull Collection<? extends VirtualFile> referentFiles,
+                                                                     @NotNull GlobalSearchScope dirtyScope,
+                                                                     @NotNull Set<? extends FileType> fileTypes) {
+    GlobalSearchScope referencesScope = GlobalSearchScope.filesWithoutLibrariesScope(project, referentFiles);
+    GlobalSearchScope wholeClearScope = GlobalSearchScope.notScope(dirtyScope);
+    GlobalSearchScope knownCleanScope = GlobalSearchScope.getScopeRestrictedByFileTypes(wholeClearScope, fileTypes.toArray(FileType.EMPTY_ARRAY));
+    GlobalSearchScope wholeDirtyScope = GlobalSearchScope.notScope(knownCleanScope);
+    return referencesScope.uniteWith(wholeDirtyScope);
   }
 
   public static @NotNull GlobalSearchScope scopeWithLibraryIfNeeded(@NotNull Project project,
