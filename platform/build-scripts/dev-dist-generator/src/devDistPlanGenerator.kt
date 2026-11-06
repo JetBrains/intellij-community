@@ -2369,7 +2369,7 @@ internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductPr
   }
   val communityRoot = index.communityRoot
   val binDir = communityRoot.resolve("bin")
-  for (os in OsFamily.entries) {
+  for (os in OsFamily.ALL) {
     for (arch in JvmArchitecture.entries) {
       val hostPlatform = hostPlatformName(os, arch)
       val platformFiles = files.getOrPut(hostPlatform) { ArrayList() }

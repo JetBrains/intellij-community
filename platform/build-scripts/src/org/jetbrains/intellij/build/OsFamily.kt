@@ -37,8 +37,9 @@ enum class OsFamily(
   }
 
   companion object {
+    /** The OSes that a build targets by default. A build targets [OHOS] only on request. */
     @JvmField
-    val ALL: PersistentList<OsFamily> = persistentListOf(*OsFamily.entries.toTypedArray())
+    val ALL: PersistentList<OsFamily> = persistentListOf(*OsFamily.entries.filter { it != OHOS }.toTypedArray())
 
     @JvmField
     val currentOs: OsFamily = when {

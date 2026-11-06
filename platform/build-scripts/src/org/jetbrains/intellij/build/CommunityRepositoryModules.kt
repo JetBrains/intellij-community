@@ -841,7 +841,7 @@ private fun jSerialCommLayoutAssetSpec(): LayoutAssetSpec {
  * cross-platform zip leaves it out and the mac signing pass covers it.
  */
 fun PlatformLayout.withRestarter() {
-  for (os in OsFamily.entries) {
+  for (os in OsFamily.ALL) {
     for (arch in JvmArchitecture.entries) {
       withOsSpecificFiles(os, arch, restarterLayoutAssetSpec(os, arch)) { distributionDir, context ->
         listOf(copyNativeBinFileToDir(NativeBinaryDownloader.getRestarter(context, os, arch), distributionDir.resolve("bin")))

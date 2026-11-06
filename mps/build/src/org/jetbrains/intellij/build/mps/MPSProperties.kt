@@ -163,7 +163,7 @@ class MPSProperties : JetBrainsProductProperties() {
 
     private fun copyExecutables(context: BuildContext, targetDirectory: Path) {
         Files.createDirectories(Path.of("$targetDirectory/build/resources"))
-        for (osFamily in OsFamily.entries) {
+        for (osFamily in OsFamily.ALL) {
             for (arch in JvmArchitecture.entries) {
                 val (execPath, _) = NativeBinaryDownloader.getLauncher(context, osFamily, arch)
                 var ext = execPath.extension

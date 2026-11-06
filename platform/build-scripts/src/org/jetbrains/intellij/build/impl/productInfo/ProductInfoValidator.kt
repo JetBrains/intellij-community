@@ -50,7 +50,7 @@ internal fun validateProductJson(jsonText: String, installationDirectories: List
   }
   for (item in productJson.launch) {
     val os = item.os
-    check(OsFamily.ALL.any { it.osName == os }) {
+    check(OsFamily.entries.any { it.osName == os }) {
       "Incorrect OS name '${os}' in ${PRODUCT_INFO_FILE_NAME}"
     }
     installation.checkFileExists(item.launcherPath, description = "${os} launcher")
