@@ -15,11 +15,13 @@
  */
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.execution.testframework.AbstractTestProxy.SuiteResultPolicy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestFinishedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestIgnoredEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestStartedEvent;
+import com.intellij.execution.testframework.sm.runner.events.TestSuiteFinishedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TestSuiteStartedEvent;
 import com.intellij.execution.testframework.sm.runner.events.TreeNodeEvent;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
@@ -43,6 +45,39 @@ public class GeneralIdBasedToSMTRunnerEventsConvertorTest extends BaseSMTRunnerT
   private GeneralIdBasedToSMTRunnerEventsConvertor myEventsProcessor;
   private SMTestProxy.SMRootTestProxy myRootProxy;
   private SMTestRunnerResultsForm myResultsViewer;
+
+  @Test
+  public void testRetrySuiteUpdatesAnExistingNode() {
+    var root = new SMTestProxy.SMRootTestProxy();
+    var processor = new GeneralIdBasedToSMTRunnerEventsConvertor(getProject(), root, "test");
+    try {
+      processor.onStartTesting();
+      var treeEvent = new TestSuiteStartedEvent("retry", "1", TreeNodeEvent.ROOT_NODE_ID,
+                                                null, null, null, null, false);
+      treeEvent.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
+      processor.onSuiteStarted(treeEvent);
+      var started = new TestSuiteStartedEvent("retry", "1", TreeNodeEvent.ROOT_NODE_ID,
+                                              null, null, null, null, true);
+      processor.onSuiteStarted(started);
+      processor.onTestStarted(new TestStartedEvent("first", "2", "1", null, null, null, null, true));
+      processor.onTestFailure(new TestFailedEvent(null, "2", "failure", "trace", false,
+                                                  null, null, null, null, false, false, -1));
+      processor.onTestFinished(new TestFinishedEvent(null, "2", 1L));
+      assertFalse(root.isDefect());
+      processor.onTestStarted(new TestStartedEvent("last", "3", "1", null, null, null, null, true));
+      processor.onTestFinished(new TestFinishedEvent(null, "3", 1L));
+      processor.onSuiteFinished(new TestSuiteFinishedEvent("retry", "1"));
+      processor.onFinishTesting();
+
+      assertEquals(SuiteResultPolicy.LAST_CHILD, root.getChildren().getFirst().getSuiteResultPolicy());
+      assertTrue(root.getChildren().getFirst().isPassed());
+      assertTrue(root.isPassed());
+    }
+    finally {
+      Disposer.dispose(processor);
+      Disposer.dispose(root);
+    }
+  }
 
   @BeforeEach
   void setUp() {

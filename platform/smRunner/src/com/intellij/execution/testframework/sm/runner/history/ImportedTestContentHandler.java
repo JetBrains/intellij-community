@@ -2,6 +2,7 @@
 package com.intellij.execution.testframework.sm.runner.history;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.AbstractTestProxy.SuiteResultPolicy;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
 import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
@@ -46,6 +47,8 @@ public class ImportedTestContentHandler extends DefaultHandler {
       TestSuiteStartedEvent startedEvent = new TestSuiteStartedEvent(suiteName,
                                                                      locationValue == null ? null : StringUtil.unescapeXmlEntities(locationValue),
                                                                      metaValue == null ? null : StringUtil.unescapeXmlEntities(metaValue));
+      startedEvent.setSuiteResultPolicy("lastChild".equals(attributes.getValue(TestResultsXmlFormatter.ATTR_RESULT_POLICY))
+                                       ? SuiteResultPolicy.LAST_CHILD : SuiteResultPolicy.ALL_CHILDREN);
       myProcessor.onSuiteStarted(startedEvent);
       mySuites.push(suiteName);
     }

@@ -4,6 +4,7 @@ package com.intellij.execution.testframework.sm.runner;
 import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.AbstractTestProxy.SuiteResultPolicy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
@@ -48,6 +49,64 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Roman Chernyatchik
  */
 public class SMTestProxyTest extends BaseSMTRunnerTestCase {
+
+  @Test
+  public void testRetrySuiteDoesNotCacheFailedAttemptsInAncestors() {
+    mySuite.setSuiteStarted();
+    var parent = createSuiteProxy("parent", mySuite);
+    parent.setSuiteStarted();
+    var retry = createSuiteProxy("retry", parent);
+    retry.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
+    retry.setSuiteStarted();
+    var first = createTestProxy("first", retry);
+    first.setStarted();
+    first.setTestFailed("failure", "trace", false);
+    first.setFinished();
+
+    assertTrue(first.isDefect());
+    assertFalse(retry.isDefect());
+    assertFalse(parent.isDefect());
+    assertFalse(mySuite.isDefect());
+
+    var last = createTestProxy("last", retry);
+    last.setStarted();
+    last.setFinished();
+    retry.setFinished();
+    parent.setFinished();
+    mySuite.setFinished();
+
+    assertTrue(retry.isPassed());
+    assertTrue(parent.isPassed());
+    assertTrue(mySuite.isPassed());
+    assertTrue(first.isDefect());
+  }
+
+  @Test
+  public void testRetrySuiteUsesFinalAttemptError() {
+    mySuite.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
+    mySuite.setSuiteStarted();
+    mySuite.addChild(mySimpleTest);
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("failure", "trace", false);
+    var last = createTestProxy("last", mySuite);
+    last.setStarted();
+    last.setTestFailed("error", "trace", true);
+    mySuite.setFinished();
+
+    assertEquals(Magnitude.ERROR_INDEX, mySuite.getMagnitudeInfo());
+  }
+
+  @Test
+  public void testRetrySuitePreservesTermination() {
+    mySuite.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
+    mySuite.setSuiteStarted();
+    mySuite.addChild(mySimpleTest);
+    mySimpleTest.setStarted();
+    mySuite.setTerminated();
+
+    assertTrue(mySuite.wasTerminated());
+    assertTrue(mySimpleTest.wasTerminated());
+  }
 
   @Test
   public void testTestInstance() {
