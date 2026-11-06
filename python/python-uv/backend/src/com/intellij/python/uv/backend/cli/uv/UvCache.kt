@@ -23,9 +23,9 @@ class UvCache(runtime: PyToolRuntime) : UvCommand("cache", runtime) {
    * Prune all unreachable objects from the cache
    */
   suspend fun prune(ciFriendly: Boolean? = null): PyResult<String> {
-    val arguments = cliArgs(
-      cliArg("--ci".takeIf { ciFriendly == true }),
-    )
+    val arguments = cliArgs {
+      if (ciFriendly == true) add(cliArg("--ci"))
+    }
     return executeAndHandleErrors("prune", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 

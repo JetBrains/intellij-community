@@ -186,11 +186,11 @@ suspend fun HatchCli<PathHolder.Eel>.new(
   location: Path? = null,
   initExistingProject: Boolean = false,
 ): PyResult<String> {
-  val arguments = cliArgs(
-    cliArg("--init".takeIf { initExistingProject }),
-    cliArg(projectName),
-    cliArg(location),
-  )
+  val arguments = cliArgs {
+    if (initExistingProject) add(cliArg("--init"))
+    add(cliArg(projectName))
+    location?.let { add(cliArg(it.toString())) }
+  }
   return runtime.executeInteractive("new", *arguments) { eelProcess, _ ->
     if (initExistingProject) {
       try {

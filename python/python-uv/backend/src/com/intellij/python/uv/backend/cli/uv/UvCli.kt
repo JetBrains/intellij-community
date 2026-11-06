@@ -22,7 +22,11 @@ sealed class UvCommand(private val command: Array<String>, protected val runtime
   }
 
   @Suppress("unused")
-  protected suspend fun <T> executeAndMatch(vararg arguments: String, expectedOutput: Regex, transformer: (MatchResult) -> Result<T, @NlsSafe String?>): PyResult<T> {
+  protected suspend fun <T> executeAndMatch(
+    vararg arguments: String,
+    expectedOutput: Regex,
+    transformer: (MatchResult) -> Result<T, @NlsSafe String?>,
+  ): PyResult<T> {
     return runtime.executeAndMatch(*command, *arguments, expectedOutput = expectedOutput, transformer = transformer)
   }
 }
@@ -102,13 +106,13 @@ class UvCli(private val runtime: PyToolRuntime) {
     python: String? = null,
     vcs: UvInitVcs? = null,
   ): PyResult<String> {
-    val arguments = cliArgs(
-      cliArg("--bare".takeIf { bare }),
-      cliArg(kind?.flag),
-      cliOption("--python", python),
-      cliOption("--vcs", vcs?.value),
-      cliArg(name), // uv takes the project name by position, so it goes after every named argument.
-    )
+    val arguments = cliArgs {
+      if (bare) add(cliArg("--bare"))
+      kind?.let { add(cliArg(it.flag)) }
+      python?.let { add(cliOption("--python", it)) }
+      vcs?.let { add(cliOption("--vcs", it.value)) }
+      name?.let { add(cliArg(it)) } // uv takes the project name by position, so it goes after every named argument.
+    }
     return runtime.executeAndHandleErrors("init", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 
@@ -138,10 +142,10 @@ class UvCli(private val runtime: PyToolRuntime) {
    * Update the project's environment
    */
   suspend fun sync(frozen: Boolean? = null, locked: Boolean? = null): PyResult<String> {
-    val arguments = cliArgs(
-      cliArg("--frozen".takeIf { frozen == true }),
-      cliArg("--locked".takeIf { locked == true }),
-    )
+    val arguments = cliArgs {
+      if (frozen == true) add(cliArg("--frozen"))
+      if (locked == true) add(cliArg("--locked"))
+    }
     return runtime.executeAndHandleErrors("sync", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 

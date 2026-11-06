@@ -100,12 +100,12 @@ class UvPython(runtime: PyToolRuntime) : UvCommand("python", runtime) {
     onlyInstalled: Boolean? = null,
     allVersions: Boolean? = null,
   ): PyResult<List<UvPythonEntry>> {
-    val arguments = cliArgs(
-      cliArg(request),
-      cliArg("--only-installed".takeIf { onlyInstalled == true }),
-      cliArg("--all-versions".takeIf { allVersions == true }),
-      cliOption("--output-format", "json"),
-    )
+    val arguments = cliArgs {
+      request?.let { add(cliArg(it)) }
+      if (onlyInstalled == true) add(cliArg("--only-installed"))
+      if (allVersions == true) add(cliArg("--all-versions"))
+      add(cliOption("--output-format", "json"))
+    }
     val stdout = executeAndHandleErrors("list", *arguments, transformer = ZeroCodeStdoutTransformer)
       .getOr { return it }
     return parseUvPythonList(stdout)
@@ -119,10 +119,10 @@ class UvPython(runtime: PyToolRuntime) : UvCommand("python", runtime) {
    * @param reinstall install the version again even where uv already has it.
    */
   suspend fun install(vararg targets: String, reinstall: Boolean? = null): PyResult<Unit> {
-    val arguments = cliArgs(
-      targets.asList(),
-      cliArg("--reinstall".takeIf { reinstall == true }),
-    )
+    val arguments = cliArgs {
+      add(targets.asList())
+      if (reinstall == true) add(cliArg("--reinstall"))
+    }
     executeAndHandleErrors("install", *arguments, transformer = ZeroCodeStdoutTransformer).getOr { return it }
     return PyResult.success(Unit)
   }
@@ -147,11 +147,11 @@ class UvPython(runtime: PyToolRuntime) : UvCommand("python", runtime) {
    *   while `uv venv --clear` builds the replacement on uv's default.
    */
   suspend fun find(request: String? = null, showVersion: Boolean? = null, system: Boolean? = null): PyResult<String> {
-    val arguments = cliArgs(
-      cliArg(request),
-      cliArg("--show-version".takeIf { showVersion == true }),
-      cliArg("--system".takeIf { system == true }),
-    )
+    val arguments = cliArgs {
+      request?.let { add(cliArg(it)) }
+      if (showVersion == true) add(cliArg("--show-version"))
+      if (system == true) add(cliArg("--system"))
+    }
     return executeAndHandleErrors("find", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 

@@ -29,10 +29,10 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
    *  otherwise, and `uv tool upgrade` is bounded by the original constraints so it cannot help).
    */
   suspend fun install(name: String, reinstall: Boolean = false): PyResult<String> {
-    val arguments = cliArgs(
-      cliArg(name),
-      cliArg("--reinstall".takeIf { reinstall }),
-    )
+    val arguments = cliArgs {
+      add(cliArg(name))
+      if (reinstall) add(cliArg("--reinstall"))
+    }
     return executeAndHandleErrors("install", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 
@@ -56,11 +56,11 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
    * several). Paths may contain spaces, so the parenthesized tails are matched greedily.
    */
   suspend fun list(showVersionSpecifiers: Boolean = false, showPaths: Boolean = false, outdated: Boolean = false): PyResult<List<UvToolListResult>> {
-    val arguments = cliArgs(
-      cliArg("--show-version-specifiers".takeIf { showVersionSpecifiers }),
-      cliArg("--show-paths".takeIf { showPaths }),
-      cliArg("--outdated".takeIf { outdated }),
-    )
+    val arguments = cliArgs {
+      if (showVersionSpecifiers) add(cliArg("--show-version-specifiers"))
+      if (showPaths) add(cliArg("--show-paths"))
+      if (outdated) add(cliArg("--outdated"))
+    }
     val stdout = executeAndHandleErrors("list", *arguments, transformer = ZeroCodeStdoutTransformer).getOr { return it }
 
     val headerRegex = Regex("""^(\S+) v(\S+)(?: \[latest:\s*(\S+)])?(?: \((.+)\))?$""")
@@ -116,9 +116,9 @@ class UvTool(runtime: PyToolRuntime) : UvCommand("tool", runtime) {
    * executables are placed on `PATH`. uv prints a single path line, parsed here into a [Path].
    */
   suspend fun dir(bin: Boolean = false): PyResult<Path> {
-    val arguments = cliArgs(
-      cliArg("--bin".takeIf { bin }),
-    )
+    val arguments = cliArgs {
+      if (bin) add(cliArg("--bin"))
+    }
     val output = executeAndHandleErrors("dir", *arguments, transformer = ZeroCodeStdoutTransformer).getOr { return it }
     return Result.success(Path.of(output.trim()))
   }

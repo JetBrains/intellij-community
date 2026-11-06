@@ -54,22 +54,22 @@ suspend fun <T> PyToolRuntime.executeAndMatch(
   }
 }
 
-// Builders for the arguments of a tool's command line. Each returns the tokens one argument contributes — none when
-// the caller left it unset — and `cliArgs` concatenates them into the array the runtime takes, so that every
-// parameter of a command occupies one line of the call, in the order the command's signature declares it.
+// Builders for the arguments of a tool's command line. Each returns the tokens one argument contributes, and
+// `cliArgs` concatenates them into the array the runtime takes, so that every parameter of a command occupies one
+// line of the call, in the order the command's signature declares it. The builders take no null: the caller adds an
+// optional argument only when it is set, in the `cliArgs { }` block.
 
 /**
- * One token, passed when [value] is not null — a switch, `cliArg("--bare".takeIf { bare })`, or a positional value,
- * `cliArg(projectName)`.
+ * One token — a switch, `if (bare) add(cliArg("--bare"))`, or a positional value, `cliArg(projectName)`.
  *
  * Taking the token rather than a name and a boolean keeps one builder for every switch, including a set of mutually
- * exclusive ones modelled as an enum of flags — `cliArg(kind?.flag)` — where "which one" and "whether any" are one
- * question.
+ * exclusive ones modelled as an enum of flags — `kind?.let { add(cliArg(it.flag)) }` — where "which one" and
+ * "whether any" are one question.
  */
-fun cliArg(value: Any?): List<String> = listOfNotNull(value?.toString())
+fun cliArg(value: String): List<String> = listOf(value)
 
-/** An option and its value, passed together when [value] is not null, and both dropped when it is. */
-fun cliOption(name: String, value: Any?): List<String> = if (value == null) emptyList() else listOf(name, value.toString())
+/** An option and its value, passed together. */
+fun cliOption(name: String, value: String): List<String> = listOf(name, value)
 
 /**
  * Renders [cliArgs] into the token array the runtime takes.
@@ -79,3 +79,5 @@ fun cliOption(name: String, value: Any?): List<String> = if (value == null) empt
  * a caller that must have the other behaviour passes the opposing value rather than leaving the argument out.
  */
 fun cliArgs(vararg cliArgs: List<String>): Array<String> = cliArgs.flatMap { it }.toTypedArray()
+fun cliArgs(builderAction: MutableList<List<String>>.() -> Unit): Array<String> =
+  cliArgs(*mutableListOf<List<String>>().also { builderAction.invoke(it) }.toTypedArray())

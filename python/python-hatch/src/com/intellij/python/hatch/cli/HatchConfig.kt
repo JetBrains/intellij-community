@@ -46,9 +46,9 @@ class HatchConfig<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("con
    * @param all Do not scrub secret fields
    */
   suspend fun show(all: Boolean? = null): PyResult<String> {
-    val arguments = cliArgs(
-      cliArg("--all".takeIf { all == true }),
-    )
+    val arguments = cliArgs {
+      if (all == true) add(cliArg("--all"))
+    }
     return executeAndHandleErrors("show", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 

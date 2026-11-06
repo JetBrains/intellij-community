@@ -245,11 +245,11 @@ class HatchEnv<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("env", 
    * - An error wrapped in [ExecError] if an execution failure occurs.
    */
   suspend fun show(vararg envs: String, internal: Boolean = false): PyResult<HatchEnvironments> {
-    val arguments = cliArgs(
-      cliArg("--ascii"),
-      cliArg("--internal".takeIf { internal }),
-      envs.asList(),
-    )
+    val arguments = cliArgs {
+      add(cliArg("--ascii"))
+      if (internal) add(cliArg("--internal"))
+      add(envs.asList())
+    }
 
     return executeAndMatch("show", *arguments, expectedOutput = SHOW_RESPONSE_REGEX) { matchResult ->
       val (standaloneTable, matricesTable) = matchResult.destructured

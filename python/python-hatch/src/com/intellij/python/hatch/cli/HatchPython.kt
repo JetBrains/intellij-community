@@ -31,11 +31,11 @@ class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pyt
    * @param dir The directory in which distributions reside
    */
   suspend fun find(name: String, parent: Boolean? = null, dir: String? = null): PyResult<Path?> {
-    val arguments = cliArgs(
-      cliArg("--parent".takeIf { parent == true }),
-      cliOption("--dir", dir),
-      cliArg(name),
-    )
+    val arguments = cliArgs {
+      if (parent == true) add(cliArg("--parent"))
+      dir?.let { add(cliOption("--dir", it)) }
+      add(cliArg(name))
+    }
 
     return executeAndHandleErrors("find", *arguments) { output ->
       when {
@@ -138,12 +138,12 @@ class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pyt
     update: Boolean? = null,
     dir: String? = null,
   ): PyResult<PythonInstallResponse> {
-    val arguments = cliArgs(
-      cliArg("--update".takeIf { update == true }),
-      cliArg("--private".takeIf { private == true }),
-      cliOption("--dir", dir),
-      names.asList(),
-    )
+    val arguments = cliArgs {
+      if (update == true) add(cliArg("--update"))
+      if (private == true) add(cliArg("--private"))
+      dir?.let { add(cliOption("--dir", it)) }
+      add(names.asList())
+    }
     return executeAndHandleErrors("install", *arguments) { output ->
       Result.success(parsePythonInstallCommandOutput(output))
     }
@@ -158,10 +158,10 @@ class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pyt
    * @param dir The directory in which distributions reside
    */
   suspend fun remove(vararg names: String = ALL_NAMES, dir: String? = null): PyResult<PythonRemoveResponse> {
-    val arguments = cliArgs(
-      cliOption("--dir", dir),
-      names.asList(),
-    )
+    val arguments = cliArgs {
+      dir?.let { add(cliOption("--dir", it)) }
+      add(names.asList())
+    }
     return executeAndHandleErrors("remove", *arguments) { processOutput ->
       val output = processOutput.stderrString
       val notInstalledRegex = Regex("""^Distribution is not installed: (.*)$""", RegexOption.MULTILINE)
@@ -199,10 +199,10 @@ class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pyt
 
     val expectedOutput = """^(?:\s*Installed\s*\n$tableRegex)?\s*Available\s*\n$tableRegex$""".toRegex(RegexOption.MULTILINE)
 
-    val arguments = cliArgs(
-      cliArg("--ascii"),
-      cliOption("--dir", dir),
-    )
+    val arguments = cliArgs {
+      add(cliArg("--ascii"))
+      dir?.let { add(cliOption("--dir", it)) }
+    }
     return executeAndMatch("show", *arguments, expectedOutput = expectedOutput) { matchResult ->
       matchResult.destructured.let { (installedTable, availableTable) ->
         ShowResponse(
@@ -222,10 +222,10 @@ class HatchPython<P : PathHolder>(runtime: PyToolRuntime) : HatchCommand<P>("pyt
    * @param dir The directory in which distributions reside
    */
   suspend fun update(vararg names: String = ALL_NAMES, dir: String? = null): PyResult<PythonInstallResponse> {
-    val arguments = cliArgs(
-      cliOption("--dir", dir),
-      names.asList(),
-    )
+    val arguments = cliArgs {
+      dir?.let { add(cliOption("--dir", it)) }
+      add(names.asList())
+    }
     return executeAndHandleErrors("update", *arguments) { output ->
       Result.success(parsePythonInstallCommandOutput(output))
     }

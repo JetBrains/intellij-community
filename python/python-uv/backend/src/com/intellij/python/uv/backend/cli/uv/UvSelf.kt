@@ -22,10 +22,10 @@ class UvSelf(runtime: PyToolRuntime) : UvCommand("self", runtime) {
    * @param dryRun Passes `--dry-run`: report what the update would do and change nothing.
    */
   suspend fun update(targetVersion: String? = null, dryRun: Boolean = false): PyResult<UvSelfUpdateResult> {
-    val arguments = cliArgs(
-      cliArg(targetVersion),
-      cliArg("--dry-run".takeIf { dryRun }),
-    )
+    val arguments = cliArgs {
+      targetVersion?.let { add(cliArg(it)) }
+      if (dryRun) add(cliArg("--dry-run"))
+    }
     return executeAndHandleErrors("update", *arguments, transformer = SELF_UPDATE_TRANSFORMER)
   }
 
@@ -33,9 +33,9 @@ class UvSelf(runtime: PyToolRuntime) : UvCommand("self", runtime) {
    * Display uv's version
    */
   suspend fun version(short: Boolean? = null): PyResult<String> {
-    val arguments = cliArgs(
-      cliArg("--short".takeIf { short == true }),
-    )
+    val arguments = cliArgs {
+      if (short == true) add(cliArg("--short"))
+    }
     return executeAndHandleErrors("version", *arguments, transformer = ZeroCodeStdoutTransformer)
   }
 }
