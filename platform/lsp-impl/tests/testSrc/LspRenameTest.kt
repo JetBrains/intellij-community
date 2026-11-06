@@ -24,6 +24,8 @@ import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.PrepareRenameDefaultBehavior
 import org.eclipse.lsp4j.PrepareRenameResult
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.Registration
+import org.eclipse.lsp4j.RegistrationParams
 import org.eclipse.lsp4j.RenameFile
 import org.eclipse.lsp4j.RenameOptions
 import org.eclipse.lsp4j.TextDocumentEdit
@@ -197,6 +199,43 @@ internal class LspRenameTest {
         assertEquals(5, selectionModel.selectionEnd, "Selection should end at position 5")
         assertEquals("hello", selectionModel.selectedText, "Selected text should be 'hello'")
       }
+    }
+  }
+
+  @Nested
+  inner class DynamicRegistration {
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
+      lspCustomization = object : LspCustomization() {
+        override val renameCustomizer = object : LspRenameSupport() {
+          override fun shouldRunRename(psiFile: PsiFile): Boolean = true
+        }
+      },
+    )
+
+    @Test
+    fun `prepareRename is sent when any matching dynamic registration has a prepare provider`() = timeoutRunBlocking {
+      TemplateManagerImpl.setTemplateTesting(project)
+
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(
+          Registration("rename-1", "textDocument/rename", RenameOptions()),
+          Registration("rename-2", "textDocument/rename", RenameOptions().apply {
+            prepareProvider = true
+          }),
+          Registration("rename-3", "textDocument/rename", RenameOptions()),
+        ))
+      }
+
+      serverSession.expectRequest(serverSession.PREPARE_RENAME, { it.textDocument.uri == fileUri }) {
+        Either3.forSecond(PrepareRenameResult(Range(Position(0, 0), Position(0, 5)), "hello"))
+      }
+
+      triggerRename()
+
+      serverSession.awaitExpected()
     }
   }
 

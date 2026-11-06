@@ -919,6 +919,39 @@ internal class LspCompletionTest {
     }
 
     @Test
+    fun `the trigger characters of every matching dynamic registration open the completion popup`(): Unit = timeoutRunBlocking {
+      val autoPopupTester = CompletionAutoPopupTester(codeInsightFixture)
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "foo<caret>").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(
+          Registration("completion-1", "textDocument/completion", CompletionRegistrationOptions().apply {
+            triggerCharacters = listOf("#")
+          }),
+          Registration("completion-2", "textDocument/completion", CompletionRegistrationOptions().apply {
+            triggerCharacters = listOf("|")
+          }),
+        ))
+      }
+
+      // An empty result opens no lookup, so the next character starts a new completion.
+      for (triggerCharacter in listOf("#", "|")) {
+        serverSession.expectRequest(serverSession.COMPLETION, {
+          it.textDocument.uri == serverSession.fileUri(virtualFile) &&
+          it.context?.triggerKind == CompletionTriggerKind.TriggerCharacter &&
+          it.context?.triggerCharacter == triggerCharacter
+        }) {
+          Either.forLeft(emptyList())
+        }
+
+        autoPopupTester.runWithAutoPopupEnabled {
+          autoPopupTester.typeWithPauses(triggerCharacter)
+        }
+        serverSession.awaitExpected()
+      }
+    }
+
+    @Test
     fun `completion item resolve uses the resolve provider of the dynamic registration`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
       val serverSession = fakeLspIntegration.serverSession(virtualFile)
@@ -926,6 +959,33 @@ internal class LspCompletionTest {
         RegistrationParams(listOf(Registration("completion", "textDocument/completion", CompletionRegistrationOptions().apply {
           resolveProvider = true
         })))
+      }
+
+      serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+        Either.forLeft(listOf(CompletionItem("myItem")))
+      }
+      serverSession.expectRequest(serverSession.COMPLETION_ITEM_RESOLVE, { it.label == "myItem" }) {
+        CompletionItem("myItem").apply { detail = "fun myItem(): String" }
+      }
+
+      val element = codeInsightFixture.completeBasic()!!.single()
+      serverSession.awaitExpected()
+
+      assertEquals("fun myItem(): String", awaitResolveAndRender(element).typeText)
+    }
+
+    @Test
+    fun `completion item resolve is sent when any matching dynamic registration has a resolve provider`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(
+          Registration("completion-1", "textDocument/completion", CompletionRegistrationOptions()),
+          Registration("completion-2", "textDocument/completion", CompletionRegistrationOptions().apply {
+            resolveProvider = true
+          }),
+          Registration("completion-3", "textDocument/completion", CompletionRegistrationOptions()),
+        ))
       }
 
       serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {

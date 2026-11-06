@@ -45,90 +45,95 @@ class LspCodeLensTest {
   private val sharedFileFixture = sourceRootFixture.psiFileFixture("test.txt", "")
   private val editorFixture = sharedFileFixture.editorFixture()
 
-  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
-    configureServerCapabilities = {
-      codeLensProvider = CodeLensOptions()
-    },
-  )
   private val codeVision by codeVisionFixture(editorFixture, sharedFileFixture)
 
-  @Test
-  fun `code lens rendered as code vision`() = timeoutRunBlocking {
-    val psiFile = sharedFileFixture.get()
-    val codeInsightContext = readAction { psiFile.codeInsightContext }
+  @Nested
+  inner class StaticRegistration {
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
+      configureServerCapabilities = {
+        codeLensProvider = CodeLensOptions()
+      },
+    )
 
-    val virtualFile = psiFile.virtualFile
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
+    @Test
+    fun `code lens rendered as code vision`() = timeoutRunBlocking {
+      val psiFile = sharedFileFixture.get()
+      val codeInsightContext = readAction { psiFile.codeInsightContext }
 
-    serverSession.expectRequest(serverSession.CODE_LENS, {
-      it.textDocument.uri == serverSession.fileUri(virtualFile) && editorFixture.get().document.textLength > 0
-    }) {
-      listOf(
-        CodeLens(Range(Position(0, 0), Position(0, 1)), Command("Run", "run"), null)
-      )
+      val virtualFile = psiFile.virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+
+      serverSession.expectRequest(serverSession.CODE_LENS, {
+        it.textDocument.uri == serverSession.fileUri(virtualFile) && editorFixture.get().document.textLength > 0
+      }) {
+        listOf(
+          CodeLens(Range(Position(0, 0), Position(0, 1)), Command("Run", "run"), null)
+        )
+      }
+
+      checkCodeLensRetrying("""
+        /*<# block [Run] #>*/
+        fun main() {}
+      """.trimIndent(), codeInsightContext)
+
+      serverSession.awaitExpected()
     }
 
-    checkCodeLensRetrying("""
-      /*<# block [Run] #>*/
-      fun main() {}
-    """.trimIndent(), codeInsightContext)
+    @Test
+    fun `two code lens on the same line rendered`() = timeoutRunBlocking {
+      val psiFile = sharedFileFixture.get()
+      val codeInsightContext = readAction { psiFile.codeInsightContext }
 
-    serverSession.awaitExpected()
-  }
+      val virtualFile = psiFile.virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
-  @Test
-  fun `two code lens on the same line rendered`() = timeoutRunBlocking {
-    val psiFile = sharedFileFixture.get()
-    val codeInsightContext = readAction { psiFile.codeInsightContext }
+      serverSession.expectRequest(serverSession.CODE_LENS, {
+        it.textDocument.uri == serverSession.fileUri(virtualFile) && editorFixture.get().document.textLength > 0
+      }) {
+        listOf(
+          CodeLens(Range(Position(0, 0), Position(0, 1)), Command("Run", "run"), null),
+          CodeLens(Range(Position(0, 0), Position(0, 1)), Command("Test", "test"), null),
+        )
+      }
 
-    val virtualFile = psiFile.virtualFile
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      checkCodeLensRetrying("""
+        /*<# block [Run   Test] #>*/
+        fun main() {}
+      """.trimIndent(), codeInsightContext)
 
-    serverSession.expectRequest(serverSession.CODE_LENS, {
-      it.textDocument.uri == serverSession.fileUri(virtualFile) && editorFixture.get().document.textLength > 0
-    }) {
-      listOf(
-        CodeLens(Range(Position(0, 0), Position(0, 1)), Command("Run", "run"), null),
-        CodeLens(Range(Position(0, 0), Position(0, 1)), Command("Test", "test"), null),
-      )
+      serverSession.awaitExpected()
     }
 
-    checkCodeLensRetrying("""
-      /*<# block [Run   Test] #>*/
-      fun main() {}
-    """.trimIndent(), codeInsightContext)
+    @Test
+    fun `codicon tokens are stripped from a code lens title`() = timeoutRunBlocking {
+      val psiFile = sharedFileFixture.get()
+      val codeInsightContext = readAction { psiFile.codeInsightContext }
 
-    serverSession.awaitExpected()
-  }
+      val virtualFile = psiFile.virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
 
-  @Test
-  fun `codicon tokens are stripped from a code lens title`() = timeoutRunBlocking {
-    val psiFile = sharedFileFixture.get()
-    val codeInsightContext = readAction { psiFile.codeInsightContext }
+      serverSession.expectRequest(serverSession.CODE_LENS, {
+        it.textDocument.uri == serverSession.fileUri(virtualFile) && editorFixture.get().document.textLength > 0
+      }) {
+        listOf(
+          CodeLens(Range(Position(0, 0), Position(0, 1)), Command("$(play) Run", "run"), null),
+          CodeLens(Range(Position(0, 0), Position(0, 1)), Command("$(debug) Debug", "debug"), null),
+        )
+      }
 
-    val virtualFile = psiFile.virtualFile
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      checkCodeLensRetrying("""
+        /*<# block [Run   Debug] #>*/
+        fun main() {}
+      """.trimIndent(), codeInsightContext)
 
-    serverSession.expectRequest(serverSession.CODE_LENS, {
-      it.textDocument.uri == serverSession.fileUri(virtualFile) && editorFixture.get().document.textLength > 0
-    }) {
-      listOf(
-        CodeLens(Range(Position(0, 0), Position(0, 1)), Command("$(play) Run", "run"), null),
-        CodeLens(Range(Position(0, 0), Position(0, 1)), Command("$(debug) Debug", "debug"), null),
-      )
+      serverSession.awaitExpected()
     }
-
-    checkCodeLensRetrying("""
-      /*<# block [Run   Debug] #>*/
-      fun main() {}
-    """.trimIndent(), codeInsightContext)
-
-    serverSession.awaitExpected()
   }
 
   @Nested
   inner class DynamicRegistration {
-    // the static `CodeLensOptions()` has no resolve provider, so the resolve provider of the registration decides
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
+
     @Test
     fun `code lens resolve uses the resolve provider of the dynamic registration`() = timeoutRunBlocking {
       val psiFile = sharedFileFixture.get()
@@ -140,6 +145,42 @@ class LspCodeLensTest {
         RegistrationParams(listOf(Registration("code-lens", "textDocument/codeLens", CodeLensRegistrationOptions().apply {
           resolveProvider = true
         })))
+      }
+
+      serverSession.expectRequest(serverSession.CODE_LENS, {
+        it.textDocument.uri == serverSession.fileUri(virtualFile) && editorFixture.get().document.textLength > 0
+      }) {
+        listOf(
+          CodeLens(Range(Position(0, 0), Position(0, 1)), null, "lens-data")
+        )
+      }
+      serverSession.expectRequest(serverSession.CODE_LENS_RESOLVE, { it.data?.toString() == "\"lens-data\"" }) {
+        CodeLens(Range(Position(0, 0), Position(0, 1)), Command("Run", "run"), "lens-data")
+      }
+
+      checkCodeLensRetrying("""
+        /*<# block [Run] #>*/
+        fun main() {}
+      """.trimIndent(), codeInsightContext)
+
+      serverSession.awaitExpected()
+    }
+
+    @Test
+    fun `code lens resolve is sent when any matching dynamic registration has a resolve provider`() = timeoutRunBlocking {
+      val psiFile = sharedFileFixture.get()
+      val codeInsightContext = readAction { psiFile.codeInsightContext }
+
+      val virtualFile = psiFile.virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(
+          Registration("code-lens-1", "textDocument/codeLens", CodeLensRegistrationOptions()),
+          Registration("code-lens-2", "textDocument/codeLens", CodeLensRegistrationOptions().apply {
+            resolveProvider = true
+          }),
+          Registration("code-lens-3", "textDocument/codeLens", CodeLensRegistrationOptions()),
+        ))
       }
 
       serverSession.expectRequest(serverSession.CODE_LENS, {
