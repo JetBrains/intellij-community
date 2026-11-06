@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision
 
+import com.intellij.codeInsight.hints.codeVision.CodeVisionProjectSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -42,6 +43,8 @@ class AppCodeVisionInitializationHost {
 
   suspend fun runForProjectIfNotInitialized(project: Project) {
     val host = project.serviceAsync<CodeVisionHost>()
+    // the host reads the project settings on the EDT when an editor is selected; load them here, off the EDT
+    project.serviceAsync<CodeVisionProjectSettings>()
     withContext(Dispatchers.EDT) {
       host.initializeIfNeeded()
     }
