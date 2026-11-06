@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -54,6 +55,50 @@ jvm_library(
     runtime_deps = ["//platform/platform-impl:ide-impl"],
 )
 ### auto-generated section `build intellij.devkit` end
+
+### auto-generated section `plugin intellij.devkit` start
+ij_plugin(
+    name = "devkit_plugin",
+    descriptor_module = ":devkit",
+    content_modules = [
+        # do not sort,
+        "//plugins/devkit/devkit-core:core",
+        "//plugins/devkit/intellij.devkit.compose:compose",
+        "//plugins/devkit/intellij.devkit.experiments:experiments",
+        "//plugins/devkit/intellij.devkit.gradle:gradle",
+        "//plugins/devkit/intellij.devkit.gradle.toml:gradle-toml",
+        "//plugins/devkit/intellij.devkit.gradle.tooling:gradle-tooling",
+        "//plugins/devkit/intellij.devkit.i18n:i18n",
+        "//plugins/devkit/intellij.devkit.intelliLang:intelliLang",
+        "//plugins/devkit/intellij.devkit.themes:themes",
+        "//plugins/devkit/intellij.devkit.uiDesigner:uiDesigner",
+        "//plugins/devkit/intellij.devkit.uiDsl:uiDsl",
+        "//plugins/devkit/intellij.devkit.workspaceModel:workspaceModel",
+        "//plugins/devkit/intellij.devkit.workspaceModel/k2",
+        "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
+        "//plugins/devkit/intellij.kotlin.devkit/k2",
+        "//plugins/devkit/intellij.devkit.debugger:debugger",
+        "//plugins/devkit/intellij.devkit.stacktrace:stacktrace",
+        "//plugins/devkit/api-dump",
+        "//plugins/devkit/api-dump-lang:apiDump-lang",
+        "//plugins/devkit/intellij.devkit.scaffolding:scaffolding",
+        "//plugins/devkit/intellij.devkit.modules:modules",
+        "//plugins/devkit/intellij.devkit.mcp:mcp",
+        "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections",
+        "//plugins/devkit/intellij.devkit.threading:threading",
+        "//plugins/devkit/intellij.devkit.smartupdate:smartupdate",
+        "//plugins/devkit/jps-plugin:jps",
+        "//platform/jewel/samples/showcase",
+        "//libraries/workspace-model-codegen:workspace-model-codegen_plugin_module",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            "@@//plugins/devkit-ultimate/intellij.devkit.qodana:devkit-qodana",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.devkit` end
 
 ### auto-generated section `iml intellij.devkit` start
 exports_files(
