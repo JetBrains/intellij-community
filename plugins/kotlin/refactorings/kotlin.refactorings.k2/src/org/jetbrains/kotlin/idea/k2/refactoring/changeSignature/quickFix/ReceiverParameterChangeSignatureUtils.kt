@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiRecursiveVisitor
+import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
+import org.jetbrains.kotlin.idea.base.psi.removeModifierKeyword
 import org.jetbrains.kotlin.idea.base.psi.setCallableReceiverTypeReference
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.typeIfSafeToResolve
@@ -75,6 +77,7 @@ object ReceiverParameterChangeSignatureUtils {
     fun removeReceiverParameter(project: Project, callableDeclaration: KtCallableDeclaration, textForReceiver: String? = null) {
         val typeReference = callableDeclaration.receiverTypeReference ?: return
         val typeParameters = typeParameters(typeReference)
+        val declarationPointer = SmartPointerManager.createPointer(callableDeclaration)
 
         if (textForReceiver != null) {
             runWriteAction {
@@ -91,6 +94,11 @@ object ReceiverParameterChangeSignatureUtils {
         }
 
         removeUnusedTypeParameters(typeParameters)
+
+        val declaration = declarationPointer.element
+        if (declaration != null && declaration.hasModifier(KtTokens.COMPANION_KEYWORD)) {
+            runWriteAction { declaration.removeModifierKeyword(KtTokens.COMPANION_KEYWORD) }
+        }
     }
 
     context(_: KaSession)

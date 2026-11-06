@@ -13794,6 +13794,36 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("companionFun.kt")
+        public void testCompanionFun() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUnusedReceiver/companionFun.kt");
+        }
+
+        @TestMetadata("companionFun2.kt")
+        public void testCompanionFun2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUnusedReceiver/companionFun2.kt");
+        }
+
+        @TestMetadata("companionFun3.kt")
+        public void testCompanionFun3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUnusedReceiver/companionFun3.kt");
+        }
+
+        @TestMetadata("companionFun4.kt")
+        public void testCompanionFun4() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUnusedReceiver/companionFun4.kt");
+        }
+
+        @TestMetadata("companionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUnusedReceiver/companionObject.kt");
+        }
+
+        @TestMetadata("companionProperty.kt")
+        public void testCompanionProperty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/removeUnusedReceiver/companionProperty.kt");
+        }
+
         @TestMetadata("inFunction.kt")
         public void testInFunction() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/removeUnusedReceiver/inFunction.kt");

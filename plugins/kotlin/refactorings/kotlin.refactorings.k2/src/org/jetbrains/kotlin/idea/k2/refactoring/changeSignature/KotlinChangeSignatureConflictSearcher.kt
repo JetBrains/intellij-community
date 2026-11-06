@@ -157,7 +157,11 @@ class KotlinChangeSignatureConflictSearcher(
         }
         if (function.hasModifier(KtTokens.COMPANION_KEYWORD)) {
             if (newReceiverInfo == null) {
-                result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.must.have.receiver"))
+                val receiverBecomesParameter =
+                    originalReceiverInfo != null && originalReceiverInfo in originalInfo.getNonReceiverParameters()
+                if (receiverBecomesParameter) {
+                    result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.must.have.receiver"))
+                }
             } else {
                 fun hasCompanionExtensionRelevantUsages() = refUsages.get().any { usage ->
                     when (usage) {
