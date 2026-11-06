@@ -48,17 +48,18 @@ class SettingsImpl internal constructor(
     @Suppress("DEPRECATION")
     state = EditorSettingsState(editor, project, softWrapAppliancePlace)
     state.refreshAll()
+    // A read computes nothing, so the first computation of the inputs starts here. Settings without an editor have no
+    // file, so their seeds are the computed values already.
+    // The computation comes before the listener below. In unit-test mode it runs at once, while the editor is still
+    // under construction and must not refresh. In production, the result comes in a later EDT event.
+    if (editor != null) {
+      state.recalculateInputs()
+    }
     state.addPropertyChangeListener(object : ObservableStateListener {
       override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
         onStatePropertyChanged(event)
       }
     })
-    // The first computation of the inputs starts here, so that a read starts nothing. It comes after the listener above,
-    // which refreshes the editor when a result changes a value. Settings without an editor have no file, so their seeds
-    // are the computed values already. In unit-test mode, the state computes the values at once instead.
-    if (editor != null && BackgroundStateInput.computesInBackground()) {
-      state.recalculateInputs()
-    }
   }
 
   /**
@@ -74,11 +75,7 @@ class SettingsImpl internal constructor(
    */
   fun reinitSettings() {
     state.refreshAll()
-    // Recompute the inputs at once, instead of waiting for the next reader.
-    //
-    // Nothing reads the tab character until the user indents, and the Remote Development frontend never reads it at
-    // all: it takes the value the backend pushed. A backend that waited for a local reader would leave that
-    // frontend indenting with the previous code style. The same computation refreshes the indent options of the document.
+    // The same computation refreshes the indent options of the document.
     state.recalculateInputs()
   }
 
@@ -474,7 +471,7 @@ class SettingsImpl internal constructor(
 
   override fun isUseTabCharacter(project: Project?): Boolean {
     if (project == null || project == state.project || state.isOverridden(state::myUseTabCharacter)) {
-      return state.currentUseTabCharacter()
+      return state.myUseTabCharacter
     }
     // A project-less editor can get a caller with a project, for example in Fleet (IJPL-26876).
     if (state.project != null) {
@@ -489,7 +486,7 @@ class SettingsImpl internal constructor(
 
   override fun getTabSize(project: Project?): Int {
     if (project == null || project == state.project || state.isOverridden(state::tabSize)) {
-      return state.currentTabSize()
+      return state.tabSize
     }
     return max(1, foreignIndentOptions(project).TAB_SIZE)
   }

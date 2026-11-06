@@ -7,11 +7,16 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
+import com.intellij.psi.codeStyle.FileIndentOptionsProvider
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -115,9 +120,6 @@ class EditorSettingsLockFreeCreationTest {
    * `CODE_STYLE_SETTINGS` user data of the editor over the project settings, and
    * `EditorImpl.codeStyleSettingsChanged` is what refreshes that user data and calls
    * `SettingsImpl.reinitSettings`. Without the event the pinned settings hide the new ones.
-   *
-   * This does not cover the *cache* invalidation. `EditorSettingsState.currentUseTabCharacter` reads no cache
-   * in unit-test mode, so there is no cached value here to invalidate.
    */
   @Test
   fun testCodeStyleChangeReachesTheTabCharacter(): Unit = fixture.runTest {
@@ -140,10 +142,14 @@ class EditorSettingsLockFreeCreationTest {
   /**
    * The state property carries the value to the Remote Development frontend, which computes none of its own.
    * Its default must therefore be the project setting, and not the global one.
+   *
+   * The inputs compute in the background, as in production. The result comes in a later EDT event, so the test reads
+   * the default before the result.
    */
   @Test
   fun testTheTabCharacterStateDefaultIsTheProjectSetting(): Unit = fixture.runTest {
     initText("abc")
+    EditorSettingsState.computeInputsInBackgroundInTests(testRootDisposable)
     val projectValue = !CodeStyleSettings.getDefaults().indentOptions.USE_TAB_CHARACTER
     val manager = CodeStyleSettingsManager.getInstance(project)
     val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
@@ -167,6 +173,7 @@ class EditorSettingsLockFreeCreationTest {
   @Test
   fun testTheTabSizeStateDefaultIsTheProjectSetting(): Unit = fixture.runTest {
     initText("abc")
+    EditorSettingsState.computeInputsInBackgroundInTests(testRootDisposable)
     val projectValue = CodeStyleSettings.getDefaults().indentOptions.TAB_SIZE + 3
     val manager = CodeStyleSettingsManager.getInstance(project)
     val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
@@ -182,6 +189,59 @@ class EditorSettingsLockFreeCreationTest {
         editorFactory.releaseEditor(created)
       }
     })
+  }
+
+  /**
+   * The settings compute the indent of the editor file when they are built. So the stored tab size is the value of the
+   * file before any event, and not the project setting.
+   */
+  @Test
+  fun testTheTabSizeOfTheFileIsStoredWhenTheEditorIsBuilt(): Unit = fixture.runTest {
+    initText("abc")
+    val fileTabSize = CodeStyle.getSettings(project).indentOptions.TAB_SIZE + 3
+    ExtensionTestUtil.maskExtensions(FileIndentOptionsProvider.EP_NAME, listOf(FixedTabSizeProvider(fileTabSize)), testRootDisposable)
+
+    val editorFactory = EditorFactory.getInstance()
+    val created = editorFactory.createEditor(editor.document, project)
+    try {
+      val settings = created.settings as SettingsImpl
+      assertEquals(fileTabSize, settings.getState().tabSize)
+      assertEquals(fileTabSize, settings.getTabSize(project))
+    }
+    finally {
+      editorFactory.releaseEditor(created)
+    }
+  }
+
+  /**
+   * A read returns the stored tab size and computes nothing, also in unit-test mode. So a code-style change reaches the
+   * editor only through its event. The document has no file, so the project settings give the value, and the editor
+   * holds no code style settings of its own.
+   */
+  @Test
+  fun testATabSizeReadComputesNothing(): Unit = fixture.runTest {
+    val editorFactory = EditorFactory.getInstance()
+    val created = editorFactory.createEditor(editorFactory.createDocument("abc"), project)
+    try {
+      val settings = created.settings as SettingsImpl
+      val original = settings.getTabSize(project)
+      val changed = original + 3
+
+      val manager = CodeStyleSettingsManager.getInstance(project)
+      val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
+      temporary.indentOptions.TAB_SIZE = changed
+      CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
+        assertEquals(original, settings.getTabSize(project))
+        manager.fireCodeStyleSettingsChanged()
+        assertEquals(changed, settings.getTabSize(project))
+      })
+
+      manager.fireCodeStyleSettingsChanged()
+      assertEquals(original, settings.getTabSize(project))
+    }
+    finally {
+      editorFactory.releaseEditor(created)
+    }
   }
 
   /**
@@ -326,5 +386,17 @@ class EditorSettingsLockFreeCreationTest {
       settings.setTabSize(explicit)
       assertEquals(explicit, settings.getTabSize(project))
     })
+  }
+}
+
+/**
+ * Gives each file the code style indent with [tabSize].
+ */
+private class FixedTabSizeProvider(private val tabSize: Int) : FileIndentOptionsProvider() {
+  override fun getIndentOptions(project: Project, settings: CodeStyleSettings, file: VirtualFile): IndentOptions {
+    val options = IndentOptions()
+    options.copyFrom(settings.indentOptions)
+    options.TAB_SIZE = tabSize
+    return options
   }
 }

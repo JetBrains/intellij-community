@@ -5,9 +5,6 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorCoreUtil
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.actions.CaretStopOptions
@@ -81,17 +78,7 @@ class EditorSettingsState(
   var rtlEnabled: Boolean by property(!EditorRegistry.current().isRtlDisabled())
 
   // Settings from the code style.
-
-  /**
-   * Read this value through [currentUseTabCharacter]. In unit-test mode, that function computes the value, and a direct
-   * read does not.
-   */
   var myUseTabCharacter: Boolean by codeStyleProperty(projectFileIndent().useTabCharacter) { fileIndent.useTabCharacter }
-
-  /**
-   * Read this value through [currentTabSize]. In unit-test mode, that function computes the value, and a direct read
-   * does not.
-   */
   var tabSize: Int by codeStyleProperty(projectFileIndent().tabSize) { fileIndent.tabSize }
 
   var myWrapWhenTypingReachesRightMargin: Boolean by codeStyleProperty(initialMargins().wrapOnTyping) { margins.wrapOnTyping }
@@ -176,39 +163,6 @@ class EditorSettingsState(
     }
 
   /**
-   * The tab size that the editor uses.
-   *
-   * When the inputs compute in the background, a call returns [tabSize]. [SettingsImpl] starts the first computation of
-   * [fileIndent] when it is built, so a call starts nothing.
-   *
-   * When the inputs compute synchronously, as in unit-test mode, the state keeps no cached value. A call returns the
-   * override, or it computes the value on the calling thread. A test can change the code style without an event, and the
-   * editor must see the new value at once.
-   */
-  internal fun currentTabSize(): Int {
-    if (!BackgroundStateInput.computesInBackground()) {
-      if (isOverridden(::tabSize)) {
-        return tabSize
-      }
-      return computeFileIndentForTest().tabSize
-    }
-    return tabSize
-  }
-
-  /**
-   * The tab character setting that the editor uses. The rules of [currentTabSize] apply.
-   */
-  internal fun currentUseTabCharacter(): Boolean {
-    if (!BackgroundStateInput.computesInBackground()) {
-      if (isOverridden(::myUseTabCharacter)) {
-        return myUseTabCharacter
-      }
-      return computeFileIndentForTest().useTabCharacter
-    }
-    return myUseTabCharacter
-  }
-
-  /**
    * Computes the inputs again: the language, [margins], and [fileIndent]. Then it refreshes the properties that read them.
    *
    * [SettingsImpl] calls this when it is built, and [SettingsImpl.reinitSettings] calls this after each event that can
@@ -276,7 +230,7 @@ class EditorSettingsState(
 
   private val fileIndentInput: BackgroundStateInput<FileIndent> = BackgroundStateInput(
     scope = EditorCoroutineScopes.settingsScope(editor, project),
-    compute = { computeFileIndent(ignoreDocOptions = true) },
+    compute = { computeFileIndent() },
     update = ::updateFileIndent,
   )
 
@@ -446,16 +400,10 @@ class EditorSettingsState(
   }
 
   /**
-   * The margins before the first computation.
-   *
-   * When the inputs compute in the background, the project settings give them, because those settings need no lock.
-   * Otherwise, as in unit-test mode, the margins are computed at once.
+   * The margins before the first computation. The project settings give them, because those settings need no lock.
    */
   private fun initialMargins(): Margins {
-    if (BackgroundStateInput.computesInBackground()) {
-      return marginsOf(CodeStyle.getProjectOrDefaultSettings(project))
-    }
-    return computeMargins()
+    return marginsOf(CodeStyle.getProjectOrDefaultSettings(project))
   }
 
   private fun computeMargins(): Margins {
@@ -509,26 +457,12 @@ class EditorSettingsState(
   }
 
   /**
-   * Computes the value for a getter in unit-test mode.
-   *
-   * The options stored on the document answer first, because a call to the providers can have side effects. For example,
-   * `DetectableIndentOptionsProvider` stores new options after an edit, and it runs the detection at once in unit-test
-   * mode.
-   */
-  private fun computeFileIndentForTest(): FileIndent {
-    val result = runCatching {
-      computeFileIndent(ignoreDocOptions = false)
-    }.getOrLogException(LOG)
-    return result ?: projectFileIndent()
-  }
-
-  /**
    * Computes the [FileIndent] of the editor file.
    *
-   * The per-file options need the PSI, so the caller must have read access. [ignoreDocOptions] skips the options stored
-   * on the document. A recompute sets it, because its result replaces those options.
+   * The per-file options need the PSI, so the caller must have read access. The computation skips the options stored on
+   * the document, because an editor that is not a viewer stores its result there.
    */
-  private fun computeFileIndent(ignoreDocOptions: Boolean): FileIndent {
+  private fun computeFileIndent(): FileIndent {
     if (editor == null || project == null) {
       return projectFileIndent()
     }
@@ -538,7 +472,7 @@ class EditorSettingsState(
     }
     val settings = editor.getUserData(CODE_STYLE_SETTINGS) ?: CodeStyle.getSettings(project, file)
     val fileOptions = ProjectLocator.withPreferredProject(file, project).use {
-      settings.getIndentOptionsByFile(project, file, null, ignoreDocOptions, null)
+      settings.getIndentOptionsByFile(project, file, null, /* ignoreDocOptions = */ true, null)
     }
     // A viewer takes its tab size from the file type.
     val tabSize = if (editor.isViewer) {
@@ -676,8 +610,6 @@ class EditorSettingsState(
   )
 
   companion object {
-    private val LOG: Logger = logger<EditorSettingsState>()
-
     /**
      * Makes the inputs of every state compute in the background, as in production, until [disposable] is disposed.
      */
