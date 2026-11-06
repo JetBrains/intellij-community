@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.externalIndex
 
 import com.intellij.openapi.application.readAction
@@ -10,13 +11,13 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
+import com.intellij.platform.backend.workspace.storeAndGet
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntity
 import com.intellij.python.externalIndex.workspace.PyExternalIndexedFileEntitySource
-import com.intellij.util.asSafely
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
@@ -74,27 +75,22 @@ class PyExternalFilesIndexService(private val project: Project, private val coro
     }
 
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-    val virtualFileUrl = file.toVirtualFileUrl(virtualFileUrlManager)
 
     project.workspaceModel.update("Add Non project file of welcome screen to storage") { storage ->
-      if (storage.containsNonProjectFile(virtualFileUrl)) {
+      if (storage.nonProjectFiles(file, virtualFileUrlManager).any()) {
         return@update
       }
+      val virtualFileUrl = virtualFileUrlManager.storeAndGet(file)
       storage.addEntity(PyExternalIndexedFileEntity(virtualFileUrl, PyExternalIndexedFileEntitySource))
     }
   }
 
   private fun removeFile(file: VirtualFile) {
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
-    val virtualFileUrl = file.toVirtualFileUrl(virtualFileUrlManager)
 
     coroutineScope.launch {
       project.workspaceModel.update("Remove Non project file from storage") { storage ->
-        storage.entitiesBySource { entitySource ->
-          entitySource is PyExternalIndexedFileEntitySource
-        }.filter {
-          it.asSafely<PyExternalIndexedFileEntity>()?.file == virtualFileUrl
-        }.forEach { storage.removeEntity(it) }
+        storage.nonProjectFiles(file, virtualFileUrlManager).forEach { storage.removeEntity(it) }
       }
     }
   }
@@ -102,18 +98,19 @@ class PyExternalFilesIndexService(private val project: Project, private val coro
   fun isFileAddedToNonProjectIndex(file: VirtualFile): Boolean {
     val virtualFileManager = project.workspaceModel.getVirtualFileUrlManager()
     val storage = project.workspaceModel.currentSnapshot
-    return storage.containsNonProjectFile(file.toVirtualFileUrl(virtualFileManager))
+    return storage.nonProjectFiles(file, virtualFileManager).any()
   }
 
   companion object {
     private val SUPPORTED_FILE_EXTENSIONS = listOf("py", "ipynb")
 
-    private fun EntityStorage.containsNonProjectFile(virtualFileUrl: VirtualFileUrl): Boolean {
-      return this.entitiesBySource { entitySource ->
-        entitySource is PyExternalIndexedFileEntitySource
-      }.any {
-        it.asSafely<PyExternalIndexedFileEntity>()?.file == virtualFileUrl
-      }
+    private fun EntityStorage.nonProjectFiles(
+      virtualFile: VirtualFile,
+      virtualFileUrlManager: VirtualFileUrlManager,
+    ): Sequence<PyExternalIndexedFileEntity> {
+      return getVirtualFileUrlIndex().findEntitiesByVirtualFile(virtualFile, virtualFileUrlManager)
+        .filterIsInstance<PyExternalIndexedFileEntity>()
+        .filter { it.entitySource is PyExternalIndexedFileEntitySource }
     }
 
     private suspend fun VirtualFile.isExternalToProject(project: Project): Boolean = readAction {

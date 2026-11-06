@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(EntityStorageInstrumentationApi::class)
 
 package com.intellij.python.externalIndex.workspace.impl
@@ -67,6 +67,10 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
       updateChildToParentReferences(parents)
     }
 
+    override fun index() {
+      index(this, "file", this.file)
+    }
+
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -80,6 +84,10 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
         checkModificationAllowed()
         getEntityData(true).file = value
         changedProperty.add("file")
+        val _diff = diff
+        if (_diff != null) {
+          index(this, "file", value)
+        }
       }
 
     override fun getEntityClass(): Class<PyExternalIndexedFileEntity> = PyExternalIndexedFileEntity::class.java

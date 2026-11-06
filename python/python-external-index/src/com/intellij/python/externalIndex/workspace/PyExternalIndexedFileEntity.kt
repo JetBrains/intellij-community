@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.externalIndex.workspace
 
 import com.intellij.platform.workspace.storage.EntitySource
@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 internal interface PyExternalIndexedFileEntity : WorkspaceEntity {
+  @IndexVfu
   val file: VirtualFileUrl
 }
 
