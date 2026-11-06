@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.CellRendererPanel;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeUICustomization;
@@ -1196,7 +1197,13 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myConfigurableToNodeMap.clear();
 
     //remove expansion and selection (to avoid stuck old elements) before cleanup
-    myTree.getSelectionModel().clearSelection();
+    ClientProperty.put(myTree, RestoreSelectionListener.DISABLED, true);
+    try {
+      myTree.getSelectionModel().clearSelection();
+    }
+    finally {
+      ClientProperty.remove(myTree, RestoreSelectionListener.DISABLED);
+    }
     // The async tree model has no root before its first load, so nothing is expanded yet.
     Object root = myTree.getModel().getRoot();
     if (root != null) {
