@@ -663,24 +663,33 @@ open class FileEditorManagerImpl(
     scheduleUpdateFileName(file = null)
   }
 
+  /** Applies [item] to the editors that the composite has now: a close or an earlier update may have changed them since the computation. */
   private suspend fun updateFileEditorProviders(item: ProviderChange) {
     withContext(Dispatchers.EDT) {
       val composite = item.composite
       if (composite.isDisposed()) {
         return@withContext
       }
+
+      val editorTypeIds = getEditorTypeIds(composite)
       for (editorTypeId in item.editorTypeIdsToRemove) {
-        composite.removeEditor(editorTypeId)
+        if (editorTypeIds.contains(editorTypeId)) {
+          composite.removeEditor(editorTypeId)
+        }
       }
 
       for (provider in item.newProviders) {
-        val editor = provider.createEditor(project, item.composite.file)
-        postProcessFileEditorWithProvider(editorWithProvider = FileEditorWithProvider(editor, provider), editorPropertyChangeListener = editorPropertyChangeListener)
+        if (editorTypeIds.contains(provider.editorTypeId)) {
+          continue
+        }
+        val editor = provider.createEditor(project, composite.file)
+        postProcessFileEditorWithProvider(editorWithProvider = FileEditorWithProvider(editor, provider),
+                                          editorPropertyChangeListener = editorPropertyChangeListener)
         composite.addEditor(editor = editor, provider = provider)
       }
 
       for (splitters in getAllSplitters()) {
-        splitters.updateFileBackgroundColorAsync(item.composite.file)
+        splitters.updateFileBackgroundColorAsync(composite.file)
       }
     }
   }
