@@ -1,12 +1,18 @@
 package com.intellij.platform.lsp
 
+import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.impl.DocumentMarkupModel
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
-import com.intellij.platform.lsp.impl.features.highlighting.LspDiagnosticAndLazyQuickFixes
 import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -21,6 +27,7 @@ import org.eclipse.lsp4j.Command
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.DiagnosticSeverity
 import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.PublishDiagnosticsParams
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.Registration
 import org.eclipse.lsp4j.RegistrationParams
@@ -28,6 +35,8 @@ import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.WorkspaceEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -100,20 +109,28 @@ class LspCodeActionsTest {
 
     @Test
     fun `quick fixes work with a dynamic registration only`() = timeoutRunBlocking {
+      // No daemon runs in this test: instantiate the pass registrar, so it assigns LspHighlightingApplier.GROUP_ID.
+      TextEditorHighlightingPassRegistrar.getInstance(project)
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
+      val document = codeInsightFixture.editor.document
       awaitFileOpenedByLspServer(project, virtualFile)
       val serverSession = fakeLspIntegration.serverSession(virtualFile)
       val fileUri = serverSession.fileUri(virtualFile)
-      val client = fakeLspIntegration.client
-      val diagnostic = Diagnostic(Range(Position(0, 0), Position(0, 5)), "problem", DiagnosticSeverity.Error, "fake")
-      assertTrue(readAction { LspDiagnosticAndLazyQuickFixes(diagnostic).getQuickFixes(client, virtualFile) }.isEmpty(),
+
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(
+          fileUri,
+          listOf(Diagnostic(Range(Position(0, 0), Position(0, 5)), "problem", DiagnosticSeverity.Error, "fake"))
+        )
+      }
+      var highlight: HighlightInfo? = null
+      waitUntilAssertSucceeds(message = "the diagnostic must reach the markup") {
+        highlight = errorHighlight(document)
+        assertNotNull(highlight)
+      }
+      assertNull(highlight!!.findRegisteredQuickFix { descriptor, _ -> descriptor.action },
                  "no quick fixes before the registration")
 
-      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
-        RegistrationParams(listOf(Registration("code-actions", "textDocument/codeAction", CodeActionRegistrationOptions().apply {
-          codeActionKinds = listOf(CodeActionKind.QuickFix)
-        })))
-      }
       serverSession.expectRequest(serverSession.CODE_ACTION, {
         it.textDocument.uri == fileUri && it.context.only == listOf(CodeActionKind.QuickFix)
       }) {
@@ -122,10 +139,19 @@ class LspCodeActionsTest {
           kind = CodeActionKind.QuickFix
         }))
       }
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("code-actions", "textDocument/codeAction", CodeActionRegistrationOptions().apply {
+          codeActionKinds = listOf(CodeActionKind.QuickFix)
+        })))
+      }
 
-      val quickFixes = readAction { LspDiagnosticAndLazyQuickFixes(diagnostic).getQuickFixes(client, virtualFile) }
+      var quickFix: IntentionAction? = null
+      waitUntilAssertSucceeds(message = "the registration must add the quick fix to the diagnostic on screen") {
+        quickFix = errorHighlight(document)?.findRegisteredQuickFix { descriptor, _ -> descriptor.action }
+        assertNotNull(quickFix)
+      }
       // A quick fix asks the server for its code action on the first `getText()` call, and only in a background thread.
-      val quickFixText = withContext(Dispatchers.IO) { readAction { quickFixes.first().text } }
+      val quickFixText = withContext(Dispatchers.IO) { readAction { quickFix!!.text } }
       serverSession.awaitExpected()
 
       assertEquals("Fix the problem", quickFixText)
@@ -242,5 +268,12 @@ class LspCodeActionsTest {
       assertEquals(emptyList<Any>(), serverSession.receivedRequests(serverSession.CODE_ACTION_RESOLVE),
                    "Expected no codeAction/resolve when the server does not support it")
     }
+  }
+
+  private suspend fun errorHighlight(document: Document): HighlightInfo? = readAction {
+    val markupModel = DocumentMarkupModel.forDocument(document, project, false) ?: return@readAction null
+    markupModel.allHighlighters
+      .mapNotNull { HighlightInfo.fromRangeHighlighter(it) }
+      .singleOrNull { it.severity == HighlightSeverity.ERROR }
   }
 }

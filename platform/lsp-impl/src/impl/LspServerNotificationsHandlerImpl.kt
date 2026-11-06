@@ -24,6 +24,7 @@ import com.intellij.platform.lsp.api.LspServerNotificationsHandler
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
 import com.intellij.platform.lsp.impl.features.executeCommandExpectingWorkspaceEdit
+import com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingApplier
 import com.intellij.platform.lsp.impl.serviceView.LspClientConsole
 import com.intellij.platform.lsp.impl.serviceView.LspServiceViewSupport
 import com.intellij.platform.lsp.impl.serviceView.ShowLspServerLogAction
@@ -169,6 +170,20 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
       it == LspDynamicCapabilities.codeLens.first
     }
 
+    val needsSemanticTokensRefresh = registeredCapabilities.any {
+      it == LspDynamicCapabilities.semanticTokens.first
+    }
+
+    val needsCodeActionsRefresh = registeredCapabilities.any {
+      it == LspDynamicCapabilities.codeAction.first
+    }
+
+    val needsInheritanceMarkersRefresh = registeredCapabilities.any {
+      it == LspDynamicCapabilities.documentSymbol.first ||
+      it == LspDynamicCapabilities.prepareTypeHierarchy.first ||
+      it == LspDynamicCapabilities.implementation.first
+    }
+
     if (needsInlayHintRefresh) {
       lspClient.refreshInlayHints()
     }
@@ -179,6 +194,21 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
 
     if (needsCodeLensesRefresh) {
       LspFeaturesRefreshing.refreshCodeLenses(project)
+    }
+
+    if (needsSemanticTokensRefresh) {
+      lspClient.refreshSemanticTokens()
+    }
+
+    if (needsCodeActionsRefresh) {
+      lspClient.forEachOpenedFile { LspHighlightingApplier.getInstance(project).scheduleHighlightingRefresh(it) }
+    }
+
+    if (needsInheritanceMarkersRefresh) {
+      lspClient.forEachOpenedFile {
+        lspClient.highlightingCacheRegistry.inheritanceMarkersCache.forceFullRepull(it)
+        LspFeaturesRefreshing.refreshLineMarkers(project, it)
+      }
     }
 
     if (needsFoldingUpdate) {

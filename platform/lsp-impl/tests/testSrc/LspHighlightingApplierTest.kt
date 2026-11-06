@@ -24,6 +24,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -169,26 +170,34 @@ internal class LspHighlightingApplierTest {
     fun `semantic tokens use the legend of the dynamic registration`(): Unit = timeoutRunBlocking {
       // No daemon runs in this test: instantiate the pass registrar, so it assigns LspHighlightingApplier.GROUP_ID.
       TextEditorHighlightingPassRegistrar.getInstance(project)
-      val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
-      val document = codeInsightFixture.editor.document
-      val serverSession = fakeLspIntegration.serverSession(virtualFile)
-      val uri = serverSession.fileUri(virtualFile)
-      val client = fakeLspIntegration.client
+      val applier = LspHighlightingApplier.getInstance(project)
+      val didOpenRefreshCollected = CompletableDeferred<Unit>()
+      applier.afterCollectHook = { didOpenRefreshCollected.complete(Unit) }
+      try {
+        val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
+        val document = codeInsightFixture.editor.document
+        val serverSession = fakeLspIntegration.serverSession(virtualFile)
+        val uri = serverSession.fileUri(virtualFile)
+        // The registration comes after the refresh of the opened file. So only the registration can trigger the pull.
+        didOpenRefreshCollected.await()
 
-      serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL, { it.textDocument.uri == uri }) {
-        SemanticTokens(listOf(0, 0, 5, 0, 0))
+        serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL, { it.textDocument.uri == uri }) {
+          SemanticTokens(listOf(0, 0, 5, 0, 0))
+        }
+        // The legend exists only in this registration. Without it, the IDE cannot decode the token.
+        val registrationOptions = SemanticTokensWithRegistrationOptions().apply {
+          full = Either.forLeft(true)
+          legend = SemanticTokensLegend(listOf("keyword"), emptyList())
+        }
+        serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+          RegistrationParams(listOf(Registration("semantic-tokens", "textDocument/semanticTokens", registrationOptions)))
+        }
+        waitUntilAssertSucceeds(message = "the token must reach the markup") {
+          assertEquals(listOf(TextRange(0, 5)), semanticTokenRanges(document))
+        }
       }
-      // The legend exists only in this registration. Without it, the IDE cannot decode the token.
-      val registrationOptions = SemanticTokensWithRegistrationOptions().apply {
-        full = Either.forLeft(true)
-        legend = SemanticTokensLegend(listOf("keyword"), emptyList())
-      }
-      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
-        RegistrationParams(listOf(Registration("semantic-tokens", "textDocument/semanticTokens", registrationOptions)))
-      }
-      withContext(Dispatchers.IO) { readAction { client.highlightingCacheRegistry.semanticTokensCache.getHighlightings(virtualFile) } }
-      waitUntilAssertSucceeds(message = "the token must reach the markup") {
-        assertEquals(listOf(TextRange(0, 5)), semanticTokenRanges(document))
+      finally {
+        applier.afterCollectHook = null
       }
     }
 

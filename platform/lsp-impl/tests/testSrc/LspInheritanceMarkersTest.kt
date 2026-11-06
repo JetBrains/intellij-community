@@ -2,6 +2,8 @@ package com.intellij.platform.lsp
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.LineMarkerInfo.LineMarkerGutterIconRenderer
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -11,6 +13,7 @@ import com.intellij.platform.lsp.api.customization.LspDocumentSymbolCustomizer
 import com.intellij.platform.lsp.api.customization.LspDocumentSymbolDisabled
 import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersCustomizer
 import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersSupport
+import com.intellij.platform.lsp.common.FakeLspServerSession
 import com.intellij.platform.lsp.common.UnansweredRequest
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
@@ -23,19 +26,27 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.DocumentSymbol
+import org.eclipse.lsp4j.DocumentSymbolRegistrationOptions
+import org.eclipse.lsp4j.ImplementationRegistrationOptions
 import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.Registration
+import org.eclipse.lsp4j.RegistrationParams
 import org.eclipse.lsp4j.SymbolKind
 import org.eclipse.lsp4j.TypeHierarchyItem
+import org.eclipse.lsp4j.TypeHierarchyRegistrationOptions
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration
 
@@ -51,15 +62,6 @@ internal class LspInheritanceMarkersTest {
   }
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
-
-  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
-    lspCustomization = InheritanceMarkersTestCustomization(),
-    configureServerCapabilities = {
-      documentSymbolProvider = Either.forLeft(true)
-      implementationProvider = Either.forLeft(true)
-      typeHierarchyProvider = Either.forLeft(true)
-    },
-  )
 
   @BeforeEach
   fun setUp() {
@@ -88,259 +90,399 @@ internal class LspInheritanceMarkersTest {
     return readAction { gutters.map { it.tooltipText } }
   }
 
-  @Test
-  fun `method of a subtyped class gets the overridden marker`() = timeoutRunBlocking {
-    val virtualFile = configureFile("markers1.txt", "class C { fun foo() }")
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
-    val fileUri = serverSession.fileUri(virtualFile)
+  @Nested
+  inner class StaticRegistration {
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
+      lspCustomization = InheritanceMarkersTestCustomization(),
+      configureServerCapabilities = {
+        documentSymbolProvider = Either.forLeft(true)
+        implementationProvider = Either.forLeft(true)
+        typeHierarchyProvider = Either.forLeft(true)
+      },
+    )
 
-    serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
-      val member = methodSymbol("foo", selectionRange = range(0, 14, 0, 17))
-      listOf(Either.forRight(classSymbol("C", SymbolKind.Class, range(0, 6, 0, 7), member)))
-    }
-    serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 6) }) {
-      listOf(typeHierarchyItem("C", fileUri, range(0, 6, 0, 7)))
-    }
-    serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) {
-      listOf(typeHierarchyItem("Sub", fileUri, range(0, 8, 0, 9)))
-    }
-    serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 14) }) {
-      Either.forLeft(listOf(Location(fileUri, range(0, 10, 0, 11))))
+    @Test
+    fun `method of a subtyped class gets the overridden marker`() = timeoutRunBlocking {
+      val virtualFile = configureFile("markers1.txt", "class C { fun foo() }")
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
+        val member = methodSymbol("foo", selectionRange = range(0, 14, 0, 17))
+        listOf(Either.forRight(classSymbol("C", SymbolKind.Class, range(0, 6, 0, 7), member)))
+      }
+      serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 6) }) {
+        listOf(typeHierarchyItem("C", fileUri, range(0, 6, 0, 7)))
+      }
+      serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) {
+        listOf(typeHierarchyItem("Sub", fileUri, range(0, 8, 0, 9)))
+      }
+      serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 14) }) {
+        Either.forLeft(listOf(Location(fileUri, range(0, 10, 0, 11))))
+      }
+
+      waitUntilAssertSucceeds(message = "The gutter markers are not shown") {
+        codeInsightFixture.doHighlighting()
+        assertEquals(listOf("Has subtypes", "Is overridden"), gutterTooltips().sortedBy { it })
+      }
+      serverSession.awaitExpected()
     }
 
-    waitUntilAssertSucceeds(message = "The gutter markers are not shown") {
+    @Test
+    fun `interface and its member get the implemented markers`() = timeoutRunBlocking {
+      val virtualFile = configureFile("markers2.txt", "interface I { fun m() }")
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
+        val member = methodSymbol("m", selectionRange = range(0, 18, 0, 19))
+        listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 10, 0, 11), member)))
+      }
+      serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 18) }) {
+        Either.forLeft(listOf(Location(fileUri, range(0, 0, 0, 1))))
+      }
+      serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 10) }) {
+        listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
+      }
+      serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) {
+        listOf(typeHierarchyItem("Impl", fileUri, range(0, 14, 0, 15)))
+      }
+
+      waitUntilAssertSucceeds(message = "The gutter markers are not shown") {
+        codeInsightFixture.doHighlighting()
+        assertEquals(listOf("Has implementations", "Has implementations"), gutterTooltips())
+      }
+      serverSession.awaitExpected()
+    }
+
+    @Test
+    fun `empty results produce no markers`() = timeoutRunBlocking {
+      val virtualFile = configureFile("markers3.txt", "interface I { fun m() }")
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
+        val member = methodSymbol("m", selectionRange = range(0, 18, 0, 19))
+        listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 10, 0, 11), member)))
+      }
+      serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 18) }) {
+        Either.forLeft(emptyList())
+      }
+      serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 10) }) {
+        listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
+      }
+      serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) { emptyList() }
+
       codeInsightFixture.doHighlighting()
-      assertEquals(listOf("Has subtypes", "Is overridden"), gutterTooltips().sortedBy { it })
-    }
-    serverSession.awaitExpected()
-  }
+      serverSession.awaitExpected()
 
-  @Test
-  fun `interface and its member get the implemented markers`() = timeoutRunBlocking {
-    val virtualFile = configureFile("markers2.txt", "interface I { fun m() }")
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
-    val fileUri = serverSession.fileUri(virtualFile)
-
-    serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
-      val member = methodSymbol("m", selectionRange = range(0, 18, 0, 19))
-      listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 10, 0, 11), member)))
-    }
-    serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 18) }) {
-      Either.forLeft(listOf(Location(fileUri, range(0, 0, 0, 1))))
-    }
-    serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 10) }) {
-      listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
-    }
-    serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) {
-      listOf(typeHierarchyItem("Impl", fileUri, range(0, 14, 0, 15)))
-    }
-
-    waitUntilAssertSucceeds(message = "The gutter markers are not shown") {
       codeInsightFixture.doHighlighting()
-      assertEquals(listOf("Has implementations", "Has implementations"), gutterTooltips())
-    }
-    serverSession.awaitExpected()
-  }
-
-  @Test
-  fun `empty results produce no markers`() = timeoutRunBlocking {
-    val virtualFile = configureFile("markers3.txt", "interface I { fun m() }")
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
-    val fileUri = serverSession.fileUri(virtualFile)
-
-    serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
-      val member = methodSymbol("m", selectionRange = range(0, 18, 0, 19))
-      listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 10, 0, 11), member)))
-    }
-    serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 18) }) {
-      Either.forLeft(emptyList())
-    }
-    serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 10) }) {
-      listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
-    }
-    serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) { emptyList() }
-
-    codeInsightFixture.doHighlighting()
-    serverSession.awaitExpected()
-
-    codeInsightFixture.doHighlighting()
-    assertTrue(gutterTooltips().isEmpty(), "No gutter markers expected for empty results")
-  }
-
-  @Test
-  fun `class without subtypes suppresses its method queries`() = timeoutRunBlocking {
-    val virtualFile = configureFile("markers7.txt", "class C { fun foo() }")
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
-    val fileUri = serverSession.fileUri(virtualFile)
-
-    serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
-      val member = methodSymbol("foo", selectionRange = range(0, 14, 0, 17))
-      listOf(Either.forRight(classSymbol("C", SymbolKind.Class, range(0, 6, 0, 7), member)))
-    }
-    serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 6) }) {
-      listOf(typeHierarchyItem("C", fileUri, range(0, 6, 0, 7)))
-    }
-    serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) { emptyList() }
-    val implementationRequested = serverSession.expectRequest(serverSession.IMPLEMENTATION) { Either.forLeft(emptyList()) }
-
-    codeInsightFixture.doHighlighting()
-    delay(500)
-
-    assertFalse(implementationRequested.isCompleted, "A method of a class without subtypes must not be queried")
-    assertTrue(gutterTooltips().isEmpty())
-    // Releases the never-matched expectation, so the test scope can finish.
-    implementationRequested.cancel()
-  }
-
-  @Test
-  fun `top-level function is not queried`() = timeoutRunBlocking {
-    val virtualFile = configureFile("markers8.txt", "fun foo() {}")
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
-    val fileUri = serverSession.fileUri(virtualFile)
-
-    serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
-      listOf(Either.forRight(methodSymbol("foo", selectionRange = range(0, 4, 0, 7))))
-    }
-    val implementationRequested = serverSession.expectRequest(serverSession.IMPLEMENTATION) { Either.forLeft(emptyList()) }
-
-    codeInsightFixture.doHighlighting()
-    delay(500)
-
-    assertFalse(implementationRequested.isCompleted, "A top-level function must not be queried")
-    assertTrue(gutterTooltips().isEmpty())
-    // Releases the never-matched expectation, so the test scope can finish.
-    implementationRequested.cancel()
-  }
-
-  @Test
-  fun `no requests when the customizer forbids the file`() = timeoutRunBlocking {
-    val virtualFile = configureFile("disabled.txt", "fun foo() {}")
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
-
-    val documentSymbolRequested = serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL) { emptyList() }
-
-    codeInsightFixture.doHighlighting()
-    delay(500)
-
-    assertFalse(documentSymbolRequested.isCompleted, "documentSymbol must not be requested for a forbidden file")
-    assertTrue(gutterTooltips().isEmpty())
-    // Releases the never-matched expectation, so the test scope can finish.
-    documentSymbolRequested.cancel()
-  }
-
-  @Test
-  fun `symbol count over the cap suppresses per-symbol requests`() = timeoutRunBlocking {
-    val virtualFile = configureFile("markers4.txt", "x".repeat(250))
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
-    val fileUri = serverSession.fileUri(virtualFile)
-
-    serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
-      val members = (2..202).map { i -> methodSymbol("m$i", selectionRange = range(0, i, 0, i + 1)) }
-      listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 0, 0, 1), *members.toTypedArray())))
-    }
-    val prepareRequested = serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY) { emptyList() }
-    val implementationRequested = serverSession.expectRequest(serverSession.IMPLEMENTATION) { Either.forLeft(emptyList()) }
-
-    codeInsightFixture.doHighlighting()
-    delay(500)
-
-    assertFalse(prepareRequested.isCompleted, "No per-symbol request expected over the symbol cap")
-    assertFalse(implementationRequested.isCompleted, "No per-symbol request expected over the symbol cap")
-    assertTrue(gutterTooltips().isEmpty())
-    // Releases the never-matched expectations, so the test scope can finish.
-    prepareRequested.cancel()
-    implementationRequested.cancel()
-  }
-
-  @Test
-  fun `typing cancels the in-flight batch and a new pull follows`() = timeoutRunBlocking {
-    val virtualFile = configureFile("markers5.txt", "interface I { fun m() }")
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
-    val fileUri = serverSession.fileUri(virtualFile)
-
-    serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
-      val member = methodSymbol("m", selectionRange = range(0, 18, 0, 19))
-      listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 10, 0, 11), member)))
-    }
-    serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 10) }) {
-      listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
-    }
-    serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) { emptyList() }
-    val pendingImplementation = UnansweredRequest()
-    val implementationRequested = serverSession.expectRequest(serverSession.IMPLEMENTATION) { pendingImplementation.hold() }
-
-    codeInsightFixture.doHighlighting()
-    implementationRequested.await()
-
-    // The second pull round for the edited document.
-    serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
-      val member = methodSymbol("m", selectionRange = range(0, 18, 0, 19))
-      listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 10, 0, 11), member)))
-    }
-    serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 10) }) {
-      listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
-    }
-    serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) { emptyList() }
-    serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 18) }) {
-      Either.forLeft(listOf(Location(fileUri, range(0, 0, 0, 1))))
+      assertTrue(gutterTooltips().isEmpty(), "No gutter markers expected for empty results")
     }
 
-    writeCommandAction(project, "typing") {
-      codeInsightFixture.editor.document.insertString(codeInsightFixture.editor.document.textLength, " ")
-    }
+    @Test
+    fun `class without subtypes suppresses its method queries`() = timeoutRunBlocking {
+      val virtualFile = configureFile("markers7.txt", "class C { fun foo() }")
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
 
-    waitUntilAssertSucceeds(message = "The in-flight request is not cancelled") {
+      serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
+        val member = methodSymbol("foo", selectionRange = range(0, 14, 0, 17))
+        listOf(Either.forRight(classSymbol("C", SymbolKind.Class, range(0, 6, 0, 7), member)))
+      }
+      serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 6) }) {
+        listOf(typeHierarchyItem("C", fileUri, range(0, 6, 0, 7)))
+      }
+      serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) { emptyList() }
+      val implementationRequested = serverSession.expectRequest(serverSession.IMPLEMENTATION) { Either.forLeft(emptyList()) }
+
       codeInsightFixture.doHighlighting()
-      assertTrue(pendingImplementation.isCancelled, "The client must cancel the stale in-flight request")
+      delay(500)
+
+      assertFalse(implementationRequested.isCompleted, "A method of a class without subtypes must not be queried")
+      assertTrue(gutterTooltips().isEmpty())
+      // Releases the never-matched expectation, so the test scope can finish.
+      implementationRequested.cancel()
     }
-    waitUntilAssertSucceeds(message = "The gutter marker is not shown after the second pull") {
+
+    @Test
+    fun `top-level function is not queried`() = timeoutRunBlocking {
+      val virtualFile = configureFile("markers8.txt", "fun foo() {}")
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
+        listOf(Either.forRight(methodSymbol("foo", selectionRange = range(0, 4, 0, 7))))
+      }
+      val implementationRequested = serverSession.expectRequest(serverSession.IMPLEMENTATION) { Either.forLeft(emptyList()) }
+
       codeInsightFixture.doHighlighting()
-      assertEquals(listOf("Has implementations"), gutterTooltips())
+      delay(500)
+
+      assertFalse(implementationRequested.isCompleted, "A top-level function must not be queried")
+      assertTrue(gutterTooltips().isEmpty())
+      // Releases the never-matched expectation, so the test scope can finish.
+      implementationRequested.cancel()
     }
-    serverSession.awaitExpected()
+
+    @Test
+    fun `no requests when the customizer forbids the file`() = timeoutRunBlocking {
+      val virtualFile = configureFile("disabled.txt", "fun foo() {}")
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+
+      val documentSymbolRequested = serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL) { emptyList() }
+
+      codeInsightFixture.doHighlighting()
+      delay(500)
+
+      assertFalse(documentSymbolRequested.isCompleted, "documentSymbol must not be requested for a forbidden file")
+      assertTrue(gutterTooltips().isEmpty())
+      // Releases the never-matched expectation, so the test scope can finish.
+      documentSymbolRequested.cancel()
+    }
+
+    @Test
+    fun `symbol count over the cap suppresses per-symbol requests`() = timeoutRunBlocking {
+      val virtualFile = configureFile("markers4.txt", "x".repeat(250))
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
+        val members = (2..202).map { i -> methodSymbol("m$i", selectionRange = range(0, i, 0, i + 1)) }
+        listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 0, 0, 1), *members.toTypedArray())))
+      }
+      val prepareRequested = serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY) { emptyList() }
+      val implementationRequested = serverSession.expectRequest(serverSession.IMPLEMENTATION) { Either.forLeft(emptyList()) }
+
+      codeInsightFixture.doHighlighting()
+      delay(500)
+
+      assertFalse(prepareRequested.isCompleted, "No per-symbol request expected over the symbol cap")
+      assertFalse(implementationRequested.isCompleted, "No per-symbol request expected over the symbol cap")
+      assertTrue(gutterTooltips().isEmpty())
+      // Releases the never-matched expectations, so the test scope can finish.
+      prepareRequested.cancel()
+      implementationRequested.cancel()
+    }
+
+    @Test
+    fun `typing cancels the in-flight batch and a new pull follows`() = timeoutRunBlocking {
+      val virtualFile = configureFile("markers5.txt", "interface I { fun m() }")
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
+        val member = methodSymbol("m", selectionRange = range(0, 18, 0, 19))
+        listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 10, 0, 11), member)))
+      }
+      serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 10) }) {
+        listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
+      }
+      serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) { emptyList() }
+      val pendingImplementation = UnansweredRequest()
+      val implementationRequested = serverSession.expectRequest(serverSession.IMPLEMENTATION) { pendingImplementation.hold() }
+
+      codeInsightFixture.doHighlighting()
+      implementationRequested.await()
+
+      // The second pull round for the edited document.
+      serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
+        val member = methodSymbol("m", selectionRange = range(0, 18, 0, 19))
+        listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 10, 0, 11), member)))
+      }
+      serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 10) }) {
+        listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
+      }
+      serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) { emptyList() }
+      serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 18) }) {
+        Either.forLeft(listOf(Location(fileUri, range(0, 0, 0, 1))))
+      }
+
+      writeCommandAction(project, "typing") {
+        codeInsightFixture.editor.document.insertString(codeInsightFixture.editor.document.textLength, " ")
+      }
+
+      waitUntilAssertSucceeds(message = "The in-flight request is not cancelled") {
+        codeInsightFixture.doHighlighting()
+        assertTrue(pendingImplementation.isCancelled, "The client must cancel the stale in-flight request")
+      }
+      waitUntilAssertSucceeds(message = "The gutter marker is not shown after the second pull") {
+        codeInsightFixture.doHighlighting()
+        assertEquals(listOf("Has implementations"), gutterTooltips())
+      }
+      serverSession.awaitExpected()
+    }
+
+    @Test
+    fun `gutter click re-requests the targets and navigates`() = timeoutRunBlocking {
+      val virtualFile = configureFile("markers6.txt", "interface I { fun m() }")
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
+        val member = methodSymbol("m", selectionRange = range(0, 18, 0, 19))
+        listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 10, 0, 11), member)))
+      }
+      serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 10) }) {
+        listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
+      }
+      serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) { emptyList() }
+      serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 18) }) {
+        Either.forLeft(listOf(Location(fileUri, range(0, 3, 0, 4))))
+      }
+
+      waitUntilAssertSucceeds(message = "The gutter marker is not shown") {
+        codeInsightFixture.doHighlighting()
+        assertEquals(1, gutterTooltips().size)
+      }
+
+      // The click handler re-requests the targets for freshness.
+      serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 18) }) {
+        Either.forLeft(listOf(Location(fileUri, range(0, 3, 0, 4))))
+      }
+
+      val renderer = codeInsightFixture.findAllGutters().single() as LineMarkerGutterIconRenderer<*>
+      val (handler, anchor) = readAction {
+        val info = renderer.lineMarkerInfo
+        @Suppress("UNCHECKED_CAST")
+        (info.navigationHandler as GutterIconNavigationHandler<PsiElement>) to info.element
+      }
+      handler.navigate(null, anchor)
+
+      waitUntilAssertSucceeds(message = "The editor caret did not move to the target") {
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor
+        assertEquals(Position(0, 3), editor?.caretModel?.logicalPosition?.let { Position(it.line, it.column) })
+      }
+      serverSession.awaitExpected()
+    }
   }
 
-  @Test
-  fun `gutter click re-requests the targets and navigates`() = timeoutRunBlocking {
-    val virtualFile = configureFile("markers6.txt", "interface I { fun m() }")
-    val serverSession = fakeLspIntegration.serverSession(virtualFile)
-    val fileUri = serverSession.fileUri(virtualFile)
+  @Nested
+  inner class DynamicRegistration {
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
+      lspCustomization = InheritanceMarkersTestCustomization(),
+    )
 
-    serverSession.expectRequest(serverSession.DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
-      val member = methodSymbol("m", selectionRange = range(0, 18, 0, 19))
-      listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 10, 0, 11), member)))
-    }
-    serverSession.expectRequest(serverSession.PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 10) }) {
-      listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
-    }
-    serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) { emptyList() }
-    serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 18) }) {
-      Either.forLeft(listOf(Location(fileUri, range(0, 3, 0, 4))))
+    private val documentSymbolRegistration =
+      Registration("document-symbol", "textDocument/documentSymbol", DocumentSymbolRegistrationOptions())
+    private val typeHierarchyRegistration =
+      Registration("type-hierarchy", "textDocument/prepareTypeHierarchy", TypeHierarchyRegistrationOptions())
+    private val implementationRegistration =
+      Registration("implementation", "textDocument/implementation", ImplementationRegistrationOptions())
+
+    @Test
+    fun `implementation registration adds the member marker`() = timeoutRunBlocking {
+      val virtualFile = configureFile("dynamic1.txt", "interface I { fun m() }")
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectInterfaceSymbols(fileUri)
+      serverSession.expectInterfaceSubtypes(fileUri)
+      serverSession.register(documentSymbolRegistration, typeHierarchyRegistration)
+      waitUntilAssertSucceeds(message = "The marker of the interface is not shown") {
+        codeInsightFixture.doHighlighting()
+        assertEquals(listOf("Has implementations"), gutterTooltips())
+      }
+      serverSession.awaitExpected()
+
+      // The cached markers are for the current document. Only the registration can make the IDE pull again.
+      serverSession.expectInterfaceSymbols(fileUri)
+      serverSession.expectInterfaceSubtypes(fileUri)
+      serverSession.expectMemberImplementations(fileUri)
+      serverSession.register(implementationRegistration)
+      waitUntilAssertSucceeds(message = "The marker of the member is not shown after the registration") {
+        codeInsightFixture.doHighlighting()
+        assertEquals(listOf("Has implementations", "Has implementations"), gutterTooltips())
+      }
+      serverSession.awaitExpected()
     }
 
-    waitUntilAssertSucceeds(message = "The gutter marker is not shown") {
-      codeInsightFixture.doHighlighting()
-      assertEquals(1, gutterTooltips().size)
+    @Test
+    fun `type hierarchy registration adds the interface marker`() = timeoutRunBlocking {
+      val virtualFile = configureFile("dynamic2.txt", "interface I { fun m() }")
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      serverSession.expectInterfaceSymbols(fileUri)
+      serverSession.expectMemberImplementations(fileUri)
+      serverSession.register(documentSymbolRegistration, implementationRegistration)
+      waitUntilAssertSucceeds(message = "The marker of the member is not shown") {
+        codeInsightFixture.doHighlighting()
+        assertEquals(listOf("Has implementations"), gutterTooltips())
+      }
+      serverSession.awaitExpected()
+
+      // The cached markers are for the current document. Only the registration can make the IDE pull again.
+      serverSession.expectInterfaceSymbols(fileUri)
+      serverSession.expectMemberImplementations(fileUri)
+      serverSession.expectInterfaceSubtypes(fileUri)
+      serverSession.register(typeHierarchyRegistration)
+      waitUntilAssertSucceeds(message = "The marker of the interface is not shown after the registration") {
+        codeInsightFixture.doHighlighting()
+        assertEquals(listOf("Has implementations", "Has implementations"), gutterTooltips())
+      }
+      serverSession.awaitExpected()
     }
 
-    // The click handler re-requests the targets for freshness.
-    serverSession.expectRequest(serverSession.IMPLEMENTATION, { it.position == Position(0, 18) }) {
-      Either.forLeft(listOf(Location(fileUri, range(0, 3, 0, 4))))
+    @Test
+    fun `document symbol registration restarts the daemon for the file`() = timeoutRunBlocking {
+      val virtualFile = configureFile("dynamic3.txt", "interface I { fun m() }")
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+
+      // Without documentSymbol, the IDE pulls no markers, so the cache keeps no markers for the file.
+      serverSession.register(typeHierarchyRegistration, implementationRegistration)
+      waitUntilAssertSucceeds(message = "The highlighting does not complete") {
+        codeInsightFixture.doHighlighting()
+        assertTrue(isHighlightingCompleted(virtualFile))
+      }
+      assertTrue(gutterTooltips().isEmpty(), "No gutter markers expected without documentSymbol")
+
+      // The test framework runs the daemon only on doHighlighting(). So only the registration can make the file dirty.
+      serverSession.expectInterfaceSymbols(fileUri)
+      serverSession.expectInterfaceSubtypes(fileUri)
+      serverSession.expectMemberImplementations(fileUri)
+      serverSession.register(documentSymbolRegistration)
+      waitUntilAssertSucceeds(message = "The registration does not restart the daemon for the file") {
+        assertFalse(isHighlightingCompleted(virtualFile))
+      }
+      waitUntilAssertSucceeds(message = "The markers are not shown after the registration") {
+        codeInsightFixture.doHighlighting()
+        assertEquals(listOf("Has implementations", "Has implementations"), gutterTooltips())
+      }
+      serverSession.awaitExpected()
     }
 
-    val renderer = codeInsightFixture.findAllGutters().single() as LineMarkerGutterIconRenderer<*>
-    val (handler, anchor) = readAction {
-      val info = renderer.lineMarkerInfo
-      @Suppress("UNCHECKED_CAST")
-      (info.navigationHandler as GutterIconNavigationHandler<PsiElement>) to info.element
+    private suspend fun isHighlightingCompleted(virtualFile: VirtualFile): Boolean = withContext(Dispatchers.EDT) {
+      val fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(virtualFile) ?: return@withContext false
+      DaemonCodeAnalyzerEx.isHighlightingCompleted(fileEditor, project)
     }
-    handler.navigate(null, anchor)
 
-    waitUntilAssertSucceeds(message = "The editor caret did not move to the target") {
-      val editor = FileEditorManager.getInstance(project).selectedTextEditor
-      assertEquals(Position(0, 3), editor?.caretModel?.logicalPosition?.let { Position(it.line, it.column) })
+    private suspend fun FakeLspServerSession.register(vararg registrations: Registration) {
+      sendRequest(REGISTER_CAPABILITY) { RegistrationParams(registrations.toList()) }
     }
-    serverSession.awaitExpected()
+
+    private fun FakeLspServerSession.expectInterfaceSymbols(fileUri: String) {
+      expectRequest(DOCUMENT_SYMBOL, { it.textDocument.uri == fileUri }) {
+        val member = methodSymbol("m", selectionRange = range(0, 18, 0, 19))
+        listOf(Either.forRight(classSymbol("I", SymbolKind.Interface, range(0, 10, 0, 11), member)))
+      }
+    }
+
+    private fun FakeLspServerSession.expectInterfaceSubtypes(fileUri: String) {
+      expectRequest(PREPARE_TYPE_HIERARCHY, { it.position == Position(0, 10) }) {
+        listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
+      }
+      expectRequest(TYPE_HIERARCHY_SUBTYPES) {
+        listOf(typeHierarchyItem("Impl", fileUri, range(0, 14, 0, 15)))
+      }
+    }
+
+    private fun FakeLspServerSession.expectMemberImplementations(fileUri: String) {
+      expectRequest(IMPLEMENTATION, { it.position == Position(0, 18) }) {
+        Either.forLeft(listOf(Location(fileUri, range(0, 0, 0, 1))))
+      }
+    }
   }
 
   private fun methodSymbol(name: String, selectionRange: Range): DocumentSymbol =
