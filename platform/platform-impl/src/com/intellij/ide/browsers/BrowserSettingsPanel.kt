@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.options.UnnamedConfigurable
+import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
@@ -19,6 +20,7 @@ import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.actionButton
@@ -85,6 +87,8 @@ internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val i
  * The "Edit Browser…" icon button of a dropdown opens [BrowserDialog] for the selected browser of the list or installed browser.
  * The "Add Browser…" item of a dropdown opens [BrowserDialog] for a new browser.
  * The dialog changes only the table, and Apply stores the table as for the edits in the table.
+ *
+ * The sections of [WebBrowserSettingsSectionEP] come after the dropdowns.
  */
 internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   private lateinit var browsersTable: JComponent
@@ -96,6 +100,9 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   private lateinit var showBrowserHoverXml: JBCheckBox
 
   private var root: DialogPanel? = null
+
+  /** The sections of [WebBrowserSettingsSectionEP]. The page creates them with its component. */
+  private var sections: List<UnnamedConfigurable> = emptyList()
 
   /**
    * Returns the original row of [item]. The table edits a copy of the row with a new id, so a check of the id must look at the original.
@@ -375,6 +382,14 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
       browserChoiceRow(IdeBundle.message("settings.browsers.default.browser"), defaultBrowserModel)
       browserChoiceRow(IdeBundle.message("settings.browsers.chromium.based.browser"), chromiumBasedBrowserModel)
 
+      sections = ConfigurableWrapper.createConfigurables(WebBrowserSettingsSectionEP.EP_NAME)
+      for (section in sections) {
+        val component = section.createComponent() ?: continue
+        row {
+          cell(component).align(AlignX.FILL)
+        }
+      }
+
       group(IdeBundle.message("settings.browsers.editor")) {
         row(IdeBundle.message("settings.browsers.show.browser.popup.in")) {
           showBrowserHover = checkBox(IdeBundle.message("settings.browsers.show.browser.popup.html")).component
@@ -411,6 +426,8 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   }
 
   override fun disposeUIResources() {
+    sections.forEach { it.disposeUIResources() }
+    sections = emptyList()
     root = null
   }
 
@@ -419,7 +436,8 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
     if (defaultBrowserChoice != storedChoice(browserManager) ||
         chromiumBasedBrowserChoice != storedChromiumBasedChoice(browserManager) ||
         browserManager.isShowBrowserHover != showBrowserHover.isSelected ||
-        browserManager.isShowBrowserHoverXml != showBrowserHoverXml.isSelected) {
+        browserManager.isShowBrowserHoverXml != showBrowserHoverXml.isSelected ||
+        sections.any { it.isModified }) {
       return true
     }
     return browsersEditor.isModified
@@ -446,6 +464,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
     defaultBrowserModel.selectedItem = storedChoice(browserManager)
     updateChromiumBasedBrowserChoices()
     chromiumBasedBrowserModel.selectedItem = storedChromiumBasedChoice(browserManager)
+    sections.filter { it.isModified }.forEach { it.apply() }
   }
 
   override fun reset() {
@@ -456,6 +475,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
     updateBrowserChoices()
     defaultBrowserModel.selectedItem = storedChoice(browserManager)
     chromiumBasedBrowserModel.selectedItem = storedChromiumBasedChoice(browserManager)
+    sections.forEach { it.reset() }
   }
 
   fun selectBrowser(browser: WebBrowser) {
