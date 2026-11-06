@@ -84,6 +84,7 @@ import com.jetbrains.python.psi.types.TypeEvalContextImpl;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +98,7 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAny;
@@ -324,21 +326,38 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     //   and returns that annotated type if found
     // - If no providers return a type, falls back to returning the type of the assigned value
 
+    final PyType finalQualifierType = qualifierType;
+    return narrowQualifiedReferenceType(
+      refExpr, context, () -> PyTypeUtil.derefOrUnknown(getTypeOfMember(finalQualifierType, null, attrName, refExpr, context, errors)));
+  }
+
+  /**
+   * Returns the type of the qualified reference {@code refExpr} after the control flow narrows {@code declaredType}.
+   * For example, {@code x.attr} has the type {@code str} after {@code if x.attr is not None:}, when its declared type is {@code str | None}.
+   * A type provider that gives the declared type of an attribute in {@link PyTypeProvider#getReferenceExpressionType}
+   * calls this function, because the control flow facts apply only when no type provider gives the type.
+   *
+   * @param declaredType gives the type of the attribute without the control flow facts
+   */
+  @ApiStatus.Internal
+  public static @Nullable PyType narrowQualifiedReferenceType(@NotNull PyReferenceExpression refExpr,
+                                                              @NotNull TypeEvalContext context,
+                                                              @NotNull Supplier<? extends @Nullable PyType> declaredType) {
     final ControlFlowTypeResult controlFlowResult = getQualifiedReferenceTypeByControlFlow(refExpr, context);
     final PyType typeByControlFlow = controlFlowResult.type();
     if (!isUnknown(typeByControlFlow)) {
       if (controlFlowResult.foundPrefixCall()) {
         // A call with prefix as receiver/argument may or may not mutate it, so return UnsafeUnion of narrowed and declared types (PY-88265)
-        PyType declaredType = PyTypeUtil.derefOrUnknown(getTypeOfMember(qualifierType, null, attrName, refExpr, context, errors));
-        if (isNoneType(declaredType)) {
-          declaredType = PyAnyType.getUnknown();
+        PyType type = declaredType.get();
+        if (isNoneType(type)) {
+          type = PyAnyType.getUnknown();
         }
-        return PyUnsafeUnionType.unsafeUnion(typeByControlFlow, declaredType);
+        return PyUnsafeUnionType.unsafeUnion(typeByControlFlow, type);
       }
       return typeByControlFlow;
     }
 
-    return PyTypeUtil.derefOrUnknown(getTypeOfMember(qualifierType, null, attrName, refExpr, context, errors));
+    return declaredType.get();
   }
 
   private static boolean resolvesToProperty(@Nullable PyType type,
