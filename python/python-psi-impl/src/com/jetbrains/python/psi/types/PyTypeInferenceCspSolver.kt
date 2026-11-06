@@ -147,22 +147,8 @@ class CspBuilder(val context: TypeEvalContext) {
     val poolSize = inferenceVars.values().size
     if (poolSize == 0) return Pair(constraints.toList(), emptySet())
     for (constraint in constraints) {
-      // One walk of the constraint finds all its inference variables.
-      // The walk evaluates the component types, so it stops when it has found every variable of the pool.
-      val found = HashSet<PyInferenceVariable>()
-      PyRecursiveTypeVisitor.traverse(constraint.left, context, object : PyTypeTraverser() {
-        override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
-          if (type is PyInferenceVariable) {
-            // The pool is keyed by the name, and equals also compares the names
-            val iv = inferenceVars.findByName(type.name)
-            if (iv != null && found.add(iv)) {
-              ivToConstraintMap.put(iv, constraint)
-              if (found.size == poolSize) return PyRecursiveTypeVisitor.Traversal.TERMINATE
-            }
-          }
-          return PyRecursiveTypeVisitor.Traversal.CONTINUE
-        }
-      })
+      val found = collectInferenceVariables(constraint.left, context, poolSize)
+      found.forEach { ivToConstraintMap.put(it, constraint) }
     }
     val discardedConstraints = HashSet<TypeConstraint>()
     for (iv in inferenceVars.values()) {
@@ -298,7 +284,7 @@ class PyInferenceVariable(
   override fun assertValid(message: String?) {}
 
   override fun hashCode(): Int {
-    return Objects.hash(typeVariable.scopeOwner, typeVariable.name)
+    return Objects.hash(typeVariable.name)
   }
 
   override fun equals(other: Any?): Boolean {
@@ -330,8 +316,6 @@ private class InferenceVariablePool {
   fun values(): Collection<PyInferenceVariable> {
     return pool.values
   }
-
-  fun findByName(name: String): PyInferenceVariable? = pool[name]
 
   fun setUnbound(infVars: Collection<PyInferenceVariable>) {
     unboundIVs.addAll(infVars)
@@ -1852,7 +1836,10 @@ private fun isStructural(type: PyType?, context: TypeEvalContext): Boolean {
   return type is PyClassType && type.isProtocol(context)
 }
 
-private fun collectInferenceVariables(root: PyType?, context: TypeEvalContext): Set<PyInferenceVariable> {
+/**
+ * Collects all inference variables in [root] up to [maxSize]. Use [maxSize] for early termination and performance optimization.
+ */
+private fun collectInferenceVariables(root: PyType?, context: TypeEvalContext, maxSize: Int = Int.MAX_VALUE): Set<PyInferenceVariable> {
   val result = HashSet<PyInferenceVariable>()
   if (root is PyInferenceVariable) {
     result.add(root)
@@ -1862,6 +1849,7 @@ private fun collectInferenceVariables(root: PyType?, context: TypeEvalContext): 
       override fun visitPyType(type: PyType): PyRecursiveTypeVisitor.Traversal {
         if (type is PyInferenceVariable) {
           result.add(type)
+          if (result.size >= maxSize) return PyRecursiveTypeVisitor.Traversal.TERMINATE
         }
         return PyRecursiveTypeVisitor.Traversal.CONTINUE
       }
