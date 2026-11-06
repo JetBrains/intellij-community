@@ -73,7 +73,7 @@ class WebPreviewFileEditor internal constructor(file: WebPreviewVirtualFile) : U
         .withLink(CommonBundle.message("action.text.configure.ellipsis"), Runnable {
           ShowSettingsUtil.getInstance().showSettingsDialog(null, { it: Configurable? ->
             it is SearchableConfigurable &&
-            it.id == "reference.settings.ide.settings.web.browsers"
+            it.id == "reference.settings.ide.settings.web.browsers.live.preview"
           }, null)
         })
       gotItTooltip.show(panel.component) { _, _ -> Point(0, 0) }
