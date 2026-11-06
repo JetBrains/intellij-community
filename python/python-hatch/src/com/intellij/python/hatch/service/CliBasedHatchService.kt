@@ -193,7 +193,7 @@ private class CliBasedHatchProjectStructureService(
       return Result.failure(FileSystemOperationHatchError(failure.error))
     }
 
-    hatchService.hatchCli().new(projectName, tempDir.asNioPath()).getOr { return it }
+    hatchService.hatchCli().new(projectName, PathHolder.Eel(tempDir.asNioPath())).getOr { return it }
     try {
       withContext(Dispatchers.IO) {
         val source = tempDir.asNioPath()

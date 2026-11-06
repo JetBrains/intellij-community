@@ -9,6 +9,7 @@ import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.pytools.backend.PyToolsBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.sdk.add.v2.PathHolder
 
 /**
  * Runs [transformer] only on outputs with exit codes 0 or 1.
@@ -67,6 +68,9 @@ suspend fun <T> PyToolRuntime.executeAndMatch(
  * "whether any" are one question.
  */
 fun cliArg(value: String): List<String> = listOf(value)
+
+/** A path, as the machine the tool runs on sees it. */
+fun cliArg(value: PathHolder): List<String> = cliArg(value.toStringOnRemoteMachine())
 
 /** An option and its value, passed together. */
 fun cliOption(name: String, value: String): List<String> = listOf(name, value)
