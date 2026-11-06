@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPane
+import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.wayland.getValidBoundsForPopup
 import com.intellij.ui.wayland.isUnconstrainedPopupPositioning
@@ -146,10 +147,23 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       location = event.locationOnScreen,
       viewBounds = view.bounds,
       mouseButton = event.getButton(),
+      stopOnHideListener = setupStopOnHideListener(view),
     )
     currentSession = newSession
     LOG.debug { "$d Starting a new move/resize session: $currentSession" }
     onStarted(event, view, newSession)
+  }
+
+  private fun setupStopOnHideListener(view: Component): HierarchyListener {
+    check(view.isShowing) { "Move/resize sessions should only start when the view is showing: $view" }
+    val showingListener = HierarchyListener { event ->
+      if (BitUtil.isSet(event.changeFlags, HierarchyEvent.SHOWING_CHANGED.toLong()) && !view.isShowing) {
+        LOG.debug { "$d Stopping the session because the view is no longer showing" }
+        stop()
+      }
+    }
+    view.addHierarchyListener(showingListener)
+    return showingListener
   }
 
   protected open fun onStarted(event: MouseEvent, view: Component, newSession: WindowListenerSession) { }
@@ -220,6 +234,12 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
       LOG.debug("$d Entering the move-with-the-mouse mode")
       enterJbrMoveMode(session, view)
       return
+    }
+
+    // Start the override only on the first drag: a click also starts a session, and the JBR move mode sets its own cursor.
+    if (isDragEvent && session.cursorOverride == null) {
+      LOG.debug { "$d Overriding the cursor in all windows" }
+      session.cursorOverride = IdeGlassPaneImpl.overrideCursorInAllWindows(Cursor.getPredefinedCursor(cursorType))
     }
 
     val bounds = Rectangle(session.viewBounds)
@@ -302,6 +322,11 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     val stoppedSession = currentSession ?: return
     LOG.debug { "$d The move/resize session has finished: $stoppedSession" }
     currentSession = null
+    stoppedSession.view.removeHierarchyListener(stoppedSession.stopOnHideListener)
+    stoppedSession.cursorOverride?.let { cursorOverride ->
+      LOG.debug { "$d Removing the cursor override" }
+      cursorOverride.close()
+    }
     onStopped(stoppedSession)
   }
 
@@ -318,9 +343,10 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
     val location: Point,
     val viewBounds: Rectangle,
     val mouseButton: Int,
+    val stopOnHideListener: HierarchyListener,
     var expectMouseReleased: Boolean = true,
     var expectMouseClicked: Boolean = true,
-    var stopOnHideListener: HierarchyListener? = null,
+    var cursorOverride: AutoCloseable? = null,
     var toolkitListener: AWTEventListener? = null,
   )
 }
@@ -353,25 +379,8 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
       grabPoint = RelativePoint(event).getPoint(view)
       @Suppress("UsePropertyAccessSyntax")
       JBR.getRelativePointerMovement().getAccumulatedMouseDeltaAndReset()
-      setupListeners(newSession, view)
+      newSession.toolkitListener = setupToolkitListener()
     }
-  }
-
-  private fun setupListeners(newSession: WindowListenerSession, component: Component) {
-    newSession.stopOnHideListener = setupStopOnHideListener(component)
-    newSession.toolkitListener = setupToolkitListener()
-  }
-
-  private fun setupStopOnHideListener(component: Component): HierarchyListener {
-    check(component.isShowing) { "Move/resize sessions should only start when the component is showing: $component" }
-    val showingListener = HierarchyListener { event ->
-      if (BitUtil.isSet(event.changeFlags, HierarchyEvent.SHOWING_CHANGED.toLong()) && !component.isShowing) {
-        LOG.debug { "$d Stopping the session because the view is no longer showing" }
-        stop()
-      }
-    }
-    component.addHierarchyListener(showingListener)
-    return showingListener
   }
 
   private fun setupToolkitListener(): AWTEventListener {
@@ -400,7 +409,6 @@ private class WaylandWindowMouseListenerSupport(source: WindowMouseListenerSourc
   }
 
   override fun onStopped(stoppedSession: WindowListenerSession) {
-    stoppedSession.view.removeHierarchyListener(stoppedSession.stopOnHideListener)
     LOG.debug { "$d Removing the toolkit listener" }
     val toolkit = Toolkit.getDefaultToolkit()
     toolkit.removeAWTEventListener(stoppedSession.toolkitListener)

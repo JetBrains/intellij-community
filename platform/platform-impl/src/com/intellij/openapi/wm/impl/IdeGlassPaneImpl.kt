@@ -36,6 +36,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.StartupUiGate
 import com.intellij.util.awaitCancellationAndInvoke
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.EdtInvocationManager
@@ -74,6 +75,7 @@ import javax.swing.JPopupMenu
 import javax.swing.JRootPane
 import javax.swing.JSeparator
 import javax.swing.JWindow
+import javax.swing.RootPaneContainer
 import javax.swing.SwingUtilities
 import javax.swing.text.html.HTMLEditorKit
 import kotlin.coroutines.CoroutineContext
@@ -92,6 +94,11 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
   private val namedPainters = HashMap<String, PainterHelper>()
   private var isPreprocessorActive = false
   private val listenerToCursor = LinkedHashMap<Any, Cursor>()
+  private val cursorOverrides = LinkedHashMap<Any, Cursor>()
+  private var cursorBeforeOverride: Cursor? = null
+  private var enabledBeforeOverride = false
+  private var overriddenWindow: Window? = null
+  private var windowCursorBeforeOverride: Cursor? = null
   private var lastCursorComponent: Component? = null
   private var lastOriginalCursor: Cursor? = null
   private var prevPressEvent: MouseEvent? = null
@@ -197,6 +204,30 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
     fun forgetPreProcessedCursor(component: JComponent) {
       component.putClientProperty(PREPROCESSED_CURSOR_KEY, null)
     }
+
+    /**
+     * Sets the [cursor] override on the glass panes of all showing windows, see [setCursorOverride].
+     *
+     * The function gets the list of windows once, so a window that opens later does not get the override.
+     * It skips a window whose glass pane is not an [IdeGlassPaneImpl].
+     *
+     * @return the object that removes the override from the same glass panes; a second `close()` call does nothing
+     */
+    @RequiresEdt
+    internal fun overrideCursorInAllWindows(cursor: Cursor): AutoCloseable {
+      val glassPanes = Window.getWindows()
+        .filter { it.isShowing }
+        .mapNotNull { (it as? RootPaneContainer)?.rootPane?.glassPane as? IdeGlassPaneImpl }
+      val requestor = Any()
+      for (glassPane in glassPanes) {
+        glassPane.setCursorOverride(cursor, requestor)
+      }
+      return AutoCloseable {
+        for (glassPane in glassPanes) {
+          glassPane.setCursorOverride(null, requestor)
+        }
+      }
+    }
   }
 
   override fun doLayout() {
@@ -292,7 +323,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
         dispatched = target is DnDAware && dispatchForDnDAware(event, point, target)
       }
     }
-    if (isVisible && componentCount == 0) {
+    if (isVisible && componentCount == 0 && cursorOverrides.isEmpty()) {
       var cursorSet = false
       if (meComponent != null) {
         val parent = pane.contentPane.parent
@@ -480,6 +511,49 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
     }
   }
 
+  /**
+   * Sets the [cursor] for the whole window of this glass pane, over the cursors of all components under the pane.
+   * Use `null` to remove the override of the [requestor].
+   *
+   * While an override is active, the pane is visible and enabled, so the AWT cursor lookup stops at the pane.
+   * The override also sets the cursor of the window of the pane.
+   * A cursor lookup that finds no component at the pointer uses the cursor of the window.
+   * If more than one requestor sets an override, the latest request wins.
+   *
+   * @see overrideCursorInAllWindows
+   */
+  @RequiresEdt
+  internal fun setCursorOverride(cursor: Cursor?, requestor: Any) {
+    val wasActive = cursorOverrides.isNotEmpty()
+    cursorOverrides.remove(requestor)
+    if (cursor != null) {
+      cursorOverrides.put(requestor, cursor)
+    }
+    val activeCursor = cursorOverrides.values.lastOrNull()
+    if (activeCursor != null) {
+      if (!wasActive) {
+        cursorBeforeOverride = if (isCursorSet) this.cursor else null
+        enabledBeforeOverride = isEnabled
+        isEnabled = true
+        val window = SwingUtilities.getWindowAncestor(this)
+        overriddenWindow = window
+        windowCursorBeforeOverride = if (window != null && window.isCursorSet) window.cursor else null
+      }
+      UIUtil.setCursor(this, activeCursor)
+      overriddenWindow?.let { UIUtil.setCursor(it, activeCursor) }
+      applyActivationState()
+    }
+    else if (wasActive) {
+      applyActivationState()
+      isEnabled = enabledBeforeOverride
+      UIUtil.setCursor(this, cursorBeforeOverride)
+      cursorBeforeOverride = null
+      overriddenWindow?.let { UIUtil.setCursor(it, windowCursorBeforeOverride) }
+      overriddenWindow = null
+      windowCursorBeforeOverride = null
+    }
+  }
+
   override fun addMousePreprocessor(listener: MouseListener, parent: Disposable) {
     doAddListener(listener, parent)
   }
@@ -530,7 +604,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
 
   private fun applyActivationState() {
     val wasVisible = isVisible
-    val hasWork = loadingIndicator != null || painters.hasPainters() || componentCount > 0
+    val hasWork = loadingIndicator != null || painters.hasPainters() || componentCount > 0 || cursorOverrides.isNotEmpty()
     if (wasVisible != hasWork) {
       isVisible = hasWork
     }
