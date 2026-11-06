@@ -823,6 +823,7 @@ internal fun layoutDistribution(
   searchableOptionSet: SearchableOptionSetDescriptor?,
   cachedDescriptorWriterProvider: ScopedCachedDescriptorContainer?,
   assetFilter: DistributionAssetFilter? = null,
+  nativeFilesInPluginDir: Boolean = false,
   context: BuildContext,
 ): Pair<List<DistributionFileEntry>, Path> {
   if (copyFiles) {
@@ -866,6 +867,7 @@ internal fun layoutDistribution(
           dryRun = !copyFiles,
           descriptorCache = cachedDescriptorWriterProvider,
           assetFilter = assetFilter,
+          nativeFilesInPluginDir = nativeFilesInPluginDir,
           context = context,
         )
       }

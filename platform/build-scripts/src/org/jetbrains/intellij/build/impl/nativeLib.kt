@@ -142,10 +142,16 @@ private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(
  * `ProductProperties.presignedNativeLibs` for the library. [libDirPrefix] is relative to the distribution root.
  * For a plugin, it is `plugins/<plugin directory>/lib`, so the tree is next to the jar that owns it.
  * For platform content, it is `lib`.
+ *
+ * When [pluginLibDir] is set, the files go to `<pluginLibDir>/<dir>/` and the distribution gets no file.
+ * A non-bundled plugin sets it to its `lib` directory, because its archive holds only that plugin directory.
+ * The archive serves all platforms, so only a library that keeps the files of all platforms goes there.
+ * The files of another library go to the distribution, as for a bundled plugin.
  */
 internal fun TaskScope.packNativePresignedFiles(
   nativeFiles: Map<ZipSource, List<String>>,
   libDirPrefix: String,
+  pluginLibDir: Path?,
   dryRun: Boolean,
   context: BuildContext,
 ) {
@@ -156,6 +162,7 @@ internal fun TaskScope.packNativePresignedFiles(
         sourceFile = sourceFile,
         paths = paths,
         libDirPrefix = libDirPrefix,
+        pluginLibDir = pluginLibDir,
         dryRun = dryRun,
         context = context,
       )
@@ -167,6 +174,7 @@ private fun unpackNativeLibraries(
   sourceFile: Path,
   paths: List<String>,
   libDirPrefix: String,
+  pluginLibDir: Path?,
   dryRun: Boolean,
   context: BuildContext,
 ) {
@@ -179,14 +187,20 @@ private fun unpackNativeLibraries(
   val sourceFileName = sourceFile.name
   check(sourceFileName.startsWith("$libName-")) { "Unexpected source file name (should start with '$libName-'): $sourceFileName" }
   val libVersion = sourceFileName.removePrefix("$libName-").substringBeforeLast('.')
-  val libDir = "$libDirPrefix/${context.productProperties.presignedNativeLibs.getOrDefault(libName, libName)}"
+  val libDirName = context.productProperties.presignedNativeLibs.getOrDefault(libName, libName)
+  val libDir = "$libDirPrefix/$libDirName"
 
   // we need to keep async-profiler agents for all platforms to support remote target profiling,
   // as a suitable agent is copied to a remote machine
   val allPlatformsRequired = libName == "async-profiler"
+  val targetPluginLibDir = pluginLibDir.takeIf { allPlatformsRequired }
   val targetOs: Collection<OsFamily>?
   val targetArch: JvmArchitecture?
-  if (!allPlatformsRequired && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
+  if (targetPluginLibDir != null) {
+    targetOs = null
+    targetArch = null
+  }
+  else if (!allPlatformsRequired && signTool.signNativeFileMode != SignNativeFileMode.PREPARE) {
     targetOs = context.options.targetOs
     targetArch = context.options.targetArch
   }
@@ -223,9 +237,11 @@ private fun unpackNativeLibraries(
 
       // add an executable flag for native packaged files without an extension on POSIX OS (as it can be executed directly, opposite to lib)
       val isExecutable = os != OsFamily.WINDOWS && !PathUtilRt.getFileName(path).contains('.')
+      val relativePath = nativeLibraryRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)
+      val pluginFile = targetPluginLibDir?.resolve(libDirName)?.resolve(relativePath)
       if (file == null) {
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-        file = tempDir.resolve(path)!!
+        file = pluginFile ?: tempDir.resolve(path)!!
         if (!dryRun) {
           extractFileToDisk(file = file, zipFile = zipFile, pathWithPackage = pathWithPackage, isExecutable = isExecutable)
         }
@@ -234,15 +250,24 @@ private fun unpackNativeLibraries(
           unsignedFiles.computeIfAbsent(os) { mutableListOf() }.add(file)
         }
       }
+      else if (pluginFile != null && !dryRun) {
+        Files.createDirectories(pluginFile.parent)
+        Files.copy(file, pluginFile)
+        if (isExecutable && !isWindows) {
+          Files.setPosixFilePermissions(pluginFile, posixExecutableFileAttribute.value())
+        }
+      }
 
-      context.addDistFile(
-        DistFile(
-          content = LocalDistFileContent(file = file, isExecutable = isExecutable),
-          relativePath = "$libDir/${nativeLibraryRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)}",
-          os = os.takeUnless { allPlatformsRequired },
-          arch = arch.takeUnless { allPlatformsRequired },
+      if (pluginFile == null) {
+        context.addDistFile(
+          DistFile(
+            content = LocalDistFileContent(file = file, isExecutable = isExecutable),
+            relativePath = "$libDir/$relativePath",
+            os = os.takeUnless { allPlatformsRequired },
+            arch = arch.takeUnless { allPlatformsRequired },
+          )
         )
-      )
+      }
     }
   }
 

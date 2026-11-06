@@ -48,6 +48,8 @@ internal fun buildPlugins(
   context: BuildContext,
   copyFiles: Boolean = true,
   layoutOnly: Boolean = false,
+  /** Whether a plugin keeps its native files in its own directory instead of the distribution; true for a non-bundled plugin. */
+  nativeFilesInPluginDir: Boolean = false,
   additionalScrambleDescriptorsProvider: (() -> Collection<PluginBuildResult>)? = null,
   /** The function to be called after the plugin is built that may add additional entries to its distribution; `layout` parameter is `null` for plugins built by Bazel. */
   pluginBuilt: ((PluginBuildResult, layout: PluginLayout?, pluginDirOrFile: Path) -> List<DistributionFileEntry>)? = null,
@@ -70,6 +72,7 @@ internal fun buildPlugins(
       arch = arch,
       context = context,
       copyFiles = copyFiles,
+      nativeFilesInPluginDir = nativeFilesInPluginDir,
       pluginBuilt = pluginBuilt,
     )
   }
@@ -160,6 +163,7 @@ private fun buildPlugin(
   arch: JvmArchitecture?,
   context: BuildContext,
   copyFiles: Boolean,
+  nativeFilesInPluginDir: Boolean,
   pluginBuilt: ((PluginBuildResult, PluginLayout?, Path) -> List<DistributionFileEntry>)?,
 ): Pair<PluginBuildResult, ScrambleTask?> = taskScope {
   val directoryName = pluginLayout.directoryName
@@ -201,6 +205,7 @@ private fun buildPlugin(
       includedModules = pluginLayout.includedModules,
       searchableOptionSet = searchableOptionSet,
       cachedDescriptorWriterProvider = descriptorCacheContainer.forPlugin(pluginDir),
+      nativeFilesInPluginDir = nativeFilesInPluginDir,
       context = context,
     )
 

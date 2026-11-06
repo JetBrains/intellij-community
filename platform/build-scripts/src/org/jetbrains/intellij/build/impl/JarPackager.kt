@@ -118,6 +118,7 @@ class JarPackager private constructor(
       searchableOptionSet: SearchableOptionSetDescriptor? = null,
       descriptorCache: ScopedCachedDescriptorContainer? = null,
       assetFilter: DistributionAssetFilter? = null,
+      nativeFilesInPluginDir: Boolean = false,
       context: BuildContext,
     ): Collection<DistributionFileEntry> {
       val packager = JarPackager(
@@ -165,7 +166,13 @@ class JarPackager private constructor(
         if (buildAssetResult.sourceToNativeFiles.isNotEmpty()) {
           // A plugin keeps the native tree in its own `lib/`, next to the jar that owns it. Platform content keeps it in `lib/`.
           val libDirPrefix = if (layout is PluginLayout) "$PLUGINS_DIRECTORY/${layout.directoryName}/$LIB_DIRECTORY" else LIB_DIRECTORY
-          packNativePresignedFiles(nativeFiles = buildAssetResult.sourceToNativeFiles, libDirPrefix = libDirPrefix, dryRun = dryRun, context = context)
+          packNativePresignedFiles(
+            nativeFiles = buildAssetResult.sourceToNativeFiles,
+            libDirPrefix = libDirPrefix,
+            pluginLibDir = outputDir.takeIf { nativeFilesInPluginDir && layout is PluginLayout },
+            dryRun = dryRun,
+            context = context,
+          )
         }
 
         val list = mutableListOf<DistributionFileEntry>()

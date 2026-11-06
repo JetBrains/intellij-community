@@ -149,6 +149,7 @@ private fun buildNonBundledPlugins(
       platformEntriesProvider = platformEntriesProvider,
       searchableOptionSet = searchableOptionSet,
       descriptorCacheContainer = descriptorCacheContainer,
+      nativeFilesInPluginDir = true,
       context = context,
     ) { pluginBuildResult, layout, pluginDirOrFile ->
       val pluginXml = checkNotNull(descriptorCacheContainer.forPlugin(pluginDirOrFile).getCachedFileData(PLUGIN_XML_RELATIVE_PATH)) {
