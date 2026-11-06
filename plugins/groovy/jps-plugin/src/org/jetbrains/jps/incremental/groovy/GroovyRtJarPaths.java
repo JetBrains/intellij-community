@@ -59,7 +59,7 @@ public final class GroovyRtJarPaths {
         return;
       }
       String fileName;
-      if (jpsPluginClassesRoot.getName().equals("groovy-jps.jar")) {
+      if (jpsPluginClassesRoot.getName().equals("intellij.groovy.jps.jar")) {
         fileName = jarNameInDistribution;
       }
       else {

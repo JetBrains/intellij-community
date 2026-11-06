@@ -23,6 +23,7 @@ dev_dist_plugin_descriptor(
         "intellij.groovy.byteCodeViewer",
         "intellij.groovy.copyright",
         "intellij.groovy.git",
+        "intellij.groovy.jps",
         "intellij.groovy.langInjection",
         "intellij.groovy.spock",
         "intellij.groovy.structuralSearch",
@@ -68,6 +69,7 @@ dev_plugin(
         "//plugins/groovy/ant:ant_content_module_jar",
         "//plugins/groovy/byteCodeViewer:byteCodeViewer_content_module_jar",
         "//plugins/groovy/intellij.groovy.copyright:copyright_content_module_jar",
+        "//plugins/groovy/jps-plugin:jps_content_module_jar",
         "//plugins/groovy/langInjection:langInjection_content_module_jar",
         "//plugins/groovy/spock:spock_content_module_jar",
         "//plugins/groovy/structuralsearch-groovy:structuralSearch_content_module_jar",
@@ -91,9 +93,6 @@ dev_plugin(
             "intellij.groovy.git",
             "intellij.groovy.psi",
         ],
-        "lib/groovy-jps.jar": [
-            "intellij.groovy.jps",
-        ],
         "lib/groovy-rt.jar": [
             "intellij.groovy.rt",
         ],
@@ -109,6 +108,7 @@ dev_plugin(
     },
     main_module = "intellij.groovy",
     module_jar_paths = {
+        "intellij.groovy.jps": "lib/intellij.groovy.jps.jar",
         "intellij.libraries.hamcrest": "lib/intellij.libraries.hamcrest.jar",
         "intellij.libraries.junit4": "lib/intellij.libraries.junit4.jar",
         "intellij.libraries.opentest4j": "lib/intellij.libraries.opentest4j.jar",
@@ -117,7 +117,6 @@ dev_plugin(
         "//plugins/groovy": "intellij.groovy",
         "//plugins/groovy/git": "intellij.groovy.git",
         "//plugins/groovy/groovy-psi:psi": "intellij.groovy.psi",
-        "//plugins/groovy/jps-plugin:jps": "intellij.groovy.jps",
         "//plugins/groovy/rt": "intellij.groovy.rt",
         "//plugins/groovy/rt-constants:constants-rt": "intellij.groovy.constants.rt",
         "//plugins/groovy/rt/classLoader": "intellij.groovy.rt.classLoader",

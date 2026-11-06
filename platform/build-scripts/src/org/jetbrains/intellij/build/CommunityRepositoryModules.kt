@@ -739,7 +739,6 @@ fun groovyPlugin(additionalModules: List<String> = emptyList(), addition: ((Plug
         "intellij.groovy.structuralSearch",
       )
     )
-    spec.withModule("intellij.groovy.jps", "groovy-jps.jar")
     spec.withModule("intellij.groovy.rt", "groovy-rt.jar")
     spec.withModule("intellij.groovy.spock.rt", "groovy-spock-rt.jar")
     spec.withModule("intellij.groovy.rt.classLoader", "groovy-rt-class-loader.jar")

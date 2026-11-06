@@ -37,6 +37,7 @@ exports_files(
 dev_dist_plugin(
     content_modules = [
         # do not sort,
+        "intellij.groovy.jps",
         "intellij.groovy.git",
         "intellij.groovy.ant",
         "intellij.groovy.copyright",
@@ -48,7 +49,6 @@ dev_dist_plugin(
         "intellij.libraries.junit4",
         "intellij.libraries.opentest4j",
         "intellij.groovy.constants.rt",
-        "intellij.groovy.jps",
         "intellij.groovy.psi",
         "intellij.groovy.rt",
         "intellij.groovy.rt.classLoader",

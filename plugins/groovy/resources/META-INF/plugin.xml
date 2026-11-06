@@ -14,6 +14,7 @@
   <vendor>JetBrains</vendor>
 
   <content namespace="jetbrains">
+    <module name="intellij.groovy.jps" loading="embedded"/>
     <module name="intellij.groovy.duplicates"/>
     <module name="intellij.groovy.duplicatesDetection"/>
     <module name="intellij.groovy.git"/>
@@ -773,7 +774,7 @@
 
     <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.editor.GroovyQuoteHandler"/>
 
-    <compileServer.plugin classpath="groovy-jps.jar;groovy-constants-rt.jar"/>
+    <compileServer.plugin classpath="intellij.groovy.jps.jar;groovy-constants-rt.jar"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.plugins.groovy.compiler.GroovyTargetScopeProvider"/>
 
     <indexPatternBuilder implementation="org.jetbrains.plugins.groovy.util.GroovyIndexPatternBuilder"/>

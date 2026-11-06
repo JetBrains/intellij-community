@@ -6,6 +6,7 @@
     <plugin id="org.intellij.groovy"/>
     <module name="intellij.gradle.jps"/>
     <module name="intellij.gradle.properties"/>
+    <module name="intellij.groovy.jps"/>
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.execution"/>
     <module name="intellij.java.execution.impl"/>
