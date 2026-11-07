@@ -42,6 +42,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
+import java.io.ByteArrayInputStream
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.FilterInputStream
@@ -138,17 +139,30 @@ class IjentSessionProcessMediator private constructor(
      * A process that writes to stderr and exits at once is common: `ssh` that cannot connect does it.
      * So the bytes that the JDK takes from the pipe at the exit are read too. See [ExitDrainedReceiveChannel].
      */
-    override val stderr: EelReceiveChannel =
-      if (process is IjentChildProcessAdapter || SystemInfoRt.isWindows) rawReceiveChannel(process.errorStream)
-      else ExitDrainedReceiveChannel(rawReceiveChannel(process.errorStream), process, process.errorStream)
+    override val stderr: EelReceiveChannel = run {
+      val stream = process.errorStream
+      val raw = rawPipeOrNull(stream)
+      when {
+        raw == null -> stream.consumeAsEelChannel(IjentThreadPool.coroutineContext)
+        SystemInfoRt.isWindows -> raw.consumeAsEelChannel(IjentThreadPool.coroutineContext)
+        else -> ExitDrainedReceiveChannel(raw.consumeAsEelChannel(IjentThreadPool.coroutineContext), process, stream)
+      }
+    }
 
     private fun rawSendChannel(stream: OutputStream): EelSendChannel =
-      if (process is IjentChildProcessAdapter) stream.asEelChannel(IjentThreadPool.coroutineContext)
-      else stream.extractRawProcessStream().asEelChannel(IjentThreadPool.coroutineContext)
+      rawPipeOrNull(stream)?.asEelChannel(IjentThreadPool.coroutineContext)
+      ?: stream.asEelChannel(IjentThreadPool.coroutineContext)
 
     private fun rawReceiveChannel(stream: InputStream): EelReceiveChannel =
-      if (process is IjentChildProcessAdapter) stream.consumeAsEelChannel(IjentThreadPool.coroutineContext)
-      else stream.extractRawProcessStream().consumeAsEelChannel(IjentThreadPool.coroutineContext)
+      rawPipeOrNull(stream)?.consumeAsEelChannel(IjentThreadPool.coroutineContext)
+      ?: stream.consumeAsEelChannel(IjentThreadPool.coroutineContext)
+
+    /** The raw pipe under [stream], or `null` if the facade must use [stream] itself. See [extractRawProcessStream]. */
+    private fun rawPipeOrNull(stream: InputStream): ReadableByteChannel? =
+      if (process is IjentChildProcessAdapter) null else stream.extractRawProcessStream()
+
+    private fun rawPipeOrNull(stream: OutputStream): WritableByteChannel? =
+      if (process is IjentChildProcessAdapter) null else stream.extractRawProcessStream()
 
     // Pin the blocking `Process.waitFor()` call to `IjentThreadPool` via the explicit
     // `runInterruptible` context. `Process.awaitExit()` would otherwise route the JDK
@@ -499,7 +513,15 @@ private suspend fun awaitProcessExit(process: IjentSessionProcessMediator.Proces
   }
 }
 
-private tailrec fun InputStream.extractRawProcessStream(): ReadableByteChannel {
+/**
+ * Returns the raw pipe under a stream of `java.lang.ProcessImpl`, or `null` if the JDK has already drained the pipe.
+ *
+ * When the process exits, the process reaper of the JDK closes the pipe and puts the bytes left in it into a [ByteArrayInputStream],
+ * or puts `ProcessBuilder.NullInputStream` / `ProcessBuilder.NullOutputStream` instead of the pipe.
+ * A facade that is built after that must read or write the JDK stream itself. An exited process is not a bug.
+ * Any other stream type is unknown JDK internals, so it stays an error.
+ */
+private tailrec fun InputStream.extractRawProcessStream(): ReadableByteChannel? {
   return when (this) {
     is FileInputStream -> channel
     is BufferedInputStream -> FilterInputStream::class.java
@@ -508,11 +530,15 @@ private tailrec fun InputStream.extractRawProcessStream(): ReadableByteChannel {
       .get(this)
       .let { it as InputStream }
       .extractRawProcessStream()
-    else -> throw IllegalStateException("Unexpected stream type: ${this::class.java}")
+    is ByteArrayInputStream -> null
+    else ->
+      if (this::class.java.name == "java.lang.ProcessBuilder\$NullInputStream") null
+      else throw IllegalStateException("Unexpected stream type: ${this::class.java}")
   }
 }
 
-private fun OutputStream.extractRawProcessStream(): WritableByteChannel {
+/** See the docs of the [InputStream] overload. */
+private tailrec fun OutputStream.extractRawProcessStream(): WritableByteChannel? {
   return when (this) {
     is FileOutputStream -> channel
     is BufferedOutputStream -> FilterOutputStream::class.java
@@ -521,6 +547,8 @@ private fun OutputStream.extractRawProcessStream(): WritableByteChannel {
       .get(this)
       .let { it as OutputStream }
       .extractRawProcessStream()
-    else -> throw IllegalStateException("Unexpected stream type: ${this::class.java}")
+    else ->
+      if (this::class.java.name == "java.lang.ProcessBuilder\$NullOutputStream") null
+      else throw IllegalStateException("Unexpected stream type: ${this::class.java}")
   }
 }
