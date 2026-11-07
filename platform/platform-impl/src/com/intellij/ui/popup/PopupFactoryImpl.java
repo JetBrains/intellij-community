@@ -65,6 +65,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.platform.icons.scale.IconScaleKt;
+import com.intellij.platform.icons.swing.ScalableSwingIcon;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColorUtil;
@@ -1046,6 +1048,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return icon.getIconWidth() == maxIconWidth && icon.getIconHeight() == maxIconHeight
              ? icon
              : EmptyIcon.create(maxIconWidth, maxIconHeight);
+    }
+
+    if (icon instanceof ScalableSwingIcon swingIcon) {
+      float neededScale = (float)min(maxIconWidth, maxIconHeight) / min(icon.getIconWidth(), icon.getIconHeight());
+      return abs(1f - neededScale) < 0.01f ? icon : swingIcon.scaled(IconScaleKt.factor(neededScale));
     }
 
     float currentScale = icon instanceof ScalableIcon scalableIcon ? scalableIcon.getScale() : 1.0f;
