@@ -21,14 +21,9 @@ interface TerminalAsyncHyperlinkInfo : HyperlinkInfo {
 
 @ApiStatus.Internal
 object TerminalHyperlinkNavigator {
-  private val crossProjectNavigator = TerminalCrossProjectFileHyperlinkNavigator()
-
   suspend fun navigate(project: Project, hyperlinkInfo: HyperlinkInfo, mouseEvent: EditorMouseEvent?) {
     if (hyperlinkInfo is TerminalFileHyperlinkInfo) {
-      hyperlinkInfo.refreshFile() // both navigators below need the file in the VFS
-    }
-    if (crossProjectNavigator.navigate(project, hyperlinkInfo, mouseEvent)) {
-      return
+      hyperlinkInfo.refreshFile() // the navigation below needs the file in the VFS
     }
     when (hyperlinkInfo) {
       is TerminalAsyncHyperlinkInfo -> hyperlinkInfo.navigate(project, mouseEvent)

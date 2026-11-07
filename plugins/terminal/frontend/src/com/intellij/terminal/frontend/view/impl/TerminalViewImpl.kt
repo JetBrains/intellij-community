@@ -95,8 +95,6 @@ import org.jetbrains.plugins.terminal.block.ui.calculateGridGeometry
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkDataKeys
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationInfo
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationProjectResolver
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
@@ -136,7 +134,6 @@ class TerminalViewImpl(
   private val settings: JBTerminalSystemSettingsProviderBase,
   startupFusInfo: TerminalStartupFusInfo?,
   override val coroutineScope: CoroutineScope,
-  private val sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver? = null,
 ) : TerminalView {
   override val sessionDeferred: CompletableDeferred<TerminalSession> = CompletableDeferred(coroutineScope.coroutineContext.job)
 
@@ -612,7 +609,6 @@ class TerminalViewImpl(
   ): BufferEditorFeatures {
     val parentDisposable = coroutineScope.asDisposable()
 
-    TerminalSourceNavigationInfo.setResolver(editor, sourceNavigationProjectResolver)
     editor.putUserData(TerminalView.KEY, this@TerminalViewImpl)
     editor.putUserData(TerminalOutputModel.KEY, model)
 

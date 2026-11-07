@@ -55,7 +55,6 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowPanel
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationProjectResolver
 import org.jetbrains.plugins.terminal.settings.impl.TerminalSessionPersistedTab
 import org.jetbrains.plugins.terminal.settings.impl.TerminalTabsStorage
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
@@ -280,7 +279,6 @@ class TerminalToolWindowTabsManagerImpl(
     val viewOptions = TerminalViewBuilderOptions(
       processOptions = builder.getRequestedProcessOptions(),
       deferSessionStartUntilUiShown = builder.deferSessionStartUntilUiShown,
-      sourceNavigationProjectResolver = builder.sourceNavigationProjectResolver,
       startupFusInfo = builder.startupFusInfo,
     )
     val terminal = createTerminalView(
@@ -419,8 +417,6 @@ class TerminalToolWindowTabsManagerImpl(
       private set
     var shouldAddToToolWindow: Boolean = true
       private set
-    var sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver? = null
-      private set
     var startupFusInfo: TerminalStartupFusInfo? = null
       private set
     var pendingContent: Content? = null
@@ -488,11 +484,6 @@ class TerminalToolWindowTabsManagerImpl(
 
     override fun shouldAddToToolWindow(addToToolWindow: Boolean): TerminalToolWindowTabBuilder {
       shouldAddToToolWindow = addToToolWindow
-      return this
-    }
-
-    override fun sourceNavigationProjectResolver(resolver: TerminalSourceNavigationProjectResolver?): TerminalToolWindowTabBuilder {
-      sourceNavigationProjectResolver = resolver
       return this
     }
 

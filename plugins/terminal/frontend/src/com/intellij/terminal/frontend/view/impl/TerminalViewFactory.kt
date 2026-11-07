@@ -41,7 +41,6 @@ internal fun createTerminalView(
     settings = JBTerminalSystemSettingsProvider(),
     startupFusInfo = options.startupFusInfo,
     coroutineScope = coroutineScope,
-    sourceNavigationProjectResolver = options.sourceNavigationProjectResolver,
   )
   scheduleSessionStart(project, terminalView, options)
   return terminalView

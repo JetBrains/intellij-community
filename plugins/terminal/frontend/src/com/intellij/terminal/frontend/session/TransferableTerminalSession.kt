@@ -36,7 +36,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
-import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationProjectResolver
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -55,13 +54,10 @@ interface TransferableTerminalSession : AutoCloseable {
   val view: TerminalView
 
   /** Replaces the project-specific presentation without restarting the process/session. Must be called on EDT. */
-  fun bind(project: Project, sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver? = null): TerminalView
+  fun bind(project: Project): TerminalView
 
   /** Creates and connects a destination presentation without replacing the current binding. */
-  fun prepareBind(
-    project: Project,
-    sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver? = null,
-  ): PreparedTransferableTerminalBinding
+  fun prepareBind(project: Project): PreparedTransferableTerminalBinding
 
   suspend fun processId(): Long
 
@@ -249,7 +245,6 @@ class TransferableTerminalSessionFactory(private val coroutineScope: CoroutineSc
   suspend fun create(
     project: Project,
     options: ShellStartupOptions,
-    sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver? = null,
     startupFusInfo: TerminalStartupFusInfo? = null,
     deferSessionStartUntilUiShown: Boolean = false,
   ): TransferableTerminalSession {
@@ -257,7 +252,6 @@ class TransferableTerminalSessionFactory(private val coroutineScope: CoroutineSc
       parentScope = coroutineScope,
       initialProject = project,
       requestedOptions = options,
-      sourceNavigationProjectResolver = sourceNavigationProjectResolver,
       startupFusInfo = startupFusInfo,
       deferSessionStartUntilUiShown = deferSessionStartUntilUiShown,
     )
@@ -282,7 +276,6 @@ suspend fun createTransferableTerminalSessionForTest(
     parentScope = parentScope,
     initialProject = initialProject,
     requestedOptions = ShellStartupOptions.Builder().build(),
-    sourceNavigationProjectResolver = null,
     startupFusInfo = null,
     deferSessionStartUntilUiShown = deferSessionStartUntilUiShown,
     sessionStarter = { _, options, scope -> sessionStarter(options, scope) },
@@ -323,7 +316,6 @@ private class TransferableTerminalSessionImpl(
   private suspend fun initialize(
     initialProject: Project,
     requestedOptions: ShellStartupOptions,
-    sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver?,
     deferSessionStartUntilUiShown: Boolean,
   ): TransferableTerminalSessionImpl {
     try {
@@ -333,7 +325,7 @@ private class TransferableTerminalSessionImpl(
       }
       if (deferSessionStartUntilUiShown) {
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          bind(initialProject, sourceNavigationProjectResolver)
+          bind(initialProject)
           scheduleSessionStartOnShow(initialProject, requestedOptions, currentView)
         }
       }
@@ -341,7 +333,7 @@ private class TransferableTerminalSessionImpl(
         startSession(initialProject, requestedOptions)
         check(transitionToRunning()) { "Transferable terminal runtime terminated during startup" }
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          bind(initialProject, sourceNavigationProjectResolver)
+          bind(initialProject)
         }
         check(sessionState.value == TerminalViewSessionState.Running) { "Transferable terminal runtime terminated during startup" }
       }
@@ -404,9 +396,9 @@ private class TransferableTerminalSessionImpl(
     stateTransitionObserver(TerminalViewSessionState.Terminated)
   }
 
-  override fun bind(project: Project, sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver?): TerminalView {
+  override fun bind(project: Project): TerminalView {
     ThreadingAssertions.assertEventDispatchThread()
-    val prepared = prepareBind(project, sourceNavigationProjectResolver)
+    val prepared = prepareBind(project)
     val committed = prepared.commit() ?: run {
       prepared.close()
       error("Transferable terminal destination project is already disposed")
@@ -415,10 +407,7 @@ private class TransferableTerminalSessionImpl(
     return prepared.view
   }
 
-  override fun prepareBind(
-    project: Project,
-    sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver?,
-  ): PreparedTransferableTerminalBinding {
+  override fun prepareBind(project: Project): PreparedTransferableTerminalBinding {
     ThreadingAssertions.assertEventDispatchThread()
     check(!closed.get()) { "Transferable terminal session is already closed" }
     val projectScope = project.service<TransferableTerminalProjectBindingScope>().coroutineScope
@@ -428,7 +417,6 @@ private class TransferableTerminalSessionImpl(
         settings = JBTerminalSystemSettingsProvider(),
         startupFusInfo = startupFusInfo,
         coroutineScope = bindingScope,
-        sourceNavigationProjectResolver = sourceNavigationProjectResolver,
       )
     }
     val binding = prepared.binding
@@ -500,7 +488,6 @@ private class TransferableTerminalSessionImpl(
       parentScope: CoroutineScope,
       initialProject: Project,
       requestedOptions: ShellStartupOptions,
-      sourceNavigationProjectResolver: TerminalSourceNavigationProjectResolver?,
       startupFusInfo: TerminalStartupFusInfo?,
       deferSessionStartUntilUiShown: Boolean = false,
       sessionStarter: (Project, ShellStartupOptions, CoroutineScope) -> TerminalSession = { project, options, scope ->
@@ -521,7 +508,6 @@ private class TransferableTerminalSessionImpl(
       ).initialize(
         initialProject = initialProject,
         requestedOptions = requestedOptions,
-        sourceNavigationProjectResolver = sourceNavigationProjectResolver,
         deferSessionStartUntilUiShown = deferSessionStartUntilUiShown,
       )
     }
