@@ -33,6 +33,7 @@ dependencies {
     "spectreTestImplementation"(libs.kotlinx.coroutines.core)
     "spectreTestRuntimeOnly"(libs.junit.platform.engine)
     "spectreTestRuntimeOnly"(libs.junit.platform.launcher)
+    "spectreTestRuntimeOnly"(libs.spectre.recording.linux)
 }
 
 val jdkLevel = project.property("jdk.level") as String
