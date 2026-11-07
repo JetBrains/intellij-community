@@ -935,6 +935,28 @@ async def nosupAssertFalse(b):
     );
   }
 
+  @TestFor(issues = "PY-93848")
+  public void testStrMethodInCondition() {
+    doTestByText(
+      """
+        if "abc".upper() == "ABC":
+            print("always")
+        else:
+            <warning descr="This code is unreachable">print("never")</warning>"""
+    );
+  }
+
+  @TestFor(issues = "PY-93848")
+  public void testChainedComparisonInCondition() {
+    doTestByText(
+      """
+        if 3 > 2 > 1:
+            print("always")
+        else:
+            <warning descr="This code is unreachable">print("never")</warning>"""
+    );
+  }
+
   @TestFor(issues = "PY-93846")
   public void testInterpolatedFStringInCondition() {
     doTestByText(

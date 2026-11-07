@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.impl
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ArrayUtil
@@ -13,18 +14,24 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyBoolLiteralExpression
 import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyConditionalExpression
 import com.jetbrains.python.psi.PyDictLiteralExpression
 import com.jetbrains.python.psi.PyElementType
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFStringFragment
 import com.jetbrains.python.psi.PyFormattedStringElement
 import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PyNumericLiteralExpression
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyPrefixExpression
-import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PySliceItem
+import com.jetbrains.python.psi.PyStarArgument
+import com.jetbrains.python.psi.PyStringElement
 import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyUtil
@@ -128,6 +135,7 @@ open class PyEvaluator {
     myEvaluating[expression] = depth
     myLowestCutDepth = Int.MAX_VALUE
     try {
+      ProgressManager.checkCanceled()
       PyUtil.verboseOnly { PyPsiUtils.assertValid(expression) }
       val result = evaluateOnce(expression)
       if (myLowestCutDepth >= depth) {
@@ -154,8 +162,87 @@ open class PyEvaluator {
       is PyBinaryExpression -> evaluateBinary(expression)
       is PyNumericLiteralExpression -> evaluateNumeric(expression)
       is PyPrefixExpression -> evaluatePrefix(expression)
+      is PyConditionalExpression -> evaluateConditional(expression)
+      is PySubscriptionExpression -> evaluateSubscription(expression)
       else -> null
     }
+  }
+
+  private fun evaluateConditional(expression: PyConditionalExpression): Any? {
+    val condition = evaluateTruthiness(expression.condition) ?: return null
+    return evaluate(if (condition) expression.truePart else expression.falsePart)
+  }
+
+  private fun evaluateSubscription(expression: PySubscriptionExpression): Any? {
+    val operand = toConstant(evaluate(expression.operand)) ?: return null
+    val index = expression.indexExpression ?: return null
+    if (index is PySliceItem) {
+      val bounds = listOf(index.lowerBound, index.upperBound, index.stride).map { bound ->
+        if (bound == null) null else toConstant(evaluate(bound))?.let(PyConstantFolder::asInteger) ?: return null
+      }
+      return fromConstant(PyConstantFolder.slice(operand, bounds[0], bounds[1], bounds[2]))
+    }
+    return fromConstant(PyConstantFolder.subscript(operand, toConstant(evaluate(index)) ?: return null))
+  }
+
+  /**
+   * Returns `null` for a bytes literal, a t-string and an f-string with a fragment that does not fold. Their values are not a `str`
+   * that the evaluator knows.
+   */
+  private fun evaluateString(expression: PyStringLiteralExpression): String? {
+    val result = StringBuilder()
+    var folded = false
+    for (element in expression.stringElements) {
+      if (element.isBytes || element.isTemplate || hasUnsupportedEscape(element)) {
+        return null
+      }
+      if (element is PyFormattedStringElement && element.fragments.isNotEmpty()) {
+        folded = true
+        result.append(evaluateFormattedString(element) ?: return null)
+      }
+      else {
+        element.decodedFragments.forEach { result.append(it.second) }
+      }
+      if (folded && result.length > PyConstantFolder.MAX_STRING_LENGTH) {
+        return null
+      }
+    }
+    return result.toString()
+  }
+
+  private fun evaluateFormattedString(element: PyFormattedStringElement): String? {
+    val decoder = PyStringLiteralDecoder(element)
+    val result = StringBuilder()
+    var child = element.firstChild
+    while (child != null) {
+      if (PyTokenTypes.FSTRING_TEXT_TOKENS.contains(child.node.elementType)) {
+        decoder.decodeRange(child.textRangeInParent).forEach { result.append(it.second) }
+      }
+      else if (child is PyFStringFragment) {
+        result.append(evaluateFragment(child) ?: return null)
+      }
+      if (result.length > PyConstantFolder.MAX_STRING_LENGTH) {
+        return null
+      }
+      child = child.nextSibling
+    }
+    return result.toString()
+  }
+
+  /**
+   * Evaluates a replacement field without a format specifier, a `=` or a conversion other than `!s`.
+   */
+  private fun evaluateFragment(fragment: PyFStringFragment): String? {
+    val conversion = fragment.typeConversion?.text
+    if (fragment.formatPart != null || (conversion != null && conversion != "!s")) {
+      return null
+    }
+    val expression = fragment.expression ?: return null
+    val textAfterExpression = fragment.text.substring(expression.startOffsetInParent + expression.textLength)
+    if (textAfterExpression.trimStart().startsWith("=")) {
+      return null
+    }
+    return toConstant(evaluate(expression))?.let(PyConstantFolder::toStr)
   }
 
   protected open fun evaluateBinary(expression: PyBinaryExpression): Any? {
@@ -177,15 +264,81 @@ open class PyEvaluator {
       }
     }
 
+    if (op == null) {
+      return null
+    }
+    if (isComparison(expression)) {
+      return evaluateComparisonChain(expression)
+    }
     val lhs = evaluate(expression.leftExpression)
     val rhs = evaluate(expression.rightExpression)
     if (op === PyTokenTypes.PLUS && lhs != null && rhs != null) {
       return applyPlus(lhs, rhs)
     }
-    if (op == null) {
-      return null
+    if (op === PyTokenTypes.AND_KEYWORD || op === PyTokenTypes.OR_KEYWORD) {
+      return fromConstant(PyConstantFolder.binary(op, toConstant(lhs), toConstant(rhs)))
     }
-    return fromConstant(PyConstantFolder.binary(op, toConstant(lhs), toConstant(rhs)))
+    return fromConstant(PyConstantFolder.binary(op, toConstant(lhs) ?: return null, toConstant(rhs) ?: return null))
+  }
+
+  /**
+   * Evaluates `a < b < c` as Python does: `a < b and b < c`, with `b` evaluated once. The parser nests a chain to the left,
+   * as `(a < b) < c`. A comparison in parentheses is not a part of the chain.
+   */
+  private fun evaluateComparisonChain(expression: PyBinaryExpression): Boolean? {
+    val links = ArrayList<PyBinaryExpression>()
+    var first: PyExpression? = expression
+    while (first is PyBinaryExpression && isComparison(first)) {
+      links.add(first)
+      first = first.leftExpression
+    }
+    links.reverse()
+    var left = evaluate(first)
+    var unknown = false
+    for (link in links) {
+      val right = evaluate(link.rightExpression)
+      when (compare(link, left, right)) {
+        false -> return false
+        null -> unknown = true
+        true -> {}
+      }
+      left = right
+    }
+    return if (unknown) null else true
+  }
+
+  private fun compare(link: PyBinaryExpression, lhs: Any?, rhs: Any?): Boolean? {
+    val op = link.operator ?: return null
+    val left = toConstant(lhs) ?: return null
+    val right = toConstant(rhs) ?: return null
+    return when {
+      op === PyTokenTypes.IN_KEYWORD -> PyConstantFolder.contains(right, left)
+      op === PyTokenTypes.NOT_KEYWORD -> PyConstantFolder.contains(right, left)?.not()
+      op === PyTokenTypes.IS_KEYWORD -> null
+      else -> (PyConstantFolder.binary(op, left, right) as? PyConstantValue.Bool)?.value
+    }
+  }
+
+  /**
+   * Returns the result of `bool(expression)`. `and`, `or` and `not` give a result also when an operand is not known,
+   * if the known operand decides it: `x or True` is true for each `x`.
+   */
+  private fun evaluateTruthiness(expression: PyExpression?): Boolean? {
+    val flattened = PyPsiUtils.flattenParens(expression) ?: return null
+    if (flattened is PyBinaryExpression && flattened.isShortCircuit) {
+      val left = evaluateTruthiness(flattened.leftExpression)
+      val right = evaluateTruthiness(flattened.rightExpression)
+      val isOr = flattened.operator === PyTokenTypes.OR_KEYWORD
+      return when {
+        left == isOr || right == isOr -> isOr
+        left != null && right != null -> !isOr
+        else -> null
+      }
+    }
+    if (flattened is PyPrefixExpression && flattened.operator === PyTokenTypes.NOT_KEYWORD) {
+      return evaluateTruthiness(flattened.operand)?.not()
+    }
+    return isTruthy(evaluate(flattened))
   }
 
   private fun evaluatePrefix(expression: PyPrefixExpression): Any? {
@@ -211,12 +364,25 @@ open class PyEvaluator {
       return result
     }
 
-    return expression.elements.map { element -> if (myEvaluateCollectionItems) evaluate(element) else element }
+    val items = expression.elements.map { element -> if (myEvaluateCollectionItems) evaluate(element) else element }
+    return when (expression) {
+      is PyTupleExpression -> TupleItems(items)
+      is PyListLiteralExpression -> ListItems(items)
+      else -> items
+    }
   }
 
+  /**
+   * Joins two lists also when Python raises an error, as `list + tuple` does, because [PyBlockEvaluator] uses this method
+   * for `x += y` and `x.extend(y)`. The result folds further only when both lists are of one kind.
+   */
   open fun applyPlus(lhs: Any?, rhs: Any?): Any? {
     if (lhs is List<*> && rhs is List<*>) {
-      return ContainerUtil.concat(lhs, rhs)
+      return when {
+        lhs is TupleItems && rhs is TupleItems -> TupleItems(lhs + rhs)
+        lhs is ListItems && rhs is ListItems -> ListItems(lhs + rhs)
+        else -> ContainerUtil.concat(lhs, rhs)
+      }
     }
     return fromConstant(PyConstantFolder.binary(PyTokenTypes.PLUS, toConstant(lhs), toConstant(rhs)))
   }
@@ -249,19 +415,25 @@ open class PyEvaluator {
     return null
   }
 
+  /**
+   * Evaluates a method call on a `str` value, a call of a builtin function and `dict(...)`. A method call on a `str` needs no resolve,
+   * because no code can change the methods of `str`. A builtin function needs resolve, because a module can shadow its name.
+   */
   protected open fun evaluateCall(expression: PyCallExpression): Any? {
-    val args = expression.arguments
-    if (expression.isCalleeText(PyNames.REPLACE) && args.size == 2) {
-      val callee = expression.callee
-      if (callee is PyQualifiedExpression) {
-        val evaluatedQualifier = evaluate(callee.qualifier)
-        if (evaluatedQualifier is String) {
-          val oldSubstring = evaluate(args[0])
-          val newSubstring = evaluate(args[1])
-          if (oldSubstring is String && newSubstring is String) {
-            return evaluatedQualifier.replace(oldSubstring, newSubstring)
-          }
+    val callee = expression.callee
+    if (callee is PyReferenceExpression) {
+      val name = callee.referencedName
+      val qualifier = callee.qualifier
+      if (name != null && qualifier != null) {
+        val receiver = toConstant(evaluate(qualifier))
+        if (receiver is PyConstantValue.Str) {
+          val arguments = evaluatePositionalArguments(expression) ?: return null
+          return fromConstant(PyConstantFolder.callMethod(receiver, name, arguments))
         }
+      }
+      else if (name in FOLDED_BUILTINS && myEnableResolve && PyBuiltinCache.isInBuiltins(callee)) {
+        val arguments = evaluatePositionalArguments(expression) ?: return null
+        return fromConstant(PyConstantFolder.callBuiltin(name!!, arguments))
       }
     }
 
@@ -321,6 +493,17 @@ open class PyEvaluator {
     result[key] = if (myEvaluateCollectionItems) evaluateOrGet(value) else value
   }
 
+  /**
+   * Returns `null` for a call with a keyword argument or an unpacked argument.
+   */
+  private fun evaluatePositionalArguments(expression: PyCallExpression): List<PyConstantValue?>? {
+    val arguments = expression.arguments
+    if (arguments.any { it is PyKeywordArgument || it is PyStarArgument }) {
+      return null
+    }
+    return arguments.map { toConstant(evaluate(it)) }
+  }
+
   private fun evaluateOrGet(expression: PyExpression?): Any? {
     val result = evaluate(expression)
     if (result != null) {
@@ -334,21 +517,13 @@ open class PyEvaluator {
 
     private const val TYPE_CHECKING = "TYPE_CHECKING"
 
-    /**
-     * Returns `null` for a bytes literal, a t-string and an f-string with an interpolated fragment. Their values are not a `str`
-     * that the literal text gives.
-     */
-    private fun evaluateString(expression: PyStringLiteralExpression): String? {
-      for (element in expression.stringElements) {
-        if (element.isBytes || element.isTemplate) {
-          return null
-        }
-        if (element is PyFormattedStringElement && element.fragments.isNotEmpty()) {
-          return null
-        }
-      }
-      return expression.stringValue
-    }
+    private val FOLDED_BUILTINS = setOf("len", "str", "int", "bool", "ord", "chr")
+
+    /** A `tuple` value of the evaluator. */
+    private class TupleItems(items: Collection<Any?>) : ArrayList<Any?>(items)
+
+    /** A `list` value of the evaluator. */
+    private class ListItems(items: Collection<Any?>) : ArrayList<Any?>(items)
 
     private fun evaluateNumeric(expression: PyNumericLiteralExpression): Any? {
       if (expression.isIntegerLiteral) {
@@ -403,14 +578,33 @@ open class PyEvaluator {
      * or a [BigInteger], whichever is the smallest that holds it.
      */
     private fun toConstant(value: Any?): PyConstantValue? {
+      return toConstant(value, intArrayOf(PyConstantFolder.MAX_SEQUENCE_SIZE))
+    }
+
+    /**
+     * Converts a value of the evaluator to the form of [PyConstantFolder]. Only a [TupleItems] and a [ListItems] convert to a sequence,
+     * because another [List] can be a `set` or a list of a subclass that does not hold Python values. The [budget] limits the count
+     * of the converted items, because the lists of nested tuples can share items.
+     */
+    private fun toConstant(value: Any?, budget: IntArray): PyConstantValue? {
       return when (value) {
         is String -> PyConstantValue.Str(value)
         is Boolean -> PyConstantValue.Bool(value)
         is Int -> PyConstantValue.Int(BigInteger.valueOf(value.toLong()))
         is Long -> PyConstantValue.Int(BigInteger.valueOf(value))
         is BigInteger -> PyConstantValue.Int(value)
+        is TupleItems -> toSequence(value, PyConstantValue.SequenceKind.TUPLE, budget)
+        is ListItems -> toSequence(value, PyConstantValue.SequenceKind.LIST, budget)
         else -> null
       }
+    }
+
+    private fun toSequence(items: List<Any?>, kind: PyConstantValue.SequenceKind, budget: IntArray): PyConstantValue.Sequence? {
+      budget[0] -= items.size
+      if (budget[0] < 0) {
+        return null
+      }
+      return PyConstantValue.Sequence(items.map { toConstant(it, budget) ?: return null }, kind)
     }
 
     private fun fromConstant(value: PyConstantValue?): Any? {
@@ -419,6 +613,38 @@ open class PyEvaluator {
         is PyConstantValue.Str -> value.value
         is PyConstantValue.Bool -> value.value
         is PyConstantValue.Int -> fromBigInteger(value.value)
+        is PyConstantValue.Sequence -> when (value.kind) {
+          PyConstantValue.SequenceKind.TUPLE -> TupleItems(value.items.map(::fromConstant))
+          PyConstantValue.SequenceKind.LIST -> ListItems(value.items.map(::fromConstant))
+        }
+      }
+    }
+
+    /**
+     * The parser gives a binary `not` only for `not in`.
+     */
+    private fun isComparison(expression: PyBinaryExpression): Boolean {
+      return PyTokenTypes.COMPARISON_OPERATIONS.contains(expression.operator)
+    }
+
+    private val UNSUPPORTED_ESCAPE = Regex("""\\(\r?\n|N\{|u[dD][89a-fA-F]|U0000[dD][89a-fA-F])""")
+
+    /**
+     * Finds an escape that [PyStringLiteralDecoder] does not decode as Python does: a line continuation, a named character,
+     * and a surrogate, which Java joins with the next surrogate into one code point.
+     */
+    private fun hasUnsupportedEscape(element: PyStringElement): Boolean {
+      if (element.isRaw) {
+        return element.isFormatted && element.text.contains("\\N{")
+      }
+      return UNSUPPORTED_ESCAPE.containsMatchIn(element.text)
+    }
+
+    private fun isTruthy(value: Any?): Boolean? {
+      return when (value) {
+        is Collection<*> -> !value.isEmpty()
+        is Map<*, *> -> !value.isEmpty()
+        else -> toConstant(value)?.let(PyConstantFolder::isTruthy)
       }
     }
 
@@ -515,11 +741,7 @@ open class PyEvaluator {
     }
 
     private fun evaluateAsBoolean(evaluator: PyEvaluator, expression: PyExpression?): Boolean? {
-      return when (val result = evaluator.evaluate(expression)) {
-        is Collection<*> -> !result.isEmpty()
-        is Map<*, *> -> !result.isEmpty()
-        else -> toConstant(result)?.let(PyConstantFolder::isTruthy)
-      }
+      return evaluator.evaluateTruthiness(expression)
     }
 
     @ApiStatus.Internal

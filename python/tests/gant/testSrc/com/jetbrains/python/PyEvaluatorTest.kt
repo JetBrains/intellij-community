@@ -11,6 +11,7 @@ import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.impl.PyConstantFolder
 import com.jetbrains.python.psi.impl.PyEvaluator
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -449,6 +450,278 @@ class PyEvaluatorTest : PyCodeInsightTestCase() {
     assertEquals(mapOf("a" to 1, "b" to 2), byText<Map<*, *>>("expr = dict([('a', 1)], b=2)"))
     assertEquals(mapOf("title" to "x"), byText<Map<*, *>>("expr = dict(base, title='x')"))
     assertNull(PyEvaluator().evaluate(parseText("expr = dict([('a', 1, 2)])")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `int operators follow Python`() = runInEdtAndWait {
+    assertEvaluates("7 % 3", 1)
+    assertEvaluates("-7 % 3", 2)
+    assertEvaluates("7 % -3", -2)
+    assertEvaluates("7 % 0", null)
+    assertEvaluates("2 ** 10", 1024)
+    assertEvaluates("(-2) ** 3", -8)
+    assertEvaluates("2 ** 100", BigInteger("1267650600228229401496703205376"))
+    assertEvaluates("2 ** -1", null)
+    assertEvaluates("6 & 3", 2)
+    assertEvaluates("6 | 3", 7)
+    assertEvaluates("6 ^ 3", 5)
+    assertEvaluates("1 << 10", 1024)
+    assertEvaluates("-16 >> 2", -4)
+    assertEvaluates("1 >> 100", 0)
+    assertEvaluates("-1 >> 100", -1)
+    assertEvaluates("1 << -1", null)
+    assertEvaluates("~5", -6)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `bool acts as int in arithmetic`() = runInEdtAndWait {
+    assertEvaluates("True + 1", 2)
+    assertEvaluates("-True", -1)
+    assertEvaluates("True & False", false)
+    assertEvaluates("True | 1", 1)
+    assertEvaluates("1 == True", true)
+    assertEvaluates("'ab' * True", "ab")
+    assertEvaluates("~True", null)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `str repetition and comparison`() = runInEdtAndWait {
+    assertEvaluates("'ab' * 3", "ababab")
+    assertEvaluates("3 * 'ab'", "ababab")
+    assertEvaluates("'ab' * -1", "")
+    assertEvaluates("'a' < 'b'", true)
+    assertEvaluates("'abc' < 'abd'", true)
+    assertEvaluates("""'\U0001F600' < '￿'""", false)
+    assertEvaluates("'a' < 1", null)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `equality across kinds and of sequences`() = runInEdtAndWait {
+    assertEvaluates("'a' == 1", false)
+    assertEvaluates("'a' != 1", true)
+    assertEvaluates("[1, 2] == [1, 2]", true)
+    assertEvaluates("(1, 2) == (1, 3)", false)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun membership() = runInEdtAndWait {
+    assertEvaluates("'b' in 'abc'", true)
+    assertEvaluates("'d' not in 'abc'", true)
+    assertEvaluates("2 in (1, 2)", true)
+    assertEvaluates("3 in [1, 2]", false)
+    assertEvaluates("1 in 'abc'", null)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `and and or return an operand`() = runInEdtAndWait {
+    assertEvaluates("0 or 'a'", "a")
+    assertEvaluates("'' and 1", "")
+    assertEvaluates("1 and 2", 2)
+    assertEvaluates("not 0", true)
+    assertEvaluates("not 'a'", false)
+    assertEvaluates("not []", true)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `conditional expression`() = runInEdtAndWait {
+    assertEvaluates("'a' if 1 else 'b'", "a")
+    assertEvaluates("'a' if '' else 'b'", "b")
+    assertEvaluates("'a' if undefined else 'b'", null)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `subscript and slice count code points`() = runInEdtAndWait {
+    assertEvaluates("'abc'[1]", "b")
+    assertEvaluates("'abc'[-1]", "c")
+    assertEvaluates("'abc'[3]", null)
+    assertEvaluates("'abcdef'[1:4]", "bcd")
+    assertEvaluates("'abcdef'[::-1]", "fedcba")
+    assertEvaluates("'abcdef'[::2]", "ace")
+    assertEvaluates("'abcdef'[-2:]", "ef")
+    assertEvaluates("'abcdef'[5:1:-2]", "fd")
+    assertEvaluates("'abc'[::0]", null)
+    assertEvaluates("(1, 2, 3)[1]", 2)
+    assertEvaluates("[1, 2, 3][1:]", listOf(2, 3))
+    assertEvaluates("""'a\U0001F600b'[1]""", "😀")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `str methods follow Python`() = runInEdtAndWait {
+    assertEvaluates("'asdf'.upper()", "ASDF")
+    assertEvaluates("'Straße'.upper()", "STRASSE")
+    assertEvaluates("'ABC'.lower()", "abc")
+    assertEvaluates("'ABC'.casefold()", "abc")
+    assertEvaluates(""""they're bill's".title()""", "They'Re Bill'S")
+    assertEvaluates("'hELLO wORLD'.capitalize()", "Hello world")
+    assertEvaluates("'  a b  '.strip()", "a b")
+    assertEvaluates("""'\xa0a\xa0'.strip()""", "a")
+    assertEvaluates("'xxaxx'.strip('x')", "a")
+    assertEvaluates("'  a'.lstrip()", "a")
+    assertEvaluates("'a  '.rstrip()", "a")
+    assertEvaluates("' a  b c '.split()", listOf("a", "b", "c"))
+    assertEvaluates("'a,b,,c'.split(',')", listOf("a", "b", "", "c"))
+    assertEvaluates("'a,b,c'.split(',', 1)", listOf("a", "b,c"))
+    assertEvaluates("'-'.join(['a', 'b'])", "a-b")
+    assertEvaluates("'abc'.startswith('ab')", true)
+    assertEvaluates("'abc'.startswith(('x', 'a'))", true)
+    assertEvaluates("'abc'.endswith('bc')", true)
+    assertEvaluates("'prefix_x'.removeprefix('prefix_')", "x")
+    assertEvaluates("'x.py'.removesuffix('.py')", "x")
+    assertEvaluates("'42'.zfill(5)", "00042")
+    assertEvaluates("'-42'.zfill(5)", "-0042")
+    assertEvaluates("'abc'.zfill(2)", "abc")
+    assertEvaluates("'aaa'.replace('a', 'b', 2)", "bba")
+    assertEvaluates("'ab'.replace('', '-')", "-a-b-")
+    assertEvaluates("'ab'.replace('', '-', 1)", "-ab")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `str methods give no value where Python raises or the folder does not know the result`() = runInEdtAndWait {
+    assertEvaluates("'a'.split('')", null)
+    assertEvaluates("'-'.join(('a', 1))", null)
+    assertEvaluates("'Straße'.casefold()", null)
+    assertEvaluates("'a,b'.split(sep=',')", null)
+    assertEvaluates("'abc'.find('b')", null)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `str method needs no resolve`() = runInEdtAndWait {
+    assertEquals("ASDF", PyEvaluator.evaluateNoResolve(parseExpression("'asdf'.upper()"), String::class.java))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `builtins follow Python`() = runInEdtAndWait {
+    assertEquals(3, PyEvaluator().evaluate(parseText("""expr = len('a\U0001F600b')""")))
+    assertEquals(2, PyEvaluator().evaluate(parseText("expr = len([1, 2])")))
+    assertEquals("10", PyEvaluator().evaluate(parseText("expr = str(10)")))
+    assertEquals("True", PyEvaluator().evaluate(parseText("expr = str(True)")))
+    assertEquals(1000, PyEvaluator().evaluate(parseText("expr = int(' 1_000 ')")))
+    assertNull(PyEvaluator().evaluate(parseText("expr = int('1__0')")))
+    assertEquals(1, PyEvaluator().evaluate(parseText("expr = int(True)")))
+    assertEquals(false, PyEvaluator().evaluate(parseText("expr = bool('')")))
+    assertEquals(128512, PyEvaluator().evaluate(parseText("""expr = ord('\U0001F600')""")))
+    assertEquals("A", PyEvaluator().evaluate(parseText("expr = chr(65)")))
+    assertNull(PyEvaluator().evaluate(parseText("expr = chr(-1)")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `builtin needs resolve to builtins`() = runInEdtAndWait {
+    assertNull(PyEvaluator.evaluateNoResolve(parseText("expr = len('abc')"), Any::class.java))
+    assertNull(PyEvaluator().evaluate(parseText("""
+      def len(x):
+          return 0
+      expr = len('abc')
+    """)))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `f-string folds its fragments`() = runInEdtAndWait {
+    assertEvaluates("f'{1 + 1}x'", "2x")
+    assertEvaluates("'a' f'{2}'", "a2")
+    assertEvaluates("f'{True!s}'", "True")
+    assertEvaluates("f'{{}}'", "{}")
+    assertEvaluates("f'{1!r}'", null)
+    assertEvaluates("f'{1:>3}'", null)
+    assertEvaluates("f'{1=}'", null)
+    assertEquals("a!", PyEvaluator().evaluate(parseText("""
+      x = 'a'
+      expr = f'{x}!'
+    """)))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `result over the limits gives no value`() = runInEdtAndWait {
+    assertEvaluates("2 ** 100000", null)
+    assertEvaluates("1 << 100000", null)
+    assertEvaluates("'a' * 100000", null)
+    assertEvaluates("'0'.zfill(100000)", null)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `chained comparison is a conjunction of its links`() = runInEdtAndWait {
+    assertEvaluates("3 > 2 > 1", true)
+    assertEvaluates("2 == 2 == 2", true)
+    assertEvaluates("0 == 0 == 1", false)
+    assertEvaluates("1 in [1] in [[1]]", true)
+    assertEvaluates("(3 > 2) > 1", false)
+    assertEvaluates("3 < 2 < undefined", false)
+    assertEvaluates("1 < undefined < 3", null)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `tuple list and set stay apart`() = runInEdtAndWait {
+    assertEvaluates("[1] == (1,)", false)
+    assertEvaluates("(1,) + (2,)", listOf(1, 2))
+    assertEvaluates("{1, 2}[0]", null)
+    assertEvaluates("'a'.startswith(['a'])", null)
+    assertEvaluates("''.join({'b', 'a'})", null)
+    assertNull(PyEvaluator().evaluate(parseText("expr = len({1, 1})")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `or with an unknown left operand gives no value but a known truth`() = runInEdtAndWait {
+    assertEvaluates("undefined or True", null)
+    assertEvaluates("undefined and False", null)
+    assertEquals(true, PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("undefined or True")))
+    assertEquals(false, PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("undefined and False")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `int accepts the whitespace of Python int`() = runInEdtAndWait {
+    assertNull(PyEvaluator().evaluate(parseText("""expr = int('\x1c1')""")))
+    assertEquals(1, PyEvaluator().evaluate(parseText("""expr = int('\xa01')""")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `literal that Java decodes unlike Python gives no value`() = runInEdtAndWait {
+    assertEvaluates("'\\ud83d\\ude00'", null)
+    assertEvaluates("""'\N{BULLET}'""", null)
+    assertEvaluates("'a\\\nb'", null)
+    assertNull(PyEvaluator().evaluate(parseText("expr = chr(0xD83D)")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `plain literal over the limit keeps its value`() = runInEdtAndWait {
+    val text = "a".repeat(PyConstantFolder.MAX_STRING_LENGTH + 1)
+    assertEvaluates("'$text'", text)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93848"])
+  fun `nested tuples that share items stay within the budget`() = runInEdtAndWait {
+    val source = buildString {
+      appendLine("x0 = (1, 2)")
+      for (i in 1..40) {
+        appendLine("x$i = (x${i - 1}, x${i - 1})")
+      }
+      appendLine("expr = x40[0]")
+    }
+    assertNull(PyEvaluator().evaluate(parseText(source)))
+  }
+
+  private fun assertEvaluates(expression: String, expected: Any?) {
+    assertEquals(expected, PyEvaluator().evaluate(parseExpression(expression)), expression)
   }
 
   private inline fun <reified T : Any> byExpression(expression: String): T =

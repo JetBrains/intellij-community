@@ -15,6 +15,11 @@ sealed interface PyConstantValue {
   /** An `int` value that is not a `bool`. */
   data class Int(val value: BigInteger) : PyConstantValue
 
-  /** A `bool` value. */
+  /** A `bool` value. Python treats it as the `int` 0 or 1 in arithmetic. */
   data class Bool(val value: Boolean) : PyConstantValue
+
+  /** A `list` or a `tuple` whose items are all known. */
+  data class Sequence(val items: List<PyConstantValue>, val kind: SequenceKind) : PyConstantValue
+
+  enum class SequenceKind { TUPLE, LIST }
 }
