@@ -162,8 +162,16 @@ public class CodeCompletionHandlerBase {
       update.trackStatistics(context);
     }
     finally {
-      if (context != null && context.getLaterRunnable() != null) {
-        context.getLaterRunnable().run();
+      Runnable laterRunnable = context == null ? null : context.getLaterRunnable();
+      if (laterRunnable != null) {
+        Application application = ApplicationManager.getApplication();
+        if (application.isWriteAccessAllowed()) {
+          // a typed char can finish the lookup in a write action, see afterItemInsertion
+          application.invokeLater(laterRunnable, Objects.requireNonNull(editor.getProject()).getDisposed());
+        }
+        else {
+          laterRunnable.run();
+        }
       }
     }
   }
