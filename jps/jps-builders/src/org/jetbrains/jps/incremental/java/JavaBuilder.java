@@ -68,7 +68,6 @@ import org.jetbrains.jps.javac.DiagnosticOutputConsumer;
 import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.ExternalJavacManagerKey;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
-import org.jetbrains.jps.javac.InputFileDataProvider;
 import org.jetbrains.jps.javac.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.JavacMain;
 import org.jetbrains.jps.javac.JavacOptions;
@@ -588,7 +587,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       return invokeJavac(compilerSdkVersion, context, chunk, compilingTool, options, files, classesConsumer, (_options, _files, _outSink) -> {
         logJavacCall(chunk, _options, "in-process");
         return JavacMain.compile(
-          _options, _files, classPath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnosticSink, _outSink, context.getCancelStatus(), compilingTool, (InputFileDataProvider)null
+          _options, _files, classPath, platformCp, modulePath, upgradeModulePath, sourcePath, outs, diagnosticSink, _outSink, context.getCancelStatus(), compilingTool, null
         );
       });
     }

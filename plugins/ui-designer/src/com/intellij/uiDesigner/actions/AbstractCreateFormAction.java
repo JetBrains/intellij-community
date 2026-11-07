@@ -57,7 +57,7 @@ abstract class AbstractCreateFormAction extends CreateElementActionBase implemen
       s = FileUtil.loadTextAndClose(getClass().getResourceAsStream(formName));
     }
     catch (IOException e) {
-      throw new IncorrectOperationException(UIDesignerBundle.message("error.cannot.read", formName), (Throwable)e);
+      throw new IncorrectOperationException(UIDesignerBundle.message("error.cannot.read", formName), e);
     }
 
     if (fqn != null) {

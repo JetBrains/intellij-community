@@ -33,7 +33,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -342,7 +341,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
   public @Nullable HighlightSeverity getSeverity(@NotNull RefElement element) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       return WriteIntentReadAction
-        .compute((Computable<HighlightSeverity>)() -> doGetSeverity(element));
+        .compute(() -> doGetSeverity(element));
     } else {
       return ReadAction
         .nonBlocking(() -> doGetSeverity(element))

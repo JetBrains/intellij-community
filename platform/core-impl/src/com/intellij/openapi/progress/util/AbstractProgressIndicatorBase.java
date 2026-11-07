@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -168,7 +167,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void checkCanceled() {
     throwIfCanceled();
     ProgressManager progressManager = ProgressManager.getInstanceOrNull();
-    if (progressManager != null && ((CoreProgressManager)progressManager).runCheckCanceledHooks(this)) {
+    if (progressManager != null && progressManager.runCheckCanceledHooks(this)) {
       throwIfCanceled();
     }
   }

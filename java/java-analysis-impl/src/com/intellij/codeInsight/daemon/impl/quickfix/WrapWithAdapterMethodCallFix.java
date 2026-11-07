@@ -178,7 +178,7 @@ public final class WrapWithAdapterMethodCallFix extends PsiUpdateModCommandActio
       }
       catch (IncorrectOperationException ioe) {
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(variableType);
-        throw new IncorrectOperationException(getExceptionMessage(variableType, aClass), (Throwable)ioe);
+        throw new IncorrectOperationException(getExceptionMessage(variableType, aClass), ioe);
       }
       PsiDeclarationStatement declaration =
         JavaPsiFacade.getElementFactory(context.getProject()).createVariableDeclarationStatement("x", outType, replacement, context);

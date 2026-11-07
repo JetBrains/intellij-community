@@ -230,7 +230,7 @@ public final class CreateFromUsageUtils {
       throw e;
     }
     catch (Exception e) {
-      throw new IncorrectOperationException("Failed to parse file template", (Throwable)e);
+      throw new IncorrectOperationException("Failed to parse file template", e);
     }
 
     PsiMethod m;

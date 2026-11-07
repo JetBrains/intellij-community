@@ -253,7 +253,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
       return createMethodFromText(builder.toString(), null).getTypeParameters()[0];
     }
     catch (RuntimeException e) {
-      throw new IncorrectOperationException("type parameter text: " + builder, (Throwable)e);
+      throw new IncorrectOperationException("type parameter text: " + builder, e);
     }
   }
 
@@ -432,7 +432,7 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
   @Override
   public @Nullable PsiPrimitiveType createPrimitiveType(@NotNull String text) {
-    return PsiJavaParserFacadeImpl.getPrimitiveType(text);
+    return getPrimitiveType(text);
   }
 
   @Override
