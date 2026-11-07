@@ -184,8 +184,8 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
         for (Pair<TextRange, String> fragment : myHost.getDecodedFragments()) {
           final TextRange encodedTextRange = fragment.getFirst();
           final TextRange intersection = encodedTextRange.intersection(rangeInsideHost);
-          if (intersection != null && !intersection.isEmpty()) {
-            final String value = fragment.getSecond();
+          final String value = fragment.getSecond();
+          if (intersection != null && !intersection.isEmpty() && !value.isEmpty()) {
             final String intersectedValue;
             if (value.codePointCount(0, value.length()) == 1 || value.length() == intersection.getLength()) {
               intersectedValue = value;
@@ -213,12 +213,12 @@ public interface PyAstStringLiteralExpression extends PyAstLiteralExpression, St
             final int valueLength = value.length();
             final int intersectionLength = intersection.getLength();
             if (valueLength == 0) {
-              // A line continuation decodes to nothing
+              // A line continuation decodes to an empty value and moves no offset in the decoded text
               endOffset = intersection.getEndOffset();
               continue;
             }
             // A long unicode escape of form \U01234567 can be decoded into a surrogate pair
-            else if (value.codePointCount(0, valueLength) == 1) {
+            if (value.codePointCount(0, valueLength) == 1) {
               if (offset == offsetInDecoded) {
                 return intersection.getStartOffset();
               }

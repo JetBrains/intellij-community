@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,7 +50,7 @@ public class PyStringLiteralDecoder {
     map.put("\\", "\\");
     map.put("'", "'");
     map.put("\"", "\"");
-    map.put("a", "\001");
+    map.put("a", "\007");
     map.put("b", "\b");
     map.put("f", "\f");
     map.put("n", "\n");
@@ -75,8 +76,9 @@ public class PyStringLiteralDecoder {
 
   private @NotNull List<Pair<TextRange, String>> decodeFragment(@NotNull String encoded, int offset) {
     final boolean raw = myNode.isRaw();
-    // A bytes literal has no Unicode escapes
-    final boolean unicode = !myNode.isBytes() && (myNode.isUnicode() || isUnicodeByDefault());
+    final boolean python2 = LanguageLevel.forElement(myNode).isPython2();
+    final boolean unicode = !myNode.isBytes() && (myNode.isUnicode() || isUnicodeByDefault(python2));
+    final boolean escapedUnicode = !raw || unicode;
     final boolean formatted = myNode.isFormatted();
 
     final List<Pair<TextRange, String>> result = new ArrayList<>();
@@ -92,13 +94,11 @@ public class PyStringLiteralDecoder {
       final String fStringBrace = escapeRegexGroup(escMatcher, EscapeRegexGroup.FSTRING_BRACE);
       final String octal = escapeRegexGroup(escMatcher, EscapeRegexGroup.OCTAL);
       final String hex = escapeRegexGroup(escMatcher, EscapeRegexGroup.HEXADECIMAL);
-      // TODO: Implement unicode character name escapes: EscapeRegexGroup.UNICODE_NAMED
+      final String unicodeName = escapeRegexGroup(escMatcher, EscapeRegexGroup.UNICODE_NAMED);
       final String unicode16 = escapeRegexGroup(escMatcher, EscapeRegexGroup.UNICODE_16BIT);
       final String unicode32 = escapeRegexGroup(escMatcher, EscapeRegexGroup.UNICODE_32BIT);
       final String wholeMatch = escapeRegexGroup(escMatcher, EscapeRegexGroup.WHOLE_MATCH);
       assert wholeMatch != null;
-
-      final boolean escapedUnicode = !raw || unicode;
 
       final String str;
       if (fStringBrace != null) {
@@ -112,6 +112,10 @@ public class PyStringLiteralDecoder {
       }
       else if (escapedUnicode && unicode16 != null) {
         str = unicode ? new String(new char[]{(char)Integer.parseInt(unicode16, 16)}) : wholeMatch;
+      }
+      else if (!raw && unicodeName != null) {
+        final String character = unicode ? decodeCharacterName(unicodeName.substring(1, unicodeName.length() - 1)) : null;
+        str = character != null ? character : wholeMatch;
       }
       else if (escapedUnicode && unicode32 != null) {
         String s = wholeMatch;
@@ -149,8 +153,45 @@ public class PyStringLiteralDecoder {
     return matcher.group(group.ordinal());
   }
 
-  private boolean isUnicodeByDefault() {
-    if (!LanguageLevel.forElement(myNode).isPython2()) {
+  /**
+   * Returns the character that Python gives for the escape {@code \N{name}}, or {@code null} when the name is unknown.
+   * <p>
+   * The JDK knows no name alias and no algorithmic name of a CJK ideograph or a Hangul syllable, so these names give {@code null}.
+   */
+  private static @Nullable String decodeCharacterName(@NotNull String name) {
+    // Python compares the ASCII letters of a name without case.
+    // String.toUpperCase also maps letters such as "ı" to ASCII letters.
+    if (!name.chars().allMatch(c -> c < 0x80)) {
+      return null;
+    }
+    final String upperName = name.toUpperCase(Locale.ROOT);
+    final int codePoint;
+    try {
+      codePoint = Character.codePointOf(upperName);
+    }
+    catch (IllegalArgumentException e) {
+      return null;
+    }
+    // Character.codePointOf also accepts names that Python rejects: a name with surrounding whitespace,
+    // the Unicode 1.0 name of a control character, and the block name of a character without a name.
+    if (!upperName.equals(Character.getName(codePoint)) ||
+        Character.getType(codePoint) == Character.CONTROL ||
+        upperName.equals(getBlockName(codePoint))) {
+      return null;
+    }
+    return Character.toString(codePoint);
+  }
+
+  private static @Nullable String getBlockName(int codePoint) {
+    final Character.UnicodeBlock block = Character.UnicodeBlock.of(codePoint);
+    if (block == null) {
+      return null;
+    }
+    return block.toString().replace('_', ' ') + " " + Integer.toHexString(codePoint).toUpperCase(Locale.ROOT);
+  }
+
+  private boolean isUnicodeByDefault(boolean python2) {
+    if (!python2) {
       return true;
     }
     final PsiFile file = myNode.getContainingFile();
