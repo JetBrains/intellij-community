@@ -3,6 +3,7 @@ package com.intellij.platform.ijent.community.impl
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.community.impl.nio.fsBlocking
 import com.intellij.platform.ijent.community.impl.nio.fsBlockingWithoutParallelismCompensation
@@ -67,9 +68,9 @@ class IjentFsBlockingFailFastSimulationTest {
 
   @Test
   fun `fs operation on EDT fails fast before the deployment is awaited`() {
-    lateinit var err: IllegalStateException
+    lateinit var err: EelUnavailableException.CommunicationFailure
     SwingUtilities.invokeAndWait {
-      err = shouldThrow<IllegalStateException> {
+      err = shouldThrow<EelUnavailableException.CommunicationFailure> {
         listRootThroughFsBlocking(interactiveFs(initialized = false))
       }
     }
@@ -78,7 +79,7 @@ class IjentFsBlockingFailFastSimulationTest {
 
   @Test
   fun `fs operation on a background thread fails fast as well`() {
-    val err = shouldThrow<IllegalStateException> {
+    val err = shouldThrow<EelUnavailableException.CommunicationFailure> {
       listRootThroughFsBlocking(interactiveFs(initialized = false))
     }
     err.message shouldContain "IJPL-245001"

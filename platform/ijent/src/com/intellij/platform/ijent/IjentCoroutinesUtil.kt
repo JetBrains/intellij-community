@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -79,6 +80,11 @@ class IjentCallerContextElement(val callerContext: IjentCallerContext) : Abstrac
  * A deployment launched in a detached scope does not inherit the element, so code that awaits such
  * a deployment must call this function on the awaiting side; see `ijentFailSafeFileSystemApi`
  * in `intellij.platform.ijent.community.impl`.
+ *
+ * The error is an [java.io.IOException]: the environment is just not connected yet, and nio callers handle only `IOException`.
+ * An `IllegalStateException` escaped `FileSystemUtil.resolveSymLink` and dropped all `FileWatcher` watch roots.
+ *
+ * @throws EelUnavailableException.CommunicationFailure inside the bridge; a retry outside it can succeed.
  */
 @ApiStatus.Internal
 @VisibleToClasses(
@@ -90,7 +96,7 @@ class IjentCallerContextElement(val callerContext: IjentCallerContext) : Abstrac
 )
 suspend fun throwIfInsideIjentFsBlocking() {
   if (currentCoroutineContext()[IjentCallerContextElement.Key] != null) {
-    throw IllegalStateException(
+    throw EelUnavailableException.CommunicationFailure(
       "IJent deployment is requested from inside a blocking IJent file system operation. " +
       "If the deployment needs user interaction (e.g., an SSH authentication dialog), it deadlocks: " +
       "the file system call blocks its thread, which may be EDT itself or may hold the read lock. " +

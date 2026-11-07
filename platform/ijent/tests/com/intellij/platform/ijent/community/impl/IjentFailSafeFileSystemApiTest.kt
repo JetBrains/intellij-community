@@ -3,6 +3,7 @@ package com.intellij.platform.ijent.community.impl
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.IjentCallerContextElement
@@ -58,7 +59,7 @@ class IjentFailSafeFileSystemApiTest {
   fun `uninitialized interactive environment fails fast inside fsBlocking`(): Unit = runBlocking {
     val fs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = { false }, deploymentMayRequireUserInteraction = { true })
     withContext(fsBlockingMarker()) {
-      val err = shouldThrow<IllegalStateException> { fs.touch() }
+      val err = shouldThrow<EelUnavailableException.CommunicationFailure> { fs.touch() }
       err.message shouldContain "IJPL-245001"
     }
   }
@@ -92,7 +93,7 @@ class IjentFailSafeFileSystemApiTest {
   fun `delegate stays usable for a safe caller after a fail-fast`(): Unit = runBlocking {
     val fs = ijentFailSafeFileSystemApi(scope, descriptor, checkIsIjentInitialized = { false }, deploymentMayRequireUserInteraction = { true })
     withContext(fsBlockingMarker()) {
-      shouldThrow<IllegalStateException> { fs.touch() }.message shouldContain "IJPL-245001"
+      shouldThrow<EelUnavailableException.CommunicationFailure> { fs.touch() }.message shouldContain "IJPL-245001"
     }
     val err = shouldThrowAny { fs.touch() }
     (err.message ?: "") shouldNotContain "IJPL-245001"
