@@ -34,6 +34,55 @@ class BazelGeneratorIntegrationTests {
     // Expected BUILD.bazel files are stored as ~BUILD.bazel in test data
     // to prevent Bazel from treating those directories as packages (same convention as plugins/bazel)
     private const val TILDE_BUILD_PREFIX = "~"
+
+    /** The BUILD file of the Starter test row, as buildifier formats it. */
+    private val STARTER_TEST_BUILD_FILE = """
+      |load("@rules_jvm//:jvm.bzl", "jvm_library")
+      |load("//build:starter_test.bzl", "starter_test")
+      |
+      |### auto-generated section `build intellij.ultimate.starter.tests` start
+      |jvm_library(
+      |    name = "starter-tests_test_lib",
+      |    testonly = True,
+      |    srcs = glob(
+      |        [
+      |            "test/**/*.kt",
+      |            "test/**/*.java",
+      |            "test/**/*.form",
+      |        ],
+      |        allow_empty = True,
+      |    ),
+      |    kotlinc_opts = "@community//:k21",
+      |    module_name = "intellij.ultimate.starter.tests",
+      |    visibility = ["//visibility:public"],
+      |    deps = ["@community//lambda-framework:lambda-testFramework_test_lib"],
+      |)
+      |### auto-generated section `build intellij.ultimate.starter.tests` end
+      |
+      |### auto-generated section `iml intellij.ultimate.starter.tests` start
+      |exports_files(
+      |    [
+      |        "intellij.ultimate.starter.tests.iml",
+      |    ],
+      |    visibility = ["//visibility:public"],
+      |)
+      |### auto-generated section `iml intellij.ultimate.starter.tests` end
+      |
+      |### auto-generated section `test intellij.ultimate.starter.tests` start
+      |starter_test(
+      |    name = "starter-tests_test",
+      |    context_plugins = [
+      |        "intellij.lambda.test.plugin",
+      |        "intellij.ultimate.extra.plugin",
+      |        "intellij.ultimate.starter.tests.plugin",
+      |    ],
+      |    frontend = True,
+      |    product = "idea",
+      |    runtime_deps = [":starter-tests_test_lib"],
+      |)
+      |### auto-generated section `test intellij.ultimate.starter.tests` end
+      |
+    """.trimMargin()
   }
 
   @JvmField
@@ -197,6 +246,66 @@ class BazelGeneratorIntegrationTests {
     generateMetadataProject(communityDir)
     assertEquals(pluginBuildFileContent, pluginBuildFile.readText())
     if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  /**
+   * A row of `build/starter-bazel-tests.json` turns the `jps_test` of its module into `starter_test`. The test compares
+   * the whole BUILD file: the load of the macro, the attributes after `name` in the order of buildifier, and
+   * `runtime_deps`. So `//:format.check` keeps the generated text.
+   */
+  @Test
+  fun `a Starter test row writes starter_test in the attribute order of buildifier`() {
+    val projectDir = Files.createTempDirectory("starter-test-build-file")
+    projectDir.resolve(".ultimate.root.marker").writeText("")
+    val communityDir = projectDir.resolve("community")
+    getTestDataPath("MRI-4552").resolve("project").copyToRecursively(communityDir, followLinks = true, overwrite = false)
+    communityDir.resolve(".idea").copyToRecursively(projectDir.resolve(".idea"), followLinks = true, overwrite = false)
+    val modulesFile = projectDir.resolve(".idea/modules.xml")
+    modulesFile.writeText(modulesFile.readText().replace("\$PROJECT_DIR\$/module/", "\$PROJECT_DIR\$/community/module/"))
+
+    val buildServer = "intellij.tools.ide.starter.build.server"
+    val product = "intellij.tools.ide.starter.product.idea"
+    val lambdaFramework = "intellij.lambda.testFramework"
+    addModuleWithTestDependencies(projectDir, "community/starter-build-server", buildServer, emptyList(), communityDir)
+    addModuleWithTestDependencies(projectDir, "community/starter-product", product, emptyList(), communityDir)
+    addModuleWithTestDependencies(projectDir, "community/lambda-framework", lambdaFramework, listOf(buildServer, product), communityDir)
+    addModuleWithTestDependencies(projectDir, "community/lambda-plugin", "intellij.lambda.test.plugin", emptyList(), communityDir)
+    addModuleWithTestDependencies(projectDir, "ultimate/starter-tests", "intellij.ultimate.starter.tests", listOf(lambdaFramework), communityDir)
+    projectDir.resolve("ultimate/starter-tests/test/StarterTest.kt").createParentDirectories().writeText("class StarterTest\n")
+    addModuleWithTestDependencies(projectDir, "ultimate/starter-tests-plugin", "intellij.ultimate.starter.tests.plugin", emptyList(), communityDir)
+    addModuleWithTestDependencies(projectDir, "ultimate/extra-plugin", "intellij.ultimate.extra.plugin", emptyList(), communityDir)
+    projectDir.resolve(STARTER_BAZEL_TESTS_RELATIVE_PATH).createParentDirectories().writeText("""
+      {
+        "products": {"$product": "idea"},
+        "tests": {"intellij.ultimate.starter.tests": ["intellij.ultimate.extra.plugin"]}
+      }
+    """.trimIndent())
+
+    generateMetadataProject(projectDir, communityOnly = false)
+
+    assertEquals(STARTER_TEST_BUILD_FILE, projectDir.resolve("ultimate/starter-tests/BUILD.bazel").readText())
+    assertEquals("""
+      |{
+      |    "generatedBy": "./build/jpsModelToBazel.cmd",
+      |    "contextPlugins": {
+      |        "idea": [
+      |            "intellij.lambda.test.plugin",
+      |            "intellij.ultimate.extra.plugin",
+      |            "intellij.ultimate.starter.tests.plugin"
+      |        ]
+      |    }
+      |}
+      |
+    """.trimMargin(), projectDir.resolve(STARTER_BAZEL_TESTS_GENERATED_RELATIVE_PATH).readText())
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  private fun addModuleWithTestDependencies(projectDir: Path, directory: String, moduleName: String, dependencies: List<String>, templateDir: Path) {
+    val relativePath = "$directory/$moduleName.iml"
+    val entries = dependencies.joinToString(separator = "") { "    <orderEntry type=\"module\" module-name=\"$it\" scope=\"TEST\" />\n" }
+    val iml = templateDir.resolve("module/intellij.module.iml").readText().replaceFirst("  </component>", "$entries  </component>")
+    projectDir.resolve(relativePath).createParentDirectories().writeText(iml)
+    registerModule(projectDir, relativePath)
   }
 
   @Test
