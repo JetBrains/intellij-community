@@ -182,65 +182,18 @@ open class PyEvaluator {
     if (op === PyTokenTypes.PLUS && lhs != null && rhs != null) {
       return applyPlus(lhs, rhs)
     }
-    else if (lhs is Number && rhs is Number) {
-      val first = toBigInteger(lhs)
-      val second = toBigInteger(rhs)
-      return when (op) {
-        PyTokenTypes.MINUS -> fromBigInteger(first.subtract(second))
-        PyTokenTypes.MULT -> fromBigInteger(first.multiply(second))
-        PyTokenTypes.FLOORDIV -> if (second.signum() == 0) null else fromBigInteger(floorDivide(first, second))
-        PyTokenTypes.LT -> first < second
-        PyTokenTypes.LE -> first <= second
-        PyTokenTypes.GT -> first > second
-        PyTokenTypes.GE -> first >= second
-        PyTokenTypes.EQEQ -> first.compareTo(second) == 0
-        PyTokenTypes.NE -> first.compareTo(second) != 0
-        else -> null
-      }
+    if (op == null) {
+      return null
     }
-    else if (op === PyTokenTypes.AND_KEYWORD || op === PyTokenTypes.OR_KEYWORD) {
-      val first = lhs as? Boolean
-      val second = rhs as? Boolean
-      // Short-circuit: `True or x` is True and `False and x` is False even when the other operand
-      // cannot be evaluated statically (e.g. `TYPE_CHECKING or not USE_EXTENSIONS`).
-      if (op === PyTokenTypes.OR_KEYWORD) {
-        if (first == true || second == true) {
-          return true
-        }
-        if (first != null && second != null) {
-          return first || second
-        }
-      }
-      else {
-        if (first == false || second == false) {
-          return false
-        }
-        if (first != null && second != null) {
-          return first && second
-        }
-      }
-    }
-
-    return null
+    return fromConstant(PyConstantFolder.binary(op, toConstant(lhs), toConstant(rhs)))
   }
 
   private fun evaluatePrefix(expression: PyPrefixExpression): Any? {
     val operator = expression.operator
-    if (operator === PyTokenTypes.NOT_KEYWORD) {
-      val value = evaluate(expression.operand) as? Boolean
-      if (value != null) {
-        return !value
-      }
+    if (!PyConstantFolder.isPrefixOperator(operator)) {
+      return null
     }
-    else if (operator === PyTokenTypes.MINUS || operator === PyTokenTypes.PLUS) {
-      val number = evaluate(expression.operand) as? Number
-      if (number != null) {
-        val bigInt = toBigInteger(number)
-        return fromBigInteger(if (operator === PyTokenTypes.MINUS) bigInt.negate() else bigInt)
-      }
-    }
-
-    return null
+    return fromConstant(PyConstantFolder.prefix(operator, toConstant(evaluate(expression.operand))))
   }
 
   /**
@@ -262,12 +215,10 @@ open class PyEvaluator {
   }
 
   open fun applyPlus(lhs: Any?, rhs: Any?): Any? {
-    return when {
-      lhs is String && rhs is String -> lhs + rhs
-      lhs is List<*> && rhs is List<*> -> ContainerUtil.concat(lhs, rhs)
-      lhs is Number && rhs is Number -> fromBigInteger(toBigInteger(lhs).add(toBigInteger(rhs)))
-      else -> null
+    if (lhs is List<*> && rhs is List<*>) {
+      return ContainerUtil.concat(lhs, rhs)
     }
+    return fromConstant(PyConstantFolder.binary(PyTokenTypes.PLUS, toConstant(lhs), toConstant(rhs)))
   }
 
   protected open fun evaluateReference(expression: PyReferenceExpression): Any? {
@@ -406,14 +357,6 @@ open class PyEvaluator {
       return null
     }
 
-    /**
-     * Rounds the quotient down, as the `//` operator of Python does. [BigInteger.divide] rounds it toward zero.
-     */
-    private fun floorDivide(dividend: BigInteger, divisor: BigInteger): BigInteger {
-      val (quotient, remainder) = dividend.divideAndRemainder(divisor)
-      return if (remainder.signum() * divisor.signum() < 0) quotient.subtract(BigInteger.ONE) else quotient
-    }
-
     @ApiStatus.Internal
     @JvmStatic
     fun evaluateAsVersion(expression: PyExpression?): IntArray? {
@@ -455,19 +398,31 @@ open class PyEvaluator {
       return null
     }
 
-    private fun toBigInteger(value: Number): BigInteger {
-      // don't forget to update fromBigInteger() after changing this method
-
+    /**
+     * Converts a value of the evaluator to the form of [PyConstantFolder]. The evaluator keeps an `int` as an [Int], a [Long]
+     * or a [BigInteger], whichever is the smallest that holds it.
+     */
+    private fun toConstant(value: Any?): PyConstantValue? {
       return when (value) {
-        is Int -> BigInteger.valueOf(value.toLong())
-        is Long -> BigInteger.valueOf(value)
-        else -> value as BigInteger
+        is String -> PyConstantValue.Str(value)
+        is Boolean -> PyConstantValue.Bool(value)
+        is Int -> PyConstantValue.Int(BigInteger.valueOf(value.toLong()))
+        is Long -> PyConstantValue.Int(BigInteger.valueOf(value))
+        is BigInteger -> PyConstantValue.Int(value)
+        else -> null
+      }
+    }
+
+    private fun fromConstant(value: PyConstantValue?): Any? {
+      return when (value) {
+        null -> null
+        is PyConstantValue.Str -> value.value
+        is PyConstantValue.Bool -> value.value
+        is PyConstantValue.Int -> fromBigInteger(value.value)
       }
     }
 
     private fun fromBigInteger(value: BigInteger): Number {
-      // don't forget to update toBigInteger() after changing this method
-
       val intValue = value.toInt()
       if (BigInteger.valueOf(intValue.toLong()) == value) {
         return intValue
@@ -561,12 +516,9 @@ open class PyEvaluator {
 
     private fun evaluateAsBoolean(evaluator: PyEvaluator, expression: PyExpression?): Boolean? {
       return when (val result = evaluator.evaluate(expression)) {
-        is Boolean -> result
-        is Int, is Long, is BigInteger -> toBigInteger(result as Number).signum() != 0
-        is String -> result.isNotEmpty()
         is Collection<*> -> !result.isEmpty()
         is Map<*, *> -> !result.isEmpty()
-        else -> null
+        else -> toConstant(result)?.let(PyConstantFolder::isTruthy)
       }
     }
 
