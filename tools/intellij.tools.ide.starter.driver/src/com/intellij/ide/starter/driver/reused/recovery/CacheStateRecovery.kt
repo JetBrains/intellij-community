@@ -8,10 +8,14 @@ import com.intellij.driver.sdk.saveSettings
 import com.intellij.tools.ide.util.common.logError
 
 /**
- * The cache store of one settings target.
+ * The cache store of one settings target, as it was at one moment.
  *
- * The IDE keeps the `$CACHE_FILE$` state of the application components in `app-internal-state.db`. The IDE holds the
- * database open, so no file baseline shows that state.
+ * The cache store lives in `app-internal-state.db`. The IDE holds the database open, so no file baseline shows that
+ * state. Two kinds of code write to the store:
+ * - An application component with the `$CACHE_FILE$` storage. Its keys carry the name of the component, so [components]
+ * gives recovery the owner of such a key, and recovery can roll the key back and reload the owner.
+ * - Code that tags a setting `com.intellij.platform.settings.CacheTag` and reads it itself, as
+ * `EditorConfigEncodingCache` does. No component owns such a key, and recovery keeps it, see [CacheStateChanges].
  *
  * @property entries each key to its value in Base64.
  * @property components the `$CACHE_FILE$` components that the IDE has loaded.
@@ -34,8 +38,9 @@ internal fun Driver.compareCacheState(reference: CacheStateSnapshot): Map<RdTarg
  *
  * @property restartReason why live recovery cannot restore this state, or `null`. Then the IDE restarts.
  * @property changedKeys each changed key to its `$CACHE_FILE$` component. Recovery rolls back these keys.
- * A key with no component belongs to code that tags its data `CacheTag` itself. Such code keeps a copy in memory, so
- * live recovery treats that data as the memory of the services, and keeps it.
+ * A key with no component belongs to code that tags its data `com.intellij.platform.settings.CacheTag` itself. There is
+ * no component to reload, and such code keeps a copy of the value in memory. A rollback in the store would not reach
+ * that copy, so live recovery treats that data as the memory that no settings component holds, and keeps it.
  */
 internal data class CacheStateChanges(
   val restartReason: String? = null,
@@ -107,7 +112,8 @@ internal data class CacheFileComponent(val pluginId: String, val name: String) {
  * The component of [components] that owns [key], or `null`.
  *
  * A key is `<plugin id>.<component>`, or `<plugin id>.<component>.<property>` for a bean state. When the prefixes of two
- * components match, the longer prefix wins.
+ * components match, the longer prefix wins. A key that no component owns is the data of a
+ * `com.intellij.platform.settings.CacheTag` setting.
  */
 private fun cacheKeyOwner(key: String, components: List<CacheFileComponent>): CacheFileComponent? {
   return components

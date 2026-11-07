@@ -29,7 +29,10 @@ fun clearCacheStore() {
 /**
  * Lists each entry of the cache store as `<key>\t<Base64 of the value>`.
  *
- * The reused IDE recovery of IDE Starter compares two lists to find the `$CACHE_FILE$` state that a test changed.
+ * The cache store holds the `$CACHE_FILE$` state of the application components, and also each setting that its own
+ * code tags [CacheTag]. A key is `<plugin id>.<key of the setting>`.
+ *
+ * The reused IDE recovery of IDE Starter compares two lists to find the state that a test changed.
  * It rolls back that state from the first list with [restoreCacheStoreEntries].
  */
 @TestOnly
@@ -41,7 +44,8 @@ fun describeCacheStore(): List<String> {
 /**
  * Writes each of [entries], given as `<key>\t<Base64 of the value>`, into the cache store, and removes [removedKeys] from it.
  *
- * The reused IDE recovery of IDE Starter rolls back the `$CACHE_FILE$` state of a test with it.
+ * The reused IDE recovery of IDE Starter rolls back the `$CACHE_FILE$` state of a test with it. A component reads the
+ * written value only on a reload, so the caller reloads the component of each key that it writes.
  */
 @TestOnly
 fun restoreCacheStoreEntries(entries: List<String>, removedKeys: List<String>) {

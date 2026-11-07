@@ -12,6 +12,9 @@ import com.intellij.ide.starter.models.TestCase
  * [setup] runs once, when that context is first created. It prepares the config, the plugins, the VM options and the
  * project files. It must not start an IDE. Every test of the context shares its `system` directory, so the first test
  * builds the indexes, and a warm-up in [setup] only moves that work.
+ *
+ * A logger is never a reason for a second configuration on one project. Add the logger to the [setup] of the
+ * configuration that exists, even when the other tests of that configuration get it too.
  */
 open class CachedProjectConfiguration(
   val testCase: TestCase<*>,

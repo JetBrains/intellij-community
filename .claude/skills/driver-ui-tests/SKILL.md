@@ -8,143 +8,39 @@ description: Write IntelliJ UI tests with IDE Starter or UI Driver.
 
 Guidelines for writing UI tests using IDE Starter and UI Driver frameworks.
 
-## Common Imports
+Three files sit next to this one. Read [find-elements.md](find-elements.md) when you look for a component or read
+the IDE state. Read [api.md](api.md) when you need the call for an action, a wait or a startup flag. Read
+[debug.md](debug.md) when a test fails.
 
-```kotlin
-// Driver core
-import com.intellij.driver.client.Driver
-import com.intellij.driver.sdk.waitForProjectOpen
-import com.intellij.driver.sdk.advancedSettings
+## Critical Rules
 
-// Test utilities
-import com.intellij.driver.tests.utils.waitForIndicators
-import com.intellij.driver.tests.utils.Plugin
-import com.intellij.driver.tests.utils.PluginInstaller
-import com.intellij.driver.tests.utils.Plugins
+These hold for every Driver test:
 
-// IDE Starter framework
-import com.intellij.ide.starter.driver.runIdeTest
-import com.intellij.ide.starter.ide.IDETestContext
-import com.intellij.ide.starter.models.IDEStartResult
-import com.intellij.ide.starter.models.VMOptions
-import com.intellij.ide.starter.runner.IDERunContext
-import com.intellij.ide.starter.runner.Starter
-import com.intellij.ide.starter.utils.catchAll
+- **Never use `Thread.sleep()`** or `delay()` - Driver framework automatically waits for UI elements
+- **Pass `pauseOnIndicators` instead of a manual `waitForIndicators`** - see "Test Structure" below
+- **Write one call chain** from the context to `useDriverAndCloseIde` - see "Test Structure" below
+- **Wrap test logic in `step("description") { }`** for better logs
+- **Verify assertions actually fail** – Comment out the action being tested and confirm the test fails. If it still passes, your assertion is too weak.
+- **Use common UI components** – create new if necessary
+- **Keep a helper for a specific test scenario `private`** – keep it in its test class. Put a reusable helper into a common UI component
+- **Do not add retries to test-sdk** – a retry hides the cause of a failure. Find the cause and wait for the correct UI state. If a test really needs `withRetries`, keep it in the test module
+- **Do not write a workaround for a bug** – when the cause is a defect of the product, of the test framework or of the Driver API, file an issue in the `AT` project of YouTrack, and link it from the test. Use the `youtrack` skill. A workaround, such as a sleep, a second attempt, a `try`/`catch` or a weaker assertion, hides the defect and keeps the test green over broken behavior
 
-// Extended test infrastructure
-import com.intellij.ide.starter.extended.allure.AllureHelperExtended.step
-import com.intellij.ide.starter.extended.allure.Subsystems
-import com.intellij.ide.starter.extended.engine.newTestContainerExtended
-import com.intellij.ide.starter.extended.engine.TestContainerExtended
-import com.intellij.ide.starter.extended.license.StagingLicenseGenerator.licenseProductCode
-import com.intellij.ide.starter.extended.loadMetadataFromServer
-import com.intellij.ide.starter.extended.setupTestMetadataSchemeWithGroupsFromCode
+## Where to look
 
-// Test framework
-import com.intellij.testFramework.TestApplicationManager
-```
+A test uses JUnit 5 with the IDE Starter framework and the UI Driver framework:
 
-## Test Structure
-- Tests use JUnit 5 with an IDE Starter framework and UI Driver framework (`community/platform/remote-driver`)
-- Test case projects are represented by the `com.intellij.ide.starter.models.TestCase` see `src/com/intellij/ide/starter/project`
-- Tests run against specific IDE (`community/tools/intellij.tools.ide.starter/src/com/intellij/ide/starter/ide/IdeProductProvider.kt`)
+| What you need | Where it is |
+|---|---|
+| The Driver framework | `community/platform/remote-driver` |
+| Common UI components | `community/platform/remote-driver/test-sdk/src/com/intellij/driver/sdk/ui` |
+| UI test examples | `tests/remote-driver-tests` |
+| Runnable examples of each rule here | `tests/intellij.ide.starter.extended/tests/com/intellij/ide/starter/extended/docexamples` |
+| The test case of a project, a `com.intellij.ide.starter.models.TestCase` | a `*Cases.kt` or a `*CachedProjects.kt` of the product, such as `tests/intellij.ide.starter.extended.idea.ultimate/src/com/intellij/ide/starter/extended/idea/ultimate/CachedProjects.kt` |
+| The IDE a test runs against | `community/tools/intellij.tools.ide.starter/src/com/intellij/ide/starter/ide/IdeProductProvider.kt` |
+| The annotations of a test | `tests/intellij.ide.starter.allure.annotations/src/com/intellij/ide/starter/extended/allure/Annotations.kt` |
 
-## Test project examples
-
-See `tests/intellij.ide.starter.extended/src/com/intellij/ide/starter/extended/data/cases`
-
-## Page Object Pattern or UiComponent
-
-Page objects extend `UiComponent` with `ComponentData` constructor:
-
-```kotlin
-class MyPageObject(data: ComponentData) : UiComponent(data) {
-    val myButton = x { byAccessibleName("Button Name") }
-    val myPanel = x { byType("com.example.MyPanel") }
-
-    fun clickMyButton() {
-        myButton.click()
-    }
-}
-
-// Extension function on Finder to create the page object
-fun Finder.myPageObject(): MyPageObject = x(
-    xQuery { byAccessibleName("Root Element Name") }, MyPageObject::class.java
-)
-
-// Use specific ui component to specify the context of the search
-fun AnotherPageObject.myPageObject(): MyPageObject = x(
-  xQuery { byAccessibleName("Root Element Name") }, MyPageObject::class.java
-)
-```
-
-## Element Selectors
-
-| Selector | Usage |
-|----------|-------|
-| `byAccessibleName("name")` | Find by accessible name attribute |
-| `byJavaClass("com.example.MyPanel")` | Find by the full class name |
-| `byType("javax.swing.JTree")` | Find by the full class name or a supertype |
-| `byVisibleText("text")` | Find by visible text content |
-
-Use `byJavaClass` or `byType`. Do not use `byClass`, which is deprecated. A full class name has `@Language("jvm-class-name")`, so the IDE resolves it and updates it on rename.
-
-Write the class name inside the query. Do not put it, or a full XPath, into a separate constant: the IDE cannot resolve or rename a class name in a plain string.
-
-```kotlin
-// BAD - a short class name in a separate constant
-private const val POPUP_LIST_XPATH = "//div[@class='HeavyWeightWindow']//div[@class='MyList']"
-
-// GOOD - a private helper with a resolvable class name
-private fun Finder.optionPopup() = x { byType("com.intellij.ui.components.JBList") }
-```
-
-
-## UI test examples
-
-See directory `tests/remote-driver-tests`
-
-
-## Common UI Components
-
-See directory `community/platform/remote-driver/test-sdk/src/com/intellij/driver/sdk/ui`
-
-## Scoping Element Searches
-
-When multiple elements match a selector, scope to a parent element:
-
-```kotlin
-// BAD - will fail if multiple InstallButtons exist
-ui.x { byJavaClass("com.intellij.ide.plugins.newui.InstallButton") }.click()
-
-// GOOD - scope to a parent element first
-val detailPane = ui.x { byJavaClass("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }
-detailPane.x { byJavaClass("com.intellij.ide.plugins.newui.InstallButton") }.click()
-```
-
-## Finding toolbar / title-bar actions
-
-Toolbar and tool-window title actions that show their text (`presentation.putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)`) render as **`ActionButtonWithText`**, not `ActionButton`. The SDK `actionButton(text)` helper searches `@class='ActionButton'` only, so it silently never matches them. `ActionButtonWithText` extends `ActionButton`, so `byType` matches both variants:
-
-```kotlin
-// Matches both icon-only and text-bearing action buttons
-fun Finder.statusButton(text: String) =
-  x { byType("com.intellij.openapi.actionSystem.impl.ActionButton") and byVisibleText(text) }
-```
-
-The visible text is itself a reliable assertion signal — you usually do not need to read the backing service/state.
-
-## Keyboard Interactions
-
-```kotlin
-element.keyboard { typeText("search text") }
-ui.keyboard { key(KeyEvent.VK_ENTER) }
-ui.keyboard { hotKey(KeyEvent.VK_META, KeyEvent.VK_COMMA) }  // Cmd+,
-```
-
-## Writing Tests
-
-### Required Annotations
+## Required Annotations
 
 Every UI test **must** have the following annotations at the class level:
 
@@ -154,183 +50,66 @@ Every UI test **must** have the following annotations at the class level:
 | `@Features.*` | Specifies the feature being tested | `Feature` |
 | `@Components.*` | Identifies the component under test | `Component` |
 
-**For tests linked to TestOps test cases**, also add:
-- `@AllureId("test_case_id")` - Links the test to the TestOps test case ID
+**For tests linked to TestOps test cases**, also add `@AllureId("test_case_id")` on the test method. The annotation
+values should match the corresponding TestOps custom fields (Subsystem, Feature, Component).
 
-The annotation values should match the corresponding TestOps custom fields (Subsystem, Feature, Component).
+## Test Structure
 
-**Available annotations:** See `tests/intellij.ide.starter.extended.allure/src/com/intellij/ide/starter/extended/allure/Annotations.kt`
+Write one call chain from the context to `useDriverAndCloseIde`. Do not keep the context in a variable, and do not
+keep a `BackgroundRun` or a `Driver` in a field. A kept context invites a second launch over project files that no
+call rewound. A local `val run = ...runIdeWithDriver()` is correct when the test calls `run.restart()`, because
+`restart()` needs that run.
 
-**Example with TestOps test case:**
-
-```kotlin
-@Subsystems.Java
-@Features.Completion
-@Components.Editor
-class MyTestFromTestOps {
-
-    @Test
-    @AllureId("318541")  // Required when test case exists in TestOps
-    fun `my test from testops`(testInfo: TestInfo) {
-        // ...
-    }
-}
-```
-
-**Example for new test (not yet in TestOps):**
-
-```kotlin
-@Subsystems.UI
-@Features.PluginManager
-@Components.Miscellaneous
-class MyNewTest {
-
-    @Test
-    fun `my new test`(testInfo: TestInfo) {
-        // ...
-    }
-}
-```
-
-### Basic Test Structure
+`pauseOnIndicators` waits for the indicators before each Driver call, so it also prevents a failure in the middle
+of the test. Pass it to `runIdeWithDriver`, and write no `waitForIndicators` in the test.
 
 ```kotlin
 @Subsystems.Java
 @Features.Completion
 @Components.Editor
 class MyTest {
-    val testCase = TestCase(IdeProductProvider.IU, myProject)
 
     @Test
     @AllureId("123456")  // Required if test case exists in TestOps
-    fun `my test name`(testInfo: TestInfo) {
-        val context = Starter.newContext(testName = "TestName", testCase = testCase)
-
-        context.applyVMOptionsPatch {
-            addSystemProperty("ide.ui.non.modal.settings.window", "true")
-        }
-
-        context.runIdeTest(testName = testInfo.displayName) {
-            waitForIndicators(5.minutes)  // Wait for indexing to complete
-
-            step("Step description") {
-                // Test actions here
+    fun `my test name`() {
+        Starter.newContext(ideInfo = IdeInfo.IdeaUltimate) { project = myProject }
+            .applyVMOptionsPatch {
+                addSystemProperty("ide.ui.non.modal.settings.window", "true")
             }
-        }
+            .runIdeWithDriver(pauseOnIndicators = 5.minutes)
+            .useDriverAndCloseIde {
+                ideFrame {
+                    openFile("src/Main.java")
+
+                    step("Step description") {
+                        // Test actions here
+                    }
+                }
+            }
     }
 }
 ```
 
-### Waiting for Project Import and Indexing
+`applyVMOptionsPatch` is safe here because the context is a fresh one for this test. Never patch a cached or a
+shared context: the change would reach every test that reuses it.
 
-Always wait for indicators at the start of your test:
+Two cases need more than the pause:
 
-```kotlin
-waitForIndicators()
-```
-
-This ensures the project is fully imported and indexed before interacting with the IDE.
-
-### Opening Files
-
-Use `openFile` instead of UI-based file navigation:
-
-```kotlin
-// GOOD - Direct and reliable
-openFile(relativePath = "src/Main.java")
-
-// AVOID - UI-based approach is slower and more fragile
-invokeAction("GotoFile", now = false)
-ui.keyboard { typeText("Main.java") }
-ui.keyboard { key(KeyEvent.VK_ENTER) }
-```
-
-### invokeAction: `now` Parameter
-
-The `now` parameter controls whether the action completes before continuing:
-
-```kotlin
-// now = true: Waits for action to complete (use when keyboard input follows)
-invokeAction("ToggleBookmarkWithMnemonic", now = true)
-ui.keyboard { key(KeyEvent.VK_1) }  // This input goes to the bookmark dialog
-
-// now = false: Returns immediately (use when waiting for UI to appear)
-invokeAction("ShowSettings", now = false)
-ui.x { byJavaClass("com.intellij.openapi.options.newEditor.SettingsEditor") }.shouldBe { present() }
-```
-
-**Rule**: Use `now = true` when the next step is keyboard input to prevent input going to the wrong component.
-**Rule**: Use `now = false` when you expect to the UI dialog to appear.
-
-### Custom Wait Conditions
-
-Use `waitFor` to wait for specific conditions:
-
-```kotlin
-waitFor("description of what we're waiting for", 30.seconds) {
-    ui.x { byJavaClass("com.example.MyComponent") }.present()
-}
-
-waitFor("text to appear", 10.seconds) {
-    ui.x { byType("javax.swing.JTree") }.hasText("expected text")
-}
-```
-
-To show the actual value on failure, use the `waitFor` overload with `getter` and `checker`. It adds the last value to the error, so do not build `errorMessage` yourself:
-
-```kotlin
-// BAD - errorMessage repeats the getter
-waitFor("the filter field holds '$query'", errorMessage = { "the filter field holds '${filterField.text}'" }) {
-    filterField.text == query
-}
-
-// GOOD - the error shows the last filterField.text
-waitFor("the filter field holds '$query'", getter = { filterField.text }, checker = { it == query })
-```
-
-## Reading IDE state via `@Remote`
-
-To read state from a service or model in the IDE under test, declare a `@Remote` interface and call it via `driver.service(...)` / `driver.utility(...)`.
-
-- **Plugin classes need the `plugin` field.** Without it the class resolves against the platform/core classloader → `DriverIllegalStateException: No such class '<fqn>' in plugin null`.
-  - Class in a plugin **content module**: `@Remote("<fqn>", plugin = "<plugin.id>/<content.module>")` (e.g. `com.intellij.figma/intellij.figma.core`).
-  - Class in the **main / embedded** plugin module: `@Remote("<fqn>", plugin = "<plugin.id>")`.
-- **Method dispatch resolves against the DECLARED `@Remote` class, not the runtime object.** A method declared on a sealed/abstract supertype ref is "not found" at runtime — declare it on the concrete subtype, or expose it via a top-level type. (The `jvm-class-name` injection also cannot resolve a nested `Foo$Bar` name → a cosmetic "Cannot resolve class" inspection error; prefer top-level types.)
-- Add the plugin module as a TEST dependency so the FQNs resolve for code-insight.
-
-```kotlin
-@Remote("com.example.MyAppService", plugin = "com.example.myplugin/com.example.myplugin.core")
-interface MyAppServiceRef {
-  fun getConfig(): MyConfigRef
-}
-// driver.service(MyAppServiceRef::class).getConfig()...
-```
-
-## Enabling a registry flag at startup
-
-Seed a registry key before the IDE starts with a `-D` VM option — `RegistryValue` falls back to `System.getProperty`. Required when a startup `ProjectActivity` or `ToolWindowFactory.shouldBeAvailable` reads the flag (setting it via the driver after start is too late):
-
-```kotlin
-context.applyVMOptionsPatch {
-  addSystemProperty("my.feature.enabled", "true")
-}
-```
-
-## Driving a real browser (Playwright)
-
-Playwright runs in the **test JVM**, alongside the driver-driven IDE (both on localhost) — useful when the IDE's client is a web app/plugin. `page.onConsoleMessage { ... }` captures the page **and its iframes** (a strong diagnostic). Put custom screenshots/files under `context.paths.testHome.resolve("log")` so they are collected as test artifacts. See `plugins/figma/integrationTests` for a full example.
+- **The first call does not wait for a frame.** The pause waits only on a project that is already open. A UI search
+  waits up to 15 s for its component, and `openFile` waits for the project frame, but an action that opens a modal
+  dialog, a call such as `singleProject()`, and a key press all run at once. Put `waitForProjectOpen(Timeouts.M)`
+  before such a call, and after the test opens or reopens a project.
+- **The pause does not work for the test.** Only then call `waitForIndicators`, and mark the test with
+  `@OptIn(ManualWaitForIndicators::class)`. An inspection warns about each other manual wait.
 
 ## Running Tests from Terminal
 
-Driver tests require a fully built IDE. There are several ways to run them:
+Driver tests require a fully built IDE. The `tests.cmd` script builds the IDE from sources and runs the tests.
+Run each local test with `USE_DOCKER_CONTAINER=true`. The container gives a screen of its own, so the test does not
+lose the focus to your desktop, and the environment matches the build agent:
 
-### Option 1: Using tests.cmd (Recommended)
-
-The `tests.cmd` script builds the IDE from sources and runs tests. **Recommended for dev server mode.**
-
-Example:
 ```bash
-./tests.cmd \
+USE_DOCKER_CONTAINER=true ./tests.cmd \
   --module intellij.driver.tests \
   --test com.intellij.driver.tests.idea.java.FindAndGoToTest
 ```
@@ -339,42 +118,5 @@ Example:
 - `--test` - fully qualified test class name (or pattern)
 - `--module intellij.driver.tests` - **required** for driver tests
 
-**Example with specific test:**
-```bash
-./tests.cmd \
-  --module intellij.driver.tests \
-  --test com.intellij.driver.tests.idea.ultimate.httpclient.BuiltInHttpClientBrotliCompressionUiTest
-```
-
-## Debugging Test Failures
-
-### Output Locations
-
-After test failure, check:
-- UI hierarchy: `out/ide-tests/tests/{IDE-version}/{TestName}/{test-method}/log/ui-hierarchy/ui.html`
-- IDE log: `out/ide-tests/tests/{IDE-version}/{TestName}/{test-method}/log/idea.log`
-- Screenshots: `out/ide-tests/tests/{IDE-version}/{TestName}/{test-method}/log/screenshots/`
-- Exceptions: `out/ide-tests/tests/{IDE-version}/{TestName}/{test-method}/error/`
-
-### Inspect the LIVE UI hierarchy, not just the post-mortem file
-
-The `ui-hierarchy/ui.html` and `full-screen.png` written on failure are captured **after** `useDriverAndCloseIde` tears the IDE down — by then the session has ended and panels often revert to an empty/welcome state, so they can be misleading. Two better sources:
-
-- **Heartbeat screenshot** `log/screenshots/001_heartbeat/` — captured mid-run, shows the real state during the wait.
-- **Live UI hierarchy server** — while the IDE is up, the component tree is browsable at `http://localhost:<port>/api/remote-driver/` (the harness sets `-Dexpose.ui.hierarchy.url=true`; the port is logged at startup as `UI Hierarchy: http://localhost:<port>/api/remote-driver/`). To inspect interactively, **park the test** at the point of interest — temporarily raise a `waitFor` timeout (e.g. to `20.minutes`) — and `curl`/open that URL while the IDE stays alive. Each node exposes `class` (simple), `javaclass` (FQN, incl. `Outer$Inner` for inner classes), `visible_text`, and `accessiblename`; read these to build a reliable matcher instead of guessing from source.
-
-### Common Issues
-
-1. **Element Not Found**: Check UI hierarchy HTML for the correct accessible name or class
-2. **Multiple Elements Match**: Scope search to parent element
-
-
-## Critical Rules
-
-- **Never use `Thread.sleep()`** or `delay()` - Driver framework automatically waits for UI elements
-- **Wrap test logic in `step("description") { }`** for better logs
-- **Verify assertions actually fail** – Comment out the action being tested and confirm the test fails. If it still passes, your assertion is too weak.
-- **Use common UI components** – create new if necessary
-- **Always check UI hierarchy** to understand the UI state when a test fails
-- **Keep a helper for a specific test scenario `private`** – keep it in its test class. Put a reusable helper into a common UI component
-- **Do not add retries to test-sdk** – a retry hides the cause of a failure. Find the cause and wait for the correct UI state. If a test really needs `withRetries`, keep it in the test module
+After the run in the container passes, run the test once without the flag. Some failures come up in one
+environment only.
