@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class AssignmentAsExpression {
     private int field;
     private int field2;

@@ -1,4 +1,3 @@
-// IGNORE_K2
 // !ADD_JAVA_API
 import java.util.*;
 import javaApi.T;

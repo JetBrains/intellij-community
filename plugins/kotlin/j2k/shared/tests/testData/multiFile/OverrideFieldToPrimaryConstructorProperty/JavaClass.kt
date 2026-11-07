@@ -1,4 +1,4 @@
-// IGNORE_K2
+// ERROR: 'x' hides member of supertype 'I' and needs an 'override' modifier.
 package test
 
-class J(override val x: Int) : I
+class J(@JvmField val x: Int) : I

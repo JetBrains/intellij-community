@@ -1,4 +1,3 @@
-// IGNORE_K2
 import java.util.function.Function;
 
 public class Test {

@@ -1,4 +1,3 @@
-// IGNORE_K2
 class Boxing {
     void test() {
         Integer i = 0;

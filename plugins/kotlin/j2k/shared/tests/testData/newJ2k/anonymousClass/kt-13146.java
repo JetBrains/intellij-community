@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class Test {
     public Runnable someRunnable = new Runnable() {
         @Override

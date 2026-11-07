@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class A implements I {
     private final String s;
 

@@ -1,4 +1,3 @@
-// IGNORE_K2
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Enumeration;

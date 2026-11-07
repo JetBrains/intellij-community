@@ -1,5 +1,5 @@
-// IGNORE_K2
+// ERROR: 'type' hides member of supertype 'K' and needs an 'override' modifier.
 internal class J : K() {
-    override val type: Int
+    val type: Int
         get() = FOO
 }

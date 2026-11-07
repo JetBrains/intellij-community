@@ -1,15 +1,26 @@
+// ERROR: 'getSomething1' overrides nothing.
+// ERROR: 'getSomething2' overrides nothing.
+// ERROR: 'getSomething3' overrides nothing.
+// ERROR: 'setSomething3' overrides nothing.
 package test
 
-abstract class C internal constructor(override val something1: Int) : B(), I {
+abstract class C internal constructor(private val mySomething1: Int) : B(), I {
     private var mySomething6 = 0
 
-    override val something2: Int
-        get() = 0
+    override fun getSomething1(): Int {
+        return mySomething1
+    }
 
-    override var something3: Int
-        get() = 0
-        set(value) {
-        }
+    override fun getSomething2(): Int {
+        return 0
+    }
+
+    override fun getSomething3(): Int {
+        return 0
+    }
+
+    override fun setSomething3(value: Int) {
+    }
 
     override fun getSomething4(): Int {
         return 0
