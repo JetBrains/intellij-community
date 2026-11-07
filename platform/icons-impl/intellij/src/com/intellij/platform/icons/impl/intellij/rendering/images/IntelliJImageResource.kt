@@ -16,7 +16,7 @@ internal class IntelliJImageResource(
   private val holder: SwingImageResourceHolder,
   private val imageModifiers: ImageModifiers? = null
 ): RescalableImageResource, CachedGPUImageResourceHolder() {
-  private val expectedDimensions by lazy { holder.getExpectedDimensions() }
+  private val expectedDimensions by lazy { holder.getExpectedDimensions(imageModifiers) }
 
   @Suppress("TestOnlyProblems")
   override fun scale(density: Float, scale: IconScale): BitmapImageResource {

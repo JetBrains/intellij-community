@@ -15,8 +15,8 @@ import com.intellij.platform.icons.rendering.ScalingContext
 
 class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, private val context: RenderingContext) : IconRenderer {
     override val iconDescriptor: IconDescriptor = iconInstance
-    private var layerRenderers = createRenderers()
     private var lastThemeDigest: String = context.theme.digest()
+    private var layerRenderers = createRenderers()
 
     private fun createRenderers(): List<IconLayerRenderer> {
         val manager = IconLayerManager.getInstance()
@@ -24,23 +24,32 @@ class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, privat
     }
 
     override fun render(paintingContext: LayerPaintingContext) {
-        if (lastThemeDigest != context.theme.digest()) {
-          layerRenderers = createRenderers()
-        }
-        val usedDimensions = calculateUsedDimensions(paintingContext.scaling)
-        for (layer in layerRenderers) {
+        val renderers = layers()
+        val usedDimensions = usedDimensions(renderers, paintingContext.scaling)
+        for (layer in renderers) {
             val nested =
                 paintingContext.createNestedLayer(slotWidth = usedDimensions.width, slotHeight = usedDimensions.height)
             layer.render(nested)
         }
     }
 
-    internal fun consumedSpace(): CompoundDimensions = layerRenderers.maxCompoundSize { it.layout.consumedSpace() }
+  private fun layers(): List<IconLayerRenderer> {
+    val themeDigest = context.theme.digest()
+    if (lastThemeDigest != themeDigest) {
+      layerRenderers = createRenderers()
+      lastThemeDigest = themeDigest
+    }
+    return layerRenderers
+  }
 
-    override fun calculateUsedDimensions(scaling: ScalingContext): Dimensions {
+    internal fun consumedSpace(): CompoundDimensions = layers().maxCompoundSize { it.layout.consumedSpace() }
+
+    override fun calculateUsedDimensions(scaling: ScalingContext): Dimensions = usedDimensions(layers(), scaling)
+
+    private fun usedDimensions(renderers: List<IconLayerRenderer>, scaling: ScalingContext): Dimensions {
         var width = 0
         var height = 0
-        for (layer in layerRenderers) {
+        for (layer in renderers) {
             val dimensions = layer.layout.consumedSpace(scaling)
             if (dimensions.width > width) {
                 width = dimensions.width
