@@ -914,6 +914,39 @@ async def nosupAssertFalse(b):
     );
   }
 
+  @TestFor(issues = "PY-93846")
+  public void testFloorDivisionByZeroInCondition() {
+    doTestByText(
+      """
+        if 1 // 0:
+            print("maybe")
+        print("always")"""
+    );
+  }
+
+  @TestFor(issues = "PY-93846")
+  public void testFloorDivisionOfNegativeNumberInCondition() {
+    doTestByText(
+      """
+        if -7 // 2 == -4:
+            print("always")
+        else:
+            <warning descr="This code is unreachable">print("never")</warning>"""
+    );
+  }
+
+  @TestFor(issues = "PY-93846")
+  public void testInterpolatedFStringInCondition() {
+    doTestByText(
+      """
+        def f(x: str):
+            if f"{x}":
+                print("maybe")
+            else:
+                print("maybe not")"""
+    );
+  }
+
   // PY-90011
   public void testIsInstanceIntWithIntEnumAnnotatedClassObject() {
     doTestByText(

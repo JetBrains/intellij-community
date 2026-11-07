@@ -17,7 +17,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -33,6 +32,7 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyDictLiteralExpression;
 import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyFormattedStringElement;
 import com.jetbrains.python.psi.PyKeyValueExpression;
 import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyNumericLiteralExpression;
@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.PyPrefixExpression;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStringElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
@@ -55,10 +56,8 @@ import org.jetbrains.annotations.Nullable;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * TODO: Merge PythonDataflowUtil and {@link PyEvaluator} and all its inheritors and improve Abstract Interpretation
@@ -69,7 +68,22 @@ public class PyEvaluator {
 
   private static final String TYPE_CHECKING = "TYPE_CHECKING";
 
-  private final @NotNull Set<PyExpression> myVisited = new HashSet<>();
+  /**
+   * The expressions on the current evaluation path, each with its depth on the path. A reference to one of them is a cycle,
+   * and the evaluator cuts it.
+   */
+  private final @NotNull Map<PyExpression, Integer> myEvaluating = new HashMap<>();
+
+  /**
+   * The lowest path depth of a cut in the expression that the evaluator evaluates now.
+   */
+  private int myLowestCutDepth = Integer.MAX_VALUE;
+
+  /**
+   * The results of the evaluated expressions. A result that depends on a cut above its expression is not kept,
+   * because the value of the cut expression is not known yet.
+   */
+  private final @NotNull Map<PyExpression, Object> myResults = new HashMap<>();
 
   private @Nullable Map<String, Object> myNamespace = null;
 
@@ -97,35 +111,66 @@ public class PyEvaluator {
 
   public void setNamespace(@Nullable Map<String, Object> namespace) {
     myNamespace = namespace;
+    myResults.clear();
   }
 
   public void setLanguageLevel(@NotNull LanguageLevel languageLevel) {
     myPythonVersion = new int[]{languageLevel.getMajorVersion(), languageLevel.getMinorVersion()};
+    myResults.clear();
   }
 
   public void setEvaluateCollectionItems(boolean evaluateCollectionItems) {
     myEvaluateCollectionItems = evaluateCollectionItems;
+    myResults.clear();
   }
 
   public void setAllowExpressionsAsValues(final boolean allowExpressionsAsValues) {
     myAllowExpressionsAsValues = allowExpressionsAsValues;
+    myResults.clear();
   }
 
   public void setEvaluateKeys(boolean evaluateKeys) {
     myEvaluateKeys = evaluateKeys;
+    myResults.clear();
   }
 
   public void enableResolve(boolean enableResolve) {
     myEnableResolve = enableResolve;
+    myResults.clear();
   }
 
   @Contract("null -> null")
   public @Nullable Object evaluate(@Nullable PyExpression expression) {
-    if (expression == null || myVisited.contains(expression)) {
+    if (expression == null) {
       return null;
     }
-    PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(expression));
-    myVisited.add(expression);
+    if (myResults.containsKey(expression)) {
+      return myResults.get(expression);
+    }
+    final Integer cutDepth = myEvaluating.get(expression);
+    if (cutDepth != null) {
+      myLowestCutDepth = Math.min(myLowestCutDepth, cutDepth);
+      return null;
+    }
+    final int depth = myEvaluating.size();
+    final int outerLowestCutDepth = myLowestCutDepth;
+    myEvaluating.put(expression, depth);
+    myLowestCutDepth = Integer.MAX_VALUE;
+    try {
+      PyUtil.verboseOnly(() -> PyPsiUtils.assertValid(expression));
+      final Object result = evaluateOnce(expression);
+      if (myLowestCutDepth >= depth) {
+        myResults.put(expression, result);
+      }
+      return result;
+    }
+    finally {
+      myEvaluating.remove(expression);
+      myLowestCutDepth = Math.min(outerLowestCutDepth, myLowestCutDepth < depth ? myLowestCutDepth : Integer.MAX_VALUE);
+    }
+  }
+
+  private @Nullable Object evaluateOnce(@NotNull PyExpression expression) {
     if (expression instanceof PyParenthesizedExpression) {
       return evaluate(((PyParenthesizedExpression)expression).getContainedExpression());
     }
@@ -142,8 +187,8 @@ public class PyEvaluator {
     else if (expression instanceof PyReferenceExpression) {
       return evaluateReference((PyReferenceExpression)expression);
     }
-    else if (expression instanceof PyStringLiteralExpression) {
-      return ((PyStringLiteralExpression)expression).getStringValue();
+    else if (expression instanceof PyStringLiteralExpression stringLiteral) {
+      return evaluateString(stringLiteral);
     }
     else if (expression instanceof PyBinaryExpression) {
       return evaluateBinary((PyBinaryExpression)expression);
@@ -155,6 +200,22 @@ public class PyEvaluator {
       return evaluatePrefix((PyPrefixExpression)expression);
     }
     return null;
+  }
+
+  /**
+   * Returns {@code null} for a bytes literal, a t-string and an f-string with an interpolated fragment. Their values are not a {@code str}
+   * that the literal text gives.
+   */
+  private static @Nullable String evaluateString(@NotNull PyStringLiteralExpression expression) {
+    for (PyStringElement element : expression.getStringElements()) {
+      if (element.isBytes() || element.isTemplate()) {
+        return null;
+      }
+      if (element instanceof PyFormattedStringElement formattedElement && !formattedElement.getFragments().isEmpty()) {
+        return null;
+      }
+    }
+    return expression.getStringValue();
   }
 
   private static @Nullable Object evaluateNumeric(@NotNull PyNumericLiteralExpression expression) {
@@ -199,7 +260,7 @@ public class PyEvaluator {
         return fromBigInteger(first.multiply(second));
       }
       else if (op == PyTokenTypes.FLOORDIV) {
-        return fromBigInteger(first.divide(second));
+        return second.signum() == 0 ? null : fromBigInteger(floorDivide(first, second));
       }
       else if (op == PyTokenTypes.LT) {
         return first.compareTo(second) < 0;
@@ -244,6 +305,15 @@ public class PyEvaluator {
     }
 
     return null;
+  }
+
+  /**
+   * Rounds the quotient down, as the {@code //} operator of Python does. {@link BigInteger#divide} rounds it toward zero.
+   */
+  private static @NotNull BigInteger floorDivide(@NotNull BigInteger dividend, @NotNull BigInteger divisor) {
+    final BigInteger[] quotientAndRemainder = dividend.divideAndRemainder(divisor);
+    final BigInteger quotient = quotientAndRemainder[0];
+    return quotientAndRemainder[1].signum() * divisor.signum() < 0 ? quotient.subtract(BigInteger.ONE) : quotient;
   }
 
   @ApiStatus.Internal
@@ -398,43 +468,50 @@ public class PyEvaluator {
       }
     }
 
-    // Support dict([("k", "v")]) syntax
     if (myEnableResolve && NameResolverTools.isCalleeShortCut(expression, PythonFQDNNames.DICT_CLASS)) {
-      final Collection<PyTupleExpression> tuples = PsiTreeUtil.findChildrenOfType(expression, PyTupleExpression.class);
-      if (!tuples.isEmpty()) {
-        final Map<Object, Object> result = new HashMap<>();
-        for (final PyTupleExpression tuple : tuples) {
-          final PsiElement[] tupleElements = tuple.getChildren();
-          if (tupleElements.length != 2) {
-            return null;
-          }
-          final PyExpression key = PyUtil.as(tupleElements[0], PyExpression.class);
-          final PyExpression value = PyUtil.as(tupleElements[1], PyExpression.class);
-          if (key != null) {
-            addRecordFromDict(result, key, value);
-          }
-        }
-        return result;
-      }
-
-      final PyExpression[] arguments = expression.getArguments();
-      //dict(foo="spam")
-      if (arguments.length > 0) {
-        final Map<Object, Object> result = new HashMap<>();
-        for (final PyExpression argument : arguments) {
-          if (!(argument instanceof PyKeywordArgument keywordArgument)) {
-            continue;
-          }
-          final String keyword = keywordArgument.getKeyword();
-          if (keyword == null) {
-            continue;
-          }
-          addRecordFromDict(result, keyword, keywordArgument.getValueExpression());
-        }
-        return result;
-      }
+      return evaluateDictCall(expression);
     }
     return null;
+  }
+
+  /**
+   * Evaluates {@code dict([("k", "v")], foo="spam")}: the pairs of a sequence literal and the keyword arguments.
+   * The result skips the other arguments, so it can hold only a part of the keys. Template completion uses such a part.
+   */
+  private @Nullable Map<Object, Object> evaluateDictCall(@NotNull PyCallExpression expression) {
+    final PyExpression[] arguments = expression.getArguments();
+    if (arguments.length == 0) {
+      return null;
+    }
+    final Map<Object, Object> result = new HashMap<>();
+    for (PyExpression argument : arguments) {
+      if (argument instanceof PyKeywordArgument keywordArgument) {
+        final String keyword = keywordArgument.getKeyword();
+        if (keyword != null) {
+          addRecordFromDict(result, keyword, keywordArgument.getValueExpression());
+        }
+      }
+      else if (!addRecordsFromPairs(result, argument)) {
+        return null;
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Returns {@code false} for a sequence literal with an element that is not a pair. Another argument adds nothing.
+   */
+  private boolean addRecordsFromPairs(@NotNull Map<Object, Object> result, @NotNull PyExpression argument) {
+    if (!(PyPsiUtils.flattenParens(argument) instanceof PySequenceExpression pairs) || pairs instanceof PyDictLiteralExpression) {
+      return true;
+    }
+    for (PyExpression pair : pairs.getElements()) {
+      if (!(PyPsiUtils.flattenParens(pair) instanceof PyTupleExpression tuple) || tuple.getElements().length != 2) {
+        return false;
+      }
+      addRecordFromDict(result, tuple.getElements()[0], tuple.getElements()[1]);
+    }
+    return true;
   }
 
   private void addRecordFromDict(@NotNull Map<Object, Object> result, @NotNull PyExpression key, @Nullable PyExpression value) {
@@ -548,8 +625,8 @@ public class PyEvaluator {
     if (result instanceof Boolean) {
       return (Boolean)result;
     }
-    else if (result instanceof Integer) {
-      return (Integer)result != 0;
+    else if (result instanceof Integer || result instanceof Long || result instanceof BigInteger) {
+      return toBigInteger((Number)result).signum() != 0;
     }
     else if (result instanceof String) {
       return !((String)result).isEmpty();
