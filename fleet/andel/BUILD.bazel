@@ -61,6 +61,7 @@ jvm_library(
         "//fleet/bifurcan",
         "//fleet/openmap",
     ],
+    runtime_deps = ["//libraries/kotlinx/serialization/json"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -68,7 +69,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
         "//fleet/util/core",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//fleet/util/codepoints",
         "//fleet/bifurcan",
         "//fleet/fastutil",

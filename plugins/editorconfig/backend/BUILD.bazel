@@ -42,10 +42,15 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//platform/code-style-impl:codeStyle-impl",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
-        "//platform/backend",
         "//platform/code-style-api:codeStyle",
         "//platform/util/concurrency",
         "//platform/core-impl",
@@ -67,7 +72,6 @@ jvm_library(
         "//platform/indexing-impl",
         "//libraries/automaton",
         "//platform/core-ui",
-        "//platform/code-style-impl:codeStyle-impl",
         "//platform/util/jdom",
         "//platform/util:util-ui",
         "//platform/statistics",
@@ -77,7 +81,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "//plugins/editorconfig/common",
         "//platform/forms_rt:java-guiForms-rt",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.editorconfig.backend` end

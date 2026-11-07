@@ -24,8 +24,10 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//java/compiler/impl",
         "//java/langInjection/jps",
         "//platform/backend",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
     deps = [
         # do not sort,
@@ -39,7 +41,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/indexing-api:indexing",
         "//platform/lang-impl",
-        "//java/compiler/impl",
         "//platform/projectModel-api:projectModel",
         "//RegExpSupport:regexp",
         "//platform/platform-api:ide",
@@ -54,7 +55,6 @@ jvm_library(
         "//plugins/IntelliLang/backend",
         "//platform/forms_rt:java-guiForms-rt",
         "//java/java-frontback-psi-api:frontback-psi",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
         "//platform/lang-api:lang",
         "//uast/uast-common-ide:ide",

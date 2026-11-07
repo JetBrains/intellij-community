@@ -18,6 +18,11 @@ jvm_library(
     ),
     module_name = "intellij.xml.testFramework",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/syntax/syntax-psi:psi",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -27,8 +32,6 @@ jvm_library(
         "//xml/xml-parser:parser",
         "//platform/core-impl",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-        "//platform/syntax/syntax-psi:psi",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/lang-api:lang",
         "//platform/editor-ui-api:editor-ui",
         "//platform/testFramework/junit5",

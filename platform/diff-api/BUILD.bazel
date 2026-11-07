@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/util/diff",
@@ -33,10 +38,8 @@ jvm_library(
         "//platform/util/multiplatform",
         "//platform/util/base",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/analysis-api:analysis",
         "//platform/projectModel-api:projectModel",
         "@lib//:kotlin-stdlib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.platform.diff` end

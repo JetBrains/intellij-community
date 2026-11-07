@@ -23,6 +23,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//jps/model-api:model",
+        "//platform/progress/shared:ide-progress",
+        "//libraries/stream",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -30,7 +36,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
-        "//jps/model-api:model",
         "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
         "//platform/execution",
@@ -41,7 +46,6 @@ jvm_library(
         "//plugins/ide-features-trainer:featuresTrainer",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
-        "//platform/progress/shared:ide-progress",
         "//platform/xdebugger-api:debugger",
         "//platform/usageView",
         "//platform/lang-impl",
@@ -53,7 +57,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//python/services/system-python",
         "//platform/util:util-ui",
-        "//libraries/stream",
         "//platform/eel",
     ],
 )

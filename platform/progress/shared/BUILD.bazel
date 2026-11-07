@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/service-container",
+        "//libraries/kotlinx/serialization/json",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -30,9 +35,7 @@ jvm_library(
         "//platform/util/progress",
         "//platform/util",
         "//platform/core-api:core",
-        "//platform/service-container",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//platform/project/shared:project",
         "//platform/kernel/rpc.lite",
         "//fleet/rpc",

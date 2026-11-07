@@ -41,6 +41,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/forms_rt:java-guiForms-rt",
+        "//plugins/kotlin/base/jps",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -57,8 +62,6 @@ jvm_library(
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/platforms",
         "//plugins/kotlin/base/facet",
-        "//platform/forms_rt:java-guiForms-rt",
-        "//plugins/kotlin/base/jps",
         "//platform/core-impl",
         "//platform/core-ui",
         "//platform/util:util-ui",

@@ -41,7 +41,11 @@ ij_plugin_module(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/http-client",
+        "//platform/backend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -52,7 +56,6 @@ ij_plugin_module(
         "//platform/lang-impl",
         "//platform/core-impl",
         "//plugins/completion-ml-ranking",
-        "//libraries/http-client",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//libraries/guava",

@@ -42,6 +42,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -61,7 +62,6 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/facet",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//plugins/kotlin/base/platforms",
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
         "//libraries/fastutil",

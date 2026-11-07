@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/ide-core/plugins",
+        "//platform/platform-util-io:ide-util-io",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -31,9 +36,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/platform-api:ide",
         "//platform/ide-core",
-        "//platform/ide-core/plugins",
         "//platform/platform-impl:ide-impl",
-        "//platform/platform-util-io:ide-util-io",
         "//platform/util",
     ],
 )

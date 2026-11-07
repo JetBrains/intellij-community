@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util/xmlDom"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -37,7 +38,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//platform/platform-impl:ide-impl",
         "//libraries/kotlinx/datetime",
-        "//platform/util/xmlDom",
         "//platform/statistics",
         "//platform/core-ui",
         "//platform/util:util-ui",

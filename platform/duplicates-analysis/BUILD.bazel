@@ -22,19 +22,22 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/indexing-api:indexing",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-impl",
         "//platform/core-api:core",
         "//platform/extensions",
         "//platform/util",
-        "//platform/indexing-api:indexing",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-impl",
         "//libraries/fastutil",
         "//platform/util/jdom",
         "//platform/core-impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.platform.duplicates.analysis` end

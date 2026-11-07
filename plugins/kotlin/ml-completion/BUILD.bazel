@@ -41,6 +41,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/preferences",
+        "//platform/projectModel-api:projectModel",
+        "//plugins/completion-ml-ranking",
+        "//libraries/completion-ranking-kotlin",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -48,13 +55,9 @@ jvm_library(
         "//platform/core-api:core",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/plugin",
-        "//plugins/kotlin/preferences",
-        "//platform/projectModel-api:projectModel",
         "//platform/lang-api:lang",
         "//platform/platform-impl:ide-impl",
-        "//plugins/completion-ml-ranking",
         "//platform/platform-impl/internal",
-        "//libraries/completion-ranking-kotlin",
         "//plugins/kotlin/base/code-insight",
     ],
 )

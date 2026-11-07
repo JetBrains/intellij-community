@@ -38,6 +38,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/ml-api:ml"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -53,7 +54,6 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/ml-impl",
         "//platform/platform-impl/internal",
-        "//platform/ml-api:ml",
     ],
 )
 ### auto-generated section `build intellij.turboComplete` end

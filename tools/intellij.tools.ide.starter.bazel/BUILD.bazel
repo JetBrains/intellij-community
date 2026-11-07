@@ -20,16 +20,19 @@ jvm_library(
     kotlinc_opts = ":custom_ide-starter-bazel",
     module_name = "intellij.tools.ide.starter.bazel",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//tools/intellij.tools.ide.util.common:ide-util-common",
+        "//platform/core-api:core",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/build-scripts/downloader",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kodein-di-jvm",
         "//tools/intellij.tools.ide.starter:ide-starter",
-        "//tools/intellij.tools.ide.util.common:ide-util-common",
-        "//platform/core-api:core",
-        "//libraries/kotlinx/coroutines/core",
         "//platform/testFramework/common",
-        "//platform/build-scripts/downloader",
         "//platform/bazel-runfiles",
     ],
 )

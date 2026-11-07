@@ -32,7 +32,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["@lib//:slf4j-jdk14"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:slf4j-jdk14",
+        "//platform/core-api:core",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -42,7 +46,6 @@ jvm_library(
         "//libraries/libthrift",
         "//libraries/netty/buffer",
         "//libraries/netty/codec-http:libraries-netty-codec-http",
-        "//platform/core-api:core",
         "//platform/util",
     ],
 )

@@ -17,6 +17,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/diagnostic"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -27,7 +28,6 @@ jvm_library(
         "//platform/util",
         "//platform/util/multiplatform",
         "//platform/util-ex",
-        "//platform/diagnostic",
         "//platform/eel-nioFs",
         "//platform/util/coroutines",
         "//libraries/kotlinx/coroutines/core",

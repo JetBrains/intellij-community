@@ -39,6 +39,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/miglayout-swing",
+        "//platform/util/coroutines",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -53,12 +58,10 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core-impl",
         "//platform/ide-core",
-        "//libraries/miglayout-swing",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/core",
         "//platform/ui.jcef",
         "//platform/analysis-api:analysis",
-        "//platform/util/coroutines",
         "//platform/welcome-screen",
     ],
 )

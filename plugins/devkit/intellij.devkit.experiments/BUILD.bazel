@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-frontend:frontend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -29,7 +30,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-impl:ide-impl",
         "//platform/experiment",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.devkit.experiments` end

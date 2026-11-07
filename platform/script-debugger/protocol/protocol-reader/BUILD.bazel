@@ -14,9 +14,9 @@ jvm_library(
     module_name = "intellij.javascript.protocolReader",
     visibility = ["//visibility:public"],
     exports = ["//platform/script-debugger/protocol/protocol-reader-runtime"],
+    runtime_deps = ["//libraries/gson"],
     deps = [
         # do not sort,
-        "//libraries/gson",
         "//platform/script-debugger/protocol/protocol-reader-runtime",
         "//platform/platform-impl:ide-impl",
         "@lib//:kotlin-stdlib",

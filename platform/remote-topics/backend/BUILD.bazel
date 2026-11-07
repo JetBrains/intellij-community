@@ -22,7 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/core",
+        "//platform/backend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -30,7 +34,6 @@ jvm_library(
         "//platform/util",
         "//platform/core-api:core",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/serialization/core",
         "//platform/remote-topics/shared:rpc-topics",
         "//platform/kernel/rpc.backend",
     ],

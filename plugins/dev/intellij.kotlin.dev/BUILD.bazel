@@ -17,10 +17,10 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/dev/intellij.dev.psiViewer:psiViewer"],
     deps = [
         # do not sort,
         "//plugins/dev/intellij.dev.codeInsight:codeInsight",
-        "//plugins/dev/intellij.dev.psiViewer:psiViewer",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/core-impl",

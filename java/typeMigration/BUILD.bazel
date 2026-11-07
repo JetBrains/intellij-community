@@ -31,6 +31,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/fastutil",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -49,9 +55,6 @@ jvm_library(
         "//java/java-impl-refactorings:impl-refactorings",
         "//java/codeserver/highlighting",
         "//java/java-frontback-psi-api:frontback-psi",
-        "//libraries/fastutil",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//jps/model-api:model",
         "//platform/core-impl",
     ],
 )

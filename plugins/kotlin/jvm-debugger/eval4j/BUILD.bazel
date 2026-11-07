@@ -54,13 +54,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/core-api:core"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/core-api:core",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+    ],
     deps = [
         # do not sort,
         "//java/debugger/openapi:java-debugger",
         "@lib//:kotlin-stdlib",
         "//libraries/asm",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/util",
         "//java/debugger/impl",
     ],

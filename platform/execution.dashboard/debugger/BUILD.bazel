@@ -22,12 +22,15 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/xdebugger-impl:debugger-impl",
+        "//platform/xdebugger-impl/ui",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/execution.dashboard",
-        "//platform/xdebugger-impl:debugger-impl",
-        "//platform/xdebugger-impl/ui",
         "//platform/core-api:core",
         "//platform/execution",
         "//platform/lang-impl",

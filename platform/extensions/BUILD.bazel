@@ -15,6 +15,7 @@ jvm_library(
     module_name = "intellij.platform.extensions",
     visibility = ["//visibility:public"],
     exports = ["//libraries/kotlinx/coroutines/core"],
+    runtime_deps = ["//libraries/kotlinx/serialization/json"],
     deps = [
         # do not sort,
         "//platform/util/jdom",
@@ -30,7 +31,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/jetbrains/annotations",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//platform/util/coroutines",
     ],
 )

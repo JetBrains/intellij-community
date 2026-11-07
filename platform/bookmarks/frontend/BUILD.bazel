@@ -18,6 +18,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/bookmarks"],
+    runtime_deps = ["//platform/ide-core-impl"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -25,7 +26,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/lang-impl",
         "//platform/core-ui",
-        "//platform/ide-core-impl",
         "//platform/platform-impl:ide-impl",
         "//platform/bookmarks",
         "//platform/project/shared:project",

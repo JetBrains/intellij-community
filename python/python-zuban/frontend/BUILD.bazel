@@ -29,6 +29,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/ide-core",
+        "//platform/project/shared:project",
+        "//platform/projectModel-api:projectModel",
+        "//python/python-lsp-core/common",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -36,15 +44,10 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-ui",
         "//platform/platform-api:ide",
-        "//platform/ide-core",
-        "//platform/project/shared:project",
-        "//platform/projectModel-api:projectModel",
         "//python/python-pytools/common",
-        "//python/python-lsp-core/common",
         "//python/python-zuban/common",
         "//python/python-lsp-core/frontend",
         "//python/python-pytools/frontend",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.python.zuban.frontend` end

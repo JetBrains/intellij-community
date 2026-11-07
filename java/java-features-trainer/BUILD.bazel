@@ -37,6 +37,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//java/debugger/impl",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -57,10 +62,8 @@ jvm_library(
         "//platform/xdebugger-api:debugger",
         "//platform/core-ui",
         "//platform/core-impl",
-        "//java/debugger/impl",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "//jps/model-api:model",
         "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
         "//platform/refactoring",

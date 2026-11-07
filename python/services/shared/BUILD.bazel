@@ -38,14 +38,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/eel-provider",
+        "//platform/diagnostic",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//python/openapi:community",
         "//libraries/jetbrains/annotations",
-        "//platform/eel-provider",
         "//python/python-exec-service/execService.python",
-        "//platform/diagnostic",
         "//platform/util",
     ],
 )

@@ -22,17 +22,20 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/lang-core",
+        "//platform/core-api:core",
+        "//jps/model-api:model",
+        "//platform/backend",
+        "//platform/ide-core",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/lang-core",
         "//platform/lang-impl",
-        "//platform/core-api:core",
         "//platform/util",
         "//platform/kernel/rpc.backend",
-        "//jps/model-api:model",
-        "//platform/ide-core",
     ],
 )
 ### auto-generated section `build intellij.platform.lang.impl.backend` end

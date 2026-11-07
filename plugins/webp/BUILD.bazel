@@ -80,13 +80,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//platform/core-api:core",
+        "//images",
+    ],
+    deps = [
+        # do not sort,
         "//platform/lang-api:lang",
         "//platform/platform-impl:ide-impl",
         "//platform/lang-impl",
-        "//images",
         "//plugins/webp/lib:webp-libwebp",
     ],
 )

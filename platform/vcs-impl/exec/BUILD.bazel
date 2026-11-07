@@ -22,10 +22,10 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/vcs-impl"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/vcs-impl",
         "//platform/core-api:core",
         "//platform/vcs-api:vcs",
         "//platform/execution",

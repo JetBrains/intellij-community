@@ -33,6 +33,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -65,8 +70,6 @@ jvm_library(
         "//platform/syntax/syntax-psi:psi",
         "//xml/xml-syntax:syntax",
         "//platform/platform-impl:ide-impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//jps/model-api:model",
     ],
 )
 ### auto-generated section `build intellij.xml.psi.impl` end

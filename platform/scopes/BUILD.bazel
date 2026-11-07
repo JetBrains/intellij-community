@@ -22,10 +22,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/runtime/product",
+        "//libraries/kotlinx/serialization/json",
+    ],
     deps = [
         # do not sort,
         "//platform/kernel/rpc.lite",
-        "//platform/runtime/product",
         "@lib//:kotlin-stdlib",
         "//platform/util",
         "//platform/core-api:core",
@@ -33,7 +37,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/platform-impl/rpc",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//platform/lang-api:lang",
         "//platform/lang-impl",
         "//platform/analysis-api:analysis",

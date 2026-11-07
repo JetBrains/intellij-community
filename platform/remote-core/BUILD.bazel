@@ -24,6 +24,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//libraries/kotlin/reflect",
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
     ],
@@ -38,7 +39,6 @@ jvm_library(
         "//platform/util/multiplatform",
         "//platform/projectModel-api:projectModel",
         "@lib//:kotlin-stdlib",
-        "//libraries/kotlin/reflect",
         "//libraries/guava",
     ],
 )

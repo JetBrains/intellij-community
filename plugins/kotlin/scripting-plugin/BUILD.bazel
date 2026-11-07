@@ -46,12 +46,15 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/build-tools-runtime",
+        "//platform/util",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/jsr223",
-        "//plugins/kotlin/build-tools-runtime",
-        "//platform/util",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-scripting-common_provided",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-scripting-jvm_provided",
     ],

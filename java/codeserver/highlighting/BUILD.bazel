@@ -22,11 +22,15 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/stream",
+        "//platform/backend",
+        "//libraries/fastutil",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
-        "//libraries/stream",
         "//platform/core-api:core",
         "//platform/core-impl",
         "//jps/model-api:model",
@@ -40,7 +44,6 @@ jvm_library(
         "//java/java-indexing-api:indexing",
         "//java/codeserver/core",
         "//java/java-frontback-impl:frontback-impl",
-        "//libraries/fastutil",
     ],
 )
 ### auto-generated section `build intellij.java.codeserver.highlighting` end

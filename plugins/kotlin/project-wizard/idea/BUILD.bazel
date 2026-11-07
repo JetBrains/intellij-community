@@ -41,6 +41,15 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/java-compatibility",
+        "//plugins/kotlin/code-insight/api",
+        "//platform/workspace/jps",
+        "//platform/backend/observation",
+        "//platform/backend/workspace",
+        "//platform/workspace/storage",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -52,7 +61,6 @@ jvm_library(
         "//platform/observable",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
-        "//libraries/java-compatibility",
         "//platform/platform-impl:ide-impl",
         "//platform/indexing-api:indexing",
         "//jps/model-api:model",
@@ -85,14 +93,9 @@ jvm_library(
         "//plugins/kotlin/base/indices",
         "//platform/platform-api:ide",
         "//platform/progress/shared:ide-progress",
-        "//plugins/kotlin/code-insight/api",
         "//platform/lang-api:lang",
         "//platform/statistics",
         "//platform/util:util-ui",
-        "//platform/workspace/jps",
-        "//platform/backend/observation",
-        "//platform/backend/workspace",
-        "//platform/workspace/storage",
     ],
 )
 ### auto-generated section `build intellij.kotlin.projectWizard.idea` end

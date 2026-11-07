@@ -14,6 +14,7 @@ jvm_library(
     module_name = "intellij.tasks",
     visibility = ["//visibility:public"],
     exports = ["//platform/tasks-platform-api:tasks"],
+    runtime_deps = ["//platform/vcs-api:vcs"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -21,7 +22,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-api:ide",
         "//platform/projectModel-api:projectModel",
-        "//platform/vcs-api:vcs",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/forms_rt:java-guiForms-rt",

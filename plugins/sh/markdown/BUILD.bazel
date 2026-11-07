@@ -26,6 +26,7 @@ jvm_library(
         # do not sort,
         "//platform/platform-frontend:frontend",
         "//plugins/sh/terminal/frontend",
+        "//platform/projectModel-api:projectModel",
     ],
     deps = [
         # do not sort,
@@ -40,7 +41,6 @@ jvm_library(
         "//platform/eel-nioFs",
         "//platform/eel-provider",
         "//platform/platform-api:ide",
-        "//platform/projectModel-api:projectModel",
         "//platform/kernel/rpc",
         "//platform/util",
     ],

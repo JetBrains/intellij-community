@@ -17,11 +17,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/stream"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/stream",
         "//plugins/stream-debugger/core",
         "//platform/core-api:core",
         "//platform/xdebugger-api:debugger",

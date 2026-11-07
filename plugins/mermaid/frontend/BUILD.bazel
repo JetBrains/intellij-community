@@ -23,6 +23,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//plugins/mermaid/markdown"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/project/shared:project",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "//plugins/mermaid/markdown",
@@ -34,8 +39,6 @@ jvm_library(
         "//platform/core-impl",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-impl:ide-impl",
-        "//platform/project/shared:project",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.mermaid.frontend` end

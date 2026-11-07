@@ -41,6 +41,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/frontend-independent",
+        "//plugins/kotlin/base/code-insight",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -48,11 +53,9 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/core-impl",
-        "//plugins/kotlin/frontend-independent",
         "//plugins/java-i18n",
         "//plugins/properties/properties-psi-impl:backend-psi",
         "//plugins/kotlin/code-insight/api",
-        "//plugins/kotlin/base/code-insight",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
     ],
 )

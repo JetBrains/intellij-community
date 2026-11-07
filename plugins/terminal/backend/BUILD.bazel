@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/pty4j"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -33,7 +34,6 @@ jvm_library(
         "//plugins/terminal",
         "//libraries/jediterm-core",
         "//libraries/jediterm-ui",
-        "//libraries/pty4j",
         "//libraries/fastutil",
         "//platform/util/coroutines",
         "//platform/kernel/rpc.backend",

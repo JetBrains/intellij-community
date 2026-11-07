@@ -29,6 +29,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/core-ui",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -38,9 +43,7 @@ jvm_library(
         "//platform/lsp-impl",
         "//platform/platform-util-io:ide-util-io",
         "//platform/lang-api:lang",
-        "//platform/core-ui",
         "//platform/util:util-ui",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.lsp.client.playground` end

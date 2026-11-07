@@ -17,18 +17,21 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/eel",
+        "//platform/util-ex",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//java/compiler/impl",
         "//java/java-impl:impl",
         "//platform/core-api:core",
-        "//platform/eel",
         "//platform/ide-core",
         "//platform/projectModel-api:projectModel",
         "//platform/testFramework/common",
         "//platform/util",
-        "//platform/util-ex",
-        "//jps/model-api:model",
     ],
 )
 ### auto-generated section `build intellij.java.testFramework.backend` end

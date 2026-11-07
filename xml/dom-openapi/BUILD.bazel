@@ -22,7 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//libraries/fastutil",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -40,7 +44,6 @@ jvm_library(
         "//xml/xml-psi-api:psi",
         "//platform/core-ui",
         "//xml/xml-analysis-api:analysis",
-        "//libraries/fastutil",
         "//platform/util/concurrency",
     ],
 )

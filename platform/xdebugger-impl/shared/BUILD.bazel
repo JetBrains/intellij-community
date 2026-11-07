@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/json",
+        "//platform/util/jdom",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -34,7 +39,6 @@ jvm_library(
         "//platform/util/concurrency",
         "//platform/xdebugger-api:debugger",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//platform/platform-impl/rpc",
         "//platform/project/shared:project",
         "//platform/editor-ui-api:editor-ui",
@@ -43,7 +47,6 @@ jvm_library(
         "//platform/xdebugger-impl/rpc",
         "//platform/platform-impl:ide-impl",
         "//platform/util/coroutines",
-        "//platform/util/jdom",
         "//platform/projectModel-api:projectModel",
         "//platform/execution-impl",
         "//platform/lang-api:lang",

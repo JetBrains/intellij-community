@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util:util-ui"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -29,7 +30,6 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-ui",
         "//platform/util",
-        "//platform/util:util-ui",
         "//platform/platform-api:ide",
         "//platform/ide-core",
         "//platform/platform-impl:ide-impl",

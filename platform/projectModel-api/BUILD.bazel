@@ -25,6 +25,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//jps/model-api:model"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util/concurrency",
+        "//platform/util/xmlDom",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -32,11 +37,9 @@ jvm_library(
         "//jps/model-api:model",
         "@lib//:kotlin-stdlib",
         "//platform/util/jdom",
-        "//platform/util/concurrency",
         "//platform/workspace/storage",
         "//platform/workspace/jps",
         "//platform/backend/workspace",
-        "//platform/util/xmlDom",
         "//platform/util/multiplatform",
         "//platform/util/base",
         "//platform/eel",

@@ -39,6 +39,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/polySymbols/backend",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -50,7 +55,6 @@ jvm_library(
         "//platform/refactoring",
         "//xml/impl",
         "//platform/polySymbols/shared:polySymbols",
-        "//platform/polySymbols/backend",
         "//platform/lang-impl",
         "//images",
         "//platform/platform-impl:ide-impl",
@@ -60,7 +64,6 @@ jvm_library(
         "//xml/xml-psi-api:psi",
         "//platform/core-ui",
         "//xml/xml-analysis-api:analysis",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util:util-ui",
     ],
 )

@@ -62,6 +62,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -70,7 +71,6 @@ jvm_library(
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
         "//libraries/kotlin/gradle-plugin-idea-proto:libraries-kotlin-gradle-plugin-idea-proto",
         "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
-        "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling",
         "//plugins/kotlin/base/project-model",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",

@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util/diff",
+        "//libraries/kotlinx/serialization/json",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -29,7 +34,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/ide-core",
         "//platform/diff-api:diff",
-        "//platform/util/diff",
         "@lib//:kotlin-stdlib",
         "//platform/vcs-api/vcs-api-core:vcs-core",
         "//platform/analysis-api:analysis",
@@ -37,7 +41,6 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/platform-impl/rpc",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//platform/platform-api:ide",
         "//platform/projectModel-api:projectModel",
         "//platform/lang-api:lang",

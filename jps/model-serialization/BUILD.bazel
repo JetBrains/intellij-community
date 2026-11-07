@@ -43,17 +43,20 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/fastutil",
+        "//libraries/opentelemetry",
+        "//libraries/opentelemetry-semconv",
+        "//libraries/kotlinx/coroutines/core",
+    ],
     deps = [
         # do not sort,
         "//platform/util",
         "//jps/model-api:model",
-        "//libraries/fastutil",
         "//platform/util/jdom",
         "//platform/util/base/multiplatform",
         "//platform/util/base",
-        "//libraries/opentelemetry",
-        "//libraries/opentelemetry-semconv",
-        "//libraries/kotlinx/coroutines/core",
     ],
 )
 ### auto-generated section `build intellij.platform.jps.model.serialization` end

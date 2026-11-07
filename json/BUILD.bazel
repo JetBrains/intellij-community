@@ -25,6 +25,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//json/syntax"],
+    runtime_deps = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -45,7 +46,6 @@ jvm_library(
         "//json/syntax",
         "//platform/syntax/syntax-psi:psi",
         "//platform/syntax/syntax-util:util",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.json` end

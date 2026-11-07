@@ -72,6 +72,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/lang-core",
+        "//platform/monolith",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -98,7 +103,6 @@ jvm_library(
         "//plugins/gradle",
         "//platform/external-system-impl:externalSystem-impl",
         "//plugins/kotlin/base/facet",
-        "//platform/lang-core",
         "//plugins/kotlin/base/compiler-configuration",
         "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
         "//plugins/kotlin/project-configuration",
@@ -109,7 +113,6 @@ jvm_library(
         "//plugins/kotlin/references",
         "//uast/uast-common:uast",
         "//plugins/kotlin/base/util",
-        "//platform/monolith",
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
         ":libraries_kotlinc_libraries-kotlinc-compose-compiler-plugin_provided",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-jps-common_provided",

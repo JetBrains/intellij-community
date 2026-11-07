@@ -44,13 +44,13 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//platform/core-api:core",
+        "//libraries/kotlin/reflect",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/kotlin/reflect",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/snakeyaml",
         "//plugins/kotlin/project-wizard/core",
     ],

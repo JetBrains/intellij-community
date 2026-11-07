@@ -57,6 +57,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/lang-core",
+        "//java/debugger/openapi:java-debugger",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+        "//java/java-backend:backend",
+    ],
     deps = [
         # do not sort,
         "//java/openapi:java",
@@ -72,9 +80,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//java/debugger/impl",
         "//platform/indexing-api:indexing",
-        "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
-        "//java/debugger/openapi:java-debugger",
         "//platform/ide-core-impl",
         "//platform/ide-core",
         "//platform/testRunner",
@@ -99,11 +105,8 @@ jvm_library(
         "//libraries/jgoodies/forms",
         "//platform/execution",
         "//platform/consoleView",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//jps/model-api:model",
         "//jps/model-serialization",
         "//platform/statistics",
-        "//java/java-backend:backend",
     ],
 )
 ### auto-generated section `build intellij.testng` end

@@ -22,22 +22,25 @@ jvm_library(
         ["main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//xml/xml-psi-impl:psi-impl",
+        "//platform/util-ex",
+        "//platform/analysis-api:analysis",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
+    deps = [
+        # do not sort,
         "//plugins/grazie/src:core",
         "//xml/xml-psi-api:psi",
-        "//xml/xml-psi-impl:psi-impl",
         "//platform/core-api:core",
         "//platform/util",
-        "//platform/util-ex",
         "//platform/code-style-api:codeStyle",
-        "//platform/analysis-api:analysis",
         "//xml/xml-parser:parser",
         "//xml/xml-ui-common:ui-common",
         "//spellchecker",
         "//spellchecker/xml",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.grazie.xml` end

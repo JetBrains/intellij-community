@@ -44,6 +44,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/editor-ui-api:editor-ui",
+        "//java/java-psi-api:psi",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -58,7 +63,6 @@ jvm_library(
         "//platform/core-impl",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
-        "//platform/editor-ui-api:editor-ui",
         "@lib//:slf4j-api",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-impl",
@@ -67,7 +71,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//java/java-psi-api:psi",
         "//java/java-impl:impl",
         "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/base/project-structure",

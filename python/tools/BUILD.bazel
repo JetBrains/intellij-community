@@ -19,22 +19,22 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//python:pycharm-community",
-        "//python/pluginCore:community-plugin",
-        "//platform/build-scripts/downloader",
-    ],
-    deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/projectModel-api:projectModel",
         "//platform/testFramework",
         "//python/python-psi-api:psi",
-        "//python:python-community-impl",
         "//libraries/guava",
+        "//python:pycharm-community",
         "//python/python-sdk/backend",
+        "//python/pluginCore:community-plugin",
         "//python/testFramework",
+        "//platform/build-scripts/downloader",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//python:python-community-impl",
     ],
 )
 ### auto-generated section `build intellij.python.tools` end

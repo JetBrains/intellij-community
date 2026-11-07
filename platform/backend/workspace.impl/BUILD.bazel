@@ -22,13 +22,18 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/opentelemetry",
+        "//platform/eel-provider",
+        "//platform/diagnostic/telemetry",
+        "//platform/diagnostic/telemetry-impl",
+        "//platform/backend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/opentelemetry",
         "//libraries/jetbrains/annotations",
-        "//platform/eel-provider",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/core-api:core",
@@ -39,8 +44,6 @@ jvm_library(
         "//platform/backend/workspace",
         "//platform/backend/observation",
         "//platform/util",
-        "//platform/diagnostic/telemetry",
-        "//platform/diagnostic/telemetry-impl",
     ],
 )
 ### auto-generated section `build intellij.platform.backend.workspace.impl` end

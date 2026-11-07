@@ -27,6 +27,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -42,7 +43,6 @@ jvm_library(
         "//platform/core-ui",
         "@lib//:kotlin-stdlib",
         "//platform/core-impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         ":libraries_jetbrains_annotations_provided",
     ],
 )

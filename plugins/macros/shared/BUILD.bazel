@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/monolith"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -38,7 +39,6 @@ jvm_library(
         "//platform/util/jdom",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/jetbrains/annotations",
-        "//platform/monolith",
     ],
 )
 ### auto-generated section `build intellij.macros.shared` end

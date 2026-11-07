@@ -32,12 +32,15 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/platform-impl/rpc",
+        "//platform/backend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/kernel/rpc.backend",
-        "//platform/platform-impl/rpc",
-        "//platform/backend",
         "//platform/refactoring",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",

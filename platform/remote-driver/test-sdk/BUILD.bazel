@@ -23,6 +23,7 @@ jvm_library(
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
     ],
+    runtime_deps = ["//platform/consoleView"],
     deps = [
         # do not sort,
         "//platform/remote-driver/client",
@@ -34,7 +35,6 @@ jvm_library(
         "//platform/remote-driver/model",
         "//platform/util",
         "//platform/platform-api:ide",
-        "//platform/consoleView",
         "//tools/intellij.tools.ide.util.common:ide-util-common",
     ],
 )

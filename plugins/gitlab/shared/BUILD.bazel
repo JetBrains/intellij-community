@@ -35,12 +35,15 @@ jvm_library(
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/json",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//platform/core-api:core",
         "//platform/util",
         "//platform/statistics",

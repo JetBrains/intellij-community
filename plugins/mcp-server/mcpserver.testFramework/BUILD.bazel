@@ -23,12 +23,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = [":libraries_mcp-kotlin-sdk_provided"],
+    runtime_deps = ["//libraries/kotlin/reflect"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/junit6",
-        "//libraries/kotlin/reflect",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",

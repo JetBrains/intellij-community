@@ -15,6 +15,7 @@ jvm_library(
     module_name = "intellij.platform.eel.nioFs",
     visibility = ["//visibility:public"],
     exports = ["//platform/eel"],
+    runtime_deps = ["//platform/util/base/multiplatform"],
     deps = [
         # do not sort,
         "//libraries/fastutil",
@@ -24,7 +25,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//platform/util/base",
-        "//platform/util/base/multiplatform",
         "//platform/util/annotations",
     ],
 )

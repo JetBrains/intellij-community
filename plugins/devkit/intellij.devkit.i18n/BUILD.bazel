@@ -31,6 +31,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//jps/model-api:model"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -39,7 +40,6 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/ide-core-impl",
         "//platform/ide-core",
-        "//jps/model-api:model",
         "//platform/projectModel-api:projectModel",
         "//plugins/properties/properties-psi-api:psi",
         "//plugins/properties/properties-psi-impl:backend-psi",

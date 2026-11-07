@@ -13,6 +13,7 @@ jvm_library(
     ),
     module_name = "intellij.javaFX.sceneBuilder",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//jps/model-api:model"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -23,7 +24,6 @@ jvm_library(
         "//java/java-syntax:syntax",
         "//plugins/javaFX",
         "//platform/core-api:core",
-        "//jps/model-api:model",
         "//platform/projectModel-api:projectModel",
         "//platform/util/nanoxml",
         "@lib//:java_f_x-scene_builder-_scene_builder_kit11-provided",

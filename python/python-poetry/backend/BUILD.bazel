@@ -34,6 +34,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util/base/multiplatform",
+        "//python/common",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -41,8 +46,6 @@ jvm_library(
         "//python/python-poetry/common",
         "//python/openapi:community",
         "//python/python-pyproject:pyproject",
-        "//platform/util/base/multiplatform",
-        "//python/common",
         "//platform/util/jdom",
         "//python/python-sdk/backend",
         "//python/python-sdk/common",

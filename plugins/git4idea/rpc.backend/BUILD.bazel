@@ -22,14 +22,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//plugins/git4idea/backend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/kernel/rpc.backend",
         "//plugins/git4idea/shared",
-        "//plugins/git4idea/backend",
     ],
 )
 ### auto-generated section `build intellij.vcs.git.rpc.backend` end

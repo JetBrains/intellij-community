@@ -45,6 +45,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//plugins/git4idea/hosting"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/git4idea:vcs-git",
+        "//platform/credential-store-ui:credentialStore-ui",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -56,7 +61,6 @@ jvm_library(
         "//platform/util/diff",
         "//platform/vcs-api:vcs",
         "//platform/external-process-auth-helper",
-        "//plugins/git4idea:vcs-git",
         "//plugins/git4idea/backend",
         "//plugins/git4idea/hosting",
         "//plugins/git4idea/shared",
@@ -71,7 +75,6 @@ jvm_library(
         "//platform/vcs-log/impl",
         "//platform/util/progress",
         "//libraries/guava",
-        "//platform/credential-store-ui:credentialStore-ui",
         "//platform/lang-impl",
         "//libraries/miglayout-swing",
         "//libraries/jackson3/databind",

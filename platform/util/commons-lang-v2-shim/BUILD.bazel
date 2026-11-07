@@ -17,11 +17,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "//libraries/commons/lang3",
-        "@lib//:platform-util-commons_lang_v2_shim-commons-collections",
-    ],
+    runtime_deps = ["@lib//:platform-util-commons_lang_v2_shim-commons-collections"],
+    deps = ["//libraries/commons/lang3"],
 )
 ### auto-generated section `build intellij.platform.util.commonsLangV2Shim` end
 

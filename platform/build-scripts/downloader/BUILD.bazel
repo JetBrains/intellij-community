@@ -28,7 +28,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/commons/lang3"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/commons/lang3",
+        "//libraries/opentelemetry-semconv",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -37,7 +41,6 @@ jvm_library(
         "//libraries/commons/io",
         "@lib//:kotlin-stdlib",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry-semconv",
         "//libraries/hash4j",
         "//platform/build-scripts/concurrency",
         "//platform/bazel-runfiles",

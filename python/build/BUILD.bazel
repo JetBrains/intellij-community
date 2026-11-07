@@ -63,6 +63,7 @@ jvm_library(
     kotlinc_opts = ":custom_build",
     module_name = "intellij.pycharm.community.build",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/opentelemetry-semconv"],
     deps = [
         # do not sort,
         "//build",
@@ -73,7 +74,6 @@ jvm_library(
         "//platform/build-scripts/downloader",
         "//build/tasks",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry-semconv",
         "//libraries/opentelemetry-extension-kotlin",
         "//platform/core-api:core",
         "//platform/platform-util-io:ide-util-io",

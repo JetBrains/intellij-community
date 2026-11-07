@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util/jdom"],
     deps = [
         # do not sort,
         "//platform/platform-impl/rpc",
@@ -44,7 +45,6 @@ jvm_library(
         "//platform/platform-impl/concurrency",
         "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
-        "//platform/util/jdom",
         "//platform/lang-api:lang",
         "//platform/analysis-api:analysis",
         "//platform/editor-ui-api:editor-ui",

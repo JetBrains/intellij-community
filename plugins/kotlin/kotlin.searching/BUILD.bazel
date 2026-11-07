@@ -41,6 +41,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin/base/facet"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -65,7 +66,6 @@ jvm_library(
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/kotlin.searching/base",
-        "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
         "//plugins/kotlin/base/psi",
     ],

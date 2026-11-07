@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/markdown-utils"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -39,7 +40,6 @@ jvm_library(
         "//plugins/mermaid",
         "//plugins/markdown/core:markdown",
         "//libraries/markdown",
-        "//platform/markdown-utils",
         "//platform/built-in-server-api:builtInServer",
         "//platform/built-in-server:builtInServer-impl",
         "//libraries/netty/codec-http:libraries-netty-codec-http",

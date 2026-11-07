@@ -31,16 +31,19 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
-        "//platform/kernel/rpc",
-        "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//platform/platform-impl/rpc",
         "//platform/execution",
         "//platform/project/shared:project",
-        "//platform/remote-topics/shared:rpc-topics",
         "//platform/execution-impl",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/kernel/rpc",
+        "//libraries/kotlinx/serialization/core",
+        "//platform/remote-topics/shared:rpc-topics",
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//platform/platform-api:ide",

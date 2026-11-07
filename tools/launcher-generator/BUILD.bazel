@@ -17,7 +17,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//platform/util/jdom",
         "//libraries/commons/imaging",

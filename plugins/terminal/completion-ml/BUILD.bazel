@@ -22,15 +22,18 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/completion-ml-ranking",
+        "//libraries/completion-ranking-sh",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/util",
         "//plugins/terminal",
-        "//plugins/completion-ml-ranking",
         "//platform/platform-impl/internal",
-        "//libraries/completion-ranking-sh",
     ],
 )
 ### auto-generated section `build intellij.terminal.completion.ml` end

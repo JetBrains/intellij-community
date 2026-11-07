@@ -22,13 +22,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/projectModel-api:projectModel",
-        "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//libraries/jetbrains/annotations",
         "//platform/util",
         "//platform/platform-impl:ide-impl",

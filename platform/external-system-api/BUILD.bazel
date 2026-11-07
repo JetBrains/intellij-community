@@ -25,6 +25,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/external-system-rt:externalSystem-rt"],
+    runtime_deps = ["//libraries/fastutil"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -53,7 +54,6 @@ jvm_library(
         "//platform/backend/workspace",
         "//platform/execution",
         "//platform/consoleView",
-        "//libraries/fastutil",
     ],
 )
 ### auto-generated section `build intellij.platform.externalSystem` end

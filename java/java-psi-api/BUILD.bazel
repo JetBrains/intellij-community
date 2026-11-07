@@ -24,6 +24,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/testIntegration"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/fastutil",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -34,8 +39,6 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi",
         "@lib//:kotlin-stdlib",
         "//java/java-syntax:syntax",
-        "//libraries/fastutil",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.java.psi` end

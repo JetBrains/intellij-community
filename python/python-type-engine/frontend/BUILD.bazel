@@ -29,6 +29,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/icons",
+        "//platform/statistics",
+        "//platform/platform-impl/rpc",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -37,7 +44,6 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/core-api:core",
         "//platform/core-ui",
-        "//platform/icons",
         "//platform/editor-ui-api:editor-ui",
         "//platform/project/shared:project",
         "//platform/projectModel-api:projectModel",
@@ -46,13 +52,10 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/progress/shared:ide-progress",
         "//platform/observable",
-        "//platform/statistics",
         "//python/python-parser:parser",
         "//python/python-pytools/frontend",
         "//python/python-type-engine/common",
         "//platform/kernel/rpc",
-        "//platform/platform-impl/rpc",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.python.typeEngine.frontend` end

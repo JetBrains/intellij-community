@@ -22,7 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = ["@lib//:kotlin-stdlib"],
+    runtime_deps = ["@lib//:kotlin-stdlib"],
 )
 ### auto-generated section `build intellij.gradle.codeInsight.properties` end
 

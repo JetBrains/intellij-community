@@ -22,13 +22,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "//python/python-psi-api:psi",
         "//plugins/sh/core",
         "//platform/util",
         "//platform/core-api:core",
-        "//platform/backend",
     ],
 )
 ### auto-generated section `build intellij.sh.python` end

@@ -54,6 +54,14 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//jvm/jvm-analysis-api:analysis"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/lang-core",
+        "//libraries/fastutil",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//java/java-backend:backend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -72,7 +80,6 @@ jvm_library(
         "//platform/indexing-api:indexing",
         "//jps/model-api:model",
         "//jps/model-serialization",
-        "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
         "//platform/refactoring",
         "//platform/testRunner",
@@ -88,7 +95,6 @@ jvm_library(
         "//platform/external-system-api:externalSystem",
         "//jvm/jvm-analysis-api:analysis",
         "//jvm/jvm-analysis-quickFix:analysis-quickFix",
-        "//libraries/fastutil",
         "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core",
         "//java/java-impl-refactorings:impl-refactorings",
@@ -99,10 +105,7 @@ jvm_library(
         "//platform/execution",
         "//platform/consoleView",
         "//platform/statistics",
-        "//platform/forms_rt:java-guiForms-rt",
         "//java/java-frontback-psi-api:frontback-psi",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//java/java-backend:backend",
     ],
 )
 ### auto-generated section `build intellij.junit` end

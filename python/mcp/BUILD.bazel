@@ -31,6 +31,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//python/python-poetry/backend",
+        "//python/python-hatch:hatch",
+        "//python/python-uv/backend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -43,9 +49,6 @@ jvm_library(
         "//python:python-community-impl",
         "//python/python-pyproject:pyproject",
         "//python/common",
-        "//python/python-poetry/backend",
-        "//python/python-hatch:hatch",
-        "//python/python-uv/backend",
     ],
 )
 ### auto-generated section `build intellij.python.mcp` end

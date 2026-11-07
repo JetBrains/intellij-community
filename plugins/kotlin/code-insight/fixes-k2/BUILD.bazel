@@ -42,6 +42,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
+        "//plugins/kotlin/project-configuration",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -50,7 +55,6 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//libraries/guava",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
@@ -87,7 +91,6 @@ jvm_library(
         "//platform/progress/shared:ide-progress",
         "//java/java-frontback-psi-api:frontback-psi",
         "//plugins/kotlin/kotlin.searching",
-        "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/base/plugin",
     ],
 )

@@ -39,6 +39,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/protobuf",
+        "//libraries/opentelemetry-semconv",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -50,10 +55,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "//platform/projectModel-impl",
         "//platform/ide-core",
-        "//libraries/kotlinx/serialization/protobuf",
         "//platform/diagnostic/telemetry",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry-semconv",
         "//libraries/mvstore",
         "//platform/util/jdom",
         "//platform/util/xmlDom",

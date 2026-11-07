@@ -31,6 +31,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/xdebugger-impl:debugger-impl",
+        "//platform/execution-impl",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -39,11 +44,9 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/xdebugger-api:debugger",
         "//java/debugger/impl",
-        "//platform/xdebugger-impl:debugger-impl",
         "//platform/xdebugger-impl/shared",
         "//platform/xdebugger-impl/ui",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/execution-impl",
         "//platform/projectModel-api:projectModel",
         "//platform/util:util-ui",
         "//platform/core-ui",

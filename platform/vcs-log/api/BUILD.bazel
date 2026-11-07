@@ -23,6 +23,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/vcs-log/graph-api:vcs-log-graph"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/diff-api:diff",
+    ],
     deps = [
         # do not sort,
         "//platform/util-rt",
@@ -30,12 +35,10 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/vcs-api/vcs-api-core:vcs-core",
         "//platform/util",
-        "//platform/editor-ui-api:editor-ui",
         "//platform/vcs-api:vcs",
         "@lib//:kotlin-stdlib",
         "//platform/ide-core",
         "//platform/core-ui",
-        "//platform/diff-api:diff",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.log` end

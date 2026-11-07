@@ -41,6 +41,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/frontend-independent",
+    ],
     deps = [
         # do not sort,
         "//plugins/kotlin/code-insight/api",
@@ -49,8 +54,6 @@ jvm_library(
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
-        "//plugins/kotlin/base/util",
-        "//plugins/kotlin/frontend-independent",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/core-impl",

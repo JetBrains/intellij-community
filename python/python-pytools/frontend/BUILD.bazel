@@ -31,6 +31,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/platform-impl/rpc",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -50,8 +55,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//platform/kernel/rpc",
         "//python/python-pytools/common",
-        "//platform/platform-impl/rpc",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.python.pytools.frontend` end

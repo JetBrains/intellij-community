@@ -22,12 +22,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//jps/model-api:model",
+        "//platform/backend",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
-        "//jps/model-api:model",
         "//platform/projectModel-api:projectModel",
         "//xml/xml-psi-api:psi",
         "//xml/xml-psi-impl:psi-impl",
@@ -48,7 +52,6 @@ jvm_library(
         "//platform/polySymbols/web",
         "//platform/lang-api:lang",
         "//libraries/fastutil",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.xml.analysis.impl` end

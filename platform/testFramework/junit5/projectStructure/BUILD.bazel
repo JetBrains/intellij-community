@@ -27,6 +27,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/testFramework/common",
+        "//libraries/kotlin/test:libraries-kotlinTest",
+        "//platform/workspace/jps",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -34,14 +40,11 @@ jvm_library(
         "//jps/model-api:model",
         "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
-        "//platform/testFramework/common",
         "//platform/testFramework/junit5",
         "//platform/lang-impl",
         "//platform/ide-core",
         "//platform/util-ex",
-        "//libraries/kotlin/test:libraries-kotlinTest",
         "//platform/ide-core-impl",
-        "//platform/workspace/jps",
         "@lib//:kotlin-stdlib",
     ],
 )

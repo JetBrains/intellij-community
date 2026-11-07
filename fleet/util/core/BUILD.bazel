@@ -76,12 +76,12 @@ jvm_library(
         "//fleet/multiplatform.shims",
         "//fleet/util/serialization",
     ],
+    runtime_deps = ["//libraries/kotlinx/serialization/json"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//fleet/util/logging/api",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//fleet/reporting/api",

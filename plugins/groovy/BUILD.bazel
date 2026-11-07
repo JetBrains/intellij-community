@@ -76,6 +76,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//plugins/groovy/groovy-psi:psi"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/properties:properties-backend",
+        "//platform/testIntegration-ui",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -107,7 +113,6 @@ jvm_library(
         "//platform/lang-api:lang",
         "@community//build:build-javac-rt",
         "//platform/editor-ui-ex:editor-ex",
-        "//plugins/properties:properties-backend",
         "//java/execution/impl",
         "//platform/usageView",
         "//java/compiler/openapi:java-compiler",
@@ -132,7 +137,6 @@ jvm_library(
         "//platform/util/jdom",
         "//platform/util:util-ui",
         "//platform/util-ex",
-        "//platform/testIntegration-ui",
         "//platform/workspace/jps",
         "//platform/backend/workspace",
         "//java/unscramble",
@@ -142,7 +146,6 @@ jvm_library(
         "//platform/statistics",
         "//platform/forms_rt:java-guiForms-rt",
         "//java/java-frontback-psi-api:frontback-psi",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.groovy` end

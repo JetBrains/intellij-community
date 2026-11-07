@@ -38,7 +38,13 @@ jvm_library(
         "//platform/util",
         "//java/java-analysis-api:analysis",
     ],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/icons",
+        "//platform/backend",
+        "//libraries/fastutil",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -51,7 +57,6 @@ jvm_library(
         "//platform/util",
         "//platform/util/jdom",
         "//platform/extensions",
-        "//platform/icons",
         "//platform/workspace/storage",
         "//platform/platform-api:ide",
         "//platform/ide-core",
@@ -71,8 +76,6 @@ jvm_library(
         "//xml/xml-psi-api:psi",
         "@lib//:kotlin-stdlib",
         "//platform/execution",
-        "//libraries/fastutil",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
     ],
 )

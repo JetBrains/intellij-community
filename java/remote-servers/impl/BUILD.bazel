@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-util-io-impl:ide-util-io-impl"],
     deps = [
         # do not sort,
         "//java/remote-servers/api:java-remoteServers",
@@ -43,7 +44,6 @@ jvm_library(
         "//java/openapi:java",
         "//java/idea-ui:ui",
         "//platform/core-ui",
-        "//platform/platform-util-io-impl:ide-util-io-impl",
         "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core",
         "//platform/util/jdom",

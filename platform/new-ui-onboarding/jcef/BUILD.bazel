@@ -22,10 +22,10 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/core-api:core"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
-        "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/platform-api:ide",
         "//platform/ide-core",

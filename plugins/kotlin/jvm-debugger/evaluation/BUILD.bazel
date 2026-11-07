@@ -41,6 +41,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/base/psi",
+        "//plugins/kotlin/base/statistics",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -55,8 +60,6 @@ jvm_library(
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/base/analysis",
         "//plugins/kotlin/base/code-insight",
-        "//plugins/kotlin/base/psi",
-        "//plugins/kotlin/base/statistics",
         "//plugins/kotlin/jvm-debugger/base/util",
         "//java/debugger/openapi:java-debugger",
         "//plugins/kotlin/jvm-debugger/eval4j",

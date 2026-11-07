@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util/jdom",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -38,7 +43,6 @@ jvm_library(
         "//platform/analysis-impl",
         "//platform/recentFiles/shared:recentFiles",
         "//platform/util/coroutines",
-        "//platform/util/jdom",
         "//platform/ide-core",
         "//platform/platform-impl/rpc",
         "//platform/project/shared:project",
@@ -49,7 +53,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/util:util-ui",
         "//platform/lang-impl",
-        "//platform/platform-frontend:frontend",
         "//platform/util",
     ],
 )

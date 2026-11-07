@@ -352,7 +352,12 @@ jvm_library(
     module_name = "intellij.idea.community.build",
     visibility = ["//visibility:public"],
     exports = ["//platform/build-scripts"],
-    runtime_deps = ["@lib//:test-discovery-plugin-base"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:test-discovery-plugin-base",
+        "//libraries/opentelemetry-semconv",
+        "//libraries/kotlinx/coroutines/core",
+    ],
     deps = [
         # do not sort,
         "//platform/build-scripts",
@@ -364,8 +369,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//build/tasks",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry-semconv",
-        "//libraries/kotlinx/coroutines/core",
         "//platform/build-scripts/downloader",
         "@community//build:zip",
         "//libraries/maven-resolver-provider",

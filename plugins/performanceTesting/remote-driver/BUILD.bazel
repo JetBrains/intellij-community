@@ -27,11 +27,11 @@ jvm_library(
         "//platform/remote-driver/core:driver-impl",
         "//platform/remote-driver/client",
     ],
+    runtime_deps = ["//libraries/assertj-core"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/performanceTesting/core:performanceTesting",
-        "//libraries/assertj-core",
         "//libraries/assertj-swing",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-util-netty:ide-util-netty",

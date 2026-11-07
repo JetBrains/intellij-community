@@ -29,6 +29,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/object-serializer",
+        "//platform/platform-impl/rpc",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -36,10 +41,8 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/kernel/rpc",
         "//platform/project/shared:project",
-        "//platform/object-serializer",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "//platform/platform-impl/rpc",
         "//platform/platform-api:ide",
     ],
 )

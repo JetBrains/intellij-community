@@ -32,6 +32,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/platform-impl/rpc"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/json",
+        "//platform/remote-topics/shared:rpc-topics",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -43,9 +48,7 @@ jvm_library(
         "//platform/statistics",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//platform/platform-impl/rpc",
-        "//platform/remote-topics/shared:rpc-topics",
         "//python/python-pytools/common",
         "//platform/eel",
         "//python/openapi:community",

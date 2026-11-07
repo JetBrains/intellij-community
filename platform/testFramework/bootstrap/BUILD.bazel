@@ -22,6 +22,8 @@ jvm_library(
         "//platform/boot",
         "//libraries/junit6-vintage",
         "//libraries/junit6-jupiter",
+        "//platform/core-nio-fs",
+        "//libraries/asm-tools",
     ],
     deps = [
         # do not sort,
@@ -31,8 +33,6 @@ jvm_library(
         "//libraries/junit6",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
         "//libraries/opentest4j",
-        "//platform/core-nio-fs",
-        "//libraries/asm-tools",
         "//platform/bazel-runfiles",
         "//platform/util/base",
         "//platform/util",

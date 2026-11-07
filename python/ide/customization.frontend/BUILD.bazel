@@ -24,14 +24,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/platform-frontend:frontend",
+        "//platform/projectModel-api:projectModel",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
-        "//platform/platform-frontend:frontend",
         "//platform/ide-core",
         "//platform/platform-impl:ide-impl",
-        "//platform/projectModel-api:projectModel",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community.customization.frontend` end

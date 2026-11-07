@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend/workspace"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -30,7 +31,6 @@ jvm_library(
         "//platform/util",
         "//platform/workspace/jps",
         "//platform/workspace/storage",
-        "//platform/backend/workspace",
         "//platform/projectModel-impl",
         "//platform/external-system-api:externalSystem",
         "//plugins/gradle",

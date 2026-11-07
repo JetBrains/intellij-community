@@ -35,6 +35,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/polySymbols/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -73,7 +74,6 @@ jvm_library(
         "//java/openapi:java",
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/polySymbols/shared:polySymbols",
-        "//platform/polySymbols/backend",
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
         "//plugins/kotlin/references",

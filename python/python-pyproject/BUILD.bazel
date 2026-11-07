@@ -43,6 +43,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//libraries/tuweni/toml"],
+    runtime_deps = ["//platform/progress/shared:ide-progress"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -55,7 +56,6 @@ jvm_library(
         "//libraries/tuweni/toml",
         "//platform/external-system-api:externalSystem",
         "//platform/ide-core",
-        "//platform/progress/shared:ide-progress",
         "//platform/backend/workspace",
         "//platform/workspace/storage",
         "//platform/platform-impl:ide-impl",

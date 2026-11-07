@@ -24,8 +24,12 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//platform/projectView/shared:projectView",
+        "//platform/projectView/backend",
         "//platform/backend",
         "//platform/todo/backend",
+        "//platform/util-ex",
     ],
     deps = [
         # do not sort,
@@ -33,7 +37,6 @@ jvm_library(
         "//java/openapi:java",
         "//java/java-impl:impl",
         "//java/java-psi-api:psi",
-        "//java/java-frontback-psi-api:frontback-psi",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/core-impl",
@@ -46,12 +49,9 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/lang-impl",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectView/shared:projectView",
-        "//platform/projectView/backend",
         "//platform/todo",
         "//platform/util",
         "//platform/util:util-ui",
-        "//platform/util-ex",
     ],
 )
 ### auto-generated section `build intellij.java.todo` end

@@ -41,15 +41,18 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/vcs-api/vcs-api-core:vcs-core",
+        "//plugins/git4idea:vcs-git",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/code-insight",
         "//platform/core-api:core",
-        "//platform/vcs-api/vcs-api-core:vcs-core",
         "//platform/platform-api:ide",
-        "//plugins/git4idea:vcs-git",
         "//plugins/git4idea/backend",
     ],
 )

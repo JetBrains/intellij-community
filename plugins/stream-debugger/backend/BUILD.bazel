@@ -22,11 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-impl/rpc"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/kernel/rpc.backend",
-        "//platform/platform-impl/rpc",
         "//plugins/stream-debugger/shared",
         "//libraries/kotlinx/coroutines/core",
         "//platform/xdebugger-impl:debugger-impl",

@@ -41,6 +41,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin/base/project-structure"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -58,7 +59,6 @@ jvm_library(
         "//platform/lang-api:lang",
         "//java/java-psi-api:psi",
         "//platform/projectModel-impl",
-        "//plugins/kotlin/base/project-structure",
         "//platform/statistics",
         "//java/java-impl:impl",
     ],

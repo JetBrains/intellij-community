@@ -40,6 +40,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/platform-impl/error-tree-view"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/platform-util-io-impl:ide-util-io-impl",
+        "//libraries/opentelemetry-semconv",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -71,7 +77,6 @@ jvm_library(
         "//libraries/fastutil",
         "//libraries/commons/cli",
         "//platform/core-ui",
-        "//platform/platform-util-io-impl:ide-util-io-impl",
         "//platform/platform-util-io:ide-util-io",
         "//platform/core-impl",
         "//platform/util/jdom",
@@ -83,7 +88,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/progress/shared:ide-progress",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry-semconv",
         "//platform/backend/workspace",
         "//platform/diagnostic",
         "//platform/backend/observation",
@@ -93,7 +97,6 @@ jvm_library(
         "//platform/execution",
         "//platform/consoleView",
         "//platform/forms_rt:java-guiForms-rt",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util",
     ],
 )

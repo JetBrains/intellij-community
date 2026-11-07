@@ -14,6 +14,11 @@ jvm_library(
     kotlinc_opts = "@community//:k11",
     module_name = "intellij.tools.jps.build.standalone",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//jps/model-serialization",
+        "//platform/util/base",
+    ],
     deps = [
         # do not sort,
         "//libraries/groovy",
@@ -21,10 +26,8 @@ jvm_library(
         "//jps/model-api:model",
         "//platform/util",
         "//libraries/cli-parser",
-        "//jps/model-serialization",
         "@community//build:build-javac-rt",
         "//libraries/protobuf",
-        "//platform/util/base",
     ],
 )
 ### auto-generated section `build intellij.tools.jps.build.standalone` end

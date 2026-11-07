@@ -30,6 +30,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util/annotations"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -42,7 +43,6 @@ jvm_library(
         "//python/impl.helperLocator:community-helpersLocator",
         "//platform/util",
         "//platform/core-api:core",
-        "//platform/util/annotations",
     ],
 )
 ### auto-generated section `build intellij.python.community.execService.python` end

@@ -44,6 +44,7 @@ jvm_library(
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
     ],
+    runtime_deps = ["//libraries/kryo5"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -62,7 +63,6 @@ jvm_library(
         "//libraries/commons/lang3",
         "//libraries/commons/io",
         "//libraries/guava",
-        "//libraries/kryo5",
         ":libraries_groovy_provided",
     ],
 )

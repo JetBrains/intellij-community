@@ -30,12 +30,15 @@ jvm_library(
         "//libraries/mcp-kotlin-sdk",
         "//libraries/kotlin/logging",
     ],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "@lib//:slf4j-api",
         "@lib//:slf4j-jdk14",
         "//libraries/ktor/server-sse:libraries-ktor-server-sse",

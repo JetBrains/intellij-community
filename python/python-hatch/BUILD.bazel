@@ -34,6 +34,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//python/python-exec-service/execService.python",
+        "//python/services/system-python",
+    ],
     deps = [
         # do not sort,
         "//python/python-hatch/common",
@@ -57,8 +62,6 @@ jvm_library(
         "//libraries/semver",
         "//python/python-sdk/common",
         "//python/common",
-        "//python/python-exec-service/execService.python",
-        "//python/services/system-python",
         "//python/python-process-output/common",
         "//platform/util/jdom",
         "//python/python-packaging:packaging",

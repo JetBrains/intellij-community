@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-frontend:frontend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -39,7 +40,6 @@ jvm_library(
         "//java/debugger/shared",
         "//plugins/stream-debugger/shared",
         "//platform/kernel/rpc",
-        "//platform/platform-frontend:frontend",
         "//platform/statistics",
     ],
 )

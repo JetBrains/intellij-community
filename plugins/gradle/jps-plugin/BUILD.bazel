@@ -27,6 +27,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/fastutil"],
     deps = [
         # do not sort,
         "//platform/util",
@@ -37,7 +38,6 @@ jvm_library(
         "//libraries/gradle",
         "@lib//:gradle-jps-ant",
         "//libraries/gson",
-        "//libraries/fastutil",
         "//platform/util/jdom",
         "//platform/util/base/multiplatform",
         "//platform/util/base",

@@ -41,6 +41,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/plugin-updater",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -48,8 +53,6 @@ jvm_library(
         "//platform/core-impl",
         "//platform/editor-ui-api:editor-ui",
         "//plugins/kotlin/base/util",
-        "//plugins/kotlin/base/plugin",
-        "//plugins/kotlin/plugin-updater",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/core-ui",

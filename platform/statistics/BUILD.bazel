@@ -45,6 +45,7 @@ jvm_library(
         "//libraries/fus-ap-validation",
         "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
+    runtime_deps = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -78,7 +79,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "@lib//:com-jetbrains-fus-reporting-fus-api",
         "//libraries/fus-ap-validation",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "@lib//:jetbrains-fus-reporting-api-jvm",
         "//platform/productMode",
     ],

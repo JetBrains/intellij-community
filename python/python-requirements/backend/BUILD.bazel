@@ -31,6 +31,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//python/python-requirements/common"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util:util-ui",
+        "//platform/analysis-impl",
+    ],
     deps = [
         # do not sort,
         "//platform/backend",
@@ -44,8 +49,6 @@ jvm_library(
         "//libraries/stream",
         "//platform/analysis-api:analysis",
         "//platform/core-impl",
-        "//platform/util:util-ui",
-        "//platform/analysis-impl",
     ],
 )
 ### auto-generated section `build intellij.python.requirements.backend` end

@@ -38,6 +38,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util/jdom"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -49,7 +50,6 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/ml-logs",
         "//platform/projectModel-api:projectModel",
-        "//platform/util/jdom",
     ],
 )
 ### auto-generated section `build intellij.findUsagesMl` end

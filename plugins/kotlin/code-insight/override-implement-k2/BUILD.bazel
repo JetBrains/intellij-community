@@ -41,6 +41,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -65,7 +66,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//plugins/kotlin/base/analysis",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base",
         "//plugins/kotlin/base/code-insight",
         "//plugins/kotlin/base/psi",
     ],

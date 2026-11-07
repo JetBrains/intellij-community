@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/properties:properties-backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -36,7 +37,6 @@ jvm_library(
         "//platform/indexing-api:indexing",
         "//java/java-psi-api:psi",
         "//platform/util:util-ui",
-        "//plugins/properties:properties-backend",
     ],
 )
 ### auto-generated section `build intellij.gradle.java.properties` end

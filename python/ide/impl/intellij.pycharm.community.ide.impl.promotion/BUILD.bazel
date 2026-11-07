@@ -25,6 +25,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//python/ide/customization.shared"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -40,7 +41,6 @@ jvm_library(
         "//platform/statistics",
         "//libraries/http-client",
         "//platform/core-ui",
-        "//python/ide/customization.shared",
         "//platform/platform-impl/update-checker",
         "//platform/util:util-ui",
     ],

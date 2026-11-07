@@ -41,6 +41,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/frontend-independent",
+        "//plugins/kotlin/base/plugin",
+        "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir",
+        "//plugins/kotlin/base/analysis",
+        "//plugins/kotlin/base/project-structure",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -48,17 +56,12 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/core-api:core",
         "//plugins/kotlin/base/util",
-        "//plugins/kotlin/frontend-independent",
         "//java/openapi:java",
-        "//plugins/kotlin/base/plugin",
-        "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir",
-        "//plugins/kotlin/base/analysis",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/util:util-ui",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
-        "//plugins/kotlin/base/project-structure",
     ],
 )
 ### auto-generated section `build intellij.kotlin.internal` end

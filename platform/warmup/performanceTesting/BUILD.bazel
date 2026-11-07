@@ -17,6 +17,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/remote-driver/model"],
     deps = [
         # do not sort,
         "//platform/projectModel-api:projectModel",
@@ -26,7 +27,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/platform-impl/playback",
         "//platform/core-api:core",
-        "//platform/remote-driver/model",
         "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
         "//platform/util/concurrency",
     ],

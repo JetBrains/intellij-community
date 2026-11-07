@@ -31,12 +31,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/productMode"],
+    runtime_deps = ["//platform/util/base"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
         "//platform/runtime/repository",
         "@lib//:kotlin-stdlib",
-        "//platform/util/base",
         "//platform/productMode",
     ],
 )

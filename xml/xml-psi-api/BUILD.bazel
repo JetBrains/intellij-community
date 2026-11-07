@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/editor-ui-api:editor-ui",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//xml/xml-parser:parser",
@@ -31,9 +36,7 @@ jvm_library(
         "//platform/util",
         "//platform/util/multiplatform",
         "//platform/util/base",
-        "//platform/editor-ui-api:editor-ui",
         "@lib//:kotlin-stdlib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.xml.psi` end

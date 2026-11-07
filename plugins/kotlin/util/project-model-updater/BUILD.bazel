@@ -39,11 +39,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/okio:squareup-okio-jvm"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlin/reflect",
+        "//libraries/okio:squareup-okio-jvm",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/kotlin/reflect",
         "//platform/util/jdom",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kaml",

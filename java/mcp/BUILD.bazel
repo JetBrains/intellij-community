@@ -31,20 +31,23 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//platform/indexing-api:indexing",
+        "//java/java-indexing-api:indexing",
+        "//platform/backend",
+    ],
+    deps = [
+        # do not sort,
         "//plugins/mcp-server:mcpserver",
         "//java/java-impl:impl",
         "//java/java-psi-api:psi",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
-        "//platform/indexing-api:indexing",
         "//platform/projectModel-api:projectModel",
         "//platform/util",
         "//java/java-frontback-psi-api:frontback-psi",
-        "//java/java-indexing-api:indexing",
         "//platform/code-style-api:codeStyle",
     ],
 )

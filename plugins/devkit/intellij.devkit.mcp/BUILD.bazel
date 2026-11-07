@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/lang-core"],
     deps = [
         # do not sort,
         "//plugins/devkit/devkit-core:core",
@@ -29,7 +30,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//plugins/mcp-server:mcpserver",
         "//platform/core-api:core",
-        "//platform/lang-core",
         "//platform/util",
         "//java/java-psi-api:psi",
         "//platform/analysis-api:analysis",

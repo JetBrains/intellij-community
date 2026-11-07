@@ -54,7 +54,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = ["//platform/platform-impl:ide-impl"],
+    runtime_deps = ["//platform/platform-impl:ide-impl"],
 )
 ### auto-generated section `build intellij.vcs.git` end
 

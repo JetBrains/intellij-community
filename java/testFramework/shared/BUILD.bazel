@@ -18,6 +18,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//java/java-impl:impl"],
+    runtime_deps = ["//platform/util/jdom"],
     deps = [
         # do not sort,
         "//java/openapi:java",
@@ -28,7 +29,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/util",
         "//libraries/junit4",
-        "//platform/util/jdom",
         "//platform/lang-api:lang",
         "//java/java-impl:impl",
         "//platform/testFramework",

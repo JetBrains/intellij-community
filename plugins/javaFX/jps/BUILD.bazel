@@ -18,6 +18,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//jps/model-impl",
+        "//platform/util/base",
+    ],
     deps = [
         # do not sort,
         "//jps/jps-builders:build",
@@ -25,11 +30,9 @@ jvm_library(
         "//platform/util",
         "//jps/model-serialization",
         "//plugins/javaFX/common",
-        "//jps/model-impl",
         "//platform/util/jdom",
         "//platform/util/base/multiplatform",
         "//libraries/jetbrains/annotations",
-        "//platform/util/base",
     ],
 )
 ### auto-generated section `build intellij.javaFX.jps` end

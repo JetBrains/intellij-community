@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/diagnostic",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -38,8 +43,6 @@ jvm_library(
         "//platform/util/base",
         "//platform/core-ui",
         "//platform/icons-api",
-        "//platform/diagnostic",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.platform.editor.ui` end

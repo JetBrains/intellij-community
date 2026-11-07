@@ -32,6 +32,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -55,7 +56,6 @@ jvm_library(
         "//platform/core-ui",
         "//platform/refactoring",
         "//platform/util:util-ui",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/remote-topics/shared:rpc-topics",
         ":libraries_xerces_provided",
         ":libraries_kotlinx_serialization_core_provided",

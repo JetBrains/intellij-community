@@ -41,6 +41,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/base/util",
+        "//platform/execution-impl",
+        "//platform/xdebugger-api:debugger",
+        "//libraries/kotlinx/serialization/json",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -58,17 +65,13 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/formatter",
         "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/base/resources:kotlin-base-resources",
         "//java/openapi:java",
-        "//platform/execution-impl",
-        "//platform/xdebugger-api:debugger",
         "//platform/core-ui",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
     ],
 )
 ### auto-generated section `build intellij.kotlin.featuresTrainer` end

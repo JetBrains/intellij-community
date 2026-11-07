@@ -55,6 +55,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//fleet/reporting/api"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -62,7 +63,6 @@ jvm_library(
         "//fleet/rpc",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "//fleet/reporting/api",
         "//fleet/reporting/shared",
         "//fleet/multiplatform.shims",
         "//fleet/util/core",

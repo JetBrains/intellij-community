@@ -41,12 +41,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/ide-core-impl"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//java/java-indexing-api:indexing",
         "//platform/core-api:core",
-        "//platform/ide-core-impl",
         "//platform/core-impl",
         "//java/java-psi-api:psi",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",

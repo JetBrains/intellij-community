@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/rd/text",
+        "//libraries/rd/swing",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -29,8 +34,6 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/progress/shared:ide-progress",
         "//libraries/rd/core",
-        "//libraries/rd/text",
-        "//libraries/rd/swing",
         "//platform/util/progress",
         "//platform/util/concurrency",
         "//platform/core-api:core",

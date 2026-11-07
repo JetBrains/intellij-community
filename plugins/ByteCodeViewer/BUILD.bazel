@@ -45,6 +45,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//java/execution/openapi:java-execution"],
     deps = [
         # do not sort,
         "//libraries/asm",
@@ -60,7 +61,6 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/lang-impl",
         "//java/java-psi-api:psi",
-        "//java/execution/openapi:java-execution",
         "//java/openapi:java",
         "//java/compiler/impl",
         "//platform/core-ui",

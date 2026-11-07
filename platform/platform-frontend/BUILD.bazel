@@ -22,12 +22,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
-        "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//platform/platform-impl:ide-impl",
     ],
+    deps = ["@lib//:kotlin-stdlib"],
 )
 ### auto-generated section `build intellij.platform.frontend` end
 

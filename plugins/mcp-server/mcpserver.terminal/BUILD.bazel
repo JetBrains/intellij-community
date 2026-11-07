@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util:util-ui",
+        "//plugins/terminal/backend",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -32,7 +37,6 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/ide-core",
         "//platform/core-ui",
-        "//platform/util:util-ui",
         "//platform/util",
         "//platform/execution-impl",
         "//platform/lang-impl",
@@ -41,7 +45,6 @@ jvm_library(
         "//platform/execution",
         "//platform/projectModel-api:projectModel",
         "//plugins/terminal",
-        "//plugins/terminal/backend",
         "//plugins/sh/core",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",

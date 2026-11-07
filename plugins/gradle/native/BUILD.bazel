@@ -22,6 +22,7 @@ jvm_library(
         "//plugins/gradle:gradle-common",
         "//plugins/gradle/native/tooling",
     ],
+    runtime_deps = ["//platform/platform-util-io:ide-util-io"],
     deps = [
         # do not sort,
         "//platform/lang-api:lang",
@@ -30,7 +31,6 @@ jvm_library(
         "//plugins/gradle:gradle-common",
         "//plugins/gradle/native/tooling",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-        "//platform/platform-util-io:ide-util-io",
     ],
 )
 ### auto-generated section `build intellij.gradle.native` end

@@ -31,15 +31,18 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:fleet-github-luben-zstd-jni",
+        "@lib//:fleet-tukaani-xz",
+        "//libraries/commons/lang3",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:slf4j-api",
-        "@lib//:fleet-github-luben-zstd-jni",
-        "@lib//:fleet-tukaani-xz",
         "//libraries/commons/compress",
         "//libraries/commons/io",
-        "//libraries/commons/lang3",
     ],
 )
 ### auto-generated section `build fleet.build.fs` end

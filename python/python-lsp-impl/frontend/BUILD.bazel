@@ -29,6 +29,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/lsp",
+        "//python/python-lsp-core/common",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -39,14 +45,11 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/editor-ui-api:editor-ui",
         "//platform/projectModel-api:projectModel",
-        "//platform/lsp",
         "//python/python-pytools/common",
         "//python/python-pytools/frontend",
-        "//python/python-lsp-core/common",
         "//python/python-lsp-core/frontend",
         "//platform/project/shared:project",
         "//platform/kernel/rpc",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.python.lsp.impl.frontend` end

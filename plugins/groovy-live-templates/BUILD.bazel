@@ -29,10 +29,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
-        "@lib//:kotlin-stdlib",
         "//libraries/groovy",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
@@ -40,7 +44,6 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/util",
         "//platform/ide-core",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.groovy.live.templates` end

@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-frontend:frontend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -37,7 +38,6 @@ jvm_library(
         "//platform/lsp-impl",
         "//platform/structure-view-impl:structureView",
         "//platform/util:util-ui",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.platform.lsp.impl.structureView` end

@@ -32,6 +32,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/opentelemetry-semconv"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -45,7 +46,6 @@ jvm_library(
         "//libraries/kryo5",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry-semconv",
         "//platform/diagnostic/telemetry",
         "//platform/util/coroutines",
         "//platform/util/base/multiplatform",

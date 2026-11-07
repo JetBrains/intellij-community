@@ -41,6 +41,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin/base/jps"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -49,7 +50,6 @@ jvm_library(
         "//plugins/kotlin/compiler-plugins/compiler-plugin-support/maven",
         "//plugins/maven",
         "//plugins/kotlin/base/plugin",
-        "//plugins/kotlin/base/jps",
         "//platform/core-api:core",
     ],
 )

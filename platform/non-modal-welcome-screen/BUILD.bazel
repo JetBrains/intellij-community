@@ -32,6 +32,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//jps/model-api:model",
+        "//platform/progress/shared:ide-progress",
+    ],
     deps = [
         # do not sort,
         "//platform/kernel/rpc.lite",
@@ -39,7 +44,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/project-frame",
         "//platform/core-api:core",
-        "//jps/model-api:model",
         "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
         "//platform/util:util-ui",
@@ -53,7 +57,6 @@ jvm_library(
         "//platform/statistics",
         "//libraries/kotlinx/serialization/core",
         "//platform/platform-impl/rpc",
-        "//platform/progress/shared:ide-progress",
         "//platform/project/shared:project",
         "//platform/diagnostic",
         "//platform/diagnostic/telemetry",

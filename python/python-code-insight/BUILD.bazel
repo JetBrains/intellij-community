@@ -37,6 +37,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["@lib//:python-code_insight-completion-ranking-python-with-full-line"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -94,7 +95,6 @@ jvm_library(
         "//python/python-syntax:syntax",
         "//python/python-syntax-core:syntax-core",
         "@lib//:python-code_insight-ml-completion-prev-exprs-models",
-        "@lib//:python-code_insight-completion-ranking-python-with-full-line",
     ],
 )
 ### auto-generated section `build intellij.python.codeInsight` end

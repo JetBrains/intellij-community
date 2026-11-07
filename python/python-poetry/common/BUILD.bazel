@@ -32,11 +32,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/core-api:core"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
-        "//platform/core-api:core",
         "//platform/util",
         "//python/common",
         "//python/python-process-output/common",

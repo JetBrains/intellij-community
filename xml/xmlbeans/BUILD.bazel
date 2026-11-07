@@ -31,13 +31,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/log4j-to-slf4j",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/lang-api:lang",
         "//xml/impl",
-        "//libraries/log4j-to-slf4j",
         "//libraries/xmlbeans",
         "//platform/core-impl",
         "//platform/analysis-impl",
@@ -50,7 +54,6 @@ jvm_library(
         "//xml/xml-psi-api:psi",
         "//platform/lang-impl",
         "//platform/forms_rt:java-guiForms-rt",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
     ],
 )

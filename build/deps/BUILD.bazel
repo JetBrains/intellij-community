@@ -13,13 +13,13 @@ jvm_library(
     ),
     module_name = "intellij.idea.community.build.dependencies",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinx/coroutines/core"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
         "//platform/build-scripts/downloader",
         "//platform/build-scripts/concurrency",
         "@lib//:kotlin-stdlib",
-        "//libraries/kotlinx/coroutines/core",
     ],
 )
 ### auto-generated section `build intellij.idea.community.build.dependencies` end

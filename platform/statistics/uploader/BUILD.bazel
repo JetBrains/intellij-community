@@ -29,6 +29,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/coroutines/core",
+        "@lib//:com-jetbrains-fus-reporting-fus-api",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -37,8 +42,6 @@ jvm_library(
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/jackson3/databind",
         "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
-        "//libraries/kotlinx/coroutines/core",
-        "@lib//:com-jetbrains-fus-reporting-fus-api",
         "//libraries/fus-ap-validation",
         "@lib//:jetbrains-fus-reporting-api-jvm",
     ],

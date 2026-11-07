@@ -25,11 +25,11 @@ jvm_library(
         ["src/main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["@lib//:grazie-markdown-specification-ai-grazie-tasks-library-model-jvm"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/ai-grazie-semantic-engine",
-        "@lib//:grazie-markdown-specification-ai-grazie-tasks-library-model-jvm",
         "//plugins/grazie/src:core",
         "//libraries/ai.grazie.spell.gec.engine.local",
         "//plugins/markdown/core:markdown",

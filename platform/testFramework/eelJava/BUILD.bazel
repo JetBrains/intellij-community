@@ -13,13 +13,13 @@ jvm_library(
     ),
     module_name = "intellij.platform.testFramework.eelJava",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/lang-core"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/eel-provider",
         "//platform/util/annotations",
         "//platform/core-api:core",
-        "//platform/lang-core",
         "//platform/lang-impl",
     ],
 )

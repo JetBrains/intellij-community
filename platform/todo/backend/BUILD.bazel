@@ -22,7 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//platform/util/jdom",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -32,7 +36,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/core-api:core",
         "//platform/util",
-        "//platform/util/jdom",
         "//platform/platform-impl/rpc",
         "//platform/indexing-api:indexing",
         "//platform/indexing-impl",

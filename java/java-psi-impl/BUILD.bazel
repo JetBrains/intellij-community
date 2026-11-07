@@ -28,6 +28,7 @@ jvm_library(
         "//java/java-frontback-psi-impl:frontback-psi-impl",
         "//platform/syntax/syntax-psi:psi",
     ],
+    runtime_deps = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "//java/java-psi-api:psi",
@@ -44,7 +45,6 @@ jvm_library(
         "//java/java-syntax:syntax",
         "//platform/syntax/syntax-psi:psi",
         "//platform/syntax/syntax-util:util",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.java.psi.impl` end

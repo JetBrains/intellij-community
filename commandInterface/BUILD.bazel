@@ -19,7 +19,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//platform/execution",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -27,10 +32,8 @@ jvm_library(
         "//platform/core-impl",
         "//platform/analysis-api:analysis",
         "//platform/analysis-impl",
-        "//platform/execution",
         "//platform/consoleView",
         "//platform/editor-ui-api:editor-ui",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.commandInterface` end

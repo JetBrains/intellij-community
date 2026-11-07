@@ -32,6 +32,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",
@@ -46,8 +51,6 @@ jvm_library(
         "//platform/duplicates-analysis",
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/core-impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//jps/model-api:model",
     ],
 )
 ### auto-generated section `build intellij.java.structuralSearch` end

@@ -33,6 +33,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//libraries/teamcity/service-messages:libraries-teamcity-service-messages"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/fastutil",
+        "//platform/code-style-api:codeStyle",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -49,7 +54,6 @@ jvm_library(
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
         "//platform/platform-impl/concurrency",
         "//platform/lang-api:lang",
-        "//libraries/fastutil",
         "//platform/core-ui",
         "//platform/ide-core-impl",
         "//platform/ide-core",
@@ -59,7 +63,6 @@ jvm_library(
         "//platform/execution",
         "//platform/consoleView",
         "//platform/consoleView/impl",
-        "//platform/code-style-api:codeStyle",
     ],
 )
 ### auto-generated section `build intellij.platform.smRunner` end

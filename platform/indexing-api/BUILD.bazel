@@ -29,11 +29,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//jps/model-api:model",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/fastutil",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
         "//platform/core-api:core",
-        "//jps/model-api:model",
         "//platform/projectModel-api:projectModel",
         "//platform/util/jdom",
         "//platform/util",
@@ -42,11 +48,8 @@ jvm_library(
         "//platform/util/concurrency",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//platform/workspace/storage",
         "//platform/workspace/jps",
-        "//libraries/fastutil",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.platform.indexing` end

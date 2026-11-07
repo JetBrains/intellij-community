@@ -51,21 +51,24 @@ jvm_library(
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//java/java-psi-api:psi",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/welcome-screen",
+        "//platform/core-ui",
+    ],
+    deps = [
+        # do not sort,
         "//java/java-frontback-psi-api:frontback-psi",
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/lang-api:lang",
         "//platform/platform-impl:ide-impl",
         "//platform/lang-core",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/non-modal-welcome-screen",
         "//platform/project/shared:project",
-        "//platform/welcome-screen",
         "//platform/util:util-ui",
-        "//platform/core-ui",
         "//fleet/rpc",
     ],
 )

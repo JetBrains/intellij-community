@@ -67,6 +67,7 @@ jvm_library(
         # do not sort,
         "//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8",
         "//java/java-runtime:rt",
+        "//platform/eel",
     ],
     deps = [
         # do not sort,
@@ -106,7 +107,6 @@ jvm_library(
         "//libraries/netty/buffer",
         "//libraries/kotlin/metadata",
         "//libraries/kotlinx/coroutines/core",
-        "//platform/eel",
         "//platform/eel-nioFs",
     ],
 )

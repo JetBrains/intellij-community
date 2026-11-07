@@ -23,15 +23,20 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//platform/util-ex",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//platform/platform-util-io-impl:ide-util-io-impl",
+        "//libraries/fastutil",
+    ],
+    deps = [
+        # do not sort,
         "//platform/platform-impl:ide-impl",
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/projectModel-api:projectModel",
         "//platform/service-container",
-        "//platform/forms_rt:java-guiForms-rt",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//platform/statistics",
         "//platform/core-ui",
@@ -40,8 +45,6 @@ jvm_library(
         "//platform/util/xmlDom",
         "//platform/ide-core/plugins",
         "//platform/ide-core",
-        "//platform/platform-util-io-impl:ide-util-io-impl",
-        "//libraries/fastutil",
         "//platform/util/concurrency",
     ],
 )

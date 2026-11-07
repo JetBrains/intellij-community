@@ -22,10 +22,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/code-style-api:codeStyle",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
-        "//platform/code-style-api:codeStyle",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-impl:ide-impl",
@@ -46,7 +50,6 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex",
         "//platform/consoleView",
         "//platform/util/concurrency",
-        "//platform/platform-frontend:frontend",
         "//platform/indexing-api:indexing",
         "//platform/compose/swing-ui:swing",
     ],

@@ -20,6 +20,8 @@ jvm_library(
     exports = ["//platform/external-system-api/testFramework"],
     runtime_deps = [
         # do not sort,
+        "//libraries/mockito",
+        "//libraries/mockito-kotlin",
         "//platform/testRunner/plugin",
         "//platform/structure-view-impl/plugin",
         "//aether-dependency-resolver/plugin",
@@ -43,8 +45,6 @@ jvm_library(
         "//java/testFramework",
         "//libraries/assertj-core",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/mockito",
-        "//libraries/mockito-kotlin",
         "//libraries/junit4",
         "//libraries/junit6",
         "//libraries/junit6-params",

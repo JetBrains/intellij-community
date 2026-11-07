@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util/concurrency",
+        "//platform/icons",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -34,8 +39,6 @@ jvm_library(
         "//platform/util",
         "//platform/util:util-ui",
         "//platform/util/coroutines",
-        "//platform/util/concurrency",
-        "//platform/icons",
         "//platform/platform-api:ide",
         "//platform/ide-core",
         "//platform/platform-impl/update-checker",

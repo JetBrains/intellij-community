@@ -44,11 +44,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//libraries/kotlinx/coroutines/core",
-    ],
+    runtime_deps = ["//libraries/kotlinx/coroutines/core"],
+    deps = ["@lib//:kotlin-stdlib"],
 )
 ### auto-generated section `build fleet.reporting.api` end
 

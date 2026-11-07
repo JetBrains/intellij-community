@@ -31,11 +31,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/code-style-api:codeStyle"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/analysis-api:analysis",
-        "//platform/code-style-api:codeStyle",
         "//platform/util/concurrency",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",

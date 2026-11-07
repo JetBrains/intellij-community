@@ -28,11 +28,14 @@ jvm_library(
     ),
     module_name = "intellij.platform.testFramework.monorepo",
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//libraries/junit6-jupiter",
-        "@lib//:kotlin-stdlib",
         "//platform/util/coroutines",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//jps/model-api:model",
         "//tools/apiDump",

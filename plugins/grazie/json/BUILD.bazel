@@ -22,6 +22,7 @@ jvm_library(
         ["src/main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util-ex"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -29,7 +30,6 @@ jvm_library(
         "//platform/core-api:core",
         "//json",
         "//platform/util",
-        "//platform/util-ex",
     ],
 )
 ### auto-generated section `build intellij.grazie.json` end

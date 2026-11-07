@@ -41,6 +41,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin/base/psi"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -63,7 +64,6 @@ jvm_library(
         "//platform/progress/shared:ide-progress",
         "//plugins/kotlin/base/util",
         "//platform/util/progress",
-        "//plugins/kotlin/base/psi",
         "//plugins/kotlin/base/indices",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/platforms",

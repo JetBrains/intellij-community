@@ -27,6 +27,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/util:util-ui",
+    ],
     deps = [
         # do not sort,
         "//plugins/textmate/common",
@@ -40,8 +45,6 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//platform/indexing-impl",
         "//platform/core-impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//platform/util:util-ui",
         ":libraries_jetbrains_annotations_provided",
     ],
 )

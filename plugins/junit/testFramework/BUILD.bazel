@@ -19,11 +19,11 @@ jvm_library(
     module_name = "intellij.junit.testFramework",
     visibility = ["//visibility:public"],
     exports = ["//plugins/junit"],
+    runtime_deps = ["//java/java-frontback-psi-api:frontback-psi"],
     deps = [
         # do not sort,
         "//jvm/jvm-analysis-testFramework:analysis-testFramework",
         "//plugins/junit",
-        "//java/java-frontback-psi-api:frontback-psi",
         "//java/testFramework",
         "//java/java-syntax:syntax",
         "//java/java-psi-api:psi",

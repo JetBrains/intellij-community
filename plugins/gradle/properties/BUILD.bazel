@@ -23,6 +23,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/indexing-api:indexing",
+        "//plugins/properties:properties-backend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -38,14 +43,12 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/util",
         "//platform/util-rt",
-        "//platform/indexing-api:indexing",
         "//platform/platform-api:ide",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/ide-core-impl",
         "//platform/external-system-api:externalSystem",
         "//platform/external-system-impl:externalSystem-impl",
-        "//plugins/properties:properties-backend",
     ],
 )
 ### auto-generated section `build intellij.gradle.properties` end

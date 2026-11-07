@@ -22,7 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//platform/remote-topics/shared:rpc-topics",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -43,7 +47,6 @@ jvm_library(
         "//platform/util",
         "//platform/statistics",
         "//platform/lang-api:lang",
-        "//platform/remote-topics/shared:rpc-topics",
         "//platform/util:util-ui",
     ],
 )

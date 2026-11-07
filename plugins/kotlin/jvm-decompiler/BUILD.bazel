@@ -41,6 +41,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/base/project-structure",
+        "//plugins/kotlin/base/code-insight",
+        "//plugins/kotlin/frontend-independent",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -52,9 +58,6 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/projectModel-api:projectModel",
         "//plugins/kotlin/base/util",
-        "//plugins/kotlin/base/project-structure",
-        "//plugins/kotlin/base/code-insight",
-        "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/jvm/shared",
         "//platform/core-ui",
         "//platform/core-impl",

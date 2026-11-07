@@ -31,11 +31,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//fleet/codecache"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//fleet/bundles",
-        "//fleet/codecache",
         "//fleet/build/platform",
         "//fleet/build/fs",
         "//libraries/kotlinx/coroutines/core",

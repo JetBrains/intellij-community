@@ -14,14 +14,17 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.util.xmlDom",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/fastutil",
+        "//libraries/kotlinx/serialization/json",
+    ],
     deps = [
         # do not sort,
         "//libraries/aalto-xml",
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
-        "//libraries/fastutil",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
     ],
 )
 ### auto-generated section `build intellij.platform.util.xmlDom` end

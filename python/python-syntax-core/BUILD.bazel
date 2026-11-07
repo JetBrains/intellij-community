@@ -30,6 +30,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "//platform/editor-ui-api:editor-ui",
@@ -47,7 +48,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/ide-core-impl",
         "//platform/analysis-impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/workspace/jps",
         "//platform/util/jdom",
         "//platform/indexing-api:indexing",

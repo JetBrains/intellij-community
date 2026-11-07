@@ -27,6 +27,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -54,7 +55,6 @@ jvm_library(
         "//platform/consoleView",
         "//platform/lang-api:lang",
         "//platform/forms_rt:java-guiForms-rt",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
         "//python/python-exec-service:community-execService",
         ":python_codeInsight_provided",

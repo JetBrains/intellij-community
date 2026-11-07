@@ -34,6 +34,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:kotlin-stdlib"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/opentelemetry-semconv",
+        "//platform/eel",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -51,15 +57,12 @@ jvm_library(
         "//platform/util",
         "//platform/diagnostic/telemetry",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry-semconv",
         "//platform/util/coroutines",
         "//platform/util/multiplatform",
         "//platform/util/base",
         "//platform/productMode",
         "//platform/pluginSystem/parser/impl",
         "//platform/syntax/syntax-api:syntax",
-        "//platform/eel",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/eel-nioFs",
     ],
 )

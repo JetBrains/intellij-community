@@ -31,6 +31,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/project/shared:project",
+        "//platform/core-ui",
+    ],
     deps = [
         # do not sort,
         "//platform/non-modal-welcome-screen/backend",
@@ -38,10 +43,8 @@ jvm_library(
         "//platform/util",
         "//platform/non-modal-welcome-screen",
         "//platform/kernel/rpc.backend",
-        "//platform/project/shared:project",
         "//platform/platform-api:ide",
         "//platform/ide-core",
-        "//platform/core-ui",
         "@lib//:kotlin-stdlib",
         "//platform/platform-impl:ide-impl",
         "//platform/welcome-screen",

@@ -29,6 +29,15 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/ide-core",
+        "//platform/project/shared:project",
+        "//platform/projectModel-api:projectModel",
+        "//platform/lsp",
+        "//python/python-lsp-core/common",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -36,16 +45,10 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-ui",
         "//platform/platform-api:ide",
-        "//platform/ide-core",
-        "//platform/project/shared:project",
-        "//platform/projectModel-api:projectModel",
-        "//platform/lsp",
         "//python/python-pytools/common",
         "//python/python-pytools/frontend",
-        "//python/python-lsp-core/common",
         "//python/python-pyright/common",
         "//python/python-lsp-core/frontend",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.python.pyright.frontend` end

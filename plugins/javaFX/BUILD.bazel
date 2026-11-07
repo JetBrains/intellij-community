@@ -35,6 +35,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/code-style-impl:codeStyle-impl",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -70,7 +75,6 @@ jvm_library(
         "//platform/core-ui",
         "//platform/core-impl",
         "//platform/forms_rt:java-guiForms-rt",
-        "//platform/code-style-impl:codeStyle-impl",
         "//platform/platform-util-io:ide-util-io",
         "//spellchecker",
         "//java/java-impl-refactorings:impl-refactorings",
@@ -81,7 +85,6 @@ jvm_library(
         "//xml/xml-analysis-api:analysis",
         "//xml/xml-parser:parser",
         "//platform/execution",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/asm",
@@ -118,6 +121,7 @@ jvm_library(
         ["properties/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/forms_rt:java-guiForms-rt"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -129,7 +133,6 @@ jvm_library(
         "//plugins/javaFX",
         "//platform/analysis-api:analysis",
         "//libraries/stream",
-        "//platform/forms_rt:java-guiForms-rt",
     ],
 )
 ### auto-generated section `build intellij.javaFX.properties` end

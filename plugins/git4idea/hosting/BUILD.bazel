@@ -23,6 +23,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//plugins/git4idea/shared"],
+    runtime_deps = ["//platform/vcs-impl/shared"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -43,7 +44,6 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/vcs-api:vcs",
         "//platform/vcs-impl",
-        "//platform/vcs-impl/shared",
         "//platform/dvcs-impl:vcs-dvcs-impl",
         "//platform/vcs-log/api:vcs-log",
         "//platform/vcs-log/impl",

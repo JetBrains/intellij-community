@@ -32,6 +32,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-util-io:ide-util-io"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -42,7 +43,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/projectModel-api:projectModel",
         "//platform/util",
-        "//platform/platform-util-io:ide-util-io",
         "//platform/platform-util-io-impl:ide-util-io-impl",
         "//platform/built-in-server-api:builtInServer",
         "//libraries/jackson3/jackson:libraries-jackson3",

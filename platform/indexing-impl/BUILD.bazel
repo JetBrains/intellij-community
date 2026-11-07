@@ -22,6 +22,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/opentelemetry-semconv",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//platform/util/concurrency",
@@ -39,7 +45,6 @@ jvm_library(
         "//libraries/hdr-histogram",
         "//platform/diagnostic/telemetry",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry-semconv",
         "//libraries/guava",
         "//platform/workspace/jps",
         "//platform/diagnostic",
@@ -53,8 +58,6 @@ jvm_library(
         "//platform/util/multiplatform",
         "//platform/util/base",
         "//platform/util-ex",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//jps/model-api:model",
     ],
 )
 ### auto-generated section `build intellij.platform.indexing.impl` end

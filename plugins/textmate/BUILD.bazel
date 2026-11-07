@@ -50,6 +50,12 @@ jvm_library(
         "//plugins/textmate/core",
         "//plugins/textmate/joni",
     ],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/snakeyaml",
+        "//fleet/fastutil",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -70,16 +76,13 @@ jvm_library(
         "//platform/util:util-ui",
         "//libraries/jackson3/databind",
         "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml",
-        "//libraries/snakeyaml",
         "//platform/platform-impl:ide-impl",
         "//libraries/kotlinx/serialization/core",
         "//platform/code-style-impl:codeStyle-impl",
         "//libraries/caffeine",
-        "//fleet/fastutil",
         "//libraries/fastutil",
         "//platform/util/xmlDom",
         "//platform/lang-api:lang",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.textmate` end

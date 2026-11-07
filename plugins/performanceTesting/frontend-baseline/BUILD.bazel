@@ -22,11 +22,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//platform/platform-frontend:frontend",
-        "//platform/statistics",
         "//platform/core-api:core",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/statistics",
         "@lib//:kotlin-stdlib",
     ],
 )

@@ -50,6 +50,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin/base/resources:kotlin-base-resources"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -71,7 +72,6 @@ jvm_library(
         "//plugins/gradle:gradle-common",
         "//plugins/kotlin/project-configuration",
         "//plugins/kotlin/base/facet",
-        "//plugins/kotlin/base/resources:kotlin-base-resources",
         "//plugins/kotlin/onboarding",
         "//plugins/kotlin/gradle/gradle-java",
         "//plugins/kotlin/gradle/gradle-tooling/impl",

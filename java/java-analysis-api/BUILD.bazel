@@ -30,6 +30,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//uast/uast-common:uast"],
+    runtime_deps = [
+        # do not sort,
+        "//jps/model-api:model",
+        "//uast/uast-common-ide:ide",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -37,15 +43,12 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi",
         "//java/java-syntax:syntax",
         "//platform/core-api:core",
-        "//jps/model-api:model",
         "//platform/projectModel-api:projectModel",
         "//platform/util",
         "@lib//:kotlin-stdlib",
         "//uast/uast-common:uast",
-        "//uast/uast-common-ide:ide",
         "//platform/workspace/jps",
         "//platform/workspace/storage",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.java.analysis` end

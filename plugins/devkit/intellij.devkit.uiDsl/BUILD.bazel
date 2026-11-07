@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/devkit/devkit-core:core"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -35,7 +36,6 @@ jvm_library(
         "//platform/core-impl",
         "//platform/editor-ui-api:editor-ui",
         "//platform/projectModel-api:projectModel",
-        "//plugins/devkit/devkit-core:core",
         "//platform/analysis-api:analysis",
         "//java/java-psi-api:psi",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",

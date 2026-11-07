@@ -22,11 +22,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//plugins/gradle/codeInsight",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/backend",
-        "//plugins/gradle/codeInsight",
         "//platform/core-api:core",
         "//platform/analysis-api:analysis",
         "//platform/util",

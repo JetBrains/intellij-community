@@ -27,12 +27,18 @@ jvm_library(
         "//platform/platform-api:ide",
         "@lib//:kotlin-stdlib",
     ],
+    runtime_deps = [
+        # do not sort,
+        "//platform/testIntegration",
+        "//platform/util-class-loader:util-classLoader",
+        "//platform/backend/workspace",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-api:ide",
-        "//platform/testIntegration",
         "//jps/model-api:model",
         "//platform/lang-core",
         "//platform/lvcs-api:lvcs",
@@ -43,7 +49,6 @@ jvm_library(
         "//platform/util/jdom",
         "//platform/util-ex",
         "//platform/util:util-ui",
-        "//platform/util-class-loader:util-classLoader",
         "//platform/util/concurrency",
         "//platform/core-ui",
         "//platform/code-style-api:codeStyle",
@@ -52,10 +57,8 @@ jvm_library(
         "//platform/refactoring",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/workspace/jps",
-        "//platform/backend/workspace",
         "//platform/workspace/storage",
         "//libraries/fastutil",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.platform.lang` end

@@ -33,6 +33,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/ide-core-impl",
+        "//platform/util/jdom",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -48,11 +54,8 @@ jvm_library(
         "//platform/refactoring",
         "//platform/core-impl",
         "//libraries/fastutil",
-        "//platform/ide-core-impl",
         "//platform/ide-core",
         "//platform/core-ui",
-        "//platform/util/jdom",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
     ],
 )

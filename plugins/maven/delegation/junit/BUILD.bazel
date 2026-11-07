@@ -22,13 +22,19 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//java/debugger/impl",
+        "//java/debugger/shared",
+        "//platform/lang-core",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/util/jdom",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/maven",
         "//plugins/junit",
-        "//java/debugger/impl",
-        "//java/debugger/shared",
         "//platform/smRunner",
         "//platform/execution",
         "//platform/execution-impl",
@@ -37,9 +43,6 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/projectModel-api:projectModel",
         "//platform/testRunner",
-        "//platform/lang-core",
-        "//platform/platform-util-io:ide-util-io",
-        "//platform/util/jdom",
     ],
 )
 ### auto-generated section `build intellij.maven.delegation.junit` end

@@ -22,12 +22,15 @@ jvm_library(
         ["src/main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/core-ui",
+        "//platform/backend",
+    ],
     deps = [
         # do not sort,
         "//plugins/markdown/core:markdown",
         "//xml/xml-psi-impl:psi-impl",
-        "//platform/core-ui",
         "//platform/core-api:core",
         "//platform/analysis-api:analysis",
         "//xml/xml-parser:parser",

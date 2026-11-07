@@ -22,12 +22,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/code-style-api:codeStyle",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//libraries/fastutil",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/kotlinx/coroutines/core",
-        "//platform/code-style-api:codeStyle",
         "//platform/lang-core",
         "//platform/statistics",
         "//platform/core-ui",
@@ -48,8 +53,6 @@ jvm_library(
         "//platform/util/concurrency",
         "//platform/platform-impl:ide-impl",
         "//platform/util/coroutines",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//jps/model-api:model",
     ],
 )
 ### auto-generated section `build intellij.platform.usageView.impl` end

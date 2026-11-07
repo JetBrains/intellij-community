@@ -23,11 +23,16 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//xml/dom-openapi:dom"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/code-style-api:codeStyle",
+        "//platform/backend",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
-        "//platform/code-style-api:codeStyle",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/indexing-api:indexing",
@@ -52,8 +57,6 @@ jvm_library(
         "//platform/core-ui",
         "//platform/libraries/cglib",
         "//platform/core-impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//jps/model-api:model",
         "//platform/util:util-ui",
     ],
 )

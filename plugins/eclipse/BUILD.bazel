@@ -46,6 +46,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlin/reflect",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -78,14 +83,12 @@ jvm_library(
         "//platform/workspace/jps",
         "//platform/workspace/storage",
         "//platform/statistics",
-        "//libraries/kotlin/reflect",
         "//platform/backend/workspace",
         "//xml/xml-psi-impl:psi-impl",
         "//platform/execution",
         "//platform/forms_rt:java-guiForms-rt",
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/welcome-screen-impl:welcomeScreen-impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.eclipse` end

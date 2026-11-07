@@ -17,14 +17,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/git4idea:vcs-git",
+        "//platform/ide-core",
+    ],
     deps = [
         # do not sort,
         "//plugins/groovy",
         "//platform/util",
-        "//plugins/git4idea:vcs-git",
         "//plugins/git4idea/backend",
         "//platform/core-api:core",
-        "//platform/ide-core",
         "@lib//:kotlin-stdlib",
     ],
 )

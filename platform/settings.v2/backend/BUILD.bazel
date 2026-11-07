@@ -23,6 +23,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/settings.v2/shared"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/platform-impl/rpc",
+        "//platform/backend",
+    ],
     deps = [
         # do not sort,
         "//platform/settings.v2/backend/baseline",
@@ -30,8 +35,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/settings.v2/shared",
         "//platform/kernel/rpc.backend",
-        "//platform/platform-impl/rpc",
-        "//platform/backend",
         "//platform/core-api:core",
         "//platform/platform-api:ide",
         "//platform/ide-core",

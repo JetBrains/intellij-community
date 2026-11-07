@@ -41,18 +41,21 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/base/util",
+        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
-        "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/plugin",
         "//platform/core-impl",
         "//platform/projectModel-impl",
         "//platform/util",
         "//platform/execution",
         "//platform/external-system-api:externalSystem",
-        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.externalSystem` end

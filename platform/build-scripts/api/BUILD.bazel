@@ -14,11 +14,11 @@ jvm_library(
     module_name = "intellij.platform.buildScripts.api",
     visibility = ["//visibility:public"],
     exports = ["//platform/build-scripts/concurrency"],
+    runtime_deps = ["//plugins/groovy/rt/classLoader"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/build-scripts/concurrency",
-        "//plugins/groovy/rt/classLoader",
         "//platform/util-class-loader:util-classLoader",
         "//platform/util",
         "//libraries/jetbrains/annotations",

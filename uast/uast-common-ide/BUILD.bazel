@@ -22,7 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/stream",
+        "//platform/backend",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -34,7 +38,6 @@ jvm_library(
         "//java/java-psi-api:psi",
         "//uast/uast-common:uast",
         "@lib//:kotlin-stdlib",
-        "//libraries/stream",
     ],
 )
 ### auto-generated section `build intellij.platform.uast.ide` end

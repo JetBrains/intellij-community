@@ -22,15 +22,18 @@ jvm_library(
         ["src/main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/IntelliLang:langInjection",
+        "//platform/backend",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
         "//platform/core-impl",
-        "//plugins/IntelliLang:langInjection",
         "//platform/lang-impl",
         "//plugins/markdown/core:markdown",
         "//plugins/toml/core",
-        "//platform/backend",
         "@lib//:kotlin-stdlib",
     ],
 )

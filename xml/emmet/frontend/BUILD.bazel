@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-frontend:frontend"],
     deps = [
         # do not sort,
         "//xml/emmet/shared",
@@ -31,7 +32,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//xml/emmet",
-        "//platform/platform-frontend:frontend",
         "//platform/remote-topics/shared:rpc-topics",
         "//platform/ide-core",
         "//platform/util:util-ui",

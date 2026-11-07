@@ -30,6 +30,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util-ex",
+        "//platform/util/coroutines",
+        "//platform/ide-core-impl",
+        "//platform/statistics",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -40,19 +47,15 @@ jvm_library(
         "//platform/eel-impl",
         "//platform/ijent",
         "//platform/ijent/impl",
-        "//platform/util-ex",
         "//platform/util",
         "//platform/util/annotations",
-        "//platform/util/coroutines",
         "//platform/core-api:core",
         "//platform/core-nio-fs",
         "//platform/platform-impl:ide-impl",
-        "//platform/ide-core-impl",
         "//platform/platform-api:ide",
         "//platform/core-ui",
         "//platform/projectModel-api:projectModel",
         "//platform/eel-nioFs-impl",
-        "//platform/statistics",
     ],
 )
 ### auto-generated section `build intellij.platform.eel.tcp` end

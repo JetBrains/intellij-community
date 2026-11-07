@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -34,7 +35,6 @@ jvm_library(
         "//java/java-analysis-impl:analysis-impl",
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/platform-api:ide",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.java.structureView` end

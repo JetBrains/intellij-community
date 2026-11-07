@@ -24,10 +24,10 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.diagnostic.telemetry.rt",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util-rt"],
     deps = [
         # do not sort,
         "//libraries/opentelemetry",
-        "//platform/util-rt",
         "//libraries/jetbrains/annotations",
     ],
 )

@@ -32,6 +32,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util/jdom",
+        "//platform/util/coroutines",
+        "//jps/model-api:model",
+        "//platform/lang-core",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -56,18 +63,14 @@ jvm_library(
         "//platform/progress/shared:ide-progress",
         "//platform/dvcs-api:vcs-dvcs",
         "//libraries/miglayout-swing",
-        "//platform/util/jdom",
         "//platform/util:util-ui",
         "//platform/core-ui",
         "//platform/diff-impl",
         "//platform/workspace/jps",
         "//platform/backend/workspace",
-        "//platform/util/coroutines",
         "//platform/workspace/storage",
         "//platform/dvcs-impl/shared",
         "//fleet/rpc",
-        "//jps/model-api:model",
-        "//platform/lang-core",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.dvcs.impl` end

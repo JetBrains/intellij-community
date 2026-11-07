@@ -43,10 +43,10 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core"],
+    runtime_deps = ["//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )

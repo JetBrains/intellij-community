@@ -23,7 +23,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/xdebugger-api:debugger"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//xml/xml-psi-api:psi",
+        "//platform/backend",
+    ],
     deps = [
         # do not sort,
         "//java/execution/openapi:java-execution",
@@ -39,7 +43,6 @@ jvm_library(
         "//platform/xdebugger-api:debugger",
         "//platform/core-ui",
         "//platform/platform-util-io:ide-util-io",
-        "//xml/xml-psi-api:psi",
         "@lib//:kotlin-stdlib",
         "//platform/execution",
         "//platform/ide-core",

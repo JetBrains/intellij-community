@@ -13,17 +13,20 @@ jvm_library(
     ),
     module_name = "intellij.platform.buildScripts.pluginPreparation",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/commons/compress",
+        "//platform/util/jdom",
+        "@community//build:zip",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
-        "//libraries/commons/compress",
         "//libraries/opentelemetry",
         "//platform/util",
-        "//platform/util/jdom",
-        "@community//build:zip",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.pluginPreparation` end

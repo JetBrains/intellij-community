@@ -45,6 +45,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/eel"],
+    runtime_deps = ["//platform/util/annotations"],
     deps = [
         # do not sort,
         "//libraries/caffeine",
@@ -69,7 +70,6 @@ jvm_library(
         "//platform/eel-impl-base",
         "//platform/platform-impl:ide-impl",
         "//platform/projectModel-impl",
-        "//platform/util/annotations",
     ],
 )
 ### auto-generated section `build intellij.python.community.execService` end

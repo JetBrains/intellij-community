@@ -40,19 +40,22 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/guava",
+        "//libraries/kotlinx/serialization/json",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//libraries/guava",
         "//platform/util",
         "//platform/util/coroutines",
         "//platform/util/multiplatform",
         "//libraries/fastutil",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
     ],
 )
 ### auto-generated section `build intellij.platform.util.progress` end

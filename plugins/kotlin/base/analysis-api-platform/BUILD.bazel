@@ -41,6 +41,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -68,7 +69,6 @@ jvm_library(
         "//java/java-analysis-impl:analysis-impl",
         "//java/codeserver/core",
         "//libraries/guava",
-        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.analysis.platform` end

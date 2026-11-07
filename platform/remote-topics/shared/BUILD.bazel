@@ -23,6 +23,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//fleet/openmap"],
+    runtime_deps = ["//platform/util/coroutines"],
     deps = [
         # do not sort,
         "//platform/kernel/rpc.lite",
@@ -31,7 +32,6 @@ jvm_library(
         "//platform/core-api:core",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
-        "//platform/util/coroutines",
         "//platform/project/shared:project",
         "//fleet/openmap",
     ],

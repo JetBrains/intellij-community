@@ -32,12 +32,16 @@ jvm_library(
         ["src/main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/lang-core",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/lang-core",
         "//platform/indexing-api:indexing",
         "//platform/projectModel-api:projectModel",
         "//platform/core-impl",
@@ -49,7 +53,6 @@ jvm_library(
         "//platform/refactoring",
         "//platform/lang-impl",
         "//platform/lang-api:lang",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.dotenv` end

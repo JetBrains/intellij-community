@@ -29,16 +29,19 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util:util-ui",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//python/python-pixi/common",
         "//platform/util",
         "//platform/core-api:core",
-        "//platform/util:util-ui",
         "//python/python-pytools/frontend",
         "//python/python-pytools/common",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.python.pixi.frontend` end

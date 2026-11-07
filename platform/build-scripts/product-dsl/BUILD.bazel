@@ -34,6 +34,7 @@ jvm_library(
     module_name = "intellij.platform.buildScripts.productDsl",
     visibility = ["//visibility:public"],
     exports = ["//platform/pluginSystem/parser/impl"],
+    runtime_deps = ["//jps/model-serialization"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -43,7 +44,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
         "//jps/model-api:model",
-        "//jps/model-serialization",
         "//platform/util",
         "//platform/util/jdom",
         "//platform/util/xmlDom",

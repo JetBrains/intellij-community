@@ -13,11 +13,11 @@ jvm_library(
     ),
     module_name = "intellij.platform.bootstrap.dev.legacy",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/build-scripts/dev-server-legacy:buildScripts-devBuildServer-legacy"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
         "//platform/boot",
-        "//platform/build-scripts/dev-server-legacy:buildScripts-devBuildServer-legacy",
         "//platform/util-class-loader:util-classLoader",
     ],
 )

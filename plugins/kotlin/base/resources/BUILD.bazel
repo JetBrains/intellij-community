@@ -52,15 +52,18 @@ jvm_library(
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util-ex",
+        "//platform/util:util-ui",
+        "//platform/core-ui",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/core-api:core",
         "//platform/util",
-        "//platform/util-ex",
-        "//platform/util:util-ui",
-        "//platform/core-ui",
         "//platform/lang-impl",
     ],
 )

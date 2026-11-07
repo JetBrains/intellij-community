@@ -41,6 +41,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//java/java-analysis-api:analysis",
+        "//plugins/kotlin/base/facet",
+        "//plugins/kotlin/base/code-insight",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -62,7 +68,6 @@ jvm_library(
         "//plugins/kotlin/references",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/base/util",
-        "//java/java-analysis-api:analysis",
         "//platform/platform-impl:ide-impl",
         "//java/openapi:java",
         "//java/java-psi-api:psi",
@@ -72,11 +77,9 @@ jvm_library(
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/base/indices",
-        "//plugins/kotlin/base/facet",
         "//platform/util/concurrency",
         "//platform/statistics",
         "//platform/util:util-ui",
-        "//plugins/kotlin/base/code-insight",
     ],
 )
 ### auto-generated section `build intellij.kotlin.searching.base` end

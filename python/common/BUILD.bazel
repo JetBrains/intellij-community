@@ -29,6 +29,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/ide-core-impl"],
     deps = [
         # do not sort,
         "//platform/core-ui",
@@ -40,7 +41,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
         "//platform/platform-api:ide",
         "//platform/ide-core",
-        "//platform/ide-core-impl",
     ],
 )
 ### auto-generated section `build intellij.python.community.common` end

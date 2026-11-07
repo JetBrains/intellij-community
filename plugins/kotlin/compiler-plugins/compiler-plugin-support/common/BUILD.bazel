@@ -41,6 +41,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/base/plugin",
+        "//platform/external-system-api:externalSystem",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -49,10 +54,8 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/lang-core",
         "//platform/projectModel-api:projectModel",
-        "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/facet",
         "//platform/lang-api:lang",
-        "//platform/external-system-api:externalSystem",
         "//plugins/kotlin/base/compiler-configuration",
     ],
 )

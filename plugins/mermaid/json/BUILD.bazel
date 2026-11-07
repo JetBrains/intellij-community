@@ -22,12 +22,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/projectModel-api:projectModel"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
         "//platform/lang-api:lang",
         "//platform/analysis-api:analysis",
-        "//platform/projectModel-api:projectModel",
         "//platform/ide-core",
         "//plugins/mermaid",
         "//json/backend",

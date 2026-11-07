@@ -22,6 +22,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/diagnostic",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -42,14 +48,11 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//platform/workspace/jps",
         "//platform/backend/workspace",
-        "//platform/diagnostic",
         "//platform/util/coroutines",
         "//libraries/hash4j",
         "//platform/workspace/storage",
         "//platform/backend/observation",
         "//platform/projectModel-impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//jps/model-api:model",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.core.impl` end

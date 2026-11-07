@@ -32,6 +32,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/diff-api:diff",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -45,7 +50,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/extensions",
         "//platform/testRunner",
-        "//platform/diff-api:diff",
         "//platform/editor-ui-ex:editor-ex",
         "//platform/usageView",
         "//platform/lang-impl",
@@ -65,7 +69,6 @@ jvm_library(
         "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
         "//platform/core-impl",
         "//platform/execution",
-        "//jps/model-api:model",
     ],
 )
 ### auto-generated section `build intellij.platform.coverage` end

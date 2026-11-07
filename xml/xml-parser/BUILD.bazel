@@ -24,6 +24,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -37,7 +38,6 @@ jvm_library(
         "//platform/syntax/syntax-psi:psi",
         "//xml/xml-syntax:syntax",
         "//platform/syntax/syntax-util:util",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.xml.parser` end

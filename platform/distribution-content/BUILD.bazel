@@ -20,13 +20,16 @@ jvm_library(
     kotlinc_opts = ":custom_distribution-content",
     module_name = "intellij.platform.distributionContent",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/okio:squareup-okio-jvm"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/okio:squareup-okio-jvm",
+        "//libraries/kotlinx/serialization/json",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kaml",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//libraries/jetbrains/annotations",
     ],
 )

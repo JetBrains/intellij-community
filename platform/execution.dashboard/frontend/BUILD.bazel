@@ -22,7 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
@@ -31,7 +31,6 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/core-api:core",
         "//platform/execution.dashboard",
-        "//platform/kernel/rpc",
         "//platform/platform-impl/rpc",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-api:ide",
@@ -47,6 +46,7 @@ jvm_library(
         "//platform/platform-frontend:frontend",
         "//platform/util",
     ],
+    deps = ["//platform/kernel/rpc"],
 )
 ### auto-generated section `build intellij.platform.execution.dashboard.frontend` end
 

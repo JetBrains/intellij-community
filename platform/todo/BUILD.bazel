@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//jps/model-api:model",
+        "//platform/util/jdom",
+    ],
     deps = [
         # do not sort,
         "//platform/kernel/rpc",
@@ -32,7 +37,6 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/indexing-api:indexing",
-        "//jps/model-api:model",
         "//platform/lang-core",
         "//platform/lang-impl",
         "//platform/core-ui",
@@ -50,7 +54,6 @@ jvm_library(
         "//platform/projectModel-impl",
         "//platform/core-impl",
         "//platform/lang-api:lang",
-        "//platform/util/jdom",
         "//libraries/fastutil",
         "//platform/util:util-ui",
         "//platform/util/coroutines",

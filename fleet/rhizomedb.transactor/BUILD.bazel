@@ -56,7 +56,6 @@ fleet_plugin_services_resources(
         allow_empty = True,
     ),
     deps = [
-        "//fleet/bifurcan",
         "//fleet/fastutil",
         "//fleet/multiplatform.shims",
         "//fleet/openmap",
@@ -95,6 +94,7 @@ jvm_library(
         "//fleet/util/core",
         "//fleet/rpc",
     ],
+    runtime_deps = ["//fleet/bifurcan"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -107,7 +107,6 @@ jvm_library(
         "//fleet/reporting/api",
         "//fleet/reporting/shared",
         "//fleet/multiplatform.shims",
-        "//fleet/bifurcan",
         "//fleet/fastutil",
         "//fleet/openmap",
     ],

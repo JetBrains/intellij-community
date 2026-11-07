@@ -22,6 +22,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/analysis-impl",
+        "//platform/core-ui",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -31,10 +37,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//plugins/editorconfig/common",
         "//platform/util:util-ui",
-        "//platform/analysis-impl",
         "//platform/lang-impl",
-        "//platform/core-ui",
-        "//platform/platform-frontend:frontend",
         "//platform/platform-api:ide",
     ],
 )

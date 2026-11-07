@@ -42,9 +42,12 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "@lib//:slf4j-api",
+        "//platform/jewel/int-ui/int-ui-decorated-window:jewel-intUi-decoratedWindow",
         "@lib//:platform-jewel-samples-standalone-org-lwjgl-lwjgl-tinyfd",
         "@lib//:platform-jewel-samples-standalone-org-nibor-autolink-autolink",
         "//libraries/jna",
+        "//platform/icons",
+        "//libraries/jbr",
     ],
     deps = [
         # do not sort,
@@ -54,7 +57,6 @@ jvm_library(
         "//platform/jewel/markdown/extensions/autolink",
         "//platform/jewel/ui",
         "//platform/jewel/foundation",
-        "//platform/jewel/int-ui/int-ui-decorated-window:jewel-intUi-decoratedWindow",
         "//libraries/skiko",
         "//platform/jewel/decorated-window",
         "//platform/jewel/markdown/int-ui-standalone-styling",
@@ -68,8 +70,6 @@ jvm_library(
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
         "//libraries/compose-foundation-desktop",
         "//platform/jewel/samples/showcase",
-        "//platform/icons",
-        "//libraries/jbr",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.samples.standalone` end

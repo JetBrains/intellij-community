@@ -23,6 +23,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//java/execution/openapi:java-execution"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/miglayout-swing",
+        "//platform/platform-util-io-impl:ide-util-io-impl",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//java/openapi:java",
@@ -59,7 +65,6 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-impl",
         "//libraries/gson",
         "//libraries/jackson3/jackson:libraries-jackson3",
-        "//libraries/miglayout-swing",
         "//platform/util/nanoxml",
         "//libraries/jackson3/databind",
         "//platform/xdebugger-impl:debugger-impl",
@@ -69,7 +74,6 @@ jvm_library(
         "//platform/diff-api:diff",
         "//platform/core-ui",
         "//platform/core-impl",
-        "//platform/platform-util-io-impl:ide-util-io-impl",
         "//platform/platform-util-io:ide-util-io",
         "//platform/util/jdom",
         "//platform/util:util-ui",
@@ -86,7 +90,6 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//java/java-frontback-impl:frontback-impl",
         "//java/java-frontback-psi-api:frontback-psi",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/eel-nioFs",
     ],
 )

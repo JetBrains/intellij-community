@@ -27,6 +27,11 @@ jvm_library(
         "//libraries/lsp4j",
         "//libraries/lsp4j/jsonrpc",
     ],
+    runtime_deps = [
+        # do not sort,
+        "//python/python-core-impl:community-core-impl",
+        "//platform/observable",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -43,10 +48,8 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/lang-api:lang",
         "//python:python-community-impl",
-        "//python/python-core-impl:community-core-impl",
         "//python/python-sdk/backend",
         "//python/python-pyproject:pyproject",
-        "//platform/observable",
         "//platform/ide-core",
         "//platform/statistics",
         "//platform/core-impl",

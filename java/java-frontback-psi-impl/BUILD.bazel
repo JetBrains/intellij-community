@@ -23,20 +23,23 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/asm",
+        "//libraries/stream",
+        "//libraries/fastutil",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/core-api:core",
         "//platform/core-impl",
-        "//libraries/asm",
-        "//libraries/stream",
         "//platform/util",
-        "//libraries/fastutil",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/serialization/core",
         "//platform/syntax/syntax-psi:psi",
         "//java/java-syntax:syntax",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.java.frontback.psi.impl` end

@@ -36,6 +36,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/execution-impl",
+        "//platform/smRunner",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -43,7 +49,6 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/execution-impl",
         "//platform/external-system-impl:externalSystem-impl",
         "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core",
@@ -63,7 +68,6 @@ jvm_library(
         "//plugins/gradle/java",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//plugins/devkit/intellij.devkit.gradle.tooling:gradle-tooling",
-        "//platform/smRunner",
         "//plugins/devkit/devkit-core:core",
         "//platform/util:util-ui",
         "//java/java-psi-api:psi",
@@ -74,7 +78,6 @@ jvm_library(
         "//platform/workspace/storage",
         "//platform/backend/workspace",
         "//platform/projectModel-impl",
-        "//jps/model-api:model",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
     ],
 )

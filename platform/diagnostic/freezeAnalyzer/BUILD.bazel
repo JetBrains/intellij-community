@@ -25,11 +25,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/fastutil"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:diogen-analysis",
-        "//libraries/fastutil",
         "//libraries/jetbrains/annotations",
     ],
 )

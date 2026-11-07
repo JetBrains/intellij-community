@@ -22,14 +22,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/projectModel-api:projectModel",
+        "//platform/core-api:core",
+        "//platform/ide-core",
+    ],
     deps = [
         # do not sort,
         "//images",
-        "//platform/projectModel-api:projectModel",
         "//platform/util",
-        "//platform/core-api:core",
         "//platform/xdebugger-impl/frontend",
-        "//platform/ide-core",
     ],
 )
 ### auto-generated section `build intellij.platform.images.xdebugger` end

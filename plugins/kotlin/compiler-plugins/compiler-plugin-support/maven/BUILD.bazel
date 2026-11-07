@@ -41,6 +41,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/eel-provider"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -52,7 +53,6 @@ jvm_library(
         "//plugins/maven",
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
         "//plugins/kotlin/base/plugin",
-        "//platform/eel-provider",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.maven` end

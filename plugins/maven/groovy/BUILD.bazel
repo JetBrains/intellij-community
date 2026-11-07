@@ -39,13 +39,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/groovy/jps-plugin:jps",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/lang-api:lang",
         "//java/idea-ui:ui",
         "//plugins/groovy",
-        "//plugins/groovy/jps-plugin:jps",
         "//platform/platform-impl:ide-impl",
         "//platform/observable",
         "//platform/ide-core",
@@ -64,7 +68,6 @@ jvm_library(
         "//jps/model-api:model",
         "//platform/util/jdom",
         "//platform/util:util-ui",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//java/java-psi-api:psi",
     ],
 )

@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -38,7 +39,6 @@ jvm_library(
         "//platform/util",
         "//platform/util/coroutines",
         "//platform/util:util-ui",
-        "//platform/backend",
     ],
 )
 ### auto-generated section `build intellij.platform.problemView.security.backend` end

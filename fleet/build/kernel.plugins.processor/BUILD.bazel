@@ -31,11 +31,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/io",
+        "//libraries/kotlinx/coroutines/core",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/io",
-        "//libraries/kotlinx/coroutines/core",
         "@lib//:fleet-google-devtools-ksp-symbol-processing-api",
     ],
 )

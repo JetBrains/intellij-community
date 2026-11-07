@@ -33,6 +33,11 @@ jvm_library(
         "//libraries/allure/java-commons:libraries-allure-java-commons",
         "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
     ],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/commons/compress",
+        "//libraries/commons/io",
+    ],
     deps = [
         # do not sort,
         "//libraries/kotlinx/coroutines/core",
@@ -58,8 +63,6 @@ jvm_library(
         "//libraries/opentelemetry",
         "//libraries/oshi-core",
         "//platform/runtime/repository",
-        "//libraries/commons/compress",
-        "//libraries/commons/io",
         "//platform/platform-util-io:ide-util-io",
         "//platform/util:util-ui",
         "//platform/util-ex",

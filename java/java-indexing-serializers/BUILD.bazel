@@ -23,14 +23,17 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//java/java-syntax:syntax",
+    ],
+    deps = [
+        # do not sort,
         "//java/java-psi-api:psi",
         "//java/java-psi-impl:psi-impl",
         "//platform/core-api:core",
         "//libraries/fastutil",
-        "//java/java-syntax:syntax",
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/core-impl",
         "//platform/util",

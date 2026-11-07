@@ -22,16 +22,19 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util-ex",
+        "//platform/analysis-api:analysis",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
         "@lib//:kotlin-stdlib",
         "//libraries/netty/codec-http:libraries-netty-codec-http",
-        "//platform/util-ex",
         "//platform/util",
         "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core",
-        "//platform/analysis-api:analysis",
     ],
 )
 ### auto-generated section `build intellij.platform.builtInServer` end

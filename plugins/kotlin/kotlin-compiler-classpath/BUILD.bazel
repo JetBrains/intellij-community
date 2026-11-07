@@ -32,7 +32,7 @@ jvm_library(
     kotlinc_opts = ":custom_util-compiler-classpath",
     module_name = "kotlin.util.compiler-classpath",
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/asm",

@@ -45,6 +45,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/base/facet",
+        "//libraries/kotlin/reflect",
+        "//platform/code-style-api:codeStyle",
+        "//platform/monolith",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -63,7 +70,6 @@ jvm_library(
         "//xml/xml-psi-api:psi",
         "//plugins/kotlin/gradle/gradle-tooling/impl",
         "//plugins/kotlin/base/project-model",
-        "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/util",
         "//platform/external-system-api:externalSystem",
         "//plugins/gradle",
@@ -84,16 +90,13 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/statistics",
-        "//libraries/kotlin/reflect",
         "//plugins/kotlin/gradle/gradle-java",
         "//plugins/kotlin/base/psi",
         "//plugins/kotlin/references",
         "//platform/observable",
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/base/code-insight",
-        "//platform/code-style-api:codeStyle",
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils",
-        "//platform/monolith",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.resources` end

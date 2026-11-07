@@ -39,10 +39,10 @@ jvm_library(
         ["src/main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinx/coroutines/core"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/kotlinx/coroutines/core",
         "//libraries/jetbrains/annotations",
         "//platform/jewel/markdown/core",
         "//platform/jewel/ui",

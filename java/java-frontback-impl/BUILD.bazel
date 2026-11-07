@@ -23,6 +23,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//java/java-frontback-psi-impl:frontback-psi-impl"],
+    runtime_deps = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "//java/java-frontback-psi-api:frontback-psi",
@@ -56,7 +57,6 @@ jvm_library(
         "//platform/consoleView",
         "//platform/consoleView/impl",
         "//platform/lang-api:lang",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
     ],
 )

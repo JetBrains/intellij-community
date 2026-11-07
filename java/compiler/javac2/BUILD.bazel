@@ -23,12 +23,15 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/forms_rt:java-guiForms-rt",
+        "//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8",
+    ],
     deps = [
         # do not sort,
         "@lib//ant/lib:ant-provided",
         "//java/compiler/forms-compiler:java-guiForms-compiler",
-        "//platform/forms_rt:java-guiForms-rt",
         "//libraries/asm",
         "//java/compiler/instrumentation-util",
     ],

@@ -30,12 +30,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util/coroutines",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
         "//platform/util",
         "//platform/util:util-ui",
-        "//platform/util/coroutines",
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/core-ui",
@@ -45,7 +49,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/projectModel-api:projectModel",
         "//platform/extensions",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.dev.pluginLoading` end

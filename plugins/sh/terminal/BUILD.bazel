@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/jediterm-ui",
+        "//libraries/jediterm-core",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -32,9 +37,7 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/ide-core",
         "//platform/core-ui",
-        "//libraries/jediterm-ui",
         "//plugins/sh/core",
-        "//libraries/jediterm-core",
         "//platform/core-api:core",
     ],
 )

@@ -23,6 +23,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/platform-impl/socket-connection"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/xdebugger-impl:debugger-impl",
+        "//libraries/guava",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -35,8 +40,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/platform-impl/socket-connection",
         "//platform/script-debugger/backend",
-        "//platform/xdebugger-impl:debugger-impl",
-        "//libraries/guava",
         "//platform/execution-impl",
         "//libraries/netty/codec-http:libraries-netty-codec-http",
         "//libraries/fastutil",

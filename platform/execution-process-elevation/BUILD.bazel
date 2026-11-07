@@ -17,12 +17,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/execution-process-mediator/daemon",
+        "//libraries/grpc",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//platform/execution-process-mediator/client",
-        "//platform/execution-process-mediator/daemon",
         "//platform/execution-process-mediator/common",
         "//platform/core-api:core",
         "//platform/platform-impl:ide-impl",
@@ -31,7 +35,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/util-ex",
         "//platform/projectModel-api:projectModel",
-        "//libraries/grpc",
         "//platform/util:util-ui",
     ],
 )

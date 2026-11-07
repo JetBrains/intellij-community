@@ -22,6 +22,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/platform-impl/rpc",
+        "//platform/platform-frontend:frontend",
+        "//platform/util/coroutines",
+        "//platform/platform-impl/update-checker",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -30,12 +37,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/pluginManager/shared",
         "//platform/core-impl",
-        "//platform/platform-impl/rpc",
-        "//platform/platform-frontend:frontend",
         "//platform/project/shared:project",
-        "//platform/util/coroutines",
         "//platform/lang-impl",
-        "//platform/platform-impl/update-checker",
     ],
 )
 ### auto-generated section `build intellij.platform.pluginManager.frontend` end

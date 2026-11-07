@@ -22,20 +22,23 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/projectModel-api:projectModel",
-        "//platform/util/jdom",
         "//platform/core-ui",
-        "//platform/core-api:core",
-        "//platform/lang-api:lang",
-        "@lib//:kotlin-stdlib",
         "//platform/usageView",
         "//platform/util:util-ui",
         "//platform/usageView-impl",
         "//platform/foldings",
+    ],
+    deps = [
+        # do not sort,
+        "//platform/projectModel-api:projectModel",
+        "//platform/util/jdom",
+        "//platform/core-api:core",
+        "//platform/lang-api:lang",
+        "@lib//:kotlin-stdlib",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.favoritesTreeView` end

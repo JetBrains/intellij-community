@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/code-style-impl:codeStyle-impl",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",
@@ -55,7 +60,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/progress/shared:ide-progress",
         "//libraries/stream",
-        "//platform/code-style-impl:codeStyle-impl",
         "//libraries/fastutil",
         "//platform/diff-impl",
         "//platform/usageView-impl",
@@ -68,7 +72,6 @@ jvm_library(
         "//platform/execution",
         "//platform/forms_rt:java-guiForms-rt",
         "//java/java-frontback-psi-api:frontback-psi",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//uast/uast-common-ide:ide",
     ],
 )

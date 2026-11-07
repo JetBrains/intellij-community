@@ -23,9 +23,14 @@ jvm_library(
     ),
     module_name = "intellij.platform.testFramework.junit5.eel",
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//libraries/junit6-jupiter",
+        "//platform/ide-core-impl",
+        "//platform/util/coroutines",
+    ],
+    deps = [
+        # do not sort,
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
@@ -35,11 +40,9 @@ jvm_library(
         "//platform/eel-impl",
         "//platform/eel-provider",
         "//platform/ide-core",
-        "//platform/ide-core-impl",
         "//platform/ijent",
         "//platform/testFramework/junit5",
         "//platform/util",
-        "//platform/util/coroutines",
         "//platform/util-ex",
         "//platform/projectModel-api:projectModel",
         "//platform/eel-nioFs-impl",

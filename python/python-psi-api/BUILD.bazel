@@ -37,7 +37,12 @@ jvm_library(
         "//python/python-parser:parser",
         "//python/python-ast:ast",
     ],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/backend",
+        "//platform/editor-ui-api:editor-ui",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -50,8 +55,6 @@ jvm_library(
         "//python/python-ast:ast",
         "//python/python-syntax-core:syntax-core",
         "@lib//:kotlin-stdlib",
-        "//platform/editor-ui-api:editor-ui",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.python.psi` end

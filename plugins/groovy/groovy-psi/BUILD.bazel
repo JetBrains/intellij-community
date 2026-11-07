@@ -37,6 +37,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//libraries/groovy"],
+    runtime_deps = ["//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable"],
     deps = [
         # do not sort,
         "//libraries/groovy",
@@ -75,7 +76,6 @@ jvm_library(
         "//platform/util/jdom",
         "//platform/util:util-ui",
         "//platform/util-ex",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/lang-api:lang",
     ],
 )

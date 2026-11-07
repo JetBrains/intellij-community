@@ -22,9 +22,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//jps/model-api:model",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
+    deps = [
+        # do not sort,
         "//platform/util",
         "//platform/util/jdom",
         "//platform/extensions",
@@ -40,7 +44,6 @@ jvm_library(
         "//platform/util/multiplatform",
         "//platform/util/base",
         "//libraries/fastutil",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.platform.analysis` end

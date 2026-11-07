@@ -42,6 +42,15 @@ jvm_library(
         exclude = ["src/main/resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//jps/model-api:model",
+        "//java/compiler/openapi:java-compiler",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/code-style-api:codeStyle",
+        "//platform/util:util-ui",
+        "//java/java-backend:backend",
+    ],
     deps = [
         # do not sort,
         "//plugins/lombok/generated",
@@ -50,7 +59,6 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/editor-ui-api:editor-ui",
         "//platform/indexing-api:indexing",
-        "//jps/model-api:model",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/lang-api:lang",
         "//platform/analysis-impl",
@@ -62,7 +70,6 @@ jvm_library(
         "//java/java-impl:impl",
         "//platform/core-ui",
         "//platform/core-impl",
-        "//java/compiler/openapi:java-compiler",
         "//libraries/guava",
         "//platform/projectModel-api:projectModel",
         "//platform/refactoring",
@@ -73,10 +80,6 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/ide-core-impl",
         "//platform/ide-core",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//platform/code-style-api:codeStyle",
-        "//platform/util:util-ui",
-        "//java/java-backend:backend",
     ],
 )
 ### auto-generated section `build intellij.lombok` end

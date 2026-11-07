@@ -23,6 +23,11 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//jvm/jvm-analysis-api:analysis"],
+    runtime_deps = [
+        # do not sort,
+        "//java/java-impl-refactorings:impl-refactorings",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",
@@ -45,7 +50,6 @@ jvm_library(
         "//platform/refactoring",
         "//platform/usageView",
         "//jvm/jvm-analysis-refactoring:analysis-refactoring",
-        "//java/java-impl-refactorings:impl-refactorings",
         "//platform/util/jdom",
         "//platform/util:util-ui",
         "//platform/ide-core-impl",
@@ -56,7 +60,6 @@ jvm_library(
         "//platform/execution",
         "//platform/consoleView",
         "//platform/consoleView/impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
         "//libraries/fastutil",
         "//platform/lang-api:lang",

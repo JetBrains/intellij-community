@@ -22,12 +22,15 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/diff-api:diff",
+        "//platform/ide-core",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/diff-api:diff",
         "//platform/vcs-impl",
-        "//platform/ide-core",
         "//platform/vcs-api:vcs",
         "//platform/core-api:core",
     ],

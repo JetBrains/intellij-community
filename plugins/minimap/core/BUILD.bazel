@@ -22,11 +22,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/monolith"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/code-style-api:codeStyle",
+        "//platform/monolith",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/code-style-api:codeStyle",
         "//platform/core-api:core",
         "//platform/core-impl",
         "//platform/core-ui",

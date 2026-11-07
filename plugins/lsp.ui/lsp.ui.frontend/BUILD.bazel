@@ -22,6 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//jps/model-impl",
+        "//platform/platform-frontend:frontend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -40,10 +45,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/core-ui",
         "//platform/lang-api:lang",
-        "//jps/model-impl",
         "//jps/model-api:model",
         "//platform/util:util-ui",
-        "//platform/platform-frontend:frontend",
         "//platform/lsp-impl",
         "//platform/lang-impl",
         "//json",

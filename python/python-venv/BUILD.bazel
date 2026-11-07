@@ -40,6 +40,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//python/python-sdk/common"],
     deps = [
         # do not sort,
         "//python/python-venv/common",
@@ -50,7 +51,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//python/python-sdk/backend",
         "//python/python-pytools/backend",
-        "//python/python-sdk/common",
         "//platform/projectModel-api:projectModel",
         "//platform/util",
         "//platform/core-api:core",

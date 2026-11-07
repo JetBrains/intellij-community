@@ -39,6 +39,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/refactoring",
+        "//platform/util/jdom",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/code-style-api:codeStyle",
@@ -49,7 +55,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/lang-impl",
         "//platform/usageView",
-        "//platform/refactoring",
         "//platform/statistics",
         "//platform/core-ui",
         "//platform/forms_rt:java-guiForms-rt",
@@ -58,14 +63,12 @@ jvm_library(
         "//platform/code-style-impl:codeStyle-impl",
         "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core",
-        "//platform/util/jdom",
         "//platform/eel",
         "//platform/eel-provider",
         "//platform/eel-impl",
         "//platform/analysis-api:analysis",
         "//platform/projectModel-api:projectModel",
         "//platform/core-impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.sh.core` end

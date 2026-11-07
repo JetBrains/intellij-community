@@ -56,6 +56,13 @@ jvm_library(
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/json",
+        "//platform/util/coroutines",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -74,18 +81,14 @@ jvm_library(
         "//platform/ide-core",
         "//platform/util/jdom",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
         "//platform/core-impl",
         "//xml/xml-parser:parser",
         "@lib//:kotlin-stdlib",
         "//platform/statistics",
-        "//platform/util/coroutines",
         "//xml/xml-psi-impl:psi-impl",
         "//xml/xml-psi-api:psi",
         "//platform/util-ex",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
-        "//jps/model-api:model",
     ],
 )
 ### auto-generated section `build intellij.platform.images` end

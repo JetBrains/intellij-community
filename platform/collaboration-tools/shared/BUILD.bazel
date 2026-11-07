@@ -26,6 +26,7 @@ jvm_library(
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/vcs-api/vcs-api-core:vcs-core"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -54,7 +55,6 @@ jvm_library(
         "//platform/util/diff",
         "//platform/util-ex",
         "//platform/util:util-ui",
-        "//platform/vcs-api/vcs-api-core:vcs-core",
         "//platform/dvcs-impl/shared",
         "//platform/vcs-impl/shared",
         "//platform/vcs-api/shared",

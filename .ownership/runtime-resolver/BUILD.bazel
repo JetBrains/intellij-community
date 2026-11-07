@@ -18,12 +18,12 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//.ownership:codeowners"],
+    runtime_deps = ["//platform/testFramework/bootstrap:tools-testsBootstrap"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//.ownership:codeowners",
         "//.ownership/monorepo-resolver:codeowners-monorepo-resolver",
-        "//platform/testFramework/bootstrap:tools-testsBootstrap",
     ],
 )
 ### auto-generated section `build intellij.codeowners.runtime.resolver` end

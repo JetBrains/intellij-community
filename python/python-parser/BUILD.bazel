@@ -36,6 +36,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/ide-core",
         "//platform/platform-impl:ide-impl",
     ],
@@ -48,7 +49,6 @@ jvm_library(
         "//platform/util/base",
         "//libraries/fastutil",
         "//platform/core-impl",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.python.parser` end

@@ -30,6 +30,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/fastutil",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/lang-core",
+        "//platform/lvcs-impl",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -60,12 +67,8 @@ jvm_library(
         "//platform/dvcs-impl/shared",
         "//platform/vcs-impl/shared",
         "//platform/core-impl",
-        "//libraries/fastutil",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//platform/lang-core",
         "//platform/util:util-ui",
         "//platform/util-ex",
-        "//platform/lvcs-impl",
     ],
 )
 ### auto-generated section `build intellij.vcs.hg` end

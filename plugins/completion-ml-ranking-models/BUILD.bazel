@@ -105,17 +105,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
+    runtime_deps = [
         # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//plugins/completion-ml-ranking",
-        "//platform/core-api:core",
-        "//platform/platform-impl/internal",
         "//libraries/completion-ranking-java",
         "//libraries/completion-ranking-kotlin",
         "//plugins/completion-ml-ranking-models/libraries",
         "//libraries/completion-ranking-rust",
-        "//platform/platform-impl:ide-impl",
         "//libraries/completion-ranking-php",
         "//libraries/completion-ranking-ruby",
         "//libraries/completion-ranking-go",
@@ -124,6 +119,14 @@ jvm_library(
         "//libraries/completion-ranking-swift",
         "//libraries/completion-ranking-cpp",
         "//libraries/completion-ranking-sh",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/completion-ml-ranking",
+        "//platform/core-api:core",
+        "//platform/platform-impl/internal",
+        "//platform/platform-impl:ide-impl",
     ],
 )
 ### auto-generated section `build intellij.completionMlRankingModels` end

@@ -62,6 +62,11 @@ jvm_library(
         "//platform/jewel/ui",
         "//platform/jewel/ide-laf-bridge",
     ],
+    runtime_deps = [
+        # do not sort,
+        "//platform/ide-core",
+        "//platform/ide-core-impl",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -74,10 +79,8 @@ jvm_library(
         "//platform/jewel/foundation",
         "//platform/jewel/ide-laf-bridge",
         "//platform/jewel/markdown/extensions/images",
-        "//platform/ide-core",
         "//libraries/coil",
         "//platform/projectModel-api:projectModel",
-        "//platform/ide-core-impl",
         "//platform/platform-impl:ide-impl",
         "//libraries/compose-foundation-desktop",
         "//platform/platform-api:ide",

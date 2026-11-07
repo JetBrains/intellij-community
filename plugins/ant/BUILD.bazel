@@ -41,6 +41,13 @@ jvm_library(
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/properties:properties-backend",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/code-style-api:codeStyle",
+        "//java/java-backend:backend",
+    ],
     deps = [
         # do not sort,
         "//java/openapi:java",
@@ -65,7 +72,6 @@ jvm_library(
         "//java/java-runtime:rt",
         "//java/execution/impl",
         "//xml/impl",
-        "//plugins/properties:properties-backend",
         "//platform/indexing-impl",
         "//java/execution/openapi:java-execution",
         "//java/idea-ui:ui",
@@ -91,13 +97,10 @@ jvm_library(
         "//xml/xml-psi-api:psi",
         "//platform/execution",
         "//platform/consoleView",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
         "//jps/model-api:model",
-        "//platform/code-style-api:codeStyle",
         "//platform/lang-api:lang",
         "//platform/testRunner",
-        "//java/java-backend:backend",
     ],
 )
 ### auto-generated section `build intellij.ant` end

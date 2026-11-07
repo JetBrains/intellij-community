@@ -23,6 +23,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/testFramework/junit5/eel"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -42,7 +43,6 @@ jvm_library(
         "//platform/core-ui",
         "//platform/platform-util-io:ide-util-io",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5/eel",
         "//platform/lang-api:lang",
         "//platform/lang-core",
         "//platform/util-ex",

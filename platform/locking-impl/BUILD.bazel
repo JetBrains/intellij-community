@@ -25,6 +25,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util/coroutines"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -32,7 +33,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
         "//platform/util-rt",
         "//platform/util",
-        "//platform/util/coroutines",
         "@lib//:jetbrains-intellij-deps-rwmutex-idea",
         "//platform/core-api:core",
     ],

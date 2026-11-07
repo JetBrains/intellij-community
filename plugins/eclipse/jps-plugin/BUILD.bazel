@@ -18,6 +18,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util/base"],
     deps = [
         # do not sort,
         "//platform/util",
@@ -25,7 +26,6 @@ jvm_library(
         "//jps/model-serialization",
         "//plugins/eclipse/common-eclipse-util:common",
         "//platform/util/jdom",
-        "//platform/util/base",
     ],
 )
 ### auto-generated section `build intellij.eclipse.jps` end

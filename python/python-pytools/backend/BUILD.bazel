@@ -31,6 +31,13 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//python/python-pytools/common"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/observable",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/platform-impl/rpc",
+        "//platform/backend",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -38,10 +45,8 @@ jvm_library(
         "//python/python-pytools/common",
         "//platform/core-api:core",
         "//platform/projectModel-api:projectModel",
-        "//platform/observable",
         "//platform/ide-core",
         "//platform/statistics",
-        "//platform/platform-util-io:ide-util-io",
         "//platform/platform-impl:ide-impl",
         "//platform/execution",
         "//python/openapi:community",
@@ -52,8 +57,6 @@ jvm_library(
         "//platform/project/shared:project",
         "//python/python-requirements/backend",
         "//platform/kernel/rpc.backend",
-        "//platform/platform-impl/rpc",
-        "//platform/backend",
     ],
 )
 ### auto-generated section `build intellij.python.pytools.backend` end

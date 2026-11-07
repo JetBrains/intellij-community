@@ -24,7 +24,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/ide-core"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/opentelemetry-semconv",
+        "//platform/ide-core",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
@@ -46,7 +50,6 @@ jvm_library(
         "//libraries/kryo5",
         "//platform/diagnostic/telemetry",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry-semconv",
         "//libraries/hash4j",
         "//platform/backend/workspace",
         "//platform/diagnostic",

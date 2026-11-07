@@ -18,12 +18,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/commons/logging"],
     deps = [
         # do not sort,
         "//plugins/maven-server-api:maven-server",
         "//plugins/maven/maven-server-telemetry:server-telemetry",
         "//plugins/maven/maven3-server-common:server-m3-common",
-        "//libraries/commons/logging",
         "@lib//:maven-server-m3-impl-org-apache-maven-maven-embedder-3-3-9-provided",
     ],
 )

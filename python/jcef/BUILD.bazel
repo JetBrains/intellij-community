@@ -22,12 +22,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/jcef/plugin"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/platform-api:ide",
-        "//plugins/jcef/plugin",
         "//platform/ui.jcef",
         "//platform/util",
         "//platform/util:util-ui",

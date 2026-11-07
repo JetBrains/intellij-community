@@ -22,14 +22,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//platform/completion/common",
-        "//platform/kernel/rpc.backend",
+        "//platform/backend",
     ],
+    deps = ["//platform/kernel/rpc.backend"],
 )
 ### auto-generated section `build intellij.platform.completion.backend` end
 

@@ -22,7 +22,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/duplicates-analysis",
+        "//platform/code-style-impl:codeStyle-impl",
+        "//platform/backend",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -31,7 +38,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/indexing-api:indexing",
         "//platform/lang-api:lang",
-        "//platform/duplicates-analysis",
         "//platform/platform-api:ide",
         "//platform/lang-impl",
         "//platform/platform-impl:ide-impl",
@@ -45,7 +51,6 @@ jvm_library(
         "//platform/usageView",
         "//platform/core-ui",
         "//platform/refactoring",
-        "//platform/code-style-impl:codeStyle-impl",
         "//platform/util/jdom",
         "//platform/util:util-ui",
         "//platform/ide-core-impl",
@@ -55,9 +60,7 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/structure-view-impl:structureView",
         "//libraries/fastutil",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
-        "//jps/model-api:model",
     ],
 )
 ### auto-generated section `build intellij.properties.backend` end

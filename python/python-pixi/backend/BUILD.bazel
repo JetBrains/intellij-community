@@ -30,6 +30,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -67,7 +68,6 @@ jvm_library(
         "//python/python-pytools/backend",
         "//python/python-pytools-runtime/backend:python-pytools-backend-runtime",
         "//python/python-pytools/common",
-        "//platform/backend",
         "//platform/util:util-ui",
     ],
 )

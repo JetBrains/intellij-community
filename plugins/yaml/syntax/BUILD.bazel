@@ -24,13 +24,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util/multiplatform"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//platform/syntax/syntax-api:syntax",
         "//platform/syntax/syntax-util:util",
-        "//platform/util/multiplatform",
         "//platform/syntax/syntax-i18n:i18n",
     ],
 )

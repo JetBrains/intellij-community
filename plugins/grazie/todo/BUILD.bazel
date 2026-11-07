@@ -22,6 +22,7 @@ jvm_library(
         ["src/main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/todo"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -30,7 +31,6 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex",
         "//platform/indexing-api:indexing",
         "//platform/projectModel-api:projectModel",
-        "//platform/todo",
         "//platform/util",
         "//libraries/jetbrains/annotations",
     ],

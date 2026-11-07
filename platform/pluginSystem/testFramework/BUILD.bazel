@@ -13,6 +13,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.pluginSystem.testFramework",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//xml/dom-openapi:dom"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -29,7 +30,6 @@ jvm_library(
         "//libraries/aalto-xml",
         "//platform/runtime/product",
         "//jps/model-api:model",
-        "//xml/dom-openapi:dom",
         "//platform/util/jdom",
     ],
 )

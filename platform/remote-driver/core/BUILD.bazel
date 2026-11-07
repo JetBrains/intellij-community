@@ -22,6 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/opentelemetry-semconv"],
     deps = [
         # do not sort,
         "//libraries/kotlinx/coroutines/core",
@@ -34,7 +35,6 @@ jvm_library(
         "//platform/util",
         "//platform/util/base",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry-semconv",
         "//libraries/commons/lang3",
         "//platform/platform-impl:ide-impl",
     ],

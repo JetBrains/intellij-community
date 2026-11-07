@@ -26,10 +26,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/git-learning-project",
+        "//plugins/git4idea:vcs-git",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/git-learning-project",
         "//plugins/ide-features-trainer:featuresTrainer",
         "//platform/analysis-api:analysis",
         "//platform/core-api:core",
@@ -46,7 +50,6 @@ jvm_library(
         "//platform/vcs-api:vcs",
         "//platform/vcs-log/impl",
         "//platform/vcs-log/api:vcs-log",
-        "//plugins/git4idea:vcs-git",
         "//plugins/git4idea/backend",
         "//plugins/git4idea/shared",
         "//platform/lang-impl",

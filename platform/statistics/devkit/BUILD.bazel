@@ -32,6 +32,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/util/jdom",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -57,12 +62,10 @@ jvm_library(
         "//platform/core-impl",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/jackson3/databind",
-        "//platform/util/jdom",
         "//platform/util:util-ui",
         "//platform/consoleView",
         "//platform/consoleView/impl",
         "//platform/forms_rt:java-guiForms-rt",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
     ],
 )

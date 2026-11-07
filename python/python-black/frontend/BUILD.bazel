@@ -29,6 +29,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/platform-frontend:frontend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -47,7 +48,6 @@ jvm_library(
         "//python/python-pytools/frontend",
         "//python/python-pytools/common",
         "//python/python-black/common",
-        "//platform/platform-frontend:frontend",
     ],
 )
 ### auto-generated section `build intellij.python.black.frontend` end

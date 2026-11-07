@@ -18,11 +18,14 @@ jvm_library(
     ),
     module_name = "intellij.cucumber.testRunner",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter"],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//platform/core-api:core",
         "@lib//:kotlin-stdlib",
+        "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter",
+    ],
+    deps = [
+        # do not sort,
         "//platform/testFramework",
         "//platform/util-class-loader:util-classLoader",
         ":libraries_cucumber-core1_provided",

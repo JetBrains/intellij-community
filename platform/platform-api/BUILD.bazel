@@ -35,13 +35,18 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/util"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/icons",
+        "//platform/remote-core",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/util",
         "//platform/extensions",
         "//platform/core-api:core",
         "//platform/forms_rt:java-guiForms-rt",
-        "//platform/icons",
         "//platform/observable",
         "//platform/projectModel-api:projectModel",
         "//platform/analysis-api:analysis",
@@ -57,7 +62,6 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io",
         "//platform/code-style-api:codeStyle",
         "//platform/credential-store",
-        "//platform/remote-core",
         "//platform/ide-core",
         "//platform/project-frame",
         "//platform/welcome-screen",
@@ -69,7 +73,6 @@ jvm_library(
         "//platform/runtime/product",
         "//platform/util/coroutines",
         "//libraries/fastutil",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.platform.ide` end

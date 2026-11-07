@@ -41,12 +41,16 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin/base/psi",
+        "//plugins/kotlin/base/plugin",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//platform/core-api:core",
-        "//plugins/kotlin/base/psi",
         "//platform/core-impl",
         "//platform/indexing-api:indexing",
         "//java/java-psi-api:psi",
@@ -57,7 +61,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//java/openapi:java",
         "//java/java-frontback-psi-api:frontback-psi",
-        "//plugins/kotlin/base/plugin",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.indices` end

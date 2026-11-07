@@ -32,6 +32,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/core-ui",
+        "//libraries/fastutil",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/code-style-api:codeStyle",
@@ -49,9 +55,6 @@ jvm_library(
         "//java/java-impl:impl",
         "//java/java-frontback-psi-api:frontback-psi",
         "//spellchecker",
-        "//platform/core-ui",
-        "//libraries/fastutil",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.java.manifest` end

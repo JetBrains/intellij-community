@@ -23,6 +23,13 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/util"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/icons",
+        "//libraries/automaton",
+        "//platform/remote-topics/shared:rpc-topics",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+    ],
     deps = [
         # do not sort,
         "//platform/kernel/rpc",
@@ -30,8 +37,6 @@ jvm_library(
         "//platform/util",
         "//platform/extensions",
         "//platform/core-api:core",
-        "//platform/icons",
-        "//libraries/automaton",
         "//platform/projectModel-api:projectModel",
         "//platform/platform-api:ide",
         "//platform/core-impl",
@@ -50,10 +55,8 @@ jvm_library(
         "//platform/platform-impl/concurrency",
         "//platform/ide-core",
         "//platform/util/coroutines",
-        "//platform/remote-topics/shared:rpc-topics",
         "//platform/lang-impl",
         "//platform/lang-api:lang",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
 ### auto-generated section `build intellij.platform.structureView` end

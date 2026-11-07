@@ -14,11 +14,11 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.platform.bootstrap.coroutine",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/kotlinx/coroutines/debug"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/debug",
         "//libraries/jetbrains/annotations",
     ],
 )

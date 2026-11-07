@@ -22,11 +22,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/util-rt"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
         "@lib//:kotlin-stdlib",
-        "//platform/util-rt",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.log.graph` end

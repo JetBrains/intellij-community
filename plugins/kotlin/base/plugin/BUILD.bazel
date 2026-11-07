@@ -41,7 +41,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/util/trove"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/workspace/storage",
+        "//platform/util/trove",
+    ],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -63,7 +67,6 @@ jvm_library(
         "//platform/projectModel-impl",
         "//platform/statistics",
         "//platform/util/xmlDom",
-        "//platform/workspace/storage",
         "//java/openapi:java",
         "//java/java-impl:impl",
         "//java/java-syntax:syntax",

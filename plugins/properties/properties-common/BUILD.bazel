@@ -24,10 +24,15 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/analysis-api:analysis",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//jps/model-api:model",
+    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
-        "//platform/analysis-api:analysis",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-api:ide",
         "//platform/projectModel-api:projectModel",
@@ -43,8 +48,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/refactoring",
         "//platform/lang-api:lang",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//jps/model-api:model",
     ],
 )
 ### auto-generated section `build intellij.properties` end

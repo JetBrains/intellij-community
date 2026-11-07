@@ -68,6 +68,7 @@ jvm_library(
         "//platform/icons-api",
         "//platform/icons-api/rendering",
     ],
+    runtime_deps = ["@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -75,7 +76,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
         "//libraries/skiko",
         "//platform/jewel/foundation",
-        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
         "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
         "//libraries/compose-foundation-desktop",
         "//libraries/compose-runtime-desktop",

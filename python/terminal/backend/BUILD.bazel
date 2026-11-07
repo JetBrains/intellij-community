@@ -30,6 +30,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/project/shared:project"],
     deps = [
         # do not sort,
         "//platform/kernel/rpc.backend",
@@ -50,7 +51,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/platform-impl:ide-impl",
         "//python/terminal/shared",
-        "//platform/project/shared:project",
     ],
 )
 ### auto-generated section `build intellij.python.terminal.backend` end

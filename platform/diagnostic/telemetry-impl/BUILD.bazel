@@ -34,11 +34,14 @@ jvm_library(
         "//platform/diagnostic/telemetry.exporters",
         "//platform/diagnostic/telemetry/rt",
     ],
-    deps = [
+    runtime_deps = [
         # do not sort,
         "//libraries/jackson3/jackson:libraries-jackson3",
-        "//libraries/opentelemetry",
         "//libraries/opentelemetry-semconv",
+    ],
+    deps = [
+        # do not sort,
+        "//libraries/opentelemetry",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/opentelemetry-extension-kotlin",

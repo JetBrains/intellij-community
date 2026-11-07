@@ -56,6 +56,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//libraries/io",
+    ],
     deps = [
         # do not sort,
         "//libraries/kotlinx/coroutines/core",
@@ -64,9 +70,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
         "//fleet/util/logging/api",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/json",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//libraries/io",
         "//fleet/ktor/client/core",
         "//fleet/modules/api",
     ],
