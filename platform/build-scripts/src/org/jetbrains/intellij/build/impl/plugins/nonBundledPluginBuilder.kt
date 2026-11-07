@@ -35,6 +35,7 @@ import org.jetbrains.intellij.build.impl.PluginRepositorySpec
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.buildHelpPlugin
 import org.jetbrains.intellij.build.impl.buildKeymapPlugin
+import org.jetbrains.intellij.build.impl.buildPublishedPlatformVariantResources
 import org.jetbrains.intellij.build.impl.dir
 import org.jetbrains.intellij.build.impl.executableFileUnixMode
 import org.jetbrains.intellij.build.impl.generatePluginRepositoryMetaFile
@@ -184,6 +185,10 @@ private fun buildNonBundledPlugins(
       val pluginDirectoryName = layout?.directoryName ?: pluginBuildResult.dir.name
       val destFile = targetDirectory.resolve("$pluginDirectoryName-$pluginVersion.zip")
       pluginSpecs.add(PluginRepositorySpec(destFile, pluginXml))
+
+      if (layout != null && os != null && arch != null) {
+        buildPublishedPlatformVariantResources(plugin = layout, os = os, arch = arch, pluginDir = pluginDirOrFile, context = context)
+      }
 
       val entries = if (layout != null) {
         handleCustomPlatformSpecificAssets(

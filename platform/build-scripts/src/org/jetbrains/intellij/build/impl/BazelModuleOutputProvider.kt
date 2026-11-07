@@ -35,6 +35,10 @@ object BazelBuildInputs {
     System.getProperty(BAZEL_BUILD_INPUTS_MANIFEST_PROPERTY)?.let { ExplicitBazelInputResolver.load(Path.of(it)) }
   }
 
+  /** Whether [resolve] can read a label: under an explicit input manifest, or in the runfiles of `bazel run` or `bazel test`. */
+  val canResolveLabels: Boolean
+    get() = isConfigured || BazelRunfiles.isRunningFromBazel
+
   fun resolve(label: String): Path {
     return resolver?.resolve(label) ?: BazelRunfiles.getFileByLabel(BazelLabel.fromString(label))
   }
