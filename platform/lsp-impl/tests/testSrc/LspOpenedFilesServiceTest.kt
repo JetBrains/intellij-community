@@ -1,15 +1,13 @@
 package com.intellij.platform.lsp
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspClient
-import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspIntegrationProvider
-import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.common.FakeLspClientDescriptor
 import com.intellij.platform.lsp.common.FakeLspConfig
+import com.intellij.platform.lsp.common.awaitRunningClient
+import com.intellij.platform.lsp.common.stopAndWait
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -88,19 +86,12 @@ internal class LspOpenedFilesServiceTest {
 
   @Test
   fun `a start request captured before a single-client stop does not revive the client`() = timeoutRunBlocking(2.minutes) {
-    val covered = createLocalFile("covered.txt")
-    val manager = LspClientManagerImpl.getInstanceImpl(project)
-    val service = LspOpenedFilesService.getInstance(project)
-    val providerClass = provider.javaClass
+    assertStaleStartRequestDoesNotRevive(stoppedBeforeCapture = false)
+  }
 
-    awaitRunningClient(manager) { service.processOpenedFiles(listOf(covered)) }
-    val client = manager.getClients(providerClass).single()
-    val staleRequestStamp = manager.startRequestStamp()
-
-    stopAndWait(manager) { manager.stopRunningServer(client) }
-
-    manager.ensureStarted(providerClass, client.descriptor, staleRequestStamp)!!.join()
-    assertTrue(manager.getClients(providerClass).isEmpty(), "the stale start request must not revive the client")
+  @Test
+  fun `a start request captured before a stop of a stopped client does not revive the client`() = timeoutRunBlocking(2.minutes) {
+    assertStaleStartRequestDoesNotRevive(stoppedBeforeCapture = true)
   }
 
   @Test
@@ -115,7 +106,7 @@ internal class LspOpenedFilesServiceTest {
     val siblingDescriptor = FakeLspClientDescriptor(project, presentableName = "FakeLspServerSibling")
     val staleRequestStamp = manager.startRequestStamp()
 
-    stopAndWait(manager) { manager.stopRunningServer(client) }
+    stopAndWait(manager, { it === client }) { manager.stopRunningServer(client) }
 
     try {
       withTimeout(30.seconds) {
@@ -144,6 +135,24 @@ internal class LspOpenedFilesServiceTest {
     stopClientsAndWait(manager)
   }
 
+  private suspend fun assertStaleStartRequestDoesNotRevive(stoppedBeforeCapture: Boolean) {
+    val covered = createLocalFile("covered.txt")
+    val manager = LspClientManagerImpl.getInstanceImpl(project)
+    val service = LspOpenedFilesService.getInstance(project)
+    val providerClass = provider.javaClass
+
+    awaitRunningClient(manager) { service.processOpenedFiles(listOf(covered)) }
+    val client = manager.getClients(providerClass).single()
+    if (stoppedBeforeCapture) stopAndWait(manager, { it === client }) { manager.stopRunningServer(client) }
+    val staleRequestStamp = manager.startRequestStamp()
+
+    if (stoppedBeforeCapture) manager.stopRunningServer(client)
+    else stopAndWait(manager, { it === client }) { manager.stopRunningServer(client) }
+
+    manager.ensureStarted(providerClass, client.descriptor, staleRequestStamp)!!.join()
+    assertTrue(manager.getClients(providerClass).isEmpty(), "the stale start request must not revive the client")
+  }
+
   private fun createLocalFile(name: String): VirtualFile {
     val path = tempDir.resolve(name)
     Files.writeString(path, "content")
@@ -155,40 +164,6 @@ internal class LspOpenedFilesServiceTest {
 
   private suspend fun stopClientsAndWait(manager: LspClientManagerImpl): Unit =
     stopAndWait(manager) { manager.stopClients(CoveredFileLspProvider::class.java) }
-
-  private suspend fun stopAndWait(manager: LspClientManagerImpl, stop: () -> Unit) {
-    val removed = CompletableDeferred<Unit>()
-    val disposable = Disposer.newDisposable("LspOpenedFilesServiceTest")
-    try {
-      manager.addListener(object : LspClientManagerListener {
-        override fun clientRemoved(lspClient: LspClient) {
-          removed.complete(Unit)
-        }
-      }, disposable, false)
-      stop()
-      removed.await()
-    }
-    finally {
-      Disposer.dispose(disposable)
-    }
-  }
-
-  private suspend fun awaitRunningClient(manager: LspClientManagerImpl, action: () -> Unit) {
-    val running = CompletableDeferred<Unit>()
-    val disposable = Disposer.newDisposable("LspOpenedFilesServiceTest")
-    try {
-      manager.addListener(object : LspClientManagerListener {
-        override fun serverStateChanged(lspClient: LspClient) {
-          if (lspClient.state == LspServerState.Running) running.complete(Unit)
-        }
-      }, disposable, false)
-      action()
-      running.await()
-    }
-    finally {
-      Disposer.dispose(disposable)
-    }
-  }
 }
 
 /** Starts a server that covers only `covered.txt`, and reports a [fileOpened] call for any other file. */

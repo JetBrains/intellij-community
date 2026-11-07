@@ -16,6 +16,7 @@ import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspCommunicationChannel
 import com.intellij.platform.lsp.api.LspCommunicationChannel.StdIO
 import com.intellij.platform.lsp.api.LspIntegrationProvider
+import com.intellij.platform.lsp.api.LspServerListener
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersSupport
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnector
@@ -34,6 +35,7 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.text.nullize
+import kotlinx.coroutines.CompletableDeferred
 import org.eclipse.lsp4j.ClientCapabilities
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.PublishDiagnosticsParams
@@ -71,6 +73,19 @@ class LspClientImpl internal constructor(
       eventBroadcaster.serverStateChanged(this)
     }
   private val stateLock = Any()
+
+  /**
+   * `true` after an explicit stop of this client. The manager sets it before the state changes, under its start-stop lock.
+   * The manager never restarts such a client automatically.
+   */
+  internal var stopRequested: Boolean = false
+
+  /**
+   * Completes when the connector has released the server, or at once when no connector exists at the stop.
+   * When the connector exists, the IDE has called [LspServerListener.serverStopped] by then.
+   * An exception in that listener does not change the outcome. A failed release completes it exceptionally.
+   */
+  internal val disconnected: CompletableDeferred<Unit> = CompletableDeferred()
 
   override var initializeResult: InitializeResult? = null
     private set
@@ -281,7 +296,8 @@ class LspClientImpl internal constructor(
           if (!project.isDisposed) LspClientManagerImpl.getInstanceImpl(project) else null
         }
         val text = (if (e is LspInitializationException) "$e\nCaused by:\n" else "") + exToLog.stackTraceToString()
-        manager?.handleMaybeUnexpectedServerStop(this, text)
+        // The failure comes from the IDE side of the start. The server is not known to be gone.
+        manager?.handleMaybeUnexpectedServerStop(this, text, serverGone = false)
       }
     }
   }
@@ -331,6 +347,7 @@ class LspClientImpl internal constructor(
     val shutdownAndExit = Runnable {
       synchronized(connectorLock) {
         if (::lsp4jServerConnector.isInitialized) lsp4jServerConnector.shutdownExitDisconnect(graceful)
+        else disconnected.complete(Unit)
       }
     }
 
