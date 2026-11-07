@@ -329,7 +329,9 @@ def rust_tool_crate(
         test_env = {},
         test_env_inherit = None,
         test_size = None,
-        test_tags = []):
+        test_tags = [],
+        integration_test_data = [],
+        integration_test_env = {}):
     """Declares one crate of a Rust tool workspace, its tests, and the clippy test over all of them.
 
     The hub supplies the crate name, the edition and the dependencies from `Cargo.toml` and `Cargo.lock`. A crate whose
@@ -396,6 +398,9 @@ def rust_tool_crate(
       test_env_inherit: the variables that the unit test takes from the environment of `bazel test`.
       test_size: the Bazel size of the unit test.
       test_tags: the tags of the unit test.
+      integration_test_data: more run-time data of each integration test, such as a library that the binary loads.
+      integration_test_env: the run-time environment of each integration test, such as an `$(rootpath ...)` of
+        `integration_test_data`.
     """
     package = native.package_name()
     if not hub.crate_name():
@@ -466,6 +471,8 @@ def rust_tool_crate(
         test_env_inherit = test_env_inherit,
         test_size = test_size,
         test_tags = test_tags,
+        integration_test_data = integration_test_data,
+        integration_test_env = integration_test_env,
     )
 
 def rust_tool_sources(*dep_data):
@@ -539,7 +546,9 @@ def _rust_tool_targets(
         test_env = {},
         test_env_inherit = None,
         test_size = None,
-        test_tags = []):
+        test_tags = [],
+        integration_test_data = [],
+        integration_test_env = {}):
     package = native.package_name()
     repo = native.repo_name()
     crate_target = crate_target or name
@@ -664,9 +673,9 @@ def _rust_tool_targets(
                 name = test_name,
                 srcs = [test],
                 compile_data = compile_data + testdata,
-                data = [":" + target for target in under_test.values()] + compile_data + testdata,
+                data = [":" + target for target in under_test.values()] + compile_data + testdata + integration_test_data,
                 deps = integration_test_deps,
-                env = env | {"CARGO_BIN_EXE_" + binary: "$(rootpath :{})".format(target) for binary, target in under_test.items()},
+                env = env | integration_test_env | {"CARGO_BIN_EXE_" + binary: "$(rootpath :{})".format(target) for binary, target in under_test.items()},
                 lint_config = lints,
                 **(integration_attrs | test_extra)
             )

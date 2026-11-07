@@ -84,8 +84,9 @@ declaration states its arguments.
 - `rust_tool_crate` declares one crate: the library or the binary, a `<bin>-bin` per binary of a library crate, its
   unit test, an integration test per `tests/*.rs` of a binary, the `testdata/` filegroup, the closure test, and
   `<crate>-clippy`. A workspace can give it another test rule, such as a wrapper that writes a JUnit report, which
-  the integration tests use too, and the constraints of a crate that some hosts do not build. With the `dep_data` of
-  its hub, a package without `src/lib.rs` is a binary crate, named after its one `[[bin]]`.
+  the integration tests use too, the run-time data and environment of the integration tests, and the constraints of a
+  crate that some hosts do not build. With the `dep_data` of its hub, a package without `src/lib.rs` is a binary
+  crate, named after its one `[[bin]]`.
 - `rust_tool_binary` declares one binary of a workspace that Bazel builds without a hub, from explicit dependencies.
 - `rust_crate_closure` writes the crate closure of a binary, for the host or for one platform. `_HOST_CRATES` lists the
   crates that it leaves out. A binary whose dependencies differ by host in more crates names a platform, so that one
