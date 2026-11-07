@@ -481,7 +481,14 @@ internal fun computeDevDistPlan(
       add(DEV_DIST_FRAGMENT_INPUTS_RELATIVE_PATH to renderFragmentInputs(sortedProducts, half))
       add(DEV_DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(collected.moduleSets, half))
       add(DEV_DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half))
-      add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(runConfigurations, splitProducts, half.macrosBzl, half.refusedRowProperties, half.generatedByHeader))
+      add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(
+        rows = runConfigurations,
+        splitProducts = splitProducts,
+        macrosBzl = half.macrosBzl,
+        refusedProperties = half.refusedRowProperties,
+        header = half.generatedByHeader,
+        sharedDistributions = !half.writesCommunityPackages,
+      ))
       add(DEV_DIST_DISTRIBUTION_INDEX_RELATIVE_PATH to renderDevDistDistributionIndex(runConfigurations, indexProducts, half.generatorCommand))
       addAll(crossHalfDescriptorPackages.files(crossHalfPluginTargets, crossHalfPluginCalls).toList())
       productDescriptorFiles.entries.mapTo(this) { it.key to it.value }

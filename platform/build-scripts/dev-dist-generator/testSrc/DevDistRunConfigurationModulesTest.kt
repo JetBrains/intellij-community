@@ -592,12 +592,14 @@ class DevDistRunConfigurationModulesTest {
       |                    "windows_x64"
       |                ]
       |            },
-      |            "modularLoader": false
+      |            "modularLoader": false,
+      |            "shared": "idea"
       |        },
       |        "ideaJetBrainsClient": {
       |            "bundledModules": [],
       |            "platformBundledModules": {},
-      |            "modularLoader": true
+      |            "modularLoader": true,
+      |            "shared": "client"
       |        }
       |    },
       |    "distributions": [
@@ -629,6 +631,43 @@ class DevDistRunConfigurationModulesTest {
       |}
       |""".trimMargin()
     )
+  }
+
+  @Test
+  fun `the shared distribution of a product has the fewest modules, then no repository, then the first name`() {
+    val rows = listOf(
+      row("idea_air", additionalModules = listOf("intellij.air")),
+      row("idea_rmr", runtimeModuleRepository = true),
+      row("idea_z"),
+      row("idea_b"),
+      row("idea_b_backend"),
+      row("client_a", product = "ideaJetBrainsClient", additionalModules = listOf("intellij.x")),
+      row("client_b", product = "ideaJetBrainsClient", runtimeModuleRepository = true),
+    )
+
+    val shared = devRunSharedDistributions(devRunDistributions(rows))
+
+    assertThat(shared.mapValues { it.value.name }).containsExactly(entry("idea", "idea_b"), entry("ideaJetBrainsClient", "client_b"))
+  }
+
+  @Test
+  fun `only a half that asks for them writes the shared distributions`() {
+    val rows = listOf(row("idea"), row("idea_air", additionalModules = listOf("intellij.air")), row("client", product = "ideaJetBrainsClient"))
+    val splitProducts = setOf("idea", "ideaJetBrainsClient")
+
+    assertThat(renderDevServerRunConfigurations(rows, splitProducts = splitProducts, macrosBzl = TEST_MACROS_BZL, header = TEST_HEADER, sharedDistributions = true))
+      .contains(
+        """
+        |DEV_DIST_SHARED_DISTRIBUTIONS = {
+        |    "idea": "//build:idea_dist",
+        |    "ideaJetBrainsClient": "//build:client_dist",
+        |}
+        |
+        |def dev_server_run_configurations():
+        |""".trimMargin()
+      )
+    assertThat(renderDevServerRunConfigurations(rows, splitProducts = splitProducts, macrosBzl = TEST_MACROS_BZL, header = TEST_HEADER))
+      .doesNotContain("DEV_DIST_SHARED_DISTRIBUTIONS")
   }
 
   @Test

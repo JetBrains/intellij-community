@@ -32,6 +32,9 @@ private const val COMMUNITY_REPOSITORY = "@community"
  *
  * [ultimate] is `true` for a distribution of the ultimate index of the monorepo. A standalone community checkout has no
  * ultimate index.
+ *
+ * [shared] is `true` for the shared distribution of the product, which the `shared` field of its `products` entry names.
+ * Every Starter test of the product runs against it.
  */
 internal data class DevDistCandidate(
   @JvmField val name: String,
@@ -43,6 +46,7 @@ internal data class DevDistCandidate(
   @JvmField val runtimeModuleRepository: Boolean,
   @JvmField val modularLoader: Boolean,
   @JvmField val ultimate: Boolean,
+  @JvmField val shared: Boolean = false,
 ) {
   /** Returns the modules that the product bundles on [hostPlatform]. */
   fun bundledModulesOn(hostPlatform: String?): Set<String> {
@@ -147,6 +151,7 @@ private fun readDevDistIndexFile(file: Path, labelPrefix: String, ultimate: Bool
         runtimeModuleRepository = entry.flag("runtimeModuleRepository"),
         modularLoader = productEntry.flag("modularLoader"),
         ultimate = ultimate,
+        shared = productEntry.get("shared")?.jsonPrimitive?.content == name,
       )
     }
   }
@@ -171,8 +176,10 @@ private fun JsonObject.strings(key: String): List<String> = field(key).jsonArray
  * [runtimeModuleRepository] is requested, when it composes a runtime module repository. A modular-loader product
  * always composes one. The bundled modules are those of [hostPlatform].
  *
- * Of the matching distributions, the one with the fewest additional modules wins. Then a distribution without a
- * runtime module repository wins, then the first name.
+ * A request with no module and without a runtime module repository gets the [DevDistCandidate.shared] distribution of
+ * the product. Else, or when the index names none, the one with the fewest additional modules wins. Then a distribution
+ * without a runtime module repository wins, then the first name. The generator computes the shared distribution by the
+ * same order.
  */
 internal fun selectDevDist(
   candidates: List<DevDistCandidate>,
@@ -181,6 +188,9 @@ internal fun selectDevDist(
   runtimeModuleRepository: Boolean,
   hostPlatform: String?,
 ): DevDistCandidate? {
+  if (modules.isEmpty() && !runtimeModuleRepository) {
+    candidates.firstOrNull { it.product == product && it.shared }?.let { return it }
+  }
   return candidates
     .asSequence()
     .filter { it.product == product }

@@ -73,6 +73,21 @@ internal class DevDistSelectionTest {
   }
 
   @Test
+  fun `request with no module gets the shared distribution of the index`() {
+    writeIndex(
+      DEV_DIST_INDEX_PATH,
+      mapOf("idea" to product(shared = "idea_wide")),
+      entry("idea", "//build:idea_dist", "idea"),
+      entry("idea_wide", "//build:idea_wide_dist", "idea", additionalModules = """["a"]"""),
+    )
+    val candidates = readDevDistIndex(projectHome).distributions
+    assertEquals(listOf(false, true), candidates.map { it.shared })
+    assertEquals("idea_wide", select(candidates)?.name)
+    assertEquals("idea_wide", select(candidates, modules = listOf("a"))?.name)
+    assertEquals("idea", select(candidates.map { it.copy(shared = false) })?.name)
+  }
+
+  @Test
   fun `real community index selects the community IDE`() {
     val file = BazelRunfiles.getFileByLabelOrNull(BazelLabel("community", "build", "dev-dist-distributions.json"))
                ?: BazelRunfiles.getFileByLabel(BazelLabel("", "build", "dev-dist-distributions.json"))
@@ -241,5 +256,7 @@ internal class DevDistSelectionTest {
 private fun entry(name: String, label: String, product: String, additionalModules: String = "[]"): String =
   """{"name":"$name","label":"$label","product":"$product","additionalModules":$additionalModules,"runtimeModuleRepository":false}"""
 
-private fun product(bundled: String = "[]", platformBundled: String = "{}"): String =
-  """{"bundledModules":$bundled,"platformBundledModules":$platformBundled,"modularLoader":false}"""
+private fun product(bundled: String = "[]", platformBundled: String = "{}", shared: String? = null): String {
+  val sharedField = if (shared == null) "" else ",\"shared\":\"$shared\""
+  return """{"bundledModules":$bundled,"platformBundledModules":$platformBundled,"modularLoader":false$sharedField}"""
+}

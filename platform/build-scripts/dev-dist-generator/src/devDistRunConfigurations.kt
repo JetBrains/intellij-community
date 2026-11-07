@@ -495,6 +495,25 @@ fun devRunDistributions(rows: List<DevRunConfigurationRow>): List<DevRunDistribu
     .sortedBy { it.name }
 }
 
+/**
+ * The shared distribution of each product of [distributions], by product.
+ *
+ * It is the distribution of the product with the fewest additional modules. A tie goes to a distribution without a
+ * runtime module repository, and then to the first name in alphabetical order. IDE Starter selects it for a request
+ * with no module, and every Starter test of the product runs against it.
+ */
+@ApiStatus.Internal
+fun devRunSharedDistributions(distributions: List<DevRunDistribution>): Map<String, DevRunDistribution> {
+  val result = TreeMap<String, DevRunDistribution>()
+  for (distribution in distributions) {
+    result.merge(distribution.product, distribution) { old, new -> minOf(old, new, SHARED_DISTRIBUTION_ORDER) }
+  }
+  return Collections.unmodifiableMap(result)
+}
+
+private val SHARED_DISTRIBUTION_ORDER: Comparator<DevRunDistribution> =
+  compareBy<DevRunDistribution> { it.additionalModules.size }.thenBy { it.runtimeModuleRepository }.thenBy { it.name }
+
 /** The package of `dev_server_run_configurations.bzl` in each half, which declares the launchers and their distributions. */
 private const val RUN_CONFIGURATIONS_PACKAGE = "build"
 
@@ -546,8 +565,9 @@ private val DISTRIBUTION_INDEX_JSON = Json { prettyPrint = true }
  * is relative to the repository of the half, so a reader in the monorepo prefixes `@community` for the community file.
  * `product` is the `build/dev-build.json` key of the rows, and the key of its `products` entry. [products] gives
  * `bundledModules`, `platformBundledModules` and `modularLoader` of each product, see [DevDistIndexProduct]. A product
- * entry states them once, because all distributions of the product share them. JSON has no comments, so the first
- * field `generatedBy` names [generatorCommand].
+ * entry states them once, because all distributions of the product share them. `shared` names the shared distribution
+ * of the product, see [devRunSharedDistributions]. JSON has no comments, so the first field `generatedBy` names
+ * [generatorCommand].
  */
 @ApiStatus.Internal
 fun renderDevDistDistributionIndex(
@@ -556,6 +576,7 @@ fun renderDevDistDistributionIndex(
   generatorCommand: String,
 ): String {
   val distributions = devRunDistributions(rows)
+  val shared = devRunSharedDistributions(distributions)
   val named = TreeMap<String, DevDistIndexProduct>()
   for (distribution in distributions) {
     named.put(distribution.product, checkNotNull(products.get(distribution.product)) {
@@ -574,6 +595,7 @@ fun renderDevDistDistributionIndex(
             }
           }
           put("modularLoader", product.modularLoader)
+          put("shared", shared.getValue(name).name)
         }
       }
     }
@@ -605,6 +627,10 @@ fun renderDevDistDistributionIndex(
  * `dev_dist_fragment_inputs.bzl`. An entry whose every field fits on one line is one line, with its XML file as a
  * trailing comment; buildifier keeps both forms.
  *
+ * With [sharedDistributions], the file also holds `DEV_DIST_SHARED_DISTRIBUTIONS`: the label of the shared distribution
+ * of each product, see [devRunSharedDistributions]. `starter_test` of `//build:starter_test.bzl` reads it. Only the
+ * ultimate half writes it, because only ultimate declares that macro.
+ *
  * Fails for a row of a product outside [splitProducts], which has no plan to launch from, and for a row that sets a
  * property of [refusedProperties], see [DevDistHalf.refusedRowProperties].
  *
@@ -618,6 +644,7 @@ fun renderDevServerRunConfigurations(
   macrosBzl: String,
   refusedProperties: Map<String, String> = emptyMap(),
   header: String,
+  sharedDistributions: Boolean = false,
 ): String {
   val sortedRows = rows.sortedBy { it.name }
   for (row in sortedRows) {
@@ -634,7 +661,8 @@ fun renderDevServerRunConfigurations(
   val sharedFlagLists = shareLists(sortedRows, DevRunConfigurationRow::jvmFlags, prefix = "_JVM_FLAGS_")
   val sharedArgumentLists = shareLists(sortedRows, DevRunConfigurationRow::programArgs, prefix = "_PROGRAM_ARGS_")
   val distributions = HashMap<String, String>()
-  for (distribution in devRunDistributions(sortedRows)) {
+  val runDistributions = devRunDistributions(sortedRows)
+  for (distribution in runDistributions) {
     distribution.rows.associateWithTo(distributions) { distribution.name }
   }
 
@@ -662,6 +690,16 @@ fun renderDevServerRunConfigurations(
       appendRow(row, distributions.getValue(row.name), sharedFlagLists, sharedArgumentLists)
     }
     append("}\n\n")
+    if (sharedDistributions) {
+      append("# The shared distribution of each product: the fewest additional modules, then no runtime module repository, then\n")
+      append("# the first name. Every Starter test of the product runs against it, see `starter_test.bzl`.\n")
+      append("DEV_DIST_SHARED_DISTRIBUTIONS = {\n")
+      for ((product, distribution) in devRunSharedDistributions(runDistributions)) {
+        append("    ").append(starlarkString(product)).append(": ")
+          .append(starlarkString("//$RUN_CONFIGURATIONS_PACKAGE:${distribution.name}_dist")).append(",\n")
+      }
+      append("}\n\n")
+    }
     append("def dev_server_run_configurations():\n")
     append("    intellij_dev_run_configurations(DEV_RUN_CONFIGURATIONS)\n")
   }

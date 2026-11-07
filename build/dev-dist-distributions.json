@@ -72,7 +72,8 @@
                 "intellij.yaml.plugin"
             ],
             "platformBundledModules": {},
-            "modularLoader": false
+            "modularLoader": false,
+            "shared": "android_studio_dev_build"
         },
         "Idea": {
             "bundledModules": [
@@ -145,7 +146,8 @@
                 "intellij.yaml.plugin"
             ],
             "platformBundledModules": {},
-            "modularLoader": false
+            "modularLoader": false,
+            "shared": "idea_community"
         }
     },
     "distributions": [
