@@ -54,6 +54,7 @@ open class CurrentTestMethodProvider : TestExecutionListener, BeforeEachCallback
         displayName = testIdentifier.displayName,
         testClass = methodSource.javaClass,
         id = testIdentifier.uniqueId,
+        isPerformanceTest = isPerformanceTest(methodSource.javaClass, runCatching { methodSource.javaMethod }.getOrNull()),
       )
     )
   }

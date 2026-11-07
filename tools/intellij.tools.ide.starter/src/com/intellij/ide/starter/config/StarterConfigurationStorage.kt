@@ -135,7 +135,7 @@ fun ConfigurationStorage.Companion.enableScreenRecording() = instance().put(ENV_
 
 /**
  * Tells if a Driver step shows its name in an overlay on the IDE, and a failed step shows its failure, in every test.
- * Without a value, the overlays are on only in the UI tests of the `com.intellij.driver.tests` package.
+ * Without a value, the overlays are on in every test, except a test with `com.intellij.ide.starter.junit5.PerformanceTest`.
  */
 fun ConfigurationStorage.Companion.driverInfoOverlaysEnabled(): Boolean? = instance().getOrNull(ENV_DRIVER_INFO_OVERLAYS_ENABLED)?.toBoolean()
 fun ConfigurationStorage.Companion.driverInfoOverlaysEnabled(value: Boolean): Unit = instance().put(ENV_DRIVER_INFO_OVERLAYS_ENABLED, value)

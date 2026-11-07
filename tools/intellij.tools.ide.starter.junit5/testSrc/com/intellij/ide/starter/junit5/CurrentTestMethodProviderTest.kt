@@ -14,6 +14,7 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder
 import org.junit.platform.launcher.core.LauncherFactory
 import org.mockito.Mockito.doReturn
 import org.mockito.Mockito.mock
+import java.lang.reflect.Method
 import java.util.Optional
 
 class CurrentTestMethodProviderTest {
@@ -54,6 +55,27 @@ class CurrentTestMethodProviderTest {
   }
 
   @Test
+  fun `a test without the annotation is no performance test`() {
+    CurrentTestMethodProvider().executionStarted(testIdentifier())
+
+    CurrentTestMethod.get()?.isPerformanceTest shouldBe false
+  }
+
+  @Test
+  fun `an annotated method is a performance test`() {
+    CurrentTestMethodProvider().executionStarted(testIdentifier(SampleTestClass::class.java.getDeclaredMethod("performanceTestMethod")))
+
+    CurrentTestMethod.get()?.isPerformanceTest shouldBe true
+  }
+
+  @Test
+  fun `a method of an annotated class is a performance test`() {
+    CurrentTestMethodProvider().executionStarted(testIdentifier(SamplePerformanceTestClass::class.java.getDeclaredMethod("testMethod")))
+
+    CurrentTestMethod.get()?.isPerformanceTest shouldBe true
+  }
+
+  @Test
   fun `starting a test plan opens a new generation`() {
     val before = CurrentTestPlan.generation
 
@@ -63,8 +85,7 @@ class CurrentTestMethodProviderTest {
     CurrentTestPlan.generation shouldBe before + 1
   }
 
-  private fun testIdentifier(): TestIdentifier {
-    val testMethod = SampleTestClass::class.java.getDeclaredMethod("testMethod")
+  private fun testIdentifier(testMethod: Method = SampleTestClass::class.java.getDeclaredMethod("testMethod")): TestIdentifier {
     val methodSource = MethodSource.from(testMethod)
     val testIdentifier = mock(TestIdentifier::class.java)
     doReturn(true).`when`(testIdentifier).isTest
@@ -75,6 +96,18 @@ class CurrentTestMethodProviderTest {
   }
 
   private class SampleTestClass {
+    @Suppress("unused")
+    fun testMethod() {
+    }
+
+    @PerformanceTest
+    @Suppress("unused")
+    fun performanceTestMethod() {
+    }
+  }
+
+  @PerformanceTest
+  private class SamplePerformanceTestClass {
     @Suppress("unused")
     fun testMethod() {
     }

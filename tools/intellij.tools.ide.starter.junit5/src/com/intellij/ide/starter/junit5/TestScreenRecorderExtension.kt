@@ -158,11 +158,8 @@ internal class TestScreenRecorderExtension(
     }
   }
 
-  private fun ExtensionContext.isPerformanceTest(): Boolean {
-    return testMethod.getOrNull()?.isAnnotationPresent(PerformanceTest::class.java) == true ||
-           generateSequence(testClass.getOrNull()) { it.enclosingClass}
-             .any { it.isAnnotationPresent(PerformanceTest::class.java) }
-  }
+  private fun ExtensionContext.isPerformanceTest(): Boolean =
+    isPerformanceTest(testClass.getOrNull(), testMethod.getOrNull())
 
   private data class Recording(
     val testContext: IDETestContext,

@@ -60,7 +60,7 @@ class DriverOverlayUiTest {
     }
   }
 
-  /** This test is outside the package of the UI tests, so it turns the overlays on. The setting resets after each test. */
+  /** The overlays are on by default, but a run can turn them off. This test needs them. The setting resets after each test. */
   @BeforeEach
   fun enableOverlays() {
     ConfigurationStorage.driverInfoOverlaysEnabled(true)
