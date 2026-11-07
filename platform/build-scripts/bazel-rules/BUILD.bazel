@@ -99,6 +99,7 @@ test_suite(
         ":dev_dist_product_content_tests",
         ":java_glob_tests",
         "//build/dev-dist-tools/bins/plugin-descriptor-writer:descriptor_rule_tests",
+        "//platform/build-scripts/bazel-rules/context-plugin-dir-tests:context_plugin_dir_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-remainder-tests:dev_plugin_remainder_tests",
         "//platform/build-scripts/bazel-rules/dev-plugin-tests:dev_plugin_tests",
         "//platform/build-scripts/bazel-rules/ij-plugin-packager/tests:ij-plugin-packager-tests",

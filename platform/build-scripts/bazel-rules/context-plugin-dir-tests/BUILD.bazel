@@ -1,0 +1,3 @@
+load("//platform/build-scripts/bazel-rules:context_plugin_dir_test.bzl", "context_plugin_dir_test_suite")
+
+context_plugin_dir_test_suite(name = "context_plugin_dir_tests")
