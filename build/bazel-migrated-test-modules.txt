@@ -238,6 +238,7 @@ intellij.python.community.execService.tests
 intellij.python.community.junit5Tests.framework
 intellij.python.community.services.internal.impl.tests
 intellij.python.community.services.shared.tests
+intellij.python.devkit.tests
 intellij.python.mcp.tests
 intellij.python.processOutput.frontend.tests
 intellij.python.pyproject.tests

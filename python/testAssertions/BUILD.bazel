@@ -10,7 +10,6 @@ content_module_jar(module = ":testAssertions")
 create_kotlinc_options(
     name = "custom_testAssertions",
     warn = "error",
-    x_x_language = ["+AllowEagerSupertypeAccessibilityChecks"],
 )
 
 jvm_library(

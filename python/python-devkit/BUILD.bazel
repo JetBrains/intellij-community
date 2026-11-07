@@ -7,11 +7,29 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 content_module_jar(module = ":devkit")
 ### auto-generated section `dev intellij.python.devkit` end
 
+jps_test(
+    name = "devkit-tests_test",
+    data = [
+        "@kotlin_test_deps//:annotations-java5-24.0.0.jar",
+        "@kotlin_test_deps//:junit.jar",
+        "@kotlin_test_deps//:kotlin-dist-for-ide.jar",
+        "@kotlin_test_deps//:kotlin-reflect.jar",
+        "@kotlin_test_deps//:kotlin-script-runtime.jar",
+        "@kotlin_test_deps//:kotlin-stdlib.jar",
+        "@kotlin_test_deps//:kotlin-stdlib-jdk8.jar",
+        "@kotlin_test_deps//:kotlin-stdlib-jdk8-sources.jar",
+        "@kotlin_test_deps//:kotlin-stdlib-sources.jar",
+        "@kotlin_test_deps//:kotlin-test.jar",
+        "@kotlin_test_deps//:kotlin-test-junit.jar",
+    ],
+    runtime_deps = [":devkit-tests_test_lib"],
+)
+### skip generation section `test intellij.python.devkit.tests`
+
 ### auto-generated section `build intellij.python.devkit` start
 create_kotlinc_options(
     name = "custom_devkit",
     warn = "error",
-    x_x_language = ["+AllowEagerSupertypeAccessibilityChecks"],
 )
 
 jvm_library(
@@ -72,7 +90,23 @@ jvm_library(
     ),
     associates = ["//python/python-devkit:devkit"],
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//java/plugin",
+        "//xml/plugin",
+        "//json/plugin",
+        "//plugins/yaml/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//aether-dependency-resolver/plugin",
+        "//platform/testRunner/plugin",
+        "//platform/vcs/plugin",
+        "//platform/structuralsearch/plugin",
+        "//platform/scratch/plugin",
+        "//plugins/properties/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -109,10 +143,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.python.devkit.tests` end
-
-### auto-generated section `test intellij.python.devkit.tests` start
-jps_test(
-    name = "devkit-tests_test",
-    runtime_deps = [":devkit-tests_test_lib"],
-)
-### auto-generated section `test intellij.python.devkit.tests` end
