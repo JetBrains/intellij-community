@@ -348,6 +348,95 @@ class PyEvaluatorTest : PyCodeInsightTestCase() {
     assertEquals(true, check("sys.version_info < (3, 5)"))
   }
 
+  @Test
+  @TestFor(issues = ["PY-93846"])
+  fun `floor division by zero gives no value`() = runInEdtAndWait {
+    assertNull(PyEvaluator().evaluate(parseExpression("1 // 0")))
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("1 // 0")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93846"])
+  fun `floor division rounds down`() = runInEdtAndWait {
+    assertEquals(3, byExpression<Int>("7 // 2"))
+    assertEquals(-4, byExpression<Int>("-7 // 2"))
+    assertEquals(-4, byExpression<Int>("7 // -2"))
+    assertEquals(3, byExpression<Int>("-7 // -2"))
+    assertEquals(-4, byExpression<Int>("-8 // 2"))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93846"])
+  fun `value of one target evaluates for each reference`() = runInEdtAndWait {
+    assertEquals("aa", byText<String>("""
+      x = "a"
+      expr = x + x
+    """))
+    assertEquals(listOf(1, 1), byText<List<*>>("""
+      a = 1
+      expr = [a, a]
+    """))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93846"])
+  fun `reference cycle gives no value`() = runInEdtAndWait {
+    assertNull(PyEvaluator().evaluate(parseText("""
+      a = b
+      b = a
+      expr = a
+    """)))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93846"])
+  fun `value in a reference cycle evaluates for each reference`() = runInEdtAndWait {
+    assertEquals(listOf(true, true), byText<List<*>>("""
+      a = True or b
+      b = a
+      expr = [a, b]
+    """))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93846"])
+  fun `f-string evaluates only without interpolation`() = runInEdtAndWait {
+    assertEquals("abc", byExpression<String>("f'abc'"))
+    assertNull(PyEvaluator().evaluate(parseExpression("f'a{x}'")))
+    assertNull(PyEvaluator().evaluate(parseExpression("'a' f'{x}'")))
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseExpression("f'{x}'")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93846"])
+  fun `t-string gives no value`() = runInEdtAndWait {
+    assertNull(PyEvaluator().evaluate(parseExpression("t'abc'")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93846"])
+  fun `bytes literal gives no value`() = runInEdtAndWait {
+    assertNull(PyEvaluator().evaluate(parseExpression("b'a'")))
+    assertNull(PyEvaluator().evaluate(parseExpression("b'a' + 'b'")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93846"])
+  fun `evaluate as boolean of a large integer`() = runInEdtAndWait {
+    assertEquals(true, PyEvaluator.evaluateAsBoolean(parseExpression("3000000000")))
+    assertEquals(true, PyEvaluator.evaluateAsBoolean(parseExpression("100000000000000000000")))
+    assertEquals(false, PyEvaluator.evaluateAsBoolean(parseExpression("3000000000 - 3000000000")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93846"])
+  fun `dict from pairs reads only the top-level pairs`() = runInEdtAndWait {
+    assertEquals(mapOf("a" to listOf(1, 2)), byText<Map<*, *>>("expr = dict([('a', (1, 2))])"))
+    assertEquals(mapOf("a" to 1, "b" to 2), byText<Map<*, *>>("expr = dict([('a', 1)], b=2)"))
+    assertEquals(mapOf("title" to "x"), byText<Map<*, *>>("expr = dict(base, title='x')"))
+    assertNull(PyEvaluator().evaluate(parseText("expr = dict([('a', 1, 2)])")))
+  }
+
   private inline fun <reified T : Any> byExpression(expression: String): T =
     assertInstanceOf(T::class.javaObjectType, PyEvaluator().evaluate(parseExpression(expression)))
 
@@ -365,7 +454,7 @@ class PyEvaluatorTest : PyCodeInsightTestCase() {
   }
 
   private companion object {
-    val DICT_OF_REFERENCES = """
+    const val DICT_OF_REFERENCES = """
       a = 'a'
       one = 1
       two = 2
