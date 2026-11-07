@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.EMPTY_MENU_ACTION_ICON
 import com.intellij.openapi.actionSystem.impl.PoppedIcon
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
 import com.intellij.openapi.actionSystem.impl.isEnterKeyStroke
+import com.intellij.openapi.actionSystem.impl.menuIcons
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.application.WriteIntentReadAction
@@ -106,17 +107,19 @@ internal class MacNativeActionMenuItem(
                          isToggleable: Boolean,
                          isToggled: Boolean,
                          insideCheckedGroup: Boolean) {
-    if (isToggleable && (insideCheckedGroup || !UISettings.getInstance().showIconsInMenus) || presentation.icon == null) {
+    val icons = menuIcons(presentation)
+
+    if (isToggleable && (insideCheckedGroup || !UISettings.getInstance().showIconsInMenus) || icons.icon == null) {
       menuItemPeer.setState(isToggled)
-      menuItemPeer.setIcon(adjustIcon(presentation.icon, useDarkIcons, action, presentation))
+      menuItemPeer.setIcon(adjustIcon(icons.icon, useDarkIcons, action, presentation))
     }
     else if (UISettings.getInstance().showIconsInMenus) {
-      var icon = presentation.icon
+      var icon = icons.icon
       if (isToggleable && isToggled) {
-        icon = icon?.let { PoppedIcon(it, 16, 16) }
+        icon = PoppedIcon(icon, 16, 16)
       }
       menuItemPeer.setIcon(adjustIcon(
-        if (presentation.isEnabled) icon else presentation.disabledIcon ?: icon?.let { IconLoader.getDisabledIcon(it) },
+        if (presentation.isEnabled) icon else icons.disabled ?: IconLoader.getDisabledIcon(icon),
         useDarkIcons, action, presentation))
     }
   }

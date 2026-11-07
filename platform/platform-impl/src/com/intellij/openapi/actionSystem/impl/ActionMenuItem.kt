@@ -10,12 +10,14 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ExperimentalIconRendering
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.ex.ActionIconDescriptors
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAligned
 import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGroup
@@ -31,6 +33,7 @@ import com.intellij.openapi.util.IconLoader.getDarkIcon
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.ui.components.JBCheckBoxMenuItem
 import com.intellij.ui.icons.getMenuBarIcon
 import com.intellij.ui.mac.MacMenuSettings
@@ -41,6 +44,8 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.LafIconLookup.getDisabledIcon
 import com.intellij.util.ui.LafIconLookup.getIcon
 import com.intellij.util.ui.LafIconLookup.getSelectedIcon
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import java.awt.event.InputEvent
@@ -195,12 +200,13 @@ class ActionMenuItem internal constructor(action: AnAction,
 
   private fun updateIcon(presentation: Presentation) {
     isToggled = isToggleable && Toggleable.isSelected(presentation)
-    if (isToggleable && (presentation.icon == null || insideCheckedGroup || !UISettings.getInstance().showIconsInMenus)) {
+    val icons = menuIcons(presentation)
+    if (isToggleable && (icons.icon == null || insideCheckedGroup || !UISettings.getInstance().showIconsInMenus)) {
       if (ActionPlaces.MAIN_MENU == place && MacMenuSettings.isSystemMenu) {
         state = isToggled
         screenMenuItemPeer?.setState(isToggled)
       }
-      val adjustedIcon = adjustIcon(presentation.icon, presentation)
+      val adjustedIcon = adjustIcon(icons.icon, presentation)
       if (adjustedIcon != null) {
         setIcon(adjustedIcon)
       }
@@ -214,15 +220,15 @@ class ActionMenuItem internal constructor(action: AnAction,
       }
     }
     else if (UISettings.getInstance().showIconsInMenus) {
-      var icon = presentation.icon
+      var icon = icons.icon
       if (isToggleable && isToggled && icon != null) {
         icon = PoppedIcon(icon, 16, 16)
       }
-      var disabled = presentation.disabledIcon
+      var disabled = icons.disabled
       if (disabled == null) {
         disabled = if (icon == null) null else getDisabledIcon(icon)
       }
-      var selected = presentation.selectedIcon
+      var selected = icons.selected
       if (selected == null) {
         selected = icon
       }
@@ -289,3 +295,45 @@ internal fun JMenuItem.setToggledIcon() {
   setSelectedIcon(selectedCheckmark)
   setDisabledIcon(disabledCheckmark)
 }
+
+/** The icons of a menu item, for the normal, disabled and selected state. */
+internal class MenuIcons(
+  val icon: Icon?,
+  val disabled: Icon?,
+  val selected: Icon?,
+)
+
+/**
+ * Builds the menu icons of [presentation].
+ * While the new icons pipeline is on, they come from icon descriptors, and `disabled` is never `null` when `icon` is not.
+ * Callers rely on this rule, so their `getDisabledIcon` fallback never gets a bridged icon.
+ */
+internal fun menuIcons(presentation: Presentation): MenuIcons {
+  if (!ExperimentalIconRendering.isEnabled) {
+    return MenuIcons(presentation.icon, presentation.disabledIcon, presentation.selectedIcon)
+  }
+  val descriptor = ActionIconDescriptors.effective(presentation)
+  return MenuIcons(
+    icon = descriptor?.createSwingIcon(),
+    disabled = descriptor?.let { ActionIconDescriptors.disabled(it).createSwingIcon() },
+    selected = presentation.selectedIconDescriptor?.createSwingIcon(),
+  )
+}
+
+/** The [ActionMenuItem] constructor is internal, so tests in other modules create an item here. */
+@TestOnly
+@ApiStatus.Internal
+fun createActionMenuItemForTest(
+  action: AnAction,
+  place: String = "TestPlace",
+  insideCheckedGroup: Boolean = false,
+): ActionMenuItem =
+  ActionMenuItem(
+    action,
+    DataContext.EMPTY_CONTEXT,
+    place,
+    ActionUiKind.POPUP,
+    enableMnemonics = false,
+    insideCheckedGroup = insideCheckedGroup,
+    useDarkIcons = false,
+  )
