@@ -14,6 +14,7 @@ import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Robot
 import com.intellij.driver.sdk.ui.remote.RobotProvider
 import com.intellij.driver.sdk.ui.remote.SearchService
+import com.intellij.driver.sdk.ui.withoutStepOverlays
 import com.intellij.driver.sdk.waitAny
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
@@ -450,10 +451,13 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
                                      parentSearchContext, foundComponent))
   }
 
+  /** The colour on the screen at [point] of this component. A step overlay goes off the screen for the read. */
   fun getColor(point: Point?, moveMouse: Boolean = true): Color {
     if (moveMouse) moveMouse(point)
-    return withComponent {
-      Color(robot.getColor(it, point).getRGB())
+    return withoutStepOverlays {
+      withComponent {
+        Color(robot.getColor(it, point).getRGB())
+      }
     }
   }
 

@@ -344,8 +344,9 @@ private class OverlayPart(rootPane: JRootPane, text: OverlayText, bounds: Rectan
   fun remove() {
     // The removal of a painter does not repaint the glass pane.
     painter.removed = true
-    glassPane.repaint(painter.bounds)
     Disposer.dispose(disposable)
+    // Paint now, so a screen read right after this call, for example of a pixel colour, sees no overlay.
+    glassPane.paintImmediately(painter.bounds)
   }
 }
 

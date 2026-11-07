@@ -80,6 +80,42 @@ fun Driver.shownOverlays(): List<ShownOverlay> = onOverlayThread {
 }
 
 /**
+ * Runs [action] with no overlay on the screen of the IDE, and shows the overlay of the running step again after it.
+ * A read of the screen, for example a pixel colour, needs the content of the IDE alone, because an overlay paints
+ * over it. The overlay is off the screen before [action] starts: this function waits for the EDT of the IDE.
+ * A step inside [action] shows no overlay either.
+ */
+@TestOnly
+fun <T> withoutStepOverlays(action: () -> T): T {
+  val hiddenIn = synchronized(OverlayState) { OverlayState.suppress() }
+  try {
+    hiddenIn?.awaitOverlayRemoved()
+    return action()
+  }
+  finally {
+    synchronized(OverlayState) { OverlayState.release() }
+  }
+}
+
+/** The longest wait for the removal of the overlay. A caller in a Driver session of the EDT cannot get the EDT. */
+private val OVERLAY_REMOVAL_TIMEOUT: Duration = 10.seconds
+
+/**
+ * Waits until the IDE applied the overlay calls that are already sent, and so painted the removal of the overlay.
+ * Logs a failure, because the caller reads the screen and a missed removal only makes the read worse.
+ */
+private fun Driver.awaitOverlayRemoved() {
+  try {
+    overlayThread.submit { withContext(OnDispatcher.EDT) { utility(DriverOverlayRef::class).getShownTitle() } }
+      .get(OVERLAY_REMOVAL_TIMEOUT.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+  }
+  catch (e: Throwable) {
+    rethrowControlFlowException(e)
+    logFailure("The wait for the removal of the overlay failed", e)
+  }
+}
+
+/**
  * Sends the overlay calls in their order, and schedules the changes of the overlay. It never shuts down.
  * A call does not get the Driver session of the step, so a step in a session of the EDT does not wait for the EDT.
  */
@@ -240,11 +276,28 @@ private object OverlayState {
   private var shown: OverlayRequest? = null
   private var nextRefresh: ScheduledFuture<*>? = null
 
+  /** The number of the running [withoutStepOverlays] calls. While it is positive, the IDE shows no overlay. */
+  private var suppressions: Int = 0
+
+  /** Hides the overlay until [release]. Returns the [Driver] of the overlay that goes, or null if the IDE shows none. */
+  fun suppress(): Driver? {
+    val hidden = shown?.driver
+    suppressions++
+    refresh()
+    return hidden
+  }
+
+  fun release() {
+    suppressions--
+    refresh()
+  }
+
   /** Makes the IDE show the overlay that has priority now, and schedules the next change. */
   fun refresh() {
     if (failure?.end?.hasPassedNow() == true) failure = null
     if (linger?.end?.hasPassedNow() == true) linger = null
-    val wanted = failure?.request ?: steps.lastOrNull { it.visibleAt.hasPassedNow() }?.request ?: linger?.request
+    val wanted = if (suppressions > 0) null
+    else failure?.request ?: steps.lastOrNull { it.visibleAt.hasPassedNow() }?.request ?: linger?.request
     if (wanted != shown) {
       val old = shown
       shown = wanted

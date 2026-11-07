@@ -7,6 +7,7 @@ import com.intellij.driver.sdk.openFile
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.ShownOverlay
 import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
+import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.codeEditor
 import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.settings.settingsDialog
@@ -14,6 +15,7 @@ import com.intellij.driver.sdk.ui.dragAndDrop
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.shownOverlays
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.ui.withoutStepOverlays
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForProjectOpen
 import com.intellij.ide.starter.config.ConfigurationStorage
@@ -49,7 +51,7 @@ private val LONGER_THAN_NESTED_STEP_DELAY: Duration = 1.seconds
 
 /**
  * Checks the overlays of the Driver steps in a real IDE: the path and the time of the step, the failure overlays,
- * the mouse events under the overlay, and the overlay with a dialog.
+ * the mouse events and the screen reads under the overlay, and the overlay with a dialog.
  */
 @ReusedRun
 class DriverOverlayUiTest {
@@ -234,12 +236,7 @@ class DriverOverlayUiTest {
       openFile(SAMPLE_FILE)
       ideFrame { ensureFocused() }
       val editor = ideFrame().codeEditor()
-      // The overlay starts at the left edge of a 600 px column at the top centre of the IDE frame.
-      // There it is over the first line of the editor.
-      val frame = ideFrame().component
-      val overlayLeft = frame.getLocationOnScreen().x + (frame.width - minOf(600, frame.width - 32)) / 2
-      val underOverlay = overlayLeft + 80 - editor.component.getLocationOnScreen().x
-      val firstLine = editor.calculatePositionPoint(1, 1).y
+      val under = pointUnderOverlay(editor)
 
       // An enclosing step shows at most 30 characters of its name.
       val outer = "Mouse under overlay"
@@ -248,7 +245,7 @@ class DriverOverlayUiTest {
         assertEquals(40, editor.getCaretLine(), "the caret must be on the last line")
 
         step("Click in the editor") {
-          editor.click(Point(underOverlay, firstLine))
+          editor.click(under)
           waitFor("the click moves the caret to the first line", getter = { editor.getCaretLine() }, checker = { it == 1 })
           waitTitle("$outer › Click in the editor", "after the click")
         }
@@ -256,13 +253,49 @@ class DriverOverlayUiTest {
         step("Drag in the editor") {
           editor.removeSelection()
           // The drag starts on the text, not on the line numbers at the left edge of the overlay.
-          ui.dragAndDrop(editor, Point(underOverlay, firstLine), editor, Point(underOverlay + 100, firstLine))
+          ui.dragAndDrop(editor, under, editor, Point(under.x + 100, under.y))
           waitFor("the drag selects text", getter = { editor.getSelection().orEmpty() }, checker = { it.isNotBlank() })
           waitTitle("$outer › Drag in the editor", "after the drag")
         }
       }
     }
   }
+
+  /**
+   * A read of the screen takes the overlay off the screen, and the step shows it again after the read. Without this,
+   * a colour that a test reads under the overlay is the translucent grey of the overlay over the content of the IDE.
+   */
+  @Test
+  fun `a screen read sees the IDE under the overlay`(driver: Driver) {
+    with(driver) {
+      waitForProjectOpen(1.minutes)
+      openFile(SAMPLE_FILE)
+      ideFrame { ensureFocused() }
+      val editor = ideFrame().codeEditor()
+      val under = pointUnderOverlay(editor)
+      val withoutStep = editor.getColor(under, moveMouse = false)
+
+      val title = "Read the screen under the overlay"
+      step(title) {
+        waitTitle(title, "the overlay shows")
+        withoutStepOverlays {
+          assertEquals(emptyList<ShownOverlay>(), shownOverlays(), "the overlay goes off the screen for a screen read")
+        }
+        waitTitle(title, "the overlay comes back after the screen read")
+        assertEquals(withoutStep, editor.getColor(under, moveMouse = false), "the colour read ignores the overlay")
+      }
+    }
+  }
+}
+
+/**
+ * A point on the first line of [editor], under the overlay. The overlay starts at the left edge of a 600 px column
+ * at the top centre of the IDE frame.
+ */
+private fun Driver.pointUnderOverlay(editor: JEditorUiComponent): Point {
+  val frame = ideFrame().component
+  val overlayLeft = frame.getLocationOnScreen().x + (frame.width - minOf(600, frame.width - 32)) / 2
+  return Point(overlayLeft + 80 - editor.component.getLocationOnScreen().x, editor.calculatePositionPoint(1, 1).y)
 }
 
 /** The time at the end of the title of a step overlay, for example ` [6s]`. */
