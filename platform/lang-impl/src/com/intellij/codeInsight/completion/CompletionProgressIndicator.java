@@ -29,6 +29,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -781,6 +782,11 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
         }
       }
     });
+  }
+
+  /** The modality of the stop event that {@link #stop()} queues. */
+  @NotNull ModalityState getStopEventModalityState() {
+    return queue.getModalityState();
   }
 
   private boolean hideAutopopupIfMeaningless() {

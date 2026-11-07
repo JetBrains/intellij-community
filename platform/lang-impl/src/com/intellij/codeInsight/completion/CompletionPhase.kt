@@ -472,6 +472,10 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
             ApplicationManager.getApplication().invokeLater(
               /* runnable = */ { indicator.scheduleRestart() },
 
+              // The restart must run in the modality of the stop event. With a weaker modality,
+              // a modal context holds the restart back, and the stop event expires it.
+              /* state = */ indicator.stopEventModalityState,
+
               // since we break the synchronous execution here, it is possible that some other EDT event finishes completion before us
               // in this case, the current indicator becomes obsolete, and we don't need to reschedule the session anymore
 
