@@ -2,8 +2,7 @@
 """
 Counts how many times each module of this fixture was executed.
 
-Counters live on the "sys" module so that they survive even if this module itself
-were dropped from sys.modules -- which is exactly what the test checks it isn't.
+Counters live on the "sys" module, so environment.py can use them without an import.
 """
 import sys
 
