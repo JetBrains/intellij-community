@@ -55,6 +55,8 @@ internal class BackgroundStateInput<T>(
     // Only the EDT can compute at once, because [update] refreshes the editor. An EDT that forbids the RW lock, such as
     // `Dispatchers.UI`, cannot compute at once either. This holds also in unit-test mode.
     if (!computesInBackground() && application.isDispatchThread && application.lockProhibitedAdvice == null) {
+      // The result of a running background computation is older than this one.
+      jobRef.getAndSet(null)?.cancel()
       val result = try {
         computeOnThisThread(application)
       } catch (e: Throwable) {
