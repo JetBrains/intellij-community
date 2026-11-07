@@ -45,6 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -81,17 +82,22 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
     return coroutineScope {
       val effectiveDocument = document!!
 
+      // the editor listeners on EDT can detect the file type from the content, which asks for the project encoding
+      val encodingPreloading = launch(CoroutineName("project encoding preloading")) {
+        project.serviceAsync<EncodingProjectManager>()
+      }
+
+      val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
+        // the highlighter can detect the file type from the content too, so its read action must not create the encoding service
+        encodingPreloading.join()
+        prepareHighlighter(project, file, effectiveDocument)
+      }
+
       // trigger opening of persistent maps in advance
       span("editor necropolis preload") {
         Necropolis.getInstanceAsync(project)
       }
-
-      // the editor listeners on EDT can detect the file type from the content, which asks for the project encoding
-      project.serviceAsync<EncodingProjectManager>()
-
-      val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
-        prepareHighlighter(project, file, effectiveDocument)
-      }
+      encodingPreloading.join()
 
       val editorDeferred = CompletableDeferred<EditorEx>()
 
