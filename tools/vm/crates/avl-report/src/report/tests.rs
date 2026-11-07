@@ -490,7 +490,7 @@ fn the_suites_a_run_never_reached_are_named() {
 /// names and records by FQNs. Measured on 2026-10-15: the first daemon run read every class as unreported, though 76
 /// scenarios finished.
 #[test]
-fn a_whole_plan_that_ran_names_no_unreported_class() {
+fn a_plan_of_simple_names_is_covered_by_records_of_fqns() {
     for planned in [CLASS, "AirFlowSmokeUiTest"] {
         let mut events = vec![plan(&[planned])];
         events.extend(scenario("1", "SUCCESSFUL", None));
