@@ -324,7 +324,7 @@ public class PyEvaluator {
     PyExpression[] elements = tupleExpression.getElements();
     int[] result = new int[elements.length];
     for (int i = 0; i < elements.length; i++) {
-      Integer num = evaluate(elements[i], Integer.class);
+      Integer num = evaluateNoResolve(elements[i], Integer.class);
       if (num == null) {
         return null;
       }

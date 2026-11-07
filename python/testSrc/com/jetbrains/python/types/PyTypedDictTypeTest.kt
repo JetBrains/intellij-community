@@ -1230,6 +1230,15 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-93851"])
+    fun `named totality value keeps the keys required`() = test("""
+      from typing import TypedDict
+      TOTAL = False
+      Movie = TypedDict("Movie", {"name": str, "year": int}, total=TOTAL)  # WARNING Value of 'total' must be True or False
+      mov: Movie = {"name": "x"}  # WARNING TypedDict 'Movie' has missing key: 'year'
+      """.trimIndent())
+
+    @Test
     @TestFor(classes = [PyTypedDictTypeProvider::class])
     fun `total False with spaces around the equals sign in another file makes the keys optional`() = test("""
       from tdmod import Movie
