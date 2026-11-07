@@ -318,7 +318,7 @@ data class VMOptions(
 
   fun setIdeStartupDialogEnabled(value: Boolean = true): Unit = addSystemProperty("intellij.startup.wizard", value)
 
-  fun setFatalErrorNotificationEnabled(): Unit = addSystemProperty("idea.fatal.error.notification", true)
+  fun setFatalErrorNotificationEnabled(): Unit = addSystemProperty("idea.fatal.error.notification", "enabled")
 
   fun setSnapshotPath(snapshotsDir: Path) {
     addSystemProperty("snapshots.path", snapshotsDir)
