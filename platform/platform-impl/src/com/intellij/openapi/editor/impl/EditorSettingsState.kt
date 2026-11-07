@@ -192,7 +192,8 @@ class EditorSettingsState(
    * The language of the editor file, which [languageInput] computes.
    *
    * [initialMargins] reads it while the state is built, before this field gets its value. It sees `null` then, which is
-   * also the value before the first computation.
+   * also the value before the first computation. It changes only inside a batch, so a calculator on any thread sees the
+   * current value.
    */
   private var language: Language? = null
 
@@ -201,6 +202,7 @@ class EditorSettingsState(
    * [softMargins], and [rightMargin] calculate their defaults from it.
    *
    * The code style settings of a file can need a read action, so [marginsInput] computes the value in the background.
+   * It changes only inside a batch, so a calculator on any thread sees the current value.
    */
   private var margins: Margins = initialMargins()
 
@@ -209,7 +211,8 @@ class EditorSettingsState(
    * defaults from it.
    *
    * The per-file value needs the PSI, and therefore the RW lock, so a calculator must not compute it. [fileIndentInput]
-   * computes the value in a background read action, and then refreshes the two properties.
+   * computes the value in a background read action, and then refreshes the two properties. It changes only inside a
+   * batch, so a calculator on any thread sees the current value.
    *
    * The seed is the project setting, and not the global one. It is what the Remote Development frontend reads until the
    * backend pushes the computed value, and this value selects the character an indent writes. The project setting needs
@@ -398,10 +401,16 @@ class EditorSettingsState(
     }
   }
 
+  /**
+   * Stores [newLanguage], and refreshes the sticky lines setting of the language in one batch. Then it computes the
+   * margins again, because they depend on the language.
+   */
   private fun updateLanguage(newLanguage: Language?) {
     if (language != newLanguage) {
-      language = newLanguage
-      refresh(::myStickyLinesShownForLanguage)
+      batch {
+        language = newLanguage
+        refresh(::myStickyLinesShownForLanguage)
+      }
       marginsInput.recalculate()
     }
   }
@@ -411,8 +420,8 @@ class EditorSettingsState(
    * margin is shown, so the batch also refreshes [myIsRightMarginShown].
    */
   private fun updateMargins(newMargins: Margins) {
-    margins = newMargins
     batch {
+      margins = newMargins
       refresh(::myWrapWhenTypingReachesRightMargin)
       refresh(::softMargins)
       refresh(::rightMargin)
@@ -471,8 +480,8 @@ class EditorSettingsState(
     if (editor != null && !editor.isViewer && fileOptions != null) {
       fileOptions.associateWithDocument(editor.document)
     }
-    fileIndent = newFileIndent
     batch {
+      fileIndent = newFileIndent
       refresh(::myUseTabCharacter)
       refresh(::tabSize)
     }
