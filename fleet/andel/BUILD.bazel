@@ -13,6 +13,10 @@ fleet_wasmjs_module(
         "@community//fleet/bifurcan:wasmjs_module_lib",
         "@community//fleet/openmap:wasmjs_module_lib",
     ],
+    runtime_deps = [
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
     deps = [
         "@community//fleet/fastutil:wasmjs_module_lib",
         "@community//fleet/util/codepoints:wasmjs_module_lib",
@@ -21,7 +25,6 @@ fleet_wasmjs_module(
         "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
         "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_collections_immutable",
         "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_core",
-        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_json",
     ],
 )
 

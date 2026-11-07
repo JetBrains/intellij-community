@@ -15,7 +15,7 @@ fleet_wasmjs_module(
         "@community//fleet/rhizomedb.transactor.rebase:wasmjs_module_lib",
         "@community//fleet/rhizomedb.transactor:wasmjs_module_lib",
     ],
-    deps = [
+    runtime_deps = [
         "@community//fleet/rhizomedb:wasmjs_module_lib",
         "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
     ],

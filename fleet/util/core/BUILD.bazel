@@ -19,6 +19,10 @@ fleet_wasmjs_module(
         "@community//fleet/util/serialization:wasmjs_module_lib",
         "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_collections_immutable",
     ],
+    runtime_deps = [
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+    ],
     deps = [
         "@community//fleet/reporting/api:wasmjs_module_lib",
         "@community//fleet/reporting/shared:wasmjs_module_lib",
@@ -26,7 +30,6 @@ fleet_wasmjs_module(
         "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
         "@kmp_deps_wasmjs//:org_jetbrains_kotlin_wrappers_kotlin_browser",
         "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_core",
-        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_json",
     ],
 )
 

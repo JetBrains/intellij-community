@@ -15,8 +15,8 @@ fleet_wasmjs_module(
         "@community//fleet/rpc:wasmjs_module_lib",
         "@community//fleet/util/core:wasmjs_module_lib",
     ],
+    runtime_deps = ["@community//fleet/bifurcan:wasmjs_module_lib"],
     deps = [
-        "@community//fleet/bifurcan:wasmjs_module_lib",
         "@community//fleet/fastutil:wasmjs_module_lib",
         "@community//fleet/multiplatform.shims:wasmjs_module_lib",
         "@community//fleet/openmap:wasmjs_module_lib",

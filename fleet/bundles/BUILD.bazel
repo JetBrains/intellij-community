@@ -8,9 +8,9 @@ fleet_wasmjs_module(
     module_name = "fleet.bundles",
     plugins = ["@lib//:kotlin-serialization-plugin"],
     visibility = ["//visibility:public"],
+    runtime_deps = ["@community//fleet/modules/api:wasmjs_module_lib"],
     deps = [
         "@community//fleet/bifurcan:wasmjs_module_lib",
-        "@community//fleet/modules/api:wasmjs_module_lib",
         "@community//fleet/util/core:wasmjs_module_lib",
         "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
         "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",

@@ -8,10 +8,8 @@ fleet_wasmjs_module(
     kotlinc_opts = ":custom_api",
     module_name = "fleet.reporting.api",
     visibility = ["//visibility:public"],
-    deps = [
-        "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
-        "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
-    ],
+    runtime_deps = ["@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core"],
+    deps = ["@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib"],
 )
 
 ### auto-generated section `dev fleet.reporting.api` start
