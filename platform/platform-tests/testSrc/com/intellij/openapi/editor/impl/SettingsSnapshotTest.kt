@@ -385,6 +385,25 @@ class SettingsSnapshotTest {
   }
 
   /**
+   * The Remote Development frontend decodes the soft margins into a mutable list. A later change of that list must not
+   * reach a snapshot.
+   */
+  @Test
+  fun testASnapshotKeepsTheSoftMarginsFromTheFrontend(): Unit = fixture.runTest {
+    val settings = SettingsImpl()
+    val state = settings.getState()
+    val property = requireNotNull(state.findProperty(state::softMargins.name))
+    val decoded = requireNotNull((property as TransferableProperty<*>).decodeFromString("[17,42]"))
+
+    property.setValue(state, decoded)
+    // Safe: the kotlinx decoder gives an ArrayList of the integers.
+    @Suppress("UNCHECKED_CAST")
+    (decoded as MutableList<Int>).add(80)
+
+    assertEquals(listOf(17, 42), settings.getSnapshot().getSoftMargins())
+  }
+
+  /**
    * Each change publishes a new snapshot, and an older snapshot keeps its values.
    */
   @Test

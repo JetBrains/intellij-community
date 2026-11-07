@@ -83,7 +83,7 @@ class EditorSettingsState(
   var tabSize: Int by codeStyleProperty(projectFileIndent().tabSize) { fileIndent.tabSize }
 
   var myWrapWhenTypingReachesRightMargin: Boolean by codeStyleProperty(initialMargins().wrapOnTyping) { margins.wrapOnTyping }
-  var softMargins: List<Int> by codeStyleProperty(initialMargins().softMargins) { margins.softMargins }
+  var softMargins: List<Int> by codeStyleProperty(initialMargins().softMargins, immutableList()) { margins.softMargins }
   var rightMargin: Int by codeStyleProperty(initialMargins().rightMargin) { margins.rightMargin }
 
   // Defaults from EditorSettingsExternalizable. A setter of SettingsImpl overrides a default for this editor.
@@ -586,6 +586,14 @@ class EditorSettingsState(
     }
   }
 
+  /**
+   * Makes the list immutable, so that a snapshot keeps it unchanged. A caller of a setter and the Remote Development
+   * frontend can give a mutable list.
+   */
+  private fun immutableList(): CustomOutValueModifier<List<Int>> {
+    return CustomOutValueModifier { java.util.List.copyOf(it) }
+  }
+
   private fun externalizable(): EditorSettingsExternalizable {
     return EditorSettingsExternalizable.getInstance()
   }
@@ -613,11 +621,13 @@ class EditorSettingsState(
    */
   private inline fun <reified T> codeStyleProperty(
     initialValue: T,
+    outValueModifier: CustomOutValueModifier<T>? = null,
     noinline defaultValueCalculator: () -> T,
   ): StateProperty<T> {
     return property(
       initialValue = initialValue,
       defaultValueCalculator = SyncDefaultValueCalculator(defaultValueCalculator),
+      outValueModifier = outValueModifier,
       alwaysTransfer = true,
     )
   }

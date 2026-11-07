@@ -591,8 +591,7 @@ class SettingsImpl internal constructor(
     if (softMargins == null) {
       state.clearOverriding(state::softMargins)
     } else {
-      // A copy, so that a later change of the caller list does not change a snapshot.
-      state.softMargins = java.util.List.copyOf(softMargins)
+      state.softMargins = softMargins
     }
   }
 
