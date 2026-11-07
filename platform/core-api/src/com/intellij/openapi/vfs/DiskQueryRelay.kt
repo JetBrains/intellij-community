@@ -10,14 +10,12 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.isInCancellableContext
 import com.intellij.openapi.progress.util.awaitWithCheckCanceled
 import com.intellij.openapi.util.ThrowableComputable
-import com.intellij.util.ExceptionUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -57,8 +55,12 @@ class DiskQueryRelay<Param : Any, Result>(function: Function<in Param, out Resul
    * We remember the submitted tasks in "myTasks" until they're finished, to avoid creating many-many similar threads
    * in case the callee is interrupted by "checkCanceled", restarted, comes again with the same query, is interrupted again, and so on.
    */
-  private val myTasks: MutableMap<Param, Future<Result>> = ConcurrentHashMap<Param, Future<Result>>()
+  private val myTasks: MutableMap<Param, Future<Outcome<Result>>> = ConcurrentHashMap<Param, Future<Outcome<Result>>>()
 
+  /**
+   * Throws the exception of the function as is, without a wrapper.
+   * Coalesced requests get the same exception instance: its stack trace shows the pooled thread, not the caller.
+   */
   fun accessDiskWithCheckCanceled(arg: Param): Result {
     val startedAtNs = System.nanoTime()
     try {
@@ -70,7 +72,8 @@ class DiskQueryRelay<Param : Any, Result>(function: Function<in Param, out Resul
         executor.submit(Callable {
           installThreadContext(coroutineScope.coroutineContext, true) {
             try {
-              function.apply(eachArg)
+              // catches cancellation too: getOrThrow() rethrows it to the waiting caller
+              runCatching { function.apply(eachArg) }
             }
             finally {
               myTasks.remove(eachArg)
@@ -82,7 +85,7 @@ class DiskQueryRelay<Param : Any, Result>(function: Function<in Param, out Resul
         // maybe it was very fast and completed before being put into a map
         myTasks.remove(arg, future)
       }
-      return future.awaitWithCheckCanceled()
+      return future.awaitWithCheckCanceled().getOrThrow()
     }
     finally {
       val elapsedNs = System.nanoTime() - startedAtNs
@@ -116,23 +119,10 @@ class DiskQueryRelay<Param : Any, Result>(function: Function<in Param, out Resul
         return task.compute()
       }
 
-      val future: Future<Result> = executor.submit(Callable { task.compute() })
+      // catches cancellation too: getOrThrow() rethrows it to the waiting caller
+      val future: Future<Outcome<Result>> = executor.submit(Callable { runCatching { task.compute() } })
       try {
-        return future.awaitWithCheckCanceled()
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (wrapper: RuntimeException) {
-        val outerCause = wrapper.cause
-        if (outerCause is ExecutionException) {
-          val t = outerCause.cause
-          if (t != null) {
-            ExceptionUtil.rethrowUnchecked(t)
-            throw t
-          }
-        }
-        throw wrapper
+        return future.awaitWithCheckCanceled().getOrThrow()
       }
       finally {
         // Better .cancel(true) here, but thread interruption is too intrusive, so it is cheaper
@@ -189,4 +179,13 @@ class DiskQueryRelay<Param : Any, Result>(function: Function<in Param, out Resul
 
   @Service(Service.Level.APP)
   private class DiskQueryRelayCoroutineScope(val scope: CoroutineScope)
+
+  /**
+   * It's easier to just pass an exception through async as a [Result], instead of unwrapping the (multiple) exception wrapping.
+   * This way the task's [Future] always completes normally, so [awaitWithCheckCanceled] throws only for the wait itself.
+   * Without it, [awaitWithCheckCanceled] wraps the task's exception, or turns a [java.util.concurrent.CancellationException]
+   * into a [ProcessCanceledException].
+   * (Aliased, because the type parameter `Result` of [DiskQueryRelay] hides [kotlin.Result])
+   */
+  private typealias Outcome<R> = Result<R>
 }

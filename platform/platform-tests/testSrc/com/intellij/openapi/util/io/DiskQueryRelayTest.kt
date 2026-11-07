@@ -21,11 +21,14 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.io.IOException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.concurrent.AbstractExecutorService
 import java.util.concurrent.Callable
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.CountDownLatch
@@ -34,6 +37,7 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.seconds
 
 private const val MANY_REQUESTS = 64
@@ -231,6 +235,69 @@ class DiskQueryRelayTest {
         }
       }
       job.join()
+    }
+  }
+
+  @Test
+  fun accessDiskWithCheckCanceled_throwsTheOriginalException_inBothContexts() {
+    for (failure in failuresOfEachKind()) {
+      val taskThread = AtomicReference<Thread>()
+      val relay = DiskQueryRelay<Int, Unit>({
+        taskThread.set(Thread.currentThread())
+        throw failure
+      })
+      assertThrowsOriginalInBothContexts(failure, taskThread) { arg -> relay.accessDiskWithCheckCanceled(arg) }
+    }
+  }
+
+  @Test
+  fun compute_throwsTheOriginalException_inBothContexts() {
+    for (failure in failuresOfEachKind()) {
+      val taskThread = AtomicReference<Thread>()
+      assertThrowsOriginalInBothContexts(failure, taskThread) {
+        DiskQueryRelay.compute<Unit, Exception> {
+          taskThread.set(Thread.currentThread())
+          throw failure
+        }
+      }
+    }
+  }
+
+  /** A cancellation exception is in the list too: the relay must not turn it into a [ProcessCanceledException] */
+  private fun failuresOfEachKind(): List<Throwable> = listOf(
+    IOException("checked"),
+    IllegalStateException("unchecked"),
+    AssertionError("error"),
+    ProcessCanceledException(),
+    CancellationException("not a PCE"),
+  )
+
+  /**
+   * Out of a cancellable context, the relay runs the task inline.
+   * In a cancellable context, it runs the task on another thread.
+   * The caller must get the same exception instance in both cases.
+   */
+  private fun assertThrowsOriginalInBothContexts(failure: Throwable, taskThread: AtomicReference<Thread>, call: (arg: Int) -> Unit) {
+    assertFalse(isInCancellableContext(), "The test thread must not be in a cancellable context")
+    assertSame(failure, catchFailure { call(1) }, "Inline run must throw the exception of the task as is")
+    assertSame(Thread.currentThread(), taskThread.get(), "Out of a cancellable context the relay must run the task inline")
+
+    timeoutRunBlocking(timeout = 30.seconds) {
+      withContext(unlimited()) {
+        assertTrue(isInCancellableContext(), "The coroutine must be in a cancellable context")
+        assertSame(failure, catchFailure { call(2) }, "Relayed run must throw the exception of the task as is, without a wrapper")
+        assertNotSame(Thread.currentThread(), taskThread.get(), "In a cancellable context the relay must run the task on another thread")
+      }
+    }
+  }
+
+  private fun catchFailure(call: () -> Unit): Throwable? {
+    try {
+      call()
+      return null
+    }
+    catch (t: Throwable) {
+      return t
     }
   }
 
