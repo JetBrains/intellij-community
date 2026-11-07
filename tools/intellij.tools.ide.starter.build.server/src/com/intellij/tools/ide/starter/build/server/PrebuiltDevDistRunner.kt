@@ -9,6 +9,7 @@ import com.intellij.platform.devIdeConfig.DevIdeConfig
 import com.intellij.tools.ide.util.common.logOutput
 import org.jetbrains.intellij.build.distributionExpirationProblem
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
 /**
@@ -27,18 +28,31 @@ import kotlin.io.path.isDirectory
  * already on disk, so both fail the run with a named reason rather than the assertions - or, worse, a timeout.
  *
  * A split-mode test starts two IDEs, the backend and the JetBrains Client frontend, so it declares two distributions:
- * [configFiles] holds one config file per product, and each IDE gets the one assembled for its platform prefix.
+ * [distributions] holds one distribution per product, and each IDE gets the one assembled for its platform prefix.
+ *
+ * A distribution can have a pool of context plugins. A requested module that the distribution does not contain is
+ * available when a plugin of the pool has it as its main module. [installContextPlugins] copies that plugin into the
+ * `plugins` directory of the IDE context.
  *
  * [origin] says where the distributions come from, for example "declared by 'idea.ide.config.path'". Each error
  * message names it.
  */
 internal class PrebuiltDevDistRunner(
-  private val configFiles: List<Path>,
+  private val distributions: List<DeclaredDevDist>,
   private val origin: String = "declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}'",
 ) : DevBuildServerRunner {
-  constructor(configFile: Path, origin: String = "declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}'") : this(listOf(configFile), origin)
+  constructor(configFile: Path, origin: String = "declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}'") :
+    this(listOf(DeclaredDevDist(configFile)), origin)
 
-  private val configs: List<Pair<Path, DevIdeConfig.Content>> by lazy { configFiles.map { it to DevIdeConfig.read(it) } }
+  private class LoadedDevDist(
+    @JvmField val configFile: Path,
+    @JvmField val config: DevIdeConfig.Content,
+    @JvmField val contextPlugins: ContextPluginDirs?,
+  )
+
+  private val loaded: List<LoadedDevDist> by lazy {
+    distributions.map { LoadedDevDist(it.configFile, DevIdeConfig.read(it.configFile), it.contextPlugins?.let(ContextPluginDirs::read)) }
+  }
 
   override fun isDevBuildSupported(): Boolean = true
 
@@ -53,15 +67,24 @@ internal class PrebuiltDevDistRunner(
 
   /** Returns the prepared IDE installation directory. */
   override fun startDevBuild(ideInfo: IdeInfo): Path {
-    val (configFile, config) = configFor(ideInfo)
-    val home = config.homePath
+    val distribution = distributionFor(ideInfo)
+    val home = distribution.config.homePath
     check(home.isDirectory()) {
-      "The dev distribution $origin is missing: $configFile names $home, which is not a directory"
+      "The dev distribution $origin is missing: ${distribution.configFile} names $home, which is not a directory"
     }
-    checkDistributionSatisfies(ideInfo, configFile, config)
-    checkDistributionIsNotExpired(home, configFile)
+    checkDistributionSatisfies(ideInfo, distribution)
+    checkDistributionIsNotExpired(home, distribution.configFile)
     logOutput("Using the prepared dev distribution $home for $ideInfo")
     return home
+  }
+
+  /** Installs the plugins of the context plugin pool that hold the requested modules the distribution does not contain. */
+  override fun installContextPlugins(ideInfo: IdeInfo, pluginsDir: Path) {
+    val distribution = distributionFor(ideInfo)
+    val contextPlugins = distribution.contextPlugins ?: return
+    val config = distribution.config
+    val missing = missingDevDistModules(ideInfo.additionalModules, config.additionalModules, config.bundledModules)
+    installContextPlugins(missing, contextPlugins, config.homePath.resolve("plugins"), pluginsDir)
   }
 
   /**
@@ -88,30 +111,32 @@ internal class PrebuiltDevDistRunner(
   }
 
   /** The declared distribution assembled for the product of [ideInfo], keyed as in `build/dev-build.json`. */
-  private fun configFor(ideInfo: IdeInfo): Pair<Path, DevIdeConfig.Content> {
-    val index = declaredDevDistFor(configs.map { (_, config) -> config.platformPrefix }, ideInfo.platformPrefix, ideInfo.baseIdePlatformPrefixForFrontend)
-    return configs.getOrNull(index ?: -1) ?: error(
+  private fun distributionFor(ideInfo: IdeInfo): LoadedDevDist {
+    val index = declaredDevDistFor(loaded.map { it.config.platformPrefix }, ideInfo.platformPrefix, ideInfo.baseIdePlatformPrefixForFrontend)
+    return loaded.getOrNull(index ?: -1) ?: error(
       "$ideInfo needs the '${devDistProductKey(ideInfo.platformPrefix, ideInfo.baseIdePlatformPrefixForFrontend)}' product, " +
       "but the dev distributions $origin were assembled as " +
-      configs.joinToString { (configFile, config) -> "'${config.platformPrefix}' ($configFile)" } +
-      if (configs.size == 1) ". A split-mode test declares its frontend distribution by '$FRONTEND_CONFIG_PATH_PROPERTY'" else ""
+      loaded.joinToString { "'${it.config.platformPrefix}' (${it.configFile})" } +
+      if (loaded.size == 1) ". A split-mode test declares its frontend distribution by '$FRONTEND_CONFIG_PATH_PROPERTY'" else ""
     )
   }
 
-  private fun checkDistributionSatisfies(ideInfo: IdeInfo, configFile: Path, config: DevIdeConfig.Content) {
+  private fun checkDistributionSatisfies(ideInfo: IdeInfo, distribution: LoadedDevDist) {
+    val config = distribution.config
+    val contextPlugins = distribution.contextPlugins
     val requested = ideInfo.additionalModules.toSet()
     val declared = config.additionalModules.toSet()
-    val missing = missingDevDistModules(requested, declared, config.bundledModules)
-    check(missing.isEmpty()) {
-      "The dev distribution $origin does not contain " +
-      "$missing, which $ideInfo asks for.\n" +
+    val unavailable = unavailableDevDistModules(requested, declared, config.bundledModules, contextPlugins)
+    check(unavailable.isEmpty()) {
+      "The dev distribution $origin and its context plugins do not contain $unavailable, which $ideInfo asks for.\n" +
       "  requested: ${requested.sorted()}\n" +
       "  declared in the distribution: ${declared.sorted()}\n" +
       "  bundled in the distribution: ${config.bundledModules.size} modules (see '${DevIdeConfig.BUNDLED_MODULES_KEY}')\n" +
-      "  config file: $configFile\n" +
-      "A module is in the distribution when it is declared or bundled. The declared list comes from the " +
-      "`additional_modules` of the distribution target this test declares, so add the missing ones to it, or point the " +
-      "test at a distribution that has them."
+      "  context plugins: ${contextPlugins?.let { "${it.modules.keys.sorted()} (${it.manifest})" } ?: "none"}\n" +
+      "  config file: ${distribution.configFile}\n" +
+      "A module is available when the distribution declares or bundles it, or when a context plugin has it as its main module. " +
+      "Add each missing plugin module to the row of the test module in `tests` of `build/starter-bazel-tests.json`. " +
+      "Then run `./build/jpsModelToBazel.cmd` and `bazel run //platform/buildScripts:plugin-model-tool`."
     }
 
     val extra = declared - requested
@@ -139,6 +164,61 @@ internal fun declaredDevDistFor(declaredProductKeys: List<String>, platformPrefi
  * [DevIdeConfig.CONFIG_PATH_PROPERTY]. Only the test harness reads it: a dev launcher starts one IDE.
  */
 internal const val FRONTEND_CONFIG_PATH_PROPERTY: String = "idea.ide.frontend.config.path"
+
+/**
+ * The manifest of the context plugin pool of the distribution of [DevIdeConfig.CONFIG_PATH_PROPERTY], as a runfiles path
+ * or an absolute path. See [ContextPluginDirs].
+ */
+internal const val CONTEXT_PLUGINS_PROPERTY: String = "idea.ide.context.plugins"
+
+/** The manifest of the context plugin pool of the distribution of [FRONTEND_CONFIG_PATH_PROPERTY]. */
+internal const val FRONTEND_CONTEXT_PLUGINS_PROPERTY: String = "idea.ide.frontend.context.plugins"
+
+/** A declared distribution: its [configFile], and the manifest of its context plugin pool, or `null` when it has no pool. */
+internal class DeclaredDevDist(@JvmField val configFile: Path, @JvmField val contextPlugins: Path? = null)
+
+/**
+ * Returns the [requested] modules that neither a dev distribution nor its [contextPlugins] contain, sorted.
+ *
+ * See [missingDevDistModules] for the modules of the distribution. A pool contains a module when one of its plugins
+ * has the module as its main module.
+ */
+internal fun unavailableDevDistModules(
+  requested: Collection<String>,
+  declared: Collection<String>,
+  bundled: Collection<String>,
+  contextPlugins: ContextPluginDirs?,
+): List<String> {
+  return missingDevDistModules(requested, declared, bundled).filter { contextPlugins?.directoryOf(it) == null }
+}
+
+/**
+ * Installs the plugins of [contextPlugins] that have the [missing] modules as main modules into [pluginsDir], and
+ * returns their plugin directories, sorted.
+ *
+ * [missing] holds the requested modules that the distribution does not contain, see [missingDevDistModules]. The
+ * function fails on a module that no plugin of the pool has. It also fails on a plugin directory that
+ * [homePluginsDir], the `plugins` directory of the distribution, already holds: the IDE would load two copies.
+ */
+internal fun installContextPlugins(missing: Collection<String>, contextPlugins: ContextPluginDirs, homePluginsDir: Path, pluginsDir: Path): List<String> {
+  val directories = missing.mapTo(sortedSetOf()) { module ->
+    contextPlugins.directoryOf(module) ?: error("The context plugins ${contextPlugins.manifest} have no plugin with the main module '$module'")
+  }
+  if (directories.isEmpty()) {
+    return emptyList()
+  }
+
+  for (directory in directories) {
+    check(!homePluginsDir.resolve(directory).exists()) {
+      "The context plugin directory '$directory' of ${contextPlugins.manifest} is also in the distribution, at ${homePluginsDir.resolve(directory)}"
+    }
+  }
+  for (directory in directories) {
+    contextPlugins.installPluginDirectory(directory, pluginsDir)
+  }
+  logOutput("Installed the context plugins ${missing.sorted()} of ${contextPlugins.manifest} into $pluginsDir")
+  return directories.toList()
+}
 
 /**
  * Returns the [requested] modules that a dev distribution does not contain, sorted.

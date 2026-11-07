@@ -237,8 +237,7 @@ class IdeFromCodeInstaller(private val useInstallationCache: Boolean = true) : I
       error("Dev build is not supported. Add dependency on intellij.tools.ide.starter.build.server module.")
     }
 
-    val ideWithProvidedAdditionalModules =
-      ideInfo.copy(additionalModules = ideInfo.additionalModules + AdditionalModulesForDevBuildServer.getAdditionalModules(ideInfo))
+    val ideWithProvidedAdditionalModules = AdditionalModulesForDevBuildServer.withRequestedModules(ideInfo)
     val installationCacheKey = InstallationCacheKey(ideWithProvidedAdditionalModules, ConfigurationStorage.useDockerContainer())
 
     val existingInstallationPath = cachedInstallationDirectories[installationCacheKey]

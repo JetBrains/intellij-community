@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.TestingOptions
 import org.junit.platform.launcher.TestExecutionListener
 import org.kodein.di.DI
 import org.kodein.di.bindSingleton
+import java.nio.file.Path
 
 fun initStarterDevBuildServerDI() {
   val runner = devBuildServerRunner()
@@ -42,13 +43,18 @@ private fun devBuildServerRunner(): DevBuildServerRunner {
   val configFile = DevIdeConfig.declaredConfigFile()
   if (configFile != null) {
     logOutput("Dev build server: using the distribution declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}' ($configFile)")
-    val frontendConfigFile = System.getProperty(FRONTEND_CONFIG_PATH_PROPERTY)?.takeIf { it.isNotEmpty() }?.let(DevIdeConfig::resolveConfigFile)
+    val distribution = DeclaredDevDist(configFile, declaredContextPlugins(CONTEXT_PLUGINS_PROPERTY))
+    val frontendConfigFile = declaredFile(FRONTEND_CONFIG_PATH_PROPERTY)
+    val frontendContextPlugins = declaredContextPlugins(FRONTEND_CONTEXT_PLUGINS_PROPERTY)
     if (frontendConfigFile == null) {
-      return PrebuiltDevDistRunner(configFile)
+      check(frontendContextPlugins == null) {
+        "'$FRONTEND_CONTEXT_PLUGINS_PROPERTY' names the context plugins of a frontend distribution, but '$FRONTEND_CONFIG_PATH_PROPERTY' is not set"
+      }
+      return PrebuiltDevDistRunner(listOf(distribution))
     }
     logOutput("Dev build server: using the frontend distribution declared by '$FRONTEND_CONFIG_PATH_PROPERTY' ($frontendConfigFile)")
     return PrebuiltDevDistRunner(
-      configFiles = listOf(configFile, frontendConfigFile),
+      distributions = listOf(distribution, DeclaredDevDist(frontendConfigFile, frontendContextPlugins)),
       origin = "declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}' and '$FRONTEND_CONFIG_PATH_PROPERTY'",
     )
   }
@@ -68,6 +74,18 @@ private fun devBuildServerRunner(): DevBuildServerRunner {
     return DevBuildServerRunnerImpl
   }
   return LocalBazelDevDistRunner(PathManager.getHomeDir())
+}
+
+/** The file that [property] names, as [DevIdeConfig.resolveConfigFile] resolves it, or `null` when [property] is unset. */
+private fun declaredFile(property: String): Path? {
+  return System.getProperty(property)?.takeIf { it.isNotBlank() }?.let(DevIdeConfig::resolveConfigFile)
+}
+
+/** The manifest of the context plugin pool that [property] names, or `null` when [property] is unset. See [ContextPluginDirs]. */
+private fun declaredContextPlugins(property: String): Path? {
+  val manifest = declaredFile(property) ?: return null
+  logOutput("Dev build server: using the context plugins declared by '$property' ($manifest)")
+  return manifest
 }
 
 /**

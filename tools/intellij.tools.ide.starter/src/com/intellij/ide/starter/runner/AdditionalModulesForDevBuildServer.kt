@@ -64,7 +64,15 @@ object AdditionalModulesForDevBuildServer {
     additionalMonolithModules.replaceWith(state.additionalMonolithModules)
   }
 
-  internal fun getAdditionalModules(ideInfo: IdeInfo): List<String> {
+  /**
+   * Returns [ideInfo] with the modules that a dev build of it must contain: the modules of [ideInfo] and the registered
+   * modules of its IDE target.
+   */
+  internal fun withRequestedModules(ideInfo: IdeInfo): IdeInfo {
+    return ideInfo.copy(additionalModules = ideInfo.additionalModules + getAdditionalModules(ideInfo))
+  }
+
+  private fun getAdditionalModules(ideInfo: IdeInfo): List<String> {
     val result = additionalModules +
                  if (ideInfo.platformPrefix == PlatformUtils.JETBRAINS_CLIENT_PREFIX) {
                    additionalFrontendModules

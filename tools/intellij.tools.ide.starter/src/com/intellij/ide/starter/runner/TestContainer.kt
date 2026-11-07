@@ -161,6 +161,9 @@ interface TestContainer {
 
     var testContext = IDETestContext(paths, ide, testCase, testName, projectHome, preserveSystemDir = preserveSystemDir)
     testContext.wipeSystemDir()
+    if (ide.isFromSources) {
+      DevBuildServerRunner.instance.installContextPlugins(AdditionalModulesForDevBuildServer.withRequestedModules(testCase.ideInfo), paths.pluginsDir)
+    }
 
     testContext = applyDefaultVMOptions(testContext)
 

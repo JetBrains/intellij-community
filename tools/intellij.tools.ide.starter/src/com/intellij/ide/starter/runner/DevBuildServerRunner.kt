@@ -26,6 +26,15 @@ interface DevBuildServerRunner {
   /** Blocks the caller until the distribution is ready. An interrupt stops the wait. */
   fun startDevBuild(ideInfo: IdeInfo): Path
 
+  /**
+   * Installs the context plugins that the IDE of [ideInfo] needs into [pluginsDir], the `plugins` directory of its context.
+   *
+   * [ideInfo] holds the requested modules, see [AdditionalModulesForDevBuildServer.withRequestedModules]. A runner that
+   * builds each requested module into the distribution installs nothing.
+   */
+  fun installContextPlugins(ideInfo: IdeInfo, pluginsDir: Path) {
+  }
+
   companion object {
     val instance: DevBuildServerRunner
       get() = di.direct.instance<DevBuildServerRunner>()

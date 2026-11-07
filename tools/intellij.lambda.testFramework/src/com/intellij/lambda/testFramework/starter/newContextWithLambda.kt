@@ -63,6 +63,9 @@ fun Starter.newContextWithLambda(
  * [addLambdaTestPluginsToDevBuild] makes the dev build bundle the plugins, so the installation carries them only
  * when the run resolved a dev build from code. A missing plugin means the run got an installer build instead, and
  * no copy can repair that: the plugin holds this repository's own test code.
+ *
+ * The function skips a plugin directory that the frontend custom plugins directory already holds. The dev build server
+ * installs a context plugin there, see `DevBuildServerRunner.installContextPlugins`.
  */
 private fun IDERemDevTestContext.installFrontendLambdaPlugins(setup: LambdaTestSetup) {
   val frontendCustomPluginsDir = frontendIDEContext.paths.pluginsDir
@@ -71,6 +74,9 @@ private fun IDERemDevTestContext.installFrontendLambdaPlugins(setup: LambdaTestS
   }
   val bundledPluginsDir = frontendIDEContext.ide.installationPath.resolve("plugins")
   setup.additionalPluginDirNames(OnlyFrontend, All).forEach { pluginDirName ->
+    if (frontendCustomPluginsDir.resolve(pluginDirName).exists()) {
+      return@forEach
+    }
     val bundledPluginDir = bundledPluginsDir.resolve(pluginDirName)
     check(bundledPluginDir.exists()) {
       "The frontend IDE at ${frontendIDEContext.ide.installationPath} does not bundle the lambda test plugin " +
