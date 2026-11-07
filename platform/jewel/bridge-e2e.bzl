@@ -112,10 +112,13 @@ def bridge_e2e_test(
         # SELF_LOCATION, which Bazel's Windows test wrapper does not set, and discovery finds nothing there.
         env = {"JB_TEST_JAR": lib_name + ".jar"},
         # Bazel scrubs the test environment, and the IDE needs the display. Without these the IDE Starter wraps the
-        # IDE in an `xvfb-run` of its own, and Spectre attaches to that wrapper instead of the IDE.
+        # IDE in an `xvfb-run` of its own, Spectre attaches to that wrapper instead of the IDE, and on Wayland the
+        # helper cannot reach the session or the session bus.
         env_inherit = [
+            "DBUS_SESSION_BUS_ADDRESS",
             "DISPLAY",
             "XAUTHORITY",
+            "XDG_RUNTIME_DIR",
         ],
         tags = BRIDGE_E2E_TAGS + tags,
         timeout = timeout,

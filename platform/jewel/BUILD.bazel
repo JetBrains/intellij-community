@@ -65,6 +65,13 @@ kt_jvm_import(
 )
 
 kt_jvm_import(
+    name = "spectre-recording-linux",
+    testonly = True,
+    jar = "@jewel_deps_spectre_recording_linux//file",
+    visibility = ["//visibility:private"],
+)
+
+kt_jvm_import(
     name = "spectre-input-coordinator",
     testonly = True,
     jar = "@jewel_deps_spectre_input_coordinator//file",
@@ -109,6 +116,7 @@ java_library(
         ":spectre-input-coordinator",
         ":spectre-input-coordinator-server",
         ":spectre-recording",
+        ":spectre-recording-linux",
         # The input coordinator serialises its protocol with kotlinx-serialization-json. The monorepo's copy
         # is used rather than a second one, for the same reason Compose and coroutines are not exported.
         "//libraries/kotlinx/serialization/json",

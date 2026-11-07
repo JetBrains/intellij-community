@@ -79,10 +79,13 @@ def standalone_e2e_test(
             "--disable-ansi-colors",
         ] + ["--select-package=" + test_package for test_package in test_packages],
         jvm_flags = SPECTRE_JVM_FLAGS + jvm_flags,
-        # Bazel scrubs the test environment; without these AWT falls back to `:0.0` and fails.
+        # Bazel scrubs the test environment; without these AWT falls back to `:0.0` and fails,
+        # and on Wayland the helper cannot reach the session or the session bus.
         env_inherit = [
+            "DBUS_SESSION_BUS_ADDRESS",
             "DISPLAY",
             "XAUTHORITY",
+            "XDG_RUNTIME_DIR",
         ],
         runtime_deps = [
             ":" + lib_name,
