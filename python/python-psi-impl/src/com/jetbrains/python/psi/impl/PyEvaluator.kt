@@ -2,6 +2,8 @@
 package com.jetbrains.python.psi.impl
 
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ArrayUtil
@@ -200,8 +202,8 @@ open class PyEvaluator {
         folded = true
         result.append(evaluateFormattedString(element) ?: return null)
       }
-      else {
-        element.decodedFragments.forEach { result.append(it.second) }
+      else if (!appendDecoded(element, element.decodedFragments, result)) {
+        return null
       }
       if (folded && result.length > PyConstantFolder.MAX_STRING_LENGTH) {
         return null
@@ -216,7 +218,9 @@ open class PyEvaluator {
     var child = element.firstChild
     while (child != null) {
       if (PyTokenTypes.FSTRING_TEXT_TOKENS.contains(child.node.elementType)) {
-        decoder.decodeRange(child.textRangeInParent).forEach { result.append(it.second) }
+        if (!appendDecoded(element, decoder.decodeRange(child.textRangeInParent), result)) {
+          return null
+        }
       }
       else if (child is PyFStringFragment) {
         result.append(evaluateFragment(child) ?: return null)
@@ -627,17 +631,33 @@ open class PyEvaluator {
       return PyTokenTypes.COMPARISON_OPERATIONS.contains(expression.operator)
     }
 
-    private val UNSUPPORTED_ESCAPE = Regex("""\\(\r?\n|N\{|u[dD][89a-fA-F]|U0000[dD][89a-fA-F])""")
+    private val SURROGATE_ESCAPE = Regex("""\\(u[dD][89a-fA-F]|U0000[dD][89a-fA-F])""")
 
     /**
-     * Finds an escape that [PyStringLiteralDecoder] does not decode as Python does: a line continuation, a named character,
-     * and a surrogate, which Java joins with the next surrogate into one code point.
+     * Appends the decoded [fragments] of [element] to [result]. Returns `false` for a `\N` escape that the decoder keeps as text
+     * in a Python 3 literal that is not raw. Python gives an error or a character that the JDK does not name for such an escape.
+     * A Python 2 `str` literal also keeps `\N` as text, and this check rejects it too.
+     */
+    private fun appendDecoded(element: PyStringElement, fragments: List<Pair<TextRange, String>>, result: StringBuilder): Boolean {
+      for (fragment in fragments) {
+        val value = fragment.second
+        if (!element.isRaw && value.contains("\\N") && fragment.first.substring(element.text) == value) {
+          return false
+        }
+        result.append(value)
+      }
+      return true
+    }
+
+    /**
+     * Finds an escape that [PyStringLiteralDecoder] does not decode as Python does. Java joins a surrogate with the next surrogate
+     * into one code point. In a raw f-string, the lexer keeps `\N{name}` as text, but Python reads `{name}` as a replacement field.
      */
     private fun hasUnsupportedEscape(element: PyStringElement): Boolean {
       if (element.isRaw) {
         return element.isFormatted && element.text.contains("\\N{")
       }
-      return UNSUPPORTED_ESCAPE.containsMatchIn(element.text)
+      return SURROGATE_ESCAPE.containsMatchIn(element.text)
     }
 
     private fun isTruthy(value: Any?): Boolean? {
