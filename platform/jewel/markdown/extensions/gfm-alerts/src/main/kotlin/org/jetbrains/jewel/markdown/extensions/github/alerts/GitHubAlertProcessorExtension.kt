@@ -69,12 +69,17 @@ private object GitHubAlertCommonMarkExtension : ParserExtension, TextContentRend
 
     override fun extend(parserBuilder: Builder) {
         parserBuilder.customBlockParserFactory { state, _ ->
-            val line = state.line.content.substring(state.column)
+            val nextNonSpace = state.nextNonSpaceIndex
+            if (!state.isMarker(nextNonSpace)) {
+                return@customBlockParserFactory BlockStart.none()
+            }
+
+            val line = state.line.content.substring(nextNonSpace)
             val matchResult = AlertStartRegex.matchEntire(line)
 
             if (matchResult != null) {
                 val type = matchResult.groupValues[1]
-                BlockStart.of(AlertParser(type)).atColumn(state.column + state.indent + matchResult.value.length)
+                BlockStart.of(AlertParser(type)).atIndex(nextNonSpace + matchResult.value.length)
             } else {
                 BlockStart.none()
             }
@@ -117,11 +122,11 @@ private class AlertParser(type: String) : AbstractBlockParser() {
             BlockContinue.none()
         }
     }
+}
 
-    private fun ParserState.isMarker(index: Int): Boolean {
-        val line = line.content
-        return indent < Parsing.CODE_BLOCK_INDENT && index < line.length && line[index] == '>'
-    }
+private fun ParserState.isMarker(index: Int): Boolean {
+    val line = line.content
+    return indent < Parsing.CODE_BLOCK_INDENT && index < line.length && line[index] == '>'
 }
 
 private class AlertTextContentNodeRenderer(private val context: TextContentNodeRendererContext) : NodeRenderer {

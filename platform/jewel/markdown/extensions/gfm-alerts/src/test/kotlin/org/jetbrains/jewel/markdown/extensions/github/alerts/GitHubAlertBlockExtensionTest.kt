@@ -1,8 +1,12 @@
 package org.jetbrains.jewel.markdown.extensions.github.alerts
 
 import org.commonmark.node.BlockQuote
+import org.commonmark.node.BulletList
 import org.commonmark.node.Document
+import org.commonmark.node.IndentedCodeBlock
+import org.commonmark.node.ListItem
 import org.commonmark.node.Node
+import org.commonmark.node.OrderedList
 import org.commonmark.node.Paragraph
 import org.commonmark.parser.Parser
 import org.commonmark.renderer.text.TextContentRenderer
@@ -516,6 +520,90 @@ public class GitHubAlertBlockExtensionTest {
             "Parsed node should be a BlockQuote node, but was ${firstChild.javaClass.name}",
             firstChild is BlockQuote,
         )
+    }
+
+    @Test
+    public fun `should not fail on container markers followed by tab and non-letter character`() {
+        val bulletInputs = listOf("+\t}", "-\t}", "*\t}")
+        for (input in bulletInputs) {
+            val parsed = parser.parse(input)
+            val firstChild = parsed.children.single()
+            assertTrue(
+                "Expected BulletList for '$input', but was ${firstChild.javaClass.name}",
+                firstChild is BulletList,
+            )
+            val listItem = firstChild.children.single()
+            assertTrue("Expected ListItem, but was ${listItem.javaClass.name}", listItem is ListItem)
+            val paragraph = listItem.children.single()
+            assertEquals("}", renderer.render(paragraph))
+        }
+
+        val orderedParsed = parser.parse("1.\t}")
+        val orderedList = orderedParsed.children.single()
+        assertTrue("Expected OrderedList, but was ${orderedList.javaClass.name}", orderedList is OrderedList)
+        assertEquals("}", renderer.render(orderedList.children.single().children.single()))
+
+        val quoteParsed = parser.parse(">\t}")
+        val blockQuote = quoteParsed.children.single()
+        assertTrue("Expected BlockQuote, but was ${blockQuote.javaClass.name}", blockQuote is BlockQuote)
+        assertEquals("}", renderer.render(blockQuote.children.single()))
+    }
+
+    @Test
+    public fun `should parse alert indented with up to three spaces`() {
+        val parsed =
+            parser.parse(
+                """
+            |   > [!NOTE]
+            |   > Indented alert content.
+            """
+                    .trimMargin()
+            )
+
+        val firstChild = parsed.children.single()
+        assertTrue("Parsed node should be a Note node, but was ${firstChild.javaClass.name}", firstChild is Note)
+
+        val firstContent = firstChild.children.single()
+        assertTrue(
+            "Parsed content should be a Paragraph, but was ${firstContent.javaClass.name}",
+            firstContent is Paragraph,
+        )
+        assertEquals("Indented alert content.", renderer.render(firstContent))
+    }
+
+    @Test
+    public fun `should parse alert indented with four spaces as code block`() {
+        val parsed =
+            parser.parse(
+                """
+            |    > [!NOTE]
+            |    > Indented code block.
+            """
+                    .trimMargin()
+            )
+
+        val firstChild = parsed.children.single()
+        assertTrue(
+            "Parsed node should be an IndentedCodeBlock, but was ${firstChild.javaClass.name}",
+            firstChild is IndentedCodeBlock,
+        )
+    }
+
+    @Test
+    public fun `should parse alert inside tab-indented list item`() {
+        val parsed = parser.parse("-\t> [!NOTE]\n \t> Alert inside list item.")
+
+        val bulletList = parsed.children.single()
+        assertTrue("Expected BulletList, but was ${bulletList.javaClass.name}", bulletList is BulletList)
+
+        val listItem = bulletList.children.single()
+        assertTrue("Expected ListItem, but was ${listItem.javaClass.name}", listItem is ListItem)
+
+        val alert = listItem.children.single()
+        assertTrue("Expected Note, but was ${alert.javaClass.name}", alert is Note)
+
+        val paragraph = alert.children.single()
+        assertEquals("Alert inside list item.", renderer.render(paragraph))
     }
 }
 
