@@ -1,0 +1,59 @@
+Set TMP on Windows under --experimental_strict_repo_env.
+
+Backport of https://github.com/bazel-contrib/bazel-gazelle/pull/2509 (commit 8b89ee9f6d3c, in the release after
+0.53.0) to 0.53.0. The functions moved on master: resolve_go_env there is read_go_env_file here. The test of the
+upstream commit is not included.
+
+With --experimental_strict_repo_env, the repository environment has no TMP and TEMP. On Windows, Go then falls back
+to the Windows directory, and `go build` in go_repository_tools fails with `mkdir C:\WINDOWS\go-build...: Access is
+denied`.
+
+TMP and TEMP are handled like GOPATH and GOCACHE: read_go_env_file points them at a directory in
+@bazel_gazelle_go_repository_cache unless go.env sets one of them, and go_repository_cache creates the directory. The
+directory is used on Windows with or without the flag, so the result does not depend on the host environment.
+Other platforms are unchanged.
+diff --git a/internal/env.bzl b/internal/env.bzl
+index bcccf9c..2968644 100644
+--- a/internal/env.bzl
++++ b/internal/env.bzl
+@@ -195,7 +195,8 @@ def read_go_env_file(ctx, env_path, cache_dir_file = None):
+         env_path: path, label, or string for the go.env file to read.
+         cache_dir_file: optional path, label, or string for a file within
+             @bazel_gazelle_go_repository_cache. GOPATH and GOCACHE default to
+-            this repo's directory when unset in env_path. Defaults to env_path.
++            this repo's directory when unset in env_path, and TMP and TEMP on
++            Windows to its tmp subdirectory. Defaults to env_path.
+ 
+     Returns:
+         A dict of environment variables, ready for execution. Do not write to
+@@ -222,6 +223,15 @@ def read_go_env_file(ctx, env_path, cache_dir_file = None):
+     cache_dir = str(ctx.path(cache_dir_file).dirname)
+     env.setdefault("GOPATH", cache_dir)
+     env.setdefault("GOCACHE", cache_dir + "/gocache")
++
++    # Without TMP and TEMP, as under --experimental_strict_repo_env, Go on
++    # Windows falls back to USERPROFILE and then to the Windows directory,
++    # which is not writable. Go reads TMP before TEMP, so one setting goes to
++    # both.
++    if ctx.os.name.startswith("windows"):
++        temp_dir = env.get("TMP") or env.get("TEMP") or cache_dir + "/tmp"
++        env.setdefault("TMP", temp_dir)
++        env.setdefault("TEMP", temp_dir)
+     return env
+ 
+ # copied from rules_go. Keep in sync.
+diff --git a/internal/go_repository_cache.bzl b/internal/go_repository_cache.bzl
+index 3e0e813..609dfa7 100644
+--- a/internal/go_repository_cache.bzl
++++ b/internal/go_repository_cache.bzl
+@@ -25,6 +25,10 @@ def _go_repository_cache_impl(ctx):
+         go_env_inherit = ctx.attr.go_env_inherit,
+     )
+     write_go_env_file(ctx, cache_env)
++    if ctx.os.name.startswith("windows"):
++        # Temporary directory for the go command (see read_go_env_file). Go
++        # creates GOCACHE itself, but os.MkdirTemp needs an existing parent.
++        ctx.file("tmp/empty", "")  # HACK: we want mkdir, but repository_ctx doesn't have it
+ 
+     # HACK: copy HOST_COMPATIBLE_SDK here so that go_deps.bzl doesn't load it.
+     # Stardoc generates documentation from go_deps.bzl, and it fails if any
