@@ -7,8 +7,10 @@ package com.intellij.openapi.editor.state
  *
  * A snapshot never changes, and any thread can read it without a lock. Each change of the state gives a new snapshot.
  * The snapshot keeps only the references to the values, so a mutable value object can still change.
+ *
+ * A subclass can add typed accessors. The state creates it in [ObservableState.createSnapshot].
  */
-class StateSnapshot internal constructor(
+open class StateSnapshot internal constructor(
   private val layout: StateLayout,
   private val values: Array<Any?>,
   private val overrides: Array<Any?>,
@@ -26,7 +28,7 @@ class StateSnapshot internal constructor(
    * Whether [property] has an override. The property must belong to the state that gave this snapshot.
    */
   fun isOverridden(property: StateProperty<*>): Boolean {
-    return overrides[property.index] !== NoOverride
+    return isOverriddenAt(property.index)
   }
 
   /**
@@ -38,6 +40,10 @@ class StateSnapshot internal constructor(
 
   internal fun valueAt(index: Int): Any? {
     return values[index]
+  }
+
+  internal fun isOverriddenAt(index: Int): Boolean {
+    return overrides[index] !== NoOverride
   }
 
   /**

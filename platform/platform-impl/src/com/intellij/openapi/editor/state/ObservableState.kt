@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.state
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Ref
 import com.intellij.util.EventDispatcher
-import java.util.concurrent.atomic.AtomicLongFieldUpdater
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -46,11 +45,6 @@ abstract class ObservableState {
    * The current values, or `null` before the first read.
    */
   @Volatile private var snapshot: StateSnapshot? = null
-
-  /**
-   * The number of batches that changed the state.
-   */
-  @Volatile private var modificationCount: Long = 0
 
   /**
    * Makes the batches on different threads run one after another.
@@ -189,16 +183,8 @@ abstract class ObservableState {
   /**
    * The current values and overrides. Inside a [batch], the snapshot does not show the changes of the batch yet.
    */
-  fun getSnapshot(): StateSnapshot {
+  open fun getSnapshot(): StateSnapshot {
     return snapshot ?: createFirstSnapshot()
-  }
-
-  /**
-   * The number of batches that changed the state. A reader that reads this number before the values knows that the
-   * values include each counted batch.
-   */
-  fun getModificationCount(): Long {
-    return modificationCount
   }
 
   /**
@@ -355,15 +341,21 @@ abstract class ObservableState {
   }
 
   /**
-   * Publishes the changes of [batch], which started from [base], in a new snapshot, and then counts them. The caller
-   * holds [writeLock], so no other publication runs at the same time.
+   * Creates a snapshot of [values] and [overrides]. A subclass can give a snapshot with typed accessors.
+   */
+  internal open fun createSnapshot(layout: StateLayout, values: Array<Any?>, overrides: Array<Any?>): StateSnapshot {
+    return StateSnapshot(layout, values, overrides)
+  }
+
+  /**
+   * Publishes the changes of [batch], which started from [base], in a new snapshot. The caller holds [writeLock], so no
+   * other publication runs at the same time.
    */
   private fun publish(base: StateSnapshot, batch: StateBatch) {
     if (!batch.hasChanges()) {
       return
     }
-    snapshot = StateSnapshot(base.layout(), batch.values(), batch.overrides())
-    MODIFICATION_COUNT_UPDATER.incrementAndGet(this)
+    snapshot = createSnapshot(base.layout(), batch.values(), batch.overrides())
   }
 
   /**
@@ -380,7 +372,7 @@ abstract class ObservableState {
       val layout = StateLayout.freeze(this, properties)
       val values = Array<Any?>(properties.size) { properties[it].initialValue }
       val overrides = Array<Any?>(properties.size) { NoOverride }
-      val first = StateSnapshot(layout, values, overrides)
+      val first = createSnapshot(layout, values, overrides)
       snapshot = first
       return first
     } finally {
@@ -415,13 +407,6 @@ abstract class ObservableState {
       customOutValueModifier = outValueModifier,
       customPropertySerializer = customPropertySerializer,
       alwaysTransfer = alwaysTransfer,
-    )
-  }
-
-  private companion object {
-    private val MODIFICATION_COUNT_UPDATER: AtomicLongFieldUpdater<ObservableState> = AtomicLongFieldUpdater.newUpdater(
-      ObservableState::class.java,
-      "modificationCount",
     )
   }
 }

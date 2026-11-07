@@ -30,7 +30,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /**
- * The getters of [SettingsImpl] read its [SettingsSnapshot], so each change of the state must publish a new snapshot.
+ * The getters of [SettingsImpl] read the [SettingsSnapshot] of its state, so each change of the state must publish a new
+ * snapshot.
  */
 @TestApplication
 class SettingsSnapshotTest {
@@ -43,8 +44,21 @@ class SettingsSnapshotTest {
   private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
 
   /**
-   * A wrong field in [SettingsSnapshot.read] gives a getter the value of another setting, so each setter must reach its
-   * own getter.
+   * The settings keep no copy of the values. Their snapshot is the snapshot of the state, also after a change.
+   */
+  @Test
+  fun testTheSettingsSnapshotIsTheSnapshotOfTheState(): Unit = fixture.runTest {
+    val settings = SettingsImpl()
+    assertSame(settings.getState().getSnapshot(), settings.getSnapshot())
+
+    settings.isLineNumbersShown = !settings.isLineNumbersShown
+
+    assertSame(settings.getState().getSnapshot(), settings.getSnapshot())
+  }
+
+  /**
+   * A wrong position in [SettingsSnapshot] gives a getter the value of another setting, so each setter must reach its own
+   * getter.
    */
   @Test
   fun testEachSetterReachesItsGetter(): Unit = fixture.runTest {
@@ -218,9 +232,9 @@ class SettingsSnapshotTest {
   }
 
   /**
-   * Two threads change two settings at the same time, and each thread ends with its own last value. A publication that
-   * loses the CAS reads the state again, so the last snapshot has both last values. Settings without an editor refresh
-   * no editor, so a change off the EDT is safe here.
+   * Two threads change two settings at the same time, and each thread ends with its own last value. The changes of the
+   * state run one after another, so the last snapshot has both last values. Settings without an editor refresh no
+   * editor, so a change off the EDT is safe here.
    */
   @Test
   fun testConcurrentChangesEndInTheLastValues(): Unit = fixture.runTest {
@@ -433,8 +447,8 @@ class SettingsSnapshotTest {
   }
 
   /**
-   * Records the snapshot that each value event of [settings] sees, by the property name. The listener comes after the
-   * listener of [settings], so it sees the snapshot that [settings] published for the event.
+   * Records the snapshot that each value event of [settings] sees, by the property name. The state publishes its
+   * snapshot before it gives the events.
    */
   private fun recordSnapshots(settings: SettingsImpl, disposable: Disposable): Map<String, SettingsSnapshot> {
     val snapshots = HashMap<String, SettingsSnapshot>()

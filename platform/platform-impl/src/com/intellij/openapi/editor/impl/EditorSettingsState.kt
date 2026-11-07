@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.registry.EditorRegistry
 import com.intellij.openapi.editor.state.CustomOutValueModifier
 import com.intellij.openapi.editor.state.ObservableState
 import com.intellij.openapi.editor.state.ObservableStateListener
+import com.intellij.openapi.editor.state.StateLayout
 import com.intellij.openapi.editor.state.StateProperty
 import com.intellij.openapi.editor.state.SyncDefaultValueCalculator
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -238,6 +239,17 @@ class EditorSettingsState(
     if (editor != null) {
       subscribeToSources(editor)
     }
+  }
+
+  /**
+   * The current values, with the accessors of [SettingsSnapshot].
+   */
+  override fun getSnapshot(): SettingsSnapshot {
+    return super.getSnapshot() as SettingsSnapshot
+  }
+
+  override fun createSnapshot(layout: StateLayout, values: Array<Any?>, overrides: Array<Any?>): SettingsSnapshot {
+    return SettingsSnapshot(layout, values, overrides)
   }
 
   /**

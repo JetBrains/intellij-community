@@ -2,6 +2,8 @@
 package com.intellij.openapi.editor.state
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Test
 
@@ -67,22 +69,20 @@ class ObservableStateBatchTest {
   }
 
   /**
-   * A batch counts once, when it publishes its changes. The count does not grow before the batch ends.
+   * A batch publishes one snapshot, when it ends. The snapshot does not change before the batch ends.
    */
   @Test
-  fun testABatchCountsOnceWhenItEnds() {
+  fun testABatchPublishesOneSnapshotWhenItEnds() {
     val state = TestState()
-    val before = state.getModificationCount()
+    val before = state.getSnapshot()
 
     state.batch {
       state.width = 2
       state.height = 3
-      assertEquals(before, state.getModificationCount())
+      assertSame(before, state.getSnapshot())
     }
-    assertEquals(before + 1, state.getModificationCount())
 
-    state.clearOverriding(state::width)
-    assertEquals(before + 2, state.getModificationCount())
+    assertNotSame(before, state.getSnapshot())
   }
 
   @Test

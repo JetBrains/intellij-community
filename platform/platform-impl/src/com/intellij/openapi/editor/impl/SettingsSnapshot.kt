@@ -5,10 +5,14 @@ import com.intellij.openapi.editor.EditorSettings.CaretEasing
 import com.intellij.openapi.editor.EditorSettings.LineNumerationType
 import com.intellij.openapi.editor.actions.CaretStopOptions
 import com.intellij.openapi.editor.ex.BidiTextDirection
+import com.intellij.openapi.editor.state.StateLayout
+import com.intellij.openapi.editor.state.StateSnapshot
 import org.jetbrains.annotations.ApiStatus
+import kotlin.reflect.KProperty
 
 /**
- * Immutable values of the settings of one editor. [SettingsImpl.getSnapshot] gives the current snapshot.
+ * Immutable values of the settings of one editor: the snapshot of its [EditorSettingsState]. [SettingsImpl.getSnapshot]
+ * gives the current snapshot.
  *
  * A read needs no lock, and it computes nothing. The accessors have the names of the
  * [com.intellij.openapi.editor.EditorSettings] getters, without the project parameter.
@@ -18,257 +22,180 @@ import org.jetbrains.annotations.ApiStatus
  * is `true`.
  */
 @ApiStatus.Internal
-class SettingsSnapshot private constructor(
-  private val lineNumbersShown: Boolean,
-  private val lineNumbersAfterIcons: Boolean,
-  private val lineNumerationType: LineNumerationType,
-  private val lineMarkerAreaShown: Boolean,
-  private val gutterIconsShown: Boolean,
-  private val foldingOutlineShown: Boolean,
-  private val foldingOutlineShownOnlyOnHover: Boolean,
-  private val foldingEndingsShown: Boolean,
-  private val autoCodeFoldingEnabled: Boolean,
-  private val singleLogicalLineFoldingAllowed: Boolean,
+class SettingsSnapshot internal constructor(
+  layout: StateLayout,
+  values: Array<Any?>,
+  overrides: Array<Any?>,
+) : StateSnapshot(layout, values, overrides) {
+  fun isLineNumbersShown(): Boolean = booleanAt(Index.lineNumbersShown)
+  fun isLineNumbersAfterIcons(): Boolean = booleanAt(Index.lineNumbersAfterIcons)
+  fun getLineNumerationType(): LineNumerationType = valueAt(Index.lineNumerationType) as LineNumerationType
+  fun isLineMarkerAreaShown(): Boolean = booleanAt(Index.lineMarkerAreaShown)
+  fun areGutterIconsShown(): Boolean = booleanAt(Index.gutterIconsShown)
+  fun isFoldingOutlineShown(): Boolean = booleanAt(Index.foldingOutlineShown)
+  fun isFoldingOutlineShownOnlyOnHover(): Boolean = booleanAt(Index.foldingOutlineShownOnlyOnHover)
+  fun isFoldingEndingsShown(): Boolean = booleanAt(Index.foldingEndingsShown)
+  fun isAutoCodeFoldingEnabled(): Boolean = booleanAt(Index.autoCodeFoldingEnabled)
+  fun isAllowSingleLogicalLineFolding(): Boolean = booleanAt(Index.singleLogicalLineFoldingAllowed)
 
-  private val rightMarginShown: Boolean,
-  private val selectionOccurrencesHighlighted: Boolean,
-  private val whitespacesShown: Boolean,
-  private val leadingWhitespaceShown: Boolean,
-  private val innerWhitespaceShown: Boolean,
-  private val trailingWhitespaceShown: Boolean,
-  private val selectionWhitespaceShown: Boolean,
-  private val indentGuidesShown: Boolean,
-  private val caretRowShown: Boolean,
-  private val intentionBulbShown: Boolean,
-  private val inspectionWidgetShown: Boolean,
-  private val editorFontInInlaysUsed: Boolean,
-  private val bidiTextDirection: BidiTextDirection,
-  private val rtlEnabled: Boolean,
-  private val stickyLinesShown: Boolean,
-  private val stickyLinesShownForLanguage: Boolean,
-  private val stickyLinesLimit: Int,
-  private val specialCharsShown: Boolean,
-  private val additionalLinesCount: Int,
-  private val additionalColumnsCount: Int,
-  private val characterGridWidthMultiplier: Float?,
+  fun isRightMarginShown(): Boolean = booleanAt(Index.rightMarginShown)
+  fun isHighlightSelectionOccurrences(): Boolean = booleanAt(Index.selectionOccurrencesHighlighted)
+  fun isWhitespacesShown(): Boolean = booleanAt(Index.whitespacesShown)
+  fun isLeadingWhitespaceShown(): Boolean = booleanAt(Index.leadingWhitespaceShown)
+  fun isInnerWhitespaceShown(): Boolean = booleanAt(Index.innerWhitespaceShown)
+  fun isTrailingWhitespaceShown(): Boolean = booleanAt(Index.trailingWhitespaceShown)
+  fun isSelectionWhitespaceShown(): Boolean = booleanAt(Index.selectionWhitespaceShown)
+  fun isIndentGuidesShown(): Boolean = booleanAt(Index.indentGuidesShown)
+  fun isCaretRowShown(): Boolean = booleanAt(Index.caretRowShown)
+  fun isShowIntentionBulb(): Boolean = booleanAt(Index.intentionBulbShown)
+  fun isShowInspectionWidget(): Boolean = booleanAt(Index.inspectionWidgetShown)
+  fun isUseEditorFontInInlays(): Boolean = booleanAt(Index.editorFontInInlaysUsed)
+  fun getBidiTextDirection(): BidiTextDirection = valueAt(Index.bidiTextDirection) as BidiTextDirection
+  fun isRtlEnabled(): Boolean = booleanAt(Index.rtlEnabled)
+  fun areStickyLinesShown(): Boolean = booleanAt(Index.stickyLinesShown) && booleanAt(Index.stickyLinesShownForLanguage)
+  fun getStickyLinesLimit(): Int = intAt(Index.stickyLinesLimit)
+  fun isShowingSpecialChars(): Boolean = booleanAt(Index.specialCharsShown)
+  fun getAdditionalLinesCount(): Int = intAt(Index.additionalLinesCount)
+  fun getAdditionalColumnsCount(): Int = intAt(Index.additionalColumnsCount)
+  fun getCharacterGridWidthMultiplier(): Float? = valueAt(Index.characterGridWidthMultiplier) as Float?
 
-  private val blockCursor: Boolean,
-  private val fullLineHeightCursor: Boolean,
-  private val lineCursorWidth: Int,
-  private val smoothCaretMovement: Boolean,
-  private val caretEasing: CaretEasing,
-  private val caretBlinking: Boolean,
-  private val caretBlinkPeriod: Int,
-  private val smoothCaretBlinking: Boolean,
-  private val virtualSpace: Boolean,
-  private val caretInsideTabs: Boolean,
-  private val smartHome: Boolean,
-  private val camelWords: Boolean,
-  private val mouseClickSelectionHonorsCamelWords: Boolean,
-  private val caretStopOptions: CaretStopOptions,
-  private val caretsAddedOnDoubleCtrl: Boolean,
+  fun isBlockCursor(): Boolean = booleanAt(Index.blockCursor)
+  fun isFullLineHeightCursor(): Boolean = booleanAt(Index.fullLineHeightCursor)
+  fun getLineCursorWidth(): Int = intAt(Index.lineCursorWidth)
+  fun isSmoothCaretMovement(): Boolean = booleanAt(Index.smoothCaretMovement)
+  fun getCaretEasing(): CaretEasing = valueAt(Index.caretEasing) as CaretEasing
+  fun isBlinkCaret(): Boolean = booleanAt(Index.caretBlinking)
+  fun getCaretBlinkPeriod(): Int = intAt(Index.caretBlinkPeriod)
+  fun isSmoothCaretBlinking(): Boolean = booleanAt(Index.smoothCaretBlinking)
+  fun isVirtualSpace(): Boolean = booleanAt(Index.virtualSpace)
+  fun isCaretInsideTabs(): Boolean = booleanAt(Index.caretInsideTabs)
+  fun isSmartHome(): Boolean = booleanAt(Index.smartHome)
+  fun isCamelWords(): Boolean = booleanAt(Index.camelWords)
+  fun isMouseClickSelectionHonorsCamelWords(): Boolean = booleanAt(Index.mouseClickSelectionHonorsCamelWords)
+  fun getCaretStopOptions(): CaretStopOptions = valueAt(Index.caretStopOptions) as CaretStopOptions
+  fun addCaretsOnDoubleCtrl(): Boolean = booleanAt(Index.caretsAddedOnDoubleCtrl)
 
-  private val softWrapsUsed: Boolean,
-  private val allSoftWrapsShown: Boolean,
-  private val softWrapsPainted: Boolean,
-  private val customSoftWrapIndentUsed: Boolean,
-  private val customSoftWrapIndent: Int,
+  fun isUseSoftWraps(): Boolean = booleanAt(Index.softWrapsUsed)
+  fun isAllSoftWrapsShown(): Boolean = booleanAt(Index.allSoftWrapsShown)
+  fun isPaintSoftWraps(): Boolean = booleanAt(Index.softWrapsPainted)
+  fun isUseCustomSoftWrapIndent(): Boolean = booleanAt(Index.customSoftWrapIndentUsed)
+  fun getCustomSoftWrapIndent(): Int = intAt(Index.customSoftWrapIndent)
 
-  private val verticalScrollOffset: Int,
-  private val verticalScrollJump: Int,
-  private val horizontalScrollOffset: Int,
-  private val horizontalScrollJump: Int,
-  private val animatedScrolling: Boolean,
-  private val refrainFromScrolling: Boolean,
-  private val additionalPageAtBottom: Boolean,
+  fun getVerticalScrollOffset(): Int = intAt(Index.verticalScrollOffset)
+  fun getVerticalScrollJump(): Int = intAt(Index.verticalScrollJump)
+  fun getHorizontalScrollOffset(): Int = intAt(Index.horizontalScrollOffset)
+  fun getHorizontalScrollJump(): Int = intAt(Index.horizontalScrollJump)
+  fun isAnimatedScrolling(): Boolean = booleanAt(Index.animatedScrolling)
+  fun isRefrainFromScrolling(): Boolean = booleanAt(Index.refrainFromScrolling)
+  fun isAdditionalPageAtBottom(): Boolean = booleanAt(Index.additionalPageAtBottom)
 
-  private val dndEnabled: Boolean,
-  private val wheelFontChangeEnabled: Boolean,
-  private val wheelFontChangePersistent: Boolean,
+  fun isDndEnabled(): Boolean = booleanAt(Index.dndEnabled)
+  fun isWheelFontChangeEnabled(): Boolean = booleanAt(Index.wheelFontChangeEnabled)
+  fun isWheelFontChangePersistent(): Boolean = booleanAt(Index.wheelFontChangePersistent)
 
-  private val variableInplaceRenameEnabled: Boolean,
-  private val renamePreselected: Boolean,
-  private val parenthesesInsertedAutomatically: Boolean,
+  fun isVariableInplaceRenameEnabled(): Boolean = booleanAt(Index.variableInplaceRenameEnabled)
+  fun isPreselectRename(): Boolean = booleanAt(Index.renamePreselected)
+  fun isInsertParenthesesAutomatically(): Boolean = booleanAt(Index.parenthesesInsertedAutomatically)
 
-  private val rightMargin: Int,
-  private val softMargins: List<Int>,
-  private val wrapWhenTypingReachesRightMargin: Boolean,
-  private val tabCharacterUsed: Boolean,
-  private val tabCharacterOverridden: Boolean,
-  private val tabSize: Int,
-  private val tabSizeOverridden: Boolean,
+  fun getRightMargin(): Int = intAt(Index.rightMargin)
+  fun getSoftMargins(): List<Int> = intListAt(Index.softMargins)
+  fun isWrapWhenTypingReachesRightMargin(): Boolean = booleanAt(Index.wrapWhenTypingReachesRightMargin)
+  fun isUseTabCharacter(): Boolean = booleanAt(Index.tabCharacterUsed)
+  fun isUseTabCharacterOverridden(): Boolean = isOverriddenAt(Index.tabCharacterUsed)
+  fun getTabSize(): Int = intAt(Index.tabSize)
+  fun isTabSizeOverridden(): Boolean = isOverriddenAt(Index.tabSize)
 
-  private val stateModificationCount: Long,
-) {
-  fun isLineNumbersShown(): Boolean = lineNumbersShown
-  fun isLineNumbersAfterIcons(): Boolean = lineNumbersAfterIcons
-  fun getLineNumerationType(): LineNumerationType = lineNumerationType
-  fun isLineMarkerAreaShown(): Boolean = lineMarkerAreaShown
-  fun areGutterIconsShown(): Boolean = gutterIconsShown
-  fun isFoldingOutlineShown(): Boolean = foldingOutlineShown
-  fun isFoldingOutlineShownOnlyOnHover(): Boolean = foldingOutlineShownOnlyOnHover
-  fun isFoldingEndingsShown(): Boolean = foldingEndingsShown
-  fun isAutoCodeFoldingEnabled(): Boolean = autoCodeFoldingEnabled
-  fun isAllowSingleLogicalLineFolding(): Boolean = singleLogicalLineFoldingAllowed
+  private fun booleanAt(index: Int): Boolean {
+    return valueAt(index) as Boolean
+  }
 
-  fun isRightMarginShown(): Boolean = rightMarginShown
-  fun isHighlightSelectionOccurrences(): Boolean = selectionOccurrencesHighlighted
-  fun isWhitespacesShown(): Boolean = whitespacesShown
-  fun isLeadingWhitespaceShown(): Boolean = leadingWhitespaceShown
-  fun isInnerWhitespaceShown(): Boolean = innerWhitespaceShown
-  fun isTrailingWhitespaceShown(): Boolean = trailingWhitespaceShown
-  fun isSelectionWhitespaceShown(): Boolean = selectionWhitespaceShown
-  fun isIndentGuidesShown(): Boolean = indentGuidesShown
-  fun isCaretRowShown(): Boolean = caretRowShown
-  fun isShowIntentionBulb(): Boolean = intentionBulbShown
-  fun isShowInspectionWidget(): Boolean = inspectionWidgetShown
-  fun isUseEditorFontInInlays(): Boolean = editorFontInInlaysUsed
-  fun getBidiTextDirection(): BidiTextDirection = bidiTextDirection
-  fun isRtlEnabled(): Boolean = rtlEnabled
-  fun areStickyLinesShown(): Boolean = stickyLinesShown && stickyLinesShownForLanguage
-  fun getStickyLinesLimit(): Int = stickyLinesLimit
-  fun isShowingSpecialChars(): Boolean = specialCharsShown
-  fun getAdditionalLinesCount(): Int = additionalLinesCount
-  fun getAdditionalColumnsCount(): Int = additionalColumnsCount
-  fun getCharacterGridWidthMultiplier(): Float? = characterGridWidthMultiplier
+  private fun intAt(index: Int): Int {
+    return valueAt(index) as Int
+  }
 
-  fun isBlockCursor(): Boolean = blockCursor
-  fun isFullLineHeightCursor(): Boolean = fullLineHeightCursor
-  fun getLineCursorWidth(): Int = lineCursorWidth
-  fun isSmoothCaretMovement(): Boolean = smoothCaretMovement
-  fun getCaretEasing(): CaretEasing = caretEasing
-  fun isBlinkCaret(): Boolean = caretBlinking
-  fun getCaretBlinkPeriod(): Int = caretBlinkPeriod
-  fun isSmoothCaretBlinking(): Boolean = smoothCaretBlinking
-  fun isVirtualSpace(): Boolean = virtualSpace
-  fun isCaretInsideTabs(): Boolean = caretInsideTabs
-  fun isSmartHome(): Boolean = smartHome
-  fun isCamelWords(): Boolean = camelWords
-  fun isMouseClickSelectionHonorsCamelWords(): Boolean = mouseClickSelectionHonorsCamelWords
-  fun getCaretStopOptions(): CaretStopOptions = caretStopOptions
-  fun addCaretsOnDoubleCtrl(): Boolean = caretsAddedOnDoubleCtrl
+  private fun intListAt(index: Int): List<Int> {
+    // Safe: the soft margins are the only list setting, and the state stores them as a List<Int>.
+    @Suppress("UNCHECKED_CAST")
+    return valueAt(index) as List<Int>
+  }
 
-  fun isUseSoftWraps(): Boolean = softWrapsUsed
-  fun isAllSoftWrapsShown(): Boolean = allSoftWrapsShown
-  fun isPaintSoftWraps(): Boolean = softWrapsPainted
-  fun isUseCustomSoftWrapIndent(): Boolean = customSoftWrapIndentUsed
-  fun getCustomSoftWrapIndent(): Int = customSoftWrapIndent
+  /**
+   * The position of each setting in [EditorSettingsState]. The JVM creates this object at the first accessor call. A
+   * state has frozen its properties then, so their positions are known.
+   */
+  private object Index {
+    val lineNumbersShown: Int = indexOf(EditorSettingsState::myAreLineNumbersShown)
+    val lineNumbersAfterIcons: Int = indexOf(EditorSettingsState::myAreLineNumbersAfterIcons)
+    val lineNumerationType: Int = indexOf(EditorSettingsState::myLineNumeration)
+    val lineMarkerAreaShown: Int = indexOf(EditorSettingsState::myLineMarkerAreaShown)
+    val gutterIconsShown: Int = indexOf(EditorSettingsState::myGutterIconsShown)
+    val foldingOutlineShown: Int = indexOf(EditorSettingsState::myIsFoldingOutlineShown)
+    val foldingOutlineShownOnlyOnHover: Int = indexOf(EditorSettingsState::foldingOutlineShownOnlyOnHover)
+    val foldingEndingsShown: Int = indexOf(EditorSettingsState::foldingEndingsShown)
+    val autoCodeFoldingEnabled: Int = indexOf(EditorSettingsState::myAutoCodeFoldingEnabled)
+    val singleLogicalLineFoldingAllowed: Int = indexOf(EditorSettingsState::myAllowSingleLogicalLineFolding)
+    val rightMarginShown: Int = indexOf(EditorSettingsState::myIsRightMarginShown)
+    val selectionOccurrencesHighlighted: Int = indexOf(EditorSettingsState::myIsHighlightSelectionOccurrences)
+    val whitespacesShown: Int = indexOf(EditorSettingsState::myIsWhitespacesShown)
+    val leadingWhitespaceShown: Int = indexOf(EditorSettingsState::myIsLeadingWhitespacesShown)
+    val innerWhitespaceShown: Int = indexOf(EditorSettingsState::myIsInnerWhitespacesShown)
+    val trailingWhitespaceShown: Int = indexOf(EditorSettingsState::myIsTrailingWhitespacesShown)
+    val selectionWhitespaceShown: Int = indexOf(EditorSettingsState::myIsSelectionWhitespacesShown)
+    val indentGuidesShown: Int = indexOf(EditorSettingsState::myIndentGuidesShown)
+    val caretRowShown: Int = indexOf(EditorSettingsState::myCaretRowShown)
+    val intentionBulbShown: Int = indexOf(EditorSettingsState::myShowIntentionBulb)
+    val inspectionWidgetShown: Int = indexOf(EditorSettingsState::showInspectionWidget)
+    val editorFontInInlaysUsed: Int = indexOf(EditorSettingsState::useEditorFontInInlays)
+    val bidiTextDirection: Int = indexOf(EditorSettingsState::bidiTextDirection)
+    val rtlEnabled: Int = indexOf(EditorSettingsState::rtlEnabled)
+    val stickyLinesShown: Int = indexOf(EditorSettingsState::myStickyLinesShown)
+    val stickyLinesShownForLanguage: Int = indexOf(EditorSettingsState::myStickyLinesShownForLanguage)
+    val stickyLinesLimit: Int = indexOf(EditorSettingsState::myStickyLinesLimit)
+    val specialCharsShown: Int = indexOf(EditorSettingsState::showingSpecialCharacters)
+    val additionalLinesCount: Int = indexOf(EditorSettingsState::myAdditionalLinesCount)
+    val additionalColumnsCount: Int = indexOf(EditorSettingsState::myAdditionalColumnsCount)
+    val characterGridWidthMultiplier: Int = indexOf(EditorSettingsState::characterGridWidth)
+    val blockCursor: Int = indexOf(EditorSettingsState::myIsBlockCursor)
+    val fullLineHeightCursor: Int = indexOf(EditorSettingsState::myIsFullLineHeightCursor)
+    val lineCursorWidth: Int = indexOf(EditorSettingsState::myLineCursorWidth)
+    val smoothCaretMovement: Int = indexOf(EditorSettingsState::myIsSmoothCaretMovement)
+    val caretEasing: Int = indexOf(EditorSettingsState::myCaretEasing)
+    val caretBlinking: Int = indexOf(EditorSettingsState::myIsCaretBlinking)
+    val caretBlinkPeriod: Int = indexOf(EditorSettingsState::myCaretBlinkingPeriod)
+    val smoothCaretBlinking: Int = indexOf(EditorSettingsState::myIsSmoothCaretBlinking)
+    val virtualSpace: Int = indexOf(EditorSettingsState::myIsVirtualSpace)
+    val caretInsideTabs: Int = indexOf(EditorSettingsState::myIsCaretInsideTabs)
+    val smartHome: Int = indexOf(EditorSettingsState::myIsSmartHome)
+    val camelWords: Int = indexOf(EditorSettingsState::myIsCamelWords)
+    val mouseClickSelectionHonorsCamelWords: Int = indexOf(EditorSettingsState::myIsMouseClickSelectionHonorsCamelWords)
+    val caretStopOptions: Int = indexOf(EditorSettingsState::caretStopOptions)
+    val caretsAddedOnDoubleCtrl: Int = indexOf(EditorSettingsState::addCaretsOnDoubleCtrl)
+    val softWrapsUsed: Int = indexOf(EditorSettingsState::myUseSoftWraps)
+    val allSoftWrapsShown: Int = indexOf(EditorSettingsState::allSoftWrapsShown)
+    val softWrapsPainted: Int = indexOf(EditorSettingsState::myPaintSoftWraps)
+    val customSoftWrapIndentUsed: Int = indexOf(EditorSettingsState::myUseCustomSoftWrapIndent)
+    val customSoftWrapIndent: Int = indexOf(EditorSettingsState::myCustomSoftWrapIndent)
+    val verticalScrollOffset: Int = indexOf(EditorSettingsState::myVerticalScrollOffset)
+    val verticalScrollJump: Int = indexOf(EditorSettingsState::myVerticalScrollJump)
+    val horizontalScrollOffset: Int = indexOf(EditorSettingsState::myHorizontalScrollOffset)
+    val horizontalScrollJump: Int = indexOf(EditorSettingsState::myHorizontalScrollJump)
+    val animatedScrolling: Int = indexOf(EditorSettingsState::myIsAnimatedScrolling)
+    val refrainFromScrolling: Int = indexOf(EditorSettingsState::myIsRefrainFromScrolling)
+    val additionalPageAtBottom: Int = indexOf(EditorSettingsState::myIsAdditionalPageAtBottom)
+    val dndEnabled: Int = indexOf(EditorSettingsState::myIsDndEnabled)
+    val wheelFontChangeEnabled: Int = indexOf(EditorSettingsState::myIsWheelFontChangeEnabled)
+    val wheelFontChangePersistent: Int = indexOf(EditorSettingsState::wheelFontChangePersistent)
+    val variableInplaceRenameEnabled: Int = indexOf(EditorSettingsState::myIsRenameVariablesInplace)
+    val renamePreselected: Int = indexOf(EditorSettingsState::myRenamePreselect)
+    val parenthesesInsertedAutomatically: Int = indexOf(EditorSettingsState::insertParenthesesAutomatically)
+    val rightMargin: Int = indexOf(EditorSettingsState::rightMargin)
+    val softMargins: Int = indexOf(EditorSettingsState::softMargins)
+    val wrapWhenTypingReachesRightMargin: Int = indexOf(EditorSettingsState::myWrapWhenTypingReachesRightMargin)
+    val tabCharacterUsed: Int = indexOf(EditorSettingsState::myUseTabCharacter)
+    val tabSize: Int = indexOf(EditorSettingsState::tabSize)
 
-  fun getVerticalScrollOffset(): Int = verticalScrollOffset
-  fun getVerticalScrollJump(): Int = verticalScrollJump
-  fun getHorizontalScrollOffset(): Int = horizontalScrollOffset
-  fun getHorizontalScrollJump(): Int = horizontalScrollJump
-  fun isAnimatedScrolling(): Boolean = animatedScrolling
-  fun isRefrainFromScrolling(): Boolean = refrainFromScrolling
-  fun isAdditionalPageAtBottom(): Boolean = additionalPageAtBottom
-
-  fun isDndEnabled(): Boolean = dndEnabled
-  fun isWheelFontChangeEnabled(): Boolean = wheelFontChangeEnabled
-  fun isWheelFontChangePersistent(): Boolean = wheelFontChangePersistent
-
-  fun isVariableInplaceRenameEnabled(): Boolean = variableInplaceRenameEnabled
-  fun isPreselectRename(): Boolean = renamePreselected
-  fun isInsertParenthesesAutomatically(): Boolean = parenthesesInsertedAutomatically
-
-  fun getRightMargin(): Int = rightMargin
-  fun getSoftMargins(): List<Int> = softMargins
-  fun isWrapWhenTypingReachesRightMargin(): Boolean = wrapWhenTypingReachesRightMargin
-  fun isUseTabCharacter(): Boolean = tabCharacterUsed
-  fun isUseTabCharacterOverridden(): Boolean = tabCharacterOverridden
-  fun getTabSize(): Int = tabSize
-  fun isTabSizeOverridden(): Boolean = tabSizeOverridden
-
-  internal fun stateModificationCount(): Long = stateModificationCount
-
-  companion object {
-    /**
-     * Reads the current values of [state], and the modification count of [state] before them. A change during the read
-     * thus leaves the count of the snapshot behind the count of the state, and the next publication reads again.
-     */
-    internal fun read(state: EditorSettingsState): SettingsSnapshot {
-      val modificationCount = state.getModificationCount()
-      return SettingsSnapshot(
-        lineNumbersShown = state.myAreLineNumbersShown,
-        lineNumbersAfterIcons = state.myAreLineNumbersAfterIcons,
-        lineNumerationType = state.myLineNumeration,
-        lineMarkerAreaShown = state.myLineMarkerAreaShown,
-        gutterIconsShown = state.myGutterIconsShown,
-        foldingOutlineShown = state.myIsFoldingOutlineShown,
-        foldingOutlineShownOnlyOnHover = state.foldingOutlineShownOnlyOnHover,
-        foldingEndingsShown = state.foldingEndingsShown,
-        autoCodeFoldingEnabled = state.myAutoCodeFoldingEnabled,
-        singleLogicalLineFoldingAllowed = state.myAllowSingleLogicalLineFolding,
-
-        rightMarginShown = state.myIsRightMarginShown,
-        selectionOccurrencesHighlighted = state.myIsHighlightSelectionOccurrences,
-        whitespacesShown = state.myIsWhitespacesShown,
-        leadingWhitespaceShown = state.myIsLeadingWhitespacesShown,
-        innerWhitespaceShown = state.myIsInnerWhitespacesShown,
-        trailingWhitespaceShown = state.myIsTrailingWhitespacesShown,
-        selectionWhitespaceShown = state.myIsSelectionWhitespacesShown,
-        indentGuidesShown = state.myIndentGuidesShown,
-        caretRowShown = state.myCaretRowShown,
-        intentionBulbShown = state.myShowIntentionBulb,
-        inspectionWidgetShown = state.showInspectionWidget,
-        editorFontInInlaysUsed = state.useEditorFontInInlays,
-        bidiTextDirection = state.bidiTextDirection,
-        rtlEnabled = state.rtlEnabled,
-        stickyLinesShown = state.myStickyLinesShown,
-        stickyLinesShownForLanguage = state.myStickyLinesShownForLanguage,
-        stickyLinesLimit = state.myStickyLinesLimit,
-        specialCharsShown = state.showingSpecialCharacters,
-        additionalLinesCount = state.myAdditionalLinesCount,
-        additionalColumnsCount = state.myAdditionalColumnsCount,
-        characterGridWidthMultiplier = state.characterGridWidth,
-
-        blockCursor = state.myIsBlockCursor,
-        fullLineHeightCursor = state.myIsFullLineHeightCursor,
-        lineCursorWidth = state.myLineCursorWidth,
-        smoothCaretMovement = state.myIsSmoothCaretMovement,
-        caretEasing = state.myCaretEasing,
-        caretBlinking = state.myIsCaretBlinking,
-        caretBlinkPeriod = state.myCaretBlinkingPeriod,
-        smoothCaretBlinking = state.myIsSmoothCaretBlinking,
-        virtualSpace = state.myIsVirtualSpace,
-        caretInsideTabs = state.myIsCaretInsideTabs,
-        smartHome = state.myIsSmartHome,
-        camelWords = state.myIsCamelWords,
-        mouseClickSelectionHonorsCamelWords = state.myIsMouseClickSelectionHonorsCamelWords,
-        caretStopOptions = state.caretStopOptions,
-        caretsAddedOnDoubleCtrl = state.addCaretsOnDoubleCtrl,
-
-        softWrapsUsed = state.myUseSoftWraps,
-        allSoftWrapsShown = state.allSoftWrapsShown,
-        softWrapsPainted = state.myPaintSoftWraps,
-        customSoftWrapIndentUsed = state.myUseCustomSoftWrapIndent,
-        customSoftWrapIndent = state.myCustomSoftWrapIndent,
-
-        verticalScrollOffset = state.myVerticalScrollOffset,
-        verticalScrollJump = state.myVerticalScrollJump,
-        horizontalScrollOffset = state.myHorizontalScrollOffset,
-        horizontalScrollJump = state.myHorizontalScrollJump,
-        animatedScrolling = state.myIsAnimatedScrolling,
-        refrainFromScrolling = state.myIsRefrainFromScrolling,
-        additionalPageAtBottom = state.myIsAdditionalPageAtBottom,
-
-        dndEnabled = state.myIsDndEnabled,
-        wheelFontChangeEnabled = state.myIsWheelFontChangeEnabled,
-        wheelFontChangePersistent = state.wheelFontChangePersistent,
-
-        variableInplaceRenameEnabled = state.myIsRenameVariablesInplace,
-        renamePreselected = state.myRenamePreselect,
-        parenthesesInsertedAutomatically = state.insertParenthesesAutomatically,
-
-        rightMargin = state.rightMargin,
-        softMargins = state.softMargins,
-        wrapWhenTypingReachesRightMargin = state.myWrapWhenTypingReachesRightMargin,
-        tabCharacterUsed = state.myUseTabCharacter,
-        tabCharacterOverridden = state.isOverridden(state::myUseTabCharacter),
-        tabSize = state.tabSize,
-        tabSizeOverridden = state.isOverridden(state::tabSize),
-
-        stateModificationCount = modificationCount,
-      )
+    private fun indexOf(property: KProperty<*>): Int {
+      return StateLayout.indexOf(EditorSettingsState::class.java, property)
     }
   }
 }
