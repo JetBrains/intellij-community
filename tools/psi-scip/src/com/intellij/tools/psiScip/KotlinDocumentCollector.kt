@@ -48,7 +48,7 @@ import org.jetbrains.kotlin.psi.KtTypeParameter
  *
  * - A definition has the name range and an `enclosing_range` from the first child after the KDoc to the end of the declaration;
  *   a primary constructor is defined at the class name, a secondary one at `constructor`, an object literal at `object`.
- *   The symbols are [KotlinSymbols]'; a local declaration, a non-property parameter and a type parameter are locals.
+ *   The symbols are [KotlinSymbols]'; a local variable or function, a non-property parameter and a type parameter are locals.
  * - A reference has the range of the reference name. A reference with more than one resolve candidate is never written.
  * - A call has [ROLE_CALL] on the callee name: `foo()`, `a.foo()`, `Foo()`, and the name of an infix call (`a eq b`).
  *   A constructor call writes the class without the bit and the constructor with it; a class without an explicit
@@ -308,18 +308,16 @@ private fun constructedClass(target: PsiElement): PsiElement? {
 }
 
 /**
- * A declaration that has a local symbol: a parameter that is no property, a local variable, function or class, an object literal,
- * a type parameter, and any declaration inside a local class or an object literal.
+ * A declaration that has a local symbol: a parameter that is no property, a local variable or function, a type parameter.
+ * A local class and an object literal have a symbol of their binary name ([KotlinSymbols]), and so have their members.
  */
 private fun isLocal(element: PsiElement): Boolean {
-  val local = when (element) {
+  return when (element) {
     is KtParameter -> !(element.hasValOrVar() && element.ownerFunction is KtConstructor<*>)
     is KtProperty -> element.isLocal
     is KtNamedFunction -> element.isLocal
-    is KtClassOrObject -> element.isLocal
     // a lambda stands for its implicit parameter `it`
     is KtFunctionLiteral, is KtDestructuringDeclarationEntry, is KtTypeParameter, is PsiTypeParameter, is PsiLocalVariable, is PsiParameter -> true
     else -> false
   }
-  return local || element is KtDeclaration && generateSequence(PsiTreeUtil.getParentOfType(element, KtClassOrObject::class.java)) { PsiTreeUtil.getParentOfType(it, KtClassOrObject::class.java) }.any { it.isLocal }
 }
