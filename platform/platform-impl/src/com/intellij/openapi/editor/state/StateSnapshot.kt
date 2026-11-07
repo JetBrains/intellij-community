@@ -9,6 +9,7 @@ package com.intellij.openapi.editor.state
  * The snapshot keeps only the references to the values, so a mutable value object can still change.
  */
 class StateSnapshot internal constructor(
+  private val layout: StateLayout,
   private val values: Array<Any?>,
   private val overrides: Array<Any?>,
 ) {
@@ -26,6 +27,13 @@ class StateSnapshot internal constructor(
    */
   fun isOverridden(property: StateProperty<*>): Boolean {
     return overrides[property.index] !== NoOverride
+  }
+
+  /**
+   * The properties of the state, frozen at its first snapshot. All snapshots of the state share it.
+   */
+  internal fun layout(): StateLayout {
+    return layout
   }
 
   internal fun valueAt(index: Int): Any? {

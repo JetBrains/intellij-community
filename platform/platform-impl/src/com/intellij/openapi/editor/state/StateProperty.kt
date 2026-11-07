@@ -28,7 +28,6 @@ abstract class StateProperty<T> internal constructor(
 
   operator fun provideDelegate(thisRef: Any, property: KProperty<*>): ReadWriteProperty<ObservableState, T> {
     name = property.name
-    (thisRef as? ObservableState)?.registerName(this, property.name)
     return this
   }
 

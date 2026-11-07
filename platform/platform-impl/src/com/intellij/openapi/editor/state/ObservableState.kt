@@ -28,20 +28,19 @@ import kotlin.reflect.typeOf
  * - [findProperty] finds a property by its name.
  *
  * Rules for a subclass and its owner:
- * - The owner calls [refreshAll] after the construction, because an initial value is only a placeholder.
+ * - The owner calls [refreshAll] after the construction, on the thread that built the state. An initial value is only a
+ *   placeholder, and the first refresh also freezes the set of properties.
  * - The subclass must not read a property while it is built. A property that registers after the first read fails.
  * - Each value must be immutable, because a snapshot keeps only the reference.
  * - A calculator and a modifier follow the rules of [SyncDefaultValueCalculator].
  */
 // Inspired by com.intellij.openapi.components.BaseState.
 abstract class ObservableState {
-  // Not a SmartList, because most states have more than one property.
-  private val properties: MutableList<StateProperty<Any>> = ArrayList()
-
   /**
-   * The properties by name. [StateProperty.provideDelegate] fills it, because a property gets its name only there.
+   * The properties in the declaration order, while the subclass is built. The first snapshot freezes them in a
+   * [StateLayout], and all later reads use the layout.
    */
-  private val propertiesByName: HashMap<String, StateProperty<Any>> = HashMap()
+  private val properties: MutableList<StateProperty<Any>> = ArrayList()
 
   /**
    * The current values, or `null` before the first read.
@@ -143,7 +142,7 @@ abstract class ObservableState {
    */
   fun refreshAll() {
     batch {
-      for (property in properties) {
+      for (property in getSnapshot().layout().properties()) {
         property.recalculate(this)
       }
     }
@@ -169,14 +168,15 @@ abstract class ObservableState {
       }
       return
     }
-    val batch = StateBatch(getSnapshot())
+    val base = getSnapshot()
+    val batch = StateBatch(base)
     openBatch = batch
     try {
       action()
     } finally {
       openBatch = null
       try {
-        publish(batch)
+        publish(base, batch)
       } finally {
         writeLock.unlock()
       }
@@ -221,7 +221,7 @@ abstract class ObservableState {
    * Whether [property] has an override.
    */
   fun isOverridden(property: KProperty<*>): Boolean {
-    val stateProperty = propertiesByName[property.name] ?: return false
+    val stateProperty = findProperty(property.name) ?: return false
     return isOverriddenAt(stateProperty.index)
   }
 
@@ -229,7 +229,7 @@ abstract class ObservableState {
    * The property with [name], or `null` when the state has none.
    */
   fun findProperty(name: String): StateProperty<Any>? {
-    return propertiesByName[name]
+    return getSnapshot().layout().findProperty(name)
   }
 
   /**
@@ -270,16 +270,7 @@ abstract class ObservableState {
    */
   @Suppress("FunctionName")
   fun __getProperties(): List<StateProperty<Any>> {
-    return properties
-  }
-
-  /**
-   * Adds [property] to the lookup by name. The first property with a name keeps it, as a search of the list in the
-   * declaration order does.
-   */
-  internal fun registerName(property: StateProperty<*>, name: String) {
-    @Suppress("UNCHECKED_CAST")
-    propertiesByName.putIfAbsent(name, property as StateProperty<Any>)
+    return getSnapshot().layout().properties()
   }
 
   /**
@@ -356,7 +347,7 @@ abstract class ObservableState {
   }
 
   private fun requireProperty(property: KProperty<*>): StateProperty<Any> {
-    return requireNotNull(propertiesByName[property.name]) { "The state has no property ${property.name}" }
+    return requireNotNull(findProperty(property.name)) { "The state has no property ${property.name}" }
   }
 
   private fun requireBatchOfThisThread(): StateBatch {
@@ -364,19 +355,20 @@ abstract class ObservableState {
   }
 
   /**
-   * Publishes the changes of [batch] in a new snapshot, and then counts them. The caller holds [writeLock], so no other
-   * publication runs at the same time.
+   * Publishes the changes of [batch], which started from [base], in a new snapshot, and then counts them. The caller
+   * holds [writeLock], so no other publication runs at the same time.
    */
-  private fun publish(batch: StateBatch) {
+  private fun publish(base: StateSnapshot, batch: StateBatch) {
     if (!batch.hasChanges()) {
       return
     }
-    snapshot = StateSnapshot(batch.values(), batch.overrides())
+    snapshot = StateSnapshot(base.layout(), batch.values(), batch.overrides())
     MODIFICATION_COUNT_UPDATER.incrementAndGet(this)
   }
 
   /**
-   * Creates the snapshot with the initial values and without overrides, unless another thread has created it.
+   * Freezes the properties, and creates the snapshot with the initial values and without overrides, unless another
+   * thread has created it.
    */
   private fun createFirstSnapshot(): StateSnapshot {
     writeLock.lock()
@@ -385,9 +377,10 @@ abstract class ObservableState {
       if (current != null) {
         return current
       }
+      val layout = StateLayout.freeze(this, properties)
       val values = Array<Any?>(properties.size) { properties[it].initialValue }
       val overrides = Array<Any?>(properties.size) { NoOverride }
-      val first = StateSnapshot(values, overrides)
+      val first = StateSnapshot(layout, values, overrides)
       snapshot = first
       return first
     } finally {
