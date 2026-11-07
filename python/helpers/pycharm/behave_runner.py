@@ -17,7 +17,7 @@ from behave.formatter.base import Formatter
 from behave.model import Step, ScenarioOutline, Feature, Scenario
 from behave.formatter import _registry
 from behave.tag_expression import TagExpression
-from behave.step_registry import registry as the_step_registry
+from behave.runner_util import parse_features
 from _jb_django_behave import run_as_django_behave
 import _bdd_utils
 import tcmessages
@@ -25,126 +25,12 @@ from _jb_utils import VersionAgnosticUtils
 
 _MAX_STEPS_SEARCH_FEATURES = 5000  # Do not look for features in folder that has more that this number of children
 _FEATURES_FOLDER = 'features'  # "features" folder name.
-try:
-    # Python 3.3+
-    from importlib.machinery import EXTENSION_SUFFIXES as _EXTENSION_SUFFIXES
-    _EXT_SUFFIXES = tuple(_EXTENSION_SUFFIXES)  # .pyd, .so, ABI-tagged variants
-except ImportError:
-    # Python 2.7 fallback: imp.get_suffixes() yields (suffix, mode, type) tuples
-    import imp
-    _EXT_SUFFIXES = tuple(s for s, _, t in imp.get_suffixes() if t == imp.C_EXTENSION)
 
 __author__ = 'Ilya.Kazakevich'
 
 from behave import configuration, runner
 
 import os
-
-
-def _step_definition_files(step_registry):
-    """
-    Collects absolute paths of files that registered step definitions.
-
-    :param step_registry behave step registry to inspect
-    :return: set of absolute file paths
-    :rtype: set
-    """
-    files = set()
-    for matchers in step_registry.steps.values():
-        for matcher in matchers:
-            path = None
-            # "location" is a lazy property on behave 1.2.6 and a cached one on 1.3.x
-            location = getattr(matcher, 'location', None)
-            if location is not None:
-                path = getattr(location, 'filename', None)
-            if path is None:
-                # Fall back to the step function itself if the matcher has no location
-                func = getattr(matcher, 'func', None)
-                code = getattr(func, '__code__', None) or getattr(func, 'func_code', None)
-                path = getattr(code, 'co_filename', None)
-            if path:
-                files.add(os.path.normcase(os.path.abspath(path)))
-    return files
-
-
-def _may_be_reimported(module):
-    """
-    Checks that a module can be safely removed from sys.modules and imported again.
-
-    Extension modules must not: their initializers register types in process-global
-    registries, so a second import raises "type X is already registered" (PY-89290).
-    Modules without a file (builtin, frozen, namespace) can't be reexecuted either.
-
-    :param module module to check
-    :return: true if the module may be reimported
-    """
-    path = getattr(module, '__file__', None)
-    if not path:
-        return False
-    return not path.endswith(_EXT_SUFFIXES)
-
-
-def _modules_to_reimport(old_modules, step_files):
-    """
-    Picks modules imported during the dry run that have to be imported again.
-
-    Only modules that registered steps qualify: everything else the dry run
-    happened to import must be imported exactly once per process. A module is
-    taken together with its descendants, and the whole subtree is skipped unless
-    every part of it may be reimported -- dropping a package while keeping one of
-    its already imported children leaves the package desynchronized, so the
-    reimported parent no longer exposes that child as an attribute (PY-91210).
-
-    :param old_modules sys.modules snapshot taken before the dry run
-    :type old_modules dict
-    :param step_files absolute paths of files that registered steps
-    :type step_files set
-    :return: set of module names
-    :rtype: set
-    """
-    result = set()
-    for (name, module) in list(sys.modules.items()):
-        if name in old_modules or module is None:
-            continue
-        path = getattr(module, '__file__', None)
-        if not path:
-            continue
-        if path.endswith('.pyc'):  # Python 2
-            path = path[:-1]
-        if os.path.normcase(os.path.abspath(path)) not in step_files:
-            continue
-        subtree = [name]
-        prefix = name + '.'
-        for (child_name, child) in list(sys.modules.items()):
-            if child_name.startswith(prefix) and child_name not in old_modules and child is not None:
-                subtree.append(child_name)
-        if all(_may_be_reimported(sys.modules[module_name]) for module_name in subtree):
-            result.update(subtree)
-    return result
-
-
-def _drop_modules(module_names):
-    """
-    Removes modules from sys.modules so that the next import reexecutes them.
-
-    A submodule is also unbound from its package: "from package import module" is
-    served from the "module" attribute of an already imported "package" without
-    consulting sys.modules at all, so dropping the submodule alone changes nothing.
-
-    :param module_names names of modules to drop
-    """
-    # Children first, so that a package is still around when its children are unbound
-    for name in sorted(module_names, reverse=True):
-        module = sys.modules.pop(name, None)
-        (package_name, _, attribute) = name.rpartition('.')
-        if not package_name:
-            continue
-        package = sys.modules.get(package_name)
-        if package is not None and getattr(package, attribute, None) is module:
-            try:
-                delattr(package, attribute)
-            except AttributeError:
-                pass
 
 
 def _get_dirs_to_run(base_dir_to_search):
@@ -184,7 +70,7 @@ def _merge_hooks_wrapper(*hooks):
 class _RunnerWrapper(runner.Runner):
     """
     Wrapper around behave native wrapper. Has nothing todo with BddRunner!
-    We need it to support dry runs (to fetch data from scenarios) and hooks api
+    We need it to support the hooks api
     """
 
     def __init__(self, config, hooks):
@@ -195,10 +81,6 @@ class _RunnerWrapper(runner.Runner):
         :param hooks hooks in format "before_scenario" => f(context, scenario) to load after/before hooks, provided by user
         """
         super(_RunnerWrapper, self).__init__(config)
-        self.dry_run = False
-        """
-        Does not run tests (only fetches "self.features") if true. Runs tests otherwise.
-        """
         self.__hooks = hooks
 
     def load_hooks(self, filename='environment.py'):
@@ -217,30 +99,6 @@ class _RunnerWrapper(runner.Runner):
                     user_and_custom_hook = [hook, user_hook]
                 hook_to_add = _merge_hooks_wrapper(*user_and_custom_hook)
             self.hooks[hook_name] = hook_to_add
-
-    def run_model(self, features=None):
-        """
-        Overrides parent method to stop (do nothing) in case of "dry_run"
-        :param features: features to run
-        :return:
-        """
-        if self.dry_run:  # To stop further execution
-            return
-        return super(_RunnerWrapper, self).run_model(features)
-
-    def clean(self):
-        """
-        Cleans runner after dry run (clears hooks, features etc). To be called before real run!
-        """
-        self.dry_run = False
-        self.hooks.clear()
-        self.features = []
-        if self.step_registry is None:
-            if hasattr(the_step_registry, 'clear'):
-                the_step_registry.clear()
-        else:
-            if hasattr(self.step_registry, 'clear'):
-                self.step_registry.clear()
 
 
 class _BehaveRunner(_bdd_utils.BddRunner):
@@ -351,23 +209,18 @@ class _BehaveRunner(_bdd_utils.BddRunner):
         return isinstance(expected_tags, TagExpression) and expected_tags.check(scenario.tags)
 
     def _get_features_to_run(self):
-        old_modules = sys.modules.copy()
-        self.__real_runner.dry_run = True
-        self.__real_runner.run()
-        # During the dry run we can import some modules with steps in nested
-        # directories. And since we then clear step registry, there's no way to
-        # get those steps back without reimport. So we drop the modules that
-        # registered steps to support such scenario (PY-86174).
-        # Nothing else may be dropped. Reimporting a module reexecutes its body,
-        # which breaks anything that has to be imported once per process:
-        # module-level state of project and library code (PY-89530, PY-90761),
-        # stdlib types other packages captured at import time (PY-90800),
-        # C extensions (PY-89290) and packages whose parent is pure Python while
-        # their children are compiled (PY-91210).
-        step_registry = self.__real_runner.step_registry or the_step_registry
-        _drop_modules(_modules_to_reimport(old_modules, _step_definition_files(step_registry)))
-        features_to_run = self.__real_runner.features
-        self.__real_runner.clean()  # To make sure nothing left after dry run
+        """
+        Parses the features to run without running them.
+
+        Unlike behave "Runner.run()", it does not load "environment.py" and the step modules.
+        So the real run executes them once, like the "behave" command does.
+        """
+        real_runner = self.__real_runner
+        with real_runner.path_manager:
+            real_runner.setup_paths()
+            feature_locations = [location for location in real_runner.feature_locations()
+                                 if not self.__config.exclude(location)]
+        features_to_run = parse_features(feature_locations, language=self.__config.lang)
 
         # Change outline scenario skeletons with real scenarios
         for feature in features_to_run:
