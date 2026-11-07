@@ -349,6 +349,20 @@ class PyEvaluatorTest : PyCodeInsightTestCase() {
   }
 
   @Test
+  @TestFor(issues = ["PY-93851"])
+  fun `version tuple with a named item gives no value`() = runInEdtAndWait {
+    assertNull(PyEvaluator.evaluateAsVersion(parseText("""
+      MINOR = 4
+      expr = (3, MINOR)
+    """)))
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("""
+      import sys
+      MINOR = 4
+      expr = sys.version_info >= (3, MINOR)
+    """), LanguageLevel.PYTHON34))
+  }
+
+  @Test
   @TestFor(issues = ["PY-93846"])
   fun `floor division by zero gives no value`() = runInEdtAndWait {
     assertNull(PyEvaluator().evaluate(parseExpression("1 // 0")))

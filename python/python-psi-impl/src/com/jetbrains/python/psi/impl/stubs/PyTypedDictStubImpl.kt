@@ -78,8 +78,8 @@ class PyTypedDictStubImpl private constructor(
       return PyTypedDictStubImpl(calleeName,
                                  typeName,
                                  fields,
-                                 PyEvaluator.evaluateAsBoolean(expression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER), true),
-                                 PyEvaluator.evaluateAsBoolean(expression.getKeywordArgument(TYPED_DICT_CLOSED_PARAMETER), false),
+                                 PyEvaluator.evaluateAsBooleanNoResolve(expression.getKeywordArgument(TYPED_DICT_TOTAL_PARAMETER), true),
+                                 PyEvaluator.evaluateAsBooleanNoResolve(expression.getKeywordArgument(TYPED_DICT_CLOSED_PARAMETER), false),
                                  expression.getKeywordArgument(TYPED_DICT_EXTRA_ITEMS_PARAMETER)?.text)
     }
 
