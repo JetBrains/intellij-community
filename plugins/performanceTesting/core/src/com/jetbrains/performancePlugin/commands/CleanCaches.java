@@ -33,7 +33,10 @@ public final class CleanCaches extends AbstractCommand {
       Project project = context.getProject();
       PsiManager.getInstance(project).dropResolveCaches();
       PsiManager.getInstance(project).dropPsiCaches();
-      ((StubIndexEx)StubIndex.getInstance()).cleanCaches();
+      // The split-mode frontend does not load the module that registers StubIndex, so getInstance() returns null there.
+      if (StubIndex.getInstance() instanceof StubIndexEx stubIndex) {
+        stubIndex.cleanCaches();
+      }
       ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
       actionCallback.setDone();
     });
