@@ -48,8 +48,9 @@ open class ObjectStateProperty<T> internal constructor(
       if (wasOverridden && state.overrideAt(index) == value) {
         return@batch
       }
+      val newValue = modify(value)
       state.storeOverride(index, value)
-      updateValue(value)
+      storeValue(newValue)
       if (!wasOverridden) {
         state.overridingChanged(name)
       }
@@ -59,8 +60,9 @@ open class ObjectStateProperty<T> internal constructor(
   override fun clearOverriding(thisRef: ObservableState) {
     state.batch {
       if (state.isOverriddenAt(index)) {
+        val newValue = modify(defaultValueCalculator.calculate())
         state.clearOverrideAt(index)
-        updateValue(defaultValueCalculator.calculate())
+        storeValue(newValue)
         state.overridingChanged(name)
       }
     }
@@ -71,9 +73,9 @@ open class ObjectStateProperty<T> internal constructor(
       if (state.isOverriddenAt(index)) {
         // Safe: the entry is not NoOverride here, and only setValue stores an override, which is a T.
         @Suppress("UNCHECKED_CAST")
-        updateValue(state.overrideAt(index) as T)
+        storeValue(modify(state.overrideAt(index) as T))
       } else {
-        updateValue(defaultValueCalculator.calculate())
+        storeValue(modify(defaultValueCalculator.calculate()))
       }
     }
   }
@@ -85,10 +87,17 @@ open class ObjectStateProperty<T> internal constructor(
   }
 
   /**
-   * Stores [calculated] after [customOutValueModifier], and notifies the listeners when the stored value changes.
+   * The value that the property holds for [calculated]: the result of [customOutValueModifier]. A change computes it
+   * before it stores anything, so a failure of the modifier or of the calculator changes nothing.
    */
-  private fun updateValue(calculated: T) {
-    val newValue = customOutValueModifier?.modifyOutValue(calculated) ?: calculated
+  private fun modify(calculated: T): T {
+    return customOutValueModifier?.modifyOutValue(calculated) ?: calculated
+  }
+
+  /**
+   * Stores [newValue], and notifies the listeners when it differs from the stored value.
+   */
+  private fun storeValue(newValue: T) {
     val oldValue = state.valueAt(index)
     if (newValue != oldValue) {
       state.storeValue(index, newValue)

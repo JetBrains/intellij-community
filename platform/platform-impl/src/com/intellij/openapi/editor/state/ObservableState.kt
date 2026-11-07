@@ -30,6 +30,7 @@ import kotlin.reflect.typeOf
  * - The owner calls [refreshAll] after the construction, on the thread that built the state. An initial value is only a
  *   placeholder, and the first refresh also freezes the set of properties.
  * - The subclass must not read a property while it is built. A property that registers after the first read fails.
+ * - The subclass must not give `this` to another thread while it is built, because the registration takes no lock.
  * - Each value must be immutable, because a snapshot keeps only the reference.
  * - A calculator and a modifier follow the rules of [SyncDefaultValueCalculator].
  */
@@ -136,7 +137,7 @@ abstract class ObservableState {
    */
   fun refreshAll() {
     batch {
-      for (property in getSnapshot().layout().properties()) {
+      for (property in currentSnapshot().layout().properties()) {
         property.recalculate(this)
       }
     }
@@ -162,7 +163,7 @@ abstract class ObservableState {
       }
       return
     }
-    val base = getSnapshot()
+    val base = currentSnapshot()
     val batch = StateBatch(base)
     openBatch = batch
     try {
@@ -184,7 +185,7 @@ abstract class ObservableState {
    * The current values and overrides. Inside a [batch], the snapshot does not show the changes of the batch yet.
    */
   open fun getSnapshot(): StateSnapshot {
-    return snapshot ?: createFirstSnapshot()
+    return currentSnapshot()
   }
 
   /**
@@ -215,7 +216,7 @@ abstract class ObservableState {
    * The property with [name], or `null` when the state has none.
    */
   fun findProperty(name: String): StateProperty<Any>? {
-    return getSnapshot().layout().findProperty(name)
+    return currentSnapshot().layout().findProperty(name)
   }
 
   /**
@@ -230,23 +231,23 @@ abstract class ObservableState {
   }
 
   /**
-   * Notifies the listeners that the value of [propertyName] changed. A property of this state calls it. Inside a
-   * [batch], the event comes after the batch ends.
+   * Notifies the listeners that the value of [propertyName] changed. A property of this state calls it inside a [batch],
+   * and the event comes after the batch ends.
    */
   internal fun propertyChanged(propertyName: String?, oldValueRef: Ref<Any?>?, newValue: Any?) {
     if (propertyName != null) {
       val event = ObservableStateListener.PropertyChangeEvent(this, propertyName, oldValueRef, newValue)
-      deliver { dispatcher.multicaster.propertyChanged(event) }
+      requireBatchOfThisThread().addEvent { dispatcher.multicaster.propertyChanged(event) }
     }
   }
 
   /**
    * Tells the listeners that the property with [propertyName] got an override, or that it lost its override. A property
-   * of this state calls it. Inside a [batch], the event comes after the batch ends.
+   * of this state calls it inside a [batch], and the event comes after the batch ends.
    */
   internal fun overridingChanged(propertyName: String?) {
     if (propertyName != null) {
-      deliver { dispatcher.multicaster.overridingChanged(this, propertyName) }
+      requireBatchOfThisThread().addEvent { dispatcher.multicaster.overridingChanged(this, propertyName) }
     }
   }
 
@@ -256,7 +257,7 @@ abstract class ObservableState {
    */
   @Suppress("FunctionName")
   fun __getProperties(): List<StateProperty<Any>> {
-    return getSnapshot().layout().properties()
+    return currentSnapshot().layout().properties()
   }
 
   /**
@@ -267,7 +268,7 @@ abstract class ObservableState {
     if (batch != null) {
       return batch.valueAt(index)
     }
-    return getSnapshot().valueAt(index)
+    return currentSnapshot().valueAt(index)
   }
 
   /**
@@ -285,7 +286,7 @@ abstract class ObservableState {
     if (batch != null) {
       return batch.overrideAt(index)
     }
-    return getSnapshot().overrideAt(index)
+    return currentSnapshot().overrideAt(index)
   }
 
   /**
@@ -310,15 +311,10 @@ abstract class ObservableState {
   }
 
   /**
-   * Gives [event] to the listeners at the end of the open batch of this thread, or at once without a batch.
+   * The current snapshot. The state uses it and not [getSnapshot], which a subclass can override.
    */
-  private fun deliver(event: () -> Unit) {
-    val batch = batchOfThisThread()
-    if (batch == null) {
-      event()
-    } else {
-      batch.addEvent(event)
-    }
+  private fun currentSnapshot(): StateSnapshot {
+    return snapshot ?: createFirstSnapshot()
   }
 
   /**

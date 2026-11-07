@@ -2,6 +2,9 @@
 package com.intellij.openapi.editor.state
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -11,6 +14,33 @@ import org.junit.Test
 class ObservableStateOverridingTest {
   private class TestState : ObservableState() {
     var size: Int by property(1)
+  }
+
+  /**
+   * A state whose modifier refuses a negative size.
+   */
+  private class CheckedState : ObservableState() {
+    var size: Int by property(
+      initialValue = 1,
+      outValueModifier = CustomOutValueModifier {
+        require(it >= 0)
+        it
+      },
+    )
+  }
+
+  /**
+   * A state whose default fails while [failing] is set.
+   */
+  private class FailingDefaultState : ObservableState() {
+    var failing: Boolean = false
+    var size: Int by property(
+      initialValue = 1,
+      defaultValueCalculator = SyncDefaultValueCalculator {
+        check(!failing)
+        1
+      },
+    )
   }
 
   private val events = mutableListOf<String>()
@@ -49,7 +79,42 @@ class ObservableStateOverridingTest {
     )
   }
 
-  private fun TestState.recordEvents(): TestState {
+  /**
+   * The property computes its value before it stores the override, so a failing modifier changes nothing.
+   */
+  @Test
+  fun testAFailingModifierStoresNoOverride() {
+    val state = CheckedState().recordEvents()
+
+    assertThrows(IllegalArgumentException::class.java) {
+      state.size = -1
+    }
+
+    assertFalse(state.isOverridden(state::size))
+    assertEquals(1, state.size)
+    assertEquals(emptyList<String>(), events)
+  }
+
+  /**
+   * The property computes its default before it removes the override, so a failing calculator changes nothing.
+   */
+  @Test
+  fun testAFailingDefaultKeepsTheOverride() {
+    val state = FailingDefaultState()
+    state.size = 5
+    state.failing = true
+    state.recordEvents()
+
+    assertThrows(IllegalStateException::class.java) {
+      state.clearOverriding(state::size)
+    }
+
+    assertTrue(state.isOverridden(state::size))
+    assertEquals(5, state.size)
+    assertEquals(emptyList<String>(), events)
+  }
+
+  private fun <S : ObservableState> S.recordEvents(): S {
     addPropertyChangeListener(object : ObservableStateListener {
       override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
         events.add("changed ${event.propertyName}")
