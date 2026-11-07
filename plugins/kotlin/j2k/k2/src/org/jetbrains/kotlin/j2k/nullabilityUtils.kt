@@ -6,8 +6,10 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInspection.dataFlow.CommonDataflow
 import com.intellij.codeInspection.dataFlow.DfaNullability
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType
+import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -30,6 +32,22 @@ internal class NullabilityInfo {
     // A recreated type object keeps its reference element
     val nullableElements: MutableSet<PsiJavaCodeReferenceElement> = HashSet()
     val notNullElements: MutableSet<PsiJavaCodeReferenceElement> = HashSet()
+
+    // The data flow facts of the engine, so that J2K does not analyze the same code again
+    val expressionDfTypes: MutableMap<PsiExpression, DfType> = HashMap()
+
+    // Kept by declaration, because the type of a lambda parameter can share its reference element with another declaration
+    val nullableLambdaParameters: MutableSet<PsiParameter> = HashSet()
+    val notNullLambdaParameters: MutableSet<PsiParameter> = HashSet()
+}
+
+internal fun NullabilityInfo?.dfaNullabilityOf(expression: PsiExpression): DfaNullability? =
+    this?.expressionDfTypes.orEmpty().dfaNullability(expression)
+
+/** Returns the nullability that the engine found for [expression], otherwise runs [getExpressionDfaNullability]. */
+internal fun Map<PsiExpression, DfType>.dfaNullability(expression: PsiExpression): DfaNullability? {
+    val type = this[expression] ?: return getExpressionDfaNullability(expression)
+    return (type as? DfReferenceType)?.nullability
 }
 
 internal val NULLABLE_DFA_NULLABILITIES = setOf(DfaNullability.NULL, DfaNullability.NULLABLE)

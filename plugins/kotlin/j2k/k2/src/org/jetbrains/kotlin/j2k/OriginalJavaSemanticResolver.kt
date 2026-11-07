@@ -8,15 +8,13 @@ import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiReference
-import com.intellij.psi.SmartPointerManager
-import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import org.jetbrains.kotlin.j2k.externalCodeProcessing.OriginalJavaPsiContext
 
-private val originalPsiPointerKey = Key.create<SmartPsiElementPointer<PsiElement>>("j2k.original.psi.pointer")
+private val originalPsiKey = Key.create<PsiElement>("j2k.original.psi")
 
 internal fun anchorCopiedElementToOriginal(original: PsiElement, copied: PsiElement) {
-    copied.putUserData(originalPsiPointerKey, SmartPointerManager.createPointer(original))
+    copied.putUserData(originalPsiKey, original)
 
     var originalChild = original.firstChild
     var copiedChild = copied.firstChild
@@ -62,4 +60,4 @@ internal class OriginalJavaSemanticResolver(
 }
 
 private fun PsiElement.originalAnchoredElement(): PsiElement? =
-    getUserData(originalPsiPointerKey)?.element
+    getUserData(originalPsiKey)?.takeIf { it.isValid }

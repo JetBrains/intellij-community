@@ -702,13 +702,14 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
 }
 
 internal fun isSupportedElement(context: KtElement): Boolean {
+    val isValidHost = context is KtStringTemplateExpression && context.isValidHost
+    val isPlus = context is KtBinaryExpression && context.operationTokenOrNull == KtTokens.PLUS
+    val isInBinaryExpression = context.parent?.parent is KtBinaryExpression
+    if (!isValidHost && !isPlus && !isInBinaryExpression) return false
     if (context.parent?.isStandardConcatenationExpression() != false) return false // we will handle the top concatenation only, will not handle KtFile-s
-    if (context is KtStringTemplateExpression && context.isValidHost) return true
+    if (isValidHost) return true
     if (context.isStandardConcatenationExpression()) return true
-    if (context.parent.parent is KtBinaryExpression) {
-        return true
-    }
-    return false
+    return isInBinaryExpression
 }
 
 internal var KtElement.indentHandler: IndentHandler? by UserDataProperty(

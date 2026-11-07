@@ -7,7 +7,7 @@ import com.intellij.psi.PsiTypeCastExpression
 import org.jetbrains.kotlin.j2k.ConverterContext
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.j2k.RecursiveConversion
-import org.jetbrains.kotlin.j2k.getExpressionDfaNullability
+import org.jetbrains.kotlin.j2k.dfaNullabilityOf
 import org.jetbrains.kotlin.j2k.psi
 import org.jetbrains.kotlin.j2k.tree.JKClass
 import org.jetbrains.kotlin.j2k.tree.JKClassBody
@@ -63,7 +63,7 @@ class NullabilityConversion(context: ConverterContext) : RecursiveConversion(con
 
             // If Java DFA knows that the cast expression is not null, it is safe to cast to the not-null type
             psiCastedExpression != null -> {
-                val dfaNullability = getExpressionDfaNullability(psiCastedExpression)
+                val dfaNullability = typeFactory.nullabilityInfo.dfaNullabilityOf(psiCastedExpression)
                 dfaNullability == DfaNullability.NOT_NULL
             }
 

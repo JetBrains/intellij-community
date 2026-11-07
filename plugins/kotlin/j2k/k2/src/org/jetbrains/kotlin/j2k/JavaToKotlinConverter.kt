@@ -67,6 +67,11 @@ class JavaToKotlinConverter(
 
         if (files.isEmpty()) return ConversionResult(emptyMap(), null)
 
+        // Only the preprocessors edit Java, and they get copies. Without them, J2K reads the files themselves.
+        if (J2kPreprocessorExtension.EP_NAME.extensionList.isEmpty()) {
+            return filesToKotlin(files = files, copiedFiles = null, reporter = reporter)
+        }
+
         val copiedFiles = readAction {
             files.map {
                 val copy = it.copy() as PsiJavaFile
@@ -86,13 +91,22 @@ class JavaToKotlinConverter(
 
     private suspend fun filesToKotlin(
         files: List<PsiJavaFile>,
-        copiedFiles: List<PsiJavaFile>,
+        copiedFiles: List<PsiJavaFile>?,
         reporter: RawProgressReporter?,
     ): ConversionResult {
         reporter?.text(KotlinJ2kBundle.message("j2k.applying.conversions"))
         reporter?.fraction(0.0)
 
         val (results, externalCodeProcessing, context) = readAction {
+            if (copiedFiles == null) {
+                return@readAction elementsToKotlin(
+                    contextElement = files.first(),
+                    inputElements = files,
+                    conversionContextElements = files,
+                    inferTypeArguments = true,
+                )
+            }
+
             val originalJavaPsiContext = OriginalJavaPsiContext(
                 originalMembersByKey = files.buildMembersByKey(),
                 originalClassesByQualifiedName = files.buildClassesByQualifiedName(),
@@ -110,6 +124,7 @@ class JavaToKotlinConverter(
                 inputElements = copiedFiles,
                 conversionContextElements = files,
                 originalJavaPsiContext = originalJavaPsiContext,
+                inferTypeArguments = true,
             )
         }
 
@@ -150,6 +165,7 @@ class JavaToKotlinConverter(
         conversionContextElements: List<PsiElement>,
         forInlining: Boolean = false,
         originalJavaPsiContext: OriginalJavaPsiContext = OriginalJavaPsiContext.Empty,
+        inferTypeArguments: Boolean = false,
     ): Result {
         val targetPlatform = (targetFile?.getKaModuleOfTypeSafe<KaSourceModule>(project, useSiteModule = null)
         // This `KaSourceModule` is not 100% waterproof, but without the target file, we don't actually know the kind of the target
@@ -170,7 +186,8 @@ class JavaToKotlinConverter(
         }
 
         val importStorage = JKImportStorage(targetPlatform, project)
-        val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, semanticResolver, referenceSearcher, importStorage, forInlining)
+        val treeBuilder =
+            JavaToJKTreeBuilder(symbolProvider, typeFactory, semanticResolver, referenceSearcher, importStorage, forInlining, inferTypeArguments)
 
         // we want to leave all imports as is in the case when user is converting only imports
         val saveImports = inputElements.all { element ->

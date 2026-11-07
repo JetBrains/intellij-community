@@ -46,7 +46,7 @@ class JavaToKotlinService(val project: Project) {
         }
     }
 
-    /** Converts on copies, so the project is untouched until [writeConversion]. */
+    /** Converts in memory, so the project is untouched until [writeConversion]. */
     private suspend fun convertInMemory(
         files: List<PsiJavaFile>,
         module: Module,

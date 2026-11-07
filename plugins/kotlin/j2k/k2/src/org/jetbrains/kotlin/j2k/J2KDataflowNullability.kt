@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor
 import com.intellij.codeInspection.dataFlow.lang.DfaListener
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem
@@ -30,6 +31,7 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor
 import com.intellij.psi.JavaTokenType
+import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiArrayAccessExpression
 import com.intellij.psi.PsiArrayInitializerExpression
 import com.intellij.psi.PsiArrayType
@@ -50,6 +52,7 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiForeachStatement
 import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiLambdaExpression
 import com.intellij.psi.PsiLocalVariable
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
@@ -59,9 +62,11 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiParameter
+import com.intellij.psi.PsiParenthesizedExpression
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiRecordComponent
 import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.PsiReferenceParameterList
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeCastExpression
@@ -86,11 +91,18 @@ import com.intellij.codeInsight.Nullability as JavaNullability
 
 /**
  * Infers the nullability of the types in [file] for J2K.
+ * [inferredTypeArguments] are the type arguments that J2K prints for the calls without explicit type arguments.
  */
-internal fun inferNullability(file: PsiJavaFile): NullabilityInfo = J2KDataflowNullability(file).nullabilityInfo()
+internal fun inferNullability(
+    file: PsiJavaFile,
+    inferredTypeArguments: Map<PsiMethodCallExpression, PsiReferenceParameterList> = emptyMap(),
+): NullabilityInfo = J2KDataflowNullability(file, inferredTypeArguments).nullabilityInfo()
 
 @ApiStatus.Internal
-class J2KDataflowNullability(private val file: PsiFile) {
+class J2KDataflowNullability(
+    private val file: PsiFile,
+    private val inferredTypeArguments: Map<PsiMethodCallExpression, PsiReferenceParameterList> = emptyMap(),
+) {
     /**
      * A type in the flow graph: the type of a declaration, of a call result, or of a type argument.
      * [platformNullability] comes from an annotation or a framework, and the engine keeps it.
@@ -133,6 +145,14 @@ class J2KDataflowNullability(private val file: PsiFile) {
     private val methods = ArrayList<PsiMethod>()
     private val sinks = HashMap<PsiExpression, TypeNode>()
     private val reached = HashSet<PsiExpression>()
+    private val expressionDfTypes = HashMap<PsiExpression, DfType>()
+
+    /** The expressions whose data flow facts the engine keeps, because the converter reads only them. */
+    private val dataflowQueries = HashSet<PsiExpression>()
+
+    /** The type arguments that give the types of lambda parameters, see [linkLambdaParameters]. */
+    private val lambdaParameterTypeArguments = HashMap<PsiParameter, TypeNode>()
+    private val nullComparisons = ArrayList<PsiBinaryExpression>()
     private val originals = OriginalJavaSemanticResolver()
     private val originalFile by lazy { originals.originalElementOrSelf(file) }
 
@@ -140,6 +160,7 @@ class J2KDataflowNullability(private val file: PsiFile) {
         collectNodes()
         collectDataflow()
         analyzeBodies()
+        for (comparison in nullComparisons) addNullComparisonDataflow(comparison)
         for ((expression, node) in sinks) {
             if (expression !in reached) addStaticDataflow(expression, node)
         }
@@ -157,15 +178,23 @@ class J2KDataflowNullability(private val file: PsiFile) {
             info.write(node.type, node.result)
             writeElements(info, node)
         }
+        for ((parameter, typeArgument) in lambdaParameterTypeArguments) {
+            when (typeArgument.result) {
+                Nullability.Nullable -> info.nullableLambdaParameters += parameter
+                Nullability.NotNull -> info.notNullLambdaParameters += parameter
+                Nullability.Default -> {}
+            }
+        }
         for ((key, node) in callNodes) {
             if (key is PsiTypeElement && node.result != Nullability.Default) info.write(node.type, node.result)
             if (key is PsiNewExpression || key is PsiTypeElement) writeElements(info, node)
         }
+        info.expressionDfTypes.putAll(expressionDfTypes)
         return info
     }
 
     private fun writeAnnotatedTypes(info: NullabilityInfo) {
-        file.accept(object : JavaRecursiveElementWalkingVisitor() {
+        val visitor = object : JavaRecursiveElementWalkingVisitor() {
             override fun visitTypeElement(typeElement: PsiTypeElement) {
                 super.visitTypeElement(typeElement)
                 val type = typeElement.type
@@ -173,7 +202,9 @@ class J2KDataflowNullability(private val file: PsiFile) {
                 if (type is PsiArrayType) info.writeAnnotated(type.componentType, type.componentType.nullability.nullability())
                 writeAnnotatedArguments(info, type)
             }
-        })
+        }
+        file.accept(visitor)
+        for (typeArgumentList in inferredTypeArguments.values) typeArgumentList.accept(visitor)
     }
 
     private fun writeAnnotatedArguments(info: NullabilityInfo, type: PsiType) {
@@ -382,8 +413,20 @@ class J2KDataflowNullability(private val file: PsiFile) {
                 super.visitCallExpression(callExpression)
                 addArgumentSinks(callExpression)
                 if (callExpression is PsiMethodCallExpression) addReceiverElementSinks(callExpression)
-                // The nodes of the explicit type arguments must exist before the DFA runs
-                if (callExpression is PsiMethodCallExpression && callExpression.typeArguments.isNotEmpty()) calleeNode(callExpression)
+                // The nodes of the type arguments must exist before the DFA runs
+                if (callExpression is PsiMethodCallExpression && typeArgumentElements(callExpression).isNotEmpty()) calleeNode(callExpression)
+                // The converter reads the nullability of the arguments of a generic method call
+                if (callExpression is PsiMethodCallExpression && callExpression.resolveMethod()?.hasTypeParameters() == true) {
+                    dataflowQueries.addAll(callExpression.argumentList.expressions)
+                }
+            }
+
+            override fun visitTypeCastExpression(expression: PsiTypeCastExpression) {
+                super.visitTypeCastExpression(expression)
+                // The converter reads the nullability of the cast operand
+                val operand = expression.operand ?: return
+                dataflowQueries += operand
+                (operand as? PsiParenthesizedExpression)?.expression?.let { dataflowQueries += it }
             }
 
             override fun visitForeachStatement(statement: PsiForeachStatement) {
@@ -415,7 +458,9 @@ class J2KDataflowNullability(private val file: PsiFile) {
 
             override fun visitBinaryExpression(expression: PsiBinaryExpression) {
                 super.visitBinaryExpression(expression)
-                addNullComparisonDataflow(expression)
+                val reference = comparedWithNull(expression) ?: return
+                nullComparisons += expression
+                dataflowQueries += reference
             }
         }
         file.accept(visitor)
@@ -516,20 +561,25 @@ class J2KDataflowNullability(private val file: PsiFile) {
         }
     }
 
-    private fun addNullComparisonDataflow(expression: PsiBinaryExpression) {
+    /** Returns the reference that [expression] compares with `null`, like `x` in `x != null`. */
+    private fun comparedWithNull(expression: PsiBinaryExpression): PsiReferenceExpression? {
         val operation = expression.operationTokenType
-        if (operation != JavaTokenType.EQEQ && operation != JavaTokenType.NE) return
+        if (operation != JavaTokenType.EQEQ && operation != JavaTokenType.NE) return null
         val left = expression.lOperand
-        val right = expression.rOperand ?: return
+        val right = expression.rOperand ?: return null
         val operand = when {
             ExpressionUtils.isNullLiteral(right) -> left
             ExpressionUtils.isNullLiteral(left) -> right
-            else -> return
+            else -> return null
         }
-        val reference = PsiUtil.skipParenthesizedExprDown(operand) as? PsiReferenceExpression ?: return
+        return PsiUtil.skipParenthesizedExprDown(operand) as? PsiReferenceExpression
+    }
+
+    private fun addNullComparisonDataflow(expression: PsiBinaryExpression) {
+        val reference = comparedWithNull(expression) ?: return
         val node = variableNode(reference) ?: return
-        if (getExpressionDfaNullability(reference) == DfaNullability.NOT_NULL) return
-        if (DfaPsiUtil.isAssertionEffectively(expression, operation == JavaTokenType.NE)) {
+        if (expressionDfTypes.dfaNullability(reference) == DfaNullability.NOT_NULL) return
+        if (DfaPsiUtil.isAssertionEffectively(expression, expression.operationTokenType == JavaTokenType.NE)) {
             node.needsNotNull = true
         } else {
             node.join(Nullability.Nullable)
@@ -578,11 +628,12 @@ class J2KDataflowNullability(private val file: PsiFile) {
                 for ((index, node) in parameterNodes.withIndex()) {
                     if (node == null) continue
                     val argument = arguments?.getOrNull(index)
-                    if (argument != null) addStaticDataflow(argument, node) else joinUnknown(node)
+                    if (argument == null) joinUnknown(node) else if (!isIgnoredBy(node, argument)) addStaticDataflow(argument, node)
                 }
             }
         }
         val returnNode = nodes[method] ?: return
+        if (returnNode.platformNullability != null) return
         if (method.isConstructor || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.FINAL)) return
         for (overrider in OverridingMethodsSearch.search(originals.originalElementOrSelf(method)).findAll()) {
             if (overrider.containingFile == originalFile) continue
@@ -597,7 +648,24 @@ class J2KDataflowNullability(private val file: PsiFile) {
             val assignment = element.parent as? PsiAssignmentExpression ?: continue
             if (assignment.lExpression != element) continue
             val value = assignment.rExpression
-            if (assignment.operationTokenType == JavaTokenType.EQ && value != null) addStaticDataflow(value, node) else node.join(Nullability.NotNull)
+            if (assignment.operationTokenType != JavaTokenType.EQ || value == null) {
+                node.join(Nullability.NotNull)
+            } else if (!isIgnoredBy(node, value)) {
+                addStaticDataflow(value, node)
+            }
+        }
+    }
+
+    /**
+     * Returns `true` when [addStaticDataflow] of [expression] cannot change any result.
+     * A node with a platform nullability keeps it, so only a link to the node of [expression] could matter.
+     */
+    private fun isIgnoredBy(node: TypeNode, expression: PsiExpression): Boolean {
+        if (node.platformNullability == null) return false
+        return when (val stripped = PsiUtil.skipParenthesizedExprDown(expression)) {
+            is PsiReferenceExpression -> (stripped.resolve() as? PsiVariable)?.let { it in nodes } != true
+            is PsiMethodCallExpression, is PsiArrayAccessExpression, is PsiNewExpression -> false
+            else -> true
         }
     }
 
@@ -703,6 +771,7 @@ class J2KDataflowNullability(private val file: PsiFile) {
         private val edges = ArrayList<Pair<TypeNode, TypeNode>>()
         private val needsNotNull = ArrayList<TypeNode>()
         private val pushed = HashSet<PsiExpression>()
+        private val types = HashMap<PsiExpression, DfType>()
         val endOfInitializerStates = ArrayList<DfaMemoryState>()
 
         override fun beforeInstanceInitializerEnd(state: DfaMemoryState) {
@@ -711,6 +780,13 @@ class J2KDataflowNullability(private val file: PsiFile) {
 
         override fun beforeExpressionPush(value: DfaValue, expression: PsiExpression, state: DfaMemoryState) {
             pushed += expression
+            if (expression in dataflowQueries) {
+                // Like CommonDataflow.getDfType, keep the facts of the states with enabled assertions
+                val assertionsDisabled = AssertionDisabledDescriptor.getAssertionsDisabledVar(value.factory)
+                if (assertionsDisabled == null || state.getDfType(assertionsDisabled) != DfTypes.TRUE) {
+                    types.merge(expression, state.getDfTypeIncludingDerived(value), DfType::join)
+                }
+            }
             val target = sinks[expression] ?: return
             if (state.getDfType(value) == DfType.FAIL) return
             val nullability = if (TypeConversionUtil.isPrimitiveAndNotNull(expression.type)) {
@@ -745,6 +821,7 @@ class J2KDataflowNullability(private val file: PsiFile) {
             for ((source, target) in edges) edge(source, target)
             for (node in needsNotNull) node.needsNotNull = true
             reached += pushed
+            for ((expression, type) in types) expressionDfTypes.putIfAbsent(expression, type)
         }
     }
 
@@ -820,8 +897,14 @@ class J2KDataflowNullability(private val file: PsiFile) {
         }
     }
 
+    /** Returns the explicit type arguments of [call], otherwise the type arguments that J2K prints for it. */
+    private fun typeArgumentElements(call: PsiMethodCallExpression): Array<PsiTypeElement> =
+        call.typeArgumentList.typeParameterElements.takeIf { it.isNotEmpty() }
+            ?: inferredTypeArguments[call]?.typeParameterElements
+            ?: PsiTypeElement.EMPTY_ARRAY
+
     private fun linkTypeArguments(call: PsiMethodCallExpression, method: PsiMethod, node: TypeNode) {
-        val typeElements = call.typeArgumentList.typeParameterElements
+        val typeElements = typeArgumentElements(call)
         val typeParameters = method.typeParameters
         if (typeElements.size != typeParameters.size) return
         val arguments = typeElements.map { typeElement ->
@@ -860,6 +943,33 @@ class J2KDataflowNullability(private val file: PsiFile) {
                         edge(typeArgument, it)
                     }
                 }
+            }
+        }
+        linkLambdaParameters(call, parameters, typeParameters, arguments)
+    }
+
+    /**
+     * Gives the parameters of the lambda arguments of [call] the type arguments that give their types,
+     * like `o` in `findAllAsArray(passes, o -> o.isDumbAware())` gets `T` of `findAllAsArray(T[], Condition<? super T>)`.
+     * A parameter only follows its type argument: the engine does not know all the arguments that constrain the type argument.
+     */
+    private fun linkLambdaParameters(
+        call: PsiMethodCallExpression,
+        parameters: Array<PsiParameter>,
+        typeParameters: Array<PsiTypeParameter>,
+        arguments: List<TypeNode>,
+    ) {
+        for ((position, argument) in call.argumentList.expressions.withIndex()) {
+            val lambda = PsiUtil.skipParenthesizedExprDown(argument) as? PsiLambdaExpression ?: continue
+            val functionalType = parameters.getOrNull(position)?.takeIf { !it.isVarArgs }?.type ?: continue
+            val samMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalType) ?: continue
+            val substitutor = LambdaUtil.getSubstitutor(samMethod, PsiUtil.resolveGenericsClassInType(functionalType))
+            for ((index, lambdaParameter) in lambda.parameterList.parameters.withIndex()) {
+                val samParameterType = samMethod.parameterList.parameters.getOrNull(index)?.type ?: continue
+                val type = substitutor.substitute(samParameterType).let { (it as? PsiWildcardType)?.bound ?: it }
+                val typeParameter = PsiUtil.resolveClassInClassTypeOnly(type) as? PsiTypeParameter ?: continue
+                val typeArgument = arguments.getOrNull(typeParameters.indexOf(typeParameter)) ?: continue
+                lambdaParameterTypeArguments[lambdaParameter] = typeArgument
             }
         }
     }
