@@ -530,6 +530,7 @@ internal class BazelBuildFileGenerator(
     bazelFilesLoader: BazelFilesLoader,
     manuallyWrittenAttributes: ManuallyWrittenAttributes,
     isCommunity: Boolean,
+    starterTestTargets: Map<String, StarterTestTarget> = emptyMap(),
   ): ModuleGenerationResult {
     validateCustomModules(list)
     val targetsPerModule = mutableListOf<ModuleTargets>()
@@ -564,7 +565,7 @@ internal class BazelBuildFileGenerator(
         exportDescriptorFiles(module = module, buildFile = imlTargetsBazel, alreadyExported = fileUpdater.handWrittenExportedFiles())
 
         val testTargetsBazel = BuildFile()
-        testTargetsBazel.generateTestTargets(module, list)
+        testTargetsBazel.generateTestTargets(module, list, starterTestTargets.get(module.module.name))
 
         targetsPerModule.add(moduleBuildTargets)
 
@@ -734,12 +735,15 @@ internal class BazelBuildFileGenerator(
     @JvmField val distributionDirectory: String,
   )
 
-  private fun BuildFile.generateTestTargets(moduleDescriptor: ModuleDescriptor, moduleList: ModuleList) {
+  /** Writes `jps_test`, or `starter_test` with the attributes of [starterTest] for a row of `build/starter-bazel-tests.json`. */
+  private fun BuildFile.generateTestTargets(moduleDescriptor: ModuleDescriptor, moduleList: ModuleList, starterTest: StarterTestTarget?) {
     if (moduleDescriptor.testSources.isEmpty()) {
+      check(starterTest == null) { "${moduleDescriptor.module.name} has a row in $STARTER_BAZEL_TESTS_RELATIVE_PATH and no test sources" }
       return
     }
 
-    load("@community//build:tests-options.bzl", "jps_test")
+    val macro = if (starterTest == null) "jps_test" else STARTER_TEST_MACRO
+    load(if (starterTest == null) "@community//build:tests-options.bzl" else STARTER_TEST_BZL, macro)
 
     val mainModuleLabel = getTestClasspathModule(moduleDescriptor, moduleList)?.let { mainModule ->
       getBazelDependencyLabel(mainModule, moduleDescriptor)
@@ -747,8 +751,17 @@ internal class BazelBuildFileGenerator(
 
     val testLibTargetName = "${moduleDescriptor.targetName}$TEST_LIB_NAME_SUFFIX"
 
-    target("jps_test") {
+    target(macro) {
       option("name", "${moduleDescriptor.targetName}_test")
+      if (starterTest != null) {
+        option("product", starterTest.product)
+        if (starterTest.frontend) {
+          option("frontend", true)
+        }
+        if (starterTest.contextPlugins.isNotEmpty()) {
+          option("context_plugins", starterTest.contextPlugins)
+        }
+      }
       option("runtime_deps", listOfNotNull(":$testLibTargetName", mainModuleLabel))
     }
   }

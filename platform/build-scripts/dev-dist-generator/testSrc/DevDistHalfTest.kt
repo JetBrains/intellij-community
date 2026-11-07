@@ -22,6 +22,18 @@ class DevDistHalfTest {
   lateinit var dir: Path
 
   @Test
+  fun `the context plugins of a split product join its extra plugin modules, and the community half has none`() {
+    val half = CommunityDevDistHalf
+    val contextPlugins = mapOf("Idea" to listOf("intellij.devkit", "intellij.devkit"), "Other" to listOf("intellij.x"))
+
+    assertThat(half.contextPluginModules(half.root(dir))).isEmpty()
+    assertThat(half.extraPluginModules("Idea", contextPlugins)).containsExactly("intellij.devkit")
+    assertThat(half.extraPluginModules("Idea")).isEmpty()
+    assertThat(half.extraPluginModules("Other", contextPlugins)).isNull()
+    assertThat(half.handExtraPopulation(contextPlugins = contextPlugins)).containsExactly("intellij.devkit")
+  }
+
+  @Test
   fun `the community half has the community checkout as its root and owns every package below it`() {
     val half = CommunityDevDistHalf
     val root = half.root(dir)

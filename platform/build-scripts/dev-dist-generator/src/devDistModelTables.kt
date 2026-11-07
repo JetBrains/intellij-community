@@ -32,6 +32,8 @@ internal class PluginPackingDerivation(
    * product can request such a layout too. Only the community half has any, see [derivePluginPackings].
    */
   @JvmField val registryLayouts: Set<String> = emptySet(),
+  /** The context plugins of each product, see [DevDistHalf.contextPluginModules]. The dev sections give each a component. */
+  @JvmField val contextPluginModules: Map<String, List<String>> = emptyMap(),
 )
 
 /**
@@ -50,7 +52,10 @@ fun deriveContentPluginPopulation(
 ): Set<String> {
   return derivePluginPopulation(
     products = products.mapNotNull { it.properties as? ProductProperties },
-    extraPopulation = half.extraPopulation(DevDistRunConfigurations.read(half, root, outputProvider)),
+    extraPopulation = half.extraPopulation(
+      runConfigurations = DevDistRunConfigurations.read(half, root, outputProvider),
+      contextPlugins = half.contextPluginModules(root),
+    ),
     platformJars = platformTable,
     outputProvider = outputProvider,
   )
@@ -78,7 +83,8 @@ internal fun derivePluginPackings(
   val runConfigurations = DevDistRunConfigurations.read(half, root, outputProvider)
   val platformRows = derivation.platformJars
   val splitProducts = half.registrySplitProducts(derivation.products.map { it.name })
-  val extraPopulation = half.extraPopulation(runConfigurations, splitProducts)
+  val contextPluginModules = half.contextPluginModules(root)
+  val extraPopulation = half.extraPopulation(runConfigurations, splitProducts, contextPluginModules)
   val registryLayouts: Set<String>
   val outsidePopulation: Set<String>
   if (half.writesCommunityPackages) {
@@ -106,5 +112,6 @@ internal fun derivePluginPackings(
     population = derived.population.filterTo(TreeSet()) { it !in outsidePopulation },
     runConfigurations = runConfigurations,
     registryLayouts = registryLayouts,
+    contextPluginModules = contextPluginModules,
   )
 }

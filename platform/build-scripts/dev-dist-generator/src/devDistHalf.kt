@@ -80,6 +80,13 @@ interface DevDistHalf {
    * a `dev` section, a `content_module_jar` call, a plan file or a generated package.
    */
   fun ownsPackage(directory: String): Boolean
+
+  /**
+   * The context plugins of each split product, read under [root], the root of the half. A Starter test installs them into
+   * the IDE context, so each one needs a component in the `additional` tier, see [extraPluginModules]. A half without
+   * Starter tests has none.
+   */
+  fun contextPluginModules(root: Path): Map<String, List<String>> = emptyMap()
 }
 
 /** The first line of each generated file of the half. It names [DevDistHalf.generatorCommand]. */
@@ -191,8 +198,17 @@ fun DevDistHalf.caseSafeProductName(product: String): String {
   return caseSafeProductName(product, splitDistributions.get(product)?.caseSafeName ?: "")
 }
 
-/** The extra plugin modules of a split product, the on-demand plugins first. `null` for a product that is not split. */
-internal fun DevDistHalf.extraPluginModules(product: String): List<String>? = splitDistributions.get(product)?.extraPluginModules()
+/**
+ * The extra plugin modules of a split product, the on-demand plugins first, then the [contextPlugins] of the product, see
+ * [DevDistHalf.contextPluginModules]. `null` for a product that is not split.
+ */
+internal fun DevDistHalf.extraPluginModules(product: String, contextPlugins: Map<String, List<String>> = emptyMap()): List<String>? {
+  val modules = splitDistributions.get(product)?.extraPluginModules() ?: return null
+  val productContextPlugins = contextPlugins.get(product) ?: return modules
+  val result = LinkedHashSet(modules)
+  result.addAll(productContextPlugins)
+  return java.util.List.copyOf(result)
+}
 
 /**
  * The bundled plugins of a split product that the composer writes first, the frozen
@@ -201,26 +217,30 @@ internal fun DevDistHalf.extraPluginModules(product: String): List<String>? = sp
  */
 internal fun DevDistHalf.compositionOrder(product: String): List<String> = splitDistributions.get(product)?.compositionOrder ?: emptyList()
 
-/** The hand-listed extra plugin modules of every split product of [splitProducts], in map order. */
-internal fun DevDistHalf.handExtraPopulation(splitProducts: Set<String> = this.splitProducts): Set<String> {
+/** The hand-listed extra plugin modules and the [contextPlugins] of every split product of [splitProducts], in map order. */
+internal fun DevDistHalf.handExtraPopulation(
+  splitProducts: Set<String> = this.splitProducts,
+  contextPlugins: Map<String, List<String>> = emptyMap(),
+): Set<String> {
   val result = LinkedHashSet<String>()
-  for ((product, config) in splitDistributions) {
+  for (product in splitDistributions.keys) {
     if (product in splitProducts) {
-      result.addAll(config.extraPluginModules())
+      result.addAll(extraPluginModules(product, contextPlugins).orEmpty())
     }
   }
   return java.util.Collections.unmodifiableSet(result)
 }
 
 /**
- * The extra plugin modules of every split product of [splitProducts]: [handExtraPopulation], then the modules the
- * dev-server run configurations name. See [DevDistRunConfigurations].
+ * The extra plugin modules of every split product of [splitProducts]: [handExtraPopulation] with [contextPlugins], then
+ * the modules the dev-server run configurations name. See [DevDistRunConfigurations].
  */
 internal fun DevDistHalf.extraPopulation(
   runConfigurations: DevDistRunConfigurations,
   splitProducts: Set<String> = this.splitProducts,
+  contextPlugins: Map<String, List<String>> = emptyMap(),
 ): Set<String> {
-  val result = LinkedHashSet(handExtraPopulation(splitProducts))
+  val result = LinkedHashSet(handExtraPopulation(splitProducts, contextPlugins))
   for (modules in runConfigurations.modulesByProduct.values) {
     result.addAll(modules)
   }

@@ -110,13 +110,27 @@ internal class JpsModuleToBazel {
         kotlincDefaults = kotlincDefaults,
       )
       val moduleList = generator.computeModuleList(m2RepoPath, skipGenerationOfPluginTargets)
+      // Only ultimate has the hand input: a community checkout gets no `starter_test`.
+      val starterTestTargets = ultimateRoot?.let { root ->
+        readStarterBazelTests(root.resolve(STARTER_BAZEL_TESTS_RELATIVE_PATH))
+          ?.resolveStarterTestTargets(JpsStarterTestModuleGraph(moduleList), source = STARTER_BAZEL_TESTS_RELATIVE_PATH)
+      }
       val bazelFilesLoader = BazelFilesLoader()
       val manuallyWrittenAttributes = ManuallyWrittenAttributes(bazelFilesLoader)
       // first, generate community to collect libs that used by community (to separate community and ultimate libs)
       val communityResult = generator.generateModuleBuildFiles(moduleList, bazelFilesLoader, manuallyWrittenAttributes, isCommunity = true)
-      val ultimateResult = generator.generateModuleBuildFiles(moduleList, bazelFilesLoader, manuallyWrittenAttributes, isCommunity = false)
+      val ultimateResult = generator.generateModuleBuildFiles(
+        list = moduleList,
+        bazelFilesLoader = bazelFilesLoader,
+        manuallyWrittenAttributes = manuallyWrittenAttributes,
+        isCommunity = false,
+        starterTestTargets = starterTestTargets.orEmpty(),
+      )
       generator.save(communityResult.moduleBuildFiles)
       generator.save(ultimateResult.moduleBuildFiles)
+      if (ultimateRoot != null && starterTestTargets != null) {
+        writeStarterBazelTestsGenerated(ultimateRoot, starterTestTargets.values)
+      }
 
       generator.generateLibs(jarRepositories = jarRepositories, m2Repo = m2RepoPath)
 

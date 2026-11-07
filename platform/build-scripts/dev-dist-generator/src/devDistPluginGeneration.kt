@@ -794,7 +794,8 @@ private fun requireNoModuleExcludes(layout: PluginLayout) {
  * dev-server run configurations of a product name, see [devDistRunConfigurationModules]. A module of it without a
  * request stops the run. [testPlugins] are the Product DSL test plugins that such a module can be.
  * [registryLayoutsByProduct] holds the registry plugins that each product plans in the registry tier, see
- * [assignRegistryLayoutsToProducts].
+ * [assignRegistryLayoutsToProducts]. [contextPluginModules] holds the context plugins of each product, which join its
+ * extra plugin modules, see [DevDistHalf.extraPluginModules].
  */
 internal fun enumerateGeneratedDevDistPluginRequests(
   products: List<DiscoveredProduct>,
@@ -803,6 +804,7 @@ internal fun enumerateGeneratedDevDistPluginRequests(
   half: DevDistHalf,
   testPlugins: List<TestPluginSpec>,
   registryLayoutsByProduct: Map<String, List<String>>,
+  contextPluginModules: Map<String, List<String>> = emptyMap(),
 ): List<DevDistPluginRequest> {
   val variants = SUPPORTED_DISTRIBUTIONS.map { distribution ->
     PluginSymbolicVariant(id = devDistHostPlatform(distribution), distribution = distribution)
@@ -812,7 +814,7 @@ internal fun enumerateGeneratedDevDistPluginRequests(
       product = product,
       outputProvider = outputProvider,
       variants = variants,
-      extraPluginModules = half.extraPluginModules(product.name) ?: return@flatMap emptyList(),
+      extraPluginModules = half.extraPluginModules(product.name, contextPluginModules) ?: return@flatMap emptyList(),
       testPlugins = testPlugins,
       additionalModules = additionalModulesByProduct.get(product.name).orEmpty(),
       registryModules = registryLayoutsByProduct.get(product.name).orEmpty(),

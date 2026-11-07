@@ -1,0 +1,9 @@
+{
+    "products": {
+        "starter.product.clion": "CLion",
+        "starter.product.idea": "idea"
+    },
+    "tests": {
+        "plain.tests": ["intellij.devkit"]
+    }
+}

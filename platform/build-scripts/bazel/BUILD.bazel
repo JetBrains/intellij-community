@@ -137,6 +137,20 @@ java_test(
 )
 
 java_test(
+    name = "starter-bazel-tests-tests",
+    size = "small",
+    data = [
+        "testData/starter-bazel-tests/marker.txt",
+        "testData/starter-bazel-tests/starter-bazel-tests.json",
+    ],
+    env = {
+        "STARTER_BAZEL_TESTS_TEST_DATA_MARKER": "$(rlocationpath testData/starter-bazel-tests/marker.txt)",
+    },
+    test_class = "org.jetbrains.intellij.build.bazel.StarterBazelTestsTest",
+    runtime_deps = [":bazel-generator-integration-tests-lib"],
+)
+
+java_test(
     name = "bazel-file-updater-load-symbols-tests",
     size = "small",
     test_class = "org.jetbrains.intellij.build.bazel.BazelFileUpdaterLoadSymbolsTest",

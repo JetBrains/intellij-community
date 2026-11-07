@@ -792,6 +792,7 @@ internal class DevDistSectionInputs private constructor(
             half = half,
             testPlugins = testPlugins,
             registryLayoutsByProduct = registryLayoutsByProduct,
+            contextPluginModules = derivation.contextPluginModules,
           )
         }
         // Only the community half has registry plugins. A plugin that a split product bundles or names keeps that tier.
