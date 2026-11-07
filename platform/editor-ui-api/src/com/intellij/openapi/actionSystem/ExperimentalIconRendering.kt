@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * [Presentation.NO_ICON_DESCRIPTOR] and nothing consumes descriptors.
  */
 @ApiStatus.Internal
-object ExperimentalIcons {
+object ExperimentalIconRendering {
   const val REGISTRY_KEY: String = "ide.experimental.icons"
 
   /**
