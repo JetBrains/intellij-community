@@ -8,7 +8,7 @@ feature is off, so a target needs only `features = ["windows_subsystem_flag"]`.
 diff --git a/toolchain/args/windows/msvc/BUILD.bazel b/toolchain/args/windows/msvc/BUILD.bazel
 --- a/toolchain/args/windows/msvc/BUILD.bazel
 +++ b/toolchain/args/windows/msvc/BUILD.bazel
-@@ -95,6 +95,7 @@
+@@ -120,6 +120,7 @@ cc_args(
          "/clang:-Xlinker",
          "/clang:/SUBSYSTEM:CONSOLE",
      ],
@@ -27,10 +27,11 @@ diff --git a/toolchain/features/msvc/BUILD.bazel b/toolchain/features/msvc/BUILD
  load("@rules_cc//cc/toolchains:feature_set.bzl", "cc_feature_set")
  load("@rules_cc//cc/toolchains:mutually_exclusive_category.bzl", "cc_mutually_exclusive_category")
  load("@rules_cc//cc/toolchains:nested_args.bzl", "cc_nested_args")
-@@ -250,6 +251,29 @@
+@@ -250,6 +251,29 @@ cc_feature(
+     feature_name = "msvc_interface_library",
  )
  
- cc_args(
++cc_args(
 +    name = "windows_subsystem_link_args",
 +    actions = ["@rules_cc//cc/toolchains/actions:link_executable_actions"],
 +    args = [
@@ -53,11 +54,10 @@ diff --git a/toolchain/features/msvc/BUILD.bazel b/toolchain/features/msvc/BUILD
 +    none_of = [":windows_subsystem_flag"],
 +)
 +
-+cc_args(
+ cc_args(
      name = "pdb_args",
      actions = _LINK_ACTIONS,
-     args = [
-@@ -267,6 +291,7 @@
+@@ -268,6 +292,7 @@ cc_feature_set(
          ":static_link_msvcrt",
          ":static_linking_mode",
          ":supported_configuration",

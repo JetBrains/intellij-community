@@ -1,0 +1,15 @@
+Expose `setargv.obj` with the MSVC support libraries.
+
+GraalVM native-image links `setargv.obj` into a Windows executable for wildcard expansion of the arguments.
+It ships next to the other runtime libraries of the MSVC toolset, but the support allowlist leaves it out, so
+lld-link fails with "could not open 'setargv.obj'". It does not select a CRT mode, so add it to the common list.
+--- a/runtimes/msvc/BUILD.bazel
++++ b/runtimes/msvc/BUILD.bazel
+@@ -12,6 +12,7 @@
+     "legacy_stdio_definitions.lib",
+     "legacy_stdio_wide_specifiers.lib",
+     "oldnames.lib",
++    "setargv.obj",
+ ]
+ 
+ _MSVC_DYNAMIC_RUNTIME_LIBRARIES = [

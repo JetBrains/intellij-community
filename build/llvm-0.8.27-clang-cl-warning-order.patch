@@ -8,7 +8,7 @@ warning back on. With `-Werror`, a third-party file then fails on a warning the 
 clang-cl reads the other `-W` flags directly and in order.
 --- a/toolchain/features/legacy/BUILD.bazel
 +++ b/toolchain/features/legacy/BUILD.bazel
-@@ -101,14 +101,16 @@
+@@ -102,14 +102,16 @@ cc_args(
  cc_args(
      name = "clang_cl_legacy_default_warning_flags",
      actions = _CLANG_CL_FRONTEND_ACTIONS,
