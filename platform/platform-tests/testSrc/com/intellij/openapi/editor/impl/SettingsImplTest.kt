@@ -36,6 +36,27 @@ class SettingsImplTest {
   private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
 
   /**
+   * The editor lives on the EDT, so a change on another thread refreshes it later on the EDT. The view then gets the new
+   * tab size.
+   */
+  @Test
+  fun testAChangeOffTheEdtRefreshesTheEditorOnTheEdt(): Unit = fixture.runTest {
+    initText("abc")
+    val editorImpl = editor as EditorImpl
+    val changed = editorImpl.view.tabSize + 3
+
+    ApplicationManager.getApplication().executeOnPooledThread {
+      editorImpl.settings.setTabSize(changed)
+    }.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+
+    PlatformTestUtil.waitWithEventsDispatching(
+      "The view did not get the new tab size",
+      { editorImpl.view.tabSize == changed },
+      TIMEOUT_SECONDS.toInt(),
+    )
+  }
+
+  /**
    * A Java caller can pass the project of a project-less editor, which is `null`.
    */
   @Test

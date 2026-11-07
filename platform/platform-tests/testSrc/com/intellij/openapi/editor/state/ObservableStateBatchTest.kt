@@ -102,6 +102,32 @@ class ObservableStateBatchTest {
   }
 
   /**
+   * After the single events, a batch gives all its value changes in one call. A write that changes no value gives none.
+   */
+  @Test
+  fun testABatchGivesAllItsValueChangesInOneCallAtItsEnd() {
+    val state = TestState()
+    state.addPropertyChangeListener(object : ObservableStateListener {
+      override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
+        events.add(event.propertyName)
+      }
+
+      override fun propertiesChanged(events: List<ObservableStateListener.PropertyChangeEvent>) {
+        this@ObservableStateBatchTest.events.add("batch " + events.joinToString(",") { it.propertyName })
+      }
+    })
+
+    state.batch {
+      state.width = 2
+      state.height = 3
+    }
+    state.width = 2
+    state.height = 4
+
+    assertEquals(listOf("width", "height", "batch width,height", "height", "batch height"), events)
+  }
+
+  /**
    * Records each value event with the values of both properties when the event comes.
    */
   private fun TestState.recordEvents(): TestState {

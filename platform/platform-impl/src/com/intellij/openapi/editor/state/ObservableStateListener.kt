@@ -27,6 +27,12 @@ interface ObservableStateListener : EventListener {
   fun overridingChanged(state: ObservableState, propertyName: String) {}
 
   /**
+   * All value changes of one batch, in their order. They come once after the [propertyChanged] events of the batch, and
+   * only when the batch changed a value. So a listener can react once to several changes.
+   */
+  fun propertiesChanged(events: List<PropertyChangeEvent>) {}
+
+  /**
    * @param oldValueRef the old value, or `null` when the sender gives none
    */
   data class PropertyChangeEvent(

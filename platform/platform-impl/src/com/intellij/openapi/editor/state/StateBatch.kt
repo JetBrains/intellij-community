@@ -13,6 +13,7 @@ internal class StateBatch(base: StateSnapshot) {
   private var valuesCopied: Boolean = false
   private var overridesCopied: Boolean = false
   private val events: MutableList<() -> Unit> = ArrayList()
+  private val valueEvents: MutableList<ObservableStateListener.PropertyChangeEvent> = ArrayList()
 
   fun valueAt(index: Int): Any? {
     return values[index]
@@ -49,6 +50,13 @@ internal class StateBatch(base: StateSnapshot) {
   }
 
   /**
+   * Adds the value change [event], which the listeners also get in one list when the batch ends.
+   */
+  fun addValueEvent(event: ObservableStateListener.PropertyChangeEvent) {
+    valueEvents.add(event)
+  }
+
+  /**
    * Whether the batch changed a value or an override. A change that a later change undoes still counts.
    */
   fun hasChanges(): Boolean {
@@ -68,5 +76,12 @@ internal class StateBatch(base: StateSnapshot) {
    */
   fun events(): List<() -> Unit> {
     return events
+  }
+
+  /**
+   * The value change events of the batch, in their order.
+   */
+  fun valueEvents(): List<ObservableStateListener.PropertyChangeEvent> {
+    return valueEvents
   }
 }

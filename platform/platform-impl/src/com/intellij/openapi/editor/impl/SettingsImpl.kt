@@ -3,6 +3,8 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorKind
@@ -15,6 +17,7 @@ import com.intellij.openapi.editor.state.ObservableStateListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.util.Condition
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Supplier
@@ -28,7 +31,8 @@ internal const val EDITOR_SHOW_SPECIAL_CHARS: String = "editor.show.special.char
  * The [EditorSettings] of one editor, or of no editor.
  *
  * The values are in an [EditorSettingsState], and a setter overrides a state property. A getter reads the
- * [SettingsSnapshot] of the state. When a state property changes, [onStatePropertyChanged] refreshes the editor.
+ * [SettingsSnapshot] of the state. After each batch of state changes, [onStatePropertiesChanged] refreshes the editor
+ * once.
  */
 @Internal
 class SettingsImpl internal constructor(
@@ -52,7 +56,11 @@ class SettingsImpl internal constructor(
     }
     state.addPropertyChangeListener(object : ObservableStateListener {
       override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
-        onStatePropertyChanged(event)
+        // The settings react once to all changes of a batch.
+      }
+
+      override fun propertiesChanged(events: List<ObservableStateListener.PropertyChangeEvent>) {
+        onStatePropertiesChanged(events)
       }
     })
   }
@@ -640,26 +648,46 @@ class SettingsImpl internal constructor(
   }
 
   /**
-   * Refreshes the editor after a change of a state property, unless the property is in [PROPERTIES_WITHOUT_EDITOR_REFRESH].
+   * Refreshes the editor after the changes of one batch. The editor lives on the EDT, so a change on another thread
+   * refreshes it later on the EDT, unless the editor is disposed by then.
    */
-  private fun onStatePropertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
-    val propertyName = event.propertyName
-    if (!doNotRefreshEditorFlag && propertyName !in PROPERTIES_WITHOUT_EDITOR_REFRESH) {
-      // The state holds the new value already, so the editor needs no reinit of the settings. That reinit would
-      // recalculate every default and compute the inputs again.
-      editor?.reinitSettings(true, false)
+  private fun onStatePropertiesChanged(events: List<ObservableStateListener.PropertyChangeEvent>) {
+    val editor = editor ?: return
+    val reinit = !doNotRefreshEditorFlag && events.any { it.propertyName !in PROPERTIES_WITHOUT_EDITOR_REFRESH }
+    val application = ApplicationManager.getApplication()
+    if (application.isDispatchThread) {
+      refreshEditor(editor, reinit, events)
+    } else {
+      application.invokeLater(
+        { refreshEditor(editor, reinit, events) },
+        ModalityState.any(),
+        Condition<Any?> { editor.isDisposed },
+      )
     }
-    when (propertyName) {
-      EditorSettingsState::myIsBlockCursor.name,
-      EditorSettingsState::myIsSmoothCaretMovement.name -> {
-        editor?.updateCaretCursor()
-        editor?.contentComponent?.repaint()
-      }
-      EditorSettingsState::myIsSmoothCaretBlinking.name -> {
-        editor?.restartCaretBlinking()
-      }
-      EditorSettingsState::myStickyLinesShownForLanguage.name -> {
-        editor?.stickyLinesForLangChanged(event)
+  }
+
+  /**
+   * Reinitializes [editor] once when [reinit] is set, and then runs the reaction of each changed property in [events].
+   */
+  private fun refreshEditor(editor: EditorImpl, reinit: Boolean, events: List<ObservableStateListener.PropertyChangeEvent>) {
+    if (reinit) {
+      // The state holds the new values already, so the editor needs no reinit of the settings. That reinit would
+      // recalculate every default and compute the inputs again.
+      editor.reinitSettings(true, false)
+    }
+    for (event in events) {
+      when (event.propertyName) {
+        EditorSettingsState::myIsBlockCursor.name,
+        EditorSettingsState::myIsSmoothCaretMovement.name -> {
+          editor.updateCaretCursor()
+          editor.contentComponent.repaint()
+        }
+        EditorSettingsState::myIsSmoothCaretBlinking.name -> {
+          editor.restartCaretBlinking()
+        }
+        EditorSettingsState::myStickyLinesShownForLanguage.name -> {
+          editor.stickyLinesForLangChanged(event)
+        }
       }
     }
   }
@@ -695,7 +723,8 @@ class SettingsImpl internal constructor(
 
   private companion object {
     /**
-     * The state properties whose change needs no editor refresh. For example, `myUseTabCharacter` does not change the view.
+     * The state properties whose change needs no editor reinit. For example, `myUseTabCharacter` does not change the view.
+     * A batch that changes only these properties reinitializes no editor.
      */
     private val PROPERTIES_WITHOUT_EDITOR_REFRESH: Set<String> = setOf(
       EditorSettingsState::myLineCursorWidth.name,

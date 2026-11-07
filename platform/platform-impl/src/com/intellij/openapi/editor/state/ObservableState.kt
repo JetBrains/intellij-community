@@ -150,6 +150,7 @@ abstract class ObservableState {
    * - Another thread sees all the changes of [action] when the batch ends, or none of them before.
    * - A change on another thread waits until the batch ends.
    * - The listeners get the events after the batch ends, in their order.
+   * - Then the listeners get all value changes of the batch in one call.
    * - A nested batch is a part of the outermost batch.
    * - When [action] fails, the changes before the failure stay, and their events come.
    */
@@ -177,6 +178,10 @@ abstract class ObservableState {
       }
       for (event in batch.events()) {
         event()
+      }
+      val valueEvents = batch.valueEvents()
+      if (valueEvents.isNotEmpty()) {
+        dispatcher.multicaster.propertiesChanged(valueEvents)
       }
     }
   }
@@ -237,7 +242,9 @@ abstract class ObservableState {
   internal fun propertyChanged(propertyName: String?, oldValueRef: Ref<Any?>?, newValue: Any?) {
     if (propertyName != null) {
       val event = ObservableStateListener.PropertyChangeEvent(this, propertyName, oldValueRef, newValue)
-      requireBatchOfThisThread().addEvent { dispatcher.multicaster.propertyChanged(event) }
+      val batch = requireBatchOfThisThread()
+      batch.addEvent { dispatcher.multicaster.propertyChanged(event) }
+      batch.addValueEvent(event)
     }
   }
 
