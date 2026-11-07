@@ -14,8 +14,8 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="library" name="com.jetbrains.fus.reporting.fus-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="com.jetbrains.fus.reporting.fus-api" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.fus.ap.validation" />
     <orderEntry type="library" name="jetbrains.fus.reporting.api.jvm" level="project" />
   </component>

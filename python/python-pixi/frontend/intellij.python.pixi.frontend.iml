@@ -28,9 +28,9 @@
     <orderEntry type="module" module-name="intellij.python.pixi.common" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.pytools.frontend" />
     <orderEntry type="module" module-name="intellij.python.pytools.common" />
-    <orderEntry type="module" module-name="intellij.platform.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.frontend" scope="RUNTIME" />
   </component>
 </module>

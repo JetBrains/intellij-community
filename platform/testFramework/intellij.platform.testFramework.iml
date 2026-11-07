@@ -39,7 +39,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.observable" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.platform.images" scope="RUNTIME" />
@@ -67,15 +67,15 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
-    <orderEntry type="module" module-name="intellij.platform.runtime.product" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.product" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" />
-    <orderEntry type="module" module-name="intellij.platform.consoleView" />
-    <orderEntry type="module" module-name="intellij.platform.consoleView.impl" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.consoleView.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.eelJava" />
-    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.eel" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.eelJava" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />

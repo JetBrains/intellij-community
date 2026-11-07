@@ -25,6 +25,6 @@
     <orderEntry type="module" module-name="intellij.platform.consoleView" />
     <orderEntry type="module" module-name="intellij.platform.consoleView.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
-    <orderEntry type="module" module-name="intellij.platform.ide.maintenance" />
+    <orderEntry type="module" module-name="intellij.platform.ide.maintenance" scope="RUNTIME" />
   </component>
 </module>

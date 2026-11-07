@@ -15,15 +15,15 @@
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
-    <orderEntry type="module" module-name="intellij.python.community.core.impl" />
-    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
-    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
+    <orderEntry type="module" module-name="intellij.python.community.core.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.xml.parser" />
+    <orderEntry type="module" module-name="intellij.xml.parser" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module" module-name="intellij.platform.smRunner" />
-    <orderEntry type="module" module-name="intellij.libraries.guava" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.smRunner" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.platform.lsp" />
     <orderEntry type="module" module-name="intellij.platform.core" />
@@ -34,12 +34,12 @@
     <orderEntry type="module" module-name="intellij.python.ty.common" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson3" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
-    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
-    <orderEntry type="module" module-name="intellij.platform.util.progress" />
-    <orderEntry type="module" module-name="intellij.platform.ide.observable" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.observable" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.pytools.backend" />
   </component>
 </module>

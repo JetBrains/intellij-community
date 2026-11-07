@@ -37,9 +37,9 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.libraries.jediterm.ui" />
+    <orderEntry type="module" module-name="intellij.libraries.jediterm.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.sh.core" />
-    <orderEntry type="module" module-name="intellij.libraries.jediterm.core" />
+    <orderEntry type="module" module-name="intellij.libraries.jediterm.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.core" />
   </component>
 </module>

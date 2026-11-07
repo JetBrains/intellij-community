@@ -10,17 +10,17 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.analysis" />
-    <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" />
-    <orderEntry type="module" module-name="intellij.python.psi" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.psi" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.impl" />
-    <orderEntry type="module" module-name="intellij.libraries.guava" />
+    <orderEntry type="module" module-name="intellij.libraries.guava" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.pycharm.community" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.sdk.backend" />
+    <orderEntry type="module" module-name="intellij.python.sdk.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.community.testFramework" />
+    <orderEntry type="module" module-name="intellij.python.community.testFramework" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="RUNTIME" />
   </component>
 </module>

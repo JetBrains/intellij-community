@@ -36,7 +36,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="fleet.util.core" />
-    <orderEntry type="module" module-name="fleet.modules.api" />
+    <orderEntry type="module" module-name="fleet.modules.api" scope="RUNTIME" />
     <orderEntry type="module" module-name="fleet.bifurcan" />
   </component>
 </module>

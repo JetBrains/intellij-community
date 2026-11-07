@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="fleet.rpc" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
-    <orderEntry type="module" module-name="fleet.reporting.api" />
+    <orderEntry type="module" module-name="fleet.reporting.api" scope="RUNTIME" />
     <orderEntry type="module" module-name="fleet.reporting.shared" />
     <orderEntry type="module" module-name="fleet.multiplatform.shims" />
     <orderEntry type="module" module-name="fleet.util.core" />

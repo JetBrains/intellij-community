@@ -80,7 +80,7 @@
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.metadata" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
+    <orderEntry type="module" module-name="intellij.platform.eel" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
   </component>
 </module>

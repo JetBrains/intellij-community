@@ -39,23 +39,23 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.launcher" />
-    <orderEntry type="module" module-name="intellij.libraries.junit6.params" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
-    <orderEntry type="module" module-name="intellij.platform.execution.impl" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.remoteDev.util" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.platform.debugger" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.debugger" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.libraries.kodein.di.jvm" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.product.idea.ultimate" />
     <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
-    <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" />
+    <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />

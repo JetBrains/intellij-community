@@ -30,16 +30,16 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.backend" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.codeInsight" />
-    <orderEntry type="module" module-name="intellij.gradle.codeInsight.backend" />
-    <orderEntry type="module" module-name="intellij.gradle.codeInsight.toml" />
+    <orderEntry type="module" module-name="intellij.gradle.codeInsight.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.codeInsight.toml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
-    <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.toml.core" />
   </component>

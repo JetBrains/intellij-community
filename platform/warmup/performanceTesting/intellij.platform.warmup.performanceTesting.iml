@@ -15,7 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.playback" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.driver.model" />
+    <orderEntry type="module" module-name="intellij.driver.model" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.tools.ide.performanceTesting.commands" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
   </component>

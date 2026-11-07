@@ -29,7 +29,7 @@
       <excludeFolder url="file://$MODULE_DIR$/setup-test-environment/build" />
     </content>
     <orderEntry type="inheritedJdk" />
-    <orderEntry type="module" module-name="intellij.json" />
+    <orderEntry type="module" module-name="intellij.json" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.yaml" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.python.community.impl.pipenv.common" />
@@ -53,7 +53,7 @@
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.remote.core" />
     <orderEntry type="module" module-name="intellij.platform.structureView" />
-    <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
+    <orderEntry type="module" module-name="intellij.platform.usageView.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.python.community" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" exported="" />
@@ -73,27 +73,27 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
-    <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
+    <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
-    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
-    <orderEntry type="module" module-name="intellij.libraries.xstream" />
+    <orderEntry type="module" module-name="intellij.libraries.xstream" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.libthrift" />
-    <orderEntry type="library" name="slf4j-api" level="project" />
-    <orderEntry type="library" name="slf4j-jdk14" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="slf4j-api" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
-    <orderEntry type="module" module-name="intellij.libraries.jsoup" />
-    <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
+    <orderEntry type="module" module-name="intellij.libraries.jsoup" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.javax.annotation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.python.refactoring" />
     <orderEntry type="module" module-name="intellij.python.codeInsight" />
     <orderEntry type="module" module-name="intellij.python.sourceRoots" />
-    <orderEntry type="module" module-name="intellij.python.navigation" />
-    <orderEntry type="module" module-name="intellij.python.spellchecker" />
+    <orderEntry type="module" module-name="intellij.python.navigation" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.spellchecker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.testing.codeInsight" />
     <orderEntry type="module" module-name="intellij.python.console" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
@@ -109,9 +109,9 @@
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.toml" />
+    <orderEntry type="module" module-name="intellij.toml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.toml.core" />
-    <orderEntry type="module" module-name="intellij.libraries.jsr305" />
+    <orderEntry type="module" module-name="intellij.libraries.jsr305" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
@@ -128,7 +128,7 @@
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.backend.observation" />
-    <orderEntry type="module" module-name="intellij.platform.ml" />
+    <orderEntry type="module" module-name="intellij.platform.ml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.commandInterface" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.syntax" />
@@ -152,9 +152,9 @@
     <orderEntry type="module" module-name="intellij.python.pyproject" />
     <orderEntry type="module" module-name="intellij.python.hatch" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" />
-    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.http.client" />
-    <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.helpersLocator" />
     <orderEntry type="module" module-name="intellij.python.community.execService.python" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
@@ -170,7 +170,7 @@
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
     <orderEntry type="module" module-name="intellij.python.externalIndex" />
     <orderEntry type="module" module-name="intellij.python.community.impl.conda" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.requirements.backend" exported="" />
     <orderEntry type="module" module-name="intellij.python.pytools.common" />
     <orderEntry type="module" module-name="intellij.python.pytools.backend" />
@@ -180,7 +180,7 @@
     <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.backend" exported="" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
-    <orderEntry type="module" module-name="intellij.platform.wsl.impl" />
+    <orderEntry type="module" module-name="intellij.platform.wsl.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
     <orderEntry type="module" module-name="intellij.platform.util.annotations" />
     <orderEntry type="module" module-name="intellij.python.packaging" exported="" />

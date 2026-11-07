@@ -12,9 +12,9 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
-    <orderEntry type="module" module-name="intellij.platform.util.rt" />
-    <orderEntry type="module" module-name="intellij.platform.util.annotations" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.rt" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.annotations" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module-library">
       <library name="jline.terminal" type="repository">

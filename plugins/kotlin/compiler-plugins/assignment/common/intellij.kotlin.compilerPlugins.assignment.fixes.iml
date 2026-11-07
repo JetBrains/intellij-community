@@ -29,14 +29,14 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.k2" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
-    <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" />
-    <orderEntry type="module" module-name="kotlin.fir" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.analysis.utils" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.fir" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
-    <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="intellij.java.psi" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.fixes" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
   </component>

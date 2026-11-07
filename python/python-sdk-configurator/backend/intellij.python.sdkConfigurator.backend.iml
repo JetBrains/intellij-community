@@ -34,22 +34,22 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
-    <orderEntry type="module" module-name="intellij.platform.ide.core" />
-    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
-    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
     <orderEntry type="module" module-name="intellij.python.community" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.platform.util.progress" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.rpc" />
-    <orderEntry type="module" module-name="intellij.platform.project" />
+    <orderEntry type="module" module-name="intellij.platform.project" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
-    <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
-    <orderEntry type="module" module-name="intellij.python.community.common" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.topics" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
-    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
-    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
-    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="RUNTIME" />
   </component>
 </module>

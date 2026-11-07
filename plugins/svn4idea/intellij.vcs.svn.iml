@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="intellij.libraries.ini4j" />
     <orderEntry type="module" module-name="intellij.libraries.oro.matcher" />
     <orderEntry type="module" module-name="intellij.libraries.jaxb" />
-    <orderEntry type="module" module-name="intellij.libraries.javax.activation" />
+    <orderEntry type="module" module-name="intellij.libraries.javax.activation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" />

@@ -11,6 +11,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.codeowners" exported="" />
     <orderEntry type="module" module-name="intellij.codeowners.monorepo.resolver" />
-    <orderEntry type="module" module-name="intellij.tools.testsBootstrap" />
+    <orderEntry type="module" module-name="intellij.tools.testsBootstrap" scope="RUNTIME" />
   </component>
 </module>

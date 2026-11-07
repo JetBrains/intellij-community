@@ -47,8 +47,8 @@
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
     <orderEntry type="module" module-name="intellij.libraries.oshi.core" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
-    <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
-    <orderEntry type="module" module-name="intellij.libraries.commons.io" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.compress" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.io" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />

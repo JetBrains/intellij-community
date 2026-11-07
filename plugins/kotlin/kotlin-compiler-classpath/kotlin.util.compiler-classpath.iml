@@ -23,19 +23,19 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.asm" />
-    <orderEntry type="module" module-name="intellij.libraries.java.compatibility" />
-    <orderEntry type="library" name="javax-inject" level="project" />
-    <orderEntry type="library" name="vavr" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.libraries.lz4" />
-    <orderEntry type="module" module-name="intellij.libraries.jsr305" />
-    <orderEntry type="module" module-name="intellij.java.psi.impl" />
-    <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
-    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.asm" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.java.compatibility" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="javax-inject" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="vavr" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.lz4" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jsr305" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.impl" scope="RUNTIME" />
   </component>
 </module>

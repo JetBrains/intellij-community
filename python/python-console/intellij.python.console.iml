@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="intellij.libraries.libthrift" />
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
-    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>

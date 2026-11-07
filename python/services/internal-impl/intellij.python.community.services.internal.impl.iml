@@ -32,6 +32,6 @@
     <orderEntry type="module" module-name="intellij.python.community" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
-    <orderEntry type="module" module-name="intellij.python.community.execService.python" />
+    <orderEntry type="module" module-name="intellij.python.community.execService.python" scope="RUNTIME" />
   </component>
 </module>

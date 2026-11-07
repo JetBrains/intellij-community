@@ -32,13 +32,13 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
-    <orderEntry type="module" module-name="intellij.platform.lsp" />
+    <orderEntry type="module" module-name="intellij.platform.lsp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.pytools.common" />
     <orderEntry type="module" module-name="intellij.python.pytools.frontend" />
-    <orderEntry type="module" module-name="intellij.python.lsp.core.common" />
+    <orderEntry type="module" module-name="intellij.python.lsp.core.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.lsp.core.frontend" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.rpc" />
-    <orderEntry type="module" module-name="intellij.platform.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.frontend" scope="RUNTIME" />
   </component>
 </module>

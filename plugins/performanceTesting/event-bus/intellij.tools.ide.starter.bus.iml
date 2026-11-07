@@ -13,10 +13,10 @@
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.module.kotlin" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
-    <orderEntry type="module" module-name="intellij.libraries.netty.codec.compression" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.codec.compression" scope="RUNTIME" />
   </component>
 </module>

@@ -13,8 +13,8 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
     <orderEntry type="module" module-name="intellij.libraries.rd.core" />
-    <orderEntry type="module" module-name="intellij.libraries.rd.text" />
-    <orderEntry type="module" module-name="intellij.libraries.rd.swing" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.text" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.swing" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core" />

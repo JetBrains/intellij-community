@@ -41,14 +41,14 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.platform.ide.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.ide.concurrency" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="fleet.rpc" />
-    <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
-    <orderEntry type="module" module-name="intellij.platform.rpc.topics.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.topics" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.topics.frontend" scope="RUNTIME" />
   </component>
 </module>

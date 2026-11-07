@@ -39,14 +39,14 @@
     <orderEntry type="module" module-name="intellij.platform.ide.bootstrap.eel" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.jbr" />
     <orderEntry type="library" name="googlecode.plist.dd" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
-    <orderEntry type="module" module-name="intellij.platform.eel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.eel.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.initialConfigImport" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
-    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.welcomeScreen" />
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs.impl" />
     <orderEntry type="module" module-name="intellij.platform.icons.impl" />

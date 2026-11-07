@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.maven" />
-    <orderEntry type="module" module-name="intellij.maven.plugin" />
+    <orderEntry type="module" module-name="intellij.maven.plugin" scope="RUNTIME" />
     <orderEntry type="module-library">
       <library name="io.takari.maven.wrapper" type="repository">
         <properties maven-id="io.takari:maven-wrapper:0.5.5">
@@ -62,7 +62,7 @@
     <orderEntry type="module" module-name="intellij.xml.analysis.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
-    <orderEntry type="module" module-name="intellij.java.testFramework.backend" />
+    <orderEntry type="module" module-name="intellij.java.testFramework.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />

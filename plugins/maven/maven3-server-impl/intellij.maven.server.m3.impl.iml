@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="intellij.maven.server" />
     <orderEntry type="module" module-name="intellij.maven.server.telemetry" />
     <orderEntry type="module" module-name="intellij.maven.server.m3.common" />
-    <orderEntry type="module" module-name="intellij.libraries.commons.logging" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.logging" scope="RUNTIME" />
     <orderEntry type="module-library" scope="PROVIDED">
       <library name="org.apache.maven:maven-embedder:3.3.9" type="repository">
         <properties maven-id="org.apache.maven:maven-embedder:3.3.9">

@@ -66,7 +66,7 @@
     <orderEntry type="module" module-name="intellij.python.pytools.backend" />
     <orderEntry type="module" module-name="intellij.python.pytools.backend.runtime" />
     <orderEntry type="module" module-name="intellij.python.pytools.common" />
-    <orderEntry type="module" module-name="intellij.platform.backend" />
+    <orderEntry type="module" module-name="intellij.platform.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>

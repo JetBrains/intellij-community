@@ -66,7 +66,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="ai.grazie.model.swagger.annotations.jvm" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.model:swagger-annotations-jvm:0.8.256">
           <verification>

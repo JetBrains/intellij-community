@@ -28,7 +28,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
-    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex" />
     <orderEntry type="module" module-name="intellij.maven" />
   </component>

@@ -9,19 +9,19 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson" />
-    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.module.kotlin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jackson.databind" scope="RUNTIME" />
     <orderEntry type="library" name="slf4j-api" level="project" />
-    <orderEntry type="library" name="slf4j-jdk14" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.commons.logging" />
+    <orderEntry type="library" scope="RUNTIME" name="slf4j-jdk14" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.logging" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.analysis.impl" />
-    <orderEntry type="module" module-name="intellij.libraries.commons.text" />
+    <orderEntry type="module" module-name="intellij.libraries.commons.text" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
-    <orderEntry type="module" module-name="intellij.platform.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
@@ -31,7 +31,7 @@
     <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.platform.ide.migLayout" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.jna" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.guava" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
@@ -321,7 +321,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="ai.grazie.tasks.library.model.jvm" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.tasks-library:tasks-library-model-jvm:0.8.256">
           <verification>
@@ -451,7 +451,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="net.loomchild:segment:2.0.1" type="repository">
         <properties include-transitive-deps="false" maven-id="net.loomchild:segment:2.0.3">
           <verification>
@@ -469,7 +469,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.carrot2:morfologik-stemming" type="repository">
         <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-stemming:2.1.9">
           <verification>
@@ -487,7 +487,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.carrot2:morfologik-speller" type="repository">
         <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-speller:2.1.9">
           <verification>
@@ -505,7 +505,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="com.carrotsearch:hppc" type="repository">
         <properties include-transitive-deps="false" maven-id="com.carrotsearch:hppc:0.9.1">
           <verification>
@@ -523,7 +523,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.carrot2:morfologik-fsa-builders" type="repository">
         <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-fsa-builders:2.1.9">
           <verification>
@@ -541,7 +541,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.carrot2:morfologik-fsa" type="repository">
         <properties include-transitive-deps="false" maven-id="org.carrot2:morfologik-fsa:2.1.9">
           <verification>
@@ -561,9 +561,9 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="tech.uom.lib:uom-lib-common:1.1" type="repository">
         <properties include-transitive-deps="false" maven-id="tech.uom.lib:uom-lib-common:1.1">
           <verification>
@@ -581,7 +581,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="tech.units:indriya:1.3" type="repository">
         <properties include-transitive-deps="false" maven-id="tech.units:indriya:1.3">
           <verification>
@@ -599,7 +599,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="javax.measure:unit-api:1.0" type="repository">
         <properties include-transitive-deps="false" maven-id="javax.measure:unit-api:1.0">
           <verification>
@@ -617,10 +617,10 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.javax.activation" />
-    <orderEntry type="module" module-name="intellij.libraries.javax.annotation" />
-    <orderEntry type="module" module-name="intellij.libraries.jaxb" />
-    <orderEntry type="module-library">
+    <orderEntry type="module" module-name="intellij.libraries.javax.activation" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.javax.annotation" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jaxb" scope="RUNTIME" />
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="com.hankcs:aho-corasick-double-array-trie" type="repository">
         <properties include-transitive-deps="false" maven-id="com.hankcs:aho-corasick-double-array-trie:1.2.3">
           <verification>
@@ -638,7 +638,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="com.vdurmont:emoji-java" type="repository">
         <properties include-transitive-deps="false" maven-id="com.vdurmont:emoji-java:5.1.1">
           <verification>
@@ -656,7 +656,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.json:json" type="repository">
         <properties maven-id="org.json:json:20240205">
           <verification>
@@ -680,10 +680,10 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.libraries.stream" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
-    <orderEntry type="module" module-name="intellij.libraries.lucene.common" />
+    <orderEntry type="module" module-name="intellij.libraries.lucene.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.ai.grazie.spell.gec.engine.local" />
     <orderEntry type="module" module-name="intellij.libraries.ai.grazie.rule.engine" exported="" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="ai.grazie.model.ner.jvm" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-ner-jvm:0.8.256">
           <verification>
@@ -704,7 +704,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="cloud.jetbrains.sdk.ml.jbai.tree.api" type="repository">
         <properties include-transitive-deps="false" maven-id="cloud.jetbrains.sdk.ml:jbai-tree-api:2.1.0">
           <verification>
@@ -722,7 +722,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="cloud.jetbrains.sdk.ml.jbai.ner.api" type="repository">
         <properties include-transitive-deps="false" maven-id="cloud.jetbrains.sdk.ml:jbai-ner-api:0.2.0">
           <verification>
@@ -745,18 +745,18 @@
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
-    <orderEntry type="module" module-name="intellij.libraries.grpc" />
-    <orderEntry type="module" module-name="intellij.platform.util.jdom" />
+    <orderEntry type="module" module-name="intellij.libraries.grpc" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
     <orderEntry type="module" module-name="intellij.libraries.ktor.client.cio" />
-    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlin.logging" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.logging" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.credentialStore" />
     <orderEntry type="module" module-name="intellij.libraries.jackson.dataformat.yaml" scope="RUNTIME" />
   </component>

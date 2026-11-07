@@ -11,7 +11,7 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="lucene-codecs" type="repository">
         <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-codecs:10.5.0">
           <verification>
@@ -31,7 +31,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="lucene-memory" type="repository">
         <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-memory:10.5.0">
           <verification>
@@ -51,7 +51,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="lucene-queries" type="repository">
         <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-queries:10.5.0">
           <verification>
@@ -71,7 +71,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="lucene-sandbox" type="repository">
         <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-sandbox:10.5.0">
           <verification>
@@ -131,7 +131,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="lucene-suggest" type="repository">
         <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-suggest:10.5.0">
           <verification>

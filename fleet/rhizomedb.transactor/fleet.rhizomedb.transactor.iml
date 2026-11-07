@@ -42,7 +42,7 @@
     <orderEntry type="module" module-name="fleet.reporting.api" />
     <orderEntry type="module" module-name="fleet.reporting.shared" />
     <orderEntry type="module" module-name="fleet.multiplatform.shims" />
-    <orderEntry type="module" module-name="fleet.bifurcan" />
+    <orderEntry type="module" module-name="fleet.bifurcan" scope="RUNTIME" />
     <orderEntry type="module" module-name="fleet.fastutil" />
     <orderEntry type="module" module-name="fleet.openmap" />
   </component>

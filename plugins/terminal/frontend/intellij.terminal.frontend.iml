@@ -56,10 +56,10 @@
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.platform.ide.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.feedback" />
     <orderEntry type="module" module-name="intellij.platform.ide.codeinsight.inline" />
-    <orderEntry type="module" module-name="intellij.platform.inline.completion" />
+    <orderEntry type="module" module-name="intellij.platform.inline.completion" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.terminal.completion" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.libraries.caffeine" />
@@ -69,7 +69,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.platform.project" />
-    <orderEntry type="module" module-name="intellij.libraries.pty4j" />
+    <orderEntry type="module" module-name="intellij.libraries.pty4j" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.platform.rpc.topics" />

@@ -12,8 +12,8 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.terminal" />
-    <orderEntry type="module" module-name="intellij.completionMlRanking" />
+    <orderEntry type="module" module-name="intellij.completionMlRanking" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.sh" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.sh" scope="RUNTIME" />
   </component>
 </module>

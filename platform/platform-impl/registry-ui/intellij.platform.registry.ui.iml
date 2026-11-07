@@ -16,6 +16,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" />
-    <orderEntry type="module" module-name="intellij.platform.ide.maintenance" />
+    <orderEntry type="module" module-name="intellij.platform.ide.maintenance" scope="RUNTIME" />
   </component>
 </module>

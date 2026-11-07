@@ -26,11 +26,11 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kodein.di.jvm" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter" />
-    <orderEntry type="module" module-name="intellij.tools.ide.util.common" />
-    <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="module" module-name="intellij.tools.ide.util.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" />
-    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" />
   </component>
 </module>

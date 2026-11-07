@@ -27,7 +27,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.util.base" />
+    <orderEntry type="module" module-name="intellij.platform.util.base" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.productMode" exported="" />
   </component>
 </module>

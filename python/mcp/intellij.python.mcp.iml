@@ -39,8 +39,8 @@
     <orderEntry type="module" module-name="intellij.python.community.impl" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
     <orderEntry type="module" module-name="intellij.python.community.common" />
-    <orderEntry type="module" module-name="intellij.python.community.impl.poetry.backend" />
-    <orderEntry type="module" module-name="intellij.python.hatch" />
-    <orderEntry type="module" module-name="intellij.python.uv.backend" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.poetry.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.hatch" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.uv.backend" scope="RUNTIME" />
   </component>
 </module>

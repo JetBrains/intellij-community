@@ -12,7 +12,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.platform.syntax" />
     <orderEntry type="module" module-name="intellij.platform.syntax.util" />
-    <orderEntry type="module" module-name="intellij.platform.util.multiplatform" />
+    <orderEntry type="module" module-name="intellij.platform.util.multiplatform" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.syntax.i18n" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

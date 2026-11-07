@@ -40,7 +40,7 @@
     <orderEntry type="module" module-name="intellij.libraries.skiko" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" exported="" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.jetbrains.compose.components.components.resources" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.compose.components:components-resources:1.13.0-beta01">
           <verification>

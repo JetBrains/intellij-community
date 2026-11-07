@@ -9,7 +9,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="commons-collections" type="repository">
         <properties include-transitive-deps="false" maven-id="commons-collections:commons-collections:3.2.2">
           <verification>

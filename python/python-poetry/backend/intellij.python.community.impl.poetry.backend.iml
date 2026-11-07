@@ -29,8 +29,8 @@
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" />
     <orderEntry type="module" module-name="intellij.python.community" />
     <orderEntry type="module" module-name="intellij.python.pyproject" />
-    <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" />
-    <orderEntry type="module" module-name="intellij.python.community.common" />
+    <orderEntry type="module" module-name="intellij.platform.util.base.multiplatform" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.community.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.python.sdk.backend" />
     <orderEntry type="module" module-name="intellij.python.sdk.common" />

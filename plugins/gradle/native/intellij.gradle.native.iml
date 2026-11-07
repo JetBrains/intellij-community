@@ -14,6 +14,6 @@
     <orderEntry type="module" module-name="intellij.gradle.common" exported="" />
     <orderEntry type="module" module-name="intellij.gradle.native.tooling" exported="" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="RUNTIME" />
   </component>
 </module>

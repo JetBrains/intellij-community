@@ -8,14 +8,14 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build" />
-    <orderEntry type="module" module-name="intellij.java.rt" />
-    <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" />
+    <orderEntry type="module" module-name="intellij.java.rt" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.tools.jps.build.standalone" scope="RUNTIME" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
   </component>
 </module>

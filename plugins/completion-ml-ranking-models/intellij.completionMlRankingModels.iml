@@ -12,18 +12,18 @@
     <orderEntry type="module" module-name="intellij.completionMlRanking" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.internal" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.java" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.kotlin" />
-    <orderEntry type="module" module-name="intellij.completionMlRankingModels.libraries" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.rust" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.kotlin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.completionMlRankingModels.libraries" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.rust" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.php" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.ruby" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.go" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.js" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.typescript" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.swift" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.cpp" />
-    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.sh" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.php" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.ruby" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.go" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.js" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.typescript" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.swift" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.cpp" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.completion.ranking.sh" scope="RUNTIME" />
   </component>
 </module>

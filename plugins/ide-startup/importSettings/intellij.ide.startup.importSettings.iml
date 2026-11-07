@@ -42,7 +42,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.libraries.rd.core" />
-    <orderEntry type="module" module-name="intellij.libraries.rd.swing" />
+    <orderEntry type="module" module-name="intellij.libraries.rd.swing" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.rd.community" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
@@ -57,8 +57,8 @@
     <orderEntry type="module" module-name="intellij.libraries.miglayout.swing" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
-    <orderEntry type="module" module-name="intellij.libraries.sqlite" />
-    <orderEntry type="module" module-name="intellij.libraries.classgraph" />
+    <orderEntry type="module" module-name="intellij.libraries.sqlite" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.classgraph" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.progress" />

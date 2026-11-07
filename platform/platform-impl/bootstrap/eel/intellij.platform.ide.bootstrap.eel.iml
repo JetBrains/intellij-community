@@ -12,11 +12,11 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
-    <orderEntry type="module" module-name="intellij.platform.util.annotations" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
-    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
+    <orderEntry type="module" module-name="intellij.platform.util.annotations" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.eel" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
-    <orderEntry type="module" module-name="intellij.platform.ijent.community.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ijent.community.impl" scope="RUNTIME" />
   </component>
 </module>

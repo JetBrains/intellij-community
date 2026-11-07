@@ -33,29 +33,29 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.devLaunch" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.json" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
-    <orderEntry type="library" name="slf4j-api" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="slf4j-api" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" />
-    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.semconv" />
+    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.semconv" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
-    <orderEntry type="module" module-name="intellij.platform.boot" />
-    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
-    <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
+    <orderEntry type="module" module-name="intellij.platform.boot" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.rt.java8" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.xz" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.libraries.fastutil" />
-    <orderEntry type="module" module-name="intellij.libraries.hash4j" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" />
-    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="module" module-name="intellij.platform.util.zip" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.protobuf" />
+    <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.hash4j" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.zip" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.protobuf" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildData" />
-    <orderEntry type="module" module-name="intellij.platform.devIdeConfig" />
+    <orderEntry type="module" module-name="intellij.platform.devIdeConfig" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.teamcity.service.messages" />
   </component>
 </module>
