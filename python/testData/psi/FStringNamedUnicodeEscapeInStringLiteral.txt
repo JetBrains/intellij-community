@@ -10,7 +10,7 @@ PyFile:FStringNamedUnicodeEscapeInStringLiteral.py
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-          PyStringLiteralExpression: 
+          PyStringLiteralExpression: a
             PsiElement(Py:SINGLE_QUOTED_STRING)('"\N{LATIN SMALL LETTER A}"')
           PsiElement(Py:FSTRING_FRAGMENT_END)('}')
         PsiElement(Py:FSTRING_END)(''')
