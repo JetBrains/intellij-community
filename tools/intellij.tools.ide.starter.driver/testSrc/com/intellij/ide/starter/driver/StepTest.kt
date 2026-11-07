@@ -1,14 +1,11 @@
 package com.intellij.ide.starter.driver
 
-import com.intellij.driver.client.Driver
-import com.intellij.driver.sdk.DriverTestLogger
 import com.intellij.driver.sdk.step
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import java.lang.reflect.Proxy
 
 internal class StepTest {
   @Test
@@ -56,26 +53,5 @@ internal class StepTest {
 
   private fun assertMatches(pattern: String, actual: String) {
     assertTrue(Regex(pattern).matches(actual), "'$actual' does not match '$pattern'")
-  }
-
-  private class FakeDriver(isConnected: Boolean = true, failingLogger: Boolean = false) {
-    val lines = mutableListOf<String>()
-
-    private val logger = Proxy.newProxyInstance(javaClass.classLoader, arrayOf(DriverTestLogger::class.java)) { _, method, args ->
-      if (failingLogger) error("The IDE is gone")
-      lines.add("${method.name}: ${args.single()}")
-      null
-    } as DriverTestLogger
-
-    val proxy: Driver = Proxy.newProxyInstance(javaClass.classLoader, arrayOf(Driver::class.java)) { self, method, args ->
-      when (method.name) {
-        "isConnected" -> isConnected
-        "utility" -> logger
-        "hashCode" -> System.identityHashCode(self)
-        "equals" -> self === args.single()
-        "toString" -> "FakeDriver"
-        else -> error("Unexpected call: ${method.name}")
-      }
-    } as Driver
   }
 }

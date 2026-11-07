@@ -1,4 +1,4 @@
-package com.intellij.ide.starter.driver
+package com.intellij.ide.starter.driver.overlay
 
 import com.intellij.driver.client.Driver
 import com.intellij.driver.sdk.WaitForException
@@ -13,7 +13,7 @@ import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.settings.settingsDialog
 import com.intellij.driver.sdk.ui.dragAndDrop
 import com.intellij.driver.sdk.ui.should
-import com.intellij.driver.sdk.ui.shownOverlays
+import com.intellij.driver.sdk.ui.shownOverlay
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.withoutStepOverlays
 import com.intellij.driver.sdk.waitFor
@@ -25,6 +25,7 @@ import com.intellij.ide.starter.driver.reused.ReusedRun
 import com.intellij.ide.starter.driver.reused.cachedProjectConfiguration
 import com.intellij.ide.starter.testContextCache.CachedProjectConfiguration
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -79,7 +80,7 @@ class DriverOverlayUiTest {
         // A step overlay stays longer than the minimum time of the step overlays, and shows the time of the step.
         Thread.sleep((OVERLAY_MIN_DURATION + 1.seconds).inWholeMilliseconds)
         waitFor("the outer step overlay shows the time of the step", timeout = 2.seconds,
-                getter = { shownOverlays() }, checker = { it == listOf(ShownOverlay("${outer.title} [3s]", null)) })
+                getter = { shownOverlay() }, checker = { it == ShownOverlay("${outer.title} [3s]", null) })
 
         step("Inner step") {
           waitShown(inner, "in a nested step")
@@ -93,9 +94,9 @@ class DriverOverlayUiTest {
 
         step("Short nested step") {}
         Thread.sleep(LONGER_THAN_NESTED_STEP_DELAY.inWholeMilliseconds)
-        assertEquals(listOf(outer.title), shownTitles(), "a short nested step does not replace the overlay of its parent")
+        assertEquals(outer.title, shownTitle(), "a short nested step does not replace the overlay of its parent")
       }
-      waitFor("the outer overlay goes after the step", timeout = 10.seconds, getter = { shownOverlays() }, checker = { it.isEmpty() })
+      waitFor("the outer overlay goes after the step", timeout = 10.seconds, getter = { shownOverlay() }, checker = { it == null })
 
       // invokeAction runs its step in withContext, through the delegate of the Driver of the test. The steps share one stack.
       val action = ShownOverlay("Action step", null)
@@ -112,7 +113,7 @@ class DriverOverlayUiTest {
       val started = TimeSource.Monotonic.markNow()
       step(short.title) {}
       waitShown(short, "after the short step")
-      waitFor("the short step overlay goes", timeout = 10.seconds, getter = { shownOverlays() }, checker = { it.isEmpty() })
+      waitFor("the short step overlay goes", timeout = 10.seconds, getter = { shownOverlay() }, checker = { it == null })
       val goneAfter = started.elapsedNow()
       assertTrue(goneAfter >= OVERLAY_MIN_DURATION, "the short step overlay went after $goneAfter")
 
@@ -132,10 +133,10 @@ class DriverOverlayUiTest {
         takeScreenshot("overlay_failure")
         step("Next step") {
           Thread.sleep(LONGER_THAN_NESTED_STEP_DELAY.inWholeMilliseconds)
-          assertEquals(listOf(failure), shownOverlays(), "the failure has priority over a new step")
+          assertEquals(failure, shownOverlay(), "the failure has priority over a new step")
         }
         waitFor("the parent overlay comes back after the failure", timeout = 10.seconds,
-                getter = { shownTitles() }, checker = { it == listOf(parent.title) })
+                getter = { shownTitle() }, checker = { it == parent.title })
         // The failure overlay shows after the timeout of the check, and stays for the minimum time.
         val failureGoneAfter = checkStarted.elapsedNow()
         assertTrue(failureGoneAfter >= CHECK_TIMEOUT + OVERLAY_MIN_DURATION, "the failure overlay went after $failureGoneAfter")
@@ -176,7 +177,7 @@ class DriverOverlayUiTest {
         waitShown(ShownOverlay("Long step", null), "at the start of the step")
         for (time in listOf("3s", "6s", "9s")) {
           waitFor("the step overlay shows $time", timeout = 5.seconds,
-                  getter = { shownOverlays() }, checker = { it == listOf(ShownOverlay("Long step [$time]", null)) })
+                  getter = { shownOverlay() }, checker = { it == ShownOverlay("Long step [$time]", null) })
           takeScreenshot("overlay_step_time_$time")
         }
         step("Nested step") {
@@ -279,7 +280,7 @@ class DriverOverlayUiTest {
       step(title) {
         waitTitle(title, "the overlay shows")
         withoutStepOverlays {
-          assertEquals(emptyList<ShownOverlay>(), shownOverlays(), "the overlay goes off the screen for a screen read")
+          assertNull(shownOverlay(), "the overlay goes off the screen for a screen read")
         }
         waitTitle(title, "the overlay comes back after the screen read")
         assertEquals(withoutStep, editor.getColor(under, moveMouse = false), "the colour read ignores the overlay")
@@ -302,15 +303,15 @@ private fun Driver.pointUnderOverlay(editor: JEditorUiComponent): Point {
 private val STEP_TIME = Regex(""" \[[^]]+]$""")
 
 /** A step overlay shows the time of the step after a few seconds, so a check of a long step compares the titles without it. */
-private fun Driver.shownTitles(): List<String> = shownOverlays().map { it.title.replace(STEP_TIME, "") }
+private fun Driver.shownTitle(): String? = shownOverlay()?.title?.replace(STEP_TIME, "")
 
 /** The IDE paints an overlay a moment after the step, and a nested step shows its overlay after a delay. */
 private fun Driver.waitShown(overlay: ShownOverlay, description: String) {
-  waitFor(description, timeout = 5.seconds, getter = { shownOverlays() }, checker = { it == listOf(overlay) })
+  waitFor(description, timeout = 5.seconds, getter = { shownOverlay() }, checker = { it == overlay })
 }
 
 private fun Driver.waitTitle(title: String, description: String) {
-  waitFor(description, timeout = 5.seconds, getter = { shownTitles() }, checker = { it == listOf(title) })
+  waitFor(description, timeout = 5.seconds, getter = { shownTitle() }, checker = { it == title })
 }
 
 private fun createProjectDir(): Path {

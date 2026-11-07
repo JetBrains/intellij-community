@@ -10,23 +10,39 @@ import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 import com.intellij.driver.sdk.withoutPauseOnIndicators
 import com.intellij.openapi.diagnostic.fileLogger
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.Callable
+import java.lang.ref.WeakReference
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
+import kotlin.time.TimeSource.Monotonic.ValueTimeMark
+import kotlin.time.TimeSource.Monotonic.markNow
 
 /** The background of a step overlay, as `0xRRGGBB`. */
 private const val STEP_COLOR: Int = 0x5A5A5A
 
 /** The background of a failure overlay, as `0xRRGGBB`. */
 private const val FAILURE_COLOR: Int = 0xC81E1E
+
+/** The time that a failure overlay shows, and the minimum time of an outermost step overlay. */
+private val OVERLAY_MIN_DURATION: Duration = 2.seconds
+
+/** A nested step shows its overlay only after this time, so a short nested step makes no remote call. */
+private val NESTED_STEP_DELAY: Duration = 250.milliseconds
+
+/** The longest wait for the IDE to apply the overlay calls. */
+private val OVERLAY_CALL_TIMEOUT: Duration = 10.seconds
+
+private const val MAX_NAME_LENGTH: Int = 60
+private const val MAX_OUTER_NAME_LENGTH: Int = 30
+private const val MAX_OUTER_STEPS: Int = 3
+private const val MAX_MESSAGE_LENGTH: Int = 60
+private const val MAX_CAUSES: Int = 10
 
 /**
  * Shows the path and the time of the running step in an overlay on the IDE of the step, and the failure of a failed step.
@@ -38,81 +54,69 @@ open class StepOverlayInterceptor : StepInterceptor {
   override fun <T> intercept(name: String, action: () -> T): T = action()
 
   override fun <T> intercept(name: String, driver: Driver?, action: () -> T): T {
-    if (driver == null || !isEnabled() || overlayUnavailable) return action()
-    return driver.startStepOverlay(name).use { overlay ->
-      try {
-        action()
-      }
-      catch (e: Throwable) {
-        rethrowControlFlowException(e)
-        overlay.fail(e)
-        throw e
-      }
+    if (driver == null || !isEnabled() || driver.overlayUnavailable) return action()
+    val step = OverlayState.start(driver, name)
+    try {
+      return action()
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      OverlayState.fail(step, e)
+      throw e
+    }
+    finally {
+      OverlayState.end(step)
     }
   }
 }
 
-/** The time that a failure overlay shows, and the minimum time of an outermost step overlay. */
-private val OVERLAY_MIN_DURATION: Duration = 2.seconds
-
-private const val MAX_MESSAGE_LENGTH: Int = 60
-private const val MAX_PATH_STEPS: Int = 5
-
-/** About two lines of the overlay. */
-private const val MAX_TITLE_LENGTH: Int = 120
-private const val MAX_CURRENT_STEP_LENGTH: Int = 60
-private const val MAX_OUTER_STEP_LENGTH: Int = 30
-
-/** A nested step shows its overlay only after this time, so a short nested step makes no remote call. */
-private val NESTED_STEP_DELAY: Duration = 250.milliseconds
-private const val MAX_CAUSES: Int = 10
-
-/** The text of the overlay that the IDE shows. [message] is the part of the message that shows. */
+/** The text of the overlay that the IDE shows. */
 data class ShownOverlay(val title: String, val message: String?)
 
-/** Returns the overlay that the IDE shows now, or an empty list. It runs after the overlay calls that are already sent. */
+/** Returns the overlay that the IDE shows now, after the overlay calls that are already sent. */
 @TestOnly
-fun Driver.shownOverlays(): List<ShownOverlay> = onOverlayThread {
-  withContext(OnDispatcher.EDT) {
-    val overlay = utility(DriverOverlayRef::class)
-    listOfNotNull(overlay.getShownTitle()?.let { ShownOverlay(it, overlay.getShownMessage()) })
+fun Driver.shownOverlay(): ShownOverlay? {
+  try {
+    return overlayThread.submit<ShownOverlay?> { readShownOverlay() }.get(OVERLAY_CALL_TIMEOUT.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+  }
+  catch (e: ExecutionException) {
+    throw e.cause ?: e
   }
 }
 
 /**
  * Runs [action] with no overlay on the screen of the IDE, and shows the overlay of the running step again after it.
- * A read of the screen, for example a pixel colour, needs the content of the IDE alone, because an overlay paints
- * over it. The overlay is off the screen before [action] starts: this function waits for the EDT of the IDE.
- * A step inside [action] shows no overlay either.
+ * Use it for a read of the screen, for example a pixel colour, because an overlay paints over the IDE.
  */
 @TestOnly
 fun <T> withoutStepOverlays(action: () -> T): T {
-  val hiddenIn = synchronized(OverlayState) { OverlayState.suppress() }
+  val hiddenIn = OverlayState.suppress()
   try {
-    hiddenIn?.awaitOverlayRemoved()
+    hiddenIn?.awaitOverlayCalls()
     return action()
   }
   finally {
-    synchronized(OverlayState) { OverlayState.release() }
+    OverlayState.release()
   }
 }
 
-/** The longest wait for the removal of the overlay. A caller in a Driver session of the EDT cannot get the EDT. */
-private val OVERLAY_REMOVAL_TIMEOUT: Duration = 10.seconds
-
-/**
- * Waits until the IDE applied the overlay calls that are already sent, and so painted the removal of the overlay.
- * Logs a failure, because the caller reads the screen and a missed removal only makes the read worse.
- */
-private fun Driver.awaitOverlayRemoved() {
+/** Logs a failure, because a missed removal only makes the screen read worse. */
+private fun Driver.awaitOverlayCalls() {
   try {
-    overlayThread.submit { withContext(OnDispatcher.EDT) { utility(DriverOverlayRef::class).getShownTitle() } }
-      .get(OVERLAY_REMOVAL_TIMEOUT.inWholeMilliseconds, TimeUnit.MILLISECONDS)
+    overlayThread.submit { readShownOverlay() }.get(OVERLAY_CALL_TIMEOUT.inWholeMilliseconds, TimeUnit.MILLISECONDS)
   }
-  catch (e: Throwable) {
-    rethrowControlFlowException(e)
-    logFailure("The wait for the removal of the overlay failed", e)
+  catch (e: ExecutionException) {
+    fileLogger().warn("The wait for the removal of the overlay failed", e)
   }
+  catch (e: TimeoutException) {
+    fileLogger().warn("The wait for the removal of the overlay failed", e)
+  }
+}
+
+/** The EDT call also waits until the IDE applied the overlay calls that are already sent. */
+private fun Driver.readShownOverlay(): ShownOverlay? = withContext(OnDispatcher.EDT) {
+  val overlay = utility(DriverOverlayRef::class)
+  overlay.getShownTitle()?.let { ShownOverlay(it, overlay.getShownMessage()) }
 }
 
 /**
@@ -123,21 +127,136 @@ private val overlayThread: ScheduledExecutorService = Executors.newSingleThreadS
   Thread(runnable, "Driver overlay").apply { isDaemon = true }
 }
 
-private fun <T> onOverlayThread(action: () -> T): T {
-  try {
-    return overlayThread.submit(Callable(action)).get()
+/**
+ * The [Driver] whose overlay call failed in a connected IDE, for example in an IDE without [DriverOverlayRef].
+ * That [Driver] shows no overlay until the end of the run. The reference is weak, because the IDE ends before the run.
+ */
+@Volatile
+private var driverWithoutOverlay: WeakReference<Driver>? = null
+
+private val Driver.overlayUnavailable: Boolean get() = driverWithoutOverlay?.get() === this
+
+/** One overlay that the IDE of [driver] can show. [startedAt] is the start of the step, or null for an overlay without a time. */
+private data class OverlayRequest(val driver: Driver, val title: String, val message: String?, val color: Int, val startedAt: ValueTimeMark?)
+
+/** A running step. A nested step is visible after [NESTED_STEP_DELAY]. */
+private class Step(val name: String, val request: OverlayRequest, val startedAt: ValueTimeMark, val visibleAt: ValueTimeMark)
+
+private class TimedOverlay(val request: OverlayRequest, val end: ValueTimeMark)
+
+/**
+ * The overlay state of all [Driver]s. A test shows its overlays in one IDE, so one state is enough.
+ * One state also keeps one step stack when a wrapper of a [Driver] and its delegate both run steps.
+ * The priority is: a failure, then the innermost visible step, then the outermost step that ended in the last [OVERLAY_MIN_DURATION].
+ */
+private object OverlayState {
+  /** From the outermost to the innermost. */
+  private val steps = ArrayList<Step>()
+  private var failure: TimedOverlay? = null
+  private var linger: TimedOverlay? = null
+
+  /** The newest failure that an overlay showed. An enclosing step does not show it again. */
+  private var shownFailure: Throwable? = null
+
+  private var shown: OverlayRequest? = null
+  private var nextRefresh: ScheduledFuture<*>? = null
+
+  /** The number of the running [withoutStepOverlays] calls. */
+  private var suppressions: Int = 0
+
+  @Synchronized
+  fun start(driver: Driver, name: String): Step {
+    val startedAt = markNow()
+    val isOutermost = steps.isEmpty()
+    val request = OverlayRequest(driver, stepPathTitle(steps.map { it.name } + name), null, STEP_COLOR, startedAt)
+    val step = Step(name, request, startedAt, if (isOutermost) startedAt else startedAt + NESTED_STEP_DELAY)
+    // A new outermost step starts a new part of the test, for example the next test. The failure of the previous part ends.
+    if (isOutermost) {
+      failure = null
+      shownFailure = null
+    }
+    linger = null
+    steps.add(step)
+    refresh()
+    return step
   }
-  catch (e: ExecutionException) {
-    throw e.cause ?: e
+
+  @Synchronized
+  fun fail(step: Step, e: Throwable) {
+    if (generateSequence(e) { it.cause }.take(MAX_CAUSES).any { it === shownFailure }) return
+    shownFailure = e
+    val title = "Step '${step.name.ellipsize(MAX_NAME_LENGTH)}' failed"
+    val request = OverlayRequest(step.request.driver, title, failureText(e)?.ellipsize(MAX_MESSAGE_LENGTH), FAILURE_COLOR, null)
+    failure = TimedOverlay(request, markNow() + OVERLAY_MIN_DURATION)
+    refresh()
+  }
+
+  @Synchronized
+  fun end(step: Step) {
+    steps.remove(step)
+    if (steps.isEmpty()) linger = TimedOverlay(step.request, step.startedAt + OVERLAY_MIN_DURATION)
+    refresh()
+  }
+
+  /** Returns the [Driver] of the overlay that goes, or null if the IDE shows none. */
+  @Synchronized
+  fun suppress(): Driver? {
+    val hidden = shown?.driver
+    suppressions++
+    refresh()
+    return hidden
+  }
+
+  @Synchronized
+  fun release() {
+    suppressions--
+    refresh()
+  }
+
+  @Synchronized
+  private fun refreshOnTimer() {
+    refresh()
+  }
+
+  /** Sends the overlay that has priority now to the IDE, and schedules the next change. */
+  private fun refresh() {
+    if (failure?.end?.hasPassedNow() == true) failure = null
+    if (linger?.end?.hasPassedNow() == true) linger = null
+    val wanted = if (suppressions > 0) null
+    else failure?.request ?: steps.lastOrNull { it.visibleAt.hasPassedNow() }?.request ?: linger?.request
+    val old = shown
+    if (wanted != old) {
+      shown = wanted
+      // A show replaces the previous overlay, so only the end of all overlays needs a hide.
+      if (wanted != null) {
+        sendCall(wanted.driver) { show(wanted.title, wanted.message, wanted.color, wanted.startedAt?.elapsedNow()?.inWholeMilliseconds ?: -1) }
+      }
+      else if (old != null) {
+        sendCall(old.driver) { hide() }
+      }
+    }
+
+    nextRefresh?.cancel(false)
+    val next = listOfNotNull(failure?.end, linger?.end, steps.lastOrNull()?.visibleAt?.takeUnless { it.hasPassedNow() }).minOrNull() ?: return
+    nextRefresh = overlayThread.schedule(::refreshOnTimer, (-next.elapsedNow()).inWholeMilliseconds + 1, TimeUnit.MILLISECONDS)
   }
 }
 
-/**
- * Tells that the overlay call failed in a connected IDE, for example in an IDE without [DriverOverlayRef].
- * Then the overlays stay off until the end of the run. Only one test runs at a time, so one flag is enough.
- */
-@Volatile
-private var overlayUnavailable: Boolean = false
+/** Calls [DriverOverlayRef] of [driver] on the overlay thread. On a failure in a connected IDE, the overlays of the IDE go off. */
+private fun sendCall(driver: Driver, call: DriverOverlayRef.() -> Unit) {
+  overlayThread.execute {
+    try {
+      withoutPauseOnIndicators { driver.utility(DriverOverlayRef::class).call() }
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      if (!driver.overlayUnavailable && driver.isConnectedSafely()) {
+        driverWithoutOverlay = WeakReference(driver)
+        fileLogger().warn("The overlay call failed. The overlays of this IDE are off until the end of the run", e)
+      }
+    }
+  }
+}
 
 private fun Driver.isConnectedSafely(): Boolean =
   try {
@@ -148,88 +267,11 @@ private fun Driver.isConnectedSafely(): Boolean =
     false
   }
 
-private fun Driver.startStepOverlay(name: String): StepOverlay {
-  synchronized(OverlayState) {
-    val step = StepOverlay(name, this, OverlayState.steps.lastOrNull())
-    OverlayState.steps.add(step)
-    OverlayState.linger = null
-    // A new outermost step starts a new part of the test, for example the next test. The failure of the previous part ends.
-    if (step.isOutermost) OverlayState.failure = null
-    try {
-      OverlayState.refresh()
-    }
-    catch (e: Throwable) {
-      // A control flow exception ends the step at once.
-      OverlayState.steps.remove(step)
-      throw e
-    }
-    return step
-  }
-}
-
-/**
- * The overlay of a running step. The innermost visible step shows its overlay, with the path of the enclosing steps.
- * An outermost step is visible at once. A nested step is visible after [NESTED_STEP_DELAY].
- * When the outermost step ends, its overlay stays until [OVERLAY_MIN_DURATION] from its start ends.
- */
-private class StepOverlay(private val name: String, private val driver: Driver, private val parent: StepOverlay?) : AutoCloseable {
-  /** The names of the running steps, from the outermost step to this step. */
-  private val path: List<String> = parent?.path.orEmpty() + name
-  private val title = stepPathTitle(path)
-  private val startedAt = TimeSource.Monotonic.markNow()
-
-  /** The IDE adds the time of the step to the title. */
-  val request: OverlayRequest = OverlayRequest(driver, title, null, STEP_COLOR, startedAt)
-
-  val isOutermost: Boolean get() = parent == null
-
-  /** The time when the step becomes visible. */
-  val visibleAt: TimeMark = if (isOutermost) startedAt else startedAt + NESTED_STEP_DELAY
-
-  /** The failure that this step or a nested step showed. */
-  private var shownFailure: Throwable? = null
-
-  /** Shows [failure], unless a nested step already showed it, also in another exception. */
-  fun fail(failure: Throwable) {
-    synchronized(OverlayState) {
-      val shown = shownFailure
-      if (shown == null || generateSequence(failure) { it.cause }.take(MAX_CAUSES).none { it === shown }) {
-        val text = failureText(failure)?.ellipsize(MAX_MESSAGE_LENGTH)
-        val failureRequest = OverlayRequest(driver, "Step '${name.ellipsize(MAX_CURRENT_STEP_LENGTH)}' failed", text, FAILURE_COLOR)
-        OverlayState.failure = TimedOverlay(failureRequest, TimeSource.Monotonic.markNow() + OVERLAY_MIN_DURATION)
-        OverlayState.refresh()
-        shownFailure = failure
-      }
-      if (shownFailure != null) parent?.shownFailure = shownFailure
-    }
-  }
-
-  override fun close() {
-    synchronized(OverlayState) {
-      OverlayState.steps.remove(this)
-      // An outermost step is visible from its start, so its overlay stays until the minimum time from the start ends.
-      if (isOutermost) OverlayState.linger = TimedOverlay(request, startedAt + OVERLAY_MIN_DURATION)
-      OverlayState.refresh()
-    }
-  }
-}
-
-/**
- * Joins the step names with `›`. A deep path keeps the first step and the last steps, and shows `…` between them.
- * A title longer than [MAX_TITLE_LENGTH] hides more enclosing steps. The current step keeps the longest name.
- */
+/** Joins the step names with `›`. A deep path keeps the first step and the last steps, and shows `…` between them. */
 private fun stepPathTitle(path: List<String>): String {
-  val current = path.last().ellipsize(MAX_CURRENT_STEP_LENGTH)
-  val outer = path.dropLast(1).map { it.ellipsize(MAX_OUTER_STEP_LENGTH) }
-  val candidates = sequence {
-    yield(buildList {
-      if (outer.size < MAX_PATH_STEPS) addAll(outer) else addAll(listOf(outer.first(), "…") + outer.takeLast(MAX_PATH_STEPS - 2))
-      add(current)
-    })
-    if (outer.size >= 2) yield(listOf(outer.first(), "…", current))
-    if (outer.isNotEmpty()) yield(listOf("…", current))
-  }
-  return candidates.map { it.joinToString(" › ") }.firstOrNull { it.length <= MAX_TITLE_LENGTH } ?: current
+  val outer = path.dropLast(1).map { it.ellipsize(MAX_OUTER_NAME_LENGTH) }
+  val shownOuter = if (outer.size <= MAX_OUTER_STEPS) outer else listOf(outer.first(), "…") + outer.takeLast(MAX_OUTER_STEPS - 1)
+  return (shownOuter + path.last().ellipsize(MAX_NAME_LENGTH)).joinToString(" › ")
 }
 
 /** Cuts the text to [max] characters at the end of a word, and adds `…`. */
@@ -244,120 +286,6 @@ private fun String.ellipsize(max: Int): String {
 private fun failureText(failure: Throwable): String? {
   val text = if (failure is WaitForException) failure.errorMessage else failure.message
   return text?.takeIf { it.isNotBlank() } ?: failure.cause?.message?.takeIf { it.isNotBlank() }
-}
-
-/** One overlay that the IDE of [driver] can show. Two requests with the same text are the same overlay. */
-private data class OverlayRequest(
-  val driver: Driver,
-  val title: String,
-  val message: String?,
-  val color: Int,
-  /** The start of the step, or null for an overlay without a time. */
-  val startedAt: TimeMark? = null,
-)
-
-private class TimedOverlay(val request: OverlayRequest, val end: TimeMark)
-
-/**
- * The overlay state of all [Driver]s. A test shows its overlays in one IDE, so one state is enough.
- * One state also keeps one step stack when a wrapper of a [Driver] and its delegate both run steps.
- * Use it only with its lock. [refresh] does not call the IDE itself. The overlay thread sends the calls in their order.
- */
-private object OverlayState {
-  /** The running steps, from the outermost to the innermost. */
-  val steps: MutableList<StepOverlay> = ArrayList()
-
-  /** The failure overlay. It has priority over the step overlays. A newer failure replaces it. */
-  var failure: TimedOverlay? = null
-
-  /** The overlay of the outermost step after the step ended. */
-  var linger: TimedOverlay? = null
-
-  private var shown: OverlayRequest? = null
-  private var nextRefresh: ScheduledFuture<*>? = null
-
-  /** The number of the running [withoutStepOverlays] calls. While it is positive, the IDE shows no overlay. */
-  private var suppressions: Int = 0
-
-  /** Hides the overlay until [release]. Returns the [Driver] of the overlay that goes, or null if the IDE shows none. */
-  fun suppress(): Driver? {
-    val hidden = shown?.driver
-    suppressions++
-    refresh()
-    return hidden
-  }
-
-  fun release() {
-    suppressions--
-    refresh()
-  }
-
-  /** Makes the IDE show the overlay that has priority now, and schedules the next change. */
-  fun refresh() {
-    if (failure?.end?.hasPassedNow() == true) failure = null
-    if (linger?.end?.hasPassedNow() == true) linger = null
-    val wanted = if (suppressions > 0) null
-    else failure?.request ?: steps.lastOrNull { it.visibleAt.hasPassedNow() }?.request ?: linger?.request
-    if (wanted != shown) {
-      val old = shown
-      shown = wanted
-      // A show replaces the previous overlay, so only the end of all overlays needs a hide.
-      if (wanted == null) {
-        if (old != null) overlayThread.execute { remoteCall(old.driver, "The overlay '${old.title}' was not removed") { hide() } }
-      }
-      else {
-        overlayThread.execute {
-          remoteCall(wanted.driver, "The overlay '${wanted.title}' failed") {
-            show(wanted.title, wanted.message, wanted.color, wanted.startedAt?.elapsedNow()?.inWholeMilliseconds ?: -1)
-          }
-        }
-      }
-    }
-    scheduleNextRefresh()
-  }
-
-  private fun scheduleNextRefresh() {
-    nextRefresh?.cancel(false)
-    val nextVisibleStep = steps.lastOrNull()?.visibleAt?.takeUnless { it.hasPassedNow() }
-    val end = listOfNotNull(failure?.end, linger?.end, nextVisibleStep).maxByOrNull { it.elapsedNow() } ?: return
-    val delayMillis = (-end.elapsedNow()).inWholeMilliseconds.coerceAtLeast(0) + 1
-    nextRefresh = overlayThread.schedule({ refreshOnTimer() }, delayMillis, TimeUnit.MILLISECONDS)
-  }
-
-  private fun refreshOnTimer() {
-    try {
-      synchronized(OverlayState) { refresh() }
-    }
-    catch (e: Throwable) {
-      logFailure("The overlay refresh failed", e)
-    }
-  }
-}
-
-/**
- * Calls [DriverOverlayRef] of [driver] on the overlay thread. The IDE paints the overlay later on its EDT.
- * Logs a failure, unless the IDE is gone.
- */
-private fun remoteCall(driver: Driver, failureText: String, call: DriverOverlayRef.() -> Unit) {
-  try {
-    withoutPauseOnIndicators { driver.utility(DriverOverlayRef::class).call() }
-  }
-  catch (e: Throwable) {
-    if (e is InterruptedException) Thread.currentThread().interrupt()
-    rethrowControlFlowException(e)
-    if (!overlayUnavailable && driver.isConnectedSafely()) {
-      overlayUnavailable = true
-      logFailure("$failureText. The overlays are off until the end of the run", e)
-    }
-  }
-}
-
-private fun logFailure(text: String, e: Throwable) {
-  if (e is InterruptedException) {
-    Thread.currentThread().interrupt()
-  }
-  val causes = generateSequence(e) { it.cause }.take(MAX_CAUSES).joinToString(" <- ") { "${it.javaClass.name}: ${it.message}" }
-  fileLogger().warn("$text: $causes")
 }
 
 /** Needs an IDE with a Performance Testing plugin that has this class. */
