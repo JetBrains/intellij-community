@@ -695,9 +695,29 @@ class PyEvaluatorTest : PyCodeInsightTestCase() {
   @TestFor(issues = ["PY-93848"])
   fun `literal that Java decodes unlike Python gives no value`() = runInEdtAndWait {
     assertEvaluates("'\\ud83d\\ude00'", null)
-    assertEvaluates("""'\N{BULLET}'""", null)
-    assertEvaluates("'a\\\nb'", null)
     assertNull(PyEvaluator().evaluate(parseText("expr = chr(0xD83D)")))
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93852"])
+  fun `escapes fold as Python decodes them`() = runInEdtAndWait {
+    assertEvaluates("""'\N{BULLET}'""", "\u2022")
+    assertEvaluates("""f'\N{BULLET}{1}'""", "\u20221")
+    assertEvaluates("'a\\\nb'", "ab")
+    assertEvaluates("'\\a'", Char(7).toString())
+    assertEvaluates("r'\\u0041'", "\\u0041")
+    assertEvaluates("""'\\N{BULLET}'""", "\\N{BULLET}")
+    assertEvaluates("""r'C:\New'""", "C:\\New")
+    assertEvaluates("""rf'C:\New{1}'""", "C:\\New1")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93852"])
+  fun `named escape that the decoder keeps as text gives no value`() = runInEdtAndWait {
+    assertEvaluates("""'\N{NBSP}'""", null)
+    assertEvaluates("""'\N{HANGUL SYLLABLE GA}'""", null)
+    assertEvaluates("""f'\N{NBSP}{1}'""", null)
+    assertEvaluates("""'\N'""", null)
   }
 
   @Test
