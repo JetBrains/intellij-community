@@ -224,9 +224,8 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       }
 
       val editor = editorSupplier()
-      span("editor languageSupplier set", Dispatchers.EDT) {
-        editor.settings.setLanguageSupplier { TextEditorImpl.getDocumentLanguage(editor) }
-      }
+      // the settings compute the language in a background read action and apply it on the EDT
+      editor.settings.setLanguageSupplier { TextEditorImpl.getDocumentLanguage(editor) }
     }
   }
 

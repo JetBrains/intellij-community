@@ -156,7 +156,9 @@ class EditorSettingsState(
 
   /**
    * Gives the language of the editor file. A new supplier and [recalculateInputs] compute the language again.
+   * Any thread can set the supplier.
    */
+  @Volatile
   internal var languageSupplier: (() -> Language?)? = null
     set(value) {
       field = value
