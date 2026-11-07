@@ -895,7 +895,7 @@ async def nosupAssertFalse(b):
 
   /**
    * The reporting half: the same short-circuit with no {@code TYPE_CHECKING}, so the dead branch is dead for
-   * everyone and the warning is owed. Fails without the fix. {@code PyEvaluatorTest.testBooleanShortCircuit}
+   * everyone and the warning is owed. Fails without the fix. {@code PyEvaluatorTest} (`boolean short circuit`)
    * covers the evaluator; this covers the inspection consuming its result.
    */
   @TestFor(issues="PY-85200")
