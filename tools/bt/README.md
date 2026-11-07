@@ -56,10 +56,12 @@ heavy target.
 
 ## Modules
 
-`--module <jps module>` runs the `jps_test` target of a JPS module. `crates/bt-core/src/modules.rs` resolves it:
+`--module <jps module>` runs the test target of a JPS module. `crates/bt-core/src/modules.rs` resolves it. A test
+target is a `jps_test`, or a `starter_test` of `//build:starter_test.bzl`, the macro that wraps `jps_test` for an IDE
+Starter test. bt reads the rule kind from the text of the `BUILD.bazel`, not from `bazel query`.
 
 1. `.idea/modules.xml` at the checkout root gives the directory of the module's `.iml`.
-2. The `BUILD.bazel` of that directory gives the `jps_test` whose `runtime_deps` name a library of the module or its
+2. The `BUILD.bazel` of that directory gives the test target whose `runtime_deps` name a library of the module or its
    `_test_lib`. A library belongs to the module when its `module_name` is the module, or when it sits in the
    `build <module>` section that the BUILD generator writes. One directory can hold several modules, so each module
    gets its own target, or none.
@@ -71,7 +73,7 @@ The module runs when the migrated list names it, or when an area owns its direct
 checkout. `tests.cmd` reads the same list. bt refuses every other module with exit 2 and the code
 `module_not_migrated`. The message gives the `./tests.cmd --module <module> --test <FQN>` command, and it gives the
 label for an explicit run. A module without a target of its own gets the code `module_without_test_target` and the same
-`tests.cmd` command. When the `BUILD.bazel` declares exactly one unfiltered `jps_test`, this refusal also gives the
+`tests.cmd` command. When the `BUILD.bazel` declares exactly one unfiltered test target, this refusal also gives the
 label of that target for an explicit run.
 
 `--filter` takes an FQN, `FQN#method` or a package, as for a label. A package is a dotted name whose segments start

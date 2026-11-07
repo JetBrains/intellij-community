@@ -477,3 +477,53 @@ fn a_filtered_jps_test_of_a_module_counts_when_it_is_the_only_one() {
         "Expected one jps_test of module intellij.groovy.tests per BUILD.bazel, found 2: groovy-tests_test, again_test"
     );
 }
+
+/// The shape that the BUILD generator writes for an IDE Starter module of the allowlist: a `starter_test` in the `test`
+/// section, in place of the `jps_test`.
+const STARTER_BUILD: &str = r#"load("//build:starter_test.bzl", "starter_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.daemon.lambdaTests` start
+jvm_library(
+    name = "lambdaTests_test_lib",
+    testonly = True,
+    srcs = glob(["testSrc/**/*.kt"], allow_empty = True),
+    module_name = "intellij.platform.daemon.lambdaTests",
+)
+### auto-generated section `build intellij.platform.daemon.lambdaTests` end
+
+### auto-generated section `test intellij.platform.daemon.lambdaTests` start
+starter_test(
+    name = "lambdaTests_test",
+    product = "idea",
+    frontend = True,
+    context_plugins = ["//platform/daemon/lambdaTests:plugin"],
+    runtime_deps = [":lambdaTests_test_lib"],
+)
+### auto-generated section `test intellij.platform.daemon.lambdaTests` end"#;
+
+/// `starter_test` wraps `jps_test`, so it is the test target of its BUILD.bazel, and a `--module` run finds it.
+#[test]
+fn a_starter_test_is_the_test_target_of_its_module() {
+    assert_eq!(parse_jps_test_name(STARTER_BUILD), Ok(Some("lambdaTests_test".to_owned())));
+    assert_eq!(
+        module_jps_test_name(STARTER_BUILD, "intellij.platform.daemon.lambdaTests"),
+        Ok(Some("lambdaTests_test".to_owned()))
+    );
+    assert_eq!(module_jps_test_name(STARTER_BUILD, "intellij.platform.daemon"), Ok(None));
+}
+
+/// A `starter_test` and a `jps_test` that run the same module are two targets, as two `jps_test` rules are.
+#[test]
+fn a_starter_test_beside_a_jps_test_of_the_same_module_is_refused() {
+    let both = format!("{STARTER_BUILD}\n\njps_test(\n    name = \"again_test\",\n    runtime_deps = [\":lambdaTests_test_lib\"],\n)\n");
+    let failure = refusal(parse_jps_test_name(&both));
+    assert_eq!((failure.code.as_ref(), failure.exit), ("bt_infra", exit::INFRA));
+    assert!(failure.message.contains("found 2"), "{}", failure.message);
+    let failure = refusal(module_jps_test_name(&both, "intellij.platform.daemon.lambdaTests"));
+    assert_eq!(
+        failure.message,
+        "Expected one jps_test of module intellij.platform.daemon.lambdaTests per BUILD.bazel, found 2: lambdaTests_test, \
+         again_test"
+    );
+}

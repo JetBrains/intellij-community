@@ -1,8 +1,8 @@
 //! Test-root discovery and the class index, over the directories of the areas.
 //!
 //! Three invariants verified across the Air area keep this cheap, and an area must keep them too:
-//! - every BUILD.bazel that declares `jps_test` declares exactly one unfiltered one, and it sits in the same
-//!   directory as the .iml, so there is no walking up and no picking among targets;
+//! - every BUILD.bazel that declares a test target ([`TEST_RULE_KINDS`]) declares exactly one unfiltered one, and it
+//!   sits in the same directory as the .iml, so there is no walking up and no picking among targets;
 //! - a test file's own `package` declaration is authoritative (it already equals the testSrc packagePrefix plus
 //!   the relative directory), so the prefix is only a hint for package runs;
 //! - every declared test source root is named `test`, `testSrc` or `tests`, so none of them can sit under a pruned
@@ -53,6 +53,12 @@ pub struct ImlTestRoot {
     pub package_prefix: Option<String>,
 }
 
+/// The rule kinds of a test target that runs one JPS module: `jps_test`, and the `starter_test` macro of
+/// `//build:starter_test.bzl`, which wraps `jps_test` for an IDE Starter test.
+///
+/// bt reads the kind from the text of a BUILD.bazel, never from `bazel query`, so a macro is known by its own name.
+pub const TEST_RULE_KINDS: &[&str] = &["jps_test", "starter_test"];
+
 const PRUNED_DIRS: &[&str] = &["out", "node_modules", ".git", ".idea", "generated", "dist", "build"];
 
 /// The test source roots an .iml declares: `isTestSource="true"` source folders that are not resource roots. The
@@ -85,7 +91,8 @@ pub fn parse_iml_test_roots(iml_text: &str) -> Vec<ImlTestRoot> {
         .collect()
 }
 
-/// The module's `jps_test` target name in a BUILD.bazel, or `None` when it declares none.
+/// The name of the one test target in a BUILD.bazel, or `None` when it declares none. The kind of a test target is one
+/// of [`TEST_RULE_KINDS`].
 ///
 /// Sibling `jvm_library` and `*_test_lib` rules must not be mistaken for it, and the name is not derivable from the
 /// module name (plugins/air/shared/core declares `ai-agent-core-tests_test`, not `air-...`).
@@ -95,12 +102,10 @@ pub fn parse_iml_test_roots(iml_text: &str) -> Vec<ImlTestRoot> {
 /// every class outside its filter. No Air integration target pins one any more (each lane is its own module, ADR
 /// 0037), but `plugins/air/sdd/wysiwyg` still does.
 pub fn parse_jps_test_name(build_text: &str) -> Result<Option<String>, Refusal> {
-    let marker = regex!(r"(?m)^jps_test\(");
-    let names: Vec<String> = marker
-        .find_iter(build_text)
-        .map(|found| rule_body(build_text, found.end()))
-        .filter(|body| !body.contains("JB_TEST_JUNIT5_FILTERS"))
-        .filter_map(|body| rule_name(&body))
+    let names: Vec<String> = rules(build_text)
+        .into_iter()
+        .filter(|(kind, body)| TEST_RULE_KINDS.contains(&kind.as_str()) && !body.contains("JB_TEST_JUNIT5_FILTERS"))
+        .filter_map(|(_, body)| rule_name(&body))
         .collect();
     match names.len() {
         0 => Ok(None),
@@ -112,7 +117,8 @@ pub fn parse_jps_test_name(build_text: &str) -> Result<Option<String>, Refusal> 
     }
 }
 
-/// The `jps_test` target of a BUILD.bazel that runs the tests of one module, or `None` when no target runs them.
+/// The test target of a BUILD.bazel that runs the tests of one module, or `None` when no target runs them. The kind of
+/// a test target is one of [`TEST_RULE_KINDS`].
 ///
 /// A target runs the module when its `runtime_deps` name a rule of the module, or the `<rule>_test_lib` of such a rule.
 /// A rule of the same file belongs to the module when one of these is true:
@@ -140,7 +146,7 @@ pub fn module_jps_test_name(build_text: &str, module: &str) -> Result<Option<Str
     let targets: Vec<(String, bool)> = rules
         .iter()
         .filter(|(kind, body)| {
-            kind == "jps_test"
+            TEST_RULE_KINDS.contains(&kind.as_str())
                 && module_rules
                     .iter()
                     .any(|rule| body.contains(&format!("\":{rule}\"")) || body.contains(&format!("\":{rule}_test_lib\"")))
@@ -369,7 +375,7 @@ pub fn scan_tree(runtime: &dyn Runtime, dirs: &[&str]) -> TreeScan {
     scan
 }
 
-/// Every test source root of the scan that has a runnable `jps_test` target.
+/// Every test source root of the scan that has a runnable test target ([`TEST_RULE_KINDS`]).
 pub fn collect_test_roots(runtime: &dyn Runtime, scan: &TreeScan) -> Result<Vec<TestRoot>, Refusal> {
     let declared = par_map(&scan.imls, |iml| {
         let text = read_text(runtime, iml)?;
