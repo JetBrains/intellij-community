@@ -753,14 +753,15 @@ internal class BazelBuildFileGenerator(
 
     target(macro) {
       option("name", "${moduleDescriptor.targetName}_test")
+      // buildifier orders the attributes after `name` alphabetically
       if (starterTest != null) {
-        option("product", starterTest.product)
-        if (starterTest.frontend) {
-          option("frontend", true)
-        }
         if (starterTest.contextPlugins.isNotEmpty()) {
           option("context_plugins", starterTest.contextPlugins)
         }
+        if (starterTest.frontend) {
+          option("frontend", true)
+        }
+        option("product", starterTest.product)
       }
       option("runtime_deps", listOfNotNull(":$testLibTargetName", mainModuleLabel))
     }
