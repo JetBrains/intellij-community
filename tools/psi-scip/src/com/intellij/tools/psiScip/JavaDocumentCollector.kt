@@ -5,7 +5,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiEnumConstantInitializer
@@ -30,7 +29,6 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiVariable
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.light.LightDefaultConstructor
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.javadoc.PsiDocComment
@@ -55,7 +53,7 @@ import com.intellij.psi.util.PsiUtil
 internal class JavaDocumentCollector(private val file: PsiJavaFile, private val relativePath: String) {
   val stats: ExportStats = ExportStats()
 
-  private val lineStarts = lineStarts(file.viewProvider.contents)
+  private val lines = LineMap(file.viewProvider.contents)
   private val occurrences = ArrayList<ScipOccurrence>()
   private val symbols = HashMap<String, ScipSymbolInformation>()
   private val locals = HashMap<PsiElement, String>()
@@ -228,19 +226,7 @@ internal class JavaDocumentCollector(private val file: PsiJavaFile, private val 
     symbols.put(symbol, ScipSymbolInformation(symbol, kind, displayName, relationships))
   }
 
-  /**
-   * The range from the first child after the doc comment, and after the whitespace and comments that follow it, to the end of [declaration].
-   * An empty child, such as an empty modifier list, does not start the range.
-   */
-  private fun enclosingRange(declaration: PsiElement): ScipRange {
-    val end = declaration.textRange.endOffset
-    var child = declaration.firstChild
-    while (child != null && (child is PsiComment || child is PsiWhiteSpace || child.textLength == 0)) {
-      child = child.nextSibling
-    }
-    val start = child?.textRange?.startOffset ?: declaration.textRange.startOffset
-    return range(TextRange(start, end))
-  }
+  private fun enclosingRange(declaration: PsiElement): ScipRange = lines.enclosingRange(declaration)
 
   // ---------------------------------------------------------------- references
 
@@ -387,9 +373,8 @@ internal class JavaDocumentCollector(private val file: PsiJavaFile, private val 
         }
         localSymbol(target)
       }
-      is PsiClass -> JavaSymbols.classSymbol(target)
-      is PsiMethod -> JavaSymbols.methodSymbol(target)
-      is PsiField -> JavaSymbols.fieldSymbol(target)
+      // a Kotlin declaration, as its light element, has the symbol of its Kotlin definition
+      is PsiClass, is PsiMethod, is PsiField -> PsiSymbols.of(target)
       else -> null
     }
     if (symbol == null) {
@@ -415,16 +400,7 @@ internal class JavaDocumentCollector(private val file: PsiJavaFile, private val 
 
   // ---------------------------------------------------------------- positions
 
-  private fun range(textRange: TextRange): ScipRange {
-    val startLine = lineOf(textRange.startOffset)
-    val endLine = lineOf(textRange.endOffset)
-    return ScipRange(startLine, textRange.startOffset - lineStarts[startLine], endLine, textRange.endOffset - lineStarts[endLine])
-  }
-
-  private fun lineOf(offset: Int): Int {
-    val index = lineStarts.binarySearch(offset)
-    return if (index >= 0) index else -index - 2
-  }
+  private fun range(textRange: TextRange): ScipRange = lines.range(textRange)
 }
 
 /** The `new` expression whose class reference is [reference], unless it creates an array. */
@@ -441,15 +417,4 @@ private fun constructorCallOf(reference: PsiJavaCodeReferenceElement): PsiNewExp
 private fun isCallee(reference: PsiJavaCodeReferenceElement): Boolean {
   val parent = reference.parent
   return parent is PsiMethodCallExpression && parent.methodExpression == reference
-}
-
-private fun lineStarts(text: CharSequence): IntArray {
-  val starts = ArrayList<Int>()
-  starts.add(0)
-  for (i in text.indices) {
-    if (text[i] == '\n') {
-      starts.add(i + 1)
-    }
-  }
-  return starts.toIntArray()
 }

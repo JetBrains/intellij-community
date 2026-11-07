@@ -54,6 +54,9 @@ jvm_library(
         "//java/java-analysis-api:analysis",
         "//java/java-analysis-impl:analysis-impl",
         "//java/java-impl:impl",
+        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
     ],
 )
 ### auto-generated section `build intellij.tools.psiScip` end

@@ -15,16 +15,16 @@ import java.util.concurrent.TimeUnit
 internal class ExportFile(@JvmField val relativePath: String, @JvmField val file: VirtualFile, @JvmField val module: String)
 
 /**
- * Selects the Java files to walk, sorted by relative path.
+ * Selects the Java and Kotlin files to walk, sorted by relative path.
  *
- * The candidates are the `*.java` files of `git ls-files`, or the lines of [filesFrom].
- * A candidate is walked when it is under a Java source root, of the production or the test type.
+ * The candidates are the `*.java` and `*.kt` files of `git ls-files`, or the lines of [filesFrom].
+ * A candidate is walked when it is under a Java source root, of the production or the test type (a Kotlin source root is one).
  * A resource root, such as a `testData` directory, does not qualify.
  * The summary counts the other candidates as `resource_root`, `no_root`, `excluded` and `missing`.
  */
 internal suspend fun selectFiles(project: Project, root: Path, filesFrom: Path?, summary: ExportSummary): List<ExportFile> {
-  val candidates = (if (filesFrom == null) gitJavaFiles(root) else Files.readAllLines(filesFrom).map { it.trim() }.filter { it.isNotEmpty() })
-    .filter { it.endsWith(".java") }
+  val candidates = (if (filesFrom == null) gitSourceFiles(root) else Files.readAllLines(filesFrom).map { it.trim() }.filter { it.isNotEmpty() })
+    .filter { it.endsWith(".java") || it.endsWith(".kt") }
     .distinct()
     .sorted()
   val fileSystem = LocalFileSystem.getInstance()
@@ -54,8 +54,8 @@ internal suspend fun selectFiles(project: Project, root: Path, filesFrom: Path?,
   return result
 }
 
-private fun gitJavaFiles(root: Path): List<String> {
-  val process = ProcessBuilder("git", "-C", root.toString(), "ls-files", "-z", "--", "*.java")
+private fun gitSourceFiles(root: Path): List<String> {
+  val process = ProcessBuilder("git", "-C", root.toString(), "ls-files", "-z", "--", "*.java", "*.kt")
     .redirectError(ProcessBuilder.Redirect.INHERIT)
     .start()
   val output = process.inputStream.readAllBytes()

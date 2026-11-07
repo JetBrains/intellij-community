@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.SystemProperties
+import org.jetbrains.kotlin.psi.KtFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -69,7 +70,7 @@ private class ExportOptions(
 }
 
 /**
- * Opens a project headless and writes a SCIP index of its Java files from PSI resolve.
+ * Opens a project headless and writes a SCIP index of its Java and Kotlin files from PSI resolve.
  *
  * The starter never saves the project or the application settings.
  * Run it with dedicated `idea.config.path` and `idea.system.path`, and on a copy of the project.
@@ -183,20 +184,24 @@ private suspend fun export(options: ExportOptions, arguments: List<String>) {
   log("wrote ${outputs.joinToString()} and $summaryFile in $writeMs ms; total ${System.currentTimeMillis() - startedAt} ms")
 }
 
+/** The document of a Java file by [JavaDocumentCollector], of a Kotlin file by [KotlinDocumentCollector]. */
 private fun collectFile(project: Project, file: ExportFile): Pair<ScipDocument?, ExportStats> {
-  val psiFile = PsiManager.getInstance(project).findFile(file.file) as? PsiJavaFile
-  if (psiFile == null) {
-    val stats = ExportStats()
-    stats.site(Counter.EXCEPTIONS, "${file.relativePath}: no Java PSI file")
-    return null to stats
+  val collector: Pair<() -> ScipDocument, ExportStats> = when (val psiFile = PsiManager.getInstance(project).findFile(file.file)) {
+    is PsiJavaFile -> JavaDocumentCollector(psiFile, file.relativePath).let { it::collect to it.stats }
+    is KtFile -> KotlinDocumentCollector(psiFile, file.relativePath).let { it::collect to it.stats }
+    else -> {
+      val stats = ExportStats()
+      stats.site(Counter.EXCEPTIONS, "${file.relativePath}: no Java or Kotlin PSI file")
+      return null to stats
+    }
   }
-  val collector = JavaDocumentCollector(psiFile, file.relativePath)
+  val (collect, stats) = collector
   val startedAt = System.nanoTime()
   return try {
-    val document = collector.collect()
-    collector.stats.add(Counter.FILES)
-    collector.stats.add(Counter.MS, (System.nanoTime() - startedAt) / 1_000_000)
-    document to collector.stats
+    val document = collect()
+    stats.add(Counter.FILES)
+    stats.add(Counter.MS, (System.nanoTime() - startedAt) / 1_000_000)
+    document to stats
   }
   catch (e: Throwable) {
     rethrowControlFlowException(e)

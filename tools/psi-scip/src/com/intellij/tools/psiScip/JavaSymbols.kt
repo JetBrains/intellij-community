@@ -50,8 +50,11 @@ internal object JavaSymbols {
   }
 
   /** The first 6 hex digits of the SHA-256 of [jvmDescriptor]. */
-  fun methodDisambiguator(method: PsiMethod): String {
-    val digest = MessageDigest.getInstance("SHA-256").digest(jvmDescriptor(method).toByteArray(Charsets.UTF_8))
+  fun methodDisambiguator(method: PsiMethod): String = disambiguator(jvmDescriptor(method))
+
+  /** The first 6 hex digits of the SHA-256 of [text]. */
+  fun disambiguator(text: String): String {
+    val digest = MessageDigest.getInstance("SHA-256").digest(text.toByteArray(Charsets.UTF_8))
     val result = StringBuilder(6)
     for (i in 0 until 3) {
       val b = digest[i].toInt() and 0xff
@@ -121,7 +124,7 @@ internal object JavaSymbols {
 
   private fun packageName(psiClass: PsiClass): String? = (psiClass.containingFile as? PsiClassOwner)?.packageName
 
-  private fun packageDescriptor(packageName: String): String {
+  fun packageDescriptor(packageName: String): String {
     if (packageName.isEmpty()) {
       return ""
     }

@@ -4,7 +4,7 @@
   <category>Platform Development</category>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
-    <p>Writes a SCIP index of the Java files of a project from PSI resolve, and the answer of the unused-declaration
+    <p>Writes a SCIP index of the Java and Kotlin files of a project from PSI resolve, and the answer of the unused-declaration
     analysis for the Java and Kotlin declarations of a project. Both are reference oracles for code search benchmarks.
     Start them headless with the <code>psiScip</code> and <code>psiUnused</code> commands.</p>
   ]]></description>
@@ -13,6 +13,7 @@
   <content namespace="jetbrains"/>
 
   <dependencies>
+    <plugin id="org.jetbrains.kotlin"/>
     <module name="intellij.java.analysis"/>
     <module name="intellij.java.analysis.impl"/>
     <module name="intellij.java.backend"/>
@@ -21,6 +22,9 @@
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.psi.impl"/>
+    <module name="intellij.libraries.kotlinc.analysis.api"/>
+    <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
+    <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
     <module name="intellij.libraries.protobuf"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.analysis.impl"/>
