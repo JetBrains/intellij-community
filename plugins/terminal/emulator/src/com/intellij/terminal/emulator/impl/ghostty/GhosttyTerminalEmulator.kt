@@ -283,6 +283,8 @@ internal class GhosttyTerminalEmulator(
         throw RuntimeException("setting the scrollback byte limit failed", t)
       }
 
+      GhosttyKittyGraphics.disable(terminalHandle)
+
       val outRenderState = arena.allocate(C_PTR)
       val renderResult = try {
         LibGhosttyVt.renderStateNew(MemorySegment.NULL, outRenderState)
