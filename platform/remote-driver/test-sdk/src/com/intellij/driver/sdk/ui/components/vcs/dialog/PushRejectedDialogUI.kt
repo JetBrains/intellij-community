@@ -43,7 +43,7 @@ class ForcePushConfirmationUI(data: ComponentData) : DialogUiComponent(data) {
   /** Confirms the force push. */
   fun confirm() {
     step("Confirm the force push") {
-      button { byAccessibleName("Force Push") }.click()
+      button("Force Push").click()
     }
   }
 }
