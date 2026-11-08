@@ -561,7 +561,10 @@ public final class PassExecutorService implements Disposable {
           return;
         }
         try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
-          if (UIUtil.isShowing(fileEditor.getComponent())) {
+          var shouldApply = pass instanceof ProgressableTextEditorHighlightingPass progressable
+                            ? progressable.isOwnedBy(updateProgress)
+                            : UIUtil.isShowing(fileEditor.getComponent());
+          if (shouldApply) {
             pass.applyInformationToEditor();
             repaintErrorStripeAndIcon(fileEditor);
             if (pass instanceof TextEditorHighlightingPass text) {

@@ -92,36 +92,40 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   public final void doCollectInformation(@NotNull ProgressIndicator progress) {
     GlobalInspectionContextBase.assertUnderDaemonProgress();
     ProgressManager.checkCanceled();
-    myFinished = false;
-    try {
-      HighlightingSession session = getHighlightingSession();
-      if (session.getProgressIndicator() == progress) {
+    HighlightingSession session = getHighlightingSession();
+    if (isOwnedBy(progress)) {
+      myFinished = false;
+      try {
         collectInformationWithProgress(progress);
       }
-      else {
-        LOG.debug("Skipped running the 2nd copy of " + this + "; myProgress=" + progress + "; session progress=" + session.getProgressIndicator());
-        // It seems we're running the second copy of this pass - there must be several file editors opened for the same document.
-        // Just skip all the work, to avoid doing it twice and step on each other toes, that would cause stuck/leaking highlighters.
-        // When the first copy is finished, all other editors will be repainted with the corresponding highlighters.
-        // Do not wait for the first copy to complete, to avoid thread starvation and deadlocks,
-        // when the first copy decides to paralellize stuff and FJP tries to steal other tasks and invokes this method
-        // and blocks waiting for the first copy to complete, which it'll never do because it's waiting.
+      finally {
+        if (myFile != null) {
+          sessionFinished();
+        }
       }
     }
-    finally {
-      if (myFile != null) {
-        sessionFinished();
-      }
+    else {
+      LOG.debug("Skipped running the 2nd copy of " + this + "; myProgress=" + progress + "; session progress=" + session.getProgressIndicator());
+      // It seems we're running the second copy of this pass - there must be several file editors opened for the same document.
+      // Just skip all the work, to avoid doing it twice and step on each other toes, that would cause stuck/leaking highlighters.
+      // When the first copy is finished, all other editors will be repainted with the corresponding highlighters.
+      // Do not wait for the first copy to complete, to avoid thread starvation and deadlocks,
+      // when the first copy decides to paralellize stuff and FJP tries to steal other tasks and invokes this method
+      // and blocks waiting for the first copy to complete, which it'll never do because it's waiting.
     }
   }
 
   @Override
   @ApiStatus.Internal
   public void markUpToDateIfStillValid(@NotNull DaemonProgressIndicator progress) {
-    HighlightingSession session = getHighlightingSession();
-    if (session.getProgressIndicator() == progress) {
+    if (isOwnedBy(progress)) {
       super.markUpToDateIfStillValid(progress);
     }
+  }
+
+  @ApiStatus.Internal
+  public final boolean isOwnedBy(@NotNull ProgressIndicator progress) {
+    return getHighlightingSession().getProgressIndicator() == progress;
   }
 
   @RequiresBackgroundThread

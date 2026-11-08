@@ -13,6 +13,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.ProductionDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.EditorTracker;
 import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass;
@@ -138,7 +139,9 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.UITestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.ConcurrencyUtil;
@@ -1538,6 +1541,119 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
 
     assertSameElements(collected, Arrays.asList(editor1, editor2));
     assertSameElements(applied, Arrays.asList(editor1, editor2));
+  }
+
+  @TestFor(issues = "IJPL-250174")
+  public void testSharedHighlightingPassFinishesAfterItsEditorBecomesHidden() {
+    checkSharedHighlightingPassWithHiddenEditor(true);
+  }
+
+  @TestFor(issues = "IJPL-250174")
+  public void testSharedHighlightingPassStaysFinishedWhenDuplicateRunsLater() {
+    checkSharedHighlightingPassWithHiddenEditor(false);
+  }
+
+  private void checkSharedHighlightingPassWithHiddenEditor(boolean duplicateFirst) {
+    var enabled = new AtomicBoolean();
+    var owner = new AtomicReference<Editor>();
+    var ownerStarted = new CountDownLatch(1);
+    var ownerStopped = new CountDownLatch(1);
+    var duplicateStopped = new CountDownLatch(1);
+    var collected = new AtomicInteger();
+    var applied = new AtomicInteger();
+    var sharedPass = new AtomicReference<ProgressableTextEditorHighlightingPass>();
+    class SharedPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
+      SharedPass(PsiFile file, Editor editor) {
+        super(getProject(), editor.getDocument(), "Test pass", file, editor,
+              new TextRange(0, editor.getDocument().getTextLength()), false, null);
+      }
+
+      @Override
+      protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
+        collected.incrementAndGet();
+        ownerStarted.countDown();
+        if (duplicateFirst) {
+          awaitSharedHighlightingPass(duplicateStopped);
+        }
+      }
+
+      @Override
+      protected void applyInformationWithProgress() {
+        applied.incrementAndGet();
+      }
+    }
+    TextEditorHighlightingPassRegistrar.getInstance(getProject()).registerTextEditorHighlightingPass((file, editor) -> {
+      if (!enabled.get()) return null;
+      if (editor != owner.get()) {
+        awaitSharedHighlightingPass(duplicateFirst ? ownerStarted : ownerStopped);
+      }
+      var pass = new SharedPass(file, editor);
+      if (editor == owner.get()) {
+        sharedPass.set(pass);
+      }
+      return pass;
+    }, null, null, false, -1);
+    configureByText(JavaFileType.INSTANCE, "class X {}");
+    myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
+    var document = getEditor().getDocument();
+    var ownerEditor = EditorFactory.getInstance().createEditor(document, getProject());
+    var duplicateEditor = EditorFactory.getInstance().createEditor(document, getProject());
+    Disposer.register(getTestRootDisposable(), () -> EditorFactory.getInstance().releaseEditor(ownerEditor));
+    Disposer.register(getTestRootDisposable(), () -> EditorFactory.getInstance().releaseEditor(duplicateEditor));
+    owner.set(ownerEditor);
+    var provider = new PsiAwareTextEditorProvider();
+    var ownerComponent = provider.getTextEditor(ownerEditor).getComponent();
+    var duplicateComponent = provider.getTextEditor(duplicateEditor).getComponent();
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
+      new DaemonCodeAnalyzer.DaemonListener() {
+        @Override
+        public void daemonFinished(@NotNull Collection<? extends FileEditor> fileEditors) {
+          for (var fileEditor : fileEditors) {
+            if (fileEditor instanceof TextEditor textEditor) {
+              if (textEditor.getEditor() == ownerEditor) {
+                ownerStopped.countDown();
+              }
+              else if (textEditor.getEditor() == duplicateEditor) {
+                duplicateStopped.countDown();
+              }
+            }
+          }
+        }
+      });
+    try {
+      UITestUtil.runWithHeadlessProperty(false, () -> {
+        ComponentUtil.forceMarkAsShowing(ownerComponent, false);
+        ComponentUtil.forceMarkAsShowing(duplicateComponent, true);
+        setActiveEditors(ownerEditor, duplicateEditor);
+        enabled.set(true);
+        myDaemonCodeAnalyzer.restart(getTestName(false));
+        myTestDaemonCodeAnalyzer.waitForDaemonToFinish(getFile());
+        myTestDaemonCodeAnalyzer.waitForTermination();
+        assertEquals(1, collected.get());
+        assertEquals(1, applied.get());
+        assertTrue(sharedPass.get().isFinished());
+        assertTrue(myDaemonCodeAnalyzer.getFileStatusMap().toString(document),
+                   DaemonCodeAnalyzerEx.isHighlightingCompleted(ownerEditor, getProject()));
+        assertTrue(DaemonCodeAnalyzerEx.isHighlightingCompleted(duplicateEditor, getProject()));
+      });
+    }
+    finally {
+      enabled.set(false);
+      ownerStarted.countDown();
+      ownerStopped.countDown();
+      duplicateStopped.countDown();
+      ComponentUtil.forceMarkAsShowing(duplicateComponent, false);
+    }
+  }
+
+  private static void awaitSharedHighlightingPass(CountDownLatch latch) {
+    try {
+      assertTrue("The highlighting pass must finish", latch.await(10, TimeUnit.SECONDS));
+    }
+    catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new RuntimeException(e);
+    }
   }
 
   private void registerFakePass(@NotNull Collection<? super Editor> applied, @NotNull Collection<? super Editor> collected) {
