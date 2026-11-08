@@ -12,6 +12,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CheckedDiskQueryRelay;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -20,11 +21,11 @@ import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.impl.SymlinksCapableFileSystem;
 import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.openapi.vfs.newvfs.FileNavigator;
+import com.intellij.openapi.vfs.newvfs.FileStateUnknownException;
 import com.intellij.openapi.vfs.newvfs.FileSystemUnavailableException;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.UnavailabilityAwareFileSystem;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -65,7 +66,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @SuppressWarnings("removal")
 public class LocalFileSystemImpl
   extends LocalFileSystemBase
-  implements Disposable, BatchingFileSystem, UnavailabilityAwareFileSystem, VirtualFilePointerCapableFileSystem, SymlinksCapableFileSystem
+  implements Disposable, BatchingFileSystem, VirtualFilePointerCapableFileSystem, SymlinksCapableFileSystem
 {
   private static final int STATUS_UPDATE_PERIOD = 1000;
 
@@ -96,9 +97,10 @@ public class LocalFileSystemImpl
 
   private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> listChildren(dir));
   private final DiskQueryRelay<VirtualFile, Object> myContentGetter = new DiskQueryRelay<>(file -> readContent(file));
-  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttributeGetter = new DiskQueryRelay<>(file -> readAttributes(file));
-  private final DiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>> myChildrenAttrGetter =
-    new DiskQueryRelay<>(pair -> listWithAttributesImpl(pair.first, pair.second));
+  private final CheckedDiskQueryRelay<VirtualFile, FileAttributes, FileStateUnknownException> myAttributeGetter =
+    CheckedDiskQueryRelay.create(file -> readAttributesOrThrowIfUnavailable(file));
+  private final CheckedDiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>, FileStateUnknownException> myChildrenAttrGetter =
+    CheckedDiskQueryRelay.create(pair -> listWithAttributesImplOrThrowIfUnavailable(pair.first, pair.second));
 
   protected LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
@@ -463,14 +465,19 @@ public class LocalFileSystemImpl
       return UNC_ROOT_ATTRIBUTES;
     }
 
-    FileAttributes attributes = myAttributeGetter.accessDiskWithCheckCanceled(file);
-    return attributes;
+    try {
+      return myAttributeGetter.accessDiskWithCheckCanceled(file);
+    }
+    catch (FileStateUnknownException e) {
+      // the public contract has no "unknown" => the answer is "absent"
+      LOG.warn(e);
+      return null;
+    }
   }
 
-  // not relayed: a checked exception cannot cross DiskQueryRelay, and the refresh calls this in a non-cancellable section
   @Override
-  public @Nullable FileAttributes getAttributesOrThrowIfUnavailable(@NotNull VirtualFile file) throws FileSystemUnavailableException {
-    return isUncRoot(file) ? UNC_ROOT_ATTRIBUTES : readAttributesOrThrowIfUnavailable(file);
+  public @Nullable FileAttributes getAttributesOrThrow(@NotNull VirtualFile file) throws FileStateUnknownException {
+    return isUncRoot(file) ? UNC_ROOT_ATTRIBUTES : myAttributeGetter.accessDiskWithCheckCanceled(file);
   }
 
   private static boolean isUncRoot(VirtualFile file) {
@@ -515,27 +522,9 @@ public class LocalFileSystemImpl
   }
 
   @Override
-  public @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @Nullable Set<String> childrenNames) {
+  public @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @Nullable Set<String> childrenNames)
+    throws FileStateUnknownException {
     return dir.isDirectory() ? myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames)) : Map.of();
-  }
-
-  // not relayed: a checked exception cannot cross DiskQueryRelay, and the refresh calls this in a non-cancellable section
-  @Override
-  public @NotNull Map<String, FileAttributes> listWithAttributesOrThrowIfUnavailable(
-    @NotNull VirtualFile dir,
-    @Nullable Set<String> names
-  ) throws FileSystemUnavailableException {
-    return dir.isDirectory() ? listWithAttributesImplOrThrowIfUnavailable(dir, names) : Map.of();
-  }
-
-  private static Map<String, FileAttributes> listWithAttributesImpl(VirtualFile dir, @Nullable Set<String> filter) {
-    try {
-      return listWithAttributesImplOrThrowIfUnavailable(dir, filter);
-    }
-    catch (FileSystemUnavailableException e) {
-      LOG.warn(e);
-      return Map.of();
-    }
   }
 
   private static Map<String, FileAttributes> listWithAttributesImplOrThrowIfUnavailable(VirtualFile dir, @Nullable Set<String> filter)
@@ -581,16 +570,6 @@ public class LocalFileSystemImpl
     }
     catch (IOException e) {
       return e;
-    }
-  }
-
-  private static @Nullable FileAttributes readAttributes(VirtualFile file) {
-    try {
-      return readAttributesOrThrowIfUnavailable(file);
-    }
-    catch (FileSystemUnavailableException e) {
-      LOG.warn(e);
-      return null;
     }
   }
 

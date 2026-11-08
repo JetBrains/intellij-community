@@ -898,7 +898,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void directoryListing() {
+  public void directoryListing() throws IOException {
     var dir = tempDir.newVirtualFile("dir/1").getParent();
     assertDirectoryListing(dir, "1");
 
@@ -958,7 +958,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void listWithAttributes_ReturnsSameDataAs_GetAttributes() {
+  public void listWithAttributes_ReturnsSameDataAs_GetAttributes() throws IOException {
     tempDir.newVirtualFile("a/a", "test".getBytes(UTF_8));
     tempDir.newVirtualFile("a/b", "test_1".getBytes(UTF_8));
     tempDir.newVirtualFile("a/c", "test_12".getBytes(UTF_8));
@@ -1120,7 +1120,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     assertEquals(1, invocationsCount[0]);
   }
 
-  private static void checkAttributesAreEqual(VirtualFile dir, LocalFileSystemImpl lfs) {
+  private static void checkAttributesAreEqual(VirtualFile dir, LocalFileSystemImpl lfs) throws IOException {
     var childrenWithAttributes = lfs.listWithAttributes(dir, null);
     var childrenNames = lfs.list(dir);
 
@@ -1145,7 +1145,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     }
   }
 
-  private void assertDirectoryListing(VirtualFile vFile, String... expected) {
+  private void assertDirectoryListing(VirtualFile vFile, String... expected) throws IOException {
     var list1 = myFS.list(vFile);
     var list2 = ArrayUtil.toStringArray(((LocalFileSystemImpl)myFS).listWithAttributes(vFile).keySet());
     assertThat(list1).

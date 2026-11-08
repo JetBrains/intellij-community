@@ -182,8 +182,8 @@ final class RefreshWorker {
           try {
             attributes = computeAttributesForFile(fs, fakeChild);
           }
-          catch (FileSystemUnavailableException _) {
-            LOG.info("refresh skipped a new file, the file system is unavailable: " + fakeChild);
+          catch (FileStateUnknownException _) {
+            LOG.info("refresh skipped a new file, the FS can't tell its state: " + fakeChild);
             continue;
           }
           if (attributes == null) continue;
@@ -320,8 +320,8 @@ final class RefreshWorker {
           dir.markClean();
         }
       }
-      catch (FileSystemUnavailableException _) {
-        LOG.info("refresh skipped, the file system is unavailable: " + file);
+      catch (FileStateUnknownException _) {
+        LOG.info("refresh skipped, the file system cannot tell the state: " + file);
         skipped.add(file);
       }
       finally {
@@ -331,7 +331,7 @@ final class RefreshWorker {
   }
 
   private boolean fullDirRefresh(List<VFileEvent> events, NewVirtualFileSystem fs, VirtualDirectoryImpl dir)
-    throws FileSystemUnavailableException {
+    throws FileStateUnknownException {
     var t = System.nanoTime();
     Pair<VirtualFile[], List<String>> snapshot = ReadAction.computeBlocking(() -> {
       VirtualFile[] children = dir.getChildren();
@@ -430,7 +430,7 @@ final class RefreshWorker {
   }
 
   private boolean partialDirRefresh(List<VFileEvent> events, NewVirtualFileSystem fs, VirtualDirectoryImpl dir)
-    throws FileSystemUnavailableException {
+    throws FileStateUnknownException {
     var t = System.nanoTime();
     Pair<List<VirtualFile>, List<String>> snapshot = ReadAction.computeBlocking(
       () -> new Pair<>(dir.getCachedChildren(), dir.getSuspiciousNames())
@@ -532,7 +532,7 @@ final class RefreshWorker {
 
   private @Nullable FileAttributes getAttributes(@NotNull NewVirtualFileSystem fs,
                                                  @Nullable Map<String, FileAttributes> dirList,
-                                                 @NotNull VirtualFile child) throws FileSystemUnavailableException {
+                                                 @NotNull VirtualFile child) throws FileStateUnknownException {
     FileAttributes attributes = null;
     if (dirList != null) {
       attributes = dirList.get(child.getName());
@@ -552,11 +552,14 @@ final class RefreshWorker {
    * The non-cancellable section here is merely a reification of the existing implicit assumption on cancellability,
    * so it does not make anything worse.
    * In the future, it should be removed in favor of non-blocking or suspending IO.
+   * <p>
+   * @throws FileStateUnknownException when the state of a file is unknown => the refresh should keep the file and keep it dirty, with
+   * no events, until the state become known
    */
   private static @Nullable FileAttributes computeAttributesForFile(NewVirtualFileSystem fs, VirtualFile file)
-    throws FileSystemUnavailableException {
-    return Cancellation.computeInNonCancelableSection(() -> fs instanceof UnavailabilityAwareFileSystem uafs
-                                                            ? uafs.getAttributesOrThrowIfUnavailable(file)
+    throws FileStateUnknownException {
+    return Cancellation.computeInNonCancelableSection(() -> fs instanceof BatchingFileSystem bfs
+                                                            ? bfs.getAttributesOrThrow(file)
                                                             : fs.getAttributes(file));
   }
 
@@ -564,10 +567,8 @@ final class RefreshWorker {
   private static Map<String, FileAttributes> computeAllChildrenAttributes(@NotNull BatchingFileSystem fs,
                                                                           @NotNull VirtualFile dir,
                                                                           @Nullable Set<String> filter)
-    throws FileSystemUnavailableException {
-    return Cancellation.computeInNonCancelableSection(() -> fs instanceof UnavailabilityAwareFileSystem uafs
-                                                            ? uafs.listWithAttributesOrThrowIfUnavailable(dir, filter)
-                                                            : fs.listWithAttributes(dir, filter));
+    throws FileStateUnknownException {
+    return Cancellation.computeInNonCancelableSection(() -> fs.listWithAttributes(dir, filter));
   }
 
   private ChildInfo childRecord(NewVirtualFileSystem fs, FakeVirtualFile child, FileAttributes attributes, boolean canonicalize) {

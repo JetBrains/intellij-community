@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.impl.async.BackpressureBySizeAndTaskCount
 import com.intellij.openapi.vfs.impl.async.MAX_ASYNC_UPDATES_POSTPONED
 import com.intellij.openapi.vfs.impl.async.MAX_ASYNC_UPDATES_SIZE_POSTPONED
 import com.intellij.openapi.vfs.newvfs.AsyncableFileSystem
-import com.intellij.openapi.vfs.newvfs.FileSystemUnavailableException
+import com.intellij.openapi.vfs.newvfs.FileStateUnknownException
 import com.intellij.openapi.vfs.newvfs.persistent.executor.AsyncableFileIOTaskExecutor
 import com.intellij.util.concurrency.SequentialTaskExecutor.createSequentialApplicationPoolExecutor
 import com.intellij.util.io.UnsyncByteArrayInputStream
@@ -283,9 +283,9 @@ class AsyncableLocalFileSystemImpl : LocalFileSystemImpl(), AsyncableFileSystem 
   override fun getAttributes(file: VirtualFile): FileAttributes? =
     attributesWithPendingWrite(file) { super.getAttributes(it) }
 
-  @Throws(FileSystemUnavailableException::class)
-  override fun getAttributesOrThrowIfUnavailable(file: VirtualFile): FileAttributes? =
-    attributesWithPendingWrite(file) { super.getAttributesOrThrowIfUnavailable(it) }
+  @Throws(FileStateUnknownException::class)
+  override fun getAttributesOrThrow(file: VirtualFile): FileAttributes? =
+    attributesWithPendingWrite(file) { super.getAttributesOrThrow(it) }
 
   private inline fun attributesWithPendingWrite(file: VirtualFile, readAttributes: (VirtualFile) -> FileAttributes?): FileAttributes? {
     //It is crucial to _first_ get unfinishedWriteOrError() tuple, and only _after_ request rawIoAttributes.
@@ -325,15 +325,12 @@ class AsyncableLocalFileSystemImpl : LocalFileSystemImpl(), AsyncableFileSystem 
     return readAttributes(file)
   }
 
+  @Throws(FileStateUnknownException::class)
   override fun listWithAttributes(
     dir: VirtualFile,
     childrenNames: Set<String?>?,
   ): Map<String, FileAttributes> =
     listWithAttributesAfterFlush { super.listWithAttributes(dir, childrenNames) }
-
-  @Throws(FileSystemUnavailableException::class)
-  override fun listWithAttributesOrThrowIfUnavailable(dir: VirtualFile, names: Set<String>?): Map<String, FileAttributes> =
-    listWithAttributesAfterFlush { super.listWithAttributesOrThrowIfUnavailable(dir, names) }
 
   private inline fun listWithAttributesAfterFlush(listWithAttributes: () -> Map<String, FileAttributes>): Map<String, FileAttributes> {
     //RC: attributes should be adjusted so pending writes look like they've been already commited -- see

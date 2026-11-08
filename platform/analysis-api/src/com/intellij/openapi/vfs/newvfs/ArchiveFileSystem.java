@@ -139,6 +139,13 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem implements 
     return myAttrGetter.apply(file);
   }
 
+  /// An archive does not tell an error from "absent" yet: a broken archive answers "absent", as in [#getAttributes]
+  @Override
+  @ApiStatus.Internal
+  public @Nullable FileAttributes getAttributesOrThrow(@NotNull VirtualFile file) {
+    return getAttributes(file);
+  }
+
   private final Function<Pair<VirtualFile, Set<String>>, Map<@NotNull String, @NotNull FileAttributes>> myListWithAttrGetter =
     ManagingFS.getInstance().accessDiskWithCheckCanceled(
       dirAndNames -> {

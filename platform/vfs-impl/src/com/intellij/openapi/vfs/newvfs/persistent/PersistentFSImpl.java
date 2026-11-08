@@ -65,6 +65,7 @@ import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.CompoundVFileEvent;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.FileDeletedException;
+import com.intellij.openapi.vfs.newvfs.FileStateUnknownException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -534,7 +535,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     String[] childrenNames;
     Map<String, FileAttributes> childrenWithAttributes;
     if (fs instanceof BatchingFileSystem batchingFileSystem) {
-      childrenWithAttributes = batchingFileSystem.listWithAttributes(dir);
+      childrenWithAttributes = listWithAttributesOrEmpty(batchingFileSystem, dir);
       childrenNames = VfsUtil.filterNames(ArrayUtil.toStringArray(childrenWithAttributes.keySet()));
     }
     else {
@@ -596,6 +597,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     );
 
     return savedChildren.children;
+  }
+
+  private static @NotNull Map<String, FileAttributes> listWithAttributesOrEmpty(@NotNull BatchingFileSystem fs, @NotNull VirtualFile dir) {
+    try {
+      return fs.listWithAttributes(dir);
+    }
+    catch (FileStateUnknownException e) {
+      //TODO IJPL-257147: an unknown listing is not an empty one -- keep the children, and do not mark them all loaded
+      LOG.warn(e);
+      return Map.of();
+    }
   }
 
   private @NotNull List<ChildInfo> createNewChildrenRecords(@NotNull VirtualFile dir,

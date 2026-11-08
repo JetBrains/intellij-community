@@ -135,15 +135,15 @@ class UnavailableFileSystemRefreshTest {
 
 /**
  * [unavailable] selects the directories whose content cannot be read: the stat of a child and the listing fail.
- * The strict reads throw. The lenient reads answer "absent" and "empty", as `LocalFileSystemImpl` does.
+ * The [BatchingFileSystem] reads throw. The public [getAttributes] answers "absent", as `LocalFileSystemImpl` does.
  */
-private class UnavailableTempFileSystem : TempFileSystem(), UnavailabilityAwareFileSystem, BatchingFileSystem {
+private class UnavailableTempFileSystem : TempFileSystem(), BatchingFileSystem {
   private val protocol = "unavailable-${System.identityHashCode(this)}"
 
   @Volatile
   var unavailable: (VirtualFile) -> Boolean = { false }
 
-  /** Runs right before a strict read throws, with the unavailable directory. */
+  /** Runs right before a [BatchingFileSystem] read throws, with the unavailable directory. */
   var beforeThrow: (VirtualFile) -> Unit = {}
 
   override fun getProtocol(): String = protocol
@@ -151,14 +151,11 @@ private class UnavailableTempFileSystem : TempFileSystem(), UnavailabilityAwareF
   override fun getAttributes(file: VirtualFile): FileAttributes? =
     if (isInUnavailable(file)) null else super.getAttributes(file)
 
-  override fun getAttributesOrThrowIfUnavailable(file: VirtualFile): FileAttributes? =
+  override fun getAttributesOrThrow(file: VirtualFile): FileAttributes? =
     if (isInUnavailable(file)) throw unavailableException(file.parent) else super.getAttributes(file)
 
   override fun listWithAttributes(dir: VirtualFile, childrenNames: Set<String>?): Map<String, FileAttributes> =
-    if (unavailable(dir)) emptyMap() else listing(dir, childrenNames)
-
-  override fun listWithAttributesOrThrowIfUnavailable(dir: VirtualFile, names: Set<String>?): Map<String, FileAttributes> =
-    if (unavailable(dir)) throw unavailableException(dir) else listing(dir, names)
+    if (unavailable(dir)) throw unavailableException(dir) else listing(dir, childrenNames)
 
   private fun isInUnavailable(file: VirtualFile): Boolean = file.parent?.let(unavailable) == true
 
