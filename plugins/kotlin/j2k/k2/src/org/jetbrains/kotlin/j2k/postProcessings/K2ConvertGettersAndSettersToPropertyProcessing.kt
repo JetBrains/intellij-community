@@ -152,6 +152,15 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : PostProcessing {
         }
     }
 
+    private class UsagesApplier(
+        private val converter: ClassConverter,
+        private val propertiesWithAccessors: List<PropertyWithAccessors>
+    ) : PostProcessingApplier {
+        override fun apply() {
+            converter.rewriteUsages(propertiesWithAccessors)
+        }
+    }
+
     override fun computeAppliers(target: PostProcessingTarget, converterContext: ConverterContext): List<PostProcessingApplier> {
         val ktElements = target.elements().filterIsInstance<KtElement>().ifEmpty { return emptyList() }
         val psiFactory = KtPsiFactory(converterContext.project)
@@ -164,7 +173,7 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : PostProcessing {
         val filter = PropertiesDataFilter(ktElements, index, psiFactory)
         val classesWithAccessors = mutableMapOf<KtClassOrObject, List<PropertyWithAccessors>>()
 
-        for ((klass, propertiesData) in propertiesDataByClass) {
+        for ([klass, propertiesData] in propertiesDataByClass) {
             analyze(klass) {
                 val propertiesWithAccessors = filter.filter(klass, propertiesData)
                 classesWithAccessors += klass to propertiesWithAccessors
@@ -173,9 +182,10 @@ internal class K2ConvertGettersAndSettersToPropertyProcessing : PostProcessing {
         }
 
         val converter = ClassConverter(psiFactory, index)
-        return classesWithAccessors.map { (klass, propertiesWithAccessors) ->
-            Applier(ApplicationInfo(converter, klass, propertiesWithAccessors))
-        }
+        return listOf(UsagesApplier(converter, classesWithAccessors.values.flatten())) +
+                classesWithAccessors.map { (klass, propertiesWithAccessors) ->
+                    Applier(ApplicationInfo(converter, klass, propertiesWithAccessors))
+                }
     }
 }
 
@@ -719,6 +729,91 @@ private class ClassConverter(
         }
     }
 
+    /**
+     * Rewrites the usages of the accessors and of the merged properties of all classes before [convertClass] copies the accessor bodies.
+     * The pointers of [index] do not follow a copied body.
+     * The innermost usage goes first, because a rewrite creates new PSI around its usage.
+     */
+    fun rewriteUsages(propertiesWithAccessors: List<PropertyWithAccessors>) {
+        for ((_, _, setter) in propertiesWithAccessors) {
+            if (setter is RealSetter) setter.function.valueParameters.single().rename(setter.parameterName)
+        }
+        val rewrites = propertiesWithAccessors.flatMap(::usageRewrites).sortedByDescending { it.offset }
+        for (rewrite in rewrites) {
+            rewrite.usage.element?.let(rewrite.action)
+        }
+    }
+
+    private class UsageRewrite(val usage: SmartPsiElementPointer<KtElement>, val offset: Int, val action: (KtElement) -> Unit)
+
+    private fun usageRewrites(propertyWithAccessors: PropertyWithAccessors): List<UsageRewrite> {
+        val (property, getter, setter) = propertyWithAccessors
+        val rewrites = mutableListOf<UsageRewrite>()
+        fun addRewrites(target: KtElement, action: (usage: KtElement) -> Unit) {
+            for (pointer in index[target].orEmpty()) {
+                val usage = pointer.element ?: continue
+                rewrites += UsageRewrite(pointer, usage.textRange.startOffset, action)
+            }
+        }
+
+        val ktProperty = when (property) {
+            is RealProperty -> property.property
+            is MergedProperty -> property.mergeTo
+            is FakeProperty -> null
+        }
+        if (ktProperty != null) {
+            val accessorBodies = listOfNotNull(getter.body, setter?.body)
+            addRewrites(ktProperty) { usage ->
+                when {
+                    accessorBodies.any { it.isAncestor(usage) } -> usage.replaceWithFieldKeyword()
+                    property is MergedProperty -> usage.replaceWithPropertyAccess(property.name)
+                }
+            }
+        }
+        if (getter is RealGetter) {
+            addRewrites(getter.function) { usage -> usage.replaceGetterCall(getter.name) }
+        }
+        if (setter is RealSetter) {
+            addRewrites(setter.function) { usage -> usage.replaceSetterCall(property.name) }
+        }
+        return rewrites
+    }
+
+    private fun KtElement.replaceWithFieldKeyword() {
+        val parent = parent
+        val referenceExpression =
+            if (parent is KtQualifiedExpression && parent.receiverExpression.isReferenceToThis()) parent else this
+        referenceExpression.replace(psiFactory.createExpression(FIELD_KEYWORD.value))
+    }
+
+    private fun KtElement.replaceWithPropertyAccess(name: String) {
+        val replacer =
+            if (parent is KtQualifiedExpression) psiFactory.createExpression(name)
+            else psiFactory.createExpression("this.$name")
+        replace(replacer)
+    }
+
+    private fun KtElement.replaceGetterCall(propertyName: String) {
+        val callExpression = getStrictParentOfType<KtCallExpression>() ?: return
+        val qualifier = callExpression.getQualifiedExpressionForSelector()
+        if (qualifier != null) {
+            qualifier.replace(psiFactory.createExpression("${qualifier.receiverExpression.text}.$propertyName"))
+        } else {
+            callExpression.replace(psiFactory.createExpression("this.$propertyName"))
+        }
+    }
+
+    private fun KtElement.replaceSetterCall(propertyName: String) {
+        val callExpression = getStrictParentOfType<KtCallExpression>() ?: return
+        val qualifier = callExpression.getQualifiedExpressionForSelector()
+        val newValue = callExpression.valueArguments.single()
+        if (qualifier != null) {
+            qualifier.replace(psiFactory.createExpression("${qualifier.receiverExpression.text}.$propertyName = ${newValue.text}"))
+        } else {
+            callExpression.replace(psiFactory.createExpression("this.$propertyName = ${newValue.text}"))
+        }
+    }
+
     private fun convert(klass: KtClassOrObject, propertyWithAccessors: PropertyWithAccessors) {
         val (property, getter, setter) = propertyWithAccessors
 
@@ -745,8 +840,8 @@ private class ClassConverter(
         }
 
         val ktProperty = getKtProperty()
-        val ktGetter = addGetter(getter, ktProperty, property.isFake)
-        val ktSetter = setter?.let { addSetter(it, ktProperty, property.name, property.isFake) }
+        val ktGetter = addGetter(getter, ktProperty)
+        val ktSetter = setter?.let { addSetter(it, ktProperty) }
         val isOpen = realGetter?.function?.hasModifier(OPEN_KEYWORD) == true || realSetter?.function?.hasModifier(OPEN_KEYWORD) == true
 
         val getterVisibility = realGetter?.function?.visibilityModifierTypeOrDefault()
@@ -795,7 +890,7 @@ private class ClassConverter(
         }
 
         if (property is MergedProperty) {
-            ktProperty.renameTo(property.name)
+            ktProperty.setName(property.name)
         }
         if (isOpen) {
             ktProperty.addModifierKeyword(OPEN_KEYWORD)
@@ -816,11 +911,7 @@ private class ClassConverter(
         if (setter?.isRedundant() == true) removeRedundantSetter(setter)
     }
 
-    private fun addGetter(getter: Getter, ktProperty: KtProperty, isFakeProperty: Boolean): KtPropertyAccessor {
-        if (!isFakeProperty) {
-            getter.body?.replacePropertyToFieldKeywordReferences(ktProperty)
-        }
-
+    private fun addGetter(getter: Getter, ktProperty: KtProperty): KtPropertyAccessor {
         val ktGetter = psiFactory.createGetter(getter.body, getter.modifiersText)
         for (modifier in redundantGetterModifiers) {
             ktGetter.removeModifierKeyword(modifier)
@@ -828,36 +919,10 @@ private class ClassConverter(
 
         if (getter is RealGetter) {
             saveSurroundingComments(getter, ktGetter)
-
-            // update original function references to property references
-            getter.function.forEachUsage { usage ->
-                val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forEachUsage
-                val qualifier = callExpression.getQualifiedExpressionForSelector()
-                if (qualifier != null) {
-                    qualifier.replace(psiFactory.createExpression("${qualifier.receiverExpression.text}.${getter.name}"))
-                } else {
-                    callExpression.replace(psiFactory.createExpression("this.${getter.name}"))
-                }
-            }
         }
 
         ktProperty.add(psiFactory.createNewLine(1))
         return ktProperty.add(ktGetter) as KtPropertyAccessor
-    }
-
-    private fun KtExpression.replacePropertyToFieldKeywordReferences(property: KtProperty) {
-        val references = index.usagesWithin(property, this).ifEmpty { return }
-        val fieldExpression = psiFactory.createExpression(FIELD_KEYWORD.value)
-
-        for (reference in references) {
-            val parent = reference.parent
-            val referenceExpression = when {
-                parent is KtQualifiedExpression && parent.receiverExpression.isReferenceToThis() -> parent
-                else -> reference
-            }
-
-            referenceExpression.replace(fieldExpression)
-        }
     }
 
     private fun KtPsiFactory.createGetter(body: KtExpression?, modifiers: String?): KtPropertyAccessor {
@@ -886,19 +951,7 @@ private class ClassConverter(
         }
     }
 
-    private fun KtElement.forEachUsage(action: (KtElement) -> Unit) {
-        index.usagesOf(this).forEach(action)
-    }
-
-    private fun addSetter(setter: Setter, ktProperty: KtProperty, propertyName: String, isFakeProperty: Boolean): KtPropertyAccessor {
-        if (setter is RealSetter) {
-            setter.function.valueParameters.single().rename(setter.parameterName)
-        }
-
-        if (!isFakeProperty) {
-            setter.body?.replacePropertyToFieldKeywordReferences(ktProperty)
-        }
-
+    private fun addSetter(setter: Setter, ktProperty: KtProperty): KtPropertyAccessor {
         val modifiers = setter.modifiersText?.takeIf { it.isNotEmpty() }
             ?: setter.safeAs<RealSetter>()?.function?.visibilityModifierTypeOrDefault()?.value
             ?: ktProperty.visibilityModifierTypeOrDefault().value
@@ -915,20 +968,6 @@ private class ClassConverter(
 
         if (setter is RealSetter) {
             saveSurroundingComments(setter, ktSetter)
-
-            // update original function references to property references
-            setter.function.forEachUsage { usage ->
-                val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forEachUsage
-                val qualifier = callExpression.getQualifiedExpressionForSelector()
-                val newValue = callExpression.valueArguments.single()
-                if (qualifier != null) {
-                    qualifier.replace(
-                        psiFactory.createExpression("${qualifier.receiverExpression.text}.$propertyName = ${newValue.text}")
-                    )
-                } else {
-                    callExpression.replace(psiFactory.createExpression("this.$propertyName = ${newValue.text}"))
-                }
-            }
         } else {
             val propertyVisibility = ktProperty.visibilityModifierTypeOrDefault()
             ktSetter.setVisibility(propertyVisibility)
@@ -971,21 +1010,6 @@ private class ClassConverter(
                 renamer.createUsageInfo(this, reference, reference.element)
             }.toTypedArray()
         renamer.renameElement(this, newName, usageInfos, null)
-    }
-
-    private fun KtProperty.renameTo(newName: String) {
-        forEachUsage { element ->
-            val isBackingField = element is KtNameReferenceExpression
-                    && element.text == FIELD_KEYWORD.value
-                    && element.mainReference.resolve() == this
-                    && isAncestor(element)
-            if (isBackingField) return@forEachUsage
-            val replacer =
-                if (element.parent is KtQualifiedExpression) psiFactory.createExpression(newName)
-                else psiFactory.createExpression("this.$newName")
-            element.replace(replacer)
-        }
-        setName(newName)
     }
 
     private fun KtPropertyAccessor.isRedundant(): Boolean =
@@ -1081,9 +1105,6 @@ private data class PropertyData(
 private interface PropertyInfo {
     val name: String
 }
-
-private val PropertyInfo.isFake: Boolean
-    get() = this is FakeAccessor
 
 private interface Accessor : PropertyInfo {
     val target: KtProperty?

@@ -1914,6 +1914,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/detectProperties/kt-32253.java");
         }
 
+        @TestMetadata("MergedPropertyInOtherAccessors.java")
+        public void testMergedPropertyInOtherAccessors() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/detectProperties/MergedPropertyInOtherAccessors.java");
+        }
+
         @TestMetadata("NoBackingField.java")
         public void testNoBackingField() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/detectProperties/NoBackingField.java");

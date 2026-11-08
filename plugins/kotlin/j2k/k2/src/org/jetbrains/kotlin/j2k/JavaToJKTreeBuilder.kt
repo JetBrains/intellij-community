@@ -649,14 +649,14 @@ class JavaToJKTreeBuilder internal constructor(
                         is KtNamedFunction -> {
                             if (origin.isExtensionDeclaration()) {
                                 val receiver = arguments.expressions.firstOrNull()?.toJK()?.parenthesizeIfCompoundExpression()
-                                origin.fqName?.also { importStorage.addImport(it) }
+                                if (origin.isImportable()) origin.fqName?.also { importStorage.addImport(it) }
                                 JKCallExpressionImpl(
                                     symbolProvider.provideDirectSymbol(origin) as JKMethodSymbol,
                                     arguments.expressions.drop(1).map { it.toJK() }.toArgumentList(),
                                     typeArguments
                                 ).qualified(receiver)
                             } else {
-                                origin.fqName?.also { importStorage.addImport(it) }
+                                if (origin.isImportable()) origin.fqName?.also { importStorage.addImport(it) }
                                 JKCallExpressionImpl(
                                     symbolProvider.provideDirectSymbol(origin) as JKMethodSymbol,
                                     arguments.toJK(),
@@ -666,7 +666,7 @@ class JavaToJKTreeBuilder internal constructor(
                         }
 
                         is KtProperty, is KtPropertyAccessor, is KtParameter -> {
-                            origin.kotlinFqName?.also { importStorage.addImport(it) }
+                            if (origin.isImportable()) origin.kotlinFqName?.also { importStorage.addImport(it) }
                             val property =
                                 if (origin is KtPropertyAccessor) origin.parent as KtProperty
                                 else origin as KtNamedDeclaration
@@ -1601,6 +1601,10 @@ class JavaToJKTreeBuilder internal constructor(
         return this@withCommentsAfterWithParent
     }
 }
+
+/** A top-level declaration and a member of an object are importable. A member of a class is not. */
+private fun PsiElement.isImportable(): Boolean =
+    getStrictParentOfType<KtClassOrObject>().let { it == null || it is KtObjectDeclaration }
 
 private const val DEPRECATED_ANNOTATION_FQ_NAME = "java.lang.Deprecated"
 private const val NO_NAME_PROVIDED = "NO_NAME_PROVIDED"
