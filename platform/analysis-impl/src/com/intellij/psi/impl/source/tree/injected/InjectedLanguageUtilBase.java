@@ -42,6 +42,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.ReadActionCache;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.InjectionUtils;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
@@ -143,6 +144,7 @@ public class InjectedLanguageUtilBase {
                                   @NotNull PsiFile containingFile,
                                   boolean probeUp,
                                   @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
+    if (!InjectionUtils.shouldInjectIntoFile(containingFile)) return false;
     //do not inject into nonphysical files except during completion
     if (!containingFile.isPhysical() && containingFile.getOriginalFile() == containingFile) {
       PsiElement context = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);

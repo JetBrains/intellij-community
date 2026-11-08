@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class InjectionUtils {
@@ -30,6 +31,16 @@ public final class InjectionUtils {
   }
   public static boolean shouldCollectLineMarkersForInjectedFiles(@NotNull PsiFile file) {
     return !Boolean.FALSE.equals(file.getUserData(COLLECT_LINE_MARKERS_FOR_INJECTED_FILES));
+  }
+
+  private static final Key<Boolean> INJECT_INTO_FILE = Key.create("inject languages into the hosts of this PSI file");
+  @ApiStatus.Internal
+  public static void setInjectIntoFile(@NotNull PsiFile topLevelFile, boolean enabled) {
+    topLevelFile.putUserData(INJECT_INTO_FILE, enabled);
+  }
+  @ApiStatus.Internal
+  public static boolean shouldInjectIntoFile(@NotNull PsiFile file) {
+    return !Boolean.FALSE.equals(file.getUserData(INJECT_INTO_FILE));
   }
 
   private static final Key<Boolean>

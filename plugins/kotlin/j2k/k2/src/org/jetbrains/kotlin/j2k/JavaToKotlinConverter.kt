@@ -25,6 +25,7 @@ import com.intellij.psi.PsiRecordComponent
 import com.intellij.psi.PsiStatement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.JavaPsiRecordUtil
+import com.intellij.util.InjectionUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
@@ -133,7 +134,10 @@ class JavaToKotlinConverter(
             edtWriteAction {
                 KtPsiFactory.contextual(javaFile.parent ?: javaFile)
                     .createPhysicalFile(javaFile.name.replace(".java", ".kt"), result.text)
-                    .also { it.addImports(result.importsToAdd) }
+                    .also {
+                        InjectionUtils.setInjectIntoFile(it, false)
+                        it.addImports(result.importsToAdd)
+                    }
             }
         }
 
