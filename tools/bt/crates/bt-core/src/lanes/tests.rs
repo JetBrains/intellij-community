@@ -99,6 +99,14 @@ fn a_lane_without_its_own_count_forces_the_planned_count() {
 }
 
 #[test]
+fn the_fast_lane_has_a_class_time_budget() {
+    let budget = lane("fast").class_time_budget.as_ref().expect("fast has a class-time budget");
+
+    assert_eq!(budget.seconds, 30);
+    assert_eq!(budget.baseline, "plugins/air/tests/integration/class-time-budget.tsv");
+}
+
+#[test]
 fn a_planned_run_names_the_plan_file_and_the_profile() {
     let planned = build_bazel_args(&RunPlan {
         shard_plan: Some("out/bt/shard-plan.tsv".to_owned()),

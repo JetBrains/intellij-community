@@ -64,6 +64,7 @@ fn payload() -> JsonPayload {
         flaky: Vec::new(),
         shard_timeouts: Vec::new(),
         errors: Vec::new(),
+        class_time_budget_violations: Vec::new(),
         degraded: false,
     }
 }

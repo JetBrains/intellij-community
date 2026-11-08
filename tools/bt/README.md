@@ -43,11 +43,12 @@ A run over many targets passes the shard plan `out/bt/shard-plan.tsv` to the tes
 its planned count and splits the classes of the target by their recorded seconds. bt records the class times of each
 run in the plan. `crates/bt-core/src/shard_plan.rs` gives the rules.
 
-Bazel forces one shard count on a whole invocation, so such a run has two `bazel test` invocations. The first one runs
-the heavy targets, the targets whose recorded seconds want more than two shards, and forces eight shards. The second
-one runs the patterns of the run less the heavy targets, and forces two shards. `--dry-run` shows the first one as
-`heavy` and the second one as `argv`. The two invocations write the Bazel profiles `out/bt/profile-heavy.json.gz` and
-`out/bt/profile.json.gz`. An explicit `--shards` and a BEP file of the caller give one invocation.
+Bazel forces one shard count on a whole invocation, so a planned run uses up to three `bazel test` invocations. The
+first one runs heavy targets, which need more than two shards, and forces eight shards. The second runs the remaining
+targets with two shards. A target without a record stays in this group. The last runs targets recorded to need one
+shard, and forces one shard. `--dry-run` shows these groups as `heavy`, `argv` and `single`. They write the profiles
+`out/bt/profile-heavy.json.gz`, `out/bt/profile.json.gz` and `out/bt/profile-single.json.gz`. An explicit `--shards` and
+a BEP file of the caller give one invocation.
 
 A shard that hits the Bazel timeout of its target is a shard timeout. The digest names the shard and the test where it
 stopped, and that test is not a failure. The `--json` payload lists the shard in `shardTimeouts`. When the times of

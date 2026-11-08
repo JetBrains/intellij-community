@@ -24,6 +24,7 @@
 pub mod areas;
 pub mod bep;
 pub mod catalog;
+pub mod class_time_budget;
 pub mod details;
 pub mod evidence;
 pub mod exit;

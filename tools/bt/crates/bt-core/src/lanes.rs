@@ -11,6 +11,7 @@ use refusal::Refusal;
 use serde::{Deserialize, Deserializer};
 
 use crate::areas::Areas;
+use crate::class_time_budget::ClassTimeBudget;
 use crate::exit::fail_infra;
 use crate::runtime::{Platform, Runtime, repo_file};
 use crate::selector::Resolution;
@@ -102,6 +103,9 @@ pub struct LaneSpec {
     #[serde(rename = "target", deserialize_with = "one_or_many")]
     pub targets: Vec<String>,
     pub extra: Vec<String>,
+    /// The class-time guard for a full, unfiltered run of this lane.
+    #[serde(default)]
+    pub class_time_budget: Option<ClassTimeBudget>,
     /// The count this lane must run with when the throughput default is wrong for it. `None` is "no opinion",
     /// which is different from 1.
     ///
@@ -197,6 +201,11 @@ impl Lanes {
         let lanes: Self = serde_json::from_str(text).map_err(|error| error.to_string())?;
         if lanes.flow_profile_dir.is_some() != lanes.flow_text_dir.is_some() {
             return Err("a suite catalog names flowProfileDir and flowTextDir together".to_owned());
+        }
+        for lane in &lanes.lanes {
+            if let Some(budget) = &lane.class_time_budget {
+                budget.validate()?;
+            }
         }
         lanes.check_tags()?;
         lanes.check_document_lanes()?;

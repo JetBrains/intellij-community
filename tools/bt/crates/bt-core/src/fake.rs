@@ -55,14 +55,24 @@ pub fn lanes() -> &'static Lanes {
     area().lanes()
 }
 
-/// The files `bt.json` and the lane table add to a tree, for a test that loads the areas from the checkout.
+/// The files `bt.json` and the lane table add to a tree, for a test that loads the areas from the checkout. The fake
+/// omits the optional class-time budget; tests of that gate add a synthetic baseline explicitly.
 pub fn area_files() -> [(String, String); 2] {
+    let mut lanes: serde_json::Value = serde_json::from_str(LANES_TEXT).expect("the fixture lane table parses");
+    let fast = lanes["lanes"]
+        .as_array_mut()
+        .expect("the fixture lane table has lanes")
+        .iter_mut()
+        .find(|lane| lane.get("name").and_then(serde_json::Value::as_str) == Some("fast"))
+        .expect("the fixture has a fast lane");
+    fast.as_object_mut().expect("a lane is an object").remove("classTimeBudget");
+    let lane_text = serde_json::to_string(&lanes).expect("the fixture lane table encodes");
     [
         (
             AREAS_FILE.to_owned(),
             format!(r#"{{ "areas": [ {{ "dir": "{AREA_DIR}", "lanes": "{LANES_FILE}" }} ] }}"#),
         ),
-        (LANES_FILE.to_owned(), LANES_TEXT.to_owned()),
+        (LANES_FILE.to_owned(), lane_text),
     ]
 }
 

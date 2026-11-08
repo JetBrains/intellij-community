@@ -237,6 +237,22 @@ fn a_green_single_target_run_is_one_line() {
     assert_eq!(text, format!("PASS  47 tests  12.3s  {DIGEST_LABEL}"));
 }
 
+#[test]
+fn a_class_time_budget_violation_has_a_separate_summary_line() {
+    let text = render_digest(
+        &digest_result(|_| {}),
+        &RenderOptions {
+            class_time_budget_violations: vec!["com.air.SlowTest in //air:tests: 35.4s > 30s".to_owned()],
+            ..RenderOptions::default()
+        },
+    );
+
+    assert!(
+        text.lines()
+            .any(|line| line == "class-time budget  com.air.SlowTest in //air:tests: 35.4s > 30s")
+    );
+}
+
 /// 63 labels is the noise the digest exists to remove; the cost line carries what the run actually spent.
 #[test]
 fn a_green_multi_target_run_summarises_counts() {

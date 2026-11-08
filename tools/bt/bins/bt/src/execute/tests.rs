@@ -3,8 +3,8 @@ use serde_json::json;
 
 use super::*;
 use bt_core::fake::{
-    AttemptSpec, FakeRuntime, REPO_ROOT, area_files, attempt, bep_lines, build_bazel_text, case, failing, flow_catalog_tree, lanes,
-    module_build_bazel_text, refusal, suite, suite_xml, test_result_event,
+    AttemptSpec, FakeRuntime, LANES_FILE, REPO_ROOT, area_files, attempt, bep_lines, build_bazel_text, case, failing, flow_catalog_tree,
+    lanes, module_build_bazel_text, refusal, suite, suite_xml, test_result_event,
 };
 use bt_core::runtime::SpawnResult;
 
@@ -20,9 +20,34 @@ fn fake_air_tree() -> FakeRuntime {
     with_areas(bt_core::fake::fake_air_tree())
 }
 
+const CLASS_TIME_BUDGET_FILE: &str = "plugins/air/tests/integration/class-time-budget.tsv";
+
+fn class_time_budget_tree(baseline: &str) -> FakeRuntime {
+    let fake = fake_air_tree();
+    let mut lanes: serde_json::Value = serde_json::from_str(bt_core::fake::LANES_TEXT).expect("the fixture lane table parses");
+    let fast = lanes["lanes"]
+        .as_array_mut()
+        .expect("the fixture lane table has lanes")
+        .iter_mut()
+        .find(|lane| lane.get("name").and_then(serde_json::Value::as_str) == Some("fast"))
+        .expect("the fixture has a fast lane");
+    fast.as_object_mut().expect("a lane is an object").insert(
+        "classTimeBudget".to_owned(),
+        json!({
+            "seconds": 30,
+            "baseline": CLASS_TIME_BUDGET_FILE,
+        }),
+    );
+    fake.put(LANES_FILE, &serde_json::to_string(&lanes).expect("the fixture lane table encodes"));
+    fake.put(CLASS_TIME_BUDGET_FILE, baseline);
+    fake
+}
+
 const CORE_LABEL: &str = "//plugins/air/shared/core:ai-agent-core-tests_test";
 const BEP_PATH: &str = "/tmp/air-bazel-test-bep.json";
 const XML_PATH: &str = "/exec/testlogs/p/t/test.xml";
+const SINGLE_LABEL: &str = "//plugins/air/single:single_test";
+const SINGLE_BEP_PATH: &str = "/tmp/air-bazel-test-bep-single.json";
 
 fn run(argv: &[&str], fake: &FakeRuntime) -> Outcome {
     execute(argv, fake).unwrap_or_else(|failure| panic!("{argv:?} refused: {failure:?}"))
@@ -283,14 +308,93 @@ fn only_a_run_of_all_classes_records_the_class_times() {
     )));
 }
 
+#[test]
+fn a_full_lane_fails_and_reports_a_class_over_the_budget() {
+    let fake = class_time_budget_tree("");
+    one_attempt(
+        &fake,
+        "PASSED",
+        r#"<testsuites><testsuite name="com.air.NewTest" tests="1" time="31.0"/></testsuites>"#,
+    );
+
+    let outcome = run(&["--lane", "fast", "--json"], &fake);
+
+    let violation = "com.air.NewTest in //plugins/air/shared/core:ai-agent-core-tests_test: 31.0s > 30s";
+    assert_eq!(outcome.exit_code, exit::TEST_FAILED, "{}", outcome.text);
+    assert!(
+        outcome.text.contains(&format!("class-time budget  {violation}")),
+        "{}",
+        outcome.text
+    );
+    let payload = outcome.json.expect("--json builds a payload");
+    assert_eq!(payload.status, RunStatus::Fail);
+    assert_eq!(payload.class_time_budget_violations, [violation]);
+}
+
+#[test]
+fn a_full_lane_allows_a_class_over_the_budget_when_the_baseline_has_a_reason() {
+    let fake = class_time_budget_tree("com.air.NewTest\tThe project fixture is required by this test.\n");
+    one_attempt(
+        &fake,
+        "PASSED",
+        r#"<testsuites><testsuite name="com.air.NewTest" tests="1" time="31.0"/></testsuites>"#,
+    );
+
+    let outcome = run(&["--lane", "fast"], &fake);
+
+    assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+    assert!(!outcome.text.contains("class-time budget"), "{}", outcome.text);
+}
+
+#[test]
+fn a_full_lane_with_explicit_shards_still_enforces_its_class_time_budget() {
+    let fake = class_time_budget_tree("");
+    one_attempt(
+        &fake,
+        "PASSED",
+        r#"<testsuites><testsuite name="com.air.NewTest" tests="1" time="31.0"/></testsuites>"#,
+    );
+
+    let outcome = run(&["--lane", "fast", "--shards", "2"], &fake);
+
+    assert_eq!(outcome.exit_code, exit::TEST_FAILED, "{}", outcome.text);
+    assert!(outcome.text.contains("class-time budget  com.air.NewTest"), "{}", outcome.text);
+}
+
+#[test]
+fn a_filtered_lane_skips_the_class_time_budget_baseline() {
+    let fake = class_time_budget_tree("malformed baseline row\n");
+    one_attempt(
+        &fake,
+        "PASSED",
+        r#"<testsuites><testsuite name="com.air.NewTest" tests="1" time="31.0"/></testsuites>"#,
+    );
+
+    let outcome = run(&["--lane", "fast", "--", "--test_filter=com.air.NewTest"], &fake);
+
+    assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+    assert!(!outcome.text.contains("class-time budget"), "{}", outcome.text);
+}
+
 const HEAVY_BEP_PATH: &str = "/tmp/air-bazel-test-bep-heavy.json";
 
-/// A plan where the core target wants six shards and the other target one.
+/// A plan where the core target wants six shards and the other target two.
 fn heavy_plan_tree() -> FakeRuntime {
     let fake = fake_air_tree();
     fake.put_absolute(
         SHARD_PLAN,
-        &format!("default\t2\nclass\t{CORE_LABEL}\tcom.A\t530.000\nclass\t{OTHER_LABEL}\tcom.B\t7.000\n"),
+        &format!("default\t2\nclass\t{CORE_LABEL}\tcom.A\t530.000\nclass\t{OTHER_LABEL}\tcom.B\t120.000\n"),
+    );
+    fake
+}
+
+fn three_group_plan_tree() -> FakeRuntime {
+    let fake = fake_air_tree();
+    fake.put_absolute(
+        SHARD_PLAN,
+        &format!(
+            "default\t2\nclass\t{CORE_LABEL}\tcom.A\t530.000\nclass\t{OTHER_LABEL}\tcom.B\t120.000\nclass\t{SINGLE_LABEL}\tcom.S\t7.000\n"
+        ),
     );
     fake
 }
@@ -340,10 +444,42 @@ fn a_heavy_target_runs_in_an_invocation_of_its_own_with_the_heavy_count() {
     }
 }
 
-/// The invocations read as one run: the targets of both, one verdict, one plan update.
 #[test]
-fn the_heavy_and_the_lane_invocation_read_as_one_run() {
-    let fake = heavy_plan_tree();
+fn a_single_shard_target_runs_in_an_invocation_of_its_own() {
+    let text = run(&["--lane", "fast", "--dry-run"], &three_group_plan_tree()).text;
+    let line = |prefix: &str| {
+        text.lines()
+            .find(|line| line.starts_with(prefix))
+            .unwrap_or_else(|| panic!("no {prefix:?} in:\n{text}"))
+            .to_owned()
+    };
+    let heavy = line("heavy   ");
+    assert_mentions(&heavy, &["--test_sharding_strategy=forced=8", CORE_LABEL]);
+
+    let main = line("argv    ");
+    assert_mentions(
+        &main,
+        &["--test_sharding_strategy=forced=2", &format!("-- -{CORE_LABEL} -{SINGLE_LABEL}")],
+    );
+    assert!(!main.contains(&format!("-{OTHER_LABEL}")), "{main}");
+
+    let single = line("single  ");
+    assert_mentions(
+        &single,
+        &[
+            "--test_sharding_strategy=forced=1",
+            "--test_env=JB_TEST_SHARD_PLAN=out/bt/shard-plan.tsv",
+            "--profile=/repo/out/bt/profile-single.json.gz",
+            SINGLE_LABEL,
+        ],
+    );
+    assert!(!single.contains(OTHER_LABEL), "{single}");
+}
+
+/// The invocations read as one run: disjoint targets, one verdict, one plan update.
+#[test]
+fn the_heavy_planned_and_single_invocations_read_as_one_run() {
+    let fake = three_group_plan_tree();
     let xml = |suite: &str, seconds: u32| format!(r#"<testsuites><testsuite name="{suite}" tests="1" time="{seconds}"/></testsuites>"#);
     let mut heavy_events = Vec::new();
     for (shard, path) in [
@@ -359,6 +495,7 @@ fn the_heavy_and_the_lane_invocation_read_as_one_run() {
     }
     fake.put_absolute(HEAVY_BEP_PATH, &bep_lines(&heavy_events));
     fake.put_absolute("/exec/testlogs/other/test.xml", &xml("com.B", 5));
+    fake.put_absolute("/exec/testlogs/single/test.xml", &xml("com.S", 1));
     fake.put_absolute(
         BEP_PATH,
         &bep_lines(&[test_result_event(&AttemptSpec {
@@ -366,21 +503,34 @@ fn the_heavy_and_the_lane_invocation_read_as_one_run() {
             ..attempt(OTHER_LABEL)
         })]),
     );
+    fake.put_absolute(
+        SINGLE_BEP_PATH,
+        &bep_lines(&[test_result_event(&AttemptSpec {
+            label: SINGLE_LABEL,
+            xml: "/exec/testlogs/single/test.xml",
+            ..attempt(SINGLE_LABEL)
+        })]),
+    );
     let outcome = run(&["--lane", "fast"], &fake);
 
     assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
-    assert_mentions(&outcome.text, &["PASS  3 tests  2 targets"]);
+    assert_mentions(&outcome.text, &["PASS  4 tests  3 targets"]);
     let spawned: Vec<String> = fake.spawned().iter().map(|argv| argv.join(" ")).collect();
-    assert_eq!(spawned.len(), 3, "{spawned:#?}");
+    assert_eq!(spawned.len(), 4, "{spawned:#?}");
     assert!(
         spawned[1].contains("forced=8") && spawned[1].ends_with(CORE_LABEL),
         "{}",
         spawned[1]
     );
     assert!(
-        spawned[2].contains("forced=2") && spawned[2].ends_with(&format!("-- -{CORE_LABEL}")),
+        spawned[2].contains("forced=2") && spawned[2].ends_with(&format!("-- -{CORE_LABEL} -{SINGLE_LABEL}")),
         "{}",
         spawned[2]
+    );
+    assert!(
+        spawned[3].contains("forced=1") && spawned[3].ends_with(SINGLE_LABEL),
+        "{}",
+        spawned[3]
     );
     let plan = fake.state().files.get(SHARD_PLAN).cloned().unwrap_or_default();
     assert_mentions(
@@ -389,11 +539,14 @@ fn the_heavy_and_the_lane_invocation_read_as_one_run() {
             &format!("target\t{CORE_LABEL}\t6\n"),
             &format!("class\t{CORE_LABEL}\tcom.A\t523.000\n"),
             &format!("class\t{OTHER_LABEL}\tcom.B\t5.000\n"),
+            &format!("class\t{SINGLE_LABEL}\tcom.S\t1.000\n"),
         ],
     );
     let removed = fake.state().removed.clone();
     assert!(
-        removed.contains(&HEAVY_BEP_PATH.to_owned()) && removed.contains(&BEP_PATH.to_owned()),
+        removed.contains(&HEAVY_BEP_PATH.to_owned())
+            && removed.contains(&BEP_PATH.to_owned())
+            && removed.contains(&SINGLE_BEP_PATH.to_owned()),
         "{removed:?}"
     );
 }

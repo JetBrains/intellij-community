@@ -1,5 +1,6 @@
 //! One invocation end to end: resolve, spawn bazel, read the BEP and test.xml, answer the digest and the payload.
 
+use std::collections::BTreeSet;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
@@ -30,7 +31,7 @@ use bt_core::selector::{
     Resolution, Selector, SelectorKind, as_filter_or_package, checkout_label, directory_pattern, no_tests_hint, resolve_selector,
     suggest_names, wanted_simple_name,
 };
-use bt_core::shard_plan::{HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, ShardPlan};
+use bt_core::shard_plan::{HEAVY_PROFILE_FILE, HEAVY_SHARDS, PROFILE_FILE, SHARD_PLAN_FILE, SINGLE_PROFILE_FILE, SINGLE_SHARDS, ShardPlan};
 use bt_core::suites::{named_suites, resolve_suite_run};
 
 /// What one invocation answers.
@@ -80,7 +81,12 @@ pub(crate) struct JsonPayload {
     /// The shards that Bazel stopped at their timeout. Their interrupted tests are not in `failures`.
     #[serde(default)]
     pub(crate) shard_timeouts: Vec<ShardTimeout>,
+    /// Errors produced while collecting the run.
+    #[serde(default)]
     pub(crate) errors: Vec<String>,
+    /// Full-lane classes over their configured time budget and outside its baseline.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) class_time_budget_violations: Vec<String>,
     pub(crate) degraded: bool,
 }
 
@@ -112,6 +118,7 @@ pub(crate) fn to_json(result: &RunResult) -> JsonPayload {
         flaky: result.flaky.clone(),
         shard_timeouts: result.timeouts.clone(),
         errors: result.build_errors.clone(),
+        class_time_budget_violations: Vec::new(),
         degraded: result.degraded,
     }
 }
@@ -296,6 +303,11 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     let shard_plan_path = repo_file(runtime, SHARD_PLAN_FILE);
     let path_text = |path: &PathBuf| path.to_string_lossy().into_owned();
     let profile = resolution.multi_target.then(|| path_text(&repo_file(runtime, PROFILE_FILE)));
+    let class_time_budget_config = if resolution.multi_target {
+        lane_spec.and_then(|spec| spec.class_time_budget.as_ref())
+    } else {
+        None
+    };
     let owns_bep_file = overridden_bep.is_none();
     let bep_path = overridden_bep.unwrap_or_else(|| runtime.temp_file("air-bazel-test-bep").to_string_lossy().into_owned());
     // The file is ours from the moment it is named, because the OS runtime creates it to reserve the name: it goes
@@ -307,15 +319,22 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     });
     let method_filtered = resolution.filter.as_deref().is_some_and(|filter| filter.contains('#'));
     let no_tests_hint = no_tests_hint(explicit_filter);
-    // A BEP path of the caller would take the events of both invocations, so such a run keeps one invocation.
-    let heavy_targets = if planned && owns_bep_file {
-        let recorded = runtime
+    // A BEP path of the caller would take the events of all invocations, so such a run keeps one invocation.
+    let recorded_plan = if planned || class_time_budget_config.is_some() {
+        runtime
             .read_text_file(&shard_plan_path)
             .map(|text| ShardPlan::parse(&text))
-            .unwrap_or_default();
-        recorded.heavy_targets(&resolution.labels)
+            .unwrap_or_default()
     } else {
-        Vec::new()
+        ShardPlan::default()
+    };
+    let (heavy_targets, single_targets) = if planned && owns_bep_file {
+        (
+            recorded_plan.heavy_targets(&resolution.labels),
+            recorded_plan.single_targets(&resolution.labels),
+        )
+    } else {
+        (Vec::new(), Vec::new())
     };
     let mut plan = RunPlan {
         resolution,
@@ -331,6 +350,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         profile,
         excluded: Vec::new(),
     };
+    let class_time_budget = class_time_budget_config.filter(|_| runs_all_classes(&plan));
     let heavy_plan = (!heavy_targets.is_empty()).then(|| RunPlan {
         resolution: Resolution {
             labels: heavy_targets.clone(),
@@ -345,13 +365,31 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         runtime,
         path: PathBuf::from(&heavy.bep_path),
     });
+    let single_plan = (!single_targets.is_empty()).then(|| RunPlan {
+        resolution: Resolution {
+            labels: single_targets.clone(),
+            ..plan.resolution.clone()
+        },
+        shards: SINGLE_SHARDS,
+        bep_path: runtime.temp_file("air-bazel-test-bep-single").to_string_lossy().into_owned(),
+        profile: Some(path_text(&repo_file(runtime, SINGLE_PROFILE_FILE))),
+        ..plan.clone()
+    });
+    let _single_bep_file = single_plan.as_ref().map(|single| BepFile {
+        runtime,
+        path: PathBuf::from(&single.bep_path),
+    });
     plan.excluded = heavy_targets;
-    // The invocation of the heavy targets runs first.
-    let invocations: Vec<BazelInvocation> = heavy_plan
-        .iter()
-        .chain(std::iter::once(&plan))
-        .map(|plan| BazelInvocation::new(runtime, plan))
-        .collect();
+    plan.excluded.extend(single_targets);
+    // The invocation order is heavy, planned, then single-shard targets.
+    let mut invocations = Vec::new();
+    if let Some(heavy) = &heavy_plan {
+        invocations.push(BazelInvocation::new(runtime, heavy, InvocationKind::Heavy));
+    }
+    invocations.push(BazelInvocation::new(runtime, &plan, InvocationKind::Planned));
+    if let Some(single) = &single_plan {
+        invocations.push(BazelInvocation::new(runtime, single, InvocationKind::Single));
+    }
     let build_only = lane.and_then(|(area, spec)| spec.build_only_args(area.lanes()));
 
     if args.dry_run {
@@ -373,13 +411,15 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         return Ok(failed);
     }
 
+    let class_time_budget_baseline = class_time_budget.map(|budget| budget.load_baseline(runtime)).transpose()?;
+
     // The directory of the profile, and the plan the tests read. A run before the first record splits each target
     // into the default count, by class.
     if plan.profile.is_some() && !runtime.exists(&shard_plan_path) {
         update_shard_plan(runtime, &shard_plan_path, &[], &[]);
     }
 
-    let BazelRun { spawned, bep, result } = run_bazel_invocations(runtime, &invocations);
+    let BazelRun { spawned, bep, mut result } = run_bazel_invocations(runtime, &invocations);
 
     // Before anything else reads the run: the next run of a failed target overwrites its logs.
     let kept_run = keep_failed_evidence(runtime, &bep);
@@ -391,6 +431,30 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         } else {
             update_shard_plan(runtime, &shard_plan_path, &[], &[]);
         }
+    }
+
+    let class_time_budget_violations = if let (Some(budget), Some(baseline)) = (class_time_budget, class_time_budget_baseline.as_ref()) {
+        let mut current_plan = recorded_plan;
+        for timing in &result.timings {
+            current_plan.record(timing);
+        }
+        let target_labels: BTreeSet<String> = result
+            .targets
+            .iter()
+            .filter(|target| target.shards > 0)
+            .map(|target| target.label.clone())
+            .collect();
+        budget
+            .violations(&current_plan, &target_labels, baseline)
+            .iter()
+            .map(bt_core::class_time_budget::ClassTimeBudgetViolation::summary)
+            .collect()
+    } else {
+        Vec::new()
+    };
+    if !class_time_budget_violations.is_empty() && result.status == RunStatus::Pass {
+        result.status = RunStatus::Fail;
+        result.exit_code = exit::TEST_FAILED;
     }
 
     if args.verbose {
@@ -416,6 +480,11 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         .failures
         .first()
         .map(|failure| format!("{WRAPPER} {}", posix_shell_quote(&rerun_selector(failure))));
+    let json = args.json.then(|| {
+        let mut payload = to_json(&result);
+        payload.class_time_budget_violations = class_time_budget_violations.clone();
+        payload
+    });
     let text = render_digest(
         &result,
         &RenderOptions {
@@ -424,11 +493,12 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             method_filtered,
             no_tests_hint,
             kept_run,
+            class_time_budget_violations,
         },
     );
     Ok(Outcome {
         exit_code: result.exit_code,
-        json: args.json.then(|| to_json(&result)),
+        json,
         text,
     })
 }
@@ -465,15 +535,34 @@ pub(crate) struct BazelInvocation {
     args: Vec<String>,
     command: Vec<OsString>,
     bep_path: String,
+    kind: InvocationKind,
+}
+
+#[derive(Clone, Copy)]
+enum InvocationKind {
+    Heavy,
+    Planned,
+    Single,
+}
+
+impl InvocationKind {
+    const fn label(self) -> &'static str {
+        match self {
+            Self::Heavy => "heavy",
+            Self::Planned => "argv",
+            Self::Single => "single",
+        }
+    }
 }
 
 impl BazelInvocation {
-    fn new(runtime: &dyn Runtime, plan: &RunPlan) -> Self {
+    fn new(runtime: &dyn Runtime, plan: &RunPlan, kind: InvocationKind) -> Self {
         let args = build_bazel_args(plan);
         Self {
             command: bazel_command(runtime.repo_root(), runtime.platform(), &args),
             args,
             bep_path: plan.bep_path.clone(),
+            kind,
         }
     }
 }
@@ -496,7 +585,7 @@ pub(crate) fn run_bazel(runtime: &dyn Runtime, command: &[OsString], bazel_args:
 ///
 /// The invocations test disjoint targets, so their BEP files merge. The exit code of the run is the worst one, where
 /// 4 ("no test target") is the mildest: an invocation whose targets the tag filters leave out tests nothing, and the
-/// other invocation still gives the answer. An exit code that is not a test verdict, such as 8 for an interrupted
+/// other invocations still give the answer. An exit code that is not a test verdict, such as 8 for an interrupted
 /// command, stops the run before the next invocation.
 fn run_bazel_invocations(runtime: &dyn Runtime, invocations: &[BazelInvocation]) -> BazelRun {
     let started = runtime.now_ms();
@@ -632,11 +721,11 @@ fn dry_run_text(runtime: &dyn Runtime, resolution: &Resolution, invocations: &[B
             .map(|suite| format!("suite   {} ({}, lane {})", suite.class, suite.suite, suite.lane)),
     );
     lines.push(format!("filter  {filter}"));
-    // The last invocation runs the patterns of the run. An invocation before it runs the heavy targets of the plan.
-    if let [heavy @ .., main] = invocations {
-        lines.extend(heavy.iter().map(|heavy| format!("heavy   {}", command_line(&heavy.command))));
-        lines.push(format!("argv    {}", command_line(&main.command)));
-    }
+    lines.extend(
+        invocations
+            .iter()
+            .map(|invocation| format!("{:<8}{}", invocation.kind.label(), command_line(&invocation.command))),
+    );
     if let Some(build_only) = build_only {
         lines.push(format!(
             "build   {}",

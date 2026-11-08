@@ -19,8 +19,8 @@ fn a_target_gets_a_shard_per_90_recorded_seconds_up_to_the_heavy_count() {
     plan.record(&timing("//a:heaviest", &[("A", 2000.0)]));
     plan.record(&timing("//a:empty", &[]));
 
-    assert_eq!(plan.shards_of("//a:small"), 1);
-    assert_eq!(plan.shards_of("//a:full"), 1);
+    assert_eq!(plan.shards_of("//a:small"), SINGLE_SHARDS);
+    assert_eq!(plan.shards_of("//a:full"), SINGLE_SHARDS);
     assert_eq!(plan.shards_of("//a:medium"), PLANNED_SHARDS);
     assert_eq!(plan.shards_of("//a:heavy"), 6);
     assert_eq!(plan.shards_of("//a:heaviest"), HEAVY_SHARDS);
@@ -62,6 +62,26 @@ fn the_heavy_targets_are_the_covered_targets_that_want_more_than_the_planned_cou
         ["//p/a:heavy_test", "//p/b/c:heavy_test"]
     );
     assert_eq!(heavy(&["p/..."]), Vec::<String>::new());
+}
+
+#[test]
+fn the_single_targets_are_the_covered_targets_that_want_one_shard() {
+    let mut plan = ShardPlan::default();
+    plan.record(&timing("//p/a:single_test", &[("A", 90.0)]));
+    plan.record(&timing("//p/a:medium_test", &[("A", 180.0)]));
+    plan.record(&timing("//p/b:heavy_test", &[("A", 181.0)]));
+    plan.record(&timing("@@community+//tools/bt:single_test", &[("A", 5.0)]));
+    let single = |patterns: &[&str]| plan.single_targets(&patterns.iter().map(|pattern| (*pattern).to_owned()).collect::<Vec<_>>());
+
+    assert_eq!(single(&["//p/..."]), ["//p/a:single_test"]);
+    assert_eq!(single(&["//p/a:all"]), ["//p/a:single_test"]);
+    assert_eq!(single(&["@community//tools/bt/..."]), ["@@community+//tools/bt:single_test"]);
+    assert_eq!(single(&["//p/...", "-//p/a:single_test"]), Vec::<String>::new());
+    assert_eq!(
+        single(&["//p/...", "-//p/a:single_test", "//p/a:single_test"]),
+        ["//p/a:single_test"]
+    );
+    assert_eq!(single(&["//p/a:unknown_test"]), Vec::<String>::new());
 }
 
 #[test]

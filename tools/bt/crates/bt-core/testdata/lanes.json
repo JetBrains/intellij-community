@@ -131,6 +131,10 @@
     {
       "name": "fast",
       "description": "all Air unit tests, excluding UI, GUI-chat, headless integration, and the slow editor sweeps (the default loop)",
+      "classTimeBudget": {
+        "seconds": 30,
+        "baseline": "plugins/air/tests/integration/class-time-budget.tsv"
+      },
       "target": [
         "//plugins/air/...",
         "@community//tools/bt/...",
