@@ -29,7 +29,10 @@ import org.junit.jupiter.api.Test
  * come from a third side. A non-linearizable outcome here would mean a pointer can observe
  * "not invalidated" for a state that never existed and skip a revalidation it needs.
  *
- * Only the generation/mapping surface is exercised: the rest of the tracker API needs real PSI
+ * [intern] checks that the holder interning stays linearizable next to the revalidation,
+ * which forgets the holder of a remapped context.
+ *
+ * Only the generation, mapping and interning surface is exercised: the rest of the tracker API needs real PSI
  * and the application read-write lock, which Lincheck threads cannot provide. The pointers-and-PSI
  * side is covered by `SmartPointerLifecycleTest` and the suites listed in
  * `docs/IntelliJ-Platform/4_man/Lang/PSI/Smart-Pointers.md`.
@@ -66,6 +69,20 @@ class SmartPointerTrackerGenerationLincheck {
   @Operation
   fun stale(): Boolean = tracker.isPossiblyInvalidated(manager)
 
+  private var lastHolder: FileHolder? = null
+
+  /**
+   * Returns `true` when the interned holder of [TestContext.A] is the same instance as at the previous call.
+   * The tracker monitor makes the interning and the comparison with [lastHolder] one atomic step.
+   */
+  @Operation
+  fun intern(): Boolean = synchronized(tracker) {
+    val holder = tracker.internFileHolderForTests(file, TestContext.A)
+    val same = holder === lastHolder
+    lastHolder = holder
+    same
+  }
+
   @Test
   fun stressTest() = StressOptions()
     .sequentialSpecification(GenerationSeqSpec::class.java)
@@ -99,27 +116,39 @@ class SmartPointerTrackerGenerationLincheck {
 
 /**
  * The sequential model: one generation counter, one validated watermark. `revalidate` catches the
- * watermark up to the counter; `stale` compares them. Pending mappings are internal state with no
- * observable result, so `pushMapping` is a no-op here — it exists to steer the real tracker through
- * both revalidation branches.
+ * watermark up to the counter; `stale` compares them. A revalidation that consumes a pending mapping
+ * forgets the interned holder, so the next `intern` gets a new one.
  */
 @Suppress("unused")
 class GenerationSeqSpec {
   private var modCount = 0L
   private var validated = 0L
+  private var mappingPending = false
+  private var holderInterned = false
 
   fun bump() {
     modCount++
   }
 
   fun pushMapping() {
+    mappingPending = true
   }
 
   fun revalidate() {
     if (modCount > validated) {
       validated = modCount
+      if (mappingPending) {
+        mappingPending = false
+        holderInterned = false
+      }
     }
   }
 
   fun stale(): Boolean = modCount > validated
+
+  fun intern(): Boolean {
+    val same = holderInterned
+    holderInterned = true
+    return same
+  }
 }

@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.SmartList
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.SmartHashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -39,7 +38,14 @@ class SmartPointerTracker(initialModCount: Long) {
   private val fileInfoList = WeakPointerReferenceList()
   private val markerCache = MarkerCache(this)
   private var mySorted = false
-  private val holderCache = ContainerUtil.createConcurrentWeakKeySoftValueMap<CodeInsightContext, FileHolder>()
+
+  /**
+   * The interned holders, one per context. A `null` context has its own holder.
+   * A file has few contexts, so [createFileHolderInterned] scans the list under the tracker monitor.
+   * The list holds the holders strongly. [pruneHolders] keeps it small.
+   */
+  private val holders = SmartList<FileHolder>()
+
   private val pendingContextMappings = SmartList<Map<CodeInsightContext, CodeInsightContext?>>()
 
   /**
@@ -55,6 +61,9 @@ class SmartPointerTracker(initialModCount: Long) {
    * in [SelfElementInfo.restoreFile], stores a null context and so cannot violate the invariant.
    * The set may hold stale contexts (a collected pointer, a holder nulled by `restoreFile`); a stale
    * entry costs one exact rescan, which replaces the set with the exact one.
+   *
+   * The contexts of [holders] are a subset of this set plus the `null` context: each exact recomputation
+   * of the set calls [pruneHolders].
    */
   private var knownContexts: MutableSet<CodeInsightContext>? = null
 
@@ -238,6 +247,11 @@ class SmartPointerTracker(initialModCount: Long) {
     pushContextMapping(mapping)
   }
 
+  /** Calls [createFileHolderInterned]. `SmartPointerTrackerGenerationLincheck` needs this entry point. */
+  @TestOnly
+  fun internFileHolderForTests(virtualFile: VirtualFile, context: CodeInsightContext?): FileHolder =
+    createFileHolderInterned(virtualFile, context)
+
   /**
    * Returns `true` when a generation bump happened after the last [revalidate].
    * The read takes no lock.
@@ -259,7 +273,7 @@ class SmartPointerTracker(initialModCount: Long) {
   @Synchronized
   internal fun clearPendingState() {
     pendingContextMappings.clear()
-    holderCache.clear()
+    holders.clear()
     knownContexts = null
   }
 
@@ -308,10 +322,11 @@ class SmartPointerTracker(initialModCount: Long) {
         liveContexts.add(newCtx)
       }
       knownContexts = liveContexts
+      pruneHolders(liveContexts)
     }
 
     for (oldCtx in composedMapping.keys) {
-      holderCache.remove(oldCtx)
+      forgetHolder(oldCtx)
     }
   }
 
@@ -331,6 +346,7 @@ class SmartPointerTracker(initialModCount: Long) {
     val allInfos = getContextAwareInfos()
     val oldContexts = collectContexts(allInfos)
     knownContexts = oldContexts
+    pruneHolders(oldContexts)
     val deadContexts = oldContexts.subtract(actualContexts)
 
     if (deadContexts.isEmpty()) {
@@ -344,8 +360,7 @@ class SmartPointerTracker(initialModCount: Long) {
       for (info in allInfos) {
         info.fileHolder = newHolder
       }
-      holderCache.remove(deadContext)
-      holderCache[actualContext] = newHolder
+      forgetHolder(deadContext)
       knownContexts = SmartHashSet<CodeInsightContext>().apply { add(actualContext) }
       return
     }
@@ -356,7 +371,7 @@ class SmartPointerTracker(initialModCount: Long) {
       }
     }
     for (deadContext in deadContexts) {
-      holderCache.remove(deadContext)
+      forgetHolder(deadContext)
     }
     // knownContexts is initialized here and this method is run in synchronized block
     knownContexts!!.removeAll(deadContexts)
@@ -376,10 +391,19 @@ class SmartPointerTracker(initialModCount: Long) {
   }
 
   /** Returns the one [FileHolder] of this tracker for [context]. A `null` context has its own holder. */
+  @Synchronized
   internal fun createFileHolderInterned(virtualFile: VirtualFile, context: CodeInsightContext?): FileHolder =
-    holderCache.computeIfAbsent(context ?: NullContext) { c -> FileHolder.create(c.takeUnless { it === NullContext }, virtualFile) }
+    holders.find { it.context == context } ?: FileHolder.create(context, virtualFile).also { holders.add(it) }
 
-  private object NullContext: CodeInsightContext
+  /** Forgets the interned holder of [context], so the next [createFileHolderInterned] creates a new one. */
+  private fun forgetHolder(context: CodeInsightContext) {
+    holders.removeIf { it.context == context }
+  }
+
+  /** Forgets the interned holders whose non-null context is not in [liveContexts], the exact new [knownContexts]. */
+  private fun pruneHolders(liveContexts: Set<CodeInsightContext>) {
+    holders.removeIf { it.context != null && it.context !in liveContexts }
+  }
 
   /** Composes the queued [mappings] into one mapping. The later mappings apply to the results of the earlier ones. */
   private fun composeMappings(
