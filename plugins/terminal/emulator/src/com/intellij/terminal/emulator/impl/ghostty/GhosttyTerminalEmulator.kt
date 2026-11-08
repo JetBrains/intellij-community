@@ -284,6 +284,7 @@ internal class GhosttyTerminalEmulator(
       }
 
       GhosttyKittyGraphics.disable(terminalHandle)
+      GhosttyGlyphProtocol.disable(terminalHandle)
 
       val outRenderState = arena.allocate(C_PTR)
       val renderResult = try {
