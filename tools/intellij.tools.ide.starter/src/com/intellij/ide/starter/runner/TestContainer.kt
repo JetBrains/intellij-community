@@ -55,6 +55,23 @@ interface TestContainer {
       }
     }
 
+    /**
+     * Gives the IDE of [context] the context plugins that it needs for [ideInfo], through `-Dplugin.path`.
+     *
+     * The IDE loads each plugin in place from the directory that [DevBuildServerRunner.contextPluginPaths] returns, so
+     * the context holds no copy. An IDE that is not from sources gets nothing.
+     */
+    fun applyContextPlugins(context: IDETestContext, ideInfo: IdeInfo): IDETestContext {
+      if (!context.ide.isFromSources) {
+        return context
+      }
+      val paths = DevBuildServerRunner.instance.contextPluginPaths(AdditionalModulesForDevBuildServer.withRequestedModules(ideInfo))
+      for (path in paths) {
+        context.ide.vmOptions.addPluginPath(path)
+      }
+      return context
+    }
+
     fun applyDefaultVMOptions(context: IDETestContext): IDETestContext {
       return when (context.testCase.ideInfo.productCode == IdeInfoType.ANDROID_STUDIO.productCode) {
         true -> context
@@ -161,11 +178,9 @@ interface TestContainer {
 
     var testContext = IDETestContext(paths, ide, testCase, testName, projectHome, preserveSystemDir = preserveSystemDir)
     testContext.wipeSystemDir()
-    if (ide.isFromSources) {
-      DevBuildServerRunner.instance.installContextPlugins(AdditionalModulesForDevBuildServer.withRequestedModules(testCase.ideInfo), paths.pluginsDir)
-    }
 
     testContext = applyDefaultVMOptions(testContext)
+    testContext = applyContextPlugins(testContext, testCase.ideInfo)
 
     val preparedContext = testContext
       .updateGeneralSettings()

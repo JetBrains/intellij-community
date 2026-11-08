@@ -2,7 +2,6 @@
 package com.intellij.tools.ide.starter.build.server
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -10,7 +9,6 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
-import kotlin.io.path.exists
 
 class PrebuiltDevDistRunnerTest {
   @TempDir
@@ -43,37 +41,35 @@ class PrebuiltDevDistRunnerTest {
   }
 
   @Test
-  fun `install copies only the plugins of the missing modules`() {
-    val pool = ContextPluginDirs.read(writeContextPluginPool(root))
+  fun `context plugin paths name only the plugins of the missing modules`() {
+    val manifest = writeContextPluginPool(root)
+    val pool = ContextPluginDirs.read(manifest)
     val homePluginsDir = root.resolve("home/plugins").createDirectories()
-    val pluginsDir = root.resolve("context/plugins")
 
-    assertEquals(listOf("lambda-test-plugin"), installContextPlugins(listOf("intellij.lambda.test.plugin"), pool, homePluginsDir, pluginsDir))
-    assertTrue(pluginsDir.resolve("lambda-test-plugin/lib/lambda-test-plugin.jar").exists())
-    assertFalse(pluginsDir.resolve("devkit").exists())
-
-    assertEquals(emptyList<String>(), installContextPlugins(emptyList(), pool, homePluginsDir, root.resolve("other/plugins")))
-    assertFalse(root.resolve("other/plugins").exists())
+    assertEquals(
+      listOf(manifest.resolveSibling("pool/lambda-test-plugin")),
+      contextPluginPaths(listOf("intellij.lambda.test.plugin"), pool, homePluginsDir),
+    )
+    assertEquals(emptyList<Path>(), contextPluginPaths(emptyList(), pool, homePluginsDir))
   }
 
   @Test
-  fun `install fails on a plugin directory of the distribution`() {
+  fun `context plugin paths fail on a plugin directory of the distribution`() {
     val pool = ContextPluginDirs.read(writeContextPluginPool(root))
     val homePluginsDir = root.resolve("home/plugins")
     homePluginsDir.resolve("devkit").createDirectories()
 
     val error = assertThrows<IllegalStateException> {
-      installContextPlugins(listOf("intellij.devkit"), pool, homePluginsDir, root.resolve("context/plugins"))
+      contextPluginPaths(listOf("intellij.devkit"), pool, homePluginsDir)
     }
     assertTrue(error.message!!.contains("'devkit'"), error.message)
-    assertFalse(root.resolve("context/plugins/devkit").exists())
   }
 
   @Test
-  fun `install fails on a module that the pool does not have`() {
+  fun `context plugin paths fail on a module that the pool does not have`() {
     val pool = ContextPluginDirs.read(writeContextPluginPool(root))
     val error = assertThrows<IllegalStateException> {
-      installContextPlugins(listOf("intellij.go"), pool, root.resolve("home/plugins"), root.resolve("context/plugins"))
+      contextPluginPaths(listOf("intellij.go"), pool, root.resolve("home/plugins"))
     }
     assertTrue(error.message!!.contains("'intellij.go'"), error.message)
   }

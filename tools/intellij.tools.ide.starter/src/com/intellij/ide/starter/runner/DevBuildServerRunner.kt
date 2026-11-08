@@ -27,13 +27,13 @@ interface DevBuildServerRunner {
   fun startDevBuild(ideInfo: IdeInfo): Path
 
   /**
-   * Installs the context plugins that the IDE of [ideInfo] needs into [pluginsDir], the `plugins` directory of its context.
+   * Returns the plugin directories of the context plugins that the IDE of [ideInfo] needs. The IDE loads each of them in
+   * place through `-Dplugin.path`, see [TestContainer.applyContextPlugins].
    *
    * [ideInfo] holds the requested modules, see [AdditionalModulesForDevBuildServer.withRequestedModules]. A runner that
-   * builds each requested module into the distribution installs nothing.
+   * builds each requested module into the distribution returns an empty list.
    */
-  fun installContextPlugins(ideInfo: IdeInfo, pluginsDir: Path) {
-  }
+  fun contextPluginPaths(ideInfo: IdeInfo): List<Path> = emptyList()
 
   companion object {
     val instance: DevBuildServerRunner

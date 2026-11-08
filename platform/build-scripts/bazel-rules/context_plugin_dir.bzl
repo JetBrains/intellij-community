@@ -1,10 +1,10 @@
 """Plugins as plugin directories of an IDE context, built apart from every distribution.
 
-The platform loads each plugin directory under `<context>/plugins`. A test installs these files and directory trees from
-its runfiles, through the manifest that the `context_plugin_manifest` output group holds, so a change of the plugin
-reaches the IDE with no distribution compose. The module index beside the manifest names the plugin directory of each
-main module, so a test installs only the plugins that it asks for. The Air lane daemon, the UI agent of ide-starter and
-`starter_test` read this rule.
+A test reads the pool through the manifest that the `context_plugin_manifest` output group holds, so a change of the
+plugin reaches the IDE with no distribution compose. The module index beside the manifest names the plugin directory of
+each main module, so a test gets only the plugins that it asks for. IDE Starter, for `starter_test` and its UI agent,
+gives the IDE each plugin directory of the runfiles through `-Dplugin.path`, and the IDE loads it in place. The Air lane
+daemon installs the files into `<context>/plugins`.
 """
 
 load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_CONSUMER_ATTRS", "dev_dist_stamp_class_consumer_transition")

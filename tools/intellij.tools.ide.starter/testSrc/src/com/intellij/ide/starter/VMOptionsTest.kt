@@ -10,6 +10,7 @@ import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import org.mockito.Mockito.mock
+import java.io.File
 import java.nio.file.Path
 
 class VMOptionsTest {
@@ -46,6 +47,26 @@ class VMOptionsTest {
     }
 
     reported.single().message shouldContain "$PATH_LENGTH_LIMIT-character limit"
+  }
+
+  @Test
+  fun `plugin paths are appended in order and a known path is not added again`() {
+    val options = vmOptions()
+    val first = tempDir.resolve("pool/devkit")
+    val second = tempDir.resolve("a=b/android")
+
+    options.addPluginPath(first)
+    options.addPluginPath(second)
+    options.addPluginPath(first)
+
+    options.pluginPaths() shouldBe listOf(first.toAbsolutePath(), second.toAbsolutePath())
+    options.data().filter { it.startsWith("-Dplugin.path=") } shouldBe
+      listOf("-Dplugin.path=${first.toAbsolutePath()}${File.pathSeparator}${second.toAbsolutePath()}")
+  }
+
+  @Test
+  fun `no plugin path gives an empty list`() {
+    vmOptions().pluginPaths().shouldBeEmpty()
   }
 
   private fun vmOptions(): VMOptions = VMOptions(ide = mock(InstalledIde::class.java), data = emptyList(), env = emptyMap())

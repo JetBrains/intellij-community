@@ -1,16 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.starter.build.server
 
-import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.devIdeConfig.DevIdeConfig
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.FileVisitOption
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
-import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
@@ -25,7 +22,7 @@ import kotlin.io.path.readLines
  * The module index `<pool>.context-plugin-modules.txt` is a sibling of the manifest. It has one
  * `<main module>\t<plugin directory>` line per plugin.
  *
- * [installPluginDirectory] copies one plugin directory into a `plugins` directory of an IDE context.
+ * [pluginDirectory] returns one plugin directory of the pool. The IDE loads it in place through `-Dplugin.path`.
  */
 @ApiStatus.Internal
 class ContextPluginDirs private constructor(
@@ -43,38 +40,78 @@ class ContextPluginDirs private constructor(
   fun directoryOf(module: String): String? = modules.get(module)
 
   /**
-   * Copies the plugin [directory] to `<pluginsDir>/<directory>` and returns that path.
+   * Returns the plugin [directory] in the pool, the path from which the IDE loads the plugin in place.
    *
-   * The copy replaces an existing directory as a whole. Each file is a copy of the real file behind its link, so the
-   * IDE context owns it. A directory tree is copied recursively in the same way. The directories of the copy are writable.
+   * Each manifest line of the directory gives the path: the source of `<directory>/<below>` is `<path>/<below>`. The
+   * function fails when two lines give two paths. It also fails when the path holds an entry that the manifest does not
+   * name. A path in `bazel-out` can keep a file that an older build declared, and the IDE would load it.
    */
-  fun installPluginDirectory(directory: String, pluginsDir: Path): Path {
+  fun pluginDirectory(directory: String): Path {
     val sources = files.get(directory)
                   ?: error("The context plugins $manifest have no plugin directory '$directory'. They have $directories")
-    val target = pluginsDir.resolve(directory)
-    NioFiles.deleteRecursively(target)
+    var root: Path? = null
     for ((destination, source) in sources) {
-      val file = pluginsDir.resolve(destination.removeSuffix("/"))
-      if (destination.endsWith('/')) {
-        copyTree(source, file)
+      val below = destination.removeSuffix("/").removePrefix("$directory/")
+      var candidate = source
+      repeat(source.fileSystem.getPath(below).nameCount) {
+        candidate = candidate.parent
+                    ?: error("The context plugins $manifest name '$destination' with the source $source, which is not below '$below'")
       }
-      else {
-        file.parent.createDirectories()
-        copyFile(source, file)
+      check(candidate.resolve(below).normalize() == source.normalize()) {
+        "The context plugins $manifest name '$destination' with the source $source, which does not end with '$below'"
       }
+      check(root == null || root == candidate) {
+        "The context plugins $manifest place the plugin directory '$directory' in two directories, $root and $candidate"
+      }
+      root = candidate
     }
-    return target
+    val pluginDirectory = checkNotNull(root)
+    check(pluginDirectory.isDirectory()) {
+      "The plugin directory '$directory' of the context plugins $manifest is not a directory: $pluginDirectory"
+    }
+    checkNoUndeclaredEntries(directory, pluginDirectory, sources)
+    return pluginDirectory
   }
 
-  private fun copyTree(source: Path, target: Path) {
-    Files.walkFileTree(source, setOf(FileVisitOption.FOLLOW_LINKS), Int.MAX_VALUE, object : SimpleFileVisitor<Path>() {
+  /**
+   * Fails on an entry of [pluginDirectory] that [sources] do not name. A file and a link are leaves. A real directory
+   * must be a parent of a named entry. The walk does not enter a directory tree, because its content is not listed.
+   */
+  private fun checkNoUndeclaredEntries(directory: String, pluginDirectory: Path, sources: List<Pair<String, Path>>) {
+    val files = HashSet<Path>()
+    val trees = HashSet<Path>()
+    val parents = HashSet<Path>()
+    for ((destination, source) in sources) {
+      val relative = pluginDirectory.relativize(source)
+      (if (destination.endsWith('/')) trees else files).add(relative)
+      var parent = relative.parent
+      while (parent != null) {
+        parents.add(parent)
+        parent = parent.parent
+      }
+    }
+    fun undeclared(entry: Path): Nothing = error(
+      "The plugin directory '$directory' at $pluginDirectory holds $entry, which the context plugins $manifest do not name. " +
+      "An older build left it: delete it and build the pool again"
+    )
+    Files.walkFileTree(pluginDirectory, object : SimpleFileVisitor<Path>() {
       override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
-        target.resolve(source.relativize(dir).toString()).createDirectories()
-        return FileVisitResult.CONTINUE
+        if (dir == pluginDirectory) {
+          return FileVisitResult.CONTINUE
+        }
+        val relative = pluginDirectory.relativize(dir)
+        return when (relative) {
+          in trees -> FileVisitResult.SKIP_SUBTREE
+          in parents -> FileVisitResult.CONTINUE
+          else -> undeclared(dir)
+        }
       }
 
       override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-        copyFile(file, target.resolve(source.relativize(file).toString()))
+        val relative = pluginDirectory.relativize(file)
+        if (relative !in files && relative !in trees) {
+          undeclared(file)
+        }
         return FileVisitResult.CONTINUE
       }
     })
@@ -148,11 +185,6 @@ class ContextPluginDirs private constructor(
         check(modules.put(module, directory) == null) { "The module index $index names '$module' twice" }
       }
       return ContextPluginDirs(manifest, files.toSortedMap(), modules)
-    }
-
-    /** A stream copy gives the file the default permissions: a Bazel output is read-only. */
-    private fun copyFile(source: Path, target: Path) {
-      Files.newInputStream(source.toRealPath()).use { Files.copy(it, target) }
     }
 
     private fun readTabSeparated(file: Path): List<Pair<String, String>> {

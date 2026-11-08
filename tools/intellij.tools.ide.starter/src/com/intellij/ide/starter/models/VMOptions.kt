@@ -15,6 +15,7 @@ import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.performanceTesting.commands.SdkObject
 import com.intellij.tools.ide.util.common.logOutput
 import org.jetbrains.annotations.ApiStatus.Experimental
+import java.io.File
 import java.lang.management.ManagementFactory
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
@@ -32,6 +33,10 @@ data class VMOptions(
   companion object {
     const val ALLOW_SKIPPING_FULL_SCANNING_ON_STARTUP_OPTION: String = "full.scanning.on.startup.can.be.skipped"
     const val TEST_SCRIPT_FILE_OPTION: String = "testscript.filename"
+
+    /** The system property from which the platform loads additional plugins, see [addPluginPath]. */
+    private const val PLUGIN_PATH_PROPERTY: String = "plugin.path"
+
     fun readIdeVMOptions(ide: InstalledIde, file: Path): VMOptions {
       return VMOptions(
         ide = ide,
@@ -86,6 +91,29 @@ data class VMOptions(
     else {
       addSystemProperty(key, value)
     }
+  }
+
+  /**
+   * Adds [path] to `-Dplugin.path`, after the paths it already has. The IDE loads each plugin of that property in place.
+   *
+   * The paths are separated by [File.pathSeparator]. A path that the property already has is not added again.
+   */
+  fun addPluginPath(path: Path) {
+    val value = path.toAbsolutePath().toString()
+    val paths = pluginPathValues()
+    if (value in paths) {
+      return
+    }
+    addSystemProperty(PLUGIN_PATH_PROPERTY, (paths + value).joinToString(File.pathSeparator))
+  }
+
+  /** The paths of `-Dplugin.path`, in their order. See [addPluginPath]. */
+  fun pluginPaths(): List<Path> = pluginPathValues().map { Path.of(it) }
+
+  private fun pluginPathValues(): List<String> {
+    val prefix = "-D$PLUGIN_PATH_PROPERTY="
+    val value = data.lastOrNull { it.trim().startsWith(prefix) }?.trim()?.removePrefix(prefix) ?: return emptyList()
+    return value.split(File.pathSeparatorChar).filter { it.isNotEmpty() }
   }
 
   fun removeSystemProperty(key: String, value: Boolean) {

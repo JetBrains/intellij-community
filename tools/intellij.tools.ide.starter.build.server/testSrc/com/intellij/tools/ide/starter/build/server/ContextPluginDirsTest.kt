@@ -13,8 +13,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
-import kotlin.io.path.isSymbolicLink
-import kotlin.io.path.isWritable
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
@@ -33,27 +31,19 @@ internal class ContextPluginDirsTest {
   }
 
   @Test
-  fun `copy of a plugin directory resolves the links and replaces the old directory`() {
-    val pool = ContextPluginDirs.read(writeSamplePool())
-    val pluginsDir = root.resolve("context/plugins")
-    val stale = pluginsDir.resolve("devkit/lib/stale.jar")
-    stale.parent.createDirectories()
-    stale.writeText("stale")
+  fun `plugin directory is the directory of the plugin in the pool`() {
+    val manifest = writeSamplePool()
+    val pool = ContextPluginDirs.read(manifest)
 
-    val installed = pool.installPluginDirectory("devkit", pluginsDir)
+    val directory = pool.pluginDirectory("devkit")
 
-    assertEquals(pluginsDir.resolve("devkit"), installed)
-    assertFalse(stale.exists())
-    val jar = installed.resolve("lib/devkit.jar")
-    assertEquals("devkit/lib/devkit.jar", jar.readText())
-    assertFalse(jar.isSymbolicLink())
-    assertTrue(jar.isWritable())
-    assertTrue(installed.resolve("lib/modules/intellij.devkit.core.jar").exists())
-    assertFalse(pluginsDir.resolve("lambda-test-plugin").exists())
+    assertEquals(manifest.resolveSibling("pool/devkit"), directory)
+    assertEquals("devkit/lib/devkit.jar", directory.resolve("lib/devkit.jar").readText())
+    assertEquals(manifest.resolveSibling("pool/lambda-test-plugin"), pool.pluginDirectory("lambda-test-plugin"))
   }
 
   @Test
-  fun `copy of a plugin directory copies a directory tree with the links resolved`() {
+  fun `plugin directory accepts a directory tree and does not look into it`() {
     val manifest = writeSamplePool()
     val packed = root.resolve("packed-tree/native/mac").createDirectories()
     packed.resolve("libfoo.dylib").writeText("libfoo")
@@ -63,20 +53,65 @@ internal class ContextPluginDirsTest {
     link(tree.resolve("readme.txt"), root.resolve("packed-tree/readme.txt").apply { writeText("readme") })
     manifest.writeText(manifest.readText() + "devkit/native/\tpool/devkit/native/\n")
 
-    val pool = ContextPluginDirs.read(manifest)
-    val installed = pool.installPluginDirectory("devkit", root.resolve("context/plugins"))
+    val directory = ContextPluginDirs.read(manifest).pluginDirectory("devkit")
 
-    val library = installed.resolve("native/mac/libfoo.dylib")
-    assertEquals("libfoo", library.readText())
-    assertFalse(library.isSymbolicLink())
-    assertFalse(library.parent.isSymbolicLink())
-    assertTrue(library.parent.isWritable())
-    assertEquals("readme", installed.resolve("native/readme.txt").readText())
-    assertEquals("devkit/lib/devkit.jar", installed.resolve("lib/devkit.jar").readText())
+    assertEquals(manifest.resolveSibling("pool/devkit"), directory)
+    assertEquals("libfoo", directory.resolve("native/mac/libfoo.dylib").readText())
   }
 
   @Test
-  fun `pool installs a directory tree resolved only from the runfiles manifest`() {
+  fun `plugin directory accepts a link to a directory tree`() {
+    val manifest = writeSamplePool()
+    val packed = root.resolve("packed-tree/native").createDirectories()
+    packed.resolve("libfoo.dylib").writeText("libfoo")
+    // A runfiles tree links a tree output as a whole. On Windows the link is a copy, a real directory.
+    link(manifest.resolveSibling("pool/devkit/native"), packed)
+    manifest.writeText(manifest.readText() + "devkit/native/\tpool/devkit/native/\n")
+
+    val directory = ContextPluginDirs.read(manifest).pluginDirectory("devkit")
+
+    assertEquals("libfoo", directory.resolve("native/libfoo.dylib").readText())
+  }
+
+  @Test
+  fun `plugin directory with a file that the manifest does not name fails`() {
+    val manifest = writeSamplePool()
+    manifest.resolveSibling("pool/devkit/lib/stale.jar").writeText("stale")
+    val pool = ContextPluginDirs.read(manifest)
+
+    val error = assertThrows<IllegalStateException> { pool.pluginDirectory("devkit") }
+
+    assertTrue(error.message!!.contains("stale.jar") && error.message!!.contains("do not name"), error.message)
+    assertEquals(manifest.resolveSibling("pool/lambda-test-plugin"), pool.pluginDirectory("lambda-test-plugin"))
+  }
+
+  @Test
+  fun `plugin directory with a directory that the manifest does not name fails`() {
+    val manifest = writeSamplePool()
+    manifest.resolveSibling("pool/devkit/old").createDirectories()
+
+    val error = assertThrows<IllegalStateException> { ContextPluginDirs.read(manifest).pluginDirectory("devkit") }
+
+    assertTrue(error.message!!.contains("old") && error.message!!.contains("do not name"), error.message)
+  }
+
+  @Test
+  fun `plugin directory that two places hold fails`() {
+    val manifest = writeSamplePool()
+    val value = "_main/tests/${manifest.fileName}"
+    val moved = "pool/devkit/lib/modules/intellij.devkit.core.jar"
+    val other = root.resolve("other")
+    other.resolve("_main/tests/$moved").apply { parent.createDirectories() }.writeText("core")
+    Files.delete(manifest.resolveSibling(moved))
+    val pool = ContextPluginDirs.resolve(value) { path -> if (path == value) manifest else other.resolve(path) }
+
+    val error = assertThrows<IllegalStateException> { pool.pluginDirectory("devkit") }
+
+    assertTrue(error.message!!.contains("in two directories"), error.message)
+  }
+
+  @Test
+  fun `plugin directory with a directory tree resolves only from the runfiles manifest`() {
     val manifest = writeSamplePool()
     val packed = root.resolve("packed-tree/native/mac").createDirectories()
     packed.resolve("libfoo.dylib").writeText("libfoo")
@@ -91,19 +126,11 @@ internal class ContextPluginDirsTest {
     val pool = ContextPluginDirs.resolve(value) { runfile ->
       DevIdeConfig.findInRunfilesManifest(runfilesManifest, runfile) ?: throw IllegalStateException("'$runfile' names no runfile")
     }
-    val installed = pool.installPluginDirectory("devkit", root.resolve("context/plugins"))
 
-    val library = installed.resolve("native/mac/libfoo.dylib")
-    assertEquals("libfoo", library.readText())
-    assertFalse(library.isSymbolicLink())
-    assertFalse(library.parent.isSymbolicLink())
-    assertTrue(library.isWritable())
-    assertTrue(library.parent.isWritable())
-    assertEquals("readme", installed.resolve("native/readme.txt").readText())
-    val jar = installed.resolve("lib/devkit.jar")
-    assertEquals("devkit/lib/devkit.jar", jar.readText())
-    assertFalse(jar.isSymbolicLink())
-    assertTrue(jar.isWritable())
+    val directory = pool.pluginDirectory("devkit")
+
+    assertEquals(manifest.resolveSibling("pool/devkit"), directory)
+    assertEquals("libfoo", directory.resolve("native/mac/libfoo.dylib").readText())
   }
 
   @Test
@@ -159,8 +186,7 @@ internal class ContextPluginDirsTest {
 
     assertEquals(alone, pool.manifest)
     assertEquals(mapOf("intellij.devkit" to "devkit", "intellij.lambda.test.plugin" to "lambda-test-plugin"), pool.modules)
-    val installed = pool.installPluginDirectory("devkit", root.resolve("context/plugins"))
-    assertEquals("devkit/lib/devkit.jar", installed.resolve("lib/devkit.jar").readText())
+    assertEquals(manifest.resolveSibling("pool/devkit"), pool.pluginDirectory("devkit"))
     assertThrows<IllegalStateException> { ContextPluginDirs.read(alone) }
   }
 

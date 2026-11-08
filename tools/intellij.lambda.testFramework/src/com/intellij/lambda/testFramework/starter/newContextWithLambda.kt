@@ -15,10 +15,9 @@ import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInS
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.Monolith
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.OnlyBackend
 import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.OnlyFrontend
-import com.intellij.util.io.copyRecursively
-import com.intellij.util.io.createDirectories
 import org.jetbrains.annotations.ApiStatus
 import kotlin.io.path.exists
+import kotlin.io.path.name
 
 fun Starter.newContextWithLambda(
   testName: String,
@@ -54,27 +53,27 @@ fun Starter.newContextWithLambda(
 }
 
 /**
- * Copies the frontend lambda test plugins out of the installation into the frontend custom plugins directory.
+ * Gives the frontend the lambda test plugins of the installation through `-Dplugin.path`, so it loads them in place.
  *
  * This is a workaround, see [AT-4407](https://youtrack.jetbrains.com/issue/AT-4407). The frontend process reads
  * its bundled plugins from `product-modules.xml` and not from the `plugins` directory of the installation, so it
- * does not see a plugin the dev build put there. A copy into the custom plugins directory is what it does load.
+ * does not see a plugin the dev build put there. A plugin of `plugin.path` is what it does load.
  *
  * [addLambdaTestPluginsToDevBuild] makes the dev build bundle the plugins, so the installation carries them only
  * when the run resolved a dev build from code. A missing plugin means the run got an installer build instead, and
- * no copy can repair that: the plugin holds this repository's own test code.
+ * nothing can repair that: the plugin holds this repository's own test code.
  *
- * The function skips a plugin directory that the frontend custom plugins directory already holds. The dev build server
- * installs a context plugin there, see `DevBuildServerRunner.installContextPlugins`.
+ * The function skips a plugin directory that the frontend already gets: from its custom plugins directory, or from a
+ * plugin path of the same name. The dev build server gives a context plugin that way, see
+ * `DevBuildServerRunner.contextPluginPaths`.
  */
 private fun IDERemDevTestContext.installFrontendLambdaPlugins(setup: LambdaTestSetup) {
   val frontendCustomPluginsDir = frontendIDEContext.paths.pluginsDir
-  if (!frontendCustomPluginsDir.exists()) {
-    frontendCustomPluginsDir.createDirectories()
-  }
+  val vmOptions = frontendIDEContext.ide.vmOptions
+  val pluginPathNames = vmOptions.pluginPaths().mapTo(HashSet()) { it.name }
   val bundledPluginsDir = frontendIDEContext.ide.installationPath.resolve("plugins")
   setup.additionalPluginDirNames(OnlyFrontend, All).forEach { pluginDirName ->
-    if (frontendCustomPluginsDir.resolve(pluginDirName).exists()) {
+    if (pluginDirName in pluginPathNames || frontendCustomPluginsDir.resolve(pluginDirName).exists()) {
       return@forEach
     }
     val bundledPluginDir = bundledPluginsDir.resolve(pluginDirName)
@@ -83,7 +82,7 @@ private fun IDERemDevTestContext.installFrontendLambdaPlugins(setup: LambdaTestS
       "'$pluginDirName'. A lambda test needs a dev build from code, because the plugin holds the test code of this " +
       "repository. Check that the run does not use a downloaded installer build."
     }
-    bundledPluginDir.copyRecursively(frontendCustomPluginsDir.resolve(pluginDirName))
+    vmOptions.addPluginPath(bundledPluginDir)
   }
 }
 

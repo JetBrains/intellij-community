@@ -31,8 +31,8 @@ import kotlin.io.path.isDirectory
  * [distributions] holds one distribution per product, and each IDE gets the one assembled for its platform prefix.
  *
  * A distribution can have a pool of context plugins. A requested module that the distribution does not contain is
- * available when a plugin of the pool has it as its main module. [installContextPlugins] copies that plugin into the
- * `plugins` directory of the IDE context.
+ * available when a plugin of the pool has it as its main module. [contextPluginPaths] returns the directory of that
+ * plugin in the pool, and the IDE loads it in place through `-Dplugin.path`.
  *
  * [origin] says where the distributions come from, for example "declared by 'idea.ide.config.path'". Each error
  * message names it.
@@ -78,13 +78,13 @@ internal class PrebuiltDevDistRunner(
     return home
   }
 
-  /** Installs the plugins of the context plugin pool that hold the requested modules the distribution does not contain. */
-  override fun installContextPlugins(ideInfo: IdeInfo, pluginsDir: Path) {
+  /** The plugin directories of the context plugin pool that hold the requested modules the distribution does not contain. */
+  override fun contextPluginPaths(ideInfo: IdeInfo): List<Path> {
     val distribution = distributionFor(ideInfo)
-    val contextPlugins = distribution.contextPlugins ?: return
+    val contextPlugins = distribution.contextPlugins ?: return emptyList()
     val config = distribution.config
     val missing = missingDevDistModules(ideInfo.additionalModules, config.additionalModules, config.bundledModules)
-    installContextPlugins(missing, contextPlugins, config.homePath.resolve("plugins"), pluginsDir)
+    return contextPluginPaths(missing, contextPlugins, config.homePath.resolve("plugins"))
   }
 
   /**
@@ -193,14 +193,17 @@ internal fun unavailableDevDistModules(
 }
 
 /**
- * Installs the plugins of [contextPlugins] that have the [missing] modules as main modules into [pluginsDir], and
- * returns their plugin directories, sorted.
+ * Returns the plugin directories of the plugins of [contextPlugins] that have the [missing] modules as main modules,
+ * sorted by directory name. The IDE loads each of them in place, so the context gets no copy.
  *
  * [missing] holds the requested modules that the distribution does not contain, see [missingDevDistModules]. The
  * function fails on a module that no plugin of the pool has. It also fails on a plugin directory that
  * [homePluginsDir], the `plugins` directory of the distribution, already holds: the IDE would load two copies.
+ *
+ * A pool directory is a read-only Bazel output. An uninstall or an update of such a plugin by the plugin manager would
+ * change the runfiles of the test.
  */
-internal fun installContextPlugins(missing: Collection<String>, contextPlugins: ContextPluginDirs, homePluginsDir: Path, pluginsDir: Path): List<String> {
+internal fun contextPluginPaths(missing: Collection<String>, contextPlugins: ContextPluginDirs, homePluginsDir: Path): List<Path> {
   val directories = missing.mapTo(sortedSetOf()) { module ->
     contextPlugins.directoryOf(module) ?: error("The context plugins ${contextPlugins.manifest} have no plugin with the main module '$module'")
   }
@@ -213,11 +216,9 @@ internal fun installContextPlugins(missing: Collection<String>, contextPlugins: 
       "The context plugin directory '$directory' of ${contextPlugins.manifest} is also in the distribution, at ${homePluginsDir.resolve(directory)}"
     }
   }
-  for (directory in directories) {
-    contextPlugins.installPluginDirectory(directory, pluginsDir)
-  }
-  logOutput("Installed the context plugins ${missing.sorted()} of ${contextPlugins.manifest} into $pluginsDir")
-  return directories.toList()
+  val paths = directories.map { contextPlugins.pluginDirectory(it) }
+  logOutput("Loads the context plugins ${missing.sorted()} of ${contextPlugins.manifest} in place from $paths")
+  return paths
 }
 
 /**
