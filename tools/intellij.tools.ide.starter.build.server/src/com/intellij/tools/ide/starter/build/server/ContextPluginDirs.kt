@@ -49,7 +49,8 @@ class ContextPluginDirs private constructor(
    * IDE context owns it. A directory tree is copied recursively in the same way. The directories of the copy are writable.
    */
   fun installPluginDirectory(directory: String, pluginsDir: Path): Path {
-    val sources = files.get(directory) ?: error("The context plugins $manifest have no plugin directory '$directory'. They have $directories")
+    val sources = files.get(directory)
+                  ?: error("The context plugins $manifest have no plugin directory '$directory'. They have $directories")
     val target = pluginsDir.resolve(directory)
     NioFiles.deleteRecursively(target)
     for ((destination, source) in sources) {
@@ -113,7 +114,10 @@ class ContextPluginDirs private constructor(
           return fallback(relative)
         }
         catch (e: IllegalStateException) {
-          throw IllegalStateException("The context plugins $manifest name '$relative', which is neither beside the manifest nor a runfile", e)
+          throw IllegalStateException(
+            "The context plugins $manifest name '$relative', which is neither beside the manifest nor a runfile",
+            e,
+          )
         }
       }
       val files = LinkedHashMap<String, MutableList<Pair<String, Path>>>()
@@ -138,7 +142,9 @@ class ContextPluginDirs private constructor(
       check(index.exists()) { "The module index $index of the context plugins $manifest does not exist" }
       val modules = LinkedHashMap<String, String>()
       for ((module, directory) in readTabSeparated(index)) {
-        check(directory in files) { "The module index $index names the plugin directory '$directory' of '$module', which $manifest does not have" }
+        check(directory in files) {
+          "The module index $index names the plugin directory '$directory' of '$module', which $manifest does not have"
+        }
         check(modules.put(module, directory) == null) { "The module index $index names '$module' twice" }
       }
       return ContextPluginDirs(manifest, files.toSortedMap(), modules)
