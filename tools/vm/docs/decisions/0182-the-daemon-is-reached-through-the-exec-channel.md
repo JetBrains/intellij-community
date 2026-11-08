@@ -23,6 +23,10 @@ The lane daemon binds `127.0.0.1` by default, and only a container-linux guest b
 [The lane daemon is the only runner of the Air UI lanes](2026-10-19-the-lane-daemon-is-the-only-runner-of-the-air-ui-lanes.md)
 records the change.
 
+Extended on 2026-11-08 by
+[The image build reaches SSH through the exec channel](2026-11-08-the-image-build-reaches-ssh-through-the-exec-channel.md):
+the Packer SSH of `image build` takes the exec channel too, through a loopback SOCKS5 proxy.
+
 ## Context
 
 The host controller `vm` reached the guest daemon over TCP. It asked the hypervisor for the guest address, a

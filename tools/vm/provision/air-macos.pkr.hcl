@@ -41,6 +41,19 @@ variable "guest_agent_binary" {
   type = string
 }
 
+# The loopback port of the SOCKS5 proxy that `vm.cmd image build` serves for the length of the build. Packer's SSH
+# reaches the candidate through it over the exec channel of Tart, because macOS Local Network privacy refuses the
+# guest address to a host process whose app the user did not grant. `crates/avl-vm/src/image/ssh_relay.rs` of the
+# UI-lane controller is the proxy and states the reason.
+variable "ssh_proxy_port" {
+  type = number
+
+  validation {
+    condition     = var.ssh_proxy_port > 0 && var.ssh_proxy_port < 65536
+    error_message = "The ssh_proxy_port variable must be a TCP port."
+  }
+}
+
 locals {
   # Where the agent lands in the guest: named once, for the upload and both invocations.
   guest_agent = "/tmp/air-vm-guest-agent"
@@ -79,6 +92,10 @@ source "tart-cli" "air_macos" {
   ssh_username = "admin"
   ssh_password = "admin"
   ssh_timeout  = "5m"
+  # Packer still asks `tart ip` for the guest address, and the proxy carries the connection to that address's
+  # sshd over `tart exec`, see the ssh_proxy_port variable.
+  ssh_proxy_host = "127.0.0.1"
+  ssh_proxy_port = var.ssh_proxy_port
 
   # base_vm is a local, digest-gated APFS snapshot prepared by fetch-base.sh.
   # It is deliberately never refreshed by Packer.

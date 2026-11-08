@@ -46,6 +46,15 @@ fingerprint only under WorkerData, and rejects a fingerprint shared with the
 other worker before normal work can begin. Tart guest-agent execution does not
 depend on SSH.
 
+Packer reaches the candidate's SSH through the exec channel, not through the
+guest network: `image build` serves it a SOCKS5 proxy on a loopback port, and
+each connection runs `tart exec -i <candidate> /usr/bin/nc 127.0.0.1 22`.
+macOS Local Network privacy refuses the guest address to an app the user did
+not grant, so the build needs no grant. The controller names the candidate
+and passes it and the port to `build-golden.sh`, which therefore runs only
+through `vm.cmd`. The record is
+`../docs/decisions/2026-11-08-the-image-build-reaches-ssh-through-the-exec-channel.md`.
+
 Packer always writes an unapproved candidate, never the pool's golden name.
 After Packer powers it off, `build-golden.sh` captures its disk,
 configuration, and NVRAM signatures, makes an APFS copy-on-write disk copy,
