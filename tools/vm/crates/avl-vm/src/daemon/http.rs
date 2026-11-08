@@ -40,6 +40,12 @@ pub(crate) const DEFAULT_ROUTE_TIMEOUT: Duration = Duration::from_secs(15);
 /// How much of a body that is not a status a probe quotes.
 const QUOTED_BODY_BYTES: usize = 120;
 
+/// The runs of a `GET` whose connection failed, the first one included, see [`DaemonClient::exchange`].
+const IDEMPOTENT_EXCHANGE_ATTEMPTS: u8 = 3;
+
+/// The wait between two runs of a `GET` whose connection failed.
+const IDEMPOTENT_EXCHANGE_PAUSE: Duration = Duration::from_millis(500);
+
 /// How one exchange failed before it produced an answer. The four are kept apart because they have four different
 /// repairs: a relay that never opened is the worker's exec channel or a daemon that does not listen, a silent one is
 /// a starved or wedged daemon, a broken one is whatever the error says, and an interrupt is the operator's.
@@ -170,7 +176,39 @@ impl DaemonClient {
     /// The route's budget bounds the whole exchange, the body included. A relay that the guest refuses reads as
     /// [`Transport::Connect`]. A relay that hangs before its first byte reads as [`Transport::NoReply`] when the route
     /// budget ends, the same as a daemon that does not answer.
+    ///
+    /// A `GET` changes nothing in the daemon, so a connection that failed is opened again, at most
+    /// [`IDEMPOTENT_EXCHANGE_ATTEMPTS`] times in all, [`IDEMPOTENT_EXCHANGE_PAUSE`] apart. The relay of a guest can fail
+    /// once in a while on its own: on Parallels Desktop 27.0.3 about one `prlctl exec` in ten failed in its channel on
+    /// 2026-11-08, and the `/status` probe of a release then read a parked daemon as busy and kept the lease. A
+    /// [`Transport::NoReply`] spent the budget of the route, and an [`Transport::Interrupted`] was asked for, so neither
+    /// runs again, and no other method does.
     pub(crate) async fn exchange(
+        &self,
+        ctx: &Ctx,
+        state: &HostState,
+        endpoint: &Endpoint,
+        body: Option<Bytes>,
+    ) -> Result<(StatusCode, Bytes), Transport> {
+        let attempts = if endpoint.method == wire::Method::Get {
+            IDEMPOTENT_EXCHANGE_ATTEMPTS
+        } else {
+            1
+        };
+        let mut attempt = 1;
+        loop {
+            let answered = self.exchange_once(ctx, state, endpoint, body.clone()).await;
+            match answered {
+                Err(Transport::Connect(_) | Transport::Broken(_)) if attempt < attempts && !ctx.is_cancelled() => {
+                    attempt += 1;
+                    tokio::time::sleep(IDEMPOTENT_EXCHANGE_PAUSE).await;
+                }
+                answered => return answered,
+            }
+        }
+    }
+
+    async fn exchange_once(
         &self,
         ctx: &Ctx,
         state: &HostState,
