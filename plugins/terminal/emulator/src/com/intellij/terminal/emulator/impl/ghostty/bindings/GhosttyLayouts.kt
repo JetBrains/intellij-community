@@ -2,7 +2,9 @@
 package com.intellij.terminal.emulator.impl.ghostty.bindings
 
 import java.lang.foreign.AddressLayout
+import java.lang.foreign.Arena
 import java.lang.foreign.MemoryLayout
+import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout
 
 /**
@@ -47,6 +49,20 @@ internal object GhosttyLayouts {
     C_PTR.withName("ptr"),
     C_LONG.withName("len"))
   const val STRING_OFF_LEN = 8L
+
+  /**
+   * Allocates a `GhosttyString` in [arena] that points at the UTF-8 bytes of [text].
+   * The bytes live in [arena] as well.
+   */
+  fun allocateString(arena: Arena, text: String): MemorySegment {
+    val bytes = text.encodeToByteArray()
+    val data = arena.allocate(bytes.size.toLong())
+    MemorySegment.copy(bytes, 0, data, C_BYTE, 0L, bytes.size)
+    val string = arena.allocate(STRING)
+    string.set(C_PTR, 0L, data)
+    string.set(C_LONG, STRING_OFF_LEN, bytes.size.toLong())
+    return string
+  }
 
   /** `GhosttyGridRef`: `size_t size; void* node; uint16 x; uint16 y;` (24 bytes, align 8). */
   val GRID_REF: MemoryLayout = MemoryLayout.structLayout(

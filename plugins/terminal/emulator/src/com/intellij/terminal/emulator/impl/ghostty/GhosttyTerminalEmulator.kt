@@ -55,8 +55,6 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.POINT
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_MIN_SIZE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_OFF_PROGRESS
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_OFF_STATE
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING_OFF_LEN
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BG_TAG
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BG_VAL
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BLINK
@@ -69,6 +67,7 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_ITALIC
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_UNDERLINE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_SIZE
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.allocateString
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyMode
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyMods
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyMouseAction
@@ -174,6 +173,7 @@ internal class GhosttyTerminalEmulator(
   private var colorScheme: ColorScheme? = null
 
   private val sizeHandler: GhosttySizeHandler = GhosttySizeHandler(initialGeometry.cellSize, ::terminalGetU16)
+  private val xtversion: GhosttyXtversion = GhosttyXtversion()
 
   // Reusable scratch buffers + cell holder (this instance is single-threaded).
   private val scratchPoint: MemorySegment = scratchArena.allocate(POINT)
@@ -364,6 +364,7 @@ internal class GhosttyTerminalEmulator(
       }
 
       sizeHandler.install(terminalHandle, arena)
+      xtversion.install(terminalHandle, arena)
 
       keyEncoderHandle = createInputHandle("ghostty_key_encoder_new", LibGhosttyVt::keyEncoderNew)
       keyEventHandle = createInputHandle("ghostty_key_event_new", LibGhosttyVt::keyEventNew)
@@ -486,16 +487,10 @@ internal class GhosttyTerminalEmulator(
 
   override fun setTerminfoName(name: String) {
     ensureOpen()
-    val bytes = name.encodeToByteArray()
     // The engine copies the name, so the memory is only needed during the call.
     val result = try {
       Arena.ofConfined().use { callArena ->
-        val data = callArena.allocate(bytes.size.toLong())
-        MemorySegment.copy(bytes, 0, data, C_BYTE, 0L, bytes.size)
-        val string = callArena.allocate(STRING)
-        string.set(C_PTR, 0L, data)
-        string.set(C_LONG, STRING_OFF_LEN, bytes.size.toLong())
-        LibGhosttyVt.terminalSet(terminal, GhosttyTerminalOption.TERMINFO_NAME.code, string)
+        LibGhosttyVt.terminalSet(terminal, GhosttyTerminalOption.TERMINFO_NAME.code, allocateString(callArena, name))
       }
     } catch (t: Throwable) {
       throw RuntimeException("ghostty_terminal_set(TERMINFO_NAME) failed", t)
