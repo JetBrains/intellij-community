@@ -10,8 +10,11 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.io.IOException
 import kotlinx.serialization.json.JsonElement
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 private val LOG = KLoggers.logger("com.jetbrains.lsp.implementation.protocolFraming")
 
@@ -41,7 +44,8 @@ const val DEFAULT_MAX_BODY_SIZE: Int = 256 shl 20
  * Runs [body] over the base-protocol frames of [connection]: `Content-Length` header, blank line, UTF-8 JSON body.
  *
  * [body] gets the decoded incoming messages and a channel for outgoing messages, both as JSON trees. For an LSP
- * session use [withLspFraming], or the connection overloads of [withLsp] and [serveLsp].
+ * session use [withLspFraming], or the connection overloads of [withLsp] and [serveLsp]. Messages queued before [body]
+ * returns are written before the connection closes, for at most a few seconds.
  *
  * A header line of more than [MAX_HEADER_LINE_LENGTH] bytes, or a `Content-Length` above [maxBodySize], drops the
  * connection, as any header that is not ours does.
@@ -114,16 +118,30 @@ private suspend fun <In : Any, Out : Any> withFraming(
       }
     }
 
+    var returned = false
     try {
       body(incomingReceiver, outgoingSender)
+      returned = true
     }
     finally {
       readJob.cancel()
-      writeJob.cancel()
-      connection.close()
+      try {
+        if (returned) {
+          // write what the body queued before it returned, e.g. the answer to `disconnect`
+          outgoingSender.close()
+          withTimeoutOrNull(OUTGOING_DRAIN_TIMEOUT) { writeJob.join() }
+        }
+      }
+      finally {
+        writeJob.cancel()
+        connection.close()
+      }
     }
   }
 }
+
+/** How long [withFraming] waits to write the queued messages after the body returns: a peer that stops reading must not hold the exit. */
+private val OUTGOING_DRAIN_TIMEOUT: Duration = 5.seconds
 
 /**
  * @return the body of the next frame, or `null` at the end of input or on a header that is not ours: a header line of

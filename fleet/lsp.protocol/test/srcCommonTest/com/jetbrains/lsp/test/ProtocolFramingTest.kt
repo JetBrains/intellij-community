@@ -261,6 +261,33 @@ class ProtocolFramingTest {
   }
 
   @Test
+  fun `writes the messages queued right before the body returns`() {
+    runTest {
+      val messages = (1..3).map { parse("""{"jsonrpc":"2.0","method":"x/note","params":$it}""") }
+      val expected = messages.joinToString("") { frame(LSP.json.encodeToString(JsonElement.serializer(), it)) }.encodeToByteArray()
+      val output = ByteChannel()
+      withBaseProtocolFraming(TestConnection(ByteChannel(), output), exitSignal = CompletableDeferred()) { _, outgoing ->
+        for (message in messages) outgoing.send(message)
+      }
+      // the reader suspends on a short write; virtual time then runs into the timeout instead of hanging
+      val written = withTimeout(10_000) { output.readByteArray(expected.size) }
+      assertEquals(messages, readChunkedFrames(written))
+    }
+  }
+
+  @Test
+  fun `a peer that does not read does not hold the exit for longer than the drain timeout`() {
+    runTest {
+      // above the ktor ByteChannel buffer, so the flush suspends until someone reads
+      val big = parse("""{"jsonrpc":"2.0","method":"x/note","params":"${"a".repeat(2 shl 20)}"}""")
+      withBaseProtocolFraming(TestConnection(ByteChannel(), ByteChannel()), exitSignal = CompletableDeferred()) { _, outgoing ->
+        outgoing.send(big)
+      }
+      assertEquals(5_000, testScheduler.currentTime)
+    }
+  }
+
+  @Test
   fun `withLsp over framing round-trips requests, results, errors and notifications`() {
     runTest {
       val echo = RequestType("x/\"echo\" é", String.serializer(), String.serializer().nullable, String.serializer())
