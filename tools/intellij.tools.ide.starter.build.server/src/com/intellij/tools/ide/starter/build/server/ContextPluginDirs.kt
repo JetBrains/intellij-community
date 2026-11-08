@@ -4,18 +4,24 @@ package com.intellij.tools.ide.starter.build.server
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.devIdeConfig.DevIdeConfig
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.FileVisitOption
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 import kotlin.io.path.readLines
 
 /**
  * The context plugins of one pool: the plugin directories of a `context_plugin_dir` target.
  *
- * The [manifest] `<pool>.context-plugins.txt` has one `<destination>\t<path>` line per file. The destination is relative to
- * `<context>/plugins` and starts with the plugin directory. The path is relative to the directory of the manifest.
+ * The [manifest] `<pool>.context-plugins.txt` has one `<destination>\t<path>` line per file or directory tree. The destination
+ * is relative to `<context>/plugins` and starts with the plugin directory. The path is relative to the directory of the manifest.
+ * A destination that ends with `/` names a directory tree, and its path ends with `/` too.
  * The module index `<pool>.context-plugin-modules.txt` is a sibling of the manifest. It has one
  * `<main module>\t<plugin directory>` line per plugin.
  *
@@ -24,7 +30,7 @@ import kotlin.io.path.readLines
 @ApiStatus.Internal
 class ContextPluginDirs private constructor(
   val manifest: Path,
-  /** The files of each plugin directory: the destination relative to `<context>/plugins` to its source. */
+  /** The files and the directory trees of each plugin directory: the destination relative to `<context>/plugins` to its source. */
   private val files: Map<String, List<Pair<String, Path>>>,
   /** The plugin directory of each plugin, by the main module of the plugin. */
   val modules: Map<String, String>,
@@ -40,19 +46,37 @@ class ContextPluginDirs private constructor(
    * Copies the plugin [directory] to `<pluginsDir>/<directory>` and returns that path.
    *
    * The copy replaces an existing directory as a whole. Each file is a copy of the real file behind its link, so the
-   * IDE context owns it. The directories of the copy are writable.
+   * IDE context owns it. A directory tree is copied recursively in the same way. The directories of the copy are writable.
    */
   fun installPluginDirectory(directory: String, pluginsDir: Path): Path {
     val sources = files.get(directory) ?: error("The context plugins $manifest have no plugin directory '$directory'. They have $directories")
     val target = pluginsDir.resolve(directory)
     NioFiles.deleteRecursively(target)
     for ((destination, source) in sources) {
-      val file = pluginsDir.resolve(destination)
-      file.parent.createDirectories()
-      // A stream copy gives the file the default permissions: a Bazel output is read-only.
-      Files.newInputStream(source.toRealPath()).use { Files.copy(it, file) }
+      val file = pluginsDir.resolve(destination.removeSuffix("/"))
+      if (destination.endsWith('/')) {
+        copyTree(source, file)
+      }
+      else {
+        file.parent.createDirectories()
+        copyFile(source, file)
+      }
     }
     return target
+  }
+
+  private fun copyTree(source: Path, target: Path) {
+    Files.walkFileTree(source, setOf(FileVisitOption.FOLLOW_LINKS), Int.MAX_VALUE, object : SimpleFileVisitor<Path>() {
+      override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
+        target.resolve(source.relativize(dir).toString()).createDirectories()
+        return FileVisitResult.CONTINUE
+      }
+
+      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+        copyFile(file, target.resolve(source.relativize(file).toString()))
+        return FileVisitResult.CONTINUE
+      }
+    })
   }
 
   companion object {
@@ -73,8 +97,15 @@ class ContextPluginDirs private constructor(
         check(directory.isNotEmpty() && directory != destination) {
           "The context plugin manifest $manifest names '$destination', which is not a file of a plugin directory"
         }
+        val tree = destination.endsWith('/')
+        check(tree == relative.endsWith('/')) {
+          "The context plugin manifest $manifest maps '$destination' to '$relative': a directory tree needs '/' at the end of both"
+        }
         val source = base.resolve(relative)
         check(source.exists()) { "The context plugin manifest $manifest names '$relative', and $source does not exist" }
+        check(source.isDirectory() == tree) {
+          "The context plugin manifest $manifest names '$relative' as a ${if (tree) "directory tree" else "file"}, and $source is not one"
+        }
         files.computeIfAbsent(directory) { ArrayList() }.add(destination to source)
       }
 
@@ -86,6 +117,11 @@ class ContextPluginDirs private constructor(
         check(modules.put(module, directory) == null) { "The module index $index names '$module' twice" }
       }
       return ContextPluginDirs(manifest, files.toSortedMap(), modules)
+    }
+
+    /** A stream copy gives the file the default permissions: a Bazel output is read-only. */
+    private fun copyFile(source: Path, target: Path) {
+      Files.newInputStream(source.toRealPath()).use { Files.copy(it, target) }
     }
 
     private fun readTabSeparated(file: Path): List<Pair<String, String>> {

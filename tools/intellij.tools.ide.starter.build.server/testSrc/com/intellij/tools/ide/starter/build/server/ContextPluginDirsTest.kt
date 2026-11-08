@@ -52,6 +52,45 @@ internal class ContextPluginDirsTest {
   }
 
   @Test
+  fun `copy of a plugin directory copies a directory tree with the links resolved`() {
+    val manifest = writeSamplePool()
+    val packed = root.resolve("packed-tree/native/mac").createDirectories()
+    packed.resolve("libfoo.dylib").writeText("libfoo")
+    // A `declare_directory` output of Bazel holds links to the packed files and directories.
+    val tree = manifest.resolveSibling("pool/devkit/native").createDirectories()
+    link(tree.resolve("mac"), packed)
+    link(tree.resolve("readme.txt"), root.resolve("packed-tree/readme.txt").apply { writeText("readme") })
+    manifest.writeText(manifest.readText() + "devkit/native/\tpool/devkit/native/\n")
+
+    val pool = ContextPluginDirs.read(manifest)
+    val installed = pool.installPluginDirectory("devkit", root.resolve("context/plugins"))
+
+    val library = installed.resolve("native/mac/libfoo.dylib")
+    assertEquals("libfoo", library.readText())
+    assertFalse(library.isSymbolicLink())
+    assertFalse(library.parent.isSymbolicLink())
+    assertTrue(library.parent.isWritable())
+    assertEquals("readme", installed.resolve("native/readme.txt").readText())
+    assertEquals("devkit/lib/devkit.jar", installed.resolve("lib/devkit.jar").readText())
+  }
+
+  @Test
+  fun `tree line without a directory fails`() {
+    val manifest = writeSamplePool()
+    manifest.writeText(manifest.readText() + "devkit/lib/devkit.jar/\tpool/devkit/lib/devkit.jar/\n")
+    val error = assertThrows<IllegalStateException> { ContextPluginDirs.read(manifest) }
+    assertTrue(error.message!!.contains("directory tree"), error.message)
+  }
+
+  @Test
+  fun `tree destination without a tree path fails`() {
+    val manifest = writeSamplePool()
+    manifest.writeText(manifest.readText() + "devkit/lib/\tpool/devkit/lib\n")
+    val error = assertThrows<IllegalStateException> { ContextPluginDirs.read(manifest) }
+    assertTrue(error.message!!.contains("'/' at the end of both"), error.message)
+  }
+
+  @Test
   fun `pool resolves an absolute manifest path`() {
     val manifest = writeSamplePool()
     assertEquals(setOf("devkit", "lambda-test-plugin"), ContextPluginDirs.resolve(manifest.toString()).directories)
@@ -74,4 +113,13 @@ internal class ContextPluginDirsTest {
   }
 
   private fun writeSamplePool(): Path = writeContextPluginPool(root)
+
+  private fun link(link: Path, target: Path) {
+    if (System.getProperty("os.name").startsWith("Windows")) {
+      target.toFile().copyRecursively(link.toFile())
+    }
+    else {
+      Files.createSymbolicLink(link, target)
+    }
+  }
 }
