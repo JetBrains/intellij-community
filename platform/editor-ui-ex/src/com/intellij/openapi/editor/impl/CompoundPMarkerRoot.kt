@@ -29,9 +29,11 @@ open class CompoundPMarkerRoot private constructor(
 
   override fun isEmpty(): Boolean = exactRangeRoot.isEmpty() && linesInRangeRoot.isEmpty()
 
-  override fun isValid(handle: SnapshotMarkerReference<*>): Boolean = exactRangeRoot.isValid(handle) || linesInRangeRoot.isValid(handle)
+  override fun isValid(handle: SnapshotMarkerReference<*>): Boolean =
+    rootFor(handle)?.isValid(handle) ?: (exactRangeRoot.isValid(handle) || linesInRangeRoot.isValid(handle))
 
   override fun resolve(handle: SnapshotMarkerReference<*>): Long {
+    rootFor(handle)?.let { return it.resolve(handle) }
     val exactResolution = exactRangeRoot.resolve(handle)
     if (!PMarkerResolution.isAbsent(exactResolution)) return exactResolution
 
@@ -104,19 +106,19 @@ open class CompoundPMarkerRoot private constructor(
   }
 
   override fun updateFlavor(handle: SnapshotMarkerReference<*>, flavorFlags: Byte): PMarkerRoot {
-    return updateMarker { it.updateFlavor(handle, flavorFlags) }
+    return updateMarker(handle) { it.updateFlavor(handle, flavorFlags) }
   }
 
   override fun updateSpec(handle: SnapshotMarkerReference<*>, spec: Byte): PMarkerRoot {
-    return updateMarker { it.updateSpec(handle, spec) }
+    return updateMarker(handle) { it.updateSpec(handle, spec) }
   }
 
   override fun updateMeasure(handle: SnapshotMarkerReference<*>, measure: Int): PMarkerRoot {
-    return updateMarker { it.updateMeasure(handle, measure) }
+    return updateMarker(handle) { it.updateMeasure(handle, measure) }
   }
 
   override fun remove(handle: SnapshotMarkerReference<*>): PMarkerRoot {
-    return updateMarker { it.remove(handle) }
+    return updateMarker(handle) { it.remove(handle) }
   }
 
   override fun purgeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot {
@@ -160,7 +162,19 @@ open class CompoundPMarkerRoot private constructor(
   @TestOnly
   fun withExactRangeRoot(root: PMarkerRoot): CompoundPMarkerRoot = withRoots(root, linesInRangeRoot)
 
-  private inline fun updateMarker(update: (PMarkerRoot) -> PMarkerRoot): CompoundPMarkerRoot {
+  private fun rootFor(handle: SnapshotMarkerReference<*>): PMarkerRoot? =
+    when ((handle.get() as? SnapshotRangeHighlighterImpl)?.getTargetArea()) {
+      HighlighterTargetArea.EXACT_RANGE -> exactRangeRoot
+      HighlighterTargetArea.LINES_IN_RANGE -> linesInRangeRoot
+      null -> null
+    }
+
+  private inline fun updateMarker(handle: SnapshotMarkerReference<*>, update: (PMarkerRoot) -> PMarkerRoot): CompoundPMarkerRoot {
+    when ((handle.get() as? SnapshotRangeHighlighterImpl)?.getTargetArea()) {
+      HighlighterTargetArea.EXACT_RANGE -> return withRoots(update(exactRangeRoot), linesInRangeRoot)
+      HighlighterTargetArea.LINES_IN_RANGE -> return withRoots(exactRangeRoot, update(linesInRangeRoot))
+      null -> Unit
+    }
     val updatedExactRoot = update(exactRangeRoot)
     if (updatedExactRoot !== exactRangeRoot) return withRoots(updatedExactRoot, linesInRangeRoot)
     return withRoots(exactRangeRoot, update(linesInRangeRoot))

@@ -49,6 +49,40 @@ import javax.swing.Icon
 @UsePMarkerImplementation
 class SnapshotRangeHighlighterImplTest {
   @Test
+  fun `line highlighter operations skip the exact range tree`() {
+    val document = DocumentImpl("one\ntwo", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val highlighter = model.addRangeHighlighter(5, 5, 1, null, HighlighterTargetArea.LINES_IN_RANGE) as SnapshotRangeMarkerImpl
+      val original = highlighter.currentRootReference().get() as CompoundPMarkerRoot
+      val unrelated = object : PMarkerRoot by original.exactRangeRoot {
+        override fun isValid(handle: SnapshotMarkerReference<*>): Boolean = error("The exact range tree must not be queried")
+        override fun resolve(handle: SnapshotMarkerReference<*>): Long = error("The exact range tree must not be queried")
+        override fun updateFlavor(handle: SnapshotMarkerReference<*>, flavorFlags: Byte): PMarkerRoot =
+          error("The exact range tree must not change")
+        override fun updateSpec(handle: SnapshotMarkerReference<*>, spec: Byte): PMarkerRoot =
+          error("The exact range tree must not change")
+        override fun updateMeasure(handle: SnapshotMarkerReference<*>, measure: Int): PMarkerRoot =
+          error("The exact range tree must not change")
+        override fun remove(handle: SnapshotMarkerReference<*>): PMarkerRoot = error("The exact range tree must not change")
+      }
+      val root = original.withExactRangeRoot(unrelated)
+      val handle = highlighter.markerHandle
+      Assertions.assertThat(root.isValid(handle)).isTrue()
+      Assertions.assertThat(root.resolve(handle)).isEqualTo(TextRangeScalarUtil.toScalarRange(5, 5))
+      val spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = true)
+      val updated = root.updateFlavor(handle, 0x40).updateSpec(handle, spec).updateMeasure(handle, 7)
+      Assertions.assertThat(updated.resolve(handle)).isEqualTo(root.resolve(handle))
+      Assertions.assertThat(updated.getPrefixAggregate(5)).isEqualTo(7)
+      Assertions.assertThat(updated.updateMeasure(handle, 7)).isSameAs(updated)
+      Assertions.assertThat(updated.remove(handle).isValid(handle)).isFalse()
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  @Test
   fun `compound metadata changes retain the offset cache identity`() {
     val document = DocumentImpl("one\ntwo", true)
     val model = MarkupModelImpl(document)

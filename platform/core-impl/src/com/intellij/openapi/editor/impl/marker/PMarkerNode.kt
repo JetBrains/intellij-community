@@ -21,6 +21,9 @@ import kotlin.experimental.or
  * @property persistentCount the number of entries whose policies can require a full traversal.
  * @property subtreeFlavorFlags the combined flavor flags used for query pruning.
  * @property aggregate the sum of marker measures within this subtree.
+ * @property changedParentMask the mask of parent links that this node must publish for its children.
+ * Bit 0 selects [left], and bit 1 selects [right].
+ * A clear bit means that the child inherits its parent link from an earlier version.
  */
 internal class PMarkerNode private constructor(
   val version: PMarkerNodeVersion,
@@ -33,6 +36,7 @@ internal class PMarkerNode private constructor(
   val persistentCount: Int,
   val subtreeFlavorFlags: Byte,
   val aggregate: Int,
+  private val changedParentMask: Byte,
 ) {
   constructor(
     version: PMarkerNodeVersion,
@@ -43,21 +47,24 @@ internal class PMarkerNode private constructor(
     source: PMarkerNode? = null,
   ) : this(
     version,
-    source?.state?.takeIf {
-      it.handle === entry.handle && it.nodeStart == entry.nodeStart && it.nodeEnd == entry.nodeEnd && it.lazyDelta == lazyDelta
-    } ?: PMarkerValidNode(version, entry.handle, entry.nodeStart, entry.nodeEnd, lazyDelta),
+    reusedState(source, entry, lazyDelta) ?: PMarkerValidNode(version, entry.handle, entry.nodeStart, entry.nodeEnd, lazyDelta),
     entry, left, right,
     maxOf(left?.height ?: 0, right?.height ?: 0) + 1,
     maxOf(entry.nodeEnd, shiftedEnd(left, lazyDelta), shiftedEnd(right, lazyDelta)),
     (if (entry.policy.isPersistent) 1 else 0) + (left?.persistentCount ?: 0) + (right?.persistentCount ?: 0),
     entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0),
     entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0),
+    changedParentMask(version, entry, left, right, lazyDelta, source),
   )
 
   val handle: SnapshotMarkerReference<*>
     get() = entry.handle
   val lazyDelta: Int
     get() = state.lazyDelta
+  val inheritsLeftParent: Boolean
+    get() = changedParentMask.toInt() and 1 == 0
+  val inheritsRightParent: Boolean
+    get() = changedParentMask.toInt() and 2 == 0
 
   /** Copies metadata and preserves the shape, offsets, and policies of this subtree. */
   fun withMetadata(
@@ -69,9 +76,32 @@ internal class PMarkerNode private constructor(
     version, state, entry, left, right, height, maximumEnd, persistentCount,
     if (updateAggregates) entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0) else subtreeFlavorFlags,
     if (updateAggregates) entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0) else aggregate,
+    changedParentMask,
   )
 
   companion object {
+    private fun reusedState(source: PMarkerNode?, entry: MarkerEntry, delta: Int): PMarkerValidNode? = source?.state?.takeIf {
+      it.handle === entry.handle && it.nodeStart == entry.nodeStart && it.nodeEnd == entry.nodeEnd && it.lazyDelta == delta
+    }
+
+    /**
+     * Computes the mask of parent links that this copy must publish.
+     * A child inherits its link only when this copy reuses the source state and the child reuses the source child's state.
+     * The source must come from an earlier version because copies from this version can have unpublished links.
+     */
+    private fun changedParentMask(
+      version: PMarkerNodeVersion,
+      entry: MarkerEntry,
+      left: PMarkerNode?,
+      right: PMarkerNode?,
+      delta: Int,
+      source: PMarkerNode?,
+    ): Byte {
+      if (source == null || source.version === version || reusedState(source, entry, delta) == null) return 3
+      return ((if (left?.state === source.left?.state) 0 else 1) or
+              (if (right?.state === source.right?.state) 0 else 2)).toByte()
+    }
+
     private fun shiftedEnd(child: PMarkerNode?, delta: Int): Int = if (child == null) Int.MIN_VALUE else child.maximumEnd + delta
   }
 }
@@ -147,6 +177,7 @@ internal class PMarkerNodeHistory<T : Any> {
       recent.get()?.let { return it }
     }
     return synchronized(this) {
+      if (latest == null && branches.isNullOrEmpty()) return@synchronized null
       var current: PMarkerNodeVersion? = version
       while (current != null) {
         val branch = current.branch

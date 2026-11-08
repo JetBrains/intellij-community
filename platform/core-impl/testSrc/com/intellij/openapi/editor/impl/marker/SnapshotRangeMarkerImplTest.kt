@@ -227,6 +227,32 @@ internal class SnapshotRangeMarkerImplTest {
   }
 
   @Test
+  fun `copied trees inherit unchanged parent records`() {
+    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
+      val marker = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+      val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+      val entries = List(15) { index ->
+        PMarkerRoot.MarkerEntry(SnapshotMarkerReference.create(marker, true), index * 4 + 1, index * 4 + 2, spec, 0)
+      }
+      val root = PMarkerDirectRoot.empty().insertMany(entries)
+      val nodeField = PMarkerDirectRoot::class.java.getDeclaredField("root").apply { isAccessible = true }
+      val latestField = PMarkerNodeHistory::class.java.getDeclaredField("latest").apply { isAccessible = true }
+      val node = nodeField.get(root) as PMarkerNode
+      val child = checkNotNull(node.left)
+      val parentRecord = checkNotNull(latestField.get(child.state.parents))
+
+      val added = SnapshotMarkerReference.create(marker, true)
+      val updated = root.insert(added, 61, 62, spec, 0)
+      val copied = nodeField.get(updated) as PMarkerNode
+
+      assertSame(node.state, copied.state)
+      assertSame(child.state, checkNotNull(copied.left).state)
+      assertSame(parentRecord, latestField.get(child.state.parents))
+      assertEquals(TextRangeScalarUtil.toScalarRange(61, 62), updated.resolve(added))
+    }
+  }
+
+  @Test
   fun `policy survives changes to marker flags`() {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)

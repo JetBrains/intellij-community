@@ -121,6 +121,47 @@ internal class PMarkerDirectRootTest {
     assertEquals(7, measured.getPrefixAggregate(8))
   }
 
+  @ParameterizedTest
+  @ValueSource(ints = [0, 1, 2])
+  fun `traversals cache absolute offsets only for visited markers`(query: Int) {
+    val entries = List(24) { entry(it * 4 + 1, it * 4 + 2) }
+    val original = empty.insertMany(entries)
+    val root = applyPatch(original, DocumentPatch.simple(40, 40, "xx", 1, false))
+    assertNull(resolutionCache(root))
+    var visited = 0
+
+    fun process(entry: MarkerEntry): Boolean {
+      val expected = entries[visited++]
+      val delta = if (expected.nodeStart > 40) 2 else 0
+      val offsets = TextRangeScalarUtil.toScalarRange(expected.nodeStart + delta, expected.nodeEnd + delta)
+      assertSame(expected.handle, entry.handle)
+      assertEquals(offsets, checkNotNull(resolutionCache(root))[entry.handle.id])
+      assertTrue(root.isValid(entry.handle))
+      assertEquals(offsets, root.resolve(entry.handle))
+      return visited < 15
+    }
+
+    when (query) {
+      0 -> assertFalse(root.processAllRangeMarkers { entry, _ -> process(entry) })
+      1 -> assertFalse(root.processRangeMarkersOverlappingWith(0, 200, 0, ::process))
+      2 -> {
+        val iterator = root.overlappingIterator(0, 200, 0)
+        do {
+          assertTrue(iterator.hasNext())
+        } while (process(iterator.next()))
+        assertTrue(iterator.hasNext())
+      }
+      else -> error("Unknown query: $query")
+    }
+
+    assertEquals(15, visited)
+    val cache = checkNotNull(resolutionCache(root))
+    for (entry in entries.drop(visited)) assertEquals(PMarkerResolution.UNRESOLVED, cache[entry.handle.id])
+    assertNull(resolutionCache(original))
+    assertEquals(PMarkerResolution.ABSENT, root.remove(entries.first().handle).resolve(entries.first().handle))
+    assertEquals(TextRangeScalarUtil.toScalarRange(45, 46), original.resolve(entries[11].handle))
+  }
+
   @Test
   fun `cached resolutions advance across insertions deletions and replacements`() {
     val entries = listOf(entry(1, 3), entry(4, 6), entry(5, 10), entry(6, 6), entry(7, 8), entry(9, 9), entry(9, 12), entry(14, 16))

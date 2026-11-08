@@ -90,6 +90,10 @@ class PMarkerDirectRoot private constructor(
     cache!!.putIfAbsent(id, resolution)
   }
 
+  private fun cacheResolution(entry: MarkerEntry, ancestorDelta: Int) {
+    cacheResolution(entry.handle.id, TextRangeScalarUtil.toScalarRange(entry.nodeStart + ancestorDelta, entry.nodeEnd + ancestorDelta))
+  }
+
   @TestOnly
   override fun invalidationReason(handle: SnapshotMarkerReference<*>): String? = keepingRootAlive {
     val state = state(handle) as? PMarkerInvalidNode ?: return@keepingRootAlive null
@@ -315,7 +319,10 @@ class PMarkerDirectRoot private constructor(
     processor: Processor<in MarkerEntry>,
   ): Boolean {
     require(startOffset in 0..endOffset) { "The query range is invalid" }
-    return processOverlaps(root, 0, startOffset, endOffset, tastePreference and 0xFF, processor)
+    return processOverlaps(root, 0, startOffset, endOffset, tastePreference and 0xFF) { entry, delta ->
+      cacheResolution(entry, delta)
+      processor.process(entry)
+    }
   }
 
   /**
@@ -348,6 +355,7 @@ class PMarkerDirectRoot private constructor(
         if (!hasNext()) throw NoSuchElementException()
         val result = next!!
         next = null
+        cacheResolution(result, 0)
         return result
       }
 
@@ -364,7 +372,10 @@ class PMarkerDirectRoot private constructor(
     }
   }
 
-  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean = processAll(root, 0, processor)
+  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean = processAll(root, 0) { entry, delta ->
+    cacheResolution(entry, delta)
+    processor.process(entry, delta)
+  }
 
   /**
    * Reads this version's history for a handle.
@@ -673,16 +684,16 @@ class PMarkerDirectRoot private constructor(
     private fun publish(node: PMarkerNode?) {
       if (node == null || node.version !== version) return
       if (node.state.version === version) node.handle.states.put(version, node.state)
-      publishParent(node.left, node.state)
-      publishParent(node.right, node.state)
+      if (!node.inheritsLeftParent) publishParent(node.left, node.state)
+      if (!node.inheritsRightParent) publishParent(node.right, node.state)
       publish(node.left)
       publish(node.right)
     }
 
-    /** Publishes a parent link only when this version changes the parent position. */
+    /** Publishes the parent link for this version. */
     private fun publishParent(child: PMarkerNode?, parent: PMarkerValidNode) {
       val parents = child?.state?.parents ?: return
-      if (parents.get(version) !== parent) parents.put(version, parent)
+      parents.put(version, parent)
     }
   }
 
@@ -718,7 +729,7 @@ class PMarkerDirectRoot private constructor(
       start: Int,
       end: Int,
       flags: Int,
-      processor: Processor<in MarkerEntry>,
+      processor: MarkerDeltaProcessor,
     ): Boolean {
       var current = node
       var currentDelta = delta
@@ -728,7 +739,7 @@ class PMarkerDirectRoot private constructor(
         if (!processOverlaps(current.left, childDelta, start, end, flags, processor)) return false
         (val nodeStart, val nodeEnd, val flavorFlags) = current.entry
         if (nodeStart + currentDelta <= end && nodeEnd + currentDelta >= start && matches(flavorFlags, flags)) {
-          if (!processor.process(current.entry)) return false
+          if (!processor.process(current.entry, currentDelta)) return false
         }
         if (nodeStart + currentDelta > end) return true
         current = current.right
