@@ -13,6 +13,8 @@ JAVA_TEST_FLAGS = [
     "-Didea.reset.classpath.from.manifest=true",
     "-Dintellij.build.use.compiled.classes=false",
     "-Djava.util.zip.use.nio.for.zip.file.access=true",
+    # common.vmoptions of every product sets it, so the JDK sends Basic proxy credentials in an HTTPS CONNECT
+    "-Djdk.http.auth.tunneling.disabledSchemes=",
     # The locale of the machine must not change a formatted date or number in a test
     "-Duser.language=en",
     "-Duser.country=US",
