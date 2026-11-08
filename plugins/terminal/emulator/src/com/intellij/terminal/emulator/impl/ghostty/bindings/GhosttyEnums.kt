@@ -181,6 +181,8 @@ internal enum class GhosttyTerminalOption(val code: Int) {
   COLOR_FOREGROUND(11),
   COLOR_BACKGROUND(12),
   COLOR_PALETTE(14),
+  /** Takes a `uint64_t*`; zero disables the Kitty graphics protocol entirely. */
+  KITTY_IMAGE_STORAGE_LIMIT(15),
   DEFAULT_CURSOR_STYLE(22),
   DEFAULT_CURSOR_BLINK(23),
   SCROLLBACK_MAX_BYTES(27),

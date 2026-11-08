@@ -300,6 +300,9 @@ internal fun csi(body: String): String = "$ESC_STR[$body"
 /** Wraps [body] in a DCS (Device Control String, `ESC P`) sequence closed by ST. */
 internal fun dcs(body: String): String = "${ESC_STR}P$body${OscTerminator.ST.sequence}"
 
+/** Wraps [body] in an APC (Application Program Command, `ESC _`) sequence closed by ST. */
+internal fun apc(body: String): String = "${ESC_STR}_$body${OscTerminator.ST.sequence}"
+
 /** Wraps [body] in an OSC (Operating System Command, `ESC ]`) sequence closed by [terminator]. */
 internal fun osc(body: String, terminator: OscTerminator = OscTerminator.BELL): String {
   return "$ESC_STR]$body${terminator.sequence}"
