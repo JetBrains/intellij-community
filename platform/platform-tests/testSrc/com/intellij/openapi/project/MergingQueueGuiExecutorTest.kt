@@ -15,6 +15,7 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.Semaphore
 import junit.framework.TestCase
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -36,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.random.Random
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
@@ -121,11 +123,11 @@ class MergingQueueGuiExecutorTest {
     val p: ProjectRule = ProjectRule(true, false, null)
   }
 
-  private class BareMergingQueueGuiExecutor<T : MergeableQueueTask<T>>(project: Project,
-                                                                       taskQueue: MergingTaskQueue<T>,
-                                                                       listener: ExecutorStateListener,
-                                                                       progressTitle: @NlsContexts.ProgressTitle String,
-                                                                       suspendedText: @NlsContexts.ProgressText String
+  private open class BareMergingQueueGuiExecutor<T : MergeableQueueTask<T>>(project: Project,
+                                                                            taskQueue: MergingTaskQueue<T>,
+                                                                            listener: ExecutorStateListener,
+                                                                            progressTitle: @NlsContexts.ProgressTitle String,
+                                                                            suspendedText: @NlsContexts.ProgressText String
   ) : MergingQueueGuiExecutor<T>(project, taskQueue, listener, progressTitle, suspendedText) {
     fun guiSuspender() = super.guiSuspender
   }
@@ -161,6 +163,55 @@ class MergingQueueGuiExecutorTest {
     TestCase.assertEquals(0, listener.beforeCount)
     TestCase.assertEquals(0, listener.afterCount)
 
+    stopExecutor(executor)
+  }
+
+  @Test
+  fun `test onFinish is invoked exactly once when task submission fails`() {
+    val exceptionRef = AtomicReference<Throwable>()
+    val listener = ValidatingListener(exceptionRef)
+    val queue = MergingTaskQueue<LoggingTask>()
+    val executor = object : BareMergingQueueGuiExecutor<LoggingTask>(
+      project, queue, listener, "title", "suspend"
+    ) {
+      override fun getBackgroundScope(): CoroutineScope {
+        throw ProcessCanceledException()
+      }
+    }
+    val finishCount = AtomicInteger()
+    queue.addTask(LoggingTask(1, null, null))
+
+    try {
+      assertFailsWith<ProcessCanceledException> {
+        executor.startBackgroundProcess(onFinish = { finishCount.incrementAndGet() })
+      }
+      assertEquals(1, finishCount.get())
+    }
+    finally {
+      queue.disposePendingTasks()
+      stopExecutor(executor)
+    }
+  }
+
+  @Test
+  fun `test onFinish is invoked exactly once when task completes`() {
+    val exceptionRef = AtomicReference<Throwable>()
+    val listener = ValidatingListener(exceptionRef)
+    val queue = MergingTaskQueue<LoggingTask>()
+    val executor = BareMergingQueueGuiExecutor(
+      project, queue, listener, "title", "suspend"
+    )
+    val finishCount = AtomicInteger()
+    val finished = CountDownLatch(1)
+    queue.addTask(LoggingTask(1, null, null))
+
+    executor.startBackgroundProcess(onFinish = {
+      finishCount.incrementAndGet()
+      finished.countDown()
+    })
+
+    finished.awaitOrThrow(5, "Wait for onFinish")
+    assertEquals(1, finishCount.get())
     stopExecutor(executor)
   }
 

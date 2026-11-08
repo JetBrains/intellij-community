@@ -24,6 +24,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
@@ -134,9 +135,15 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
   /**
    * Start task queue processing in background in SINGLE thread. If background process is already running, this method does nothing.
    *
-   * It is guaranteed that this method invokes onFinish, even if the method itself threw an exception
+   * It is guaranteed that this method invokes [onFinish] exactly once, even if this method throws an exception.
    */
   fun startBackgroundProcess(onFinish: () -> Unit) {
+    val finished = AtomicBoolean(false)
+    val finishOnce: () -> Unit = {
+      if (finished.compareAndSet(false, true)) {
+        onFinish()
+      }
+    }
     var startedInBackground = false
     try {
       if (taskQueue.isEmpty) return  // there is no race: client first adds a task to myTaskQueue, then invokes startBackgroundProcess
@@ -146,7 +153,7 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
           // TODO: there seems to be a race between mySingleTaskExecutor.tryStartProcess and FileBasedIndexTumbler. Return now
           backgroundTasksSubmitted.incrementAndGet()
           val actionStarted = AtomicBoolean(false)
-          project.service<ScopeHolder>().scope.launch(schedulingDispatcher) {
+          getBackgroundScope().launch(schedulingDispatcher) {
             val suspender = TaskSuspender.suspendable(mySuspendedText)
             withBackgroundProgress(project, myProgressTitle, suspender) {
               reportRawProgress { reporter ->
@@ -163,26 +170,26 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
                 finally {
                   // it is important to run onFinish after the task execution and not as a callback to Task.Backgroundable
                   // because these callbacks are executed on EDT in NON_MODAL, while this task can run on background regardless of modality
-                  onFinish()
+                  finishOnce()
                 }
               }
             }
           }.invokeOnCompletion {
             if (!actionStarted.get()) {
               task.close()
-              onFinish()
+              finishOnce()
             }
           }
         }
         catch (pce: ProcessCanceledException) {
           task.close()
-          onFinish()
+          finishOnce()
           throw pce
         }
         catch (t: Throwable) {
           task.close()
           mySingleTaskExecutor.clearScheduledFlag()
-          onFinish()
+          finishOnce()
           LOG.error("Failed to start background index update task", t)
           throw t
         }
@@ -190,10 +197,13 @@ open class MergingQueueGuiExecutor<T : MergeableQueueTask<T>> protected construc
     }
     finally {
       if (!startedInBackground) {
-        onFinish()
+        finishOnce()
       } // else - will be invoked from a background process
     }
   }
+
+  @VisibleForTesting
+  protected open fun getBackgroundScope(): CoroutineScope = project.service<ScopeHolder>().scope
 
   protected open val taskId: Any? = null
 
