@@ -9,9 +9,9 @@ import com.intellij.testFramework.common.BazelTestUtil
 abstract class AbstractJavaUastTest : AbstractUastFixtureTest() {
   public override fun getTestDataPath(): String {
     if (BazelTestUtil.isUnderBazelTest) {
-      val label = BazelLabel.fromString("@community//uast/uast-tests:java")
+      val label = BazelLabel.fromString("@community//uast/uast-tests:testData")
       return BazelTestUtil.getFileFromBazelRuntime(label).toAbsolutePath().toString()
     }
-    return PathManagerEx.getCommunityHomePath() + "/uast/uast-tests/java"
+    return PathManagerEx.getCommunityHomePath() + "/uast/uast-tests/testData"
   }
 }

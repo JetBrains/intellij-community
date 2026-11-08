@@ -3,7 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 filegroup(
     name = "testData",
-    srcs = glob(["java/**"]),
+    srcs = glob(["testData/**"]),
     visibility = ["//visibility:public"],
 )
 
