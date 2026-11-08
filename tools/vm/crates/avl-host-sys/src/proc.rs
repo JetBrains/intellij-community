@@ -166,6 +166,24 @@ pub struct SpawnOptions {
     /// spawned after the signal would otherwise be signalled at once. Only for a short command under a tight timeout,
     /// since nothing but the timeout and a second Ctrl-C ends it. Honoured by [`Runner::capture`]; ignored elsewhere.
     pub interruptible: Interruptible,
+    /// A failure of the launcher that the same command answers differently a moment later, which
+    /// [`Runner::capture`] runs again. `None` takes every answer as it is.
+    pub transient_failure: Option<TransientFailure>,
+}
+
+/// A failure that belongs to the launcher of a command rather than to the command, and that a run a moment later does
+/// not repeat, such as the channel of a hypervisor CLI to its guest. [`Runner::capture`], and every runner call over
+/// it, runs the command again while [`TransientFailure::matches`] its capture, at most [`TransientFailure::attempts`]
+/// times in all, [`TransientFailure::pause`] apart. The last capture is the answer, so a failure that stays is reported
+/// as it is. Only for a command that may run twice: the launcher can fail after the command ran.
+#[derive(Clone, Copy, Debug)]
+pub struct TransientFailure {
+    /// Whether a capture is the failure of the launcher and not an answer of the command.
+    pub matches: fn(&Captured) -> bool,
+    /// The runs in all, the first one included.
+    pub attempts: u8,
+    /// The wait between two runs.
+    pub pause: Duration,
 }
 
 impl SpawnOptions {
@@ -181,7 +199,15 @@ impl SpawnOptions {
             merge_stderr_into_file: false,
             keep_destination_on_failure: false,
             interruptible: Interruptible::Yes,
+            transient_failure: None,
         }
+    }
+
+    /// The same options, running the command again on `failure`; see [`SpawnOptions::transient_failure`].
+    #[must_use]
+    pub const fn retrying(mut self, failure: TransientFailure) -> Self {
+        self.transient_failure = Some(failure);
+        self
     }
 
     /// The same options for a teardown that outlives an interrupt; see [`SpawnOptions::interruptible`].
@@ -319,10 +345,19 @@ impl Runner {
     /// guest exec that spent its whole timeout is exactly the cost worth seeing.
     pub async fn capture(&self, ctx: &Ctx, argv: &[String], options: &SpawnOptions) -> Result<Captured, ProcError> {
         check_argv(argv).map_err(ProcError::Other)?;
-        let started = Instant::now();
-        let captured = self.run_captured(ctx, argv, options, options.interruptible).await;
-        ctx.phase().record_subprocess(argv, started.elapsed());
-        captured
+        let mut attempt = 1;
+        loop {
+            let started = Instant::now();
+            let captured = self.run_captured(ctx, argv, options, options.interruptible).await;
+            ctx.phase().record_subprocess(argv, started.elapsed());
+            match (&captured, options.transient_failure) {
+                (Ok(answer), Some(failure)) if attempt < failure.attempts && (failure.matches)(answer) && !ctx.is_cancelled() => {
+                    attempt += 1;
+                    tokio::time::sleep(failure.pause).await;
+                }
+                _ => return captured,
+            }
+        }
     }
 
     pub(super) async fn run_captured(

@@ -479,6 +479,21 @@ async fn a_start_of_a_stopped_vm_boots_it() {
     assert!(!fixture.fake.saw_call_containing("--drop-state"), "{:?}", fixture.fake.calls());
 }
 
+// A failed channel of `prlctl exec` is no answer of the guest: the probe runs again, and a running guest answers.
+#[tokio::test]
+async fn a_failed_channel_of_prlctl_exec_is_run_again() {
+    let ctx = Ctx::background();
+    let fixture = Fixture::new();
+    fixture.fake.answer(Answer::ExecChannelFailures, "2");
+    assert!(fixture.parallels.guest_answers(&ctx, WORKER, PRLCTL_EXEC_PROBE_TIMEOUT).await);
+    assert_eq!(
+        fixture.fake.calls().iter().filter(|call| call.contains("exec macOS")).count(),
+        3,
+        "{:?}",
+        fixture.fake.calls()
+    );
+}
+
 // --- suspend -------------------------------------------------------------------------------------------------
 
 #[tokio::test]

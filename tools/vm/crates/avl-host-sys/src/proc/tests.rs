@@ -289,6 +289,67 @@ async fn overrides_reach_the_child() {
     assert!(!env.contains("AIR_TEST_MARKER=first"), "{env}");
 }
 
+/// The launcher failure of a test: the command printed `launcher hiccup` on stderr and exited 255.
+fn launcher_hiccup(captured: &Captured) -> bool {
+    captured.exit_code == 255 && captured.stderr.contains("launcher hiccup")
+}
+
+const HICCUP: TransientFailure = TransientFailure {
+    matches: launcher_hiccup,
+    attempts: 3,
+    pause: Duration::from_millis(10),
+};
+
+/// A command that fails as its launcher `failures` times, counted in a file of `directory`, then prints `answered`.
+fn hiccuping(directory: &Path, failures: u8) -> Vec<String> {
+    let count = directory.join("runs");
+    sh(&format!(
+        r#"n=$(cat '{count}' 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" > '{count}'; if [ "$n" -le {failures} ]; then echo 'launcher hiccup' >&2; exit 255; fi; echo answered"#,
+        count = count.display()
+    ))
+}
+
+fn runs(directory: &Path) -> String {
+    fs::read_to_string(directory.join("runs")).unwrap().trim().to_owned()
+}
+
+// A failure of the launcher that a moment later does not repeat is run again, and the caller sees the answer of the
+// command; every runner call over `capture`, `checked_quietly` here, gets it.
+#[tokio::test]
+async fn a_transient_launcher_failure_is_run_again() {
+    let directory = tempfile::tempdir().unwrap();
+    let captured = runner()
+        .checked_quietly(
+            &Ctx::background(),
+            &hiccuping(directory.path(), 2),
+            &SpawnOptions::within(Duration::from_mins(1)).retrying(HICCUP),
+        )
+        .await
+        .unwrap();
+    assert_eq!(captured.stdout.trim(), "answered");
+    assert_eq!(runs(directory.path()), "3");
+}
+
+// A failure that stays past the attempts is the answer, and a command that exits 255 itself, without the mark of the
+// launcher, is never run again.
+#[tokio::test]
+async fn a_launcher_failure_that_stays_and_a_failure_of_the_command_are_answered_as_they_are() {
+    let directory = tempfile::tempdir().unwrap();
+    let options = SpawnOptions::within(Duration::from_mins(1)).retrying(HICCUP);
+    let stays = runner()
+        .capture(&Ctx::background(), &hiccuping(directory.path(), 9), &options)
+        .await
+        .unwrap();
+    assert_eq!(stays.exit_code, 255);
+    assert_eq!(runs(directory.path()), "3");
+
+    let command = tempfile::tempdir().unwrap();
+    let count = command.path().join("runs");
+    let own = sh(&format!("echo x >> '{}'; echo 'the command failed' >&2; exit 255", count.display()));
+    assert_eq!(runner().capture(&Ctx::background(), &own, &options).await.unwrap().exit_code, 255);
+    assert_eq!(fs::read_to_string(&count).unwrap().lines().count(), 1);
+}
+
 #[tokio::test]
 async fn stdin_is_delivered() {
     let captured = runner()

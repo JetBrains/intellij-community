@@ -28,7 +28,9 @@ use serde::de::{Deserializer, MapAccess, Visitor};
 use serde::{Deserialize, Serialize};
 
 use avl_host_sys::share::SharedFolder;
-use avl_host_sys::{Backoff, Ctx, Poll, PollClock, ProbeExit, ProbeOutput, Runner, SpawnOptions, probe_unanswered};
+use avl_host_sys::{
+    Backoff, Captured, Ctx, Poll, PollClock, ProbeExit, ProbeOutput, Runner, SpawnOptions, TransientFailure, probe_unanswered,
+};
 
 use crate::worker::hypervisor::unsupported;
 
@@ -66,6 +68,24 @@ const PRLCTL_EXEC_PROBE_TIMEOUT: Duration = Duration::from_secs(30);
 /// The timeout of one read of the login settings through `prlctl exec`: a `defaults read` or a `test -f`.
 const PRLCTL_EXEC_READ_TIMEOUT: Duration = Duration::from_mins(1);
 
+/// The failure of the channel of `prlctl exec` to the guest, which every guest command line of this backend runs
+/// again, see [`Parallels::guest_options`].
+///
+/// On Parallels Desktop 27.0.3 about one `prlctl exec` in ten exits 255 with `PrlJob_GetResult: Invalid argument` on
+/// stderr while the guest tools of the same version run, measured on 2026-11-08 over 50 calls of `/usr/bin/true`.
+/// The call a moment later succeeds. A probe that took it as the answer of the guest read a running VM as one whose
+/// guest does not answer, and the start that followed refused: the VM "is not stopped". A command that exits 255
+/// itself prints no `PrlJob_` line, so it is answered as it is.
+pub(crate) const PRLCTL_EXEC_CHANNEL_FAILURE: TransientFailure = TransientFailure {
+    matches: prlctl_exec_channel_failed,
+    attempts: 4,
+    pause: Duration::from_millis(500),
+};
+
+/// Whether a capture of `prlctl exec` is the failure of its channel, see [`PRLCTL_EXEC_CHANNEL_FAILURE`].
+fn prlctl_exec_channel_failed(captured: &Captured) -> bool {
+    captured.exit_code == 255 && captured.stderr.contains("PrlJob_")
+}
 
 /// A VM state `prlctl list -j` reports. The three this controller acts on are variants, because the only decisions
 /// here are "is there a saved state" and "is it off"; every other state keeps `prlctl`'s own word, because `vm
@@ -314,6 +334,12 @@ impl Parallels {
             .collect()
     }
 
+    /// The options of a guest command line of this backend: a timeout, and the run again of a failed channel of
+    /// `prlctl exec`, see [`PRLCTL_EXEC_CHANNEL_FAILURE`].
+    pub(crate) const fn guest_options(timeout: Duration) -> SpawnOptions {
+        SpawnOptions::within(timeout).retrying(PRLCTL_EXEC_CHANNEL_FAILURE)
+    }
+
     fn guest_line(&self, ctx: &Ctx, worker: &str, argv: &[&str]) -> Vec<String> {
         let argv: Vec<String> = argv.iter().map(|word| (*word).to_owned()).collect();
         self.guest_argv(ctx, worker, &argv)
@@ -396,7 +422,7 @@ impl Parallels {
             .checked_quietly(
                 ctx,
                 &self.guest_line(ctx, worker, &["/usr/bin/true"]),
-                &SpawnOptions::within(timeout),
+                &Self::guest_options(timeout),
             )
             .await
             .is_ok()
@@ -551,7 +577,7 @@ impl Parallels {
                 .capture(
                     ctx,
                     &self.guest_line(ctx, worker, &["/usr/bin/who"]),
-                    &SpawnOptions::within(PRLCTL_EXEC_PROBE_TIMEOUT),
+                    &Self::guest_options(PRLCTL_EXEC_PROBE_TIMEOUT),
                 )
                 .await;
             Ok(who.is_ok_and(|who| who.exit_code == 0 && has_console_session(&who.stdout)))
@@ -671,7 +697,7 @@ impl Parallels {
         let read = |argv: Vec<String>, answers_on_stdout: bool| async move {
             let captured = self
                 .runner
-                .capture(ctx, &argv, &SpawnOptions::within(PRLCTL_EXEC_READ_TIMEOUT))
+                .capture(ctx, &argv, &Self::guest_options(PRLCTL_EXEC_READ_TIMEOUT))
                 .await?;
             match captured.probe_exit() {
                 ProbeExit::Answered if answers_on_stdout && captured.stdout.trim().is_empty() => {
