@@ -1055,6 +1055,65 @@ def internal_get_smart_step_into_variants(dbg, seq, thread_id, frame_id, start_l
         dbg.writer.add_command(cmd)
 
 
+def _get_statement_line_range(frame):
+    """
+    JetBrains extension: gives the lines of the statement that the frame executes, so that the step-in targets
+    contain only the calls of that statement. For a compound statement, the lines stop at the start of its body.
+
+    :return: the first and the last line, both 1-based and inclusive. The current line only, when the source of
+        the frame is not available.
+    """
+    import ast
+
+    line = frame.f_lineno
+    try:
+        tree = ast.parse("".join(linecache.getlines(frame.f_code.co_filename)))
+    except (SyntaxError, ValueError):
+        return line, line
+
+    innermost = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.stmt) and node.lineno <= line <= node.end_lineno:
+            if innermost is None or (node.lineno, -node.end_lineno) > (innermost.lineno, -innermost.end_lineno):
+                innermost = node
+    if innermost is None:
+        return line, line
+
+    start_line, end_line = innermost.lineno, innermost.end_lineno
+    for node in ast.walk(innermost):
+        if node is not innermost and isinstance(node, ast.stmt):
+            # The nested statements of a compound statement are not a part of its header.
+            if node.lineno > line:
+                end_line = min(end_line, node.lineno - 1)
+            elif node.end_lineno < line:
+                start_line = max(start_line, node.end_lineno + 1)
+    return start_line, end_line
+
+
+def _get_step_in_target_range(filename, variant):
+    """
+    JetBrains extension: gives the source range of the call of a smart step into variant, so that the IDE can
+    highlight the targets in the editor.
+
+    :return: the `line`, `column`, `endLine` and `endColumn` keyword arguments of `StepInTarget`, or an empty dict
+        when the variant has no complete range (Python < 3.11).
+    """
+    if variant.line < 1 or variant.endlineno < 1 or variant.startcol < 0 or variant.endcol < 0:
+        return {}
+
+    def to_column(line, utf8_offset):
+        # `dis` gives the offsets in UTF-8 bytes. DAP measures the columns in UTF-16 code units, from 1.
+        prefix = linecache.getline(filename, line).encode("utf-8")[:utf8_offset].decode("utf-8", "replace")
+        return len(prefix.encode("utf-16-le")) // 2 + 1
+
+    return {
+        "line": variant.line,
+        "column": to_column(variant.line, variant.startcol),
+        "endLine": variant.endlineno,
+        "endColumn": to_column(variant.endlineno, variant.endcol),
+    }
+
+
 def internal_get_step_in_targets_json(dbg, seq, thread_id, frame_id, request, set_additional_thread_info):
     try:
         thread = pydevd_find_thread_by_id(thread_id)
@@ -1069,8 +1128,7 @@ def internal_get_step_in_targets_json(dbg, seq, thread_id, frame_id, request, se
             dbg.writer.add_command(cmd)
             return
 
-        start_line = 0
-        end_line = 99999999
+        start_line, end_line = _get_statement_line_range(frame)
         if pydevd_bytecode_utils is None:
             variants = []
         else:
@@ -1080,6 +1138,7 @@ def internal_get_step_in_targets_json(dbg, seq, thread_id, frame_id, request, se
         targets = []
         counter = itertools.count(0)
         target_id_to_variant = {}
+        # JetBrains extension: no limit on the number of targets. The targets are the calls of one statement.
         for variant in variants:
             if not variant.is_visited:
                 if variant.children_variants:
@@ -1091,14 +1150,18 @@ def internal_get_step_in_targets_json(dbg, seq, thread_id, frame_id, request, se
                                 StepInTarget(
                                     id=target_id,
                                     label="%s (call %s)" % (child_variant.name, child_variant.call_order),
+                                    **_get_step_in_target_range(frame.f_code.co_filename, child_variant)
                                 )
                             )
                         else:
-                            targets.append(StepInTarget(id=target_id, label=child_variant.name))
+                            targets.append(
+                                StepInTarget(
+                                    id=target_id,
+                                    label=child_variant.name,
+                                    **_get_step_in_target_range(frame.f_code.co_filename, child_variant)
+                                )
+                            )
                         target_id_to_variant[target_id] = child_variant
-
-                        if len(targets) >= 15:  # Show at most 15 targets.
-                            break
                 else:
                     target_id = next(counter)
                     if variant.call_order > 1:
@@ -1106,14 +1169,18 @@ def internal_get_step_in_targets_json(dbg, seq, thread_id, frame_id, request, se
                             StepInTarget(
                                 id=target_id,
                                 label="%s (call %s)" % (variant.name, variant.call_order),
+                                **_get_step_in_target_range(frame.f_code.co_filename, variant)
                             )
                         )
                     else:
-                        targets.append(StepInTarget(id=target_id, label=variant.name))
+                        targets.append(
+                            StepInTarget(
+                                id=target_id,
+                                label=variant.name,
+                                **_get_step_in_target_range(frame.f_code.co_filename, variant)
+                            )
+                        )
                     target_id_to_variant[target_id] = variant
-
-                    if len(targets) >= 15:  # Show at most 15 targets.
-                        break
 
         # Store the last request (may be used afterwards when stepping).
         info.pydev_smart_step_into_variants = tuple(variants)

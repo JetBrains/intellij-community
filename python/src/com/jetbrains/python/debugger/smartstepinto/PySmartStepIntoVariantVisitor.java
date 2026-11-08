@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -46,7 +47,7 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     myCollector = collector;
     boolean shouldJump = false;
     int mid = (variantsFromPython.size() - 1) / 2;
-    if (variantsFromPython.get(variantsFromPython.size() - 1).first.equals(RERAISE)) {
+    if (variantsFromPython.getLast().first.equals(RERAISE)) {
       int i = 0;
       while (i < mid) {
         if (!variantsFromPython.get(i).first.equals(variantsFromPython.get(mid + i).first) ||
@@ -63,7 +64,7 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     if (shouldJump) {
       myVariantsFromPython = variantsFromPython.subList(mid, variantsFromPython.size() - 1);
     }
-    else if (variantsFromPython.get(variantsFromPython.size() - 1).first.equals(RERAISE)) {
+    else if (variantsFromPython.getLast().first.equals(RERAISE)) {
       myVariantsFromPython = variantsFromPython.subList(0, variantsFromPython.size() - 1);
     }
     else {
@@ -93,7 +94,7 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     if (ref != null && isBuiltIn(ref)) return;
 
     if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON312)
-        && ref instanceof PyFunction && ((((PyFunction)ref).isAsync()) || ((PyFunction)ref).isGenerator())) {
+        && ref instanceof PyFunction function && ((function.isAsync()) || function.isGenerator())) {
       return;
     }
 
@@ -179,7 +180,9 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     if (psiOperator != null) myCollector.add(new PySmartStepIntoVariantOperator(psiOperator, callOrder, myContext));
   }
 
-  private static boolean isBuiltIn(@NotNull PsiElement ref) {
+  /** Whether {@code ref} is in a builtins module or in a stub, so that the debugger cannot step into it. */
+  @ApiStatus.Internal
+  public static boolean isBuiltIn(@NotNull PsiElement ref) {
     PsiElement navFile = ref.getNavigationElement().getContainingFile();
     return (navFile instanceof PyFile && BUILTINS_MODULES.contains(navFile.getContainingFile().getName())
             || navFile instanceof PyiFile);

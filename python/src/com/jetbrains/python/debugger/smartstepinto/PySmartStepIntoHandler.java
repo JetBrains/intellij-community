@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -30,6 +31,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -73,17 +75,17 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
     PyStackFrame currentFrame = (PyStackFrame)mySession.getCurrentStackFrame();
     if (currentFrame == null || currentFrame.isComprehension()) return Collections.emptyList();
 
-    PySmartStepIntoContext context = ReadAction.compute(() -> createSmartStepIntoContext(currentFrame));
+    PySmartStepIntoContext context = ReadAction.computeBlocking(() -> createSmartStepIntoContext(currentFrame));
     if (context == null) return Collections.emptyList();
 
-    var document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(position.getFile()));
+    var document = ReadAction.computeBlocking(() -> FileDocumentManager.getInstance().getDocument(position.getFile()));
     if (document == null) return Collections.emptyList();
 
     var variantsFromPython = myProcess.getSmartStepIntoVariants(context.getStartLine(), context.getEndLine());
 
     if (variantsFromPython.isEmpty()) return Collections.emptyList();
 
-    return ReadAction.compute(() -> removePossiblyUnreachableVariants(document, position.getLine(), variantsFromPython, context));
+    return ReadAction.computeBlocking(() -> removePossiblyUnreachableVariants(document, position.getLine(), variantsFromPython, context));
   }
 
   @Override
@@ -94,7 +96,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
   private @NotNull List<PySmartStepIntoVariant> removePossiblyUnreachableVariants(@NotNull Document document, int line,
                                                                                   @NotNull List<Pair<String, Boolean>> variantsFromPython,
                                                                                   @NotNull PySmartStepIntoContext context) {
-    PsiElement expression = findSmartStepIntoBaseExpression(document, line);
+    PsiElement expression = findSmartStepIntoBaseExpression(mySession.getProject(), document, line);
     if (expression == null) return Collections.emptyList();
 
     List<PySmartStepIntoVariant> result = new ArrayList<>();
@@ -110,8 +112,9 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
    * <p>
    * Note, that expressions can span multiple lines, e.g. for parenthesized expressions or argument lists.
    */
-  private @Nullable PsiElement findSmartStepIntoBaseExpression(@NotNull Document document, int line) {
-    PsiFile file = PsiDocumentManager.getInstance(mySession.getProject()).getPsiFile(document);
+  @ApiStatus.Internal
+  public static @Nullable PsiElement findSmartStepIntoBaseExpression(@NotNull Project project, @NotNull Document document, int line) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
     PsiElement element = file.findElementAt(DocumentUtil.getFirstNonSpaceCharOffset(document, line));
@@ -196,8 +199,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
     Document document = FileDocumentManager.getInstance().getDocument(position.getFile());
     if (document == null) return null;
 
-    PySmartStepIntoHandler handler = (PySmartStepIntoHandler)myProcess.getSmartStepIntoHandler();
-    PsiElement expression = handler.findSmartStepIntoBaseExpression(document, position.getLine());
+    PsiElement expression = findSmartStepIntoBaseExpression(mySession.getProject(), document, position.getLine());
 
     if (expression != null) {
       TextRange range = expression.getTextRange();
