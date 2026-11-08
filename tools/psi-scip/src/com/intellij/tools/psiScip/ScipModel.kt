@@ -2,38 +2,38 @@
 package com.intellij.tools.psiScip
 
 /** The `Definition` bit of the SCIP `SymbolRole` enum. */
-internal const val ROLE_DEFINITION: Int = 0x1
+const val ROLE_DEFINITION: Int = 0x1
 
 /** The `Import` bit of the SCIP `SymbolRole` enum. */
-internal const val ROLE_IMPORT: Int = 0x2
+const val ROLE_IMPORT: Int = 0x2
 
 /** The `WriteAccess` bit of the SCIP `SymbolRole` enum. */
-internal const val ROLE_WRITE: Int = 0x4
+const val ROLE_WRITE: Int = 0x4
 
 /** The `ReadAccess` bit of the SCIP `SymbolRole` enum. */
-internal const val ROLE_READ: Int = 0x8
+const val ROLE_READ: Int = 0x8
 
 /**
  * A private bit of `symbol_roles`: the occurrence is the callee name of a call.
  * SCIP has no field for a call, so the exporter sets the bit itself.
  * A reader that does not know the bit ignores it.
  */
-internal const val ROLE_CALL: Int = 1 shl 20
+const val ROLE_CALL: Int = 1 shl 20
 
 /** A private bit of `symbol_roles`: the occurrence is inside a doc comment. It never carries [ROLE_CALL]. */
-internal const val ROLE_DOC: Int = 1 shl 21
+const val ROLE_DOC: Int = 1 shl 21
 
 /** A private bit of `symbol_roles`: the range of the occurrence is not the name of the symbol. */
-internal const val ROLE_NON_NAME: Int = 1 shl 22
+const val ROLE_NON_NAME: Int = 1 shl 22
 
 /**
  * A private bit of `symbol_roles`: the occurrence is the name of a method reference, such as `bar` of `Foo::bar`.
  * It never carries [ROLE_CALL]: the method is passed as a value, and the reader decides whether that is a call.
  */
-internal const val ROLE_METHOD_REF: Int = 1 shl 23
+const val ROLE_METHOD_REF: Int = 1 shl 23
 
 /** The values of the SCIP `SymbolInformation.Kind` enum that the exporter writes, with their protobuf numbers. */
-internal enum class ScipKind(val number: Int) {
+enum class ScipKind(val number: Int) {
   Class(7),
   Constructor(9),
   Enum(11),
@@ -47,7 +47,7 @@ internal enum class ScipKind(val number: Int) {
  * A SCIP range: `[startLine, startColumn, endColumn]` on one line, else `[startLine, startColumn, endLine, endColumn]`.
  * Lines are 0-based, and columns count UTF-16 code units from the line start.
  */
-internal class ScipRange(@JvmField val startLine: Int, @JvmField val startColumn: Int, @JvmField val endLine: Int, @JvmField val endColumn: Int) :
+class ScipRange(@JvmField val startLine: Int, @JvmField val startColumn: Int, @JvmField val endLine: Int, @JvmField val endColumn: Int) :
   Comparable<ScipRange> {
   fun toArray(): IntArray {
     return if (startLine == endLine) intArrayOf(startLine, startColumn, endColumn) else intArrayOf(startLine, startColumn, endLine, endColumn)
@@ -58,16 +58,16 @@ internal class ScipRange(@JvmField val startLine: Int, @JvmField val startColumn
   }
 }
 
-internal class ScipOccurrence(
+class ScipOccurrence(
   @JvmField val range: ScipRange,
   @JvmField val symbol: String,
   @JvmField val roles: Int,
   @JvmField val enclosingRange: ScipRange?,
 )
 
-internal class ScipRelationship(@JvmField val symbol: String, @JvmField val isReference: Boolean, @JvmField val isImplementation: Boolean)
+class ScipRelationship(@JvmField val symbol: String, @JvmField val isReference: Boolean, @JvmField val isImplementation: Boolean)
 
-internal class ScipSymbolInformation(
+class ScipSymbolInformation(
   @JvmField val symbol: String,
   @JvmField val kind: ScipKind,
   @JvmField val displayName: String,
@@ -75,14 +75,14 @@ internal class ScipSymbolInformation(
 )
 
 /** One source file of the index. [occurrences] and [symbols] are in the order the writer emits. */
-internal class ScipDocument(
+class ScipDocument(
   @JvmField val relativePath: String,
   @JvmField val language: String,
   @JvmField val occurrences: List<ScipOccurrence>,
   @JvmField val symbols: List<ScipSymbolInformation>,
 )
 
-internal val OCCURRENCE_ORDER: Comparator<ScipOccurrence> =
+val OCCURRENCE_ORDER: Comparator<ScipOccurrence> =
   compareBy<ScipOccurrence> { it.range }.thenBy { it.symbol }.thenBy { it.roles }
 
-internal val SYMBOL_ORDER: Comparator<ScipSymbolInformation> = compareBy { it.symbol }
+val SYMBOL_ORDER: Comparator<ScipSymbolInformation> = compareBy { it.symbol }

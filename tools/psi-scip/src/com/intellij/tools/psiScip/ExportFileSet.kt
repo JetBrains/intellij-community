@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
@@ -15,16 +14,24 @@ import java.util.concurrent.TimeUnit
 internal class ExportFile(@JvmField val relativePath: String, @JvmField val file: VirtualFile, @JvmField val module: String)
 
 /**
- * Selects the Java and Kotlin files to walk, sorted by relative path.
+ * Selects the files accepted by registered language collectors, sorted by relative path.
  *
- * The candidates are the `*.java` and `*.kt` files of `git ls-files`, or the lines of [filesFrom].
- * A candidate is walked when it is under a Java source root, of the production or the test type (a Kotlin source root is one).
+ * The candidates are files of the registered extensions from `git ls-files`, or the lines of [filesFrom].
+ * A candidate is walked when its collector takes its root ([ScipDocumentCollector.isSourceFile]): Java and Kotlin
+ * files under a Java source root, of the production or the test type (a Kotlin source root is one).
  * A resource root, such as a `testData` directory, does not qualify.
  * The summary counts the other candidates as `resource_root`, `no_root`, `excluded` and `missing`.
  */
-internal suspend fun selectFiles(project: Project, root: Path, filesFrom: Path?, summary: ExportSummary): List<ExportFile> {
-  val candidates = (if (filesFrom == null) gitSourceFiles(root) else Files.readAllLines(filesFrom).map { it.trim() }.filter { it.isNotEmpty() })
-    .filter { it.endsWith(".java") || it.endsWith(".kt") }
+internal suspend fun selectFiles(
+  project: Project,
+  root: Path,
+  filesFrom: Path?,
+  extensions: Set<String>,
+  collectors: List<ScipDocumentCollector>,
+  summary: ExportSummary,
+): List<ExportFile> {
+  val candidates = (if (filesFrom == null) gitSourceFiles(root, extensions) else Files.readAllLines(filesFrom).map { it.trim() }.filter { it.isNotEmpty() })
+    .filter { path -> extensions.any { path.endsWith(".$it") } }
     .distinct()
     .sorted()
   val fileSystem = LocalFileSystem.getInstance()
@@ -34,10 +41,12 @@ internal suspend fun selectFiles(project: Project, root: Path, filesFrom: Path?,
       val fileIndex = ProjectFileIndex.getInstance(project)
       for (path in chunk) {
         val file = fileSystem.findFileByNioFile(root.resolve(path))
+        val extension = path.substringAfterLast('.', "")
+        val collector = collectors.firstOrNull { extension in it.fileExtensions }
         val category = when {
           file == null -> "missing"
           fileIndex.isExcluded(file) -> "excluded"
-          fileIndex.isUnderSourceRootOfType(file, JavaModuleSourceRootTypes.SOURCES) -> {
+          collector?.isSourceFile(file, fileIndex) == true -> {
             val module = ModuleUtilCore.findModuleForFile(file, project)?.name ?: "<no module>"
             result.add(ExportFile(path, file, module))
             null
@@ -54,8 +63,10 @@ internal suspend fun selectFiles(project: Project, root: Path, filesFrom: Path?,
   return result
 }
 
-private fun gitSourceFiles(root: Path): List<String> {
-  val process = ProcessBuilder("git", "-C", root.toString(), "ls-files", "-z", "--", "*.java", "*.kt")
+private fun gitSourceFiles(root: Path, extensions: Set<String>): List<String> {
+  if (extensions.isEmpty()) return emptyList()
+  val arguments = extensions.sorted().map { "*.$it" }
+  val process = ProcessBuilder("git", "-C", root.toString(), "ls-files", "-z", "--", *arguments.toTypedArray())
     .redirectError(ProcessBuilder.Redirect.INHERIT)
     .start()
   val output = process.inputStream.readAllBytes()

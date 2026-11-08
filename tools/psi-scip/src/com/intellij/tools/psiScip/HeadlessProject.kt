@@ -30,15 +30,19 @@ private const val OPEN_TIMEOUT_PROPERTY = "psi.scip.open.timeout.seconds"
 private const val SMART_MODE_TIMEOUT_PROPERTY = "psi.scip.smart.mode.timeout.seconds"
 
 /**
- * Opens [root] headless for an export, with [jdk] as every JDK it asks for, and returns it in smart mode with its
+ * Opens [root] headless for an export, with [jdk] as every JDK it asks for when provided, and returns it in smart mode with its
  * configuration (such as a Maven import) done; [log] reports the steps. The export starters of this module share it.
  *
  * A directory with `.idea` opens without import, any other directory is imported.
  * A wait that exceeds its timeout is a failure; the waits use [withTimeoutOrNull],
  * because the [kotlinx.coroutines.TimeoutCancellationException] of `withTimeout` is a cancellation that the failure handler rethrows.
  */
-internal suspend fun openReadyProject(root: Path, jdk: Path, log: (String) -> Unit): Project {
+internal suspend fun openReadyProject(root: Path, jdk: Path?, log: (String) -> Unit): Project {
   val project = openProject(root, jdk, log)
+  val collectors = ScipDocumentCollector.EP_NAME.extensionList
+  edtWriteAction {
+    collectors.forEach { it.configureProject(project) }
+  }
   waitForProject(project, jdk, log)
   val moduleSdks = readAction {
     ModuleManager.getInstance(project).modules.map { module ->
@@ -50,7 +54,7 @@ internal suspend fun openReadyProject(root: Path, jdk: Path, log: (String) -> Un
   return project
 }
 
-private suspend fun openProject(root: Path, jdk: Path, log: (String) -> Unit): Project {
+private suspend fun openProject(root: Path, jdk: Path?, log: (String) -> Unit): Project {
   TrustedProjects.setProjectTrusted(root, true)
   val task = OpenProjectTask {
     showWelcomeScreen = false
@@ -79,7 +83,7 @@ private suspend fun openProject(root: Path, jdk: Path, log: (String) -> Unit): P
  * Waits for smart mode and for the project configuration, such as a Maven import.
  * An import can give modules JDK names that do not exist yet, so the wait repeats until [configureSdk] registers no new name.
  */
-private suspend fun waitForProject(project: Project, jdkHome: Path, log: (String) -> Unit) {
+private suspend fun waitForProject(project: Project, jdkHome: Path?, log: (String) -> Unit) {
   val timeout = timeoutFromProperty(SMART_MODE_TIMEOUT_PROPERTY, 120.minutes)
   withTimeoutOrNull(timeout) {
     repeat(3) {
@@ -96,9 +100,10 @@ private suspend fun waitForProject(project: Project, jdkHome: Path, log: (String
 
 /**
  * Registers [jdkHome] under every JDK name that the project or one of its modules asks for and cannot find, plus [DEFAULT_JDK_NAME].
- * A project without an SDK gets [DEFAULT_JDK_NAME]. Returns `true` when the call changed the JDK table or the project SDK.
+ * A project without an SDK gets [DEFAULT_JDK_NAME] when [jdkHome] is set. Returns `true` when the call changed the JDK table or the project SDK.
  */
-private suspend fun configureSdk(project: Project, jdkHome: Path, log: (String) -> Unit): Boolean {
+private suspend fun configureSdk(project: Project, jdkHome: Path?, log: (String) -> Unit): Boolean {
+  if (jdkHome == null) return false
   val names = TreeSet<String>()
   readAction {
     val rootManager = ProjectRootManager.getInstance(project)

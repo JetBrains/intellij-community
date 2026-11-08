@@ -7,10 +7,8 @@ import com.intellij.openapi.application.ModernApplicationStarter
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.SystemProperties
-import org.jetbrains.kotlin.psi.KtFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -23,9 +21,9 @@ import kotlin.system.exitProcess
 
 private const val COMMAND = "psiScip"
 
-private const val USAGE = """Usage: $COMMAND --project=<dir> --jdk=<JDK home> --output=<index.scip> [options]
+private const val USAGE = """Usage: $COMMAND --project=<dir> [--jdk=<JDK home>] --output=<index.scip> [options]
   --project=<dir>        the project to open; a directory with .idea opens without import
-  --jdk=<JDK home>       a full JDK with lib/src.zip; it is registered under every JDK name that the project asks for
+  --jdk=<JDK home>       optional full JDK with lib/src.zip; required when collecting Java or Kotlin files
   --output=<index.scip>  the SCIP index to write; the summary goes to <index>.summary.json
   --format=scip|json|both  json writes <index>.json in the shape of `scip print --json` (default: scip)
   --files-from=<file>    relative paths of the candidate files, one per line (default: git ls-files)
@@ -33,7 +31,7 @@ private const val USAGE = """Usage: $COMMAND --project=<dir> --jdk=<JDK home> --
 
 private class ExportOptions(
   @JvmField val project: Path,
-  @JvmField val jdk: Path,
+  @JvmField val jdk: Path?,
   @JvmField val output: Path,
   @JvmField val writeScip: Boolean,
   @JvmField val writeJson: Boolean,
@@ -50,8 +48,10 @@ private class ExportOptions(
       val unknown = values.keys - setOf("project", "jdk", "output", "format", "files-from", "threads")
       require(unknown.isEmpty()) { "unknown options: $unknown" }
       val project = Path.of(requireNotNull(values["project"]) { "--project is required" }).absolute().normalize()
-      val jdk = Path.of(requireNotNull(values["jdk"]) { "--jdk is required" }).absolute().normalize()
-      require(Files.isRegularFile(jdk.resolve("lib/src.zip"))) { "--jdk must be a full JDK with lib/src.zip: $jdk" }
+      val jdk = values["jdk"]?.let { Path.of(it).absolute().normalize() }
+      if (jdk != null) {
+        require(Files.isRegularFile(jdk.resolve("lib/src.zip"))) { "--jdk must be a full JDK with lib/src.zip: $jdk" }
+      }
       val output = Path.of(requireNotNull(values["output"]) { "--output is required" }).absolute().normalize()
       val format = values["format"] ?: "scip"
       require(format in setOf("scip", "json", "both")) { "--format must be scip, json or both" }
@@ -70,7 +70,7 @@ private class ExportOptions(
 }
 
 /**
- * Opens a project headless and writes a SCIP index of its Java and Kotlin files from PSI resolve.
+ * Opens a project headless and writes a SCIP index of files handled by installed language collectors from PSI resolve.
  *
  * The starter never saves the project or the application settings.
  * Run it with dedicated `idea.config.path` and `idea.system.path`, and on a copy of the project.
@@ -118,7 +118,15 @@ private suspend fun export(options: ExportOptions, arguments: List<String>) {
   log("project is ready after $openMs ms")
 
   val summary = ExportSummary()
-  val files = selectFiles(project, options.project, options.filesFrom, summary)
+  val collectors = ScipDocumentCollector.EP_NAME.extensionList
+  val extensions = collectors.flatMap { it.fileExtensions }.toSet()
+  val files = selectFiles(project, options.project, options.filesFrom, extensions, collectors, summary)
+  if (options.jdk == null && files.any { file ->
+      val extension = file.file.extension
+      collectors.any { it.requiresJdk && extension in it.fileExtensions }
+    }) {
+    error("--jdk is required when the project contains Java or Kotlin source files")
+  }
   log("walking ${files.size} files, skipped ${summary.skippedFiles}, threads ${options.threads}")
 
   val collectStartedAt = System.currentTimeMillis()
@@ -129,7 +137,7 @@ private suspend fun export(options: ExportOptions, arguments: List<String>) {
   coroutineScope {
     files.forEachIndexed { index, file ->
       launch(dispatcher) {
-        val (document, stats) = smartReadAction(project) { collectFile(project, file) }
+        val (document, stats) = smartReadAction(project) { collectFile(project, file, collectors) }
         documents[index] = document
         fileStats[index] = stats
         val count = done.incrementAndGet()
@@ -184,24 +192,25 @@ private suspend fun export(options: ExportOptions, arguments: List<String>) {
   log("wrote ${outputs.joinToString()} and $summaryFile in $writeMs ms; total ${System.currentTimeMillis() - startedAt} ms")
 }
 
-/** The document of a Java file by [JavaDocumentCollector], of a Kotlin file by [KotlinDocumentCollector]. */
-private fun collectFile(project: Project, file: ExportFile): Pair<ScipDocument?, ExportStats> {
-  val collector: Pair<() -> ScipDocument, ExportStats> = when (val psiFile = PsiManager.getInstance(project).findFile(file.file)) {
-    is PsiJavaFile -> JavaDocumentCollector(psiFile, file.relativePath).let { it::collect to it.stats }
-    is KtFile -> KotlinDocumentCollector(psiFile, file.relativePath).let { it::collect to it.stats }
-    else -> {
-      val stats = ExportStats()
-      stats.site(Counter.EXCEPTIONS, "${file.relativePath}: no Java or Kotlin PSI file")
-      return null to stats
-    }
+private fun collectFile(project: Project, file: ExportFile, collectors: List<ScipDocumentCollector>): Pair<ScipDocument?, ExportStats> {
+  val psiFile = PsiManager.getInstance(project).findFile(file.file)
+  if (psiFile == null) {
+    val stats = ExportStats()
+    stats.site(Counter.EXCEPTIONS, "${file.relativePath}: no PSI file")
+    return null to stats
   }
-  val (collect, stats) = collector
+  val collector = collectors.firstOrNull { it.accepts(psiFile) }
+  if (collector == null) {
+    val stats = ExportStats()
+    stats.site(Counter.EXCEPTIONS, "${file.relativePath}: no registered PSI collector")
+    return null to stats
+  }
   val startedAt = System.nanoTime()
   return try {
-    val document = collect()
-    stats.add(Counter.FILES)
-    stats.add(Counter.MS, (System.nanoTime() - startedAt) / 1_000_000)
-    document to stats
+    val collection = collector.collect(psiFile, file.relativePath)
+    collection.stats.add(Counter.FILES)
+    collection.stats.add(Counter.MS, (System.nanoTime() - startedAt) / 1_000_000)
+    collection.document to collection.stats
   }
   catch (e: Throwable) {
     rethrowControlFlowException(e)

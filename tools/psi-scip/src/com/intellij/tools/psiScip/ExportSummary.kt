@@ -9,7 +9,7 @@ import java.util.TreeMap
 private const val SITES_PER_COUNTER = 50
 
 /** The counters of the summary. A counter in [SITE_COUNTERS] also keeps its first sites. */
-internal enum class Counter(@JvmField val key: String) {
+enum class Counter(@JvmField val key: String) {
   FILES("files"),
   DEFINITIONS("definitions"),
   REFS("refs"),
@@ -32,7 +32,7 @@ private val SITE_COUNTERS = setOf(
 )
 
 /** The counters of one file or of a sum of files, with the first sites of each failure counter. */
-internal class ExportStats {
+class ExportStats {
   private val counts = LongArray(Counter.entries.size)
   private val sites = HashMap<Counter, MutableList<String>>()
 

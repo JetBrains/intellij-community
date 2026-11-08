@@ -4,13 +4,17 @@
   <category>Platform Development</category>
   <vendor>JetBrains</vendor>
   <description><![CDATA[
-    <p>Writes a SCIP index of the Java and Kotlin files of a project from PSI resolve, and the answer of the unused-declaration
+    <p>Writes a SCIP index of the source files of a project from PSI resolve, and the answer of the unused-declaration
     analysis for the Java and Kotlin declarations of a project. Both are reference oracles for code search benchmarks.
     Start them headless with the <code>psiScip</code> and <code>psiUnused</code> commands.</p>
   ]]></description>
 
   <!-- the first content tag gives the plugin its namespace; the namespace makes the internal library modules visible -->
-  <content namespace="jetbrains"/>
+  <content namespace="jetbrains">
+    <!-- The Go plugin may be absent, so keep this module optional.
+         required-if-available can reject this plugin when Go is absent. -->
+    <module name="intellij.tools.psiScip.go" loading="optional"/>
+  </content>
 
   <dependencies>
     <plugin id="org.jetbrains.kotlin"/>
@@ -40,8 +44,17 @@
     <module name="intellij.platform.uast"/>
   </dependencies>
 
+  <extensionPoints>
+    <extensionPoint name="documentCollector" interface="com.intellij.tools.psiScip.ScipDocumentCollector" />
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <appStarter id="psiScip" implementation="com.intellij.tools.psiScip.PsiScipStarter" internal="true"/>
     <appStarter id="psiUnused" implementation="com.intellij.tools.psiScip.PsiUnusedStarter" internal="true"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.tools.psiScip">
+    <documentCollector implementation="com.intellij.tools.psiScip.JavaDocumentCollectorExtension"/>
+    <documentCollector implementation="com.intellij.tools.psiScip.KotlinDocumentCollectorExtension"/>
   </extensions>
 </idea-plugin>
