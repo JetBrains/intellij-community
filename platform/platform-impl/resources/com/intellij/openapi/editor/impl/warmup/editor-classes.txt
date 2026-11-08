@@ -1,4 +1,5 @@
 # The classes to load and initialize on a BG thread before the EDT creates the first editor
+# Initialize
 com.intellij.openapi.editor.impl.CaretModelImpl
 com.intellij.openapi.editor.impl.CaretImpl
 com.intellij.openapi.editor.impl.SelectionModelImpl
@@ -17,9 +18,7 @@ com.intellij.openapi.editor.impl.view.IterationState
 com.intellij.openapi.editor.impl.EditorImpl
 com.intellij.openapi.editor.impl.EditorGutterComponentImpl
 com.intellij.openapi.editor.impl.EditorComponentImpl
-# The EDT loads the classes below when it restores the editors of a project.
-# To update them, take the class load logs of 10 `vm bench project markdown` runs.
-# Keep the platform classes that the EDT loads in the `restoreEditors` span of at least 6 runs.
+# The EDT loads the classes below when it restores the editors.
 com.intellij.codeHighlighting.BackgroundEditorHighlighter
 com.intellij.codeInsight.CodeInsightActionHandler
 com.intellij.codeInsight.actions.BaseCodeInsightAction
@@ -384,7 +383,6 @@ com.intellij.openapi.editor.markup.LineMarkerRendererEx$Position
 com.intellij.openapi.editor.state.CustomOutValueModifier
 com.intellij.openapi.editor.state.FixedDefaultValue
 com.intellij.openapi.editor.state.ObjectStateProperty
-com.intellij.openapi.editor.state.ObservableStateKt
 com.intellij.openapi.editor.state.ObservableStateListener
 com.intellij.openapi.editor.state.ObservableStateListener$PropertyChangeEvent
 com.intellij.openapi.editor.state.StateProperty
@@ -516,8 +514,6 @@ com.intellij.ui.tabs.impl.TabSideSplitter
 com.intellij.ui.tabs.impl.multiRow.MultiRowLayout
 com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout
 com.intellij.ui.tabs.impl.table.TableLayout
-# The EDT loads the classes below when it creates the editor in the IU startup highlighting test.
-# They are the editor classes of the class load windows of 16 runs that the list above misses.
 com.intellij.openapi.editor.LineNumberConverter$1
 com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport
 com.intellij.openapi.editor.elf.Elf
@@ -588,7 +584,6 @@ com.intellij.openapi.editor.impl.view.animation.EditorPainterCache$serveRequests
 com.intellij.openapi.editor.impl.zombie.CleaverNecromancer$spawnZombie$2
 com.intellij.openapi.editor.markup.GutterIconRenderer$Alignment
 com.intellij.openapi.editor.markup.GutterIconRenderer$VerticalAlignment
-com.intellij.openapi.editor.state.ObservableStateKt$sam$i$com_intellij_openapi_editor_state_SyncDefaultValueCalculator$0
 com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader$start$1
 com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader$start$1$1
 com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader$start$1$indicatorJob$1
