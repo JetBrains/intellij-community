@@ -597,6 +597,22 @@ async fn a_parallels_connect_is_the_installed_agent_relay_in_one_shell_string() 
     );
 }
 
+/// A Parallels VM that does not run, a suspended or a stopped one, runs nothing, so a release frees its lease without
+/// starting it. A running VM has a guest that the commands must reach.
+#[tokio::test]
+async fn a_parallels_vm_that_does_not_run_runs_nothing() {
+    let pool = avl_host_testkit::HostPool::builder(Backend::Parallels, GuestOs::Macos, crate::worker::tart::MINIMUM_VERSION)
+        .with_parallels()
+        .build();
+    let manager = manager_over(&pool.settings, pool.runner(), None, builds_nothing());
+    let worker = pool.settings.workers[0].clone();
+    for (status, runs_nothing) in [("suspended", true), ("stopped", true), ("running", false)] {
+        pool.fake.answer(Answer::Status, format!("VM \"{worker}\" exist {status}\n"));
+        assert_eq!(manager.runs_nothing(&ctx(), &worker).await.unwrap(), runs_nothing, "{status}");
+    }
+    assert!(!pool.fake.saw_call_containing("start"), "{:?}", pool.fake.calls());
+}
+
 /// A connect to a port where nothing listens is a refused connection at the first read, with the reason, as the
 /// HTTP client expects of a socket.
 #[tokio::test]

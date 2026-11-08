@@ -206,9 +206,12 @@ impl Manager {
         }
     }
 
-    /// Whether the worker runs nothing, so that a command can skip its guest: a Tart worker with no run process, or a
-    /// Docker or testing-ui container that does not run. A lease release, `daemon stop` and the IDE stop of a recycle
-    /// ask it. A Parallels worker answers false, so those commands reach its guest.
+    /// Whether the worker runs nothing, so that a command can skip its guest: a Tart worker with no run process, a
+    /// Parallels VM that `prlctl status` does not report running, or a Docker or testing-ui container that does not
+    /// run. A lease release, `daemon stop` and the IDE stop of a recycle ask it. A suspended Parallels VM is the
+    /// suspended Tart worker of `pool stop`: its guest runs nothing until a start. A release that started it instead
+    /// kept the lease of a VM that cannot start, such as one whose saved state the host cannot restore, and left a
+    /// worker that could be neither used nor freed.
     ///
     /// A gate, not [`Machine::running`]: a standalone `lease release` or `daemon stop` passed no other gate, and the
     /// Docker question needs the CLI that its engine gate resolves ([`Docker::stopped`]). Tart answers from its process
@@ -220,7 +223,7 @@ impl Manager {
             #[cfg(unix)]
             Machine::Tart(tart) => Ok(!tart.running(ctx, worker).await?),
             #[cfg(unix)]
-            Machine::Parallels(_) => Ok(false),
+            Machine::Parallels(parallels) => Ok(!parallels.running(ctx, worker).await?),
             Machine::Docker(docker) => docker.stopped(ctx, worker).await,
             Machine::ContainerLinux(backend) => Ok(!backend.running(ctx, worker).await?),
         }
