@@ -88,6 +88,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/junit6",
+        "//platform/devIdeConfig",
         "//platform/bazel-runfiles",
     ],
 )

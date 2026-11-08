@@ -88,6 +88,7 @@ class ContextPluginDirs private constructor(
      *
      * A path of the manifest or of the module index can be missing beside the resolved manifest. Then the path resolves as
      * the runfiles path `<directory of value>/<path>`. A pool in another repository, such as `@community`, needs that.
+     * A directory tree can also resolve from the runfiles manifest, which lists its files rather than the directory.
      */
     fun resolve(value: String): ContextPluginDirs = resolve(value, DevIdeConfig::resolveConfigFile)
 

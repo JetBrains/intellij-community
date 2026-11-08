@@ -1,8 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.starter.build.server
 
+import java.nio.file.FileVisitOption
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 
@@ -63,5 +67,26 @@ internal fun writeContextPluginPool(root: Path): Path {
     "intellij.devkit\tdevkit\n" +
     "intellij.lambda.test.plugin\tlambda-test-plugin\n"
   )
+  return manifest
+}
+
+internal fun writeBazelRunfilesManifest(root: Path, poolManifest: Path): Path {
+  val runfiles = root.resolve("runfiles")
+  val manifestOnly = root.resolve("manifest-only").createDirectories()
+  val standaloneManifest = manifestOnly.resolve(poolManifest.fileName)
+  Files.copy(poolManifest, standaloneManifest)
+
+  val entries = ArrayList<String>()
+  Files.walkFileTree(runfiles, setOf(FileVisitOption.FOLLOW_LINKS), Int.MAX_VALUE, object : SimpleFileVisitor<Path>() {
+    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+      val runfilesPath = runfiles.relativize(file).toString().replace('\\', '/')
+      val absolutePath = if (file == poolManifest) standaloneManifest else file
+      entries.add("$runfilesPath $absolutePath")
+      return FileVisitResult.CONTINUE
+    }
+  })
+
+  val manifest = root.resolve("RUNFILES_MANIFEST_FILE")
+  manifest.writeText(entries.joinToString(separator = "\n", postfix = "\n"))
   return manifest
 }

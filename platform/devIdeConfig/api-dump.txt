@@ -6,6 +6,7 @@ f:com.intellij.platform.devIdeConfig.DevIdeConfig
 - sf:MAIN_CLASS_NAME_KEY:java.lang.String
 - sf:PLATFORM_PREFIX_KEY:java.lang.String
 - s:declaredConfigFile():java.nio.file.Path
+- s:findInRunfilesManifest(java.nio.file.Path,java.lang.String):java.nio.file.Path
 - s:read(java.nio.file.Path):com.intellij.platform.devIdeConfig.DevIdeConfig$Content
 - s:resolveConfigFile(java.lang.String):java.nio.file.Path
 f:com.intellij.platform.devIdeConfig.DevIdeConfig$Content

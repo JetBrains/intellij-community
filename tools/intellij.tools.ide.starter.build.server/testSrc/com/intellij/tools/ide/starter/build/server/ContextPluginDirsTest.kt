@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools.ide.starter.build.server
 
+import com.intellij.platform.devIdeConfig.DevIdeConfig
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -72,6 +73,54 @@ internal class ContextPluginDirsTest {
     assertTrue(library.parent.isWritable())
     assertEquals("readme", installed.resolve("native/readme.txt").readText())
     assertEquals("devkit/lib/devkit.jar", installed.resolve("lib/devkit.jar").readText())
+  }
+
+  @Test
+  fun `pool installs a directory tree resolved only from the runfiles manifest`() {
+    val manifest = writeSamplePool()
+    val packed = root.resolve("packed-tree/native/mac").createDirectories()
+    packed.resolve("libfoo.dylib").writeText("libfoo")
+    val tree = manifest.resolveSibling("pool/devkit/native").createDirectories()
+    link(tree.resolve("mac"), packed)
+    link(tree.resolve("readme.txt"), root.resolve("packed-tree/readme.txt").apply { writeText("readme") })
+    manifest.writeText(manifest.readText() + "devkit/native/\tpool/devkit/native/\n")
+
+    val runfilesManifest = writeBazelRunfilesManifest(root, manifest)
+    val value = "_main/tests/${manifest.fileName}"
+    assertFalse(root.resolve("manifest-only/pool").exists())
+    val pool = ContextPluginDirs.resolve(value) { runfile ->
+      DevIdeConfig.findInRunfilesManifest(runfilesManifest, runfile) ?: throw IllegalStateException("'$runfile' names no runfile")
+    }
+    val installed = pool.installPluginDirectory("devkit", root.resolve("context/plugins"))
+
+    val library = installed.resolve("native/mac/libfoo.dylib")
+    assertEquals("libfoo", library.readText())
+    assertFalse(library.isSymbolicLink())
+    assertFalse(library.parent.isSymbolicLink())
+    assertTrue(library.isWritable())
+    assertTrue(library.parent.isWritable())
+    assertEquals("readme", installed.resolve("native/readme.txt").readText())
+    val jar = installed.resolve("lib/devkit.jar")
+    assertEquals("devkit/lib/devkit.jar", jar.readText())
+    assertFalse(jar.isSymbolicLink())
+    assertTrue(jar.isWritable())
+  }
+
+  @Test
+  fun `pool reports a tree with no runfiles manifest entry`() {
+    val manifest = writeSamplePool()
+    manifest.resolveSibling("pool/devkit/native").createDirectories()
+    manifest.writeText(manifest.readText() + "devkit/native/\tpool/devkit/native/\n")
+
+    val runfilesManifest = writeBazelRunfilesManifest(root, manifest)
+    val value = "_main/tests/${manifest.fileName}"
+    val error = assertThrows<IllegalStateException> {
+      ContextPluginDirs.resolve(value) { runfile ->
+        DevIdeConfig.findInRunfilesManifest(runfilesManifest, runfile) ?: throw IllegalStateException("'$runfile' names no runfile")
+      }
+    }
+
+    assertTrue(error.message!!.contains("neither beside the manifest nor a runfile"), error.message)
   }
 
   @Test

@@ -99,7 +99,9 @@ class BazelRunfilesManifest @JvmOverloads constructor(
     // required to resolve directories as in the manifest entries
     // only files are present as keys, but not directories
     return calculatedManifestEntries.computeIfAbsent(key) {
-      val subset = bazelRunFilesManifest.filter { it.key.startsWith(key) }
+      val prefix = if (key.endsWith('/')) key else "$key/"
+      // Keep the slash boundary so a sibling such as "native-extra" cannot match "native".
+      val subset = bazelRunFilesManifest.filter { it.key.startsWith(prefix) }
       val calculatedValue = if (subset.isNotEmpty()) {
         val longestKey = findLongestCommonPrefix(subset.keys)
         val longestValue = findLongestCommonPrefix(subset.values.toSet())

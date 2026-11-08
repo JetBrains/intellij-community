@@ -17,6 +17,9 @@ import java.util.Properties;
  * different module set is looking at the wrong distribution, and can only notice because the distribution says so
  * here.
  * <p>
+ * The manifest lookup resolves directory values too. Bazel expands directory outputs into one line per file, so the
+ * lookup derives the directory from its file entries.
+ * <p>
  * This class carries the whole format - keys, the relative-home rule, and the runfiles lookup - because its three
  * users sit in three different dependency layers and would otherwise each own a copy. It therefore depends on
  * nothing: not merely to stay small, but because {@code PreBuiltDevMain} must not pull Kotlin into the boot
@@ -131,11 +134,9 @@ public final class DevIdeConfig {
     // Windows has no runfiles tree, only this manifest of `<runfiles-relative path> <absolute path>` lines.
     String manifest = System.getenv("RUNFILES_MANIFEST_FILE");
     if (manifest != null && !manifest.isEmpty()) {
-      for (String line : Files.readAllLines(Path.of(manifest))) {
-        int separator = line.indexOf(' ');
-        if (separator == value.length() && line.startsWith(value)) {
-          return Path.of(line.substring(separator + 1));
-        }
+      Path fromManifest = findInRunfilesManifest(Path.of(manifest), value);
+      if (fromManifest != null) {
+        return fromManifest;
       }
     }
 
@@ -144,6 +145,47 @@ public final class DevIdeConfig {
       " (JAVA_RUNFILES=" + System.getenv("JAVA_RUNFILES") +
       ", RUNFILES_DIR=" + System.getenv("RUNFILES_DIR") +
       ", RUNFILES_MANIFEST_FILE=" + manifest + ")");
+  }
+
+  /**
+   * Finds the path for {@code value} in a Bazel runfiles manifest, or {@code null} when it has no matching entry.
+   * <p>
+   * A value that ends with {@code /} names a directory. The manifest holds one line per file because Bazel expands
+   * directory outputs. This method derives the directory from the first file entry below it.
+   */
+  public static Path findInRunfilesManifest(Path manifestFile, String value) throws IOException {
+    boolean directory = value.endsWith("/");
+    for (String line : Files.readAllLines(manifestFile)) {
+      int separator = line.indexOf(' ');
+      if (separator < 1) {
+        continue;
+      }
+
+      String runfilesPath = line.substring(0, separator);
+      String filePath = line.substring(separator + 1);
+      if (!directory) {
+        if (runfilesPath.equals(value)) {
+          return Path.of(filePath);
+        }
+        continue;
+      }
+
+      if (!runfilesPath.startsWith(value)) {
+        continue;
+      }
+
+      String below = runfilesPath.substring(value.length());
+      if (below.isEmpty()) {
+        continue;
+      }
+
+      String normalizedFilePath = filePath.replace('\\', '/');
+      String suffix = "/" + below;
+      if (normalizedFilePath.endsWith(suffix)) {
+        return Path.of(normalizedFilePath.substring(0, normalizedFilePath.length() - suffix.length()));
+      }
+    }
+    return null;
   }
 
   private static List<String> splitModules(String value) {

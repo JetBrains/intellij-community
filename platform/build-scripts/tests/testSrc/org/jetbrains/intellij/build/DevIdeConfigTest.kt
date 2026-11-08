@@ -113,6 +113,35 @@ class DevIdeConfigTest {
   }
 
   @Test
+  fun aDirectoryIsResolvedFromTheManifest() {
+    val manifestFile = tempDir.resolve("MANIFEST")
+    val file = tempDir.resolve("execroot/plugins/native/libnative.so")
+    Files.writeString(manifestFile, "workspace/plugins/native/libnative.so $file\n")
+
+    assertThat(DevIdeConfig.findInRunfilesManifest(manifestFile, "workspace/plugins/native/"))
+      .isEqualTo(tempDir.resolve("execroot/plugins/native"))
+  }
+
+  @Test
+  fun aFileNeedsAnExactManifestEntry() {
+    val manifestFile = tempDir.resolve("MANIFEST")
+    val file = tempDir.resolve("execroot/idea.config")
+    Files.writeString(manifestFile, "workspace/idea.config $file\n")
+
+    assertThat(DevIdeConfig.findInRunfilesManifest(manifestFile, "workspace/idea.config")).isEqualTo(file)
+    assertThat(DevIdeConfig.findInRunfilesManifest(manifestFile, "workspace/idea")).isNull()
+  }
+
+  @Test
+  fun aDirectoryIsResolvedFromAWindowsManifestPath() {
+    val manifestFile = tempDir.resolve("MANIFEST")
+    Files.writeString(manifestFile, "workspace/plugins/native/libnative.dll C:\\bazel\\execroot\\repo\\plugins\\native\\libnative.dll\n")
+
+    assertThat(DevIdeConfig.findInRunfilesManifest(manifestFile, "workspace/plugins/native/"))
+      .isEqualTo(Path.of("C:/bazel/execroot/repo/plugins/native"))
+  }
+
+  @Test
   fun aPathThatNamesNothingReportsWhereItLooked() {
     assertThatThrownBy { DevIdeConfig.resolveConfigFile("build/idea_air_dist.ide.config") }
       .hasMessageContaining("names neither an existing file nor a runfile")
