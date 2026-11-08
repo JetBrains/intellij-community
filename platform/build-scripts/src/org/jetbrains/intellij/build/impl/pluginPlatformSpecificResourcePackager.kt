@@ -56,6 +56,16 @@ internal fun buildPublishedPlatformVariantResources(plugin: PluginLayout, os: Os
   handlePlatformResourceGenerator(dist, plugin.platformResourceGeneratorsFor(dist, classicDev = context.options.isDevDistribution), listOf(dist to pluginDir), context)
 }
 
+/**
+ * Runs the platform resource generators of a bundled platform variant of [plugin] in [pluginDir], for [dist] only.
+ *
+ * The OS-specific bundled build lays out such a variant once for each distribution, as the non-bundled build does for
+ * [buildPublishedPlatformVariantResources]. A bundled build runs every generator, so the classic dev selection is off.
+ */
+internal fun buildBundledPlatformVariantResources(plugin: PluginLayout, dist: SupportedDistribution, pluginDir: Path, context: BuildContext) {
+  handlePlatformResourceGenerator(dist, plugin.platformResourceGeneratorsFor(dist, classicDev = false), listOf(dist to pluginDir), context)
+}
+
 private fun handlePlatformResourceGenerator(
   dist: SupportedDistribution,
   generators: List<ResourceGenerator>,

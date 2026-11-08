@@ -29,6 +29,7 @@ import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.SUPPORTED_DISTRIBUTIONS
 import org.jetbrains.intellij.build.impl.SupportedDistribution
+import org.jetbrains.intellij.build.impl.buildBundledPlatformVariantResources
 import org.jetbrains.intellij.build.impl.buildPlatformSpecificPluginResources
 import org.jetbrains.intellij.build.impl.copyAdditionalPlugins
 import org.jetbrains.intellij.build.impl.getOsAndArchSpecificDistDirectory
@@ -223,7 +224,12 @@ private fun buildOsSpecificBundledPlugins(
               context = context,
               additionalScrambleDescriptorsProvider = { commonPlugins },
               layoutOnly = layoutOnly,
-            )
+            ) { result, layout, _ ->
+              if (layout != null) {
+                buildBundledPlatformVariantResources(plugin = layout, dist = task.dist, pluginDir = result.dir, context = context)
+              }
+              emptyList()
+            }
           }
       }
 

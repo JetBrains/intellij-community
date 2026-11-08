@@ -98,6 +98,20 @@ class PlatformResourceGeneratorRunTest {
   }
 
   @Test
+  fun `a bundled platform variant runs every generator of its own distribution`(@TempDir tempDir: Path) {
+    val invocations = ArrayList<String>()
+    val layout = createPlatformLayout(invocations)
+    val context = createContext(tempDir)
+    val otherDistribution = SupportedDistribution(OsFamily.LINUX, JvmArchitecture.aarch64, LinuxLibcImpl.GLIBC)
+
+    buildBundledPlatformVariantResources(layout, otherDistribution, tempDir.resolve("other"), context)
+    assertThat(invocations).isEmpty()
+
+    buildBundledPlatformVariantResources(layout, distribution, tempDir.resolve("plugin"), context)
+    assertThat(invocations).containsExactly("omitted", "declared", "omitted-run", "declared-skip")
+  }
+
+  @Test
   fun `an omitted platform generator makes the layout platform-specific`() {
     val layout = PluginLayout.pluginAuto(listOf("test.plugin")) { spec ->
       spec.withGeneratedPlatformResources(platform = distribution, layoutAssetSpec = LayoutAssetSpec.OMITTED) { _, _ -> }
