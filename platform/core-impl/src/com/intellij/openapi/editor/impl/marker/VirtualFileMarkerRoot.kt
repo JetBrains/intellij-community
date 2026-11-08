@@ -120,17 +120,13 @@ class VirtualFileMarkerRoot private constructor(
 
       while (true) {
         val oldReference = file.getUserData(FILE_MARKER_ROOT_REF_KEY)
-        oldReference?.get()?.let { fileRoot ->
-          if (document != null) fileRoot.attach(document)
-          return fileRoot
+        var fileRoot = oldReference?.get()
+        if (fileRoot == null) {
+          fileRoot = VirtualFileMarkerRoot(file, initialRootReference)
+          if (!file.replace(FILE_MARKER_ROOT_REF_KEY, oldReference, WeakReference(fileRoot))) continue
         }
-
-        val fileRoot = VirtualFileMarkerRoot(file, initialRootReference)
-        val newReference = WeakReference(fileRoot)
-        if (file.replace(FILE_MARKER_ROOT_REF_KEY, oldReference, newReference)) {
-          if (document != null) fileRoot.attach(document)
-          return fileRoot
-        }
+        if (document != null) fileRoot.attach(document)
+        return fileRoot
       }
     }
 
