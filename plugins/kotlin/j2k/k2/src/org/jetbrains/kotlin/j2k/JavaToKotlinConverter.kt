@@ -97,7 +97,7 @@ class JavaToKotlinConverter(
         reporter?.text(KotlinJ2kBundle.message("j2k.applying.conversions"))
         reporter?.fraction(0.0)
 
-        val (results, externalCodeProcessing, context) = readAction {
+        val (results, externalCodeProcessing, converterContext) = readAction {
             if (copiedFiles == null) {
                 return@readAction elementsToKotlin(
                     contextElement = files.first(),
@@ -137,14 +137,19 @@ class JavaToKotlinConverter(
             }
         }
 
-        PostProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
-            reporter?.text(description)
-            reporter?.fraction(phase.toDouble() / PostProcessor.phasesCount.toDouble())
-        }
+        PostProcessor.doAdditionalProcessing(
+            MultipleFilesPostProcessingTarget(kotlinFiles),
+            converterContext,
+            onPhaseChanged = { phase, description ->
+                reporter?.text(description)
+                reporter?.fraction(phase.toDouble() / PostProcessor.phasesCount)
+            },
+            onPhaseProgress = { phase, fraction -> reporter?.fraction((phase + fraction) / PostProcessor.phasesCount) },
+        )
 
         J2kPostprocessorExtension.runProcessors(project, kotlinFiles)
 
-        val (javaLines, kotlinLines) = readAction {
+        val [javaLines, kotlinLines] = readAction {
             files.sumOf { StringUtil.getLineBreakCount(it.text) } to kotlinFiles.sumOf { StringUtil.getLineBreakCount(it.text) }
         }
 
@@ -215,7 +220,7 @@ class JavaToKotlinConverter(
         val treeRoots = elementsWithAsts.mapNotNull { it.value }
         applyConversions(treeRoots, context)
 
-        val results = elementsWithAsts.map { (element, ast) ->
+        val results = elementsWithAsts.map { [element, ast] ->
             if (ast == null) return@map null
 
             val code = JKCodeBuilder(context).printCodeOut(ast)

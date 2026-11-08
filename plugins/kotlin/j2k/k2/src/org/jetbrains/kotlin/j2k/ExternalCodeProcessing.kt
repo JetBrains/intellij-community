@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.j2k.externalCodeProcessing.ExternalUsagesFixer
@@ -13,5 +14,12 @@ interface ExternalCodeProcessing {
     context(_: KaSession)
     fun bindJavaDeclarationsToConvertedKotlinOnes(files: List<KtFile>)
 
-    fun collectUsages(onProgress: ((done: Int, total: Int, name: String) -> Unit)? = null): List<ExternalUsagesFixer.JKMemberInfoWithUsages>
+    /**
+     * Searches the usages of the converted members one by one, each member in its own smart read action.
+     * [onProgress] gets the done fraction of the whole search and the member at [index] of [total] that the search processes now.
+     */
+    suspend fun collectUsages(
+        project: Project,
+        onProgress: ((fraction: Double, member: String, index: Int, total: Int) -> Unit)? = null,
+    ): List<ExternalUsagesFixer.JKMemberInfoWithUsages>
 }

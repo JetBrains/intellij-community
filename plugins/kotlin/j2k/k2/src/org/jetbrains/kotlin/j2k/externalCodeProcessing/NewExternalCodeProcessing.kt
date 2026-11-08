@@ -2,15 +2,17 @@
 
 package org.jetbrains.kotlin.j2k.externalCodeProcessing
 
-import com.intellij.ide.util.DelegatingProgressIndicator
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
+import com.intellij.openapi.progress.util.ProgressWrapper
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiField
@@ -148,17 +150,25 @@ class NewExternalCodeProcessing(
         }
     }
 
-    override fun collectUsages(onProgress: ((done: Int, total: Int, name: String) -> Unit)?): List<ExternalUsagesFixer.JKMemberInfoWithUsages> {
+    override suspend fun collectUsages(
+        project: Project,
+        onProgress: ((fraction: Double, member: String, index: Int, total: Int) -> Unit)?,
+    ): List<ExternalUsagesFixer.JKMemberInfoWithUsages> {
         val total = members.size
         return members.values.mapIndexed { index, member ->
-            onProgress?.invoke(index, total, member.name)
-            try {
-                member.collectUsages()
-            } catch (e: ProcessCanceledException) {
-                throw e
-            } catch (t: Throwable) {
-                LOG.error("Failed to collect usages of '${member.name}'", t)
-                ExternalUsagesFixer.JKMemberInfoWithUsages(member, emptyList(), emptyList())
+            fun report(searchFraction: Double) {
+                onProgress?.invoke((index + searchFraction) / total, member.name, index, total)
+            }
+            // A write action restarts only the search of this member
+            smartReadAction(project) {
+                report(0.0)
+                try {
+                    member.collectUsages(::report)
+                } catch (t: Throwable) {
+                    rethrowControlFlowException(t)
+                    LOG.error("Failed to collect usages of '${member.name}'", t)
+                    ExternalUsagesFixer.JKMemberInfoWithUsages(member, emptyList(), emptyList())
+                }
             }
         }
     }
@@ -167,7 +177,7 @@ class NewExternalCodeProcessing(
         private val LOG: Logger = logger<NewExternalCodeProcessing>()
     }
 
-    private fun JKMemberData.collectUsages(): ExternalUsagesFixer.JKMemberInfoWithUsages {
+    private fun JKMemberData.collectUsages(onSearchFraction: (Double) -> Unit): ExternalUsagesFixer.JKMemberInfoWithUsages {
         val javaUsages = mutableListOf<PsiElement>()
         val kotlinUsages = mutableListOf<KtElement>()
         if (this is JKMemberDataCameFromJava<*>) {
@@ -190,8 +200,8 @@ class NewExternalCodeProcessing(
                             }
                         }
                     },
-                    // PsiSearchHelperImpl reports its own low-level "searching for word" text/fraction on this indicator,
-                    SilentSearchProgressIndicator(currentIndicator)
+                    // PsiSearchHelperImpl reports its own low-level "searching for word" text and fraction on this indicator
+                    SearchProgressIndicator(currentIndicator, onSearchFraction)
                 )
             }
         }
@@ -199,12 +209,27 @@ class NewExternalCodeProcessing(
     }
 }
 
-private class SilentSearchProgressIndicator(delegate: ProgressIndicator) : DelegatingProgressIndicator(delegate) {
-    override fun setText(text: String?) {
-        // swallow: don't let the low-level reference search overwrite our own progress text
-    }
+/**
+ * Gives the fraction of the reference search to [onFraction], which turns it into the fraction of the whole search.
+ * The texts, the fractions, the indeterminate state, and the start and the stop of the search do not reach [original].
+ */
+private class SearchProgressIndicator(
+    original: ProgressIndicator,
+    private val onFraction: (Double) -> Unit,
+) : ProgressWrapper(original, true) {
+    private var maxFraction = 0.0
 
+    override fun setText(text: String?) {}
+
+    override fun setText2(text: String?) {}
+
+    override fun setIndeterminate(indeterminate: Boolean) {}
+
+    @Synchronized
     override fun setFraction(fraction: Double) {
-        // swallow: don't let the low-level reference search overwrite our own progress fraction
+        // The searchers of one member report their fractions one after another, so keep the largest one
+        if (fraction <= maxFraction) return
+        maxFraction = fraction.coerceAtMost(1.0)
+        onFraction(maxFraction)
     }
 }

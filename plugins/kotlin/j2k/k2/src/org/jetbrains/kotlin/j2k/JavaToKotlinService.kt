@@ -109,11 +109,9 @@ class JavaToKotlinService(val project: Project) {
         progress?.text(KotlinJ2kBundle.message("progress.searching.usages"))
         progress?.fraction(0.0)
 
-        return smartReadAction(project) {
-            externalCodeProcessing.collectUsages { done, total, name ->
-                progress?.fraction(done.toDouble() / total.toDouble())
-                progress?.details(name)
-            }
+        return externalCodeProcessing.collectUsages(project) { fraction, member, index, total ->
+            progress?.fraction(fraction)
+            progress?.details(KotlinJ2kBundle.message("progress.searching.usages.member", member, index + 1, total))
         }
     }
 

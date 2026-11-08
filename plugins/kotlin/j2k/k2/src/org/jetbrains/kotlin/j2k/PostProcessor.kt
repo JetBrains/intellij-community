@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.j2k
 
-// import removed: forbidAnalysis no longer used during application phase
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
@@ -70,15 +69,20 @@ object PostProcessor {
         }
     }
 
+    /**
+     * [onPhaseProgress] gets the done fraction of the current phase:
+     * the first half is the computation of the appliers, the second half is their application.
+     */
     suspend fun doAdditionalProcessing(
         target: PostProcessingTarget,
         converterContext: ConverterContext?,
-        onPhaseChanged: ((Int, String) -> Unit)? = null
+        onPhaseChanged: ((Int, String) -> Unit)? = null,
+        onPhaseProgress: ((phase: Int, fraction: Double) -> Unit)? = null,
     ) {
         if (converterContext == null) error("Invalid converter context for K2 J2K")
         val contextElement = target.files().firstOrNull() ?: return
 
-        for ((i, group) in processings.withIndex()) {
+        for ([i, group] in processings.withIndex()) {
             checkCanceled()
             onPhaseChanged?.invoke(i, group.description)
             val appliers = mutableListOf<PostProcessingApplier>()
@@ -86,7 +90,8 @@ object PostProcessor {
             // Step 1: compute appliers
             readAction {
                 analyze(contextElement) {
-                    for (processing in group.processings) {
+                    for ([index, processing] in group.processings.withIndex()) {
+                        onPhaseProgress?.invoke(i, 0.5 * index / group.processings.size)
                         try {
                             appliers += processing.computeAppliers(target, converterContext)
                         } catch (e: ProcessCanceledException) {
@@ -99,8 +104,9 @@ object PostProcessor {
             }
 
             // Step 2: apply them
-            for (applier in appliers) {
+            for ([index, applier] in appliers.withIndex()) {
                 checkCanceled()
+                onPhaseProgress?.invoke(i, 0.5 + 0.5 * index / appliers.size)
                 edtWriteAction {
                     CodeStyleManager.getInstance(contextElement.project).performActionWithFormatterDisabled {
                         try {
@@ -120,14 +126,14 @@ object PostProcessor {
 // TODO try to reduce the number of post-processing groups for better performance
 private val processings: List<NamedPostProcessingGroup> = listOf(
     NamedPostProcessingGroup(
-        KotlinJ2kBundle.message("processing.step.cleaning.up.code"),
+        KotlinJ2kBundle.message("processing.step.converting.accessors"),
         listOf(
             K2ConvertGettersAndSettersToPropertyProcessing()
         ),
     ),
 
     NamedPostProcessingGroup(
-        KotlinJ2kBundle.message("processing.step.cleaning.up.code"),
+        KotlinJ2kBundle.message("processing.step.merging.constructor.parameters"),
         listOf(
             MergePropertyWithConstructorParameterProcessing()
         ),
@@ -173,7 +179,7 @@ private val processings: List<NamedPostProcessingGroup> = listOf(
     ),
 
     NamedPostProcessingGroup(
-        KotlinJ2kBundle.message("processing.step.optimizing.imports"),
+        KotlinJ2kBundle.message("processing.step.formatting"),
         listOf(
             FormatCodeProcessing()
         )
