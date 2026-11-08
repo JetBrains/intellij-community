@@ -113,6 +113,11 @@ public class K2JavaToKotlinConverterMultiFileTestGenerated extends AbstractK2Jav
         runTest("../../shared/tests/testData/multiFile/ProtectedVisibility/");
     }
 
+    @TestMetadata("ShortenInsideNotNullAssertion")
+    public void testShortenInsideNotNullAssertion() throws Exception {
+        runTest("../../shared/tests/testData/multiFile/ShortenInsideNotNullAssertion/");
+    }
+
     @TestMetadata("StaticAnnotation")
     public void testStaticAnnotation() throws Exception {
         runTest("../../shared/tests/testData/multiFile/StaticAnnotation/");
