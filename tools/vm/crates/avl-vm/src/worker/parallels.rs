@@ -66,6 +66,7 @@ const PRLCTL_EXEC_PROBE_TIMEOUT: Duration = Duration::from_secs(30);
 /// The timeout of one read of the login settings through `prlctl exec`: a `defaults read` or a `test -f`.
 const PRLCTL_EXEC_READ_TIMEOUT: Duration = Duration::from_mins(1);
 
+
 /// A VM state `prlctl list -j` reports. The three this controller acts on are variants, because the only decisions
 /// here are "is there a saved state" and "is it off"; every other state keeps `prlctl`'s own word, because `vm
 /// status` prints it verbatim and "paused" or "resuming" is what an agent reading that row needs to see.
@@ -135,6 +136,9 @@ pub(crate) struct VmInfo {
     pub state: Option<VmState>,
     #[serde(rename = "OS")]
     pub os: Option<String>,
+    /// The bundle directory of the VM, which holds its `parallels.log`.
+    #[serde(rename = "Home")]
+    pub home: Option<String>,
     /// `prlctl`'s own spelling, spaces included.
     #[serde(rename = "Host Shared Folders")]
     pub shared_folders: Option<SharedFolders>,
@@ -249,6 +253,32 @@ fn resolved_path(path: &Path) -> PathBuf {
         }
     }
     resolved
+}
+
+/// How [`Parallels::start`] started a VM.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ParallelsStart {
+    /// `prlctl start` resumed the saved state, or booted a VM that had none.
+    Started,
+    /// The host could not restore the saved state, so the start dropped it and booted the VM cold. The guest lost the
+    /// memory of its last session, such as a warm daemon, and its disk is as it was.
+    DroppedUnrestorableState,
+}
+
+/// The file in the bundle directory of a VM where Parallels logs each operation on it.
+const VM_LOG_NAME: &str = "parallels.log";
+
+/// The question that Parallels logs when Apple Virtualization refuses to restore the saved state of a VM.
+const RESTORE_FAILED_MARKER: &str = "PET_QUESTION_MACVM_CANNOT_RESTORE_SUSPEND_STATE";
+
+/// Whether the log at `path` gained `marker` after its first `length` bytes. A log that shrank, a rotation, is read
+/// whole. A log that cannot be read gained nothing.
+fn log_gained(path: &Path, length: u64, marker: &str) -> bool {
+    let Ok(bytes) = std::fs::read(path) else {
+        return false;
+    };
+    let start = usize::try_from(length).ok().filter(|start| *start <= bytes.len()).unwrap_or(0);
+    String::from_utf8_lossy(&bytes[start..]).contains(marker)
 }
 
 /// The Parallels backend, one of the two a [`Machine`](crate::worker::hypervisor::Machine) is.
@@ -433,6 +463,49 @@ impl Parallels {
         }
     }
 
+    // --- starting --------------------------------------------------------------------------------------------
+
+    /// Starts the VM: a resume of its saved state, or a boot of a stopped VM.
+    ///
+    /// Apple Virtualization cannot restore every saved state, such as one that an earlier version of the host wrote.
+    /// `prlctl` then asks its question `PET_QUESTION_MACVM_CANNOT_RESTORE_SUSPEND_STATE`, answers it Cancel on its own
+    /// because no one is at the screen, and exits 255 with "Operation canceled". The VM keeps the saved state, so every
+    /// later start fails the same way. Only the log of the VM names the cause. So a start of a suspended VM that fails,
+    /// and whose log gained [`RESTORE_FAILED_MARKER`] during the attempt, spends the state with
+    /// `prlctl stop --drop-state` and boots once, which [`ParallelsStart::DroppedUnrestorableState`] reports. Every other
+    /// failure is the refusal of the first start, and its state stays.
+    pub(crate) async fn start(&self, ctx: &Ctx, worker: &str) -> Result<ParallelsStart, Refusal> {
+        let info = self.info(ctx, worker).await?;
+        let log = info.home.as_deref().map(|home| Path::new(home).join(VM_LOG_NAME));
+        let log_length = log
+            .as_deref()
+            .map_or(0, |path| std::fs::metadata(path).map_or(0, |metadata| metadata.len()));
+        let argv = self.prlctl(&["start", worker]);
+        let Err(failure) = self.runner.checked(ctx, &argv, &SpawnOptions::within(PRLCTL_START_TIMEOUT)).await else {
+            return Ok(ParallelsStart::Started);
+        };
+        let suspended = info.state == Some(VmState::Suspended);
+        if !suspended
+            || !log
+                .as_deref()
+                .is_some_and(|path| log_gained(path, log_length, RESTORE_FAILED_MARKER))
+        {
+            return Err(failure.into());
+        }
+        // `prlctl` resets the VM back to its saved state after the failed restore. The state must land before the drop.
+        self.wait_for_state(ctx, worker, VmState::Suspended).await?;
+        self.runner
+            .checked(
+                ctx,
+                &self.prlctl(&["stop", worker, "--drop-state"]),
+                &SpawnOptions::within(PRLCTL_STOP_TIMEOUT),
+            )
+            .await?;
+        self.wait_for_state(ctx, worker, VmState::Stopped).await?;
+        self.runner.checked(ctx, &argv, &SpawnOptions::within(PRLCTL_START_TIMEOUT)).await?;
+        Ok(ParallelsStart::DroppedUnrestorableState)
+    }
+
     // --- waiting ---------------------------------------------------------------------------------------------
 
     /// Waits until `prlctl` reports the VM in `state`.
@@ -551,9 +624,8 @@ impl Parallels {
                             format!("Parallels VM {worker} stopped before it could be suspended"),
                         ));
                     }
-                    self.runner
-                        .checked(ctx, &self.prlctl(&["start", worker]), &SpawnOptions::within(PRLCTL_START_TIMEOUT))
-                        .await?;
+                    // A stopped VM has no saved state, so the start is a boot.
+                    self.start(ctx, worker).await?;
                     restarted = true;
                 }
                 _ if self.guest_answers(ctx, worker, PRLCTL_EXEC_PROBE_TIMEOUT).await => {
@@ -713,9 +785,8 @@ impl Parallels {
         }
         self.apply_shares(ctx, worker, &info, shares).await?;
         if cycled {
-            self.runner
-                .checked(ctx, &self.prlctl(&["start", worker]), &SpawnOptions::within(PRLCTL_START_TIMEOUT))
-                .await?;
+            // The stop above spent the saved state, so the start is a boot.
+            self.start(ctx, worker).await?;
             self.wait_for_guest_execution(ctx, worker).await?;
         }
         Ok(cycled)

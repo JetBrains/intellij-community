@@ -3,13 +3,13 @@
 //! deleted: `pool gc` and `pool recycle` refuse.
 
 use avl_base::{Outcome, Refusal};
+use avl_host_sys::Ctx;
 use avl_host_sys::guest::ensure_host_paths;
 use avl_host_sys::share::shares;
-use avl_host_sys::{Ctx, SpawnOptions};
 use serde_json::json;
 
 use super::{GUEST_PROBE_TIMEOUT, Manager, StartState, StopState};
-use crate::worker::parallels::{PRLCTL_START_TIMEOUT, Parallels, VmState as ParallelsState};
+use crate::worker::parallels::{Parallels, ParallelsStart, VmState as ParallelsState};
 use avl_base::RefusalExt;
 
 /// What `pool recycle` answers on Parallels, before any lock and again for one slot.
@@ -63,13 +63,7 @@ impl Manager {
         ensure_host_paths(ctx, &self.runner, &self.settings).await?;
         let already_running = parallels.running(ctx, worker).await? && self.guest_answers(ctx, worker, GUEST_PROBE_TIMEOUT).await;
         if !already_running {
-            self.runner
-                .checked(
-                    ctx,
-                    &[self.settings.parallels.clone(), "start".to_owned(), worker.to_owned()],
-                    &SpawnOptions::within(PRLCTL_START_TIMEOUT),
-                )
-                .await?;
+            self.start_vm(ctx, parallels, worker).await?;
             parallels.wait_for_guest_execution(ctx, worker).await?;
         }
         parallels.wait_for_console_login(ctx, worker).await?;
@@ -90,6 +84,18 @@ impl Manager {
     }
 
     /// Suspends a running Parallels worker.
+    /// Starts the VM through [`Parallels::start`], and says so when the start had to drop a saved state that the host
+    /// could not restore: the run then pays a cold daemon, and the reader of the report sees why.
+    async fn start_vm(&self, ctx: &Ctx, parallels: &Parallels, worker: &str) -> Result<(), Refusal> {
+        if parallels.start(ctx, worker).await? == ParallelsStart::DroppedUnrestorableState {
+            self.note(
+                worker,
+                format!("{worker} had a saved state that this host cannot restore, so the start dropped it and booted the VM cold"),
+            );
+        }
+        Ok(())
+    }
+
     pub(super) async fn stop_parallels(&self, ctx: &Ctx, parallels: &Parallels, worker: &str) -> Result<StopState, Refusal> {
         parallels.require_info(ctx, worker).await?;
         if !parallels.running(ctx, worker).await? {
@@ -115,13 +121,7 @@ impl Manager {
         // now and hand the VM back in the state it was found in.
         let restore_suspended = initial.state == Some(ParallelsState::Suspended);
         if !parallels.running(ctx, &worker).await? || !self.guest_answers(ctx, &worker, GUEST_PROBE_TIMEOUT).await {
-            self.runner
-                .checked(
-                    ctx,
-                    &[self.settings.parallels.clone(), "start".to_owned(), worker.clone()],
-                    &SpawnOptions::within(PRLCTL_START_TIMEOUT),
-                )
-                .await?;
+            self.start_vm(ctx, parallels, &worker).await?;
             parallels.wait_for_guest_execution(ctx, &worker).await?;
         }
         let mut provisioned = self.provision_parallels_worker(ctx, parallels, &worker).await;
