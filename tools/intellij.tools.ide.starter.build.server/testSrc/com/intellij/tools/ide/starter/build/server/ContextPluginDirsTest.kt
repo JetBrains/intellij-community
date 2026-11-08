@@ -97,6 +97,37 @@ internal class ContextPluginDirsTest {
   }
 
   @Test
+  fun `pool of a runfiles path finds a file in the runfiles when it is missing beside the manifest`() {
+    val manifest = writeSamplePool()
+    val runfiles = root.resolve("runfiles")
+    val value = runfiles.relativize(manifest).toString().replace('\\', '/')
+    // The manifest resolves outside the runfiles tree, where it has no sibling.
+    val alone = root.resolve("outside/_main/tests").createDirectories().resolve(manifest.fileName.toString())
+    Files.copy(manifest, alone)
+    val resolveRunfile = { path: String -> if (path == value) alone else runfiles.resolve(path) }
+
+    val pool = ContextPluginDirs.resolve(value, resolveRunfile)
+
+    assertEquals(alone, pool.manifest)
+    assertEquals(mapOf("intellij.devkit" to "devkit", "intellij.lambda.test.plugin" to "lambda-test-plugin"), pool.modules)
+    val installed = pool.installPluginDirectory("devkit", root.resolve("context/plugins"))
+    assertEquals("devkit/lib/devkit.jar", installed.resolve("lib/devkit.jar").readText())
+    assertThrows<IllegalStateException> { ContextPluginDirs.read(alone) }
+  }
+
+  @Test
+  fun `pool of a runfiles path names the manifest when a file is in no place`() {
+    val manifest = writeSamplePool()
+    val alone = root.resolve("outside").createDirectories().resolve(manifest.fileName.toString())
+    Files.copy(manifest, alone)
+    val value = "_main/tests/pool.context-plugins.txt"
+    val error = assertThrows<IllegalStateException> {
+      ContextPluginDirs.resolve(value) { path -> if (path == value) alone else throw IllegalStateException("'$path' names no runfile") }
+    }
+    assertTrue(error.message!!.contains("neither beside the manifest nor a runfile"), error.message)
+  }
+
+  @Test
   fun `pool without a module index fails`() {
     val manifest = writeSamplePool()
     Files.delete(manifest.resolveSibling("pool.context-plugin-modules.txt"))

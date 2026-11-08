@@ -83,14 +83,38 @@ class ContextPluginDirs private constructor(
     const val MANIFEST_SUFFIX: String = ".context-plugins.txt"
     const val MODULE_INDEX_SUFFIX: String = ".context-plugin-modules.txt"
 
-    /** Reads the pool that [value] names, an absolute path or a runfiles path, as [DevIdeConfig.resolveConfigFile] resolves it. */
-    fun resolve(value: String): ContextPluginDirs = read(DevIdeConfig.resolveConfigFile(value))
+    /**
+     * Reads the pool that [value] names, an absolute path or a runfiles path, as [DevIdeConfig.resolveConfigFile] resolves it.
+     *
+     * A path of the manifest or of the module index can be missing beside the resolved manifest. Then the path resolves as
+     * the runfiles path `<directory of value>/<path>`. A pool in another repository, such as `@community`, needs that.
+     */
+    fun resolve(value: String): ContextPluginDirs = resolve(value, DevIdeConfig::resolveConfigFile)
 
-    /** Reads the pool of [manifest] and its module index. */
-    fun read(manifest: Path): ContextPluginDirs {
+    internal fun resolve(value: String, resolveRunfile: (String) -> Path): ContextPluginDirs {
+      val directory = value.substringBeforeLast('/', missingDelimiterValue = "")
+      return read(resolveRunfile(value)) { relative -> resolveRunfile(if (directory.isEmpty()) relative else "$directory/$relative") }
+    }
+
+    /** Reads the pool of [manifest] and its module index. Each path must be beside [manifest]. */
+    fun read(manifest: Path): ContextPluginDirs = read(manifest, fallback = null)
+
+    private fun read(manifest: Path, fallback: ((String) -> Path)?): ContextPluginDirs {
       val manifestName = manifest.name
       require(manifestName.endsWith(MANIFEST_SUFFIX)) { "The context plugin manifest $manifest does not end with '$MANIFEST_SUFFIX'" }
       val base = manifest.parent
+      fun locate(relative: String): Path {
+        val beside = base.resolve(relative)
+        if (fallback == null || beside.exists()) {
+          return beside
+        }
+        try {
+          return fallback(relative)
+        }
+        catch (e: IllegalStateException) {
+          throw IllegalStateException("The context plugins $manifest name '$relative', which is neither beside the manifest nor a runfile", e)
+        }
+      }
       val files = LinkedHashMap<String, MutableList<Pair<String, Path>>>()
       for ((destination, relative) in readTabSeparated(manifest)) {
         val directory = destination.substringBefore('/')
@@ -101,7 +125,7 @@ class ContextPluginDirs private constructor(
         check(tree == relative.endsWith('/')) {
           "The context plugin manifest $manifest maps '$destination' to '$relative': a directory tree needs '/' at the end of both"
         }
-        val source = base.resolve(relative)
+        val source = locate(relative)
         check(source.exists()) { "The context plugin manifest $manifest names '$relative', and $source does not exist" }
         check(source.isDirectory() == tree) {
           "The context plugin manifest $manifest names '$relative' as a ${if (tree) "directory tree" else "file"}, and $source is not one"
@@ -109,7 +133,7 @@ class ContextPluginDirs private constructor(
         files.computeIfAbsent(directory) { ArrayList() }.add(destination to source)
       }
 
-      val index = base.resolve(manifestName.removeSuffix(MANIFEST_SUFFIX) + MODULE_INDEX_SUFFIX)
+      val index = locate(manifestName.removeSuffix(MANIFEST_SUFFIX) + MODULE_INDEX_SUFFIX)
       check(index.exists()) { "The module index $index of the context plugins $manifest does not exist" }
       val modules = LinkedHashMap<String, String>()
       for ((module, directory) in readTabSeparated(index)) {
