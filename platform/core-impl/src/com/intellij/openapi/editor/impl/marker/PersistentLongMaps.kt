@@ -97,20 +97,7 @@ internal class PersistentLongMap16<V : Any> private constructor(
     return getUnchecked(key)
   }
 
-  override fun getUnchecked(key: Long): V? {
-    var branch = root ?: return null
-
-    for (depth in 0 until LEVELS) {
-      val child = branch.children[index(key, depth)] ?: return null
-      if (depth == LEVELS - 1) {
-        @Suppress("UNCHECKED_CAST")
-        return child as V
-      }
-      branch = child as Branch
-    }
-
-    return null
-  }
+  override fun getUnchecked(key: Long): V? = find(root, key)
 
   override fun put(key: Long, value: V): PersistentLongMap16<V> {
     requireNonNegativeKey(key)
@@ -164,32 +151,18 @@ internal class PersistentLongMap16<V : Any> private constructor(
     override fun get(key: Long): V? {
       checkActive()
       requireNonNegativeKey(key)
-      return find(key)
+      return find(root, key)
     }
 
     override fun getUnchecked(key: Long): V? {
       checkActive()
-      return find(key)
-    }
-
-    private fun find(key: Long): V? {
-      var branch = root ?: return null
-
-      for (depth in 0 until LEVELS) {
-        val child = branch.children[index(key, depth)] ?: return null
-        if (depth == LEVELS - 1) {
-          @Suppress("UNCHECKED_CAST")
-          return child as V
-        }
-        branch = child as Branch
-      }
-      return null
+      return find(root, key)
     }
 
     override fun put(key: Long, value: V) {
       checkActive()
       requireNonNegativeKey(key)
-      if (find(key) == null) size++
+      if (find<V>(root, key) == null) size++
       root = put(root, key, value, 0)
       dirty = true
     }
@@ -258,6 +231,19 @@ internal class PersistentLongMap16<V : Any> private constructor(
     private fun index(key: Long, depth: Int): Int {
       val shift = (LEVELS - depth - 1) * BITS
       return ((key ushr shift) and MASK).toInt()
+    }
+
+    private fun <V : Any> find(root: Branch?, key: Long): V? {
+      var branch = root ?: return null
+      for (depth in 0 until LEVELS) {
+        val child = branch.children[index(key, depth)] ?: return null
+        if (depth == LEVELS - 1) {
+          @Suppress("UNCHECKED_CAST")
+          return child as V
+        }
+        branch = child as Branch
+      }
+      return null
     }
 
     private fun <V : Any> put(branch: Branch?, key: Long, value: V, depth: Int): Branch {
