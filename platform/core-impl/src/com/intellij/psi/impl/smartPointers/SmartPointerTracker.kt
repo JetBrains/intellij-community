@@ -471,9 +471,11 @@ class SmartPointerTracker(initialModCount: Long) {
    * Works in collaboration with [PointerReference].
    *
    * Not synchronized.
+   *
+   * The list starts with a shared empty array. The first [add] allocates an array of one slot.
    */
   private class WeakPointerReferenceList {
-    private var references = arrayOfNulls<PointerReference>(10)
+    private var references: Array<PointerReference?> = EMPTY_REFERENCES
     private var nextAvailableIndex = 0
 
     var size: Int = 0
@@ -561,6 +563,9 @@ class SmartPointerTracker(initialModCount: Long) {
 
   companion object {
     private val ourQueue = ReferenceQueue<SmartPsiElementPointerImpl<*>?>()
+
+    /** The initial array of every [WeakPointerReferenceList]. Nothing writes into it. */
+    private val EMPTY_REFERENCES = arrayOfNulls<PointerReference>(0)
 
     init {
       val application = ApplicationManager.getApplication()
