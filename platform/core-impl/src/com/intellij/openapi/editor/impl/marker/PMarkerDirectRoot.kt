@@ -683,17 +683,9 @@ class PMarkerDirectRoot private constructor(
      */
     private fun publish(node: PMarkerNode?) {
       if (node == null || node.version !== version) return
-      if (node.state.version === version) node.handle.states.put(version, node.state)
-      if (!node.inheritsLeftParent) publishParent(node.left, node.state)
-      if (!node.inheritsRightParent) publishParent(node.right, node.state)
+      node.publish()
       publish(node.left)
       publish(node.right)
-    }
-
-    /** Publishes the parent link for this version. */
-    private fun publishParent(child: PMarkerNode?, parent: PMarkerValidNode) {
-      val parents = child?.state?.parents ?: return
-      parents.put(version, parent)
     }
   }
 

@@ -61,10 +61,13 @@ internal class PMarkerNode private constructor(
     get() = entry.handle
   val lazyDelta: Int
     get() = state.lazyDelta
-  val inheritsLeftParent: Boolean
-    get() = changedParentMask.toInt() and 1 == 0
-  val inheritsRightParent: Boolean
-    get() = changedParentMask.toInt() and 2 == 0
+
+  /** Publishes this node's state and the changed parent links for its children. */
+  fun publish() {
+    if (state.version === version) handle.states.put(version, state)
+    if (changedParentMask.toInt() and 1 != 0) left?.state?.parents?.put(version, state)
+    if (changedParentMask.toInt() and 2 != 0) right?.state?.parents?.put(version, state)
+  }
 
   /** Copies metadata and preserves the shape, offsets, and policies of this subtree. */
   fun withMetadata(
