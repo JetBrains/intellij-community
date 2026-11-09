@@ -105,8 +105,8 @@ class DriverOverlayUiTest {
         waitShown(action, "after a step of the SDK in withContext")
       }
 
-      step("Open the settings and check every option of the code style page") {
-        waitTitle("Open the settings and check every option of the code style…", "a long step name ends at a word")
+      step("Open the settings and check every option of the code style page of the Kotlin language in the settings dialog") {
+        waitTitle("Open the settings and check every option of the code style page of the Kotlin language…", "a long step name ends at a word")
       }
 
       val short = ShownOverlay("Short step", null)
@@ -157,8 +157,8 @@ class DriverOverlayUiTest {
       waitForProjectOpen(1.minutes)
       step("Prepare the project") {
         step("Open the code styles") {
-          step("Check every wrapping option of the Kotlin code style page in the settings") {
-            val path = "Prepare the project › Open the code styles › Check every wrapping option of the Kotlin code style page…"
+          step("Check every wrapping option of the Kotlin code style page in the settings of the IDE for each language") {
+            val path = "Prepare the project › Open the code styles › Check every wrapping option of the Kotlin code style page in the settings of the IDE for…"
             val expected = ShownOverlay(path, null)
             waitShown(expected, "the overlay shows")
             takeScreenshot("overlay_long_text")

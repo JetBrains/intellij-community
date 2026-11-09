@@ -38,10 +38,10 @@ private val NESTED_STEP_DELAY: Duration = 250.milliseconds
 /** The longest wait for the IDE to apply the overlay calls. */
 private val OVERLAY_CALL_TIMEOUT: Duration = 10.seconds
 
-private const val MAX_NAME_LENGTH: Int = 60
-private const val MAX_OUTER_NAME_LENGTH: Int = 30
+private const val MAX_NAME_LENGTH: Int = 90
+private const val MAX_OUTER_NAME_LENGTH: Int = 45
 private const val MAX_OUTER_STEPS: Int = 3
-private const val MAX_MESSAGE_LENGTH: Int = 60
+private const val MAX_MESSAGE_LENGTH: Int = 90
 private const val MAX_CAUSES: Int = 10
 
 /**
