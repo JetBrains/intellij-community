@@ -62,6 +62,13 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("go to http://localhost and validate", unknownOffsets(extracted));
   }
 
+  @SuppressWarnings("NonAsciiCharacters")
+  public void testMarkdownAutolink() {
+    var prefix = "Voici enfin un bug grâce aux accents,\nenfin : ";
+    var extracted = extractText("a.md", prefix + "<https://admin.deleev.com/inventory/inventory/zone_manager_home>.", 0);
+    assertEquals(prefix + "|.", unknownOffsets(extracted));
+  }
+
   public void testMarkdownImage() {
     TextContent extracted = extractText("a.md", "[Before ![AltText](http://www.google.com.au/images/nav_logo7.png) after](http://google.com.au/)", 3);
     assertEquals("Before  after", unknownOffsets(extracted));

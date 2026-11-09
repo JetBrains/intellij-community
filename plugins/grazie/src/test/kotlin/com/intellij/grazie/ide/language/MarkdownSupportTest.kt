@@ -3,6 +3,7 @@
 
 package com.intellij.grazie.ide.language
 
+import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.grazieTestFixture
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.util.Disposer
@@ -43,6 +44,14 @@ class MarkdownSupportTest {
   @Test
   fun `test no false positives in test links`() {
     grazie.runHighlightTestForFile("ide/language/markdown/TestLink.md")
+  }
+
+  @Test
+  fun `test no whitespace warnings after autolinks`() {
+    val fixture = grazie.fixture
+    GrazieConfig.update { it.copy(userEnabledRules = it.userEnabledRules + "LanguageTool.EN.COMMA_PARENTHESIS_WHITESPACE") }
+    fixture.configureByText("a.md", "This is not a bug: <https://example.com>.")
+    fixture.checkHighlighting()
   }
 
   @Test
