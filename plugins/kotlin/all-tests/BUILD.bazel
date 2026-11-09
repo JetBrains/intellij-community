@@ -25,6 +25,7 @@ jvm_library(
         "//plugins/kotlin/base/code-insight",
         "//plugins/kotlin/project-wizard/core",
         "//plugins/kotlin/fir/tests:tests_test_lib",
+        "//plugins/kotlin/property-tests:propertyBased-tests_test_lib",
         "//plugins/kotlin/uast/uast-kotlin-fir:kotlin-uast",
         "//plugins/kotlin/project-wizard/cli",
         "//plugins/kotlin/project-wizard/compose",

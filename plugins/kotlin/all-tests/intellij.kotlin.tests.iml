@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.codeInsight" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.fir.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.propertyBased.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.uast" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.cli" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.compose" scope="RUNTIME" />

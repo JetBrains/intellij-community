@@ -1,0 +1,57 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.kotlin.propertyBased.tests` start
+jvm_library(
+    name = "propertyBased-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.propertyBased.tests",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+        "//plugins/kotlin/test-framework:test-framework_test_lib",
+        "//plugins/kotlin/tests-common:common-tests_test_lib",
+        "//java/testFramework",
+        "//platform/testFramework",
+        "//platform/testFramework/core",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//libraries/junit4",
+    ],
+)
+### auto-generated section `build intellij.kotlin.propertyBased.tests` end
+
+### auto-generated section `iml intellij.kotlin.propertyBased.tests` start
+exports_files(
+    [
+        "intellij.kotlin.propertyBased.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.propertyBased.tests` end
+
+### auto-generated section `test intellij.kotlin.propertyBased.tests` start
+jps_test(
+    name = "propertyBased-tests_test",
+    runtime_deps = [":propertyBased-tests_test_lib"],
+)
+### auto-generated section `test intellij.kotlin.propertyBased.tests` end
