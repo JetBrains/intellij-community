@@ -32,6 +32,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -217,7 +218,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     try {
       return CachedValuesManager.getCachedValue(element, () -> {
         GlobalSearchScope scope = myDirtyScopeHolder.isMostlyDirty() ? null : buildScopeWithReferences(getReferentFiles(element), element);
-        return CachedValueProvider.Result.create(scope, PsiModificationTracker.MODIFICATION_COUNT, this);
+        return CachedValueProvider.Result.create(scope, PsiModificationTracker.MODIFICATION_COUNT, VirtualFileManager.getInstance(), this);
       });
     }
     catch (RuntimeException e1) {

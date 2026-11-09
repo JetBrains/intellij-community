@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
@@ -352,14 +353,14 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
 
     fun scopeWithCodeReferences(element: PsiElement): GlobalSearchScope? {
         if (!isServiceEnabledFor(element)) return null
-        if (!shouldRestrictScope()) return null
         val originalElement = element.unwrapped ?: return null
 
         return runActionSafe("scope with code references") {
             CachedValuesManager.getCachedValue(originalElement) {
                 CachedValueProvider.Result.create(
-                    buildScopeWithReferences(referentFiles(originalElement), originalElement),
+                    if (shouldRestrictScope()) buildScopeWithReferences(referentFiles(originalElement), originalElement) else null,
                     PsiModificationTracker.MODIFICATION_COUNT,
+                    VirtualFileManager.getInstance(),
                     this,
                 )
             }
