@@ -245,13 +245,13 @@ internal class TerminalSearchSession(
 
   override fun close() {
     Disposer.dispose(disposable)
-    closeCallback()
-    // We only need to transfer the focus if the editor is still visible.
-    // There can be several reasons for closing the search,
-    // and in some cases the editor can be hidden (e.g., switching to the alternate buffer).
+    // Transfer the focus before closeCallback removes the focused search field.
+    // Otherwise, AWT moves the focus to the next focusable component: the gutter in screen reader mode.
+    // Skip it when the editor is hidden, e.g., after the switch to the alternate buffer.
     if (editor.contentComponent.isShowing) {
       editor.contentComponent.requestFocusInWindow()
     }
+    closeCallback()
   }
 
   private class TerminalSearchPresentation(private val editor: Editor) : LivePreviewPresentation {
