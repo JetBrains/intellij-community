@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.BasicUndoableAction
@@ -56,12 +57,13 @@ import com.intellij.spellchecker.state.ProjectDictionaryState
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.spellchecker.util.Strings
 import com.intellij.util.EventDispatcher
-import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
 import java.util.function.Consumer
@@ -96,17 +98,23 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   private var suggestionProvider: SuggestionProvider? = null
   private val settings by lazy { SpellCheckerSettings.getInstance(project) }
-  private val disposable = coroutineScope.asDisposable()
 
   init {
     fullConfigurationReload()
 
-    StandardFileSystems.local().addVirtualFileListener(CustomDictFileListener(project = project, manager = this), disposable)
-    StandardFileSystems.local().addVirtualFileListener(ProjectDictFileListener(this), disposable)
     BUNDLED_EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
     RuntimeDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
     CustomDictionaryProvider.EP_NAME.addChangeListener(coroutineScope) { fillEngineDictionary(spellChecker) }
-    addUserDictionaryChangedListener({ DictionaryModificationTracker.getInstance(project).incModificationCount() }, disposable)
+    coroutineScope.launch(Dispatchers.EDT) {
+      if (project.isDisposed) {
+        return@launch
+      }
+      val manager = this@SpellCheckerManager
+      StandardFileSystems.local().addVirtualFileListener(CustomDictFileListener(project = project, manager = manager), manager)
+      StandardFileSystems.local().addVirtualFileListener(ProjectDictFileListener(manager), manager)
+      AppDictionaryState.getInstance().addAppDictListener({ restartInspections("SpellCheckerManager.addAppDictListener") }, manager)
+      addUserDictionaryChangedListener({ DictionaryModificationTracker.getInstance(project).incModificationCount() }, manager)
+    }
   }
 
   companion object {
@@ -223,7 +231,6 @@ class SpellCheckerManager @Internal constructor(@Internal val project: Project, 
 
   private fun initUserDictionaries(spellChecker: SpellCheckerEngine) {
     val appDictionaryState = AppDictionaryState.getInstance()
-    appDictionaryState.addAppDictListener({ restartInspections("SpellCheckerManager.addAppDictListener") }, disposable)
     if (appDictionaryState.dictionary == null) {
       appDictionaryState.dictionary = UserDictionary(AppDictionaryState.DEFAULT_NAME)
     }
