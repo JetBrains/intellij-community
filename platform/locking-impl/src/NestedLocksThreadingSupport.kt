@@ -37,6 +37,7 @@ import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.ThreadContextElement
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.future.asCompletableFuture
@@ -78,6 +79,21 @@ private sealed interface ParallelizablePermit {
 
   @JvmInline
   value class Read(val readPermit: ReadPermit?) : ParallelizablePermit
+}
+
+/**
+ * The read permit of a thread that runs a computation with a parallelized read permit.
+ * The thread does not hold a real read permit: the read permit of the computation that started the parallelization protects it.
+ * This permit is never released, because no read action acquires it.
+ */
+private object ParallelizedReadPermit : ReadPermit {
+  override fun release() {
+    error("A parallelized read permit must not be released")
+  }
+
+  override fun toString(): String {
+    return "ParallelizedReadPermit"
+  }
 }
 
 private fun Permit.asParallelizablePermit(): ParallelizablePermit {
@@ -214,7 +230,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   /**
    * The global lock that is a default choice when lock parallelization is absent
    */
-  private val zeroLevelComputationState = ComputationState(emptyArray(), RWMutexIdea(), false)
+  private val zeroLevelComputationState = ComputationState(emptyArray(), RWMutexIdea(), null)
 
   /**
    * A stack of computation states for the thread that is allowed to hold the Write-Intent lock
@@ -373,21 +389,25 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     /**
      * An artifact of parallelizing the read lock. The code parallelized from the read lock
      * has no way of upgrading further, so it is safe to share read access with whole remaining computation tree.
+     * It is not `null` only for a parallelized read. All computations of this state share this permit.
      */
-    private val isParallelizedRead: Boolean,
+    val parallelizedReadPermit: ReadPermit?,
   ) {
+
+    val threadingSupport: NestedLocksThreadingSupport
+      get() = this@NestedLocksThreadingSupport
 
     fun level(): Int {
       return lowerLevelPermits.size
     }
 
     fun isParallelizedReadPermit(): Boolean {
-      return isParallelizedRead
+      return parallelizedReadPermit != null
     }
 
     fun getThisThreadPermit(): ParallelizablePermit? {
-      if (isParallelizedRead) {
-        return ParallelizablePermit.Read(null)
+      if (parallelizedReadPermit != null) {
+        return ParallelizablePermit.Read(parallelizedReadPermit)
       }
       else {
         return thisLevelPermit.get()?.asParallelizablePermit()
@@ -398,7 +418,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
      * Fast check for read access; skips unnecessary boxing that is caused by inline classes
      */
     fun isReadAcquired(): Boolean {
-      return isParallelizedRead || thisLevelPermit.get() != null || myWriteIntentAcquired.get()
+      return parallelizedReadPermit != null || thisLevelPermit.get() != null || myWriteIntentAcquired.get()
     }
 
     /**
@@ -539,7 +559,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
       val existingPermit = this@NestedLocksThreadingSupport.thisLevelPermit.get()
       check(existingPermit == thisLevelPermit) { "Internal error: attempt to parallelize a foreign write-intent permit" }
       this@NestedLocksThreadingSupport.thisLevelPermit.set(null)
-      return ComputationState(lowerLevelPermits + thisLevelPermit, RWMutexIdea(), false) to object : AccessToken() {
+      return ComputationState(lowerLevelPermits + thisLevelPermit, RWMutexIdea(), null) to object : AccessToken() {
         override fun finish() {
           this@NestedLocksThreadingSupport.thisLevelPermit.set(existingPermit)
         }
@@ -551,19 +571,35 @@ class NestedLocksThreadingSupport : ThreadingSupport {
      * We simply grant the read access to all computations.
      */
     fun parallelizeRead(): Pair<ComputationState, () -> Unit> {
-      return ComputationState(lowerLevelPermits, thisLevelLock, true) to {}
+      return ComputationState(lowerLevelPermits, thisLevelLock, ParallelizedReadPermit) to {}
     }
 
     override fun toString(): String {
-      return "ComputationState(level=${level()},thisLevelLock=$thisLevelLock,isParallelizedRead=${isParallelizedRead})"
+      return "ComputationState(level=${level()},thisLevelLock=$thisLevelLock,parallelizedReadPermit=${parallelizedReadPermit})"
     }
   }
 
-  private class ComputationStateContextElement(val computationState: ComputationState) : CoroutineContext.Element {
+  private class ComputationStateContextElement(val computationState: ComputationState) : ThreadContextElement<Permit?> {
     override val key: CoroutineContext.Key<*>
       get() = ComputationStateContextElement
 
     companion object : CoroutineContext.Key<ComputationStateContextElement>
+
+    override fun updateThreadContext(context: CoroutineContext): Permit? {
+      val parallelizedReadPermit = computationState.parallelizedReadPermit ?: return null
+      val threadingSupport = computationState.threadingSupport
+      val previousPermit = threadingSupport.thisLevelPermit.get()
+      if (previousPermit == null) {
+        threadingSupport.hack_setThisLevelPermit(parallelizedReadPermit)
+      }
+      return previousPermit
+    }
+
+    override fun restoreThreadContext(context: CoroutineContext, oldState: Permit?) {
+      if (computationState.parallelizedReadPermit != null) {
+        computationState.threadingSupport.hack_setThisLevelPermit(oldState)
+      }
+    }
 
     override fun equals(other: Any?): Boolean {
       return other is ComputationStateContextElement && this.computationState == other.computationState
