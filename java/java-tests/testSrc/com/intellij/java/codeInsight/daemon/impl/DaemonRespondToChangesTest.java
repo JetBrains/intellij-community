@@ -26,6 +26,7 @@ import com.intellij.codeInsight.daemon.impl.IntentionsUI;
 import com.intellij.codeInsight.daemon.impl.PassExecutorService;
 import com.intellij.codeInsight.daemon.impl.ProgressableTextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
+import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.daemon.impl.TextEditorHighlightingPassRegistrarImpl;
 import com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
@@ -34,6 +35,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -54,7 +56,6 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
-import com.intellij.idea.IJIgnore;
 import com.intellij.idea.TestFor;
 import com.intellij.javaee.ExternalResourceManagerExBase;
 import com.intellij.lang.LanguageFilter;
@@ -132,11 +133,14 @@ import com.intellij.psi.PsiExpressionCodeFragment;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.UITestUtil;
@@ -147,6 +151,7 @@ import com.intellij.ui.EditorNotificationsImpl;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TestTimeOut;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -188,13 +193,13 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
  * tests general daemon behaviour/interruptibility/restart during highlighting
  */
-@IJIgnore(issue = "IJPL-251500")
 @SkipSlowTestLocally
 @DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
 public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase {
@@ -400,6 +405,34 @@ public class DaemonRespondToChangesTest extends ProductionDaemonAnalyzerTestCase
     finally {
       editorFactory.releaseEditor(consoleEditor);
     }
+  }
+
+  @TestFor(issues = "IJPL-260896")
+  public void testCompletedFileRenewalDoesNotRetainEditor() throws Exception {
+    var file = new LightVirtualFile("renew.txt", "text");
+    var editorFactory = EditorFactory.getInstance();
+    var document = Objects.requireNonNull(FileDocumentManager.getInstance().getDocument(file));
+    var editor = editorFactory.createEditor(document, getProject());
+    Future<?> future;
+    try {
+      setActiveEditors(editor);
+      myTestDaemonCodeAnalyzer.waitForTermination();
+      Supplier<Future<?>> renewalTask = () -> Objects.requireNonNull(
+        ReflectionUtil.getField(DaemonCodeAnalyzerImpl.class, myDaemonCodeAnalyzer, Future.class, "renewInBackgroundAndRestart"));
+      var previousTask = renewalTask.get();
+      WriteAction.run(() -> PsiManagerEx.getInstanceEx(getProject()).getFileManager().setViewProvider(file, null));
+      assertNull(TextEditorBackgroundHighlighter.getCachedFileToHighlight(getProject(), file, CodeInsightContexts.anyContext()));
+      myDaemonCodeAnalyzer.restart(getTestName(false));
+      PlatformTestUtil.waitWithEventsDispatching("The daemon must renew the file", () -> renewalTask.get() != previousTask, 10);
+      future = renewalTask.get();
+      PlatformTestUtil.waitWithEventsDispatching("The file renewal must finish", future::isDone, 10);
+      future.get();
+    }
+    finally {
+      setActiveEditors();
+      editorFactory.releaseEditor(editor);
+    }
+    LeakHunter.checkLeak(future, Editor.class, leaked -> leaked == editor);
   }
 
   public static class MyWaitingAnnotator extends DaemonAnnotatorsRespondToChangesTest.MyRecordingAnnotator {

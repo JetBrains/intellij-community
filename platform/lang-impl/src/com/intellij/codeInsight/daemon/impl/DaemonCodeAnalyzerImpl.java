@@ -1454,7 +1454,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           PassExecutorService.log(null, null, reason);
         }
         renewInBackgroundAndRestart.cancel(false);
-        renewInBackgroundAndRestart = ForkJoinPool.commonPool().submit(() -> {
+        renewInBackgroundAndRestart = CompletableFuture.runAsync(() -> {
           ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
             if (!myProject.isDisposed()) {
               // refresh the current file and cache it (in background) so that FileDocumentManager.getCachedDocument above could retrieve it later
@@ -1471,7 +1471,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
               }
             }
           });
-        });
+        }, ForkJoinPool.commonPool());
         return null;
       }
       progress = createUpdateProgress(fileEditor);
