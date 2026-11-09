@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.util.containers.ContainerUtil;
@@ -152,6 +153,19 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     myFixture.configureByText("requirements.txt", "pkg[extras]");
 
     final PyPackageRequirementsInspection inspection = new PyPackageRequirementsInspection();
+    inspection.ignoredPackages.add("pkg");
+
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+  }
+
+  @TestFor(issues = "PY-93909")
+  public void testIgnoredPackagesWithNullItem() {
+    setRequirementsProvider(RequirementsProviderType.REQUIREMENTS_TXT);
+    myFixture.configureByText("a.py", "import pkg\n");
+
+    final PyPackageRequirementsInspection inspection = new PyPackageRequirementsInspection();
+    inspection.ignoredPackages.add(null);
     inspection.ignoredPackages.add("pkg");
 
     myFixture.enableInspections(inspection);

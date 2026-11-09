@@ -16,12 +16,19 @@ import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PythonVisitorFilter
 import one.util.streamex.StreamEx
+import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class PyPackageRequirementsInspection : PyInspection() {
   @JvmField
   val ignoredPackages: MutableList<String> = mutableListOf()
+
+  /** A saved list can hold a null item. It ignores nothing, so reading drops it. */
+  override fun readSettings(node: Element) {
+    super.readSettings(node)
+    ignoredPackages.removeAll { name: String? -> name == null }
+  }
 
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(OptPane.stringList("ignoredPackages", PyPsiBundle.message(IGNORED_PACKAGES)))
@@ -36,9 +43,13 @@ class PyPackageRequirementsInspection : PyInspection() {
       PsiElementVisitor.EMPTY_VISITOR
     }
     else {
-      PyRequirementVisitor(holder, ignoredPackages.map { PyPackageName.from(it) }, PyInspectionVisitor.getContext(session))
+      PyRequirementVisitor(holder, ignoredPackageNames(), PyInspectionVisitor.getContext(session))
     }
   }
+
+  /** The names of [ignoredPackages]. An empty item or a null item ignores nothing. */
+  fun ignoredPackageNames(): List<PyPackageName> =
+    ignoredPackages.mapNotNull { name: String? -> name?.takeIf { it.isNotBlank() }?.let { PyPackageName.from(it) } }
 
   private fun isPythonInTemplateLanguages(psiFile: PsiFile) =
     StreamEx.of(psiFile.viewProvider.languages)
