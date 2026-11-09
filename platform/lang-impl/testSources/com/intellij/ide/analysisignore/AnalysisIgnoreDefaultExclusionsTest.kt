@@ -4,7 +4,6 @@ package com.intellij.ide.analysisignore
 import com.intellij.lang.LangBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
@@ -17,7 +16,6 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.ide.OptionalExclusionUtil
@@ -27,10 +25,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -56,13 +54,14 @@ class AnalysisIgnoreDefaultExclusionsTest {
   private val fileIndex get() = WorkspaceFileIndex.getInstance(project)
   private val service get() = AnalysisIgnoreService.getInstance(project)
   private val settings get() = AnalysisIgnoreDefaultsSettings.getInstance()
+  private val disposable get() = projectModel.disposableRule.disposable
 
   private lateinit var module: Module
   private lateinit var projectRoot: VirtualFile
   private val notificationContents = ArrayList<String>()
 
   @BeforeEach
-  fun setUp(@TestDisposable disposable: Disposable) {
+  fun setUp() {
     projectRoot = projectModel.baseProjectDir.newVirtualDirectory("projectRoot")
     module = projectModel.createModule()
     ModuleRootModificationUtil.addContentRoot(module, projectRoot)
