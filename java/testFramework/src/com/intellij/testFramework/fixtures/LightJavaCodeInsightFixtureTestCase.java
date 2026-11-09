@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaPsiFacade;
@@ -25,7 +26,9 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 
@@ -85,6 +88,17 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
         AcceptedLanguageLevelsSettings.allowLevel(project, myLanguageLevel);
       }
       super.setUpProject(project, handler);
+    }
+
+    @TestOnly
+    @ApiStatus.Internal
+    @Override
+    public void setUpExistingModule(@NotNull Module module, @NotNull VirtualFile sourceRoot) {
+      checkCanSetUpExistingModule(ProjectDescriptor.class);
+      if (myLanguageLevel.isPreview() || myLanguageLevel == LanguageLevel.JDK_X) {
+        AcceptedLanguageLevelsSettings.allowLevel(module.getProject(), myLanguageLevel);
+      }
+      createContentEntry(module, sourceRoot);
     }
 
     @Override

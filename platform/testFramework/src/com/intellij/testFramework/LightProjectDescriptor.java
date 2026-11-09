@@ -20,8 +20,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -174,6 +176,51 @@ public class LightProjectDescriptor {
     }
 
     return srcRoot;
+  }
+
+  /**
+   * Applies this descriptor to the existing {@code module} of a JUnit 5 test.
+   * <p>
+   * It sets the SDK, adds {@code sourceRoot} as the content root and the source root, and calls {@link #configureModule}.
+   * It does not register the SDK. Call {@link #registerSdk} first.
+   * It does not call {@link #setUpProject} or {@link #createDirForSources}.
+   * Thus it fails for a descriptor that overrides one of them.
+   * A descriptor whose {@link #setUpProject} override does more setup overrides this method too,
+   * and calls {@link #checkCanSetUpExistingModule} with its own class.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  public void setUpExistingModule(@NotNull Module module, @NotNull VirtualFile sourceRoot) {
+    checkCanSetUpExistingModule(LightProjectDescriptor.class);
+    createContentEntry(module, sourceRoot);
+  }
+
+  /**
+   * Fails when a subclass of {@code ownerClass} overrides {@link #setUpProject} or {@link #createDirForSources}.
+   * {@link #setUpExistingModule} calls neither of them, so such a subclass needs its own setup.
+   */
+  @TestOnly
+  @ApiStatus.Internal
+  protected final void checkCanSetUpExistingModule(@NotNull Class<? extends LightProjectDescriptor> ownerClass) {
+    checkNotOverridden(ownerClass, "setUpProject", Project.class, SetupHandler.class);
+    checkNotOverridden(ownerClass, "createDirForSources", Module.class);
+  }
+
+  private void checkNotOverridden(@NotNull Class<? extends LightProjectDescriptor> ownerClass,
+                                  @NotNull String methodName,
+                                  Class<?> @NotNull ... parameterTypes) {
+    Class<?> declaringClass;
+    try {
+      declaringClass = getClass().getMethod(methodName, parameterTypes).getDeclaringClass();
+    }
+    catch (NoSuchMethodException e) {
+      throw new IllegalStateException(e);
+    }
+    if (!declaringClass.isAssignableFrom(ownerClass)) {
+      throw new IllegalStateException(
+        getClass().getName() + " overrides " + methodName + " in " + declaringClass.getName() +
+        ". A JUnit 5 test cannot apply it to an existing module. Give the test its own project setup.");
+    }
   }
 
   protected final void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
