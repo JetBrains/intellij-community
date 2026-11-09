@@ -1122,6 +1122,12 @@ public class PyParameterInfoTest extends PyParameterInfoTestCase {
         "\"Q\", \"R\", \"S\", \"T\", \"U\", \"V\", \"W\", \"X\", \"Y\", \"Z\"], "});
   }
 
+  @TestFor(issues = "PY-93911")
+  public void testLoneStarParameter() {
+    final Map<String, PsiElement> test = loadTest(1);
+    feignCtrlP(test.get("<arg1>").getTextOffset()).check("*", new String[]{""});
+  }
+
   // PY-46053
   public void testLongStarSlashParameter() {
     final Map<String, PsiElement> test = loadTest(4);
