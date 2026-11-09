@@ -7,7 +7,6 @@ package com.intellij.platform.ide.bootstrap
 import com.intellij.BundleBase
 import com.intellij.accessibility.LinuxAccessibilitySupport
 import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.CliResult
 import com.intellij.ide.IdeBundle
@@ -23,19 +22,12 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.InitialConfigImportState
-import com.intellij.openapi.application.MigrationRedirect
-import com.intellij.openapi.application.MigrationRedirectChoice
-import com.intellij.openapi.application.isMigrationRedirectStart
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.PluginAutoUpdater
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
-import com.intellij.openapi.application.launchMigrationRedirect
-import com.intellij.openapi.application.loadMigrationRedirect
-import com.intellij.openapi.application.migrationStateFile
-import com.intellij.openapi.application.showMigrationRedirect
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
@@ -251,50 +243,9 @@ fun startApplication(
 
   val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
 
-  // after the migration, a start of the old IDE on macOS shows the redirect window before the application exists
-  val migrationRedirectDeferred = scope.async(CoroutineName("migration redirect decision")) {
-    if (OS.CURRENT != OS.macOS || isHeadless || AppMode.isRemoteDevHost() || configImportNeededDeferred.await()) {
-      return@async null
-    }
-    // a second start gives its arguments to the running IDE and exits while the directories are locked
-    lockSystemDirsJob.join()
-    val stateFile = migrationStateFile()
-    // nearly all starts have no state file; they write no log line, so they do not wait for the logger
-    if (span("migration redirect checking", Dispatchers.IO) { Files.notExists(stateFile) }) {
-      return@async null
-    }
-    logDeferred.join()
-    val redirect = span("migration redirect loading", Dispatchers.IO) {
-      loadMigrationRedirect(isMigrationRedirectStart(args), stateFile)
-    }
-    if (redirect != null) {
-      hideSplash()
-    }
-    redirect
-  }
-  // the primary button starts the Unified IDE and exits the process; when that start fails, the usual start continues
-  val migrationRedirectJob = scope.launch(CoroutineName("migration redirect")) {
-    val redirect = migrationRedirectDeferred.await() ?: return@launch
-    initLafJob.join()
-    val choice = withContext(RawSwingDispatcher) {
-      showMigrationRedirect(redirect.content)
-    }
-    if (choice == MigrationRedirectChoice.EXIT) {
-      exitProcess(0)
-    }
-    val sourceProduct = appInfoDeferred.await().build.productCode
-    val isLaunched = try {
-      launchMigrationRedirect(redirect, sourceProduct, args)
-    }
-    catch (e: Throwable) {
-      rethrowControlFlowException(e)
-      logger<MigrationRedirect>().warn("the launch of the Unified IDE failed, the usual start continues", e)
-      false
-    }
-    if (isLaunched) {
-      exitProcess(0)
-    }
-  }
+  val migrationRedirect = scheduleMigrationRedirect(
+    scope, args, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, initLafJob, appInfoDeferred
+  )
 
   if (!isHeadless && !AppMode.isRemoteDevHost() && EarlyProjectFrame.isEnabled) {
     scope.launch(CoroutineName("early project frame")) {
@@ -309,7 +260,7 @@ fun startApplication(
       if (euaDocumentDeferred.await() is EndUserAgreementStatus.Required) {
         return@launch
       }
-      if (migrationRedirectDeferred.await() != null) {
+      if (migrationRedirect.redirect.await() != null) {
         return@launch
       }
       appInfoDeferred.await()
@@ -386,7 +337,7 @@ fun startApplication(
 
     checkSystemDirJob.join()
     // the redirect window can exit the process, so it comes before the application
-    migrationRedirectJob.join()
+    migrationRedirect.job.join()
 
     val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY)
     if (classBeforeAppProperty != null && !configImportNeededDeferred.await()) {
