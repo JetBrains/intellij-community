@@ -57,6 +57,9 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   private static final UUID PREDEFINED_OLD_EXPLORER_ID = UUID.fromString("16BF23D4-93E0-4FFC-BFD6-CB13575177B0");
   private static final UUID PREDEFINED_EDGE_ID = UUID.fromString("37cae5b9-e8b2-4949-9172-aafa37fbc09c");
 
+  @ApiStatus.Internal
+  public static final UUID IDE_BROWSER_ID = UUID.fromString("8e2f6a41-7c3d-4b95-a0e8-1d6f4c2b9a73");
+
   private static final UUID[] PREDEFINED_BROWSER_IDS = new UUID[]{
     PREDEFINED_CHROME_ID,
     PREDEFINED_FIREFOX_ID,

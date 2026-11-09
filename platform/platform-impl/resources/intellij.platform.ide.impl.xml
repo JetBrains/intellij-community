@@ -1686,6 +1686,7 @@
     <notificationRouter implementation="com.intellij.notification.impl.LocalNotificationRouter" order="last"/>
     <nonLockedIdeEventQueueDispatcher implementation="com.intellij.ide.ui.laf.LaFMnemonicDispatcher"/>
     <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserManager" />
+    <statistics.applicationUsagesCollector implementation="com.intellij.ide.browsers.WebBrowserSettingsCollector"/>
     <applicationService serviceImplementation="com.intellij.ide.impl.TrustedPaths" />
     <applicationService serviceImplementation="com.intellij.ide.impl.TrustedPathsSettings" />
     <applicationService serviceImplementation="com.intellij.ide.trustedProjects.ExternallyOpenedFiles" />
