@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.eel.EelOsFamily
@@ -233,27 +232,20 @@ fun PythonInterpreter.stdlibLibDirectory(): VirtualFile? {
  * The environment's own `lib/pythonX.Y/` directory when this SDK's environment has one,
  * or `null` otherwise (including when no environment was detected).
  *
- * Resolves [PythonEnvironment.libRoot] against the SDK's class roots first (covering both
- * direct matches and the `site-packages` shortcut, since the `venv` module doesn't add
- * `lib/pythonX.Y` itself to `sys.path`), with a [LocalFileSystem] fallback when the SDK has no
- * class roots yet (e.g. a fresh empty SDK created for package management).
+ * Finds [PythonEnvironment.libRoot] in the VFS one time. Returns it when it is a class root of the SDK. Also returns
+ * it when it is the parent of a `site-packages` class root, because the `venv` module does not put `lib/pythonX.Y`
+ * on `sys.path`. An SDK with no class roots yet, such as an empty SDK for package management, gets the directory.
+ *
+ * Callers hold a read action, so do not call `VirtualFile.toNioPath()` here: it waits for the pending VFS writes.
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 fun PythonInterpreter.venvLibDirectory(): VirtualFile? {
   val libRoot = pythonEnvironment?.libRoot ?: return null
+  val libDir = VirtualFileManager.getInstance().findFileByNioPath(libRoot) ?: return null
   val classRoots = sdkClassRoots
-  // Empty in case of a temporary empty SDK created to install package management.
-  if (classRoots.isEmpty()) {
-    return VirtualFileManager.getInstance().findFileByNioPath(libRoot)
-  }
-  for (file in classRoots) {
-    if (file.toNioPath() == libRoot) return file
-    val parent = file.parent
-    if (file.name == PyNames.SITE_PACKAGES && parent != null && parent.toNioPath() == libRoot) {
-      return parent
-    }
-  }
-  return null
+  if (classRoots.isEmpty()) return libDir
+  val isClassRoot = classRoots.any { it == libDir || it.name == PyNames.SITE_PACKAGES && it.parent == libDir }
+  return if (isClassRoot) libDir else null
 }
 
 private val PythonInterpreter.sdkClassRoots: Array<VirtualFile>
