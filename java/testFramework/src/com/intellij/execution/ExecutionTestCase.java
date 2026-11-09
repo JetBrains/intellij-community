@@ -28,6 +28,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaProjectTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestLoggerFactory;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -182,6 +183,9 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
 
   protected final void setupModuleRoots(Module module) {
     final String modulePath = getTestAppPath();
+    if (BazelTestUtil.isUnderBazelTest()) {
+      BazelTestUtil.allowVfsAccessToCanonicalRunfilesRoot(Path.of(modulePath));
+    }
     final String srcPath = getSrcPath(modulePath);
     VirtualFile moduleDir = StandardFileSystems.local().findFileByPath(modulePath.replace(File.separatorChar, '/'));
     VirtualFile srcDir = StandardFileSystems.local().findFileByPath(srcPath.replace(File.separatorChar, '/'));
