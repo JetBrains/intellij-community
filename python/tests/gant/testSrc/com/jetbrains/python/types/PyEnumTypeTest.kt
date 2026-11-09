@@ -1176,7 +1176,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-77355"])
     fun `indexer of a str enum yields enum instance`() = test("""
-      from enum import Enum, StrEnum
+      from enum import Enum, EnumType, StrEnum
 
       class Color(StrEnum):
           RED = "red"
@@ -1191,7 +1191,51 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
           A = "a"
 
       def to_kind(s: str) -> Kind:
+          expr = Kind[s]
+      #   └ TYPE Kind
           return Kind[s]
+
+      class LabelledType(EnumType):
+          pass
+
+      class Labelled(StrEnum, metaclass=LabelledType):
+          pass
+
+      class Provider(Labelled):
+          OTHER = "other"
+
+      expr = Provider["OTHER"]
+      #└ TYPE Provider
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-77355"])
+    fun `indexer of a str enum from another file yields enum instance`() = test("""
+      from kinds import Kind
+
+      expr = Kind["A"]
+      #└ TYPE Kind
+
+      def to_kind(s: str) -> Kind:
+          return Kind[s]
+      """.trimIndent(),
+      "kinds.py" to """
+        from enum import Enum
+
+        class Kind(str, Enum):
+            A = "a"
+        """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-77355"])
+    fun `str enum class subscripted in a type hint is not generic`() = test("""
+      from enum import Enum
+
+      class Kind(str, Enum):
+          A = "a"
+
+      def f(x: Kind[int]) -> None: ...
+      #             ^^^ WARNING Class 'Kind' is not generic
       """.trimIndent())
   }
 
