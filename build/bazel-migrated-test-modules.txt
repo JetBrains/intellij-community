@@ -117,6 +117,7 @@ intellij.javaee.appServers.weblogic.jps.tests
 intellij.json.networknt.wrapper.tests
 intellij.json.tests
 intellij.jsonpath.tests
+intellij.junit.java.tests
 intellij.junit.v5.rt.tests
 intellij.jvm.analysis.java.tests
 intellij.jvm.analysis.java.tests.codeInspection

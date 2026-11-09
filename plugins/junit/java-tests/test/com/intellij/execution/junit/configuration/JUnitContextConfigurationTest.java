@@ -24,6 +24,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.testFramework.MapDataContext;
+import com.intellij.testFramework.common.BazelTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -227,6 +228,9 @@ public class JUnitContextConfigurationTest extends JUnitConfigurationTestCase {
 
   @Override
   protected @NotNull String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      return BazelTestUtil.getFileFromBazelRuntime("@community//plugins/junit/java-tests:testData").toString();
+    }
     return PathManager.getCommunityHomePath() + "/plugins/junit/java-tests/testData";
   }
 }

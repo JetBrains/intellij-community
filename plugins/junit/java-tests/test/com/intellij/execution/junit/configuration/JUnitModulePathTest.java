@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.rt.junit.JUnitStarter;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtil;
@@ -264,6 +265,9 @@ public class JUnitModulePathTest extends BaseConfigurationTestCase {
 
   @Override
   protected @NotNull String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      return BazelTestUtil.getFileFromBazelRuntime("@community//plugins/junit/java-tests:testData").toString();
+    }
     return PathManager.getCommunityHomePath() + "/plugins/junit/java-tests/testData";
   }
 }

@@ -81,6 +81,7 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -888,6 +889,9 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
 
   @Override
   protected @NotNull String getTestDataPath() {
+    if (BazelTestUtil.isUnderBazelTest()) {
+      return BazelTestUtil.getFileFromBazelRuntime("@community//plugins/junit/java-tests:testData").toString();
+    }
     return PathManager.getCommunityHomePath() + "/plugins/junit/java-tests/testData";
   }
 }

@@ -1,5 +1,29 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+)
+
+jps_test(
+    name = "java-tests_test",
+    data = [
+        BAZEL_TARGETS_JSON,
+        "@community//plugins/junit/java-tests:testData",
+    ],
+    jvm_flags = [
+        "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
+    ],
+    tags = [
+        "debugger-tests",
+    ],
+    runtime_deps = [":java-tests_test_lib"],
+)
+### skip generation section `test intellij.junit.java.tests`
 
 ### auto-generated section `build intellij.junit.java.tests` start
 jvm_library(
@@ -23,6 +47,8 @@ jvm_library(
         "//plugins/junit/properties",
         "//java/manifest",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//plugins/junit5_rt:junit-v5-rt",
+        "//plugins/junit6_rt:junit-v6-rt",
     ],
     deps = [
         # do not sort,
@@ -68,6 +94,7 @@ jvm_library(
         "//libraries/junit4",
         "//libraries/junit6",
         "//platform/testFramework/junit5",
+        "//platform/bazel-runfiles",
     ],
 )
 ### auto-generated section `build intellij.junit.java.tests` end
@@ -80,10 +107,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.junit.java.tests` end
-
-### auto-generated section `test intellij.junit.java.tests` start
-jps_test(
-    name = "java-tests_test",
-    runtime_deps = [":java-tests_test_lib"],
-)
-### auto-generated section `test intellij.junit.java.tests` end
