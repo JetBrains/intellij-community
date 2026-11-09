@@ -62,10 +62,10 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
 
   override fun updateImpl(data: PresentationData) {
     val value = value ?: return
-    data.presentableText = value.name
+    val file = virtualFile
+    data.presentableText = file?.name ?: value.name
     data.setIcon(computeIcon(value))
 
-    val file = virtualFile
     if (file != null && file.`is`(VFileProperty.SYMLINK)) {
       val target: @NlsSafe String? = file.canonicalPath
       if (target == null) {
@@ -183,7 +183,7 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
   final override fun isMarkReadOnly(): Boolean = true
 
   override fun getTypeSortKey(): Comparable<ExtensionSortKey?>? {
-    return ExtensionSortKey(extension(value) ?: return null)
+    return ExtensionSortKey(extension(virtualFile) ?: return null)
   }
 
   class ExtensionSortKey(private val ext: String) : Comparable<ExtensionSortKey?> {
@@ -191,9 +191,8 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
   }
 
   override fun shouldDrillDownOnEmptyElement(): Boolean {
-    val file = value
     @Suppress("DEPRECATION")
-    return file != null && file.fileType === com.intellij.openapi.fileTypes.StdFileTypes.JAVA
+    return virtualFile?.fileType === com.intellij.openapi.fileTypes.StdFileTypes.JAVA
   }
 
   override fun canRepresent(element: Any?): Boolean {
@@ -201,8 +200,8 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
       return true
     }
 
-    val value = value
-    return value != null && element != null && element == value.virtualFile
+    val file = virtualFile
+    return file != null && file.isValid && element == file
   }
 
   override fun contains(file: VirtualFile): Boolean {
@@ -228,8 +227,10 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
   }
 }
 
-private fun extension(file: PsiFile?): String? {
-  val vFile = file?.virtualFile ?: return null
+private fun extension(vFile: VirtualFile?): String? {
+  if (vFile == null) {
+    return null
+  }
   val type = vFile.fileType
   val defaultExtension = type.defaultExtension
   when {

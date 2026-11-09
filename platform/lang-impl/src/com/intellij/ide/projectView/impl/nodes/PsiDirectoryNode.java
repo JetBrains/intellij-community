@@ -52,6 +52,7 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.openapi.vfs.newvfs.NewVirtualFile.asCacheAvoiding;
@@ -100,7 +101,8 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     assert project != null : this;
     PsiDirectory psiDirectory = getValue();
     assert psiDirectory != null : this;
-    VirtualFile directoryFile = psiDirectory.getVirtualFile();
+    VirtualFile directoryFile = getVirtualFile();
+    assert directoryFile != null : this;
     Object parentValue = getParentValue();
     data.setTooltip(null);
     synchronized (chain) {
@@ -254,7 +256,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   @Override
   @SuppressWarnings("deprecation")
   public String getTestPresentation() {
-    return "PsiDirectory: " + getValue().getName();
+    return "PsiDirectory: " + Objects.requireNonNull(getVirtualFile()).getName();
   }
 
   public boolean isFQNameShown() {
@@ -263,12 +265,15 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    final PsiDirectory value = getValue();
-    if (value == null) {
+    VirtualFile directory = getVirtualFile();
+    Project project = getProject();
+    if (directory == null || project == null) {
+      return false;
+    }
+    if (!directory.isValid()) {
       return false;
     }
 
-    VirtualFile directory = value.getVirtualFile();
     if (directory.isInLocalFileSystem()) {
       file = VfsUtil.getLocalFile(file);
     }
@@ -277,7 +282,6 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
       return false;
     }
 
-    final Project project = value.getProject();
     PsiFileSystemItemFilter filter = getFilter();
     if (filter != null) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
@@ -351,9 +355,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     Project project = getProject();
     ProjectSettingsService service = ProjectSettingsService.getInstance(project);
     Runnable runnable;
-    VirtualFile file = getVirtualFile();
+    PsiDirectory value = getValue();
+    if (value == null) return;
+    VirtualFile file = value.getVirtualFile();
     try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162972")) {
-      Module module = ModuleUtilCore.findModuleForPsiElement(getValue());
+      Module module = ModuleUtilCore.findModuleForPsiElement(value);
       if (module == null) {
         runnable = null;
       }
