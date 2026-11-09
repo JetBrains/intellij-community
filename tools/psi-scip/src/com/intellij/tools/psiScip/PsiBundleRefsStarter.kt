@@ -83,7 +83,8 @@ private class BundleOptions(@JvmField val project: Path, @JvmField val jdk: Path
  *   literal that only spells the key, java-i18n's reference outside a `@PropertyKey` position) and its class, which
  *   tells the provider (java-i18n's code literals, DevKit's descriptor attributes, UI Designer's forms);
  * - `targets`: what the key's own references resolve to (DevKit's `action.<id>.text` to the action, a tool window,
- *   a plugin id, an advanced setting);
+ *   a plugin id, an advanced setting), at the element a navigation goes to: a DOM target's attribute value, not the
+ *   start of its file;
  * - `implicit`: whether an [ImplicitPropertyUsageProvider] counts the key as used, as `UnusedProperty` asks first.
  *
  * Lines are 1-based, columns 0-based in UTF-16 units, as accio's JSON counts them. Bundles, keys and references are
@@ -202,7 +203,7 @@ private fun keyOf(project: Project, root: Path, psi: PsiFile, pointer: SmartPsiE
   }.sortedWith(compareBy<Ref>({ it.at }, { it.reference }))
   val keyElement = PsiTreeUtil.getChildOfType(property, PropertyKeyImpl::class.java)
   val targets = keyElement?.references.orEmpty().flatMap { ref ->
-    resolved(ref).mapNotNull { target -> placeOf(root, target.containingFile, target.textOffset)?.let { Target(it, ref.javaClass.name) } }
+    resolved(ref).mapNotNull { target -> target.navigationElement.let { placeOf(root, it.containingFile, it.textOffset) }?.let { Target(it, ref.javaClass.name) } }
   }.sortedWith(compareBy<Target>({ it.at }, { it.reference }))
   val implicit = IMPLICIT_USAGE.extensionList.any { it.isUsed(property) }
   return Key(key, placeOf(root, psi, property.textOffset)?.line ?: 0, refs, targets, implicit)
