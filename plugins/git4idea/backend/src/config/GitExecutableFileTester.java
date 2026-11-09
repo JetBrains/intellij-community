@@ -24,6 +24,7 @@ import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.nio.file.Path;
 import java.util.Collections;
@@ -59,13 +60,21 @@ class GitExecutableFileTester {
         LOG.warn(e);
 
         result = new TestResult(e, currentLastModificationDate);
-        if (!isProjectTrustFailure(e)) {
+        if (isCacheable(e)) {
           myTestMap.put(executable, result);
         }
       }
 
       return result;
     });
+  }
+
+  /**
+   * Timeouts and project-trust failures are transient, so don't cache them
+   */
+  private static boolean isCacheable(Exception e) {
+    return !(e instanceof GitVersionIdentificationTimeoutException)
+           && !isProjectTrustFailure(e);
   }
 
   /**
@@ -80,7 +89,7 @@ class GitExecutableFileTester {
     return false;
   }
 
-  private static @NotNull GitVersion testOrAbort(@NotNull GitExecutable executable) throws Exception {
+  private @NotNull GitVersion testOrAbort(@NotNull GitExecutable executable) throws Exception {
     int maxAttempts = 1;
 
     // IDEA-248193 Apple Git might hang with timeout after hibernation. Do several attempts.
@@ -95,11 +104,11 @@ class GitExecutableFileTester {
       attempt++;
     }
 
-    throw new GitVersionIdentificationException(
-      GitBundle.message("git.executable.validation.error.no.response.in.n.attempts.message", maxAttempts), null);
+    throw new GitVersionIdentificationTimeoutException(maxAttempts);
   }
 
-  private static @Nullable GitVersion runTestWithTimeout(@NotNull GitExecutable executable) throws Exception {
+  @VisibleForTesting
+  @Nullable GitVersion runTestWithTimeout(@NotNull GitExecutable executable) throws Exception {
     EmptyProgressIndicator indicator = new EmptyProgressIndicator();
     Ref<Exception> exceptionRef = new Ref<>();
     Ref<GitVersion> resultRef = new Ref<>();
@@ -192,6 +201,12 @@ class GitExecutableFileTester {
     GitVersion version = GitVersion.parse(rawResult, type);
     LOG.info("Git version for " + executable + ": " + version);
     return version;
+  }
+
+  private static final class GitVersionIdentificationTimeoutException extends GitVersionIdentificationException {
+    private GitVersionIdentificationTimeoutException(int attempts) {
+      super(GitBundle.message("git.executable.validation.error.no.response.in.n.attempts.message", attempts), null);
+    }
   }
 
   public static class TestResult {
