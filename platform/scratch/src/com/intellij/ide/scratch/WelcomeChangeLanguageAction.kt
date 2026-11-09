@@ -3,6 +3,8 @@ package com.intellij.ide.scratch
 
 import com.intellij.ide.actions.WelcomeFilesRootType
 import com.intellij.ide.welcomeScreen.WelcomeUtils
+import com.intellij.lang.Language
+import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
@@ -23,4 +25,7 @@ internal class WelcomeChangeLanguageAction : ChangeLanguageAction() {
   override fun fileFilter(project: Project): Condition<VirtualFile> {
     return Condition { file -> !file.isDirectory() && WelcomeFilesRootType.Util.instance.containsFile(file) }
   }
+
+  /** The language comes from the file name, because [WelcomeFilesRootType] does not substitute the language. */
+  override fun fileLanguage(project: Project, file: VirtualFile): Language? = LanguageUtil.getLanguageForPsi(project, file)
 }

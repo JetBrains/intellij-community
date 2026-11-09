@@ -119,13 +119,12 @@ internal class BackendWelcomeFilesApi : WelcomeFilesApi {
 /**
  * Returns the language of the Home [file], as the "Change Language" action of the editor menu shows it.
  * A file without an extension and without a language shows plain text, as a `txt` file does.
+ * The language comes from the file name, because [WelcomeFilesRootType] does not substitute the language.
  */
 private fun getFileLanguage(project: Project, file: VirtualFile): WelcomeFileLanguage {
   val language = when {
     // A file type without a language gets no language substitution.
-    LanguageUtil.getFileLanguage(file) != null -> {
-      ScratchFileService.getInstance().scratchesMapping.getMapping(file) ?: LanguageUtil.getLanguageForPsi(project, file)
-    }
+    LanguageUtil.getFileLanguage(file) != null -> LanguageUtil.getLanguageForPsi(project, file)
     file.extension == null -> FileTypes.PLAIN_TEXT.language
     else -> null
   }

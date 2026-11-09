@@ -3,7 +3,10 @@ package org.jetbrains.plugins.groovy.refactoring.rename;
 
 import com.intellij.groovy.testFramework.BaseTest;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -747,6 +750,25 @@ public class RenameTest extends GroovyLatestTest implements BaseTest {
     final PsiFile file = fixture.configureByText("Abc.groovy", "print new Abc()\n");
     fixture.renameElement(file, "Abcd.groovy");
     fixture.checkResult("print new Abcd()\n");
+  }
+
+  @Test
+  public void renameScriptFileToTextFile() {
+    doTestRenameScriptFileToTextFile("Abc.txt");
+  }
+
+  @Test
+  public void renameScriptFileToTextFileWithInvalidClassName() {
+    doTestRenameScriptFileToTextFile("my-notes.txt");
+  }
+
+  private void doTestRenameScriptFileToTextFile(String newName) {
+    JavaCodeInsightTestFixture fixture = getFixture();
+    VirtualFile file = fixture.configureByText("Abc.groovy", "print new Abc()\n").getVirtualFile();
+    fixture.renameElement(fixture.getFile(), newName);
+    Assert.assertEquals(newName, file.getName());
+    Assert.assertEquals(PlainTextLanguage.INSTANCE, PsiManager.getInstance(fixture.getProject()).findFile(file).getLanguage());
+    Assert.assertEquals("print new Abc()\n", FileDocumentManager.getInstance().getDocument(file).getText());
   }
 
   @Test

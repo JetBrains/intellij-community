@@ -7,6 +7,7 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -96,6 +97,25 @@ internal class WelcomeFileLanguageTest {
   }
 
   @Test
+  fun `language mapping of a renamed file does not change the language`(): Unit = timeoutRunBlocking {
+    markAsWelcomeProject(project, disposable)
+    val file = createWelcomeFile()
+    val language = TestLanguage()
+    val mapping = ScratchFileService.getInstance().scratchesMapping
+    try {
+      // A rename of a file keeps the mapping of the language that the user selected before.
+      edtWriteAction { mapping.setMapping(file, language) }
+
+      val expected = FileTypeManager.getInstance().getFileTypeByExtension("txt").displayName
+      assertEquals(expected, WelcomeFilesApi.getInstance().fileLanguage(project.projectId(), file.rpcId()).first().displayName)
+    }
+    finally {
+      edtWriteAction { mapping.setMapping(file, null) }
+      language.unregisterLanguage(DefaultPluginDescriptor("WelcomeFileLanguageTest"))
+    }
+  }
+
+  @Test
   fun `file outside the welcome project has no language`(): Unit = timeoutRunBlocking {
     val file = createWelcomeFile()
 
@@ -110,3 +130,5 @@ internal class WelcomeFileLanguageTest {
     return file
   }
 }
+
+private class TestLanguage : Language("WelcomeFileLanguageTest")
