@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettingsService
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleId
 import com.intellij.ide.whatsNew.DefaultWhatsNewQueryHandler
 import com.intellij.ide.whatsNew.WhatsNewUtil
 import com.intellij.l10n.LocalizationStateService
@@ -336,7 +337,10 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
     val pageContent = getContent(
       isWelcomeScreenProject = WelcomeScreenProjectProvider.isWelcomeScreenProject(project),
       isChinaRegion = isChinaRegion,
-      isAiNotAllowed = !PluginManagerCore.isLoaded(AIR_PLUGIN_ID),
+      isAiNotAllowed = !(
+        PluginManagerCore.isLoaded(AIR_PLUGIN_ID) &&
+        PluginManagerCore.getPluginSet().isModuleEnabled(PluginModuleId("intellij.air.aiEnabled", PluginModuleId.JETBRAINS_NAMESPACE))
+      ),
     )
     // One-page case
     val request = if (startPageId == WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID || multipageIds.size == 1) {

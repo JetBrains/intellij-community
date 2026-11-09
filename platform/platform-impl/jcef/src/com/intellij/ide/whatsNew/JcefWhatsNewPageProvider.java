@@ -3,6 +3,7 @@ package com.intellij.ide.whatsNew;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginModuleId;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -90,7 +91,10 @@ final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
 
       parameters.put("product", ApplicationInfo.getInstance().getBuild().getProductCode());
 
-      if (PluginManagerCore.isLoaded(PluginId.getId("com.intellij.air"))) {
+      if (
+        PluginManagerCore.isLoaded(PluginId.getId("com.intellij.air")) &&
+        PluginManagerCore.getPluginSet().isModuleEnabled(PluginModuleId.getId("intellij.air.aiEnabled", PluginModuleId.JETBRAINS_NAMESPACE))
+      ) {
         parameters.put("code", WelcomeScreenProjectProvider.isWelcomeScreenProject(project) ? "welcome-plugin" : "standard-plugin");
       }
     }
