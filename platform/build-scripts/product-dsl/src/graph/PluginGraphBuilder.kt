@@ -402,14 +402,22 @@ internal class PluginGraphBuilder(
    * Encapsulates: `isTestPlugin` detection + addPlugin + linkPluginMainTarget + linkPluginContent for all modules.
    *
    * Used during extraction to build graph directly without intermediate maps.
+   *
+   * @param productionPlugins the main modules of the production plugins that declare a test framework module as content
    */
   fun addPluginWithContent(
     pluginModule: TargetName,
     content: PluginContentInfo,
     testFrameworkContentModules: Set<ContentModuleName>,
+    productionPlugins: Set<TargetName> = emptySet(),
   ) {
     val contentModuleNames = content.contentModules.mapTo(HashSet()) { it.moduleId.contentName() }
-    val isTest = content.isTestPlugin || isTestPlugin(pluginModule, contentModuleNames, testFrameworkContentModules)
+    val isTest = content.isTestPlugin || isTestPlugin(
+      pluginTarget = pluginModule,
+      contentModules = contentModuleNames,
+      testFrameworkContentModules = testFrameworkContentModules,
+      productionPlugins = productionPlugins,
+    )
 
     addPlugin(
       name = pluginModule,

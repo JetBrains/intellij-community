@@ -98,6 +98,11 @@ data class ModuleSetGenerationConfig(
    */
   @JvmField val testFrameworkContentModules: Set<ContentModuleName> = emptySet(),
   /**
+   * The main modules of the production plugins that declare a module of [testFrameworkContentModules] as `<content>`.
+   * The generator does not treat such a plugin as a test plugin, so its content modules satisfy production dependencies.
+   */
+  @JvmField val productionPluginsThatIncludeTestFrameworkModules: Set<TargetName> = emptySet(),
+  /**
    * Library names that are considered testing libraries.
    * Modules in product distributions should have these libraries in 'test' scope only.
    * If a module has these libraries in production scope, a diff will be generated to fix it.

@@ -69,6 +69,18 @@ class PluginDependencyResolutionTest {
       )
       assertThat(result).isFalse()
     }
+
+    @Test
+    fun `production plugin with test framework content is not test plugin`() {
+      val junit4 = ContentModuleName("intellij.libraries.junit4")
+      val result = isTestPlugin(
+        pluginTarget = TargetName("intellij.groovy"),
+        contentModules = setOf(junit4, ContentModuleName("intellij.groovy.jps")),
+        testFrameworkContentModules = setOf(junit4),
+        productionPlugins = setOf(TargetName("intellij.groovy")),
+      )
+      assertThat(result).isFalse()
+    }
   }
 
   @Nested

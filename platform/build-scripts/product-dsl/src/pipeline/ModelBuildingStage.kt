@@ -214,6 +214,7 @@ internal object ModelBuildingStage {
         discoverPluginDescriptorsFromSources(
           outputProvider = outputProvider,
           testFrameworkContentModules = config.testFrameworkContentModules,
+          productionPluginsThatIncludeTestFrameworkModules = config.productionPluginsThatIncludeTestFrameworkModules,
           dslOwnedPluginXmlPaths = dslOwnedPluginXmlPaths,
           contentPluginPopulation = config.contentPluginPopulation,
         )
@@ -250,6 +251,7 @@ internal object ModelBuildingStage {
         declaredPluginModules = declaredPluginModules,
         testPluginModuleNames = testPluginModuleNames,
         testFrameworkContentModules = config.testFrameworkContentModules,
+        productionPluginsThatIncludeTestFrameworkModules = config.productionPluginsThatIncludeTestFrameworkModules,
       )
     }
 
@@ -349,6 +351,7 @@ internal object ModelBuildingStage {
     declaredPluginModules: Set<TargetName>,
     testPluginModuleNames: Set<TargetName>,
     testFrameworkContentModules: Set<ContentModuleName>,
+    productionPluginsThatIncludeTestFrameworkModules: Set<TargetName>,
   ) {
     // ═══════════════════════════════════════════════════════════════════════════════
     // Phase 1: Plugin Extraction
@@ -378,7 +381,12 @@ internal object ModelBuildingStage {
       info?.let { plugin to it }
     }.filterNotNull()
     for ((pluginModule, info) in extractedPlugins) {
-      builder.addPluginWithContent(pluginModule = pluginModule, content = info, testFrameworkContentModules = testFrameworkContentModules)
+      builder.addPluginWithContent(
+        pluginModule = pluginModule,
+        content = info,
+        testFrameworkContentModules = testFrameworkContentModules,
+        productionPlugins = productionPluginsThatIncludeTestFrameworkModules,
+      )
       pluginInfos[pluginModule] = info
     }
   }
@@ -1172,6 +1180,7 @@ internal object ModelBuildingStage {
   internal fun discoverPluginDescriptorsFromSources(
     outputProvider: ModuleOutputProvider,
     testFrameworkContentModules: Set<ContentModuleName> = emptySet(),
+    productionPluginsThatIncludeTestFrameworkModules: Set<TargetName> = emptySet(),
     dslOwnedPluginXmlPaths: Set<Path> = emptySet(),
     contentPluginPopulation: Set<String> = emptySet(),
   ): DiscoveredPluginDescriptors {
@@ -1198,7 +1207,9 @@ internal object ModelBuildingStage {
       if (testPluginXml != null) {
         testPluginModules.add(TargetName(module.name))
       }
-      else if (prodPluginXml != null && declaresTestFrameworkContent(prodPluginXml, testFrameworkContentModules)) {
+      else if (prodPluginXml != null &&
+               TargetName(module.name) !in productionPluginsThatIncludeTestFrameworkModules &&
+               declaresTestFrameworkContent(prodPluginXml, testFrameworkContentModules)) {
         // Test plugins that keep plugin.xml in production resources (the rdct and ReSharper ones, for instance) are
         // invisible to every list the generator is configured with, so without this they get neither auto-add nor
         // validation and a content module conversion breaks them silently (IJPL-252475).

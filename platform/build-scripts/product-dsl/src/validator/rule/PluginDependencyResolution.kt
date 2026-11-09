@@ -54,12 +54,18 @@ import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityV
  * @param pluginTarget The build target (plugin) to check
  * @param contentModules Content modules declared in the plugin
  * @param testFrameworkContentModules Known test framework content modules
+ * @param productionPlugins The main modules of the production plugins that declare a test framework module as content.
+ * Such a plugin is never a test plugin.
  */
 internal fun isTestPlugin(
   pluginTarget: TargetName,
   contentModules: Set<ContentModuleName>,
   testFrameworkContentModules: Set<ContentModuleName>,
+  productionPlugins: Set<TargetName> = emptySet(),
 ): Boolean {
+  if (pluginTarget in productionPlugins) {
+    return false
+  }
   // Name-based detection
   if (matchesTestPluginNamePattern(pluginTarget)) {
     return true
