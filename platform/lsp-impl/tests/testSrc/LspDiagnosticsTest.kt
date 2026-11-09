@@ -216,6 +216,88 @@ internal class LspDiagnosticsTest {
 
       (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(expectedData)
     }
+
+    /**
+     * A rename keeps the [VirtualFile], but changes its URI. After the rename, a push for the old URI finds no file.
+     */
+    @Test
+    @TestFor(issues = ["IJPL-260427"])
+    fun `diagnostics of the old URI go when the server clears them after a rename`(): Unit = timeoutRunBlocking {
+      (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+
+      val virtualFile = codeInsightFixture.configureByText("before.txt", "hello world").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val oldUri = serverSession.fileUri(virtualFile)
+
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(oldUri, listOf(
+          Diagnostic(Range(Position(0, 0), Position(0, 5)), "stale", DiagnosticSeverity.Error, null)
+        ))
+      }
+      checkHighlightingByPolling(createExpectedDataFromText("""<error descr="stale">hello</error> world"""))
+
+      val didClose = serverSession.expectNotification(serverSession.DID_CLOSE) { it.textDocument.uri == oldUri }
+      val didOpen = serverSession.expectNotification(serverSession.DID_OPEN) { it.textDocument.uri.endsWith("/after.txt") }
+      writeCommandAction(project, "") {
+        virtualFile.rename(this@LspDiagnosticsTest, "after.txt")
+      }
+      didClose.await()
+      didOpen.await()
+      val newUri = serverSession.fileUri(virtualFile)
+
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(oldUri, emptyList())
+      }
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(newUri, listOf(
+          Diagnostic(Range(Position(0, 6), Position(0, 11)), "fresh", DiagnosticSeverity.Error, null)
+        ))
+      }
+
+      checkHighlightingByPolling(createExpectedDataFromText("""hello <error descr="fresh">world</error>"""))
+    }
+
+    /**
+     * After the rename, a new file takes the old path. So the push that clears the old URI finds the new file, not the renamed one.
+     */
+    @Test
+    @TestFor(issues = ["IJPL-260427"])
+    fun `diagnostics of the old URI go when a new file takes the old path after a rename`(): Unit = timeoutRunBlocking {
+      (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+
+      val virtualFile = codeInsightFixture.configureByText("reused.txt", "hello world").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val oldUri = serverSession.fileUri(virtualFile)
+
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(oldUri, listOf(
+          Diagnostic(Range(Position(0, 0), Position(0, 5)), "stale", DiagnosticSeverity.Error, null)
+        ))
+      }
+      checkHighlightingByPolling(createExpectedDataFromText("""<error descr="stale">hello</error> world"""))
+
+      val didClose = serverSession.expectNotification(serverSession.DID_CLOSE) { it.textDocument.uri == oldUri }
+      val didOpen = serverSession.expectNotification(serverSession.DID_OPEN) { it.textDocument.uri.endsWith("/moved.txt") }
+      writeCommandAction(project, "") {
+        val dir = virtualFile.parent
+        virtualFile.rename(this@LspDiagnosticsTest, "moved.txt")
+        dir.createChildData(this@LspDiagnosticsTest, "reused.txt")
+      }
+      didClose.await()
+      didOpen.await()
+      val newUri = serverSession.fileUri(virtualFile)
+
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(oldUri, emptyList())
+      }
+      serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
+        PublishDiagnosticsParams(newUri, listOf(
+          Diagnostic(Range(Position(0, 6), Position(0, 11)), "fresh", DiagnosticSeverity.Error, null)
+        ))
+      }
+
+      checkHighlightingByPolling(createExpectedDataFromText("""hello <error descr="fresh">world</error>"""))
+    }
   }
 
   @Nested
