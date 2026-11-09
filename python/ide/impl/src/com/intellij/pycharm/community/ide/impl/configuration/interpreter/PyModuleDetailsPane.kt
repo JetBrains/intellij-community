@@ -44,6 +44,7 @@ import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
 import com.jetbrains.python.sdk.interpreterItemsUnderProgress
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -374,13 +375,15 @@ internal class PyModuleDetailsPane(
 
   /**
    * Name → Sdk lookup that prefers the association-filtered [availableSdks] instance and falls
-   * back to any editable clone in `ProjectSdksModel`. The module's forced SDK (uv-workspace case)
+   * back to any editable Python clone in `ProjectSdksModel`. The module's forced SDK (uv-workspace case)
    * is not in [availableSdks] but the editable-clones map carries it, so the caller resolves the
    * row to the same instance the rest of the editor uses.
    */
   private fun buildSdkLookup(availableSdks: List<Sdk>): Map<String, Sdk> = buildMap {
     availableSdks.forEach { put(it.name, it) }
-    projectSdksModel.projectSdks.values.forEach { putIfAbsent(it.name, it) }
+    projectSdksModel.projectSdks.values
+      .filter { PythonSdkUtil.isPythonSdk(it, true) }
+      .forEach { putIfAbsent(it.name, it) }
   }
 
   private fun publishComboItems(items: List<SdkComboItem>) {
