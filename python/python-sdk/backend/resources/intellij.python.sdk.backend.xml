@@ -107,6 +107,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <workspaceModel.fileIndexContributor implementation="com.intellij.python.sdk.backend.PySitePackagesExcludeWorkspaceFileIndexContributor"/>
     <applicationService serviceInterface="com.jetbrains.python.sdk.WinRegistryService"
                         serviceImplementation="com.jetbrains.python.sdk.WinRegistryServiceImpl"/>
     <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>

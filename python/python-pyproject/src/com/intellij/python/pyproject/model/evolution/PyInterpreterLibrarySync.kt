@@ -7,10 +7,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.storeAndGet
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRoot
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
@@ -24,7 +24,7 @@ import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.python.sdk.backend.PY_INTERPRETER_LIBRARY_KIND_ID
 import com.intellij.python.sdk.backend.PyInterpreterLibraryName
 import com.intellij.python.sdk.backend.PythonInterpreterRoots
@@ -32,6 +32,7 @@ import com.intellij.python.sdk.backend.classRoots
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.python.sdk.backend.pyInterpreterDependency
+import com.intellij.python.sdk.backend.sitePackagesToExclude
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.conflate
@@ -86,24 +87,33 @@ class PyInterpreterLibrarySync(private val project: Project, private val scope: 
     val workspaceModel = project.workspaceModel
     val urlManager = workspaceModel.getVirtualFileUrlManager()
     val storage = workspaceModel.currentSnapshot
-    val wanted = mutableMapOf<String, List<VirtualFile>>()
+    val classRoots = mutableMapOf<String, List<VirtualFileUrl>>()
     for (evoPyProject in evoPyProjects) {
       val interpreter = evoPyProject.interpreter ?: continue
       val name = evoPyProject.pyProject.residesOnModule.findModuleEntity(storage)?.dependencies?.pyInterpreterDependency?.library?.name ?: continue
-      wanted[name] = interpreter.classRoots(project).toList()
+      classRoots[name] = interpreter.classRoots(project).map { urlManager.storeAndGet(it) }
     }
+    // The exclusion is the same for the whole project, so a directory that any interpreter here needs stays.
+    val kept = classRoots.values.flatten().toSet()
+    val wanted = classRoots.mapValues { (_, roots) -> LibraryRoots(roots, sitePackagesToExclude(roots, kept)) }
 
     val current = storage.entities<LibraryEntity>()
       .filter { it.entitySource == PyInterpreterLibraryEntitySource }
-      .associate { it.name to it.roots.map { root -> root.url.url } }
-    if (current == wanted.mapValues { (_, roots) -> roots.map { it.url } }) return
+      .associate { it.name to LibraryRoots(it.roots.map { root -> root.url }, it.excludedRoots.map { excluded -> excluded.url }) }
+    if (current == wanted) return
 
     workspaceModel.update("Build the Python interpreter libraries") { storage ->
       // Only the libraries: the source roots of the same source stay, see [syncSourceRoots].
       storage.entities<LibraryEntity>().filter { it.entitySource == PyInterpreterLibraryEntitySource }.toList().forEach(storage::removeEntity)
-      addInterpreterLibraries(storage, wanted, urlManager)
+      addInterpreterLibraries(storage, wanted)
     }
   }
+
+  /**
+   * The roots of an interpreter library: the class roots of its interpreter, and the `site-packages` that the project
+   * excludes, see [sitePackagesToExclude]. The platform excludes them for the project, see `ExcludedRootFileIndexContributor`.
+   */
+  private data class LibraryRoots(val classRoots: List<VirtualFileUrl>, val excludedRoots: List<VirtualFileUrl>)
 
   /**
    * Gives the module of each Python project of [evoPyProjects] the source roots of its interpreter, under the content
@@ -172,15 +182,16 @@ class PyInterpreterLibrarySync(private val project: Project, private val scope: 
       .groupBy({ it.contentRoot.module.symbolicId }, { it.url.url })
       .mapValues { (_, urls) -> urls.toSet() }
 
-  private fun addInterpreterLibraries(storage: MutableEntityStorage, wanted: Map<String, List<VirtualFile>>, urlManager: VirtualFileUrlManager) {
+  private fun addInterpreterLibraries(storage: MutableEntityStorage, wanted: Map<String, LibraryRoots>) {
     for ((name, roots) in wanted) {
       storage.addEntity(LibraryEntity(
         name = name,
         tableId = LibraryTableId.ProjectLibraryTableId,
-        roots = roots.map { LibraryRoot(urlManager.storeAndGet(it), LibraryRootTypeId.COMPILED) },
+        roots = roots.classRoots.map { LibraryRoot(it, LibraryRootTypeId.COMPILED) },
         entitySource = PyInterpreterLibraryEntitySource,
       ) {
         typeId = LibraryTypeId(PY_INTERPRETER_LIBRARY_KIND_ID)
+        excludedRoots = roots.excludedRoots.map { ExcludeUrlEntity(it, PyInterpreterLibraryEntitySource) }
       })
     }
   }
