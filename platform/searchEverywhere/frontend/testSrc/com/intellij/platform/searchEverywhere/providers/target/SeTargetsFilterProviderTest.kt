@@ -10,8 +10,8 @@ import com.intellij.platform.searchEverywhere.SeItem
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
 import com.intellij.platform.searchEverywhere.SeTypeFilterKeys
-import com.intellij.platform.searchEverywhere.providers.findSearchScopesInfo
-import com.intellij.platform.searchEverywhere.providers.findTypeVisibilityStates
+import com.intellij.platform.searchEverywhere.providers.getSearchScopesInfo
+import com.intellij.platform.searchEverywhere.providers.getTypeVisibilityStates
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -34,7 +34,7 @@ class SeTargetsFilterProviderTest {
   @Test
   fun theTabFindsTheTypesOfTheTargetProvider() = timeoutRunBlocking {
     withProvider(supportsScopes = false) { provider ->
-      val states = provider.findTypeVisibilityStates(SeTypeFilterKeys.DEFAULT)
+      val states = provider.getTypeVisibilityStates(SeTypeFilterKeys.DEFAULT)
 
       assertEquals(listOf("Kotlin" to true, "Java" to false), states?.map { it.name to it.isEnabled })
     }
@@ -43,14 +43,14 @@ class SeTargetsFilterProviderTest {
   @Test
   fun theTabFindsNoTypesForAnUnknownKey() = timeoutRunBlocking {
     withProvider(supportsScopes = false) { provider ->
-      assertEquals(emptyList<SeTypeVisibilityStatePresentation>(), provider.findTypeVisibilityStates("unknown"))
+      assertEquals(emptyList<SeTypeVisibilityStatePresentation>(), provider.getTypeVisibilityStates("unknown"))
     }
   }
 
   @Test
   fun theTabFindsTheScopesOfTheTargetProvider() = timeoutRunBlocking {
     withProvider(supportsScopes = true) { provider ->
-      val scopes = provider.findSearchScopesInfo()
+      val scopes = provider.getSearchScopesInfo()
 
       assertNotNull(scopes, "a target provider that supports scopes must give them to the tab")
       assertNotNull(scopes!!.projectScopeId, "the scope chooser needs the project scope")
@@ -60,7 +60,7 @@ class SeTargetsFilterProviderTest {
   @Test
   fun theTabFindsNoScopesWhenTheTargetProviderHasNone() = timeoutRunBlocking {
     withProvider(supportsScopes = false) { provider ->
-      assertNull(provider.findSearchScopesInfo())
+      assertNull(provider.getSearchScopesInfo())
     }
   }
 
@@ -68,8 +68,8 @@ class SeTargetsFilterProviderTest {
   fun theTabFindsNothingForAPlainProvider() = timeoutRunBlocking {
     val provider = PlainProvider()
 
-    assertNull(provider.findSearchScopesInfo())
-    assertNull(provider.findTypeVisibilityStates(SeTypeFilterKeys.DEFAULT))
+    assertNull(provider.getSearchScopesInfo())
+    assertNull(provider.getTypeVisibilityStates(SeTypeFilterKeys.DEFAULT))
   }
 
   private suspend fun withProvider(supportsScopes: Boolean, block: suspend (SeItemsProvider) -> Unit) {

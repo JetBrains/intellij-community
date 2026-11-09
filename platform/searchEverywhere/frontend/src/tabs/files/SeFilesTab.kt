@@ -21,7 +21,7 @@ class SeFilesTab(delegate: SeTabDelegate) : SeDefaultTabBase(delegate) {
   override val priority: Int get() = PRIORITY
 
   private val filterEditor: SuspendLazyProperty<SeFilterEditor> = initAsync(delegate.scope) {
-    delegate.createTargetsFilterEditor(tabId = id)
+    delegate.createTargetsFilterEditor(tabId = id, persistScopeIfAvailable = true)
   }
 
   override suspend fun getFilterEditor(): SeFilterEditor =
