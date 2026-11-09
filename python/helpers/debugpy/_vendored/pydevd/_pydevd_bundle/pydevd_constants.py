@@ -157,11 +157,12 @@ else:
     _current_frames = sys._current_frames
 
 IS_PYTHON_STACKLESS = "stackless" in sys.version.lower()
+IS_GIL_ENABLED = getattr(sys, "_is_gil_enabled", lambda: True)()
 CYTHON_SUPPORTED = False
 
 python_implementation = platform.python_implementation()
-if python_implementation == "CPython":
-    # Only available for CPython!
+if python_implementation == "CPython" and IS_GIL_ENABLED:
+    # Only available for CPython with the GIL enabled!
     CYTHON_SUPPORTED = True
 
 # =======================================================================================================================
