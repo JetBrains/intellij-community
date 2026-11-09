@@ -6,16 +6,12 @@ import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.issue.BuildIssue
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -31,6 +27,7 @@ import org.jetbrains.plugins.gradle.service.project.BaseProjectImportErrorHandle
 import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector
 import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector.FailureGroup
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import java.io.Closeable
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.isRegularFile
@@ -42,7 +39,7 @@ class GradleExecutionReporterImpl(
   private val projectPath: String,
   private val taskId: ExternalSystemTaskId,
   private val listener: ExternalSystemTaskNotificationListener,
-) : GradleExecutionReporter, Disposable {
+) : GradleExecutionReporter, Closeable {
 
   var buildEnvironment: BuildEnvironment? = null
 
@@ -158,7 +155,7 @@ class GradleExecutionReporterImpl(
     return FileNavigatable(taskId.project, FilePosition(buildFile, 0, 0))
   }
 
-  override fun dispose() {
+  override fun close() {
     flushPendingIssues()
   }
 
