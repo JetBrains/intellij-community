@@ -3,7 +3,7 @@ internal enum class E {
 }
 
 internal class A {
-    fun foo(list: MutableList<String?>, collection: MutableCollection<Int?>, map: MutableMap<Int?, Int?>) {
+    fun foo(list: List<String?>, collection: Collection<Int?>, map: Map<Int?, Int?>) {
         val a = "".length
         val b = E.A.name
         val c = E.A.ordinal

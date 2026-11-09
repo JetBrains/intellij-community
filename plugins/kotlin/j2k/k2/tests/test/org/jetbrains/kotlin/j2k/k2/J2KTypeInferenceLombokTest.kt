@@ -20,11 +20,11 @@ import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.j2k.J2KDataflowNullability
+import org.jetbrains.kotlin.j2k.J2KTypeInference
 import org.jetbrains.kotlin.j2k.J2K_LOMBOK_PROJECT_DESCRIPTOR
 import org.jetbrains.kotlin.j2k.Nullability
 
-class J2KDataflowNullabilityLombokTest : KotlinLightCodeInsightFixtureTestCase() {
+class J2KTypeInferenceLombokTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = J2K_LOMBOK_PROJECT_DESCRIPTOR
 
     fun testGeneratedMembersHaveBodiesInConversionCopy() {
@@ -72,7 +72,7 @@ class J2KDataflowNullabilityLombokTest : KotlinLightCodeInsightFixtureTestCase()
             }
             """.trimIndent()
         )
-        val decisions = allowAnalysisOnEdt { J2KDataflowNullability(file.copy() as PsiFile).decisions }
+        val decisions = allowAnalysisOnEdt { J2KTypeInference(file.copy() as PsiFile).decisions }
             .entries.filter { it.key is PsiField }.associate { (it.key as PsiField).name to it.value }
 
         assertEquals(Nullability.NotNull, decisions["name"])

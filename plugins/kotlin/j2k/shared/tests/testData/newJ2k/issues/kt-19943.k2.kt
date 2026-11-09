@@ -1,25 +1,25 @@
 class TestSpecialMethodForTypeValue {
-    fun testByte(xs: MutableList<Byte?>): Byte {
+    fun testByte(xs: List<Byte?>): Byte {
         return xs.get(0)!!
     }
 
-    fun testShort(xs: MutableList<Short?>): Short {
+    fun testShort(xs: List<Short?>): Short {
         return xs.get(0)!!
     }
 
-    fun testInt(xs: MutableList<Int?>): Int {
+    fun testInt(xs: List<Int?>): Int {
         return xs.get(0)!!
     }
 
-    fun testLong(xs: MutableList<Long?>): Long {
+    fun testLong(xs: List<Long?>): Long {
         return xs.get(0)!!
     }
 
-    fun testFloat(xs: MutableList<Float?>): Float {
+    fun testFloat(xs: List<Float?>): Float {
         return xs.get(0)!!
     }
 
-    fun testDouble(xs: MutableList<Double?>): Double {
+    fun testDouble(xs: List<Double?>): Double {
         return xs.get(0)!!
     }
 }

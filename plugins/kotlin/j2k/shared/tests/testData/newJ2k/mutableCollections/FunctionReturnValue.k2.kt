@@ -3,7 +3,7 @@ internal class A {
         return ArrayList<String>()
     }
 
-    fun foo(): MutableCollection<String> {
+    fun foo(): Collection<String> {
         val collection = createCollection()
         collection.add("a")
         return collection

@@ -1,13 +1,13 @@
 import java.io.File
 
 internal class A {
-    private val field1: MutableList<String?> = ArrayList<String?>()
-    val field2: MutableList<String?> = ArrayList<String?>()
+    private val field1: List<String?> = ArrayList<String?>()
+    val field2: List<String?> = ArrayList<String?>()
     val field3: Int = 0
     protected val field4: Int = 0
 
-    private var field5: MutableList<String?> = ArrayList<String?>()
-    var field6: MutableList<String?> = ArrayList<String?>()
+    private var field5: List<String?> = ArrayList<String?>()
+    var field6: List<String?> = ArrayList<String?>()
 
     private var field7 = 0
     var field8: Int = 0

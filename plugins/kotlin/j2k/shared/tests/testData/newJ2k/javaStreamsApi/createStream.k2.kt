@@ -3,7 +3,7 @@ import java.util.stream.Collectors
 import java.util.stream.Stream
 
 internal class Test {
-    fun main(lst: MutableList<String?>) {
+    fun main(lst: List<String?>) {
         val streamOfList = lst.stream()
             .map<String?> { x: String? -> x + "e" }
             .collect(Collectors.toList())

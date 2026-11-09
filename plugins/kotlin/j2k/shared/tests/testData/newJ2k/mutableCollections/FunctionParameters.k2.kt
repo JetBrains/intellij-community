@@ -1,6 +1,6 @@
 internal class A<T> {
     fun foo(
-        nonMutableCollection: MutableCollection<String?>,
+        nonMutableCollection: Collection<String?>,
         mutableCollection: MutableCollection<String?>,
         mutableSet: MutableSet<T?>,
         mutableMap: MutableMap<String?, T?>

@@ -109,10 +109,10 @@ interface TestTypeParameter<@TypeUseAnon1 F : @TypeUseAnon1 File?> {
 }
 
 class TestNestedTypeArgument {
-    var field: MutableList<String?>? = null
+    var field: List<String?>? = null
 
-    fun foo(param: MutableList<String?>?) {
-        val local: MutableList<String?>? = null
+    fun foo(param: List<String?>?) {
+        val local: List<String?>? = null
     }
 }
 

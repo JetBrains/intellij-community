@@ -1,49 +1,49 @@
 internal class J {
-    fun simple(list: MutableList<String>?): MutableList<String>? {
+    fun simple(list: List<String>?): List<String>? {
         return list
     }
 
-    fun nested(map: MutableMap<String?, MutableList<String>?>?): MutableMap<String?, MutableList<String>?>? {
+    fun nested(map: Map<String?, MutableList<String>?>?): Map<String?, MutableList<String>?>? {
         return map
     }
 
-    fun wildcard(collection: MutableCollection<out String>?): MutableCollection<out String>? {
+    fun wildcard(collection: Collection<out String>?): Collection<out String>? {
         return collection
     }
 
-    fun nestedNotNull(list: MutableList<MutableList<String>?>?): MutableList<MutableList<String>?>? {
+    fun nestedNotNull(list: List<MutableList<String>?>?): List<MutableList<String>?>? {
         return list
     }
 
-    fun nestedNullable(list: MutableList<MutableList<String?>?>?): MutableList<MutableList<String?>?>? {
+    fun nestedNullable(list: List<MutableList<String?>?>?): List<MutableList<String?>?>? {
         return list
     }
 
-    fun outerNullableInnerNotNull(list: MutableList<MutableList<String>?>?): MutableList<MutableList<String>?>? {
+    fun outerNullableInnerNotNull(list: List<MutableList<String>?>?): List<MutableList<String>?>? {
         return list
     }
 
-    fun outerNotNullInnerNullable(list: MutableList<MutableList<String?>>?): MutableList<MutableList<String?>>? {
+    fun outerNotNullInnerNullable(list: List<MutableList<String?>>?): List<MutableList<String?>>? {
         return list
     }
 
-    fun mapMixed(map: MutableMap<String, MutableList<String>?>?): MutableMap<String, MutableList<String>?>? {
+    fun mapMixed(map: Map<String, MutableList<String>?>?): Map<String, MutableList<String>?>? {
         return map
     }
 
-    fun <T> notNullT(list: MutableList<T>?): MutableList<T>? {
+    fun <T> notNullT(list: List<T>?): List<T>? {
         return list
     }
 
-    fun <T> nullableT(list: MutableList<T?>?): MutableList<T?>? {
+    fun <T> nullableT(list: List<T?>?): List<T?>? {
         return list
     }
 
-    fun <T> nestedNotNullT(list: MutableList<MutableList<T>?>?): MutableList<MutableList<T>?>? {
+    fun <T> nestedNotNullT(list: List<MutableList<T>?>?): List<MutableList<T>?>? {
         return list
     }
 
-    fun <T> outerNullableInnerNotNullT(list: MutableList<MutableList<T>?>?): MutableList<MutableList<T>?>? {
+    fun <T> outerNullableInnerNotNullT(list: List<MutableList<T>?>?): List<MutableList<T>?>? {
         return list
     }
 }

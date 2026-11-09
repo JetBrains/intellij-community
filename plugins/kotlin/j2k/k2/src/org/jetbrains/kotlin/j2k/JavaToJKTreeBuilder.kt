@@ -316,8 +316,8 @@ class JavaToJKTreeBuilder internal constructor(
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? {
         inferredTypeArguments =
             if (inferTypeArguments && psi is PsiJavaFile) logErrors(emptyMap()) { collectInferredTypeArguments(psi) } else emptyMap()
-        typeFactory.nullabilityInfo = (psi.containingFile as? PsiJavaFile)?.let { file ->
-            logErrors(null) { inferNullability(file, inferredTypeArguments) }
+        typeFactory.typeInferenceInfo = (psi.containingFile as? PsiJavaFile)?.let { file ->
+            logErrors(null) { inferTypes(file, inferredTypeArguments) }
         }
 
         return when (psi) {
@@ -598,7 +598,7 @@ class JavaToJKTreeBuilder internal constructor(
             if (typeParameters.size != typeArgumentList.typeArguments.size) return typeArgumentList
 
             val passesNull = argumentList.expressions.any {
-                typeFactory.nullabilityInfo.dfaNullabilityOf(it) in NULLABLE_DFA_NULLABILITIES
+                typeFactory.typeInferenceInfo.dfaNullabilityOf(it) in NULLABLE_DFA_NULLABILITIES
             }
 
             typeArgumentList.typeArguments.forEachIndexed { index, typeArgument ->
@@ -1263,7 +1263,7 @@ class JavaToJKTreeBuilder internal constructor(
         }
 
         fun PsiParameter.toJK(): JKParameter {
-            val info = typeFactory.nullabilityInfo
+            val info = typeFactory.typeInferenceInfo
             val rawType = when {
                 info == null -> type.toJK()
                 this in info.notNullLambdaParameters -> type.toJK().updateNullability(NotNull)

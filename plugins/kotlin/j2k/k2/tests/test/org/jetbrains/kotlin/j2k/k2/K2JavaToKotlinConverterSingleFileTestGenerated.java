@@ -4528,6 +4528,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("CollectionFactories.java")
+        public void testCollectionFactories() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/CollectionFactories.java");
+        }
+
         @TestMetadata("FunctionParameters.java")
         public void testFunctionParameters() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/mutableCollections/FunctionParameters.java");
@@ -4556,6 +4561,21 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("Iterator2.java")
         public void testIterator2() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/mutableCollections/Iterator2.java");
+        }
+
+        @TestMetadata("KotlinCallers.java")
+        public void testKotlinCallers() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/KotlinCallers.java");
+        }
+
+        @TestMetadata("KotlinSuperParameters.java")
+        public void testKotlinSuperParameters() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/KotlinSuperParameters.java");
+        }
+
+        @TestMetadata("LambdaAndSwitchResults.java")
+        public void testLambdaAndSwitchResults() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/LambdaAndSwitchResults.java");
         }
 
         @TestMetadata("ListIterator.java")
@@ -4606,6 +4626,26 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("Overrides.java")
         public void testOverrides() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/mutableCollections/Overrides.java");
+        }
+
+        @TestMetadata("ReadOnlyFields.java")
+        public void testReadOnlyFields() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/ReadOnlyFields.java");
+        }
+
+        @TestMetadata("ReadOnlyLocals.java")
+        public void testReadOnlyLocals() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/ReadOnlyLocals.java");
+        }
+
+        @TestMetadata("ReadOnlyParameters.java")
+        public void testReadOnlyParameters() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/ReadOnlyParameters.java");
+        }
+
+        @TestMetadata("ReadOnlyReturns.java")
+        public void testReadOnlyReturns() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/ReadOnlyReturns.java");
         }
 
         @TestMetadata("Recursion.java")

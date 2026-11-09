@@ -1,6 +1,6 @@
 internal class C<T> {
-    fun foo1(src: MutableCollection<out T?>) {
-        val t: T? = src.iterator().next()
+    fun foo1(src: Collection<out T?>) {
+        val t = src.iterator().next()
     }
 
     fun foo2(src: ArrayList<out T?>) {
@@ -15,6 +15,6 @@ internal class C<T> {
         return comparable.compareTo(t)
     }
 
-    fun foo5(w: MutableCollection<*>?) {
+    fun foo5(w: Collection<*>?) {
     }
 }

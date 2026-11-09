@@ -5,7 +5,7 @@ class TestLambda<T> {
         }
     }
 
-    fun toStringAllBox(list: MutableList<Box<T?>?>): String {
+    fun toStringAllBox(list: List<Box<T?>?>): String {
         return list.stream().map<T?> { obj: Box<T?>? -> obj!!.unbox() }.map<String> { obj: T? -> obj.toString() }
             .reduce { s1: String?, s2: String? -> s1 + ", " + s2 }.orElse("")
     }

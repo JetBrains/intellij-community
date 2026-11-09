@@ -141,16 +141,6 @@ class TypeMappingConversion(
     private fun JKClassSymbol.kotlinCollectionClassName(): String? =
         toKotlinMutableTypesMap[fqName]
 
-    private val toKotlinMutableTypesMap: Map<String, String> = mapOf(
-        CommonClassNames.JAVA_UTIL_ITERATOR to StandardNames.FqNames.mutableIterator.asString(),
-        CommonClassNames.JAVA_UTIL_LIST to StandardNames.FqNames.mutableList.asString(),
-        CommonClassNames.JAVA_UTIL_COLLECTION to StandardNames.FqNames.mutableCollection.asString(),
-        CommonClassNames.JAVA_UTIL_SET to StandardNames.FqNames.mutableSet.asString(),
-        CommonClassNames.JAVA_UTIL_MAP to StandardNames.FqNames.mutableMap.asString(),
-        CommonClassNames.JAVA_UTIL_MAP_ENTRY to StandardNames.FqNames.mutableMapEntry.asString(),
-        java.util.ListIterator::class.java.canonicalName to StandardNames.FqNames.mutableListIterator.asString()
-    )
-
     private fun JKClassSymbol.kotlinStandardType(): String? {
         if (isKtFunction(fqName)) return fqName
         return JavaToKotlinClassMap.mapJavaToKotlin(FqName(fqName))?.asString()
@@ -183,3 +173,13 @@ class TypeMappingConversion(
         private fun isKtFunction(fqName: String) = ktFunctionRegex.matches(fqName)
     }
 }
+
+internal val toKotlinMutableTypesMap: Map<String, String> = mapOf(
+    CommonClassNames.JAVA_UTIL_ITERATOR to StandardNames.FqNames.mutableIterator.asString(),
+    CommonClassNames.JAVA_UTIL_LIST to StandardNames.FqNames.mutableList.asString(),
+    CommonClassNames.JAVA_UTIL_COLLECTION to StandardNames.FqNames.mutableCollection.asString(),
+    CommonClassNames.JAVA_UTIL_SET to StandardNames.FqNames.mutableSet.asString(),
+    CommonClassNames.JAVA_UTIL_MAP to StandardNames.FqNames.mutableMap.asString(),
+    CommonClassNames.JAVA_UTIL_MAP_ENTRY to StandardNames.FqNames.mutableMapEntry.asString(),
+    java.util.ListIterator::class.java.canonicalName to StandardNames.FqNames.mutableListIterator.asString()
+)

@@ -11,7 +11,7 @@ internal object J {
         return arr
     }
 
-    fun listOfNotNullArrays(list: MutableList<Array<String>>?): MutableList<Array<String>>? {
+    fun listOfNotNullArrays(list: List<Array<String>>?): List<Array<String>>? {
         return list
     }
 }

@@ -2,10 +2,10 @@
 import java.util.function.BiFunction
 
 class Test {
-    fun notNullParameters(f: BiFunction<Int?, Int?, String?>) {
+    fun notNullParameters(f: BiFunction<Int?, Int?, String>) {
     }
 
-    fun nullableParameter(f: BiFunction<Int?, Int?, String?>) {
+    fun nullableParameter(f: BiFunction<Int?, Int?, String>) {
     }
 
     fun nullableReturnType(f: BiFunction<Int?, Int?, String?>) {

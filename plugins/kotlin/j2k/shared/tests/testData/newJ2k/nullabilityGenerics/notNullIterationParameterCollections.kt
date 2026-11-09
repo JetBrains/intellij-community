@@ -7,14 +7,14 @@ internal class TestCollection {
         }
     }
 
-    fun param(strings: MutableCollection<String>) {
+    fun param(strings: Collection<String>) {
         for (s in strings) {
             println(s.length)
         }
     }
 
     fun local() {
-        val stringsLocal: MutableCollection<String> = ArrayList<String>()
+        val stringsLocal: Collection<String> = ArrayList<String>()
         for (s in stringsLocal) {
             println(s.length)
         }
@@ -53,14 +53,14 @@ internal class TestList {
         }
     }
 
-    fun param(strings: MutableList<String>) {
+    fun param(strings: List<String>) {
         for (s in strings) {
             println(s.length)
         }
     }
 
     fun local() {
-        val stringsLocal: MutableList<String> = ArrayList<String>()
+        val stringsLocal: List<String> = ArrayList<String>()
         for (s in stringsLocal) {
             println(s.length)
         }
@@ -76,14 +76,14 @@ internal class TestSet {
         }
     }
 
-    fun param(strings: MutableSet<String>) {
+    fun param(strings: Set<String>) {
         for (s in strings) {
             println(s.length)
         }
     }
 
     fun local() {
-        val stringsLocal: MutableSet<String> = HashSet<String>()
+        val stringsLocal: Set<String> = HashSet<String>()
         for (s in stringsLocal) {
             println(s.length)
         }

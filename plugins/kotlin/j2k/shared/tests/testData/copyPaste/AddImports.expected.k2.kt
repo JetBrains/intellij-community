@@ -1,5 +1,5 @@
 import java.io.File
 
-fun foo(file: File?): MutableList<String?> {
-    return mutableListOf<String?>()
+fun foo(file: File?): List<String?> {
+    return emptyList<String?>()
 }

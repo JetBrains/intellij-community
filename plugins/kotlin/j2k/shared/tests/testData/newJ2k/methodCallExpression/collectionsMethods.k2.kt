@@ -1,9 +1,9 @@
 internal class A {
-    fun foo(): MutableMap<String?, String?> {
-        val list1 = mutableListOf<String?>()
-        val list2 = mutableListOf<Int>(1)
-        val set1 = mutableSetOf<String?>()
-        val set2 = mutableSetOf<String>("a")
-        return mutableMapOf<String?, String?>()
+    fun foo(): Map<String?, String?> {
+        val list1 = emptyList<String?>()
+        val list2 = listOf<Int>(1)
+        val set1 = emptySet<String?>()
+        val set2 = setOf<String>("a")
+        return emptyMap<String?, String?>()
     }
 }

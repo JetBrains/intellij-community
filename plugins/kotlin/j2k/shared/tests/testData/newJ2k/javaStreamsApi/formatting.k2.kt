@@ -2,7 +2,7 @@
 import java.util.stream.Collectors
 
 internal class Test {
-    fun main(lst: MutableList<Int?>) {
+    fun main(lst: List<Int?>) {
         val newLst =  /*before list*/lst /*after list*/.stream() /* after stream*/
             .filter { x: Int? -> x!! > 10 }
             .map<Int?> { x: Int? -> x!! + 2 }  /*some comment*/.distinct() /* one more comment */

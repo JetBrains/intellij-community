@@ -5,7 +5,7 @@ class J {
         l2: MutableSet<Int?>,
         l3: MutableSet<Int?>,
         l4: MutableSet<Int?>,
-        l5: MutableSet<Int?>
+        l5: Set<Int?>
     ) {
         l0.add(1)
         l1.addAll(l5)

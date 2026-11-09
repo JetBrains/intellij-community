@@ -1,11 +1,11 @@
 internal class A {
-    private val field1: MutableList<String?> = TODO()
-    val field2: MutableList<String?> = ArrayList<String?>()
+    private val field1: List<String?> = TODO()
+    val field2: List<String?> = ArrayList<String?>()
     val field3: Int = TODO()
     protected val field4: Int = TODO()
 
-    private var field5: MutableList<String?> = TODO()
-    var field6: MutableList<String?> = TODO()
+    private var field5: List<String?> = TODO()
+    var field6: List<String?> = TODO()
 
     private var field7: Int = TODO()
     var field8: Int = TODO()

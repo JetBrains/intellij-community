@@ -1,3 +1,3 @@
-internal class X(private val list: MutableList<Y?>?) {
+internal class X(private val list: List<Y?>?) {
     internal inner class Y
 }

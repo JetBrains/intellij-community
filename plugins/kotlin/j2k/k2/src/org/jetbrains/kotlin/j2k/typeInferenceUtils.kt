@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow
 import com.intellij.codeInspection.dataFlow.DfaNullability
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiParameter
@@ -21,10 +22,10 @@ import java.util.Collections
 import java.util.IdentityHashMap
 
 /**
- * A collection of types with known nullability as determined by [J2KDataflowNullability].
- * This information is used to set the nullability of created `JKType`s in [org.jetbrains.kotlin.j2k.types.JKTypeFactory].
+ * A collection of types with known nullability or mutability as determined by [J2KTypeInference].
+ * This information is used to set the nullability and the mutability of created `JKType`s in [org.jetbrains.kotlin.j2k.types.JKTypeFactory].
  */
-internal class NullabilityInfo {
+internal class TypeInferenceInfo {
     // Identity sets tell apart the equal type arguments of one type
     val nullableTypes: MutableSet<PsiType> = Collections.newSetFromMap(IdentityHashMap())
     val notNullTypes: MutableSet<PsiType> = Collections.newSetFromMap(IdentityHashMap())
@@ -32,6 +33,12 @@ internal class NullabilityInfo {
     // A recreated type object keeps its reference element
     val nullableElements: MutableSet<PsiJavaCodeReferenceElement> = HashSet()
     val notNullElements: MutableSet<PsiJavaCodeReferenceElement> = HashSet()
+
+    val readOnlyTypes: MutableSet<PsiType> = Collections.newSetFromMap(IdentityHashMap())
+    val readOnlyElements: MutableSet<PsiJavaCodeReferenceElement> = HashSet()
+
+    // The calls whose result goes only to a declaration with a read-only type
+    val readOnlyCalls: MutableSet<PsiElement> = HashSet()
 
     // The data flow facts of the engine, so that J2K does not analyze the same code again
     val expressionDfTypes: MutableMap<PsiExpression, DfType> = HashMap()
@@ -41,7 +48,7 @@ internal class NullabilityInfo {
     val notNullLambdaParameters: MutableSet<PsiParameter> = HashSet()
 }
 
-internal fun NullabilityInfo?.dfaNullabilityOf(expression: PsiExpression): DfaNullability? =
+internal fun TypeInferenceInfo?.dfaNullabilityOf(expression: PsiExpression): DfaNullability? =
     this?.expressionDfTypes.orEmpty().dfaNullability(expression)
 
 /** Returns the nullability that the engine found for [expression], otherwise runs [getExpressionDfaNullability]. */

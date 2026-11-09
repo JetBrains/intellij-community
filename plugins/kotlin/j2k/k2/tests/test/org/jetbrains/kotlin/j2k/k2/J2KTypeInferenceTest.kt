@@ -6,11 +6,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.j2k.J2KDataflowNullability
+import org.jetbrains.kotlin.j2k.J2KTypeInference
 import org.jetbrains.kotlin.j2k.J2K_PROJECT_DESCRIPTOR
 import org.jetbrains.kotlin.j2k.Nullability
 
-class J2KDataflowNullabilityTest : KotlinLightCodeInsightFixtureTestCase() {
+class J2KTypeInferenceTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = J2K_PROJECT_DESCRIPTOR
 
     fun testFieldAssignedOnOnePathStaysNullable() {
@@ -124,6 +124,6 @@ class J2KDataflowNullabilityTest : KotlinLightCodeInsightFixtureTestCase() {
     @OptIn(KaAllowAnalysisOnEdt::class)
     private fun decisionsByName(javaCode: String, path: String = "C.java"): Map<String?, Nullability> {
         val file = myFixture.addFileToProject(path, javaCode.trimIndent())
-        return allowAnalysisOnEdt { J2KDataflowNullability(file).decisions }.mapKeys { (it.key as? PsiNamedElement)?.name }
+        return allowAnalysisOnEdt { J2KTypeInference(file).decisions }.mapKeys { (it.key as? PsiNamedElement)?.name }
     }
 }

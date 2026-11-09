@@ -517,13 +517,20 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.util.Map.Entry.getKey") convertTo Field("kotlin.collections.Map.Entry.key"),
         Method("java.util.Map.Entry.getValue") convertTo Field("kotlin.collections.Map.Entry.value"),
 
-        Method("java.util.Set.of") convertTo Method(setOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER withByArgumentsFilter ::setOfFilter,
-        Method("java.util.List.of") convertTo Method(listOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER withByArgumentsFilter ::listOfFilter,
-        Method("java.util.Collections.singletonList") convertTo Method(listOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.singleton") convertTo Method(setOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.emptyList") convertTo Method(emptyListFqName()) withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.emptySet") convertTo Method(emptySetFqName()) withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.emptyMap") convertTo Method(emptyMapFqName()) withReplaceType REPLACE_WITH_QUALIFIER,
+        *(Method("java.util.Set.of") convertTo Method(setOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER withByArgumentsFilter ::setOfFilter)
+            .orReadOnly("kotlin.collections.setOf"),
+        *(Method("java.util.List.of") convertTo Method(listOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER withByArgumentsFilter ::listOfFilter)
+            .orReadOnly("kotlin.collections.listOf"),
+        *(Method("java.util.Collections.singletonList") convertTo Method(listOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER)
+            .orReadOnly("kotlin.collections.listOf"),
+        *(Method("java.util.Collections.singleton") convertTo Method(setOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER)
+            .orReadOnly("kotlin.collections.setOf"),
+        *(Method("java.util.Collections.emptyList") convertTo Method(emptyListFqName()) withReplaceType REPLACE_WITH_QUALIFIER)
+            .orReadOnly("kotlin.collections.emptyList"),
+        *(Method("java.util.Collections.emptySet") convertTo Method(emptySetFqName()) withReplaceType REPLACE_WITH_QUALIFIER)
+            .orReadOnly("kotlin.collections.emptySet"),
+        *(Method("java.util.Collections.emptyMap") convertTo Method(emptyMapFqName()) withReplaceType REPLACE_WITH_QUALIFIER)
+            .orReadOnly("kotlin.collections.emptyMap"),
     )
 
     // For now, these conversions only mark that the last lambda can be moved outside parentheses
@@ -931,8 +938,8 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
                 withByArgumentsFilter { it.size == 1 },
         Method("java.util.Arrays.deepToString") convertTo ExtensionMethod("kotlin.collections.contentDeepToString") withReplaceType REPLACE_WITH_QUALIFIER
                 withByArgumentsFilter { it.size == 1 },
-        Method("java.util.Arrays.asList") convertTo Method("kotlin.collections.mutableListOf") withReplaceType REPLACE_WITH_QUALIFIER
-                withByArgumentsFilter ::asListFilter,
+        *(Method("java.util.Arrays.asList") convertTo Method("kotlin.collections.mutableListOf") withReplaceType REPLACE_WITH_QUALIFIER
+                withByArgumentsFilter ::asListFilter).orReadOnly("kotlin.collections.listOf"),
     )
 
     private val printlnConversions: List<Conversion> = listOf(
@@ -1237,8 +1244,13 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     private fun List<JKLiteralExpression>.containsNull(): Boolean =
         any { it.isNull() }
 
-    // TODO: before mutability inference is implemented in K2 (KTIJ-29148),
-    //   use mutable versions of collection creation functions
+    private fun Conversion.orReadOnly(readOnlyFqName: String): Array<Conversion> =
+        arrayOf(copy(to = Method(readOnlyFqName), filter = ::isReadOnlyResult), this)
+
+    private fun isReadOnlyResult(expression: JKExpression): Boolean {
+        val call = (expression.parent as? JKQualifiedExpression)?.psi ?: expression.psi ?: return false
+        return call in typeFactory.typeInferenceInfo?.readOnlyCalls.orEmpty()
+    }
 
     private fun setOfFqName(): String =
         "kotlin.collections.mutableSetOf"

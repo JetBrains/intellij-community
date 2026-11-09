@@ -8,22 +8,22 @@ internal class A {
     }
 
     fun <T> emptyList() {
-        val list = mutableListOf<String?>()
+        val list = kotlin.collections.emptyList<String?>()
     }
 
     fun <T> emptySet() {
-        val set = mutableSetOf<String?>()
+        val set = kotlin.collections.emptySet<String?>()
     }
 
     fun <K, V> emptyMap() {
-        val map = mutableMapOf<String?, String?>()
+        val map = kotlin.collections.emptyMap<String?, String?>()
     }
 
     fun <T> listOf(s: String?) {
-        val list = mutableListOf<String?>(s)
+        val list = kotlin.collections.listOf<String?>(s)
     }
 
     fun <T> setOf(s: String?) {
-        val set = mutableSetOf<String?>(s)
+        val set = kotlin.collections.setOf<String?>(s)
     }
 }

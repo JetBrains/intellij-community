@@ -9,7 +9,7 @@ internal class Lists {
         print(clean)
     }
 
-    private fun print(items: MutableList<out String?>) {
+    private fun print(items: List<out String?>) {
         println(items.size)
     }
 

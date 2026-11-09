@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.j2k.types.updateNullability
 
 /**
  * Try to determine more precise nullability for some JK elements.
- * See also [org.jetbrains.kotlin.j2k.inferNullability]
+ * See also [org.jetbrains.kotlin.j2k.inferTypes]
  */
 class NullabilityConversion(context: ConverterContext) : RecursiveConversion(context) {
     override fun applyToElement(element: JKTreeElement): JKTreeElement {
@@ -41,7 +41,7 @@ class NullabilityConversion(context: ConverterContext) : RecursiveConversion(con
     }
 
     // Try to update nullability of the cast's type to not-null in certain cases
-    // TODO migrate to J2KDataflowNullability
+    // TODO migrate to J2KTypeInference
     // TODO support the case of argument for not-null parameter
     private fun JKTypeCastExpression.updateNullability() {
         var context = parent
@@ -63,7 +63,7 @@ class NullabilityConversion(context: ConverterContext) : RecursiveConversion(con
 
             // If Java DFA knows that the cast expression is not null, it is safe to cast to the not-null type
             psiCastedExpression != null -> {
-                val dfaNullability = typeFactory.nullabilityInfo.dfaNullabilityOf(psiCastedExpression)
+                val dfaNullability = typeFactory.typeInferenceInfo.dfaNullabilityOf(psiCastedExpression)
                 dfaNullability == DfaNullability.NOT_NULL
             }
 

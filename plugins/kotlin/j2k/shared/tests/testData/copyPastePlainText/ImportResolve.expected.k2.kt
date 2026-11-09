@@ -8,7 +8,7 @@ class Target {
 
     var unresolved: UnresolvedInterface<UnresolvedGeneric?> = UnresolvedImplementation() // Should not add import
 
-    var hashMapOfNotImported: MutableMap<ToBeImportedJava?, ToBeImportedKotlin?> =
+    var hashMapOfNotImported: Map<ToBeImportedJava?, ToBeImportedKotlin?> =
         HashMap<ToBeImportedJava?, ToBeImportedKotlin?>()
 
     fun acceptKotlinClass(tbi: ToBeImportedKotlin?) {

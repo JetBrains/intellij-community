@@ -1,6 +1,5 @@
-// ERROR: Return type mismatch: expected 'MutableList<Int?>', actual 'List<Int?>'.
 class JJ {
-    private fun bug(list: MutableList<String?>): MutableList<Int?> {
+    private fun bug(list: MutableList<String?>): List<Int?> {
         return list.map<String?, Int?> { string: String? -> string!!.length }
     }
 }

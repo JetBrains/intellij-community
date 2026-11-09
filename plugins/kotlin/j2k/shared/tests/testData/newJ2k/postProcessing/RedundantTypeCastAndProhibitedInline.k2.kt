@@ -5,8 +5,8 @@ object C {
     fun consume2(c: C?) {
     }
 
-    fun foo(cList: MutableList<C?>) {
-        val iter: MutableIterator<*> = cList.iterator()
+    fun foo(cList: List<C?>) {
+        val iter: Iterator<*> = cList.iterator()
         while (iter.hasNext()) {
             val c = iter.next() as C?
             consume1(c)
