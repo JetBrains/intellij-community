@@ -28,7 +28,7 @@ internal class PyPackageVersionUsagesCollector : ProjectUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.packages", 9)
+  private val GROUP = EventLogGroup("python.packages", 10)
 
   //full list is stored in metadata, see FUS-1218 for more details
   private val PYTHON_PACKAGE_INSTALLED = registerPythonSpecificEvent(GROUP,

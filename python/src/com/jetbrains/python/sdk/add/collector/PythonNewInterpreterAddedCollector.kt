@@ -22,7 +22,7 @@ internal object PythonNewInterpreterAddedCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("python.new.interpreter.added", 5)
+  private val GROUP = EventLogGroup("python.new.interpreter.added", 6)
   private val INTERPRETER_ADDED_EVENT = GROUP.registerVarargEvent("interpreted.added",
                                                                   INTERPRETER_TYPE,
                                                                   EXECUTION_TYPE,
