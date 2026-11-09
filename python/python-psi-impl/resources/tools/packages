@@ -140,6 +140,7 @@ Levenshtein levenshtein
 LocalAuthentication pyobjc-framework-localauthentication
 LucoPy lucopy
 M2Crypto m2crypto
+MDAnalysis mdanalysis
 MVGLive PyMVGLive
 MailChecker mailchecker
 MapKit pyobjc-framework-mapkit
@@ -213,10 +214,13 @@ PyQt6 pyqt6-sip
 PyRTF pyrtf3
 PyReconstruct PyRECONSTRUCT
 PySide qt_backport
+PySide2 pyside2
+PySide6 pyside6
 PySimpleGUI pysimplegui
 Pydblibrary robotframework-pydblibrary
 Pyrex Pyrex-real
 Pyro4 pyro4
+Pyro5 pyro5
 PysphereLibrary robotframework-pyspherelibrary
 QTKit pyobjc-framework-qtkit
 QcloudApi tencentcloud-sdk-python
@@ -252,6 +256,7 @@ Selenium2Screenshots robotframework-selenium2screenshots
 SeleniumLibrary robotframework-seleniumlibrary
 SeleniumTestability robotframework-seleniumtestability
 ServiceManagement pyobjc-framework-servicemanagement
+SimpleITK simpleitk
 SipPhoneLibrary sipphone-automation
 SnapSearch snapsearch-client-python
 Social pyobjc-framework-social
@@ -296,6 +301,7 @@ WikiNotification TracWikiNotification
 WikiTemplates TracWikiTemplates
 XSLForms XSLTools
 Xlib python3-xlib
+ZODB zodb
 ZSI infi.ZSI
 _ list_print
 _6px px

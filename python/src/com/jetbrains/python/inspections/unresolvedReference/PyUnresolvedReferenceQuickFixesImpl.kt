@@ -246,6 +246,9 @@ object PyUnresolvedReferenceQuickFixesImpl : PyUnresolvedReferenceQuickFixes {
   }
 
   private fun createInstallAndImportQuickFix(project: Project, interpreter: PythonInterpreter, importedModuleName: String, asName: String?): LocalQuickFix? {
+    if (!PyPsiPackageUtil.isModuleNameCaseTrusted(importedModuleName)) {
+      return null
+    }
     val packageName = PyPsiPackageUtil.moduleToPackageName(importedModuleName)
     val canBeInstalled = !interpreter.isReadOnly &&
                          runBlockingCancellable {
