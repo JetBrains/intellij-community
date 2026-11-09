@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.async.ListChange
 import com.intellij.collaboration.async.Deleted
+import com.intellij.collaboration.async.ListChange
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.util.CodeReviewDomainEntity
@@ -11,6 +11,7 @@ import com.intellij.collaboration.util.map
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,11 +34,11 @@ import org.jetbrains.plugins.gitlab.api.GitLabRestId
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.SinceGitLab
-import org.jetbrains.plugins.gitlab.data.GitLabAwardEmojiDetails
 import org.jetbrains.plugins.gitlab.api.dto.GitLabAwardEmojiRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
+import org.jetbrains.plugins.gitlab.data.GitLabAwardEmojiDetails
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.addAwardEmoji
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.deleteAwardEmoji
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.deleteDraftNote
@@ -138,8 +139,10 @@ class MutableGitLabMergeRequestNote(
   override fun canSubmit(): Boolean = false
 
   init {
-    cs.launch {
-      data.collect { loadEmojis() }
+    if (!Registry.`is`("gitlab.merge.requests.disable.emojis.fetching")) {
+      cs.launch {
+        data.collect { loadEmojis() }
+      }
     }
   }
 

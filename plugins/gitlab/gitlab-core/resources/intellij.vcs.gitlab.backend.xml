@@ -126,6 +126,8 @@
                  description="Load the project details purely with REST API"/>
     <registryKey defaultValue="true" description="Enable file uploading action for review notes"
                  key="gitlab.merge.requests.file.upload.enabled"/>
+    <registryKey defaultValue="false" description="Disable loading emojis for notes in merge requests"
+                 key="gitlab.merge.requests.disable.emojis.fetching"/>
     <applicationSettings service="org.jetbrains.plugins.gitlab.authentication.accounts.GitLabPersistentAccounts"/>
     <projectSettings service="org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsPersistentFiltersHistory"/>
     <projectSettings service="org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences"/>
