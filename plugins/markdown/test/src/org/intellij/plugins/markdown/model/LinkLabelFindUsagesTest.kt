@@ -131,11 +131,12 @@ class LinkLabelFindUsagesTest: BasePlatformTestCase() {
   }
 
   @Test
-  fun `a comment wrapper does not hide a later definition`() {
+  fun `link definition and HTML comments do not hide a later definition`() {
     myFixture.configureByText("some.md", """
       [/<caret>/]
 
-      [//]: # (A comment)
+      [//]: # (A link definition comment)
+      <!-- A comment -->
       [//]: https://example.com
     """.trimIndent())
 

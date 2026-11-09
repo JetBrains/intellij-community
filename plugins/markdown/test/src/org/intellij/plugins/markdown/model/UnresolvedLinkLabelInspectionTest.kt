@@ -149,7 +149,7 @@ class UnresolvedLinkLabelInspectionTest: BasePlatformTestCase() {
   }
 
   @Test
-  fun `a comment wrapper does not define a link label`() {
+  fun `a link definition comment does not define a link label`() {
     doTest("""
       [//]
 

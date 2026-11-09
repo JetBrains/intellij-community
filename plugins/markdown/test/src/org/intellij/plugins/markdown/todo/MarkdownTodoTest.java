@@ -22,6 +22,10 @@ public class MarkdownTodoTest extends BasePlatformTestCase {
     doTest("[//]: # (todo comment)", 1);
   }
 
+  public void testHtmlTodo() {
+    doTest("<!-- todo comment -->", 1);
+  }
+
   public void testTodoTodoPosition() {
     doTest("[//]: #a (todo todo comment)", 1);
   }

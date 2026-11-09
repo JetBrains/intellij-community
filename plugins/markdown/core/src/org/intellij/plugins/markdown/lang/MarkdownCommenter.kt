@@ -13,48 +13,81 @@ import com.intellij.util.DocumentUtil
 import com.intellij.util.text.CharArrayUtil.regionMatches
 
 /**
- * Commenting and uncommenting lines in markdown files.
- * If the lines already have parentheses, they are escaping/unescaping when commenting/uncommenting, respectively.
- * Markdown understands comments only if there is an empty line before the commented line, so:
- *  * empty line is added if there is no empty line before it;
- *  * added empty lines are removed when uncommenting.
+ * Comment and uncomment lines and selected text in Markdown files.
  *
  * Examples:
  *  1. * Simple text: Welcome to JetBrains IntelliJ IDEA.
- *     * Commented text: [//]: # (Welcome to JetBrains IntelliJ IDEA.)
+ *     * Commented text: `<!-- Welcome to JetBrains IntelliJ IDEA. -->`
  *
  *  2. * Text with parentheses: 1. [IntelliJ platform overview](#intellij-platform-overview)
- *     * Commented text: [//]: # (1. [IntelliJ platform overview]&#40;#intellij-platform-overview&#41;)
+ *     * Commented text: `<!-- 1. [IntelliJ platform overview](#intellij-platform-overview) -->`
+ *
+ * The block comment action wraps selected text in an HTML comment.
+ *
+ * The line comment action writes `<!-- text -->`.
+ * It writes `[//]: # (text)` when [MarkdownCommentSyntax.LINK_DEFINITION_SYNTAX_REGISTRY_KEY] is true,
+ * or when the line contains `-->`.
  */
 class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> {
-  private data class CommentSyntax(val prefix: String, val suffix: String)
+  private data class CommentSyntax(val prefix: String, val suffix: String, val isLinkDefinition: Boolean = false)
 
-  override fun getLineCommentPrefix(): String = commentPrefix
+  private val htmlCommentSyntax = CommentSyntax(HTML_COMMENT_PREFIX, HTML_COMMENT_SUFFIX)
+  private val linkDefinitionCommentSyntax = CommentSyntax("[//]: # (", CLOSE_ROUND_BRACKET, isLinkDefinition = true)
+
+  private val commentSyntaxes = listOf(
+    htmlCommentSyntax,
+    CommentSyntax(HTML_COMMENT_PREFIX, "-->"),
+    CommentSyntax("<!--", HTML_COMMENT_SUFFIX),
+    CommentSyntax("<!--", "-->"),
+    linkDefinitionCommentSyntax,
+    CommentSyntax("[//]: # $DOUBLE_QUOTE", DOUBLE_QUOTE, isLinkDefinition = true),
+    CommentSyntax("[//]: # $SINGLE_QUOTE", SINGLE_QUOTE, isLinkDefinition = true),
+  )
+
+  private fun commentSyntaxToWrite(line: CharSequence? = null): CommentSyntax {
+    return if (MarkdownCommentSyntax.shouldWriteLinkDefinitionSyntax() || line?.contains(HTML_COMMENT_TERMINATOR) == true) {
+      linkDefinitionCommentSyntax
+    }
+    else {
+      htmlCommentSyntax
+    }
+  }
+
+  override fun getLineCommentPrefix(): String = commentSyntaxToWrite().prefix
   override fun getCommentPrefix(line: Int, document: Document, data: CommenterDataHolder): String = lineCommentPrefix
 
-  override fun getBlockCommentPrefix(): String? = null
-  override fun getBlockCommentSuffix(): String? = null
+  override fun getBlockCommentPrefix(): String = HTML_COMMENT_PREFIX
+  override fun getBlockCommentSuffix(): String = HTML_COMMENT_SUFFIX
 
   override fun getCommentedBlockCommentPrefix(): String? = null
   override fun getCommentedBlockCommentSuffix(): String? = null
 
-  override fun getBlockCommentPrefix(selectionStart: Int, document: Document, data: CommenterDataHolder): String? = null
-  override fun getBlockCommentSuffix(selectionEnd: Int, document: Document, data: CommenterDataHolder): String? = null
+  override fun getBlockCommentPrefix(selectionStart: Int, document: Document, data: CommenterDataHolder): String = HTML_COMMENT_PREFIX
+  override fun getBlockCommentSuffix(selectionEnd: Int, document: Document, data: CommenterDataHolder): String = HTML_COMMENT_SUFFIX
 
   override fun isLineCommented(line: Int, offset: Int, document: Document, data: CommenterDataHolder): Boolean {
     return getCommentSyntax(line, offset, document) != null
   }
 
-  override fun insertBlockComment(startOffset: Int, endOffset: Int, document: Document, data: CommenterDataHolder): TextRange? = null
+  override fun insertBlockComment(startOffset: Int, endOffset: Int, document: Document, data: CommenterDataHolder): TextRange? {
+    if (document.charsSequence.subSequence(startOffset, endOffset).contains(HTML_COMMENT_TERMINATOR)) return null
+    return SelfManagingCommenterUtil.insertBlockComment(
+      startOffset, endOffset, document, HTML_COMMENT_PREFIX, HTML_COMMENT_SUFFIX,
+    )
+  }
 
-  override fun uncommentBlockComment(startOffset: Int, endOffset: Int, document: Document, data: CommenterDataHolder) = Unit
+  override fun uncommentBlockComment(startOffset: Int, endOffset: Int, document: Document, data: CommenterDataHolder) {
+    SelfManagingCommenterUtil.uncommentBlockComment(
+      startOffset, endOffset, document, HTML_COMMENT_PREFIX, HTML_COMMENT_SUFFIX,
+    )
+  }
 
   override fun commentLine(line: Int, offset: Int, document: Document, data: CommenterDataHolder) {
-    actuallyCommentLine(line, offset, document, shouldInsertEmptyLine(line, document))
+    actuallyCommentLine(line, offset, document)
   }
 
   override fun uncommentLine(line: Int, offset: Int, document: Document, data: CommenterDataHolder) {
-    actuallyUncommentLine(line, offset, document, shouldRemoveEmptyLine(line, document))
+    actuallyUncommentLine(line, offset, document)
   }
 
   override fun createLineCommentingState(startLine: Int, endLine: Int, document: Document, file: PsiFile): CommenterDataHolder? = null
@@ -67,7 +100,9 @@ class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> 
   ): CommenterDataHolder? = null
 
   override fun getBlockCommentRange(selectionStart: Int, selectionEnd: Int, document: Document, data: CommenterDataHolder): TextRange? {
-    return null
+    return SelfManagingCommenterUtil.getBlockCommentRange(
+      selectionStart, selectionEnd, document, HTML_COMMENT_PREFIX, HTML_COMMENT_SUFFIX,
+    )
   }
 
   private fun shouldInsertEmptyLine(line: Int, document: Document): Boolean {
@@ -79,21 +114,26 @@ class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> 
     return line != 0 && DocumentUtil.isLineEmpty(document, line - 1) && document.isLineModified(line - 1)
   }
 
-  private fun actuallyCommentLine(line: Int, offset: Int, document: Document, insertEmptyLine: Boolean) {
+  private fun actuallyCommentLine(line: Int, offset: Int, document: Document) {
     val end = document.getLineEndOffset(line)
     val marker = getRangeMarker(document, offset, end)
-    escape(document, marker)
-    val prefix = when {
-      insertEmptyLine -> "\n$commentPrefix"
-      else -> commentPrefix
+    val syntax = commentSyntaxToWrite(document.charsSequence.subSequence(offset, end))
+    if (syntax.isLinkDefinition) {
+      escape(document, marker)
     }
-    SelfManagingCommenterUtil.insertBlockComment(marker.startOffset, marker.endOffset, document, prefix, commentSuffix)
+    val prefix = if (syntax.isLinkDefinition && shouldInsertEmptyLine(line, document)) "\n${syntax.prefix}" else syntax.prefix
+    SelfManagingCommenterUtil.insertBlockComment(marker.startOffset, marker.endOffset, document, prefix, syntax.suffix)
     marker.dispose()
   }
 
-  private fun actuallyUncommentLine(line: Int, offset: Int, document: Document, removeEmptyLine: Boolean) {
+  private fun actuallyUncommentLine(line: Int, offset: Int, document: Document) {
     val syntax = getCommentSyntax(line, offset, document) ?: return
     val end = document.getLineEndOffset(line)
+    if (end - offset < syntax.prefix.length + syntax.suffix.length) {
+      document.deleteString(offset, end)
+      return
+    }
+    val removeEmptyLine = syntax.isLinkDefinition && shouldRemoveEmptyLine(line, document)
     val range = SelfManagingCommenterUtil.getBlockCommentRange(offset, end, document, syntax.prefix, syntax.suffix) ?: return
     val marker = when {
       removeEmptyLine -> getRangeMarker(document, document.getLineStartOffset(line - 1), range.endOffset)
@@ -104,7 +144,7 @@ class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> 
       else -> syntax.prefix
     }
     SelfManagingCommenterUtil.uncommentBlockComment(marker.startOffset, marker.endOffset, document, prefix, syntax.suffix)
-    if (syntax.prefix == commentPrefix) {
+    if (syntax.isLinkDefinition) {
       unescape(document, marker)
     }
     marker.dispose()
@@ -112,13 +152,16 @@ class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> 
 
   private fun getCommentSyntax(line: Int, offset: Int, document: Document): CommentSyntax? {
     val text = document.charsSequence
-    val syntax = when {
-      regionMatches(text, offset, commentPrefix) -> CommentSyntax(commentPrefix, commentSuffix)
-      regionMatches(text, offset, doubleQuotedCommentPrefix) -> CommentSyntax(doubleQuotedCommentPrefix, doubleQuote)
-      regionMatches(text, offset, singleQuotedCommentPrefix) -> CommentSyntax(singleQuotedCommentPrefix, singleQuote)
-      else -> return null
+    val lineEnd = document.getLineEndOffset(line)
+    val lineLength = lineEnd - offset
+    return commentSyntaxes.firstOrNull { syntax ->
+      lineLength >= syntax.prefix.length + syntax.suffix.length &&
+      regionMatches(text, offset, syntax.prefix) && regionMatches(text, lineEnd - syntax.suffix.length, syntax.suffix)
+    } ?: commentSyntaxes.firstOrNull { syntax ->
+      syntax.prefix == "<!--" && syntax.suffix == HTML_COMMENT_TERMINATOR &&
+      ((lineLength == 5 && regionMatches(text, offset, "<!-->")) ||
+       (lineLength == 6 && regionMatches(text, offset, "<!--->")))
     }
-    return syntax.takeIf { regionMatches(text, document.getLineEndOffset(line) - it.suffix.length, it.suffix) }
   }
 
   private fun getRangeMarker(document: Document, startOffset: Int, endOffset: Int): RangeMarker {
@@ -134,35 +177,32 @@ class MarkdownCommenter : Commenter, SelfManagingCommenter<CommenterDataHolder> 
     }
   }
 
-  private fun escape(document: Document, range: RangeMarker) {
-    val start = range.startOffset
-    val end = range.endOffset
-    if (start >= end) {
-      return
-    }
-    for (offset in end downTo start) {
-      actuallyReplace(document, offset, closeRoundBracket, escapedCloseBracket)
-      actuallyReplace(document, offset, openRoundBracket, escapedOpenBracket)
+  private fun unescape(document: Document, range: RangeMarker) {
+    for (offset in range.endOffset downTo range.startOffset) {
+      actuallyReplace(document, offset, ESCAPED_CLOSE_BRACKET, CLOSE_ROUND_BRACKET)
+      actuallyReplace(document, offset, ESCAPED_OPEN_BRACKET, OPEN_ROUND_BRACKET)
     }
   }
 
-  private fun unescape(document: Document, range: RangeMarker) {
-    for (offset in range.endOffset downTo range.startOffset) {
-      actuallyReplace(document, offset, escapedCloseBracket, closeRoundBracket)
-      actuallyReplace(document, offset, escapedOpenBracket, openRoundBracket)
+  private fun escape(document: Document, range: RangeMarker) {
+    val start = range.startOffset
+    val end = range.endOffset
+    if (start >= end) return
+    for (offset in end downTo start) {
+      actuallyReplace(document, offset, CLOSE_ROUND_BRACKET, ESCAPED_CLOSE_BRACKET)
+      actuallyReplace(document, offset, OPEN_ROUND_BRACKET, ESCAPED_OPEN_BRACKET)
     }
   }
 
   companion object {
-    private const val openRoundBracket = "("
-    private const val closeRoundBracket = ")"
-    private const val doubleQuote = "\""
-    private const val singleQuote = "'"
-    private const val escapedOpenBracket = "&#40;"
-    private const val escapedCloseBracket = "&#41;"
-    private const val commentPrefix = "[//]: # ("
-    private const val commentSuffix = closeRoundBracket
-    private const val doubleQuotedCommentPrefix = "[//]: # $doubleQuote"
-    private const val singleQuotedCommentPrefix = "[//]: # $singleQuote"
+    private const val OPEN_ROUND_BRACKET = "("
+    private const val CLOSE_ROUND_BRACKET = ")"
+    private const val DOUBLE_QUOTE = "\""
+    private const val SINGLE_QUOTE = "'"
+    private const val ESCAPED_OPEN_BRACKET = "&#40;"
+    private const val ESCAPED_CLOSE_BRACKET = "&#41;"
+    private const val HTML_COMMENT_PREFIX = "<!-- "
+    private const val HTML_COMMENT_SUFFIX = " -->"
+    private const val HTML_COMMENT_TERMINATOR = "-->"
   }
 }

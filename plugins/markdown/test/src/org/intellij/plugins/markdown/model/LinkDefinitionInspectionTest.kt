@@ -330,7 +330,7 @@ class LinkDefinitionInspectionTest: BasePlatformTestCase() {
   }
 
   @Test
-  fun `footnotes and comment wrappers are excluded`() {
+  fun `footnotes and link definition comments are excluded`() {
     doTest("""
       [^note]: A footnote
       [^note]: Another footnote
