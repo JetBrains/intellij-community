@@ -223,8 +223,19 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
    */
   private boolean setInternalValue(@NotNull T value) {
     if (value == TREE_WRAPPER_VALUE) return true;
-    myValue = TreeAnchorizer.getService().createAnchor(value);
+    myValue = createAnchor(value);
     return false;
+  }
+
+  /**
+   * Returns the anchor that the node stores for a value.
+   * <p>
+   * {@link #getValue()} restores the value with {@link TreeAnchorizer#retrieveElement}, so an override returns
+   * the value itself or a {@link SmartPsiElementPointer}. The hook runs from the constructor, so an override reads only {@code value}.
+   * </p>
+   */
+  protected @NotNull Object createAnchor(@NotNull T value) {
+    return TreeAnchorizer.getService().createAnchor(value);
   }
 
   public final Object getEqualityObject() {

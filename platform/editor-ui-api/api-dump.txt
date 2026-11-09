@@ -554,6 +554,7 @@ a:com.intellij.ide.util.treeView.AbstractTreeNode
 - apply(java.util.Map):V
 - canRepresent(java.lang.Object):Z
 - p:computeBackgroundColor():java.awt.Color
+- p:createAnchor(java.lang.Object):java.lang.Object
 - equals(java.lang.Object):Z
 - getChildToHighlightAt(I):com.intellij.ide.util.treeView.PresentableNodeDescriptor
 - a:getChildren():java.util.Collection
