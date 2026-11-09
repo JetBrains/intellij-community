@@ -23,6 +23,8 @@ public interface PyCustomStubType<Psi extends PyElement, Stub extends PyCustomSt
   Stub createStub(@NotNull Psi psi);
 
   /**
+   * The stream holds only this stub. A non-null result must read all of its bytes.
+   *
    * @param stream stream containing serialized stub
    * @return a custom stub instance or null if it could not be read.
    * @see PyCustomStub#serialize(StubOutputStream)

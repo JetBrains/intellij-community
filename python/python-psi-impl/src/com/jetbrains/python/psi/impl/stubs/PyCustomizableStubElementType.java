@@ -31,19 +31,23 @@ public interface PyCustomizableStubElementType<Psi extends PyElement, Stub exten
 
     if (hasCustomStub) {
       stream.writeName(stub.getTypeClass().getCanonicalName());
-      stub.serialize(stream);
+      PyCustomStubFormat.write(stub, stream);
     }
   }
 
+  /**
+   * Reads the custom stub that {@link #serializeCustomStub} wrote. Returns null when no extension has the type of the stub.
+   * This occurs, for example, when the plugin of the type is off.
+   */
   default @Nullable Stub deserializeCustomStub(@NotNull StubInputStream stream) throws IOException {
     if (stream.readBoolean()) {
       final String typeName = stream.readNameString();
+      final PyCustomStubFormat.Body body = PyCustomStubFormat.read(stream);
       for (StubType type : getExtensions()) {
         if (type.getClass().getCanonicalName().equals(typeName)) {
-          return type.deserializeStub(stream);
+          return body.read(type);
         }
       }
-      throw new IOException("Unknown custom stub type " + typeName);
     }
 
     return null;
