@@ -1433,9 +1433,17 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-79199"])
     fun `enum base must be the last base class`() = test("""
-      from enum import Enum, IntEnum
+      from enum import Enum, EnumType, IntEnum
 
       class Mixin: ...
+
+      class Other: ...
+
+      class Base(Enum): ...
+
+      class Meta(EnumType): ...
+
+      class Custom(metaclass=Meta): ...
 
       class A(Enum, Mixin):
       #       ^^^^ ERROR Enum class 'Enum' must be the last base class
@@ -1447,6 +1455,82 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       # The enum machinery accepts this order. The class still fails at run time, but for its MRO, not for this rule.
       class C(int, Mixin, IntEnum):
           c = 1
+
+      class D(Enum, str):
+      #       ^^^^ ERROR Enum class 'Enum' must be the last base class
+          d = "d"
+
+      class E(Enum, Mixin, Other):
+      #       ^^^^ ERROR Enum class 'Enum' must be the last base class
+          e = 1
+
+      class F(Mixin, Enum, Other):
+      #              ^^^^ ERROR Enum class 'Enum' must be the last base class
+          f = 1
+
+      class G(IntEnum, Mixin):
+      #       ^^^^^^^ ERROR Enum class 'IntEnum' must be the last base class
+          g = 1
+
+      class H(Base, Mixin):
+      #       ^^^^ ERROR Enum class 'Base' must be the last base class
+          h = 1
+
+      class I(Custom, Mixin):
+      #       ^^^^^^ ERROR Enum class 'Custom' must be the last base class
+          i = 1
+
+      class J(Enum, Undefined):
+      #             ^^^^^^^^^ ERROR Unresolved reference 'Undefined'
+          j = 1
+
+      class K(Base, Enum):
+          k = 1
+
+      class L(Mixin, IntEnum):
+          l = 1
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79199"])
+    fun `enum base must be the last base class from another file`() = test("""
+      from enum_bases import Base, Custom, Mixin
+
+      class A(Base, Mixin):
+      #       ^^^^ ERROR Enum class 'Base' must be the last base class
+          a = 1
+
+      class B(Custom, Mixin):
+      #       ^^^^^^ ERROR Enum class 'Custom' must be the last base class
+          b = 1
+      """.trimIndent(),
+      "enum_bases.py" to """
+        from enum import Enum, EnumType
+
+        class Mixin: ...
+
+        class Meta(EnumType): ...
+
+        class Base(Enum): ...
+
+        class Custom(metaclass=Meta): ...
+        """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79199"])
+    @TestCaseOptions(testFileName = "aaa.pyi")
+    fun `enum base order is not checked in a stub`() = test("""
+      from enum import Enum
+
+      class Mixin: ...
+
+      class Pet(Enum):
+          CAT = 1
+
+      class Cat(Pet): ...
+      #         ^^^ ERROR Enum class 'Pet' is final and cannot be subclassed
+
+      class Color(Enum, Mixin): ...
       """.trimIndent())
 
     @Test
