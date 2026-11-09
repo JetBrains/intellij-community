@@ -26,9 +26,10 @@ private val logger = fileLogger()
 
 /**
  * Gives an interpreter library entry (see [PyInterpreterLibraryName]) to each module of [project] that refers to a
- * Python SDK and has no entry yet. An older build and the facet of a module of another type store such a reference:
- * the Python SDK of a module, and the SDK name of a Python facet. An inherited project SDK is not one: a Python module
- * does not inherit its interpreter.
+ * Python SDK and has no entry yet, see [ownSdkReferenceOf]. An older build and the facet of a module of another type
+ * store such a reference: the Python SDK of a module, and the SDK name of a Python facet. An inherited project SDK is
+ * not one: a module does not inherit its interpreter. The entry then names the interpreter, so a module of another
+ * type, such as a Java module with its own Python SDK, is a Python project.
  *
  * The migration removes these references, so a removed entry does not come back from them. The model calls this
  * function on each pass, so a module that an older build gives an SDK later, without an entry, also gets one.
@@ -43,13 +44,14 @@ internal suspend fun migrateSdkReferences(project: Project): Boolean {
   val projectDir = project.basePath?.let { Path.of(it) } ?: return false
   val storage = project.workspaceModel.currentSnapshot
   val registry = PythonInterpreterRegistry.getInstance(project)
-  val modules = storage.entities<ModuleEntity>().filter { it.hasPendingSdkReference() }.toList()
+  val modules = storage.entities<ModuleEntity>().filter { pendingSdkNameOf(it) != null }.toList()
   if (modules.isEmpty()) return false
 
   val entries = modules.mapNotNull { module ->
     val sdkName = pendingSdkNameOf(module) ?: return@mapNotNull null
-    // The store of the registry holds no SDK of the table, so the SDK is imported for the PyProject of the module.
-    val ownerDir = PyProjectImpl.baseDirOf(module) ?: return@mapNotNull null
+    // The store of the registry holds no SDK of the table, so the SDK is imported for the PyProject of the module. The
+    // module needs no other sign of a Python project: the entry makes it one, see PyProjectImpl.baseDirOf.
+    val ownerDir = PyProjectImpl.baseDirOfRoots(module) ?: return@mapNotNull null
     val key = registry.importTableSdk(sdkName, ownerDir) ?: return@mapNotNull null
     MigratedModule(module.symbolicId, PyInterpreterLibraryName.of(projectDir, key), registry.transferredPathsOfTableSdk(sdkName))
   }
@@ -88,20 +90,16 @@ private data class MigratedModule(val moduleId: ModuleId, val name: PyInterprete
  */
 internal fun hasPendingSdkReferences(project: Project, storage: EntityStorage): Boolean {
   if (project.basePath == null) return false
-  return storage.entities<ModuleEntity>().any { it.hasPendingSdkReference() }
+  return storage.entities<ModuleEntity>().any { pendingSdkNameOf(it) != null }
 }
-
-private fun ModuleEntity.hasPendingSdkReference(): Boolean =
-  pendingSdkNameOf(this) != null
 
 /**
  * The SDK name that [migrateSdkReferences] imports for [module], or `null` when the module needs no migration. A module
- * without an entry gives its Python SDK, else the SDK name of its Python facet. A module with an entry is migrated.
+ * without an entry gives the Python SDK that it names itself, see [ownSdkReferenceOf]. A module with an entry is migrated.
  */
 private fun pendingSdkNameOf(module: ModuleEntity): String? {
   if (interpreterLibraryOf(module) != null) return null
-  return module.dependencies.firstNotNullOfOrNull { (it as? SdkDependency)?.sdk?.takeIf { sdk -> sdk.type == PyNames.PYTHON_SDK_ID_NAME }?.name }
-         ?: module.facets.firstOrNull { it.typeId.name == PYTHON_FACET_ID }?.configurationXmlTag?.let(::facetSdkName)
+  return ownSdkReferenceOf(module)
 }
 
 /** The name of the library of [interpreter] in the project at [projectDir]. */

@@ -21,8 +21,8 @@ internal fun interpreterLibraryOf(module: ModuleEntity): PyInterpreterLibraryNam
 private const val FACET_SDK_NAME_ATTRIBUTE = "sdkName"
 
 /**
- * The Python SDK name that an older build stored for [module], read from [storage], or `null`. Only
- * [migrateSdkReferences] reads it: it gives the module an interpreter library entry.
+ * The Python SDK name that an older build stored for [module], read from [storage], or `null`. In the legacy flow it is
+ * what the module stores to name its interpreter, see [storedInterpreterReferenceOf].
  * Order: the module SDK, the project SDK if the module inherits it, the SDK of a Python facet. The module SDK and the
  * project SDK count only when they are Python SDKs. So a Java module with a Python facet gets the facet SDK, and not
  * its JDK, as `PyModuleService.findPythonSdk` answers.
@@ -38,6 +38,15 @@ internal fun sdkReferenceOf(module: ModuleEntity, storage: EntityStorage): Strin
   if (moduleSdk != null && moduleSdk.type == PyNames.PYTHON_SDK_ID_NAME) return moduleSdk.name
   return module.facets.firstOrNull { it.typeId.name == PYTHON_FACET_ID }?.configurationXmlTag?.let(::facetSdkName)
 }
+
+/**
+ * The Python SDK name that [module] names itself, or `null`: its own Python SDK, else the SDK name of its Python facet.
+ * An inherited project SDK is not one: a module does not inherit its interpreter. [migrateSdkReferences] gives a module
+ * with such a name an interpreter library entry, and the name makes the module a Python project, see [namesInterpreter].
+ */
+internal fun ownSdkReferenceOf(module: ModuleEntity): String? =
+  module.dependencies.firstNotNullOfOrNull { (it as? SdkDependency)?.sdk?.takeIf { sdk -> sdk.type == PyNames.PYTHON_SDK_ID_NAME }?.name }
+  ?: module.facets.firstOrNull { it.typeId.name == PYTHON_FACET_ID }?.configurationXmlTag?.let(::facetSdkName)
 
 /** The `sdkName` attribute of the facet configuration. A pattern, so this module needs no XML library. */
 private val FACET_SDK_NAME = Regex("""\b$FACET_SDK_NAME_ATTRIBUTE\s*=\s*"([^"]*)"""")

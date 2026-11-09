@@ -34,6 +34,15 @@ internal sealed interface StoredInterpreterReference {
   data class SdkName(val name: String) : StoredInterpreterReference
 }
 
+/**
+ * Whether [module] names an interpreter itself: an interpreter library entry, or in the legacy flow its own Python SDK,
+ * see [ownSdkReferenceOf]. An inherited project SDK does not count. A module that names one is a Python project,
+ * whatever its type, see [com.intellij.python.pyproject.model.internal.pyProject.PyProjectImpl.baseDirOf].
+ */
+internal fun namesInterpreter(module: ModuleEntity): Boolean =
+  if (isInterpreterLibraryFlowEnabled()) interpreterLibraryOf(module) != null
+  else ownSdkReferenceOf(module) != null
+
 /** What [module] stores to name its interpreter, read from [storage], see [StoredInterpreterReference]. */
 internal fun Project.storedInterpreterReferenceOf(module: ModuleEntity, storage: EntityStorage): StoredInterpreterReference? =
   if (isInterpreterLibraryFlowEnabled()) interpreterLibraryOf(module)?.let { keyOf(it) }?.let(StoredInterpreterReference::Library)
