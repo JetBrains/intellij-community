@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshotProvider
 import com.intellij.openapi.actionSystem.UiDataProvider
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.Disposer
@@ -113,85 +112,6 @@ class UpdateInfoTreeTest {
   }
 
   @Test
-  fun `VFS deletion removes or invalidates rows and creation restores them`() {
-    val unknown = cachedFile("cached/unknown.txt")
-    val modified = cachedFile("cached/modified.txt")
-    val underDir = cachedFile("cached/dir/inner.txt")
-    val files = UpdatedFiles.create()
-    // "Not in repository" supports deletion, "Modified" does not
-    addAll(files, FileGroup.UNKNOWN_ID, listOf(unknown))
-    addAll(files, FileGroup.MODIFIED_ID, listOf(modified, underDir))
-    val errorLook = files.getGroupById(FileGroup.MODIFIED_ID)!!.invalidAttributes
-
-    withTree(files) { tree ->
-      val unknownGroup = group(tree, FileGroup.UNKNOWN_ID)
-      assertThat(rowPaths(unknownGroup)).containsExactly(unknown)
-      assertSameLook(fileNode(tree, modified).attributes, statusAttributes(modified))
-
-      VfsTestUtil.deleteFile(vFile(unknown))
-      VfsTestUtil.deleteFile(vFile(modified))
-      VfsTestUtil.deleteFile(vFile(underDir).parent)
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-
-      assertThat(unknownGroup.childCount).describedAs("row of a group that supports deletion").isZero()
-      assertThat(rowPaths(group(tree, FileGroup.MODIFIED_ID))).containsExactlyInAnyOrder(modified, underDir)
-      assertSameLook(fileNode(tree, modified).attributes, errorLook)
-      assertSameLook(fileNode(tree, underDir).attributes, errorLook)
-
-      val parent = vFile(modified.substringBeforeLast('/'))
-      VfsTestUtil.createFile(parent, "modified.txt")
-      VfsTestUtil.createDir(parent, "dir")
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-
-      assertSameLook(fileNode(tree, modified).attributes, statusAttributes(modified))
-      assertThat(fileNode(tree, underDir).attributes.fgColor).isNotEqualTo(errorLook.fgColor)
-    }
-  }
-
-  @Test
-  fun `rows follow renamed files and directories`() {
-    val unknown = cachedFile("cached/unknown.txt")
-    val modified = cachedFile("cached/modified.txt")
-    val underDir = cachedFile("cached/dir/inner.txt")
-    val files = UpdatedFiles.create()
-    // "Not in repository" supports deletion, "Modified" does not
-    addAll(files, FileGroup.UNKNOWN_ID, listOf(unknown))
-    addAll(files, FileGroup.MODIFIED_ID, listOf(modified, underDir))
-    val errorLook = files.getGroupById(FileGroup.MODIFIED_ID)!!.invalidAttributes
-    val renamedUnknown = path("cached/unknown2.txt")
-    val renamedModified = path("cached/modified2.txt")
-    val movedUnderDir = path("cached/dir2/inner.txt")
-
-    withTree(files) { tree ->
-      WriteAction.runAndWait<Throwable> {
-        vFile(unknown).rename(this, "unknown2.txt")
-        vFile(modified).rename(this, "modified2.txt")
-        vFile(underDir).parent.rename(this, "dir2")
-      }
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-
-      assertThat(rowPaths(group(tree, FileGroup.UNKNOWN_ID))).describedAs("row of a group that supports deletion")
-        .containsExactly(renamedUnknown)
-      assertThat(rowPaths(group(tree, FileGroup.MODIFIED_ID))).containsExactlyInAnyOrder(renamedModified, movedUnderDir)
-      assertSameLook(fileNode(tree, renamedModified).attributes, statusAttributes(renamedModified))
-      assertSameLook(fileNode(tree, movedUnderDir).attributes, statusAttributes(movedUnderDir))
-      assertThat(fileNode(tree, movedUnderDir).attributes.fgColor).isNotEqualTo(errorLook.fgColor)
-
-      val jTree = jTree(tree)
-      jTree.selectionPath = TreePath(fileNode(tree, renamedModified).path)
-      val modifiedData = RecordingSink().also { tree.uiDataSnapshot(it) }
-      jTree.selectionPath = TreePath(fileNode(tree, movedUnderDir).path)
-      val underDirData = RecordingSink().also { tree.uiDataSnapshot(it) }
-      assertThat(modifiedData.values[UpdateInfoTree.UPDATE_VIEW_SELECTED_PATH]).isEqualTo(filePath(renamedModified))
-      assertThat(underDirData.values[UpdateInfoTree.UPDATE_VIEW_SELECTED_PATH]).isEqualTo(filePath(movedUnderDir))
-      offEdt {
-        assertThat((modifiedData.lazy(CommonDataKeys.NAVIGATABLE) as OpenFileDescriptor).file).isEqualTo(vFile(renamedModified))
-        assertThat((underDirData.lazy(CommonDataKeys.NAVIGATABLE) as OpenFileDescriptor).file).isEqualTo(vFile(movedUnderDir))
-      }
-    }
-  }
-
-  @Test
   fun `selection data resolves the selected rows`() {
     val cachedModified = cachedFile("cached/modified.txt")
     val created = cachedFile("cached/created.txt")
@@ -237,11 +157,10 @@ class UpdateInfoTreeTest {
   }
 
   @Test
-  fun `selection data resolves the rows taken on EDT, not the current tree`() {
+  fun `selection data resolves the rows taken on EDT when the lazies run`() {
     val unknown = cachedFile("cached/unknown.txt")
     val missing = path("missing/m.txt")
     val files = UpdatedFiles.create()
-    // "Not in repository" supports deletion: a deleted file loses its row
     addAll(files, FileGroup.UNKNOWN_ID, listOf(unknown, missing))
 
     withTree(files) { tree ->
@@ -251,7 +170,7 @@ class UpdateInfoTreeTest {
 
       VfsTestUtil.deleteFile(vFile(unknown))
       PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
-      assertThat(rowPaths(unknownGroup)).containsExactly(missing)
+      assertThat(rowPaths(unknownGroup)).describedAs("local changes are not tracked").containsExactly(unknown, missing)
 
       offEdt {
         assertThat(data.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY)).isEmpty()

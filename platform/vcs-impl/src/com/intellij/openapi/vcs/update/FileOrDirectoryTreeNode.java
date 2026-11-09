@@ -22,8 +22,7 @@ import java.util.Map;
 /**
  * A row for a path reported by an update. The node holds only the path: it never creates VFS pointers and never resolves
  * the path through VFS when the tree is built or painted (IJPL-257565). VFS is consulted from its cache when painting,
- * and fully only for the selected rows, see {@link UpdateInfoTree#uiDataSnapshot}.
- * Deletion, moves and renames are tracked by {@link UpdateInfoTree} from VFS events, see {@link #setDeleted} and {@link #retarget}.
+ * and fully only for the selected rows, see {@link UpdateInfoTree#uiDataSnapshot}. Local changes after the update are not tracked.
  */
 @ApiStatus.Internal
 public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode {
@@ -31,9 +30,8 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode {
   private final SimpleTextAttributes myInvalidAttributes;
   private final boolean myCanBeAbsent;
   private final @NotNull Project myProject;
-  protected @NotNull FilePath myPath;
+  protected final @NotNull FilePath myPath;
   private final @NlsSafe String myName;
-  private boolean myDeleted;
 
   FileOrDirectoryTreeNode(@NotNull String path,
                           boolean isDirectory,
@@ -57,31 +55,8 @@ public abstract class FileOrDirectoryTreeNode extends AbstractTreeNode {
     return myPath;
   }
 
-  boolean isDeleted() {
-    return myDeleted;
-  }
-
-  /**
-   * Called by {@link UpdateInfoTree} on EDT when VFS reports the path deleted ({@code true}) or created again ({@code false}).
-   */
-  void setDeleted(boolean deleted) {
-    myDeleted = deleted;
-  }
-
-  /**
-   * Called by {@link UpdateInfoTree} on EDT when VFS reports the file (or a directory above it) moved or renamed to {@code newPath}.
-   * The row follows the file as its VFS pointer used to; the displayed name stays the reported one.
-   */
-  void retarget(@NotNull FilePath newPath) {
-    myPath = newPath;
-    myDeleted = false;
-  }
-
   @Override
   public @NotNull SimpleTextAttributes getAttributes() {
-    if (myDeleted) {
-      return myInvalidAttributes;
-    }
     SimpleTextAttributes attributes;
     VirtualFile cached = LocalFileSystem.getInstance().findFileByPathIfCached(myPath.getPath());
     if (cached != null) {

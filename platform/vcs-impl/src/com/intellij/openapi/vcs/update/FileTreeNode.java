@@ -39,9 +39,6 @@ public class FileTreeNode extends FileOrDirectoryTreeNode {
   @Override
   protected boolean acceptFilter(@Nullable Pair<PackageSetBase, NamedScopesHolder> filter, boolean showOnlyFilteredItems) {
     try {
-      if (isDeleted()) {
-        return false;
-      }
       VirtualFile file = LocalFileSystem.getInstance().findFileByPathIfCached(myPath.getPath());
       if (file != null && file.isValid() && filter != null && filter.first.contains(file, getProject(), filter.second)) {
         applyFilter(true);
