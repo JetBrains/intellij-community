@@ -5,7 +5,10 @@ jps_test(
     name = "execution-process-mediator-common-tests_test",
     timeout = "moderate",
     jvm_flags = ["-ea"],
-    tags = ["community-aggregator"],
+    sandbox = True,
+    tags = [
+        "debugger-tests",
+    ],
     runtime_deps = [":execution-process-mediator-common-tests_test_lib"],
 )
 ### skip generation section `test intellij.execution.process.mediator.common.tests`
