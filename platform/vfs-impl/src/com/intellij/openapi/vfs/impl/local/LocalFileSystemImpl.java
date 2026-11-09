@@ -45,6 +45,7 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
@@ -470,9 +471,8 @@ public class LocalFileSystemImpl
       return myAttributeGetter.accessDiskWithCheckCanceled(file);
     }
     catch (FileStateUnknownException e) {
-      // the reader has already logged the error
-      LOG.debug(e);
-      // the public contract has no "unknown" => the answer is "absent"
+      // the public contract has no "unknown" => the answer is "absent", and the error stays only in the log
+      logReadError(e.getCause());
       return null;
     }
   }
@@ -499,8 +499,8 @@ public class LocalFileSystemImpl
           .filter(Objects::nonNull)
           .toArray(String[]::new);
       }
-      catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
-      catch (IOException | RuntimeException e) { LOG.warn(e); }
+      catch (NoSuchFileException e) { LOG.debug(e); }
+      catch (IOException | RuntimeException e) { logReadError(e); }
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     try (var dirStream = Files.newDirectoryStream(nioPath)) {
@@ -509,9 +509,24 @@ public class LocalFileSystemImpl
         .filter(Objects::nonNull)
         .toArray(String[]::new);
     }
-    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
-    catch (IOException | RuntimeException e) { LOG.warn(e); }
+    catch (NoSuchFileException e) { LOG.debug(e); }
+    catch (IOException | RuntimeException e) { logReadError(e); }
     return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  /// Logs an error that the caller turns into "absent" or "empty", so the log is the only trace of it.
+  /// A denied access is a usual state of a protected directory, so it goes to `debug`
+  private static void logReadError(@NotNull Throwable e) {
+    // the JDK maps `EACCES` to AccessDeniedException, but `EPERM` (e.g. macOS TCC) to a plain FileSystemException.
+    // Its reason is the OS message: on a localized OS the check fails, and a denied access goes to `warn`
+    boolean accessDenied = (e instanceof AccessDeniedException)
+                           || (e instanceof FileSystemException fse && "Operation not permitted".equals(fse.getReason()));
+    if (accessDenied) {
+      LOG.debug(e);
+    }
+    else {
+      LOG.warn(e);
+    }
   }
 
   private static @Nullable String getFileNameOrNull(@NotNull Path path) {
@@ -548,12 +563,8 @@ public class LocalFileSystemImpl
     catch (NoSuchFileException | NotDirectoryException e) { LOG.debug(e); }
     catch (InvalidPathException e) { LOG.warn(e); }
     // an error is not equivalent to "empty dir": the refresh deletes each child that the listing lacks
-    catch (AccessDeniedException e) {
-      LOG.debug(e);
-      throw new FileStateUnknownException(e);
-    }
+    // (no logging: the caller decides on it, the cause goes with the exception)
     catch (IOException | RuntimeException e) {
-      LOG.warn(e);
       throw new FileStateUnknownException(e);
     }
     return Map.of();
@@ -621,14 +632,10 @@ public class LocalFileSystemImpl
     catch (FileStateUnknownException e) { throw e; }
     catch (NoSuchFileException | NotDirectoryException e) { LOG.debug("File doesn't exist: " + e.getMessage()); }
     catch (InvalidPathException e) { LOG.warn(e); }
-    catch (AccessDeniedException e) {
-      LOG.debug(e);
-      throw new FileStateUnknownException(e);
-    }
     catch (IOException | RuntimeException e) {
       // these errors are not equivalent to "absent file", they are 'unknown state'
       // e.g. the refresh() shouldn't delete this file
-      LOG.warn(e);
+      // (no logging: the caller decides on it, the cause goes with the exception)
       throw new FileStateUnknownException(e);
     }
     return null;

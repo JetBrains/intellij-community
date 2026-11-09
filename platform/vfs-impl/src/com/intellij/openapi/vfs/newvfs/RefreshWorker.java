@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
@@ -68,9 +69,11 @@ import static com.intellij.util.containers.CollectionFactory.createFilePathMap;
 import static com.intellij.util.containers.CollectionFactory.createFilePathSet;
 import static com.intellij.util.containers.FastUtilHashingStrategies.getCaseInsensitiveStringStrategy;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 final class RefreshWorker {
   private static final Logger LOG = Logger.getInstance(RefreshWorker.class);
+  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
 
   private static final int PARALLELISM = MathUtil.clamp(
     Registry.intValue("vfs.refresh.worker.parallelism", 6),
@@ -182,8 +185,8 @@ final class RefreshWorker {
           try {
             attributes = computeAttributesForFile(fs, fakeChild);
           }
-          catch (FileStateUnknownException _) {
-            LOG.info("refresh skipped a new file, the FS can't tell its state: " + fakeChild);
+          catch (FileStateUnknownException e) {
+            THROTTLED_LOG.info("refresh skipped a new file, the FS can't tell its state: " + fakeChild + ": " + e.getMessage());
             continue;
           }
           if (attributes == null) continue;
@@ -320,8 +323,8 @@ final class RefreshWorker {
           dir.markClean();
         }
       }
-      catch (FileStateUnknownException _) {
-        LOG.info("refresh skipped, the file system cannot tell the state: " + file);
+      catch (FileStateUnknownException e) {
+        THROTTLED_LOG.info("refresh skipped, the FS can't tell the state: " + file + ": " + e.getMessage());
         skipped.add(file);
       }
       finally {
@@ -541,7 +544,7 @@ final class RefreshWorker {
       throw e;
     }
     catch (FileStateUnknownException e) {
-      LOG.debug("refresh checks the children by name, the listing failed: " + dir, e);
+      THROTTLED_LOG.info("refresh checks the children by name, the listing failed: " + dir + ": " + e.getMessage());
     }
 
     // without a listing, no new child appears, and the next refresh must try the listing again

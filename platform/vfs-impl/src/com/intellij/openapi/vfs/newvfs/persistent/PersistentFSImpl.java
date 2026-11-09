@@ -620,8 +620,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return fs.listWithAttributes(dir);
     }
     catch (FileStateUnknownException e) {
-      // the FS implementation has already logged the error
-      LOG.debug("listAll: the listing failed, the directory keeps the children known so far: " + dir, e);
+      // the error ends here, and the FS that threw it does not have to log it
+      THROTTLED_LOG.info("listWithAttributes: the listing failed, the directory keeps the children known so far: " + dir + ": " + e.getMessage());
       return null;
     }
   }
