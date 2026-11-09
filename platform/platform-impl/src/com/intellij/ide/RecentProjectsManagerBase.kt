@@ -441,6 +441,12 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
   @Internal
   fun updateRecentMetadata(project: Project, metaInfoUpdater: RecentProjectMetaInfo.() -> Unit) {
     val projectPath = getProjectPath(project)?.invariantSeparatorsPathString ?: return
+    updateRecentMetadata(projectPath, metaInfoUpdater)
+  }
+
+  /** Updates a stored project before its project instance exists. */
+  @Internal
+  fun updateRecentMetadata(projectPath: String, metaInfoUpdater: RecentProjectMetaInfo.() -> Unit) {
     synchronized(stateLock) {
       val currentProjectMetaInfo = state.additionalInfo.get(projectPath) ?: return
       metaInfoUpdater(currentProjectMetaInfo)
