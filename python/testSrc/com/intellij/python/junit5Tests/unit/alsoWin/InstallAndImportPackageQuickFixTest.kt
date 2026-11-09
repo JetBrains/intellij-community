@@ -59,4 +59,26 @@ internal class InstallAndImportPackageQuickFixTest {
 
     fixture.findSingleIntention("Install and import package 'IPython'")
   }
+
+  @Test
+  @TestFor(issues = ["PY-55983"])
+  fun `install and import is not offered for a class name that a rare project ships as a module`(fixture: CodeInsightTestFixture) {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(fixture.project, availablePackageNames = listOf("pyrq", "mock"))
+
+    fixture.configureByText("foo.py", "m = Mock<caret>()")
+
+    assertTrue(fixture.filterAvailableIntentions("Ignore unresolved reference").isNotEmpty())
+    assertEquals(emptyList<String>(), fixture.filterAvailableIntentions("Install").map { it.text })
+  }
+
+  @Test
+  @TestFor(issues = ["PY-55983"])
+  fun `install and import is not offered for a standard library class name`(fixture: CodeInsightTestFixture) {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(fixture.project, availablePackageNames = listOf("htmlparser"))
+
+    fixture.configureByText("foo.py", "parser = HTMLParser<caret>()")
+
+    assertTrue(fixture.filterAvailableIntentions("Ignore unresolved reference").isNotEmpty())
+    assertEquals(emptyList<String>(), fixture.filterAvailableIntentions("Install").map { it.text })
+  }
 }

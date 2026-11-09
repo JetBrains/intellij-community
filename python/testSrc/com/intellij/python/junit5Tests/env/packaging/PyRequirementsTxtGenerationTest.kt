@@ -119,7 +119,7 @@ internal class PyRequirementsTxtGenerationTest {
   fun differentTopLevelImport() = doTest()
   @Test
   fun differentTopLevelImportWithOriginalPackage() = doTest(
-    packages = DEFAULT_PACKAGES + PythonPackage("docker", "3.7.0", false),
+    packages = DEFAULT_PACKAGES + PythonPackage("jwt", "1.3.1", false),
   )
   @Test
   fun baseFileUnchanged() = doTest()
@@ -189,7 +189,7 @@ internal class PyRequirementsTxtGenerationTest {
       PythonPackage("cookiecutter", "1.7.0", false),
       PythonPackage("numpy", "1.18.1", false),
       PythonPackage("tox", "3.14.4", false),
-      PythonPackage("docker-py", "1.10.6", false),
+      PythonPackage("PyJWT", "2.8.0", false),
     )
   }
 }
