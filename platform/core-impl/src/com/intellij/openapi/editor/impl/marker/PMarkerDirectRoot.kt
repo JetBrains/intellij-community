@@ -257,7 +257,18 @@ class PMarkerDirectRoot private constructor(
     require(start <= Int.MAX_VALUE - length && patch.moveOffset() in 0..Int.MAX_VALUE - length) { "The patch range overflows Int" }
     if (root == null || start == end && length == 0) return@keepingRootAlive this
     val fullTraversal = root.persistentCount > 0 && PersistentMarkerPolicy.requiresFullTraversal(patch, beforeText, afterText)
-    if (!fullTraversal && patch.moveOffset() == start && root.maximumEnd < start) return@keepingRootAlive this
+    if (!fullTraversal && patch.moveOffset() == start) {
+      if (root.maximumEnd < start) return@keepingRootAlive this
+      if (end < root.minimumStart || end == root.minimumStart && root.canShiftAtStart && patch.originEndOffset() <= end &&
+          affectedMarkerConsumer === PMarkerRoot.EMPTY_HANDLE_CONSUMER) {
+        val delta = length - (end - start)
+        if (delta == 0) return@keepingRootAlive this
+        val editor = Editor()
+        return@keepingRootAlive editor.finish(
+          editor.shift(root, delta), resolutionUpdate = PMarkerResolutionUpdate(resolutionCacheIdentity, start, end, delta),
+        )
+      }
+    }
     val editor = Editor()
     val transform = MarkerTransformer { entry ->
       val result = entry.policy.transform(entry, patch, beforeText, afterText)

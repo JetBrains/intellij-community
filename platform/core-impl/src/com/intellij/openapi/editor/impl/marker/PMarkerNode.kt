@@ -17,6 +17,8 @@ import kotlin.experimental.or
  * @property state the position before shifts from ancestors.
  * @property entry the current marker metadata and stored offsets.
  * @property height the height used for AVL balancing.
+ * @property minimumStart the smallest start offset, including lazy shifts within this subtree.
+ * @property canShiftAtStart whether all markers at [minimumStart] use default nonempty ranges and have no left greediness.
  * @property maximumEnd the largest end offset, including lazy shifts within this subtree.
  * @property persistentCount the number of entries whose policies can require a full traversal.
  * @property subtreeFlavorFlags the combined flavor flags used for query pruning.
@@ -32,6 +34,8 @@ internal class PMarkerNode private constructor(
   val left: PMarkerNode?,
   val right: PMarkerNode?,
   val height: Int,
+  val minimumStart: Int,
+  val canShiftAtStart: Boolean,
   val maximumEnd: Int,
   val persistentCount: Int,
   val subtreeFlavorFlags: Byte,
@@ -50,6 +54,8 @@ internal class PMarkerNode private constructor(
     reusedState(source, entry, lazyDelta) ?: PMarkerValidNode(version, entry.handle, entry.nodeStart, entry.nodeEnd, lazyDelta),
     entry, left, right,
     maxOf(left?.height ?: 0, right?.height ?: 0) + 1,
+    minimumStart(entry, left, lazyDelta),
+    canShiftAtStart(entry, left, right, lazyDelta),
     maxOf(entry.nodeEnd, shiftedEnd(left, lazyDelta), shiftedEnd(right, lazyDelta)),
     (if (entry.policy.isPersistent) 1 else 0) + (left?.persistentCount ?: 0) + (right?.persistentCount ?: 0),
     entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0),
@@ -76,13 +82,24 @@ internal class PMarkerNode private constructor(
     right: PMarkerNode? = this.right,
     updateAggregates: Boolean = true,
   ): PMarkerNode = PMarkerNode(
-    version, state, entry, left, right, height, maximumEnd, persistentCount,
+    version, state, entry, left, right, height, minimumStart, canShiftAtStart(entry, left, right, lazyDelta), maximumEnd, persistentCount,
     if (updateAggregates) entry.flavorFlags or (left?.subtreeFlavorFlags ?: 0) or (right?.subtreeFlavorFlags ?: 0) else subtreeFlavorFlags,
     if (updateAggregates) entry.measure + (left?.aggregate ?: 0) + (right?.aggregate ?: 0) else aggregate,
     changedParentMask,
   )
 
   companion object {
+    private fun minimumStart(entry: MarkerEntry, left: PMarkerNode?, delta: Int): Int =
+      if (left == null) entry.nodeStart else left.minimumStart + delta
+
+    private fun canShiftAtStart(entry: MarkerEntry, left: PMarkerNode?, right: PMarkerNode?, delta: Int): Boolean {
+      val minimum = minimumStart(entry, left, delta)
+      return left?.canShiftAtStart != false &&
+             (entry.nodeStart != minimum || entry.policy === DefaultMarkerPolicy &&
+              entry.nodeStart < entry.nodeEnd && !MarkerSpec.isGreedyToLeft(entry.spec)) &&
+             (right == null || right.minimumStart + delta != minimum || right.canShiftAtStart)
+    }
+
     private fun reusedState(source: PMarkerNode?, entry: MarkerEntry, delta: Int): PMarkerValidNode? = source?.state?.takeIf {
       it.handle === entry.handle && it.nodeStart == entry.nodeStart && it.nodeEnd == entry.nodeEnd && it.lazyDelta == delta
     }
