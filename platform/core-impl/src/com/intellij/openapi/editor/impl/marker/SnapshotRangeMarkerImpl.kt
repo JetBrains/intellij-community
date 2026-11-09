@@ -82,7 +82,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   @Synchronized
   fun markDisposed() {
     if (isDisposed()) return
-    fallbackRange = currentRange()
+    fallbackRange = currentRange(forRemoval = true)
     disposalState = DISPOSED
   }
 
@@ -195,8 +195,8 @@ open class SnapshotRangeMarkerImpl private constructor(
   @Volatile
   private var cachedResolution: CachedResolution? = null
 
-  private fun currentRange(): Long {
-    val resolution = currentResolution()
+  private fun currentRange(forRemoval: Boolean = false): Long {
+    val resolution = currentResolution(forRemoval)
     return if (PMarkerResolution.isAbsent(resolution)) fallbackRange else resolution
   }
 
@@ -208,7 +208,7 @@ open class SnapshotRangeMarkerImpl private constructor(
    * Resolves this marker in the current root. Reuses cached offsets for the same identity or advances them across one direct edit.
    * Traverses the tree when neither shortcut applies.
    */
-  private fun currentResolution(): Long {
+  private fun currentResolution(forRemoval: Boolean): Long {
     val root = currentRootReference().get()
     val cacheIdentity = root.resolutionCacheIdentity
     val cached = cachedResolution
@@ -221,8 +221,12 @@ open class SnapshotRangeMarkerImpl private constructor(
     else {
       PMarkerResolution.UNRESOLVED
     }
-    val resolution = if (advanced != PMarkerResolution.UNRESOLVED) advanced
-                            else resolve(root)
+    val resolution = when {
+      advanced != PMarkerResolution.UNRESOLVED -> advanced
+      forRemoval && root is PMarkerDirectRoot && cached != null && PMarkerResolution.isValid(cached.resolution) ->
+        root.resolveForRemoval(markerHandle, PMarkerResolution.startOffset(cached.resolution))
+      else -> resolve(root)
+    }
     cacheResolution(root, resolution)
     return resolution
   }

@@ -26,6 +26,30 @@ import java.util.concurrent.TimeUnit
 
 internal class SnapshotRangeMarkerImplTest {
   @Test
+  fun `disposal keeps current offsets when the cached start belongs to another marker`() {
+    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
+      val document = DocumentImpl("abcdefgh", true)
+      val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
+      val reference = marker.currentRootReference()
+      val original = reference.get()
+      val before = document.core.snapshot().text()
+      val patch = DocumentPatch.simple(0, 0, "xx", newModStamp = 1, clearLineFlags = false)
+      val shifted = original.applyPatch(patch, before, before.replace(0, 0, "xx"))
+      reference.set(shifted)
+      val other = document.createRangeMarker(2, 3) as SnapshotRangeMarkerImpl
+
+      marker.dispose()
+
+      assertFalse(marker.isValid)
+      assertEquals(TextRange(4, 6), marker.textRange)
+      assertTrue(other.isValid)
+      assertEquals(TextRange(2, 3), other.textRange)
+      assertEquals(TextRangeScalarUtil.toScalarRange(2, 4), original.resolve(marker.markerHandle))
+      assertEquals(TextRangeScalarUtil.toScalarRange(4, 6), shifted.resolve(marker.markerHandle))
+    }
+  }
+
+  @Test
   fun `disposal retains offsets without allocating a resolution map`() {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)

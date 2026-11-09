@@ -72,6 +72,25 @@ class PMarkerDirectRoot private constructor(
     }
   }
 
+  /** Checks [startOffsetHint] against this tree before using the versioned histories to resolve [handle]. */
+  internal fun resolveForRemoval(handle: SnapshotMarkerReference<*>, startOffsetHint: Int): Long {
+    val cached = cachedResolutions?.get(handle.id) ?: PMarkerResolution.UNRESOLVED
+    if (cached != PMarkerResolution.UNRESOLVED) return cached
+    var node = root
+    var delta = 0
+    while (node != null) {
+      val order = compare(startOffsetHint, handle, node.entry.nodeStart + delta, node.handle)
+      if (order == 0) {
+        val resolution = TextRangeScalarUtil.toScalarRange(node.entry.nodeStart + delta, node.entry.nodeEnd + delta)
+        cacheResolution(handle.id, resolution)
+        return resolution
+      }
+      delta += node.lazyDelta
+      node = if (order < 0) node.left else node.right
+    }
+    return resolve(handle)
+  }
+
   private fun resolveState(state: PMarkerNodeState?): Long = when (state) {
     null -> PMarkerResolution.ABSENT
     is PMarkerInvalidNode -> if (state.reason == 0) PMarkerResolution.ABSENT else PMarkerResolution.invalid(state.range)
