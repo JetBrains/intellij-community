@@ -26,5 +26,6 @@ fn the_cmd_form_needs_an_output_file() {
 #[test]
 fn a_missing_spec_fails_with_its_path() {
     let run = run(&["materialize", "--spec=/no/such/idea.home.json", "--format=json"]);
-    run.assert_error("ERROR: cannot read /no/such/idea.home.json: No such file or directory (os error 2)\n");
+    // The text of the OS error differs on Windows.
+    run.assert_error("ERROR: cannot read /no/such/idea.home.json: ");
 }

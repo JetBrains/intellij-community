@@ -127,7 +127,18 @@ fn an_old_staging_directory_goes_and_a_new_one_stays() {
 }
 
 fn filetime_directory(directory: &std::path::Path, age: Duration) {
-    let handle = fs::File::open(directory).unwrap();
+    let mut options = fs::OpenOptions::new();
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt as _;
+        // Windows opens a directory only with backup semantics, and a new time needs the right to write attributes.
+        const FILE_WRITE_ATTRIBUTES: u32 = 0x100;
+        const FILE_FLAG_BACKUP_SEMANTICS: u32 = 0x0200_0000;
+        options.access_mode(FILE_WRITE_ATTRIBUTES).custom_flags(FILE_FLAG_BACKUP_SEMANTICS);
+    }
+    #[cfg(not(windows))]
+    options.read(true);
+    let handle = options.open(directory).unwrap();
     handle.set_modified(std::time::SystemTime::now() - age).unwrap();
 }
 

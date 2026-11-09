@@ -9,12 +9,12 @@ fn fixture_launch() -> LaunchSpec {
     launch(Path::new("/w"))
 }
 
+/// A generation below `root`. Each path is one string, so it has `/` on every OS, as `join` would not on Windows.
 fn materialized(root: &str) -> Materialized {
-    let home = PathBuf::from(root).join("g/v5-a-flat");
     Materialized {
-        launcher: home.join("bin/idea"),
-        vm_options_file: home.join("vmoptions-00"),
-        home,
+        launcher: PathBuf::from(format!("{root}/g/v5-a-flat/bin/idea")),
+        vm_options_file: PathBuf::from(format!("{root}/g/v5-a-flat/vmoptions-00")),
+        home: PathBuf::from(format!("{root}/g/v5-a-flat")),
         vm_options_variable: "IDEA_VM_OPTIONS".to_owned(),
         built: false,
     }
