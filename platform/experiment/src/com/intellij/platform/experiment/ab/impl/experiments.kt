@@ -21,7 +21,6 @@ import kotlin.math.absoluteValue
  */
 enum class ABExperimentOption {
   KUBERNETES_SEPARATE_SERVICE_VIEW,
-  FUZZY_FILE_SEARCH,
   SHOW_TRIAL_SURVEY,
   NEW_USERS_ONBOARDING,
   CLION_WIZARD_REMOVAL,

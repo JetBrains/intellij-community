@@ -60,9 +60,6 @@ import java.util.Set;
 @SuppressWarnings("NewClassNamingConvention")
 public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
-  private static final RegistryValue fuzzySearchRegistryValue = Registry.get("search.everywhere.fuzzy.file.search.enabled");
-  private static final boolean isFuzzySearchEnabled = fuzzySearchRegistryValue.asBoolean();
-
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(ChooseByNameTest.class);
@@ -269,13 +266,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     List<PsiFile> objects = gotoFile("Object.java", true);
     assertNotEmpty(objects);
     assertTrue((objects.get(0)).getVirtualFile().getPath().contains("mockJDK"));
-
-    // Fuzzy search finds some results for the query `mockJDK/Object.java`, so let's ensure the test runs with fuzzy search disabled.
-    fuzzySearchRegistryValue.setValue(false);
-
     assertEmpty(gotoFile("mockJDK/Object.java", true));
-
-    fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
 
   public void test_goto_file_can_go_to_dir() {
@@ -286,8 +277,6 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
     PsiDirectory fooDir = fooIndex.getContainingDirectory();
     PsiDirectory barDir = barIndex.getContainingDirectory();
-
-    fuzzySearchRegistryValue.setValue(false);
 
     assertOrderedEquals(findFiles(fixture, "foo/"), List.of(fooDir));
     assertOrderedEquals(findFiles(fixture, "foo\\"), List.of(fooDir));
@@ -304,63 +293,13 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertOrderedEquals(findFiles(fixture, "\\bar.txt"), List.of(barIndex, barDir));
     assertOrderedEquals(findFiles(fixture, "bar.txt"), List.of(barIndex, barDir));
     assertOrderedEquals(findFiles(fixture, "bar"), List.of(barIndex, barDir));
-
-    fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
-  }
-
-  public void test_goto_file_can_go_to_dir_with_fuzzy() {
-    PsiFile fooIndex = addEmptyFile("foo/index.html");
-    PsiFile barIndex = addEmptyFile("bar.txt/bar.txt");
-
-    SeProvidersTestFixture fixture = createFixture(fooIndex);
-
-    PsiDirectory fooDir = fooIndex.getContainingDirectory();
-    PsiDirectory barDir = barIndex.getContainingDirectory();
-
-    // With fuzzy search enabled, the search also shows files inside the directory.
-    fuzzySearchRegistryValue.setValue(true);
-
-    assertOrderedEquals(findFiles(fixture, "foo/"), List.of(fooDir, fooIndex));
-    assertOrderedEquals(findFiles(fixture, "foo\\"), List.of(fooDir, fooIndex));
-    assertOrderedEquals(findFiles(fixture, "/foo"), List.of(fooDir, fooIndex));
-    assertOrderedEquals(findFiles(fixture, "\\foo"), List.of(fooDir, fooIndex));
-    assertOrderedEquals(findFiles(fixture, "foo"), List.of(fooDir, fooIndex));
-    assertOrderedEquals(findFiles(fixture, "/index.html"), List.of(fooIndex));
-    assertOrderedEquals(findFiles(fixture, "\\index.html"), List.of(fooIndex));
-    assertEmpty(findFiles(fixture, "index.html/"));
-    assertEmpty(findFiles(fixture, "index.html\\"));
-    assertOrderedEquals(findFiles(fixture, "bar.txt/"), List.of(barDir, barIndex));
-    assertOrderedEquals(findFiles(fixture, "bar.txt\\"), List.of(barDir, barIndex));
-    assertOrderedEquals(findFiles(fixture, "/bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(findFiles(fixture, "\\bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(findFiles(fixture, "bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(findFiles(fixture, "bar"), List.of(barIndex, barDir));
-
-    fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
 
   public void test_prefer_files_to_directories_even_if_longer() {
     PsiFile fooFile = addEmptyFile("dir/fooFile.txt");
     PsiDirectory fooDir = addEmptyFile("foo/barFile.txt").getContainingDirectory();
 
-    fuzzySearchRegistryValue.setValue(false);
-
     assertOrderedEquals(gotoFile("foo"), List.of(fooFile, fooDir));
-
-    fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
-  }
-
-  public void test_prefer_files_to_directories_even_if_longer_with_fuzzy() {
-    PsiFile fooFile = addEmptyFile("dir/fooFile.txt");
-    PsiFile barFile = addEmptyFile("foo/barFile.txt");
-    PsiDirectory fooDir = barFile.getContainingDirectory();
-
-    // With fuzzy search enabled, the search also shows files inside the directory.
-    fuzzySearchRegistryValue.setValue(true);
-
-    assertOrderedEquals(gotoFile("foo"), List.of(fooFile, fooDir, barFile));
-
-    fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
 
   public void test_find_method_by_qualified_name() {
@@ -744,12 +683,10 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     VfsTestUtil.createFile(libRoot, "foo/bar/goo/index.html");
     Library library = PsiTestUtil.addProjectLibrary(getModule(), "lib", List.of(libRoot), List.of());
     PsiFile loose = addEmptyFile("foo/bar/goo2/index.html");
-    fuzzySearchRegistryValue.setValue(false);
     try {
       assertOrderedEquals(gotoFile("foo/bar/goo/index.html"), List.of(loose));
     }
     finally {
-      fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
       PsiTestUtil.removeLibrary(getModule(), library);
       WriteAction.run(() -> libRoot.delete(this));
     }
@@ -776,31 +713,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiFile file = addEmptyFile("foo/bar/goo/doo/index.html");
     PsiDirectory dooDir = file.getContainingDirectory();
 
-    fuzzySearchRegistryValue.setValue(false);
-    try {
-      assertOrderedEquals(gotoFile("foo/bar/goo/doo/", false, file), List.of(dooDir));
-    }
-    finally {
-      fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
-    }
-  }
-
-  /**
-   * The search reports a file in the only matched directory twice: once by its name, and once as a child of that
-   * directory. A long gap in the qualifier can put the name weight below the child weight, so the child copy must go through.
-   * The gap must be longer than about a thousand characters to get there.
-   */
-  public void test_a_repeated_file_keeps_its_better_weight() {
-    PsiFile file = addEmptyFile("shop/" + ("a".repeat(250) + "/").repeat(6) + "billing/billing.txt");
-    SeProvidersTestFixture fixture = createFixture(file);
-    fuzzySearchRegistryValue.setValue(true);
-    try {
-      // Search Everywhere shows one copy of the file, and it must be the child copy with the better weight.
-      assertEquals(List.of(0), weightsOf(fixture, SeProviderIdUtils.FILES_ID, "shop/billing", file));
-    }
-    finally {
-      fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
-    }
+    assertOrderedEquals(gotoFile("foo/bar/goo/doo/", false, file), List.of(dooDir));
   }
 
   public void test_exactly_matching_qualified_symbol_gets_the_exact_match_degree() {
