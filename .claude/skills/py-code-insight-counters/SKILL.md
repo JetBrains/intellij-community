@@ -29,6 +29,8 @@ defect in a test. A work count does not flake like a time.
 | `CFG_BUILDS`, `CFG_INSTRUCTIONS` | the control flow builds and their instructions | `PyControlFlowBuilder.buildControlFlow` |
 | `COMPLETION_LOOKUP_ITEMS` | the lookup items of the Python completion | `CompletionVariantsProcessor.setupItem` |
 | `PATH_CACHE_CLEARS` | the clears of a non-empty resolve path cache | `PythonPathCache.clearCache` |
+| `DJANGO_TAG_LIBRARY_SCANS` | the scans of a Django tag library for its registered tags and filters | `DjangoTagLibrary.getRegistrations` |
+| `DJANGO_TEMPLATE_LOAD_SCANS` | the scans of a Django template for the tags and filters that it loads | `DjangoTagLibrary.getLoadedTags` |
 
 A cache hit and an evaluation do not add up to the calls. The rest are library delegations and the requests that the
 recursion guard stops.

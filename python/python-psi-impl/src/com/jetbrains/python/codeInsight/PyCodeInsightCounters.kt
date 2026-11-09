@@ -8,8 +8,11 @@ import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.LongAdder
 
 /**
- * Counts the work of the native Python code insight: type evaluations, type contexts, type matches, type walks,
- * overload checks, control flow builds, completion lookup items and resolve path cache clears.
+ * Counts the work of the Python code insight. For the native Python support, it counts type evaluations, type contexts,
+ * type matches, type walks, overload checks, control flow builds, completion lookup items and resolve path cache clears.
+ * For the Django template support of the Django plugin, it counts the scans of the tag libraries and of the `{% load %}`
+ * tags of a template.
+ * [Counter] is a closed set, so the counters of a plugin that builds on the Python support are here too.
  *
  * The counting is off by default. Then each hook costs one volatile read. A test turns the counting on with [enable],
  * runs an action, and compares two [snapshot] values. The hooks do not change a result.
@@ -34,6 +37,8 @@ object PyCodeInsightCounters {
     CFG_INSTRUCTIONS("cfg.instructions"),
     COMPLETION_LOOKUP_ITEMS("completion.lookupItems"),
     PATH_CACHE_CLEARS("resolve.pathCache.clears"),
+    DJANGO_TAG_LIBRARY_SCANS("django.tagLibrary.scans"),
+    DJANGO_TEMPLATE_LOAD_SCANS("django.template.loadScans"),
   }
 
   /** The counter values at one moment. */
