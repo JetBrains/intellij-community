@@ -2,19 +2,18 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.backend
 
 import com.intellij.ide.actions.WELCOME_NEW_FILE_EXTENSION
+import com.intellij.ide.actions.WELCOME_NEW_LANGUAGE
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.application
@@ -104,7 +103,7 @@ abstract class WelcomeScreenNewFileFeatureBackend : WelcomeScreenFeatureBackend(
     invokeWelcomeScreenAction(project, "WelcomeNewEmptyFile") {
       SimpleDataContext.builder()
         .setParent(it)
-        .add(CommonDataKeys.LANGUAGE, language)
+        .add(WELCOME_NEW_LANGUAGE, language)
         .add(WELCOME_NEW_FILE_EXTENSION, extension)
         .build()
     }
