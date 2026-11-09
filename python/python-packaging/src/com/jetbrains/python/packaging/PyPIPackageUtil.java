@@ -16,12 +16,8 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.python.requirements.PyPackageVersionComparator;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
-import com.intellij.util.io.RequestBuilder;
-import com.jetbrains.python.packaging.repository.PyPackageRepositories;
-import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -317,48 +313,6 @@ public final class PyPIPackageUtil {
       return version;
     }
     return null;
-  }
-
-  @RequiresBackgroundThread
-  public static @NotNull List<@NotNull String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
-    LOG.info("Fetching index of all packages available on " + url);
-    RequestBuilder builder = HttpRequests.request(url).userAgent(getUserAgent());
-
-    PyPackageRepositories service = ApplicationManager.getApplication().getService(PyPackageRepositories.class);
-    service.getRepositories().stream()
-      .filter(repo -> url.equals(repo.getRepositoryUrl()))
-      .findFirst()
-      .ifPresent(repository -> PyPackageRepositoryUtil.withBasicAuthorization(builder, repository));
-
-    return builder.connect(request -> {
-      final List<String> packages = new ArrayList<>();
-      final Reader reader = request.getReader();
-      new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
-        HTML.Tag myTag;
-
-        @Override
-        public void handleStartTag(@NotNull HTML.Tag tag, @NotNull MutableAttributeSet set, int i) {
-          myTag = tag;
-        }
-
-        @Override
-        public void handleText(char @NotNull [] data, int pos) {
-          if (myTag != null && "a".equals(myTag.toString())) {
-            String packageName = String.valueOf(data);
-            if (packageName.endsWith("/")) {
-              packageName = packageName.substring(0, packageName.indexOf("/"));
-            }
-            packages.add(packageName);
-          }
-        }
-
-        @Override
-        public void handleEndTag(@NotNull HTML.Tag t, int pos) {
-          myTag = null;
-        }
-      }, true);
-      return packages;
-    });
   }
 
   @SuppressWarnings("FieldMayBeFinal")

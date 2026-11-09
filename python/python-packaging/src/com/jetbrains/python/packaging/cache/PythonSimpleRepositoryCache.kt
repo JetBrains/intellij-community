@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.python.Result
+import com.jetbrains.python.packaging.CancelableParserDelegator
 import com.jetbrains.python.packaging.cache.PythonPackageCacheIOError.FailedToFetchPackages
 import com.jetbrains.python.packaging.cache.impl.InMemorySearchPage
 import com.jetbrains.python.packaging.management.PythonRepositoryManager.PythonRepositoryIOError
@@ -15,6 +16,7 @@ import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.withBasicAuthorization
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -89,13 +91,14 @@ class PythonSimpleRepositoryCache(private val repository: PyPackageRepository) :
   @CheckReturnValue
   override suspend fun reload(): Result<Unit, PythonPackageCacheIOError> = withContext(Dispatchers.IO) {
     val packages = mutableSetOf<String>()
+    val coroutineContext = currentCoroutineContext()
 
     try {
       HttpRequests.request(repository.repositoryUrl)
         .userAgent(userAgent)
         .withBasicAuthorization(repository)
         .connect { request ->
-          ParserDelegator()
+          CancelableParserDelegator(coroutineContext)
             .parse(
               request.reader,
               SimpleRepositoryCacheParser(packages),

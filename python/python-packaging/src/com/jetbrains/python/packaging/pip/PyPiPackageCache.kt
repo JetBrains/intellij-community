@@ -1,15 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip
 
+import com.jetbrains.python.packaging.PyPiPackageFetcher
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
-import com.jetbrains.python.packaging.PyPIPackageUtil
+import com.jetbrains.python.mapError
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.cache.MappedPackedAsciiStringSetCacheFile
 import com.jetbrains.python.packaging.cache.PackageVersionMap
@@ -21,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
-import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.time.measureTimedValue
@@ -34,15 +33,15 @@ class PyPiPackageCache : PythonPackageCache {
   private var searchCache = Caffeine.newBuilder().maximumSize(SEARCH_CACHE_SIZE).build<String, PythonPackageSearchResult>()
   private val packageCache =
     MappedPackedAsciiStringSetCacheFile(filePath) {
-      val timedValue = measureTimedValue {
+      (val value, val duration) = measureTimedValue {
         containsCache.invalidateAll()
         searchCache.invalidateAll()
         service<PyPiPackageLoader>().loadPackages()
       }
-      
-      logger.info("PyPI package cache refetched in ${timedValue.duration}")
-      
-      timedValue.value
+
+      logger.info("PyPI package cache refetched in $duration")
+
+      value
     }
 
   override val size: Int
@@ -55,13 +54,13 @@ class PyPiPackageCache : PythonPackageCache {
         name in packageCache
       }
     }
-  
+
   fun tryContains(name: String): Boolean? {
-    containsCache.getIfPresent(name)?.also { 
+    containsCache.getIfPresent(name)?.also {
       return it
     }
-    
-    return packageCache.tryContains(name)?.also { 
+
+    return packageCache.tryContains(name)?.also {
       containsCache.put(name, it)
     }
   }
@@ -99,58 +98,52 @@ class PyPiPackageCache : PythonPackageCache {
   @ApiStatus.Internal
   @Service
   class PyPiPackageLoader {
-    @RequiresBackgroundThread
     @CheckReturnValue
-    fun loadPackages(): Result<PackageVersionMap, FailedToFetchPackages> =
-      try {
-        val pypiPackages = loadPackagesFromPypi().map { PyPackageName.normalizePackageName(it) }.associateWith { emptySet<String>() }
-        Result.success(pypiPackages)
-      }
-      catch (e: IOException) {
-        Result.failure(FailedToFetchPackages(e.message ?: "IOException"))
-      }
-      catch (t: Throwable) {
-        logger.warn("Cannot fetch PyPI packages from the internet", t)
-        throw t
-      }
+    suspend fun loadPackages(): Result<PackageVersionMap, FailedToFetchPackages> =
+      loadPackagesFromPypi()
+        .mapSuccess { packages ->
+          packages
+            .map { PyPackageName.normalizePackageName(it) }
+            .associateWith { emptySet<String>() }
+        }
+        .mapError { FailedToFetchPackages(it.message) }
 
     /**
      * In some tests we have a problem that pypi return 0 packages without any error.
      * So we need to retry this operation.
      */
-    private fun loadPackagesFromPypi(): List<String> {
-      var error: Throwable? = null
+    private suspend fun loadPackagesFromPypi(): Result<List<String>, PyPiPackageFetcher.FetchError> {
+      var error: PyPiPackageFetcher.FetchError? = null
       val maxAttempts = 3
 
       repeat(maxAttempts) {
         logger.debug { "PyPI packages fetch attempt ${it + 1}" }
 
         val fetched =
-          try {
-            PyPIPackageUtil.parsePyPIListFromWeb(PyPIPackageUtil.PYPI_LIST_URL)
-          }
-          catch (t: IOException) {
-            logger.warn("Failed to fetch PyPI packages on attempt ${it + 1}", t)
-            error = t
-            return@repeat
-          }
+          PyPiPackageFetcher
+            .fetchPipPackages()
+            .getOr { failure ->
+              logger.warn("Failed to fetch PyPI packages on attempt ${it + 1}: ${failure.error.message}")
+              error = failure.error
+              return@repeat
+            }
 
         logger.debug { "Fetched PyPI packages on attempt ${it + 1}" }
 
         if (fetched.size > 2) {
-          return fetched
+          return Result.Success(fetched)
         }
 
         logger.debug { "Fetched PyPI packages list on attempt ${it + 1} is too small. Fetched ${fetched}" }
       }
 
       if (error != null) {
-        throw error
+        return Result.Failure(error)
       }
 
       logger.warn("Empty PyPI packages list returned after $maxAttempts attempts")
 
-      return emptyList()
+      return Result.Success(emptyList())
     }
 
     companion object {

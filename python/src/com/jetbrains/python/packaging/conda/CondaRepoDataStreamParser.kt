@@ -2,15 +2,16 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.cache.PackageVersionMap
+import kotlinx.coroutines.ensureActive
 import tools.jackson.core.JacksonException
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.ObjectReadContext
 import tools.jackson.core.json.JsonFactory
 import java.io.InputStream
+import kotlin.coroutines.CoroutineContext
 
 internal object CondaRepoDataStreamParser {
   private const val PACKAGES_FIELD = "packages"
@@ -19,8 +20,7 @@ internal object CondaRepoDataStreamParser {
   private const val VERSION_FIELD = "version"
   private val JSON_FACTORY = JsonFactory()
 
-  @RequiresBackgroundThread
-  fun parseVersions(inputStream: InputStream): Result<PackageVersionMap, ParseError> =
+  fun parseVersions(inputStream: InputStream, coroutineContext: CoroutineContext): Result<PackageVersionMap, ParseError> =
     try {
       JSON_FACTORY.createParser(ObjectReadContext.empty(), inputStream).use { parser ->
         require(parser.nextToken() == JsonToken.START_OBJECT) { "repodata.json: expected top-level object" }
@@ -28,6 +28,8 @@ internal object CondaRepoDataStreamParser {
         val accumulator = mutableMapOf<String, MutableSet<String>>()
 
         while (parser.nextToken() != JsonToken.END_OBJECT) {
+          coroutineContext.ensureActive()
+
           val field = parser.currentName()
           parser.nextToken()
 
@@ -37,7 +39,7 @@ internal object CondaRepoDataStreamParser {
             continue
           }
 
-          parsePackagesMap(parser, accumulator)
+          parsePackagesMap(parser, coroutineContext, accumulator)
         }
 
         Result.Success(accumulator)
@@ -47,11 +49,16 @@ internal object CondaRepoDataStreamParser {
       Result.Failure(ParseError(e.localizedMessage))
     }
 
-  @RequiresBackgroundThread
-  private fun parsePackagesMap(parser: JsonParser, accumulator: MutableMap<String, MutableSet<String>>) {
+  private fun parsePackagesMap(
+    parser: JsonParser,
+    coroutineContext: CoroutineContext,
+    accumulator: MutableMap<String, MutableSet<String>>,
+  ) {
     require(parser.currentToken() == JsonToken.START_OBJECT)
 
     while (parser.nextToken() != JsonToken.END_OBJECT) {
+      coroutineContext.ensureActive()
+
       // field name is the build filename, e.g. "numpy-1.26.0-py311hXXX.conda"
       parser.nextToken() // START_OBJECT of the record
 
@@ -59,6 +66,8 @@ internal object CondaRepoDataStreamParser {
       var version: String? = null
 
       while (parser.nextToken() != JsonToken.END_OBJECT) {
+        coroutineContext.ensureActive()
+
         parser.nextToken()
 
         when (parser.currentName()) {
