@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.java.completion.modcommand.SameSignatureCallParametersItemProvider;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.util.Key;
 import com.intellij.patterns.ElementPattern;
@@ -280,7 +281,8 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       }
     }
 
-    if (object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
+    if (object instanceof SameSignatureCallParametersItemProvider.Arguments ||
+        object instanceof String && item.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) == Boolean.TRUE) {
       return MyResult.superMethodParameters;
     }
 

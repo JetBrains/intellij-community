@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -237,6 +237,10 @@ public final class JavaCompletionUtil {
       return JavaSmartCompletionContributor.getExpectedTypes(location.getBaseCompletionParameters());
     });
 
+  /**
+   * Marks a lookup element with the parameters of an enclosing method as call arguments.
+   * Used in third-party plugins: nothing in this repository sets it since the item moved to {@code SameSignatureCallParametersItemProvider}.
+   */
   public static final Key<Boolean> SUPER_METHOD_PARAMETERS = Key.create("SUPER_METHOD_PARAMETERS");
   private static final ElementPattern<PsiElement> INSIDE_PARAMETER_LIST =
     psiElement().withParent(

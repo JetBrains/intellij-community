@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -12,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
 import com.intellij.codeInsight.lookup.WeighingContext;
+import com.intellij.java.completion.modcommand.SameSignatureCallParametersItemProvider;
 import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -452,7 +453,8 @@ public final class JavaCompletionSorting {
     }
 
     private boolean isExactlyExpected(@NotNull LookupElement item, @Nullable PsiType itemType) {
-      if (JavaCompletionUtil.SUPER_METHOD_PARAMETERS.get(item) != null) {
+      if (item.getObject() instanceof SameSignatureCallParametersItemProvider.Arguments ||
+          JavaCompletionUtil.SUPER_METHOD_PARAMETERS.get(item) != null) {
         return true;
       }
       if (itemType == null || itemType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {

@@ -713,6 +713,7 @@
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.MethodReturnTypeItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" order="last, after javaReflection, after javaMethodHandle"
                                           implementationClass="com.intellij.java.completion.modcommand.ClassLiteralItemProvider"/>
+    <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.SameSignatureCallParametersItemProvider"/>
     <modcompletion.completionItemFilter language="JAVA"
                                         implementationClass="com.intellij.java.completion.modcommand.MethodReturnTypeItemProvider$DuplicateFilter"/>
 
