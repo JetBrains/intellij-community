@@ -22,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
+import java.nio.file.AccessDeniedException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.NotDirectoryException
@@ -89,9 +90,15 @@ class VirtualEnvReader private constructor(
       root.listDirectoryEntries()
     }
     catch (_: NoSuchFileException) {
-      return emptyList()
+      null
     }
     catch (_: NotDirectoryException) {
+      null
+    }
+    catch (_: AccessDeniedException) {
+      null
+    }
+    if (children == null) {
       return emptyList()
     }
 
