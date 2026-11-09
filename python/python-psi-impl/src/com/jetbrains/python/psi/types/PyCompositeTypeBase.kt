@@ -1,19 +1,25 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types
 
+import it.unimi.dsi.fastutil.HashCommon
 import org.jetbrains.annotations.ApiStatus
 
 /**
  * Shared base for set-of-members [PyCompositeType]s ([PyUnionType], [PyUnsafeUnionType], [PyIntersectionType]).
  * Provides the single memoized `hashCode` + fast-path `equals`, avoiding the structural-equality
  * storm on deeply nested composite types.
+ *
+ * The hash code is the sum of the mixed hash codes of the members.
+ * A plain sum gives `list[A | B]` and `list[A] | B` the same hash code.
  */
 @ApiStatus.Internal
 abstract class PyCompositeTypeBase : PyCompositeType {
   /** Members compared for equality/hashing; must be effectively immutable (the hash code is memoized from it). */
   protected abstract val memberSet: Set<PyType?>
 
-  private val cachedHashCode: Int by lazy(LazyThreadSafetyMode.PUBLICATION) { memberSet.hashCode() }
+  private val cachedHashCode: Int by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    memberSet.sumOf { HashCommon.murmurHash3(it.hashCode()) }
+  }
 
   final override fun hashCode(): Int = cachedHashCode
 
