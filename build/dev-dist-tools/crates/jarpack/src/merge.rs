@@ -160,7 +160,8 @@ pub struct MergeOptions {
 /// What a merge did.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct MergeReport {
-    /// The entry names that more than one source gave, in merge order.
+    /// The entry names that more than one source gave, in merge order. A patch replaces the first later entry of its name,
+    /// so that entry is no duplicate.
     pub duplicates: Vec<String>,
     /// The size of the written jar.
     pub bytes_written: u64,
@@ -194,7 +195,8 @@ impl MergeSpec {
     ///
     /// **The first source wins**, so the source order is the precedence. To write what the in-process `JarPackager`
     /// writes, every library jar must come before every module output. Duplicates are expected, because two libraries
-    /// can hold the same `META-INF/services` entry, so the merge reports a collision and does not fail.
+    /// can hold the same `META-INF/services` entry, so the merge reports a collision and does not fail. A patch is no
+    /// collision: it replaces the first later entry of its name, and only a second later entry is a duplicate.
     ///
     /// **A jar keeps the manifest of its module.** The manifest of a module output survives the merge, whatever
     /// `keep_manifest` and the policy of the source say. The manifest of a library survives only by its policy or by
@@ -221,6 +223,8 @@ impl MergeSpec {
 
         let mut writer = Writer::new(file);
         let mut seen: HashSet<&str> = HashSet::new();
+        // The patch names whose replaced entry is still to come.
+        let mut patched: HashSet<&str> = HashSet::new();
         let mut duplicates: Vec<String> = Vec::new();
         let mut entities: Vec<String> = Vec::new();
         let mut module_manifest: Option<&Path> = None;
@@ -244,7 +248,11 @@ impl MergeSpec {
                         continue;
                     }
                     if add_file_source(&mut writer, name, path, *patch, &mut seen, output, keep_manifest)? {
-                        duplicates.push(name.clone());
+                        if !patched.remove(name.as_str()) {
+                            duplicates.push(name.clone());
+                        }
+                    } else if *patch {
+                        patched.insert(name);
                     }
                     continue;
                 }
@@ -321,7 +329,9 @@ impl MergeSpec {
                     );
                 }
                 if !seen.insert(entry.name) {
-                    duplicates.push(entry.name.to_string());
+                    if !patched.remove(entry.name) {
+                        duplicates.push(entry.name.to_string());
+                    }
                     continue;
                 }
                 if reserved.is_some_and(|reserved| reserved.contains(entry.name)) {

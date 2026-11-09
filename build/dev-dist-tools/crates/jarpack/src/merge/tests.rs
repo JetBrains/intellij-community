@@ -26,11 +26,32 @@ fn patch_precedence_and_collision() {
     let module = write_zip_jar(&scratch, "main.jar", &[entry("META-INF/plugin.xml", "original")]);
     let patched = Source::patch("META-INF/plugin.xml", &patch);
     let archive = Source::module(&module);
-    let (data, _) = pack(&scratch, spec("plugin.jar", vec![patched.clone(), archive.clone()]));
+    let (data, duplicates) = pack(&scratch, spec("plugin.jar", vec![patched.clone(), archive.clone()]));
     assert_eq!(read_entry(&data, "META-INF/plugin.xml"), "patched");
+    assert_eq!(duplicates, Vec::<String>::new(), "the entry that a patch replaces is no duplicate");
     let bad = spec(scratch.dir().join("bad.jar").to_str().unwrap(), vec![archive, patched]);
     let error = pack_error(&bad);
     assert!(error.contains("must precede"), "expected a patch collision, got {error}");
+}
+
+/// A patch replaces one entry. A second module output with the same entry is a real collision, also as a file source.
+#[test]
+fn a_second_entry_of_a_patched_name_is_a_duplicate() {
+    let scratch = Scratch::new();
+    let patch = scratch.file("plugin.xml", b"patched");
+    let other = scratch.file("other.xml", b"other");
+    let main = write_zip_jar(&scratch, "main.jar", &[entry("META-INF/plugin.xml", "original")]);
+    let second = write_zip_jar(&scratch, "second.jar", &[entry("META-INF/plugin.xml", "second")]);
+    let patched = Source::patch("META-INF/plugin.xml", &patch);
+    let (data, duplicates) = pack(
+        &scratch,
+        spec("plugin.jar", vec![patched.clone(), Source::module(&main), Source::module(&second)]),
+    );
+    assert_eq!(read_entry(&data, "META-INF/plugin.xml"), "patched");
+    assert_eq!(duplicates, ["META-INF/plugin.xml"]);
+    let file = Source::file("META-INF/plugin.xml", &other);
+    let (_, duplicates) = pack(&scratch, spec("files.jar", vec![patched, file.clone(), file]));
+    assert_eq!(duplicates, ["META-INF/plugin.xml"]);
 }
 
 #[test]

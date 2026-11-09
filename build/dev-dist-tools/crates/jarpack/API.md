@@ -76,6 +76,8 @@ states.
   `<jar>: N duplicate entries, first source wins: a, b`, with at most 10 names, and it has no line end. The packer
   writes it to the `duplicateReport` tag of the `pack jar` span, and the count to the `duplicates` tag. A successful
   pack prints nothing. After a failed inventory, the packer prints the line to stderr and then the error.
+- A `patch=` source replaces the first later entry of its name, and that entry is no duplicate. A second later entry
+  of the name is a duplicate.
 - `MergeSpec` and `MergeReport` are `Send + Sync`, so a caller can pack many specs on parallel threads.
 - The merge hashes the bytes of the jar as they go to the file. So `MergeReport::content_hash` is the
   `xxh3::hash_file` value of the jar, and the packer does not read the jar again for its inventory. The hasher sits
