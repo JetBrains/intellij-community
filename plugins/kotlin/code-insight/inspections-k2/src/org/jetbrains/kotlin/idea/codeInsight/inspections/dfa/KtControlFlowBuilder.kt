@@ -189,6 +189,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.kotlin.psi.KtSuperExpression
@@ -365,15 +366,25 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
             if (!first) {
                 val anchor = if (entry == lastEntry) KotlinExpressionAnchor(expr) else null
-                addInstruction(StringConcatInstruction(anchor, stringType))
+                addInstruction(StringConcatInstruction(anchor, stringType, false, entry.isCharEntry()))
             }
             first = false
         }
         if (entries.size == 1 && entries[0] !is KtLiteralStringTemplateEntry) {
             // Implicit toString conversion for "$myVar" string
             addInstruction(PushValueInstruction(DfTypes.referenceConstant("", stringType)))
-            addInstruction(StringConcatInstruction(KotlinExpressionAnchor(expr), stringType))
+            addInstruction(StringConcatInstruction(KotlinExpressionAnchor(expr), stringType, entries[0].isCharEntry(), false))
         }
+    }
+
+    context(_: KaSession)
+    private fun KtStringTemplateEntry.isCharEntry(): Boolean =
+        this is KtStringTemplateEntryWithExpression && expression.isNotNullChar()
+
+    context(_: KaSession)
+    private fun KtExpression?.isNotNullChar(): Boolean {
+        val type = this?.getKotlinType() ?: return false
+        return type.classId == KaStandardTypeClassIds.CHAR && !type.isMarkedNullable
     }
 
     context(_: KaSession)
@@ -553,7 +564,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (token === KtTokens.PLUS && (leftKtType?.classId == KaStandardTypeClassIds.STRING || expr.right?.getKotlinType()?.classId == KaStandardTypeClassIds.STRING)) {
             processExpression(expr.left)
             processExpression(expr.right)
-            addInstruction(StringConcatInstruction(KotlinExpressionAnchor(expr), stringType))
+            addInstruction(StringConcatInstruction(KotlinExpressionAnchor(expr), stringType, expr.left.isNotNullChar(), expr.right.isNotNullChar()))
             return
         }
         if (leftKtType?.toDfType() is DfIntegralType) {
