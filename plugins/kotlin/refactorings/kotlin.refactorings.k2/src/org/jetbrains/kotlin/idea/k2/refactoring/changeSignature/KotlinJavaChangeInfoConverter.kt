@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtElement
@@ -87,13 +88,19 @@ class KotlinJavaChangeInfoConverter: JavaChangeInfoConverter {
 
         var javaChangeInfos = changeInfo.getUserData(javaChangeInfoKey)
         if (javaChangeInfos == null) {
-            val ktCallableDeclaration = changeInfo.method.takeUnless { it.isExpectDeclaration() } ?: unwrappedKotlinBase
-            val isProperty = ktCallableDeclaration is KtParameter || ktCallableDeclaration is KtProperty
-            val isJvmOverloads = isJvmAnnotated(ktCallableDeclaration, JvmOverloads::class.java.simpleName)
-            javaChangeInfos = ktCallableDeclaration?.toLightMethods()?.map {
-                createJavaInfoForLightMethod(ktCallableDeclaration, it, changeInfo, isJvmOverloads, isProperty)
-            } ?: emptyList()
-            changeInfo.putUserData(javaChangeInfoKey, javaChangeInfos)
+            val declarations = ExpectActualUtils.withExpectedActuals(changeInfo.method)
+                    .filterIsInstance<KtNamedDeclaration>()
+                    .filterNot { it.isExpectDeclaration() }
+            javaChangeInfos = declarations.flatMap { ktCallableDeclaration ->
+                val isProperty = ktCallableDeclaration is KtParameter || ktCallableDeclaration is KtProperty
+                val isJvmOverloads = isJvmAnnotated(ktCallableDeclaration, JvmOverloads::class.java.simpleName)
+                ktCallableDeclaration.toLightMethods().map {
+                    createJavaInfoForLightMethod(ktCallableDeclaration, it, changeInfo, isJvmOverloads, isProperty)
+                }
+            }
+            if (javaChangeInfos.isNotEmpty()) {
+                changeInfo.putUserData(javaChangeInfoKey, javaChangeInfos)
+            }
         }
 
         val javaChangeInfo = javaChangeInfos.firstOrNull { info ->
