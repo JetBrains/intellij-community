@@ -3,15 +3,11 @@ package com.intellij.psi.impl.smartPointers
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Segment
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.impl.PsiDocumentManagerEx
 import kotlin.concurrent.Volatile
 
 /**
@@ -48,18 +44,9 @@ internal class FileElementInfo(file: PsiFile, manager: SmartPointerManagerEx) : 
   override fun pointsToTheSameElementAs(other: SmartPointerElementInfo, manager: SmartPointerManagerEx): Boolean =
     other is FileElementInfo && this.virtualFile == other.virtualFile
 
-  override fun getRange(manager: SmartPointerManagerEx): Segment? {
-    if (!virtualFile.isValid()) return null
+  override fun getRange(manager: SmartPointerManagerEx): Segment? = SelfElementInfo.fileRange(virtualFile)
 
-    val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return null
-    return TextRange.from(0, document.textLength)
-  }
-
-  override fun getPsiRange(manager: SmartPointerManagerEx): Segment? {
-    val currentDoc = FileDocumentManager.getInstance().getCachedDocument(virtualFile)
-    val committedDoc = currentDoc?.let { (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerEx).getLastCommittedDocument(it) }
-    return if (committedDoc == null) getRange(manager) else TextRange(0, committedDoc.textLength)
-  }
+  override fun getPsiRange(manager: SmartPointerManagerEx): Segment? = SelfElementInfo.filePsiRange(myProject, virtualFile)
 
   override fun toString(): String = "file{$virtualFile, $myLanguageId}"
 }

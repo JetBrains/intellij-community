@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers
 
+import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.withAllowedIrrelevantContexts
 import com.intellij.lang.Language
 import com.intellij.openapi.application.runReadActionBlocking
@@ -220,12 +221,57 @@ open class SelfElementInfo internal constructor(
         tracker?.revalidate(vfile, smartPointerManager)
 
         val context = fileHolder().context ?: return@runReadActionBlocking null
-        val file = withAllowedIrrelevantContexts {
-          PsiManager.getInstance(project).findFile(vfile, context)
+        restoreFileFromVirtual(vfile, project, language, context)
+      }
+    }
+
+    /**
+     * Finds the root of [language] in the view provider of [virtualFile], as a file smart pointer restores it.
+     *
+     * An invalid [virtualFile] is replaced by the child of the same name in its valid parent.
+     * [Language.ANY] means the base language of the view provider.
+     * A null [context] means any code insight context, as [PsiManager.findFile] without a context finds.
+     */
+    @JvmStatic
+    @ApiStatus.Internal
+    fun restoreFileFromVirtual(virtualFile: VirtualFile, project: Project, language: Language, context: CodeInsightContext?): PsiFile? {
+      return runReadActionBlocking {
+        if (project.isDisposed()) return@runReadActionBlocking null
+
+        val vfile = restoreVFile(virtualFile) ?: return@runReadActionBlocking null
+        val manager = PsiManager.getInstance(project)
+        val file = if (context == null) {
+          manager.findFile(vfile)
+        }
+        else {
+          withAllowedIrrelevantContexts { manager.findFile(vfile, context) }
         } ?: return@runReadActionBlocking null
         val effectiveLanguage = if (language === Language.ANY) file.viewProvider.baseLanguage else language
-        return@runReadActionBlocking file.viewProvider.getPsi(effectiveLanguage)
+        file.viewProvider.getPsi(effectiveLanguage)
       }
+    }
+
+    /**
+     * The range of the whole text of [virtualFile], or null for an invalid file or a file with no document.
+     */
+    @JvmStatic
+    @ApiStatus.Internal
+    fun fileRange(virtualFile: VirtualFile): Segment? {
+      if (!virtualFile.isValid()) return null
+
+      val document = FileDocumentManager.getInstance().getDocument(virtualFile) ?: return null
+      return TextRange.from(0, document.textLength)
+    }
+
+    /**
+     * The range of the whole committed text of [virtualFile]. With no cached document, it is [fileRange].
+     */
+    @JvmStatic
+    @ApiStatus.Internal
+    fun filePsiRange(project: Project, virtualFile: VirtualFile): Segment? {
+      val currentDoc = FileDocumentManager.getInstance().getCachedDocument(virtualFile)
+      val committedDoc = currentDoc?.let { (PsiDocumentManager.getInstance(project) as PsiDocumentManagerEx).getLastCommittedDocument(it) }
+      return if (committedDoc == null) fileRange(virtualFile) else TextRange(0, committedDoc.textLength)
     }
 
     @JvmStatic
