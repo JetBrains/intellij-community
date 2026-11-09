@@ -6,9 +6,10 @@ import com.intellij.openapi.ui.validation.CHECK_NO_RESERVED_WORDS
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.util.SystemProperties
+import com.intellij.platform.eel.provider.toEelApi
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
@@ -27,7 +28,6 @@ import java.nio.file.FileSystems
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.Path
 import kotlin.io.path.name
 
 /**
@@ -49,14 +49,29 @@ sealed class ProjectPathFlows<T : Path?> private constructor(
   }
 
   /**
-   * The project path comes from a text, thus it can be not valid. Then [projectPathWithDefault] emits [defaultPath].
+   * The project path comes from a text, thus it can be not valid. Then [projectPathWithDefault] emits the home directory
+   * of the user on [eelForDefaultPath]. A binary on that eel can use it as its working directory.
    */
-  private class Dynamic(projectPath: Flow<Path?>, defaultPath: Directory) : ProjectPathFlows<Path?>(projectPath) {
-    override val projectPathWithDefault: Flow<Path> = projectPath.map { it ?: defaultPath }
+  private class Dynamic(projectPath: Flow<Path?>, eelForDefaultPath: EelDescriptor) : ProjectPathFlows<Path?>(projectPath) {
+
+    /**
+     * The home directory of the user on [eelForDefaultPath]. It is null until [projectPathWithDefault] needs it for the first time.
+     */
+    @Volatile
+    private var defaultPath: Directory? = null
+
+    override val projectPathWithDefault: Flow<Path> = projectPath.map {
+      it
+      ?: defaultPath
+      ?: eelForDefaultPath.toEelApi().fs.user.home.asNioPath().also { userHome ->
+        defaultPath = userHome
+      }
+    }
   }
 
   /**
    * Emits a path for each value of [projectPath]. For a path that is not valid, it emits a default path.
+   * The default path is on the same eel as a valid project path.
    */
   abstract val projectPathWithDefault: Flow<Path>
 
@@ -67,7 +82,6 @@ sealed class ProjectPathFlows<T : Path?> private constructor(
 
 
   companion object {
-    private val defaultPath = Path(SystemProperties.getUserHome())
     private val localRoots by lazy {
       FileSystems.getDefault().rootDirectories.toSet()
     }
@@ -86,7 +100,7 @@ sealed class ProjectPathFlows<T : Path?> private constructor(
         withContext(Dispatchers.Default) {
           validatePath(it, onlyAllowPathsOn).successOrNull
         }
-      }, defaultPath)
+      }, eelForDefaultPath = onlyAllowPathsOn)
 
 
     /**
