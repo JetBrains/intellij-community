@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -30,6 +31,8 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.VcsNotificationIdsHolder;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
@@ -37,6 +40,7 @@ import com.intellij.openapi.vcs.changes.committed.RefreshIncomingChangesAction;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
@@ -243,12 +247,32 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       return result.isEmpty() ? null : result;
     });
     sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
-      VirtualFile selectedFile = selectedPath != null ? selectedPath.getVirtualFile() : null;
-      return selectedFile != null ? new OpenFileDescriptor(myProject, selectedFile) : null;
+      if (selectedPath == null) return null;
+      VirtualFile selectedFile = selectedPath.getVirtualFile();
+      return selectedFile != null ? new OpenFileDescriptor(myProject, selectedFile) : new MissingFileNavigatable(myProject, selectedPath);
     });
     sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       return VfsUtil.toVirtualFileArray(ContainerUtil.mapNotNull(selectedFilePaths, FilePath::getVirtualFile));
     });
+  }
+
+  /** Navigation to a file that no longer exists on disk: warns instead of doing nothing. */
+  private record MissingFileNavigatable(@NotNull Project project, @NotNull FilePath path) implements Navigatable {
+    @Override
+    public void navigate(boolean requestFocus) {
+      String message = VcsBundle.message("update.info.file.not.found", StringUtil.escapeXmlEntities(path.getPresentableUrl()));
+      VcsNotifier.getInstance(project).notifyMinorWarning(VcsNotificationIdsHolder.UPDATED_FILE_NOT_FOUND, message);
+    }
+
+    @Override
+    public boolean canNavigate() {
+      return true;
+    }
+
+    @Override
+    public boolean canNavigateToSource() {
+      return true;
+    }
   }
 
   private final class MyTreeIterator implements Iterator<Pair<FilePath, FileStatus>> {

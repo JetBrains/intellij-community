@@ -35,6 +35,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
       PATCH_CREATION_FAILED,
       PROJECT_PARTIALLY_UPDATED,
       PROJECT_UPDATE_FINISHED,
+      UPDATED_FILE_NOT_FOUND,
       ROOT_ADDED,
       ROOTS_INVALID,
       ROOTS_REGISTERED,
@@ -85,6 +86,7 @@ class VcsNotificationIdsHolder : NotificationIdsHolder {
     const val PATCH_CREATION_FAILED = "vcs.patch.creation.failed"
     const val PROJECT_PARTIALLY_UPDATED = "vcs.project.partially.updated"
     const val PROJECT_UPDATE_FINISHED = "vcs.project.update.finished"
+    const val UPDATED_FILE_NOT_FOUND = "vcs.updated.file.not.found"
     const val ROOT_ADDED = "vcs.root.added"
     const val ROOTS_INVALID = "vcs.roots.invalid"
     const val ROOTS_REGISTERED = "vcs.roots.registered"

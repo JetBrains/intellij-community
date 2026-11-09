@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.update
 
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataMap
@@ -20,6 +23,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.pom.Navigatable
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -149,10 +153,39 @@ class UpdateInfoTreeTest {
         assertThat(data.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY)).containsExactly(vFile(cachedModified))
         assertThat(data.lazy(VcsDataKeys.FILE_PATHS)).isNull()
 
-        assertThat(missingData.lazy(CommonDataKeys.NAVIGATABLE)).isNull()
+        assertThat(missingData.lazy(CommonDataKeys.NAVIGATABLE)).isNotNull().isNotInstanceOf(OpenFileDescriptor::class.java)
         assertThat(missingData.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY)).isEmpty()
         assertThat(missingData.lazy(VcsDataKeys.FILE_PATHS)).containsExactly(filePath(missing))
       }
+    }
+  }
+
+  @Test
+  fun `navigation to a missing file warns`() {
+    val missing = path("missing/m.txt")
+    val files = UpdatedFiles.create()
+    addAll(files, FileGroup.REMOVED_FROM_REPOSITORY_ID, listOf(missing))
+
+    withTree(files) { tree ->
+      val notifications = ArrayList<Notification>()
+      project.messageBus.connect(tree).subscribe(Notifications.TOPIC, object : Notifications {
+        override fun notify(notification: Notification) {
+          notifications.add(notification)
+        }
+      })
+      jTree(tree).selectionPath = TreePath(fileNode(tree, missing).path)
+      val data = RecordingSink().also { tree.uiDataSnapshot(it) }
+      var navigatable: Navigatable? = null
+      offEdt { navigatable = data.lazy(CommonDataKeys.NAVIGATABLE) }
+
+      assertThat(navigatable).isNotInstanceOf(OpenFileDescriptor::class.java)
+      assertThat(navigatable!!.canNavigate()).isTrue()
+      navigatable!!.navigate(true)
+
+      assertThat(notifications).singleElement().satisfies({
+        assertThat(it.type).isEqualTo(NotificationType.WARNING)
+        assertThat(it.content).contains(FileUtil.toSystemDependentName(missing))
+      })
     }
   }
 
