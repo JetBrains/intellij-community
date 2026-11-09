@@ -136,7 +136,8 @@ class PythonInterpreterRoots(private val project: Project, private val scope: Co
 
   /** Checks every interpreter that has roots, after a change of the facts that names no interpreter. */
   private fun refreshAll() {
-    for (key in roots.keys.toList()) interpreterOf(key)?.let(::refresh)
+    // The iterator of the map skips a key that [retain] removes on another thread. A copy of the keys can throw then.
+    for (key in roots.keys) interpreterOf(key)?.let(::refresh)
   }
 
   private fun interpreterOf(key: PythonInterpreterKey): PythonInterpreter? =
