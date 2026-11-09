@@ -14,6 +14,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.reportSoftAssertFailure
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ref.DebugReflectionUtil
@@ -75,12 +76,13 @@ private fun collectAllNonDisposedProjects(unitTestProject: Project?): Set<Projec
 
 @ApiStatus.Internal
 @TestOnly
-fun testWorkspaceModelLeak(unitTestProject: Project? = null) {
+@JvmOverloads
+fun testWorkspaceModelLeak(unitTestProject: Project? = null, testClass: Class<*>? = null) {
   if (!CHECK_WORKSPACE_MODEL_LEAKS) {
     return
   }
 
-  doTestWorkspaceModelLeak(unitTestProject)
+  doTestWorkspaceModelLeak(unitTestProject, testClass)
 }
 
 @ApiStatus.Internal
@@ -136,7 +138,7 @@ private val IGNORED_FIELDS = setOf(
 private const val LEAKED_WSM = "leakedWorkspaceModel"
 
 @TestOnly
-private fun doTestWorkspaceModelLeak(unitTestProject: Project? = null) {
+private fun doTestWorkspaceModelLeak(unitTestProject: Project? = null, testClass: Class<*>? = null) {
   if (ApplicationManager.getApplication() == null) {
     return
   }
@@ -170,7 +172,9 @@ private fun doTestWorkspaceModelLeak(unitTestProject: Project? = null) {
     }
     catch (e: AssertionError) {
       publishHeapDump(LEAKED_WSM)
-      throw AssertionError(e)
+      val testName = testClass?.let { "Workspace model leak in test ${it.name}" } ?: "Workspace model leak"
+      reportSoftAssertFailure(testName, e)
+      return
     }
     catch (e: ProcessCanceledException) {
       val cause = e.cause

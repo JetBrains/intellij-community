@@ -120,7 +120,7 @@ class TestCaseXmlRenderer {
     return testPlan.getParent(testIdentifier).map(TestIdentifier::getLegacyReportingName).orElse("<unrooted>");
   }
 
-  private void writeThrowableMessage(XMLStreamWriter xml, TestExecutionResult result)
+  static void writeThrowableMessage(XMLStreamWriter xml, TestExecutionResult result)
     throws XMLStreamException {
     Throwable throwable = null;
     if (result != null) {

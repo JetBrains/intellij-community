@@ -397,7 +397,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
     RunAll.runAll(
-      () -> testWorkspaceModelLeak(project),
+      () -> testWorkspaceModelLeak(project, getClass()),
       () -> {
         if (ApplicationManager.getApplication() != null) {
           CodeStyle.dropTemporarySettings(project);

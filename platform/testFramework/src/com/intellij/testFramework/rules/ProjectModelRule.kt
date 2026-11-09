@@ -73,7 +73,7 @@ open class ProjectModelRule : TestRule {
 
     public override fun after() {
       runAll(
-        { testWorkspaceModelLeak(project) },
+        { testWorkspaceModelLeak(project, testClass) },
         { PlatformTestUtil.forceCloseProjectWithoutSaving(project) },
         { filePointerTracker.assertPointersAreDisposed() },
         { _project = null }

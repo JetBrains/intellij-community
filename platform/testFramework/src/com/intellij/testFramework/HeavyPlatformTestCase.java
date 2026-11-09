@@ -472,7 +472,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     //noinspection Convert2MethodRef
     EdtTestUtil.runInEdtAndWait(() -> {
       RunAll.runAll(
-        () -> testWorkspaceModelLeak(myProject),
+        () -> testWorkspaceModelLeak(myProject, getClass()),
         () -> disposeRootDisposable(),
         () -> {
           if (project != null) {

@@ -2,6 +2,25 @@
 package com.intellij.testFramework
 
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter
+import com.intellij.tests.bazel.SoftAssertFailureXmlReporter
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+
+@ApiStatus.Internal
+fun reportSoftAssertFailure(testName: String, failure: AssertionError) {
+  if (!TeamCityLogger.isUnderTC) throw failure
+
+  val kind = TeamCityReporter.SyntheticTestKind.SOFT_ASSERT_FAILURE
+  System.getenv("TEST_UNDECLARED_OUTPUTS_DIR")?.let { outputDir ->
+    System.err.println(testName)
+    failure.printStackTrace(System.err)
+    SoftAssertFailureXmlReporter.writeReport(Path.of(outputDir), "(${kind.prefix} $testName)", failure)
+    return
+  }
+
+  TeamCityReporter.reportTestLifecycle(testName, TeamCityReporter.TestOutcome.FAILED, failure.message.orEmpty(), failure.stackTraceToString(),
+                                     generifyTestName = false, syntheticTestKind = kind)
+}
 
 internal fun ErrorLog.reportAsFailures() {
   val errors = takeLoggedErrors()
