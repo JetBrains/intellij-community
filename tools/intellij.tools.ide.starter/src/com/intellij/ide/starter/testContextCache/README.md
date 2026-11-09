@@ -67,5 +67,9 @@ The `system` directory is not copied. The IDE writes to a live VFS during the co
 Only a stopped VFS is safe to copy, and a stop for each reuse would cost a warm-up launch. The path is the real
 directory, not a symlink, so it needs no special case on Windows, in a delete, or in a walk.
 
+`Starter.newTestContextFromCache()` deletes the cache of the global workspace model in the `system` directory. That
+cache holds the SDK table of the `config` of the test before. The IDE then reads the SDK table from its own `config` at
+the start.
+
 A failed test does not drop the cache entry. The next test rewinds the project files and keeps the `system` directory.
 After a crash, the next IDE opens it as after a crash, and keeps the VFS and the indexes.

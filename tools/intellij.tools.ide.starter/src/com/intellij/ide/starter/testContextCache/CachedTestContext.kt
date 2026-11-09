@@ -82,11 +82,24 @@ class CachedTestContext internal constructor(val testContext: IDETestContext) {
    * A current test context shares the `system` directory of its cached context, and every cached context has its own.
    * A split context has a second one for the frontend, and a split run holds the frontend context.
    */
-  internal fun isSourceOf(testContext: IDETestContext): Boolean {
-    val cachedSystemDirs = listOfNotNull(this.testContext, (this.testContext as? IDERemDevTestContext)?.frontendIDEContext)
-      .map { it.paths.systemDir }
-    return testContext.paths.systemDir in cachedSystemDirs
+  internal fun isSourceOf(testContext: IDETestContext): Boolean = testContext.paths.systemDir in systemDirs()
+
+  /**
+   * Deletes the cache of the global workspace model in each `system` directory of this entry. No IDE may run on
+   * them during this call.
+   *
+   * The cache holds the SDK table and the global libraries of the `config` of the test before. The IDE replaces them
+   * from its own `config` 5 s after the start, and that removes an SDK that the IDE registered meanwhile.
+   */
+  @OptIn(ExperimentalPathApi::class)
+  internal fun deleteGlobalModelCache() {
+    for (systemDir in systemDirs()) {
+      systemDir.resolve(GLOBAL_MODEL_CACHE_DIR_NAME).deleteRecursively()
+    }
   }
+
+  private fun systemDirs(): List<Path> =
+    listOfNotNull(testContext, (testContext as? IDERemDevTestContext)?.frontendIDEContext).map { it.paths.systemDir }
 
   /**
    * Rewinds the project files to the prepared state. No IDE may run on them during this call.
@@ -177,6 +190,9 @@ private fun currentContextRoot(sourceContextRoot: Path, contextDirName: String):
   val productRoot = cacheRelativeContextRoot.parent ?: Path.of("")
   return GlobalPaths.instance.testsDirectory.resolve(productRoot).resolve(contextDirName)
 }
+
+/** The value of `GlobalWorkspaceModelCacheImpl.DATA_DIR_NAME`, the directory of the global workspace model cache. */
+private const val GLOBAL_MODEL_CACHE_DIR_NAME = "global-model-cache"
 
 private fun IDETestContext.overrideOwnDirectories() {
   if (this is IDERemDevTestContext) {

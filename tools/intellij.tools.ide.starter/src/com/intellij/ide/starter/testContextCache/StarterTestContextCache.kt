@@ -10,7 +10,8 @@ import com.intellij.tools.ide.util.common.logOutput
  *
  * For a test that starts and stops an IDE of its own. The project files go back to the prepared state first, so the
  * test starts from the state that [CachedProjectConfiguration.setup] left, whatever the test before it did. The
- * context has its own `config` and `plugins`, and the one shared `system` directory of the cached context.
+ * context has its own `config` and `plugins`, and the one shared `system` directory of the cached context. The cache
+ * of the global workspace model in that directory is deleted, because it holds the SDK table of another `config`.
  *
  * The other way to reuse a prepared project is `@ReusedRun`, where one IDE serves a whole test class.
  */
@@ -22,6 +23,7 @@ fun Starter.newTestContextFromCache(configuration: CachedProjectConfiguration): 
   if (restored) {
     cachedTestContext.requestProjectFilesVfsRefresh()
   }
+  cachedTestContext.deleteGlobalModelCache()
   val currentTestContext = cachedTestContext.createCurrentTestContext(currentTestContextDirName())
   // the IDE takes in the rewound files before the other commands, see AT-5404
   currentTestContext.syncProjectFilesOnStart = restored
