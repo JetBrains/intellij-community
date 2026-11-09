@@ -38,6 +38,7 @@ intellij.copyright.tests
 intellij.debugger.jvm.advanced.java.tests
 intellij.debugger.jvm.advanced.mcpServer.tests
 intellij.debugger.logpoints.frontend.tests
+intellij.debugger.logpoints.java.tests
 intellij.debuggerMcp.tests
 intellij.dev.leakDetection.tests
 intellij.dev.pluginLoading.tests
