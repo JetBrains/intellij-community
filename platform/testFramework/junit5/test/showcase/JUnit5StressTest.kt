@@ -4,6 +4,8 @@ package com.intellij.testFramework.junit5.showcase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.testFramework.junit5.StressTestApplication
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -30,6 +32,10 @@ class JUnit5StressTest {
   // Lifecycle methods must observe stress mode too (guards against regressions where only test-method invocations are wrapped,
   // leaving @BeforeAll/@BeforeEach/@AfterEach/@AfterAll with isInStressTest()=false).
   companion object {
+    // The TestFixtureExtension callbacks set up and tear down the fixtures. These callbacks are not invocations, so the stress mode
+    // must stay on for the whole class, not only around each invocation.
+    private val classFixture = stressModeFixture("class fixture")
+
     @JvmStatic
     @BeforeAll
     fun ensureStressInBeforeAll() {
@@ -41,6 +47,14 @@ class JUnit5StressTest {
     fun ensureStressInAfterAll() {
       assertTrue(ApplicationManagerEx.isInStressTest(), "@AfterAll should run in stress mode")
     }
+  }
+
+  private val testFixture = stressModeFixture("test fixture")
+
+  @Test
+  fun `ensure stress in fixtures`() {
+    classFixture.get()
+    testFixture.get()
   }
 
   @BeforeEach
@@ -85,5 +99,12 @@ class JUnit5StressTest {
         }
       )),
     )
+  }
+}
+
+private fun stressModeFixture(name: String): TestFixture<Unit> = testFixture {
+  assertTrue(ApplicationManagerEx.isInStressTest(), "The setup of the $name should run in stress mode")
+  initialized(Unit) {
+    assertTrue(ApplicationManagerEx.isInStressTest(), "The teardown of the $name should run in stress mode")
   }
 }
