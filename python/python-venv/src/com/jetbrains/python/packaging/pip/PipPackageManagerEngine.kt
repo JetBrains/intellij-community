@@ -44,8 +44,7 @@ class PipPackageManagerEngine(
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
     val output = runPackagingTool("list_outdated", listOf()).getOr { return it }
-    val packages = PipParseUtils.parseOutdatedOutputs(output)
-    return PyResult.success(packages)
+    return PipParseUtils.parseOutdatedOutputs(output)
   }
 
   override suspend fun updatePackageCommand(vararg specifications: PythonRepositoryPackageSpecification): PyResult<Unit> {
