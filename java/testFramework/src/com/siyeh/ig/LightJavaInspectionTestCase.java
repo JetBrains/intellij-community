@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
-import com.intellij.JavaTestUtil;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -13,7 +12,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
@@ -21,7 +19,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.TestDataPath;
-import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.Language;
@@ -34,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 @TestDataPath("$CONTENT_ROOT/testData/ig/")
 public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFixtureTestCase {
 
-  public static final String INSPECTION_GADGETS_TEST_DATA_PATH = "/java/java-tests/testData/ig/";
+  public static final String INSPECTION_GADGETS_TEST_DATA_PATH = LightJavaInspectionFixture.INSPECTION_GADGETS_TEST_DATA_PATH;
 
   @Override
   protected void setUp() throws Exception {
@@ -158,50 +155,12 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
 
   @Override
   protected String getTestDataPath() {
-    if (BazelTestUtil.isUnderBazelTest()) {
-      String basePath = getBasePath();
-      if (basePath.startsWith(INSPECTION_GADGETS_TEST_DATA_PATH)) {
-        return JavaTestUtil.getJavaTestDataPath() + "/ig/" + basePath.substring(INSPECTION_GADGETS_TEST_DATA_PATH.length());
-      }
-    }
-    return super.getTestDataPath();
+    return LightJavaInspectionFixture.inspectionTestDataPath(getBasePath());
   }
 
   @Override
   protected String getBasePath() {
-    final String className = getInspectionClass().getName();
-    final String[] words = className.split("\\.");
-    final StringBuilder basePath = new StringBuilder(INSPECTION_GADGETS_TEST_DATA_PATH);
-    final int lastWordIndex = words.length - 1;
-    for (int i = 0; i < lastWordIndex; i++) {
-      String word = words[i];
-      if (word.equals("ig")) {
-        //noinspection SpellCheckingInspection
-        word = "igtest";
-      }
-      basePath.append(word).append('/');
-    }
-    String lastWord = words[lastWordIndex];
-    lastWord = StringUtil.trimEnd(lastWord, "Inspection");
-    final int length = lastWord.length();
-    boolean upperCase = false;
-    for (int i = 0; i < length; i++) {
-      final char ch = lastWord.charAt(i);
-      if (Character.isUpperCase(ch)) {
-        if (!upperCase) {
-          upperCase = true;
-          if (i != 0) {
-            basePath.append('_');
-          }
-        }
-        basePath.append(Character.toLowerCase(ch));
-      }
-      else {
-        upperCase = false;
-        basePath.append(ch);
-      }
-    }
-    return basePath.toString();
+    return LightJavaInspectionFixture.inspectionBasePath(getInspectionClass());
   }
 
   protected Class<? extends InspectionProfileEntry> getInspectionClass() {

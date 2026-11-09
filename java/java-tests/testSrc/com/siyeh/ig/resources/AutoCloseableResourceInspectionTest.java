@@ -7,21 +7,33 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Bas Leijdekkers
  * @noinspection resource
  */
-public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class AutoCloseableResourceInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection(), getEnvironmentClasses());
 
-
+  @Test
   public void testCorrectClose() {
     // No highlighting because str was closed and we have ignoreResourcesWithClose option set
     //noinspection EmptyTryBlock
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
              class X {
                  public static void m() throws IOException {
@@ -36,8 +48,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              """);
   }
 
+  @Test
   public void testEscape() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
              class X {
                static void m() throws IOException {
@@ -50,11 +63,12 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              """);
   }
 
+  @Test
   public void testEscape2() {
     final AutoCloseableResourceInspection inspection = new AutoCloseableResourceInspection();
     inspection.anyMethodMayClose = false;
-    myFixture.enableInspections(inspection);
-    doTest("""
+    inspectionFixture.get().getFixture().enableInspections(inspection);
+    inspectionFixture.get().doTest("""
              import java.io.*;
              class X {
                static void m() throws IOException {
@@ -67,8 +81,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              """);
   }
 
+  @Test
   public void testEscape3() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
              class X {
                static void m() throws IOException {
@@ -78,9 +93,10 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              """);
   }
 
+  @Test
   public void testARM() {
     mockSql();
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.sql.*;
              class X {
                static void m(Driver driver) throws SQLException {
@@ -94,15 +110,15 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   }
 
   private void mockSql() {
-    addEnvironmentClass("package java.sql;\n" +
+    inspectionFixture.get().addEnvironmentClass("package java.sql;\n" +
                         "public interface Driver { Connection connect(String s, Object o) throws SQLException;}");
-    addEnvironmentClass("package java.sql;\n" +
+    inspectionFixture.get().addEnvironmentClass("package java.sql;\n" +
                         "public interface Connection extends AutoCloseable { PreparedStatement prepareStatement(String s);}");
-    addEnvironmentClass("package java.sql;\n" +
+    inspectionFixture.get().addEnvironmentClass("package java.sql;\n" +
                         "public interface PreparedStatement extends AutoCloseable { ResultSet executeQuery();}");
-    addEnvironmentClass("package java.sql;\n" +
+    inspectionFixture.get().addEnvironmentClass("package java.sql;\n" +
                         "public class SQLException extends Exception {}");
-    addEnvironmentClass("""
+    inspectionFixture.get().addEnvironmentClass("""
                           package java.sql;
                           public interface ResultSet extends AutoCloseable {
                             boolean next();
@@ -110,9 +126,10 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
                           }""");
   }
 
+  @Test
   public void testSimple() {
     mockSql();
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.sql.*;
              class X {
                static void m(Driver driver) throws SQLException {
@@ -122,8 +139,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              """);
   }
 
+  @Test
   public void testSystemOut() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                static void m(String s) {
                  System.out.printf("asdf %s", s);
@@ -133,8 +151,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              """);
   }
 
+  @Test
   public void testMethodReference() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;
              class X {
                void m(List<String> list) {
@@ -151,8 +170,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              """);
   }
 
+  @Test
   public void testFormatter() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;
              class TryWithResourcesFalsePositiveForFormatterFormat {
                  public static void useFormatter( Formatter output ) {
@@ -162,8 +182,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              """);
   }
 
+  @Test
   public void testWriterAppend() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
              class A {
                  private static void write(Writer writer) throws IOException {
@@ -173,8 +194,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              """);
   }
 
+  @Test
   public void testScanner() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.Scanner;
              class A {
                  static void a() throws java.io.IOException {
@@ -186,9 +208,10 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testTernary() {
     //noinspection EmptyTryBlock
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
 
              class X {
@@ -200,20 +223,15 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
-  }
-
+  @Test
   public void testFilesMethod() {
-    addEnvironmentClass("""
+    inspectionFixture.get().addEnvironmentClass("""
                           package java.nio.file;
                           import java.util.stream.Stream;
                           public final class Files {
                             public static Stream<String> lines(Path path) {return Stream.empty();}
                           }""");
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
              import java.nio.file.Files;
              import java.util.stream.Stream;
@@ -224,8 +242,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testClosedResource() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
 
              class X {
@@ -235,8 +254,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testContractParameter() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
 
              class X {
@@ -251,8 +271,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testContractThis() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
 
              class X implements Closeable {
@@ -269,9 +290,10 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testCallThenClose() {
     // No highlighting because str was closed and we have ignoreResourcesWithClose option set
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
 
              class X implements AutoCloseable {
@@ -288,8 +310,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   }
 
 
+  @Test
   public void testLambdaReturnsResource() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
 
              class X implements AutoCloseable {
@@ -306,8 +329,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testLambdaNotReturnsResource() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
 
              class X implements AutoCloseable {
@@ -325,8 +349,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
   }
 
 
+  @Test
   public void testResourcePassedToConstructorOfResource() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
 
              class X implements AutoCloseable {
@@ -339,8 +364,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testCreatedResourcePassedToConstructor() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
 
              class X implements AutoCloseable {
@@ -353,8 +379,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testCreatedResourcePassedToConstructorAsVar() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
 
              class X implements AutoCloseable {
@@ -368,8 +395,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testResourceAssigned() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class X implements AutoCloseable {
           @Override public void close() {}
@@ -385,9 +413,10 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testResourceObjectMethodReturnsAnotherResource() {
     // Expect error in case when it happens inside the resource itself
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class X implements AutoCloseable {
           @Override public void close() {}
@@ -398,8 +427,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testResourceEscapesToConstructor() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class X implements AutoCloseable {
           @Override public void close() {}
@@ -418,8 +448,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testIgnoredStreamPassedAsArgumentToNonIgnored() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import java.io.ByteArrayOutputStream;
         import java.io.IOException;
@@ -434,8 +465,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testConstructorClosesResource() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import java.io.ByteArrayOutputStream;
         import java.io.IOException;
@@ -453,8 +485,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testResourceClosed() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class Test{
           void test(){
@@ -473,8 +506,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testGetMethodNotConsideredAsResource() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class Test{
           void test(){
@@ -487,8 +521,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testBuilderMustNotBeTriggered() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class Test{
           void test(){
@@ -504,8 +539,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testFieldInitializationAsEscape() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class AC implements AutoCloseable {
           AC ac = new AC();
@@ -513,8 +549,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testTryAsReference() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class AC implements AutoCloseable {
           void test(boolean condition) {
@@ -527,8 +564,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
           @Override public void close(){}
         }""");
   }
+  @Test
   public void testReferenceReousrce() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import java.io.BufferedReader;
         import java.io.IOException;
@@ -547,8 +585,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testClose() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class AC implements AutoCloseable {
           void test() {
@@ -564,8 +603,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void test232779() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class AutoCloseableSample {
           public OAuth2AccessToken authenticateOAuth(String code) {
@@ -589,8 +629,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testOnlyLastBuilderCallInConsidered() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class AutoCloseableSample {
           void test() {
@@ -604,8 +645,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         }""");
   }
 
+  @Test
   public void testEscapeLoop1() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import java.io.FileOutputStream;
         import java.io.IOException;
@@ -627,8 +669,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         """);
   }
 
+  @Test
   public void testEscapeLoop2() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import java.io.FileOutputStream;
         import java.io.IOException;
@@ -651,7 +694,9 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
         """);
   }
 
+  @Test
   public void testIgnoreFix() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     try {
       myFixture.configureByText("X.java", """
@@ -669,19 +714,20 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
       IntentionAction intention = myFixture.findSingleIntention("Ignore 'AutoCloseable' returned by this method");
       myFixture.checkIntentionPreviewHtml(intention, "Add method <code>X.produce()</code> to the list of ignored methods");
       myFixture.launchAction(intention);
-      var inspection = (AutoCloseableResourceInspection)InspectionProfileManager.getInstance(getProject()).getCurrentProfile()
-        .getUnwrappedTool("AutoCloseableResource", getFile());
-      assertContainsElements(inspection.myMethodMatcher.getClassNames(), "X");
-      assertContainsElements(inspection.myMethodMatcher.getMethodNamePatterns(), "produce");
+      var inspection = (AutoCloseableResourceInspection)InspectionProfileManager.getInstance(myFixture.getProject()).getCurrentProfile()
+        .getUnwrappedTool("AutoCloseableResource", myFixture.getFile());
+      assertThat(inspection.myMethodMatcher.getClassNames()).contains("X");
+      assertThat(inspection.myMethodMatcher.getMethodNamePatterns()).contains("produce");
     }
     finally {
       InspectionProfileImpl.INIT_INSPECTIONS = false;
     }
   }
 
+  @Test
   public void testSwitchExpression() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> {
-      doTest("""
+    IdeaTestUtil.withLevel(inspectionFixture.get().getFixture().getModule(), LanguageLevel.JDK_21, () -> {
+      inspectionFixture.get().doTest("""
                import java.io.*;
                abstract class TestInputOutput {
                    enum FileSource { DEV_NULL, DEV_URANDOM, UNKNOWN}
@@ -716,15 +762,13 @@ public class AutoCloseableResourceInspectionTest extends LightJavaInspectionTest
     });
   }
 
-  @Override
-  protected LocalInspectionTool getInspection() {
+  private static LocalInspectionTool getInspection() {
     AutoCloseableResourceInspection inspection = new AutoCloseableResourceInspection();
     inspection.ignoreConstructorMethodReferences = false;
     return inspection;
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       """
       package java.util;
