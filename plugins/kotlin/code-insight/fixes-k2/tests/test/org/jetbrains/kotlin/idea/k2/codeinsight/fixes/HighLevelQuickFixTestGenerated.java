@@ -9107,6 +9107,26 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/underscoreWithMismatch.kt");
         }
 
+        @TestMetadata("valueClassForLoopNoWarn.kt")
+        public void testValueClassForLoopNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/valueClassForLoopNoWarn.kt");
+        }
+
+        @TestMetadata("valueClassLambdaNoWarn.kt")
+        public void testValueClassLambdaNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/valueClassLambdaNoWarn.kt");
+        }
+
+        @TestMetadata("valueClassNoWarn.kt")
+        public void testValueClassNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/valueClassNoWarn.kt");
+        }
+
+        @TestMetadata("valueClassRenamedEntriesNoWarn.kt")
+        public void testValueClassRenamedEntriesNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/valueClassRenamedEntriesNoWarn.kt");
+        }
+
         @TestMetadata("valueUsed.kt")
         public void testValueUsed() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingNameMismatch/valueUsed.kt");

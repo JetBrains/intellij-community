@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.extractPrimaryParameters
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFullValueClassDestructuring
 import org.jetbrains.kotlin.idea.codeinsight.utils.isPositionalDestructuringType
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConvertToPositionalDestructuringFix
@@ -86,6 +87,7 @@ internal class DestructingShortFormNameMismatchInspection : AbstractKotlinInspec
 
 context(session: KaSession)
 private fun analyzeDestructuringDeclaration(declaration: KtDestructuringDeclaration): DestructuringAnalysisResult? {
+    if (declaration.isFullValueClassDestructuring()) return null
     val constructorParameters = extractPrimaryParameters(declaration) ?: return null
 
     // Check if the destructured type is intended for positional destructuring (Pair, Triple, IndexedValue)
