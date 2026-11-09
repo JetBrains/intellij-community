@@ -5,10 +5,12 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 jps_test(
     name = "testRunner-tests_test",
     timeout = "moderate",
-    tags = ["community-aggregator"],
+    sandbox = True,
+    tags = [
+        "debugger-tests",
+    ],
     runtime_deps = [":testRunner-tests_test_lib"],
 )
-
 ### skip generation section `test intellij.platform.testRunner.tests`
 
 ### auto-generated section `dev intellij.platform.testRunner` start
