@@ -20,6 +20,6 @@ annotation class PerformanceTest
  * Tells if [PerformanceTest] marks [testMethod] or [testClass]. A class also takes the annotation of its enclosing
  * class, and, because the annotation is [Inherited], of its superclass.
  */
-internal fun isPerformanceTest(testClass: Class<*>?, testMethod: Method?): Boolean =
+fun isPerformanceTest(testClass: Class<*>?, testMethod: Method?): Boolean =
   testMethod?.isAnnotationPresent(PerformanceTest::class.java) == true ||
   generateSequence(testClass) { it.enclosingClass }.any { it.isAnnotationPresent(PerformanceTest::class.java) }
