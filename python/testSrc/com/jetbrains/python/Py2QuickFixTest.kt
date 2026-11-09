@@ -150,6 +150,26 @@ class Py2QuickFixTest : PyTestCase() {
     myFixture.findSingleIntention("Install and import package 'IPython'")
   }
 
+  @TestFor(issues = ["PY-55983"])
+  fun testInstallAndImportNotOfferedForClassNameThatRareProjectShipsAsModule(): Unit = timeoutRunBlocking {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(myFixture.project, availablePackageNames = listOf("pyrq", "mock"))
+
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    myFixture.configureByText(PythonFileType.INSTANCE, "m = Mock<caret>()")
+    assertTrue(myFixture.filterAvailableIntentions("Ignore unresolved reference").isNotEmpty())
+    assertEquals(emptyList<String>(), myFixture.filterAvailableIntentions("Install").map { it.text })
+  }
+
+  @TestFor(issues = ["PY-55983"])
+  fun testInstallAndImportNotOfferedForStandardLibraryClassName(): Unit = timeoutRunBlocking {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(myFixture.project, availablePackageNames = listOf("htmlparser"))
+
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    myFixture.configureByText(PythonFileType.INSTANCE, "parser = HTMLParser<caret>()")
+    assertTrue(myFixture.filterAvailableIntentions("Ignore unresolved reference").isNotEmpty())
+    assertEquals(emptyList<String>(), myFixture.filterAvailableIntentions("Install").map { it.text })
+  }
+
   fun testImportFromModule() {
     doInspectionTest(
       arrayOf("importFromModule/foo/bar.py", "importFromModule/foo/baz.py", "importFromModule/foo/__init__.py"),
