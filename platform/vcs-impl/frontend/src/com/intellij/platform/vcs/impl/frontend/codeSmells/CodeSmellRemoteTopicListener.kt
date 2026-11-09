@@ -11,6 +11,6 @@ internal class CodeSmellRemoteTopicListener : ProjectRemoteTopicListener<ShowCod
   override val topic: ProjectRemoteTopic<ShowCodeSmellRequest> = CODE_SMELL_REMOTE_TOPIC
 
   override fun handleEvent(project: Project, event: ShowCodeSmellRequest) {
-    FrontendCodeSmellService.getInstance(project).showCodeSmellsInToolWindow(event.smells)
+    FrontendCodeSmellService.getInstance(project).showCodeSmellsInToolWindow(event.smells, event.tabTitle)
   }
 }

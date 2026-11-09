@@ -2,6 +2,7 @@
 package com.intellij.platform.vcs.impl.shared
 
 import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
@@ -18,9 +19,13 @@ data class CodeSmellDto(
   val severityValue: Int
 )
 
+/** [tabTitle] is the title of the tab that shows the problems.*/
 @ApiStatus.Internal
 @Serializable
-data class ShowCodeSmellRequest(val smells: List<CodeSmellDto>)
+data class ShowCodeSmellRequest(
+  val smells: List<CodeSmellDto>,
+  val tabTitle: @NlsContexts.TabTitle String
+)
 
 @ApiStatus.Internal
 val CODE_SMELL_REMOTE_TOPIC: ProjectRemoteTopic<ShowCodeSmellRequest> = ProjectRemoteTopic("vcs.codeSmell.show", ShowCodeSmellRequest.serializer())

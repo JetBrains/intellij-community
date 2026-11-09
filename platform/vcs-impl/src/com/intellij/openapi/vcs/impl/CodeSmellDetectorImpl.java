@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -63,8 +64,14 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
   @Override
   public void showCodeSmellErrors(@NotNull @Unmodifiable List<? extends CodeSmellInfo> smellList) {
+    showCodeSmellErrors(smellList, VcsBundle.message("code.smells.error.messages.tab.name"));
+  }
+
+  @Override
+  public void showCodeSmellErrors(@NotNull @Unmodifiable List<? extends CodeSmellInfo> smellList,
+                                  @NotNull @NlsContexts.TabTitle String tabTitle) {
     if (isSplitProblemsViewKeyEnabled()) { // rem-dev implementation
-      showCodeSmellErrorsInFrontend(smellList, myProject);
+      showCodeSmellErrorsInFrontend(smellList, myProject, tabTitle);
       return;
     }
 
@@ -100,10 +107,10 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
       }
 
-      boolean shownInProblemsViewToolWindow = showCodeSmellsPanelInToolWindow(myProject, errorTreeView);
+      boolean shownInProblemsViewToolWindow = showCodeSmellsPanelInToolWindow(myProject, errorTreeView, tabTitle);
       if (!shownInProblemsViewToolWindow) {
         AbstractVcsHelperImpl helper = (AbstractVcsHelperImpl)AbstractVcsHelper.getInstance(myProject);
-        helper.openMessagesView(errorTreeView, VcsBundle.message("code.smells.error.messages.tab.name"));
+        helper.openMessagesView(errorTreeView, tabTitle);
       }
     });
   }

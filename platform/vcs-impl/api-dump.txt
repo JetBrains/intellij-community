@@ -196,6 +196,7 @@ a:com.intellij.openapi.vcs.CodeSmellDetector
 - a:findCodeSmells(java.util.List):java.util.List
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.CodeSmellDetector
 - a:showCodeSmellErrors(java.util.List):V
+- a:showCodeSmellErrors(java.util.List,java.lang.String):V
 c:com.intellij.openapi.vcs.VcsNotifier
 - sf:IMPORTANT_NOTIFICATION_GROUP_ID:java.lang.String
 - pf:myProject:com.intellij.openapi.project.Project

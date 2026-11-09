@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.codeInsight.CodeSmellInfo;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -32,4 +33,12 @@ public abstract class CodeSmellDetector {
    */
   public abstract void showCodeSmellErrors(@NotNull @Unmodifiable List<? extends CodeSmellInfo> smells);
 
+  /**
+   * Shows the specified list of problems in a Messages pane with the specified tab title.
+   *
+   * @param smells   the problems to show.
+   * @param tabTitle the title of the tab that shows the problems.
+   */
+  public abstract void showCodeSmellErrors(@NotNull @Unmodifiable List<? extends CodeSmellInfo> smells,
+                                           @NotNull @NlsContexts.TabTitle String tabTitle);
 }

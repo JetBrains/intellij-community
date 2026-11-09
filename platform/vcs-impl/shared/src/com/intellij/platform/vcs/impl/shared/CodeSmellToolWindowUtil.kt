@@ -4,7 +4,7 @@ package com.intellij.platform.vcs.impl.shared
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.impl.ContentImpl
@@ -13,8 +13,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 val CODE_SMELL_DETECTOR_KEY: Key<Boolean> = Key.create("CODE_SMELL_DETECTOR_KEY")
 
+/** Shows [panel] in the Problems View tool window as a tab with the title [tabTitle], and replaces the previous code-smell tab. */
 @ApiStatus.Internal
-fun showCodeSmellsPanelInToolWindow(project: Project, panel: NewErrorTreeViewPanel) : Boolean {
+fun showCodeSmellsPanelInToolWindow(
+  project: Project,
+  panel: NewErrorTreeViewPanel,
+  tabTitle: @NlsContexts.TabTitle String,
+): Boolean {
   val toolWindow = if (project.isDisposed) null else ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROBLEMS_VIEW)
   if (toolWindow != null && toolWindow.isAvailable) {
     toolWindow.activate({
@@ -27,7 +32,7 @@ fun showCodeSmellsPanelInToolWindow(project: Project, panel: NewErrorTreeViewPan
         }
       }
 
-      val content = ContentImpl(panel, VcsBundle.message("code.smells.error.messages.tab.name"), true)
+      val content = ContentImpl(panel, tabTitle, true)
       content.putUserData(CODE_SMELL_DETECTOR_KEY, true)
       contentManager.addContent(content)
       contentManager.setSelectedContent(content, true)

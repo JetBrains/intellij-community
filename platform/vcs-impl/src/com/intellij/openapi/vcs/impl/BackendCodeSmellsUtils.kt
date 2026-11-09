@@ -7,6 +7,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.rpc.topics.broadcast
 import com.intellij.platform.vcs.impl.shared.CODE_SMELL_REMOTE_TOPIC
@@ -15,14 +16,18 @@ import com.intellij.platform.vcs.impl.shared.ShowCodeSmellRequest
 
 private val LOG = logger<CodeSmellDetectorImpl>()
 
-internal fun showCodeSmellErrorsInFrontend(smellList: List<@JvmWildcard CodeSmellInfo>, project: Project){
+internal fun showCodeSmellErrorsInFrontend(
+  smellList: List<@JvmWildcard CodeSmellInfo>,
+  project: Project,
+  tabTitle: @NlsContexts.TabTitle String,
+) {
   val dtos = convertToDtos(smellList)
   if (dtos.isEmpty()) {
     LOG.debug("the list of code smells is empty, nothing will be displayed")
     return
   }
 
-  val showCodeSmellRequest = ShowCodeSmellRequest(dtos)
+  val showCodeSmellRequest = ShowCodeSmellRequest(dtos, tabTitle)
   CODE_SMELL_REMOTE_TOPIC.broadcast(project, showCodeSmellRequest)
 }
 
