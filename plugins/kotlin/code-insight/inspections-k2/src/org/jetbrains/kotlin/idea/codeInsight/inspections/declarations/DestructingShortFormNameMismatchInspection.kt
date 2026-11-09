@@ -72,7 +72,7 @@ internal class DestructingShortFormNameMismatchInspection : AbstractKotlinInspec
             } else {
                 // For regular data classes: offer rename fix on each mismatched entry
                 // (full form conversion is available as a separate intention)
-                for ((entry, expectedName) in analysisResult.entriesWithNameMismatch) {
+                for ([entry, expectedName] in analysisResult.entriesWithNameMismatch) {
                     holder.registerProblem(
                         entry,
                         KotlinBundle.message("inspection.destruction.declaration.mismatch"),
@@ -93,11 +93,10 @@ private fun analyzeDestructuringDeclaration(declaration: KtDestructuringDeclarat
 
     // Find all entries with name mismatch
     val entriesWithNameMismatch = declaration.entries.zip(constructorParameters)
-        .filter { (entry, param) ->
+        .filter { [entry, param] ->
             val entryName = entry.nameAsName
             entryName != null && entryName != param.name
-        }
-        .map { (entry, param) -> entry to param.name }
+        }.map { [entry, param] -> entry to param.name }
 
     return DestructuringAnalysisResult(
         preferPositionalDestructuring = isPositionalDestructuring,
@@ -137,12 +136,12 @@ private class RenameVariableToMatchPropertiesQuickFix(
 
         fun getContainingBlock(element: PsiElement): KtElement? = element.parent.parent as? KtElement
 
-        val (firstElementToRename, firstNameToRename) = firstToRename
+        val [firstElementToRename, firstNameToRename] = firstToRename
         psiElementsToIgnore.add(firstElementToRename)
         scopes[firstNameToRename] = getContainingBlock(firstElementToRename)?.let { mutableSetOf(it) } ?: mutableSetOf()
         object : RenameProcessor(project, firstElementToRename, firstNameToRename, false, false) {
             init {
-                elementToName.subList(1, elementToName.size).forEach { (element, name) ->
+                elementToName.subList(1, elementToName.size).forEach { [element, name] ->
                     val scope = getContainingBlock(element)
                     val namedScopes = scopes.getOrPut(name) { mutableSetOf() }
                     if (scope != null && namedScopes.none { PsiTreeUtil.isAncestor(it, scope, false) } && namedScopes.add(scope)) {
