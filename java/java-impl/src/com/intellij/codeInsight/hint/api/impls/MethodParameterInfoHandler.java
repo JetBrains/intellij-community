@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.api.impls;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -946,13 +946,16 @@ public final class MethodParameterInfoHandler
 
   @Override
   public void syncUpdateOnCaretMove(@NotNull UpdateParameterInfoContext context) {
-    if (!Registry.is("editor.completion.hints.virtual.comma")) return;
-
     Project project = context.getProject();
     Editor editor = context.getEditor();
     if (editor instanceof EditorWindow) return;
-    int inlaysBeforeCaretWithComma = getInlaysBeforeCaretWithComma(editor);
-    if (inlaysBeforeCaretWithComma == 0) return;
+    int inlaysBeforeCaretWithComma = Registry.is("editor.completion.hints.virtual.comma") ? getInlaysBeforeCaretWithComma(editor) : 0;
+    if (inlaysBeforeCaretWithComma == 0) {
+      if (isAfterComma(editor)) {
+        updateHintsBeforeCommandEnd(context);
+      }
+      return;
+    }
 
     EditorUtil.performBeforeCommandEnd(() -> {
       if (project.isDisposed() || editor.isDisposed()) return;
@@ -973,6 +976,26 @@ public final class MethodParameterInfoHandler
       if (call == null || !call.isValid()) return;
       int index = ParameterInfoUtils.getCurrentParameterIndex(exprList.getNode(), editor.getCaretModel().getOffset(), JavaTokenType.COMMA);
       asyncHighlightHints(editor, (PsiExpressionList)exprList, index, context.getCustomContext());
+    });
+  }
+
+  private static boolean isAfterComma(@NotNull Editor editor) {
+    CharSequence text = editor.getDocument().getImmutableCharSequence();
+    int offset = CharArrayUtil.shiftBackward(text, editor.getCaretModel().getOffset() - 1, WHITESPACE_OR_LINE_BREAKS);
+    return offset >= 0 && text.charAt(offset) == ',';
+  }
+
+  private void updateHintsBeforeCommandEnd(@NotNull UpdateParameterInfoContext context) {
+    if (!(context.getParameterOwner() instanceof PsiExpressionList exprList) || !exprList.isValid() ||
+        !(exprList.getParent() instanceof PsiCallExpression call) || !JavaMethodCallElement.isCompletionMode(call)) {
+      return;
+    }
+    Project project = context.getProject();
+    Editor editor = context.getEditor();
+    EditorUtil.performBeforeCommandEnd(() -> {
+      if (project.isDisposed() || editor.isDisposed()) return;
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      if (exprList.isValid()) processFoundElementForUpdatingParameterInfo(exprList, context);
     });
   }
 

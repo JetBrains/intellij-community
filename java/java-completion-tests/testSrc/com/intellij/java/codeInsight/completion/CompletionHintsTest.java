@@ -1657,9 +1657,27 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
     complete("toChars(int codePoint, char[] dst, int dstIndex)");
     type("codePoin");
     completeSmart("codePoint");
-    checkResultWithInlays("class C { int codePoint = 123; void m() { Character.toChars(<HINT text=\"codePoint:\"/>codePoint, <hint text=\"dst:\"/><caret><Hint text=\",dstIndex:\"/>) } }");
+    checkResultWithInlays("class C { int codePoint = 123; void m() { Character.toChars(<Hint text=\"codePoint:\"/>codePoint, <HINT text=\"dst:\"/><caret><Hint text=\",dstIndex:\"/>) } }");
     waitForAllAsyncStuff();
     checkResultWithInlays("class C { int codePoint = 123; void m() { Character.toChars(<Hint text=\"codePoint:\"/>codePoint, <HINT text=\"dst:\"/><caret><Hint text=\",dstIndex:\"/>) } }");
+  }
+
+  public void testHintsUpdatedAfterSmartCompletionOfVariableArgument() {
+    doTestHintsAfterSmartCompletionOfArgument("cls");
+  }
+
+  public void testHintsUpdatedAfterSmartCompletionOfClassLiteralArgument() {
+    doTestHintsAfterSmartCompletionOfArgument("String.class");
+  }
+
+  private void doTestHintsAfterSmartCompletionOfArgument(String argument) {
+    configureJava("class C { Class<String> cls; void accept(Class<String> first, int second) {} void m() { acc<caret> } }");
+    complete();
+    waitForParameterInfo();
+    completeSmart(argument);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    checkResultWithInlays("class C { Class<String> cls; void accept(Class<String> first, int second) {} void m() { accept(<Hint text=\"first:\"/>" +
+                          argument + ", <HINT text=\"second:\"/><caret>); } }");
   }
 
   public void testOverloadSwitchingForVarargMethod() {

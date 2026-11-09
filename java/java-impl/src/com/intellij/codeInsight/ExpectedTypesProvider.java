@@ -4,13 +4,9 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.JavaFrontendCompletionUtil;
-import com.intellij.codeInsight.completion.JavaMethodCallElement;
-import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.lookup.CommaTailType;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ModNavigator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NullableComputable;
@@ -45,7 +41,6 @@ import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiDiamondType;
 import com.intellij.psi.PsiDiamondTypeImpl;
 import com.intellij.psi.PsiDoWhileStatement;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiEnumConstant;
@@ -1465,22 +1460,7 @@ public final class ExpectedTypesProvider {
         if (returnType != null) returnType = substitutor.substitute(returnType);
         return getFinalCallParameterTailType(call, returnType, method);
       }
-      if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
-        PsiCall completedOuterCall = getCompletedOuterCall(argument);
-        if (completedOuterCall != null) return new CommaTailTypeWithSyncHintUpdate(completedOuterCall);
-      }
       return CommaTailType.INSTANCE;
-    }
-
-    private static @Nullable PsiCall getCompletedOuterCall(@NotNull PsiExpression argument) {
-      PsiElement expressionList = argument.getParent();
-      if (expressionList instanceof PsiExpressionList && expressionList.getParent() instanceof PsiCall call) {
-        PsiCall originalCall = CompletionUtil.getOriginalElement(call);
-        if (originalCall != null && JavaMethodCallElement.isCompletionMode(originalCall)) {
-          return originalCall;
-        }
-      }
-      return null;
     }
 
     private static void inferMethodCallArgumentTypes(@NotNull PsiExpression argument,
@@ -1699,39 +1679,5 @@ public final class ExpectedTypesProvider {
     }
 
     return JavaTailTypes.CALL_RPARENTH;
-  }
-
-  private static final class CommaTailTypeWithSyncHintUpdate extends ModNavigatorTailType {
-    private final PsiCall myOriginalCall;
-
-    private CommaTailTypeWithSyncHintUpdate(@NotNull PsiCall originalCall) {myOriginalCall = originalCall;}
-
-    @Override
-    public int processTail(@NotNull ModNavigator navigator, int tailOffset) {
-      return CommaTailType.INSTANCE.processTail(navigator, tailOffset);
-    }
-
-    @Override
-    public int processTail(@NotNull Editor editor, int tailOffset) {
-      int result = CommaTailType.INSTANCE.processTail(editor, tailOffset);
-      if (myOriginalCall.isValid()) {
-        PsiDocumentManager.getInstance(myOriginalCall.getProject()).commitDocument(editor.getDocument());
-        if (myOriginalCall.isValid()) ParameterHintsPass.asyncUpdate(myOriginalCall, editor);
-      }
-      return result;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      CommaTailTypeWithSyncHintUpdate update = (CommaTailTypeWithSyncHintUpdate)o;
-      return myOriginalCall.equals(update.myOriginalCall);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(myOriginalCall);
-    }
   }
 }
