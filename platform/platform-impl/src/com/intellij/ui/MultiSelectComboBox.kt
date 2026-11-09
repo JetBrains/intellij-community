@@ -30,8 +30,9 @@ import javax.swing.plaf.basic.BasicComboBoxUI
 /**
  * Combo-box with an ability to pick several items.
  *
- * Use addSelectionChangedListener() to subscribe on change events.
- * Use getSelectedItems() to get selected items explicitly.
+ * Use [addActionListener] to subscribe on selection changes made by the user.
+ * A programmatic change fires the listeners only through a `*AndNotify` method, such as [setSelectedItemsAndNotify].
+ * Use [selectedItems] to get the selected items explicitly.
  *
  * @param items The list of available items.
  * @param itemToTextConverter The function for extracting an item's presentable name.
@@ -52,7 +53,8 @@ class MultiSelectComboBox<T>(
   private val mySelectedPanel: JPanel
   private val myComboBoxModel = MultiComboBoxModel(items)
 
-  val items: List<T> = myItems
+  val items: List<T>
+    get() = myItems
   val selectedItems: Set<T> = mySelectedItems
 
   var requestFocusOnClick: Boolean
@@ -133,6 +135,35 @@ class MultiSelectComboBox<T>(
 
   fun setSelectedItems(selectedItems: Collection<T>?) {
     setSelectedItems(selectedItems?.toSet())
+  }
+
+  /**
+   * Replaces the items like [setItems] and fires the action listeners when the selection changed.
+   */
+  fun setItemsAndNotify(newItems: List<T>) {
+    notifyIfSelectionChanged { setItems(newItems) }
+  }
+
+  /**
+   * Removes the item like [removeItem] and fires the action listeners when the selection changed.
+   */
+  fun removeItemAndNotify(item: T) {
+    notifyIfSelectionChanged { removeItem(item) }
+  }
+
+  /**
+   * Selects the items like [setSelectedItems] and fires the action listeners when the selection changed.
+   */
+  fun setSelectedItemsAndNotify(selectedItems: Collection<T>?) {
+    notifyIfSelectionChanged { setSelectedItems(selectedItems?.toSet()) }
+  }
+
+  private inline fun notifyIfSelectionChanged(change: () -> Unit) {
+    val before = mySelectedItems.toSet()
+    change()
+    if (before != mySelectedItems) {
+      fireActionEvent()
+    }
   }
 
   override fun setEnabled(enabled: Boolean) {
