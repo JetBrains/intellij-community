@@ -56,5 +56,33 @@ The `+` prefix lets Git replace the moving `tip` tag.
 
 ## Using a custom build
 
-To use a custom build of libghostty-vt, set `-Dij.terminal.libghostty-vt.lib.root=<directory>` to a directory
-holding the needed `<os>-<arch>` subdirectory with the library file.
+To use a custom build of libghostty-vt, set `-Dij.terminal.libghostty-vt.lib.root=<libghostty-vt root>`.
+The directory must hold the `<os>-<arch>` subdirectory of the current platform:
+
+```text
+<libghostty-vt root>/
+├── linux-aarch64/libghostty-vt.so
+├── linux-x86_64/libghostty-vt.so
+├── macos-aarch64/libghostty-vt.dylib
+├── macos-x86_64/libghostty-vt.dylib
+├── windows-aarch64/ghostty-vt.dll
+└── windows-x86_64/ghostty-vt.dll
+```
+
+### "Cannot open library" on macOS
+
+A build that you download with a browser can fail to load:
+
+```text
+java.lang.IllegalArgumentException: Cannot open library: <libghostty-vt root>/macos-aarch64/libghostty-vt.dylib
+```
+
+The browser marks the downloaded file with the `com.apple.quarantine` file attribute.
+When you extract the downloaded archive, the extracted files get the attribute too.
+macOS forbids loading a quarantined library that is not notarized.
+
+To fix it, remove the quarantine attribute from the `<libghostty-vt root>` directory recursively:
+
+```sh
+xattr -dr com.apple.quarantine <libghostty-vt root>
+```
