@@ -14,6 +14,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.NoAutomaticReset
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
@@ -62,7 +63,7 @@ import javax.swing.SwingConstants
  * Layout mirrors the platform's Project Structure > Modules view: master list of Python modules on the left,
  * per-module editor on the right with SDK selector plus Packages / Sources / Dependencies tabs.
  */
-internal class PyWorkspaceStructureConfigurable(private val project: Project) : SearchableConfigurable {
+internal class PyWorkspaceStructureConfigurable(private val project: Project) : SearchableConfigurable, NoAutomaticReset {
 
   // Cancelled in disposeUIResources. Child of project-level scope → survives dialog close, dies
   // with project. Primary lifecycle primitive: anything launched here stops silently on dispose.

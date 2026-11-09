@@ -52,11 +52,13 @@ internal class PySourcesConfigurable(pyProject: PyProject) : Configurable {
     }
   }
 
+  /** Detaches the editor at once, so that no editor on the screen holds the model that this reset disposes. */
+  @RequiresEdt
   override fun reset() {
     val previous = session ?: return
     session = null
+    detachEditor()
     moduleScope.launch {
-      withContext(Dispatchers.EDT) { detachEditor() }
       previous.disposeAsync()
       launchEditorAttach()
     }

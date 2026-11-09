@@ -127,6 +127,8 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
 
   @Override
   protected List<ContentEntry> addContentEntries(VirtualFile[] files) {
+    // A file chooser can call back after a reset of the settings page disposed the model of this editor.
+    if (getModel().isDisposed()) return List.of();
     List<ContentEntry> entries = super.addContentEntries(files);
     addContentEntryPanels(entries.toArray(new ContentEntry[0]));
     return entries;
