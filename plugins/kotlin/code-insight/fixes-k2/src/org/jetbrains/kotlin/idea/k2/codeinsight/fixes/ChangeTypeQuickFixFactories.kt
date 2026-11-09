@@ -47,7 +47,7 @@ import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.commonSupertype
 import org.jetbrains.kotlin.analysis.api.types.restore
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
-import org.jetbrains.kotlin.analysis.api.types.typeCreation.typeCreator
+import org.jetbrains.kotlin.analysis.api.types.typeCreation.copy
 import org.jetbrains.kotlin.analysis.api.types.withNullability
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -314,16 +314,10 @@ internal object ChangeTypeQuickFixFactories {
     }
 
     context(session: KaSession)
-    private fun KaFunctionType.changeReturnType(newReturnType: KaType) : KaFunctionType {
-        val type = this
-        // TODO: could be simplified when KT-85037 is fixed
-        return typeCreator.functionType {
-            receiverType = type.receiverType
-            for (parameterType in type.parameterTypes) {
-                valueParameter(null, parameterType)
-            }
+    private fun KaFunctionType.changeReturnType(newReturnType: KaType) : KaFunctionType? {
+        return copy {
             returnType = newReturnType
-        }
+        } as? KaFunctionType
     }
 
 

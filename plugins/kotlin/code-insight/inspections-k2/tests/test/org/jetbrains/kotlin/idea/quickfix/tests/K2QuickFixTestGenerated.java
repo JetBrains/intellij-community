@@ -323,6 +323,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithFunctionReference.kt");
         }
 
+        @TestMetadata("addFunctionParameterWithFunctionReferenceOfTooLargeArity.kt")
+        public void testAddFunctionParameterWithFunctionReferenceOfTooLargeArity() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithFunctionReferenceOfTooLargeArity.kt");
+        }
+
         @TestMetadata("addFunctionParameterWithLambda.kt")
         public void testAddFunctionParameterWithLambda() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithLambda.kt");

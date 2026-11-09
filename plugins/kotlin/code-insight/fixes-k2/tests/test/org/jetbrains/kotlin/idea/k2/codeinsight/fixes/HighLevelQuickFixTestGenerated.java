@@ -5556,6 +5556,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/callWithLambdaArg.kt");
             }
 
+            @TestMetadata("callWithLambdaArgOfTooLargeArity.kt")
+            public void testCallWithLambdaArgOfTooLargeArity() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/callWithLambdaArgOfTooLargeArity.kt");
+            }
+
             @TestMetadata("callWithLambdaArgOnly.kt")
             public void testCallWithLambdaArgOnly() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createFunction/call/member/callWithLambdaArgOnly.kt");
@@ -6265,6 +6270,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("fromQualifiedCallExpression.kt")
             public void testFromQualifiedCallExpression() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromQualifiedCallExpression.kt");
+            }
+
+            @TestMetadata("fromQualifiedCallExpressionWithTooLargeArity.kt")
+            public void testFromQualifiedCallExpressionWithTooLargeArity() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/createFromUsage/createVariable/parameter/fromQualifiedCallExpressionWithTooLargeArity.kt");
             }
 
             @TestMetadata("fromUnqualifiedCallExpression.kt")

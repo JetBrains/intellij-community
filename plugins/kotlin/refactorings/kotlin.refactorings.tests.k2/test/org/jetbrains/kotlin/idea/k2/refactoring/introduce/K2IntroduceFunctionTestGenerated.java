@@ -1627,6 +1627,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             public void testLocalFun() throws Exception {
                 runTest("testData/extractFunction/parameters/capturedFunctions/localFun.kt");
             }
+
+            @TestMetadata("localFunWithTooLargeArity.kt")
+            public void testLocalFunWithTooLargeArity() throws Exception {
+                runTest("testData/extractFunction/parameters/capturedFunctions/localFunWithTooLargeArity.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
