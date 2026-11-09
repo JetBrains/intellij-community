@@ -262,6 +262,8 @@
     <action id="Terminal.AiAgents.LaunchJunieCli" class="com.intellij.terminal.frontend.action.LaunchJunieCliAction"/>
 
     <group id="Terminal.ReworkedTerminalContextMenu">
+      <reference ref="Terminal.HyperlinkContextMenu"/>
+      <separator/>
       <reference ref="Terminal.Find"/>
       <reference ref="Terminal.NewTab"/>
       <reference ref="Terminal.CloseTab"/>
@@ -277,8 +279,6 @@
       <separator/>
       <reference ref="Terminal.LineUp"/>
       <reference ref="Terminal.LineDown"/>
-      <separator/>
-      <reference ref="Terminal.HyperlinkContextMenu" />
     </group>
 
     <action id="Terminal.ToggleEmulatorBadge" class="com.intellij.terminal.frontend.action.TerminalEmulatorBadgeToggleAction"
