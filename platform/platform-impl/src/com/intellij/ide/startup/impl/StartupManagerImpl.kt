@@ -15,6 +15,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.startup.StartupManagerEx
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -46,6 +47,7 @@ import com.intellij.openapi.project.impl.isCorePlugin
 import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindowManager
@@ -86,6 +88,7 @@ import java.util.ArrayDeque
 import java.util.Deque
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -120,12 +123,14 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
             is ProjectActivity -> {
               val pluginScope = createActivityScope(project, extension.javaClass)
               pluginScope.launch {
+                startupManager.awaitActivityHold()
                 extension.execute(project)
               }
             }
             is DumbAware -> {
               val pluginScope = createActivityScope(project, extension.javaClass)
               pluginScope.launch {
+                startupManager.awaitActivityHold()
                 @Suppress("UsagesOfObsoleteApi")
                 startupManager.runOldActivity(extension as StartupActivity)
               }
@@ -146,6 +151,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   private val initProjectStartupActivities = ArrayDeque<Runnable>()
   private val postStartupActivities = ArrayDeque<Runnable>()
   private val runningProjectActivities = ConcurrentHashMap<Class<*>, Job>()
+  private val activityHold = AtomicReference<CompletableDeferred<Unit>?>()
 
   @Volatile
   private var freezePostStartupActivities = false
@@ -180,6 +186,34 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     else {
       LOG.error("Activities registered via registerPostStartupActivity must be dumb-aware: $runnable")
     }
+  }
+
+  /**
+   * Holds the start of the post-startup activities of this project until the returned token is finished.
+   * The hold covers the `postStartupActivity` and the `backgroundPostStartupActivity` extensions.
+   * An activity that starts while the hold is active waits for the end of the hold, and then runs.
+   * An activity that runs already is not affected.
+   *
+   * A plugin load runs the activities that it adds at once. A caller that loads the project model after the plugin load
+   * takes the hold before the load, so these activities see the loaded model.
+   *
+   * Only one hold can be active at a time. The caller must finish the token in a `finally` block.
+   * Otherwise, the held activities never run.
+   */
+  @ApiStatus.Internal
+  fun holdActivities(): AccessToken {
+    val hold = CompletableDeferred<Unit>()
+    check(activityHold.compareAndSet(null, hold)) { "The activities of '${project.name}' are held already" }
+    return object : AccessToken() {
+      override fun finish() {
+        activityHold.compareAndSet(hold, null)
+        hold.complete(Unit)
+      }
+    }
+  }
+
+  internal suspend fun awaitActivityHold() {
+    activityHold.get()?.await()
   }
 
   override fun startupActivityPassed(): Boolean = isInitProjectActivitiesPassed.isCompleted
@@ -539,6 +573,7 @@ private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginI
   }
 
   createActivityScope(project, activity.javaClass).launch {
+    awaitActivityHold(project)
     try {
       @Suppress("UsagesOfObsoleteApi")
       (activity as StartupActivity).runActivity(project)
@@ -563,6 +598,7 @@ private fun launchActivity(
     additionalContext +
     tracer.rootSpan(name = "run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString)),
   ) {
+    awaitActivityHold(project)
     try {
       activity.execute(project = project)
     }
@@ -573,6 +609,10 @@ private fun launchActivity(
       LOG.error(PluginException(e, pluginId))
     }
   }
+}
+
+private suspend fun awaitActivityHold(project: Project) {
+  (project.serviceAsync<StartupManager>() as? StartupManagerImpl)?.awaitActivityHold()
 }
 
 private fun createActivityScope(project: Project, aClass: Class<*>): CoroutineScope {
