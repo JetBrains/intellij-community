@@ -17,6 +17,7 @@ package com.jetbrains.python.psi.types;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Project service to cache {@link TypeEvalContext}
@@ -37,6 +38,16 @@ public interface TypeEvalContextCache {
    */
   @NotNull
   TypeEvalContext getContext(@NotNull TypeEvalContext standard);
+
+  /**
+   * Returns the context that this cache holds for {@code constraints}, or null.
+   * Lets a factory method skip building a context on a hit.
+   *
+   * @param constraints the constraints of the context wanted, which are also its key in this cache
+   */
+  @ApiStatus.Internal
+  @Nullable
+  TypeEvalContext getCachedContext(@NotNull TypeEvalConstraints constraints);
 
   /**
    * Returns the library context for the constraints of {@code delegating}, and builds one only if the cache holds none.
