@@ -297,6 +297,31 @@ public class PyStubsTest extends PyTestCase {
   }
 
   @TestFor(issues = "PY-83189")
+  public void testMembersFollowAMoveBetweenDirectoriesOfDifferentLevels() throws IOException {
+    final VirtualFile vFile = myFixture.copyFileToProject("VersionSpecificMembersFollowLanguageLevel.py", "old/a.py");
+    final VirtualFile oldDir = vFile.getParent();
+    final VirtualFile newDir = WriteAction.computeAndWait(() -> oldDir.getParent().createChildDirectory(this, "new"));
+    try {
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(oldDir, LanguageLevel.PYTHON311);
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(newDir, LanguageLevel.PYTHON312);
+      final PyFileImpl file = (PyFileImpl)myFixture.getPsiManager().findFile(vFile);
+      assertNotNull(file);
+      assertEquals(LanguageLevel.PYTHON311, file.getEffectiveLanguageLevel());
+      assertMembers(vFile, List.of("old", "common"), List.of("top_old"));
+      // The move specifies no level: each directory keeps the level it was given, so the level stamp does not change.
+      // The file takes the level of its new parent, and only the PSI change of the move reports it.
+      WriteAction.runAndWait(() -> vFile.move(this, newDir));
+      assertSame(file, myFixture.getPsiManager().findFile(vFile));
+      assertEquals(LanguageLevel.PYTHON312, file.getEffectiveLanguageLevel());
+      assertMembers(vFile, List.of("new", "common"), List.of("top_new"));
+    }
+    finally {
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(oldDir, null);
+      PythonLanguageLevelPusher.specifyFileLanguageLevel(newDir, null);
+    }
+  }
+
+  @TestFor(issues = "PY-83189")
   public void testMembersFollowFileChange() throws IOException {
     final VirtualFile vFile = myFixture.copyFileToProject(getTestName(false) + ".py");
     assertMembers(vFile, List.of("first"), List.of("f"));
