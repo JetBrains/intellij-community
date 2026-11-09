@@ -46,7 +46,10 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
+import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.VerticalComponentGap
+import com.intellij.ui.dsl.builder.components.DslLabel
+import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
@@ -112,7 +115,7 @@ internal class IterativeMergeFlowDelegate(
 
   private lateinit var descriptionLabel: JLabel
   private lateinit var resolveAutomaticallyButton: JButton
-  private lateinit var resolveStatusLabel: JLabel
+  private lateinit var resolveStatusLabel: ResolveStatusLabel
   private lateinit var reviewOrResolveButton: JButton
   private lateinit var acceptAndFinishButton: JButton
   private var resolveActionControllers: List<MergeResolveActionComponentController> = emptyList()
@@ -181,20 +184,25 @@ internal class IterativeMergeFlowDelegate(
         }
       }.customize(UnscaledGapsY(top = 8, bottom = 4))
       row {
+        resolveActionControllers.forEach { controller ->
+          cell(controller.component)
+            .customize(UnscaledGaps(right = defaultSpacingConfiguration.segmentedButtonHorizontalGap))
+        }
+
+        // The status cell sets the gap to the right. Keep the default vertical gaps, so the row keeps its height.
+        val verticalGap = defaultSpacingConfiguration.verticalComponentGap
         resolveAutomaticallyButton =
           button(VcsBundle.message(if (isResolvingConflicts) "multiple.file.merge.dialog.progress.title.resolving.conflicts"
                                    else "multiple.file.iterative.merge.resolve.automatically"),
                  actionListener = { onResolveAutomaticallyClick() }).applyToComponent {
             icon = AllIcons.Diff.MagicResolve
-          }.align(AlignX.LEFT).component
+          }.customize(UnscaledGaps(top = verticalGap, bottom = verticalGap)).component
 
-        for (controller in resolveActionControllers) {
-          cell(controller.component)
-            .customize(UnscaledGaps(left = defaultSpacingConfiguration.segmentedButtonHorizontalGap))
-        }
-
-        resolveStatusLabel = label("")
+        resolveStatusLabel = cell(ResolveStatusLabel())
+          .align(Align.FILL)
           .resizableColumn()
+          .customize(UnscaledGaps(left = defaultSpacingConfiguration.segmentedButtonHorizontalGap,
+                                  right = defaultSpacingConfiguration.horizontalSmallGap))
           .component
         cell(createViewOptionsToolbar().component)
           .align(AlignX.RIGHT)
@@ -206,9 +214,9 @@ internal class IterativeMergeFlowDelegate(
       }.resizableRow()
     }.apply {
       // If the width is smaller than this, then buttons don't render properly
-      minimumSize = JBUI.size(550, 240)
+      minimumSize = JBUI.size(710, 240)
 
-      preferredSize = JBUI.size(850, if (files.size <= 6) 400 else 500)
+      preferredSize = JBUI.size(890, if (files.size <= 6) 400 else 500)
     }
   }
 
@@ -454,7 +462,6 @@ internal class IterativeMergeFlowDelegate(
 
   private fun clearAutoResolveStatus() {
     resolveStatusLabel.text = ""
-    resolveStatusLabel.isVisible = false
   }
 
   private fun onResolveAutomaticallyClick() {
@@ -503,7 +510,6 @@ internal class IterativeMergeFlowDelegate(
                                   totalUnresolved,
                                   filesWithUnresolved)
       }
-      resolveStatusLabel.isVisible = true
       updateButtonsState()
     }
   }
@@ -797,6 +803,37 @@ private data class IterativeMergeDialogState(
   val allSelectedFilesResolved: Boolean,
   val allFilesResolvedAndReviewed: Boolean,
 )
+
+private class ResolveStatusLabel : JPanel(null) {
+  private val textPane = DslLabel(DslLabelType.LABEL).apply {
+    maxLineLength = MAX_LINE_LENGTH_WORD_WRAP
+  }
+
+  var text: @Nls String = ""
+    set(value) {
+      field = value
+      textPane.text = value
+      revalidate()
+      repaint()
+    }
+
+  init {
+    isOpaque = false
+    add(textPane)
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(top = 4, bottom = 4))
+  }
+
+  override fun doLayout() {
+    val textHeight = getTextHeight()
+    textPane.setBounds(0, (height - textHeight) / 2, width, textHeight)
+  }
+
+  private fun getTextHeight(): Int {
+    // The text pane wraps the text to its current width when it calculates the preferred height
+    textPane.setSize(width, textPane.height.coerceAtLeast(1))
+    return textPane.preferredSize.height
+  }
+}
 
 private class DisabledStateLayerUI(private val table: MergeConflictsTreeTable) : LayerUI<JComponent>() {
   override fun paint(g: Graphics, layer: JComponent) {
