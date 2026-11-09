@@ -167,7 +167,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
             locations = locations.stream()
               .map(l -> l.method())
               .distinct()
-              .flatMap(m -> JavaLineBreakpointType.collectInlineConditionalReturnLocations(m, position.getLine() + 1))
+              .flatMap(m -> bytecodeInspector.findInlineConditionalReturnLocations(m, position.getLine() + 1).stream())
               .toList();
           }
         }
