@@ -137,7 +137,7 @@ private class ProjectWizardTestFixtureImpl(
 
   suspend fun tearDown() {
     runAllSuspend(
-      { setWizard(null) },
+      { withContext(Dispatchers.EDT) { setWizard(null) } },
       { closeCreatedProjects() },
       { resetDefaultProject() },
       { Disposer.dispose(testDisposable) },
