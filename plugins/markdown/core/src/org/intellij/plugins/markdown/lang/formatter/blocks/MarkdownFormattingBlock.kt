@@ -9,6 +9,7 @@ import com.intellij.formatting.Spacing
 import com.intellij.formatting.SpacingBuilder
 import com.intellij.formatting.Wrap
 import com.intellij.lang.ASTNode
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
@@ -16,6 +17,7 @@ import com.intellij.psi.formatter.common.InjectedLanguageBlockBuilder
 import com.intellij.psi.formatter.common.MultiFragmentInjectedLanguageBlockBuilder
 import com.intellij.psi.formatter.common.SettingsAwareBlock
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
@@ -182,6 +184,19 @@ internal open class MarkdownFormattingBlock(
 }
 
 private class MarkdownInjectedLanguageBlockBuilder(settings: CodeStyleSettings) : MultiFragmentInjectedLanguageBlockBuilder(settings) {
+  override fun addInjectedBlocks(
+    result: MutableList<in Block>,
+    injectionHost: ASTNode,
+    wrap: Wrap?,
+    alignment: Alignment?,
+    indent: Indent?
+  ): Boolean {
+    val host = injectionHost.psi
+    val injectedFiles = InjectedLanguageManager.getInstance(host.project).getInjectedPsiFiles(host).orEmpty()
+    if (injectedFiles.any { PsiTreeUtil.hasErrorElements(it.first) }) return false
+    return super.addInjectedBlocks(result, injectionHost, wrap, alignment, indent)
+  }
+
   override fun createBlockBeforeInjection(
     node: ASTNode,
     wrap: Wrap?,

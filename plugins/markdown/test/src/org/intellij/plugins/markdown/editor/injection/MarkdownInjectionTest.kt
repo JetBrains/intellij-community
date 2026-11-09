@@ -558,6 +558,23 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
     assertEquals(text, file.text)
   }
 
+  fun `test well formatted code remains as is`() {
+    val text = """
+      ```java
+      if (policy == null) {
+          throw new ResourceNotFoundException("Policy not found with id: " + policyId);
+      }
+      ```
+    """.trimIndent()
+    configureFromFileText("test.md", text)
+
+    WriteCommandAction.runWriteCommandAction(project) {
+      CodeStyleManager.getInstance(project).reformatText(file, listOf(file.textRange))
+    }
+
+    assertEquals(text, file.text)
+  }
+
   fun `test fence does not ignore line separators`() {
     val content =
       """
@@ -1573,7 +1590,7 @@ class MarkdownInjectionTest : LightPlatformCodeInsightTestCase() {
 
   private fun Block.getDependentSpacings(): List<DependantSpacingImpl> {
     val children = subBlocks
-    val directSpacings = children.zipWithNext().mapNotNull { (child1, child2) ->
+    val directSpacings = children.zipWithNext().mapNotNull { [child1, child2] ->
       val spacing = getSpacing(child1, child2)
       if (spacing !is DependantSpacingImpl) return@mapNotNull null
       spacing
