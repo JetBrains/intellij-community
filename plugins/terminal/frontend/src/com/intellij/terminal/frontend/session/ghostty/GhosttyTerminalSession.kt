@@ -21,6 +21,7 @@ import com.intellij.terminal.emulator.createTerminalEmulator
 import com.intellij.terminal.frontend.session.ObservableTtyConnector
 import com.intellij.terminal.frontend.session.TerminalShellIntegrationController
 import com.intellij.terminal.frontend.session.addWorkingDirectoryListener
+import com.intellij.terminal.frontend.session.getInitialWorkingDirectory
 import com.intellij.terminal.frontend.session.toCellPixelSize
 import com.intellij.terminal.frontend.session.toTerminalGridGeometry
 import com.intellij.terminal.frontend.session.toTerminalSize
@@ -217,8 +218,8 @@ class GhosttyTerminalSession internal constructor(
   // along with it.
   private val pendingResponses = ArrayList<ByteArray>()
 
-  // The working directory reported in the session state: starts at the requested
-  // startup directory and is kept fresh by the working-directory tracker (see
+  // The working directory reported in the session state: starts at getInitialWorkingDirectory
+  // and is kept fresh by the working-directory tracker (see
   // createGhosttyTerminalSession). Guarded by emulatorLock; the next projection reports the
   // new value.
   private var currentDirectory: String? = initialWorkingDirectory
@@ -839,7 +840,7 @@ internal fun createGhosttyTerminalSession(
       gridSize = initialTermSize.toTerminalSize(),
       cellSize = options.initialCellPixelSize?.toCellPixelSize() ?: CellPixelSize.UNKNOWN,
     ),
-    initialWorkingDirectory = options.workingDirectory,
+    initialWorkingDirectory = getInitialWorkingDirectory(options)?.toString(),
     terminfoName = options.envVariables["TERM"],
     shellIntegrationController = shellIntegrationController,
     settings = settings,

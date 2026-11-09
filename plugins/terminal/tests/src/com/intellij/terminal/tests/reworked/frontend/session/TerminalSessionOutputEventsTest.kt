@@ -42,6 +42,7 @@ import org.jetbrains.plugins.terminal.session.impl.dto.MouseFormatDto
 import org.jetbrains.plugins.terminal.session.impl.dto.MouseModeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TextStyleOptionDto
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.junit.Test
 
 /**
@@ -321,6 +322,30 @@ internal class TerminalSessionOutputEventsTest(emulatorType: TerminalEmulatorTyp
     connector.feed(completionFinishedOsc(COMPLETION_RESULT))
     assertThat(collector.awaitEvent<TerminalCompletionFinishedEvent>().result).isEqualTo(COMPLETION_RESULT)
   }
+
+  @Test
+  fun `a shell session reports no current directory before the shell reports one`() = runSessionTest { _, connector, collector ->
+    // The title change makes both emulators report the state.
+    connector.feed("${ESC}]0;My Title${BEL}")
+    val beforeShellReport = collector.awaitEvent<TerminalStateChangedEvent> { it.state.windowTitle == "My Title" }
+    assertThat(beforeShellReport.state.currentDirectory)
+      .describedAs("a shell can start in another directory than the requested one")
+      .isNull()
+
+    connector.feed(shellIntegrationInitializedOsc(WORKING_DIRECTORY))
+    val afterShellReport = collector.awaitEvent<TerminalStateChangedEvent> { it.state.currentDirectory != null }
+    assertThat(afterShellReport.state.currentDirectory).isEqualTo(WORKING_DIRECTORY)
+  }
+
+  @Test
+  fun `a non-shell session reports the directory where the process started`() =
+    runSessionTest(processType = TerminalProcessType.NON_SHELL) { _, connector, collector ->
+      connector.feed("${ESC}]0;My Title${BEL}")
+      val event = collector.awaitEvent<TerminalStateChangedEvent> { it.state.windowTitle == "My Title" }
+      assertThat(event.state.currentDirectory)
+        .describedAs("the loopback process starts in the user home directory")
+        .isEqualTo(System.getProperty("user.home"))
+    }
 
   // ---------------------------------------------------------------------------
   // Group B: content editing / rendering

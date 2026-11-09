@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import org.jetbrains.plugins.terminal.TerminalEmulatorType
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.junit.Rule
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -52,11 +53,14 @@ internal abstract class TerminalSessionTestCase(protected val emulatorType: Term
    * specific output events, and the low-level session reports them in their natural order (see
    * `TerminalSessionTestUtil.createLoopbackTerminalSession`'s parameter of the same name); pass `false` only
    * when the test's own point is the production, `StateAwareTerminalSession`-wrapped session's behavior.
+   *
+   * [processType] is the type of the process that the session reports to have started.
    */
   protected fun runSessionTest(
     isLowLevelSession: Boolean = true,
+    processType: TerminalProcessType = TerminalProcessType.SHELL,
     test: suspend (session: TerminalSession, connector: LoopbackTtyConnector, collector: TerminalOutputEventCollector) -> Unit,
-  ) = runSessionTestWithoutCollector(isLowLevelSession) { session, connector, sessionScope ->
+  ) = runSessionTestWithoutCollector(isLowLevelSession, processType) { session, connector, sessionScope ->
     test(session, connector, TerminalOutputEventCollector(session, sessionScope))
   }
 
@@ -66,6 +70,7 @@ internal abstract class TerminalSessionTestCase(protected val emulatorType: Term
    */
   protected fun runSessionTestWithoutCollector(
     isLowLevelSession: Boolean = true,
+    processType: TerminalProcessType = TerminalProcessType.SHELL,
     test: suspend (session: TerminalSession, connector: LoopbackTtyConnector, sessionScope: CoroutineScope) -> Unit,
   ) {
     emulatorType.setDefault(disposableRule.disposable)
@@ -75,7 +80,8 @@ internal abstract class TerminalSessionTestCase(protected val emulatorType: Term
         val (session, connector) = TerminalSessionTestUtil.createLoopbackTerminalSession(
           project = projectRule.project,
           coroutineScope = sessionScope,
-          isLowLevelSession = isLowLevelSession
+          isLowLevelSession = isLowLevelSession,
+          processType = processType,
         )
         test(session, connector, sessionScope)
       }

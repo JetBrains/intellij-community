@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.emulator.TerminalGridGeometry
 import com.intellij.terminal.emulator.TerminalSize
@@ -139,6 +140,9 @@ object TerminalSessionTestUtil {
    * [envVariables] is the environment of the process that the session reports to have started.
    *
    * [initialGridGeometry] is the grid geometry the session starts with.
+   *
+   * [processType] is the type of the process that the session reports to have started.
+   * The process starts in the user home directory.
    */
   fun createLoopbackTerminalSession(
     project: Project,
@@ -147,13 +151,14 @@ object TerminalSessionTestUtil {
     isLowLevelSession: Boolean = false,
     envVariables: Map<String, String> = emptyMap(),
     initialGridGeometry: TerminalGridGeometry = DEFAULT_GRID_GEOMETRY,
+    processType: TerminalProcessType = TerminalProcessType.SHELL,
   ): Pair<TerminalSession, LoopbackTtyConnector> {
     val connector = LoopbackTtyConnector()
     val workingDirectory = System.getProperty("user.home")
     val options = ShellStartupOptions.Builder()
       .initialGridGeometry(initialGridGeometry.toDto())
-      .processType(TerminalProcessType.SHELL)
-      .workingDirectory(workingDirectory)
+      .processType(processType)
+      .setFinalWorkingDirectoryEelPath(Path.of(workingDirectory).asEelPath())
       .emulatorType(emulatorType)
       .envVariables(envVariables)
       .build()
@@ -166,7 +171,7 @@ object TerminalSessionTestUtil {
       shellCommand = listOf("/bin/bash"),
       workingDirectory = workingDirectory,
       envVariables = emptyMap(),
-      processType = TerminalProcessType.SHELL,
+      processType = processType,
       pid = null,
     )
     val session = createStandardStateAwareTerminalSession(delegate, startupOptions, coroutineScope)

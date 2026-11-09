@@ -1,6 +1,7 @@
 package com.intellij.terminal.frontend.session
 
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.asDisposable
 import com.jediterm.terminal.TtyConnector
@@ -12,9 +13,26 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import org.jetbrains.plugins.terminal.arrangement.ProcessInfoUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalShellIntegrationEventsListener
+import org.jetbrains.plugins.terminal.startup.TerminalProcessType
+
+/**
+ * Returns the directory that the session can report before the process reports one.
+ */
+internal fun getInitialWorkingDirectory(options: ShellStartupOptions): EelPath? {
+  if (options.processType == TerminalProcessType.SHELL) {
+    // Do not use a directory requested for a shell process as an initial directory.
+    // Because shell may actually decide to start in a different directory.
+    // For example, CMD starts in the home directory if the process is started with a WSL path.
+    return null
+  }
+  // But if it is a NON_SHELL process, it is safe to use the directory where the process started.
+  // Because it shouldn't change.
+  return options.workingDirectoryEelPathNotNull
+}
 
 internal fun addWorkingDirectoryListener(
   ttyConnector: ObservableTtyConnector,
