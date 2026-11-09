@@ -2,6 +2,7 @@
 package com.jetbrains.python
 
 import com.intellij.idea.TestFor
+import com.intellij.python.community.testFramework.fixme
 import com.intellij.testFramework.runInEdtAndGet
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
@@ -86,6 +87,56 @@ class PyTypeParameterCompletionTest : PyCodeInsightTestCase() {
   """, "U", visible = "T")
 
   @Test
+  @TestFor(issues = ["PY-93937"])
+  fun `class type parameter not in its own default`() = fixme<AssertionError>("PY-93937", "U is in") {
+    assertNotOffered("""
+      y = 1
+      class C[T, U = ]: ...
+      #              └ CARET
+    """, "U", visible = "y")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93937"])
+  fun `function type parameters not in a default before the later type parameter`() = fixme<AssertionError>("PY-93937", "T is in") {
+    assertNotOffered("""
+      y = 1
+      def f[T = , U = int](a: T) -> U: ...
+      #         └ CARET
+    """, "T", "U", visible = "y")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93937"])
+  fun `alias type parameters not in a default before the later type parameter`() = fixme<AssertionError>("PY-93937", "T is in") {
+    assertNotOffered("""
+      y = 1
+      type A[T = , U = int] = dict[T, U]
+      #          └ CARET
+    """, "T", "U", visible = "y")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93937"])
+  fun `function type parameters not in a bound`() = fixme<AssertionError>("PY-93937", "T is in") {
+    assertNotOffered("""
+      y = 1
+      def f[T, U: ](a: T, b: U) -> U: ...
+      #           └ CARET
+    """, "T", "U", visible = "y")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93937"])
+  fun `class type parameters not in a constraint`() = fixme<AssertionError>("PY-93937", "T is in") {
+    assertNotOffered("""
+      y = 1
+      class C[T, U: (, int)]: ...
+      #              └ CARET
+    """, "T", "U", visible = "y")
+  }
+
+  @Test
   fun `class type parameters in the class body`() = assertOffered("""
     class C[T]:
         attr: X
@@ -128,10 +179,12 @@ class PyTypeParameterCompletionTest : PyCodeInsightTestCase() {
     }
   }
 
-  private fun assertNotOffered(@Language("Python") text: String, name: String, visible: String) {
+  private fun assertNotOffered(@Language("Python") text: String, vararg names: String, visible: String) {
     val variants = variants(text)
     assertTrue(visible in variants, "$visible is not in $variants")
-    assertFalse(name in variants, "$name is in $variants")
+    for (name in names) {
+      assertFalse(name in variants, "$name is in $variants")
+    }
   }
 
   private fun variants(text: String): List<String> = runInEdtAndGet {
