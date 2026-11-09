@@ -2,7 +2,10 @@ package com.intellij.python.pyproject.model.internal.pyProject
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleTypeManager
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
+import com.intellij.python.pyproject.model.evolution.ownSdkReferenceOf
 import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
 import com.intellij.workspaceModel.ide.toPath
 import com.jetbrains.python.project.PyProject
@@ -16,9 +19,7 @@ internal data class PyProjectImpl private constructor(override val baseDir: Path
     private val log = fileLogger()
     fun create(module: Module, snapshot: ImmutableEntityStorage): PyProjectImpl? {
       val moduleEntity = module.findModuleEntity(snapshot) ?: return null
-      if (moduleEntity.type?.name != PYTHON_MODULE_ID && moduleEntity.facets.none { it.typeId.name == PYTHON_FACET_ID }) {
-        return null
-      }
+      if (!isPythonProject(moduleEntity)) return null
       val roots = moduleEntity.contentRoots
       val root = when (val n = roots.size) {
         0 -> return null
@@ -35,6 +36,24 @@ internal data class PyProjectImpl private constructor(override val baseDir: Path
         }
       }
       return PyProjectImpl(root.url.toPath(), residesOnModule = module)
+    }
+
+    /**
+     * Whether [moduleEntity] is a Python project. A module with a content root is a Python project when one of these is
+     * true:
+     * * its type is Python. A module without a type has the default type of the IDE, as [ModuleTypeManager] gives it;
+     * * it has a Python facet;
+     * * the default module type of the IDE is Python, as in PyCharm. A module of another type, such as one that another
+     *   IDE made, is then a Python project too;
+     * * it names an interpreter itself, see [ownSdkReferenceOf]. A module of another IDE, such as a Java module, then is
+     *   one. An inherited project SDK does not count.
+     */
+    private fun isPythonProject(moduleEntity: ModuleEntity): Boolean {
+      val types = ModuleTypeManager.getInstance()
+      return types.findByID(moduleEntity.type?.name).id == PYTHON_MODULE_ID ||
+             moduleEntity.facets.any { it.typeId.name == PYTHON_FACET_ID } ||
+             types.defaultModuleType.id == PYTHON_MODULE_ID ||
+             ownSdkReferenceOf(moduleEntity) != null
     }
   }
 }

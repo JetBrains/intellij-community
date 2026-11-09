@@ -32,6 +32,15 @@ internal fun sdkReferenceOf(module: ModuleEntity, storage: EntityStorage): Strin
   return module.facets.firstOrNull { it.typeId.name == PYTHON_FACET_ID }?.configurationXmlTag?.let(::facetSdkName)
 }
 
+/**
+ * The Python SDK name that [module] names itself, or `null`: its own Python SDK, else the SDK name of its Python facet.
+ * An inherited project SDK is not one: a module does not inherit its interpreter. The name makes the module a Python
+ * project, see `PyProjectImpl`.
+ */
+internal fun ownSdkReferenceOf(module: ModuleEntity): String? =
+  module.dependencies.firstNotNullOfOrNull { (it as? SdkDependency)?.sdk?.takeIf { sdk -> sdk.type == PyNames.PYTHON_SDK_ID_NAME }?.name }
+  ?: module.facets.firstOrNull { it.typeId.name == PYTHON_FACET_ID }?.configurationXmlTag?.let(::facetSdkName)
+
 /** The `sdkName` attribute of the facet configuration. A pattern, so this module needs no XML library. */
 private val FACET_SDK_NAME = Regex("""\b$FACET_SDK_NAME_ATTRIBUTE\s*=\s*"([^"]*)"""")
 
