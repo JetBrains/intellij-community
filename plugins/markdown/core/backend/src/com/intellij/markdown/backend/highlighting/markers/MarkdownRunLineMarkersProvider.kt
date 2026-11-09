@@ -24,6 +24,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.nextLeaf
+import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownCodeSpanConfigurationContextSearcher
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
@@ -193,12 +194,42 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
     }
 
     private fun getText(element: PsiElement): @NlsSafe String {
-      if (element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)) return element.text.trim()
+      if (element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT)) return collectFenceCommand(element)
       if (element.hasType(MarkdownTokenTypes.BACKTICK)) {
         val codeSpanText = element.parent.text
         return codeSpanText.substring(1, codeSpanText.length - 1).trim()
       }
       return ""
+    }
+
+    private fun collectFenceCommand(element: PsiElement): String {
+      val document = PsiDocumentManager.getInstance(element.project).getDocument(element.containingFile) ?: return element.text.trim()
+
+      fun adjacentLine(line: PsiElement, forward: Boolean): PsiElement? {
+        val next = line.siblings(forward, withSelf = false).firstOrNull { it.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT) } ?: return null
+        val expectedLine = document.getLineNumber(line.textOffset) + if (forward) 1 else -1
+        return next.takeIf { document.getLineNumber(it.textOffset) == expectedLine }
+      }
+
+      fun isContinued(line: PsiElement): Boolean {
+        val text = line.text
+        return text.takeLastWhile { it == '\\' }.length % 2 == 1 && trimPrompt(text) == text.removePrefix("$")
+      }
+
+      val previousLine = adjacentLine(element, forward = false)
+      if (previousLine != null && isContinued(previousLine)) {
+        return ""
+      }
+
+      var line = element
+      return buildString {
+        append(line.text)
+        while (isContinued(line)) {
+          line = adjacentLine(line, forward = true) ?: break
+          setLength(length - 1)
+          append(line.text)
+        }
+      }.trim()
     }
 
     private fun getAllCodeSpansOnLine(element: PsiElement): List<PsiElement> {

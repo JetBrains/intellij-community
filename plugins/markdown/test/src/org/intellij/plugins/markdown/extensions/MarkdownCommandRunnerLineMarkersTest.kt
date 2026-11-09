@@ -4,6 +4,8 @@ package org.intellij.plugins.markdown.extensions
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMarkers
 import com.intellij.execution.Executor
 import com.intellij.icons.AllIcons
+import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
+import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase
 import com.intellij.lang.Language
 import com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService
 import com.intellij.markdown.frontend.execution.MarkdownFrontendRunnerFlowService
@@ -13,6 +15,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
@@ -99,6 +102,30 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     myFixture.doHighlighting()
     val markers = getDisplayedLineMarkers(myFixture.editor.document, project)
     assertNotNull(markers.firstOrNull { it.icon == AllIcons.RunConfigurations.TestState.Run_run })
+  }
+
+  @Test
+  fun `line run marker includes continued lines`() {
+    ExtensionTestUtil.maskExtensions(RunAnythingProvider.EP_NAME, listOf(object : RunAnythingProviderBase<String>() {
+      override fun findMatchingValue(dataContext: DataContext, pattern: String): String? = pattern.takeIf { it.startsWith("npm start ") }
+      override fun getCommand(value: String): String = value
+      override fun execute(dataContext: DataContext, value: String) = Unit
+    }), testRootDisposable)
+    val file = myFixture.addFileToProject("foo/README.md", """
+      ```
+      npm start -- \
+      --port=9090 \
+      --host=example.com
+      npm stop
+      ```
+    """.trimIndent())
+    myFixture.openFileInEditor(file.virtualFile)
+
+    myFixture.doHighlighting()
+
+    val marker = getDisplayedLineMarkers(myFixture.editor.document, project).single { it.icon == AllIcons.RunConfigurations.TestState.Run }
+    assertEquals(1, myFixture.editor.document.getLineNumber(marker.startOffset))
+    assertEquals("Run 'npm start -- --port=9090 --host=example.com'", marker.lineMarkerTooltip)
   }
 
   @Test

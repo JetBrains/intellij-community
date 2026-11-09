@@ -114,6 +114,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/lang-core",
         "//platform/execution",
+        "//platform/execution-impl",
         "//plugins/textmate",
         "//platform/diff-api:diff",
         "//platform/diff-impl",
