@@ -4,71 +4,165 @@ package org.intellij.plugins.markdown.actions
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
-import org.junit.Test
 
-class MarkdownCodeSpanExtendWordSelectionHandlerTest: LightPlatformCodeInsightTestCase() {
-  @Test
+class MarkdownExtendWordSelectionTest: LightPlatformCodeInsightTestCase() {
   fun testSingleInsideOneWord() = doTest(
     "`Some <caret>text`",
     "`Some <selection><caret>text</selection>`",
     1
   )
 
-  @Test
   fun testSingleInsideAll() = doTest(
     "`Some <caret>text`",
     "`<selection>Some <caret>text</selection>`",
     2
   )
 
-  @Test
   fun testSingleOutside() = doTest(
     "`Some <caret>text`",
     "<selection>`Some <caret>text`</selection>",
     3
   )
 
-  @Test
   fun testDoubleInsideAll() = doTest(
     "`Some <caret>text`",
     "`<selection>Some <caret>text</selection>`",
     2
   )
 
-  @Test
   fun testSingleMultilineInsideAll() = doTest(
-    "`Some <caret>text\nother line?`",
-    "`<selection>Some <caret>text\nother line?</selection>`",
+    """
+    `Some <caret>text
+    other line?`
+    """.trimIndent(),
+    """
+    `<selection>Some <caret>text
+    other line?</selection>`
+    """.trimIndent(),
     3
   )
 
-  @Test
   fun testDoubleMultilineInsideAll() = doTest(
-    "``Some <caret>text\nother line?``",
-    "``<selection>Some <caret>text\nother line?</selection>``",
+    """
+    ``Some <caret>text
+    other line?``
+    """.trimIndent(),
+    """
+    ``<selection>Some <caret>text
+    other line?</selection>``
+    """.trimIndent(),
     3
   )
 
-  @Test
   fun testAlmostFenceInsideAll() = doTest(
     "```Some <caret>text and the rest```",
     "```<selection>Some <caret>text and the rest</selection>```",
     2
   )
 
-  @Test
   fun testAlmostFenceOutside() = doTest(
     "```Some <caret>text and the rest```",
     "<selection>```Some <caret>text and the rest```</selection>",
     3
   )
 
-  @Test
   fun testWithSelected() = doTest(
     "`So<selection>me <caret>text and t</selection>he rest`",
     "`<selection>Some <caret>text and the rest</selection>`",
     1
   )
+
+  fun testWordIsSelected() = doTest(
+    sections,
+    """
+    # Head
+
+    ## Second l 1
+
+    This is my <selection><caret>text</selection>
+
+    ## Second l 2
+
+    # Other
+    """.trimIndent(),
+    1
+  )
+
+  fun testLineIsSelected() = doTest(
+    sections,
+    """
+    # Head
+
+    ## Second l 1
+
+    <selection>This is my <caret>text</selection>
+
+    ## Second l 2
+
+    # Other
+    """.trimIndent(),
+    2
+  )
+
+  fun testParagraphIsSelected() = doTest(
+    sections,
+    """
+    # Head
+
+    ## Second l 1
+
+    <selection>This is my <caret>text
+    </selection>
+    ## Second l 2
+
+    # Other
+    """.trimIndent(),
+    3
+  )
+
+  fun testSectionWithHeaderIsSelected() = doTest(
+    sections,
+    """
+    # Head
+
+    <selection>## Second l 1
+
+    This is my <caret>text
+    </selection>
+    ## Second l 2
+
+    # Other
+    """.trimIndent(),
+    4
+  )
+
+  fun testFileIsSelected() = doTest(
+    sections,
+    """
+    <selection># Head
+
+    ## Second l 1
+
+    This is my <caret>text
+
+    ## Second l 2
+    </selection>
+    # Other
+    """.trimIndent(),
+    5
+  )
+
+  private val sections = """
+    # Head
+
+    ## Second l 1
+
+    This is my <caret>text
+
+    ## Second l 2
+
+    # Other
+  """.trimIndent()
 
   private fun doTest(before: String, expected: String, count: Int) {
     configureFromFileText("test.md", before)

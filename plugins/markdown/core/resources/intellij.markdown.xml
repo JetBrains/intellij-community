@@ -269,6 +269,7 @@
     <daemon.highlightInfoFilter implementation="org.intellij.plugins.markdown.injection.CodeFenceHighlightInfoFilter"/>
 
     <extendWordSelectionHandler implementation="org.intellij.plugins.markdown.editor.MarkdownCodeSpanExtendWordSelectionHandler"/>
+    <extendWordSelectionHandler implementation="org.intellij.plugins.markdown.editor.MarkdownHeaderSectionExtendWordSelectionHandler"/>
 
     <typedHandler implementation="org.intellij.plugins.markdown.editor.lists.MarkdownListItemCreatingTypedHandlerDelegate"/>
 
