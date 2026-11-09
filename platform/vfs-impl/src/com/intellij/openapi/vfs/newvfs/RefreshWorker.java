@@ -344,11 +344,13 @@ final class RefreshWorker {
     boolean dirIsCaseSensitive = dir.isCaseSensitive();
 
     Map<String, FileAttributes> childrenWithAttributes;
+    Set<String> unknownNames = createFilePathSet(/*expectedSize: */0, dirIsCaseSensitive);
     t = System.nanoTime();
-    if (fs instanceof BatchingFileSystem) {
-      childrenWithAttributes = adjustCaseSensitivity(
-        computeAllChildrenAttributes((BatchingFileSystem)fs, dir, /*filter: */null),
-        dirIsCaseSensitive
+    if (fs instanceof BatchingFileSystem batchingFileSystem) {
+      childrenWithAttributes = listOrCheckByName(
+        batchingFileSystem, dir, /*filter: */null, dirIsCaseSensitive,
+        /* namesToCheck: */ vfsNames,
+        /* unknownNames: */  unknownNames
       );
     }
     else {
@@ -370,6 +372,7 @@ final class RefreshWorker {
 
     Set<String> deletedNames = createFilePathSet(vfsNames, dirIsCaseSensitive);
     childrenWithAttributes.keySet().forEach(deletedNames::remove);
+    unknownNames.forEach(deletedNames::remove);
 
     ObjectOpenCustomHashSet<String> actualNames = dirIsCaseSensitive ?
                                                   null :
@@ -395,7 +398,7 @@ final class RefreshWorker {
 
     List<Pair<VirtualFile, FileAttributes>> existingMap = new ArrayList<>(vfsChildren.length - deletedNames.size());
     for (VirtualFile child : vfsChildren) {
-      if (!deletedNames.contains(child.getName())) {
+      if (!deletedNames.contains(child.getName()) && !unknownNames.contains(child.getName())) {
         existingMap.add(new Pair<>(child, getAttributes(fs, childrenWithAttributes, child)));
       }
     }
@@ -444,11 +447,11 @@ final class RefreshWorker {
     for (VirtualFile file : cached) namesToRefresh.add(file.getName());
 
     Map<String, FileAttributes> childrenWithAttributes = null;
+    Set<String> unknownNames = createFilePathSet(/*expectedSize: */ 0, dirIsCaseSensitive);
     if (fs instanceof BatchingFileSystem batchingFileSystem) {
       t = System.nanoTime();
-      childrenWithAttributes = adjustCaseSensitivity(
-        computeAllChildrenAttributes(batchingFileSystem, dir, namesToRefresh),
-        dirIsCaseSensitive
+      childrenWithAttributes = listOrCheckByName(
+        batchingFileSystem, dir, namesToRefresh, dirIsCaseSensitive, /*namesToCheck: */namesToRefresh, unknownNames
       );
       ioTime.addAndGet(System.nanoTime() - t);
     }
@@ -483,7 +486,9 @@ final class RefreshWorker {
 
     List<Pair<VirtualFile, FileAttributes>> existingMap = cached.isEmpty() ? List.of() : new ArrayList<>(cached.size());
     for (VirtualFile child : cached) {
-      existingMap.add(new Pair<>(child, getAttributes(fs, childrenWithAttributes, child)));
+      if (!unknownNames.contains(child.getName())) {
+        existingMap.add(new Pair<>(child, getAttributes(fs, childrenWithAttributes, child)));
+      }
     }
 
     checkCancelled(dir);
@@ -504,6 +509,62 @@ final class RefreshWorker {
     var changed = ReadAction.computeBlocking(() -> !cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames()));
     vfsTime.addAndGet(System.nanoTime() - t);
     return changed;
+  }
+
+  /// Gets the actual children of `dir`, to compare with the VFS children.
+  /// The answer has 3 states for a name:
+  /// - child exists: childName is in the result map;
+  /// - child is unknown: childName is returned in `unknownNames`;
+  /// - child is absent: not in result, not in `unknownNames`
+  /// It is expected that the caller deletes the absent children from VFS -- but keeps the unknown children as-is.
+  /// <p>
+  /// A successful listing is returned as-is: [BatchingFileSystem#listWithAttributes] promises a complete listing, `unknownNames`
+  /// remains empty.
+  /// A failed listing does not prove that a child is absent -- e.g. it could be the user has no access to the dir listing, but has
+  /// access to specific children -- so then the method checks each of `namesToCheck`, and adds `dir` to `skipped`.
+  ///
+  /// @param filter       the names to list, or null for all names
+  /// @param namesToCheck the names to check one by one if the listing fails: the VFS children, and the wanted names of a partial scan
+  /// @param unknownNames out: the names whose state is unknown. The caller generates no event for them
+  /// @return the existing children with their attributes
+  /// @throws FileSystemUnavailableException if the file system is unavailable
+  private @NotNull Map<String, FileAttributes> listOrCheckByName(@NotNull BatchingFileSystem fs,
+                                                                 @NotNull VirtualDirectoryImpl dir,
+                                                                 @Nullable Set<String> filter,
+                                                                 boolean caseSensitive,
+                                                                 @NotNull Collection<String> namesToCheck,
+                                                                 @NotNull Set<String> unknownNames) throws FileSystemUnavailableException {
+    try {
+      return adjustCaseSensitivity(computeAllChildrenAttributes(fs, dir, filter), caseSensitive);
+    }
+    catch (FileSystemUnavailableException e) {
+      throw e;
+    }
+    catch (FileStateUnknownException e) {
+      LOG.debug("refresh checks the children by name, the listing failed: " + dir, e);
+    }
+
+    // without a listing, no new child appears, and the next refresh must try the listing again
+    skipped.add(dir);
+    Map<String, FileAttributes> childrenWithAttributes = createFilePathMap(namesToCheck.size(), caseSensitive);
+    for (String name : namesToCheck) {
+      FakeVirtualFile child = new FakeVirtualFile(dir, name);
+      try {
+        // non-cancellable, see computeAttributesForFile()
+        FileAttributes attributes = Cancellation.computeInNonCancelableSection(() -> fs.getAttributesOrThrow(child));
+        if (attributes != null) {
+          childrenWithAttributes.put(name, attributes);
+        }
+      }
+      catch (FileSystemUnavailableException e) {
+        throw e;
+      }
+      catch (FileStateUnknownException e) {
+        LOG.debug("refresh keeps a child, the file system cannot tell its state: " + child, e);
+        unknownNames.add(name);
+      }
+    }
+    return childrenWithAttributes;
   }
 
   /**

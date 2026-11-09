@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -22,7 +23,6 @@ import com.intellij.openapi.vfs.impl.SymlinksCapableFileSystem;
 import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.openapi.vfs.newvfs.FileNavigator;
 import com.intellij.openapi.vfs.newvfs.FileStateUnknownException;
-import com.intellij.openapi.vfs.newvfs.FileSystemUnavailableException;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -48,6 +48,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.NotDirectoryException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -98,9 +99,9 @@ public class LocalFileSystemImpl
   private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> listChildren(dir));
   private final DiskQueryRelay<VirtualFile, Object> myContentGetter = new DiskQueryRelay<>(file -> readContent(file));
   private final CheckedDiskQueryRelay<VirtualFile, FileAttributes, FileStateUnknownException> myAttributeGetter =
-    CheckedDiskQueryRelay.create(file -> readAttributesOrThrowIfUnavailable(file));
+    CheckedDiskQueryRelay.create(file -> readAttributesOrThrow(file));
   private final CheckedDiskQueryRelay<Pair<VirtualFile, @Nullable Set<String>>, Map<String, FileAttributes>, FileStateUnknownException> myChildrenAttrGetter =
-    CheckedDiskQueryRelay.create(pair -> listWithAttributesImplOrThrowIfUnavailable(pair.first, pair.second));
+    CheckedDiskQueryRelay.create(pair -> listWithAttributesOrThrow(pair.first, pair.second));
 
   protected LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
@@ -469,8 +470,9 @@ public class LocalFileSystemImpl
       return myAttributeGetter.accessDiskWithCheckCanceled(file);
     }
     catch (FileStateUnknownException e) {
+      // the reader has already logged the error
+      LOG.debug(e);
       // the public contract has no "unknown" => the answer is "absent"
-      LOG.warn(e);
       return null;
     }
   }
@@ -527,8 +529,10 @@ public class LocalFileSystemImpl
     return dir.isDirectory() ? myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames)) : Map.of();
   }
 
-  private static Map<String, FileAttributes> listWithAttributesImplOrThrowIfUnavailable(VirtualFile dir, @Nullable Set<String> filter)
-    throws FileSystemUnavailableException {
+  private static Map<String, FileAttributes> listWithAttributesOrThrow(
+    VirtualFile dir,
+    @Nullable Set<String> filter
+  ) throws FileStateUnknownException {
     try {
       var path = Path.of(toIoPath(dir));
       var paths = LocalFileSystemEelUtil.getAttributeListingPaths(path);
@@ -539,25 +543,60 @@ public class LocalFileSystemImpl
         return LocalFileSystemEelUtil.listWithAttributesUsingEel(paths.getSecond(), filter);
       }
     }
-    catch (FileSystemUnavailableException e) { throw e; }
-    catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
-    catch (IOException | RuntimeException e) { LOG.warn(e); }
+    catch (FileStateUnknownException e) { throw e; }
+    // the directory does not exist, so it has no children:
+    catch (NoSuchFileException | NotDirectoryException e) { LOG.debug(e); }
+    catch (InvalidPathException e) { LOG.warn(e); }
+    // an error is not equivalent to "empty dir": the refresh deletes each child that the listing lacks
+    catch (AccessDeniedException e) {
+      LOG.debug(e);
+      throw new FileStateUnknownException(e);
+    }
+    catch (IOException | RuntimeException e) {
+      LOG.warn(e);
+      throw new FileStateUnknownException(e);
+    }
     return Map.of();
   }
 
+  /// The contract of this method is basically [BatchingFileSystem#listWithAttributes(VirtualFile, Set)] contract,
+  /// just with [Path] instead of [VirtualFile]
   private static Map<String, FileAttributes> listWithAttributesLocal(@NotNull Path dir, @Nullable Set<String> filter) throws IOException {
     var expectedSize = filter != null ? filter.size() : 10;
     // we must return a 'normal' (=case-sensitive) map from this method (see the [BatchingFileSystem#listWithAttributes] contract)
     var childrenWithAttributes = CollectionFactory.<FileAttributes>createFilePathMap(expectedSize, /*caseSensitive: */true);
 
+    var entryFailure = new Ref<Exception>();
     PlatformNioHelper.visitDirectory(dir, filter, (file, ioAttributesHolder) -> {
       try {
         var attributes = amendAttributes(file, FileAttributes.fromNio(file, ioAttributesHolder.get()));
         childrenWithAttributes.put(file.getFileName().toString(), attributes);
       }
-      catch (Exception e) { LOG.debug(e); }
+      // the entry was deleted after the directory read
+      catch (NoSuchFileException e) { LOG.debug(e); }
+      catch (Exception e) {
+        // The entry does exist, but its attributes can't be read => it makes the _whole_ listing unknown.
+        // Why: under current BatchingFileSystem.listWithAttributes() contract, either an entry exists & has attributes, or entry
+        // is absent => file is absent, and the refresh() deletes it. The contract doesn't define partial-availability state
+        // 'entry exists, but its attributes are unavailable', it only defines the state 'whole listing is unavailable' (by
+        // throwing FileStateUnknownException) -- so, under this contract we're forced to throw FileStateUnknownException, even
+        // though _some_ information is available.
+        // The cost: refresh() won't be able to see _new_ children in this directory until full listing become available -- even
+        // if these new children are successfully reported by `readdir`, but some _other_ children's attributes fails.
+        // refresh() still re-examines the _known_ children one-by-one, but _new_ children remain invisible to VFS.
+        // E.g. this happens on each refresh for a directory with `r` but without `x` (POSIX `r--`), and for a FUSE/network FS
+        // that fails `stat` of single entries.
+        // If such directories are common, we'll need to extend the listWithAttributes() contract with partial-availability option:
+        // introduce some way of marking the entry as "the name exists, the attributes are unknown" instead of failing the whole
+        // listing.
+        entryFailure.set(e);
+        return false;
+      }
       return true;
     });
+    if (!entryFailure.isNull()) {
+      throw new FileStateUnknownException(entryFailure.get());
+    }
 
     return childrenWithAttributes;
   }
@@ -573,16 +612,25 @@ public class LocalFileSystemImpl
     }
   }
 
-  private static @Nullable FileAttributes readAttributesOrThrowIfUnavailable(VirtualFile file) throws FileSystemUnavailableException {
+  private static @Nullable FileAttributes readAttributesOrThrow(VirtualFile file) throws FileStateUnknownException {
     try {
       var nioFile = Path.of(toIoPath(file));
       var attributes = readAttributesUsingEel(nioFile);
       return amendAttributes(nioFile, attributes);
     }
-    catch (FileSystemUnavailableException e) { throw e; }
-    catch (NoSuchFileException e) { LOG.debug("File doesn't exist: " + e.getMessage()); }
-    catch (AccessDeniedException e) { LOG.debug(e); }
-    catch (IOException | RuntimeException e) { LOG.warn(e); }
+    catch (FileStateUnknownException e) { throw e; }
+    catch (NoSuchFileException | NotDirectoryException e) { LOG.debug("File doesn't exist: " + e.getMessage()); }
+    catch (InvalidPathException e) { LOG.warn(e); }
+    catch (AccessDeniedException e) {
+      LOG.debug(e);
+      throw new FileStateUnknownException(e);
+    }
+    catch (IOException | RuntimeException e) {
+      // these errors are not equivalent to "absent file", they are 'unknown state'
+      // e.g. the refresh() shouldn't delete this file
+      LOG.warn(e);
+      throw new FileStateUnknownException(e);
+    }
     return null;
   }
 

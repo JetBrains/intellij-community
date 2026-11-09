@@ -10,6 +10,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.limits.FileSizeLimit
+import com.intellij.openapi.vfs.newvfs.FileStateUnknownException
 import com.intellij.openapi.vfs.newvfs.FileSystemUnavailableException
 import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.channels.EelDelicateApi
@@ -126,13 +127,13 @@ fun listWithAttributesUsingEel(eelPath: EelPath, filter: Set<String>?): Map<Stri
       val childAttributes = toVfs(file, attributes, eelFsApi)
       childrenWithAttributes[file.fileName] = amendAttributes(childAttributes) { file.asNioPath() }
     }
-    catch (e: FileSystemUnavailableException) {
+    catch (e: FileStateUnknownException) {
       throw e
     }
     catch (e: Exception) {
       rethrowControlFlowException(e)
-      @Suppress("removal", "DEPRECATION")
-      LocalFileSystemBase.LOG.debug(e)
+      // as in LocalFileSystemImpl.listWithAttributesLocal(): without the entry, the map says that it is absent, and the refresh deletes it
+      throw FileStateUnknownException(e)
     }
     true
   }
