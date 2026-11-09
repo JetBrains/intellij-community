@@ -34,6 +34,7 @@ public final class PsiTreeAnchorizer extends TreeAnchorizer {
 
   @Override
   public void freeAnchor(final Object element) {
+    if (element instanceof PsiFileSystemItemAnchor) return;
     if (element instanceof SmartPsiElementPointer<?> pointer) {
       ReadAction.runBlocking(() -> {
         Project project = pointer.getProject();

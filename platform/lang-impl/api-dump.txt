@@ -3235,6 +3235,7 @@ c:com.intellij.ide.projectView.impl.nodes.PsiFileNode
 - canNavigate():Z
 - canRepresent(java.lang.Object):Z
 - contains(com.intellij.openapi.vfs.VirtualFile):Z
+- p:createAnchor(com.intellij.psi.PsiFile):java.lang.Object
 - getChildrenImpl():java.util.Collection
 - getTitle():java.lang.String
 - f:navigate(Z):V
