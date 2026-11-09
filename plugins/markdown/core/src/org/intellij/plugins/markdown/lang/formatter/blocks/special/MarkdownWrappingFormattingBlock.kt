@@ -9,6 +9,7 @@ import com.intellij.formatting.WrapType
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownBlocks
@@ -35,10 +36,12 @@ internal open class MarkdownWrappingFormattingBlock(
   override fun buildChildren(): List<Block> {
     val filtered = MarkdownBlocks.filterFromWhitespaces(node.children()).toList()
     val childWrap = createWrapForChildren()
+    val noneWrap = Wrap.createWrap(WrapType.NONE, false)
     val result = ArrayList<Block>(filtered.size)
 
     filtered.forEachIndexed { index, child ->
       val previous = filtered.getOrNull(index - 1)
+      val isFirstListItemElement = index == 0 && node.treeParent?.elementType == MarkdownElementTypes.LIST_ITEM
       val isAfterOpeningParenthesis = previous?.elementType == MarkdownTokenTypes.LPAREN
       val isAdjacentToPreviousQuote = previous != null
                                       && (previous.elementType == MarkdownTokenTypes.SINGLE_QUOTE
@@ -46,26 +49,28 @@ internal open class MarkdownWrappingFormattingBlock(
                                       && previous.textRange.endOffset == child.textRange.startOffset
       when (child.elementType) {
         MarkdownTokenTypes.LPAREN -> {
-          result.add(MarkdownFormattingBlock(child, settings, spacing, alignment, childWrap))
+          val wrap = if (isFirstListItemElement) noneWrap else childWrap
+          result.add(MarkdownFormattingBlock(child, settings, spacing, alignment, wrap))
         }
 
         MarkdownTokenTypes.TEXT -> {
-          processTextElement(result, child, childWrap, !isAfterOpeningParenthesis && !isAdjacentToPreviousQuote)
+          processTextElement(result, child, childWrap,
+                             !isFirstListItemElement && !isAfterOpeningParenthesis && !isAdjacentToPreviousQuote)
         }
 
         MarkdownTokenTypes.SINGLE_QUOTE, MarkdownTokenTypes.DOUBLE_QUOTE -> {
           val isAttachedToPreviousText = previous?.elementType == MarkdownTokenTypes.TEXT
                                          && previous.textRange.endOffset == child.textRange.startOffset
-          val wrap = if (isAttachedToPreviousText) Wrap.createWrap(WrapType.NONE, false) else childWrap
+          val wrap = if (isFirstListItemElement || isAttachedToPreviousText) noneWrap else childWrap
           result.add(MarkdownFormattingBlock(child, settings, spacing, alignment, wrap))
         }
 
         in MarkdownTokenTypeSets.WHITE_SPACES -> {
-          result.add(MarkdownFormattingBlock(child, settings, spacing, alignment, Wrap.createWrap(WrapType.NONE, false)))
+          result.add(MarkdownFormattingBlock(child, settings, spacing, alignment, noneWrap))
         }
 
         else -> {
-          val wrap = if (isAfterOpeningParenthesis) Wrap.createWrap(WrapType.NONE, false) else null
+          val wrap = if (isFirstListItemElement || isAfterOpeningParenthesis) noneWrap else null
           result.add(MarkdownBlocks.create(child, settings, spacing, wrap) { alignment })
         }
       }

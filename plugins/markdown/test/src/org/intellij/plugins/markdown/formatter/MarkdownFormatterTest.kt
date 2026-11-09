@@ -49,6 +49,14 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test lists`() = doTest()
 
+  fun `test reflow list items with unbreakable first elements`() = doTest()
+
+  fun `test reflow list items with long words and links at default margin`() = doTest(
+    rightMargin = 120,
+    keepLineBreaks = true,
+    singleFile = true,
+  )
+
   //For now alignment of fence parts is not supported
   fun `test fences`() = doTest()
 
@@ -213,9 +221,11 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
     wrapOnTyping: Boolean = true,
     wrapTextIfLong: Boolean = true,
     wrapTextInsideBlockquotes: Boolean = true,
+    singleFile: Boolean = false,
   ) {
-    val before = getTestName(true) + "_before.md"
-    val after = getTestName(true) + "_after.md"
+    val testName = getTestName(true)
+    val before = testName + (if (singleFile) ".md" else "_before.md")
+    val after = if (singleFile) before else "${testName}_after.md"
     runWithTemporaryStyleSettings(project) { settings ->
       settings.apply {
         WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = wrapOnTyping
