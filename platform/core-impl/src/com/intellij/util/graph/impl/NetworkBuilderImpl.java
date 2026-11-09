@@ -18,14 +18,14 @@ public class NetworkBuilderImpl<N, E> extends NetworkBuilder<N, E> {
     com.google.common.graph.NetworkBuilder<Object, Object> guavaBuilder =
       myIsDirected ? com.google.common.graph.NetworkBuilder.directed()
                    : com.google.common.graph.NetworkBuilder.undirected();
-    guavaBuilder
+    com.google.common.graph.NetworkBuilder<N, ? super E> builder = guavaBuilder
       .allowsParallelEdges(myDoAllowParallelEdges)
       .allowsSelfLoops(myDoAllowSelfLoops)
       .edgeOrder(GraphAdapter.unwrapOrder(myEdgeOrder))
       .nodeOrder(GraphAdapter.unwrapOrder(myNodeOrder));
-    if (myExpectedEdgeCount.isPresent()) guavaBuilder.expectedEdgeCount(myExpectedEdgeCount.getAsInt());
-    if (myExpectedNodeCount.isPresent()) guavaBuilder.expectedNodeCount(myExpectedNodeCount.getAsInt());
+    if (myExpectedEdgeCount.isPresent()) builder.expectedEdgeCount(myExpectedEdgeCount.getAsInt());
+    if (myExpectedNodeCount.isPresent()) builder.expectedNodeCount(myExpectedNodeCount.getAsInt());
 
-    return GraphAdapter.wrapNetwork(guavaBuilder.build());
+    return GraphAdapter.wrapNetwork(builder.build());
   }
 }
