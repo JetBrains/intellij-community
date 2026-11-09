@@ -443,7 +443,7 @@ internal class RemoteRecentProjectActionGroup(val projectId: String, val project
     }
 
     val result = mutableListOf<AnAction>()
-    if (project.canOpenProject()) {
+    if (!project.status.isOpened && project.canOpenProject()) {
       result.add(DumbAwareAction.create(UIBundle.message("project.widget.opening.project.group.child.action.text")) { event ->
         project.openProject(event)
       })
