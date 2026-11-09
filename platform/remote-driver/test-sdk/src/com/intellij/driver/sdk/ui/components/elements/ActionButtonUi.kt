@@ -1,7 +1,6 @@
 package com.intellij.driver.sdk.ui.components.elements
 
 import com.intellij.driver.client.Remote
-import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.accessibleName
@@ -29,9 +28,7 @@ class ActionButtonUi(data: ComponentData): UiComponent(data) {
   val popState: Int get() = actionButtonComponent.getPopState()
 
   fun performAction() {
-    driver.withContext(OnDispatcher.EDT) {
-      actionButtonComponent.click()
-    }
+    click()
   }
 }
 
@@ -53,7 +50,6 @@ interface ActionButtonComponent {
   fun getPresentation(): PresentationRef
   fun isSelected(): Boolean
   fun getPopState(): Int
-  fun click()
 }
 
 @Remote("com.intellij.openapi.actionSystem.Presentation")

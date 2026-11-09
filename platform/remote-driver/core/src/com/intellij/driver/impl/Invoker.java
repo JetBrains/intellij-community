@@ -50,7 +50,6 @@ import org.apache.commons.lang3.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.SwingUtilities;
 import java.awt.IllegalComponentStateException;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Array;
@@ -166,24 +165,16 @@ public class Invoker implements InvokerMBean {
 
     if (call.getDispatcher() == OnDispatcher.EDT) {
       Object[] res = new Object[1];
-      ModalityState[] modalityState = new ModalityState[1];
-      try {
-        SwingUtilities.invokeAndWait(() -> {
-          modalityState[0] = ModalityState.current();
-        });
-      }
-      catch (Throwable e) {
-        throw new RuntimeException(e);
-      }
       Application app = ApplicationManager.getApplication();
       Runnable runnable = () -> {
         res[0] = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
       };
+      ModalityState modalityState = call.getLockSemantics() == LockSemantics.WRITE_ACTION ? ModalityState.nonModal() : ModalityState.any();
       if (call.getLockSemantics() == LockSemantics.NO_LOCK && app instanceof ApplicationEx applicationEx) {
-        applicationEx.invokeAndWaitRelaxed(runnable, modalityState[0]);
+        applicationEx.invokeAndWaitRelaxed(runnable, modalityState);
       }
       else {
-        app.invokeAndWait(runnable, modalityState[0]);
+        app.invokeAndWait(runnable, modalityState);
       }
       result = res[0];
     }
