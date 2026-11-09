@@ -305,7 +305,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         try {
           errorHandler?.handleError(e)
         }
-        catch (e: Throwable) {
+        catch (_: Throwable) {
           // swallowing error :(
         }
       }
@@ -325,7 +325,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         try {
           errorHandler?.handleError(e)
         }
-        catch (e: Throwable) {
+        catch (_: Throwable) {
           // swallowing error :(
         }
       }
@@ -602,7 +602,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     if (checkTopmostReadAction && isInTopmostReadAction()) {
       // this case is identical to the branch of parallelization of read lock. Regardless of what permit is currently being held by this thread,
       // the caller requested parallelization while being in a read action, hence we need to parallelize a read.
-      val (newComputationState, cleanup) = currentComputationState.parallelizeRead()
+      val [newComputationState, cleanup] = currentComputationState.parallelizeRead()
       return ComputationStateContextElement(newComputationState) to cleanup
     }
     when (currentPermit) {
@@ -618,13 +618,13 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         // We must ensure that the computation in `runBlockingCancellable` has read access;
         // Otherwise there can be deadlocks where `runBlockingCancellable` is canceled by a pending write which cannot start
         // because some computation inside `runBlockingCancellable` waits for read access in a blocking way
-        val (newComputationState, cleanup) = currentComputationState.parallelizeRead()
+        val [newComputationState, cleanup] = currentComputationState.parallelizeRead()
         return ComputationStateContextElement(newComputationState) to cleanup
       }
       is WriteIntentPermit -> {
         // we are attempting to share a write-intent lock
         // it means that we are entering a new level of locking
-        val (newComputationState, cleanup) = currentComputationState.parallelizeWriteIntent(currentPermit)
+        val [newComputationState, cleanup] = currentComputationState.parallelizeWriteIntent(currentPermit)
         statesOfWIThread.set(statesOfWIThread.get() ?: mutableListOf())
         statesOfWIThread.get()?.add(newComputationState)
 
@@ -659,7 +659,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
             try {
               errorHandler?.handleError(e)
             }
-            catch (e: Throwable) {
+            catch (_: Throwable) {
               // swallowing error :(
             }
           }
@@ -674,7 +674,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         //
         // In short, we apply the parallelization of write-intent lock here with downgrading of write permits back to write intent.
         val token = downgradeWriteLockToWriteIntent()
-        val (newState, cleanup) = currentComputationState.parallelizeWriteIntent(thisLevelPermit.get() as WriteIntentPermit)
+        val [newState, cleanup] = currentComputationState.parallelizeWriteIntent(thisLevelPermit.get() as WriteIntentPermit)
         statesOfWIThread.set(statesOfWIThread.get() ?: mutableListOf())
         statesOfWIThread.get()?.add(newState)
         return ComputationStateContextElement(newState) to {
@@ -1122,11 +1122,12 @@ class NestedLocksThreadingSupport : ThreadingSupport {
   private suspend fun <T> acquireLockOrCancel(job: Job, rollback: (T) -> Unit, action: suspend () -> T): T? {
     var permit: T? = null
     try {
+      @Suppress("CoroutineContextWithJob")
       return withContext(job) {
         permit = action()
         permit
       }
-    } catch (e: ThreadingSupport.RetryLockAcquisitionException) {
+    } catch (_: ThreadingSupport.RetryLockAcquisitionException) {
       // if the permit was already acquired; let's release it
       if (permit != null) {
         rollback(permit)
@@ -1287,7 +1288,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
           try {
             acquisitionJob.ensureActive()
           }
-          catch (e: ThreadingSupport.RetryLockAcquisitionException) {
+          catch (_: ThreadingSupport.RetryLockAcquisitionException) {
             return ThreadingSupport.ExecutorResult.Retry
           }
 
@@ -1433,7 +1434,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
     preparatoryWriteIntent: PreparatoryWriteIntent,
     newlyArrivedListenersRef: AtomicReference<List<WriteActionListener>>
   ): WriteLockInitResult {
-    val (shouldRelease, exposedData) = try {
+    val [shouldRelease, exposedData] = try {
       when (val p = preparatoryWriteIntent.permitRef.get()) {
         is WriteIntentPermit -> {
           val exposedPermitData = processWriteLockAcquisition {
@@ -1588,8 +1589,8 @@ class NestedLocksThreadingSupport : ThreadingSupport {
           require(newThisLevelPermit is WriteIntentPermit) {
             "When suspending write action is finishing, the thread must hold write-intent lock"
           }
-          val (newWritePermits, newWritePermit) = try {
-            myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { (listener, data) ->
+          val [newWritePermits, newWritePermit] = try {
+            myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { [listener, data] ->
               @Suppress("UNCHECKED_CAST")
               val castedListener: WriteLockReacquisitionListener<Any> = listener as WriteLockReacquisitionListener<Any>
               castedListener.beforeWriteLockReacquired(data)
@@ -1607,7 +1608,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
               }
             }
             hack_setThisLevelPermit(newWritePermit)
-            myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { (listener, data) ->
+            myWriteLockReacquisitionListener.zip(listOfReacquisitionData).forEachGuaranteed { [listener, data] ->
               @Suppress("UNCHECKED_CAST")
               val castedListener: WriteLockReacquisitionListener<Any> = listener as WriteLockReacquisitionListener<Any>
               castedListener.afterWriteLockReacquired(data)
@@ -1877,7 +1878,7 @@ class NestedLocksThreadingSupport : ThreadingSupport {
         try {
           errorHandler?.handleError(e)
         }
-        catch (e: Throwable) {
+        catch (_: Throwable) {
           // swallowing error :(
         }
       }
