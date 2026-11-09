@@ -398,6 +398,8 @@ internal class SnapshotRangeMarkerImplTest {
       val reader = executor.submit {
         assertTrue(start.await(10, TimeUnit.SECONDS))
         repeat(100_000) {
+          assertEquals(2, marker.startOffset)
+          assertEquals(4, marker.endOffset)
           assertEquals(TextRange(2, 4), marker.textRange)
           assertTrue(marker.isValid)
         }

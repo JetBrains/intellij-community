@@ -82,7 +82,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   @Synchronized
   fun markDisposed() {
     if (isDisposed()) return
-    fallbackRange = currentRange(forRemoval = true)
+    fallbackRange = currentRangeForRemoval()
     disposalState = DISPOSED
   }
 
@@ -102,9 +102,19 @@ open class SnapshotRangeMarkerImpl private constructor(
     }
   }
 
-  override fun getStartOffset(): Int = PMarkerResolution.startOffset(currentRange())
+  override fun getStartOffset(): Int {
+    val resolution = cachedCurrentResolution()
+    return PMarkerResolution.startOffset(
+      if (resolution == PMarkerResolution.UNRESOLVED) currentRange() else rangeOrFallback(resolution)
+    )
+  }
 
-  override fun getEndOffset(): Int = PMarkerResolution.endOffset(currentRange())
+  override fun getEndOffset(): Int {
+    val resolution = cachedCurrentResolution()
+    return PMarkerResolution.endOffset(
+      if (resolution == PMarkerResolution.UNRESOLVED) currentRange() else rangeOrFallback(resolution)
+    )
+  }
 
   override fun getTextRange(): TextRange = PMarkerResolution.toTextRange(currentRange())
 
@@ -195,24 +205,34 @@ open class SnapshotRangeMarkerImpl private constructor(
   @Volatile
   private var cachedResolution: CachedResolution? = null
 
-  private fun currentRange(forRemoval: Boolean = false): Long {
-    val resolution = currentResolution(forRemoval)
-    return if (PMarkerResolution.isAbsent(resolution)) fallbackRange else resolution
+  private fun cachedCurrentResolution(): Long {
+    val root = currentRootReference().get()
+    val cached = cachedResolution
+    return if (cached != null && cached.identity === root.resolutionCacheIdentity) cached.resolution else PMarkerResolution.UNRESOLVED
   }
+
+  private fun currentRange(): Long {
+    val root = currentRootReference().get()
+    return rangeOrFallback(resolveCurrent(root, cachedResolution, forRemoval = false))
+  }
+
+  private fun currentRangeForRemoval(): Long {
+    val root = currentRootReference().get()
+    return rangeOrFallback(resolveCurrent(root, cachedResolution, forRemoval = true))
+  }
+
+  private fun rangeOrFallback(resolution: Long): Long =
+    if (PMarkerResolution.isAbsent(resolution)) fallbackRange else resolution
 
   internal fun cacheResolution(root: PMarkerRoot, resolution: Long) {
     cachedResolution = CachedResolution(root.resolutionCacheIdentity, resolution)
   }
 
   /**
-   * Resolves this marker in the current root. Reuses cached offsets for the same identity or advances them across one direct edit.
-   * Traverses the tree when neither shortcut applies.
+   * Resolves offsets for a cache miss or disposal. Advances offsets across one direct edit or resolves them in [root].
    */
-  private fun currentResolution(forRemoval: Boolean): Long {
-    val root = currentRootReference().get()
-    val cacheIdentity = root.resolutionCacheIdentity
-    val cached = cachedResolution
-    if (cached != null && cached.identity === cacheIdentity) {
+  private fun resolveCurrent(root: PMarkerRoot, cached: CachedResolution?, forRemoval: Boolean): Long {
+    if (cached != null && cached.identity === root.resolutionCacheIdentity) {
       return cached.resolution
     }
     val advanced = if (cached != null && !isDisposed()) {

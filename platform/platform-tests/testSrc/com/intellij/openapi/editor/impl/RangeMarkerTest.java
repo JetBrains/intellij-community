@@ -1734,7 +1734,17 @@ public class RangeMarkerTest {
   @PerformanceUnitTest
   @Test
   public void testGetStartEndOffsetPerformance() {
-    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
+    doTestGetStartEndOffsetPerformance(4_000);
+  }
+
+  @PerformanceUnitTest
+  @Test
+  public void testGetStartEndOffsetWithUniqueRangesPerformance() {
+    doTestGetStartEndOffsetPerformance(100_000);
+  }
+
+  private void doTestGetStartEndOffsetPerformance(int documentLength) {
+    DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", documentLength / 4));
     int N = 100_000;
     RangeMarker[] markers = new RangeMarker[N];
     for (int i = 0; i < N; i++) {
