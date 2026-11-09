@@ -44,7 +44,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//libraries/kotlin/reflect",
-        "//plugins/kotlin/code-insight/descriptions",
         "//java/execution/impl",
     ],
     deps = [
@@ -77,6 +76,7 @@ jvm_library(
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//plugins/kotlin/base/project-structure",
+        "//plugins/kotlin/code-insight/descriptions",
         "//plugins/kotlin/refactorings/kotlin.refactorings.common:kotlin-refactorings-base",
         "//platform/lang-impl",
         "//platform/core-ui",
