@@ -9018,9 +9018,6 @@ com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor
 com.intellij.util.io.mvstore.StoreErrorHandler
 org.h2.mvstore.cache.FilePathCache
 org.h2.util.Utils
-com.intellij.platform.locking.impl.ParallelizablePermit$Read
-com.intellij.platform.locking.impl.ParallelizablePermit$Write
-com.intellij.platform.locking.impl.ParallelizablePermit$WriteIntent
 com.intellij.ide.RecentProjectColorInfo
 com.intellij.ide.projectView.ProjectViewSettings
 com.intellij.ide.projectView.ViewSettings
