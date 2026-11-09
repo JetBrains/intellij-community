@@ -26,6 +26,7 @@ defect in a test. A work count does not flake like a time.
 | `MATCH_STEPS` | the steps of the type match | `PyTypeChecker.match` |
 | `OVERLOAD_CANDIDATES_CHECKED` | the overload candidates that the argument types check | `PyCallExpressionHelper.matchesByArgumentTypes` |
 | `CFG_BUILDS`, `CFG_INSTRUCTIONS` | the control flow builds and their instructions | `PyControlFlowBuilder.buildControlFlow` |
+| `PATH_CACHE_CLEARS` | the clears of a non-empty resolve path cache | `PythonPathCache.clearCache` |
 
 A cache hit and an evaluation do not add up to the calls. The rest are library delegations and the requests that the
 recursion guard stops.
