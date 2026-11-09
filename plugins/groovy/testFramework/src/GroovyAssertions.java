@@ -3,18 +3,31 @@ package com.intellij.groovy.testFramework;
 
 import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.intellij.testFramework.UsefulTestCase.assertEquals;
-import static com.intellij.testFramework.UsefulTestCase.assertNotNull;
-import static com.intellij.testFramework.UsefulTestCase.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 public final class GroovyAssertions {
 
   private GroovyAssertions() { }
+
+  public static <T> T assertOneElement(@NotNull Collection<? extends T> collection) {
+    assertEquals(1, collection.size(), collection::toString);
+    return collection.iterator().next();
+  }
+
+  public static <T> T assertOneElement(T @NotNull [] array) {
+    assertEquals(1, array.length, () -> Arrays.toString(array));
+    return array[0];
+  }
 
   public static void assertType(@Nullable String expected, @Nullable PsiType actual) {
     if (expected == null) {

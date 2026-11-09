@@ -13,8 +13,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import java.util.Objects;
 
 import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
-import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
 import static com.intellij.util.ArrayUtil.getLastElement;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 
 public interface BaseTest {
 
@@ -68,6 +68,6 @@ public interface BaseTest {
   @NotNull
   default GrExpression lastExpression() {
     final GrStatement lastStatement = getLastElement(getGroovyFile().getStatements());
-    return assertInstanceOf(lastStatement, GrExpression.class);
+    return assertInstanceOf(GrExpression.class, lastStatement);
   }
 }

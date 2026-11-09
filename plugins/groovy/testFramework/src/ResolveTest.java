@@ -15,14 +15,14 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo;
 
 import java.util.Collection;
 
+import static com.intellij.groovy.testFramework.GroovyAssertions.assertOneElement;
 import static com.intellij.groovy.testFramework.GroovyAssertions.assertType;
-import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
-import static com.intellij.testFramework.UsefulTestCase.assertEquals;
-import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
-import static com.intellij.testFramework.UsefulTestCase.assertNotNull;
-import static com.intellij.testFramework.UsefulTestCase.assertNull;
-import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.GrDelegatesToUtilKt.getDelegatesToInfo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public interface ResolveTest extends BaseTest {
 
@@ -35,7 +35,7 @@ public interface ResolveTest extends BaseTest {
   @NotNull
   default <T extends PsiReference> T referenceUnderCaret(@NotNull Class<T> refType) {
     PsiReference ref = getPsiFile().findReferenceAt(getFixture().getCaretOffset());
-    return assertInstanceOf(ref, refType);
+    return assertInstanceOf(refType, ref);
   }
 
   @NotNull
@@ -64,12 +64,12 @@ public interface ResolveTest extends BaseTest {
   default <T extends PsiElement> T resolveTest(@NotNull GroovyReference reference, @Nullable Class<T> clazz) {
     Collection<? extends GroovyResolveResult> results = reference.resolve(false);
     if (clazz == null) {
-      assertEmpty(results);
+      assertTrue(results.isEmpty(), results::toString);
       return null;
     }
     else {
       PsiElement resolved = assertOneElement(results).getElement();
-      return assertInstanceOf(resolved, clazz);
+      return assertInstanceOf(clazz, resolved);
     }
   }
 
@@ -95,9 +95,9 @@ public interface ResolveTest extends BaseTest {
 
   default void setterMethodTest(String name, String originalName, String containingClass) {
     var result = elementUnderCaret(GrMethodCall.class).advancedResolve();
-    var method = assertInstanceOf(result.getElement(), PsiMethod.class);
+    var method = assertInstanceOf(PsiMethod.class, result.getElement());
     methodTest(method, name, containingClass);
-    var original = assertInstanceOf(method.getNavigationElement(), PsiMethod.class);
+    var original = assertInstanceOf(PsiMethod.class, method.getNavigationElement());
     methodTest(original, originalName, containingClass);
   }
 }

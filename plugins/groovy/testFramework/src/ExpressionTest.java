@@ -10,9 +10,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
-import static com.intellij.testFramework.UsefulTestCase.assertEmpty;
-import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
-import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
+import java.util.Arrays;
+
+import static com.intellij.groovy.testFramework.GroovyAssertions.assertOneElement;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public interface ExpressionTest extends ResolveTest, TypingTest {
 
@@ -36,7 +38,7 @@ public interface ExpressionTest extends ResolveTest, TypingTest {
     GrMethodCall expression = elementUnderCaret(GrMethodCall.class);
     GroovyResolveResult[] results = expression.multiResolveGroovy(false);
     PsiElement resolved = assertOneElement(results).getElement();
-    return assertInstanceOf(resolved, clazz);
+    return assertInstanceOf(clazz, resolved);
   }
 
   default <T extends PsiMethod> T methodCallTest(@Nullable Class<T> clazz, @Nullable String expectedType) {
@@ -44,11 +46,11 @@ public interface ExpressionTest extends ResolveTest, TypingTest {
     GroovyResolveResult[] results = expression.multiResolveGroovy(false);
     final T resolved;
     if (clazz == null) {
-      assertEmpty(results);
+      assertTrue(results.length == 0, () -> Arrays.toString(results));
       resolved = null;
     }
     else {
-      resolved = assertInstanceOf(assertOneElement(results).getElement(), clazz);
+      resolved = assertInstanceOf(clazz, assertOneElement(results).getElement());
     }
     typingTest(expression, expectedType);
     return resolved;

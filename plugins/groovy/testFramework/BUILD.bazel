@@ -2,8 +2,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.groovy.testFramework` start
 jvm_provided_library(
-    name = "libraries_junit4_provided",
-    lib = "//libraries/junit4",
+    name = "libraries_junit6_provided",
+    lib = "//libraries/junit6",
 )
 
 jvm_library(
@@ -27,7 +27,7 @@ jvm_library(
         "//plugins/groovy/groovy-psi:psi",
         "//platform/testFramework",
         "//java/testFramework",
-        ":libraries_junit4_provided",
+        ":libraries_junit6_provided",
     ],
 )
 ### auto-generated section `build intellij.groovy.testFramework` end
