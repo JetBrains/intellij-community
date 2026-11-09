@@ -472,9 +472,9 @@ public class SearchResults implements DocumentListener, CaretListener {
       final IntList resultEndOffsets = new IntArrayList(mergedStartOffsets.length);
 
       new Object() {
-        int counter = 0;
-        int startsIndex = 0;
-        int endsIndex = 0;
+        int counter;
+        int startsIndex;
+        int endsIndex;
 
         void run() {
           while (startsIndex < mergedStartOffsets.length ||
@@ -845,12 +845,8 @@ public class SearchResults implements DocumentListener, CaretListener {
   }
 
   private @Nullable FindResult findOccurrenceEqualTo(FindResult occurrence) {
-    for (FindResult findResult : myOccurrences) {
-      if (findResult.equals(occurrence)) {
-        return findResult;
-      }
-    }
-    return null;
+    int i = myOccurrences.indexOf(occurrence);
+    return i == -1 ? null : myOccurrences.get(i);
   }
 
   protected @Nullable FindResult firstOccurrenceAtOrAfterCaret() {
@@ -990,7 +986,7 @@ public class SearchResults implements DocumentListener, CaretListener {
       if (next == null) {
         if (processFromTheBeginning) {
           if (hasMatches()) {
-            next = getOccurrences().get(getOccurrences().size() - 1);
+            next = getOccurrences().getLast();
           }
         }
         else {
@@ -1037,7 +1033,7 @@ public class SearchResults implements DocumentListener, CaretListener {
     if (next == null) {
       if (processFromTheBeginning) {
         if (hasMatches()) {
-          next = getOccurrences().get(0);
+          next = getOccurrences().getFirst();
         }
       }
       else {
