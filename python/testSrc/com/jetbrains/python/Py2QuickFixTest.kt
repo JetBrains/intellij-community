@@ -122,6 +122,34 @@ class Py2QuickFixTest : PyTestCase() {
     myFixture.findSingleIntention("Install and import package 'pandas'") // 'pd' is a common import alias for 'pandas' from PyPI
   }
 
+  @TestFor(issues = ["PY-55983"])
+  fun testInstallAndImportNotOfferedForCapitalizedNameOfLowercaseModule(): Unit = timeoutRunBlocking {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(myFixture.project, availablePackageNames = listOf("starlette"))
+
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    myFixture.configureByText(PythonFileType.INSTANCE, "app = Starlette<caret>()")
+    assertTrue(myFixture.filterAvailableIntentions("Ignore unresolved reference").isNotEmpty())
+    assertEquals(emptyList<String>(), myFixture.filterAvailableIntentions("Install").map { it.text })
+  }
+
+  @TestFor(issues = ["PY-55983"])
+  fun testInstallAndImportOfferedForLowercaseModule(): Unit = timeoutRunBlocking {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(myFixture.project, availablePackageNames = listOf("starlette"))
+
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    myFixture.configureByText(PythonFileType.INSTANCE, "app = starlette<caret>.Starlette()")
+    myFixture.findSingleIntention("Install and import package 'starlette'")
+  }
+
+  @TestFor(issues = ["PY-55983"])
+  fun testInstallAndImportOfferedForCapitalizedModuleFromAliasTable(): Unit = timeoutRunBlocking {
+    TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(myFixture.project, availablePackageNames = listOf("ipython"))
+
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    myFixture.configureByText(PythonFileType.INSTANCE, "IPython<caret>.embed()")
+    myFixture.findSingleIntention("Install and import package 'IPython'")
+  }
+
   fun testImportFromModule() {
     doInspectionTest(
       arrayOf("importFromModule/foo/bar.py", "importFromModule/foo/baz.py", "importFromModule/foo/__init__.py"),

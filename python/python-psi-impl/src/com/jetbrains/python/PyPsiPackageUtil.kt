@@ -34,6 +34,17 @@ object PyPsiPackageUtil {
     return PyPackageName.normalizePackageName(PACKAGES_TOPLEVEL.getOrDefault(module, default))
   }
 
+  /**
+   * Whether the letter case of [module] can be trusted to match the module that the package [moduleToPackageName]
+   * maps it to provides.
+   *
+   * PyPI project names are case-insensitive, but module names are not: `Starlette` maps to the project `starlette`,
+   * whose module is `starlette`. A module name with capitals is trusted only when the alias table lists it.
+   */
+  fun isModuleNameCaseTrusted(module: String): Boolean {
+    return module in PACKAGES_TOPLEVEL || module == module.lowercase()
+  }
+
   private fun loadPackageAliases(): Map<String, String> {
     return buildMap {
       try {
