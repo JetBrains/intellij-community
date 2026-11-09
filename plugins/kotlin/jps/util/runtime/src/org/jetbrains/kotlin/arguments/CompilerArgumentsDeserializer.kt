@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.arguments
 
 import org.jdom.Element
 import org.jdom.Text
-import org.jetbrains.kotlin.cli.common.arguments.ArgumentParseErrors
 import org.jetbrains.kotlin.cli.common.arguments.CommonToolArguments
 import org.jetbrains.kotlin.cli.common.arguments.LanguageSettingsParser
 import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
@@ -104,7 +103,7 @@ class CompilerArgumentsDeserializerV5<T : CommonToolArguments>(override val comp
 
         private fun parseInternalArgument(argument: String): ManualLanguageFeatureSetting? {
             val parser = LanguageSettingsParser
-            return parser.parseInternalArgument(argument, ArgumentParseErrors())
+            return parser.parseInternalArgument(argument, mutableListOf())
         }
     }
 }
