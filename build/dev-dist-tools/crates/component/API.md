@@ -95,9 +95,10 @@ The collector writes and checks the record of each plugin component. The compose
 - `layout::FINGERPRINT_FILE`: `fingerprint.txt`.
 - `LocalLayout { version: u32, files: Vec<LocalLayoutFile>, metadata: Vec<String> }`: the layout. `metadata` names the
   files that the composer writes beside the layout.
-- `LocalLayoutFile { path, runfile, symlink_target, executable, mode, kind }`: one file, which is a runfile, a
-  symbolic link or a directory. `runfile` and `symlink_target` are `Option<String>`, `mode` is an `Option<u32>`, and
-  `kind` is an `Option<LocalFileKind>`. `serde_json` writes the Kotlin bytes: every key, `null` included, and `kind`
-  only for a directory.
+- `LocalLayoutFile { path, runfile, symlink_target, executable, mode, hash, kind }`: one file, which is a runfile, a
+  symbolic link or a directory. `runfile` and `symlink_target` are `Option<String>`, `mode` is an `Option<u32>`, `hash`
+  is an `Option<i64>`, and `kind` is an `Option<LocalFileKind>`. `serde_json` writes every key of the first five,
+  `null` included, `hash` only for a runfile, and `kind` only for a directory. `hash` is the content hash of the
+  component entry, so `dev-home` keys the file of a generation without reading it.
 - `LocalFileKind { Directory }`: the JSON `kind`, which is `directory`.
 - `LocalLayoutFile::is_directory() -> bool`: `kind` is `Directory`.

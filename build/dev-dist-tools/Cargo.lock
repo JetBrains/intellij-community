@@ -211,6 +211,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "dev-home"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "cli",
+ "component",
+ "distpath",
+ "fscopy",
+ "rayon",
+ "serde",
+ "serde_json",
+ "testkit",
+ "windows-sys",
+ "xxh3",
+]
+
+[[package]]
 name = "dev-launch"
 version = "0.1.0"
 dependencies = [

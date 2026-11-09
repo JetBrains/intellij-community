@@ -1,0 +1,27 @@
+[package]
+name = "dev-home"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+anyhow.workspace = true
+cli.workspace = true
+component.workspace = true
+distpath.workspace = true
+fscopy.workspace = true
+rayon.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+xxh3.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+windows-sys.workspace = true
+
+[dev-dependencies]
+testkit.workspace = true

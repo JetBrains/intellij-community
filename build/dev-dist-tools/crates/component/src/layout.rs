@@ -25,7 +25,8 @@ pub struct LocalLayout {
 }
 
 /// One file of the layout: a runfile, a symbolic link, or a directory. `mode` is an exact mode or `None` for the
-/// conventional mode of a file.
+/// conventional mode of a file. `hash` is the content hash of a runfile, the `hash` of its component entry, so a launch
+/// keys the file without reading it.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct LocalLayoutFile {
@@ -34,6 +35,8 @@ pub struct LocalLayoutFile {
     pub symlink_target: Option<String>,
     pub executable: bool,
     pub mode: Option<u32>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hash: Option<i64>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub kind: Option<LocalFileKind>,
 }

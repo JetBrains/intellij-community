@@ -407,10 +407,10 @@ fn local_layout_bytes() {
     .unwrap();
     let expected = concat!(
         r#"{"version":1,"files":["#,
-        r#"{"path":"lib/app.jar","runfile":"_main/tree/lib/app.jar","symlinkTarget":null,"executable":false,"mode":null},"#,
+        r#"{"path":"lib/app.jar","runfile":"_main/tree/lib/app.jar","symlinkTarget":null,"executable":false,"mode":null,"hash":1},"#,
         r#"{"path":"lib/current","runfile":null,"symlinkTarget":"app.jar","executable":false,"mode":null},"#,
         r#"{"path":"lib/empty","runfile":null,"symlinkTarget":null,"executable":false,"mode":448,"kind":"directory"},"#,
-        r#"{"path":"plugins/demo/lib/demo \"quoted\"\t.jar","runfile":"_main/packed.jar","symlinkTarget":null,"executable":true,"mode":488}"#,
+        r#"{"path":"plugins/demo/lib/demo \"quoted\"\t.jar","runfile":"_main/packed.jar","symlinkTarget":null,"executable":true,"mode":488,"hash":1}"#,
         r#"],"metadata":["core-classpath.txt","fingerprint.txt"]}"#
     );
     assert_eq!(read_text(target.join("local-layout.json")), expected);

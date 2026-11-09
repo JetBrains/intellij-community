@@ -13,8 +13,8 @@ use component::plugin_classpath::PLUGIN_CLASSPATH;
 
 /// The bytes of the local layout. The caller checked the destinations with `compose::validate_destinations`.
 ///
-/// Every entry lists `path`, `runfile`, `symlinkTarget`, `executable` and `mode`, `null` included, and `kind` only for
-/// a directory. The metadata list names the files that the composer writes beside the layout.
+/// Every entry lists `path`, `runfile`, `symlinkTarget`, `executable` and `mode`, `null` included, `hash` only for a
+/// runfile, and `kind` only for a directory. The metadata list names the files that the composer writes beside the layout.
 pub(crate) fn encode_local_layout(
     components: &[&ComponentManifest],
     source_runfiles: &BTreeMap<PathBuf, String>,
@@ -37,12 +37,17 @@ pub(crate) fn encode_local_layout(
                 ..LocalLayoutFile::default()
             },
             ComponentEntry::ComponentFile {
-                source, executable, mode, ..
+                source,
+                executable,
+                mode,
+                hash,
+                ..
             } => LocalLayoutFile {
                 runfile: Some(resolve_source_runfile(source, source_runfiles, source_directory_runfiles, &path)?),
                 path,
                 executable: *executable,
                 mode: mode.filter(|&mode| mode != manifest::conventional_mode(*executable)),
+                hash: Some(*hash),
                 ..LocalLayoutFile::default()
             },
         });
