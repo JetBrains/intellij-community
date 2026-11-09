@@ -2,6 +2,8 @@
 package com.jetbrains.python.packaging.pip
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.jetbrains.python.PyBundle
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
 import kotlinx.serialization.SerialName
@@ -24,9 +26,22 @@ internal object PipParseUtils {
     }
   }
 
-  fun parseOutdatedOutputs(jsonContent: String): List<PythonOutdatedPackage> {
-    val parsed = json.decodeFromStringLogError<List<PipPackageInfo>>(jsonContent)
-    return parsed.map { PythonOutdatedPackage(it.name, it.version, it.latestVersion) }
+  /**
+   * Parses the JSON list of the outdated packages. pip prints the list on its last line. A failed fetch from an index
+   * adds log lines before the list, such as "Could not fetch URL ... - skipping". Output with no JSON list is a failure
+   * that holds the output.
+   */
+  fun parseOutdatedOutputs(output: String): PyResult<List<PythonOutdatedPackage>> {
+    val jsonLine = output.lines().map { it.trim() }.lastOrNull { it.startsWith("[") }
+    val parsed = jsonLine?.let {
+      try {
+        json.decodeFromString<List<PipPackageInfo>>(it)
+      }
+      catch (_: SerializationException) {
+        null
+      }
+    } ?: return PyResult.localizedError(PyBundle.message("python.packaging.error.pip.outdated.output", output))
+    return PyResult.success(parsed.map { PythonOutdatedPackage(it.name, it.version, it.latestVersion) })
   }
 
   private inline fun <reified T> Json.decodeFromStringLogError(jsonContent: String): T {
