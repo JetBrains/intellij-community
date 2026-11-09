@@ -37,6 +37,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Deque
 import java.util.Enumeration
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
@@ -63,6 +64,13 @@ private val KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = computeKotlinStdlibClasse
 
 private var logStream: Writer? = null
 
+private const val JNA_PACKAGE = "com.sun.jna."
+private const val JNA_NATIVE_CLASS_FILE = "com/sun/jna/Native.class"
+
+/**
+ * @param jnaModule the content module `intellij.libraries.jna`. When it is set, this loader takes every `com.sun.jna.*` class from the
+ * loader of that module and never defines its own copy, also when its own class path holds one.
+ */
 @ApiStatus.Internal
 class PluginClassLoader(
   classPath: ClassPath,
@@ -72,6 +80,7 @@ class PluginClassLoader(
   resolveScopeManager: ResolveScopeManager?,
   packagePrefix: String?,
   private val libDirectories: List<Path>,
+  private val jnaModule: PluginModuleDescriptor?,
 ) : UrlClassLoader(classPath), PluginAwareClassLoader, MultiParentClassLoaderSupport {
   private val multiParentClassLoaderHelper = MultiParentClassLoaderHelper({ extractDirectParentClassLoaders(parents, coreLoader) }, coreLoader)
 
@@ -81,11 +90,17 @@ class PluginClassLoader(
   private val edtTime = AtomicLong()
   private val backgroundTime = AtomicLong()
   private val loadedClassCounter = AtomicInteger()
+  @Volatile
+  private var isOwnJnaChecked = false
+
   @Suppress("SSBasedInspection")
   private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + CoroutineName(pluginId.idString))
   private val _resolveScopeManager = resolveScopeManager ?: defaultResolveScopeManager
 
   companion object {
+    /** The plugins whose own JNA copy is reported in the log. Content modules share the class path of their plugin. */
+    private val pluginsWithOwnJna: MutableSet<PluginId> = ConcurrentHashMap.newKeySet()
+
     init {
       val isParallelCapable = registerAsParallelCapable()
       assert(isParallelCapable)
@@ -162,6 +177,9 @@ class PluginClassLoader(
     if (mustBeLoadedByPlatform(name)) {
       return coreLoader.loadClass(name)
     }
+    jnaClassLoaderFor(name)?.let {
+      return loadJnaClass(jnaLoader = it, name = name)
+    }
 
     val fileNameWithoutExtension = name.replace('.', '/')
     val fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION
@@ -191,6 +209,15 @@ class PluginClassLoader(
       @Suppress("TestOnlyProblems")
       for (classloader in getAllParentsClassLoaders()) {
         if (classloader is PluginClassLoader) {
+          val jnaLoader = classloader.jnaClassLoaderFor(name)
+          if (jnaLoader != null) {
+            c = classloader.loadJnaClass(jnaLoader = jnaLoader, name = name)
+            if (c != null) {
+              break
+            }
+            continue
+          }
+
           try {
             val consistencyError = classloader.packagePrefix?.let {
               classloader._resolveScopeManager.isDefinitelyAlienClass(name = name, packagePrefix = it, force = forceLoadFromSubPluginClassloader)
@@ -277,12 +304,17 @@ class PluginClassLoader(
   }
 
   override fun loadClassInsideSelf(name: String): Class<*>? {
+    if (jnaClassLoaderFor(name) != null) {
+      return null
+    }
+
     val fileNameWithoutExtension = name.replace('.', '/')
     val fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION
     val packageNameHash = ClasspathCache.getPackageNameHash(fileNameWithoutExtension, fileNameWithoutExtension.lastIndexOf('/'))
     return loadClassInsideSelf(name = name, fileName = fileName, packageNameHash = packageNameHash)
   }
 
+  /** The caller checks [jnaClassLoaderFor] first. */
   private fun loadClassInsideSelf(name: String, fileName: String, packageNameHash: Long): Class<*>? {
     synchronized(getClassLoadingLock(name)) {
       var c = findLoadedClass(name)
@@ -317,6 +349,38 @@ class PluginClassLoader(
 ${if (exception == null) "" else exception.message}""")
     }
     catch (_: IOException) {
+    }
+  }
+
+  override fun findClass(name: String): Class<*> {
+    if (jnaClassLoaderFor(name) != null) {
+      throw ClassNotFoundException("$name belongs to the loader of intellij.libraries.jna, not to $this")
+    }
+    return super.findClass(name)
+  }
+
+  /** The loader of `intellij.libraries.jna` for [name], or `null` when this loader defines the class itself. */
+  private fun jnaClassLoaderFor(name: String): ClassLoader? {
+    val jnaModule = jnaModule ?: return null
+    if (!name.startsWith(JNA_PACKAGE)) {
+      return null
+    }
+    return jnaModule.pluginClassLoader?.takeIf { it !== this }
+  }
+
+  private fun loadJnaClass(jnaLoader: ClassLoader, name: String): Class<*>? {
+    if (!isOwnJnaChecked) {
+      isOwnJnaChecked = true
+      if (classPath.findResource(JNA_NATIVE_CLASS_FILE) != null && pluginsWithOwnJna.add(pluginId)) {
+        logger<PluginClassLoader>().info("$pluginId bundles JNA; the class loader uses the JNA of intellij.libraries.jna")
+      }
+    }
+
+    try {
+      return jnaLoader.loadClass(name)
+    }
+    catch (_: ClassNotFoundException) {
+      return null
     }
   }
 

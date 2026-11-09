@@ -37,6 +37,9 @@ class ClassLoaderConfigurator(
 
   private val mainToClassPath = IdentityHashMap<PluginId, MainPluginDescriptorClassPathInfo>()
 
+  private val jnaModule: PluginModuleDescriptor? =
+    pluginSet.findEnabledModule(PluginModuleId("intellij.libraries.jna", PluginModuleId.JETBRAINS_NAMESPACE))
+
   init {
     resourceFileFactory = try {
       @Suppress("UNCHECKED_CAST")
@@ -130,6 +133,7 @@ class ClassLoaderConfigurator(
         resolveScopeManager = createModuleResolveScopeManager(),
         packagePrefix = module.packagePrefix,
         libDirectories = mainInfo.libDirectories,
+        jnaModule = jnaModuleFor(module),
       )
     }
     else {
@@ -141,9 +145,18 @@ class ClassLoaderConfigurator(
         resolveScopeManager = null,
         packagePrefix = null,
         libDirectories = mainInfo.libDirectories,
+        jnaModule = jnaModuleFor(module),
       )
     }
     return true
+  }
+
+  /**
+   * A non-bundled plugin takes JNA from `intellij.libraries.jna`, also when it bundles its own copy (see [PluginClassLoader]).
+   * Bundled code keeps the module dependency rule, so a bundled module without a dependency on JNA still fails at once.
+   */
+  private fun jnaModuleFor(module: PluginModuleDescriptor): PluginModuleDescriptor? {
+    return jnaModule?.takeIf { it.pluginId != module.pluginId && !module.getMainDescriptor().isBundled }
   }
 
   private fun getSortedDependencies(module: PluginModuleDescriptor): Array<PluginModuleDescriptor> {
@@ -247,6 +260,7 @@ class ClassLoaderConfigurator(
         resolveScopeManager = null,
         packagePrefix = module.packagePrefix,
         libDirectories = ArrayList(),
+        jnaModule = null,
       )
       return
     }
@@ -266,6 +280,7 @@ class ClassLoaderConfigurator(
       resolveScopeManager = createModuleResolveScopeManager(),
       packagePrefix = module.packagePrefix,
       libDirectories = ArrayList(),
+      jnaModule = null,
     )
   }
 
@@ -314,7 +329,8 @@ class ClassLoaderConfigurator(
                              coreLoader = coreLoader,
                              resolveScopeManager = resolveScopeManager,
                              packagePrefix = module.packagePrefix,
-                             libDirectories = libDirectories)
+                             libDirectories = libDirectories,
+                             jnaModule = jnaModuleFor(module))
   }
 }
 

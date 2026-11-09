@@ -1,5 +1,5 @@
 <!--suppress PluginXmlPluginLogo -->
-<idea-plugin>
+<idea-plugin require-restart="true">
   <id>com.intellij.modules.jna</id>
   <name>Java Native Access (JNA)</name>
   <vendor>JetBrains</vendor>
