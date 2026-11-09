@@ -18,20 +18,20 @@ import java.util.Objects;
  */
 @ApiStatus.Internal
 public final class TypeEvalConstraints {
-  final boolean myAllowDataFlow;
-  final boolean myAllowStubToAST;
-  final boolean myAllowCallContext;
-  final boolean myIsExternal;
-  final @Nullable PsiFile myOrigin;
+  public final boolean myAllowDataFlow;
+  public final boolean myAllowStubToAST;
+  public final boolean myAllowCallContext;
+  public final boolean myIsExternal;
+  public final @Nullable PsiFile myOrigin;
 
   /**
    * @see TypeEvalContext
    */
-  TypeEvalConstraints(final boolean allowDataFlow,
-                      final boolean allowStubToAST,
-                      final boolean allowCallContext,
-                      final boolean isExternal,
-                      final @Nullable PsiFile origin) {
+  public TypeEvalConstraints(final boolean allowDataFlow,
+                             final boolean allowStubToAST,
+                             final boolean allowCallContext,
+                             final boolean isExternal,
+                             final @Nullable PsiFile origin) {
     myAllowDataFlow = allowDataFlow;
     myAllowStubToAST = allowStubToAST;
     myAllowCallContext = allowCallContext;

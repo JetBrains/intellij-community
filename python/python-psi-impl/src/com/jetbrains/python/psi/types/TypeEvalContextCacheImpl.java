@@ -85,12 +85,8 @@ final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
     return retrieveFromStorage(standard, myCachedMapStorage);
   }
 
-  /**
-   * Returns the context that this cache holds for {@code constraints}, or null.
-   * Lets the factory skip building a context on a hit. Not on {@link TypeEvalContextCache}: {@link TypeEvalConstraints}
-   * is not in the API module.
-   */
-  @Nullable TypeEvalContext getCachedContext(@NotNull TypeEvalConstraints constraints) {
+  @Override
+  public @Nullable TypeEvalContext getCachedContext(@NotNull TypeEvalConstraints constraints) {
     return myCachedMapStorage.getValue().get(constraints);
   }
 
