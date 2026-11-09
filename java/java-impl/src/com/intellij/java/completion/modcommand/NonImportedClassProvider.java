@@ -9,7 +9,6 @@ import com.intellij.codeInsight.completion.JavaClassReferenceCompletionContribut
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.JavaMemberNameCompletionContributor;
-import com.intellij.codeInsight.completion.JavaPatternCompletionUtil;
 import com.intellij.codeInsight.completion.LimitedAccessibleClassPreprocessor;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.java.syntax.parser.JavaKeywords;
@@ -175,8 +174,6 @@ public final class NonImportedClassProvider extends JavaModCompletionItemProvide
     boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
     GlobalSearchScope scope = JavaClassNameCompletionContributor.getReferenceScope(parameters, filterByScope, inPermitsList);
 
-    boolean patternContext = JavaPatternCompletionUtil.isPatternContext(psiFile, insertedElement);
-
     Processor<PsiClass> classProcessor = new Processor<>() {
       @Override
       public boolean process(PsiClass psiClass) {
@@ -201,9 +198,6 @@ public final class NonImportedClassProvider extends JavaModCompletionItemProvide
               (!afterNew || !(eachClass.hasModifierProperty(PsiModifier.ABSTRACT) && eachClass.hasModifierProperty(PsiModifier.SEALED)));
             for (ClassReferenceCompletionItem element : createClassLookupItems(psiClass, afterNew, condition)) {
               ConstructorCallCompletionItem.tryWrap(element, parameters.getPosition()).forEach(sink);
-              //if (patternContext) {
-              //  JavaPatternCompletionUtil.addPatterns(sink::accept, insertedElement, element.getObject(), false);
-              //}
             }
           }
         }

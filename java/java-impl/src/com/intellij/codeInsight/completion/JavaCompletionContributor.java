@@ -617,10 +617,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         StringUtil.isNotEmpty(matcher.getPrefix())) {
       new JavaStaticMemberProcessor(parameters).processStaticMethodsGlobally(matcher, result);
     }
-
-    if (JavaPatternCompletionUtil.insideDeconstructionList(parameters.getPosition())) {
-      JavaPatternCompletionUtil.suggestFullDeconstructionList(parameters, result);
-    }
   }
 
   @VisibleForTesting
