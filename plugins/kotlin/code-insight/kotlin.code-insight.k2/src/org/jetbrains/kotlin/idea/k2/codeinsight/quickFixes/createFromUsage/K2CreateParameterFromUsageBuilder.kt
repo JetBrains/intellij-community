@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
@@ -198,7 +199,7 @@ object K2CreateParameterFromUsageBuilder {
             val parent = expression.parent
             if (parent is KtCallExpression) {
                 val expectedParameters = computeExpectedParams(parent)
-                return typeCreator.functionType {
+                val functionType = typeCreator.functionType {
                     val grandParent = parent.parent
                     if (grandParent is KtDotQualifiedExpression) {
                        receiverType = grandParent.receiverExpression.expressionType ?: builtinTypes.nullableAny
@@ -208,6 +209,7 @@ object K2CreateParameterFromUsageBuilder {
                     }
                     returnType = parent.expectedType ?: builtinTypes.unit
                 }
+                if (functionType is KaFunctionType) return functionType
             }
 
             (parent as? KtDeclarationWithReturnType)?.returnType.withResolvableApproximation()?.let { return it }

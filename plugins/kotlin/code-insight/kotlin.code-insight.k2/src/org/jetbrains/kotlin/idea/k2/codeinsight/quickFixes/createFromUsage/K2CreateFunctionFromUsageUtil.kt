@@ -352,7 +352,7 @@ object K2CreateFunctionFromUsageUtil {
     }
 
     context(_: KaSession)
-    private fun guessUnsubstitutedType(type: KaFunctionType, substitutions: List<Pair<KaType, KaTypeParameterType>>): KaType {
+    private fun guessUnsubstitutedType(type: KaFunctionType, substitutions: List<Pair<KaType, KaTypeParameterType>>): KaType? {
         val substitutedReceiverType = type.receiverType?.let { originalReceiverType ->
             guessUnsubstitutedType(originalReceiverType, substitutions)
         }
@@ -368,7 +368,7 @@ object K2CreateFunctionFromUsageUtil {
                 valueParameter(parameter.name, substitutedType)
             }
             returnType = substitutedReturnType
-        }
+        } as? KaFunctionType
     }
 
     context(_: KaSession)

@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.buildSubstitutor
 import org.jetbrains.kotlin.analysis.api.types.builtinTypes
@@ -510,7 +511,7 @@ private fun createOriginalType(
                 }
 
                 returnType = functionSymbol.returnType
-            }
+            } as? KaFunctionType
         }
         else -> parameterExpression?.expressionType ?: receiverToExtract?.type
     } ?: builtinTypes.nullableAny
