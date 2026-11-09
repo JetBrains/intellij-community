@@ -8,6 +8,9 @@ import com.intellij.l10n.LocalizationUtil
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.MigrationImageData
+import com.intellij.openapi.application.MigrationState
+import com.intellij.openapi.application.MigrationStatus
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -62,10 +65,6 @@ fun decidePlatformUpdate(
                        updates !is PlatformUpdates.ConnectionError
   return PlatformUpdateDecision(announced, migration, migrationReady)
 }
-
-/** The SVG data of the light and the dark variant of one image. */
-@ApiStatus.Internal
-class MigrationImageData(val light: ByteArray, val dark: ByteArray)
 
 /** Everything that the migration dialog shows. The dialog loads nothing. */
 internal class MigrationOfferContent(

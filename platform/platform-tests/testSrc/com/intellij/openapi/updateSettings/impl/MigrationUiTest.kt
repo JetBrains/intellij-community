@@ -2,6 +2,9 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.plainTextArea
+import com.intellij.openapi.application.plainTextButton
+import com.intellij.openapi.application.plainTextLink
 import com.intellij.util.ui.JBFont
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

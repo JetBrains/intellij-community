@@ -127,9 +127,6 @@ public final class ConfigImportHelper {
   private static final String PLIST = "Info.plist";
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
-  /** The state file of the migration in the update checker. It is about the IDE that wrote it, so the import skips it. */
-  private static final String MIGRATION_STATE_FILE_NAME = "migration.json";
-
   private static final Set<String> SESSION_FILES = Set.of(
     SpecialConfigFiles.LOCK_FILE, SpecialConfigFiles.PORT_LOCK_FILE, SpecialConfigFiles.TOKEN_FILE, SpecialConfigFiles.USER_WEB_TOKEN,
     InitialConfigImportState.CUSTOM_MARKER_FILE_NAME);
@@ -1724,7 +1721,7 @@ public final class ConfigImportHelper {
       fileName.equals(BUNDLED_PLUGINS_FILENAME) ||
       fileName.equals(StoragePathMacros.APP_INTERNAL_STATE_DB) ||
       fileName.equals(ExpiredPluginsState.EXPIRED_PLUGINS_FILENAME) ||
-      fileName.equals(MIGRATION_STATE_FILE_NAME) ||
+      fileName.equals(MigrationStateKt.MIGRATION_STATE_FILE_NAME) ||
       fileName.startsWith(SpecialConfigFiles.CHROME_USER_DATA) ||
       fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName())) ||
       (settings != null && settings.shouldSkipPath(path))

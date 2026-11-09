@@ -1,7 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
+import java.nio.file.Path
+import java.util.concurrent.TimeUnit
+
+private val LOG = logger<MigrationLaunchContract>()
 
 /**
  * The launch contract between the old IDE and the Unified IDE.
@@ -30,7 +36,7 @@ import org.jetbrains.annotations.ApiStatus
  * The compatibility rule: version 1 keys never change their meaning. A new optional key keeps version 1. A changed meaning needs version 2.
  * The reader ignores all values when the version is missing or unknown. It ignores unknown keys, so a later version can add keys.
  *
- * The old IDE writes the arguments with `migrationLaunchArguments`. The Unified IDE reads them with [readMigrationLaunchParameters].
+ * The old IDE writes the arguments with [migrationLaunchArguments]. The Unified IDE reads them with [readMigrationLaunchParameters].
  */
 @ApiStatus.Internal
 object MigrationLaunchContract {
@@ -67,4 +73,50 @@ fun readMigrationLaunchParameters(property: (String) -> String? = System::getPro
   val reason = MigrationLaunchReason.entries.firstOrNull { it.value == reasonValue } ?: return null
   val sourceProduct = property(MigrationLaunchContract.SOURCE_PRODUCT_PROPERTY)?.takeIf { it.isNotBlank() } ?: return null
   return MigrationLaunchParameters(reason, sourceProduct)
+}
+
+/**
+ * The arguments of the [MigrationLaunchContract] that start the installed application.
+ * [sourceProduct] is the product code of this IDE. [arguments] are the positional arguments.
+ */
+@ApiStatus.Internal
+fun migrationLaunchArguments(reason: MigrationLaunchReason, sourceProduct: String, arguments: List<String>): List<String> =
+  listOf(
+    "-D${MigrationLaunchContract.VERSION_PROPERTY}=${MigrationLaunchContract.VERSION}",
+    "-D${MigrationLaunchContract.REASON_PROPERTY}=${reason.value}",
+    "-D${MigrationLaunchContract.SOURCE_PRODUCT_PROPERTY}=${sourceProduct}",
+  ) + arguments
+
+/** The macOS command that starts a new instance of [app] with [arguments]. Each value is a separate argument. */
+@ApiStatus.Internal
+fun macOpenCommand(app: Path, arguments: List<String>): List<String> =
+  listOf("/usr/bin/open", "-n", "-a", app.toString(), "--args") + arguments
+
+/** Starts [command] and logs it. A failure is logged and gives `null`. */
+@ApiStatus.Internal
+fun startMigrationProcess(command: List<String>): Process? {
+  LOG.info("starting the Unified IDE: ${command}")
+  try {
+    return ProcessBuilder(command).redirectOutput(ProcessBuilder.Redirect.DISCARD).start()
+  }
+  catch (e: IOException) {
+    LOG.warn("cannot start the Unified IDE", e)
+    return null
+  }
+}
+
+/** Waits up to [timeoutSeconds] for the `open` [process] and logs a failure. Returns `true` when `open` ends with the exit code 0. */
+@ApiStatus.Internal
+fun waitForMigrationOpen(process: Process, timeoutSeconds: Long): Boolean {
+  if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
+    LOG.warn("the start of the Unified IDE does not end in ${timeoutSeconds} s")
+    return false
+  }
+  val exitCode = process.exitValue()
+  if (exitCode != 0) {
+    val stderr = process.errorStream.bufferedReader().use { it.readText() }.trim()
+    LOG.warn("cannot start the Unified IDE: exit code ${exitCode}, ${stderr}")
+    return false
+  }
+  return true
 }

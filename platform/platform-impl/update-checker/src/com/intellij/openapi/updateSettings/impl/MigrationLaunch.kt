@@ -7,40 +7,25 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.application.MigrationLaunchContract
 import com.intellij.openapi.application.MigrationLaunchReason
+import com.intellij.openapi.application.MigrationState
+import com.intellij.openapi.application.MigrationStatus
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.macOpenCommand
+import com.intellij.openapi.application.migrationLaunchArguments
+import com.intellij.openapi.application.startMigrationProcess
+import com.intellij.openapi.application.waitForMigrationOpen
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.isDirectory
 
 private val LOG = logger<MigrationOfferContent>()
 
 // after the timeout, `open` continues and starts the Unified IDE; only the log of its exit code is lost
 private const val OPEN_TIMEOUT_SECONDS = 5L
-
-/**
- * The arguments of the [MigrationLaunchContract] that start the Unified IDE.
- * [sourceProduct] is the product code of this IDE. [arguments] are the positional arguments.
- */
-@ApiStatus.Internal
-fun migrationLaunchArguments(reason: MigrationLaunchReason, sourceProduct: String, arguments: List<String>): List<String> =
-  listOf(
-    "-D${MigrationLaunchContract.VERSION_PROPERTY}=${MigrationLaunchContract.VERSION}",
-    "-D${MigrationLaunchContract.REASON_PROPERTY}=${reason.value}",
-    "-D${MigrationLaunchContract.SOURCE_PRODUCT_PROPERTY}=${sourceProduct}",
-  ) + arguments
-
-/** The macOS command that starts a new instance of [app] with [arguments]. Each value is a separate argument. */
-@ApiStatus.Internal
-fun macOpenCommand(app: Path, arguments: List<String>): List<String> =
-  listOf("/usr/bin/open", "-n", "-a", app.toString(), "--args") + arguments
 
 /**
  * The action of "Restart to Update" for an installed migration distribution.
@@ -110,31 +95,4 @@ private fun startMigrationApp(state: MigrationState) {
     rethrowControlFlowException(e)
     LOG.warn("cannot start ${state.app}", e)
   }
-}
-
-/** Starts [command] and logs it. A failure is logged and gives `null`. */
-private fun startMigrationProcess(command: List<String>): Process? {
-  LOG.info("starting the Unified IDE: ${command}")
-  try {
-    return ProcessBuilder(command).redirectOutput(ProcessBuilder.Redirect.DISCARD).start()
-  }
-  catch (e: IOException) {
-    LOG.warn("cannot start the Unified IDE", e)
-    return null
-  }
-}
-
-/** Waits up to [timeoutSeconds] for the `open` [process] and logs a failure. Returns `true` when `open` ends with the exit code 0. */
-private fun waitForMigrationOpen(process: Process, timeoutSeconds: Long): Boolean {
-  if (!process.waitFor(timeoutSeconds, TimeUnit.SECONDS)) {
-    LOG.warn("the start of the Unified IDE does not end in ${timeoutSeconds} s")
-    return false
-  }
-  val exitCode = process.exitValue()
-  if (exitCode != 0) {
-    val stderr = process.errorStream.bufferedReader().use { it.readText() }.trim()
-    LOG.warn("cannot start the Unified IDE: exit code ${exitCode}, ${stderr}")
-    return false
-  }
-  return true
 }

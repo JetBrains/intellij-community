@@ -3,6 +3,8 @@ package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.application.MigrationLaunchParameters
 import com.intellij.openapi.application.MigrationLaunchReason
+import com.intellij.openapi.application.macOpenCommand
+import com.intellij.openapi.application.migrationLaunchArguments
 import com.intellij.openapi.application.readMigrationLaunchParameters
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
