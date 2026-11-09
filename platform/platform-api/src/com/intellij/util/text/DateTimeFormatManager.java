@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -77,16 +77,14 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Dat
   }
 
   //<editor-fold desc="Internal stuff">
-  record Formats(
-    DateTimeFormatter date, DateTimeFormatter timeShort, DateTimeFormatter timeMedium, DateTimeFormatter dateTime,
-    DateFormat dateFmt, DateFormat dateTimeFmt
-  ) { }
+  record Formats(DateTimeFormatter date, DateTimeFormatter timeShort, DateTimeFormatter timeMedium, DateTimeFormatter dateTime) { }
 
   private volatile Formats myFormats;
 
   Formats getFormats() {
     var formats = myFormats;
     if (formats == null) {
+      //noinspection SSBasedInspection
       myFormats = formats = myOverrideSystemDateFormat ? DateFormatUtil.getCustomFormats(this) : DateFormatUtil.getSystemFormats();
     }
     return formats;
@@ -94,7 +92,7 @@ public final class DateTimeFormatManager implements PersistentStateComponent<Dat
 
   @ApiStatus.Internal
   public @NotNull DateFormat getDateFormat() {
-    return getFormats().dateFmt;
+    return new DateFormatAdapter(getFormats().date);
   }
 
   @ApiStatus.Internal

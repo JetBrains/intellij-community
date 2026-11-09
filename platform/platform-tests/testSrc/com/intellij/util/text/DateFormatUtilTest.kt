@@ -56,7 +56,6 @@ class DateFormatUtilTest {
     assertPrettyDate(DateFormatUtil.formatDate(d2.toMillis()), d2)
   }
 
-  @Suppress("GrazieStyle")
   @Test fun prettyDateTime() {
     val now = LocalDateTime.now()
     assertPrettyDateTime("Moments ago", now.minus(Duration.ofSeconds(1)))

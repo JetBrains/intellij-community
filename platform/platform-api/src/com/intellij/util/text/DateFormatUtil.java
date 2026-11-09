@@ -22,7 +22,6 @@ import java.lang.foreign.StructLayout;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -40,13 +39,11 @@ import static java.lang.foreign.ValueLayout.JAVA_INT;
 import static java.lang.foreign.ValueLayout.JAVA_LONG;
 import static java.util.Objects.requireNonNullElse;
 
-/**
- * Formats date/time according to a system (OS) format or to the IDE settings.
- * Values to format are expected to be in UTC; they are converted to the local timezone on formatting.
- * <p/>
- * Please note that formatted strings may include special characters (e.g., Narrow No-Break Space),
- * so take care on inserting them into documents.
- */
+/// Formats date/time according to a system (OS) format or to the IDE settings.
+/// Values to format are expected to be in UTC; they are converted to the local timezone on formatting.
+///
+/// Please note that formatted strings may include special characters (e.g., Narrow No-Break Space),
+/// so take care on inserting them into documents.
 public final class DateFormatUtil {
   private static final Logger LOG = Logger.getInstance(DateFormatUtil.class);
 
@@ -70,18 +67,18 @@ public final class DateFormatUtil {
 
   private DateFormatUtil() { }
 
-  /** @deprecated use {@link #formatDate} */
+  /// @deprecated use [#formatDate]
   @Deprecated(forRemoval = true)
   @SuppressWarnings("removal")
   public static @NotNull SyncDateFormat getDateFormat() {
-    return new SyncDateFormat(formats().dateFmt());
+    return new SyncDateFormat(new DateFormatAdapter(formats().date()));
   }
 
-  /** @deprecated use {@link #formatDateTime} */
+  /// @deprecated use [#formatDateTime]
   @Deprecated(forRemoval = true)
   @SuppressWarnings("removal")
   public static @NotNull SyncDateFormat getDateTimeFormat() {
-    return new SyncDateFormat(formats().dateTimeFmt());
+    return new SyncDateFormat(new DateFormatAdapter(formats().dateTime()));
   }
 
   public static @NlsSafe @NotNull String formatTime(@NotNull Date time) {
@@ -137,39 +134,38 @@ public final class DateFormatUtil {
   private static @Nullable String doFormatPretty(long time, boolean formatTime) {
     if (!DateTimeFormatManager.getInstance().isPrettyFormattingAllowed()) return null;
 
-    long currentTime = Clock.getTime();
-    Calendar c = Calendar.getInstance();
+    var currentTime = Clock.getTime();
+    var c = Calendar.getInstance();
 
     c.setTimeInMillis(currentTime);
-    int currentYear = c.get(Calendar.YEAR);
-    int currentDayOfYear = c.get(Calendar.DAY_OF_YEAR);
+    var currentYear = c.get(Calendar.YEAR);
+    var currentDayOfYear = c.get(Calendar.DAY_OF_YEAR);
 
     c.setTimeInMillis(time);
-    int year = c.get(Calendar.YEAR);
-    int dayOfYear = c.get(Calendar.DAY_OF_YEAR);
+    var year = c.get(Calendar.YEAR);
+    var dayOfYear = c.get(Calendar.DAY_OF_YEAR);
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("now=" + currentTime + " t=" + time + " z=" + c.getTimeZone());
     }
 
     if (formatTime) {
-      long delta = currentTime - time;
+      var delta = currentTime - time;
       if (delta >= 0 && delta <= HOUR + MINUTE) {
         return UtilBundle.message("date.format.minutes.ago", (int)Math.rint(delta / (double)MINUTE));
       }
     }
 
-    boolean isToday = currentYear == year && currentDayOfYear == dayOfYear;
+    var isToday = currentYear == year && currentDayOfYear == dayOfYear;
     if (isToday) {
-      String result = UtilBundle.message("date.format.today");
+      var result = UtilBundle.message("date.format.today");
       return formatTime ? result + " " + formatTime(time) : result;
     }
 
-    boolean isYesterdayOnPreviousYear =
-      currentYear == year + 1 && currentDayOfYear == 1 && dayOfYear == c.getActualMaximum(Calendar.DAY_OF_YEAR);
-    boolean isYesterday = isYesterdayOnPreviousYear || currentYear == year && currentDayOfYear == dayOfYear + 1;
+    var isYesterdayOnPreviousYear = currentYear == year + 1 && currentDayOfYear == 1 && dayOfYear == c.getActualMaximum(Calendar.DAY_OF_YEAR);
+    var isYesterday = isYesterdayOnPreviousYear || currentYear == year && currentDayOfYear == dayOfYear + 1;
     if (isYesterday) {
-      String result = UtilBundle.message("date.format.yesterday");
+      var result = UtilBundle.message("date.format.yesterday");
       return formatTime ? result + " " + formatTime(time) : result;
     }
 
@@ -181,13 +177,13 @@ public final class DateFormatUtil {
   }
 
   public static @NlsSafe @NotNull String formatBetweenDates(long d1, long d2) {
-    long delta = Math.abs(d1 - d2);
+    var delta = Math.abs(d1 - d2);
     if (delta == 0) return UtilBundle.message("date.format.right.now");
 
-    int n = -1;
+    var n = -1;
     int i;
     for (i = 0; i < DENOMINATORS.length; i++) {
-      long denominator = DENOMINATORS[i];
+      var denominator = DENOMINATORS[i];
       if (delta >= denominator) {
         n = (int)(delta / denominator);
         break;
@@ -214,18 +210,16 @@ public final class DateFormatUtil {
     return "";
   }
 
-  /** @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatDateLong} */
+  /// @deprecated use [com.intellij.ide.nls.NlsMessages#formatDateLong]
   @Deprecated(forRemoval = true)
   public static @NlsSafe @NotNull String formatAboutDialogDate(@NotNull Date date) {
     return DateFormat.getDateInstance(DateFormat.LONG, Locale.US).format(date);
   }
 
-  /**
-   * Return sample date that can be used to determine preferred string width.
-   * <p>
-   * We should not use {@code new Date()} to ensure results are reproducible (and to avoid "Today" for pretty formats).
-   * Returned date is expected to return maximum width string for date formats like "d.m.yy H:M".
-   */
+  /// Return sample date that can be used to determine preferred string width.
+  ///
+  /// We should not use `new Date()` to ensure results are reproducible (and to avoid "Today" for pretty formats).
+  /// Returned date is expected to return maximum width string for date formats like "d.m.yy H:M".
   public static @NotNull Date getSampleDateTime() {
     return Date.from(LocalDateTime.of(2100, Month.DECEMBER, 31, 23, 59).atZone(ZoneId.systemDefault()).toInstant());
   }
@@ -265,7 +259,7 @@ public final class DateFormatUtil {
     };
   }
 
-  static @NotNull Formats getCustomFormats(DateTimeFormatManager settings) {
+  static @NotNull Formats getCustomFormats(@NotNull DateTimeFormatManager settings) {
     var date = settings.getDateFormatPattern();
     var timeShort = settings.isUse24HourTime() ? TIME_SHORT_24H : TIME_SHORT_12H;
     var timeMedium = settings.isUse24HourTime() ? TIME_MEDIUM_24H : TIME_MEDIUM_12H;
@@ -292,9 +286,8 @@ public final class DateFormatUtil {
       DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(locale),
       DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale),
       DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM).withLocale(locale),
-      DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT).withLocale(locale),
-      DateFormat.getDateInstance(DateFormat.SHORT, locale),
-      DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT, locale));
+      DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT, FormatStyle.SHORT).withLocale(locale)
+    );
   }
 
   private static @Nullable Locale getDynamicLocale() {
@@ -378,7 +371,7 @@ public final class DateFormatUtil {
   }
 
   private static Locale getLocaleById(String localeStr) {
-    int p = localeStr.indexOf('.');
+    var p = localeStr.indexOf('.');
     if (p > 0) localeStr = localeStr.substring(0, p);
     p = localeStr.indexOf('@');
     if (p > 0) localeStr = localeStr.substring(0, p);
@@ -386,6 +379,7 @@ public final class DateFormatUtil {
     return p < 0 ? Locale.of(localeStr) : Locale.of(localeStr.substring(0, p), localeStr.substring(p + 1));
   }
 
+  @SuppressWarnings("SpellCheckingInspection")
   private static final class Kernel32 {
     static final int LOCALE_SSHORTDATE = 0x0000001F;
     static final int LOCALE_SSHORTTIME = 0x00000079;
@@ -393,7 +387,8 @@ public final class DateFormatUtil {
 
     static final MethodHandle GET_LOCALE_INFO_EX = Linker.nativeLinker().downcallHandle(
       WindowsSystemLibraries.kernel32().findOrThrow("GetLocaleInfoEx"),
-      FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT), WindowsKernel32.captureLastError());
+      FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS, JAVA_INT), WindowsKernel32.captureLastError()
+    );
   }
 
   static Formats getWindowsFormats() throws Throwable {
@@ -430,9 +425,8 @@ public final class DateFormatUtil {
       formatFromString(date, locale),
       formatFromString(timeShort, locale),
       formatFromString(timeMedium, locale),
-      formatFromString(dateTime, locale),
-      new SimpleDateFormat(date),
-      new SimpleDateFormat(dateTime));
+      formatFromString(dateTime, locale)
+    );
   }
 
   private static DateTimeFormatter formatFromString(String format, Locale locale) {
@@ -441,7 +435,7 @@ public final class DateFormatUtil {
       return DateTimeFormatter.ofPattern(format.trim(), locale);
     }
     catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException("unrecognized format string '" + format + "'");
+      throw new IllegalArgumentException("unrecognized format string '" + format + "'", e);
     }
   }
   //</editor-fold>

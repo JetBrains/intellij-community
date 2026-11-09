@@ -11617,7 +11617,6 @@ f:com.intellij.util.text.SyncDateFormat
 - format(java.util.Date):java.lang.String
 - getDelegate():java.text.DateFormat
 - parse(java.lang.String):java.util.Date
-- toPattern():java.lang.String
 c:com.intellij.util.ui.AnimatedIcon
 - javax.swing.JComponent
 - com.intellij.openapi.Disposable

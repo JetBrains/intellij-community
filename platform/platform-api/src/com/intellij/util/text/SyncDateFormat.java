@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -6,10 +6,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
-/** @deprecated use {@link java.time.format.DateTimeFormatter} */
+/// @deprecated use [DateTimeFormatter]
 @Deprecated(forRemoval = true)
 @SuppressWarnings("DeprecatedIsStillUsed")
 public final class SyncDateFormat {
@@ -33,12 +33,5 @@ public final class SyncDateFormat {
 
   public synchronized DateFormat getDelegate() {
     return (DateFormat)myDelegate.clone();
-  }
-
-  public synchronized String toPattern() {
-    if (myDelegate instanceof SimpleDateFormat) {
-      return ((SimpleDateFormat)myDelegate).toPattern();
-    }
-    throw new UnsupportedOperationException("Delegate must be of SimpleDateFormat type");
   }
 }

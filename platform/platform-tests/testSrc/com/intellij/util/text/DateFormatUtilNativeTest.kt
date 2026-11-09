@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text
 
 import com.intellij.testFramework.junit5.TestApplication
@@ -14,11 +15,9 @@ import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS.MAC
 import org.junit.jupiter.api.condition.OS.WINDOWS
 import java.lang.foreign.MemorySegment
-import java.text.SimpleDateFormat
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Date
 import java.util.Locale
 
 @TestApplication
@@ -47,7 +46,7 @@ internal class DateFormatUtilNativeTest {
       val locale = if (separator < 0) Locale.of(identifier)
       else Locale.of(identifier.substring(0, separator), identifier.substring(separator + 1))
       val styles = listOf(1L to 0L, 0L to 1L, 0L to 2L, 1L to 1L)
-      val patterns = styles.map { (dateStyle, timeStyle) ->
+      val patterns = styles.map { [dateStyle, timeStyle] ->
         val formatter = library.CFDateFormatterCreate(null, nativeLocale, dateStyle, timeStyle)
         assertThat(formatter).isNotNull()
         try {
@@ -107,13 +106,10 @@ internal class DateFormatUtilNativeTest {
   private fun assertFormats(formats: DateTimeFormatManager.Formats, patterns: List<String>, locale: Locale) {
     val instant = LocalDateTime.of(2026, 9, 8, 13, 45, 27).atZone(ZoneId.systemDefault())
     val actual = listOf(formats.date(), formats.timeShort(), formats.timeMedium(), formats.dateTime())
-    for ((formatter, pattern) in actual.zip(patterns)) {
+    for ([formatter, pattern] in actual.zip(patterns)) {
       assertThat(formatter.locale).isEqualTo(locale)
       assertThat(formatter.format(instant)).isEqualTo(DateTimeFormatter.ofPattern(pattern.trim(), locale).format(instant))
     }
-    val date = Date.from(instant.toInstant())
-    assertThat(formats.dateFmt().format(date)).isEqualTo(SimpleDateFormat(patterns[0]).format(date))
-    assertThat(formats.dateTimeFmt().format(date)).isEqualTo(SimpleDateFormat(patterns[3]).format(date))
   }
 
   private fun readString(library: CoreFoundation, string: Pointer): String {
