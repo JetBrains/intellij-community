@@ -9,6 +9,7 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.getTargetType
 import com.intellij.execution.target.joinTargetPaths
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.execution.wsl.listWindowsLocalDriveRoots
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileChooser.FileChooser
@@ -28,6 +29,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.environmentVariables
+import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
@@ -141,16 +143,18 @@ data class EelFileSystem(
   ): ActionListener =
     ComponentWithBrowseButton.BrowseFolderActionListener(textField, null, descriptor.withRoots(getRootsForBrowsing()), fieldAccessor)
 
+  /**
+   * Limits the chooser to the file system of this eel: the file system roots for the local eel, and the root of the home
+   * directory for another eel. On Windows, the local roots are the fixed drives only, see [listWindowsLocalDriveRoots].
+   */
   private fun getRootsForBrowsing(): List<VirtualFile> {
+    val roots = when {
+      eelDescriptor != LocalEelDescriptor -> listOf(eelApi.userInfo.home.root.asNioPath())
+      eelDescriptor.osFamily.isWindows -> listWindowsLocalDriveRoots()
+      else -> FileSystems.getDefault().rootDirectories.toList()
+    }
     val vfs = LocalFileSystem.getInstance()
-    return if (eelDescriptor == LocalEelDescriptor) {
-      FileSystems.getDefault().rootDirectories
-    }
-    else {
-      listOf(eelApi.userInfo.home.root.asNioPath())
-    }.mapNotNull {
-      vfs.findFileByNioFile(it) ?: vfs.refreshAndFindFileByNioFile(it)
-    }
+    return roots.mapNotNull { vfs.findFileByNioFile(it) ?: vfs.refreshAndFindFileByNioFile(it) }
   }
 
   override fun getBinaryToExec(path: PathHolder.Eel, workingDir: Path?): BinaryToExec {
