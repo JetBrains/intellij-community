@@ -20,6 +20,12 @@ fn spec_json(fixture: &Fixture) -> serde_json::Value {
         "vmOptions": spec.vm_options,
         "vmOptionsVariable": spec.vm_options_variable,
         "runtimeModuleRepository": spec.runtime_module_repository,
+        "launch": {
+            "programArguments": spec.launch.program_arguments,
+            "workingDirectory": spec.launch.working_directory,
+            "env": spec.launch.env,
+            "unsetEnv": spec.launch.unset_env,
+        },
     })
 }
 
@@ -76,4 +82,29 @@ fn a_file_below_a_tree_has_its_source_in_the_tree() {
     assert_eq!(fixture.spec.source("lib/app.jar").unwrap(), fixture.spec.files["lib/app.jar"]);
     let error = format!("{:#}", fixture.spec.source("plugins/a/lib/a.jar").unwrap_err());
     assert_eq!(error, "the home spec names no source for plugins/a/lib/a.jar");
+}
+
+#[test]
+fn a_launch_with_an_unknown_key_or_a_bad_variable_fails() {
+    let fixture = Fixture::new("");
+    let mut value = spec_json(&fixture);
+    value["launch"]["args"] = serde_json::json!([]);
+    let error = format!("{:#}", read_spec(&write_spec(&fixture, &value)).unwrap_err());
+    assert!(error.contains("unknown field `args`"), "{error}");
+
+    let mut value = spec_json(&fixture);
+    value["launch"]["unsetEnv"] = serde_json::json!(["A=B"]);
+    let error = format!("{:#}", read_spec(&write_spec(&fixture, &value)).unwrap_err());
+    assert!(
+        error.ends_with(r#"`launch` names a variable that is not a variable name: "A=B""#),
+        "{error}"
+    );
+
+    let mut value = spec_json(&fixture);
+    value["launch"]["workingDirectory"] = "runfiles".into();
+    let error = format!("{:#}", read_spec(&write_spec(&fixture, &value)).unwrap_err());
+    assert!(
+        error.ends_with("`launch.workingDirectory` is not an absolute path: runfiles"),
+        "{error}"
+    );
 }

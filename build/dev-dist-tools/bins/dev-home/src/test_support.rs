@@ -9,7 +9,7 @@ use component::layout::{LOCAL_LAYOUT_VERSION, LocalFileKind, LocalLayout, LocalL
 use testkit::{TempDir, write_file};
 
 use crate::generation::{self, Materialized};
-use crate::spec::{HomeSpec, SPEC_VERSION};
+use crate::spec::{HomeSpec, LaunchSpec, SPEC_VERSION};
 use crate::store::Store;
 
 /// The files of the home and their first content. `bin/idea` is executable, and `jbr` is a tree.
@@ -56,6 +56,7 @@ impl Fixture {
             vm_options: out.join("idea.vmoptions"),
             vm_options_variable: "IDEA_VM_OPTIONS".to_owned(),
             runtime_module_repository: true,
+            launch: launch(directory.path()),
         };
         let fixture = Self { directory, spec };
         fixture.write_layout();
@@ -125,6 +126,19 @@ impl Fixture {
         let file = &self.spec.layout;
         let _ = fs::remove_file(file);
         write_file(file, serde_json::to_vec(&layout).unwrap());
+    }
+}
+
+/// The launch of the fixture target: one program argument, the working directory and the variables of `bazel run`.
+pub(crate) fn launch(directory: &Path) -> LaunchSpec {
+    LaunchSpec {
+        program_arguments: vec!["--nosplash".to_owned()],
+        working_directory: directory.join("idea.runfiles/_main"),
+        env: BTreeMap::from([
+            ("BUILD_WORKSPACE_DIRECTORY".to_owned(), "/work".to_owned()),
+            ("JAVA_RUNFILES".to_owned(), directory.join("idea.runfiles").display().to_string()),
+        ]),
+        unset_env: vec!["RUNFILES_MANIFEST_FILE".to_owned()],
     }
 }
 

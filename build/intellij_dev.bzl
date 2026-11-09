@@ -93,6 +93,9 @@ def export_vm_options(name, runtime_module_repository):
         lines.append(_RUNTIME_MODULE_REPOSITORY_PROPERTY + "${EXPORT}/" + _RUNTIME_MODULE_REPOSITORY_FILE)
     return {"sibling_vm_options": lines, "output_base": OUTPUT_BASE}
 
+# The variables that `bazel run` removes from the environment of the executable. A run handler removes them too.
+_BAZEL_RUN_REMOVED_VARIABLES = ["JAVA_RUNFILES", "RUNFILES_DIR", "RUNFILES_MANIFEST_FILE", "RUNFILES_MANIFEST_ONLY", "TEST_SRCDIR"]
+
 # The `java` of the bundled runtime in the home, for each OS token. The native launcher finds the runtime at `<home>/jbr`
 # when no variable and no user file names one. On macOS it appends `Contents/Home` to the runtime.
 _RUNTIME_JAVA = {
@@ -251,7 +254,22 @@ def _native_launch(ctx, os, dist, placement, flags, program_args):
     files = {destination: _execroot_path(ctx, file.path) for destination, file in home.items() if not file.is_directory}
     trees = {destination: _execroot_path(ctx, file.path) for destination, file in home.items() if file.is_directory}
     layout = _execroot_path(ctx, dist_home_path(dist)) + "/local-layout.json"
+    tool = ctx.attr._dev_home[DefaultInfo].files_to_run.executable
+    tool_path = _execroot_path(ctx, tool.path)
     spec_file = ctx.actions.declare_file(ctx.label.name + ".home.json")
+    spec_path = _execroot_path(ctx, spec_file.path)
+
+    environment = dict(ctx.attr.env)
+    if windows:
+        # `bazel run` starts the stub in `<name>.cmd.runfiles`.
+        working_directory = runfiles_directory
+    else:
+        environment.update({"JAVA_RUNFILES": runfiles_directory, "RUNFILES_DIR": runfiles_directory})
+        working_directory = "%s/%s" % (runfiles_directory, ctx.workspace_name)
+
+    # `bazel run` starts the stub with these variables, and a run handler starts the launcher with them.
+    launch_environment = dict(environment)
+    launch_environment.update({"BUILD_WORKING_DIRECTORY": WORKSPACE_ROOT, "BUILD_WORKSPACE_DIRECTORY": WORKSPACE_ROOT})
     ctx.actions.write(spec_file, json.encode({
         "version": 1,
         "target": str(ctx.label),
@@ -265,22 +283,18 @@ def _native_launch(ctx, os, dist, placement, flags, program_args):
         "vmOptions": _execroot_path(ctx, vm_options_file.path),
         "vmOptionsVariable": ctx.attr.env_var_base_name + "_VM_OPTIONS",
         "runtimeModuleRepository": ctx.attr.runtime_module_repository and not _states_repository(lines),
+        "launch": {
+            "programArguments": program_args,
+            "workingDirectory": working_directory,
+            "env": launch_environment,
+            "unsetEnv": _BAZEL_RUN_REMOVED_VARIABLES,
+        },
     }))
-    tool = ctx.attr._dev_home[DefaultInfo].files_to_run.executable
-    tool_path = _execroot_path(ctx, tool.path)
-    spec_path = _execroot_path(ctx, spec_file.path)
 
     if windows:
         ctx.actions.write(executable, _cmd_stub(ctx.label, tool_path, spec_path, program_args), is_executable = True)
-        environment = dict(ctx.attr.env)
-
-        # `bazel run` starts the stub in `<name>.cmd.runfiles`.
-        working_directory = runfiles_directory
     else:
         ctx.actions.write(executable, _sh_stub(tool_path, spec_path, program_args), is_executable = True)
-        environment = dict(ctx.attr.env)
-        environment.update({"JAVA_RUNFILES": runfiles_directory, "RUNFILES_DIR": runfiles_directory})
-        working_directory = "%s/%s" % (runfiles_directory, ctx.workspace_name)
 
     # The files of the home are runfiles, so `bazel run` builds them, and `bazel build` lists only the files below.
     # `dev-home` reads each one where Bazel wrote it, through the home spec, not through the runfiles tree.
@@ -290,12 +304,11 @@ def _native_launch(ctx, os, dist, placement, flags, program_args):
     ).merge(ctx.attr._dev_home[DefaultInfo].default_runfiles)
     runfiles = _merge_data(ctx, runfiles)
 
+    # A run handler reads only the command. The answer of `dev-home` names the rest of the launch, so a change of the
+    # launch stays in the checkout.
     launch_content = {
         "version": 4,
         "materializer": [tool_path, "materialize", "--spec=" + spec_path, "--format=json"],
-        "programArguments": program_args,
-        "workingDirectory": working_directory,
-        "env": environment,
     }
     launch = ctx.actions.declare_file(ctx.label.name + ".launch.json")
     ctx.actions.write(launch, json.encode_indent(launch_content) + "\n")
@@ -366,9 +379,9 @@ temporary file, which the stub calls. The stub runs the console launcher, so `ba
 
 `bazel run //<package>:<name> -- <argument>` adds a program argument after the ones of the row. `bazel run` starts the
 executable in `<name>.runfiles/_main`, or in `<name>.cmd.runfiles` on Windows. `<name>.launch.json` has version 4. It
-states the command of `dev-home` that prints the generation as JSON, the program arguments, the working directory and
-the environment of a launch. An IDE run handler runs that command, writes a copy of the vmoptions file with its debug
-options, and starts the launcher itself.""",
+states the command of `dev-home` that prints the generation as JSON, and nothing else. The answer names the launcher, the vmoptions file, the program
+arguments, the working directory, the variables that `bazel run` sets and the ones that it removes. An IDE run handler
+runs that command, writes a copy of the vmoptions file with its debug options, and starts the launcher itself.""",
     implementation = _intellij_dev_java_launcher_impl,
     executable = True,
     fragments = ["java"],

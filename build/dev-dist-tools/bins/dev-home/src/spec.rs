@@ -2,7 +2,7 @@
 //!
 //! The spec names the source file of each destination of the home by its absolute path, so the tool reads no runfiles
 //! tree and no runfiles manifest. The local layout of the distribution adds the hash, the mode, the directories and the
-//! symbolic links.
+//! symbolic links. The spec also holds the launch of the target, which the tool passes through to the `json` answer.
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -46,6 +46,24 @@ pub(crate) struct HomeSpec {
     /// Whether the vmoptions file of the generation names `modules/module-descriptors.dat` of the home.
     #[serde(default)]
     pub(crate) runtime_module_repository: bool,
+    /// The launch of the target, for an IDE run handler. The generation stores none of it, so two checkouts with other
+    /// launches share one generation.
+    pub(crate) launch: LaunchSpec,
+}
+
+/// The launch of a target as `bazel run` starts its stub, without the launcher and the vmoptions file.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(crate) struct LaunchSpec {
+    /// The program arguments of the row, before the arguments of the run configuration.
+    pub(crate) program_arguments: Vec<String>,
+    /// The directory where `bazel run` starts the stub.
+    pub(crate) working_directory: PathBuf,
+    /// The variables that `bazel run` sets: the ones of `RunEnvironmentInfo`, `BUILD_WORKING_DIRECTORY` and
+    /// `BUILD_WORKSPACE_DIRECTORY`.
+    pub(crate) env: BTreeMap<String, String>,
+    /// The variables that `bazel run` removes from the environment of the stub.
+    pub(crate) unset_env: Vec<String>,
 }
 
 /// Reads and checks the spec at `path`.
@@ -80,6 +98,7 @@ fn validate(spec: &HomeSpec) -> Result<()> {
         ("fingerprint", &spec.fingerprint),
         ("layout", &spec.layout),
         ("vmOptions", &spec.vm_options),
+        ("launch.workingDirectory", &spec.launch.working_directory),
     ] {
         if !path.is_absolute() {
             bail!("`{name}` is not an absolute path: {}", path.display());
@@ -89,6 +108,11 @@ fn validate(spec: &HomeSpec) -> Result<()> {
         distpath::validate_path(destination).with_context(|| format!("the destination {destination:?}"))?;
         if !source.is_absolute() {
             bail!("the source of {destination} is not an absolute path: {}", source.display());
+        }
+    }
+    for name in spec.launch.env.keys().chain(&spec.launch.unset_env) {
+        if name.is_empty() || name.contains(['=', '\0']) {
+            bail!("`launch` names a variable that is not a variable name: {name:?}");
         }
     }
     Ok(())

@@ -9,7 +9,8 @@
 //! ```
 //!
 //! `materialize` reads the home spec of the target, builds the generation of its fingerprint when it is missing, and
-//! prints the launcher and the vmoptions file of the generation in the form of `--format`. `--output` writes the answer
+//! prints the launcher and the vmoptions file of the generation in the form of `--format`. The `json` form also names
+//! the launch of the target, so an IDE run handler reads nothing else. `--output` writes the answer
 //! to a file instead, which the `cmd` form needs. `INTELLIJ_DEV_HOME_ROOT` replaces the root of the spec. After a new
 //! generation, `materialize` starts `gc` as a detached child.
 //!
@@ -88,7 +89,7 @@ fn materialize(spec: &Path, root: Option<PathBuf>, format: Format) -> Result<Str
     fs::create_dir_all(&root).with_context(|| format!("cannot create {}", root.display()))?;
     let store = store::Store::new(&root)?;
     let materialized = generation::materialize(&spec, &root, &store)?;
-    let text = output::render(&materialized, format)?;
+    let text = output::render(&materialized, &spec.launch, format)?;
     if gc::is_due(&root, materialized.built) {
         gc::start_detached(&root);
     }

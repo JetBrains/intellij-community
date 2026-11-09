@@ -1,6 +1,8 @@
 //! The three forms of the answer of `materialize`.
 //!
-//! - `json`, for an IDE run handler: `{"home", "launcher", "vmOptionsFile", "vmOptionsVariable"}`.
+//! - `json`, for an IDE run handler: `{"home", "launcher", "vmOptionsFile", "vmOptionsVariable", "programArguments",
+//!   "workingDirectory", "env", "unsetEnv"}`. The last four come from the launch of the spec. A run handler needs only
+//!   this answer, so a new key is additive, and a launch file names nothing but the command.
 //! - `sh`, for the stub of macOS and Linux, which `eval`s it: `DEV_HOME_LAUNCHER=<launcher>` and
 //!   `export <ENV>_VM_OPTIONS=<file>`, each value in single quotes.
 //! - `cmd`, for the stub of Windows, which `call`s it: two `set "<name>=<value>"` lines.
@@ -8,6 +10,7 @@
 use anyhow::{Result, bail};
 
 use crate::generation::Materialized;
+use crate::spec::LaunchSpec;
 
 /// The variable that names the launcher in the `sh` and `cmd` forms.
 pub(crate) const LAUNCHER_VARIABLE: &str = "DEV_HOME_LAUNCHER";
@@ -31,8 +34,8 @@ impl Format {
     }
 }
 
-/// The text of the answer in `format`.
-pub(crate) fn render(materialized: &Materialized, format: Format) -> Result<String> {
+/// The text of the answer in `format`. Only the `json` form names `launch`, because `bazel run` starts the stub with it.
+pub(crate) fn render(materialized: &Materialized, launch: &LaunchSpec, format: Format) -> Result<String> {
     let launcher = materialized.launcher.display().to_string();
     let vm_options = materialized.vm_options_file.display().to_string();
     let variable = &materialized.vm_options_variable;
@@ -43,6 +46,10 @@ pub(crate) fn render(materialized: &Materialized, format: Format) -> Result<Stri
                 "launcher": launcher,
                 "vmOptionsFile": vm_options,
                 "vmOptionsVariable": variable,
+                "programArguments": launch.program_arguments,
+                "workingDirectory": launch.working_directory.display().to_string(),
+                "env": launch.env,
+                "unsetEnv": launch.unset_env,
             });
             Ok(format!("{value}\n"))
         }
