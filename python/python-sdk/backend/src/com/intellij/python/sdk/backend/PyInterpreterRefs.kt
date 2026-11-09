@@ -155,10 +155,19 @@ fun findTarget(project: Project, targetId: String): TargetEnvironmentConfigurati
   TargetEnvironmentsManager.getInstance(project).targets.resolvedConfigs().firstOrNull { it.uuid == targetId }
 
 /**
- * Registers [target] in the targets of [project], so a [PyInterpreterRef] can name it by its id. A target stores no
- * credentials there: the IDE keeps them in its credential store.
+ * Registers a copy of [target] in the targets of [project], so a [PyInterpreterRef] can name it by its id. A target
+ * stores no credentials there: the IDE keeps them in its credential store.
+ *
+ * The copy has the id of [target] and no language runtimes. A target of a Python SDK carries a
+ * [com.jetbrains.python.target.PythonLanguageRuntimeConfiguration], which the targets of a project cannot store.
  */
 @ApiStatus.Internal
 fun registerTarget(project: Project, target: TargetEnvironmentConfiguration) {
-  TargetEnvironmentsManager.getInstance(project).addTarget(target)
+  if (findTarget(project, target.uuid) != null) return
+  val state = TargetEnvironmentsManager.OneTargetState().apply {
+    loadFromConfiguration(target)
+    uuid = target.uuid
+  }
+  val copy = state.toTargetConfiguration() ?: return
+  TargetEnvironmentsManager.getInstance(project).addTarget(copy)
 }
