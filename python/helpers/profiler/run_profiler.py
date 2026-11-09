@@ -75,9 +75,11 @@ class Profiler:
 
     def process(self, message):
         if hasattr(message, 'save_snapshot'):
+            # The request path is on the IDE machine. PYCHARM_SNAPSHOT_PATH is on the machine of this process.
+            snapshot_basepath = base_snapshot_path or message.save_snapshot.filepath
             self.save_snapshot(
                 message.id,
-                generate_snapshot_filepath(message.save_snapshot.filepath, remote_run, self.snapshot_extension()),
+                generate_snapshot_filepath(snapshot_basepath, remote_run, self.snapshot_extension()),
                 remote_run or send_stat_flag
             )
         else:
