@@ -1,10 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.j2k
+package org.jetbrains.kotlin.j2k.k2
 
 import com.intellij.openapi.components.service
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.j2k.JavaToKotlinService
 
 class JavaToKotlinServiceTest : KotlinLightCodeInsightFixtureTestCase() {
 
@@ -19,12 +20,12 @@ class JavaToKotlinServiceTest : KotlinLightCodeInsightFixtureTestCase() {
             }
         """.trimIndent()) as PsiJavaFile
 
-        val result = runWithModalProgressBlocking(project, "") {
+        (val failed, val externalUsageFiles) = runWithModalProgressBlocking(project, "") {
             project.service<JavaToKotlinService>().convert(listOf(javaFile), module)
         }
 
-        assertEmpty(result.failed)
-        val rewritten = result.externalUsageFiles.map { it.name }
+        assertEmpty(failed)
+        val rewritten = externalUsageFiles.map { it.name }
         assertContainsElements(rewritten, "Caller.kt")
         assertFalse("Converted files must not be reported as external", rewritten.contains("Model.kt"))
     }
@@ -32,12 +33,12 @@ class JavaToKotlinServiceTest : KotlinLightCodeInsightFixtureTestCase() {
     fun testConvertReportsNoExternalFilesWhenNothingReferencesTheConvertedCode() {
         val javaFile = myFixture.addFileToProject("Lonely.java", "public class Lonely {}") as PsiJavaFile
 
-        val result = runWithModalProgressBlocking(project, "") {
+        (val failed, val externalUsageFiles) = runWithModalProgressBlocking(project, "") {
             project.service<JavaToKotlinService>().convert(listOf(javaFile), module)
         }
 
-        assertEmpty(result.failed)
-        assertEmpty(result.externalUsageFiles)
+        assertEmpty(failed)
+        assertEmpty(externalUsageFiles)
     }
 
 }

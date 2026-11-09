@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.j2k
 
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk
 
 abstract class AbstractJavaToKotlinConverterSingleFileFullJDKTest : AbstractJavaToKotlinConverterSingleFileTest() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = J2K_FULL_JDK_PROJECT_DESCRIPTOR
+    override fun getProjectDescriptor(): LightProjectDescriptor = getInstanceFullJdk()
 }

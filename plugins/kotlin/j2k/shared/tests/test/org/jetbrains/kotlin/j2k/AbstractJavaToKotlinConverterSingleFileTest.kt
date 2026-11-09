@@ -2,10 +2,17 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.psi.impl.PsiImplUtil
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
@@ -14,6 +21,8 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.File
 import java.util.regex.Pattern
 
@@ -55,7 +64,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
     open fun doTest(javaPath: String) {
         val javaFile = File(javaPath)
-        val fileContents = javaFile.getFileTextWithoutDirectives()
+        val fileContents = javaFile.readText().getTextWithoutDirectives()
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(javaFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2) {
             withCustomCompilerOptions(fileContents, project, module) {
@@ -97,6 +106,48 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         }
 
         KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
+    }
+
+    private object J2kTestPreprocessorExtension : J2kPreprocessorExtension {
+        override suspend fun processFiles(
+            project: Project,
+            files: List<PsiJavaFile>,
+        ) {
+            for (file in files) {
+                val method = readAction {
+                    file.classes.firstOrNull()?.findDescendantOfType<PsiMethod> {
+                        it.name != "main" && !it.isConstructor && !it.name.startsWith("get") && !it.name.startsWith("set")
+                    }
+                } ?: continue
+
+                edtWriteAction {
+                    PsiImplUtil.setName(checkNotNull(method.nameIdentifier), "prebar")
+                }
+            }
+        }
+    }
+
+    private object J2kTestPostprocessorExtension : J2kPostprocessorExtension {
+        override suspend fun processFiles(
+            project: Project,
+            files: List<KtFile>,
+        ) {
+            for (file in files) {
+                val firstNamedParameter = readAction {
+                    file.findDescendantOfType<KtParameter> { it.nameIdentifier != null }
+                } ?: continue
+
+                val references = readAction { ReferencesSearch.search(firstNamedParameter, LocalSearchScope(file)).findAll() }
+                edtWriteAction {
+                    PsiImplUtil.setName(checkNotNull(firstNamedParameter.nameIdentifier), "postbar")
+                }
+                for (reference in references) {
+                    edtWriteAction {
+                        PsiImplUtil.setName(reference.element, "postbar")
+                    }
+                }
+            }
+        }
     }
 
     abstract fun dumpTextWithErrors(createKotlinFile: KtFile): String
