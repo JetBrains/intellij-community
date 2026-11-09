@@ -431,12 +431,12 @@ public final class JavaFunctionalExpressionIndex extends FileBasedIndexExtension
    * has no modifier list and type of its own, so its context starts at the first field of the declaration.
    */
   private static int getContextStart(@NotNull LighterAST tree, @NotNull LighterASTNode context) {
+    int declarationStart = context.getStartOffset();
     if (context.getTokenType() != FIELD || LightTreeUtil.firstChildOfType(tree, context, MODIFIER_LIST) != null) {
-      return context.getStartOffset();
+      return declarationStart;
     }
     LighterASTNode parent = tree.getParent(context);
-    if (parent == null) return context.getStartOffset();
-    int declarationStart = context.getStartOffset();
+    if (parent == null) return declarationStart;
     for (LighterASTNode sibling : tree.getChildren(parent)) {
       if (sibling.getStartOffset() >= context.getStartOffset()) break;
       if (sibling.getTokenType() == FIELD && LightTreeUtil.firstChildOfType(tree, sibling, MODIFIER_LIST) != null) {
