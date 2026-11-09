@@ -401,7 +401,7 @@ private suspend fun startProcessImpl(
 
   try {
     // Inherit env vars because lack of `PATH` might break things
-    val environment = System.getenv().toMutableMap()
+    val environment = EnvironmentUtil.getEnvironmentMap().toMutableMap()
     environment.putAll(builder.env)
     val platform = Platform.current()
     val escapedCommandLine = CommandLineUtil.toCommandLine(builder.exe, builder.args, platform)
