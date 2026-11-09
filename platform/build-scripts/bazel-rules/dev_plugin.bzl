@@ -25,7 +25,7 @@ load(":content_module_jar.bzl", "ContentModuleJarInfo", "declare_spans", "librar
 load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_ATTRS", "DEV_DIST_STAMP_CLASS_FLAG_ATTR", "DevDistPluginDescriptorInfo", "dev_dist_check_stamp_class", "dev_dist_mode_refusals", "dev_dist_neutral_product_transition", "dev_dist_stamp_class_transition")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
-load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
+load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
 load(":java_glob.bzl", "executable_destinations")
 
 DevDistRuntimeLayoutInfo = provider(
@@ -570,7 +570,7 @@ def _dev_plugin_impl(ctx):
     for copy in copies:
         (placed_trees if copy.tree else placed_files)[plugin_directory + "/" + copy.destination] = copy.file
     executables = executable_destinations(ctx.attr.executables, "%s: executables" % ctx.label, plugin_directory, placed_files)
-    placement = dev_dist_placement(ctx, placed_files, placed_trees, executables)
+    placement = DevDistPlacementInfo(files = placed_files, trees = placed_trees, executables = executables)
     return [
         DefaultInfo(files = depset([manifest, classpath]), runfiles = ctx.runfiles(transitive_files = payload)),
         DevDistRuntimeLayoutInfo(part = runtime_layout, descriptor = classpath_descriptor, descriptor_module = main_module),

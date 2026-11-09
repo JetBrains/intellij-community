@@ -86,8 +86,8 @@ cd community && ./bazel.cmd test //build/dev-dist-tools/...
 - `./build/dev-dist.cmd` runs `//build/dev-dist-tools/bins/dev-dist:dev-dist_opt`, the binary built in `opt`, and
   `replay` runs `bins/content-module-packer:content-module-packer_opt`. The unit test of each binary stays on the
   `rust_binary`.
-- A launch target runs no tool of this workspace at start. Its executable is a stub that starts the native launcher of
-  the distribution.
+- A launch target runs one tool of this workspace at start: `bins/dev-home:dev-home_opt`, the generation writer. Its
+  stub runs it, and then the native launcher of the generation.
 
 ### The Windows gate
 

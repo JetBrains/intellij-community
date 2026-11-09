@@ -10,7 +10,7 @@ load(":dev_dist_plugin_descriptor.bzl", "DEV_DIST_STAMP_CLASS_ATTRS", "DEV_DIST_
 load(":dev_dist_tool_info.bzl", "dev_dist_tool_inputs")
 load(":dev_plugin.bzl", "DevDistRuntimeLayoutInfo", "dev_dist_plugin_directory")
 load(":dev_plugin_source_tree.bzl", "source_tree_entries", "source_tree_prefix")
-load(":intellij_dev_dist.bzl", "IntellijDevFragmentInfo", "dev_dist_placement")
+load(":intellij_dev_dist.bzl", "DevDistPlacementInfo", "IntellijDevFragmentInfo")
 load(":java_glob.bzl", "executable_destinations")
 
 def _graph_info_init(**_kwargs):
@@ -1196,7 +1196,7 @@ def _component_placement(ctx, files, trees, reused, executables):
     placed_trees = dict(trees)
     for destination, file in reused.items():
         (placed_trees if file.is_directory else placed_files)[destination] = file
-    return dev_dist_placement(ctx, placed_files, placed_trees, executables)
+    return DevDistPlacementInfo(files = placed_files, trees = placed_trees, executables = executables)
 
 def _dev_plugin_component_impl(ctx):
     remainder = ctx.attr.remainder[DevPluginRemainderInfo]

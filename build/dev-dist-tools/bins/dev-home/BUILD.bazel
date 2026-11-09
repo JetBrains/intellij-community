@@ -1,5 +1,15 @@
 load("//build/dev-dist-tools:defs.bzl", "dev_dist_rust_crate")
+load("//build/rust-tools:defs.bzl", "optimized_binary")
 
 dev_dist_rust_crate(
     name = "dev-home",
+)
+
+# The stub of each launch target runs this file, `dev-home_opt/dev-home`: the binary, always optimized, because it
+# hashes the bytes of a new generation. The unit test stays on `:dev-home`.
+optimized_binary(
+    name = "dev-home_opt",
+    binary = ":dev-home",
+    binary_name = "dev-home",
+    visibility = ["//visibility:public"],
 )

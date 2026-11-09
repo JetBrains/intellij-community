@@ -899,9 +899,9 @@ def _declare_run_launcher(
         visibility):
     """The launcher `name`, the launcher over the distribution `_declare_run_distribution` declared as `distribution`.
 
-    The row is an `intellij_dev_java_launcher` over `<distribution>_dist_launch`, with the home `<distribution>_dist` on
-    Windows. It starts the native launcher with the variables of `_env_var_base_name`. Its vmoptions file names the
-    runtime module repository under the rule of `export_vm_options`.
+    The row is an `intellij_dev_java_launcher` over `<distribution>_dist_launch`, on every OS. It starts the native
+    launcher of the generation with the variables of `_env_var_base_name`. Its vmoptions file names the runtime module
+    repository under the rule of `export_vm_options`.
     """
     for flag in jvm_flags:
         if flag.startswith("-Dadditional.modules="):
@@ -925,7 +925,6 @@ def _declare_run_launcher(
         name = name,
         visibility = visibility,
         dist = "//%s:%s_dist_launch" % (native.package_name(), distribution),
-        export = "//%s:%s_dist" % (native.package_name(), distribution),
         vm_options = {os: destination.vm_options for os, destination in destinations.items()},
         product_info = {os: destination.product_info for os, destination in destinations.items()},
         launcher = _launcher_destinations(plan.launch.launcher),

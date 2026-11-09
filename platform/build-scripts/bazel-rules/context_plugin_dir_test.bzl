@@ -25,7 +25,7 @@ def _fake_component_impl(ctx):
     ctx.actions.write(manifest, "")
     return [
         DefaultInfo(files = depset(outputs)),
-        DevDistPlacementInfo(files = files, trees = trees, executables = ctx.attr.executables, executable_copies = {}),
+        DevDistPlacementInfo(files = files, trees = trees, executables = ctx.attr.executables),
         IntellijDevFragmentInfo(name = _MODULE, manifest = manifest, payload = None, plugin_classpath_part = None, plugin_classpath_prefix = None),
     ]
 

@@ -152,42 +152,15 @@ IntellijDevFragmentInfo = provider(
 DevDistPlacementInfo = provider(
     doc = """Where a component places its files in a home, known at analysis.
 
-    A launch target links its home from these paths in its runfiles tree, because Bazel writes a runfiles tree only
-    from paths that analysis knows. Every destination is in slash form, relative to the home. The composer checks the
-    placement against the component manifest, see `placement.rs` of the composer.""",
+    A launch target names these files in its home spec, where Bazel wrote them. `dev-home` sets the mode of each file
+    from the layout, so a source file needs no executable copy. Every destination is in slash form, relative to the
+    home. The composer checks the placement against the component manifest, see `placement.rs` of the composer.""",
     fields = {
         "files": "Dictionary from a file destination to its `File`.",
         "trees": "Dictionary from a directory destination to a directory `File` that holds every entry below it at the same relative path.",
         "executables": "The file destinations that need the executable bit.",
-        "executable_copies": "Dictionary from an executable destination with a source file to the copy of that file, which a launch target links. See `dev_dist_placement`.",
     },
 )
-
-def dev_dist_placement(ctx, files, trees, executables):
-    """The `DevDistPlacementInfo` of a component, with one copy of each executable source file.
-
-    Analysis cannot see the mode of a source file. The mode on disk is not reliable either: an extracted repository
-    gets the modes of its archive, or `0555` from the repo contents cache. Bazel writes the copy executable. The
-    component declares the copy, so every launch target and every distribution over the component links the same file.
-    The composer still gets the source in the placement, because the component manifest names the source.
-    """
-    executable_copies = {}
-    for destination in executables:
-        file = files.get(destination)
-        if file == None or not file.is_source:
-            continue
-        copy = ctx.actions.declare_file("%s.executables/%s" % (ctx.label.name, destination))
-        ctx.actions.run_shell(
-            outputs = [copy],
-            inputs = [file],
-            command = 'cp "$1" "$2"',
-            arguments = [file.path, copy.path],
-            mnemonic = "DevLaunchExecutableCopy",
-            progress_message = "Copying the executable %s of %%{label}" % destination,
-            execution_requirements = {"no-cache": "1", "no-remote-exec": "1", "no-sandbox": "1"},
-        )
-        executable_copies[destination] = copy
-    return DevDistPlacementInfo(files = files, trees = trees, executables = executables, executable_copies = executable_copies)
 
 IntellijDevReferenceInfo = provider(
     doc = "A reference fragment, the second producer of a gate. No distribution composes it.",
@@ -208,7 +181,7 @@ IntellijDevDistInfo = provider(
         "home_prefix": "The directory below `home` that holds the home of the IDE: `Contents` for a macOS app, or `\"\"` for `home` itself. `home_prefix` of `dev_dist_product_files.bzl` states the rule.",
         "ide_config": "The config file used by PreBuiltDevMain.",
         "runtime_files": "Component artifacts used directly by a local launch.",
-        "placement": "The merged `DevDistPlacementInfo` of a local launch as `struct(files, trees, executables, executable_copies)`. None for a full distribution or a component without a placement.",
+        "placement": "The merged `DevDistPlacementInfo` of a local launch as `struct(files, trees, executables)`. None for a full distribution or a component without a placement.",
         "core_classpath": "The `core-classpath.txt` of a local launch as a file of its own, or None.",
         "plugin_classpath": "The `plugins/plugin-classpath.txt` of a local launch as a file of its own, or None.",
         "sibling_vm_options": "The sibling vmoptions file `<name>.dist.vmoptions` of an export, or None.",
@@ -763,7 +736,7 @@ def _packed_jars_component_impl(ctx):
             inputs = [catalogue, jar_list] + [source.metadata for record in records for source in _packed_sources(record)],
             mnemonic = "IntellijDevPackedJars",
             progress_message = "Naming %d packed %s jars and %d native trees for %%{label}" % (len(jars), ctx.attr.platform_prefix, len(trees)),
-            placement = dev_dist_placement(ctx, placed_files, placed_trees, []),
+            placement = DevDistPlacementInfo(files = placed_files, trees = placed_trees, executables = []),
             plugin_classpath_prefix = ctx.file.plugin_classpath_prefix,
             main_class = ctx.attr.main_class,
         )
@@ -804,7 +777,7 @@ def _packed_jars_component_impl(ctx):
         inputs = [metadata] + executable_lists + files,
         mnemonic = "IntellijDevFiles",
         progress_message = "Naming distribution files for %{label}",
-        placement = dev_dist_placement(ctx, destinations, {}, executables),
+        placement = DevDistPlacementInfo(files = destinations, trees = {}, executables = executables),
         main_class = ctx.attr.main_class,
     )
 
@@ -899,7 +872,6 @@ def _merge_placements(ctx, fragment_targets):
     files = {}
     trees = {}
     executables = []
-    executable_copies = {}
     owners = {}
     for target in fragment_targets:
         if DevDistPlacementInfo not in target:
@@ -913,12 +885,11 @@ def _merge_placements(ctx, fragment_targets):
                 owners[destination] = kind
                 into[destination] = file
         executables.extend(placement.executables)
-        executable_copies.update(placement.executable_copies)
     for destination in owners:
         for parent in _parents(destination):
             if parent in trees:
                 fail("%s: '%s' of %s is below '%s', which %s links as a whole" % (ctx.label, destination, owners[destination], parent, owners[parent]))
-    return struct(files = files, trees = trees, executables = executables, executable_copies = executable_copies)
+    return struct(files = files, trees = trees, executables = executables)
 
 # The token of a sibling vmoptions line that stands for the absolute path of the home of the export.
 _EXPORT_TOKEN = "${EXPORT}"
