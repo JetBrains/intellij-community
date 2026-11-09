@@ -2,10 +2,12 @@
 package com.intellij.ide.startup.impl
 
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
@@ -52,6 +54,37 @@ internal class StartupManagerActivityHoldTest {
   }
 
   @Test
+  fun `an added legacy dumb-aware activity waits for the end of the hold`(): Unit = timeoutRunBlocking {
+    assertLegacyActivityWaitsForHold(RecordingLegacyDumbAwareActivity())
+  }
+
+  @Test
+  fun `an added legacy activity that needs the smart mode waits for the end of the hold`(): Unit = timeoutRunBlocking {
+    assertLegacyActivityWaitsForHold(RecordingLegacyActivity())
+  }
+
+  /**
+   * The extension point takes only a [ProjectActivity] from code, so a legacy activity starts the way the listener starts it.
+   * The project of the fixture is dumb until a test asks for its indexes, and a legacy activity can wait for the smart mode.
+   */
+  private suspend fun assertLegacyActivityWaitsForHold(activity: RecordingLegacyActivity) {
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    val startupManager = startupManager()
+    val hold = startupManager.holdActivities()
+    try {
+      startupManager.startAddedActivity(activity)
+
+      assertNull(withTimeoutOrNull(300.milliseconds) { activity.ran.await() })
+      assertFalse(activity.ran.isCompleted)
+    }
+    finally {
+      hold.finish()
+    }
+
+    activity.ran.await()
+  }
+
+  @Test
   fun `a second hold fails while the first one is active`(): Unit = timeoutRunBlocking {
     val startupManager = startupManager()
     val hold = startupManager.holdActivities()
@@ -73,4 +106,15 @@ internal class StartupManagerActivityHoldTest {
       ran.complete(Unit)
     }
   }
+
+  @Suppress("UsagesOfObsoleteApi")
+  private open class RecordingLegacyActivity : StartupActivity {
+    val ran = CompletableDeferred<Unit>()
+
+    override fun runActivity(project: Project) {
+      ran.complete(Unit)
+    }
+  }
+
+  private class RecordingLegacyDumbAwareActivity : RecordingLegacyActivity(), DumbAware
 }

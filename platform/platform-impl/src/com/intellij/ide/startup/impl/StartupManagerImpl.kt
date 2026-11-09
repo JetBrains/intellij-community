@@ -114,36 +114,46 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     fun addActivityEpListener(project: Project) {
       StartupActivity.POST_STARTUP_ACTIVITY.addExtensionPointListener(object : ExtensionPointListener<Any> {
         override fun extensionAdded(extension: Any, pluginDescriptor: PluginDescriptor) {
-          if (project is LightEditCompatible && extension !is LightEditCompatible) {
-            return
-          }
-
-          val startupManager = getInstance(project) as StartupManagerImpl
-          when (extension) {
-            is ProjectActivity -> {
-              val pluginScope = createActivityScope(project, extension.javaClass)
-              pluginScope.launch {
-                startupManager.awaitActivityHold()
-                extension.execute(project)
-              }
-            }
-            is DumbAware -> {
-              val pluginScope = createActivityScope(project, extension.javaClass)
-              pluginScope.launch {
-                startupManager.awaitActivityHold()
-                @Suppress("UsagesOfObsoleteApi")
-                startupManager.runOldActivity(extension as StartupActivity)
-              }
-            }
-            else -> {
-              DumbService.getInstance(project).runWhenSmart {
-                @Suppress("UsagesOfObsoleteApi")
-                startupManager.runOldActivity(extension as StartupActivity)
-              }
-            }
-          }
+          (getInstance(project) as StartupManagerImpl).startAddedActivity(extension)
         }
       }, project)
+    }
+  }
+
+  /**
+   * Starts [extension], a `postStartupActivity` that a plugin load added after the project opened.
+   * The activity waits for the end of a hold, see [holdActivities].
+   */
+  @VisibleForTesting
+  fun startAddedActivity(extension: Any) {
+    if (project is LightEditCompatible && extension !is LightEditCompatible) {
+      return
+    }
+
+    val pluginScope = createActivityScope(project, extension.javaClass)
+    when (extension) {
+      is ProjectActivity -> {
+        pluginScope.launch {
+          awaitActivityHold()
+          extension.execute(project)
+        }
+      }
+      is DumbAware -> {
+        pluginScope.launch {
+          awaitActivityHold()
+          @Suppress("UsagesOfObsoleteApi")
+          runOldActivity(extension as StartupActivity)
+        }
+      }
+      else -> {
+        pluginScope.launch {
+          awaitActivityHold()
+          DumbService.getInstance(project).runWhenSmart {
+            @Suppress("UsagesOfObsoleteApi")
+            runOldActivity(extension as StartupActivity)
+          }
+        }
+      }
     }
   }
 
@@ -193,6 +203,8 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
    * The hold covers the `postStartupActivity` and the `backgroundPostStartupActivity` extensions.
    * An activity that starts while the hold is active waits for the end of the hold, and then runs.
    * An activity that runs already is not affected.
+   * A legacy `StartupActivity` waits too. The initial pass of the post-startup activities then waits at it,
+   * and the activities that [runAfterOpened] queued wait with it.
    *
    * A plugin load runs the activities that it adds at once. A caller that loads the project model after the plugin load
    * takes the hold before the load, so these activities see the loaded model.
@@ -213,7 +225,10 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   }
 
   internal suspend fun awaitActivityHold() {
-    activityHold.get()?.await()
+    while (true) {
+      val hold = activityHold.get() ?: return
+      hold.await()
+    }
   }
 
   override fun startupActivityPassed(): Boolean = isInitProjectActivitiesPassed.isCompleted
@@ -397,6 +412,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           continue
         }
 
+        awaitActivityHold()
         @Suppress("SSBasedInspection", "UsagesOfObsoleteApi")
         if (activity is DumbAware) {
           if (pluginDescriptor.pluginId == PluginManagerCore.CORE_ID) {
@@ -416,6 +432,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
         }
       }
 
+      awaitActivityHold()
       withContext(tracer.span("run post-startup dynamically registered activities")) {
         freezePostStartupActivities = true
         runActivities(postStartupActivities)
@@ -594,19 +611,16 @@ private fun launchActivity(
   pluginId: PluginId,
   additionalContext: CoroutineContext = EmptyCoroutineContext,
 ): Job {
-  return createActivityScope(project, activity.javaClass).launch(
-    additionalContext +
-    tracer.rootSpan(name = "run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString)),
-  ) {
+  return createActivityScope(project, activity.javaClass).launch(additionalContext) {
     awaitActivityHold(project)
-    try {
-      activity.execute(project = project)
-    }
-    catch (e: CancellationException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error(PluginException(e, pluginId))
+    withContext(tracer.rootSpan(name = "run activity", arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString))) {
+      try {
+        activity.execute(project = project)
+      }
+      catch (e: Throwable) {
+        rethrowControlFlowException(e)
+        LOG.error(PluginException(e, pluginId))
+      }
     }
   }
 }
