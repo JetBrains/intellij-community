@@ -96,15 +96,17 @@ public final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
   }
 
   @Override
-  public @NotNull TypeEvalContext getLibraryContext(@NotNull TypeEvalContext delegating) {
-    final TypeEvalConstraints constraints = ((TypeEvalContextImpl)delegating).getConstraints();
+  public @NotNull TypeEvalContext getLibraryContext(@NotNull TypeEvalConstraints constraints) {
     // code completion will always have a new PsiFile, use the original file instead
     final PsiFile origin = constraints.myOrigin == null ? null : constraints.myOrigin.getOriginalFile();
-    final TypeEvalConstraints key = new TypeEvalConstraints(constraints.myAllowDataFlow,
-                                                           constraints.myAllowStubToAST,
-                                                           constraints.myAllowCallContext,
-                                                           constraints.myIsExternal,
-                                                           origin);
+    // A file that is not a copy is its own original, and then the constraints are already the key
+    final TypeEvalConstraints key = origin == constraints.myOrigin
+                                    ? constraints
+                                    : new TypeEvalConstraints(constraints.myAllowDataFlow,
+                                                              constraints.myAllowStubToAST,
+                                                              constraints.myAllowCallContext,
+                                                              constraints.myIsExternal,
+                                                              origin);
     final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = myLibrariesCachedMapStorage.getValue();
     final TypeEvalContext cachedContext = map.get(key);
     if (cachedContext != null) {
