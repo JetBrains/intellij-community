@@ -483,6 +483,7 @@ class SeTargetItemsProvider<T> private constructor(
    * A provider that exposes this must resolve the same scope ids back in [getItemsFlow]. Both sides
    * read one [SeTargetScopes], so the ids always agree.
    */
+  @ApiStatus.Internal
   suspend fun getSearchScopesInfo(): SearchScopesInfo? = if (supportsScopes) scopes.getValue().info else null
 
   /** The scope of the everywhere toggle, or null when this provider offers no scope. */
@@ -576,6 +577,7 @@ class SeTargetItemsProvider<T> private constructor(
   /**
    * The type list that the filter which [key] names shows, or an empty list when there is no such filter.
    */
+  @ApiStatus.Internal
   suspend fun getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation> =
     typeFilters.getValue()[key]?.let {
       typeVisibilityStates(it)

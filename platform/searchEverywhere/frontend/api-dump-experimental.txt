@@ -56,9 +56,6 @@
 - f:getProvidersIdToName(kotlin.coroutines.Continuation):java.lang.Object
 - f:getProvidersIds():java.util.List
 - f:getScope():kotlinx.coroutines.CoroutineScope
-- f:getSearchScopesInfos(kotlin.coroutines.Continuation):java.lang.Object
-- f:getTypeVisibilityStates(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
-- bs:getTypeVisibilityStates$default(com.intellij.platform.searchEverywhere.frontend.resultsProcessing.SeTabDelegate,java.lang.String,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - f:getUpdatedPresentation(com.intellij.platform.searchEverywhere.SeItemData,kotlin.coroutines.Continuation):java.lang.Object
 - f:isCommandsSupported(kotlin.coroutines.Continuation):java.lang.Object
 - f:isExtendedInfoEnabled(kotlin.coroutines.Continuation):java.lang.Object

@@ -310,8 +310,6 @@
 - f:getNavigatableForItem(com.intellij.platform.searchEverywhere.SeItem):com.intellij.pom.Navigatable
 - f:getPreviewInfo(com.intellij.platform.searchEverywhere.SeItem,kotlin.coroutines.Continuation):java.lang.Object
 - f:getPsiElementForItem(com.intellij.platform.searchEverywhere.SeItem):com.intellij.psi.PsiElement
-- f:getSearchScopesInfo(kotlin.coroutines.Continuation):java.lang.Object
-- f:getTypeVisibilityStates(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - f:getVirtualFileForItem(com.intellij.platform.searchEverywhere.SeItem):com.intellij.openapi.vfs.VirtualFile
 - f:itemSelected(com.intellij.platform.searchEverywhere.SeItem,com.intellij.platform.searchEverywhere.SeItemsProvider,I,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - f:performExtendedAction(com.intellij.platform.searchEverywhere.SeItem,com.intellij.platform.searchEverywhere.SeItemsProvider,kotlin.coroutines.Continuation):java.lang.Object
