@@ -13,8 +13,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.projectRoots.impl.createSdkForEnvironment
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -33,7 +35,6 @@ import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.pythonBinaryPath
-import com.jetbrains.python.sdk.readPythonSdkForConfiguration
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -192,30 +193,32 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
   /** Whether the registry holds [interpreter]: its owner registered it. Waits for the first computation. */
   suspend fun isRegistered(interpreter: PythonInterpreter): Boolean = tableFlow.first().any { it.isFor(interpreter.sdk) }
 
-  /** A Python SDK at [homePath] with the data [data] that is not in the SDK table. */
+  /**
+   * A Python SDK at [homePath] with the data [data] that is not in the SDK table. The SDK is in no table yet, so its
+   * changes need no write action: the first computation builds SDKs, and a caller under a modal progress waits for it,
+   * while a write action on the EDT waits for the modal progress (PY-93821). The legacy flow adds the SDK to the table
+   * later, in a write action, see [addSdk].
+   */
   private suspend fun newSdk(homePath: String, data: PythonSdkAdditionalData, suggestedName: String?, knownVersion: String? = null): Sdk {
     val sdkType = pythonSdkType()
     // In the library flow the SDK is in no table, so its name is unique among the stored SDKs only.
     val existing = if (isInterpreterLibraryFlowEnabled()) PythonInterpreterSdks.getInstance(project).sdks() else PythonSdkTable.tableSdks()
+    val name = if (suggestedName == null) SdkConfigurationUtil.createUniqueSdkName(sdkType, homePath, existing)
+               else SdkConfigurationUtil.createUniqueSdkName(suggestedName, existing)
     @Suppress("SETUP_SDK_DIRECTLY") // The registry is the only place that creates a Python SDK.
-    val sdk = SdkConfigurationUtil.createSdk(existing, homePath, sdkType, data, suggestedName)
+    val sdk = ProjectJdkTable.getInstance().createSdkForEnvironment(project, name, sdkType, homePath)
     // A version that the store saved needs no probe, so a project opens without running its interpreters.
-    if (knownVersion != null && sdk.versionString != knownVersion) {
-      edtWriteAction {
-        val modificator = sdk.sdkModificator
-        modificator.versionString = knownVersion
-        modificator.commitChanges()
-      }
-    }
+    val version = knownVersion ?: withContext(Dispatchers.IO) { sdkType.getVersionString(homePath) }
+    sdk.sdkModificator.apply {
+      sdkAdditionalData = data
+      this.homePath = homePath
+      versionString = version
+    }.applyChangesWithoutWriteAction()
     // The version of a target interpreter is not read from its home path, so the target answers for it. A target
     // interpreter has no detected environment, so this version is the only one it states before it is registered.
     if (sdk.versionString == null) {
-      val version = withContext(Dispatchers.IO) { sdkType.getVersionString(sdk) } ?: return sdk
-      edtWriteAction {
-        val modificator = sdk.sdkModificator
-        modificator.versionString = version
-        modificator.commitChanges()
-      }
+      val targetVersion = withContext(Dispatchers.IO) { sdkType.getVersionString(sdk) } ?: return sdk
+      sdk.sdkModificator.apply { versionString = targetVersion }.applyChangesWithoutWriteAction()
     }
     return sdk
   }
@@ -356,14 +359,16 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
   private suspend fun holdSdk(key: PythonInterpreterKey, sdk: Sdk) {
     val name = project.basePath?.let { PyInterpreterLibraryName.of(Path.of(it), key).toString() }
     if (name != null && sdk.name != name) {
-      edtWriteAction {
-        val modificator = sdk.sdkModificator
+      val rename = { modificator: SdkModificator ->
         modificator.name = name
         // A caller can set the data in place, such as the owner of a mock SDK. The modificator copies the data of the
         // last commit, so it takes the data that the SDK holds now, or the commit drops that change.
         modificator.sdkAdditionalData = sdk.sdkAdditionalData
-        modificator.commitChanges()
       }
+      // A held SDK is in no table, so its change needs no write action: the first computation holds SDKs, see [newSdk].
+      // A test can hold an SDK of the table, see [putTestSdk], and a change of a table SDK is a write of the model.
+      if (PythonSdkTable.tableSdks().none { it === sdk }) sdk.sdkModificator.apply(rename).applyChangesWithoutWriteAction()
+      else edtWriteAction { sdk.sdkModificator.apply(rename).commitChanges() }
     }
     PythonInterpreterSdks.getInstance(project).put(key, sdk)
   }
@@ -415,7 +420,8 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
         sdk.pythonInterpreterOfKey(key).successOrNull
       }
     }
-    adoptOwnerlessModuleSdks()
+    // The computation writes nothing, so a caller under a modal progress can wait for it (PY-93821). An SDK of an older
+    // build gets its owner from PythonSdkAdditionalDataMigrationActivity, and the commit of that owner recomputes the list.
     return PythonSdkTable.pythonSdks().mapNotNull { it.pythonInterpreterResultAsync().successOrNull }
   }
 
@@ -436,37 +442,11 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
   }
 
   /**
-   * Gives an owner to each SDK without one that exactly one [PyProject] of this project uses: that [PyProject]. An older
-   * build kept such SDKs, for example a system Python added in the settings. The SDK then stays the interpreter of that
-   * [PyProject]. An SDK that several [PyProject]s use stays without an owner, so no [PyProject] gets the interpreter of
-   * another one.
-   */
-  private suspend fun adoptOwnerlessModuleSdks() {
-    val users = mutableMapOf<Sdk, MutableList<PyProject>>()
-    for (pyProject in project.getPyProjects()) {
-      val sdk = pyProject.residesOnModule.readPythonSdkForConfiguration() ?: continue
-      if (sdk.sdkAdditionalData !is PythonSdkAdditionalData || sdk.ownerDirectory() != null) continue
-      users.getOrPut(sdk) { mutableListOf() } += pyProject
-    }
-    for ((sdk, pyProjects) in users) {
-      val owner = pyProjects.singleOrNull() ?: continue
-      registerMutex.withLock {
-        edtWriteAction {
-          val modificator = sdk.sdkModificator
-          (modificator.sdkAdditionalData as PythonSdkAdditionalData).associatedModulePath = owner.baseDir.toString()
-          modificator.commitChanges()
-        }
-      }
-    }
-  }
-
-  /**
    * An event for each change of the data of an interpreter, see [PythonInterpreterDetails.changes], and for each module
    * change: the SDK of a stored record is built once the PyProject that owns it is there, see [buildSdk].
    *
    * In the legacy flow the data is the SDK table. A commit of an SDK can change what the interpreter is: the target of a
-   * target interpreter, or the owner that [adoptOwnerlessModuleSdks] writes. A recompute after that owner write finds no
-   * SDK without an owner, so it ends there.
+   * target interpreter, or the owner that PythonSdkAdditionalDataMigrationActivity writes for an SDK of an older build.
    */
   private fun sdkTableChanges(): Flow<Unit> =
     merge(PythonInterpreterDetails.getInstance(project).changes.map { }, moduleChanges())

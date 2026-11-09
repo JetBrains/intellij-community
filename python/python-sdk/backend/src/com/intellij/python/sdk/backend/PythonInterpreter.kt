@@ -170,7 +170,8 @@ private fun Sdk.buildPythonInterpreter(forceRefresh: Boolean): PyResult<PythonIn
   if (data == null || ref == null || homePath == null) {
     return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
   }
-  // An SDK without an owner is no interpreter. The registry adopts such an SDK for the first PyProject that needs it.
+  // An SDK without an owner is no interpreter. PythonSdkAdditionalDataMigrationActivity gives an SDK of an older build the
+  // working directory of the module that uses it, see [projectDirOf].
   val ownerDir = projectDirOf(data) ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
   val interpreter = when (val mode = ref.mode) {
     is PyInterpreterRef.Mode.Target -> TargetPythonInterpreter(this, mode.targetId, ref.env, ownerDir, PathHolder.Target(homePath))
