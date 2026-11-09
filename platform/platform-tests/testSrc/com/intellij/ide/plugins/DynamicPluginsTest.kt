@@ -80,6 +80,7 @@ import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
 import com.intellij.platform.testFramework.plugins.extension
 import com.intellij.platform.testFramework.plugins.extensionPoint
 import com.intellij.platform.testFramework.plugins.extensions
+import com.intellij.platform.testFramework.plugins.includeClassFile
 import com.intellij.platform.testFramework.plugins.includePackageClassFiles
 import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
@@ -1396,6 +1397,23 @@ class DynamicPluginsTest {
     finally {
       PluginEnabler.HEADLESS.enable(allPlugins)
       assertThat(reconfigureInTest(addNewCustomPlugins = emptyList(), forceRemovePlugins = allPlugins)).isTrue()
+    }
+  }
+
+  @Test
+  fun `dynamically loaded plugin that bundles JNA takes JNA from the JNA module`() {
+    val jnaModuleId = PluginModuleId("intellij.libraries.jna", PluginModuleId.JETBRAINS_NAMESPACE)
+    val jnaLoader = PluginManagerCore.getPluginSet().findEnabledModule(jnaModuleId)!!.pluginClassLoader!!
+
+    val routedPlugin = loadPluginWithText(plugin("bundles-jna") {
+      includeClassFile("com.sun.jna.Version")
+    })
+    try {
+      val routedLoader = PluginManagerCore.getPluginSet().findEnabledPlugin(PluginId.getId("bundles-jna"))!!.pluginClassLoader!!
+      assertThat(Class.forName("com.sun.jna.Version", false, routedLoader).classLoader).isSameAs(jnaLoader)
+    }
+    finally {
+      Disposer.dispose(routedPlugin)
     }
   }
 }

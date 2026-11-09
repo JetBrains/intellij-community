@@ -6,15 +6,22 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
+import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.pluginSystem.testFramework.buildPluginSet
+import com.intellij.platform.testFramework.plugins.PluginSpec
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.depends
+import com.intellij.platform.testFramework.plugins.includeClassFile
+import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
+import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
 internal class ClassLoaderConfiguratorTest {
@@ -142,4 +149,94 @@ internal class ClassLoaderConfiguratorTest {
       .containsExactly("com.example.sub.xml", null)
   }
 
+  // The JNA cases use a real directory: the class path opens a jar with `ZipFile`, and `ZipFile` needs the default file system.
+
+  @Test
+  fun `non-bundled plugin takes JNA from the JNA module`(@TempDir dir: Path) {
+    val pluginSet = buildJnaPluginSet(dir, jnaPlugin(), pluginWithOwnJna("routed"))
+    val jnaLoader = jnaModuleLoader(pluginSet)
+
+    assertThat(loadJnaClass(pluginSet.getEnabledPlugin("routed").pluginClassLoader!!).classLoader).isSameAs(jnaLoader)
+    assertThat(loadJnaClass(jnaLoader).classLoader).isSameAs(jnaLoader)
+  }
+
+  @Test
+  fun `content modules of a non-bundled plugin take JNA from the JNA module`(@TempDir dir: Path) {
+    val routedModules = plugin("routed-modules") {
+      includeClassFile(JNA_PROBE_CLASS)
+      content {
+        module("routed.shared", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+          packagePrefix = "com.example.routed.shared"
+        }
+        module("routed.own", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+          isSeparateJar = true
+          includeClassFile(JNA_PROBE_CLASS)
+        }
+      }
+    }
+    val pluginSet = buildJnaPluginSet(dir, jnaPlugin(), routedModules)
+    val jnaLoader = jnaModuleLoader(pluginSet)
+
+    val modules = (pluginSet.getEnabledPlugin("routed-modules") as PluginMainDescriptor).contentModules
+    assertThat(modules.map { it.moduleId.name }).containsExactly("routed.shared", "routed.own")
+    for (module in modules) {
+      assertThat(loadJnaClass(module.pluginClassLoader!!).classLoader).describedAs(module.moduleId.name).isSameAs(jnaLoader)
+    }
+  }
+
+  @Test
+  fun `bundled plugin takes JNA through a routed non-bundled parent`(@TempDir dir: Path) {
+    val bundledDependent = plugin("bundled-dependent") {
+      depends("routed")
+    }
+    val pluginSet = buildJnaPluginSet(dir, jnaPlugin(), pluginWithOwnJna("routed"), bundledDependent, bundled = setOf("bundled-dependent"))
+
+    val dependentLoader = pluginSet.getEnabledPlugin("bundled-dependent").pluginClassLoader!!
+    assertThat(loadJnaClass(dependentLoader).classLoader).isSameAs(jnaModuleLoader(pluginSet))
+  }
+
+  @Test
+  fun `plugin keeps its own JNA without the JNA module`(@TempDir dir: Path) {
+    val pluginSet = buildJnaPluginSet(dir, pluginWithOwnJna("own"))
+
+    val loader = pluginSet.getEnabledPlugin("own").pluginClassLoader!!
+    assertThat(loadJnaClass(loader).classLoader).isSameAs(loader)
+  }
+
+  @Test
+  fun `bundled plugin keeps its own JNA`(@TempDir dir: Path) {
+    val pluginSet = buildJnaPluginSet(dir, jnaPlugin(), pluginWithOwnJna("bundled-own"), bundled = setOf("bundled-own"))
+
+    val loader = pluginSet.getEnabledPlugin("bundled-own").pluginClassLoader!!
+    assertThat(loadJnaClass(loader).classLoader).isSameAs(loader)
+  }
 }
+
+private const val JNA_PROBE_CLASS = "com.sun.jna.Version"
+
+private fun jnaPlugin(): PluginSpec = plugin("jna-host") {
+  content(namespace = PluginModuleId.JETBRAINS_NAMESPACE) {
+    module("intellij.libraries.jna", loadingRule = ModuleLoadingRuleValue.REQUIRED) {
+      isSeparateJar = true
+      includeClassFile(JNA_PROBE_CLASS)
+    }
+  }
+}
+
+private fun pluginWithOwnJna(id: String): PluginSpec = plugin(id) {
+  includeClassFile(JNA_PROBE_CLASS)
+}
+
+private fun buildJnaPluginSet(dir: Path, vararg plugins: PluginSpec, bundled: Set<String> = emptySet()): PluginSet {
+  val paths = plugins.associate { it.id!! to it.installAt(dir) }
+  return PluginSetTestBuilder.fromDescriptors { loadingContext ->
+    paths.map { (id, path) -> checkNotNull(loadDescriptorFromFileOrDirInTests(path, loadingContext, isBundled = id in bundled)) }
+  }.build()
+}
+
+private fun jnaModuleLoader(pluginSet: PluginSet): ClassLoader {
+  return pluginSet.findEnabledModule(PluginModuleId("intellij.libraries.jna", PluginModuleId.JETBRAINS_NAMESPACE))!!.pluginClassLoader!!
+}
+
+/** Loads the probe class without its static initializer. */
+private fun loadJnaClass(loader: ClassLoader): Class<*> = Class.forName(JNA_PROBE_CLASS, false, loader)
