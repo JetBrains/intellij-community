@@ -19,6 +19,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.types.TypeEvalConstraints;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.psi.types.TypeEvalContextCache;
 import kotlin.Unit;
@@ -97,7 +98,9 @@ public final class PyTypeCachingTest extends PyTestCase {
       () -> TypeEvalContext.codeInsightFallback(project),
       () -> TypeEvalContext.externalContext(project),
       () -> TypeEvalContext.deepCodeInsight(project),
-      () -> project.getService(TypeEvalContextCache.class).getLibraryContext(TypeEvalContext.codeAnalysis(project, file)));
+      // The constraints of codeAnalysis, which the library context takes without a context to carry them
+      () -> project.getService(TypeEvalContextCache.class)
+        .getLibraryContext(new TypeEvalConstraints(false, false, false, false, file)));
     for (Supplier<TypeEvalContext> lookup : lookups) {
       final TypeEvalContext first = lookup.get();
       final TypeEvalContext[] second = new TypeEvalContext[1];
