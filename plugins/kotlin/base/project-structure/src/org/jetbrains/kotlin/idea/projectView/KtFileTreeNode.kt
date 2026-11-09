@@ -11,21 +11,30 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 
+/**
+ * The Project View node of a Kotlin file.
+ *
+ * The node holds no [KtFile]. Like [PsiFileNode], it keeps the anchor of the file and finds the [KtFile] again
+ * in [getValue]. A large project has a node for each file of an expanded directory.
+ * A strong [KtFile] in each node keeps its whole PSI tree in memory.
+ */
 class KtFileTreeNode(
     project: Project?,
-    val ktFile: KtFile,
+    ktFile: KtFile,
     viewSettings: ViewSettings,
     private val nestedFileNodes: Collection<AbstractTreeNode<*>>
 ) : PsiFileNode(project, ktFile, viewSettings), FileNodeWithNestedFileNodes {
 
+    @Deprecated("Read value", ReplaceWith("value as KtFile"))
+    val ktFile: KtFile
+        get() = checkNotNull(value as? KtFile) { "The file of $this is gone" }
+
     override fun getNestedFileNodes(): Collection<AbstractTreeNode<*>> = nestedFileNodes
 
-    override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> =
-        if (settings.isShowMembers) {
-            nestedFileNodes + ktFile.toDeclarationsNodes(settings)
-        } else {
-            nestedFileNodes
-        }
+    override fun getChildrenImpl(): Collection<AbstractTreeNode<*>> {
+        val file = value as? KtFile
+        return if (file == null || !settings.isShowMembers) nestedFileNodes else nestedFileNodes + file.toDeclarationsNodes(settings)
+    }
 }
 
 internal fun KtFile.toDeclarationsNodes(settings: ViewSettings): Collection<AbstractPsiBasedNode<out KtDeclaration?>> =
