@@ -43,4 +43,8 @@ public class JavaFileStructureHierarchyTest extends JavaFileStructureTestCase {
   @Test public void testSimple() {checkTree();}
   @Test public void testAnonymousAsConstantInInterface() {checkTree("getA");}
   @Test public void testAnonymousHashCode() {checkTree("hash");}
+  @Test public void testInnerClassExtendingOuter() {checkTree();}
+  @Test public void testNestedInterfacesExtendingOuter() {checkTree();}
+  @Test public void testAnonymousDefaultImplementationConstant() {checkTree();}
+  @Test public void testAnonymousConstantInImplementedInterface() {checkTree();}
 }

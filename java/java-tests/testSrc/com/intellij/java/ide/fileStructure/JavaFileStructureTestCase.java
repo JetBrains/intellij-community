@@ -50,6 +50,7 @@ public abstract class JavaFileStructureTestCase {
   protected FileStructureTestFixture myPopupFixture;
   protected String myTestMethodName;
   private boolean myShowAnonymousByDefault;
+  private boolean myShowInheritedByDefault;
 
   protected abstract String getTestDataFolderName();
 
@@ -60,6 +61,7 @@ public abstract class JavaFileStructureTestCase {
     myPopupFixture = new FileStructureTestFixture(myFixture);
     myTestMethodName = testInfo.getTestMethod().orElseThrow().getName();
     myShowAnonymousByDefault = PropertiesComponent.getInstance().getBoolean(getAnonymousPropertyName());
+    myShowInheritedByDefault = PropertiesComponent.getInstance().getBoolean(getInheritedPropertyName());
   }
 
   protected void checkTree() {
@@ -94,6 +96,7 @@ public abstract class JavaFileStructureTestCase {
   void tearDownFileStructure() {
     try {
       PropertiesComponent.getInstance().setValue(getAnonymousPropertyName(), myShowAnonymousByDefault);
+      PropertiesComponent.getInstance().setValue(getInheritedPropertyName(), myShowInheritedByDefault);
     }
     finally {
       EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(myPopupFixture));
@@ -102,6 +105,10 @@ public abstract class JavaFileStructureTestCase {
 
   private static String getAnonymousPropertyName() {
     return TreeStructureUtil.getPropertyName(JavaAnonymousClassesNodeProvider.JAVA_ANONYMOUS_PROPERTY_NAME);
+  }
+
+  private static String getInheritedPropertyName() {
+    return TreeStructureUtil.getPropertyName(InheritedMembersNodeProvider.ID);
   }
 
   protected String getTestDataPath() {

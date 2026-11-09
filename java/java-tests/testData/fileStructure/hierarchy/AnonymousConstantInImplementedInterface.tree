@@ -1,0 +1,5 @@
+-AnonymousConstantInImplementedInterface.java
+ -[AnonymousConstantInImplementedInterface]
+  -DEFAULT: AnonymousConstantInImplementedInterfaceBase = new AnonymousConstantInImplementedInterfaceBase() {...}
+   -$1
+ -AnonymousConstantInImplementedInterfaceBase

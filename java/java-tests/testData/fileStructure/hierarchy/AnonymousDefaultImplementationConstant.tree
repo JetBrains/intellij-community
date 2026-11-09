@@ -1,0 +1,4 @@
+-AnonymousDefaultImplementationConstant.java
+ -[AnonymousDefaultImplementationConstant]
+  -DEFAULT: AnonymousDefaultImplementationConstant = new AnonymousDefaultImplementationConstant() {...}
+   -$1
