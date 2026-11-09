@@ -85,7 +85,8 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
           parserDispatchers.remove(taskNameId)?.close()
           currentTaskId = taskNameId
         }
-        else if (cleanLine.text.startsWith("> Configure") ||
+        else if (cleanLine.text.startsWith("Download ") ||
+                 cleanLine.text.startsWith("> Configure") ||
                  cleanLine.text.startsWith("FAILURE: Build failed") ||
                  cleanLine.text.startsWith("FAILURE: Build completed") ||
                  cleanLine.text.startsWith("[Incubating] Problems report is available at:") ||
