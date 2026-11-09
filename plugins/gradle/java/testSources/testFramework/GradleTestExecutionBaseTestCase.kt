@@ -85,10 +85,4 @@ abstract class GradleTestExecutionBaseTestCase : GradleExecutionTestCase() {
       TestProxyAssertions.assertPsiLocation(project, testProxy, className, methodName, parameterName)
     }
   }
-
-  fun assertBuildViewTestTaskNodeText(assertation: (String) -> Unit) {
-    assertBuildViewNode(buildView, ":test") {
-      assertation(it.consoleText)
-    }
-  }
 }

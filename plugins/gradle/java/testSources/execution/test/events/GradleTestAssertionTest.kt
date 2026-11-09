@@ -6,6 +6,8 @@ import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.GRADLE_CLASSPATH_ENHANCEMENT_POSSIBLE
 import com.intellij.gradle.testFramework.util.JUNIT_5_SUPPORTED_VERSIONS
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
+import com.intellij.platform.testFramework.assertion.consoleText
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.junit.jupiter.api.Assertions
@@ -1921,9 +1923,9 @@ class GradleTestAssertionTest : GradleTestExecutionTestCase() {
       assertTestConsoleDoesNotContain("DAEMON_CLASSPATH: " + projectRoot.toNioPath())
       assertTestConsoleDoesNotContain("TEST_CLASSPATH: " + projectRoot.toNioPath())
 
-      assertBuildViewTestTaskNodeText {
-        assertThat(it).contains("TEST_CLASSPATH: " + projectRoot.toNioPath())
-        assertThat(it).doesNotContain("DAEMON_CLASSPATH: " + projectRoot.toNioPath())
+      assertBuildViewNode(buildView, ":test") {
+        assertThat(it.consoleText).contains("TEST_CLASSPATH: " + projectRoot.toNioPath())
+        assertThat(it.consoleText).doesNotContain("DAEMON_CLASSPATH: " + projectRoot.toNioPath())
       }
     }
   }
