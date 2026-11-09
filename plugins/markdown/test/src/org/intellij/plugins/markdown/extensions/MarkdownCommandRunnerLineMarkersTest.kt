@@ -165,7 +165,7 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
   fun `PowerShell block reaches the frontend intact without the language plugin`() {
     assertNull(Language.findLanguageByID("PowerShell"))
     capturingRunner.acceptsLanguage = registeredRunners.single { it.javaClass.simpleName == "ShMarkdownRunner" }::isApplicable
-    MarkdownSettings.getInstance(project).useFileDirectoryForCommands = true
+    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     val command = "\$text = @'\n# text\n\n'@\n\$env:EXAMPLE = \$text"
     val file = myFixture.addFileToProject("foo/powershell.md", "```powershell title=demo\n$command\n```")
     myFixture.openFileInEditor(file.virtualFile)
@@ -176,9 +176,9 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `preview preserves PowerShell commands and trims shell prompts`() {
+  fun `preview preserves PowerShell commands and strips shell comments`() {
     capturingRunner.acceptsLanguage = registeredRunners.single { it.javaClass.simpleName == "ShMarkdownRunner" }::isApplicable
-    MarkdownSettings.getInstance(project).useFileDirectoryForCommands = true
+    MarkdownSettings.getInstance().useFileDirectoryForCommands = true
     val pipe = TestBrowserPipe()
     val extension = createPreviewExtension(pipe)
     val command = "\$value = 'hello' # comment"
@@ -195,7 +195,7 @@ class MarkdownCommandRunnerLineMarkersTest : BasePlatformTestCase() {
     clickPreviewBlock(pipe, shellHtml)
     PlatformTestUtil.waitWithEventsDispatching("The shell command did not execute", { capturingRunner.capturedCommand != null }, 10)
 
-    assertEquals("value = 'hello'", capturingRunner.capturedCommand)
+    assertEquals("\$value = 'hello'", capturingRunner.capturedCommand)
   }
 
   @Test

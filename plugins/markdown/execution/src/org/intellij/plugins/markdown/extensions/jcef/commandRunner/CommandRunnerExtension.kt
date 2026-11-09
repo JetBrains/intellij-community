@@ -451,7 +451,7 @@ class CommandRunnerExtension(
     fun trimPrompt(cmd: String): String {
       return cmd.lines()
         .map { line ->
-          val withoutPrompt = if (line.startsWith("$")) line.substringAfter("$") else line
+          val withoutPrompt = if (line.startsWith("$") && line.getOrNull(1)?.isWhitespace() != false) line.drop(1) else line
           stripTrailingShellComment(withoutPrompt)
         }
         .filter { line -> line.isNotEmpty() }

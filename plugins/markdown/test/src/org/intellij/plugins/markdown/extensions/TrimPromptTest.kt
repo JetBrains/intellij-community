@@ -52,6 +52,10 @@ class TrimPromptTest {
     assertEquals(" npm install", strip("\$ npm install"))
   }
 
+  @Test fun `leading dollar variable is preserved`() {
+    assertEquals("\$var1 = 10", strip("\$var1 = 10"))
+  }
+
   @Test fun `leading dollar prompt and trailing comment are both trimmed`() {
     assertEquals(" npm install", strip("\$ npm install # deps"))
   }

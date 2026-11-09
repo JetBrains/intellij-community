@@ -213,7 +213,7 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
 
       fun isContinued(line: PsiElement): Boolean {
         val text = line.text
-        return text.takeLastWhile { it == '\\' }.length % 2 == 1 && trimPrompt(text) == text.removePrefix("$")
+        return text.takeLastWhile { it == '\\' }.length % 2 == 1 && text.endsWith(trimPrompt(text))
       }
 
       val previousLine = adjacentLine(element, forward = false)
