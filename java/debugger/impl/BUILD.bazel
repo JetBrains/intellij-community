@@ -4,7 +4,10 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 jps_test(
     name = "java-debugger-impl-tests_test",
-    tags = ["community-aggregator"],
+    sandbox = True,
+    tags = [
+        "debugger-tests",
+    ],
     runtime_deps = [":java-debugger-impl-tests_test_lib"],
 )
 
