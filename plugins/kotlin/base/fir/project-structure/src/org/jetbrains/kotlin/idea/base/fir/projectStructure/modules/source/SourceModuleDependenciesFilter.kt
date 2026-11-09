@@ -1,8 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.source
 
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
 import org.jetbrains.kotlin.idea.base.platforms.isSharedNative
+import org.jetbrains.kotlin.library.KotlinLibrary
+import org.jetbrains.kotlin.library.isNativeStdlib
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.isJs
@@ -18,26 +22,20 @@ import org.jetbrains.kotlin.platform.konan.isNative
  * However: Passing dependencies produced by one Kotlin backend into analysis of another platform might have unpredictable/unwanted
  * consequences and is forbidden under the implementations rules (even if users added those order entries themselves explicitly)
  */
-@ApiStatus.Internal
-interface SourceModuleDependenciesFilter {
-    fun isSupportedDependency(dependency: SourceModuleDependenciesFilterCandidate): Boolean
+internal interface SourceModuleDependenciesFilter {
+    fun isSupportedDependency(dependency: KaModule): Boolean
 }
 
-@ApiStatus.Internal
-class HmppSourceModuleDependencyFilter(private val dependeePlatform: TargetPlatform) : SourceModuleDependenciesFilter {
-    override fun isSupportedDependency(dependency: SourceModuleDependenciesFilterCandidate): Boolean {
-        /* Filter only acts on libraries */
-        return if (dependency is SourceModuleDependenciesFilterCandidate.LibraryDependency) {
-            isSupportedDependency(dependency)
-        } else true
-    }
+internal class HmppSourceModuleDependencyFilter(private val dependeePlatform: TargetPlatform) : SourceModuleDependenciesFilter {
+    override fun isSupportedDependency(dependency: KaModule): Boolean {
+        if (dependency !is KaLibraryModule) return true
 
-    private fun isSupportedDependency(dependency: SourceModuleDependenciesFilterCandidate.LibraryDependency): Boolean {
-        val dependencyPlatform: TargetPlatform = dependency.targetPlatform
-        val isKlibDependency = dependency is SourceModuleDependenciesFilterCandidate.KlibLibraryDependency
+        val dependencyPlatform = dependency.targetPlatform
+        val klibs = dependency.klibs
+        val isKlibDependency = klibs.isNotEmpty()
 
         // HACK: allow depending on stdlib even if platforms do not match
-        if (dependeePlatform.isNative() && isKlibDependency && dependency.isNativeStdlib) return true
+        if (dependeePlatform.isNative() && klibs.any { it.isNativeStdlib }) return true
 
         val platformsWhichAreNotContainedInOther = dependeePlatform.componentPlatforms - dependencyPlatform.componentPlatforms
         if (platformsWhichAreNotContainedInOther.isEmpty()) return true
@@ -57,16 +55,11 @@ class HmppSourceModuleDependencyFilter(private val dependeePlatform: TargetPlatf
     }
 }
 
-@ApiStatus.Internal
-class NonHmppSourceModuleDependenciesFilter(private val dependeePlatform: TargetPlatform) : SourceModuleDependenciesFilter {
-    override fun isSupportedDependency(dependency: SourceModuleDependenciesFilterCandidate): Boolean {
-        /* Filter only acts on libraries */
-        return if (dependency is SourceModuleDependenciesFilterCandidate.LibraryDependency) {
-            isSupportedDependency(dependency.targetPlatform)
-        } else true
-    }
+internal class NonHmppSourceModuleDependenciesFilter(private val dependeePlatform: TargetPlatform) : SourceModuleDependenciesFilter {
+    override fun isSupportedDependency(dependency: KaModule): Boolean {
+        if (dependency !is KaLibraryModule) return true
 
-    private fun isSupportedDependency(dependencyPlatform: TargetPlatform): Boolean {
+        val dependencyPlatform = dependency.targetPlatform
         return dependeePlatform.isJvm() && dependencyPlatform.isJvm() ||
                 dependeePlatform.isJs() && dependencyPlatform.isJs() ||
                 dependeePlatform.isNative() && dependencyPlatform.isNative() ||
@@ -74,29 +67,8 @@ class NonHmppSourceModuleDependenciesFilter(private val dependeePlatform: Target
     }
 }
 
-class NegatedModuleDependencyFilter(private val original: SourceModuleDependenciesFilter) : SourceModuleDependenciesFilter {
-    override fun isSupportedDependency(dependency: SourceModuleDependenciesFilterCandidate): Boolean {
-        return !original.isSupportedDependency(dependency)
-    }
-}
-
-@ApiStatus.Internal
-sealed class SourceModuleDependenciesFilterCandidate {
-    abstract val targetPlatform: TargetPlatform
-
-    data class ModuleDependency(
-        override val targetPlatform: TargetPlatform,
-    ) : SourceModuleDependenciesFilterCandidate()
-
-    sealed class LibraryDependency: SourceModuleDependenciesFilterCandidate()
-
-    data class KlibLibraryDependency(
-        override val targetPlatform: TargetPlatform,
-        val isNativeStdlib: Boolean,
-    ) : LibraryDependency()
-
-    data class NonKlibLibraryDependency(
-        override val targetPlatform: TargetPlatform,
-    ) : LibraryDependency()
-}
-
+/**
+ * The klibs of the library. A library that is not based on klibs has no klibs.
+ */
+private val KaLibraryModule.klibs: List<KotlinLibrary>
+    get() = (this as? KaLibraryModuleImpl)?.resolvedKotlinLibraries.orEmpty()
