@@ -98,9 +98,12 @@ private const val MAGIC_MAC_PATH = "/AppTranslocation/"
 private const val LOAD_SHELL_ENV_PROPERTY = "ij.load.shell.env"
 private const val LOAD_SHELL_ENV_TIMEOUT_PROPERTY = "ij.load.shell.env.timeout"
 
-private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> = AtomicReference {
+/** The processor of a later start before the application exists. */
+internal val notInitializedProcessor: (List<String>) -> Deferred<CliResult> = {
   CompletableDeferred(CliResult(AppExitCodes.ACTIVATE_NOT_INITIALIZED, IdeBundle.message("activation.not.initialized")))
 }
+
+private val commandProcessor: AtomicReference<(List<String>) -> Deferred<CliResult>> = AtomicReference(notInitializedProcessor)
 
 // checked - using a Deferred type doesn't lead to loading this class on StartupUtil init
 internal var shellEnvDeferred: Deferred<Boolean?>? = null
@@ -166,6 +169,8 @@ fun startApplication(
     initUi(initAwtToolkitJob, isHeadless, scope)
   }
 
+  // the splash does not show before the decision of the migration redirect, which can exit the process
+  val migrationRedirectGate = CompletableDeferred<Unit>()
   var initUiScale: Job? = null
   if (!isHeadless) {
     initUiScale = scope.launch {
@@ -181,7 +186,7 @@ fun startApplication(
       }
     }
 
-    scheduleShowSplashIfNeeded(scope, lockSystemDirsJob, initUiScale, appInfoDeferred, args)
+    scheduleShowSplashIfNeeded(scope, lockSystemDirsJob, initUiScale, appInfoDeferred, args, gate = migrationRedirectGate)
   }
 
   val initLafJob = scope.launch {
@@ -239,13 +244,14 @@ fun startApplication(
     }
   }
 
-  scheduleSystemLibSetupAndLogInfoAndInitMacApp(scope, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
+  val migrationRedirect = scheduleMigrationRedirect(
+    scope, args, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, initAwtToolkitJob, initLafJob, appInfoDeferred
+  )
+  migrationRedirect.redirect.invokeOnCompletion { migrationRedirectGate.complete(Unit) }
+
+  scheduleSystemLibSetupAndLogInfoAndInitMacApp(scope, logDeferred, appInfoDeferred, initLafJob, args, mainScope, migrationRedirect.job)
 
   val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
-
-  val migrationRedirect = scheduleMigrationRedirect(
-    scope, args, isHeadless, configImportNeededDeferred, lockSystemDirsJob, logDeferred, initLafJob, appInfoDeferred
-  )
 
   if (!isHeadless && !AppMode.isRemoteDevHost() && EarlyProjectFrame.isEnabled) {
     scope.launch(CoroutineName("early project frame")) {
@@ -428,6 +434,7 @@ private fun scheduleSystemLibSetupAndLogInfoAndInitMacApp(
   initUiDeferred: Job,
   args: List<String>,
   mainScope: CoroutineScope,
+  migrationRedirectJob: Job,
 ) {
   scope.launch {
     if (OS.CURRENT == OS.Windows) {
@@ -459,6 +466,8 @@ private fun scheduleSystemLibSetupAndLogInfoAndInitMacApp(
 
     if (OS.CURRENT == OS.macOS && !AppMode.isHeadless() && !AppMode.isRemoteDevHost()) {
       initUiDeferred.join()
+      // the migration redirect takes the open events of this start before these handlers
+      migrationRedirectJob.join()
       launch(CoroutineName("macOS app init")) {
         runCatching {
           initMacApplication(mainScope)

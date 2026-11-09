@@ -7,8 +7,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.PreemptiveSafeFileOutputStream
 import org.jetbrains.annotations.ApiStatus
+import tools.jackson.core.JsonParser
+import tools.jackson.core.JsonToken
 import java.io.IOException
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
@@ -20,6 +23,8 @@ private val LOG: Logger
 /** The config import skips this file, because it is about the IDE that wrote it. */
 internal const val MIGRATION_STATE_FILE_NAME: String = "migration.json"
 private const val FORMAT_VERSION = 1
+// the `os` value of a macOS record in the `launch` array of `product-info.json`
+private const val MAC_OS_NAME = "macOS"
 
 @ApiStatus.Internal
 enum class MigrationStatus(val id: String) {
@@ -48,7 +53,7 @@ fun migrationStateFile(configDir: Path = PathManager.getConfigDir()): Path = con
 @ApiStatus.Internal
 fun readMigrationState(file: Path): MigrationState? {
   val state = readUncheckedMigrationState(file) ?: return null
-  return validateMigrationState(state, file)
+  return validateMigrationState(state, file, readInstalledProductInfo(state.app))
 }
 
 /** Returns the state in [file] without the check of the Unified IDE. An invalid file is deleted. */
@@ -72,17 +77,19 @@ internal fun readUncheckedMigrationState(file: Path): MigrationState? {
   }
 }
 
-/** Returns [state] when it passes the check of [readMigrationState], else deletes [file]. */
-internal fun validateMigrationState(state: MigrationState, file: Path): MigrationState? {
+/**
+ * Returns [state] when it passes the check of [readMigrationState], else deletes [file].
+ * [info] is the product info of [MigrationState.app].
+ */
+internal fun validateMigrationState(state: MigrationState, file: Path, info: InstalledProductInfo?): MigrationState? {
   if (state.product == ApplicationInfoImpl.getShadowInstance().build.productCode) {
     return discard(file, "the state is about this IDE: ${state.product}")
   }
   if (!state.app.isDirectory()) {
     return discard(file, "the Unified IDE does not exist: ${state.app}")
   }
-  val productCode = readInstalledProductCode(state.app)
-  if (productCode != state.product) {
-    return discard(file, "${state.app} has the product code ${productCode}, expected ${state.product}")
+  if (info?.productCode != state.product) {
+    return discard(file, "${state.app} has the product code ${info?.productCode}, expected ${state.product}")
   }
   return state
 }
@@ -102,12 +109,17 @@ fun deleteMigrationState(file: Path) {
   deleteLogged(migrationRedirectContentFile(file))
 }
 
+/** The data of the `product-info.json` of an installed IDE. [macLauncher] is an executable file inside the IDE. */
+@ApiStatus.Internal
+class InstalledProductInfo(val productCode: String?, val macLauncher: Path?)
+
 /**
- * Returns the product code in the `product-info.json` of the installed IDE [app], or `null`.
+ * Returns the `product-info.json` data of the installed IDE [app], or `null` when the file does not exist or is not valid.
  * The startup calls it before the services exist, so it uses the path rule of `IdeProductInfo.loadProductInfo` and not the service.
+ * The launcher is the `launcherPath` of the first `macOS` record of `launch`, relative to the folder of the file.
  */
 @ApiStatus.Internal
-fun readInstalledProductCode(app: Path): String? {
+fun readInstalledProductInfo(app: Path): InstalledProductInfo? {
   val file = productInfoFile(app)
   val text = try {
     Files.readString(file)
@@ -121,16 +133,36 @@ fun readInstalledProductCode(app: Path): String? {
   }
 
   var productCode: String? = null
+  var launcherPath: String? = null
   try {
     parseMigrationJson(text) { parser, name ->
-      if (name == "productCode") productCode = parser.stringOrNull() else parser.skipChildren()
+      when (name) {
+        "productCode" -> productCode = parser.stringOrNull()
+        "launch" -> launcherPath = readMacLauncherPath(parser)
+        else -> parser.skipChildren()
+      }
     }
   }
   catch (e: InvalidMigrationJsonException) {
     LOG.info("invalid ${file}: ${e.message}")
     return null
   }
-  return productCode
+  return InstalledProductInfo(productCode, launcherPath?.let { resolveLauncher(app, file, it) })
+}
+
+private fun resolveLauncher(app: Path, file: Path, relativePath: String): Path? {
+  val launcher = try {
+    file.parent.resolve(relativePath).normalize()
+  }
+  catch (_: InvalidPathException) {
+    LOG.info("invalid launcher path in ${file}: ${relativePath}")
+    return null
+  }
+  if (!launcher.startsWith(app.normalize()) || !Files.isRegularFile(launcher) || !Files.isExecutable(launcher)) {
+    LOG.info("the launcher is not an executable file in ${app}: ${launcher}")
+    return null
+  }
+  return launcher
 }
 
 private fun parseMigrationState(text: String): MigrationState {
@@ -167,6 +199,25 @@ private fun formatMigrationState(state: MigrationState): String = formatMigratio
   writeStringProperty("status", state.status.id)
   writeStringProperty("app", state.app.toString())
   writeStringProperty("product", state.product)
+}
+
+/** Reads the `launch` array at the current token of [parser], and returns the `launcherPath` of its first `macOS` record. */
+private fun readMacLauncherPath(parser: JsonParser): String? {
+  if (parser.currentToken() != JsonToken.START_ARRAY) invalidMigrationJson("'launch' is not an array")
+  var result: String? = null
+  while (parser.nextToken() != JsonToken.END_ARRAY) {
+    var os: String? = null
+    var launcherPath: String? = null
+    readMigrationJsonObject(parser) { recordParser, name ->
+      when (name) {
+        "os" -> os = recordParser.stringOrNull()
+        "launcherPath" -> launcherPath = recordParser.stringOrNull()
+        else -> recordParser.skipChildren()
+      }
+    }
+    if (result == null && os == MAC_OS_NAME) result = launcherPath
+  }
+  return result
 }
 
 /** The `product-info.json` of the installed IDE [app]. This is the path rule of `IdeProductInfo.loadProductInfo`. */

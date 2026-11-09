@@ -92,12 +92,17 @@ fun migrationLaunchArguments(reason: MigrationLaunchReason, sourceProduct: Strin
 fun macOpenCommand(app: Path, arguments: List<String>): List<String> =
   listOf("/usr/bin/open", "-n", "-a", app.toString(), "--args") + arguments
 
-/** Starts [command] and logs it. A failure is logged and gives `null`. */
+/**
+ * Starts [command] and logs it. With [inheritIO], the process gets the standard streams of this process.
+ * A failure is logged and gives `null`.
+ */
 @ApiStatus.Internal
-fun startMigrationProcess(command: List<String>): Process? {
+fun startMigrationProcess(command: List<String>, inheritIO: Boolean = false): Process? {
   LOG.info("starting the Unified IDE: ${command}")
   try {
-    return ProcessBuilder(command).redirectOutput(ProcessBuilder.Redirect.DISCARD).start()
+    val builder = ProcessBuilder(command)
+    if (inheritIO) builder.inheritIO() else builder.redirectOutput(ProcessBuilder.Redirect.DISCARD)
+    return builder.start()
   }
   catch (e: IOException) {
     LOG.warn("cannot start the Unified IDE", e)

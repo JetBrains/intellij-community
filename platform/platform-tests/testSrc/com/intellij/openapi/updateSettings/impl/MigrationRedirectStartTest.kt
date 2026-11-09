@@ -1,9 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
-import com.intellij.openapi.application.isMigrationRedirectStart
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
+import com.intellij.openapi.application.MigrationRedirectStart
+import com.intellij.openapi.application.migrationRedirectStart
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -28,43 +29,70 @@ class MigrationRedirectStartTest {
   }
 
   @Test
-  fun `start with no positional argument is redirected`() {
-    assertTrue(start())
-    assertTrue(start("nosplash"))
+  fun `start with no positional argument is an open start`() {
+    assertEquals(MigrationRedirectStart.OPEN, start())
+    assertEquals(MigrationRedirectStart.OPEN, start("nosplash"))
+    assertEquals(MigrationRedirectStart.OPEN, start("-Didea.config.path=/x"))
   }
 
   @Test
   fun `start with files and projects is redirected`() {
-    assertTrue(start(file.toString()))
-    assertTrue(start(project.toString()))
-    assertTrue(start("main.go"))
+    assertEquals(MigrationRedirectStart.OPEN, start(file.toString()))
+    assertEquals(MigrationRedirectStart.OPEN, start(project.toString()))
+    assertEquals(MigrationRedirectStart.OPEN, start("main.go"))
   }
 
   @Test
-  fun `start with an option or a URL is redirected`() {
-    assertTrue(start("-l", "10", file.toString()))
-    assertTrue(start("--wait", file.toString()))
-    assertTrue(start("jetbrains://idea/navigate/reference?project=a&path=b"))
+  fun `start with an option is redirected`() {
+    assertEquals(MigrationRedirectStart.OPEN, start("-l", "10", file.toString()))
+    assertEquals(MigrationRedirectStart.OPEN, start("--line", "10", file.toString()))
+    assertEquals(MigrationRedirectStart.OPEN, start("-e", "new.go"))
   }
 
   @Test
-  fun `known commands are not redirected`() {
-    assertFalse(start("format", "-h"))
-    assertFalse(start("inspect"))
-    assertFalse(start("diff", "a", "b"))
+  fun `wait option in any position gives a start that waits`() {
+    assertEquals(MigrationRedirectStart.OPEN_AND_WAIT, start("--wait"))
+    assertEquals(MigrationRedirectStart.OPEN_AND_WAIT, start("--wait", file.toString()))
+    assertEquals(MigrationRedirectStart.OPEN_AND_WAIT, start(file.toString(), "--wait"))
+    assertEquals(MigrationRedirectStart.OPEN_AND_WAIT, start("-l", "10", file.toString(), "--wait"))
+  }
+
+  @Test
+  fun `start with a URL is redirected`() {
+    assertEquals(MigrationRedirectStart.OPEN, start("jetbrains://idea/navigate/reference?project=a&path=b"))
+  }
+
+  @Test
+  fun `diff and merge are redirected as commands`() {
+    assertEquals(MigrationRedirectStart.GUI_COMMAND, start("diff", "a", "b"))
+    assertEquals(MigrationRedirectStart.GUI_COMMAND, start("merge", "a", "b", "c", "d"))
+  }
+
+  @Test
+  fun `headless commands are not redirected`() {
+    assertNull(start("format", "-h"))
+    assertNull(start("inspect"))
+    assertNull(start("installPlugins", "a"))
+    assertNull(start("myinspect"))
   }
 
   @Test
   fun `client modes and remote dev commands are not redirected`() {
-    assertFalse(start("thinClient"))
-    assertFalse(start("ijLight"))
-    assertFalse(start("serverMode"))
+    assertNull(start("thinClient"))
+    assertNull(start("ijLight"))
+    assertNull(start("serverMode"))
   }
 
   @Test
   fun `unknown first argument that is not a path is not redirected`() {
-    assertFalse(start("myPluginCommand", "a"))
+    assertNull(start("myPluginCommand", "a"))
   }
 
-  private fun start(vararg args: String): Boolean = isMigrationRedirectStart(args.toList(), currentDir)
+  @Test
+  fun `property of this IDE before a file is ignored`() {
+    assertEquals(MigrationRedirectStart.OPEN, start("-Didea.config.path=/x", file.toString()))
+    assertNull(start("-Didea.config.path=/x", "format"))
+  }
+
+  private fun start(vararg args: String): MigrationRedirectStart? = migrationRedirectStart(args.toList(), currentDir)
 }

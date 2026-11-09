@@ -5,7 +5,9 @@ import com.intellij.openapi.application.MigrationImageData
 import com.intellij.openapi.application.MigrationRedirectContent
 import com.intellij.openapi.application.MigrationRedirectTexts
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.createDirectories
+import kotlin.io.path.setPosixFilePermissions
 import kotlin.io.path.writeText
 
 /**
@@ -43,4 +45,17 @@ internal fun writeProductInfo(app: Path, productCode: String? = "JB", extra: Str
   val productInfo = app.resolve("Contents/Resources/product-info.json")
   productInfo.parent.createDirectories()
   productInfo.writeText("""{ ${productCode?.let { "\"productCode\": \"${it}\"," } ?: ""} "name": "Unified IDE"${extra} }""")
+}
+
+/**
+ * Writes a macOS `product-info.json` with the product code `JB` into [app], and the launcher [script] at [launcherPath].
+ * Returns the launcher. It needs POSIX file permissions.
+ */
+internal fun writeMacLauncher(app: Path, script: String = "#!/bin/sh\nexit 0\n", launcherPath: String = "../MacOS/light"): Path {
+  writeProductInfo(app, extra = """, "launch": [{ "os": "macOS", "arch": "aarch64", "launcherPath": "${launcherPath}" }]""")
+  val launcher = app.resolve("Contents/Resources").resolve(launcherPath).normalize()
+  launcher.parent.createDirectories()
+  launcher.writeText(script)
+  launcher.setPosixFilePermissions(PosixFilePermissions.fromString("rwxr-xr-x"))
+  return launcher
 }

@@ -2,19 +2,23 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.application.MigrationImageData
+import com.intellij.openapi.application.MigrationOpenRequests
 import com.intellij.openapi.application.MigrationRedirect
 import com.intellij.openapi.application.MigrationRedirectChoice
 import com.intellij.openapi.application.MigrationRedirectContent
+import com.intellij.openapi.application.MigrationRedirectStart
 import com.intellij.openapi.application.MigrationState
 import com.intellij.openapi.application.MigrationStatus
 import com.intellij.openapi.application.launchMigrationRedirect
 import com.intellij.openapi.application.loadMigrationRedirect
+import com.intellij.openapi.application.migrationRedirectArguments
 import com.intellij.openapi.application.migrationRedirectCommand
 import com.intellij.openapi.application.migrationRedirectContentFile
 import com.intellij.openapi.application.migrationStateFile
 import com.intellij.openapi.application.showMigrationRedirect
 import com.intellij.openapi.application.writeMigrationRedirectContent
 import com.intellij.openapi.application.writeMigrationState
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.runInEdtAndGet
 import org.junit.Assert.assertEquals
@@ -30,6 +34,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.io.path.createDirectories
+import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.writeText
 
@@ -49,7 +54,7 @@ class MigrationRedirectTest {
 
   @Test
   fun `no state gives no redirect`() {
-    assertNull(load())
+    assertNull(load(MigrationRedirectStart.OPEN))
   }
 
   @Test
@@ -58,41 +63,58 @@ class MigrationRedirectTest {
     writeProductInfo(app, productCode = "GO")
     writeState(MigrationStatus.INSTALLED)
     writeContent()
-    assertNull(load())
+    for (start in MigrationRedirectStart.entries) {
+      assertNull(load(start))
+    }
     assertTrue(stateFile.exists())
     assertTrue(contentFile.exists())
   }
 
   @Test
-  fun `moved state without a copy gives no redirect and keeps the state`() {
+  fun `open start without a copy gives no window and keeps the state`() {
     writeState(MigrationStatus.MOVED)
-    assertNull(load())
+    val redirect = load(MigrationRedirectStart.OPEN)!!
+    assertEquals(app, redirect.state.app)
+    assertNull(redirect.content)
+    assertFalse(redirect.waits)
     assertTrue(stateFile.exists())
   }
 
   @Test
-  fun `moved state with an invalid copy gives no redirect`() {
+  fun `open start with an invalid copy gives no window`() {
     writeState(MigrationStatus.MOVED)
     contentFile.writeText("""{ "version": 1 }""")
-    assertNull(load())
+    assertNull(load(MigrationRedirectStart.OPEN)!!.content)
     assertTrue(stateFile.exists())
   }
 
   @Test
-  fun `moved state with a valid copy gives a redirect`() {
+  fun `open start with a valid copy gives the window`() {
     writeState(MigrationStatus.MOVED)
     writeContent()
-    val redirect = load()!!
-    assertEquals(app, redirect.state.app)
+    val redirect = load(MigrationRedirectStart.OPEN)!!
     assertEquals(MigrationStatus.MOVED, redirect.state.status)
-    assertEquals("GoLand is now part of Unified IDE", redirect.content.texts.title)
+    assertEquals("GoLand is now part of Unified IDE", redirect.content!!.texts.title)
+  }
+
+  @Test
+  fun `start that waits gives no window and keeps the copy`() {
+    writeState(MigrationStatus.MOVED)
+    writeContent()
+    for (start in listOf(MigrationRedirectStart.OPEN_AND_WAIT, MigrationRedirectStart.GUI_COMMAND)) {
+      val redirect = load(start)!!
+      assertTrue(redirect.waits)
+      assertNull(redirect.content)
+      assertNull("the application has no launcher", redirect.launcher)
+    }
+    assertTrue(contentFile.exists())
   }
 
   @Test
   fun `missing application deletes the state and the copy`() {
     writeState(MigrationStatus.MOVED, app = tempDir.root.toPath().resolve("Missing.app"))
     writeContent()
-    assertNull(load())
+    assertNull(load(MigrationRedirectStart.OPEN))
     assertFalse(stateFile.exists())
     assertFalse(contentFile.exists())
   }
@@ -101,7 +123,7 @@ class MigrationRedirectTest {
   fun `start that is not redirected reads no file`() {
     writeState(MigrationStatus.MOVED, app = tempDir.root.toPath().resolve("Missing.app"))
     writeContent()
-    assertNull(loadMigrationRedirect(isRedirected = false, stateFile))
+    assertNull(load(null))
     assertTrue(stateFile.exists())
     assertTrue(contentFile.exists())
   }
@@ -113,7 +135,7 @@ class MigrationRedirectTest {
     val flat = """<svg xmlns="http://www.w3.org/2000/svg" width="100000" height="1"/>""".toByteArray()
     val base = redirectContent()
     writeMigrationRedirectContent(MigrationRedirectContent(base.texts, MigrationImageData(flat, flat), base.targetLogo), contentFile)
-    val content = load()?.content
+    val content = load(MigrationRedirectStart.OPEN)?.content
     assertNotNull("the copy passes the check of the SVG size", content)
 
     var isWindowShown = false
@@ -206,15 +228,96 @@ class MigrationRedirectTest {
   }
 
   @Test
-  fun `failed start returns false`() {
-    // `open` fails for a missing application, and a system without `open` cannot start the command
-    val state = MigrationState(MigrationStatus.MOVED, tempDir.root.toPath().resolve("Missing.app"), "JB")
-    assertFalse(timeoutRunBlocking { launchMigrationRedirect(MigrationRedirect(state, redirectContent()), "GO", emptyList()) })
+  fun `launcher command runs the launcher with the redirect reason first`() {
+    val launcher = Path.of("/Users/me/Applications/Unified IDE.app/Contents/MacOS/light")
+    val command = migrationRedirectCommand(Path.of("/Users/me/Applications/Unified IDE.app"), "GO", listOf("--wait", "/a"), launcher)
+    assertEquals(listOf(
+      launcher.toString(),
+      "-Dide.migration.version=1",
+      "-Dide.migration.reason=redirect",
+      "-Dide.migration.source.product=GO",
+      "--wait",
+      "/a",
+    ), command)
   }
 
-  private fun load(): MigrationRedirect? = loadMigrationRedirect(isRedirected = true, stateFile)
+  @Test
+  fun `forwarded arguments have no property of this IDE`() {
+    val args = listOf("nosplash", "/a", "-Didea.config.path=/x", "-Dfoo", "--wait", "-Da=b=c", "/b")
+    assertEquals(listOf("nosplash", "/a", "-Dfoo", "--wait", "/b"), migrationRedirectArguments(args, tempDir.root.toPath()))
+  }
 
-  private fun loadContent(): MigrationRedirectContent = load()!!.content
+  @Test
+  fun `forwarded arguments are absolute`() {
+    val currentDir = tempDir.root.toPath().resolve("work").createDirectories()
+    val file = currentDir.resolve("main.go").createFile()
+    val a = currentDir.resolve("a").createFile()
+    val b = currentDir.resolve("b").createFile()
+    // a file with the name of the command does not change the command
+    currentDir.resolve("diff").createFile()
+
+    assertEquals(listOf(file.toString()), migrationRedirectArguments(listOf("main.go"), currentDir))
+    assertEquals(listOf(currentDir.toString()), migrationRedirectArguments(listOf("."), currentDir))
+    assertEquals(listOf("diff", a.toString(), b.toString()), migrationRedirectArguments(listOf("diff", "a", "b"), currentDir))
+    assertEquals(listOf("-l", "10", file.toString(), "--wait"),
+                 migrationRedirectArguments(listOf("-l", "10", "main.go", "--wait"), currentDir))
+    assertEquals(listOf("missing.go", "jetbrains://idea/navigate"),
+                 migrationRedirectArguments(listOf("missing.go", "jetbrains://idea/navigate"), currentDir))
+  }
+
+  @Test
+  fun `open requests give the URL first and absolute paths`() {
+    val file = tempDir.root.toPath().resolve("a.go")
+    assertEquals(listOf("jetbrains://idea/navigate", file.toString()),
+                 MigrationOpenRequests(listOf(file), "jetbrains://idea/navigate").toArguments())
+    assertEquals(emptyList<String>(), MigrationOpenRequests(emptyList(), null).toArguments())
+  }
+
+  @Test
+  fun `failed start returns null`() {
+    // `open` fails for a missing application, and a system without `open` cannot start the command
+    val state = MigrationState(MigrationStatus.MOVED, tempDir.root.toPath().resolve("Missing.app"), "JB")
+    assertNull(launch(MigrationRedirect(state, waits = false, content = null, launcher = null), emptyList()))
+  }
+
+  @Test
+  fun `waiting launch without a launcher returns null`() {
+    val state = writeState(MigrationStatus.MOVED)
+    var isStarted = false
+    val redirect = MigrationRedirect(state, waits = true, content = null, launcher = null)
+    assertNull(launch(redirect, listOf("--wait", "/a")) { isStarted = true })
+    assertFalse(isStarted)
+  }
+
+  @Test
+  fun `waiting launch returns the exit code of the child`() {
+    IoTestUtil.assumeUnix()
+    val launcher = writeMacLauncher(app, script = "#!/bin/sh\nexit 3\n")
+    writeState(MigrationStatus.MOVED)
+    val redirect = load(MigrationRedirectStart.OPEN_AND_WAIT)!!
+    assertEquals(launcher, redirect.launcher)
+    var isStarted = false
+    assertEquals(3, launch(redirect, listOf("--wait", "/a")) { isStarted = true })
+    assertTrue(isStarted)
+  }
+
+  @Test
+  fun `waiting launch with a child that cannot start returns null`() {
+    IoTestUtil.assumeUnix()
+    val launcher = writeMacLauncher(app, script = "#!/missing/interpreter\n")
+    val state = writeState(MigrationStatus.MOVED)
+    var isStarted = false
+    assertNull(launch(MigrationRedirect(state, waits = true, content = null, launcher), listOf("--wait", "/a")) { isStarted = true })
+    assertFalse(isStarted)
+  }
+
+  private fun load(start: MigrationRedirectStart?): MigrationRedirect? = loadMigrationRedirect(start, stateFile)
+
+  private fun loadContent(): MigrationRedirectContent = load(MigrationRedirectStart.OPEN)!!.content!!
+
+  private fun launch(redirect: MigrationRedirect, arguments: List<String>, onStart: () -> Unit = {}): Int? = timeoutRunBlocking {
+    launchMigrationRedirect(redirect, "GO", arguments, onStart = { onStart() })
+  }
 
   private fun show(
     content: MigrationRedirectContent,

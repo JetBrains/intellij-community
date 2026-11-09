@@ -13,6 +13,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.URLUtil
+import com.intellij.util.io.awaitExit
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -44,10 +45,15 @@ private const val CONTENT_INSET = 24
 private const val LOGO_SIZE = 32
 // the size step of `JBFont.h3`
 private const val TITLE_SIZE_INCREASE = 3f
+private const val WAIT_OPTION = "--wait"
+private val GUI_COMMANDS = setOf("diff", "merge")
 
-/** The moved state and the content of the redirect window. */
+/**
+ * What the migration does with a redirected start. A non-null [content] shows the redirect window.
+ * [launcher] is the macOS launcher of the Unified IDE for a start that [waits].
+ */
 @ApiStatus.Internal
-class MigrationRedirect(val state: MigrationState, val content: MigrationRedirectContent)
+class MigrationRedirect(val state: MigrationState, val waits: Boolean, val content: MigrationRedirectContent?, val launcher: Path?)
 
 /** What the user selects in the redirect window. */
 @ApiStatus.Internal
@@ -59,42 +65,76 @@ enum class MigrationRedirectChoice {
   EXIT,
 }
 
+/** The kind of a redirected start. [waits] is `true` when the caller of this IDE waits for the result, so the start shows no window. */
+@ApiStatus.Internal
+enum class MigrationRedirectStart(val waits: Boolean) {
+  /** A start with no argument, or with options, files, projects or a URL, without the `--wait` option. */
+  OPEN(waits = false),
+
+  /** A start with the `--wait` option, for example from `git` with this IDE as its editor. */
+  OPEN_AND_WAIT(waits = true),
+
+  /** The `diff` or the `merge` command, for example from `git difftool` or `git mergetool`. */
+  GUI_COMMAND(waits = true),
+}
+
 /**
- * Returns `true` when the migration redirects the start with [args].
- * A known command stays in this IDE, because scripts and CI call it.
+ * Returns the kind of the start with [args], or `null` when the migration does not redirect it.
+ * A known command other than `diff` and `merge` stays in this IDE, because scripts and CI call it.
  * The first argument of a redirected start is an option, a URL, or an existing file or directory in [currentDir].
  * Any other first argument can be the command of a plugin, so this IDE runs it.
  */
 @ApiStatus.Internal
-fun isMigrationRedirectStart(args: List<String>, currentDir: Path = Path.of("").toAbsolutePath()): Boolean {
-  val positional = ApplicationStartArguments.stripKnownArguments(args)
-  val first = positional.firstOrNull() ?: return true
+fun migrationRedirectStart(args: List<String>, currentDir: Path = Path.of("").toAbsolutePath()): MigrationRedirectStart? {
+  val positional = ApplicationStartArguments.stripKnownArguments(migrationRedirectArguments(args, currentDir))
+  val first = positional.firstOrNull() ?: return MigrationRedirectStart.OPEN
   if (WellKnownCommand.getCommandFor(positional) != null) {
-    return false
+    return if (first in GUI_COMMANDS) MigrationRedirectStart.GUI_COMMAND else null
   }
-  if (first.startsWith("-") || first.contains(URLUtil.SCHEME_SEPARATOR) || isExistingPath(first, currentDir)) {
-    return true
+  if (first.startsWith("-") || first.contains(URLUtil.SCHEME_SEPARATOR) || existingPath(first, currentDir) != null) {
+    return if (WAIT_OPTION in positional) MigrationRedirectStart.OPEN_AND_WAIT else MigrationRedirectStart.OPEN
   }
   LOG.info("the first argument is not a file, the usual start continues: ${first}")
-  return false
+  return null
 }
 
-private fun isExistingPath(argument: String, currentDir: Path): Boolean =
-  try {
-    Files.exists(currentDir.resolve(argument))
+/**
+ * The arguments of this start for the Unified IDE.
+ * The `-Dkey=value` arguments are meant for this IDE, as in `Main.preprocessArgs`, so they go away.
+ * An existing relative path becomes absolute in [currentDir], because the Unified IDE has its own working directory.
+ * The first argument of a known command stays.
+ */
+@ApiStatus.Internal
+fun migrationRedirectArguments(args: List<String>, currentDir: Path = Path.of("").toAbsolutePath()): List<String> {
+  val arguments = args.filterNot { it.startsWith("-D") && it.contains('=') }
+  val positional = ApplicationStartArguments.stripKnownArguments(arguments)
+  val commandIndex = if (WellKnownCommand.getCommandFor(positional) != null) arguments.indexOf(positional.first()) else -1
+  return arguments.mapIndexed { index, argument ->
+    if (index == commandIndex || argument.startsWith("-") || argument.contains(URLUtil.SCHEME_SEPARATOR)) argument
+    else existingPath(argument, currentDir)?.toString() ?: argument
+  }
+}
+
+/** Returns the absolute path of [argument] in [currentDir] when the file exists, else `null`. */
+private fun existingPath(argument: String, currentDir: Path): Path? {
+  val path = try {
+    currentDir.resolve(argument).normalize()
   }
   catch (_: InvalidPathException) {
-    false
+    return null
   }
+  return path.takeIf { Files.exists(it) }
+}
 
 /**
- * Returns the redirect when this start shows the redirect window, or `null`.
- * The window shows only for [isRedirected], a valid state with the `moved` status, and a valid content copy.
+ * Returns what the migration does with a start of the kind [start], or `null` for the usual start.
+ * Only a valid state with the `moved` status redirects. A `null` [start] reads no file.
+ * Only an [MigrationRedirectStart.OPEN] start reads the content copy, and a missing or invalid copy shows no window.
  * A failure is logged and gives `null`, so that the usual start continues.
  */
 @ApiStatus.Internal
-fun loadMigrationRedirect(isRedirected: Boolean, stateFile: Path = migrationStateFile()): MigrationRedirect? {
-  if (!isRedirected) {
+fun loadMigrationRedirect(start: MigrationRedirectStart?, stateFile: Path = migrationStateFile()): MigrationRedirect? {
+  if (start == null) {
     return null
   }
   try {
@@ -102,9 +142,17 @@ fun loadMigrationRedirect(isRedirected: Boolean, stateFile: Path = migrationStat
     if (unchecked.status != MigrationStatus.MOVED) {
       return null
     }
-    val state = validateMigrationState(unchecked, stateFile) ?: return null
-    val content = readMigrationRedirectContent(migrationRedirectContentFile(stateFile)) ?: return null
-    return MigrationRedirect(state, content)
+    val info = readInstalledProductInfo(unchecked.app)
+    val state = validateMigrationState(unchecked, stateFile, info) ?: return null
+    if (start.waits) {
+      LOG.info("a start that waits for the result, ${state.app} starts with no window")
+      return MigrationRedirect(state, waits = true, content = null, launcher = info?.macLauncher)
+    }
+    val content = readMigrationRedirectContent(migrationRedirectContentFile(stateFile))
+    if (content == null) {
+      LOG.info("no valid content copy, ${state.app} starts with no window")
+    }
+    return MigrationRedirect(state, waits = false, content, launcher = null)
   }
   catch (e: Throwable) {
     rethrowControlFlowException(e)
@@ -113,16 +161,55 @@ fun loadMigrationRedirect(isRedirected: Boolean, stateFile: Path = migrationStat
   }
 }
 
-/** The command that starts the Unified IDE with the `redirect` reason and the arguments of this start. */
+/**
+ * The command that starts the Unified IDE with the `redirect` reason and the arguments of this start.
+ * Without [launcher], it starts a new instance with `open`. With [launcher], it runs the launcher of the Unified IDE.
+ */
 @ApiStatus.Internal
-fun migrationRedirectCommand(app: Path, sourceProduct: String, arguments: List<String>): List<String> =
-  macOpenCommand(app, migrationLaunchArguments(MigrationLaunchReason.REDIRECT, sourceProduct, arguments))
+fun migrationRedirectCommand(app: Path, sourceProduct: String, arguments: List<String>, launcher: Path? = null): List<String> {
+  val launchArguments = migrationLaunchArguments(MigrationLaunchReason.REDIRECT, sourceProduct, arguments)
+  return if (launcher == null) macOpenCommand(app, launchArguments) else listOf(launcher.toString()) + launchArguments
+}
 
-/** Starts the Unified IDE of [redirect] with `open` and returns `true` when the start succeeds. */
+/**
+ * Starts the Unified IDE of [redirect] and returns the exit code for this process, or `null` when the start fails.
+ * A start that does not wait uses `open` and gives `0`.
+ * A start that waits runs the launcher as a child with the standard streams of this process, and gives the exit code of the child.
+ * [onStart] runs after the start of the child.
+ */
 @ApiStatus.Internal
-suspend fun launchMigrationRedirect(redirect: MigrationRedirect, sourceProduct: String, arguments: List<String>): Boolean {
-  val process = startMigrationProcess(migrationRedirectCommand(redirect.state.app, sourceProduct, arguments)) ?: return false
-  return runInterruptible(Dispatchers.IO) { waitForMigrationOpen(process, OPEN_TIMEOUT_SECONDS) }
+suspend fun launchMigrationRedirect(
+  redirect: MigrationRedirect,
+  sourceProduct: String,
+  arguments: List<String>,
+  onStart: suspend () -> Unit = {},
+): Int? {
+  val app = redirect.state.app
+  if (!redirect.waits) {
+    val process = startMigrationProcess(migrationRedirectCommand(app, sourceProduct, arguments)) ?: return null
+    val isStarted = runInterruptible(Dispatchers.IO) { waitForMigrationOpen(process, OPEN_TIMEOUT_SECONDS) }
+    return if (isStarted) 0 else null
+  }
+
+  val launcher = redirect.launcher ?: run {
+    LOG.warn("no launcher in ${app}, the start that waits cannot be redirected")
+    return null
+  }
+  val child = startMigrationProcess(migrationRedirectCommand(app, sourceProduct, arguments, launcher), inheritIO = true) ?: return null
+  onStart()
+  val exitCode = child.awaitExit()
+  LOG.info("the Unified IDE exited with the code ${exitCode}")
+  return exitCode
+}
+
+/**
+ * The files and the URL that macOS gives to this start as Apple events, for example from Finder or a drop on the Dock icon.
+ * [uri] is the last URL, because the IDE opens only one.
+ */
+@ApiStatus.Internal
+class MigrationOpenRequests(val files: List<Path>, val uri: String?) {
+  /** The forwarded arguments: the URL first, because the IDE reads a URL only in the first argument, then the absolute file paths. */
+  fun toArguments(): List<String> = listOfNotNull(uri) + files.map { it.toAbsolutePath().toString() }
 }
 
 /**

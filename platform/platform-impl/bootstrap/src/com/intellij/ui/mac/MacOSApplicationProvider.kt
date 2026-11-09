@@ -47,6 +47,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Desktop
 import java.awt.event.MouseEvent
+import java.net.URI
 import java.net.URLDecoder
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
@@ -230,6 +231,13 @@ private fun submit(name: String, scope: CoroutineScope, task: suspend CoroutineS
   }
 }
 
+/** The protocol command of [uri] for [CommandLineProcessor]. An `open?file=` URI gets [CommandLineProcessor.SCHEME_INTERNAL]. */
+internal fun protocolCommand(uri: URI): String {
+  val uriString = uri.toString()
+  return if ("open" == uri.host && QueryStringDecoder(uri).parameters()["file"] != null) CommandLineProcessor.SCHEME_INTERNAL + uriString
+  else uriString
+}
+
 private fun installProtocolHandler(desktop: Desktop, mainScope: CoroutineScope) {
   val mainBundle = Foundation.invoke("NSBundle", "mainBundle")
   val urlTypes = Foundation.invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"))
@@ -243,11 +251,8 @@ private fun installProtocolHandler(desktop: Desktop, mainScope: CoroutineScope) 
 
   desktop.setOpenURIHandler { event ->
     val uri = event.uri
-    var uriString = uri.toString()
-    URLDecoder.decode(uriString, "UTF-8")
-    if ("open" == uri.host && QueryStringDecoder(uri).parameters()["file"] != null) {
-      uriString = CommandLineProcessor.SCHEME_INTERNAL + uriString
-    }
+    URLDecoder.decode(uri.toString(), "UTF-8")
+    val uriString = protocolCommand(uri)
     if (LoadingState.APP_STARTED.isOccurred) {
       mainScope.launch {
        val result = CommandLineProcessor.processProtocolCommand(uriString)

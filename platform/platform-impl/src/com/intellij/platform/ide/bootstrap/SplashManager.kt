@@ -87,6 +87,9 @@ private val LE_INT: ValueLayout.OfInt = ValueLayout.JAVA_INT_UNALIGNED.withOrder
 // don't use `error` on it, because it can crash the application
 private fun logger(): Logger = Logger.getInstance("com.intellij.platform.ide.bootstrap.SplashManager")
 
+/**
+ * Shows the splash when the start needs it. The splash shows only after [gate].
+ */
 @ApiStatus.Internal
 fun scheduleShowSplashIfNeeded(
   scope: CoroutineScope,
@@ -94,12 +97,13 @@ fun scheduleShowSplashIfNeeded(
   initUiScale: Job,
   appInfoDeferred: Deferred<ApplicationInfo>,
   args: List<String>,
+  gate: Job,
 ) {
   scope.launch(CoroutineName("showSplashIfNeeded")) {
     if (!AppMode.isLightEdit() && !isRealRemoteDevHost(args) && CommandLineArgs.isSplashNeeded(args)) {
       lockSystemDirsJob.join()
       try {
-        showSplashIfNeeded(scope, initUiScale, appInfoDeferred)
+        showSplashIfNeeded(scope, initUiScale, appInfoDeferred, gate)
       }
       catch (e: CancellationException) {
         throw e
@@ -113,7 +117,7 @@ fun scheduleShowSplashIfNeeded(
 
 private fun isRealRemoteDevHost(args: List<String>): Boolean = AppMode.isRemoteDevHost() && args.firstOrNull() != WellKnownCommand.SPLIT_MODE
 
-private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
+private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, gate: Job) {
   val oldJob = splashJob.get()
   if (oldJob.isCancelled) {
     return
@@ -144,6 +148,9 @@ private fun showSplashIfNeeded(scope: CoroutineScope, initUiScale: Job, appInfoD
       assert(SPLASH_WINDOW == null)
       loadSplashImage(appInfo)
     } ?: return@launch
+
+    // the gate is after the image load, so that a gate that ends soon adds no wait
+    gate.join()
 
     if (isTooLateToShowSplash()) {
       return@launch
