@@ -14,7 +14,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleDependency
 import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.jps.entities.SdkDependency
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.caches.project.cacheByClass
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.idea.base.facet.additionalVisibleModules
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.KotlinExportedDependenciesCollector
-import org.jetbrains.kotlin.idea.base.fir.projectStructure.modules.library.KaLibraryModuleImpl
 import org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.K2IDEProjectStructureProviderCache
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
@@ -32,7 +30,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModule
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForTest
-import org.jetbrains.kotlin.library.isNativeStdlib
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.closure
 import com.intellij.openapi.module.Module as OpenapiModule
@@ -52,7 +49,7 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
                 dependency.collectKaModules(from.kind, this)
             }
             val dependencyFilter = from.getDependencyFilter()
-            removeIf { !dependencyFilter.isSupportedDependency(it.toDependencyCandidate()) }
+            removeIf { !dependencyFilter.isSupportedDependency(it) }
             addAll(extraDependencies)
             remove(from)
         }.toList()
@@ -240,22 +237,6 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
         module.isHMPPEnabled -> HmppSourceModuleDependencyFilter(targetPlatform)
         else -> NonHmppSourceModuleDependenciesFilter(targetPlatform)
     }
-
-    private fun KaModule.toDependencyCandidate(): SourceModuleDependenciesFilterCandidate {
-        if (this is KaLibraryModuleImpl) {
-            if (resolvedKotlinLibraries.isNotEmpty()) { // this is a klib-based library
-                val isNativeStdlib = resolvedKotlinLibraries.any { kotlinLibrary ->
-                    kotlinLibrary.isNativeStdlib
-                }
-                return SourceModuleDependenciesFilterCandidate.KlibLibraryDependency(targetPlatform, isNativeStdlib)
-            }
-        }
-        if (this is KaLibraryModule) { //this is a non-klib-based library
-            return SourceModuleDependenciesFilterCandidate.NonKlibLibraryDependency(targetPlatform)
-        }
-        return SourceModuleDependenciesFilterCandidate.ModuleDependency(targetPlatform)
-    }
-
 
     companion object {
         fun getInstance(project: Project): KaSourceModuleDependenciesProvider =
