@@ -349,6 +349,11 @@ enum class JavaFeature {
   COMPARATOR_MIN_MAX(LanguageLevel.JDK_26, "feature.comparator.min.max"),
 
   VALHALLA_VALUE_CLASSES(LanguageLevel.JDK_X, "feature.valhalla.value.classes"),
+
+  /**
+   * JEP 539
+   */
+  STRICT_FIELDS(LanguageLevel.JDK_28_PREVIEW, "feature.strict.fields"),
   ;
 
   /**
@@ -444,6 +449,8 @@ enum class JavaFeature {
         "VIRTUAL_THREADS" -> VIRTUAL_THREADS
         "MODULE_IMPORTS" -> MODULE_IMPORT_DECLARATIONS
         "LAZY_CONSTANTS" -> LAZY_CONSTANTS
+        "VALUE_OBJECTS" -> VALHALLA_VALUE_CLASSES
+        "STRICT_FIELDS" -> STRICT_FIELDS
         else -> null
       }
     }

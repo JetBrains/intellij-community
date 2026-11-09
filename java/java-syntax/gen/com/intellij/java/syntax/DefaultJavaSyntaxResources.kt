@@ -122,6 +122,7 @@ internal object DefaultJavaSyntaxResources {
     "feature.static.interface.calls" to "Static interface method calls",
     "feature.stream.and.optional.api" to "Stream and Optional API",
     "feature.stream.gatherers" to "Stream Gatherers",
+    "feature.strict.fields" to "Strict field initialization",
     "feature.strictfp" to "Always-strict floating point semantics",
     "feature.string.switch" to "Strings in 'switch' statements",
     "feature.string.templates" to "String templates",
