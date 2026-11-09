@@ -3,6 +3,7 @@ package com.intellij.openapi.roots.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -42,11 +43,15 @@ internal class ModuleFileIndexImplTest {
   private val workspaceModel get() = projectModel.project.workspaceModel
   private val virtualFileUrlManager get() = workspaceModel.getVirtualFileUrlManager()
 
-  private lateinit var module: Module
+  private val module get() = moduleHolder!!
+  private var moduleHolder: Module? = null
 
   @BeforeEach
   fun setUp() {
-    module = projectModel.createModule()
+    moduleHolder = projectModel.createModule()
+    disposable.whenDisposed {
+      moduleHolder = null
+    }
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ModuleContentFileSetContributor(module), disposable)
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ModuleNonRecursiveFileSetContributor(module), disposable)
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ModuleNonRecursiveNonIndexableFileSetContributor(module), disposable)
