@@ -5856,7 +5856,10 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   @Test
   @TestFor(issues = ["PY-87570"])
   fun `unresolved references in type expressions are reported only as unresolved references`() = test("""
-    from typing import cast, TypeVar, ParamSpec, Callable
+    from typing import cast, Callable, Generic, ParamSpec, TypeAlias, TypeVar, TypeVarTuple, Unpack
+    from missing_module import Imported
+    #    │                     ^^^^^^^^ ERROR Unresolved reference 'Imported'
+    #    ^^^^^^^^^^^^^^ ERROR Unresolved reference 'missing_module'
 
     a1: Unresolved | int
     #   ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
@@ -5888,8 +5891,28 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #                          ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
     P1 = ParamSpec("P1", default=[Unresolved])
     #                             ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    P2 = ParamSpec("P2", default=Unresolved.attr)
+    #                            ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    #                            ^^^^^^^^^^^^^^^ WARNING Default type of ParamSpec must be a ParamSpec type or a list of types FIXME
+    Ts1 = TypeVarTuple("Ts1", default=Unpack[Unresolved])
+    #                                 │      ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    #                                 ^^^^^^^^^^^^^^^^^^ WARNING Default type of TypeVarTuple must be unpacked FIXME
+    class Box(Generic[Unresolved]): ...
+    #                 ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    a7: Callable[Unresolved, int]
+    #            ^^^^^^^^^^ ERROR 'Callable' first parameter must be a list literal of parameter types ('[T1, T2, ...]') or a parameter specification FIXME
+    #            ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    a8: (Unresolved)
+    #   │^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    #   ^^^^^^^^^^^^ WARNING Invalid type annotation FIXME
     def g[T = Unresolved](): ...
     #         ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
+    c4 = cast(Imported, 1)
+    type S3 = Imported
+    T3 = TypeVar("T3", default=Imported)
+    P3 = ParamSpec("P3", default=[Imported])
+    def h[T = Imported](): ...
+    A1: TypeAlias = Imported
     """.trimIndent())
 
   @Test
@@ -5988,6 +6011,10 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
     #    ^^^^ WARNING Invalid type annotation
     a12: handle
     #    ^^^^^^ WARNING Invalid type annotation
+    a13: int | var
+    #    ^^^^^^^^^ WARNING Invalid type annotation
+    a14: int | var | str
+    #    ^^^^^^^^^^^^^^^ WARNING Invalid type annotation
     c1 = cast(var, 1)
     #         ^^^ WARNING Expected a type
     type S1 = var
