@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -95,11 +96,16 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
 
   /**
    * Counts the changes of a level that no PSI change reports: a pushed or a specified level, a forced level, and a root
-   * change, which can give a module a new SDK. A file keeps its level until this count or the PSI modification count changes, see
+   * change, which can give a module a new SDK. Use it as a dependency of a cached value that holds a language level,
+   * together with {@link com.intellij.psi.util.PsiModificationTracker#MODIFICATION_COUNT}: the level of a file also follows the
+   * directory and the module that hold it, and those change with no level change at all, see
    * {@link PyFileImpl#getEffectiveLanguageLevel()}.
+   * <p>
+   * The count is of the application, not of a project: a forced level is a static field and a specified level is set on
+   * a virtual file without a project, so only the root change among its inputs is per project.
    */
-  static long getLevelModificationCount() {
-    return LEVEL_MODIFICATIONS.getModificationCount();
+  public static @NotNull ModificationTracker getLevelModificationTracker() {
+    return LEVEL_MODIFICATIONS;
   }
 
   static void levelsChanged() {
