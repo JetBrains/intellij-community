@@ -132,7 +132,12 @@ internal open class CodeFenceInjector : MultiHostInjector, DumbAware {
         }
         else {
           val last = places.last()
-          places[places.lastIndex] = last.copy(suffix = last.suffix + element.text)
+          places[places.lastIndex] = when {
+            last.suffix.isEmpty() && last.range.endOffset == element.startOffsetInParent -> {
+              last.copy(range = TextRange(last.range.startOffset, element.startOffsetInParent + element.textLength))
+            }
+            else -> last.copy(suffix = last.suffix + element.text)
+          }
         }
         continue
       }

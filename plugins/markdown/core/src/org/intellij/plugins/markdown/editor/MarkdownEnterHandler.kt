@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.editor
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegate.Result
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -56,6 +57,7 @@ internal class MarkdownEnterHandler : EnterHandlerDelegate {
   override fun postProcessEnter(file: PsiFile, editor: Editor, dataContext: DataContext): Result {
     val injectionHost = InjectedLanguageManager.getInstance(file.project).getInjectionHost(file)
     if (!file.isValid && injectionHost?.isValid != true) return Result.Continue
+    if (injectionHost != null && editor !is EditorWindow) return Result.Continue
 
     val element = findPostProcessElement(file, editor, injectionHost) ?: return Result.Continue
     if (injectionHost == null && !shouldHandle(editor, dataContext, element)) return Result.Continue

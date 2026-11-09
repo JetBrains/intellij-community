@@ -47,6 +47,8 @@
                           serviceImplementation="com.intellij.markdown.backend.commandRunner.LocalPreviewCommandRunnability"/>
       <externalAnnotator language="Markdown"
                          implementationClass="com.intellij.markdown.backend.inspections.MarkdownNonExistentInternetResourcesAnnotator"/>
+      <editor.injectedFileChangesHandlerProvider language="Markdown"
+                                                 implementationClass="com.intellij.markdown.backend.editor.MarkdownInjectedFileChangesHandlerProvider"/>
       <platform.rpc.backend.remoteApiProvider
         implementation="com.intellij.markdown.backend.editor.livepreview.MarkdownLivePreviewRemoteApiProvider"
         apiInterfaces="org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRemoteApi"/>
