@@ -55,21 +55,6 @@
   <!-- Build the IJ platform for MPS without custom patches (re-runnable) -->
   <target name="build" depends="ij-platform,repackage,package-mps-platform-provided"/>
 
-  <!-- Code changes required for MPS not yet integrated into the codebase -->
-  <target name="patch" description="Apply MPS patches to IDEA Community sources">
-    <apply.patch file="${basedir}/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
-    <apply.patch file="${basedir}/patches/DisableCoursesAndTextSearch.patch"/>
-    <apply.patch file="${basedir}/patches/DisableSlowOperationsInEAP.patch"/>
-    <apply.patch file="${basedir}/patches/IJPL-156181.patch"/>
-    <apply.patch file="${basedir}/patches/jps.patch"/>
-    <apply.patch file="${basedir}/patches/MPS-36060.patch"/>
-    <apply.patch file="${basedir}/patches/MPS-38229.patch"/>
-    <apply.patch file="${basedir}/patches/MPS-38534-WelcomeScreenPromotions_for251.patch"/>
-    <apply.patch file="${basedir}/patches/WindowsDistribution.patch"/>
-    <!-- After patching the platform build looks for .mps project folder instead of .idea -->
-    <symlink link="${platform.root}/.mps" resource="${platform.root}/.idea"/>
-  </target>
-
   <!-- Bazel build of modules and plugins required by MPS -->
   <target name="ij-platform" description="Compile and package the raw IJ platform">
     <exec failonerror="true" executable="${platform.root}/bazel.cmd" dir="${platform.root}">
