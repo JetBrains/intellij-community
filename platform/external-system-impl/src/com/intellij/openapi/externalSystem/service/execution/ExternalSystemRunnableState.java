@@ -10,7 +10,6 @@ import com.intellij.build.BuildTreeFilters;
 import com.intellij.build.BuildView;
 import com.intellij.build.BuildViewManager;
 import com.intellij.build.BuildViewSettingsProvider;
-import com.intellij.build.BuildViewSettingsProviderAdapter;
 import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.WeakFilterableSupplier;
 import com.intellij.build.events.BuildEvent;
@@ -93,6 +92,7 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.attach
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.createFailureResult;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getExecutionConsoleSettings;
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY;
 
 public class ExternalSystemRunnableState extends UserDataHolderBase implements RunProfileState {
@@ -234,9 +234,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
 
     var consoleManager = getConsoleManagerFor(task);
     var consoleView = consoleManager.attachExecutionConsole(myProject, task, myEnv, processHandler);
-    var consoleSettings = consoleView instanceof BuildViewSettingsProvider
-                          ? new BuildViewSettingsProviderAdapter((BuildViewSettingsProvider)consoleView)
-                          : consoleManager.getExecutionConsoleSettings();
+    var consoleSettings = getExecutionConsoleSettings(consoleManager, consoleView);
 
     attachExecutionConsole(myProject, consoleView, processHandler);
 
