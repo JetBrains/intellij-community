@@ -103,6 +103,37 @@ class TestApplicationManager private constructor() {
         return
       }
 
+      val app = ApplicationManager.getApplication()
+      invokeAndWaitIfNeeded {
+        runAll(
+          { cleanUpProjectForNextTest(project) },
+          { LightPlatformTestCase.checkAssertions() },
+          {
+            // reset the data provider before disposing the project to ensure that the disposed project is not accessed
+            getInstanceIfCreated()?.setDataProvider(null)
+          },
+          { WriteIntentReadAction.run { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } },
+          { app.cleanApplicationStateCatching()?.let { throw it } }
+        )
+      }
+    }
+
+    /**
+     * Prepares the open [project] for the next test, as [tearDownProjectAndApp] does, but does not close the project.
+     *
+     * It drops the temporary code style, the postponed formatting, the lookup, the editors, the uncommitted documents,
+     * the undo history, and the PSI caches.
+     * It does not check the logged errors and does not clean the application state. A JUnit 5 test does both with its extensions.
+     * Call it from any thread. The work runs on the EDT.
+     */
+    @ApiStatus.Internal
+    @TestOnly
+    @JvmStatic
+    fun cleanUpProjectForNextTest(project: Project) {
+      if (project.isDisposed) {
+        return
+      }
+
       val isLightProject = ProjectManagerImpl.isLight(project)
       val app = ApplicationManager.getApplication()
 
@@ -144,7 +175,6 @@ class TestApplicationManager private constructor() {
               throw IllegalStateException("PsiManager must be not disposed")
             }
           },
-          { LightPlatformTestCase.checkAssertions() },
           { LightPlatformTestCase.clearUncommittedDocuments(project) },
           { app.runWriteIntentReadAction<Unit, Nothing?> { (UndoManager.getInstance(project) as UndoManagerImpl).dropHistoryInTests() } },
           { project.serviceIfCreated<TemplateDataLanguageMappings>()?.cleanupForNextTest() },
@@ -153,18 +183,12 @@ class TestApplicationManager private constructor() {
           { waitForProjectLeakingThreads(project) },
           { dropModuleRootCaches(project) },
           {
-            // reset the data provider before disposing the project to ensure that the disposed project is not accessed
-            getInstanceIfCreated()?.setDataProvider(null)
-          },
-          { WriteIntentReadAction.run { ProjectManagerEx.getInstanceEx().forceCloseProject(project) } },
-          {
             if (testCounter++ % 100 == 0) {
               // Some tests are written in Groovy, and running all of them may result in some 40 MiB of memory wasted on bean data,
               // so let's clear the cache occasionally to ensure it doesn't grow too big.
               GCUtil.clearBeanInfoCache()
             }
-          },
-          { app.cleanApplicationStateCatching()?.let { throw it } }
+          }
         )
       }
     }
