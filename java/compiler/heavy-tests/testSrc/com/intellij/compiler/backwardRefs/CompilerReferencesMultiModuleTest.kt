@@ -126,6 +126,36 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesFixtureTestCase() {
     assertNull("3 of 4 modules are dirty", service.getScopeWithCodeReferences(baseClass))
   }
 
+  fun testNoScopeRestrictionAfterVfsChangesMakeMostModulesDirty() {
+    val moduleC = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "C", myFixture.tempDirFixture.findOrCreateDir("C"))
+    IdeaTestUtil.setModuleLanguageLevel(moduleC, LanguageLevel.JDK_11)
+    ModuleRootModificationUtil.setModuleSdk(moduleC, ModuleRootManager.getInstance(module).sdk)
+    ModuleRootModificationUtil.addDependency(moduleC, module)
+    addClass("BaseClass.java", "public interface BaseClass{}")
+    val files = runWriteActionAndWait {
+      listOf("A", "B", "C").map {
+        val file = myFixture.tempDirFixture.findOrCreateDir(it).createChildData(this, "Class$it.java")
+        VfsUtil.saveText(file, "public class Class$it implements BaseClass{}")
+        file
+      }
+    }
+    rebuildProject()
+    val service = CompilerReferenceService.getInstance(project)
+    val baseClass = myFixture.findClass("BaseClass")
+    assertNotNull(service.getScopeWithCodeReferences(baseClass))
+
+    // With a loaded document and PSI, a VFS change reloads the document. The PSI modification count changes only at the next commit.
+    val documents = runReadActionBlocking { files.map { PsiManager.getInstance(project).findFile(it)!!.viewProvider.document!! } }
+    runWriteActionAndWait {
+      for (file in files) {
+        VfsUtil.saveText(file, VfsUtil.loadText(file) + "\n// Edited")
+      }
+    }
+    assertTrue(documents.all { PsiDocumentManager.getInstance(project).isUncommited(it) })
+    assertEquals(setOf("A", "B", "C"), dirtyModules().toSet())
+    assertNull("3 of 4 modules are dirty", service.getScopeWithCodeReferences(baseClass))
+  }
+
   private fun edit(file: PsiFile) {
     myFixture.openFileInEditor(file.virtualFile)
     myFixture.type("/*edit*/")
