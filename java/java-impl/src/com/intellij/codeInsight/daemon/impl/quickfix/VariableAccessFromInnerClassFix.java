@@ -328,7 +328,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
         if (thisType == MAKE_FINAL && !canBeFinal(variable, outerReferences)) {
           thisType = COPY_TO_FINAL;
         }
-        type = type >= thisType ? type : thisType;
+        type = Math.max(type, thisType);
       }
     }
     return type;
