@@ -240,7 +240,7 @@ open class TypeEvalContextImpl internal constructor(
   }
 
   private fun getLibraryContext(project: Project): TypeEvalContext {
-    return project.service<TypeEvalContextCache>().getLibraryContext(this)
+    return project.service<TypeEvalContextCache>().getLibraryContext(constraints)
   }
 
   /**

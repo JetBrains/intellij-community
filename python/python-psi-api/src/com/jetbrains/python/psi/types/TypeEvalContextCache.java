@@ -50,11 +50,13 @@ public interface TypeEvalContextCache {
   TypeEvalContext getCachedContext(@NotNull TypeEvalConstraints constraints);
 
   /**
-   * Returns the library context for the constraints of {@code delegating}, and builds one only if the cache holds none.
+   * Returns the library context for {@code constraints}, and builds one only if the cache holds none.
+   * The library contexts are a map of their own, which outlives a PSI change, so this is not {@link #getContext}
+   * with another key.
    *
-   * @param delegating the context that delegates the types of library elements, not a library context to store
+   * @param constraints the constraints of the context that delegates the types of library elements
    */
   @ApiStatus.Internal
   @NotNull
-  TypeEvalContext getLibraryContext(@NotNull TypeEvalContext delegating);
+  TypeEvalContext getLibraryContext(@NotNull TypeEvalConstraints constraints);
 }
