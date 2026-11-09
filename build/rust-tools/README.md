@@ -10,7 +10,7 @@ follow it.
 | `community/tools/bt`: BT | `@bt` | `bt_rust_crate` |
 | `community/tools/vm`: the Air UI-lane tooling | `@avl` | `avl_crate` |
 | `docs/ij-void/portal-server`: the server of the docs portal | none | none |
-| `plugins/air/native`: the Air session supervisor | `@air` | `air_session_crate` |
+| `plugins/air/native`: the Air session supervisor, the library `air-ide` of the IDE, and `air-core` | `@air` | `air_session_crate`, `air_core_crate`, `air_ide_crate` |
 
 ## The files here
 
@@ -71,7 +71,7 @@ equal to the sources.
 | dev-dist tools | None. |
 | BT | None. BT has no Bazel action tool, so it has no closure test. |
 | Air UI-lane tooling | None. |
-| Air session supervisor | None. `air-session` is not a Bazel action tool, so it has no closure test. Item 11 scans the community workspaces only, so the copy-paste gate of this workspace is `//plugins/air:air-duplicate-code_test`. |
+| Air session supervisor | None. No crate is a Bazel action tool, so none has a closure test. `air-ide` is a `cdylib`, which `rust_tool_crate` does not declare, so `air_ide_crate` declares its library, test and clippy test with the functions of the hub. Item 11 scans the community workspaces only, so the copy-paste gate of this workspace is `//plugins/air:air-duplicate-code_test`. |
 | portal server | Items 4 to 8, and item 11, because the gate scans only the community workspaces. The portal Dockerfile builds the server with cargo, and Bazel does not build it. The gates are `cargo fmt --check`, `cargo clippy --all-targets` and `cargo test` in its directory, and `sync.mjs --check`. |
 
 ## The Bazel macro core
