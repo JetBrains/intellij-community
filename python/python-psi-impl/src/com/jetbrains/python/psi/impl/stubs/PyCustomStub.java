@@ -16,6 +16,8 @@ public interface PyCustomStub {
   Class<? extends PyCustomStubType<?, ?>> getTypeClass();
 
   /**
+   * The stream is only for this stub, so that a reader without its type can skip it.
+   *
    * @param stream stream to serialize {@code this} stub
    * @see PyCustomStubType#deserializeStub(StubInputStream)
    */
