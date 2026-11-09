@@ -46,7 +46,7 @@ class PyTypeParameterCompletionTest : PyCodeInsightTestCase() {
   @Test
   fun `function type parameters not in a decorator`() = assertNotOffered("""
     y = 1
-    @X
+    @
     #└ CARET
     def f[Key](a: Key) -> Key: ...
   """, "Key", visible = "y")
