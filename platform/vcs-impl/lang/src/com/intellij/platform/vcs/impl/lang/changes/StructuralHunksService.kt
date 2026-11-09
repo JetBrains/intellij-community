@@ -24,19 +24,27 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers
 import com.intellij.psi.PsiManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Computes the hunks of a modified file and names each hunk by the elements of the file structure that it changes. A cache keeps the hunks
- * of a file while its inputs stay the same, so that a second read names only the files whose inputs changed.
+ * of a file while its inputs stay the same, so that a second read names only the files whose inputs changed. A file that no read used for
+ * five minutes leaves the cache, so the cache holds no hunks while no tree shows them.
  *
  * Call it outside the event thread: a base content can come from a VCS process.
  */
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
-class StructuralHunksService(private val project: Project) {
-  private val cache = HunkCache()
+class StructuralHunksService(private val project: Project, coroutineScope: CoroutineScope) {
+  private val cache = HunkCache(coroutineScope)
 
   /**
    * The hunks of a local change of [file], and whether the commit can include them one by one. The ranges of a valid partial tracker win,
@@ -52,6 +60,12 @@ class StructuralHunksService(private val project: Project) {
    */
   fun hunks(file: VirtualFile, beforeRevision: ContentRevision): List<StructuralHunk>? =
     collect(file, beforeRevision, changeListId = null, useTracker = false)?.hunks
+
+  /** Removes the hunks of each file that no read used for [age], as the cache does for its files after [HUNKS_LIFETIME]. */
+  @TestOnly
+  fun removeHunksUnreadFor(age: Duration) {
+    cache.removeUnreadFor(age)
+  }
 
   /**
    * The cache or a tracker gives the hunks without the base content. A load of the base content can take long, so it runs outside a read
@@ -174,20 +188,60 @@ private data class CacheKey(val file: VirtualFile, val changeListId: String?, va
  */
 private data class HunkSource(val version: StructuralHunkVersion, val baseContentHash: Int?, val trackerLines: List<HunkLines>?)
 
-/** Keeps the hunks of the files that the trees read last. The least recently read file leaves first. */
-private class HunkCache {
-  private val entries = LinkedHashMap<CacheKey, Pair<HunkSource, List<StructuralHunk>>>(16, 0.75f, true)
+/**
+ * Keeps the hunks of the files that the trees read last. The least recently read file leaves first. A file that no read used for
+ * [HUNKS_LIFETIME] leaves too: a sweep in [scope] removes it. The sweep runs only while the cache holds a file.
+ */
+private class HunkCache(private val scope: CoroutineScope) {
+  private val entries = LinkedHashMap<CacheKey, HunkEntry>(16, 0.75f, true)
+
+  /** The sweep of the unread files, or null while the cache is empty. */
+  private var sweep: Job? = null
 
   @Synchronized
-  fun get(key: CacheKey, source: HunkSource): List<StructuralHunk>? = entries[key]?.takeIf { it.first == source }?.second
+  fun get(key: CacheKey, source: HunkSource): List<StructuralHunk>? {
+    val entry = entries[key]?.takeIf { it.source == source } ?: return null
+    entry.readAt = System.nanoTime()
+    return entry.hunks
+  }
 
   @Synchronized
   fun put(key: CacheKey, source: HunkSource, hunks: List<StructuralHunk>) {
-    entries[key] = source to hunks
+    entries[key] = HunkEntry(source, hunks, System.nanoTime())
     if (entries.size > MAX_CACHED_FILES) entries.remove(entries.keys.first())
+    if (sweep == null) sweep = scope.launch { sweepUnread() }
+  }
+
+  /** Removes each file that no read used for [age]. */
+  @Synchronized
+  fun removeUnreadFor(age: Duration) {
+    val oldestRead = System.nanoTime() - age.inWholeNanoseconds
+    entries.values.removeIf { it.readAt <= oldestRead }
+  }
+
+  private suspend fun sweepUnread() {
+    while (true) {
+      delay(HUNKS_LIFETIME)
+      if (removeUnreadAndStopWhenEmpty()) return
+    }
+  }
+
+  /** The sweep stops in the same lock as [put] starts it, so each new file of an empty cache starts a sweep. */
+  @Synchronized
+  private fun removeUnreadAndStopWhenEmpty(): Boolean {
+    removeUnreadFor(HUNKS_LIFETIME)
+    if (entries.isNotEmpty()) return false
+    sweep = null
+    return true
   }
 
   private companion object {
     const val MAX_CACHED_FILES = 1_000
   }
 }
+
+/** The hunks of a file, the inputs that they describe, and the time of the last read, from [System.nanoTime]. */
+private class HunkEntry(val source: HunkSource, val hunks: List<StructuralHunk>, var readAt: Long)
+
+/** How long the cache keeps the hunks of a file that no read uses. */
+private val HUNKS_LIFETIME: Duration = 5.minutes
