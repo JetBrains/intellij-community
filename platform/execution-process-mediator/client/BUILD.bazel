@@ -4,7 +4,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jps_test(
     name = "execution-process-mediator-client-tests_test",
     timeout = "moderate",
-    tags = ["community-aggregator"],
+    sandbox = True,
+    tags = [
+        "debugger-tests",
+    ],
     runtime_deps = [":execution-process-mediator-client-tests_test_lib"],
 )
 ### skip generation section `test intellij.execution.process.mediator.client.tests`
