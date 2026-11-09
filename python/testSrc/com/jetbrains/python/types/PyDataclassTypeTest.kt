@@ -254,6 +254,24 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
   @Nested
   inner class DataclassTransformConstructorSignature {
     @Test
+    @TestFor(issues = ["PY-93910"])
+    fun `class in another file with a decorator expression is not a dataclass`() = test("""
+      from mod import Document
+      
+      expr = Document()
+      #└ TYPE Document
+      """.trimIndent(),
+      "mod.py" to """
+        registry = [lambda cls: cls]
+        
+        
+        @registry[0]
+        class Document:
+            name: str
+      """.trimIndent()
+    )
+
+    @Test
     fun `dataclass_transform constructor signature`() = test("""
       from typing import dataclass_transform
       
