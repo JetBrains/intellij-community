@@ -9,7 +9,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeWithMe.ClientId;
-import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobLauncherImpl;
@@ -640,7 +639,7 @@ public final class PassExecutorService implements Disposable {
     if (LOG.isDebugEnabled()) {
       Document document = pass instanceof TextEditorHighlightingPass text ? text.getDocument() : null;
       CharSequence docText = document == null ? "" : ": '" + StringUtil.first(document.getCharsSequence(), 10, true)+ "'";
-      String message = StringUtil.repeatSymbol(' ', IdeaForkJoinWorkerThreadFactory.getThreadNum() * 4)
+      String message = "[" + Thread.currentThread().getName() + "] "
                        + (pass == null ? "" : pass + " ")
                        + StringUtil.join(info, Functions.TO_STRING(), "")
                        + "; progress=" + progressIndicator

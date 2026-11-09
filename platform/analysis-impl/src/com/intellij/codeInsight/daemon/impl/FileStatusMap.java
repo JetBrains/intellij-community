@@ -6,7 +6,6 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
 import com.intellij.codeInsight.multiverse.EditorContextManager;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -16,7 +15,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ThrowableRunnable;
@@ -30,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * The FileStatusMap class represents a map that stores the status of files' analysis in a project.
@@ -366,16 +363,9 @@ public final class FileStatusMap implements Disposable {
     }
   }
 
-  // logging
-  private static final ConcurrentMap<Thread, Integer> threads = ConcurrentCollectionFactory.createConcurrentWeakMap();
-
-  private static int getThreadNum() {
-    return threads.computeIfAbsent(Thread.currentThread(), thread -> threads.size());
-  }
-
   private static void log(@Nullable Document document, @NonNls @NotNull String msg, @NonNls @NotNull Object reason, @NonNls Object additionalInfo) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug(StringUtil.repeatSymbol(' ', getThreadNum() * 4)
+      LOG.debug("[" + Thread.currentThread().getName() + "] "
                 + (document == null ? "" : document +"; ")
                 + msg
                 + reason

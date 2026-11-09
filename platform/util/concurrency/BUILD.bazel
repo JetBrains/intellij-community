@@ -82,6 +82,7 @@ jvm_library(
         "//platform/core-api:core",
         "//libraries/assertj-core",
         "//libraries/junit6",
+        "//platform/boot",
         "//platform/util/concurrency",
     ],
 )
