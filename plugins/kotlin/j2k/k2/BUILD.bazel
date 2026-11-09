@@ -69,6 +69,7 @@ jvm_library(
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/code-insight/api",
         "//plugins/kotlin/code-insight/fixes-k2:kotlin-codeInsight-fixes",
+        "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//plugins/kotlin/code-insight/utils",
         "//plugins/kotlin/frontend-independent",
         "//platform/refactoring",
