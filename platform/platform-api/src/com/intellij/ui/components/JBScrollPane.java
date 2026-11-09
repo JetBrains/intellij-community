@@ -95,6 +95,14 @@ public class JBScrollPane extends JScrollPane {
   @ApiStatus.Experimental
   public static final Key<Boolean> FORCE_HORIZONTAL_SCROLL = Key.create("FORCE_SHIFT_ON_SCROLL");
 
+  /**
+   * The number of units that one notch of the mouse wheel scrolls.
+   * Set it on the scroll pane or on its view.
+   * By default, a notch scrolls by the number of units that the system sets, three on Windows by default.
+   */
+  @ApiStatus.Internal
+  public static final Key<Integer> UNITS_PER_WHEEL_NOTCH = Key.create("UNITS_PER_WHEEL_NOTCH");
+
   private static final Logger LOG = Logger.getInstance(JBScrollPane.class);
 
   private static final String STATUS_COMPONENT = "STATUS_COMPONENT";
@@ -336,6 +344,11 @@ public class JBScrollPane extends JScrollPane {
         if (Boolean.TRUE.equals(ClientProperty.get(pane, FORCE_HORIZONTAL_SCROLL))) {
           event = withShiftModifier(event);
         }
+        MouseWheelEvent outerEvent = event;
+        Integer unitsPerNotch = getUnitsPerWheelNotch(pane);
+        if (unitsPerNotch != null && event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL && event.getScrollAmount() != unitsPerNotch) {
+          event = withScrollAmount(event, unitsPerNotch);
+        }
 
         JScrollBar bar = event.isShiftDown() ? pane.getHorizontalScrollBar() : pane.getVerticalScrollBar();
 
@@ -373,7 +386,8 @@ public class JBScrollPane extends JScrollPane {
 
         if (!event.isConsumed()) {
           // try to process a mouse wheel event by outer scroll pane
-          MouseEventAdapter.redispatch(event, ComponentUtil
+          // the outer scroll pane gets the event with the system scroll amount, not with the amount of this pane
+          MouseEventAdapter.redispatch(outerEvent, ComponentUtil
             .getParentOfType((Class<? extends JScrollPane>)JScrollPane.class, pane.getParent()));
         }
       }
@@ -387,6 +401,21 @@ public class JBScrollPane extends JScrollPane {
     return MouseEventAdapter.convert(event, (JComponent)event.getSource(), event.getID(), event.getWhen(),
                                      UIUtil.getAllModifiers(event) | InputEvent.SHIFT_DOWN_MASK,
                                      event.getX(), event.getY());
+  }
+
+  /**
+   * Returns a new {@code MouseWheelEvent} copied from the given event with the given scroll amount
+   */
+  private static @NotNull MouseWheelEvent withScrollAmount(@NotNull MouseWheelEvent event, int scrollAmount) {
+    return MouseEventAdapter.convert(event, (Component)event.getSource(), event.getID(), event.getWhen(), UIUtil.getAllModifiers(event),
+                                     event.getX(), event.getY(), scrollAmount);
+  }
+
+  static @Nullable Integer getUnitsPerWheelNotch(@NotNull JScrollPane pane) {
+    Integer unitsPerNotch = ClientProperty.get(pane, UNITS_PER_WHEEL_NOTCH);
+    if (unitsPerNotch != null) return unitsPerNotch;
+    JViewport viewport = pane.getViewport();
+    return viewport == null ? null : ClientProperty.get(viewport.getView(), UNITS_PER_WHEEL_NOTCH);
   }
 
   @Override

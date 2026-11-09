@@ -52,6 +52,7 @@ import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.ui.IconManager
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
@@ -237,6 +238,7 @@ open class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
 
     if (result is ListPopupImpl) {
       ClientProperty.put(result.list, AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
+      ClientProperty.put(result.list, JBScrollPane.UNITS_PER_WHEEL_NOTCH, 1)
 
       ApplicationManager.getApplication().messageBus.connect(result).subscribe(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC, object : RecentProjectsChange {
         override fun change() {

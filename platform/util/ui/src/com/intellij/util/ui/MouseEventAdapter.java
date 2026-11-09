@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.SwingUtilities;
@@ -79,17 +80,15 @@ public class MouseEventAdapter<T> extends MouseAdapter implements MouseInputList
   }
 
   protected MouseListener getMouseListener(T adapter) {
-    return adapter instanceof MouseListener ? (MouseListener)adapter : null;
+    return adapter instanceof MouseListener listener ? listener : null;
   }
 
   protected MouseMotionListener getMouseMotionListener(T adapter) {
-    MouseListener listener = getMouseListener(adapter);
-    return listener instanceof MouseMotionListener ? (MouseMotionListener)listener : null;
+    return getMouseListener(adapter) instanceof MouseMotionListener listener ? listener : null;
   }
 
   protected MouseWheelListener getMouseWheelListener(T adapter) {
-    MouseListener listener = getMouseListener(adapter);
-    return listener instanceof MouseWheelListener ? (MouseWheelListener)listener : null;
+    return getMouseListener(adapter) instanceof MouseWheelListener listener ? listener : null;
   }
 
   protected @NotNull MouseEvent convert(@NotNull MouseEvent event) {
@@ -111,8 +110,8 @@ public class MouseEventAdapter<T> extends MouseAdapter implements MouseInputList
   }
 
   public static @NotNull MouseEvent convert(@NotNull MouseEvent event, Component source, int id, long when, int modifiers, int x, int y) {
-    if (event instanceof MouseWheelEvent) return convert((MouseWheelEvent)event, source, id, when, modifiers, x, y);
-    if (event instanceof MenuDragMouseEvent) return convert((MenuDragMouseEvent)event, source, id, when, modifiers, x, y);
+    if (event instanceof MouseWheelEvent wheelEvent) return convert(wheelEvent, source, id, when, modifiers, x, y);
+    if (event instanceof MenuDragMouseEvent mouseEvent) return convert(mouseEvent, source, id, when, modifiers, x, y);
     return new MouseEvent(source, id, when, modifiers, x, y,
                           event.getClickCount(),
                           event.isPopupTrigger(),
@@ -120,13 +119,22 @@ public class MouseEventAdapter<T> extends MouseAdapter implements MouseInputList
   }
 
   public static @NotNull MouseWheelEvent convert(@NotNull MouseWheelEvent event, Component source, int id, long when, int modifiers, int x, int y) {
+    return convert(event, source, id, when, modifiers, x, y, event.getScrollAmount());
+  }
+
+  /**
+   * Copies the event with the given scroll amount.
+   */
+  @ApiStatus.Internal
+  public static @NotNull MouseWheelEvent convert(@NotNull MouseWheelEvent event, Component source, int id, long when, int modifiers, int x, int y,
+                                                 int scrollAmount) {
     return new MouseWheelEvent(source, id, when, modifiers, x, y,
                                event.getXOnScreen(),
                                event.getYOnScreen(),
                                event.getClickCount(),
                                event.isPopupTrigger(),
                                event.getScrollType(),
-                               event.getScrollAmount(),
+                               scrollAmount,
                                event.getWheelRotation(),
                                event.getPreciseWheelRotation());
   }

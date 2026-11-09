@@ -52,6 +52,7 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SmartExpander
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
@@ -156,6 +157,7 @@ class RecentProjectFilteringTree internal constructor(
 
     treeComponent.putClientProperty(Control.Painter.KEY, Control.Painter.LEAF_WITHOUT_INDENT)
     treeComponent.putClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED, true)
+    treeComponent.putClientProperty(JBScrollPane.UNITS_PER_WHEEL_NOTCH, 1)
     treeComponent.putClientProperty(
       RenderingUtil.CUSTOM_SELECTION_BACKGROUND,
       Supplier { ListUiUtil.WithTallRow.background(JList<Any>(), isSelected = true, hasFocus = true) }
