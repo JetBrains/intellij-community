@@ -60,7 +60,7 @@ class TypeEvalContextFactoryImpl : TypeEvalContextFactory {
    * @param constraints the constraints of the context wanted, which are also its key in the cache
    * @param build builds the context, called only on a miss
    * @return context to use
-   * @see TypeEvalContextCacheImpl.getCachedContext
+   * @see TypeEvalContextCache.getCachedContext
    */
   private inline fun getContextFromCache(
     project: Project,
@@ -68,8 +68,7 @@ class TypeEvalContextFactoryImpl : TypeEvalContextFactory {
     build: () -> TypeEvalContext,
   ): TypeEvalContext {
     val cache = project.service<TypeEvalContextCache>()
-    val cached = (cache as? TypeEvalContextCacheImpl)?.getCachedContext(constraints)
-    return cached ?: cache.getContext(build())
+    return cache.getCachedContext(constraints) ?: cache.getContext(build())
   }
 
   private fun buildCodeAnalysisContext(origin: PsiFile?): TypeEvalContext {
