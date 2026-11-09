@@ -245,10 +245,11 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
 
           val pyProjectTomlPath = projectPath.resolve(PY_PROJECT_TOML)
 
+          val uv = executable.pathHolder.successOrNull
           val pythonVersions = withContext(Dispatchers.IO) {
             val versionRequest = PyProjectToml.parseOrNull(pyProjectTomlPath)?.project?.requiresPython
 
-            val cli = validateAndCreateUvCli(executable.pathHolder.successOrNull, model.fileSystem).getOr { return@withContext emptyList() }
+            val cli = validateAndCreateUvCli(uv, model.fileSystem).getOr { return@withContext emptyList() }
             // The supported Python versions of uv do not depend on a directory, so this runs with none.
             val uvLowLevel = createUvLowLevel(cwd = null, cli)
             uvLowLevel.listSupportedPythonVersions(versionRequest)
@@ -256,7 +257,7 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
           }
 
           // Resolved before the items are added so the renderer already knows which row to mark on its first paint.
-          defaultLanguageLevel = executable.pathHolder.successOrNull?.let { uvExecutable ->
+          defaultLanguageLevel = uv?.let { uvExecutable ->
             withContext(Dispatchers.IO) { resolveDefaultLanguageLevel(uvExecutable, projectPath) }
           }
 
@@ -298,7 +299,8 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
    * `uv venv --clear`, which ignores that venv and takes uv's default instead.
    */
   internal suspend fun resolveDefaultLanguageLevel(uvExecutable: P, projectPath: Path): String? {
-    val workingDir = generateSequence(projectPath) { it.parent }.firstOrNull { withContext(Dispatchers.IO) {it.isDirectory()} } ?: return null
+    val workingDir =
+      generateSequence(projectPath) { it.parent }.firstOrNull { withContext(Dispatchers.IO) { it.isDirectory() } } ?: return null
 
     // On a target, uv gets only the files of workingDir that it reads, not a copy of the full workingDir.
     val uploadConfig = when (uvExecutable) {
@@ -307,7 +309,8 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
         UploadConfig(relativePaths = UV_PYTHON_FIND_FILES.filter { workingDir.resolve(it).isRegularFile() })
       }
     }
-    val runtime = PyToolRuntime(model.fileSystem.getBinaryToExec(uvExecutable, workingDir), ExecOptions(uploadBeforeExecution = uploadConfig))
+    val runtime =
+      PyToolRuntime(model.fileSystem.getBinaryToExec(uvExecutable, workingDir), ExecOptions(uploadBeforeExecution = uploadConfig))
     val reported = runtime.uvCli().python().find(showVersion = true, system = true).successOrNull ?: return null
     return LANGUAGE_LEVEL_PREFIX.find(reported)?.value
   }

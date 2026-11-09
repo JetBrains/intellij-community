@@ -186,12 +186,12 @@ abstract class PyV3ProjectBaseGenerator<TYPE_SPECIFIC_SETTINGS : PyV3ProjectType
 /**
  * "Click here to switch from Local to WSL" button for example.
  */
-private class ChangeEelFix(private val newEel: EelDescriptor, private val onEelChaned: suspend (EelApi) -> Unit) :
+private class ChangeEelFix(private val newEel: EelDescriptor, private val onEelChanged: suspend (EelApi) -> Unit) :
   FacetConfigurationQuickFix(PyBundle.message("new.project.switch.eel", newEel.name)) {
   @RequiresEdt
   override fun run(place: JComponent?) {
     runWithModalProgressBlocking(ModalTaskOwner.guess(), PyBundle.message("new.project.switch.eel", newEel.name)) {
-      onEelChaned(newEel.toEelApi())
+      onEelChanged(newEel.toEelApi())
     }
   }
 }
