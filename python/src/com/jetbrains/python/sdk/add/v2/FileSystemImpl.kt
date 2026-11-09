@@ -902,16 +902,23 @@ internal suspend fun Path.toEelFileSystem(): EelFileSystem = getEelDescriptor().
  */
 internal suspend fun EelDescriptor.toEelFileSystem(): EelFileSystem = EelFileSystem(toEelApi())
 
-internal fun <P : PathHolder> FileSystem<P>.getInstallableInterpreters(): List<InstallableSelectableInterpreter<P>> =
+/**
+ * The Python versions that the IDE can install on this file system. Only a local file system has them.
+ *
+ * The first call parses `sdks.json`, so the list is read on [Dispatchers.IO].
+ */
+internal suspend fun <P : PathHolder> FileSystem<P>.getInstallableInterpreters(): List<InstallableSelectableInterpreter<P>> =
   if (isLocal) {
-    getSdksToInstall()
-      .mapNotNull { sdk ->
-        LanguageLevel.fromPythonVersionSafe(sdk.installation.release.version)?.let { it to sdk }
-      }
-      .sortedByDescending { it.first }
-      .map { (languageLevel, sdk) ->
-        InstallableSelectableInterpreter(PythonInfo(languageLevel), sdk)
-      }
+    withContext(Dispatchers.IO) {
+      getSdksToInstall()
+        .mapNotNull { sdk ->
+          LanguageLevel.fromPythonVersionSafe(sdk.installation.release.version)?.let { it to sdk }
+        }
+        .sortedByDescending { it.first }
+        .map { (languageLevel, sdk) ->
+          InstallableSelectableInterpreter(PythonInfo(languageLevel), sdk)
+        }
+    }
   }
   else emptyList()
 
