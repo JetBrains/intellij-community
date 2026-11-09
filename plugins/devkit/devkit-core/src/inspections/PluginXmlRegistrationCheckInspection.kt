@@ -133,9 +133,10 @@ internal class PluginXmlRegistrationCheckInspection : DevKitPluginXmlInspectionB
     definingModule: Module,
     elementModule: Module,
   ): Boolean {
-    if (!areModulesInSamePluginSet(definingModule.name, elementModule.name)) return false
+    val descriptor = DomUtil.getFile(element)
+    if (!areInSamePluginModuleSet(definingModule.name, elementModule.name, descriptor)) return false
     val classFile = PsiUtilCore.getVirtualFile(psiClass) ?: return true
-    val descriptorFile = DomUtil.getFile(element).virtualFile
+    val descriptorFile = descriptor.virtualFile
     if (isInProductionRoots(descriptorFile, elementModule.project)) {
       if (!isInProductionRoots(classFile, elementModule.project)) return false
       return isLoadedByMainPluginClassloader(definingModule) && seesMainPluginClassloader(elementModule) ||

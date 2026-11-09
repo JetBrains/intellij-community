@@ -2712,6 +2712,58 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
     testHighlighting(testedFile)
   }
 
+  fun `test references to module in plugin module set of another project profile - no error`() {
+    val siblingModule = addModuleWithActionsXml("siblingModule", "Sibling")
+    declarePluginModuleSets()
+    addProjectProfileWithPluginModuleSets(project, testRootDisposable, listOf(myFixture.module.name, siblingModule.name))
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <actions>
+              <reference ref="SiblingAction"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test references to module in plugin module set of later project profile after profile without the pair - no error`() {
+    val siblingModule = addModuleWithActionsXml("siblingModule", "Sibling")
+    declarePluginModuleSets()
+    addProjectProfileWithPluginModuleSets(project, testRootDisposable, listOf(myFixture.module.name, "otherModule"))
+    addProjectProfileWithPluginModuleSets(project, testRootDisposable, listOf(myFixture.module.name, siblingModule.name))
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <actions>
+              <reference ref="SiblingAction"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
+  fun `test references to sibling module when no project profile declares plugin module sets - error`() {
+    val siblingModule = addModuleWithActionsXml("siblingModule", "Sibling")
+    declarePluginModuleSets()
+    addProjectProfileWithPluginModuleSets(project, testRootDisposable)
+
+    val testedFile = addPluginXml(
+      """
+      <idea-plugin>
+          <actions>
+              <reference ref="<error descr="Action or group 'SiblingAction' (module '${siblingModule.name}') is not reachable from module '${myFixture.module.name}' dependencies">SiblingAction</error>"/>
+          </actions>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
   fun `test class in test source root of same module - error`() {
     addTestOnlyTopic()
 
@@ -4264,13 +4316,7 @@ class PluginXmlReferencesModuleReachabilityInspectionTest : JavaCodeInsightFixtu
    * [PluginXmlReferencesModuleReachabilityInspection] to see them.
    */
   private fun declarePluginModuleSets(vararg moduleSets: List<String>) {
-    val registrationCheck = PluginXmlRegistrationCheckInspection()
-    moduleSets.forEach { moduleNames ->
-      registrationCheck.pluginsModules.add(PluginXmlRegistrationCheckInspection.PluginModuleSet().apply {
-        modules = LinkedHashSet(moduleNames)
-      })
-    }
-    myFixture.enableInspections(registrationCheck)
+    myFixture.enableInspections(registrationCheckWithModuleSets(*moduleSets))
   }
 
   private fun addPluginXml(@Language("XML") content: String): PsiFile {

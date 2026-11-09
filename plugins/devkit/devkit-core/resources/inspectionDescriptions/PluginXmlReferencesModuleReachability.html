@@ -25,7 +25,8 @@ compile and runtime dependencies.
   or modules packaged into the main plugin jar without an own content-module descriptor. A content module with any other
   loading mode gets its own classloader, which sees only declared dependencies, so its classes and bundles are still
   reported. The multi-module plugin configuration is picked from the
-  <code>Plugin DevKit | Plugin descriptor | Plugin.xml registration check</code> inspection.
+  <code>Plugin DevKit | Plugin descriptor | Plugin.xml registration check</code> inspection of the current profile,
+  or of any other project profile when the current one declares none.
 </p>
 
 <p>

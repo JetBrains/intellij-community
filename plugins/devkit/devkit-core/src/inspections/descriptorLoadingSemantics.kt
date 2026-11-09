@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.module.Module
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
@@ -111,20 +112,36 @@ private fun resolveEffectivePluginId(file: XmlFile, visited: MutableSet<XmlFile>
  * into the main jar without an own content-module descriptor; a non-embedded content module gets its own classloader.
  * [module] is not a sibling of itself: a reference inside one module is decided by that module's runtime scope, which
  * tells production and test roots apart.
- * A module may be listed in several sets when several plugins package it; two modules are siblings when at least one
- * set contains both.
- * Returns `false` when [PluginXmlRegistrationCheckInspection] is absent from the profile or declares no set containing [module].
- *
- * Module sets are read from the project's current profile on purpose, ignoring the profile of the running inspection
- * session (the batch wrapper set by `GlobalInspectionContextImpl.inspectFile`): they describe project composition, so
- * Inspect Code with another profile and Run Inspection by Name, whose profiles lack this inspection, keep the exemption.
  */
 internal fun areSiblingModulesInSamePlugin(module: Module, otherModule: Module, context: PsiElement): Boolean {
-  if (module == otherModule) return false
-  val inspection = InspectionProjectProfileManager.getInstance(module.project).currentProfile
-                     .getUnwrappedTool(REGISTRATION_CHECK_SHORT_NAME, context) as? PluginXmlRegistrationCheckInspection
-                   ?: return false
-  return inspection.areModulesInSamePluginSet(module.name, otherModule.name)
+  return module != otherModule && areInSamePluginModuleSet(module.name, otherModule.name, context)
+}
+
+/**
+ * Whether at least one `pluginsModules` set of [PluginXmlRegistrationCheckInspection] contains both modules; a module
+ * may be listed in several sets when several plugins package it.
+ *
+ * Module sets describe project composition, not inspection preferences, so they are read from the project's profiles,
+ * ignoring the profile of the running inspection session (the batch wrapper set by `GlobalInspectionContextImpl.inspectFile`)
+ * and the sets of the running inspection itself: Inspect Code with another profile and Run Inspection by Name, whose
+ * profiles lack the registration check, still see the sets. The current profile wins when its registration check
+ * declares any set; otherwise a set of any other project profile counts, so switching to a profile without sets keeps
+ * them too. Profiles may hold stale copies of the sets, so the result does not depend on which profile loads first.
+ * [context] selects the scoped tool of each profile.
+ */
+internal fun areInSamePluginModuleSet(moduleName: String, otherModuleName: String, context: PsiElement): Boolean {
+  val profileManager = InspectionProjectProfileManager.getInstance(context.project)
+  val currentInspection = profileManager.currentProfile.findRegistrationCheck(context)
+  if (currentInspection != null && currentInspection.pluginsModules.isNotEmpty()) {
+    return currentInspection.areModulesInSamePluginSet(moduleName, otherModuleName)
+  }
+  return profileManager.profiles.asSequence()
+    .mapNotNull { it.findRegistrationCheck(context) }
+    .any { it.areModulesInSamePluginSet(moduleName, otherModuleName) }
+}
+
+private fun InspectionProfileImpl.findRegistrationCheck(context: PsiElement): PluginXmlRegistrationCheckInspection? {
+  return getUnwrappedTool(REGISTRATION_CHECK_SHORT_NAME, context) as? PluginXmlRegistrationCheckInspection
 }
 
 private const val REGISTRATION_CHECK_SHORT_NAME = "PluginXmlRegistrationCheck"

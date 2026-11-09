@@ -19,4 +19,8 @@ class PluginXmlRegistrationCheckInspectionTest : PluginXmlRegistrationCheckInspe
   fun testRegistrationCheckWithDependencyDescriptorInSingleFileResourceRoot() {
     doTestRegistrationCheck(dependencyDescriptorInSingleFileRoot = true)
   }
+
+  fun testRegistrationCheckWithModuleSetInAnotherProjectProfile() {
+    doTestRegistrationCheck(moduleSetInAnotherProfile = true)
+  }
 }

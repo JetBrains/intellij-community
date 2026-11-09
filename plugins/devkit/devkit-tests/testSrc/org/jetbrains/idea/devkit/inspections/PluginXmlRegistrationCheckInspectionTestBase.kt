@@ -74,8 +74,10 @@ abstract class PluginXmlRegistrationCheckInspectionTestBase : JavaCodeInsightFix
   /**
    * When [dependencyDescriptorInSingleFileRoot] is `true`, the descriptor of `anotherModule` is not in a `META-INF` directory.
    * It is a single-file resource root with the `META-INF` output path.
+   * When [moduleSetInAnotherProfile] is `true`, the current profile declares no plugin module sets, and the set of the main
+   * module and `additionalModule` comes from another project profile.
    */
-  protected fun doTestRegistrationCheck(dependencyDescriptorInSingleFileRoot: Boolean = false) {
+  protected fun doTestRegistrationCheck(dependencyDescriptorInSingleFileRoot: Boolean = false, moduleSetInAnotherProfile: Boolean = false) {
     val anotherModule = addModule("anotherModule", "../anotherModuleDir")
     ModuleRootModificationUtil.addModuleLibrary(anotherModule, libraryUrlOf(AnAction::class.java))
     ModuleRootModificationUtil.addModuleLibrary(anotherModule, libraryUrlOf(LanguageExtensionPoint::class.java))
@@ -88,10 +90,15 @@ abstract class PluginXmlRegistrationCheckInspectionTestBase : JavaCodeInsightFix
     ModuleRootModificationUtil.addDependency(module, additionalModule)
     configureLanguageRuntime(module)
 
-    val moduleSet = PluginXmlRegistrationCheckInspection.PluginModuleSet()
-    moduleSet.modules.add(module.name)
-    moduleSet.modules.add(additionalModule.name)
-    inspection.pluginsModules.add(moduleSet)
+    if (moduleSetInAnotherProfile) {
+      addProjectProfileWithPluginModuleSets(project, testRootDisposable, listOf(module.name, additionalModule.name))
+    }
+    else {
+      val moduleSet = PluginXmlRegistrationCheckInspection.PluginModuleSet()
+      moduleSet.modules.add(module.name)
+      moduleSet.modules.add(additionalModule.name)
+      inspection.pluginsModules.add(moduleSet)
+    }
 
     for (name in DEPENDENCY_MODULE_CLASSES) {
       copySourceFile("dependencyModule", name, "../anotherModuleDir")
