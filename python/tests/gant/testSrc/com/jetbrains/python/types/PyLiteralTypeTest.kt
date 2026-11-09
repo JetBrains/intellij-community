@@ -1257,6 +1257,8 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       #        └ TYPE Literal[-2]
       invert_zero = ~0
       #             └ TYPE Literal[-1]
+      minus_beyond_long = -18446744073709551616
+      #                   └ TYPE Literal[-18446744073709551616]
       """.trimIndent())
 
     @Test
@@ -1313,6 +1315,15 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE int
           expr = ~b
       #   └ TYPE int
+
+      def mixed_unions(literals_then_float: Literal[1, 2] | float, float_then_literals: float | Literal[1, 2],
+                       int_and_bool: Literal[1, True]):
+          expr = -literals_then_float
+      #   └ TYPE int | float
+          expr = -float_then_literals
+      #   └ TYPE float | int
+          expr = -int_and_bool
+      #   └ TYPE int
       """.trimIndent())
 
     @Test
@@ -1340,6 +1351,10 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           expr = not u
       #   └ TYPE Literal[False, True]
           expr = not i
+      #   └ TYPE bool
+
+      def mixed_union(bool_and_int: Literal[True, 1]):
+          expr = not bool_and_int
       #   └ TYPE bool
       """.trimIndent())
 
@@ -1400,6 +1415,24 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-80620"])
+    fun `imported name assigned a signed int literal gets the literal type in both contexts`() = test("""
+      from m import positive, negative, plus
+      expr = positive
+      #└ TYPE Literal[1]
+      expr = negative
+      #└ TYPE Type mismatch for code analysis context ('Unknown') and user initiated context ('Literal[-1]') FIXME Literal[-1]
+      expr = plus
+      #└ TYPE Type mismatch for code analysis context ('Unknown') and user initiated context ('Literal[1]') FIXME Literal[1]
+      """.trimIndent(),
+      "m.py" to """
+        positive = 1
+        negative = -1
+        plus = +1
+        """.trimIndent(),
+    )
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
     fun `unary operators on int literal against Literal annotation`() = test("""
       from typing import Literal
 
@@ -1411,6 +1444,25 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           d: Literal[-1] = -i
       #                    ^^ WARNING Expected type 'Literal[-1]', got 'int' instead
           e: int = -1
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-80620"])
+    fun `variable holding a negative int literal selects the overload keyed on that literal`() = test("""
+      from typing import Literal, overload
+
+      @overload
+      def read(size: Literal[-1]) -> bytes: ...
+      @overload
+      def read(size: int) -> bytes | None: ...
+      def read(size): ...
+
+      read_all = -1
+      expr = read(read_all)
+      #└ TYPE bytes
+      read_some = -2
+      expr = read(read_some)
+      #└ TYPE bytes | None
       """.trimIndent())
   }
 }
