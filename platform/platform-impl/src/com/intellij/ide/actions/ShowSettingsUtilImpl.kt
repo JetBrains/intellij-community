@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
+import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.ide.ui.search.SearchUtil
@@ -8,8 +9,10 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsOpeningTracker
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsOpeningTracker.OpeningEntry
+import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
@@ -24,8 +27,10 @@ import com.intellij.openapi.options.TabbedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableVisitor
 import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.options.newEditor.SettingsDialog
 import com.intellij.openapi.options.newEditor.SettingsDialogFactory
 import com.intellij.openapi.options.newEditor.SettingsDialogPerformanceTracker
+import com.intellij.openapi.options.newEditor.SettingsEditor
 import com.intellij.openapi.options.newEditor.SettingsNonModalDialog
 import com.intellij.openapi.options.newEditor.SettingsNonModalDialogFactory
 import com.intellij.openapi.options.newEditor.SettingsToolWindowManager
@@ -35,8 +40,12 @@ import com.intellij.openapi.project.currentOrDefaultProject
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperDialog
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.navigation.Place
+import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.Activatable
@@ -48,6 +57,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import java.awt.Component
 import java.awt.Composite
+import java.awt.Window
 import java.util.function.Consumer
 import java.util.function.Predicate
 import javax.swing.SwingUtilities
@@ -387,6 +397,61 @@ open class ShowSettingsUtilImpl : ShowSettingsUtil() {
   override fun closeSettings(@NotNull project: Project, @NotNull component: Component) {
     val dialogWrapper = getDialogWrapperFor(component) ?: return
     dialogWrapper.doCancelAction()
+  }
+
+  @ApiStatus.Internal
+  override suspend fun closeSettingsDialog(project: Project, @NlsContexts.DialogMessage message: String): Boolean? {
+    val modality = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      findVisibleModalSettingsDialog()?.window?.let { ModalityState.stateForComponent(it) } ?: ModalityState.nonModal()
+    }
+    return withContext(Dispatchers.EDT + modality.asContextElement()) {
+      val modalResult = closeModalSettingsDialog(project, message)
+      if (modalResult == false) {
+        return@withContext false
+      }
+      SettingsNonModalDialog.closeOpenDialog(project, message) ?: modalResult
+    }
+  }
+
+  private fun closeModalSettingsDialog(project: Project, @NlsContexts.DialogMessage message: String): Boolean? {
+    val settingsDialog = findVisibleModalSettingsDialog()
+    val editor = settingsDialog?.editor.asSafely<SettingsEditor>()
+    if (editor == null) {
+      return null
+    }
+    editor.checkCurrentModified()
+    if (!editor.isModified) {
+      closeSettings(project, editor)
+      return true
+    }
+
+    val result = MessageDialogBuilder.yesNoCancel(ApplicationBundle.message("settings.switch.project.unsaved.title"), message)
+      .yesText(ApplicationBundle.message("settings.switch.project.button.apply"))
+      .noText(ApplicationBundle.message("settings.switch.project.button.dont.save"))
+      .cancelText(CommonBundle.getCancelButtonText())
+      .asWarning()
+      .invocationPlace("Modal settings unsaved changes")
+      .show(project)
+    return when (result) {
+      Messages.YES -> {
+        settingsDialog.applyAndClose(true)
+        // If the dialog is still showing, then it wasn't closed due to some validation error
+        !settingsDialog.isShowing
+      }
+      Messages.NO -> {
+        closeSettings(project, editor)
+        !settingsDialog.isShowing
+      }
+      else -> false
+    }
+  }
+
+  private fun findVisibleModalSettingsDialog(): SettingsDialog? {
+    return Window.getWindows().mapNotNull {
+      it.asSafely<DialogWrapperDialog>()?.dialogWrapper.asSafely<SettingsDialog>()
+    }.firstOrNull {
+      it.isVisible
+    }
   }
 }
 

@@ -173,6 +173,29 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     }
 
     /**
+     * Closes the open settings window of [project], and returns `true`.
+     * When the window has unsaved changes, this function first asks the user to apply or discard them.
+     * The question shows [message].
+     * Returns `null` when no settings dialog was open.
+     * Returns `false` when the user cancels dialog close or the modified settings apply fails.
+     */
+    @JvmStatic
+    fun closeOpenDialog(project: Project, @NlsContexts.DialogMessage message: String): Boolean? {
+      val existing = ourInstance ?: return null
+      if (existing.isDisposed || existing.project != project) {
+        return null
+      }
+      existing.editor.checkCurrentModified()
+      when (existing.resolveUnsavedChanges(message)) {
+        UnsavedChangesResult.APPLIED -> existing.afterApply()
+        UnsavedChangesResult.NOT_MODIFIED, UnsavedChangesResult.DISCARDED -> existing.afterCancel()
+        UnsavedChangesResult.APPLY_FAILED, UnsavedChangesResult.CANCELED -> return false
+      }
+      existing.close()
+      return true
+    }
+
+    /**
      * Returns `true` if [window] is the Settings window itself or is owned (directly or
      * transitively) by the Settings window.
      */
