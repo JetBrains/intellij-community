@@ -141,6 +141,7 @@
     "intellij.database.dialects.vertica",
     "intellij.database.dialects.vertica.ex",
     "intellij.database.docker",
+    "intellij.database.explorer",
     "intellij.database.flameGraphs",
     "intellij.database.grazie",
     "intellij.database.grid.impl",
