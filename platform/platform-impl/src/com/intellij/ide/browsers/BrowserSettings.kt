@@ -26,8 +26,8 @@ class BrowserSettings : BoundCompositeConfigurable<UnnamedConfigurable>(
     }
   }
 
+  /** Selects [browser] in the "Installed Browsers" table, see [BrowserSettingsConfigurable.selectBrowser]. */
   fun selectBrowser(browser: WebBrowser) {
-    createPanel()
     browserSettings.selectBrowser(browser)
   }
 

@@ -21,6 +21,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.CollapsibleRow
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.actionButton
@@ -98,8 +99,12 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   private val chromiumBasedBrowserModel = BrowserChoiceModel(isChromiumBased = true)
   private lateinit var showBrowserHover: JBCheckBox
   private lateinit var showBrowserHoverXml: JBCheckBox
+  private lateinit var installedBrowsersGroup: CollapsibleRow
 
   private var root: DialogPanel? = null
+
+  /** The browser that [reset] selects in the table, see [selectBrowser]. */
+  private var browserToSelect: ConfigurableWebBrowser? = null
 
   /** The sections of [WebBrowserSettingsSectionEP]. The page creates them with its component. */
   private var sections: List<UnnamedConfigurable> = emptyList()
@@ -397,7 +402,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
         }
       }
 
-      collapsibleGroup(IdeBundle.message("settings.browsers.installed.browsers")) {
+      installedBrowsersGroup = collapsibleGroup(IdeBundle.message("settings.browsers.installed.browsers")) {
         row {
           comment(IdeBundle.message("settings.browsers.installed.browsers.comment"))
         }
@@ -406,7 +411,8 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
             .align(Align.FILL)
             .component
         }.resizableRow()
-      }.resizableRow()
+      }
+      installedBrowsersGroup.resizableRow()
     }
     startDetection()
     return root
@@ -428,6 +434,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   override fun disposeUIResources() {
     sections.forEach { it.disposeUIResources() }
     sections = emptyList()
+    browserToSelect = null
     root = null
   }
 
@@ -476,12 +483,28 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
     defaultBrowserModel.selectedItem = storedChoice(browserManager)
     chromiumBasedBrowserModel.selectedItem = storedChromiumBasedChoice(browserManager)
     sections.forEach { it.reset() }
+    selectBrowserToSelect()
   }
 
+  /**
+   * Expands the "Installed Browsers" group and selects [browser] in the table.
+   * The settings dialog resets the page after it creates the component, and the reset of the table clears its selection.
+   * So the page keeps [browser] and selects it again on each [reset].
+   */
   fun selectBrowser(browser: WebBrowser) {
     if (browser is ConfigurableWebBrowser) {
-      browsersEditor.selectItem(browser)
+      browserToSelect = browser
+      if (root != null) {
+        selectBrowserToSelect()
+      }
     }
+  }
+
+  private fun selectBrowserToSelect() {
+    val browser = browserToSelect ?: return
+    val row = browsersEditor.model.items.firstOrNull { originalOf(it).id == browser.id } ?: return
+    installedBrowsersGroup.expanded = true
+    browsersEditor.selectItem(originalOf(row))
   }
 
   companion object {

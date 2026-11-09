@@ -139,10 +139,8 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
       .apply {
         if (retry != null) {
           addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("button.fix")) {
-            val browserSettings = BrowserSettings()
-            val initializer = browser?.let { Runnable { browserSettings.selectBrowser(it) } }
-            if (ShowSettingsUtil.getInstance().editConfigurable(project, browserSettings, initializer)) {
-              retry.invoke()
+            ShowSettingsUtil.getInstance().showSettingsDialog(project, BrowserSettings::class.java) { settings ->
+              browser?.let { settings.selectBrowser(it) }
             }
           })
         }
