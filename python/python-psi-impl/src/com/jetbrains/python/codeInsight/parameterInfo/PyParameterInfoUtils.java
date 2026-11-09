@@ -398,8 +398,9 @@ public final class PyParameterInfoUtils {
         }
       }
       else if (lastParamIndex == parameterList.size() - 1) { // we're right after the end of param list
+        // A `/` or a bare `*` marker has an index but no named parameter.
         final PyCallableParameter parameter = indexToNamedParameter.get(lastParamIndex);
-        if (parameter.isPositionalContainer() || parameter.isKeywordContainer()) {
+        if (parameter != null && (parameter.isPositionalContainer() || parameter.isKeywordContainer())) {
           highlightIndex = lastParamIndex; // stick to *arg
         }
       }
