@@ -172,6 +172,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   public EditorTextField(Document document, Project project, FileType fileType, boolean isViewer, boolean oneLineMode) {
     if (EditorFactory.getInstance() instanceof EditorFactoryImpl factory) {
       factory.startEditorClassesPreparation();
+      factory.startHighlighterPreparation(project, document, fileType);
     }
     myOneLineMode = oneLineMode;
     myIsViewer = isViewer;
