@@ -42,7 +42,7 @@ public class GradleExecutionConsoleManager extends DefaultExternalSystemExecutio
 
   @Override
   public @NotNull BuildViewSettingsProvider getExecutionConsoleSettings() {
-    return new GradleBuildViewSettingsProvider();
+    return GradleBuildViewSettingsProvider.INSTANCE;
   }
 
   @Override

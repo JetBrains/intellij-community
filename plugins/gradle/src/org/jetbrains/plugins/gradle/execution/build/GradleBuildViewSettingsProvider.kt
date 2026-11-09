@@ -6,7 +6,7 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class GradleBuildViewSettingsProvider : BuildViewSettingsProvider {
+object GradleBuildViewSettingsProvider : BuildViewSettingsProvider {
 
   override fun isSingleBuildConsoleView(): Boolean = Registry.`is`("gradle.build.toolwindow.single.console")
 }

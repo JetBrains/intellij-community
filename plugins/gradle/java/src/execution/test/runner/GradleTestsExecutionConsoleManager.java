@@ -191,7 +191,7 @@ public final class GradleTestsExecutionConsoleManager
             null,
             null,
             defaultBuildDescriptor,
-            new GradleBuildViewSettingsProvider()
+            GradleBuildViewSettingsProvider.INSTANCE
           );
         }
         buildViewManager.onEvent(buildId, event);
@@ -325,6 +325,6 @@ public final class GradleTestsExecutionConsoleManager
 
   @Override
   public @NotNull BuildViewSettingsProvider getExecutionConsoleSettings() {
-    return new GradleBuildViewSettingsProvider();
+    return GradleBuildViewSettingsProvider.INSTANCE;
   }
 }
