@@ -76,7 +76,7 @@ fun SeItemsProvider.isExtendedInfoEnabled(): Boolean {
 }
 
 @ApiStatus.Internal
-suspend fun SeItemsProvider.findSearchScopesInfo(): SearchScopesInfo? =
+suspend fun SeItemsProvider.getSearchScopesInfo(): SearchScopesInfo? =
   when (this) {
     is SeSearchScopesProvider -> getSearchScopesInfo()
     is SeTargetsFilterProvider -> targetItemsProvider.getSearchScopesInfo()
@@ -84,7 +84,7 @@ suspend fun SeItemsProvider.findSearchScopesInfo(): SearchScopesInfo? =
   }
 
 @ApiStatus.Internal
-suspend fun SeItemsProvider.findTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation>? =
+suspend fun SeItemsProvider.getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation>? =
   when (this) {
     is SeTypeVisibilityStateProvider -> getTypeVisibilityStates(key)
     is SeTargetsFilterProvider -> targetItemsProvider.getTypeVisibilityStates(key)
@@ -281,9 +281,9 @@ class SeLocalItemDataProvider(
     return provider.itemSelected(item, modifiers, searchText)
   }
 
-  suspend fun getSearchScopesInfo(): SearchScopesInfo? = provider.findSearchScopesInfo()
+  suspend fun getSearchScopesInfo(): SearchScopesInfo? = provider.getSearchScopesInfo()
 
-  suspend fun getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation>? = provider.findTypeVisibilityStates(key)
+  suspend fun getTypeVisibilityStates(key: String): List<SeTypeVisibilityStatePresentation>? = provider.getTypeVisibilityStates(key)
 
   /**
    * Defines if results can be shown in <i>Find</i> toolwindow.

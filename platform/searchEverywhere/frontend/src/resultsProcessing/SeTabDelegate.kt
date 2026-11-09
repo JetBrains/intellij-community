@@ -171,17 +171,21 @@ class SeTabDelegate(
    * Creates the standard filter of a tab: the scope chooser, the preview toggle, and the type filter.
    * The Classes, Files, and Symbols tabs show the same filter.
    *
-   * @param tabId the id of the tab. The filter keeps the selected scope under this id when [persistScope] is true.
+   * @param tabId the id of the tab. The filter keeps the selected scope under this id when [persistScopeIfAvailable] is true.
    * @param hasPreviewAction whether the filter shows the toggle of the preview.
-   * @param persistScope whether the filter keeps the selected scope between the popups.
+   * @param persistScopeIfAvailable whether the filter keeps the selected scope between the popups.
    */
-  suspend fun createTargetsFilterEditor(tabId: String, hasPreviewAction: Boolean = true, persistScope: Boolean = true): SeFilterEditor =
+  suspend fun createTargetsFilterEditor(
+    tabId: String,
+    hasPreviewAction: Boolean = true,
+    persistScopeIfAvailable: Boolean = false,
+  ): SeFilterEditor =
     SeTargetsFilterEditor(project,
                           tabId,
                           getSearchScopesInfos().firstOrNull(),
                           getTypeVisibilityStates(),
                           hasPreviewAction = hasPreviewAction,
-                          persistScopeIfAvailable = persistScope)
+                          persistScopeIfAvailable = persistScopeIfAvailable)
 
   suspend fun itemSelected(itemData: SeItemData, modifiers: Int, searchText: String): Boolean {
     return providers.getValue().itemSelected(itemData, modifiers, searchText)
