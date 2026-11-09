@@ -33,7 +33,7 @@ import java.nio.file.Path
 class CondaViewModel<P : PathHolder>(
   val fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
-  val projectPathFlows: ProjectPathFlows,
+  val projectPathFlows: ProjectPathFlows<*>,
 ) : PythonToolViewModel {
   val condaExecutable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = propertyGraph.property(null)
   val condaEnvironmentsResult: MutableStateFlow<PyResult<List<PyCondaEnv>>?> = MutableStateFlow(null)

@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.first
 class VenvViewModel<P : PathHolder>(
   fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
-  projectPathFlows: ProjectPathFlows,
+  projectPathFlows: ProjectPathFlows<*>,
 ) : PythonToolViewModel {
   val backProperty: ObservableMutableProperty<ValidatedPath.Folder<P>?> = propertyGraph.property(null)
   val inheritSitePackages: GraphProperty<Boolean> = propertyGraph.property(false)

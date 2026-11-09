@@ -56,7 +56,7 @@ interface PySdkPanelBuilder {
    * Performs only static initialization using Kotlin DSL [com.intellij.ui.dsl], without access to [CoroutineScope].
    */
   @RequiresEdt
-  fun buildPanel(outerPanel: Panel, projectPathFlows: ProjectPathFlows)
+  fun buildPanel(outerPanel: Panel, projectPathFlows: ProjectPathFlows<*>)
 
   /**
    * This method is used to bind the background initialization of the panel to a specific [scopingComponent] showing scope.
@@ -105,7 +105,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
   private lateinit var model: PythonMutableTargetAddInterpreterModel<PathHolder.Eel>
 
   @RequiresEdt
-  override fun buildPanel(outerPanel: Panel, projectPathFlows: ProjectPathFlows) {
+  override fun buildPanel(outerPanel: Panel, projectPathFlows: ProjectPathFlows<*>) {
     // To support project creation on new WSL we would need to derive eel from pathFlow
     // That means we would need to rebuild the whole UI as soon as it changes
     // While it is possible, it cost time, and we postpone for now

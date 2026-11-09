@@ -48,7 +48,7 @@ internal interface PythonToolViewModel {
 }
 
 abstract class PythonAddInterpreterModel<P : PathHolder>(
-  val projectPathFlows: ProjectPathFlows,
+  val projectPathFlows: ProjectPathFlows<*>,
   val fileSystem: FileSystem<P>,
 ) {
   internal val modificationCounter: AtomicProperty<Int> = AtomicProperty(0)
@@ -171,12 +171,12 @@ abstract class PythonAddInterpreterModel<P : PathHolder>(
 
 }
 
-abstract class PythonMutableTargetAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows, fileSystem: FileSystem<P>) :
+abstract class PythonMutableTargetAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows<*>, fileSystem: FileSystem<P>) :
   PythonAddInterpreterModel<P>(projectPathFlows, fileSystem) {
   override val state: MutableTargetState<P> = MutableTargetState(propertyGraph)
 }
 
-class PythonLocalAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows, fileSystem: FileSystem<P>) :
+class PythonLocalAddInterpreterModel<P : PathHolder>(projectPathFlows: ProjectPathFlows<*>, fileSystem: FileSystem<P>) :
   PythonMutableTargetAddInterpreterModel<P>(projectPathFlows, fileSystem) {
   override fun initialize(scope: CoroutineScope) {
     super.initialize(scope)

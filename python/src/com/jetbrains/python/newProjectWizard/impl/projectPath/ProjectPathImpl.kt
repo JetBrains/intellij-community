@@ -12,6 +12,7 @@ import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 
 /**
@@ -31,7 +32,7 @@ class ProjectPathImpl(
 
 
   private val listener = DocumentListenerToFlowAdapter(field)
-  override val projectPathFlows: ProjectPathFlows = ProjectPathFlows.create(listener.flow, onlyAllowPathsOn = onlyAllowPathOn)
+  override val projectPathFlows: ProjectPathFlows<Path?> = ProjectPathFlows.create(listener.flow, onlyAllowPathsOn = onlyAllowPathOn)
 
   init {
     field.addDocumentListener(listener)

@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.onEach
 internal class UvViewModel<P : PathHolder>(
   fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
-  private val projectPathFlows: ProjectPathFlows,
+  private val projectPathFlows: ProjectPathFlows<*>,
 ) : PythonToolViewModel {
   val uvExecutable: ObservableMutableProperty<ValidatedPath.Executable<P>?> = propertyGraph.property(null)
   val uvVenvPath: ObservableMutableProperty<ValidatedPath.Folder<P>?> = propertyGraph.property(null)

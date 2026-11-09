@@ -32,7 +32,7 @@ interface ProjectPathProvider {
   /**
    * [ProjectPathFlows] made out of project path
    */
-  val projectPathFlows: ProjectPathFlows
+  val projectPathFlows: ProjectPathFlows<*>
 
   companion object {
 

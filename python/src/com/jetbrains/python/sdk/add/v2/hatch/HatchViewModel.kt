@@ -33,7 +33,7 @@ import kotlin.io.path.isRegularFile
 internal class HatchViewModel<P : PathHolder>(
   val fileSystem: FileSystem<P>,
   propertyGraph: PropertyGraph,
-  val projectPathFlows: ProjectPathFlows,
+  val projectPathFlows: ProjectPathFlows<*>,
 ) : PythonToolViewModel {
   val selectedEnvFromAvailable: ObservableMutableProperty<HatchVirtualEnvironment<P>?> = propertyGraph.property(null)
 
