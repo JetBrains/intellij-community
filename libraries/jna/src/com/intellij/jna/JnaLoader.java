@@ -6,6 +6,7 @@ import com.sun.jna.Native;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.logging.Level;
 
 /**
@@ -33,8 +34,10 @@ public final class JnaLoader {
         String winDir = System.getenv("SystemRoot");
         if (winDir != null) {
           String path = System.getProperty("jna.platform.library.path");
-          path = (path == null ? "" : path + ';') + winDir + "\\System32";
-          System.setProperty("jna.platform.library.path", path);
+          String systemDir = winDir + "\\System32";
+          if (path == null || !Arrays.asList(path.split(";")).contains(systemDir)) {
+            System.setProperty("jna.platform.library.path", path == null ? systemDir : path + ';' + systemDir);
+          }
         }
       }
 

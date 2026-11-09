@@ -437,7 +437,9 @@ private fun scheduleSystemLibSetupAndLogInfoAndInitMacApp(
       if (windowsDirectory != null) {
         val libraryPath = System.getProperty("jna.platform.library.path")
         val systemDirectory = "$windowsDirectory\\System32"
-        System.setProperty("jna.platform.library.path", if (libraryPath == null) systemDirectory else "$libraryPath;$systemDirectory")
+        if (libraryPath == null || systemDirectory !in libraryPath.split(';')) {
+          System.setProperty("jna.platform.library.path", if (libraryPath == null) systemDirectory else "$libraryPath;$systemDirectory")
+        }
       }
     }
 
