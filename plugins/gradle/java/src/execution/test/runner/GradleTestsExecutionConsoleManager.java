@@ -13,7 +13,6 @@ import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.FileMessageEvent;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.MessageEvent;
-import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.events.StartEvent;
 import com.intellij.build.events.impl.ProgressBuildEventImpl;
@@ -192,14 +191,6 @@ public final class GradleTestsExecutionConsoleManager
         }
         buildViewManager.onEvent(buildId, event);
 
-        if (event instanceof OutputBuildEvent && event.getMessage().startsWith("<ijLog>")) {
-          GradleTestsExecutionConsoleOutputProcessor.onOutput(
-            consoleView,
-            event.getMessage(),
-            ((OutputBuildEvent)event).getOutputType()
-          );
-        }
-
         if (event instanceof StartEvent) {
           ProgressBuildEventImpl progressBuildEvent =
             new ProgressBuildEventImpl(event.getId(), event.getParentId(), event.getEventTime(), event.getMessage(), -1, -1, "");
@@ -254,7 +245,7 @@ public final class GradleTestsExecutionConsoleManager
                        @NotNull ProcessHandler processHandler,
                        @NotNull String text,
                        @NotNull Key processOutputType) {
-    // plan text output for Gradle < 7.0 is process via OutputBuildEvent
+    GradleTestsExecutionConsoleOutputProcessor.onOutput(executionConsole, text, processOutputType);
   }
 
   @Override
