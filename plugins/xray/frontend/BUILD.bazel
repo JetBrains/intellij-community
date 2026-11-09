@@ -1,0 +1,71 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.xray.frontend` start
+content_module_jar(module = ":frontend")
+### auto-generated section `dev intellij.xray.frontend` end
+
+### auto-generated section `build intellij.xray.frontend` start
+jvm_library(
+    name = "frontend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xray.frontend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util/jdom",
+        "@lib//:kotlin-stdlib",
+        "//platform/platform-impl/rpc",
+        "//platform/platform-frontend:frontend",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/core-api:core",
+        "//platform/xdebugger-api:debugger",
+        "//platform/platform-api:ide",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-ui",
+        "//platform/lang-api:lang",
+        "//platform/analysis-api:analysis",
+        "//platform/lang-impl",
+        "//platform/ide-core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util:util-ui",
+        "//platform/core-impl",
+        "//platform/lang-core",
+        "//libraries/miglayout-swing",
+    ],
+)
+### auto-generated section `build intellij.xray.frontend` end
+
+### auto-generated section `iml intellij.xray.frontend` start
+exports_files(
+    [
+        "intellij.xray.frontend.iml",
+        "resources/intellij.xray.frontend.xml",
+        "resources/xray/defaults/codeVision/defaults.xml",
+        "resources/xray/defaults/declarative/defaults_Gradle.xml",
+        "resources/xray/defaults/declarative/defaults_JS.xml",
+        "resources/xray/defaults/declarative/defaults_Java.xml",
+        "resources/xray/defaults/declarative/defaults_Kotlin.xml",
+        "resources/xray/defaults/declarative/defaults_TS.xml",
+        "resources/xray/defaults/index.xml",
+        "resources/xray/defaults/parameterNames/defaults_Angular.xml",
+        "resources/xray/defaults/parameterNames/defaults_JS.xml",
+        "resources/xray/defaults/parameterNames/defaults_Java.xml",
+        "resources/xray/defaults/parameterNames/defaults_Kotlin.xml",
+        "resources/xray/defaults/parameterNames/defaults_TS.xml",
+        "resources/xray/defaults/parameterNames/defaults_Vue.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.xray.frontend` end

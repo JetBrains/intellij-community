@@ -2531,6 +2531,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/xpath/xslt-rt/intellij.xpath.rt.iml" filepath="$PROJECT_DIR$/plugins/xpath/xslt-rt/intellij.xpath.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xpath/intellij.xpath.tests.iml" filepath="$PROJECT_DIR$/plugins/xpath/intellij.xpath.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xray/intellij.xray.iml" filepath="$PROJECT_DIR$/plugins/xray/intellij.xray.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/xray/backend/intellij.xray.backend.iml" filepath="$PROJECT_DIR$/plugins/xray/backend/intellij.xray.backend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/xray/frontend/intellij.xray.frontend.iml" filepath="$PROJECT_DIR$/plugins/xray/frontend/intellij.xray.frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/xray/shared/intellij.xray.shared.iml" filepath="$PROJECT_DIR$/plugins/xray/shared/intellij.xray.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" filepath="$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/backend/intellij.yaml.backend.iml" filepath="$PROJECT_DIR$/plugins/yaml/backend/intellij.yaml.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/backend/intellij.yaml.backend.tests.iml" filepath="$PROJECT_DIR$/plugins/yaml/backend/intellij.yaml.backend.tests.iml" />

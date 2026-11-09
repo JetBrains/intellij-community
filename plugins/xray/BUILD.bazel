@@ -3,11 +3,20 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `dev intellij.xray` start
 dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.xray.frontend",
+        "intellij.xray.shared",
+        "intellij.xray.backend",
+    ],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/xray.jar": ["intellij.xray"],
     },
     main_module = "intellij.xray",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.xray.backend"],
+    },
 )
 ### auto-generated section `dev intellij.xray` end
 
@@ -15,11 +24,7 @@ dev_dist_plugin(
 jvm_library(
     name = "xray",
     srcs = glob(
-        [
-            "src/**/*.kt",
-            "src/**/*.java",
-            "src/**/*.form",
-        ],
+        [],
         allow_empty = True,
     ),
     module_name = "intellij.xray",
@@ -28,31 +33,6 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//libraries/jetbrains/annotations",
-        "//platform/core-api:core",
-        "//platform/util",
-        "//platform/util/jdom",
-        "//platform/projectModel-api:projectModel",
-        "//platform/editor-ui-api:editor-ui",
-        "//platform/platform-api:ide",
-        "//platform/ide-core",
-        "//platform/ide-core-impl",
-        "//platform/platform-impl:ide-impl",
-        "//platform/analysis-api:analysis",
-        "//platform/analysis-impl",
-        "//platform/lang-api:lang",
-        "//platform/lang-impl",
-        "//platform/xdebugger-api:debugger",
-        "//platform/util:util-ui",
-        "//platform/core-ui",
-        "//platform/core-impl",
-        "//platform/lang-core",
-        "//libraries/miglayout-swing",
-        "//platform/platform-frontend:frontend",
-    ],
 )
 ### auto-generated section `build intellij.xray` end
 
@@ -61,19 +41,6 @@ exports_files(
     [
         "intellij.xray.iml",
         "resources/META-INF/plugin.xml",
-        "resources/xray/defaults/codeVision/defaults.xml",
-        "resources/xray/defaults/declarative/defaults_Gradle.xml",
-        "resources/xray/defaults/declarative/defaults_JS.xml",
-        "resources/xray/defaults/declarative/defaults_Java.xml",
-        "resources/xray/defaults/declarative/defaults_Kotlin.xml",
-        "resources/xray/defaults/declarative/defaults_TS.xml",
-        "resources/xray/defaults/index.xml",
-        "resources/xray/defaults/parameterNames/defaults_Angular.xml",
-        "resources/xray/defaults/parameterNames/defaults_JS.xml",
-        "resources/xray/defaults/parameterNames/defaults_Java.xml",
-        "resources/xray/defaults/parameterNames/defaults_Kotlin.xml",
-        "resources/xray/defaults/parameterNames/defaults_TS.xml",
-        "resources/xray/defaults/parameterNames/defaults_Vue.xml",
     ],
     visibility = ["//visibility:public"],
 )

@@ -1,0 +1,45 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.xray.shared` start
+content_module_jar(module = ":shared")
+### auto-generated section `dev intellij.xray.shared` end
+
+### auto-generated section `build intellij.xray.shared` start
+jvm_library(
+    name = "shared",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xray.shared",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/object-serializer",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//platform/platform-impl/rpc",
+        "//platform/platform-api:ide",
+    ],
+)
+### auto-generated section `build intellij.xray.shared` end
+
+### auto-generated section `iml intellij.xray.shared` start
+exports_files(
+    [
+        "intellij.xray.shared.iml",
+        "resources/intellij.xray.shared.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.xray.shared` end

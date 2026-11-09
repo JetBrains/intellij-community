@@ -1,0 +1,10 @@
+<idea-plugin>
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.xray.shared"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>

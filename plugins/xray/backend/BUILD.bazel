@@ -1,0 +1,44 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.xray.backend` start
+content_module_jar(module = ":backend")
+### auto-generated section `dev intellij.xray.backend` end
+
+### auto-generated section `build intellij.xray.backend` start
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.xray.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/xray/shared",
+        "//platform/kernel/rpc.backend",
+        "//platform/platform-impl/rpc",
+        "//platform/backend",
+    ],
+)
+### auto-generated section `build intellij.xray.backend` end
+
+### auto-generated section `iml intellij.xray.backend` start
+exports_files(
+    [
+        "intellij.xray.backend.iml",
+        "resources/intellij.xray.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.xray.backend` end

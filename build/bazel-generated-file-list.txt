@@ -1897,6 +1897,9 @@ plugins/webp/tests
 plugins/xpath
 plugins/xpath/xslt-rt
 plugins/xray
+plugins/xray/backend
+plugins/xray/frontend
+plugins/xray/shared
 plugins/yaml
 plugins/yaml/backend
 plugins/yaml/plugin

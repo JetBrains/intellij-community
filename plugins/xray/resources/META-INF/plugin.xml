@@ -6,41 +6,11 @@
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
-    <plugin id="com.intellij.modules.xdebugger"/>
-    <module name="intellij.platform.frontend"/>
   </dependencies>
 
-  <resource-bundle>messages.XRayBundle</resource-bundle>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <editorFactoryListener implementation="com.intellij.xray.impl.editorTracking.XRayModeTracker"/>
-    <iw.actionProvider implementation="com.intellij.xray.impl.action.XRayModeActionProvider"/>
-    <notificationGroup displayType="BALLOON" id="X-Ray Inlay Visibility" bundle="messages.XRayBundle" key="xray.inlay.notification.group"/>
-
-    <!-- Platform EPs -->
-    <codeInsight.inlayHintSettingsOverrider implementation="com.intellij.xray.impl.platform.XRayInlayHintSettingsOverrider"/>
-    <codeInsight.inlayContextMenuContributor implementation="com.intellij.xray.impl.platform.XRayInlayContextMenuContributor"/>
-    <codeInsight.inlaySettingsConfigurableFactory implementation="com.intellij.xray.impl.platform.XRayInlaySettingsConfigurableFactory"/>
-    <codeInsight.declarativeInlayPayloadContributor implementation="com.intellij.xray.impl.platform.XRayDeclarativeInlayPayloadContributor"/>
-    <codeVision.codeVisionEntryExtraActionContributor implementation="com.intellij.xray.impl.platform.XRayCodeVisionEntryExtraActionContributor"/>
-  </extensions>
-
-  <projectListeners>
-    <listener class="com.intellij.xray.impl.editorTracking.XRaySelectionListener"
-              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
-    <listener class="com.intellij.xray.impl.debugger.XRayDebuggerUseModeListener" topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
-  </projectListeners>
-
-  <actions resource-bundle="messages.XRayBundle">
-    <action id="ToggleXRayMode" class="com.intellij.xray.impl.action.ToggleXRayModeAction" icon="AllIcons.General.InspectionsEye">
-      <keyboard-shortcut first-keystroke="ctrl shift X" keymap="$default"/>
-    </action>
-    <group id="XRayHintVisibility" class="com.intellij.xray.impl.action.XRayHintVisibilityGroup">
-      <add-to-group group-id="InlayMenu" anchor="first"/>
-    </group>
-  </actions>
-  
-  <applicationListeners>
-    <listener class="com.intellij.xray.impl.XRayDynamicPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
-  </applicationListeners>
+  <content namespace="jetbrains">
+    <module name="intellij.xray.frontend" required-if-available="intellij.platform.frontend"/>
+    <module name="intellij.xray.shared" loading="required"/>
+    <module name="intellij.xray.backend" required-if-available="intellij.platform.backend"/>
+  </content>
 </idea-plugin>
