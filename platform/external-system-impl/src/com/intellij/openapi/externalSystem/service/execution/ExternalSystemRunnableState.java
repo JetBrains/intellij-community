@@ -471,8 +471,7 @@ public class ExternalSystemRunnableState extends UserDataHolderBase implements R
       myProcessHandler.notifyTextAvailable(greeting + "\n", ProcessOutputTypes.SYSTEM);
 
       var eventMessage = BuildBundle.message("build.status.running");
-      myEventDispatcher.notifyBuildEvent(id,
-                                         StartBuildEvent.builder(eventMessage, myBuildDescriptor)
+      myEventDispatcher.notifyBuildEvent(id, StartBuildEvent.builder(eventMessage, myBuildDescriptor)
           .withBuildViewSettings(myConsoleSettings)
           .build()
       );
