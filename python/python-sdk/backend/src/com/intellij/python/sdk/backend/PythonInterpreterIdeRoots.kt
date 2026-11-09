@@ -5,12 +5,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.python.community.helpersLocator.PythonBundledPyiStubsLocator
 import com.jetbrains.python.psi.LanguageLevel
 import java.nio.file.Path
-import kotlin.io.path.exists
 
 /** The binary skeletons of the interpreter, when it has them, see [PythonInterpreterRootsContributor]. */
 internal class PythonInterpreterSkeletonRoots : PythonInterpreterRootsContributor {
   override fun classRoots(project: Project, interpreter: PythonInterpreter): List<Path> =
-    listOfNotNull(interpreter.skeletonsPath?.takeIf { it.exists() })
+    // No disk check here: resolve can derive the roots under a read action. `toRoot` drops a path that the VFS does not know.
+    listOfNotNull(interpreter.skeletonsPath)
 }
 
 /**

@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.jetbrains.python.PyNames;
@@ -41,7 +40,7 @@ public final class PySkeletonUtil {
     if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, file, false)) {
       PySkeletonHeader skeletonHeader = file.getUserData(CACHED_SKELETON_HEADER);
       if (skeletonHeader == null) {
-        skeletonHeader = PySkeletonHeader.readSkeletonHeader(file.toNioPath());
+        skeletonHeader = PySkeletonHeader.readSkeletonHeader(file);
         file.putUserData(CACHED_SKELETON_HEADER, skeletonHeader);
       }
       return skeletonHeader;
@@ -65,19 +64,14 @@ public final class PySkeletonUtil {
 
   /**
    * Whether {@code vFile} belongs to the standard library of {@code interpreter}.
+   * <p>
+   * Code insight calls it under a read action, so it reads no file outside the VFS.
    */
   @RequiresBackgroundThread(generateAssertion = false)
   public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable PythonInterpreter interpreter) {
+    if (interpreter == null) return false;
     //noinspection deprecation
-    return isStdLib(vFile, interpreter == null ? null : PythonInterpreterExtKt.getSdkAPI(interpreter));
-  }
-
-  @RequiresBackgroundThread(generateAssertion = false)
-  public static boolean isStdLib(@NotNull VirtualFile vFile, @Nullable Sdk pythonSdk) {
-    if (pythonSdk == null) {
-      return false;
-    }
-
+    final Sdk pythonSdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
     @Nullable VirtualFile originFile = vFile;
     @NotNull String originPath = vFile.getPath();
     boolean checkOnRemoteFS = false;
@@ -103,7 +97,7 @@ public final class PySkeletonUtil {
         originFile = null;
       }
       else {
-        originFile = VfsUtil.findFile(Path.of(binaryPath), true);
+        originFile = VfsUtil.findFile(Path.of(binaryPath), false);
       }
       originPath = binaryPath;
     }
@@ -116,9 +110,7 @@ public final class PySkeletonUtil {
     if (libDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, libDir, pythonSdk, checkOnRemoteFS)) {
       return true;
     }
-    final PythonInterpreter pythonInterpreter = PythonInterpreterKt.pythonInterpreterResult(pythonSdk, false).getSuccessOrNull();
-    if (pythonInterpreter == null) return PyTypeShed.INSTANCE.isInStandardLibrary(vFile);
-    final VirtualFile venvLibDir = PythonInterpreterExtKt.venvLibDirectory(pythonInterpreter);
+    final VirtualFile venvLibDir = PythonInterpreterExtKt.venvLibDirectory(interpreter);
     if (venvLibDir != null && isUnderLibDirButNotSitePackages(originFile, originPath, venvLibDir, pythonSdk, checkOnRemoteFS)) {
       return true;
     }

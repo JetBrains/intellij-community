@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.skeleton;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.LineNumberReader;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,35 +44,52 @@ public final class PySkeletonHeader {
   }
 
   public static @Nullable PySkeletonHeader readSkeletonHeader(@NotNull Path file) {
-    try (BufferedReader buffered = Files.newBufferedReader(file, StandardCharsets.UTF_8);
-         LineNumberReader reader = new LineNumberReader(buffered)) {
-      String line = null;
-      // Read 3 lines, skip first 2: encoding, module name
-      for (int i = 0; i < 3; i++) {
-        line = reader.readLine();
-        if (line == null) {
-          return null;
-        }
-      }
-      // Try the old whitespace-unsafe header format v1 first
-      final Matcher v1Matcher = VERSION_LINE_V1.matcher(line);
-      if (v1Matcher.matches()) {
-        return new PySkeletonHeader(v1Matcher.group(1), fromVersionString(v1Matcher.group(2)));
-      }
-      final Matcher fromMatcher = FROM_LINE_V2.matcher(line);
-      if (fromMatcher.matches()) {
-        final String binaryFile = fromMatcher.group(1);
-        line = reader.readLine();
-        if (line != null) {
-          final Matcher byMatcher = BY_LINE_V2.matcher(line);
-          if (byMatcher.matches()) {
-            final int version = fromVersionString(byMatcher.group(1));
-            return new PySkeletonHeader(binaryFile, version);
-          }
-        }
-      }
+    try (BufferedReader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+      return readSkeletonHeader(reader);
     }
     catch (IOException ignored) {
+      return null;
+    }
+  }
+
+  /**
+   * Reads the header through the VFS. Unlike {@link VirtualFile#toNioPath()}, the read does not wait for the pending
+   * writes of the local file system, so a read action can call it. For a local file, the read can still read the disk.
+   */
+  public static @Nullable PySkeletonHeader readSkeletonHeader(@NotNull VirtualFile file) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8))) {
+      return readSkeletonHeader(reader);
+    }
+    catch (IOException ignored) {
+      return null;
+    }
+  }
+
+  private static @Nullable PySkeletonHeader readSkeletonHeader(@NotNull BufferedReader reader) throws IOException {
+    String line = null;
+    // Read 3 lines, skip first 2: encoding, module name
+    for (int i = 0; i < 3; i++) {
+      line = reader.readLine();
+      if (line == null) {
+        return null;
+      }
+    }
+    // Try the old whitespace-unsafe header format v1 first
+    final Matcher v1Matcher = VERSION_LINE_V1.matcher(line);
+    if (v1Matcher.matches()) {
+      return new PySkeletonHeader(v1Matcher.group(1), fromVersionString(v1Matcher.group(2)));
+    }
+    final Matcher fromMatcher = FROM_LINE_V2.matcher(line);
+    if (fromMatcher.matches()) {
+      final String binaryFile = fromMatcher.group(1);
+      line = reader.readLine();
+      if (line != null) {
+        final Matcher byMatcher = BY_LINE_V2.matcher(line);
+        if (byMatcher.matches()) {
+          final int version = fromVersionString(byMatcher.group(1));
+          return new PySkeletonHeader(binaryFile, version);
+        }
+      }
     }
     return null;
   }

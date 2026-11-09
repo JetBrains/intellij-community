@@ -9,6 +9,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.PythonDocumentationLinkProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
@@ -978,9 +980,11 @@ public final class PyStdlibDocumentationLinkProvider implements PythonDocumentat
       file = file.getParent();
       assert file != null;
     }
-    Sdk sdk = PyBuiltinCache.findSdkForFile(file);
+    PythonInterpreter interpreter = PyBuiltinCache.findInterpreterForFile(file);
     VirtualFile vFile = file.getVirtualFile();
-    if (vFile != null && sdk != null && PySkeletonUtil.isStdLib(vFile, sdk)) {
+    if (vFile != null && interpreter != null && PySkeletonUtil.isStdLib(vFile, interpreter)) {
+      //noinspection deprecation
+      Sdk sdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
       QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
       if (qName == null) {
         return null;
