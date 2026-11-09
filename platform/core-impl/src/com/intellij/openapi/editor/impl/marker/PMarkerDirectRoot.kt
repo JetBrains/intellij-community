@@ -37,7 +37,7 @@ class PMarkerDirectRoot private constructor(
   private val root: PMarkerNode?,
   private val invalids: PersistentLongMap<PMarkerInvalidNode>,
   override val resolutionCacheIdentity: Any = Any(),
-  @Volatile private var cachedResolutions: ConcurrentLongLongMap? = null,
+  @Volatile private var cachedResolutions: ResolutionCache? = null,
   private val resolutionUpdate: PMarkerResolutionUpdate? = null,
 ) : PMarkerRoot {
   override fun advanceResolution(previousIdentity: Any, resolution: Long): Long =
@@ -82,12 +82,11 @@ class PMarkerDirectRoot private constructor(
   private fun cacheResolution(id: Long, resolution: Long) {
     var cache = cachedResolutions
     if (cache == null) {
-      cache = Java11Shim.createConcurrentLongLongMap(PMarkerResolution.UNRESOLVED)
-      if (!CACHED_RESOLUTIONS_UPDATER.compareAndSet(this, null, cache)) {
-        cache = cachedResolutions
-      }
+      cache = ResolutionCache(id, resolution)
+      if (CACHED_RESOLUTIONS_UPDATER.compareAndSet(this, null, cache)) return
+      cache = cachedResolutions
     }
-    cache!!.putIfAbsent(id, resolution)
+    cache!!.put(id, resolution)
   }
 
   private fun cacheResolution(entry: MarkerEntry, ancestorDelta: Int) {
@@ -428,6 +427,32 @@ class PMarkerDirectRoot private constructor(
   /** Keeps a traversal node and the total lazy shift from its ancestors. */
   private data class Frame(val node: PMarkerNode, val delta: Int)
 
+  /** Stores the first resolution directly and allocates a map for other marker IDs. Metadata changes share this cache. */
+  private class ResolutionCache(private val firstId: Long, private val firstResolution: Long) {
+    @Volatile
+    private var additionalResolutions: ConcurrentLongLongMap? = null
+
+    operator fun get(id: Long): Long =
+      if (id == firstId) firstResolution else additionalResolutions?.get(id) ?: PMarkerResolution.UNRESOLVED
+
+    fun put(id: Long, resolution: Long) {
+      if (id == firstId) return
+      var cache = additionalResolutions
+      if (cache == null) {
+        cache = Java11Shim.createConcurrentLongLongMap(PMarkerResolution.UNRESOLVED)
+        if (!ADDITIONAL_RESOLUTIONS_UPDATER.compareAndSet(this, null, cache)) {
+          cache = additionalResolutions
+        }
+      }
+      cache!!.putIfAbsent(id, resolution)
+    }
+
+    companion object {
+      private val ADDITIONAL_RESOLUTIONS_UPDATER: AtomicReferenceFieldUpdater<ResolutionCache, ConcurrentLongLongMap> =
+        AtomicReferenceFieldUpdater.newUpdater(ResolutionCache::class.java, ConcurrentLongLongMap::class.java, "additionalResolutions")
+    }
+  }
+
   private fun interface MarkerTransformer {
     fun transform(entry: MarkerEntry): MarkerTransformResult
   }
@@ -690,9 +715,9 @@ class PMarkerDirectRoot private constructor(
   }
 
   companion object {
-    private val CACHED_RESOLUTIONS_UPDATER: AtomicReferenceFieldUpdater<PMarkerDirectRoot, ConcurrentLongLongMap> =
+    private val CACHED_RESOLUTIONS_UPDATER: AtomicReferenceFieldUpdater<PMarkerDirectRoot, ResolutionCache> =
       AtomicReferenceFieldUpdater.newUpdater(
-        PMarkerDirectRoot::class.java, ConcurrentLongLongMap::class.java, "cachedResolutions")
+        PMarkerDirectRoot::class.java, ResolutionCache::class.java, "cachedResolutions")
 
     private val EMPTY: PMarkerDirectRoot =
       PMarkerDirectRoot(PMarkerNodeHistory.initialVersion, null, PersistentLongMap.empty())

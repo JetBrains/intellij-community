@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.containers.ConcurrentLongLongMap
 import com.intellij.util.ref.GCWatcher
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -567,8 +566,11 @@ internal class PMarkerDirectRootTest {
     return root.applyPatch(patch, before, before.replace(patch.startOffset(), patch.endOffset(), patch.newFragment()))
   }
 
-  private fun resolutionCache(root: PMarkerDirectRoot): ConcurrentLongLongMap? = PMarkerDirectRoot::class.java
-    .getDeclaredField("cachedResolutions").apply { isAccessible = true }.get(root) as ConcurrentLongLongMap?
+  private fun resolutionCache(root: PMarkerDirectRoot): Any? = PMarkerDirectRoot::class.java
+    .getDeclaredField("cachedResolutions").apply { isAccessible = true }.get(root)
+
+  private operator fun Any.get(id: Long): Long = javaClass.getDeclaredMethod("get", Long::class.javaPrimitiveType)
+    .apply { isAccessible = true }.invoke(this, id) as Long
 
   private fun assertSpec(root: PMarkerRoot, handle: SnapshotMarkerReference<*>, spec: Byte) {
     assertEquals(spec, resolvedEntries(root).single { it.handle === handle }.spec)

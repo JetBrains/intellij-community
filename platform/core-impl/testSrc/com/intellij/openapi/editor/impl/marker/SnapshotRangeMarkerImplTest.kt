@@ -12,6 +12,7 @@ import com.intellij.util.ObjectUtilsRt
 import com.intellij.util.ref.GCUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -24,6 +25,63 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 internal class SnapshotRangeMarkerImplTest {
+  @Test
+  fun `disposal retains offsets without allocating a resolution map`() {
+    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
+      val document = DocumentImpl("abcdefgh", true)
+      val markers = List(12) { document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl }
+      for (marker in markers) {
+        val root = marker.currentRootReference().get()
+
+        marker.dispose()
+
+        assertFalse(marker.isValid)
+        assertEquals(TextRange(2, 4), marker.textRange)
+        repeat(2) {
+          assertEquals(TextRangeScalarUtil.toScalarRange(2, 4), root.resolve(marker.markerHandle))
+          assertTrue(root.isValid(marker.markerHandle))
+          assertNull(resolutionMap(root))
+        }
+        assertEquals(PMarkerResolution.ABSENT, marker.currentRootReference().get().resolve(marker.markerHandle))
+      }
+    }
+  }
+
+  @Test
+  fun `metadata changes share the resolution map allocated for a second marker`() {
+    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
+      val document = DocumentImpl("abcdefgh", true)
+      val first = document.createRangeMarker(1, 3) as SnapshotRangeMarkerImpl
+      val second = document.createRangeMarker(5, 7) as SnapshotRangeMarkerImpl
+      val root = first.currentRootReference().get()
+      val firstRange = TextRangeScalarUtil.toScalarRange(1, 3)
+      val secondRange = TextRangeScalarUtil.toScalarRange(5, 7)
+      assertEquals(firstRange, root.resolve(first.markerHandle))
+      assertNull(resolutionMap(root))
+
+      val updated = root.updateSpec(first.markerHandle, MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = false))
+      assertNull(resolutionMap(updated))
+      assertEquals(secondRange, updated.resolve(second.markerHandle))
+
+      assertNotNull(resolutionMap(root))
+      assertSame(resolutionMap(root), resolutionMap(updated))
+      for (current in listOf(root, updated)) {
+        assertEquals(firstRange, current.resolve(first.markerHandle))
+        assertEquals(secondRange, current.resolve(second.markerHandle))
+        assertTrue(current.isValid(first.markerHandle))
+        assertTrue(current.isValid(second.markerHandle))
+      }
+      assertEquals(PMarkerResolution.ABSENT, updated.remove(first.markerHandle).resolve(first.markerHandle))
+      assertEquals(firstRange, root.resolve(first.markerHandle))
+    }
+  }
+
+  private fun resolutionMap(root: PMarkerRoot): Any? {
+    val cache = checkNotNull(PMarkerDirectRoot::class.java.getDeclaredField("cachedResolutions")
+                              .apply { isAccessible = true }.get(root))
+    return cache.javaClass.getDeclaredField("additionalResolutions").apply { isAccessible = true }.get(cache)
+  }
+
   @Test
   fun `marker getters follow the snapshot during publication`() {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
