@@ -737,8 +737,12 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
         val declared = deferred.getCompleted()?.getOrNull()
         if (snapshot.value != declared) {
           snapshot.value = declared
-          // The init does not wait for this read, so a reader that ran before it reads again.
-          project.messageBus.syncPublisher(PACKAGE_MANAGEMENT_TOPIC).declaredPackagesChanged(interpreter)
+          // The init does not wait for this read, so a reader that ran before it reads again. A coroutine publishes it: the
+          // project can start its dispose before it cancels the manager scope, and the bus of a disposed project throws
+          // `AlreadyDisposedException`. A coroutine ends quietly with it, and a completion handler reports it.
+          managerScope.launch(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
+            project.messageBus.syncPublisher(PACKAGE_MANAGEMENT_TOPIC).declaredPackagesChanged(interpreter)
+          }
         }
       }
       newEntry
