@@ -2,14 +2,17 @@
 package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyClassTypeImpl
@@ -18,6 +21,7 @@ import com.jetbrains.python.psi.types.PyIntersectionType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
+import com.jetbrains.python.psi.types.TypeEvalContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -42,7 +46,7 @@ import java.util.concurrent.atomic.AtomicLong
 @Subsystems.Typing
 @Components.TypeInference
 @Layers.Functional
-@TestFor(issues = ["PY-90901", "PY-89956"],
+@TestFor(issues = ["PY-90901", "PY-89956", "PY-93904"],
          classes = [PyCompositeTypeBase::class, PyUnionType::class, PyUnsafeUnionType::class, PyIntersectionType::class, PyClassTypeImpl::class])
 class PyCompositeTypeEqualityPerformanceTest : PyCodeInsightTestCase() {
 
@@ -144,6 +148,38 @@ class PyCompositeTypeEqualityPerformanceTest : PyCodeInsightTestCase() {
       val y = make(listOf(CollidingLeaf("Q"), common))
       assertEquals(x.hashCode(), y.hashCode()) { "$name: colliding leaves must give equal composite hash codes (precondition)" }
       assertNotEquals(x, y) { "$name: the hashCode fast path must fall through to the member-set comparison" }
+    }
+  }
+
+  @Test
+  fun `nested types that differ only in the nesting of union members get different hash codes`() {
+    val file = myFixture.configureByText("a.py", """
+      v1 = [[1, "s", b""]]
+      v2 = [[1, "s"], b""]
+      v3 = [[1], "s", b""]
+      v4 = [[1, b""], "s"]
+      v5 = [["s", b""], 1]
+      v6 = [["s"], 1, b""]
+      v7 = [[b""], 1, "s"]
+    """.trimIndent()) as PyFile
+    runReadActionBlocking {
+      val context = TypeEvalContext.codeAnalysis(myFixture.project, file)
+      val types = (1..7).map { context.getType(file.findTopLevelAttribute("v$it")!!)!! }
+      assertEquals(
+        listOf(
+          "list[list[int | str | bytes]]",
+          "list[list[int | str] | bytes]",
+          "list[list[int] | str | bytes]",
+          "list[list[int | bytes] | str]",
+          "list[list[str | bytes] | int]",
+          "list[list[str] | int | bytes]",
+          "list[list[bytes] | int | str]",
+        ),
+        types.map { PythonDocumentationProvider.getTypeName(it, context) },
+      )
+      assertEquals(types.size, types.map { it.hashCode() }.toSet().size) {
+        "Each type must have its own hash code: ${types.map { it.hashCode() }}"
+      }
     }
   }
 
