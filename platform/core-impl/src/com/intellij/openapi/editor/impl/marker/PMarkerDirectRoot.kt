@@ -212,8 +212,7 @@ class PMarkerDirectRoot private constructor(
         if (!PMarkerResolution.isValid(offsets)) continue
         result = editor.delete(result, TextRangeScalarUtil.startOffset(offsets), handle)
       }
-      editor.pendingInvalids[handle] = PMarkerNodeHistory.purgedState
-      editor.invalidsBuilder.remove(handle.id)
+      editor.recordPurge(handle)
       changed = true
     }
     if (changed) editor.finish(result) else this
@@ -470,7 +469,7 @@ class PMarkerDirectRoot private constructor(
 
   /**
    * Builds one successor version by copying nodes owned by existing roots.
-   * [pendingInvalids] tracks invalid states and purge records. [finish] publishes their histories and the final tree links.
+   * [recordPendingState] tracks invalid states and purge records. [finish] publishes their histories and the final tree links.
    * Each editor is confined to one update.
    */
   private inner class Editor {
@@ -479,11 +478,43 @@ class PMarkerDirectRoot private constructor(
       PMarkerNodeHistory.nextVersion(this@PMarkerDirectRoot.version)
     }
 
-    /** Retains new invalid states and purge records until [finish] publishes their histories. */
-    val pendingInvalids: MutableMap<SnapshotMarkerReference<*>, PMarkerInvalidNode> = IdentityHashMap()
+    private var firstPendingHandle: SnapshotMarkerReference<*>? = null
+    private var firstPendingState: PMarkerInvalidNode? = null
+    private var additionalPendingStates: MutableMap<SnapshotMarkerReference<*>, PMarkerInvalidNode>? = null
 
     /** Builds the map of invalid and removed states for this version from the existing [invalids]. */
-    val invalidsBuilder: PersistentLongMapBuilder<PMarkerInvalidNode> = invalids.builder()
+    private var invalidsBuilder: PersistentLongMapBuilder<PMarkerInvalidNode>? = null
+
+    private fun editInvalids(): PersistentLongMapBuilder<PMarkerInvalidNode> =
+      invalidsBuilder ?: invalids.builder().also { invalidsBuilder = it }
+
+    private fun removeInvalid(id: Long) {
+      val builder = invalidsBuilder
+      if (builder != null) builder.remove(id)
+      else if (invalids.getUnchecked(id) != null) editInvalids().remove(id)
+    }
+
+    /** Retains the latest pending state for each handle until [finish] publishes the histories. */
+    private fun recordPendingState(handle: SnapshotMarkerReference<*>, state: PMarkerInvalidNode) {
+      if (firstPendingHandle == null) {
+        firstPendingHandle = handle
+        firstPendingState = state
+      }
+      else if (firstPendingHandle === handle) {
+        firstPendingState = state
+      }
+      else {
+        val pending = additionalPendingStates ?: IdentityHashMap<SnapshotMarkerReference<*>, PMarkerInvalidNode>().also {
+          additionalPendingStates = it
+        }
+        pending[handle] = state
+      }
+    }
+
+    fun recordPurge(handle: SnapshotMarkerReference<*>) {
+      recordPendingState(handle, PMarkerNodeHistory.purgedState)
+      removeInvalid(handle.id)
+    }
 
     /** The smallest old end offset changed by a policy, or [Int.MAX_VALUE] when no policy changes a range or validity. */
     var firstChangedEnd: Int = Int.MAX_VALUE
@@ -531,7 +562,7 @@ class PMarkerDirectRoot private constructor(
      */
     fun insertNode(initial: PMarkerNode?, entry: MarkerEntry): PMarkerNode {
       if (initial == null) {
-        invalidsBuilder.remove(entry.handle.id)
+        removeInvalid(entry.handle.id)
         return make(entry)
       }
       val node = push(initial)
@@ -698,8 +729,8 @@ class PMarkerDirectRoot private constructor(
     /** Records an invalid state or removal tombstone for this version. A zero [reason] marks removal. */
     fun recordInvalid(handle: SnapshotMarkerReference<*>, range: Long, reason: Int) {
       val state = PMarkerInvalidNode(range, reason)
-      pendingInvalids[handle] = state
-      invalidsBuilder.put(handle.id, state)
+      recordPendingState(handle, state)
+      editInvalids().put(handle.id, state)
     }
 
     /** Creates a root that retains the final tree and invalid and removed states, then publishes their weak histories. */
@@ -707,8 +738,9 @@ class PMarkerDirectRoot private constructor(
       node: PMarkerNode?,
       resolutionUpdate: PMarkerResolutionUpdate? = null,
     ): PMarkerDirectRoot {
-      val result = PMarkerDirectRoot(version, node, invalidsBuilder.build(), resolutionUpdate = resolutionUpdate)
-      for ([handle, state] in pendingInvalids) handle.states.put(version, state)
+      val result = PMarkerDirectRoot(version, node, invalidsBuilder?.build() ?: invalids, resolutionUpdate = resolutionUpdate)
+      firstPendingHandle?.states?.put(version, checkNotNull(firstPendingState))
+      additionalPendingStates?.forEach { [handle, state] -> handle.states.put(version, state) }
       publish(node)
       return result
     }
