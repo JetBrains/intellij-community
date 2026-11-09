@@ -1,37 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.restructuredtext.python;
 
-import com.google.common.collect.Lists;
-import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.python.sdk.backend.PythonInterpreter;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunContentExecutor;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.restructuredtext.RestBundle;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
-import com.intellij.util.system.OS;
-import com.jetbrains.python.PythonHelper;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.jetbrains.python.ReSTService;
-import com.jetbrains.python.configuration.PyModuleInterpreterReader;
-import com.jetbrains.python.run.PythonCommandLineState;
-import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
-import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +26,6 @@ import java.awt.Dimension;
 import java.awt.Insets;
 import java.lang.reflect.Method;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -164,83 +144,38 @@ public class SphinxBaseCommand {
     }
   }
 
-  public void execute(final @NotNull Module module) {
-    final Project project = module.getProject();
-
-    try {
-      if (!setWorkDir(module)) return;
-      final ProcessHandler process = createProcess(module);
-      process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_REMOTE_CLIENTS, true);
-      new RunContentExecutor(project, process)
-        .withFilter(new PythonTracebackFilter(project))
-        .withTitle("reStructuredText")
-        .withRerun(() -> execute(module))
-        .withAfterCompletion(getAfterTask(module))
-        .run();
-    }
-    catch (ExecutionException e) {
-      Messages.showErrorDialog(e.getMessage(), RestBundle.message("sphinx.restructured.text.error"));
-    }
+  /**
+   * Runs {@code sphinx-quickstart} for the Python project of {@code file}, or for the main Python project when {@code file}
+   * is {@code null}.
+   * Returns at once. See {@link SphinxQuickstart#launchSphinxQuickstart}.
+   */
+  public void execute(final @NotNull Project project, final @Nullable VirtualFile file) {
+    SphinxQuickstart.launchSphinxQuickstart(this, project, file);
   }
 
-  protected @Nullable Runnable getAfterTask(final Module module) {
-    return () -> {
-      final ReSTService service = ReSTService.getInstance(module);
-      StandardFileSystems.local().refreshAndFindFileByPath(service.getWorkdir());
-    };
+  /**
+   * Asks for the work directory of {@code module} if it has none.
+   * Returns the documentation directory, or {@code null} when the user cancels or the project has no base path.
+   */
+  @RequiresEdt
+  @Nullable Path askForDocsDir(final @NotNull Module module) {
+    if (!setWorkDir(module)) return null;
+    final String workDir = ReSTService.getInstance(module).getWorkdir();
+    final String docsDir = workDir.isEmpty() ? module.getProject().getBasePath() : workDir;
+    return docsDir == null ? null : Path.of(docsDir);
   }
 
-  private ProcessHandler createProcess(Module module) throws ExecutionException {
-    GeneralCommandLine commandLine = createCommandLine(module, Collections.emptyList());
-    ProcessHandler handler = PythonProcessRunner.createProcess(commandLine);
-    ProcessTerminatedListener.attach(handler);
-    return handler;
-  }
-
-  protected GeneralCommandLine createCommandLine(Module module, List<String> params) throws ExecutionException {
-    PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(module);
-    if (interpreter == null) {
-      throw new ExecutionException(PythonRestBundle.message("python.rest.no.sdk.specified"));
-    }
-
-    ReSTService service = ReSTService.getInstance(module);
-
-    String sdkHomePath = PythonInterpreterExtKt.getBinaryPathString(interpreter);
-
-    GeneralCommandLine cmd = new GeneralCommandLine();
-    var executablePath = PythonSdkUtil.getExecutablePath(Path.of(sdkHomePath), OS.CURRENT.getBinaryName("sphinx-quickstart"));
-    if (executablePath != null) {
-      cmd.withExePath(executablePath.toString());
-    }
-    else {
-      cmd = PythonHelper.LOAD_ENTRY_POINT.newCommandLine(sdkHomePath, new ArrayList<>());
-    }
-
-    cmd.setWorkDirectory(service.getWorkdir().isEmpty() ? module.getProject().getBasePath() : service.getWorkdir());
-    PythonCommandLineState.createStandardGroups(cmd);
-    ParamsGroup scriptParams = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
-    assert scriptParams != null;
-
-    if (params != null) {
-      for (String p : params) {
-        scriptParams.addParameter(p);
-      }
-    }
-
-    final Map<String, String> env = cmd.getEnvironment();
-    PythonEnvUtil.setPythonIOEncoding(env, "utf-8");
-    PythonEnvUtil.setPythonUnbuffered(env);
-    PythonEnvUtil.resetHomePathChanges(sdkHomePath, env);
-    env.put("PYCHARM_EP_DIST", "Sphinx");
-    env.put("PYCHARM_EP_NAME", "sphinx-quickstart");
-
-    List<String> pathList = Lists.newArrayList(PythonCommandLineState.getAddedPaths(interpreter));
-    pathList.addAll(PythonCommandLineState.collectPythonPath(module));
-
-    PythonCommandLineState.initPythonPath(cmd, true, pathList, sdkHomePath);
-
-    PythonSdkType.applyActivationEnvironment(cmd.getEnvironment(), PythonInterpreterExtKt.activationEnvironmentBlocking(interpreter).getSuccessOrNull());
-
-    return cmd;
+  /** Shows the console of the quickstart {@code process}. The rerun button stops the process and runs {@code rerun}. */
+  @RequiresEdt
+  void showConsole(final @NotNull Project project, final @NotNull ProcessHandler process, final @NotNull Runnable rerun) {
+    process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_REMOTE_CLIENTS, true);
+    new RunContentExecutor(project, process)
+      .withFilter(new PythonTracebackFilter(project))
+      .withTitle("reStructuredText")
+      .withRerun(() -> {
+        process.destroyProcess();
+        rerun.run();
+      })
+      .run();
   }
 }

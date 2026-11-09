@@ -57,6 +57,8 @@ jvm_library(
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/util/concurrency",
         "//python/python-exec-service:community-execService",
+        "//platform/progress/shared:ide-progress",
+        "//python/python-pyproject:pyproject",
         ":python_codeInsight_provided",
     ],
 )

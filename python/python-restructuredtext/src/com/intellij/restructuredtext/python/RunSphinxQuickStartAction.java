@@ -5,12 +5,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -32,22 +26,8 @@ public class RunSphinxQuickStartAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
-    final Presentation presentation = RestPythonUtil.updateSphinxQuickStartRequiredAction(e);
-    assert presentation.isEnabled() && presentation.isVisible() : "Sphinx requirements for action are not satisfied";
-
     final Project project = e.getData(CommonDataKeys.PROJECT);
-
     if (project == null) return;
-
-    Module module = e.getData(PlatformCoreDataKeys.MODULE);
-    if (module == null) {
-      Module[] modules = ModuleManager.getInstance(project).getModules();
-      module = modules.length == 0 ? null : modules [0];
-    }
-
-    if (module == null) return;
-    final SphinxBaseCommand action = new SphinxBaseCommand();
-    final Module finalModule = module;
-    ApplicationManager.getApplication().invokeLater(() -> action.execute(finalModule), ModalityState.nonModal());
+    new SphinxBaseCommand().execute(project, e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
 }
