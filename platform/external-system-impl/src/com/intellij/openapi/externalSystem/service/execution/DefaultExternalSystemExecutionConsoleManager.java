@@ -31,7 +31,8 @@ public class DefaultExternalSystemExecutionConsoleManager
                                                            @NotNull ExternalSystemTask task,
                                                            @Nullable ExecutionEnvironment env,
                                                            @Nullable ProcessHandler processHandler) {
-    ConsoleView executionConsole = createConsoleView(project, task, env);
+    assert processHandler != null;
+    var executionConsole = createConsoleView(project, task, env);
     executionConsole.attachToProcess(processHandler);
     return executionConsole;
   }
@@ -39,7 +40,10 @@ public class DefaultExternalSystemExecutionConsoleManager
   protected @NotNull ConsoleView createConsoleView(@NotNull Project project,
                                                    @NotNull ExternalSystemTask task,
                                                    @Nullable ExecutionEnvironment env) {
-    return TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    return TextConsoleBuilderFactory.getInstance().createBuilder(project)
+      // the single flow console uses OutputBuildEvent as a source instead of ProcessHandler
+      .setAttachToProcessOutput(!getExecutionConsoleSettings().isSingleBuildConsoleView())
+      .getConsole();
   }
 
   @Override

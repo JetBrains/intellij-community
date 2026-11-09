@@ -54,15 +54,22 @@ abstract class AbstractExternalSystemOutputMessageDispatcher(
   abstract suspend fun notifyParserTextAvailable(text: BuildOutputText, outputType: ProcessOutputType)
 
   override fun notifyTextAvailable(text: @NlsSafe String, outputType: ProcessOutputType) {
-    val outputId = OutputId()
+    if (consoleSettings.isSingleBuildConsoleView) {
+      val outputId = OutputId()
 
-    notifyBuildEvent(buildId, OutputBuildEvent.builder(text)
-      .withId(outputId)
-      .withOutputType(outputType)
-      .build())
+      notifyBuildEvent(buildId, OutputBuildEvent.builder(text)
+        .withId(outputId)
+        .withOutputType(outputType)
+        .build())
 
-    @Suppress("RAW_RUN_BLOCKING") runBlocking {
-      notifyParserTextAvailable(BuildOutputText.createOutputText(outputId, text), outputType)
+      @Suppress("RAW_RUN_BLOCKING") runBlocking {
+        notifyParserTextAvailable(BuildOutputText.createOutputText(outputId, text), outputType)
+      }
+    }
+    else {
+      @Suppress("RAW_RUN_BLOCKING") runBlocking {
+        notifyParserTextAvailable(BuildOutputText.createOutputText(text), outputType)
+      }
     }
   }
 

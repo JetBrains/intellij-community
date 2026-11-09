@@ -20,6 +20,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
@@ -36,15 +37,25 @@ import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.time.Duration.Companion.minutes
 
-class GradleTestExecutionTest : GradleTestExecutionTestCase() {
+@ParameterizedClass
+@ValueSource(booleans = [false, true])
+class GradleTestExecutionTest(private val singleConsole: Boolean) : GradleTestExecutionTestCase() {
 
   @TestDisposable
   private lateinit var testDisposable: Disposable
+
+  @BeforeEach
+  fun setUpSingleConsole() {
+    Registry.get("gradle.build.toolwindow.single.console").setValue(singleConsole, testDisposable)
+  }
 
   @ParameterizedTest
   @TargetVersions(JUNIT_5_SUPPORTED_VERSIONS)

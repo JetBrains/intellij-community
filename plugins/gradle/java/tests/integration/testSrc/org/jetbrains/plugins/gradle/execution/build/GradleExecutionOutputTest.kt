@@ -50,12 +50,12 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
       }
       assertBuildViewNode(runView, "successful") {
         Assertions.assertThat(it.consoleText)
-          .contains("Task doLast")
+          .containsOnlyOnce("Task doLast")
       }
       assertBuildViewNode(runView, ":task") {
         if (isPerTaskOutputSupported()) {
           Assertions.assertThat(it.consoleText)
-            .contains("Task doLast")
+            .containsOnlyOnce("Task doLast")
         }
       }
     }
@@ -87,13 +87,13 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
       }
       assertBuildViewNode(runView, "failed") {
         Assertions.assertThat(it.consoleText)
-          .contains("Task doLast")
+          .containsOnlyOnce("Task doLast")
           .contains("Task failure")
       }
       assertBuildViewNode(runView, ":failingTask") {
         if (isPerTaskOutputSupported()) {
           Assertions.assertThat(it.consoleText)
-            .contains("Task doLast")
+            .containsOnlyOnce("Task doLast")
           //.contains("Task failure")
         }
       }
@@ -138,15 +138,15 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
       }
       assertBuildViewNode(runView, "failed") {
         Assertions.assertThat(it.consoleText)
-          .contains("Task 1 doLast")
+          .containsOnlyOnce("Task 1 doLast")
           .contains("Task 1 failure")
-          .contains("Task 2 doLast")
+          .containsOnlyOnce("Task 2 doLast")
           .contains("Task 2 failure")
       }
       assertBuildViewNode(runView, ":failingTask1") {
         if (isPerTaskOutputSupported()) {
           Assertions.assertThat(it.consoleText)
-            .contains("Task 1 doLast")
+            .containsOnlyOnce("Task 1 doLast")
             //.contains("Task 1 failure")
             .doesNotContain("Task 2 failure")
         }
@@ -154,7 +154,7 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
       assertBuildViewNode(runView, ":failingTask2") {
         if (isPerTaskOutputSupported()) {
           Assertions.assertThat(it.consoleText)
-            .contains("Task 2 doLast")
+            .containsOnlyOnce("Task 2 doLast")
             //.contains("Task 2 failure")
             .doesNotContain("Task 1 failure")
         }

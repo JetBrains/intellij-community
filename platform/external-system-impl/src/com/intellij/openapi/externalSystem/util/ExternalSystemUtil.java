@@ -415,6 +415,8 @@ public final class ExternalSystemUtil {
     var progressListener = project.getService(SyncViewManager.class);
 
     try (var eventDispatcher = new ExternalSystemEventDispatcher(taskId, progressListener, consoleSettings)) {
+      eventDispatcher.attachToProcess(processHandler);
+
       var syncListener = new ExternalSystemSyncEventDispatcher(
         importSpec, task, processHandler, eventDispatcher, buildDescriptor,
         BuildConsoleUtils.getDataContext(taskId, progressListener, consoleView),
@@ -1035,7 +1037,9 @@ public final class ExternalSystemUtil {
 
   /**
    * Resolves the build view settings for the execution console.
-   * The settings of the execution console take precedence over the settings of the console manager.
+   * The build view settings belong to the console manager, see {@link ExternalSystemExecutionConsoleManager#getExecutionConsoleSettings()}.
+   * An execution console that implements {@link BuildViewSettingsProvider} still takes precedence for compatibility, but it is reported:
+   * a decorated console loses its settings, because the decorator doesn't implement {@link BuildViewSettingsProvider}.
    */
   @ApiStatus.Internal
   public static @NotNull BuildViewSettingsProvider getExecutionConsoleSettings(
@@ -1043,6 +1047,8 @@ public final class ExternalSystemUtil {
     @Nullable ExecutionConsole executionConsole
   ) {
     if (executionConsole instanceof BuildViewSettingsProvider settings) {
+      LOG.warn("The execution console " + executionConsole.getClass().getName() + " provides the build view settings. " +
+               "Return them from " + consoleManager.getClass().getName() + ".getExecutionConsoleSettings() instead.");
       return new BuildViewSettingsProviderAdapter(settings);
     }
     return consoleManager.getExecutionConsoleSettings();
@@ -1216,7 +1222,7 @@ public final class ExternalSystemUtil {
     private final @NotNull BuildEventDispatcher eventDispatcher;
     private final @NotNull BuildDescriptor buildDescriptor;
     private final @NotNull DataContext dataContext;
-    private final @Nullable BuildViewSettingsProvider viewSettingsProvider;
+    private final @NotNull BuildViewSettingsProvider viewSettingsProvider;
 
     private final @NotNull Ref<Supplier<? extends FinishBuildEvent>> finishSyncEventSupplier = new Ref<>();
 
@@ -1250,7 +1256,9 @@ public final class ExternalSystemUtil {
     @Override
     public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, @NotNull ProcessOutputType outputType) {
       processHandler.notifyTextAvailable(text, outputType);
-      eventDispatcher.notifyTextAvailable(text, outputType);
+      if (!viewSettingsProvider.isSingleBuildConsoleView()) {
+        eventDispatcher.notifyTextAvailable(text, outputType);
+      }
     }
 
     @Override

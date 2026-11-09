@@ -8,10 +8,13 @@ import com.intellij.gradle.testFramework.fixtures.gradleProjectRootFixture
 import com.intellij.gradle.testFramework.fixtures.projectFixture
 import com.intellij.gradle.testFramework.projectInfo.simpleJavaProjectInfo
 import com.intellij.gradle.testFramework.util.createBuildFile
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
+import com.intellij.platform.testFramework.assertion.consoleText
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.registryKeyFixture
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
 import org.junit.jupiter.api.Test
@@ -36,6 +39,21 @@ class GradleSyncOutputTest(private val gradleVersion: GradleVersion, singleConso
 
   private val buildViewFixture by buildViewFixture(projectFixture).dependsOn(singleConsoleFixture)
   private val syncView get() = buildViewFixture.syncView
+
+  @Test
+  fun `test sync output is not duplicated`(): Unit = runBlocking {
+    projectRoot.createBuildFile(gradleVersion) {
+      withJavaPlugin()
+      withPostfix {
+        call("println", "Build script output")
+      }
+    }
+    gradle.syncProject(project, projectRoot)
+    assertBuildViewNode(syncView, "finished") {
+      assertThat(it.consoleText)
+        .containsOnlyOnce("Build script output")
+    }
+  }
 
   @Test
   fun `test sync with lazy task configuration`(): Unit = runBlocking {

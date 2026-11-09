@@ -37,11 +37,12 @@ import javax.swing.JComponent
 @TestApplication
 @ParameterizedClass
 @ValueSource(booleans = [false, true])
-class BuildViewTest(val singleConsole: Boolean) {
+class BuildViewTest(useSingleConsole: Boolean) {
 
-  private val settingsProvider: BuildViewSettingsProvider = object : BuildViewSettingsProvider {
-    override fun isExecutionViewHidden(): Boolean = false
-    override fun isSingleBuildConsoleView(): Boolean = singleConsole
+  private val settings: BuildViewSettingsProvider by testFixture {
+    initialized(object : BuildViewSettingsProvider {
+      override fun isSingleBuildConsoleView(): Boolean = useSingleConsole
+    }) {}
   }
 
   private val projectFixture = projectFixture()
@@ -103,7 +104,7 @@ class BuildViewTest(val singleConsole: Boolean) {
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(BuildProgressDescriptorImpl(buildDescriptor), settingsProvider)
+      .start(BuildProgressDescriptorImpl(buildDescriptor), settings)
         .fileMessage("message 1", "message 1 descriptive text", INFO, FilePosition(Path.of("aFile1.java"), 0, 0))
         .fileMessage("message 1.1", "message 1.1 descriptive text", WARNING, FilePosition(Path.of("aFile1.java"), 0, 0))
         .fileMessage("message 2", "message 2 descriptive text", WARNING, FilePosition(Path.of(tempDirectory, "project/aFile2.java"), 0, 0))
@@ -163,7 +164,7 @@ class BuildViewTest(val singleConsole: Boolean) {
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(BuildProgressDescriptorImpl(buildDescriptor), settingsProvider)
+      .start(BuildProgressDescriptorImpl(buildDescriptor), settings)
         .message("Root message", "Text of the root message console", INFO, null)
       .progress("Running…")
         .startChildProgress("Inner progress")
@@ -200,7 +201,7 @@ class BuildViewTest(val singleConsole: Boolean) {
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(BuildProgressDescriptorImpl(buildDescriptor), settingsProvider)
+      .start(BuildProgressDescriptorImpl(buildDescriptor), settings)
         .message("Root message", "Text of the root message console", INFO, null)
       .progress("Running…")
         .startChildProgress("Inner progress")
@@ -235,7 +236,7 @@ class BuildViewTest(val singleConsole: Boolean) {
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start(BuildProgressDescriptorImpl(buildDescriptor), settingsProvider)
+      .start(BuildProgressDescriptorImpl(buildDescriptor), settings)
         .output("Build greeting\n", ProcessOutputType.STDOUT)
         .message("Root message", "Text of the root message console", INFO, null)
       .progress("Running…")
@@ -305,7 +306,7 @@ class BuildViewTest(val singleConsole: Boolean) {
     // @formatter:off
     BuildViewManager
       .createBuildProgress(project)
-      .start("started", BuildProgressDescriptorImpl(buildDescriptor), settingsProvider)
+      .start("started", BuildProgressDescriptorImpl(buildDescriptor), settings)
         .presentable("my event", presentationData)
       .finish("finished", SuccessResultImpl())
     // @formatter:on
