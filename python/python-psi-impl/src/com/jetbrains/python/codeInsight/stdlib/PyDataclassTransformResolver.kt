@@ -357,7 +357,7 @@ fun resolveDecoratorStubSafe(decorator: PyDecorator, context: TypeEvalContext): 
   val resolveContext = PyResolveContext.defaultContext(context)
   return StubAwareComputation.on(decorator)
            .overAst { psi -> psi.multiResolveCalleeFunction(resolveContext) as List<PsiElement> }
-           .overStub { stub -> stub?.let { PyResolveUtil.resolveQualifiedNameInScope(it.qualifiedName, decorator.containingFile as ScopeOwner, context) } }
+           .overStub { stub -> stub?.qualifiedName?.let { PyResolveUtil.resolveQualifiedNameInScope(it, decorator.containingFile as ScopeOwner, context) } }
            .overAstStubLike { psi -> psi.qualifiedName?.let { PyResolveUtil.resolveQualifiedNameInScope(it, decorator.containingFile as ScopeOwner, context) } }
            .compute(context) ?: emptyList()
 }
