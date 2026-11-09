@@ -261,11 +261,12 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
    * Returns the effective language level of this file, the level that selects the {@code sys.version_info} branches of its stub.
    * It is not {@link #getLanguageLevel()}: a {@code .pyi} file parses with the latest level.
    * The level stays until the PSI modification count changes, or until a level changes without a PSI change, see
-   * {@link PythonLanguageLevelPusher#getLevelModificationCount()}.
+   * {@link PythonLanguageLevelPusher#getLevelModificationTracker()}.
    */
   @ApiStatus.Internal
   public final @NotNull LanguageLevel getEffectiveLanguageLevel() {
-    final long stamp = myModificationTracker.getModificationCount() + PythonLanguageLevelPusher.getLevelModificationCount();
+    final long stamp = myModificationTracker.getModificationCount() +
+                       PythonLanguageLevelPusher.getLevelModificationTracker().getModificationCount();
     final EffectiveLanguageLevel cached = myEffectiveLanguageLevel;
     if (cached != null && cached.stamp() == stamp) {
       return cached.level();
