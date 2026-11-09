@@ -5,9 +5,11 @@ import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.isInCancellableContext
+import com.intellij.openapi.vfs.CheckedDiskQueryRelay
 import com.intellij.openapi.vfs.DiskQueryRelay
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.ThrowableConvertor
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -260,6 +262,18 @@ class DiskQueryRelayTest {
           throw failure
         }
       }
+    }
+  }
+
+  @Test
+  fun checkedRelay_throwsTheOriginalException_inBothContexts() {
+    for (failure in failuresOfEachKind()) {
+      val taskThread = AtomicReference<Thread>()
+      val relay = CheckedDiskQueryRelay.create(ThrowableConvertor<Int, Unit, Exception> {
+        taskThread.set(Thread.currentThread())
+        throw failure
+      })
+      assertThrowsOriginalInBothContexts(failure, taskThread) { arg -> relay.accessDiskWithCheckCanceled(arg) }
     }
   }
 

@@ -36,7 +36,11 @@ import java.util.function.Function
  * An instance of the class should be used for performing multiple similar operations;
  * for one-shot tasks, [.compute] is simpler to use.
  */
-class DiskQueryRelay<Param : Any, Result>(function: Function<in Param, out Result>, private val executor: ExecutorService) {
+class DiskQueryRelay<Param : Any, Result>(
+  function: Function<in Param, out Result>,
+  private val executor: ExecutorService
+) : CheckedDiskQueryRelay<Param, Result, RuntimeException> {
+
   constructor(function: Function<in Param, out Result>) : this(function, ProcessIOExecutorService.INSTANCE)
 
   private val function: Function<in Param, out Result> = Function { arg: Param ->
@@ -61,7 +65,7 @@ class DiskQueryRelay<Param : Any, Result>(function: Function<in Param, out Resul
    * Throws the exception of the function as is, without a wrapper.
    * Coalesced requests get the same exception instance: its stack trace shows the pooled thread, not the caller.
    */
-  fun accessDiskWithCheckCanceled(arg: Param): Result {
+  override fun accessDiskWithCheckCanceled(arg: Param): Result {
     val startedAtNs = System.nanoTime()
     try {
       if (shouldNotDispatch()) {

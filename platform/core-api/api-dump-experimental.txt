@@ -322,6 +322,11 @@ a:com.intellij.openapi.roots.FileIndexFacade
 com.intellij.openapi.util.registry.RegistryManager
 - *a:is(java.lang.String,Z):Z
 - *a:stringValue(java.lang.String,java.lang.String):java.lang.String
+*:com.intellij.openapi.vfs.CheckedDiskQueryRelay
+- a:accessDiskWithCheckCanceled(java.lang.Object):java.lang.Object
+- s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:compute(com.intellij.openapi.util.ThrowableComputable,java.util.concurrent.ExecutorService):java.lang.Object
+- s:create(com.intellij.util.ThrowableConvertor):com.intellij.openapi.vfs.CheckedDiskQueryRelay
 *:com.intellij.openapi.vfs.FileVisibilityProvider
 - *sf:Companion:com.intellij.openapi.vfs.FileVisibilityProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName

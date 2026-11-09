@@ -1721,9 +1721,10 @@ a:com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
 - removeVirtualFileListener(com.intellij.openapi.vfs.VirtualFileListener):V
 - p:startEventPropagation():V
 f:com.intellij.openapi.vfs.DiskQueryRelay
+- com.intellij.openapi.vfs.CheckedDiskQueryRelay
 - <init>(java.util.function.Function):V
 - <init>(java.util.function.Function,java.util.concurrent.ExecutorService):V
-- f:accessDiskWithCheckCanceled(java.lang.Object):java.lang.Object
+- accessDiskWithCheckCanceled(java.lang.Object):java.lang.Object
 c:com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 - java.lang.RuntimeException
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
