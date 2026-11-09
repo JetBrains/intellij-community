@@ -66,4 +66,21 @@ public class StringConcat {
     if (<warning descr="Condition 's3.length() < 6' is always 'false'">s3.length() < 6</warning>) {}
   }
 
+  void testConcatChar(char c, String s) {
+    char first = 'a';
+    String second = "b";
+    if (<warning descr="Condition '(first + second).equals(\"ab\")' is always 'true'">(first + second).equals("ab")</warning>) {}
+    if (<warning descr="Condition '(second + first).equals(\"ba\")' is always 'true'">(second + first).equals("ba")</warning>) {}
+    if (<warning descr="Condition '(\"\" + first + second).equals(\"ab\")' is always 'true'">("" + first + second).equals("ab")</warning>) {}
+    String s1 = second;
+    s1 += first;
+    if (<warning descr="Condition 's1.equals(\"ba\")' is always 'true'">s1.equals("ba")</warning>) {}
+    String s2 = "x" + c;
+    if (<warning descr="Condition 's2.length() == 2' is always 'true'">s2.length() == 2</warning>) {}
+    if (s.equals("ab")) {
+      String s3 = c + s;
+      if (<warning descr="Condition 's3.length() == 3' is always 'true'">s3.length() == 3</warning>) {}
+    }
+  }
+
 }

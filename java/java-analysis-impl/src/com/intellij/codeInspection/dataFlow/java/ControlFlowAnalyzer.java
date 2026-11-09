@@ -459,7 +459,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       generateBoxingUnboxingInstructionFor(lExpr, resType);
       rExpr.accept(this);
       generateBoxingUnboxingInstructionFor(rExpr, resType);
-      generateBinOp(new JavaExpressionAnchor(expression), sign, rExpr, resType);
+      generateBinOp(new JavaExpressionAnchor(expression), sign, lExpr.getType(), rExpr, resType);
       generateBoxingUnboxingInstructionFor(rExpr, resType, type, false);
     }
 
@@ -1712,7 +1712,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       } else {
         embeddedExpression.accept(this);
       }
-      addInstruction(new StringConcatInstruction(null, constraint));
+      addInstruction(new StringConcatInstruction(null, constraint, false, PsiTypes.charType().equals(embeddedExpression.getType())));
     }
     PsiFragment lastFragment = fragments.get(count);
     Object value = lastFragment.getValue();
@@ -2074,7 +2074,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       PsiType resType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, op, true);
       DfaAnchor anchor = i == operands.length - 1 ? new JavaExpressionAnchor(expression) :
                          new JavaPolyadicPartAnchor(expression, i);
-      generateBinOp(anchor, op, rExpr, resType);
+      generateBinOp(anchor, op, lType, rExpr, resType);
 
       lExpr = rExpr;
       lType = resType;
@@ -2088,7 +2088,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private void generateBinOp(@NotNull DfaAnchor anchor, @NotNull IElementType op, PsiExpression rExpr, PsiType resType) {
+  private void generateBinOp(@NotNull DfaAnchor anchor, @NotNull IElementType op, @Nullable PsiType lType, PsiExpression rExpr,
+                             PsiType resType) {
     if ((op == JavaTokenType.DIV || op == JavaTokenType.PERC) && resType != null && PsiTypes.longType().isAssignableFrom(resType)) {
       Object divisorValue = ExpressionUtils.computeConstantExpression(rExpr);
       if (!(divisorValue instanceof Number number) || (number.longValue() == 0)) {
@@ -2097,7 +2098,8 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     Instruction inst;
     if (op.equals(JavaTokenType.PLUS) && TypeUtils.isJavaLangString(resType)) {
-      inst = new StringConcatInstruction(anchor, TypeConstraints.exact(resType));
+      inst = new StringConcatInstruction(anchor, TypeConstraints.exact(resType),
+                                         PsiTypes.charType().equals(lType), PsiTypes.charType().equals(rExpr.getType()));
     }
     else if (PsiTypes.booleanType().equals(resType)) {
       if (op.equals(JavaTokenType.AND)) {

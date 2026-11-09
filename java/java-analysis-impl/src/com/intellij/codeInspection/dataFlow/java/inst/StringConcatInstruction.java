@@ -27,10 +27,22 @@ import static com.intellij.codeInspection.dataFlow.types.DfTypes.referenceConsta
 
 public class StringConcatInstruction extends EvalInstruction {
   private final @NotNull TypeConstraint myStringType;
+  private final boolean myLeftChar;
+  private final boolean myRightChar;
 
   public StringConcatInstruction(@Nullable DfaAnchor anchor, @NotNull TypeConstraint stringType) {
+    this(anchor, stringType, false, false);
+  }
+
+  /**
+   * @param leftChar true if the left operand has the {@code char} type
+   * @param rightChar true if the right operand has the {@code char} type
+   */
+  public StringConcatInstruction(@Nullable DfaAnchor anchor, @NotNull TypeConstraint stringType, boolean leftChar, boolean rightChar) {
     super(anchor, 2);
     myStringType = stringType;
+    myLeftChar = leftChar;
+    myRightChar = rightChar;
   }
 
   @Override
@@ -39,14 +51,14 @@ public class StringConcatInstruction extends EvalInstruction {
                                 @NotNull DfaValue @NotNull ... arguments) {
     DfaValue left = arguments[0];
     DfaValue right = arguments[1];
-    String leftString = getString(state, left);
-    String rightString = getString(state, right);
+    String leftString = getString(state, left, myLeftChar);
+    String rightString = getString(state, right, myRightChar);
     if (leftString != null && rightString != null &&
         leftString.length() + rightString.length() <= CustomMethodHandlers.MAX_STRING_CONSTANT_LENGTH_TO_TRACK) {
       return factory.fromDfType(concatenationResult(leftString + rightString, myStringType));
     }
-    DfIntType leftRange = getLength(factory, state, left, leftString);
-    DfIntType rightRange = getLength(factory, state, right, rightString);
+    DfIntType leftRange = getLength(factory, state, left, leftString, myLeftChar);
+    DfIntType rightRange = getLength(factory, state, right, rightString, myRightChar);
     DfType resultRange = leftRange.eval(rightRange, LongRangeBinOp.PLUS);
     DfType result = resultRange.isConst(0)
                     ? referenceConstant("", myStringType)
@@ -54,9 +66,12 @@ public class StringConcatInstruction extends EvalInstruction {
     return factory.fromDfType(result);
   }
 
-  private static @NotNull DfIntType getLength(@NotNull DfaValueFactory factory, @NotNull DfaMemoryState state, @NotNull DfaValue dfaValue, @Nullable String constValue) {
+  private static @NotNull DfIntType getLength(@NotNull DfaValueFactory factory, @NotNull DfaMemoryState state, @NotNull DfaValue dfaValue, @Nullable String constValue, boolean isChar) {
     if (constValue != null) {
       return intValue(constValue.length());
+    }
+    if (isChar) {
+      return intValue(1);
     }
     DfType lengthType;
     if (dfaValue.getDfType() instanceof DfIntegralType) {
@@ -74,8 +89,12 @@ public class StringConcatInstruction extends EvalInstruction {
     return (DfIntType)intRange(LongRangeSet.range(0, Integer.MAX_VALUE));
   }
   
-  private static @Nullable String getString(@NotNull DfaMemoryState state, DfaValue value) {
+  private static @Nullable String getString(@NotNull DfaMemoryState state, DfaValue value, boolean isChar) {
     DfType dfType = state.getDfType(value);
+    if (isChar) {
+      // DFA stores a char constant as an int
+      return dfType.getConstantOfType(Integer.class) instanceof Integer code ? String.valueOf((char)code.intValue()) : null;
+    }
     if (dfType.equals(NULL)) {
       return "null";
     }
