@@ -153,8 +153,10 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
       }
     }
 
-    PyCompletionMlElementInfo info = PyCompletionMlElementInfo.Companion.fromElement(element);
-    item.putUserData(PyCompletionMlElementInfo.Companion.getKey(), info);
+    if (element != null) {
+      PyCompletionMlElementInfo info = PyCompletionMlElementInfo.Companion.fromElement(element);
+      item.putUserData(PyCompletionMlElementInfo.Companion.getKey(), info);
+    }
     return item;
   }
 
