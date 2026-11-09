@@ -672,6 +672,10 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           __required_keys__: frozenset[str]
 
 
+      class TypedDictOtherKeyType(Protocol):
+          __required_keys__: ClassVar[frozenset[int]]
+
+
       class Movie(TypedDict):
           name: str
 
@@ -680,6 +684,126 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       definition: type[TypedDictLike] = Movie
       not_class_variable: TypedDictInstanceLike = Movie(name="")
       #                                           ^^^^^^^^^^^^^^ WARNING Expected type 'TypedDictInstanceLike', got 'Movie' instead
+      not_class_variable_definition: type[TypedDictInstanceLike] = Movie
+      #                                                            ^^^^^ WARNING Expected type 'type[TypedDictInstanceLike]', got 'type[Movie]' instead
+      other_key_type: TypedDictOtherKeyType = Movie(name="")
+      #                                       ^^^^^^^^^^^^^^ WARNING Expected type 'TypedDictOtherKeyType', got 'Movie' instead
+      plain_dict: TypedDictLike = {"name": ""}
+      #                           ^^^^^^^^^^^^ WARNING Expected type 'TypedDictLike', got 'dict[str, str]' instead
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-93429"])
+    @Test
+    fun `TypedDict state satisfies a type variable bound by protocols with the class variables of the TypedDict fallback`() = test("""
+      from typing import Callable, ClassVar, Protocol, TypedDict, overload
+
+
+      class TypedDictLikeV1(Protocol):
+          __required_keys__: ClassVar[frozenset[str]]
+          __optional_keys__: ClassVar[frozenset[str]]
+
+
+      class TypedDictLikeV2(Protocol):
+          __required_keys__: frozenset[str]
+          __optional_keys__: frozenset[str]
+
+
+      class Graph[StateT: TypedDictLikeV1 | TypedDictLikeV2]:
+          def __init__(self, state_schema: type[StateT]) -> None: ...
+
+          @overload
+          def add_node[NodeStateT: TypedDictLikeV1 | TypedDictLikeV2](self, node: Callable[[NodeStateT], object]) -> None: ...
+          @overload
+          def add_node[NodeStateT: TypedDictLikeV1 | TypedDictLikeV2](self, name: str, node: Callable[[NodeStateT], object]) -> None: ...
+          def add_node(self, *args, **kwargs) -> None: ...
+
+
+      class State(TypedDict):
+          question: str
+
+
+      class Plain:
+          pass
+
+
+      def node(state: State) -> object: ...
+      def plain_node(state: Plain) -> object: ...
+
+
+      graph = Graph(State)
+      graph.add_node(node)
+      graph.add_node("named", node)
+      graph.add_node(plain_node)
+      #              ^^^^^^^^^^ WARNING No overload of 'add_node' matches the arguments. Argument types: ((state: Plain) -> object). Expected one of: [NodeStateT: TypedDictLikeV1 | TypedDictLikeV2](node: (NodeStateT) -> object), [NodeStateT: TypedDictLikeV1 | TypedDictLikeV2](name: str, node: (NodeStateT) -> object)
+      plain_graph = Graph(Plain)
+      #                   ^^^^^ WARNING Expected type 'type[StateT ≤: TypedDictLikeV1 | TypedDictLikeV2]', got 'type[Plain]' instead
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-93429"])
+    @Test
+    fun `TypedDict from another file matches a protocol from another file with the class variables of the TypedDict fallback`() = test("""
+      from protocols import TypedDictInstanceLike, TypedDictLike
+      from states import Film, Movie
+
+
+      instance: TypedDictLike = Movie(name="")
+      definition: type[TypedDictLike] = Movie
+      functional: TypedDictLike = Film(title="")
+      not_class_variable: TypedDictInstanceLike = Movie(name="")
+      #                                           ^^^^^^^^^^^^^^ WARNING Expected type 'TypedDictInstanceLike', got 'Movie' instead
+      not_class_variable_definition: type[TypedDictInstanceLike] = Movie
+      #                                                            ^^^^^ WARNING Expected type 'type[TypedDictInstanceLike]', got 'type[Movie]' instead
+      """.trimIndent(),
+      "protocols.py" to """
+      from typing import ClassVar, Protocol
+
+
+      class TypedDictLike(Protocol):
+          __required_keys__: ClassVar[frozenset[str]]
+          __optional_keys__: ClassVar[frozenset[str]]
+
+
+      class TypedDictInstanceLike(Protocol):
+          __required_keys__: frozenset[str]
+          __optional_keys__: frozenset[str]
+      """.trimIndent(),
+      "states.py" to """
+      from typing import TypedDict
+
+
+      class Movie(TypedDict):
+          name: str
+
+
+      Film = TypedDict("Film", {"title": str})
+      """.trimIndent())
+
+    @TestFor(issues = ["PY-93429"])
+    @Test
+    fun `isinstance of a TypedDict overlaps unsafely with a runtime protocol with instance variables, not with class variables`() = test("""
+      from typing import ClassVar, Protocol, TypedDict, runtime_checkable
+
+
+      @runtime_checkable
+      class RuntimeTypedDictLike(Protocol):
+          __required_keys__: ClassVar[frozenset[str]]
+
+
+      @runtime_checkable
+      class RuntimeTypedDictInstanceLike(Protocol):
+          __required_keys__: frozenset[str]
+
+
+      class Movie(TypedDict):
+          name: str
+
+
+      def check(movie: Movie):
+          if isinstance(movie, RuntimeTypedDictLike):
+              pass
+          if isinstance(movie, RuntimeTypedDictInstanceLike):
+      #                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ ERROR Unsafe overlap between the type and protocol
+              pass
       """.trimIndent())
 
     @TestFor(issues = ["PY-53104"])
