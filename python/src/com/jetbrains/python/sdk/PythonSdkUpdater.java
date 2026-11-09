@@ -10,9 +10,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -769,7 +767,7 @@ public final class PythonSdkUpdater {
   /**
    * Commits new SDK paths using an SDK modificator if the paths have been changed.
    * <p>
-   * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
+   * You may invoke it from any thread. Blocks until the commit is done, in a write action on the calling thread.
    */
   private static void commitSdkPathsIfChanged(@NotNull Sdk sdk,
                                               final @NotNull List<VirtualFile> sdkPaths,
@@ -837,9 +835,11 @@ public final class PythonSdkUpdater {
    * lock on the EDT for the whole of the workspace-model update the commit performs, which is a freeze (PY-89734).
    * <p>
    * The modificator is built inside the write action, so the SDK cannot change between the two.
+   * <p>
+   * A background write action needs no write-safe modality, so the callers may run in any modality, such as a pooled
+   * thread in {@code ModalityState.any()}.
    */
   private static void changeSdkModificator(@NotNull Sdk sdk, @NotNull Processor<? super SdkModificator> processor) {
-    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
     ApplicationManager.getApplication().runWriteAction(() -> {
       final SdkModificator effectiveModificator = sdk.getSdkModificator();
       if (processor.process(effectiveModificator)) {
