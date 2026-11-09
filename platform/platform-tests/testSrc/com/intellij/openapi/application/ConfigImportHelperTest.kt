@@ -212,11 +212,13 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = createConfigDir("2027.1")
 
     val stateFile = oldConfigDir.resolve("migration.json").apply { writeText("{}") }
+    val contentFile = oldConfigDir.resolve("migration-redirect.json").apply { writeText("{}") }
     val otherFile = oldConfigDir.resolve("other.xml").apply { writeText("...") }
 
     doImport(oldConfigDir, newConfigDir, options)
 
     assertThat(newConfigDir.resolve(stateFile.fileName)).doesNotExist()
+    assertThat(newConfigDir.resolve(contentFile.fileName)).doesNotExist()
     assertThat(newConfigDir.resolve(otherFile.fileName)).hasSameBinaryContentAs(otherFile)
   }
 

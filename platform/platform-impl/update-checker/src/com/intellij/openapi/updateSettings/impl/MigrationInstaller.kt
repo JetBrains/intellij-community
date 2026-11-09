@@ -8,11 +8,11 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.readInstalledProductCode
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.ide.productInfo.IdeProductInfo
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
@@ -140,7 +140,7 @@ private fun installMacApp(dmg: Path, product: String, indicator: ProgressIndicat
     Files.createDirectories(applications)
     val target = applications.resolve(app.fileName.toString())
     if (Files.exists(target, LinkOption.NOFOLLOW_LINKS)) {
-      val productCode = IdeProductInfo.getInstance().loadProductInfo(target)?.productCode
+      val productCode = readInstalledProductCode(target)
       if (productCode != product) {
         throw MigrationInstallException(IdeBundle.message("updates.migration.error.exists", target.toString()),
                                         "${target} has the product code ${productCode}, expected ${product}")

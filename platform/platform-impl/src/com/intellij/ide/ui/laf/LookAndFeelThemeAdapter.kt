@@ -12,6 +12,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.TableActions
 import com.intellij.util.ResourceUtil
+import com.intellij.util.SVGLoader
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.JBDimension
@@ -270,12 +271,13 @@ private fun toFont(defaults: UIDefaults, key: Any): Font {
 
 internal fun createRawDarculaTheme(): UITheme {
   val classLoader = LookAndFeelThemeAdapter::class.java.classLoader
-  val filename = "themes/darcula.theme.json"
-  val data = ResourceUtil.getResourceAsBytes(filename, classLoader, /*checkParents =*/ true)
-             ?: throw RuntimeException("Can't load $filename")
+  val data = readThemeResource("themes/darcula.theme.json", classLoader)
   val theme = UITheme.loadDeprecatedFromJson(data, themeId = "Darcula", classLoader)
   return theme
 }
+
+private fun readThemeResource(filename: String, classLoader: ClassLoader): ByteArray =
+  ResourceUtil.getResourceAsBytes(filename, classLoader, /*checkParents =*/ true) ?: throw RuntimeException("Can't load $filename")
 
 @ApiStatus.Internal
 @VisibleForTesting
@@ -284,6 +286,37 @@ fun setEarlyUiLaF() {
   val theme = createRawDarculaTheme()
   val laf = LookAndFeelThemeAdapter(createBaseLaF(), UIThemeLookAndFeelInfoImpl(theme))
   UIManager.setLookAndFeel(laf)
+}
+
+private fun createRawNewUiDarkTheme(): UITheme {
+  val classLoader = LookAndFeelThemeAdapter::class.java.classLoader
+  val data = readThemeResource("themes/expUI/expUI_dark.theme.json", classLoader)
+  // the parent is given, so the theme list of the application is not needed
+  return UITheme.loadFromJson(parentTheme = createRawDarculaTheme(),
+                              data = data,
+                              themeId = UITheme.EXPERIMENTAL_DARK_ID,
+                              classLoader = classLoader,
+                              defaultDarkParent = null,
+                              defaultLightParent = null,
+                              warn = { message, error -> logger<LookAndFeelThemeAdapter>().warn(message, error) })
+}
+
+/**
+ * Sets the Dark theme of the New UI for a window that shows before the application exists.
+ * Close the result after the window: it sets the previous look and feel again and removes the icon patchers of this theme.
+ * `LafManager` removes only the patchers of its own theme.
+ */
+@ApiStatus.Internal
+fun setEarlyNewUiDarkLaF(): AutoCloseable {
+  val previousLaf = UIManager.getLookAndFeel()
+  val colorPatcherProvider = SVGLoader.colorPatcherProvider
+  val theme = createRawNewUiDarkTheme()
+  UIManager.setLookAndFeel(LookAndFeelThemeAdapter(createBaseLaF(), UIThemeLookAndFeelInfoImpl(theme)))
+  return AutoCloseable {
+    theme.patcher?.let(IconLoader::removePathPatcher)
+    SVGLoader.colorPatcherProvider = colorPatcherProvider
+    UIManager.setLookAndFeel(previousLaf)
+  }
 }
 
 @ApiStatus.Internal

@@ -70,6 +70,35 @@ class MigrationContentManifestTest {
   }
 
   @Test
+  fun `redirect fields are parsed`() {
+    val redirect = valid(manifest(locales = mapOf("en" to offer("English", redirect = redirect("GoLand is now part of Unified IDE")))),
+                         Locale.ENGLISH).redirect!!
+    assertEquals("GoLand", redirect.windowTitle)
+    assertEquals("GoLand is now part of Unified IDE", redirect.title)
+    assertEquals("This icon now opens Unified IDE.", redirect.body)
+    assertEquals("Launch Unified IDE", redirect.primaryButton)
+  }
+
+  @Test
+  fun `manifest without a valid redirect section is valid`() {
+    assertNull(valid(manifest(), Locale.ENGLISH).redirect)
+    val blank = offer("English", redirect = redirect(" "))
+    assertNull(valid(manifest(locales = mapOf("en" to blank)), Locale.ENGLISH).redirect)
+    val partial = offer("English", redirect = """{ "title": "GoLand is now part of Unified IDE" }""")
+    assertNull(valid(manifest(locales = mapOf("en" to partial)), Locale.ENGLISH).redirect)
+  }
+
+  @Test
+  fun `redirect section follows the locale match`() {
+    val english = offer("English", redirect = redirect("English redirect"))
+    val japanese = offer("Japanese", redirect = redirect("Japanese redirect"))
+    val korean = offer("Korean", redirect = """{ "title": "Korean redirect" }""")
+    val manifest = manifest(locales = mapOf("en" to english, "ja" to japanese, "ko" to korean))
+    assertEquals("Japanese redirect", valid(manifest, Locale.JAPANESE).redirect!!.title)
+    assertEquals("English redirect", valid(manifest, Locale.KOREAN).redirect!!.title)
+  }
+
+  @Test
   fun `no offer in any locale is invalid`() {
     invalid(manifest(locales = mapOf("en" to """{ "ready": { "title": "x" } }""")), Locale.ENGLISH)
   }
@@ -171,6 +200,7 @@ class MigrationContentManifestTest {
     title: String,
     learnMoreUrl: String = "https://www.jetbrains.com/unified/",
     ready: String? = """{ "title": "Unified IDE is ready", "action": "Restart to Update" }""",
+    redirect: String? = null,
   ): String = """
     {
       "offer": {
@@ -180,6 +210,14 @@ class MigrationContentManifestTest {
         "learnMore": { "text": "Learn more", "url": "${learnMoreUrl}" },
         "primaryButton": "Update to Unified IDE",
         "secondaryButton": "Remind Me Later"
-      }${ready?.let { """, "ready": ${it}""" } ?: ""}
+      }${ready?.let { """, "ready": ${it}""" } ?: ""}${redirect?.let { """, "redirect": ${it}""" } ?: ""}
+    }"""
+
+  private fun redirect(title: String): String = """
+    {
+      "windowTitle": "GoLand",
+      "title": "${title}",
+      "body": "This icon now opens Unified IDE.",
+      "primaryButton": "Launch Unified IDE"
     }"""
 }

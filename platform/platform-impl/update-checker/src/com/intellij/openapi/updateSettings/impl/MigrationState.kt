@@ -6,14 +6,13 @@ import com.intellij.openapi.application.deleteMigrationState
 import com.intellij.openapi.application.migrationStateFile
 import com.intellij.openapi.application.readMigrationState
 import com.intellij.openapi.application.writeMigrationState
-import com.intellij.platform.ide.productInfo.IdeProductInfo
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
 
 /** Keeps the state of [file] in memory. The first [get] reads the file. */
 @ApiStatus.Internal
-class MigrationStateStore(private val file: Path, private val productCodeOf: (Path) -> String? = ::installedProductCode) {
+class MigrationStateStore(private val file: Path) {
   private val lock = Any()
   private var isLoaded = false
   private var state: MigrationState? = null
@@ -25,7 +24,7 @@ class MigrationStateStore(private val file: Path, private val productCodeOf: (Pa
     state
   }
 
-  /** Deletes the file, for example when the Unified IDE is removed while the IDE runs. */
+  /** Deletes the file and the content copy, for example when the Unified IDE is removed while the IDE runs. */
   fun clear() {
     synchronized(lock) {
       state = null
@@ -45,7 +44,7 @@ class MigrationStateStore(private val file: Path, private val productCodeOf: (Pa
   }
 
   private fun load() {
-    state = readMigrationState(file, productCodeOf)
+    state = readMigrationState(file)
     isLoaded = true
   }
 }
@@ -54,5 +53,3 @@ private val defaultStore by lazy { MigrationStateStore(migrationStateFile()) }
 
 /** The state of the config dir of this IDE. */
 internal fun migrationStateStore(): MigrationStateStore = defaultStore
-
-private fun installedProductCode(app: Path): String? = IdeProductInfo.getInstance().loadProductInfo(app)?.productCode

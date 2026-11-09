@@ -60,6 +60,13 @@ internal fun JsonParser.intOrNull(): Int? = when (currentToken()) {
   else -> invalidMigrationJson("'${currentName()}' is not an integer")
 }
 
+/** Reads a base64 string. */
+internal fun JsonParser.binaryOrNull(): ByteArray? = when (currentToken()) {
+  JsonToken.VALUE_STRING -> binaryValue
+  JsonToken.VALUE_NULL -> null
+  else -> invalidMigrationJson("'${currentName()}' is not a base64 string")
+}
+
 /** Writes one JSON object with [content]. */
 internal fun formatMigrationJson(content: JsonGenerator.() -> Unit): String {
   val writer = StringWriter()

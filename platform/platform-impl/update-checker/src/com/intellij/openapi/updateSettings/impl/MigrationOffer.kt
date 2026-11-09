@@ -9,8 +9,12 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.MigrationImageData
+import com.intellij.openapi.application.MigrationRedirectContent
+import com.intellij.openapi.application.MigrationRedirectTexts
 import com.intellij.openapi.application.MigrationState
 import com.intellij.openapi.application.MigrationStatus
+import com.intellij.openapi.application.migrationRedirectContentFile
+import com.intellij.openapi.application.writeMigrationRedirectContent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -72,6 +76,7 @@ internal class MigrationOfferContent(
   val distribution: DistributionInfo,
   val offer: MigrationOfferTexts,
   val ready: MigrationReadyTexts?,
+  val redirect: MigrationRedirectTexts?,
   val sourceLogo: MigrationImageData,
   val targetLogo: MigrationImageData,
   val background: MigrationImageData?,
@@ -129,6 +134,7 @@ private fun doLoadMigrationOffer(update: PlatformUpdates.Loaded, indicator: Prog
       distribution = distribution,
       offer = manifest.offer,
       ready = manifest.ready,
+      redirect = manifest.redirect,
       sourceLogo = loadImage(images.sourceLogo, indicator),
       targetLogo = loadImage(images.targetLogo, indicator),
       background = images.background?.let { loadImage(it, indicator) },
@@ -175,6 +181,7 @@ internal fun startMigrationUpdate(project: Project?, content: MigrationOfferCont
       catch (e: IOException) {
         LOG.warn("cannot write the migration state", e)
       }
+      writeRedirectContent(content.redirect?.let { MigrationRedirectContent(it, content.sourceLogo, content.targetLogo) })
     }
 
     override fun onSuccess() {
@@ -280,6 +287,20 @@ internal fun showMigrationOffer(project: Project?, content: MigrationOfferConten
   }
   finally {
     isMigrationOfferShown = false
+  }
+}
+
+/** Without a [redirect] content, the old copy is deleted, so that the redirect window does not show old texts. */
+private fun writeRedirectContent(redirect: MigrationRedirectContent?) {
+  if (redirect == null) {
+    LOG.info("the manifest has no valid 'redirect' section: no redirect window shows after the migration")
+  }
+  val file = migrationRedirectContentFile()
+  try {
+    writeMigrationRedirectContent(redirect, file)
+  }
+  catch (e: IOException) {
+    LOG.warn("cannot write ${file}", e)
   }
 }
 

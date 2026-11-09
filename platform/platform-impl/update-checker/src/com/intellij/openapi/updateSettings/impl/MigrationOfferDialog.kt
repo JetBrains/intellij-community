@@ -18,7 +18,6 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import javax.swing.Action
 import javax.swing.Icon
-import javax.swing.JButton
 import javax.swing.JComponent
 
 private const val CONTENT_WIDTH = 480

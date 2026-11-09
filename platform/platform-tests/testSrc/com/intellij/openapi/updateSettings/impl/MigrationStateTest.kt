@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.openapi.application.MigrationState
 import com.intellij.openapi.application.MigrationStatus
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.migrationRedirectContentFile
 import com.intellij.openapi.application.migrationStateFile
 import com.intellij.openapi.application.readMigrationState
 import com.intellij.openapi.application.writeMigrationState
@@ -12,6 +13,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -29,6 +31,11 @@ class MigrationStateTest {
   private val configDir: Path by lazy { tempDir.root.toPath().resolve("config") }
   private val file: Path by lazy { migrationStateFile(configDir) }
   private val app: Path by lazy { tempDir.root.toPath().resolve("Unified IDE.app").createDirectories() }
+
+  @Before
+  fun writeApp() {
+    writeProductInfo(app)
+  }
 
   @Test
   fun `state is written and read`() {
@@ -71,12 +78,24 @@ class MigrationStateTest {
       json(app = "\"\""),
       json(app = "\"relative/Unified IDE.app\""),
       json(product = "\"\""),
+      json(app = "1"),
+      json(version = "1.5"),
+      json() + " trailing",
     )
     for (text in invalid) {
       write(text)
       assertNull(text, read())
       assertFalse(text, file.exists())
     }
+  }
+
+  @Test
+  fun `invalid state deletes the content copy`() {
+    write("not a json")
+    val copy = migrationRedirectContentFile(file)
+    copy.writeText("{}")
+    assertNull(read())
+    assertFalse(copy.exists())
   }
 
   @Test
@@ -88,27 +107,30 @@ class MigrationStateTest {
 
   @Test
   fun `application of another product is ignored and deleted`() {
+    writeProductInfo(app, productCode = "GO")
     write(json())
-    assertNull(read(productCode = "GO"))
+    assertNull(read())
     assertFalse(file.exists())
 
+    writeProductInfo(app, productCode = null)
     write(json())
-    assertNull(read(productCode = null))
+    assertNull(read())
     assertFalse(file.exists())
   }
 
   @Test
   fun `state about this IDE is ignored and deleted`() {
     val productCode = ApplicationInfoImpl.getShadowInstance().build.productCode
+    writeProductInfo(app, productCode)
     write(json(product = quoted(productCode)))
-    assertNull(read(productCode = productCode))
+    assertNull(read())
     assertFalse(file.exists())
   }
 
   @Test
   fun `store reads the file on the first use`() {
     write(json(status = "\"moved\""))
-    val store = MigrationStateStore(file) { "JB" }
+    val store = MigrationStateStore(file)
     assertEquals(MigrationStatus.MOVED, store.get()!!.status)
 
     file.writeText("not a json")
@@ -118,18 +140,21 @@ class MigrationStateTest {
   @Test
   fun `store clear deletes the file`() {
     write(json())
-    val store = MigrationStateStore(file) { "JB" }
+    val store = MigrationStateStore(file)
     assertEquals(MigrationStatus.INSTALLED, store.get()!!.status)
+    val copy = migrationRedirectContentFile(file)
+    copy.writeText("{}")
     store.clear()
     assertNull(store.get())
     assertFalse(file.exists())
+    assertFalse(copy.exists())
   }
 
   @Test
   fun `store keeps the state when the write fails`() {
     configDir.parent.createDirectories()
     configDir.writeText("a file, not a directory")
-    val store = MigrationStateStore(file) { "JB" }
+    val store = MigrationStateStore(file)
     assertThrows(IOException::class.java) {
       store.set(MigrationState(MigrationStatus.INSTALLED, app, "JB"))
     }
@@ -138,15 +163,15 @@ class MigrationStateTest {
 
   @Test
   fun `store keeps the state that it writes`() {
-    val store = MigrationStateStore(file) { "JB" }
+    val store = MigrationStateStore(file)
     assertNull(store.get())
     store.set(MigrationState(MigrationStatus.INSTALLED, app, "JB"))
     assertEquals(MigrationStatus.INSTALLED, store.get()!!.status)
     assertTrue(file.exists())
-    assertEquals(MigrationStatus.INSTALLED, MigrationStateStore(file) { "JB" }.get()!!.status)
+    assertEquals(MigrationStatus.INSTALLED, MigrationStateStore(file).get()!!.status)
   }
 
-  private fun read(productCode: String? = "JB"): MigrationState? = readMigrationState(file) { productCode }
+  private fun read(): MigrationState? = readMigrationState(file)
 
   private fun write(text: String) {
     configDir.createDirectories()

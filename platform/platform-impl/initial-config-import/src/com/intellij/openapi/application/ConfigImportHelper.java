@@ -1722,6 +1722,7 @@ public final class ConfigImportHelper {
       fileName.equals(StoragePathMacros.APP_INTERNAL_STATE_DB) ||
       fileName.equals(ExpiredPluginsState.EXPIRED_PLUGINS_FILENAME) ||
       fileName.equals(MigrationStateKt.MIGRATION_STATE_FILE_NAME) ||
+      fileName.equals(MigrationRedirectContentKt.MIGRATION_REDIRECT_CONTENT_FILE_NAME) ||
       fileName.startsWith(SpecialConfigFiles.CHROME_USER_DATA) ||
       fileName.endsWith(".jdk") && fileName.startsWith(String.valueOf(ApplicationNamesInfo.getInstance().getScriptName())) ||
       (settings != null && settings.shouldSkipPath(path))

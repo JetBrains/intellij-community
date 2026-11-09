@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.openapi.application.MigrationRedirectTexts
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -46,17 +47,21 @@ class MigrationReadyTexts(val title: @NlsSafe String, val action: @NlsSafe Strin
 
 @ApiStatus.Internal
 sealed interface MigrationManifestParseResult {
-  /** [ready] is `null` when no locale has a valid `ready` section. The client then uses its generic texts. */
+  /**
+   * [ready] is `null` when no locale has a valid `ready` section. The client then uses its generic texts.
+   * [redirect] is `null` when no locale has a valid `redirect` section. Then no redirect window shows after the migration.
+   */
   class Valid(
     val offer: MigrationOfferTexts,
     val ready: MigrationReadyTexts?,
+    val redirect: MigrationRedirectTexts?,
     val images: MigrationImages,
   ) : MigrationManifestParseResult
 
   class Invalid(val reason: String) : MigrationManifestParseResult
 }
 
-/** Parses the content manifest of the migration and selects the offer and the ready texts for [locale]. */
+/** Parses the content manifest of the migration and selects the offer, the ready and the redirect texts for [locale]. */
 @ApiStatus.Internal
 fun parseMigrationManifest(
   text: String,
@@ -79,7 +84,8 @@ fun parseMigrationManifest(
     val offer = candidates.firstNotNullOfOrNull { it.offer?.toModel(allowFileUrls) }
                 ?: invalid("no valid 'offer' for ${locale.toLanguageTag()}")
     val ready = candidates.firstNotNullOfOrNull { it.ready?.toModel() }
-    MigrationManifestParseResult.Valid(offer, ready, images)
+    val redirect = candidates.firstNotNullOfOrNull { it.redirect?.toModel() }
+    MigrationManifestParseResult.Valid(offer, ready, redirect, images)
   }
   catch (e: InvalidManifestException) {
     MigrationManifestParseResult.Invalid(e.message!!)
@@ -158,6 +164,16 @@ private fun ReadyDto.toModel(): MigrationReadyTexts? {
   )
 }
 
+/** Returns `null` when a text is missing, so that the next locale applies. */
+private fun RedirectDto.toModel(): MigrationRedirectTexts? {
+  return MigrationRedirectTexts(
+    windowTitle = windowTitle?.takeIf { it.isNotBlank() } ?: return null,
+    title = title?.takeIf { it.isNotBlank() } ?: return null,
+    body = body?.takeIf { it.isNotBlank() } ?: return null,
+    primaryButton = primaryButton?.takeIf { it.isNotBlank() } ?: return null,
+  )
+}
+
 private fun checkedUrl(url: String, allowFileUrls: Boolean): String {
   if (!isAllowedContentUrl(url, allowFileUrls)) invalid("URL is not allowed: ${url}")
   return url
@@ -184,7 +200,7 @@ private class ImagesDto(val sourceLogo: ImageDto? = null, val targetLogo: ImageD
 private class ImageDto(val light: String? = null, val dark: String? = null)
 
 @Serializable
-private class LocaleDto(val offer: OfferDto? = null, val ready: ReadyDto? = null)
+private class LocaleDto(val offer: OfferDto? = null, val ready: ReadyDto? = null, val redirect: RedirectDto? = null)
 
 @Serializable
 private class OfferDto(
@@ -198,6 +214,14 @@ private class OfferDto(
 
 @Serializable
 private class ReadyDto(val title: String? = null, val action: String? = null)
+
+@Serializable
+private class RedirectDto(
+  val windowTitle: String? = null,
+  val title: String? = null,
+  val body: String? = null,
+  val primaryButton: String? = null,
+)
 
 @Serializable
 private class LinkDto(val text: String? = null, val url: String? = null)
