@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -59,13 +60,16 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
                                                @NotNull Document document,
                                                @Nullable Language language,
                                                @NotNull EvaluationMode mode) {
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
-      List<PyImportStatementBase> pseudoImports = fragment.getPseudoImports();
-      String customInfo = StringUtil.nullize(StringUtil.join(pseudoImports, PsiElement::getText, "\n"));
-      return new XExpressionImpl(fragment.getText(), language, customInfo, mode);
-    }
-    return super.createExpression(project, document, language, mode);
+    XExpression expression = ReadAction.computeBlocking(() -> {
+      PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+      if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
+        List<PyImportStatementBase> pseudoImports = fragment.getPseudoImports();
+        String customInfo = StringUtil.nullize(StringUtil.join(pseudoImports, PsiElement::getText, "\n"));
+        return new XExpressionImpl(fragment.getText(), language, customInfo, mode);
+      }
+      return null;
+    });
+    return expression != null ? expression : super.createExpression(project, document, language, mode);
   }
 
   @VisibleForTesting
