@@ -1,0 +1,7 @@
+The IDE highlights errors in Markdown code fences.
+
+```json
+{
+  "value": <spot>invalid
+}
+```

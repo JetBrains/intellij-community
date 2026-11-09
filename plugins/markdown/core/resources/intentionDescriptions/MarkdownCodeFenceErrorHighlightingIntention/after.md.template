@@ -1,0 +1,7 @@
+The IDE does not highlight errors in Markdown code fences. You can enable highlighting again in Settings | Languages & Frameworks | Markdown.
+
+```json
+{
+  "value": <spot>invalid
+}
+```
