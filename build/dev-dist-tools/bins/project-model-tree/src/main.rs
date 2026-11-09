@@ -53,11 +53,12 @@ struct Row {
 }
 
 fn main() -> ExitCode {
-    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stdout(), &mut std::io::stderr()))
+    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stderr()))
 }
 
-/// Runs the tool and returns the exit code: 2 for a usage error, 1 for a failed copy or a failed span file.
-fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
+/// Runs the tool and returns the exit code: 2 for a usage error, 1 for a failed copy or a failed span file. A run that
+/// succeeds writes nothing. The `files` tag of the root span states the number of files.
+fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     let Some(options) = cli::ok_or_report(errors, parse_options(args)) else {
         return 2;
     };
@@ -70,10 +71,7 @@ fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors:
         }
         root.end();
         match result {
-            Ok(_) => {
-                let _ = writeln!(output, "Project model tree materialized into {}", options.output_dir.display());
-                0
-            }
+            Ok(_) => 0,
             Err(error) => {
                 cli::report(errors, &error);
                 1

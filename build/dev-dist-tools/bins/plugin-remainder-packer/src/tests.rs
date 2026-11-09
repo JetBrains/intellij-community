@@ -13,17 +13,17 @@ fn run_captured(values: &[impl AsRef<OsStr>]) -> Run {
     testkit::run_tool(run, values)
 }
 
-/// Fails unless the projection run passed and printed its line.
+/// Fails unless the projection run passed and wrote nothing.
 #[track_caller]
 fn assert_projected(run: &Run) {
-    assert!(run.code == 0 && !run.output.is_empty() && run.errors.is_empty(), "{run:?}");
+    assert!(run.code == 0 && run.errors.is_empty(), "{run:?}");
 }
 
 /// Fails unless the run of the case `name` failed with `code` and `message`, and wrote no output below `root`.
 #[track_caller]
 fn assert_refused_before_any_write(name: &str, root: &Path, run: &Run, code: u8, message: &str) {
     assert!(
-        run.code == code && run.errors.contains(message) && run.output.is_empty(),
+        run.code == code && run.errors.contains(message),
         "{name}: expected the code {code} and {message:?}, got {run:?}"
     );
     for file in ["payload", "inventory.json", "assets.json", "plugin-classpath.txt"] {
@@ -76,13 +76,10 @@ fn arguments_are_refused_with_the_usage_code() {
         version_four,
     ];
     for case in cases {
-        let Run { code, output, errors } = run_captured(&case);
-        assert!(
-            code == 2 && !errors.is_empty() && output.is_empty(),
-            "{case:?}: code={code}, output={output:?}, errors={errors:?}"
-        );
+        let Run { code, errors } = run_captured(&case);
+        assert!(code == 2 && !errors.is_empty(), "{case:?}: code={code}, errors={errors:?}");
     }
-    let Run { code, errors, .. } = run_captured(&[ALL.as_slice(), &["--recipe=recipe.json"]].concat());
+    let Run { code, errors } = run_captured(&[ALL.as_slice(), &["--recipe=recipe.json"]].concat());
     assert_eq!(code, 2);
     assert_eq!(errors, "ERROR: unknown option: --recipe\n");
 }
@@ -288,16 +285,12 @@ fn gzip_resources_mode_writes_one_member_per_xml_entry() {
     let archive = root.path().join("postgres-1.256.jar");
     write_deflated_zip(&archive, &[("com/db/postgres.minicat.xml", &"<model/>".repeat(1000))]);
     let output = root.path().join("out");
-    let Run {
-        code,
-        output: printed,
-        errors,
-    } = run_captured(&[
+    let Run { code, errors } = run_captured(&[
         OsString::from("gzip-resources"),
         OsString::from(format!("--output-dir={}", output.display())),
         archive.clone().into_os_string(),
     ]);
-    assert_eq!((code, printed.as_str(), errors.as_str()), (0, "", ""));
+    assert_eq!((code, errors.as_str()), (0, ""));
     let member = fs::read(output.join("com/db/postgres.minicat.xml.gzip")).unwrap();
     let mut source = zip::ZipArchive::new(fs::File::open(&archive).unwrap()).unwrap();
     let mut deflated = Vec::new();
@@ -319,12 +312,12 @@ fn gzip_resources_mode_refuses_bad_arguments_and_non_xml_entries() {
         vec!["gzip-resources", output.as_str(), "--unknown=x", "a.jar"],
         vec!["gzip-resources", output.as_str(), output.as_str(), "a.jar"],
     ] {
-        let Run { code, errors, .. } = run_captured(&case);
+        let Run { code, errors } = run_captured(&case);
         assert!(code == 2 && !errors.is_empty(), "{case:?}: code={code}, errors={errors:?}");
     }
     let archive = root.path().join("notes.jar");
     write_deflated_zip(&archive, &[("notes.txt", "text")]);
-    let Run { code, errors, .. } = run_captured(&[OsString::from("gzip-resources"), OsString::from(output), archive.into_os_string()]);
+    let Run { code, errors } = run_captured(&[OsString::from("gzip-resources"), OsString::from(output), archive.into_os_string()]);
     assert_eq!(code, 1);
     assert!(errors.contains(r#"unexpected file "notes.txt""#), "{errors}");
 }

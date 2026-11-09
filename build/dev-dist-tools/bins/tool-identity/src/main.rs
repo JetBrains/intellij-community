@@ -26,11 +26,11 @@ use std::process::ExitCode;
 use anyhow::{Context, bail};
 
 fn main() -> ExitCode {
-    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stdout(), &mut std::io::stderr()))
+    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stderr()))
 }
 
-/// Runs the tool and returns the exit code: 1 for every error. The tool writes nothing to `_output`.
-fn run(args: impl IntoIterator<Item = OsString>, _output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
+/// Runs the tool and returns the exit code: 1 for every error. A run that succeeds writes nothing.
+fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     match write_identity(args) {
         Ok(()) => 0,
         Err(error) => {

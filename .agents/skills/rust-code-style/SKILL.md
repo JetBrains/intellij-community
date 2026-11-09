@@ -29,12 +29,15 @@ An action tool returns `anyhow::Result` from every function and prints the chain
 
 ```rust
 fn main() -> ExitCode {
-    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stdout(), &mut std::io::stderr()))
+    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stderr()))
 }
 ```
 
 `run` calls the tool and passes an error to `cli::report`, which prints `ERROR: {error:#}`. Each tool keeps its own exit
 codes. `bins/runtime-layout/src/main.rs` of the dev-dist tools shows the shape.
+
+An action tool that succeeds prints nothing. Bazel shows the output of a successful action as an `INFO: From` block.
+A count or a report of a run goes into a tag of its span.
 
 A person- or agent-facing CLI answers a `Refusal { code, message, exit, details }`. The code is the stable half that a
 caller automates against. The shared crate `community/tools/bt/crates/refusal` holds the type, with the details as JSON

@@ -31,12 +31,12 @@ enum Mode<Spec> {
 }
 
 impl<Spec> Mode<Spec> {
-    /// The name of the root span and the noun of the success line.
-    const fn job(&self) -> (&'static str, &'static str) {
+    /// The name of the root span.
+    const fn job(&self) -> &'static str {
         match self {
-            Self::Jars { .. } => ("collect packed jars", "packed jars"),
-            Self::Files { .. } => ("collect files", "files"),
-            Self::PluginComponent { .. } => ("collect plugin component metadata", "plugin files"),
+            Self::Jars { .. } => "collect packed jars",
+            Self::Files { .. } => "collect files",
+            Self::PluginComponent { .. } => "collect plugin component metadata",
         }
     }
 }
@@ -96,22 +96,19 @@ impl<Spec> Options<Spec> {
 }
 
 fn main() -> std::process::ExitCode {
-    std::process::ExitCode::from(run(
-        std::env::args_os().skip(1).collect(),
-        &mut std::io::stdout(),
-        &mut std::io::stderr(),
-    ))
+    std::process::ExitCode::from(run(std::env::args_os().skip(1).collect(), &mut std::io::stderr()))
 }
 
-/// Runs the tool and returns the exit code: 2 for an option error, 1 for any other error.
-fn run(args: Vec<OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
+/// Runs the tool and returns the exit code: 2 for an option error, 1 for any other error. A run that succeeds writes
+/// nothing. The `fileCount` tag of the `inventory dev build component` span states the number of files.
+fn run(args: Vec<OsString>, errors: &mut dyn Write) -> u8 {
     let Some(options) = cli::ok_or_report(errors, parse_options(args)) else {
         return 2;
     };
     let Some(options) = cli::ok_or_report(errors, options.read_spec()) else {
         return 1;
     };
-    let (job, content) = options.mode.job();
+    let job = options.mode.job();
     trace::run_traced(job, options.trace_file.as_deref().map(Path::new), 1, errors, |tracer, errors| {
         let root = tracer.span(job);
         root.tag("kind", options.kind.as_str());
@@ -124,14 +121,7 @@ fn run(args: Vec<OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u
         }
         root.end();
         match result {
-            Ok(count) => {
-                let _ = writeln!(
-                    output,
-                    "Dev distribution component '{}' named {count} {content} in {}",
-                    options.kind, options.manifest
-                );
-                0
-            }
+            Ok(()) => 0,
             Err(error) => {
                 cli::report(errors, &error);
                 1
@@ -141,8 +131,7 @@ fn run(args: Vec<OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u
 }
 
 /// Collects the files of the mode and writes the manifest. The plugin component mode also writes the classpath record.
-/// It returns the number of files that the manifest names.
-fn collect(options: &Options<PluginComponentSpec>, root: &trace::Span) -> anyhow::Result<usize> {
+fn collect(options: &Options<PluginComponentSpec>, root: &trace::Span) -> anyhow::Result<()> {
     let (files, classpath) = match &options.mode {
         Mode::Jars { jars_file, catalogue } => {
             let span = root.child("collect platform jars");
@@ -167,7 +156,7 @@ fn collect(options: &Options<PluginComponentSpec>, root: &trace::Span) -> anyhow
         }
         std::fs::write(classpath_part, record).with_context(|| format!("write {}", classpath_part.display()))?;
     }
-    Ok(files.len())
+    Ok(())
 }
 
 fn record_collection(

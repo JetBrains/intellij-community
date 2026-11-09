@@ -234,11 +234,10 @@ pub const REFERENCE_CONTENT_HASHES: [(usize, i64); 10] = [
     (524301, 8144707773225287728),
 ];
 
-/// The outcome of one run of a tool: the exit code, the text on stdout and the text on stderr.
+/// The outcome of one run of a tool: the exit code and the text on stderr. A dev-dist tool writes nothing to stdout.
 #[derive(Debug)]
 pub struct Run {
     pub code: u8,
-    pub output: String,
     pub errors: String,
 }
 
@@ -260,13 +259,12 @@ impl Run {
     }
 }
 
-/// Calls the `run` function of a tool with `args`, as `main` calls it, and keeps the text that it writes.
-pub fn run_tool(run: impl FnOnce(Vec<OsString>, &mut dyn Write, &mut dyn Write) -> u8, args: &[impl AsRef<OsStr>]) -> Run {
-    let (mut output, mut errors) = (Vec::new(), Vec::new());
-    let code = run(args.iter().map(|arg| arg.as_ref().to_owned()).collect(), &mut output, &mut errors);
+/// Calls the `run` function of a tool with `args`, as `main` calls it, and keeps the text that it writes to stderr.
+pub fn run_tool(run: impl FnOnce(Vec<OsString>, &mut dyn Write) -> u8, args: &[impl AsRef<OsStr>]) -> Run {
+    let mut errors = Vec::new();
+    let code = run(args.iter().map(|arg| arg.as_ref().to_owned()).collect(), &mut errors);
     Run {
         code,
-        output: String::from_utf8(output).expect("UTF-8 on stdout"),
         errors: String::from_utf8(errors).expect("UTF-8 on stderr"),
     }
 }

@@ -748,8 +748,11 @@ fn packed_component_writes_the_manifest_and_the_classpath() {
             "0"
         };
         assert_eq!(span_tag(&span, "byteCount"), Some(expected), "{span}");
+        if span_name(&span) == "inventory dev build component" {
+            assert_eq!(span_tag(&span, "fileCount"), Some("5"), "{span}");
+        }
     }
-    assert!(outcome.output.contains("named 5 plugin files"), "{}", outcome.output);
+    assert_eq!(outcome.errors, "", "a run that succeeds writes nothing");
 }
 
 #[test]
@@ -764,7 +767,7 @@ fn packed_component_writes_jars_only() {
     for span in read_spans("component.spans.json") {
         assert_eq!(span_tag(&span, "byteCount"), Some("0"), "payload reads were reported: {span}");
     }
-    assert!(outcome.output.contains("named 3 plugin files"), "{}", outcome.output);
+    assert_eq!(outcome.errors, "", "a run that succeeds writes nothing");
 }
 
 #[test]

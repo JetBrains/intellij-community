@@ -2,7 +2,8 @@
 
 /// Formats the duplicate report of one jar: `<jar>: N duplicate entries, first source wins: a, b`, with at most 10
 /// names. It is not a failure. Two merged libraries can hold the same service file, and the first source wins. The
-/// report makes a real collision visible in the action log, for example two module outputs with the same class.
+/// packer puts the report into the span of the jar, so a real collision stays visible in the trace, for example two
+/// module outputs with the same class. A successful action prints nothing.
 pub fn duplicate_line(jar_name: &str, duplicates: &[String]) -> Option<String> {
     if duplicates.is_empty() {
         return None;

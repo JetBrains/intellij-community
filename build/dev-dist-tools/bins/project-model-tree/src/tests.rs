@@ -257,8 +257,7 @@ fn run_writes_the_span_file() {
         format!("--output-dir={}", tree.display()),
         format!("--trace-file={}", trace.display()),
     ]);
-    assert_eq!(result.code, 0, "{}", result.errors);
-    assert_eq!(result.output, format!("Project model tree materialized into {}\n", tree.display()));
+    assert_eq!((result.code, result.errors.as_str()), (0, ""), "a run that succeeds writes nothing");
     let content = std::fs::read_to_string(&trace).unwrap();
     assert!(content.contains("materialize project model tree"), "span file: {content}");
     assert!(content.contains("\"files\""), "the root span lacks the file count: {content}");

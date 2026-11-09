@@ -72,9 +72,10 @@ states.
 - The caller creates the parent of the jar and the root of the native tree before the pack. The packer creates them
   with `filemeta::create_dir_all_0755`. pluginpack reserves each destination of its stage before the merge, so the
   parent exists. A missing parent fails at the create call of the jar with `<path>: <io::Error>`.
-- `MergeSpec::pack` prints nothing. The caller prints `duplicate_line(&spec.jar_name(), &report.duplicates)` to stderr.
-  The line is `<jar>: N duplicate entries, first source wins: a, b`, with at most 10 names, and it has no line end.
-  The packer writes the inventory, then prints the line, and reports an inventory error after it.
+- `MergeSpec::pack` prints nothing. The line `duplicate_line(&spec.jar_name(), &report.duplicates)` is
+  `<jar>: N duplicate entries, first source wins: a, b`, with at most 10 names, and it has no line end. The packer
+  writes it to the `duplicateReport` tag of the `pack jar` span, and the count to the `duplicates` tag. A successful
+  pack prints nothing. After a failed inventory, the packer prints the line to stderr and then the error.
 - `MergeSpec` and `MergeReport` are `Send + Sync`, so a caller can pack many specs on parallel threads.
 - The merge hashes the bytes of the jar as they go to the file. So `MergeReport::content_hash` is the
   `xxh3::hash_file` value of the jar, and the packer does not read the jar again for its inventory. The hasher sits

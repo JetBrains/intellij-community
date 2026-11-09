@@ -165,11 +165,7 @@ fn file_mode_writes_the_manifest() {
     assert_eq!(entries.len(), 1);
     let entry = &entries["bin/ijent"];
     assert_eq!((&entry["executable"], &entry["source"]), (&true.into(), &"inputs/ijent".into()));
-    assert_eq!(
-        outcome.output,
-        "Dev distribution component 'files' named 1 files in component.json\n"
-    );
-    assert_eq!(outcome.errors, "");
+    assert_eq!(outcome.errors, "", "a run that succeeds writes nothing");
     let names: Vec<_> = std::fs::read_dir(".").unwrap().map(|entry| entry.unwrap().file_name()).collect();
     assert_eq!(names.len(), 3, "unexpected outputs: {names:?}");
 }
@@ -189,7 +185,6 @@ fn a_failed_run_writes_the_trace_without_the_manifest() {
     let spans = read_spans("trace.json");
     assert_eq!(span_name(&spans[0]), "collect files");
     assert_eq!(span_tag(&spans[0], "error"), Some("true"));
-    assert_eq!(outcome.output, "");
 }
 
 #[test]
@@ -218,10 +213,7 @@ fn the_trace_names_the_spans_of_the_jar_mode() {
     args.extend(["--metadata-catalogue=catalogue.json".into(), "--trace-file=trace.json".into()]);
     let outcome = run_collector(&args);
     outcome.assert_success();
-    assert_eq!(
-        outcome.output,
-        "Dev distribution component 'files' named 1 packed jars in component.json\n"
-    );
+    assert_eq!(outcome.errors, "", "a run that succeeds writes nothing");
     let spans = read_spans("trace.json");
     let names: Vec<&str> = spans.iter().map(span_name).collect();
     assert_eq!(

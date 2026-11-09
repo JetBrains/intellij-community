@@ -45,11 +45,11 @@ use crate::assemble::{AssembledPart, assemble};
 use crate::part::{Member, PART_VERSION, PLUGIN_ORDER, read_part, write_json};
 
 fn main() -> ExitCode {
-    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stdout(), &mut std::io::stderr()))
+    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stderr()))
 }
 
-/// Runs the tool and returns the exit code: 1 for every error.
-fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
+/// Runs the tool and returns the exit code: 1 for every error. A run that succeeds writes nothing.
+fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     let mut args: Vec<OsString> = args.into_iter().collect();
     let result = if args.first().is_some_and(|first| first == "plan-part") {
         args.remove(0);
@@ -58,10 +58,7 @@ fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors:
         run_assemble(args)
     };
     match result {
-        Ok(message) => {
-            let _ = writeln!(output, "{message}");
-            0
-        }
+        Ok(()) => 0,
         Err(error) => {
             cli::report(errors, &error);
             1
@@ -69,7 +66,7 @@ fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors:
     }
 }
 
-fn run_assemble(args: Vec<OsString>) -> anyhow::Result<String> {
+fn run_assemble(args: Vec<OsString>) -> anyhow::Result<()> {
     let mut options = cli::parse(args)?;
     let part_files = values(&mut options, "--part")?;
     let frontend_only_files = values(&mut options, "--frontend-only-part")?;
@@ -106,10 +103,7 @@ fn run_assemble(args: Vec<OsString>) -> anyhow::Result<String> {
         let table = facts::read_facts(Path::new(&module_facts))?;
         write_json(Path::new(&selected_facts), &facts::select_facts(&table, &result)?, true)?;
     }
-    Ok(format!(
-        "Wrote the runtime module repository layout of {} plugins to {output}",
-        result.plugins.len()
-    ))
+    Ok(())
 }
 
 /// The independent libraries file of `plan-part`.
@@ -120,7 +114,7 @@ struct IndependentLibraries {
     libraries: Vec<Member>,
 }
 
-fn run_plan_part(args: Vec<OsString>) -> anyhow::Result<String> {
+fn run_plan_part(args: Vec<OsString>) -> anyhow::Result<()> {
     let mut options = cli::parse(args)?;
     let independent_library_files = values(&mut options, "--independent-libraries")?;
     let refused_modules = values(&mut options, "--refused-module")?;
@@ -152,11 +146,7 @@ fn run_plan_part(args: Vec<OsString>) -> anyhow::Result<String> {
     )
     .with_context(|| plan_path.clone())?;
     write_json(Path::new(&output), &result, false)?;
-    Ok(format!(
-        "Wrote the layout part of {} with {} jars to {output}",
-        result.descriptor_module,
-        result.jars.len()
-    ))
+    Ok(())
 }
 
 /// Takes every value of a list option. A value must not be empty, because each one names a file or a module.

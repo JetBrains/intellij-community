@@ -30,7 +30,7 @@ use planfile::contract::{Catalogue, LayoutAssets, Operation, Producer, Recipe, S
 const GZIP_RESOURCES_MODE: &str = "gzip-resources";
 
 fn main() -> ExitCode {
-    let code = run(std::env::args_os().skip(1), &mut std::io::stdout(), &mut std::io::stderr());
+    let code = run(std::env::args_os().skip(1), &mut std::io::stderr());
     ExitCode::from(code)
 }
 
@@ -177,8 +177,8 @@ impl Options {
 }
 
 /// Runs the packer and returns the exit code: 0 on success, 1 on a failure, 2 on a usage error. It prints an error once,
-/// through `cli::report`.
-fn run(arguments: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
+/// through `cli::report`. A run that succeeds writes nothing.
+fn run(arguments: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     let mut arguments = arguments.into_iter().peekable();
     if arguments.peek().is_some_and(|argument| argument == GZIP_RESOURCES_MODE) {
         arguments.next();
@@ -188,10 +188,7 @@ fn run(arguments: impl IntoIterator<Item = OsString>, output: &mut dyn Write, er
         return 2;
     };
     match project(&options) {
-        Ok(plugin) => {
-            let _ = writeln!(output, "Packed the remainder for {plugin} from its plan file");
-            0
-        }
+        Ok(()) => 0,
         Err(error) => {
             cli::report(errors, &error);
             1
@@ -275,7 +272,7 @@ fn modules(options: &mut cli::Options, name: &str) -> anyhow::Result<Vec<String>
 /// Derives the recipe from the plan file, packs it against the Starlark input catalogue, then writes the asset rows and
 /// the plugin classpath record. A refusal happens before any write. Only an I/O failure after `Execution::write` can
 /// leave the plugin directory behind, and Bazel discards the outputs of a failed action.
-fn project(options: &Options) -> anyhow::Result<String> {
+fn project(options: &Options) -> anyhow::Result<()> {
     let file = planfile::read(&options.projection)?;
     let catalogue: Catalogue = planfile::json::read(&options.input_catalogue)?;
     if options.part.is_some() {
@@ -303,7 +300,7 @@ fn project(options: &Options) -> anyhow::Result<String> {
         )?;
         let execution = pluginpack::plan(&derivation.recipe, &derivation.catalogue)?;
         execution.write(&options.output_dir, &options.inventory)?;
-        return Ok(file.plugin);
+        return Ok(());
     }
     let classpath_descriptor = options
         .classpath_descriptor
@@ -333,7 +330,7 @@ fn project(options: &Options) -> anyhow::Result<String> {
         options.classpath.as_ref().expect("the parser requires it outside the neutral part"),
         &derivation.class_path,
     )?;
-    Ok(file.plugin)
+    Ok(())
 }
 
 /// The descriptor part: packs the descriptor assets once, without a refusal, and writes the rows and the record of each
@@ -341,12 +338,7 @@ fn project(options: &Options) -> anyhow::Result<String> {
 ///
 /// A refusal omits only a whole asset, see `planfile::omitted_assets`. So a descriptor asset that no mode omits has the
 /// same bytes in every mode. A mode that omits one is refused, because the collector places every descriptor asset.
-fn project_descriptor_part(
-    options: &Options,
-    file: &planfile::PlanFile,
-    catalogue: &Catalogue,
-    descriptor: &[u8],
-) -> anyhow::Result<String> {
+fn project_descriptor_part(options: &Options, file: &planfile::PlanFile, catalogue: &Catalogue, descriptor: &[u8]) -> anyhow::Result<()> {
     let derive = |refused_modules: &[String]| {
         planfile::derive(
             file,
@@ -380,7 +372,7 @@ fn project_descriptor_part(
         write_output(&row.assets, &assets)?;
         write_output(&row.classpath, &class_path)?;
     }
-    Ok(file.plugin.clone())
+    Ok(())
 }
 
 /// The recipe and the catalogue of the remainder assets of `destinations` alone. The catalogue keeps only the artifacts

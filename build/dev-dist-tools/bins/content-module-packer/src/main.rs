@@ -52,8 +52,8 @@ fn main() -> ExitCode {
 /// Runs one recipe and returns the exit code of the process. The code is 0, or [`FAILURE`] for each type of failure.
 ///
 /// A relative path resolves against `base_dir`. That applies to the flag file, to `--trace-file=` and to each path in
-/// the recipe. The process passes its working directory, which is the exec root in a build. The run writes each report
-/// and each error to `stderr`, and it writes nothing to stdout.
+/// the recipe. The process passes its working directory, which is the exec root in a build. A run that succeeds writes
+/// nothing. A failed run writes its error to `stderr`, and it writes nothing to stdout.
 fn run(arguments: impl IntoIterator<Item = OsString>, base_dir: &Path, stderr: &mut dyn Write) -> u8 {
     let options = match options::parse(arguments) {
         Ok(options) => options,

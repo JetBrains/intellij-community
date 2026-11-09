@@ -23,7 +23,7 @@ use anyhow::Context;
 use appinfo::{ApplicationInfo, Replacement};
 
 fn main() -> ExitCode {
-    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stdout(), &mut std::io::stderr()))
+    ExitCode::from(run(std::env::args_os().skip(1), &mut std::io::stderr()))
 }
 
 struct Options {
@@ -57,21 +57,15 @@ struct Options {
     dev_jvm_arguments: Vec<String>,
 }
 
-/// Runs the tool and returns the exit code: 2 for a usage error, 1 for a render error.
-fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
+/// Runs the tool and returns the exit code: 2 for a usage error, 1 for a render error. A run that succeeds writes nothing.
+fn run(args: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
     let Some(options) = cli::ok_or_report(errors, parse_options(args)) else {
         return 2;
     };
-    if cli::ok_or_report(errors, render_to_files(&options)).is_none() {
-        return 1;
+    match cli::ok_or_report(errors, render_to_files(&options)) {
+        Some(()) => 0,
+        None => 1,
     }
-    let _ = writeln!(
-        output,
-        "Rendered the launch files of {} for {}",
-        options.model.display(),
-        options.platform
-    );
-    0
 }
 
 /// Reads the options. Every option but `--frontend-vmoptions-out`, `--host-application-info`,

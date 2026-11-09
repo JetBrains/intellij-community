@@ -295,10 +295,7 @@ fn projection_mode_matches_the_in_process_derivation() {
     ];
     let result = run(&packer, &arguments, root.path());
     assert!(result.status.success(), "{}", String::from_utf8_lossy(&result.stderr));
-    assert_eq!(
-        String::from_utf8(result.stdout).unwrap(),
-        "Packed the remainder for filtered from its plan file\n"
-    );
+    assert!(result.stdout.is_empty(), "a run that succeeds writes nothing to stdout");
     assert_eq!(
         snapshot(&packed.join("plugin")),
         snapshot(&in_process.join("plugin")),

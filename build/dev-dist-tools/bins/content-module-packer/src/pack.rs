@@ -18,8 +18,8 @@ use crate::inventory;
 /// groups. They run in parallel on one scoped thread per CPU, and each thread takes the next group from a shared
 /// cursor. After a failure, no new group starts, and the result is the first error in group order.
 ///
-/// A group in parallel writes its report to a buffer. The buffers go to `stderr` in group order after all groups end.
-/// So the lines of two jars do not mix, and the order of the lines does not depend on the timing.
+/// A group in parallel writes its error report to a buffer. The buffers go to `stderr` in group order after all groups
+/// end. So the lines of two jars do not mix, and the order of the lines does not depend on the timing.
 pub(crate) fn pack_all(specs: &[MergeSpec], options: &MergeOptions, root: &Span, stderr: &mut dyn Write) -> anyhow::Result<()> {
     if let [spec] = specs {
         return pack_one(spec, options, root, stderr);
@@ -81,11 +81,12 @@ pub(crate) fn pack_in_parallel(
 }
 
 /// Packs one group under a `pack jar` span. A group with a metadata file gets an `inventory packing output` child
-/// span. The duplicate report goes to `out`, before the error of a failed inventory.
+/// span.
 ///
 /// A duplicate is not a failure. Two merged libraries can hold the same service file or licence stub, and the first
-/// source wins. The report makes a real collision visible in the action log, for example two module outputs with the
-/// same class.
+/// source wins. The `duplicates` tag of the span states the count, and the `duplicateReport` tag states the duplicate
+/// line. A group that succeeds writes nothing to `out`. A failed inventory writes the duplicate line to `out`, before
+/// the caller reports the error.
 fn pack_one(spec: &MergeSpec, options: &MergeOptions, parent: &Span, out: &mut dyn Write) -> anyhow::Result<()> {
     let jar_name = spec.jar_name();
     let span = parent.child("pack jar");
@@ -109,7 +110,10 @@ fn pack_one(spec: &MergeSpec, options: &MergeOptions, parent: &Span, out: &mut d
     }
     if let Some(line) = jarpack::duplicate_line(&jar_name, &merged.duplicates) {
         span.tag("duplicates", merged.duplicates.len());
-        let _ = writeln!(out, "{line}");
+        if result.is_err() {
+            let _ = writeln!(out, "{line}");
+        }
+        span.tag("duplicateReport", line);
     }
     result
 }

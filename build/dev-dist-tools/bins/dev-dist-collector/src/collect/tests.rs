@@ -411,7 +411,12 @@ fn tree_records_expand_to_the_inventory_files() {
     for span in &read_spans("trace.json")[1..] {
         assert_eq!(span_tag(span, "byteCount"), Some("0"), "payload bytes were read: {span}");
     }
-    assert!(outcome.output.contains("named 3 packed jars"), "{}", outcome.output);
+    // The span states the count, and the run writes nothing.
+    let inventory = read_spans("trace.json")
+        .into_iter()
+        .find(|span| span_name(span) == "inventory dev build component");
+    assert_eq!(inventory.as_ref().and_then(|span| span_tag(span, "fileCount")), Some("3"));
+    assert_eq!(outcome.errors, "");
 }
 
 /// A jar at a file of the tree is a conflict that only the expansion shows. Before the expansion the tree is one

@@ -506,6 +506,28 @@ fn a_recipe_that_does_not_parse_writes_no_trace() {
 }
 
 #[test]
+fn a_duplicate_goes_to_the_span_and_a_run_that_succeeds_writes_nothing() {
+    let dir = pack_one_jar("");
+    let base = dir.path();
+    fs::copy(base.join("module.jar"), base.join("copy.jar")).expect("a second module jar");
+    write_recipe(
+        base,
+        "output=out/example.jar\nmetadata-file=example.metadata.json\ntrace-file=example.spans.json\n\
+         module=module.jar\nmodule=copy.jar\n",
+    );
+    let outcome = run_in(base, &[flag_file_argument(base)]);
+    assert_eq!((outcome.code, outcome.stderr.as_str()), (0, ""));
+    let trace = read_trace(&base.join("example.spans.json"));
+    let jar = tags(&spans(&trace)[1]);
+    assert_eq!(jar.get("duplicates").map(String::as_str), Some("1"), "{jar:?}");
+    assert_eq!(
+        jar.get("duplicateReport").map(String::as_str),
+        Some("example.jar: 1 duplicate entry, first source wins: com/example/Packed.class"),
+        "{jar:?}"
+    );
+}
+
+#[test]
 fn the_duplicate_report_comes_before_the_error_of_a_failed_inventory() {
     let dir = pack_one_jar("");
     let base = dir.path();
@@ -549,23 +571,23 @@ fn write_duplicate_recipe(base: &Path, count: usize) -> Vec<String> {
     names
 }
 
-/// The duplicate report of each jar of [`write_duplicate_recipe`], in the order of `names`.
-fn duplicate_reports(names: &[String]) -> String {
-    names
-        .iter()
-        .map(|name| format!("{name}: 1 duplicate entry, first source wins: com/example/Packed.class\n"))
-        .collect()
+/// The duplicate report of a jar of [`write_duplicate_recipe`].
+fn duplicate_report(name: &str) -> String {
+    format!("{name}: 1 duplicate entry, first source wins: com/example/Packed.class")
 }
 
 #[test]
-fn a_one_shot_run_packs_each_group_and_reports_in_group_order() {
+fn a_one_shot_run_packs_each_group_and_reports_in_its_span() {
     // A whole tranche in one flag file. Each jar merges two copies of one module, so each jar reports one duplicate.
     let dir = pack_one_jar("");
     let base = dir.path();
     let names = write_duplicate_recipe(base, 24);
     let outcome = run_in(base, &[flag_file_argument(base), "--trace-file=one-shot.spans.json".into()]);
-    assert_eq!(outcome.code, 0, "{}", outcome.stderr);
-    assert_eq!(outcome.stderr, duplicate_reports(&names));
+    assert_eq!(
+        (outcome.code, outcome.stderr.as_str()),
+        (0, ""),
+        "a run that succeeds writes nothing"
+    );
     assert_eq!(file_names(&base.join("out")), names);
 
     // The workers record into the tracer of the run, and each jar span is a child of the root.
@@ -578,7 +600,9 @@ fn a_one_shot_run_packs_each_group_and_reports_in_group_order() {
     for span in &all[1..] {
         assert_eq!(span["operationName"], "pack jar");
         assert_eq!(span["references"][0]["spanID"], all[0]["spanID"], "{span}");
-        packed.push(tags(span)["jar"].clone());
+        let jar = tags(span)["jar"].clone();
+        assert_eq!(tags(span).get("duplicateReport"), Some(&duplicate_report(&jar)), "{span}");
+        packed.push(jar);
     }
     packed.sort();
     assert_eq!(packed, names);
@@ -628,7 +652,7 @@ fn a_one_shot_run_with_more_groups_than_workers_packs_every_group_in_order() {
     let names = write_duplicate_recipe(base, 11);
     let (result, stderr, packed) = pack_on_workers(base, 3);
     result.expect("every group packs");
-    assert_eq!(stderr, duplicate_reports(&names));
+    assert_eq!(stderr, "", "a group that succeeds writes nothing");
     assert_eq!(packed, names);
 }
 

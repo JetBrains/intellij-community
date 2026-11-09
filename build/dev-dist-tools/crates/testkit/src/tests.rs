@@ -70,20 +70,16 @@ fn a_mode_and_a_link_are_set() {
 }
 
 #[test]
-fn a_tool_run_keeps_the_code_and_both_texts() {
+fn a_tool_run_keeps_the_code_and_the_errors() {
     let run = run_tool(
-        |args, output, errors| {
-            writeln!(output, "{args:?}").unwrap();
-            write!(errors, "ERROR: x").unwrap();
+        |args, errors| {
+            write!(errors, "ERROR: {args:?}").unwrap();
             2
         },
         &["--a=1", "b"],
     );
-    assert_eq!(
-        (run.code, run.output.as_str(), run.errors.as_str()),
-        (2, "[\"--a=1\", \"b\"]\n", "ERROR: x")
-    );
-    run.assert_error("x");
+    assert_eq!((run.code, run.errors.as_str()), (2, "ERROR: [\"--a=1\", \"b\"]"));
+    run.assert_error("--a=1");
 }
 
 /// The child run sees the variable that the setup command exports, and the parent sees none.

@@ -503,11 +503,7 @@ fn assemble_command() {
         format!("--bazel-targets={targets}"),
         format!("--output={output}"),
     ]);
-    assert_eq!(result.code, 0, "{}", result.errors);
-    assert_eq!(
-        result.output,
-        format!("Wrote the runtime module repository layout of 2 plugins to {output}\n")
-    );
+    assert_eq!((result.code, result.errors.as_str()), (0, ""), "a run that succeeds writes nothing");
     let expected = r#"{
   "version": 1,
   "plugins": [
@@ -819,10 +815,10 @@ fn plan_part() {
         &output,
     );
     let result = run_tool(&args);
-    assert_eq!(result.code, 0, "{}", result.errors);
-    assert_eq!(result.output, format!("Wrote the layout part of p.main with 4 jars to {output}\n"));
+    assert_eq!((result.code, result.errors.as_str()), (0, ""), "a run that succeeds writes nothing");
     let data = std::fs::read_to_string(&output).unwrap();
     let actual: Part = serde_json::from_str(&data).unwrap();
+    assert_eq!((actual.descriptor_module.as_str(), actual.jars.len()), ("p.main", 4));
     let mut natives = modules(&["p.natives"]);
     natives.push(library("@lib//:natives", &["external/lib+/natives.jar"]));
     let mut main = modules(&["p.main", "p.other"]);
@@ -861,9 +857,9 @@ fn plan_part_leaves_out_the_jars_of_refused_modules() {
     args.push("--refused-module=p.content".to_owned());
     args.push("--refused-module=p.other".to_owned());
     let result = run_tool(&args);
-    assert_eq!(result.code, 0, "{}", result.errors);
-    assert_eq!(result.output, format!("Wrote the layout part of p.main with 3 jars to {output}\n"));
+    assert_eq!((result.code, result.errors.as_str()), (0, ""), "a run that succeeds writes nothing");
     let actual: Part = serde_json::from_str(&std::fs::read_to_string(&output).unwrap()).unwrap();
+    assert_eq!((actual.descriptor_module.as_str(), actual.jars.len()), ("p.main", 3));
     assert_eq!(
         actual.jars.iter().map(|jar| jar.destination.as_str()).collect::<Vec<_>>(),
         ["lib/modules/p.natives.jar", "lib/p.jar", "lib/a2.jar"]

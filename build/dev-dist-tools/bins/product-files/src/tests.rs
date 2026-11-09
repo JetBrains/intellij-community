@@ -751,8 +751,7 @@ fn the_tool_writes_the_four_files() {
     ];
     args.extend(IDEA.inputs());
     let result = run_tool(&args);
-    assert_eq!(result.code, 0, "{}", result.errors);
-    assert_eq!(result.output, format!("Rendered the launch files of {model} for darwin_aarch64\n"));
+    assert_eq!((result.code, result.errors.as_str()), (0, ""), "a run that succeeds writes nothing");
     assert_eq!(
         std::fs::read_to_string(out("out.vmoptions")).unwrap(),
         format!("-Xmx2048m\n-XX:+Common\n{EAP_LINE}\n-Dx=mac\n")
