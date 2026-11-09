@@ -19,6 +19,7 @@ import com.intellij.python.sdk.backend.impl.buildUnavailableItem
 import com.intellij.python.sdk.backend.impl.recordedPythonInfo
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonInfo
@@ -58,6 +59,9 @@ private fun EelOsFamily.executableName(binaryName: String): String = when (this)
  * The receiver is the interpreter because that is what determines where to look: the answer is a property of this
  * environment, not of the tool. Only a native interpreter is supported: `null` for a target.
  */
+@RequiresBackgroundThread
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 fun PythonInterpreter.findToolExecutable(tool: PyTool, executableName: String = tool.packageName.name): Path? =
   when (this) {
     is NativePythonInterpreter -> {
@@ -146,6 +150,8 @@ suspend fun Sdk.interpreterItem(): PyInterpreterItem? = pythonInterpreterResultA
  * From Kotlin call [getPythonInfo] instead, which also says why it cannot be used.
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 @RequiresBlockingContext
 fun Sdk.isInterpreterUsable(): Boolean =
   runBlockingMaybeCancellable { pythonInterpreterResultAsync().successOrNull?.getPythonInfo() } is Result.Success<*>
@@ -225,6 +231,8 @@ fun PythonInterpreter.sitePackagesDirectory(project: Project): VirtualFile? = li
  * of its own then finds its standard library in the roots of the SDK.
  */
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+// External plugins reach this through `PythonSdkUtil.getSitePackagesDirectory`, and their threads are unknown.
+@RequiresReadLockAbsence(generateAssertion = false)
 fun Sdk.sitePackagesDirectory(): VirtualFile? {
   val interpreter = pythonInterpreterResult().successOrNull
   val libDirectory = if (interpreter?.venvLibRoot() != null) interpreter.venvLibDirectory() else stdlibLibDirectory()
@@ -295,6 +303,7 @@ val PythonInterpreter.skeletonsPath: Path?
  */
 @Internal
 @RequiresBackgroundThread(generateAssertion = false)
+@RequiresReadLockAbsence
 fun PythonInterpreter.ensureSkeletonsRoot() {
   val path = skeletonsPath ?: return
   if (path.exists()) return

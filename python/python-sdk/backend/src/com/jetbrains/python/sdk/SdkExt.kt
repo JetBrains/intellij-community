@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.python.sdk.backend.service.ActivatableEnvironmentService
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.errorProcessing.PyResult
@@ -166,6 +167,7 @@ val Sdk.skeletonsPath: Path?
 
 @Internal
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+@RequiresReadLockAbsence
 @Throws(IOException::class)
 fun Sdk.createSkeletonsRootDirectory(): Path? {
   return skeletonsPath?.let { Files.createDirectories(it) }
@@ -185,6 +187,8 @@ suspend fun Sdk.activationEnvironment(): PyResult<Map<String, String>> {
 @Deprecated("Blocking bridge for Java callers that cannot suspend; from Kotlin call the suspend activationEnvironment() instead")
 @Internal
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 @RequiresBlockingContext
 fun Sdk.activationEnvironmentBlocking(): PyResult<Map<String, String>> {
   val binaryPath = pythonBinaryPath().getOr { return it }

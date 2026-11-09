@@ -10,6 +10,7 @@ import com.intellij.python.sdk.backend.PythonEnvironmentExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.jetbrains.python.psi.resolve.MainPythonSdkKt;
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -91,6 +92,9 @@ public final class PythonSdkUtil {
    * "site-packages" at all, and this method returns {@code null} accordingly in this case.
    */
   @SuppressWarnings("unused") // Used by ext. plugin
+  @RequiresBackgroundThread(generateAssertion = false)
+  // External plugins call this, and their threads are unknown.
+  @RequiresReadLockAbsence(generateAssertion = false)
   public static @Nullable VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
     return PySkeletonUtil.getSitePackagesDirectory(pythonSdk);
   }
@@ -100,6 +104,8 @@ public final class PythonSdkUtil {
    */
   @Deprecated
   @RequiresBackgroundThread(generateAssertion = false)
+  // External plugins call this, and their threads are unknown.
+  @RequiresReadLockAbsence(generateAssertion = false)
   public static boolean isVirtualEnv(@NotNull Sdk sdk) {
     return VENV_KIND_ID.equals(kindIdOf(sdk));
   }
@@ -109,6 +115,8 @@ public final class PythonSdkUtil {
    */
   @Deprecated
   @RequiresBackgroundThread(generateAssertion = false)
+  // External plugins call this, and their threads are unknown.
+  @RequiresReadLockAbsence(generateAssertion = false)
   public static boolean isCondaVirtualEnv(@NotNull Sdk sdk) {
     return CONDA_KIND_ID.equals(kindIdOf(sdk));
   }

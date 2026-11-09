@@ -12,6 +12,7 @@ import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
@@ -58,6 +59,8 @@ public final class PySkeletonUtil {
    * "site-packages" at all, and this method returns {@code null} accordingly in this case.
    */
   @RequiresBackgroundThread
+  // External plugins reach this through `PythonSdkUtil.getSitePackagesDirectory`, and their threads are unknown.
+  @RequiresReadLockAbsence(generateAssertion = false)
   public static @Nullable VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
     return PythonInterpreterExtKt.sitePackagesDirectory(pythonSdk);
   }

@@ -10,6 +10,8 @@ import com.intellij.python.sdk.backend.PythonInterpreterUpdateStep
 import com.intellij.python.sdk.backend.ensureSkeletonsRoot
 import com.intellij.python.sdk.backend.isDisposed
 import com.jetbrains.python.errorProcessing.PyError
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Stops the update when it may not run: the project or the interpreter is gone, or a background update asks for an
@@ -30,7 +32,8 @@ internal class PythonInterpreterUpdateGateStep : PythonInterpreterUpdateStep {
       logSkipped(project, interpreter.toString())
       return false
     }
-    interpreter.ensureSkeletonsRoot()
+    // An awaited step runs in the context of the caller, which can be the EDT.
+    withContext(Dispatchers.IO) { interpreter.ensureSkeletonsRoot() }
     return true
   }
 

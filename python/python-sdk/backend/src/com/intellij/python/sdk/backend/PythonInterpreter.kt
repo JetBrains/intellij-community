@@ -8,6 +8,7 @@ import com.intellij.python.sdk.backend.impl.cachedPythonEnvironmentResult
 import com.intellij.python.sdk.backend.impl.enrichLocalPythonSdkWithHomeInfo
 import com.intellij.python.sdk.common.PyEnvId
 import com.intellij.python.sdk.common.PyInterpreterRef
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -158,6 +159,8 @@ class TargetPythonInterpreter internal constructor(
  * @param forceRefresh re-detect even if a cached result already exists.
  */
 @RequiresBackgroundThread(generateAssertion = false)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 @RequiresBlockingContext
 fun Sdk.pythonInterpreterResult(forceRefresh: Boolean = false): PyResult<PythonInterpreter> = buildPythonInterpreter(forceRefresh)
 
@@ -238,6 +241,8 @@ suspend fun PythonInterpreter.createMapper(project: Project, console: PathMappin
  * of the failure.
  */
 @RequiresBackgroundThread(generateAssertion = false)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 @RequiresBlockingContext
 @Throws(InvalidSdkException::class)
 fun Sdk.pythonInterpreterOrThrow(forceRefresh: Boolean = false): PythonInterpreter =
@@ -249,6 +254,8 @@ fun Sdk.pythonInterpreterOrThrow(forceRefresh: Boolean = false): PythonInterpret
  */
 @Deprecated("Handle a broken SDK", ReplaceWith("pythonInterpreterResult(forceRefresh)"))
 @RequiresBackgroundThread(generateAssertion = false)
+// Off until PY-93940.
+@RequiresReadLockAbsence(generateAssertion = false)
 @RequiresBlockingContext
 @Throws(InvalidSdkException::class)
 fun Sdk.pythonInterpreter(forceRefresh: Boolean = false): PythonInterpreter = pythonInterpreterOrThrow(forceRefresh)

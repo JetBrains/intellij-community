@@ -21,6 +21,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.jetbrains.python.PyInternalExecApi;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.module.PyModuleService;
@@ -216,6 +217,8 @@ public final class PythonSdkUtil {
 
   // It is only here for external plugins
   @RequiresBackgroundThread(generateAssertion = false)
+  // External plugins call this, and their threads are unknown.
+  @RequiresReadLockAbsence(generateAssertion = false)
   public static @Nullable String getPythonExecutable(@NotNull String rootPath) {
     var python = VirtualEnvReaderKt.VirtualEnvReader().findPythonInPythonRoot(Path.of(rootPath));
     return (python != null) ? python.toString() : null;
@@ -226,6 +229,8 @@ public final class PythonSdkUtil {
    */
   @Deprecated
   @RequiresBackgroundThread(generateAssertion = false)
+  // External plugins call this, and their threads are unknown.
+  @RequiresReadLockAbsence(generateAssertion = false)
   public static @Nullable String getExecutablePath(final @NotNull String homeDirectory, @NotNull String name) {
     Path path = getExecutablePath(Path.of(homeDirectory), name);
     return (path != null) ? path.toString() : null;
@@ -239,6 +244,8 @@ public final class PythonSdkUtil {
    * @return
    */
   @RequiresBackgroundThread(generateAssertion = false)
+  // Off until PY-93940.
+  @RequiresReadLockAbsence(generateAssertion = false)
   @Deprecated(forRemoval = true)
   public static @Nullable Path getExecutablePath(@NotNull Path homeDirectory, @NotNull String name) {
     Path binDir = homeDirectory.getParent();

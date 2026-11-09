@@ -21,6 +21,8 @@ import com.intellij.python.sdk.backend.findToolExecutable
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.Result
 import com.intellij.python.pyproject.model.evolution.pythonInterpreters
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
   override suspend fun getStates(project: Project, tool: PyTool): List<PyToolSdkStateDto> =
@@ -49,7 +51,7 @@ internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
   }
 
   private suspend fun interpreterState(tool: PyTool, interpreter: PythonInterpreter, item: PyInterpreterItem): PyToolSdkStateDto {
-    val path = interpreter.findToolExecutable(tool)
+    val path = withContext(Dispatchers.IO) { interpreter.findToolExecutable(tool) }
     val version = path?.let {
       when (val result = tool.validateCustomPath(it)) {
         is Result.Success -> result.result.value
