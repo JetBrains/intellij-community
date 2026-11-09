@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -122,8 +121,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     NameGrouper grouper = new NameGrouper(namePattern, indicator);
     processNames(parameters, name -> grouper.processName(name));
 
-    Ref<Boolean> hasSuggestions = Ref.create(false);
-    return new NamePass(base, parameters, consumer, hasSuggestions, grouper).process(dirPattern);
+    return new NamePass(base, parameters, consumer, grouper).process(dirPattern);
   }
 
   /**
@@ -134,25 +132,25 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
   private final class NamePass {
     private final @NotNull ChooseByNameViewModel base;
     private final @NotNull FindSymbolParameters parameters;
-    private final @NotNull Processor<? super FoundItemDescriptor<?>> consumer;
-    private final @NotNull Ref<Boolean> hasSuggestions;
+    private final @NotNull Processor<FoundItemDescriptor<?>> consumer;
     private final @NotNull NameGrouper grouper;
+    /** Whether the pass reported a file along one of the chains. */
+    private boolean hasSuggestions = false;
     /** Whether the consumer asked to stop, which is the only reason that may end the pass along the literal chain. */
     private boolean stoppedByConsumer = false;
 
     NamePass(@NotNull ChooseByNameViewModel base,
              @NotNull FindSymbolParameters parameters,
              @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
-             @NotNull Ref<Boolean> hasSuggestions,
              @NotNull NameGrouper grouper) {
       this.base = base;
       this.parameters = parameters;
       this.consumer = item -> {
+        hasSuggestions = true;
         if (consumer.process(item)) return true;
         stoppedByConsumer = true;
         return false;
       };
-      this.hasSuggestions = hasSuggestions;
       this.grouper = grouper;
     }
 
@@ -205,7 +203,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     private boolean processGroup(@NotNull SuffixMatches group, @NotNull DirectoryPathMatcher dirMatcher) {
-      return group.processFiles(parameters.withLocalPattern(dirMatcher.dirPattern), consumer, hasSuggestions, dirMatcher);
+      return group.processFiles(parameters.withLocalPattern(dirMatcher.dirPattern), this, dirMatcher);
     }
   }
 
@@ -578,8 +576,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     boolean processFiles(@NotNull FindSymbolParameters parameters,
-                         @NotNull Processor<? super FoundItemDescriptor<?>> processor,
-                         @NotNull Ref<Boolean> hasSuggestions,
+                         @NotNull NamePass pass,
                          @NotNull DirectoryPathMatcher dirMatcher) {
       List<MatchResult> matchingNames = this.matchingNames;
       if (patternSuffix.length() <= 3 && !dirMatcher.dirPattern.isEmpty()) {
@@ -624,18 +621,14 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
 
         matchedFiles = moveDirectoriesToEnd(matchedFiles);
 
-        Processor<FoundItemDescriptor<PsiFileSystemItem>> trackingProcessor = res -> {
-          hasSuggestions.set(true);
-          return processor.process(res);
-        };
-        if (!ContainerUtil.process(matchedFiles, trackingProcessor)) {
+        if (!ContainerUtil.process(matchedFiles, pass.consumer)) {
           return false;
         }
       }
 
       // let the framework switch to searching outside project to display these well-matching suggestions
       // instead of worse-matching ones in project (that are very expensive to calculate)
-      return hasSuggestions.get() ||
+      return pass.hasSuggestions ||
              parameters.isSearchInLibraries() ||
              !hasSuggestionsOutsideProject(parameters.getCompletePattern(), matchingNames, dirMatcher);
     }

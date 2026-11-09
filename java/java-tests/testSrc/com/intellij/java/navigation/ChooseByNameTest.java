@@ -775,18 +775,12 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
-  /** @return the weight of each copy of the item, the best weight first */
-  private static List<Integer> weightsOf(SeProvidersTestFixture fixture, String providerId, String text, Object item) {
-    List<Integer> weights = new ArrayList<>();
-    for (SeItem each : fixture.searchBlocking(providerId, text, false, false, ELEMENTS_LIMIT)) {
-      if (item.equals(SeProvidersTestFixture.elementOf(each))) weights.add(each.weight());
-    }
-    assertFalse("The search for '" + text + "' did not return " + item, weights.isEmpty());
-    return weights;
-  }
-
+  /** @return the best weight of the item */
   private static int weightOf(SeProvidersTestFixture fixture, String providerId, String text, Object item) {
-    return weightsOf(fixture, providerId, text, item).getFirst();
+    for (SeItem each : fixture.searchBlocking(providerId, text, false, false, ELEMENTS_LIMIT)) {
+      if (item.equals(SeProvidersTestFixture.elementOf(each))) return each.weight();
+    }
+    throw new AssertionError("The search for '" + text + "' did not return " + item);
   }
 
   /** Opens a new Search Everywhere session. Its providers go away with the test. */
