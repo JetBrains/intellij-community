@@ -25,7 +25,7 @@ public final class ViewStructureAction extends ViewStructureActionBase {
     if (popup == null) return;
 
     VirtualFile virtualFile = fileEditor.getFile();
-    String title = virtualFile == null ? fileEditor.getName() : virtualFile.getName();
+    String title = virtualFile == null ? fileEditor.getName() : virtualFile.getPresentableName();
     popup.setTitle(title);
     popup.show();
   }

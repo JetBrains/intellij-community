@@ -66,7 +66,7 @@ public final class ViewStructureAction extends DumbAwareAction {
     FileStructurePopup popup = createPopup(project, fileEditor, myCallbackAfterNavigation);
     if (popup == null) return;
 
-    String title = virtualFile == null ? fileEditor.getName() : virtualFile.getName();
+    String title = virtualFile == null ? fileEditor.getName() : virtualFile.getPresentableName();
     popup.setTitle(title);
     popup.show();
   }
