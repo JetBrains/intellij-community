@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.newvfs.FileDeletedException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
-import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
@@ -28,12 +27,12 @@ import com.intellij.openapi.vfs.newvfs.persistent.ListResult;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Attributes;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl.DirectoryChildren;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor;
 import com.intellij.psi.impl.PsiCachedValue;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
-import com.intellij.util.ui.EDT;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -542,6 +541,25 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return getCachedChildren();
   }
 
+  private @NotNull DirectoryChildren persistedChildren(@NotNull PersistentFSImpl pFS) {
+    ListResult persisted = pFS.peer().list(getId());
+    return new DirectoryChildren(persisted.children, persisted.allChildrenCached());
+  }
+
+  /// @return true if `children` has exactly the ids of `childrenInfo`, in any order
+  private static boolean hasSameIds(@NotNull VfsData.ChildrenIds children, @NotNull List<? extends ChildInfo> childrenInfo) {
+    if (children.size() != childrenInfo.size()) {
+      return false;
+    }
+    IntSet ids = children.toIntSet();
+    for (ChildInfo childInfo : childrenInfo) {
+      if (!ids.contains(childInfo.getId())) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /** Loads into memory all the children cached in VFS persistent storage so far. This could be _not all_ the actual directory children */
   private void loadAllPersistedChildren() {
     ListResult childrenInPersistence = owningPersistentFS().peer().list(getId());
@@ -558,24 +576,36 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     VfsData vfsData = getVfsData();
     PersistentFSImpl pFS = vfsData.owningPersistentFS();
 
-    //.listAll() could involve underlying FS access, i.e. IO, which is freeze-producing if done under the lock.
+    //.listAllChildren() could involve underlying FS access, i.e. IO, which is freeze-producing if done under the lock.
     // But we need it under the .directoryData lock for consistency: to ensure no children list's changes could
-    // sneak in between .listAll() and children processing under the lock below -- see comments in .logDisappearedChildren()
+    // sneak in between .listAllChildren() and children processing under the lock below -- see comments in .logDisappearedChildren()
     // for possible inconsistency.
-    // So the trick: execute .listAll() outside the lock, to trigger FS access, if needed, outside the lock, with
-    // its results being cached. Then repeat .listAll() under the lock to ensure consistency -- that second
-    // .listAll() call 99.99% returns cached data without FS access:
-    pFS.listAll(this);
+    // So the trick: execute .listAllChildren() outside the lock, to trigger FS access, if needed, outside the lock, with
+    // its results being cached. Then repeat .listAllChildren() under the lock to ensure consistency -- that second
+    // .listAllChildren() call 99.99% returns cached data without FS access:
+    boolean listingIsIncomplete = !pFS.listAllChildren(this).complete();
 
     synchronized (directoryData) {
       if (directoryData.children.isInvalidated()) {
         return VirtualFile.EMPTY_ARRAY;
       }
 
-      List<? extends ChildInfo> childrenInfo = pFS.listAll(this);
+      // if listing is incomplete => take already existing children
+      DirectoryChildren children = listingIsIncomplete ? persistedChildren(pFS) : pFS.listAllChildren(this);
+      List<? extends ChildInfo> childrenInfo = children.children();
+      // a failed listing gives only the children known so far: the names that were not found then could still exist
+      boolean complete = children.complete();
+      // Shortcut: a failed listing repeats on each getChildren()
+      // If all the persisted children are already cached => just re-build the same children list is enough
+      if (!complete
+          && (!sortChildrenOnLoading || directoryData.children.isSorted())
+          && hasSameIds(directoryData.children, childrenInfo)) {
+        return directoryData.children.asFiles(childId -> getCachedOrLoadChild(childId, vfsData));
+      }
+
       if (childrenInfo.isEmpty()) {
-        directoryData.clearAdoptedNames();
-        directoryData.children = VfsData.ChildrenIds.EMPTY.withAllChildrenLoaded(true);
+        if (complete) directoryData.clearAdoptedNames();
+        directoryData.children = VfsData.ChildrenIds.EMPTY.withAllChildrenLoaded(complete);
         return VirtualFile.EMPTY_ARRAY;
       }
 
@@ -642,8 +672,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         logDisappearedChildren(vfsData, prevChildren, newChildren, childrenInfo);
       }
 
-      directoryData.clearAdoptedNames();
-      directoryData.children = new VfsData.ChildrenIds(newChildrenIds, sortChildrenOnLoading, /*allChildren: */ true);
+      if (complete) directoryData.clearAdoptedNames();
+      directoryData.children = new VfsData.ChildrenIds(newChildrenIds, sortChildrenOnLoading, /*allChildren: */ complete);
       assertConsistency(isCaseSensitive, childrenInfo);
 
       return newChildren;

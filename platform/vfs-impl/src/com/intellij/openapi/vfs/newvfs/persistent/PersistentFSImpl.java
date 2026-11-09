@@ -517,12 +517,23 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @Override
   @ApiStatus.Internal
   public @Unmodifiable @NotNull List<? extends ChildInfo> listAll(@NotNull VirtualFile dir) {
+    return listAllChildren(dir).children();
+  }
+
+  /// The children of a directory, and whether they are all its children
+  @ApiStatus.Internal
+  public record DirectoryChildren(@Unmodifiable @NotNull List<? extends ChildInfo> children, boolean complete) {}
+
+  /// [#listAll] that also tells whether the answer is complete. It is not complete if the FS cannot list `dir` now:
+  /// then the answer is the children known so far, and the directory is not marked as having all its children cached
+  @ApiStatus.Internal
+  public @NotNull PersistentFSImpl.DirectoryChildren listAllChildren(@NotNull VirtualFile dir) {
     checkReadAccess();
 
     int dirId = fileId(dir);
     ListResult childrenList = vfsPeer.list(dirId);
     if (childrenList.allChildrenCached()) {
-      return childrenList.children;
+      return new DirectoryChildren(childrenList.children, /*complete: */ true);
     }
 
     //children are not (all) cached yet: request the actual children from FS, and cache them:
@@ -535,7 +546,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     String[] childrenNames;
     Map<String, FileAttributes> childrenWithAttributes;
     if (fs instanceof BatchingFileSystem batchingFileSystem) {
-      childrenWithAttributes = listWithAttributesOrEmpty(batchingFileSystem, dir);
+      childrenWithAttributes = listWithAttributesOrNull(batchingFileSystem, dir);
+      if (childrenWithAttributes == null) {
+        // an unknown listing is not an empty one: keep the children as they are, and do not mark them all cached
+        return new DirectoryChildren(childrenList.children, /*complete: */ false);
+      }
       childrenNames = VfsUtil.filterNames(ArrayUtil.toStringArray(childrenWithAttributes.keySet()));
     }
     else {
@@ -596,17 +611,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       /*setAllChildrenCached: */ true  //=we're sure we load all the children at this point
     );
 
-    return savedChildren.children;
+    return new DirectoryChildren(savedChildren.children, /*complete: */ true);
   }
 
-  private static @NotNull Map<String, FileAttributes> listWithAttributesOrEmpty(@NotNull BatchingFileSystem fs, @NotNull VirtualFile dir) {
+  /// @return the children of `dir` with their attributes, or null if the FS cannot list `dir` now
+  private static @Nullable Map<String, FileAttributes> listWithAttributesOrNull(@NotNull BatchingFileSystem fs, @NotNull VirtualFile dir) {
     try {
       return fs.listWithAttributes(dir);
     }
     catch (FileStateUnknownException e) {
-      //TODO IJPL-257147: an unknown listing is not an empty one -- keep the children, and do not mark them all loaded
-      LOG.warn(e);
-      return Map.of();
+      // the FS implementation has already logged the error
+      LOG.debug("listAll: the listing failed, the directory keeps the children known so far: " + dir, e);
+      return null;
     }
   }
 

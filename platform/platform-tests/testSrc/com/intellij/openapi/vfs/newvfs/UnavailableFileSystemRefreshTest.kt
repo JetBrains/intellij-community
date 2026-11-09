@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -224,6 +225,27 @@ class UnavailableFileSystemRefreshTest {
     assertThat(dir.isValid).describedAs("the state of the root is unknown, not absent").isTrue()
     assertThat(dir.findChild("a.txt")).isNotNull()
     assertThat(dir.isDirty).isTrue()
+  }
+
+  @Test
+  fun `getChildren of a directory that cannot be listed does not mark it fully loaded, so a child is still found by name`() {
+    fs.createChildDirectory(this, dir, "sub")
+    fs.createChildFile(this, FakeVirtualFile(dir, "sub"), "x.txt")
+    refresh(dir)
+    val sub = checkNotNull(dir.findChild("sub")) as VirtualDirectoryImpl
+    assertThat(sub.allChildrenCached()).describedAs("precondition: VFS has not listed sub yet").isFalse()
+    fs.listingFails = { it.path == sub.path }
+
+    assertThat(sub.children).describedAs("VFS knows no child of sub, and the listing fails").isEmpty()
+
+    assertThat(sub.allChildrenLoaded()).describedAs("a failed listing is not an empty one").isFalse()
+    assertThat(sub.allChildrenCached()).describedAs("a failed listing is not an empty one").isFalse()
+    assertThat(sub.findChild("x.txt")).describedAs("sub is not fully loaded, so a lookup asks the file system by name").isNotNull()
+
+    fs.listingFails = { false }
+    assertThat(sub.children.map { it.name }).describedAs("the listing works again").containsExactly("x.txt")
+    assertThat(sub.allChildrenLoaded()).isTrue()
+    assertThat(sub.allChildrenCached()).isTrue()
   }
 
   private fun refresh(file: VirtualFile) {
