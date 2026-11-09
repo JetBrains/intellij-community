@@ -91,7 +91,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ArrayUtil
 import com.intellij.util.DisposeAwareRunnable
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.FileContentUtilCore
 import com.intellij.util.Function
 import com.intellij.util.NullableFunction
@@ -1422,21 +1421,8 @@ object MavenUtil {
 
     @Throws(IOException::class, JDOMException::class)
     fun read(file: Path): Element? {
-      try {
-        return relay.accessDiskWithCheckCanceled(file)
-      }
-      catch (e: RuntimeException) {
-        // accessDiskWithCheckCanceled propagates Future.get() failures via ExceptionUtil.rethrow,
-        // which wraps the ExecutionException in a RuntimeException. Restore the original cause
-        // so callers can match on IOException/JDOMException.
-        val cause = (e.cause as? ExecutionException)?.cause ?: throw e
-        ExceptionUtil.rethrowUnchecked(cause)
-        when (cause) {
-          is IOException -> throw cause
-          is JDOMException -> throw cause
-          else -> throw e
-        }
-      }
+      // the relay throws the IOException/JDOMException of the function as is, so callers can match on them
+      return relay.accessDiskWithCheckCanceled(file)
     }
 
     companion object {

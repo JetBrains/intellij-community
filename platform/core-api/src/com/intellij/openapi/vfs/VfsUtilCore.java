@@ -24,7 +24,6 @@ import com.intellij.openapi.vfs.impl.InputStreamSkippingBOM;
 import com.intellij.openapi.vfs.impl.VfsUtilCoreApplicationService;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -432,19 +431,9 @@ public class VfsUtilCore {
         // FileUtilRt.loadText might try to take a read action, in which case it will freeze
         // if accessDiskWithCheckCanceled is called within a write action.
         && !application.isWriteAccessAllowed()) {
-      try {
-        // Use DiskQueryRelay to delegate file loading to a background thread.
-        return application.getService(VfsUtilCoreApplicationService.class).getLoadTextDQR()
-          .accessDiskWithCheckCanceled(Pair.create(file, length));
-      }
-      catch (RuntimeException e) {
-        // Unwrap the IO exception.
-        IOException t = ExceptionUtil.findCause(e, IOException.class);
-        if (t != null) {
-          throw t;
-        }
-        throw e;
-      }
+      // Use DiskQueryRelay to delegate file loading to a background thread.
+      return application.getService(VfsUtilCoreApplicationService.class).getLoadTextDQR()
+        .accessDiskWithCheckCanceled(Pair.create(file, length));
     }
     try (InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset())) {
       return new String(FileUtilRt.loadText(reader, length));

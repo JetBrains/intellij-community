@@ -30,7 +30,6 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
-import com.intellij.util.ExceptionUtil
 import com.intellij.util.FileContentUtilCore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,7 +41,6 @@ import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
 import java.io.IOException
-import java.io.UncheckedIOException
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
@@ -56,14 +54,8 @@ private const val DECLINE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
 
 private val TASK_KEY: Key<Future<CharSequence>> = Key.create("java.decompiler.optimistic.task")
 
-private val BYTECODE_RELAY: DiskQueryRelay<VirtualFile, ByteArray> = DiskQueryRelay { file ->
-  try {
-    file.contentsToByteArray(false)
-  }
-  catch (e: IOException) {
-    throw UncheckedIOException(e)
-  }
-}
+// the relay throws the IOException of the function as is
+private val BYTECODE_RELAY: DiskQueryRelay<VirtualFile, ByteArray> = DiskQueryRelay { file -> file.contentsToByteArray(false) }
 
 @Suppress("IO_FILE_USAGE", "SplitModeApiUsage")
 class IdeaDecompiler : ClassFileDecompilers.Light() {
@@ -207,15 +199,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     override fun getBytecode(externalPath: String, internalPath: String?): ByteArray {
       val file = pathMap[externalPath] ?: throw AssertionError(externalPath + " not in " + pathMap.keys)
       return bytecodeCache.getOrPut(externalPath) {
-        try {
-          BYTECODE_RELAY.accessDiskWithCheckCanceled(file)
-        }
-        catch (e: ProcessCanceledException) {
-          throw e
-        }
-        catch (e: RuntimeException) {
-          throw ExceptionUtil.findCause(e, IOException::class.java) ?: e
-        }
+        BYTECODE_RELAY.accessDiskWithCheckCanceled(file)
       }
     }
   }

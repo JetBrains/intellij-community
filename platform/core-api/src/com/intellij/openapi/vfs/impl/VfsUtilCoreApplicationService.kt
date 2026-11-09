@@ -3,24 +3,17 @@ package com.intellij.openapi.vfs.impl
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.util.Pair
-import com.intellij.openapi.vfs.DiskQueryRelay
+import com.intellij.openapi.vfs.CheckedDiskQueryRelay
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ThrowableConvertor
 import java.io.IOException
-import java.util.function.Function
 
-@Service( Service.Level.APP)
+@Service(Service.Level.APP)
 internal class VfsUtilCoreApplicationService {
 
-  val loadTextDQR: DiskQueryRelay<Pair<VirtualFile, Int>, String> = DiskQueryRelay<Pair<VirtualFile, Int>, String>(
-    Function { pair: Pair<VirtualFile, Int> ->
-      try {
-        return@Function VfsUtilCore.loadText(pair.first, pair.second)
-      }
-      catch (e: IOException) {
-        // Wrap IOException
-        throw RuntimeException(e)
-      }
-    }
+  /** [CheckedDiskQueryRelay], so the Java caller sees the [IOException] of the function */
+  val loadTextDQR: CheckedDiskQueryRelay<Pair<VirtualFile, Int>, String, IOException> = CheckedDiskQueryRelay.create(
+    ThrowableConvertor { pair -> VfsUtilCore.loadText(pair.first, pair.second) }
   )
 }
