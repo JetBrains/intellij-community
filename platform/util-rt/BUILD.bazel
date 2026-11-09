@@ -4,7 +4,10 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jps_test(
     name = "util-rt-tests_test",
     timeout = "moderate",
-    tags = ["community-aggregator"],
+    sandbox = True,
+    tags = [
+        "debugger-tests",
+    ],
     runtime_deps = [":util-rt-tests_test_lib"],
 )
 
