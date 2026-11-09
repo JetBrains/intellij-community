@@ -3,7 +3,10 @@ package com.intellij.platform.settings.v2.impl.providers
 
 // @spec ../../../../../../../../../spec/file-layers.spec.md
 
-import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil
 import com.intellij.platform.settings.v2.SettingsValue.MapValue
 import com.intellij.platform.settings.v2.impl.JsonSettingsCodec
 import com.intellij.platform.settings.v2.impl.SettingsDecodingException
@@ -40,15 +43,14 @@ object JsonConfigFile {
   }
 
   /**
-   * Makes the file at [path] known to the VFS, or its absence when the file is missing. A VFS event fires only for a
-   * file that the VFS tracks, and a refresh of a partly loaded directory checks only the names that the VFS knows. So
-   * after the asynchronous refresh ends, a later VFS refresh reports a change of the file, and also its creation.
+   * Makes the file at [path] known to the VFS, or its absence when the file is missing, so the watcher gets its
+   * events. Two cases need it: the missing file at the watch start, whose directory the VFS has not listed yet, and
+   * the file that a write creates through NIO in a directory the VFS listed before the write.
+   *
+   * The lookup runs on a background thread and never waits for the EDT (ADR 0167).
    */
   internal fun refreshInVfs(path: Path) {
-    val vfm = VirtualFileManager.getInstance()
-    // Refresh the parent's children first: a bare file-path refresh leaves a just-created file "absent" when the
-    // directory's child list is already cached, so the new config would never become VFS-visible.
-    // The finish callback runs on the EDT under the write lock, so its synchronous lookup runs inline.
-    vfm.refreshAndFindFileByNioPath(path.parent)?.refresh(true, false) { vfm.refreshAndFindFileByNioPath(path) }
+    val vfs = LocalFileSystem.getInstance() as NewVirtualFileSystem
+    VfsImplUtil.refreshAndFindFileByPath(vfs, FileUtil.toSystemIndependentName(path.toString())) { }
   }
 }
