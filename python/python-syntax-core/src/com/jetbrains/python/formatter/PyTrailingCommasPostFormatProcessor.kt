@@ -10,8 +10,10 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.startOffset
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.ast.PyAstArgumentList
@@ -41,6 +43,7 @@ class PyTrailingCommasPostFormatProcessor : PostFormatProcessor {
     val visitor = TrailingCommaInsertVisitor(settings, range, project)
 
     psiElement.accept(visitor)
+    visitor.insertCommas()
     return visitor.resultTextRange
   }
 
@@ -63,6 +66,7 @@ class PyTrailingCommasPostFormatProcessor : PostFormatProcessor {
     private val pyCommonSettings = settings.getCommonSettings(PythonLanguage.getInstance())
     private val helper = PostFormatProcessorHelper(pyCommonSettings).apply { resultTextRange = range }
     private val codeStyleManager = CodeStyleManager.getInstance(project)
+    private val commaPlaces = mutableListOf<CommaPlace>()
 
     val resultTextRange: TextRange get() = helper.resultTextRange
 
@@ -112,7 +116,7 @@ class PyTrailingCommasPostFormatProcessor : PostFormatProcessor {
       if (!helper.isElementFullyInRange(container)) return
       elements.lastOrNull()?.let { lastElement ->
         if (!lastElement.isMultiLine()) return
-        insertComma(container, lastElement)
+        addCommaPlace(container, lastElement)
       }
     }
 
@@ -120,17 +124,48 @@ class PyTrailingCommasPostFormatProcessor : PostFormatProcessor {
       if ((node.parent !is PyAstParenthesizedExpression && node.parent !is PyAstSubscriptionExpression) || !node.isMultiLine()) return
       node.elements.lastOrNull()?.let { lastElement ->
         if (lastElement.nextSibling?.elementType != PyTokenTypes.COMMA) {
-          insertComma(node, lastElement)
+          addCommaPlace(node, lastElement)
         }
       }
     }
 
-    private fun insertComma(container: PsiElement, after: PsiElement) {
-      val initialLength = container.textLength
-      val comma = PyAstElementGenerator.getInstance(after.project).createComma()
-      val addedComma = container.addAfter(comma.psi, after)
-      codeStyleManager.reformatRange(container, after.endOffset, addedComma.endOffset)
-      helper.updateResultRange(initialLength, container.textLength)
+    private fun addCommaPlace(container: PsiElement, after: PsiElement) {
+      commaPlaces.add(CommaPlace(container, after))
+    }
+
+    /**
+     * Inserts all commas that the visit found. Then reformats each group of nearby commas in one pass.
+     * The visit does not change the tree.
+     */
+    fun insertCommas() {
+      val generator = commaPlaces.firstOrNull()?.let { PyAstElementGenerator.getInstance(it.container.project) } ?: return
+      for (group in groupNearbyContainers()) {
+        val root = PsiTreeUtil.findCommonParent(group.map { it.container }) ?: continue
+        val initialLength = root.textLength
+        val addedCommas = group.map { (container, after) -> container.addAfter(generator.createComma().psi, after) }
+        val formatted = codeStyleManager.reformatRange(root, addedCommas.minOf { it.startOffset }, addedCommas.maxOf { it.endOffset }, true)
+        helper.updateResultRange(initialLength, formatted.textLength)
+      }
+    }
+
+    /**
+     * Puts the next container into the current group when the text between them is at most
+     * 1/[MAX_REFORMAT_GROUPS] of the file. Then the groups reformat at most the full file again,
+     * and there are at most [MAX_REFORMAT_GROUPS] + 1 groups.
+     */
+    private fun groupNearbyContainers(): List<List<CommaPlace>> {
+      val maxGap = commaPlaces.first().container.containingFile.textLength / MAX_REFORMAT_GROUPS
+      val groups = mutableListOf<MutableList<CommaPlace>>()
+      var groupEnd = 0
+      for (place in commaPlaces.sortedBy { it.container.startOffset }) {
+        val range = place.container.textRange
+        if (groups.isEmpty() || range.startOffset - groupEnd > maxGap) {
+          groups.add(mutableListOf())
+        }
+        groupEnd = maxOf(groupEnd, range.endOffset)
+        groups.last().add(place)
+      }
+      return groups
     }
 
     private fun PsiElement.isMultiLine(): Boolean {
@@ -138,4 +173,13 @@ class PyTrailingCommasPostFormatProcessor : PostFormatProcessor {
       return (lookForNewLineAfter.nextSibling as? PsiWhiteSpace)?.textContains('\n') == true
     }
   }
+
+  private data class CommaPlace(val container: PsiElement, val after: PsiElement)
 }
+
+/**
+ * Each reformat call scans the full file, for example for the formatter tags.
+ * A reformat of a group also formats the text between its commas again.
+ * This limit keeps both costs linear in the file length.
+ */
+private const val MAX_REFORMAT_GROUPS = 32
