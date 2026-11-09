@@ -18,6 +18,7 @@ import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Test
 import javax.swing.JPanel
 import kotlin.test.assertEquals
@@ -62,7 +63,7 @@ internal class UIEventListenerRoutingTest {
     val context = ProcessOutputUiContext(project, JPanel(), disposableFixture.get())
     val toolWindow = ToolWindowManager.getInstance(project)
       .registerToolWindow(TOOL_WINDOW_ID, JPanel(), ToolWindowAnchor.BOTTOM)
-    UIEventListener(context, toolWindow).launch()
+    context.coroutineScope.launch { UIEventListener(context, toolWindow).listen(context.controller.uiEvents) }
     context.awaitTopicDelivery()
     return context
   }

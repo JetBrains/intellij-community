@@ -24,7 +24,8 @@ import com.intellij.util.ui.FormBuilder
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import java.awt.Font
 import javax.swing.Action
@@ -39,9 +40,9 @@ internal class UIEventListener(
   private val uiContext: ProcessOutputUiContext,
   private val toolWindow: ToolWindow,
 ) {
-  fun launch() =
-    uiContext.coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      uiContext.controller.uiEvents.collect { event ->
+  suspend fun listen(events: Flow<UiEvent>) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      events.collect { event ->
         when (event) {
           is UiEvent.DisplayExecError -> {
             displayExecError(event.execErrorDto, event.associatedProcess)
@@ -55,6 +56,7 @@ internal class UIEventListener(
         }
       }
     }
+  }
 
   private suspend fun displayExecErrorInModal(error: ExecErrorDto) {
     writeIntentReadAction {
