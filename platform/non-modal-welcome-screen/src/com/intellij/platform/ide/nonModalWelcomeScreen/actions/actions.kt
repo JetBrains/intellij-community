@@ -3,6 +3,7 @@ package com.intellij.platform.ide.nonModalWelcomeScreen.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.WELCOME_NEW_FILE_EXTENSION
+import com.intellij.ide.actions.WELCOME_NEW_LANGUAGE
 import com.intellij.ide.actions.rememberWelcomeNewFile
 import com.intellij.ide.actions.welcomeNewFileUsageData
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -14,7 +15,6 @@ import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionWrapper
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -65,7 +65,7 @@ open class NewEmptyFileAction(languageId: String, private val text: Supplier<@Nl
     val extension = if (language == null) fileExtension ?: return else null
     val dataContext = SimpleDataContext.builder()
       .setParent(e.dataContext)
-      .add(CommonDataKeys.LANGUAGE, language)
+      .add(WELCOME_NEW_LANGUAGE, language)
       .add(WELCOME_NEW_FILE_EXTENSION, extension)
       .build()
     val event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null)

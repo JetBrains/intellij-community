@@ -13,6 +13,7 @@ import com.intellij.ide.util.DeleteHandler
 import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -54,12 +55,21 @@ import java.nio.file.Path
 
 /**
  * The extension of the new Home file.
- * [WelcomeNewEmptyFileAction] uses it when the data context has no [CommonDataKeys.LANGUAGE].
+ * [WelcomeNewEmptyFileAction] uses it when the data context has no [WELCOME_NEW_LANGUAGE].
  * For example, the language plugin is disabled.
  */
 @ApiStatus.Internal
 @JvmField
 val WELCOME_NEW_FILE_EXTENSION: DataKey<String> = DataKey.create("WelcomeNewFileExtension")
+
+/**
+ * The language of the new Home file.
+ * [WelcomeNewEmptyFileAction] creates an empty file in this language.
+ * The action does not read [CommonDataKeys.LANGUAGE], because the focused editor also sets that key.
+ */
+@ApiStatus.Internal
+@JvmField
+val WELCOME_NEW_LANGUAGE: DataKey<Language> = DataKey.create("WelcomeNewFileLanguage")
 
 internal class WelcomeNewEmptyFileAction : DumbAwareAction(), FusAwareAction {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -74,7 +84,7 @@ internal class WelcomeNewEmptyFileAction : DumbAwareAction(), FusAwareAction {
     val context = ScratchFileCreationHelper.Context()
     context.defaultRootType = WelcomeFilesRootType.Util.instance
     context.filePrefix = "Untitled"
-    context.language = CommonDataKeys.LANGUAGE.getData(e.dataContext)
+    context.language = WELCOME_NEW_LANGUAGE.getData(e.dataContext)
     if (context.language == null) {
       context.fileExtension = WELCOME_NEW_FILE_EXTENSION.getData(e.dataContext)
     }
