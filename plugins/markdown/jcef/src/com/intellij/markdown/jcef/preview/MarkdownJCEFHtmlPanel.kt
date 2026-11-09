@@ -2,7 +2,6 @@
 package com.intellij.markdown.jcef.preview
 
 import com.intellij.find.FindManager
-import com.intellij.markdown.frontend.preview.jcef.zoomIndicator.PreviewZoomIndicatorManager
 import com.intellij.markdown.jcef.preview.impl.IncrementalDOMBuilder
 import com.intellij.markdown.jcef.preview.impl.JcefBrowserPipeImpl
 import com.intellij.markdown.jcef.preview.impl.addRequestHandler
@@ -11,19 +10,17 @@ import com.intellij.markdown.jcef.preview.impl.waitForPageLoad
 import com.intellij.markdown.jcef.preview.impl.waitForReloadIgnoringCache
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.components.Magnificator
 import com.intellij.ui.components.ZoomableViewport
@@ -64,6 +61,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelEx
 import org.intellij.plugins.markdown.ui.preview.MarkdownImageResourceProvider
 import org.intellij.plugins.markdown.ui.preview.MarkdownImageWatcher
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewBrowserActions
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewZoomIndicator
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler
 import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler.PreviewRequest
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
@@ -427,8 +425,7 @@ class MarkdownJCEFHtmlPanel(private val project: Project?, private val virtualFi
     val panel = JBLoadingPanel(BorderLayout(), this)
 
     previewInnerComponent.addPropertyChangeListener(TEMPORARY_FONT_SIZE.toString()) {
-      val balloon = project.service<PreviewZoomIndicatorManager>().createOrGetBalloon(this@MarkdownJCEFHtmlPanel)
-      balloon?.show(RelativePoint.getSouthOf(previewInnerComponent), Balloon.Position.below)
+      project.serviceOrNull<MarkdownPreviewZoomIndicator>()?.show(this@MarkdownJCEFHtmlPanel, previewInnerComponent)
     }
 
     // MarkdownPreviewSearchSession requires EDT context to update actions in SearchReplaceComponent.updateBindingsActionsAndFocus

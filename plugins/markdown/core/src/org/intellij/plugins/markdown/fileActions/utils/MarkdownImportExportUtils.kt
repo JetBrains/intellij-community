@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileImpl
@@ -210,5 +211,22 @@ object MarkdownImportExportUtils {
     )
     val dirToExport = file.parent
     refreshProjectDirectory(project, dirToExport.path)
+  }
+
+  /**
+   * Shows the result of an export to [outputFile], and refreshes the target directory after a successful export.
+   */
+  fun notifyExportResult(project: Project, outputFile: File, isSuccessful: Boolean) {
+    val exportedFile = if (isSuccessful) LocalFileSystem.getInstance().refreshAndFindFileByNioFile(outputFile.toPath()) else null
+    if (exportedFile != null) {
+      notifyAndRefreshIfExportSuccess(exportedFile, project)
+    }
+    else {
+      MarkdownNotifications.showError(
+        project,
+        id = MarkdownExportProvider.Companion.NotificationIds.exportFailed,
+        message = MarkdownBundle.message("markdown.export.failure.msg", outputFile.name)
+      )
+    }
   }
 }

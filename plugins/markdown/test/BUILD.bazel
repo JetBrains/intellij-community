@@ -83,6 +83,7 @@ jvm_library(
         "//xml/xml-parser:parser",
         "//platform/lang-impl",
         "//platform/platform-util-netty:ide-util-netty",
+        "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core",
         "//platform/testFramework",
         "//platform/testFramework/structureView",

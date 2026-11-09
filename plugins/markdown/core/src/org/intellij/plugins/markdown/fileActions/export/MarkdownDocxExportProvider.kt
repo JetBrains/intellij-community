@@ -51,7 +51,8 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
       }
       //Note: if the reference document is not found for some reason, then all styles in the created docx document will be default.
       val refDocx = FileUtil.join(mdFile.parent.path, "${mdFile.nameWithoutExtension}.${formatDescription.extension}")
-      val cmd = getConvertMdToDocxCommandLine(mdFile, outputFile, refDocx)
+      val pandoc = PandocApplicationSettings.getInstance().resolveExecutable().ifBlank { "pandoc" }
+      val cmd = createMdToDocxCommandLine(pandoc, mdFile, outputFile, refDocx)
 
       output = ExecUtil.execAndGetOutput(cmd)
     }
@@ -80,28 +81,32 @@ internal class MarkdownDocxExportProvider : MarkdownExportProvider {
         )
       }
     }
-
-    private fun getConvertMdToDocxCommandLine(srcFile: VirtualFile, targetFile: String, refFile: String): GeneralCommandLine {
-      val pandoc = PandocApplicationSettings.getInstance().resolveExecutable().ifBlank { "pandoc" }
-      val commandLine = mutableListOf(
-        pandoc,
-        srcFile.path,
-        "-f",
-        MarkdownFileType.INSTANCE.name.lowercase(Locale.getDefault()),
-        "-t",
-        formatDescription.extension,
-        "-o",
-        targetFile
-      )
-      if (FileUtil.exists(refFile)) {
-        commandLine.add("--reference-doc=$refFile")
-      }
-      return GeneralCommandLine(commandLine)
-    }
   }
 
   companion object {
     @JvmStatic
     val format = MarkdownFileActionFormat("Microsoft Word", "docx")
   }
+}
+
+/**
+ * Returns the Pandoc command that converts [srcFile] to [targetFile].
+ *
+ * Pandoc resolves a relative image path from its working directory, so the command runs in the directory of [srcFile].
+ */
+internal fun createMdToDocxCommandLine(pandoc: String, srcFile: VirtualFile, targetFile: String, refFile: String): GeneralCommandLine {
+  val commandLine = mutableListOf(
+    pandoc,
+    srcFile.path,
+    "-f",
+    MarkdownFileType.INSTANCE.name.lowercase(Locale.getDefault()),
+    "-t",
+    MarkdownDocxExportProvider.format.extension,
+    "-o",
+    targetFile
+  )
+  if (FileUtil.exists(refFile)) {
+    commandLine.add("--reference-doc=$refFile")
+  }
+  return GeneralCommandLine(commandLine).withWorkDirectory(srcFile.parent.path)
 }

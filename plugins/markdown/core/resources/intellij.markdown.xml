@@ -363,6 +363,8 @@
     <projectSettings service="org.intellij.plugins.markdown.settings.DocumentLinksSafeState"/>
     <projectSettings service="org.intellij.plugins.markdown.settings.pandoc.PandocSettings"/>
     <applicationSettings service="org.intellij.plugins.markdown.settings.pandoc.PandocApplicationSettings"/>
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
+    <applicationSettings service="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
   </extensions>
 
   <applicationListeners>

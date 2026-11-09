@@ -24,10 +24,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        "//plugins/jcef/plugin",
-        "//platform/platform-frontend:frontend",
         "//platform/editor-ui-ex:editor-ex",
-        "//platform/project/shared:project",
         "//platform/built-in-server-api:builtInServer",
         "//platform/built-in-server:builtInServer-impl",
         "//platform/util/coroutines",
@@ -41,7 +38,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/markdown/core:markdown",
-        "//plugins/markdown/core/frontend",
+        "//plugins/jcef/plugin",
         "//libraries/jcef",
         "//platform/ui.jcef",
         "//platform/analysis-api:analysis",
@@ -57,6 +54,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/platform-util-io:ide-util-io",
         "//platform/platform-util-netty:ide-util-netty",
+        "//platform/project/shared:project",
+        "//platform/progress/shared:ide-progress",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-impl",
         "//platform/refactoring",

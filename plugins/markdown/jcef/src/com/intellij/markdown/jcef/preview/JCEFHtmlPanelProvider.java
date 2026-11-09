@@ -2,6 +2,8 @@
 package com.intellij.markdown.jcef.preview;
 
 import com.intellij.idea.AppMode;
+import com.intellij.openapi.client.ClientKind;
+import com.intellij.openapi.client.ClientSessionsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.jcef.JBCefApp;
@@ -42,5 +44,16 @@ public final class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
 
   public static boolean canBeUsed() {
     return !AppMode.isRemoteDevHost() && JBCefApp.isSupported();
+  }
+
+  /**
+   * Tells whether an offscreen panel can render a file for an export.
+   * On the remote development host, the panel forwards the rendering to the frontend, so a controller client must be connected.
+   */
+  public static boolean canBeUsedForExport() {
+    if (AppMode.isRemoteDevHost() && ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER).isEmpty()) {
+      return false;
+    }
+    return JBCefApp.isSupported();
   }
 }

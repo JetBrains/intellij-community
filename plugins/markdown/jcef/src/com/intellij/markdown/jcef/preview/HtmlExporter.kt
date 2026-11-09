@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportResult
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -16,13 +17,11 @@ import java.io.File
 import java.io.IOException
 import java.util.Base64
 
-internal data class HtmlResourceSavingSettings(val isSaved: Boolean, val resourceDir: String)
-
 private val defaultCspContent = """
 default-src 'none';
 script-src 'self';
 style-src 'unsafe-inline';
-img-src file: *;
+img-src file: data: *;
 connect-src 'none';
 font-src * data: *;
 object-src 'none';
@@ -33,15 +32,21 @@ child-src 'none';
 private val shouldEnforceCsp: Boolean
   get() = Registry.`is`("markdown.export.html.enforce.csp", true)
 
+/**
+ * Converts the HTML source of the Markdown preview to a standalone document.
+ *
+ * When [imagesSrcDir] is `null`, the document embeds each image.
+ * Otherwise, each `img` element names its image in [imagesSrcDir], and the result holds the image content.
+ */
 internal class HtmlExporter(
   htmlSource: @NlsSafe String,
-  private val savingSettings: HtmlResourceSavingSettings,
   private val project: Project,
-  private val targetFile: File,
+  private val imagesSrcDir: String?,
 ) {
   private val document = Jsoup.parse(htmlSource)
+  private val savedImages = mutableListOf<MarkdownHtmlExportResult.Image>()
 
-  fun export() {
+  fun export(): MarkdownHtmlExportResult {
     with(document.head()) {
       getElementsByTag("script").remove()
       processMetaElements(this)
@@ -51,14 +56,14 @@ internal class HtmlExporter(
     document.body().select(".code-fence-highlighter-copy-button").remove()
 
     val images = document.body().getElementsByTag("img")
-    if (savingSettings.isSaved) {
-      saveImages(images)
+    if (imagesSrcDir != null) {
+      saveImages(images, imagesSrcDir)
     }
     else {
       inlineImagesContent(images)
     }
 
-    targetFile.writeText(document.html())
+    return MarkdownHtmlExportResult(document.html(), savedImages.toList())
   }
 
   private fun processMetaElements(head: Element) {
@@ -73,6 +78,7 @@ internal class HtmlExporter(
         else -> csp.remove()
       }
     }
+    head.prependElement("meta").attr("charset", "UTF-8")
   }
 
   private fun appendInlineStylesContent(styles: Elements) {
@@ -115,23 +121,19 @@ internal class HtmlExporter(
   private fun encodeImage(url: String, bytes: ByteArray): String {
     val extension = FileUtil.getExtension(url, "png")
     val contentType = if (extension == "svg") "svg+xml" else extension
-    val encoder = Base64.getEncoder()
-    return "data:image/$contentType;base64, ${encoder.encode(bytes)}"
+    return "data:image/$contentType;base64,${Base64.getEncoder().encodeToString(bytes)}"
   }
 
-  private fun saveImages(images: Elements) {
+  private fun saveImages(images: Elements, srcDir: String) {
     images.forEach {
       val imgSrc = it.attr("src")
       val imgUri = getImgUriWithProtocol(imgSrc)
       val content = getResource(imgUri)
 
       if (content != null && imgSrc.isNotEmpty()) {
-        val savedImgFile = getSavedImageFile(savingSettings.resourceDir, imgSrc)
-        FileUtil.createIfDoesntExist(savedImgFile)
-        savedImgFile.writeBytes(content)
-
-        val relativeImgPath = getRelativeImagePath(savingSettings.resourceDir)
-        it.attr("src", FileUtil.join(relativeImgPath, File(imgSrc).name))
+        val imageName = File(imgSrc).name
+        savedImages.add(MarkdownHtmlExportResult.Image(imageName, content))
+        it.attr("src", if (srcDir.isEmpty()) imageName else "$srcDir/$imageName")
       }
     }
   }
@@ -159,8 +161,4 @@ internal class HtmlExporter(
       )
       null
     }
-
-  private fun getSavedImageFile(resDir: String, imgUrl: String) = File(FileUtil.join(resDir, File(imgUrl).name))
-
-  private fun getRelativeImagePath(resDir: String) = FileUtil.getRelativePath(targetFile.parentFile, File(resDir))
 }

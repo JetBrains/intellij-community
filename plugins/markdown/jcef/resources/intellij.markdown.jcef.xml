@@ -14,7 +14,6 @@
     <module name="intellij.libraries.netty.buffer"/>
     <module name="intellij.libraries.netty.codec.http"/>
     <module name="intellij.markdown"/>
-    <module name="intellij.markdown.frontend"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.builtInServer"/>
     <module name="intellij.platform.builtInServer.impl"/>
@@ -24,11 +23,11 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.util.netty"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.lang.impl"/>
@@ -51,10 +50,5 @@
 
     <markdownExportProvider implementation="com.intellij.markdown.jcef.fileActions.export.MarkdownPdfExportProvider"/>
     <markdownExportProvider implementation="com.intellij.markdown.jcef.fileActions.export.MarkdownHtmlExportProvider"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.markdown.jcef.fileActions.export.MarkdownHtmlExportSettings"/>
-    <applicationSettings service="com.intellij.markdown.jcef.fileActions.export.MarkdownHtmlExportSettings"/>
   </extensions>
 </idea-plugin>
