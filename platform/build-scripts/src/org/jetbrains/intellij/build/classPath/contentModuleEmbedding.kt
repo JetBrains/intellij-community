@@ -670,6 +670,5 @@ private val badIncludesForPluginCollector = hashSetOf(
   "META-INF/server-flags.xml",
   // intellij.bigdatatools.core doesn't depend on intellij.bigdatatools.aws
   "META-INF/bigdataide-aws.xml",
-  "META-INF/app-servers-service-view-integration.xml",
   "META-INF/js-plugin.xml",
 )
