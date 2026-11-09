@@ -2,22 +2,34 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixtureByTestName;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MultipleVariablesInDeclarationInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class MultipleVariablesInDeclarationInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixtureByTestName(projectFixture, testName -> getInspection(testName));
 
-  public void testOnlyWarnArrayDimensions() { doTest(); }
-  public void testMultipleVariableDeclaration() { doTest(); }
+  @Test
+  public void testOnlyWarnArrayDimensions() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testMultipleVariableDeclaration() { inspectionFixture.get().doTest(); }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection(String testName) {
     MultipleVariablesInDeclarationInspection inspection = new MultipleVariablesInDeclarationInspection();
-    if ("OnlyWarnArrayDimensions".equals(getTestName(false))) {
+    if ("OnlyWarnArrayDimensions".equals(testName)) {
       inspection.onlyWarnArrayDimensions = true;
     }
     else {

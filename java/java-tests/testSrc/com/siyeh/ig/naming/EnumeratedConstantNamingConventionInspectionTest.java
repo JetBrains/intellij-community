@@ -1,17 +1,30 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.ArrayUtilRt;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
-public class EnumeratedConstantNamingConventionInspectionTest extends AbstractFieldNamingConventionInspectionTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
+@TestApplication
+public class EnumeratedConstantNamingConventionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection(), ArrayUtilRt.EMPTY_STRING_ARRAY, null, FieldNamingConventionInspection.class);
+
+  @Test
   public void testEnumeratedConstantNamingConvention() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     FieldNamingConventionInspection inspection = new FieldNamingConventionInspection();
     inspection.setEnabled(true, new EnumeratedConstantNamingConvention().getShortName());
     return inspection;

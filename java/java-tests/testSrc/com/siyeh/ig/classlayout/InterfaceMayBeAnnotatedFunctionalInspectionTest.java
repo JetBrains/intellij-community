@@ -1,44 +1,58 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class InterfaceMayBeAnnotatedFunctionalInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new InterfaceMayBeAnnotatedFunctionalInspection());
 
+  @Test
   public void testSimple() {
-    doTest("interface /*Interface 'Simple' may be annotated with @FunctionalInterface*/Simple/**/ {" +
+    inspectionFixture.get().doTest("interface /*Interface 'Simple' may be annotated with @FunctionalInterface*/Simple/**/ {" +
            "  void f();" +
            "}");
   }
 
+  @Test
   public void testLessSimple() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              interface /*Interface 'F' may be annotated with @FunctionalInterface*/F/**/  {    boolean equals(Object o);    static void f00() {}
                  default void g() {}
                  void f();
              }""");
   }
 
+  @Test
   public void testNotFunctional() {
-    doTest("interface G {" +
+    inspectionFixture.get().doTest("interface G {" +
            "<T> void f();" +
            "}");
   }
 
+  @Test
   public void testAlreadyAnnotated() {
-    doTest("@FunctionalInterface interface Asd {" +
+    inspectionFixture.get().doTest("@FunctionalInterface interface Asd {" +
            "    boolean doSmth();" +
            "}");
   }
 
+  @Test
   public void testSealed() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              sealed interface Fooy {
                  String foo();
              }
@@ -51,18 +65,8 @@ public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightJavaIn
              }""");
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
-
+  @Test
   public void testAnnotationType() {
-    doTest("@interface A {}");
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new InterfaceMayBeAnnotatedFunctionalInspection();
+    inspectionFixture.get().doTest("@interface A {}");
   }
 }

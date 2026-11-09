@@ -1,21 +1,33 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings("RedundantStringFormatCall")
-public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
+public class SystemOutErrInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new SystemOutErrInspection());
 
+  @Test
   public void testSimple() {
-    doStatementTest("/*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/**/.println(\"debugging\");");
+    inspectionFixture.get().doStatementTest("/*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/**/.println(\"debugging\");");
   }
 
+  @Test
   public void testMultiple() {
-    doMemberTest("public void foo() {" +
+    inspectionFixture.get().doMemberTest("public void foo() {" +
                  "  /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/**/.println(0);" +
                  "  /*Uses of 'System.err' should probably be replaced with more robust logging*/System.err/**/.println(0);" +
                  "  final java.io.PrintStream out = /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/**/;" +
@@ -24,7 +36,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
   }
 
   private void addSlf4j() {
-    addEnvironmentClass("""
+    inspectionFixture.get().addEnvironmentClass("""
         package org.slf4j;
         @SuppressWarnings("ALL") public class LoggerFactory {
         public static Logger getLogger(Class clazz) { return null; }
@@ -37,7 +49,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
   }
 
   private void addMessageFormat() {
-    addEnvironmentClass("""
+    inspectionFixture.get().addEnvironmentClass("""
         package java.text;
         public final class MessageFormat{
           public static String format(String format, Object... arguments) {return format;}
@@ -45,10 +57,11 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
         """);
   }
 
+  @Test
   public void testSimpleLogFix() {
     addSlf4j();
 
-    doTest(
+    inspectionFixture.get().doTest(
       """
       class Test{
         void foo(Object o) {
@@ -57,7 +70,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
       }
       """);
 
-    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+    inspectionFixture.get().checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
   """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
@@ -72,10 +85,11 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
       """);
   }
 
+  @Test
   public void testSimpleExistedLogFix() {
     addSlf4j();
 
-    doTest(
+    inspectionFixture.get().doTest(
       """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
@@ -89,7 +103,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
       }
       """);
 
-    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+    inspectionFixture.get().checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
   """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
@@ -104,10 +118,11 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
       """);
   }
 
+  @Test
   public void testSimpleExistedLogWithRecordFix() {
     addSlf4j();
 
-    doTest(
+    inspectionFixture.get().doTest(
       """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
@@ -123,7 +138,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
       }
       """);
 
-    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+    inspectionFixture.get().checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
   """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
@@ -140,10 +155,11 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
       """);
   }
 
+  @Test
   public void testSimpleExistedLogWithStringFormatFix() {
     addSlf4j();
 
-    doTest(
+    inspectionFixture.get().doTest(
       """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
@@ -157,7 +173,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
       }
       """);
 
-    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+    inspectionFixture.get().checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
   """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
@@ -172,11 +188,12 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
       """);
   }
 
+  @Test
   public void testSimpleExistedLogWithMessageFormatFix() {
     addSlf4j();
     addMessageFormat();
 
-    doTest(
+    inspectionFixture.get().doTest(
       """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
@@ -191,7 +208,7 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
       }
       """);
 
-    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+    inspectionFixture.get().checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
   """
       import org.slf4j.Logger;
       import org.slf4j.LoggerFactory;
@@ -205,10 +222,5 @@ public class SystemOutErrInspectionTest extends LightJavaInspectionTestCase {
         }
       }
       """);
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new SystemOutErrInspection();
   }
 }

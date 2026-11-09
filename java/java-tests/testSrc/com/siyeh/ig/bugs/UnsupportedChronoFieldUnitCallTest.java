@@ -1,15 +1,25 @@
 // Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class UnsupportedChronoFieldUnitCallTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
+public class UnsupportedChronoFieldUnitCallTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new UnsupportedChronoFieldUnitCallInspection());
+
+  @Test
   public void testUnsupportedField() {
-    doTest("""
+    inspectionFixture.get().doTest("""
     import java.time.LocalDate;
     import java.time.LocalTime;
     import java.time.temporal.ChronoField;
@@ -25,8 +35,9 @@ public class UnsupportedChronoFieldUnitCallTest extends LightJavaInspectionTestC
       }
     }""");
   }
+  @Test
   public void testUnsupportedFieldTrace() {
-    doTest("""
+    inspectionFixture.get().doTest("""
     import java.time.LocalDate;
     import java.time.LocalTime;
     import java.time.temporal.ChronoField;
@@ -41,8 +52,9 @@ public class UnsupportedChronoFieldUnitCallTest extends LightJavaInspectionTestC
       }
     }""");
   }
+  @Test
   public void testUnsupportedUnit() {
-    doTest("""
+    inspectionFixture.get().doTest("""
     import java.time.LocalDate;
     import java.time.LocalTime;
     import java.time.temporal.ChronoUnit;
@@ -58,16 +70,5 @@ public class UnsupportedChronoFieldUnitCallTest extends LightJavaInspectionTestC
         LocalDate l2 = localDate.minus(1, ChronoUnit.DAYS);
       }
     }""");
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new UnsupportedChronoFieldUnitCallInspection();
   }
 }

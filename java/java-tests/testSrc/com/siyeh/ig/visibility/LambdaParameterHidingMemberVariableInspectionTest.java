@@ -15,20 +15,25 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LambdaParameterHidingMemberVariableInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new LambdaParameterHidingMemberVariableInspection();
-  }
+@TestApplication
+public class LambdaParameterHidingMemberVariableInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new LambdaParameterHidingMemberVariableInspection(), getEnvironmentClasses());
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {"""
         package java.util.function;
         public interface Function<T, R> {
@@ -36,8 +41,9 @@ public class LambdaParameterHidingMemberVariableInspectionTest extends LightJava
         }"""};
   }
 
+  @Test
   public void testSimple() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.function.Function;
              class X {
                private String s;
@@ -48,8 +54,9 @@ public class LambdaParameterHidingMemberVariableInspectionTest extends LightJava
              }""");
   }
 
+  @Test
   public void testStatic() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.function.Function;
              class X {
                private String s;
@@ -59,8 +66,9 @@ public class LambdaParameterHidingMemberVariableInspectionTest extends LightJava
              }""");
   }
 
+  @Test
   public void testStaticStatic() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.function.Function;
              class X {
                private static String s;

@@ -2,32 +2,44 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CommentedOutCodeInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class CommentedOutCodeInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
+  @Test
   public void testCommentedOutCode() {
-    doTest();
-    checkQuickFixAll();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 
+  @Test
   public void testUncommentBlock() {
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("commented.out.code.uncomment.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFix(InspectionGadgetsBundle.message("commented.out.code.uncomment.quickfix"));
   }
 
+  @Test
   public void testUncommentEndOfLine() {
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("commented.out.code.uncomment.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFix(InspectionGadgetsBundle.message("commented.out.code.uncomment.quickfix"));
   }
 
-  @Override
-  protected @Nullable InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     final CommentedOutCodeInspection inspection = new CommentedOutCodeInspection();
     inspection.minLines = 1;
     return inspection;

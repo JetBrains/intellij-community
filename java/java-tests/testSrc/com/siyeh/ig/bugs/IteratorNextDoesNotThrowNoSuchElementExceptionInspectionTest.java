@@ -1,17 +1,27 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class IteratorNextDoesNotThrowNoSuchElementExceptionInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class IteratorNextDoesNotThrowNoSuchElementExceptionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new IteratorNextDoesNotThrowNoSuchElementExceptionInspection());
 
+  @Test
   public void testPrevious() {
-    doTest("import java.util.*;" +
+    inspectionFixture.get().doTest("import java.util.*;" +
            "class ReverseListIterator<T> implements Iterator<T> {" +
            "    private ListIterator<T> iterator;" +
            "    public ReverseListIterator(List<T> list) {" +
@@ -29,8 +39,9 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspectionTest extend
            "}");
   }
 
+  @Test
   public void testEmpty() {
-    doTest("import java.util.*;" +
+    inspectionFixture.get().doTest("import java.util.*;" +
            "class EmptyIterator<T> implements Iterator<T> {" +
            "    public boolean hasNext() {" +
            "        return false;" +
@@ -43,8 +54,9 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspectionTest extend
            "}");
   }
 
+  @Test
   public void testCompiledMethodCall() {
-    doTest("import java.util.*;\n" +
+    inspectionFixture.get().doTest("import java.util.*;\n" +
            "\n" +
            "class MyIterator implements Iterator<String> {\n" +
            "  @Override\n" +
@@ -61,8 +73,9 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspectionTest extend
            "}\n");
   }
 
+  @Test
   public void testEnumeration() {
-    doTest("import java.util.*;" +
+    inspectionFixture.get().doTest("import java.util.*;" +
            "class EnumerationIterator<T> implements Iterator<T> {" +
            "  Enumeration<T> myEnumeration;" +
            "  EnumerationIterator(Enumeration<T> enumeration) {" +
@@ -78,26 +91,22 @@ public class IteratorNextDoesNotThrowNoSuchElementExceptionInspectionTest extend
            "}");
   }
 
+  @Test
   public void testInsideAnonymous() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;class A<T> {{Iterator<T> i = new Iterator<>() {  Enumeration<T> myEnumeration;  public boolean hasNext() {    return myEnumeration.hasMoreElements();  }  public T next() {    if (this.hasNext()) {
                    return null;
                  }
                  throw new NoSuchElementException();  }  public void remove() {}};}}""");
   }
 
+  @Test
   public void testAbstractMethod() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.Iterator;
              interface MyIterator extends Iterator<String> {
                  @Override
                  String next();
              }""");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new IteratorNextDoesNotThrowNoSuchElementExceptionInspection();
   }
 }

@@ -15,19 +15,25 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
 @SuppressWarnings({"EmptySynchronizedStatement", "NestedSynchronizedStatement", "SynchronizeOnThis"})
-public class NestedSynchronizedStatementInspectionTest extends LightJavaInspectionTestCase {
+public class NestedSynchronizedStatementInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new NestedSynchronizedStatementInspection());
 
-  @Override
-  protected LocalInspectionTool getInspection() {
-    return new NestedSynchronizedStatementInspection();
-  }
-
+  @Test
   public void testClassInitializer() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class C {
                {
                  synchronized (C.class) {
@@ -39,8 +45,9 @@ public class NestedSynchronizedStatementInspectionTest extends LightJavaInspecti
              """);
   }
 
+  @Test
   public void testInsideLambda() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class C {
                static void m() {
                 synchronized (C.class){

@@ -16,24 +16,39 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AnonymousInnerClassMayBeStaticInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class AnonymousInnerClassMayBeStaticInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_17);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new AnonymousInnerClassMayBeStaticInspection());
 
-  public void testAnonymousInnerClassMayBeStatic() { doTest(); }
+  @Test
+  public void testAnonymousInnerClassMayBeStatic() { inspectionFixture.get().doTest(); }
 
-  public void testUnresolvedReference() { doTest(); }
+  @Test
+  public void testUnresolvedReference() { inspectionFixture.get().doTest(); }
 
+  @Test
   public void testAnonymousInnerClassMayBeStaticInsideInterface() {
-    doTest();
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    inspectionFixture.get().doTest();
     String message = InspectionGadgetsBundle.message("anonymous.inner.may.be.named.static.inner.class.quickfix");
     final IntentionAction intention = myFixture.getAvailableIntention(message);
     assertNotNull(intention);
@@ -50,16 +65,5 @@ public class AnonymousInnerClassMayBeStaticInspectionTest extends LightJavaInspe
                            }
                        }
                    }""", text);
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new AnonymousInnerClassMayBeStaticInspection();
   }
 }

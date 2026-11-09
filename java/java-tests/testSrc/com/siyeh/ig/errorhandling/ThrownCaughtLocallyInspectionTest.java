@@ -15,18 +15,24 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class ThrownCaughtLocallyInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  @Override
-  protected LocalInspectionTool getInspection() {
-    return new ThrowCaughtLocallyInspection();
-  }
-  
+@TestApplication
+public class ThrownCaughtLocallyInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ThrowCaughtLocallyInspection());
+
+  @Test
   public void testLambdaOrAnonymous() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class C {
              private Object bar() {
                      try{

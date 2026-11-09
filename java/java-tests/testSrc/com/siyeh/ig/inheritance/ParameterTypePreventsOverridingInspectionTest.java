@@ -15,17 +15,27 @@
  */
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ParameterTypePreventsOverridingInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class ParameterTypePreventsOverridingInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ParameterTypePreventsOverridingInspection(), getEnvironmentClasses());
 
+  @Test
   public void testSimple() {
-    doTest("package c;" +
+    inspectionFixture.get().doTest("package c;" +
            "import a.*;" +
            "import b.String;" +
            "class Sub extends Super {" +
@@ -33,8 +43,9 @@ public class ParameterTypePreventsOverridingInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testNonMatchingReturnType() {
-    doTest("package c;" +
+    inspectionFixture.get().doTest("package c;" +
            "import a.*;" +
            "import b.String;" +
            "class Sub extends Super {" +
@@ -45,8 +56,9 @@ public class ParameterTypePreventsOverridingInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testMatchingReturnType() {
-    doTest("package c;" +
+    inspectionFixture.get().doTest("package c;" +
            "import a.*;" +
            "import b.String;" +
            "class Sub extends Super {" +
@@ -57,24 +69,27 @@ public class ParameterTypePreventsOverridingInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testTypeParameter1() {
-    doTest("package c;" +
+    inspectionFixture.get().doTest("package c;" +
            "import a.*;" +
            "class Y<T> extends X<T> {" +
            "  void m(T t) {}" +
            "}");
   }
 
+  @Test
   public void testTypeParameter2() {
-    doTest("package c;" +
+    inspectionFixture.get().doTest("package c;" +
            "import a.*;" +
            "class Y<T extends String> extends X {" +
            "  void m(T t) {}" +
            "}");
   }
 
+  @Test
   public void testStaticmethod() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.List;class ParameterTypePreventsOverridingFalsePositiveForStaticMethods {
                  public static class SuperClass {
                      public static <T> Object wrap( List<T> something ) {
@@ -89,8 +104,7 @@ public class ParameterTypePreventsOverridingInspectionTest extends LightJavaInsp
              }""");
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[]{
       "package a;" +
       "public class Super {" +
@@ -106,11 +120,5 @@ public class ParameterTypePreventsOverridingInspectionTest extends LightJavaInsp
       "package b;" +
       "public class String {}"
     };
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new ParameterTypePreventsOverridingInspection();
   }
 }

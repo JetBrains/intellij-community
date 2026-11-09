@@ -15,35 +15,40 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings("AtomicFieldUpdaterNotStaticFinal")
-public class AtomicFieldUpdaterNotStaticFinalInspectionTest extends LightJavaInspectionTestCase {
+public class AtomicFieldUpdaterNotStaticFinalInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new AtomicFieldUpdaterNotStaticFinalInspection());
 
+  @Test
   public void testSimple() {
-    doTest("import java.util.concurrent.atomic.AtomicLongFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicLongFieldUpdater;" +
            "class A {" +
            "  private volatile long l = 0;" +
            "  private AtomicLongFieldUpdater /*AtomicLongFieldUpdater field 'updater' is not declared 'static final'*/updater/**/ = AtomicLongFieldUpdater.newUpdater(A.class, \"l\");" +
            "}");
   }
 
+  @Test
   public void testNoWarning() {
-    doTest("import java.util.concurrent.atomic.AtomicLongFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicLongFieldUpdater;" +
            "class A {" +
            "  private volatile long l = 0;" +
            "  private static final AtomicLongFieldUpdater updater = AtomicLongFieldUpdater.newUpdater(A.class, \"l\");" +
            "}");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new AtomicFieldUpdaterNotStaticFinalInspection();
   }
 }

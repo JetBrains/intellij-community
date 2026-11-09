@@ -1,27 +1,37 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  @Override
-  protected LocalInspectionTool getInspection() {
+@TestApplication
+public class CatchMayIgnoreExceptionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection(), getEnvironmentClasses());
+
+  private static LocalInspectionTool getInspection() {
     final CatchMayIgnoreExceptionInspection tool = new CatchMayIgnoreExceptionInspection();
     tool.m_ignoreCatchBlocksWithComments = true;
     tool.m_ignoreNonEmptyCatchBlock = false;
     return tool;
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       "package junit.framework; public abstract class TestCase {}"
     };
   }
 
+  @Test
   public void testSimple() {
-    doStatementTest("""
+    inspectionFixture.get().doStatementTest("""
                           try {
                             throw new Exception();
                           } /*Empty 'catch' block*/catch/**/ (Exception e) {
@@ -29,8 +39,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                       """);
   }
 
+  @Test
   public void testEmptyStatement() {
-    doStatementTest(
+    inspectionFixture.get().doStatementTest(
       """
             try {
               throw new Exception();
@@ -40,8 +51,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
         """);
   }
 
+  @Test
   public void testComment() {
-    doStatementTest("""
+    inspectionFixture.get().doStatementTest("""
                           try {
                             throw new Exception();
                           } catch (Exception e) {
@@ -50,8 +62,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                       """);
   }
 
+  @Test
   public void testIgnored() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class C {
                void m() {
                  try {
@@ -63,8 +76,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
              """);
   }
 
+  @Test
   public void testUnused() {
-    doStatementTest("""
+    inspectionFixture.get().doStatementTest("""
                           try {
                           }
                           catch (RuntimeException /*Unused 'catch' parameter 'e'*/e/**/) {
@@ -75,8 +89,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
 
   }
 
+  @Test
   public void testUsedIgnored() {
-    doStatementTest("""
+    inspectionFixture.get().doStatementTest("""
                           try {
                           }
                           catch (RuntimeException /*'catch' parameter named 'ignore' is used*/ignore/**/) {
@@ -88,8 +103,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
 
   }
 
+  @Test
   public void testUnusedComment() {
-    doStatementTest("""
+    inspectionFixture.get().doStatementTest("""
                           try {
                           }
                           catch (RuntimeException e) { \s
@@ -100,8 +116,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                       """);
   }
 
+  @Test
   public void testVMExceptionIgnored() {
-    doStatementTest("""
+    inspectionFixture.get().doStatementTest("""
 
                           try {
                             System.out.println("hello");
@@ -116,8 +133,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                       """);
   }
 
+  @Test
   public void testVMExceptionIgnored2() {
-    doStatementTest("""
+    inspectionFixture.get().doStatementTest("""
 
                           try {
                             System.out.println("hello");
@@ -132,8 +150,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                       """);
   }
 
+  @Test
   public void testVMExceptionIgnored3() {
-    doStatementTest("""
+    inspectionFixture.get().doStatementTest("""
 
                           try {
                             System.out.println("hello");
@@ -148,8 +167,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                       """);
   }
 
+  @Test
   public void testVMExceptionNotIgnored() {
-    doStatementTest("""
+    inspectionFixture.get().doStatementTest("""
 
                           try {
                             System.out.println("hello");
@@ -165,8 +185,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                       """);
   }
 
+  @Test
   public void testVMExceptionLeaked() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Exc {
                volatile Throwable exception;
                void test() {
@@ -181,8 +202,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
              }""");
   }
 
+  @Test
   public void testVMExceptionLeakedArray() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Exc {
                Throwable[] exception;
                void test() {
@@ -197,8 +219,9 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
              }""");
   }
 
+  @Test
   public void testSneakyThrow() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Exc {
                Object apply() {
                  try {

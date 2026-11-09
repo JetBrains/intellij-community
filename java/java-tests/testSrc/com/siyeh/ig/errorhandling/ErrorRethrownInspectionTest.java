@@ -15,21 +15,33 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class ErrorRethrownInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
+@TestApplication
+public class ErrorRethrownInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ErrorRethrownInspection());
+
+  @Test
   public void testSimple() {
-    doStatementTest("try {" +
+    inspectionFixture.get().doStatementTest("try {" +
                     "  System.out.println(\"foo\");" +
                     "} catch (Error /*Error 'e' not rethrown*/e/**/) {" +
                     "  e.printStackTrace();" +
                     "}");
   }
 
+  @Test
   public void testNoWarn1() {
-    doStatementTest("try {" +
+    inspectionFixture.get().doStatementTest("try {" +
                     "  System.out.println(\"foo\");" +
                     "} catch (Error e) {" +
                     "  e.printStackTrace();" +
@@ -37,8 +49,9 @@ public class ErrorRethrownInspectionTest extends LightJavaInspectionTestCase {
                     "}");
   }
 
+  @Test
   public void testNoWarn2() {
-    doStatementTest("try {" +
+    inspectionFixture.get().doStatementTest("try {" +
                     "  System.out.println(\"foo\");" +
                     "} catch (AssertionError e) {" +
                     "  e.printStackTrace();" +
@@ -46,16 +59,12 @@ public class ErrorRethrownInspectionTest extends LightJavaInspectionTestCase {
                     "}");
   }
 
+  @Test
   public void testSubclass() {
-    doStatementTest("try {" +
+    inspectionFixture.get().doStatementTest("try {" +
                     "  System.out.println(\"foo\");" +
                     "} catch (AssertionError /*Error 'e' not rethrown*/e/**/) {" +
                     "  e.printStackTrace();" +
                     "}");
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new ErrorRethrownInspection();
   }
 }

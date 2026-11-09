@@ -15,31 +15,43 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings("SuspiciousToArrayCall")
-public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTestCase {
+public class SuspiciousToArrayCallInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new SuspiciousToArrayCallInspection());
 
+  @Test
   public void testCast() {
-    doMemberTest("public void testThis(java.util.List l) {" +
+    inspectionFixture.get().doMemberTest("public void testThis(java.util.List l) {" +
                  "  final String[][] ss = (String[][]) l.toArray(new Number[l.size()]);" +
                  "}");
   }
 
+  @Test
   public void testParameterized() {
-    doMemberTest("public void testThis(java.util.List<String> l) {" +
+    inspectionFixture.get().doMemberTest("public void testThis(java.util.List<String> l) {" +
                  "  l.toArray(/*Array of type 'java.lang.String[]' expected, 'java.lang.Number[]' found*/new Number[l.size()]/**/);" +
                  "}");
   }
 
+  @Test
   public void testGenerics() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;class K<T extends Integer> {
                  List<T> list = new ArrayList<>();
 
@@ -49,8 +61,9 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testQuestionMark() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.List;
 
              class Test {
@@ -60,8 +73,9 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testWrongGeneric() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;
 
              class Test {
@@ -76,8 +90,9 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
              }""");
   }
   
+  @Test
   public void testStreams() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.stream.Stream;
              class Test {
                  static {
@@ -86,8 +101,9 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
              }""");
   }
   
+  @Test
   public void testStreamsParens() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.stream.Stream;
              class Test {
                  static {
@@ -96,8 +112,9 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
              }""");
   }
   
+  @Test
   public void testStreamsIntersection() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.stream.Stream;
              class Test {
                  static {
@@ -106,8 +123,9 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
              }""");
   }
   
+  @Test
   public void testToArrayGeneric() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;
              class Test {
                static <A extends CharSequence> A[] toArray(List<CharSequence> cs) {
@@ -117,8 +135,9 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
              }""");
   }
   
+  @Test
   public void testToArrayGeneric2() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;
              class Test {
 
@@ -129,8 +148,9 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
              }""");
   }
   
+  @Test
   public void testCastNonRaw() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;
 
              class Test {
@@ -144,8 +164,9 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
              class Bar extends Foo {}""");
   }
 
+  @Test
   public void testTypeParameter() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.stream.*;
              import java.util.function.*;
              abstract class AbstractStreamWrapper<T extends Cloneable> implements Stream<T> {
@@ -168,8 +189,9 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
              }""");
   }
 
+  @Test
   public void testStreamFilter() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.Arrays;
              class Parent {}
              class Child extends Parent {}
@@ -187,16 +209,5 @@ public class SuspiciousToArrayCallInspectionTest extends LightJavaInspectionTest
                     .toArray(Child[]::new);
                 }
              }""");
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new SuspiciousToArrayCallInspection();
   }
 }

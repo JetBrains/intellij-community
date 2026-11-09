@@ -15,28 +15,42 @@
  */
 package com.siyeh.ig.style;
 
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessarySuperQualifierInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class UnnecessarySuperQualifierInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
+  @Test
   public void testUnnecessarySuperQualifier() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
   
+  @Test
   public void testIgnoreClarificationSuperQualifier() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     UnnecessarySuperQualifierInspection inspection = getInspection();
     inspection.ignoreClarification = true;
     myFixture.enableInspections(inspection);
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
   @NotNull
-  @Override
-  protected UnnecessarySuperQualifierInspection getInspection() {
+  private static UnnecessarySuperQualifierInspection getInspection() {
     return new UnnecessarySuperQualifierInspection();
   }
 }

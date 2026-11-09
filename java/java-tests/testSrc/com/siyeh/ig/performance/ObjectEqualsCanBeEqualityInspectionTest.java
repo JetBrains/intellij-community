@@ -2,33 +2,43 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ObjectEqualsCanBeEqualityInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class ObjectEqualsCanBeEqualityInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ObjectEqualsCanBeEqualityInspection());
 
+  @Test
   public void testTopLevel() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  void x(Object one, Object two) {" +
            "    one./*_*/equals(two);" +
            "  }" +
            "}");
-    assertQuickFixNotAvailable(CommonQuickFixBundle.message("fix.replace.x.with.y", "equals()", "=="));
+    inspectionFixture.get().assertQuickFixNotAvailable(CommonQuickFixBundle.message("fix.replace.x.with.y", "equals()", "=="));
   }
 
+  @Test
   public void testClass() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  boolean m(Class c1, Class c2) {" +
            "    return c1./*'equals()' can be replaced with '=='*//*_*/equals/**/(c2);" +
            "  }" +
            "}");
-    checkQuickFix(CommonQuickFixBundle.message("fix.replace.x.with.y", "equals()", "=="),
+    inspectionFixture.get().checkQuickFix(CommonQuickFixBundle.message("fix.replace.x.with.y", "equals()", "=="),
                  "class X {" +
                  "  boolean m(Class c1, Class c2) {" +
                  "    return c1 == c2;" +
@@ -36,13 +46,14 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightJavaInspection
                  "}");
   }
 
+  @Test
   public void testClassObjects() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  boolean m(Class c1, Class c2) {" +
            "    return !java.util.Objects./*'!equals()' can be replaced with '!='*//*_*/equals/**/(c1, c2);" +
            "  }" +
            "}");
-    checkQuickFix(CommonQuickFixBundle.message("fix.replace.x.with.y", "!equals()", "!="),
+    inspectionFixture.get().checkQuickFix(CommonQuickFixBundle.message("fix.replace.x.with.y", "!equals()", "!="),
                   "class X {" +
                   "  boolean m(Class c1, Class c2) {" +
                   "    return c1 != c2;" +
@@ -50,17 +61,19 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightJavaInspection
                   "}");
   }
 
+  @Test
   public void testObject() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  boolean m(Object o1, Object o2) {" +
            "    return o1.equals(o2);" +
            "  }" +
            "}");
   }
 
+  @Test
   public void testEnum() {
     // should not warn, this is reported by the "'equals()' called on Enum value" inspection
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  boolean m(E e1, E e2) {" +
            "    return e1.equals(e2);" +
            "  }" +
@@ -70,16 +83,18 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightJavaInspection
            "}");
   }
 
+  @Test
   public void testString() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  boolean isRighteous(String a) {" +
            "    return a.equals(\"righteous\");" +
            "  }" +
            "}");
   }
 
+  @Test
   public void testSingleton() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              final class Singleton {
                static String BUNDLE = null;
                static class DynamicBundle { DynamicBundle(Class<?> cls, String bundle) {} }
@@ -91,17 +106,5 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightJavaInspection
                  return s1./*'equals()' can be replaced with '=='*/equals/**/(s2);
                }
              }""");
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new ObjectEqualsCanBeEqualityInspection();
   }
 }

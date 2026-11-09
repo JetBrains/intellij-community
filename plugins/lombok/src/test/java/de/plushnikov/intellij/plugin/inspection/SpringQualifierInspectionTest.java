@@ -1,14 +1,22 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
 
-public class SpringQualifierInspectionTest extends LombokInspectionTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokTestUtil.lombokInspectionFixture;
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new SpringQualifierCopyableLombokAnnotationInspection();
-  }
+@TestApplication
+public class SpringQualifierInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lombokInspectionFixture(projectFixture, () -> new SpringQualifierCopyableLombokAnnotationInspection(), "");
 
   private static final @Language("JAVA") String FILE_TEXT_WITHOUT_WARNING = """
     import lombok.NonNull;
@@ -41,7 +49,9 @@ public class SpringQualifierInspectionTest extends LombokInspectionTest {
     \tprivate static class SomeDestination {}
     }""";
 
+  @Test
   public void testWithConfigurationWithBlanks() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     addQualifierClass();
     myFixture.addFileToProject("lombok.config", """
       lombok.copyableAnnotations += org.springframework.beans.factory.annotation.Qualifier
@@ -52,7 +62,9 @@ public class SpringQualifierInspectionTest extends LombokInspectionTest {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testWithConfigurationWithoutBlanks() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     addQualifierClass();
     myFixture.addFileToProject("lombok.config", """
       lombok.copyableAnnotations+=org.springframework.beans.factory.annotation.Qualifier
@@ -63,13 +75,17 @@ public class SpringQualifierInspectionTest extends LombokInspectionTest {
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testWithoutConfiguration() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     addQualifierClass();
     myFixture.configureByText("SomeRouterService.java", FILE_TEXT_WITH_WARNING);
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testNonValidTarget() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     addQualifierClass();
     myFixture.configureByText("Foo.java", """
       import lombok.NonNull;
@@ -88,6 +104,7 @@ public class SpringQualifierInspectionTest extends LombokInspectionTest {
 
 
   private void addQualifierClass() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.addClass("""
                          package org.springframework.beans.factory.annotation;
 

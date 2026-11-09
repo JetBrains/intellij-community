@@ -4,14 +4,33 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.OverwrittenKeyInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class OverwrittenKeyInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
+public class OverwrittenKeyInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new OverwrittenKeyInspection());
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    inspectionFixture.get().getFixture().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/overwrittenKey/");
+  }
+
+  @Test
   public void testOverwrittenKey() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.addClass("""
                          package com.google.common.collect;
                          public abstract class ImmutableSet<E> implements Set<E> {
@@ -19,25 +38,10 @@ public class OverwrittenKeyInspectionTest extends LightJavaInspectionTestCase {
                              throw new UnsupportedOperationException();
                            }
                          }""");
-    doTest();
+    inspectionFixture.get().doTest();
   }
+  @Test
   public void testOverwrittenKeyArray() {
-    doTest();
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new OverwrittenKeyInspection();
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/overwrittenKey/";
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
+    inspectionFixture.get().doTest();
   }
 }

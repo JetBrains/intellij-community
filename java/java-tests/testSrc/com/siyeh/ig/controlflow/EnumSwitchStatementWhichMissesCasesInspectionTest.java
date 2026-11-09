@@ -1,18 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings("EnumSwitchStatementWhichMissesCases")
-public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJavaInspectionTestCase {
+public class EnumSwitchStatementWhichMissesCasesInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new EnumSwitchStatementWhichMissesCasesInspection());
 
+  @Test
   public void testSimple() {
-    doTest("enum E { A, B, C }" +
+    inspectionFixture.get().doTest("enum E { A, B, C }" +
            "class X {" +
            "  void m(E e) {" +
            "    /*'switch' statement on enum type 'E' misses case 'C'*/switch/**/ (e) {" +
@@ -23,8 +33,9 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "}");
   }
 
+  @Test
   public void testTwoMissing() {
-    doTest("enum E { A, B, C, D }" +
+    inspectionFixture.get().doTest("enum E { A, B, C, D }" +
            "class X {" +
            "  void m(E e) {" +
            "    /*'switch' statement on enum type 'E' misses cases 'C' and 'D'*/switch/**/ (e) {" +
@@ -35,8 +46,9 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "}");
   }
 
+  @Test
   public void testManyMissing() {
-    doTest("enum E { FIRST, SECOND, THIRD, FOURTH, FIFTH, SIXTH, SEVENTH, EIGHTH, NINTH }" +
+    inspectionFixture.get().doTest("enum E { FIRST, SECOND, THIRD, FOURTH, FIFTH, SIXTH, SEVENTH, EIGHTH, NINTH }" +
            "class X {" +
            "  void m(E e) {" +
            "    /*'switch' statement on enum type 'E' misses cases 'FIRST', 'SECOND', 'THIRD', 'FOURTH', 'FIFTH', ...*/switch/**/ (e) {" +
@@ -45,8 +57,9 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "}");
   }
 
+  @Test
   public void testFullyCovered() {
-    doTest("enum E { A, B, C }" +
+    inspectionFixture.get().doTest("enum E { A, B, C }" +
            "class X {" +
            "  void m(E e) {" +
            "    switch(e) {" +
@@ -58,8 +71,9 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "}");
   }
 
+  @Test
   public void testUnresolved() {
-    doTest("enum E { A, B, C }" +
+    inspectionFixture.get().doTest("enum E { A, B, C }" +
            "class X {" +
            "  void m(E e) {" +
            "    switch(e) {" +
@@ -69,8 +83,9 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "}");
   }
 
+  @Test
   public void testSyntaxErrorInLabel() {
-    doTest("enum E { A, B, C }" +
+    inspectionFixture.get().doTest("enum E { A, B, C }" +
            "class X {" +
            "  void m(E e) {" +
            "    switch(e) {" +
@@ -80,8 +95,9 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
            "}");
   }
 
+  @Test
   public void testDfaFullyCovered() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              enum E {A, B, C}
 
              class X {
@@ -95,8 +111,9 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
              }""");
   }
 
+  @Test
   public void testDfaNotCovered() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              enum E {A, B, C}
 
              class X {
@@ -108,8 +125,9 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
              }""");
   }
 
+  @Test
   public void testDfaPossibleValues() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              enum E {A, B, C}
 
              class X {
@@ -124,8 +142,9 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
              }""");
   }
 
+  @Test
   public void testDfaPossibleValuesNotCovered() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              enum E {A, B, C}
 
              class X {
@@ -139,8 +158,9 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
              }""");
   }
   
+  @Test
   public void testDfaJoinEphemeral() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              enum X {A, B, C}
 
              class Test {
@@ -158,8 +178,9 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
              }""");
   }
 
+  @Test
   public void testJava14() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              enum E {A, B, C}
 
              class X {
@@ -184,10 +205,4 @@ public class EnumSwitchStatementWhichMissesCasesInspectionTest extends LightJava
              }""");
   }
 
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new EnumSwitchStatementWhichMissesCasesInspection();
-  }
 }

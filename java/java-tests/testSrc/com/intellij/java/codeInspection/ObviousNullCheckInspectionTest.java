@@ -17,34 +17,37 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ObviousNullCheckInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class ObviousNullCheckInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
+public class ObviousNullCheckInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8_ANNOTATED);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ObviousNullCheckInspection());
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    inspectionFixture.get().getFixture().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + TEST_DATA_DIR);
+  }
+
   static final String TEST_DATA_DIR = "/inspection/obviousNotNull/";
 
+  @Test
   public void testObviousNullCheck() {
-    doTest();
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new ObviousNullCheckInspection();
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + TEST_DATA_DIR;
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8_ANNOTATED;
+    inspectionFixture.get().doTest();
   }
 
   public static class ObviousNullCheckInspectionFixTest extends LightQuickFixParameterizedTestCase {
@@ -56,7 +59,7 @@ public class ObviousNullCheckInspectionTest extends LightJavaInspectionTestCase 
     @NotNull
     @Override
     protected LightProjectDescriptor getProjectDescriptor() {
-      return JAVA_11_ANNOTATED;
+      return LightJavaCodeInsightFixtureTestCase.JAVA_11_ANNOTATED;
     }
 
     @Override

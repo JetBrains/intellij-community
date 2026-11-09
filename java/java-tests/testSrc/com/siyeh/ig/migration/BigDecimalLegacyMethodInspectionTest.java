@@ -1,28 +1,29 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class BigDecimalLegacyMethodInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new BigDecimalLegacyMethodInspection();
-  }
+@TestApplication
+public class BigDecimalLegacyMethodInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new BigDecimalLegacyMethodInspection());
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11;
-  }
-
+  @Test
   public void testSimple() {
     // noinspection BigDecimalLegacyMethod, deprecation, ResultOfMethodCallIgnored
-    doTest(
+    inspectionFixture.get().doTest(
       "import java.math.*;" +
       "class X {" +
       "  void m(BigDecimal value) {" +
@@ -35,9 +36,10 @@ public class BigDecimalLegacyMethodInspectionTest extends LightJavaInspectionTes
       "}");
   }
 
+  @Test
   public void testNoWarn() {
     // noinspection BigDecimalLegacyMethod, deprecation
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.math.BigDecimal;
              import java.math.RoundingMode;
              class SetScaleDetectionIssueTest {

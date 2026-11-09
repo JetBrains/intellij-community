@@ -1,17 +1,27 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class AtomicFieldUpdaterIssuesInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new AtomicFieldUpdaterIssuesInspection(), getEnvironmentClasses());
 
+  @Test
   public void testAllGood() {
-    doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
            "class A {" +
            "  private volatile int value = 0;" +
            "  private static final AtomicIntegerFieldUpdater updater = " +
@@ -19,8 +29,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testStatic() {
-    doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
            "class A {" +
            "  private static volatile int value = 0;" +
            "  private static final AtomicIntegerFieldUpdater updater = " +
@@ -28,8 +39,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testNotVolatile() {
-    doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
            "class A {" +
            "  private int value = 0;" +
            "  private static final AtomicIntegerFieldUpdater updater = " +
@@ -37,8 +49,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testFieldNotFound() {
-    doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
            "class Z {" +
            "  volatile int value = 0;" +
            "}" +
@@ -48,8 +61,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testWrongType1() {
-    doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
            "class A {" +
            "  private volatile long value = 0;" +
            "  private static final AtomicIntegerFieldUpdater updater = " +
@@ -57,8 +71,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testWrongType2() {
-    doTest("import java.util.concurrent.atomic.AtomicLongFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicLongFieldUpdater;" +
            "class A {" +
            "  private volatile int value = 0;" +
            "  private static final AtomicLongFieldUpdater updater = " +
@@ -66,8 +81,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testWrongType3() {
-    doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
            "class A {" +
            "  private volatile int[] value = new int[]{0};" +
            "  private static final AtomicReferenceFieldUpdater updater = " +
@@ -75,8 +91,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testRightType() {
-    doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
            "import java.util.RandomAccess;" +
            "class A<T extends RandomAccess> {" +
            "  private volatile T value = null;" +
@@ -85,8 +102,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testNotAccessible1() {
-    doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;" +
            "class Z {" +
            "  private volatile int value = 0;" +
            "}" +
@@ -99,16 +117,18 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
   /**
    * private fields are not accessible at runtime even from inner classes.
    */
+  @Test
   public void testNotAccessible2() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;class Z {  private volatile int value = 0;  static class A {
                  private static final AtomicIntegerFieldUpdater updater =\s
                    AtomicIntegerFieldUpdater.newUpdater(Z.class, /*'private' field 'value' is not accessible from here*/"value"/**/);
                }}""");
   }
 
+  @Test
   public void testNotAccessible3() {
-    doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
            "import one.ProtectedOther;" +
            "class X {" +
            "  private static final AtomicReferenceFieldUpdater updater = " +
@@ -116,8 +136,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testNotAccessible4() {
-    doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
            "import one.PackageLocalOther;" +
            "class X {" +
            "  private static final AtomicReferenceFieldUpdater updater = " +
@@ -125,8 +146,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testAccessible1() {
-    doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
            "class X {" +
            "  protected volatile String value;" +
            "  private static final AtomicReferenceFieldUpdater<X, String> X_UPDATER = AtomicReferenceFieldUpdater\n" +
@@ -134,8 +156,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testAccessible2() {
-    doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
+    inspectionFixture.get().doTest("import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
            "import one.ProtectedOther;" +
            "class X extends ProtectedOther {" +
            "  private static final AtomicReferenceFieldUpdater updater = " +
@@ -143,8 +166,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testAccessible3() {
-    doTest("package one;" +
+    inspectionFixture.get().doTest("package one;" +
            "import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;" +
            "class X {" +
            "  private static final AtomicReferenceFieldUpdater updater = " +
@@ -152,8 +176,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
            "}");
   }
 
+  @Test
   public void testAccessibleAnonymousCtor() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
 
              class Test {
@@ -170,8 +195,9 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
              }""");
   }
 
+  @Test
   public void testAvoidNPE() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
              class Z</*!Cyclic inheritance involving 'T'*//*!*/T extends T> {
                private T value = null;
@@ -180,8 +206,7 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
              }""");
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[]{
       "package one;" +
       "public class ProtectedOther {" +
@@ -193,11 +218,5 @@ public class AtomicFieldUpdaterIssuesInspectionTest extends LightJavaInspectionT
       "  volatile String s;" +
       "}"
     };
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new AtomicFieldUpdaterIssuesInspection();
   }
 }

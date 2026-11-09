@@ -15,16 +15,27 @@
  */
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SocketResourceInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class SocketResourceInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new SocketResourceInspection());
 
+  @Test
   public void testNoCloseNoVar() {
-    doTest("import java.io.*;" +
+    inspectionFixture.get().doTest("import java.io.*;" +
            "import java.net.*;" +
            "class X {" +
            "    public static void m() throws IOException {" +
@@ -33,8 +44,9 @@ public class SocketResourceInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  @Test
   public void testNoClose() {
-    doTest("import java.io.*;" +
+    inspectionFixture.get().doTest("import java.io.*;" +
            "import java.net.*;" +
            "class X {" +
            "    public static void m() throws IOException {" +
@@ -43,9 +55,10 @@ public class SocketResourceInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  @Test
   @SuppressWarnings("EmptyFinallyBlock")
   public void testTryNoClose() {
-    doTest("import java.io.*;" +
+    inspectionFixture.get().doTest("import java.io.*;" +
            "import java.net.*;" +
            "class X {" +
            "    public static void m() throws IOException {" +
@@ -57,8 +70,9 @@ public class SocketResourceInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  @Test
   public void testImmediateClose() {
-    doTest("import java.io.*;" +
+    inspectionFixture.get().doTest("import java.io.*;" +
            "import java.net.*;" +
            "class X {" +
            "    public static void m() throws IOException {" +
@@ -68,9 +82,10 @@ public class SocketResourceInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  @Test
   public void testCorrectClose() {
     //noinspection EmptyTryBlock
-    doTest("import java.io.*;" +
+    inspectionFixture.get().doTest("import java.io.*;" +
            "import java.net.*;" +
            "class X {" +
            "    public static void m() throws IOException {" +
@@ -81,10 +96,5 @@ public class SocketResourceInspectionTest extends LightJavaInspectionTestCase {
            "        }" +
            "    }" +
            "}");
-  }
-
-  @Override
-  protected LocalInspectionTool getInspection() {
-    return new SocketResourceInspection();
   }
 }

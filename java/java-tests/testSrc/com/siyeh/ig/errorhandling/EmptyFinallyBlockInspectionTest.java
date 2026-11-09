@@ -15,19 +15,28 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class EmptyFinallyBlockInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new EmptyFinallyBlockInspection();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
+@TestApplication
+public class EmptyFinallyBlockInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new EmptyFinallyBlockInspection());
+
+  @Test
   @SuppressWarnings("EmptyFinallyBlock")
   public void testSimple() {
-    doTest("""
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    inspectionFixture.get().doTest("""
              class C {
                void m() throws Exception {
                  try { throw new Exception(); }
@@ -37,9 +46,11 @@ public class EmptyFinallyBlockInspectionTest extends LightJavaInspectionTestCase
     myFixture.findSingleIntention(InspectionGadgetsBundle.message("remove.try.finally.block.quickfix"));
   }
 
+  @Test
   @SuppressWarnings("EmptyFinallyBlock")
   public void testResources() {
-    doTest("""
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    inspectionFixture.get().doTest("""
              class C {
                void m() throws Exception {
                  try (AutoCloseable r = null) { throw new Exception(); }

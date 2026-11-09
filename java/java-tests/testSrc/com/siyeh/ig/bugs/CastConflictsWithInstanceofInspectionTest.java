@@ -15,32 +15,51 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class CastConflictsWithInstanceofInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  public void testElseElse() { doTest(); }
-  public void testSimple() { doTest(); }
-  public void testElseElseOrOr() { doTest(); }
-  public void testAndAnd() { doTest(); }
-  public void testPolyadic() { doTest(); }
-  public void testNotOr() { doTest(); }
-  public void testOrInstanceofOrInstanceof() { doTest(); }
-  public void testIfCheckBefore() { doTest(); }
-  public void testIfElseCheckBefore() { doTest(); }
-  public void testAssertCheckBefore() { doTest(); }
-  public void testAssertionMethodCheckBefore() { doTest(); }
-  public void testWhileOrChain() { doTest(); }
-  public void testOrCasts() { doTest(); }
-  public void testNextOperand() { doTest(); }
-  public void testOrNotInWhile() { doTest(); }
-  public void testCastConflictsTernaryBooleanFlag() { doTest(); }
+@TestApplication
+public class CastConflictsWithInstanceofInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new CastConflictsWithInstanceofInspection());
 
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new CastConflictsWithInstanceofInspection();
-  }
+  @Test
+  public void testElseElse() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testSimple() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testElseElseOrOr() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testAndAnd() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testPolyadic() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testNotOr() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testOrInstanceofOrInstanceof() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testIfCheckBefore() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testIfElseCheckBefore() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testAssertCheckBefore() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testAssertionMethodCheckBefore() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testWhileOrChain() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testOrCasts() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testNextOperand() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testOrNotInWhile() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testCastConflictsTernaryBooleanFlag() { inspectionFixture.get().doTest(); }
 }

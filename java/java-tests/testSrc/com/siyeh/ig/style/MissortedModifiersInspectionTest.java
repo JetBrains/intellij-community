@@ -3,92 +3,110 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixtureByTestName;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MissortedModifiersInspectionTest extends LightJavaInspectionTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
-  }
+@TestApplication
+public class MissortedModifiersInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixtureByTestName(projectFixture, testName -> getInspection(testName));
 
+  @Test
   public void testMissortedModifiers() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testIgnoreAnnotations() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testTypeUseWithTypeUseGenerated() {
     doTestQuickFix();
   }
+  @Test
   public void testTypeUseWithTypeUseGeneratedInline() {
     doTestQuickFix();
   }
 
+  @Test
   public void testTypeUseWithTypeUseNotGenerated() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testTypeUseWithTypeHighlightingUseNotGenerated() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testTypeUseWithTypeHighlightingUseGenerated() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testSimpleComment() {
     doTestQuickFix();
   }
 
+  @Test
   public void testAnotherComment() {
     doTestQuickFix();
   }
 
+  @Test
   public void testKeepAnnotationOrder() {
     doTestQuickFix();
   }
 
+  @Test
   public void testMissortedInModuleRequires(){
     doTestQuickFix();
   }
 
+  @Test
   public void testSealedClass() {
     doTestQuickFix();
   }
 
   public void doTestQuickFix() {
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("missorted.modifiers.sort.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFix(InspectionGadgetsBundle.message("missorted.modifiers.sort.quickfix"));
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(getProject());
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    JavaCodeStyleSettings instance = JavaCodeStyleSettings.getInstance(myFixture.getProject());
     instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = false;
-    if (getTestName(false).contains("TypeUseWithType")) {
+    if (inspectionFixture.get().getTestName(false).contains("TypeUseWithType")) {
       instance.GENERATE_USE_TYPE_ANNOTATION_BEFORE_TYPE = true;
     }
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection(String testName) {
     MissortedModifiersInspection inspection = new MissortedModifiersInspection();
-    if (getTestName(false).contains("IgnoreAnnotations")) {
+    if (testName.contains("IgnoreAnnotations")) {
       inspection.m_requireAnnotationsFirst = false;
     }
-    if (getTestName(false).contains("UseGenerated")) {
+    if (testName.contains("UseGenerated")) {
       inspection.typeUseWithType = true;
     }
     return inspection;

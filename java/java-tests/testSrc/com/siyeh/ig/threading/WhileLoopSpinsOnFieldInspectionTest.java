@@ -5,30 +5,47 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
-public class WhileLoopSpinsOnFieldInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
+@TestApplication
+public class WhileLoopSpinsOnFieldInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_LATEST_WITH_LATEST_JDK);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
+
+  @Test
   public void testWhileLoopSpinsOnField() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, this::doTest);
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_8, inspectionFixture.get()::doTest);
   }
 
+  @Test
   public void testConditionBoundedBuffer() {
     // Sample from JCIP
     // See IDEA-364908
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testMultiFileFix() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.addFileToProject("F1.java", """
       public class F1 {
           boolean f;
       }
       """);
-    doTest();
+    inspectionFixture.get().doTest();
     IntentionAction action = myFixture.findSingleIntention("Make 'f' volatile and add Thread.onSpinWait()");
     var text = myFixture.getIntentionPreviewText(action);
     assertEquals("""
@@ -47,16 +64,9 @@ public class WhileLoopSpinsOnFieldInspectionTest extends LightJavaInspectionTest
       }
       """, text);
   }
-  
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_LATEST_WITH_LATEST_JDK;
-  }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     WhileLoopSpinsOnFieldInspection inspection = new WhileLoopSpinsOnFieldInspection();
     inspection.ignoreNonEmtpyLoops = false;
     return inspection;

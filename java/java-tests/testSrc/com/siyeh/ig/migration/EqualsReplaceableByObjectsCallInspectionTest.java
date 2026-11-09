@@ -2,44 +2,53 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class EqualsReplaceableByObjectsCallInspectionTest extends LightJavaInspectionTestCase {
-  private EqualsReplaceableByObjectsCallInspection myInspection;
+@TestApplication
+public class EqualsReplaceableByObjectsCallInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
-  @Override
-  public void setUp() throws Exception {
-    myInspection = new EqualsReplaceableByObjectsCallInspection();
-    super.setUp();
-  }
+  private EqualsReplaceableByObjectsCallInspection myInspection = new EqualsReplaceableByObjectsCallInspection();
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     myInspection = null;
-    super.tearDown();
   }
 
+  @Test
   public void testEqualsReplaceableByObjectsCall() {
     testEqualsReplaceable(false);
   }
 
+  @Test
   public void testEqualsReplaceableByObjectsCallCheckNull() {
     testEqualsReplaceable(true);
   }
 
   protected void testEqualsReplaceable(boolean checkNotNull) {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myInspection.checkNotNull = checkNotNull;
-    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.configureByFile(inspectionFixture.get().getTestName(false) + ".java");
     myFixture.testHighlighting(true, true, false);
   }
 
   @Nullable
-  @Override
-  protected LocalInspectionTool getInspection() {
+  private LocalInspectionTool getInspection() {
     return myInspection;
   }
 }

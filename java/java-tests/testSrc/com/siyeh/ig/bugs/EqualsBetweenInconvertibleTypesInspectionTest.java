@@ -1,43 +1,57 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings("ALL")
-public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInspectionTestCase {
+public class EqualsBetweenInconvertibleTypesInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new EqualsBetweenInconvertibleTypesInspection(), getEnvironmentClasses());
 
+  @Test
   public void testSimple() {
-    doMemberTest("public void foo() {\n" +
+    inspectionFixture.get().doMemberTest("public void foo() {\n" +
                  "    final Integer foo = new Integer(3);\n" +
                  "    final Double bar = new Double(3);\n" +
                  "    foo./*'equals' between objects of inconvertible types 'Integer' and 'Double'*/equals/**/(bar);\n" +
                  "}\n");
   }
 
+  @Test
   public void testWithoutQualifier() {
-    doTest("class Clazz {\n" +
+    inspectionFixture.get().doTest("class Clazz {\n" +
            "    void foo() {\n" +
            "        boolean bar = /*'equals' between objects of inconvertible types 'Clazz' and 'String'*/equals/**/(\"differentClass\");\n" +
            "    }\n" +
            "}");
   }
 
+  @Test
   public void testJavaUtilObjectsEquals() {
-    doStatementTest("java.util.Objects./*'equals' between objects of inconvertible types 'Integer' and 'String'*/equals/**/(Integer.valueOf(1), \"string\");");
+    inspectionFixture.get().doStatementTest("java.util.Objects./*'equals' between objects of inconvertible types 'Integer' and 'String'*/equals/**/(Integer.valueOf(1), \"string\");");
   }
 
+  @Test
   public void testComGoogleCommonBaseObjects() {
-    doStatementTest("com.google.common.base.Objects./*'equal' between objects of inconvertible types 'Integer' and 'String'*/equal/**/(Integer.valueOf(1), \"string\");");
+    inspectionFixture.get().doStatementTest("com.google.common.base.Objects./*'equal' between objects of inconvertible types 'Integer' and 'String'*/equal/**/(Integer.valueOf(1), \"string\");");
   }
 
+  @Test
   public void testCollection() {
-    doTest(
+    inspectionFixture.get().doTest(
       "import java.util.Collection;" +
       "class XXX {" +
       "  interface A {}" +
@@ -52,8 +66,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
       "}");
   }
 
+  @Test
   public void testRaw() {
-    doTest(
+    inspectionFixture.get().doTest(
       "import java.util.Collection;" +
       "class XXX {" +
       "  interface A {}" +
@@ -63,8 +78,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
       "}");
   }
 
+  @Test
   public void testMethodReference() {
-    doTest("import java.util.Objects;\n" +
+    inspectionFixture.get().doTest("import java.util.Objects;\n" +
            "import java.util.function.*;\n" +
            "\n" +
            "class Test {\n" +
@@ -76,8 +92,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}\n");
   }
 
+  @Test
   public void testSimplePredicateIsEqualTest() {
-    doMemberTest("public <T> void foo(T t) {\n" +
+    inspectionFixture.get().doMemberTest("public <T> void foo(T t) {\n" +
                  "    (java.util.function.Predicate./*'isEqual' between objects of inconvertible types 'String' and 'int'*/isEqual/**/(\"1\")).test(1);\n" +
                  "    java.util.function.Predicate.isEqual(\"1\").test(new Object());\n" +
                  "    java.util.function.Predicate.isEqual(new Object()).test(1);\n" +
@@ -97,8 +114,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
                  "}\n");
   }
 
+  @Test
   public void testStreamPredicateEqualTest() {
-    doMemberTest("    public void foo() {\n" +
+    inspectionFixture.get().doMemberTest("    public void foo() {\n" +
                  "        java.util.List<Integer> collect = java.util.stream.Stream.of(1)\n" +
                  "                .filter(java.util.function.Predicate./*'isEqual' between objects of inconvertible types 'String' and 'Integer'*/isEqual/**/(\"1\"))\n" +
                  "                .filter(java.util.function.Predicate.not(\n" +
@@ -118,8 +136,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
                  "    }\n");
   }
 
+  @Test
   public void testStreamPredicateEqualWithGenericTest() {
-    doTest(
+    inspectionFixture.get().doTest(
       "import java.util.function.Predicate;\n" +
       "\n" +
       "public class X {\n" +
@@ -143,8 +162,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
       "\n");
   }
 
+  @Test
   public void testNoCommonSubclass() {
-    doTest("import java.util.Date;\n" +
+    inspectionFixture.get().doTest("import java.util.Date;\n" +
            "import java.util.Map;\n" +
            "import java.util.Objects;\n" +
            "\n" +
@@ -155,8 +175,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testNoCommonSubclassEqualityComparison() {
-    doTest("import java.util.Date;\n" +
+    inspectionFixture.get().doTest("import java.util.Date;\n" +
            "import java.util.Map;\n" +
            "import java.util.Objects;\n" +
            "\n" +
@@ -167,8 +188,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testCommonSubclass() {
-    doTest("import java.util.Date;\n" +
+    inspectionFixture.get().doTest("import java.util.Date;\n" +
            "import java.util.Map;\n" +
            "import java.util.Objects;\n" +
            "\n" +
@@ -181,8 +203,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testListAndSet() {
-    doTest("import java.util.*;\n" +
+    inspectionFixture.get().doTest("import java.util.*;\n" +
            "\n" +
            "class X {\n" +
            "  boolean test(Set<String> set, List<String> list) {\n" +
@@ -192,8 +215,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testSameClassInDeepComparison() {
-    doTest("import java.util.ArrayList;\n" +
+    inspectionFixture.get().doTest("import java.util.ArrayList;\n" +
            "class Numbers {\n" +
            "    private static <K extends Number, T extends Class<K>> void foo(T categoryClass, ArrayList<Number> numbers) {\n" +
            "        for (Number number : numbers) {\n" +
@@ -205,8 +229,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testDifferentSets() {
-    doTest("import java.util.*;\n" +
+    inspectionFixture.get().doTest("import java.util.*;\n" +
            "\n" +
            "class X {\n" +
            "  boolean test(HashSet<String> set1, TreeSet<String> set2) {\n" +
@@ -219,8 +244,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testGeneratedEquals() {
-    doTest("class A {\n" +
+    inspectionFixture.get().doTest("class A {\n" +
            "    int i;\n" +
            "\n" +
            "    @Override\n" +
@@ -238,8 +264,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "  }");
   }
 
+  @Test
   public void testWildcards() {
-    doTest("import java.util.*;" +
+    inspectionFixture.get().doTest("import java.util.*;" +
            "class X {" +
            "  boolean x(Class<? extends Date> a, Class<? extends Map<String, String>> b) {" +
            "    return b./*No class found which is a subtype of both 'Map<String, String>' and 'Date'*/equals/**/(a);" +
@@ -247,16 +274,18 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testAnonymousClasses() {
-    doTest("import java.util.*;" +
+    inspectionFixture.get().doTest("import java.util.*;" +
            "class X {{" +
            "    boolean equals = new HashSet<String>() {\n" +
            "        }./*'equals' between objects of inconvertible types 'HashSet<String>' and 'TreeSet<Integer>'*/equals/**/(new TreeSet<Integer>());" +
            "}}");
   }
 
+  @Test
   public void testFBounds() {
-    doTest("class U<T extends U<T>> {\n" +
+    inspectionFixture.get().doTest("class U<T extends U<T>> {\n" +
            "  void m(U<?> u1, U<?> u2) {\n" +
            "    if (u1 == u2) {\n" +
            "      System.out.println();\n" +
@@ -265,8 +294,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testFBoundsWrong() {
-    doTest("class U<T extends U<T, Q>, Q> {\n" +
+    inspectionFixture.get().doTest("class U<T extends U<T, Q>, Q> {\n" +
            "  void m(U<?, Integer> u1, U<?, String> u2) {\n" +
            "    if (u1./*'equals' between objects of inconvertible types 'U<capture of ?, Integer>' and 'U<capture of ?, String>'*/equals/**/(u2)) {\n" +
            "      System.out.println();\n" +
@@ -275,8 +305,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testUseDfa() {
-    doTest("class X {\n" +
+    inspectionFixture.get().doTest("class X {\n" +
            "  void test() {\n" +
            "    Object obj = \"value\";\n" +
            "    Object obj2 = 123;\n" +
@@ -286,8 +317,9 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
+  @Test
   public void testCapture() {
-    doTest("class X<A, B> {\n" +
+    inspectionFixture.get().doTest("class X<A, B> {\n" +
            "  static final X<?, ?> CONST = new X<>();\n" +
            "  static final X<Integer, String> CONST2 = new X<>();\n" +
            "  \n" +
@@ -298,8 +330,7 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
            "}");
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private String[] getEnvironmentClasses() {
     return new String[] {
       "package com.google.common.base;" +
       "public final class Objects {" +
@@ -308,16 +339,5 @@ public class EqualsBetweenInconvertibleTypesInspectionTest extends LightJavaInsp
       "  }" +
       "}"
     };
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new EqualsBetweenInconvertibleTypesInspection();
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11;
   }
 }

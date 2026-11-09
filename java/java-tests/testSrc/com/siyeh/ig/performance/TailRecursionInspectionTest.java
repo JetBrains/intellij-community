@@ -15,16 +15,23 @@
  */
 package com.siyeh.ig.performance;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class TailRecursionInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new TailRecursionInspection();
-  }
+@TestApplication
+public class TailRecursionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new TailRecursionInspection());
 
-  public void testLambdaWithReturnStmt() { doTest(); }
-  public void testTailRecursion() { doTest(); }
+  @Test
+  public void testLambdaWithReturnStmt() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testTailRecursion() { inspectionFixture.get().doTest(); }
 }

@@ -1,19 +1,31 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class UnnecessarilyQualifiedInnerClassAccessInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
+@TestApplication
+public class UnnecessarilyQualifiedInnerClassAccessInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new UnnecessarilyQualifiedInnerClassAccessInspection());
+
+  @Test
   public void testRemoveQualifier() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                /*'Y' is unnecessarily qualified with 'X'*//*_*/X/**//* 1*/./* 2*/Y foo;
               \s
                class Y{}
              }""");
-    checkQuickFix("Remove qualifier", """
+    inspectionFixture.get().checkQuickFix("Remove qualifier", """
       class X {
         /* 2*//* 1*/ Y foo;
        \s
@@ -21,14 +33,15 @@ public class UnnecessarilyQualifiedInnerClassAccessInspectionTest extends LightJ
       }""");
   }
 
+  @Test
   public void testRemoveQualifierWithImport() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              package p;
              import java.util.List;
              abstract class X implements List</*'Y' is unnecessarily qualified with 'X'*//*_*/X/**/.Y> {
                class Y{}
              }""");
-    checkQuickFix("Remove qualifier", """
+    inspectionFixture.get().checkQuickFix("Remove qualifier", """
       package p;
       import p.X.Y;
 
@@ -39,21 +52,19 @@ public class UnnecessarilyQualifiedInnerClassAccessInspectionTest extends LightJ
     );
   }
 
+  @Test
   public void testUnnecessarilyQualifiedInnerClassAccess() {
-    doTest();
-    checkQuickFixAll();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 
+  @Test
   public void testNoImports() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final UnnecessarilyQualifiedInnerClassAccessInspection inspection = new UnnecessarilyQualifiedInnerClassAccessInspection();
     inspection.ignoreReferencesNeedingImport = true;
     myFixture.enableInspections(inspection);
-    doTest();
-    checkQuickFixAll();
-  }
-
-  @Override
-  protected BaseInspection getInspection() {
-    return new UnnecessarilyQualifiedInnerClassAccessInspection();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 }

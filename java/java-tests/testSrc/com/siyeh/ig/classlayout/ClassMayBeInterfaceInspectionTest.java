@@ -2,15 +2,27 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ClassMayBeInterfaceInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class ClassMayBeInterfaceInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
+  @Test
   public void testOne() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              abstract class /*Abstract class 'ConvertMe' may be interface*/ConvertMe/**/ {
                  public static final String S = "";
                  public void m() {}
@@ -22,8 +34,9 @@ public class ClassMayBeInterfaceInspectionTest extends LightJavaInspectionTestCa
              }""");
   }
 
+  @Test
   public void testOnTwo() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class ConvertMe {
                  public static final String S = "";
                  public void m() {}
@@ -35,8 +48,9 @@ public class ClassMayBeInterfaceInspectionTest extends LightJavaInspectionTestCa
              }""");
   }
 
+  @Test
   public void testMethodCantBeDefault() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Issue {
                  public abstract class Inner {
                      public Issue getParent() {
@@ -46,8 +60,9 @@ public class ClassMayBeInterfaceInspectionTest extends LightJavaInspectionTestCa
              }""");
   }
 
+  @Test
   public void testObjectMethods() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              abstract class X {
                public boolean equals(Object o) { return false; }
                public int hashCode() { return 1; }
@@ -55,8 +70,9 @@ public class ClassMayBeInterfaceInspectionTest extends LightJavaInspectionTestCa
              }""");
   }
 
+  @Test
   public void testLocalClassAccessingParameter() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Outer {
                void x(int parameter) {
                  abstract class Example {
@@ -79,8 +95,7 @@ public class ClassMayBeInterfaceInspectionTest extends LightJavaInspectionTestCa
              """);
   }
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     final ClassMayBeInterfaceInspection inspection = new ClassMayBeInterfaceInspection();
     inspection.reportClassesWithNonAbstractMethods = true;
     return inspection;

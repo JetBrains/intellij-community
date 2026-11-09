@@ -2,33 +2,47 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public final class MathClampMigrationInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixtureByTestName;
 
+@TestApplication
+public final class MathClampMigrationInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixtureByTestName(projectFixture, testName -> getInspection(testName));
+
+  @Test
   public void testMathClampMigration() {
-    doTest();
-    checkQuickFixAll();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 
+  @Test
   public void testInvalidInputs() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testFullyQualifiedName() {
-    doTest();
-    checkQuickFixAll();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 
+  @Test
   public void testMathClampBraveMode() {
-    doTest();
-    checkQuickFixAll();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
   
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection(String testName) {
     MathClampMigrationInspection inspection = new MathClampMigrationInspection();
-    if (!this.getTestName(false).contains("BraveMode")) {
+    if (!testName.contains("BraveMode")) {
       inspection.braveMode = false;
     }
     return inspection;

@@ -1,17 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings("ThrowablePrintedToSystemOut")
-public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspectionTestCase {
+public class ThrowablePrintedToSystemOutInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ThrowablePrintedToSystemOutInspection());
 
+  @Test
   public void testSimple() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                    void foo() {
                      final RuntimeException x = new RuntimeException();
                      System.out.println(/*'Throwable' argument 'x' to 'System.out.println()' call*/x/**/);
@@ -19,14 +30,16 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspecti
                    """);
   }
 
+  @Test
   public void testEvenSimpler() {
-    doStatementTest("System.out.println(/*'Throwable' argument 'new RuntimeException()' to 'System.out.println()' call*/new RuntimeException()/**/);");
+    inspectionFixture.get().doStatementTest("System.out.println(/*'Throwable' argument 'new RuntimeException()' to 'System.out.println()' call*/new RuntimeException()/**/);");
   }
 
+  @Test
   public void testSimpleLogFix() {
     addSlf4j();
 
-    doTest(
+    inspectionFixture.get().doTest(
         """
         class Test{
           void foo() {
@@ -36,7 +49,7 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspecti
         }
         """);
 
-    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+    inspectionFixture.get().checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
         """
         import org.slf4j.Logger;
         import org.slf4j.LoggerFactory;
@@ -53,7 +66,7 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspecti
   }
 
   private void addSlf4j() {
-    addEnvironmentClass("""
+    inspectionFixture.get().addEnvironmentClass("""
         package org.slf4j;
         @SuppressWarnings("ALL") public class LoggerFactory {
         public static Logger getLogger(Class clazz) { return null; }
@@ -64,10 +77,11 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspecti
     """);
   }
 
+  @Test
   public void testSimpleExistedLogFix() {
     addSlf4j();
 
-    doTest(
+    inspectionFixture.get().doTest(
         """
         import org.slf4j.Logger;
         import org.slf4j.LoggerFactory;
@@ -82,7 +96,7 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspecti
         }
         """);
 
-    checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
+    inspectionFixture.get().checkQuickFix("Convert 'System.out' call to call of 'Slf4j'",
         """
         import org.slf4j.Logger;
         import org.slf4j.LoggerFactory;
@@ -96,10 +110,5 @@ public class ThrowablePrintedToSystemOutInspectionTest extends LightJavaInspecti
           }
         }
         """);
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new ThrowablePrintedToSystemOutInspection();
   }
 }

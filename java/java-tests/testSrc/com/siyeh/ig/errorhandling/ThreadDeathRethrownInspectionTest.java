@@ -15,36 +15,42 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class ThreadDeathRethrownInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+@TestApplication
+public class ThreadDeathRethrownInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ThreadDeathRethrownInspection(), getEnvironmentClasses());
+
+  private static String[] getEnvironmentClasses() {
     return new String[] {"package java.lang;" +
                          "public class ThreadDeath extends Error {}"};
   }
 
+  @Test
   public void testSimple() {
-    doStatementTest("try {" +
+    inspectionFixture.get().doStatementTest("try {" +
                     "  System.out.println(\"foo\");" +
                     "} catch (ThreadDeath /*ThreadDeath 'e' not rethrown*/e/**/) {" +
                     "  e.printStackTrace();" +
                     "}");
   }
 
+  @Test
   public void testNoWarn() {
-    doStatementTest("try {" +
+    inspectionFixture.get().doStatementTest("try {" +
                     "  System.out.println(\"foo\");" +
                     "} catch (ThreadDeath e) {" +
                     "  e.printStackTrace();" +
                     "  throw e;" +
                     "}");
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new ThreadDeathRethrownInspection();
   }
 }

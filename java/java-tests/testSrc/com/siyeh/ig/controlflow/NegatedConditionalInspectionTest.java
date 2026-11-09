@@ -2,40 +2,53 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Roland Illig
  */
-public class NegatedConditionalInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class NegatedConditionalInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
   private final NegatedConditionalInspection myInspection = new NegatedConditionalInspection();
 
+  @Test
   public void testNegatedConditionalNullAndZeroAllowed() {
     myInspection.m_ignoreNegatedNullComparison = true;
     myInspection.m_ignoreNegatedZeroComparison = true;
 
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testNegatedConditionalNullAndZeroDisallowed() {
     myInspection.m_ignoreNegatedNullComparison = false;
     myInspection.m_ignoreNegatedZeroComparison = false;
 
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testNegatedConditionalNullAllowed() {
     myInspection.m_ignoreNegatedNullComparison = true;
     myInspection.m_ignoreNegatedZeroComparison = false;
 
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private InspectionProfileEntry getInspection() {
     return myInspection;
   }
 }

@@ -4,46 +4,55 @@ package com.siyeh.ig.naming;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.execution.junit.codeInspection.naming.TestClassNamingConvention;
 import com.intellij.execution.junit.codeInspection.naming.TestSuiteNamingConvention;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.ArrayUtilRt;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class NewClassNamingConventionInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class NewClassNamingConventionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection(), ArrayUtilRt.EMPTY_STRING_ARRAY, null, NewClassNamingConventionInspection.class);
 
-  public void testSimple() { doTest(); }
+  @Test
+  public void testSimple() { inspectionFixture.get().doTest(); }
 
+  @Test
   public void testSuiteNameConventionTest() {
-    addEnvironmentClass("package org.junit.runner;\n" +
+    inspectionFixture.get().addEnvironmentClass("package org.junit.runner;\n" +
                         "public @interface RunWith {Class<?> value();}");
-    addEnvironmentClass("package org.junit.runners;\n" +
+    inspectionFixture.get().addEnvironmentClass("package org.junit.runners;\n" +
                         "public class Suite {}");
-    addEnvironmentClass("package org.junit.runners;\n" +
+    inspectionFixture.get().addEnvironmentClass("package org.junit.runners;\n" +
                         "public class Parameterized extends Suite {}");
-    addEnvironmentClass("package org.junit;\n" +
+    inspectionFixture.get().addEnvironmentClass("package org.junit;\n" +
                         "public @interface Test{}");
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testNested() {
-    addEnvironmentClass("package org.junit.platform.commons.annotation; @interface Testable{}");
-    addEnvironmentClass("package org.junit.jupiter.api; public @interface Nested{}");
-    addEnvironmentClass("package org.junit.jupiter.api; import org.junit.platform.commons.annotation.Testable; @Testable public @interface Test{}");
-    doTest();
+    inspectionFixture.get().addEnvironmentClass("package org.junit.platform.commons.annotation; @interface Testable{}");
+    inspectionFixture.get().addEnvironmentClass("package org.junit.jupiter.api; public @interface Nested{}");
+    inspectionFixture.get().addEnvironmentClass("package org.junit.jupiter.api; import org.junit.platform.commons.annotation.Testable; @Testable public @interface Test{}");
+    inspectionFixture.get().doTest();
   }
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     NewClassNamingConventionInspection conventionInspection = new NewClassNamingConventionInspection();
     conventionInspection.setEnabled(true, ClassNamingConvention.CLASS_NAMING_CONVENTION_SHORT_NAME);
     conventionInspection.setEnabled(true, AbstractClassNamingConvention.ABSTRACT_CLASS_NAMING_CONVENTION_SHORT_NAME);
     conventionInspection.setEnabled(true, TestClassNamingConvention.TEST_CLASS_NAMING_CONVENTION_SHORT_NAME);
     conventionInspection.setEnabled(true, TestSuiteNamingConvention.TEST_SUITE_NAMING_CONVENTION_SHORT_NAME);
     return conventionInspection;
-  }
-
-  @Override
-  protected Class<? extends InspectionProfileEntry> getInspectionClass() {
-    return NewClassNamingConventionInspection.class;
   }
 }

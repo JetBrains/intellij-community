@@ -2,29 +2,42 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.miscGenerics.RedundantArrayForVarargsCallInspection;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class RedundantArrayForVarargsCallInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantArrayForVarargs/";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
+public class RedundantArrayForVarargsCallInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new RedundantArrayForVarargsCallInspection());
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    inspectionFixture.get().getFixture().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantArrayForVarargs/");
   }
 
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new RedundantArrayForVarargsCallInspection();
-  }
-
-  public void testIDEADEV15215() { doTest(); }
-  public void testIDEADEV25923() { doTest(); }
-  public void testNestedArray() { doTest(); }
-  public void testCheckEnumConstant() { doTest(); }
-  public void testGeneric() { doTest(); }
-  public void testRawArray() { doTest(); }
-  public void testPolymorphicSignature() { doTest(); }
-  public void testValidSubtype() { doTest(); }
+  @Test
+  public void testIDEADEV15215() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testIDEADEV25923() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testNestedArray() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testCheckEnumConstant() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testGeneric() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testRawArray() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testPolymorphicSignature() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testValidSubtype() { inspectionFixture.get().doTest(); }
 }

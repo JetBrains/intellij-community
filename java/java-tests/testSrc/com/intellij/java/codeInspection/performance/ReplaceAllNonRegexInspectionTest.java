@@ -2,42 +2,56 @@
 package com.intellij.java.codeInspection.performance;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.performance.ReplaceAllNonRegexInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class ReplaceAllNonRegexInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new ReplaceAllNonRegexInspection();
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
+public class ReplaceAllNonRegexInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ReplaceAllNonRegexInspection());
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    inspectionFixture.get().getFixture().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/replaceAllNonRegex");
   }
 
+  @Test
   public void testSimplePositive() {
-    doTest();
-    checkQuickFixAll();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 
+  @Test
   public void testNonConstant() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testRegexLike() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testComment() {
-    doTest();
-    checkQuickFixAll();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 
+  @Test
   public void testJava4() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_4, () -> doTest());
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/replaceAllNonRegex";
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_1_4, () -> inspectionFixture.get().doTest());
   }
 }

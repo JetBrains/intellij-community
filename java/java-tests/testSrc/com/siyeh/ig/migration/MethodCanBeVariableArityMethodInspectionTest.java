@@ -7,11 +7,19 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.ProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class MethodCanBeVariableArityMethodInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
+public class MethodCanBeVariableArityMethodInspectionTest {
 
   private static final ProjectDescriptor JAVA_HIGHEST_WITH_OLD_ANNOTATIONS = new ProjectDescriptor(LanguageLevel.HIGHEST) {
     @Override
@@ -21,17 +29,16 @@ public class MethodCanBeVariableArityMethodInspectionTest extends LightJavaInspe
     }
   };
 
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(JAVA_HIGHEST_WITH_OLD_ANNOTATIONS);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
+
+  @Test
   public void testMethodCanBeVariableArity() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_HIGHEST_WITH_OLD_ANNOTATIONS;
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     final MethodCanBeVariableArityMethodInspection inspection = new MethodCanBeVariableArityMethodInspection();
     inspection.ignoreByteAndShortArrayParameters = true;
     inspection.ignoreOverridingMethods = true;

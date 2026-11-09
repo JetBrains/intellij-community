@@ -15,47 +15,54 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings("InterfaceMethodClashesWithObject")
-public class InterfaceMethodClashesWithObjectInspectionTest extends LightJavaInspectionTestCase {
+public class InterfaceMethodClashesWithObjectInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new InterfaceMethodClashesWithObjectInspection());
 
+  @Test
   public void testBadClone() {
-    doTest("interface BadClone {" +
+    inspectionFixture.get().doTest("interface BadClone {" +
            "  int /*'clone()' clashes with method in 'java.lang.Object'*/clone/**/();" +
            "}");
   }
 
+  @Test
   public void testBadFinalize() {
-    doTest("interface BadFinalize {" +
+    inspectionFixture.get().doTest("interface BadFinalize {" +
            "  Object /*'finalize()' clashes with method in 'java.lang.Object'*/finalize/**/();" +
            "}");
   }
 
+  @Test
   public void testGoodClone() {
-    doTest("interface GoodClone {" +
+    inspectionFixture.get().doTest("interface GoodClone {" +
            "  GoodClone clone() throws CloneNotSupportedException;" +
            "}");
   }
 
+  @Test
   public void testAnnotated() {
-    doTest("interface A {" +
+    inspectionFixture.get().doTest("interface A {" +
            "    @Deprecated" +
            "    void finalize();" +
            "}" +
            "class B implements A {" +
            "    public @Deprecated void finalize() {}" +
            "}");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new InterfaceMethodClashesWithObjectInspection();
   }
 }

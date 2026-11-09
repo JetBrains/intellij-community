@@ -1,61 +1,65 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.initialization;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class NonThreadSafeLazyInitializationInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class NonThreadSafeLazyInitializationInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new NonThreadSafeLazyInitializationInspection());
 
+  @Test
   public void testNonThreadSafeLazyInitialization() {
-    doTest();
-    checkQuickFixAll();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 
+  @Test
   public void testNestedAssignment() {
-    doTest();
-    assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
+  @Test
   public void testLocalVariableReferenced() {
-    doTest();
-    assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
+  @Test
   public void testInstanceVariableReferenced() {
-    doTest();
-    assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
+  @Test
   public void testQualifiedInstanceMethod() {
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
+  @Test
   public void testStaticVariableReferenced() {
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
+  @Test
   public void testNormal() {
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new NonThreadSafeLazyInitializationInspection();
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 }

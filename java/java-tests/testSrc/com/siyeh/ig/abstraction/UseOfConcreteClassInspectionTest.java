@@ -15,62 +15,70 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class UseOfConcreteClassInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new UseOfConcreteClassInspection();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
+@TestApplication
+public class UseOfConcreteClassInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new UseOfConcreteClassInspection(), getEnvironmentClasses());
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {"class A {}"};
   }
 
+  @Test
   public void testForeach() {
-    doMemberTest("void m(java.util.List<A> l) {" +
+    inspectionFixture.get().doMemberTest("void m(java.util.List<A> l) {" +
                  "  for (/*Local variable 'a' of concrete class 'A'*/A/**/ a : l) {}" +
                  "}");
   }
 
+  @Test
   public void testLocal() {
-    doMemberTest("void m() {/*Local variable 'a' of concrete class 'A'*/A/**/ a;}");
+    inspectionFixture.get().doMemberTest("void m() {/*Local variable 'a' of concrete class 'A'*/A/**/ a;}");
   }
 
+  @Test
   public void testParameter() {
-    doMemberTest("void m(/*Parameter 'a' of concrete class 'A'*/A/**/ a) {}");
+    inspectionFixture.get().doMemberTest("void m(/*Parameter 'a' of concrete class 'A'*/A/**/ a) {}");
   }
   
+  @Test
   public void testCatchParameter() {
-    doMemberTest("void m() {try {toString();} catch (MyEx ex) {}} static class MyEx extends Error {}");
+    inspectionFixture.get().doMemberTest("void m() {try {toString();} catch (MyEx ex) {}} static class MyEx extends Error {}");
   }
 
+  @Test
   public void testStaticField() {
-    doMemberTest("static /*Static field 'myA' of concrete class 'A'*/A/**/ myA;");
+    inspectionFixture.get().doMemberTest("static /*Static field 'myA' of concrete class 'A'*/A/**/ myA;");
   }
 
+  @Test
   public void testInstanceField() {
-    doMemberTest("/*Instance field 'myA' of concrete class 'A'*/A/**/ myA;");
+    inspectionFixture.get().doMemberTest("/*Instance field 'myA' of concrete class 'A'*/A/**/ myA;");
   }
 
+  @Test
   public void testMethodReturn() {
-    doMemberTest("/*Method returns a concrete class 'A'*/A/**/ getA() {return null;}");
+    inspectionFixture.get().doMemberTest("/*Method returns a concrete class 'A'*/A/**/ getA() {return null;}");
   }
 
+  @Test
   public void testInstanceofInterfaces() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testCastToConcreteClass() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 }

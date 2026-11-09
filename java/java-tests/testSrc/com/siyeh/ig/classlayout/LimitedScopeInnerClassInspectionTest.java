@@ -2,18 +2,30 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LimitedScopeInnerClassInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class LimitedScopeInnerClassInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new LimitedScopeInnerClassInspection());
 
+  @Test
   public void testSimple() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                void x() {
                  class /*Local class 'Y'*/Y/**/ {}
@@ -21,8 +33,10 @@ public class LimitedScopeInnerClassInspectionTest extends LightJavaInspectionTes
              }""");
   }
 
+  @Test
   public void testEnum() {
-    doTest("""
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    inspectionFixture.get().doTest("""
              class X {
                  void x() {
                      enum /*Local class 'E'*//*_*/E/**/ {
@@ -40,10 +54,5 @@ public class LimitedScopeInnerClassInspectionTest extends LightJavaInspectionTes
                           A, B
                        }
                    }""", myFixture.getIntentionPreviewText(intention));
-  }
-
-  @Override
-  protected @Nullable InspectionProfileEntry getInspection() {
-    return new LimitedScopeInnerClassInspection();
   }
 }

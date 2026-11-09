@@ -15,26 +15,33 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class PackageNamingConventionInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class PackageNamingConventionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new PackageNamingConventionInspection());
 
+  @Test
   public void testSharedLocalInspection() {
-    doTest("package /*Package name 'a' is too short*/a/**/./*Package name 'bbbbbbbbbbbbbbbbbbbb' is too long*/bbbbbbbbbbbbbbbbbbbb/**/;" +
+    inspectionFixture.get().doTest("package /*Package name 'a' is too short*/a/**/./*Package name 'bbbbbbbbbbbbbbbbbbbb' is too long*/bbbbbbbbbbbbbbbbbbbb/**/;" +
            "class X {}");
   }
 
+  @Test
   public void testNoAssertion() {
-    doTest("package /*Package name 'a' is too short*/a/**/./*!Identifier expected*/;/*!*/" +
+    inspectionFixture.get().doTest("package /*Package name 'a' is too short*/a/**/./*!Identifier expected*/;/*!*/" +
            "class X {}");
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new PackageNamingConventionInspection();
   }
 }

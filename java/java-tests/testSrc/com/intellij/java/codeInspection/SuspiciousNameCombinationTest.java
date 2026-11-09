@@ -5,28 +5,45 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.suspiciousNameCombination.SuspiciousNameCombinationInspection;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-public class SuspiciousNameCombinationTest extends LightJavaInspectionTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/suspiciousNameCombination";
+@TestApplication
+public class SuspiciousNameCombinationTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    inspectionFixture.get().getFixture().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/suspiciousNameCombination");
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     SuspiciousNameCombinationInspection inspection = new SuspiciousNameCombinationInspection();
     inspection.addNameGroup("someWord,otherWord");
     return inspection;
   }
 
-  public void testAssignment() { doTest();}
-  public void testInitializer() { doTest();}
-  public void testParameter() { doTest();}
-  public void testReturnValue() { doTest();}
-  public void testExcluded() { doTest();}
-  public void testTwoWords() { doTest();}
+  @Test
+  public void testAssignment() { inspectionFixture.get().doTest();}
+  @Test
+  public void testInitializer() { inspectionFixture.get().doTest();}
+  @Test
+  public void testParameter() { inspectionFixture.get().doTest();}
+  @Test
+  public void testReturnValue() { inspectionFixture.get().doTest();}
+  @Test
+  public void testExcluded() { inspectionFixture.get().doTest();}
+  @Test
+  public void testTwoWords() { inspectionFixture.get().doTest();}
 }

@@ -1,21 +1,28 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class OverloadedVarargsMethodInspectionTest extends LightJavaInspectionTestCase
+@TestApplication
+public class OverloadedVarargsMethodInspectionTest
 {
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new OverloadedVarargsMethodInspection();
-  }
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new OverloadedVarargsMethodInspection());
 
+  @Test
   public void testOneWarning() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Overload {
                public void overload() {}
                public void overload(int p1) {}
@@ -24,8 +31,9 @@ public class OverloadedVarargsMethodInspectionTest extends LightJavaInspectionTe
              }""");
   }
 
+  @Test
   public void testWarnWhenSuperMethod() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Super {
                public void method() {}
              }
@@ -34,8 +42,9 @@ public class OverloadedVarargsMethodInspectionTest extends LightJavaInspectionTe
              }""");
   }
 
+  @Test
   public void testOverridingMethod() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              interface Base {
                void test(String... ss);
              }
@@ -44,8 +53,9 @@ public class OverloadedVarargsMethodInspectionTest extends LightJavaInspectionTe
              }""");
   }
 
+  @Test
   public void testGenericMethods() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              interface Foo<T> {
                      void makeItSo(T command, int... values);
                  }
@@ -55,8 +65,9 @@ public class OverloadedVarargsMethodInspectionTest extends LightJavaInspectionTe
                  }""");
   }
 
+  @Test
   public void testNoWarningBecauseOfTypes() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Overload {
                public void method() {}
                public void method(int p1) {}
@@ -67,8 +78,9 @@ public class OverloadedVarargsMethodInspectionTest extends LightJavaInspectionTe
              }""");
   }
   
+  @Test
   public void testNoWarningBecauseOfTypes2() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;
              final class CompositeRequestDataValueProcessor {
              
@@ -87,16 +99,18 @@ public class OverloadedVarargsMethodInspectionTest extends LightJavaInspectionTe
              """);
   }
 
+  @Test
   public void testWarningForConvertibleArgumentTypes() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Overload {
                public void method(Number p1, String p2) {}
                public void /*Overloaded varargs method 'method()'*/method/**/(Integer p1, String p2, String... p3) {}
              }""");
   }
 
+  @Test
   public void testWarningWithOneArgument() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Overload {
                public void method() {}
                public void /*Overloaded varargs method 'method()'*/method/**/(String... p1) {}

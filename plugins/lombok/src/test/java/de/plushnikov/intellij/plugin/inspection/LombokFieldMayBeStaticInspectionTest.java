@@ -1,21 +1,24 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import com.siyeh.ig.performance.FieldMayBeStaticInspection;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import org.junit.jupiter.api.Test;
 
-public class LombokFieldMayBeStaticInspectionTest extends LombokInspectionTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokTestUtil.lombokInspectionFixture;
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/canBeStaticInspection";
-  }
+@TestApplication
+public class LombokFieldMayBeStaticInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lombokInspectionFixture(projectFixture, () -> new FieldMayBeStaticInspection(), "/inspection/canBeStaticInspection");
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new FieldMayBeStaticInspection();
-  }
-
+  @Test
   public void testDefault() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 }

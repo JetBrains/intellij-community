@@ -2,22 +2,34 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class UnnecessaryDefaultInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection(), getEnvironmentClasses());
 
+  @Test
   public void testUnnecessaryDefault() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testNestedDeconstructionPatterns() {
-    doTest("""
+    inspectionFixture.get().doTest("""
     final class Test {
         public static void main(String[] args) {
             final var nullLevel2 = new Level1(null);
@@ -47,8 +59,9 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
     }""");
   }
 
+  @Test
   public void testSwitchExpression() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                boolean x(E e) {
                  return switch (e) {
@@ -57,7 +70,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                  };
                }
              }""");
-    checkQuickFix("Remove 'default' branch",
+    inspectionFixture.get().checkQuickFix("Remove 'default' branch",
                   """
                     class X {
                       boolean x(E e) {
@@ -68,8 +81,9 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                     }""");
   }
 
+  @Test
   public void testSwitchFallthrough() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                void x(E e) {
                  switch (e) {
@@ -81,7 +95,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                }
              }
              """);
-    checkQuickFix("Remove 'default' branch",
+    inspectionFixture.get().checkQuickFix("Remove 'default' branch",
                   """
                     class X {
                       void x(E e) {
@@ -95,8 +109,9 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                     """);
   }
 
+  @Test
   public void testDeclarationInBranch() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  void x(E e) {" +
            "    switch (e) {" +
            "      /*'default' branch is unnecessary*/default/*_*//**/:" +
@@ -108,7 +123,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
            "      }" +
            "   }" +
            "}");
-    checkQuickFix("Remove 'default' branch",
+    inspectionFixture.get().checkQuickFix("Remove 'default' branch",
                   """
                     class X {  void x(E e) {    switch (e) {
                         case A, B:
@@ -116,8 +131,9 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                             x = 2;        System.out.println(x);      }   }}""");
   }
 
+  @Test
   public void testCaseDefaultInEnumSwitch() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  void x(E e) {" +
            "    switch (e) {" +
            "      case A, B:" +
@@ -127,7 +143,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
            "    }" +
            "  }" +
            "}");
-    checkQuickFix("Remove 'default' branch",
+    inspectionFixture.get().checkQuickFix("Remove 'default' branch",
                   "class X {" +
                   "  void x(E e) {" +
                   "    switch (e) {" +
@@ -138,8 +154,9 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                   "}");
   }
 
+  @Test
   public void testCaseDefaultInSealedSwitch() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  void x(I i) {" +
            "    switch (i) {" +
            "      case I ii when Math.random() > 0.5:" +
@@ -153,7 +170,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
            "    }" +
            "  }" +
            "}");
-    checkQuickFix("Remove 'default' branch",
+    inspectionFixture.get().checkQuickFix("Remove 'default' branch",
                   "class X {" +
                   "  void x(I i) {" +
                   "    switch (i) {" +
@@ -168,8 +185,9 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                   "}");
   }
 
+  @Test
   public void testDefaultInParameterizedSealedHierarchy() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  void x(J<Integer> j) {" +
            "    switch (j) {" +
            "      case D2 d2 -> {}" +
@@ -179,8 +197,9 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
            "}");
   }
 
+  @Test
   public void testDefaultWithDominance() {
-    doTest("""
+    inspectionFixture.get().doTest("""
     import org.jetbrains.annotations.Nullable;
     class TestExample {
         sealed interface II {
@@ -202,8 +221,9 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
     """);
   }
 
+  @Test
   public void testNullDefaultWithDominance() {
-    doTest("""
+    inspectionFixture.get().doTest("""
     import org.jetbrains.annotations.Nullable;
     class TestExample {
         sealed interface II {
@@ -225,8 +245,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
     """);
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       """
 enum E { A, B }
@@ -241,15 +260,9 @@ final class D2<T> implements J<T> {}
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     final UnnecessaryDefaultInspection inspection = new UnnecessaryDefaultInspection();
     inspection.onlyReportSwitchExpressions = false;
     return inspection;
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
   }
 }

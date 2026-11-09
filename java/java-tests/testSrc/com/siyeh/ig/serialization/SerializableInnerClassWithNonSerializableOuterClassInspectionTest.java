@@ -15,51 +15,61 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SerializableInnerClassWithNonSerializableOuterClassInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class SerializableInnerClassWithNonSerializableOuterClassInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new SerializableInnerClassWithNonSerializableOuterClassInspection());
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new SerializableInnerClassWithNonSerializableOuterClassInspection();
-  }
-
+  @Test
   public void testAnonymousClass() {
-    doTest("class NonSerializable {" +
+    inspectionFixture.get().doTest("class NonSerializable {" +
            "    public void method() {" +
            "        java.io.Serializable s = new /*Inner class 'java.io.Serializable' is serializable while its outer class is not*/java.io.Serializable/**/() {};" +
            "    }" +
            "}");
   }
 
+  @Test
   public void testInnerClass() {
-    doTest("class NonSerializable {" +
+    inspectionFixture.get().doTest("class NonSerializable {" +
            "    public class /*Inner class 'MySerializable' is serializable while its outer class is not*/MySerializable/**/ implements java.io.Serializable {" +
            "    }" +
            "}");
   }
 
+  @Test
   public void testLocalClass() {
-    doTest("class A {" +
+    inspectionFixture.get().doTest("class A {" +
            "  void m() {" +
            "    class /*Inner class 'Y' is serializable while its outer class is not*/Y/**/ implements java.io.Serializable {}" +
            "  }" +
            "}");
   }
 
+  @Test
   public void testStaticAnonymousClass() {
-    doTest("class A {" +
+    inspectionFixture.get().doTest("class A {" +
            "  static void m() {" +
            "    new java.io.Serializable() {};" +
            "  }" +
            "}");
   }
 
+  @Test
   public void testTypeParameter() {
-    doTest("class A<TypeParameter extends java.awt.Component> {}");
+    inspectionFixture.get().doTest("class A<TypeParameter extends java.awt.Component> {}");
   }
 }

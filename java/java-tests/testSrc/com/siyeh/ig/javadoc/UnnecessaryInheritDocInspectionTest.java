@@ -15,29 +15,29 @@
  */
 package com.siyeh.ig.javadoc;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class UnnecessaryInheritDocInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
+@TestApplication
+public class UnnecessaryInheritDocInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new UnnecessaryInheritDocInspection());
+
+  @Test
   public void testUnnecessaryInheritDoc() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testModuleInfo() {
-    doNamedTest("module-info");
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new UnnecessaryInheritDocInspection();
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
+    inspectionFixture.get().doNamedTest("module-info");
   }
 }

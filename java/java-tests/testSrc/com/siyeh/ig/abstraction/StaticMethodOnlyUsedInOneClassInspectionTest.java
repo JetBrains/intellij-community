@@ -15,7 +15,7 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -23,22 +23,37 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PsiTestUtil;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Bas Leijdekkers
  */
-public class StaticMethodOnlyUsedInOneClassInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class StaticMethodOnlyUsedInOneClassInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new StaticMethodOnlyUsedInOneClassInspection());
 
+  @Test
   public void testStaticMethodOnlyUsedInOneClass() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testStaticMethodInSourceCode() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     PsiFile file = myFixture.addFileToProject(
       "genSrc/com/siyeh/igtest/abstraction/Something.java",
       """
@@ -58,14 +73,8 @@ public class StaticMethodOnlyUsedInOneClassInspectionTest extends LightJavaInspe
     JavaSourceRootProperties properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("", true);
     PsiTestUtil.addSourceRoot(myFixture.getModule(), genSrc, JavaSourceRootType.SOURCE, properties);
 
-    PsiClass buildConfig = myFixture.findClass("com.siyeh.igtest.abstraction.Something");
-    assertTrue(JavaProjectRootsUtil.isInGeneratedCode(buildConfig.getContainingFile().getVirtualFile(), project));
-    doTest();
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new StaticMethodOnlyUsedInOneClassInspection();
+    PsiClass buildConfig = ReadAction.computeBlocking(() -> myFixture.findClass("com.siyeh.igtest.abstraction.Something"));
+    assertTrue(ReadAction.computeBlocking(() -> JavaProjectRootsUtil.isInGeneratedCode(buildConfig.getContainingFile().getVirtualFile(), project)));
+    inspectionFixture.get().doTest();
   }
 }

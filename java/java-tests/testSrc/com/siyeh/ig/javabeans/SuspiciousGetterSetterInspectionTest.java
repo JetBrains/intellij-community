@@ -15,30 +15,37 @@
  */
 package com.siyeh.ig.javabeans;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SuspiciousGetterSetterInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class SuspiciousGetterSetterInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new SuspiciousGetterSetterInspection());
 
+  @Test
   public void testSuspiciousGetterSetter() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final JavaCodeStyleSettings settings =
-      JavaCodeStyleSettings.getInstance(getProject());
+      JavaCodeStyleSettings.getInstance(myFixture.getProject());
     settings.FIELD_NAME_PREFIX = "my";
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testNoPrefix() {
-    doTest();
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new SuspiciousGetterSetterInspection();
+    inspectionFixture.get().doTest();
   }
 }

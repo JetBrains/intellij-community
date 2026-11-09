@@ -15,49 +15,49 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings("StringEqualsCharSequence")
-public class StringEqualsCharSequenceInspectionTest extends LightJavaInspectionTestCase {
+public class StringEqualsCharSequenceInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new StringEqualsCharSequenceInspection());
 
+  @Test
   public void testSimple() {
-    doMemberTest("boolean m(String s, CharSequence cs) {" +
+    inspectionFixture.get().doMemberTest("boolean m(String s, CharSequence cs) {" +
                  "  return s./*'String.equals()' called with 'CharSequence' argument*/equals/**/(cs);" +
                  "}");
   }
 
+  @Test
   public void testMethodReference() {
-    doStatementTest("java.util.function.Predicate<CharSequence> p = \"123\"::/*'String.equals()' called with 'CharSequence' argument*/equals/**/;");
+    inspectionFixture.get().doStatementTest("java.util.function.Predicate<CharSequence> p = \"123\"::/*'String.equals()' called with 'CharSequence' argument*/equals/**/;");
   }
 
+  @Test
   public void testObjectsEquals() {
-    doMemberTest("boolean m(String s, CharSequence cs) {" +
+    inspectionFixture.get().doMemberTest("boolean m(String s, CharSequence cs) {" +
                  "  return java.util.Objects./*'String.equals()' called with 'CharSequence' argument*/equals/**/(s, cs);" +
                  "}");
   }
 
+  @Test
   public void testPredicate() {
-    doMemberTest("boolean m(String s, CharSequence cs) {" +
+    inspectionFixture.get().doMemberTest("boolean m(String s, CharSequence cs) {" +
                  "  return java.util.function.Predicate./*'String.equals()' called with 'CharSequence' argument*/isEqual/**/(s).test(cs);" +
                  "}");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new StringEqualsCharSequenceInspection();
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
   }
 }

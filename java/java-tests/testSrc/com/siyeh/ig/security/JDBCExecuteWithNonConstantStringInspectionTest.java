@@ -16,21 +16,32 @@
 package com.siyeh.ig.security;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class JDBCExecuteWithNonConstantStringInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class JDBCExecuteWithNonConstantStringInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
+  @Test
   public void testJDBCExecuteWithNonConstantString() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     final JDBCExecuteWithNonConstantStringInspection inspection = new JDBCExecuteWithNonConstantStringInspection();
     inspection.considerStaticFinalConstant = true;
     return inspection;

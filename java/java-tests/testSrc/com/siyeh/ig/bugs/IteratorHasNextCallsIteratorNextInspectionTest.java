@@ -15,18 +15,28 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings({"IteratorHasNextCallsIteratorNext", "override"})
-public class IteratorHasNextCallsIteratorNextInspectionTest extends LightJavaInspectionTestCase {
+public class IteratorHasNextCallsIteratorNextInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new IteratorHasNextCallsIteratorNextInspection());
 
+  @Test
   public void testHasNextCallsNext() {
-    doTest("import java.util.*;" +
+    inspectionFixture.get().doTest("import java.util.*;" +
            "class MyIterator<T> implements Iterator<T> {" +
            "    private Iterator<T> iterator;" +
            "    MyIterator(Iterator<T> iterator) {" +
@@ -44,8 +54,9 @@ public class IteratorHasNextCallsIteratorNextInspectionTest extends LightJavaIns
            "}");
   }
 
+  @Test
   public void testHasNextCallsPrevious() {
-    doTest("import java.util.*;" +
+    inspectionFixture.get().doTest("import java.util.*;" +
            "abstract class MyIterator<T> implements ListIterator<T> {" +
            "    private ListIterator<T> iterator;" +
            "    MyIterator(ListIterator<T> iterator) {" +
@@ -64,11 +75,5 @@ public class IteratorHasNextCallsIteratorNextInspectionTest extends LightJavaIns
            "        return iterator.previous();" +
            "    }" +
            "}");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new IteratorHasNextCallsIteratorNextInspection();
   }
 }

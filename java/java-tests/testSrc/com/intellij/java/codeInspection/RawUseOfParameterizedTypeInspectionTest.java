@@ -8,22 +8,45 @@ import com.intellij.codeInspection.miscGenerics.RawUseOfParameterizedTypeInspect
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.testFramework.ExpectedHighlightingData;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class RawUseOfParameterizedTypeInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static org.assertj.core.api.Assertions.assertThat;
 
+@TestApplication
+public class RawUseOfParameterizedTypeInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    inspectionFixture.get().getFixture().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/rawUseOfParameterizedType/");
+  }
+
+  @Test
   public void testRawUseOfParameterizedType() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
   
+  @Test
   public void testInvalidType() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testIgnoreWhenQuickFixNotAvailable() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final RawUseOfParameterizedTypeInspection inspection = (RawUseOfParameterizedTypeInspection)getInspection();
     inspection.ignoreWhenQuickFixNotAvailable = true;
     myFixture.enableInspections(inspection);
@@ -32,12 +55,11 @@ public class RawUseOfParameterizedTypeInspectionTest extends LightJavaInspection
     final ExpectedHighlightingData data = new ExpectedHighlightingData(document, false, false, false);
     data.init();
     final List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.WARNING);
-    assertEmpty(infos);
+    assertThat(infos).isNullOrEmpty();
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     final RawUseOfParameterizedTypeInspection inspection = new RawUseOfParameterizedTypeInspection();
     inspection.ignoreObjectConstruction = false;
     inspection.ignoreUncompilable = true;
@@ -45,10 +67,5 @@ public class RawUseOfParameterizedTypeInspectionTest extends LightJavaInspection
     inspection.ignoreTypeCasts = true;
     inspection.ignoreWhenQuickFixNotAvailable = false;
     return inspection;
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/rawUseOfParameterizedType/";
   }
 }

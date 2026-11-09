@@ -7,12 +7,25 @@ import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class MismatchedCollectionQueryUpdateInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
+public class MismatchedCollectionQueryUpdateInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9_ANNOTATED);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
   private static final ImplicitUsageProvider TEST_PROVIDER = new ImplicitUsageProvider() {
     @Override
@@ -31,29 +44,24 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightJavaInsp
     }
   };
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), ImplicitUsageProvider.EP_NAME, TEST_PROVIDER, myFixture.getTestRootDisposable());
     EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList();
   }
 
+  @Test
   public void testMismatchedCollectionQueryUpdate() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
   
+  @Test
   public void testUsedAssignmentResult() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9_ANNOTATED;
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     MismatchedCollectionQueryUpdateInspection inspection = new MismatchedCollectionQueryUpdateInspection();
     inspection.ignoredClasses.add("com.siyeh.igtest.bugs.mismatched_collection_query_update.ConstList");
     return inspection;

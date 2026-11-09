@@ -15,16 +15,25 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class InnerClassReferencedViaSubclassInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class InnerClassReferencedViaSubclassInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new InnerClassReferencedViaSubclassInspection(), getEnvironmentClasses());
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[]{
       "class MyClass {" +
       "    class InnerClass {" +
@@ -38,40 +47,39 @@ public class InnerClassReferencedViaSubclassInspectionTest extends LightJavaInsp
       "}"};
   }
   
+  @Test
   public void testSimple1() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "    void m() {" +
            "        SubClass./*Inner class 'InnerClass' declared in class 'MyClass' but referenced via subclass 'SubClass'*/InnerClass/**/ foo = new SubClass().new InnerClass();" +
            "    }" +
            "}");
   }
   
+  @Test
   public void testSimple2() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "    void m() {" +
            "        SubClass./*Inner class 'NestedClass' declared in class 'MyClass' but referenced via subclass 'SubClass'*/NestedClass/**/ bar1 = new SubClass./*Inner class 'NestedClass' declared in class 'MyClass' but referenced via subclass 'SubClass'*/NestedClass/**/();" +
            "    }" +
            "}");
   }
   
+  @Test
   public void testNoWarn() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "    void m() {" +
            "        MyClass.NestedClass bar2= null;" +
            "    }" +
            "}");
   }
   
+  @Test
   public void testReferenceExpression() {
-    doTest("class UnrelatedClass {" +
+    inspectionFixture.get().doTest("class UnrelatedClass {" +
            "    void foo() {" +
            "        SubClass./*Inner class 'NestedClass' declared in class 'MyClass' but referenced via subclass 'SubClass'*/NestedClass/**/.m();" +
            "    }" +
            "}");
-  }
-
-  @Override
-  protected LocalInspectionTool getInspection() {
-    return new InnerClassReferencedViaSubclassInspection();
   }
 }

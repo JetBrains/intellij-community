@@ -15,20 +15,26 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
 @SuppressWarnings("EmptyFinallyBlock")
-public class NestedTryStatementInspectionTest extends LightJavaInspectionTestCase {
+public class NestedTryStatementInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new NestedTryStatementInspection());
 
-  @Override
-  protected LocalInspectionTool getInspection() {
-    return new NestedTryStatementInspection();
-  }
-
+  @Test
   public void testClassInitializer() {
     //noinspection EmptyTryBlock
-    doTest("""
+    inspectionFixture.get().doTest("""
              class C {
                static {
                  try {
@@ -40,9 +46,10 @@ public class NestedTryStatementInspectionTest extends LightJavaInspectionTestCas
              """);
   }
 
+  @Test
   public void testInsideLambda() {
     //noinspection EmptyTryBlock
-    doTest("""
+    inspectionFixture.get().doTest("""
              class C {
                static void m() {
                 try {

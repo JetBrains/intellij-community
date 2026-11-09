@@ -15,24 +15,31 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class RedundantImplementsInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class RedundantImplementsInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new RedundantImplementsInspection());
 
-  public void testInterface() { doTest(); }
-  public void testEnum() { doTest(); }
-  public void testClassExtends() { doTest(); }
-  public void testClassImplements() { doTest(); }
+  @Test
+  public void testInterface() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testEnum() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testClassExtends() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testClassImplements() { inspectionFixture.get().doTest(); }
 
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new RedundantImplementsInspection();
-  }
 }

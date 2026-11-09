@@ -1,29 +1,28 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.JavaCodeFragmentFactory;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
 @SuppressWarnings("ALL")
-public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected LocalInspectionTool getInspection() {
-    return new IgnoreResultOfCallInspection();
-  }
+public class IgnoreResultOfCallInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_15);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new IgnoreResultOfCallInspection(), getEnvironmentClasses());
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15;
-  }
-
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private String[] getEnvironmentClasses() {
     return new String[]{
       """
         package java.util.regex;
@@ -197,8 +196,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
       """};
   }
 
+  @Test
   public void testJetbrainsAnnotationOnClass() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import org.jetbrains.annotations.CheckReturnValue;
              
              @CheckReturnValue
@@ -215,8 +215,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
              """);
   }
 
+  @Test
   public void testSpringAnnotationOnClass() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import org.springframework.lang.CheckReturnValue;
              
              @CheckReturnValue
@@ -233,8 +234,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
              """);
   }
 
+  @Test
   public void testCanIgnoreReturnValue() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import com.google.errorprone.annotations.CanIgnoreReturnValue;
              import javax.annotation.CheckReturnValue;
 
@@ -252,8 +254,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
              }""");
   }
 
+  @Test
   public void testCanIgnoreReturnValue2() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class TestClass {
 
@@ -329,8 +332,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testCanIgnoreReturnValue3() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import com.google.errorprone.annotations.CanIgnoreReturnValue;
         import com.google.errorprone.annotations.CheckReturnValue;
@@ -347,8 +351,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testCanIgnoreReturnValue4() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import org.assertj.core.annotation.CanIgnoreReturnValue;
              import javax.annotation.CheckReturnValue;
 
@@ -368,8 +373,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
 
 
 
+  @Test
   public void testCustomCheckReturnValue() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import a.CheckReturnValue;
 
              class Test {
@@ -382,8 +388,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
              }""");
   }
 
+  @Test
   public void testObjectMethods() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class C {
                void foo(Object o, String s) {
                  o./*Result of 'Object.equals()' is ignored*/equals/**/(s);
@@ -392,8 +399,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
              """);
   }
 
+  @Test
   public void testMatcher() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class C {
                void matcher() {
                  final java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("baaaa");
@@ -405,8 +413,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
              """);
   }
 
+  @Test
   public void testReader() {
-    doTest("import java.io.Reader;" +
+    inspectionFixture.get().doTest("import java.io.Reader;" +
            "import java.io.IOException;" +
            "class U {" +
            "  void m(Reader r) throws IOException {" +
@@ -415,8 +424,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
            "}");
   }
 
+  @Test
   public void testJSR305Annotation() {
-    doTest("import javax.annotation.CheckReturnValue;" +
+    inspectionFixture.get().doTest("import javax.annotation.CheckReturnValue;" +
            "class A {" +
            "  @CheckReturnValue" +
            "  static Object a() {" +
@@ -428,8 +438,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
            "}");
   }
 
+  @Test
   public void testRandomGetter() {
-    doTest("class A {" +
+    inspectionFixture.get().doTest("class A {" +
            "  private String name;" +
            "  public String getName() {" +
            "    return name;" +
@@ -440,8 +451,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
            "}");
   }
 
+  @Test
   public void testJSR305Annotation2() {
-    doTest("import javax.annotation.CheckReturnValue;" +
+    inspectionFixture.get().doTest("import javax.annotation.CheckReturnValue;" +
            "@CheckReturnValue " +
            "class A {" +
            "  static Object a() {" +
@@ -453,8 +465,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
            "}");
   }
 
+  @Test
   public void testJSR305Annotation3() {
-    doTest("import javax.annotation.CheckReturnValue;" +
+    inspectionFixture.get().doTest("import javax.annotation.CheckReturnValue;" +
            "@CheckReturnValue " +
            "class Parent {" +
            "  class A {" +
@@ -468,9 +481,11 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
            "}");
   }
 
+  @Test
   public void testInference() {
-    Registry.get("ide.ignore.call.result.inspection.honor.inferred.pure").setValue(true, getTestRootDisposable());
-    doTest(
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    Registry.get("ide.ignore.call.result.inspection.honor.inferred.pure").setValue(true, myFixture.getTestRootDisposable());
+    inspectionFixture.get().doTest(
       """
         class Test {
           private static <T> T checkNotNull(T reference) {
@@ -493,8 +508,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testPureMethod() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import org.jetbrains.annotations.Contract;
 
@@ -511,8 +527,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testPureMethodReturningThis() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import org.jetbrains.annotations.Contract;
 
@@ -533,8 +550,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testPureMethodInVoidFunctionalExpression() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import org.jetbrains.annotations.Contract;
 
@@ -553,8 +571,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testStream() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import java.util.stream.*;
         import java.util.*;
@@ -572,8 +591,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         }""");
   }
 
+  @Test
   public void testPattern() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import java.util.regex.Pattern;
         import java.util.Set;
@@ -586,8 +606,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testPatternCaught() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import java.util.regex.*;
         import java.util.Set;
@@ -605,9 +626,10 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testOptionalOrElseThrow() {
     //noinspection OptionalUsedAsFieldOrParameterType
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import java.util.Optional;
 
@@ -619,8 +641,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testParamContract() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class X{
         public static int atLeast(int min, int actual, String varName) {
@@ -638,9 +661,10 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testInForExpressionList() {
     //noinspection StatementWithEmptyBody
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class X {
           void test(String s) {
@@ -650,9 +674,10 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testInSwitchExpression() {
     //noinspection SwitchStatementWithTooFewBranches
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                String test(String s) {
                  return switch(s) {
@@ -663,9 +688,10 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
              """);
   }
 
+  @Test
   public void testOptionalGet() {
     //noinspection ALL
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class X {
           void test(java.util.Optional<String> opt) {
@@ -675,8 +701,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         }""");
   }
 
+  @Test
   public void testCommonsLang3NotNull() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import org.apache.commons.lang3.Validate;
         class X{
@@ -688,8 +715,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testVoidType() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                void a() {
                  b();
@@ -702,8 +730,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
              """);
   }
 
+  @Test
   public void testIgnoreMethodDefinedInSubclasses() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         import java.util.stream.Stream;
         import java.util.*;
@@ -724,9 +753,10 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testStringBuilderMethods() {
     //noinspection DataFlowIssue,EqualsOnSuspiciousObject,TooBroadScope
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class X {
           void x() {
@@ -751,8 +781,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testParseShort() {
-    doTest(
+    inspectionFixture.get().doTest(
       """
         class X {
           boolean validate(String s) {
@@ -767,9 +798,10 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         }
         """);
   }
+  @Test
   @SuppressWarnings("Convert2Lambda")
   public void testIgnoreInTestContainers() {
-    doTest(
+    inspectionFixture.get().doTest(
       """        
         import org.junit.jupiter.api.function.Executable;
         import org.mockito.MockedStatic;
@@ -803,8 +835,9 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         """);
   }
 
+  @Test
   public void testArgumentSideEffects() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.nio.channels.FileChannel;
              import java.nio.ByteBuffer;
              import java.io.IOException;
@@ -828,8 +861,10 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
              """);
   }
   
+  @Test
   public void testFragment() {
-    PsiFile file = JavaCodeFragmentFactory.getInstance(getProject()).createCodeBlockCodeFragment("String.format(\"hello\");", null, true);
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    PsiFile file = JavaCodeFragmentFactory.getInstance(myFixture.getProject()).createCodeBlockCodeFragment("String.format(\"hello\");", null, true);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
     myFixture.testHighlighting(true, false, false);
   }

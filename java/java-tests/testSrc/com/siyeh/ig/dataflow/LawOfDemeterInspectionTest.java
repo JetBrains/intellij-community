@@ -1,17 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dataflow;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LawOfDemeterInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class LawOfDemeterInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new LawOfDemeterInspection(), getEnvironmentClasses());
 
+  @Test
   public void testSimpleWarning() {
-    doTest("""
+    inspectionFixture.get().doTest("""
            import a.*;
            class X {
              void x(A a) {
@@ -21,8 +31,9 @@ public class LawOfDemeterInspectionTest extends LightJavaInspectionTestCase {
            """);
   }
 
+  @Test
   public void testFields() {
-    doTest("""
+    inspectionFixture.get().doTest("""
            import a.*;
            class X {
              void x(C c) {
@@ -32,8 +43,9 @@ public class LawOfDemeterInspectionTest extends LightJavaInspectionTestCase {
            """);
   }
 
+  @Test
   public void testFields2() {
-    doTest("""
+    inspectionFixture.get().doTest("""
            import a.*;
            class X {
              void x(D d) {
@@ -43,8 +55,9 @@ public class LawOfDemeterInspectionTest extends LightJavaInspectionTestCase {
            """);
   }
 
+  @Test
   public void testConstructor() {
-    doTest("""
+    inspectionFixture.get().doTest("""
            import a.*;
            class X {
              void x() {
@@ -54,8 +67,9 @@ public class LawOfDemeterInspectionTest extends LightJavaInspectionTestCase {
            """);
   }
 
+  @Test
   public void testArrayLengthAccess() {
-    doTest("""
+    inspectionFixture.get().doTest("""
            class X {  public static Object cloneArray(final Object source) {
                final Object[] result = ((Object[]) source).clone();
                for (int i = 0; i < result.length; i++) {
@@ -66,8 +80,9 @@ public class LawOfDemeterInspectionTest extends LightJavaInspectionTestCase {
            """);
   }
 
+  @Test
   public void testFactoryMethod() {
-    doTest("""
+    inspectionFixture.get().doTest("""
            import a.*;
            class X {
              void x() {
@@ -77,8 +92,9 @@ public class LawOfDemeterInspectionTest extends LightJavaInspectionTestCase {
            """);
   }
 
+  @Test
   public void testReturnsSameClass() {
-    doTest("""
+    inspectionFixture.get().doTest("""
            import a.*;
            class X {
              void x(A a) {
@@ -88,8 +104,9 @@ public class LawOfDemeterInspectionTest extends LightJavaInspectionTestCase {
            """);
   }
 
+  @Test
   public void testInnerClass() {
-    doTest("""
+    inspectionFixture.get().doTest("""
            class X {
              void x() {
                new Inner().foo().foo();
@@ -108,13 +125,7 @@ public class LawOfDemeterInspectionTest extends LightJavaInspectionTestCase {
            """);
   }
 
-  @Override
-  protected @Nullable InspectionProfileEntry getInspection() {
-    return new LawOfDemeterInspection();
-  }
-
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       """
       package a;

@@ -4,28 +4,54 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class PointlessBooleanExpressionInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  public void testBoxedEqualsCallBoxed() { doTest(); }
-  public void testBoxedEqualsCallBoxedNullable() { doTest(); }
-  public void testBoxedEqualsCallBoxedNullableReturnValue() { doTest(); }
-  public void testBoxedEqualsCallObject() { doTest(); }
-  public void testBoxedEqualsCallPrimitive() { doTest(); }
-  public void testBoxedEqualsCallPrimitiveParenthesized() { doTest(); }
-  public void testBoxedEqualsSignBoxed() { doTest(); }
-  public void testBoxedEqualsSignBoxedNullable() { doTest(); }
-  public void testBoxedEqualsSignBoxedNullableReturnValue() { doTest(); }
-  public void testBoxedEqualsSignPrimitive() { doTest(); }
-  public void testBoxedEqualsSignPrimitive2() { doTest(); }
-  public void testPointlessBooleanExpression() { doTest(); }
-  public void testRegression() { doTest(); }
-  public void testFlexibleConstructorBodiesNotAvailable() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest); }
+@TestApplication
+public class PointlessBooleanExpressionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
-  @Override
-  protected @NotNull InspectionProfileEntry getInspection() {
+  @Test
+  public void testBoxedEqualsCallBoxed() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testBoxedEqualsCallBoxedNullable() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testBoxedEqualsCallBoxedNullableReturnValue() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testBoxedEqualsCallObject() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testBoxedEqualsCallPrimitive() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testBoxedEqualsCallPrimitiveParenthesized() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testBoxedEqualsSignBoxed() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testBoxedEqualsSignBoxedNullable() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testBoxedEqualsSignBoxedNullableReturnValue() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testBoxedEqualsSignPrimitive() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testBoxedEqualsSignPrimitive2() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testPointlessBooleanExpression() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testRegression() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testFlexibleConstructorBodiesNotAvailable() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture(); IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, inspectionFixture.get()::doTest); }
+
+  private static @NotNull InspectionProfileEntry getInspection() {
     final PointlessBooleanExpressionInspection inspection = new PointlessBooleanExpressionInspection();
     inspection.m_ignoreExpressionsContainingConstants = true;
     return inspection;

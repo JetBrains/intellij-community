@@ -15,40 +15,51 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class NumberEqualityInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class NumberEqualityInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new NumberEqualityInspection());
 
+  @Test
   public void testNumberEquality() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testTernary() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testIfElseWithoutCurlyBraces() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testIfElseWithCurlyBraces() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testBooleanExpression() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testSingleComparisonWithNull() {
-    doTest();
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new NumberEqualityInspection();
+    inspectionFixture.get().doTest();
   }
 }

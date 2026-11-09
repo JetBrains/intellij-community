@@ -15,50 +15,58 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class JavaLangImportInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class JavaLangImportInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new JavaLangImportInspection());
 
+  @Test
   public void testSamePackageConflict() {
-    addEnvironmentClass("package a;" +
+    inspectionFixture.get().addEnvironmentClass("package a;" +
                         "class String {}");
-    doTest("package a;" +
+    inspectionFixture.get().doTest("package a;" +
            "import java.lang.String;" +
            "class X {" +
            "  String s;" +
            "}");
   }
 
+  @Test
   public void testSimple() {
-    doTest("package a;" +
+    inspectionFixture.get().doTest("package a;" +
            "/*Unnecessary import from the 'java.lang' package*/import java.lang.String;/**/" +
            "class X {{" +
            "  String s;" +
            "}}");
   }
 
+  @Test
   public void testPackageOnDemandConflict() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.addClass("""
                                 package b;
                                 class String {
                                 }""");
-    doTest("""
+    inspectionFixture.get().doTest("""
              package a;
              import java.lang.String;
              import b.*;
              class X {
                String s;
              }""");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new JavaLangImportInspection();
   }
 }

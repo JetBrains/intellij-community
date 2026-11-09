@@ -1,22 +1,25 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 import de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnUtilityClassLombokAnnotationInspection;
+import org.junit.jupiter.api.Test;
 
-public class RedundantModifiersOnUtilityClassLombokInspectionTest extends LombokInspectionTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokTestUtil.lombokInspectionFixture;
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/redundantModifierInspection";
-  }
+@TestApplication
+public class RedundantModifiersOnUtilityClassLombokInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lombokInspectionFixture(projectFixture, () -> new RedundantModifiersOnUtilityClassLombokAnnotationInspection(), "/inspection/redundantModifierInspection");
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new RedundantModifiersOnUtilityClassLombokAnnotationInspection();
-  }
-
+  @Test
   public void testUtilityClassClass() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
 }

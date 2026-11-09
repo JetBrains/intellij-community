@@ -1,22 +1,32 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.RecordCanBeClassInspection;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
+@TestApplication
+public class SerializableRecordCanBeClassInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new RecordCanBeClassInspection(), getEnvironmentClasses());
+
+  @Test
   public void testSerializableVersionUIDWithoutSerial() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.Serializable;
              record <warning descr="Record can be converted to class"><caret>R</warning>() implements Serializable {
                @MyAnn
                private static final long serialVersionUID = 1;
                static long number = 10;
              }""");
-    checkQuickFix("Convert record to class", """
+    inspectionFixture.get().checkQuickFix("Convert record to class", """
       import java.io.Serial;
       import java.io.Serializable;
 
@@ -47,8 +57,9 @@ public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspect
       }""");
   }
 
+  @Test
   public void testSerializableVersionUIDWithSerial() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.Serial;
              import java.io.Serializable;
              record <warning descr="Record can be converted to class"><caret>R</warning>() implements Serializable {
@@ -56,7 +67,7 @@ public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspect
                private static final long serialVersionUID = 1;
                static long number = 10;
              }""");
-    checkQuickFix("Convert record to class", """
+    inspectionFixture.get().checkQuickFix("Convert record to class", """
       import java.io.Serial;
       import java.io.Serializable;
 
@@ -87,13 +98,14 @@ public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspect
       }""");
   }
 
+  @Test
   public void testWithoutSerialVersionUID() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.Serializable;
              record <warning descr="Record can be converted to class"><caret>R</warning>() implements Serializable {
                static long number = 10;
              }""");
-    checkQuickFix("Convert record to class", """
+    inspectionFixture.get().checkQuickFix("Convert record to class", """
       import java.io.Serial;
       import java.io.Serializable;
 
@@ -123,14 +135,15 @@ public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspect
       }""");
   }
 
+  @Test
   public void testSerialVersionUIDWithWrongModifier() {
-    doTest("import java.io.Serializable;\n" +
+    inspectionFixture.get().doTest("import java.io.Serializable;\n" +
            "record <warning descr=\"Record can be converted to class\"><caret>R</warning>() implements Serializable {\n" +
            "  static long number = 10;\n" +
            "  @MyAnn\n" +
            "  private static long serialVersionUID = 10;\n" + // not final
            "}");
-    checkQuickFix("Convert record to class", """
+    inspectionFixture.get().checkQuickFix("Convert record to class", """
       import java.io.Serializable;
 
       final class R implements Serializable {
@@ -159,13 +172,7 @@ public class SerializableRecordCanBeClassInspectionTest extends LightJavaInspect
       }""");
   }
 
-  @Override
-  protected @Nullable InspectionProfileEntry getInspection() {
-    return new RecordCanBeClassInspection();
-  }
-
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[]{
       """
 package java.io;

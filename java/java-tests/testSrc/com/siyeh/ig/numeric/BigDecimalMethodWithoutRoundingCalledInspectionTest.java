@@ -1,21 +1,24 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
 @SuppressWarnings({"BigDecimalMethodWithoutRoundingCalled", "BigDecimalLegacyMethod"})
-public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJavaInspectionTestCase {
+public class BigDecimalMethodWithoutRoundingCalledInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new BigDecimalMethodWithoutRoundingCalledInspection(), getEnvironmentClasses());
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new BigDecimalMethodWithoutRoundingCalledInspection();
-  }
-
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       "package java.math;" +
       "public class BigDecimal {" +
@@ -27,9 +30,10 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
     };
   }
 
+  @Test
   public void testSetScale() {
     // noinspection BigDecimalLegacyMethod
-    doTest("import java.math.BigDecimal;" +
+    inspectionFixture.get().doTest("import java.math.BigDecimal;" +
            "class X {" +
            "  static void foo(BigDecimal value) {" +
            "    value = value./*'BigDecimal.setScale()' called without a rounding mode argument*/setScale/**/(2);" +
@@ -38,9 +42,10 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
            "}");
   }
 
+  @Test
   public void testDivide() {
     // noinspection BigDecimalLegacyMethod
-    doTest("import java.math.BigDecimal;" +
+    inspectionFixture.get().doTest("import java.math.BigDecimal;" +
            "class X {" +
            "  static void foo(BigDecimal value) {" +
            "    value = value./*'BigDecimal.divide()' called without a rounding mode argument*/divide/**/(value);" +
@@ -49,8 +54,9 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
            "}");
   }
 
+  @Test
   public void testNoWarnOnOtherMethod() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.math.BigDecimal;
              import java.math.RoundingMode;
              class B {
@@ -62,11 +68,5 @@ public class BigDecimalMethodWithoutRoundingCalledInspectionTest extends LightJa
                      return v != null ? v.setScale(6, RoundingMode.HALF_EVEN) : null;
                  }
              }""");
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
   }
 }

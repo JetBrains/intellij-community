@@ -1,17 +1,29 @@
 package de.plushnikov.intellij.plugin.highlights;
 
-public class StaticConstructorHighlightTest extends AbstractLombokHighlightsTest {
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import de.plushnikov.intellij.plugin.inspection.LombokInspection;
+import org.junit.jupiter.api.Test;
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/staticConstructor";
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokTestUtil.lombokInspectionFixture;
 
+@TestApplication
+public class StaticConstructorHighlightTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lombokInspectionFixture(projectFixture, () -> new LombokInspection(), "/highlights/staticConstructor");
+
+  @Test
   public void testDataDto() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testValueDto() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 }

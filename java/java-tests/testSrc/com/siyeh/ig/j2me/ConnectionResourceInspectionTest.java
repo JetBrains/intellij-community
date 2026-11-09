@@ -15,27 +15,30 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ConnectionResourceInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class ConnectionResourceInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ConnectionResourceInspection(), getEnvironmentClasses());
 
+  @Test
   public void testConnectionResource() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new ConnectionResourceInspection();
-  }
-
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       "package javax.microedition.io;" +
       "public class Connector {" +

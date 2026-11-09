@@ -16,26 +16,40 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnaryPlusInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class UnaryPlusInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
+  @Test
   public void testUnaryPlus() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testUnaryPlusConfusing() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.enableInspections(new UnaryPlusInspection());
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     final UnaryPlusInspection inspection = new UnaryPlusInspection();
     inspection.onlyReportInsideBinaryExpression = false;
     return inspection;

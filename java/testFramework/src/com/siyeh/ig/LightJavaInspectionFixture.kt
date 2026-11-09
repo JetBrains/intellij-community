@@ -214,6 +214,8 @@ class LightJavaInspectionFixture internal constructor(
  *
  * [basePath] is the test data path relative to the community root.
  * By default, it comes from the inspection class, as [LightJavaInspectionTestCase.getBasePath] computes it.
+ * [testDataPath] is an absolute test data path, as an override of [LightJavaInspectionTestCase.getTestDataPath] gives it.
+ * When it is set, the fixture ignores [basePath].
  */
 @TestOnly
 @JvmOverloads
@@ -223,8 +225,9 @@ fun lightJavaInspectionFixture(
   @Language("JAVA") environmentClasses: Array<String> = emptyArray(),
   basePath: String? = null,
   inspectionClass: Class<out InspectionProfileEntry>? = null,
+  testDataPath: String? = null,
 ): TestFixture<LightJavaInspectionFixture> =
-  lightJavaInspectionFixtureByTestName(projectFixture, { inspection.get() }, environmentClasses, basePath, inspectionClass)
+  lightJavaInspectionFixtureByTestName(projectFixture, { inspection.get() }, environmentClasses, basePath, inspectionClass, testDataPath)
 
 /**
  * Creates a [LightJavaInspectionFixture] as [lightJavaInspectionFixture] does, for a class that sets up the inspection for each test.
@@ -238,12 +241,13 @@ fun lightJavaInspectionFixtureByTestName(
   @Language("JAVA") environmentClasses: Array<String> = emptyArray(),
   basePath: String? = null,
   inspectionClass: Class<out InspectionProfileEntry>? = null,
+  testDataPath: String? = null,
 ): TestFixture<LightJavaInspectionFixture> = testFixture("lightJavaInspectionFixture") {
   val fixture = lightJavaCodeInsightFixture(projectFixture).init()
   val tool = inspection.apply(fixture.getTestName(false))
-  val testBasePath = basePath ?: LightJavaInspectionFixture.inspectionBasePath(
-    inspectionClass ?: tool?.javaClass ?: error("Give an inspection, a base path, or an inspection class"))
-  fixture.testDataPath = LightJavaInspectionFixture.inspectionTestDataPath(testBasePath)
+  fixture.testDataPath = testDataPath ?: LightJavaInspectionFixture.inspectionTestDataPath(
+    basePath ?: LightJavaInspectionFixture.inspectionBasePath(
+      inspectionClass ?: tool?.javaClass ?: error("Give an inspection, a base path, an inspection class, or a test data path")))
 
   for (environmentClass in environmentClasses) {
     fixture.addClass(environmentClass)

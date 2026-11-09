@@ -1,17 +1,27 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class SwitchStatementWithTooManyBranchesInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new SwitchStatementWithTooManyBranchesInspection());
 
+  @Test
   public void testSimple() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                        public void foo(int x) {
                             /*'switch' has too many branches (11)*/switch/**/ (x) {
                                case 1:
@@ -43,8 +53,9 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaI
                    """);
   }
 
+  @Test
   public void testJava12() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                        public void foo(int x) {
                             /*'switch' has too many branches (13)*/switch/**/ (x) {
                                case 1 -> {}
@@ -64,8 +75,9 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaI
                    """);
   }
 
+  @Test
   public void testJava13Expression() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                        public int foo(int x) {
                             return /*'switch' has too many branches (13)*/switch/**/ (x) {
                                case 1 -> 0;
@@ -85,8 +97,9 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaI
                    """);
   }
 
+  @Test
   public void testNoWarn() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                        public void foo(int x) {
                             switch (x) {
                                case 1:
@@ -114,11 +127,5 @@ public class SwitchStatementWithTooManyBranchesInspectionTest extends LightJavaI
                            }
                        }\
                    """);
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new SwitchStatementWithTooManyBranchesInspection();
   }
 }

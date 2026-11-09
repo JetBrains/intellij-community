@@ -1,49 +1,64 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CopyConstructorMissesFieldInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class CopyConstructorMissesFieldInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new CopyConstructorMissesFieldInspection());
 
+  @Test
   public void testCopyConstructorMissesField() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testSimple() {
-    doTest("class Simple {" +
+    inspectionFixture.get().doTest("class Simple {" +
            "  private String name;" +
            "  public /*Copy constructor does not copy field 'name'*/Simple/**/(Simple simple) {}" +
            "}");
   }
 
+  @Test
   public void testTwo() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  int one, two;" +
            "  /*Copy constructor does not copy fields 'one' and 'two'*/X/**/(X x) {}" +
            "}");
   }
 
+  @Test
   public void testThree() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  int one, two, three;" +
            "  /*Copy constructor does not copy fields 'one', 'two' and 'three'*/X/**/(X x) {}" +
            "}");
   }
 
+  @Test
   public void testFour() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  int one, two, three, four;" +
            "  /*Copy constructor does not copy 4 fields*/X/**/(X x) {}" +
            "}");
   }
 
+  @Test
   public void testSimpleAssignment() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  int one, two;" +
            "  X(X x) {" +
            "    (this).one = x.one;" +
@@ -52,8 +67,9 @@ public class CopyConstructorMissesFieldInspectionTest extends LightJavaInspectio
            "}");
   }
 
+  @Test
   public void testSimpleThisCall() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  int one, two;" +
            "  X(int one, int two) {" +
            "    this.one = one;" +
@@ -65,8 +81,9 @@ public class CopyConstructorMissesFieldInspectionTest extends LightJavaInspectio
            "}");
   }
 
+  @Test
   public void testGetterThisCall() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  int one, two;" +
            "  X(int one, int two) {" +
            "    this.one = one;" +
@@ -84,8 +101,9 @@ public class CopyConstructorMissesFieldInspectionTest extends LightJavaInspectio
            "}");
   }
 
+  @Test
   public void testGettersAndSetters() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  int one, two;" +
            "  X(X x) {" +
            "    setOne(x.getOne());" +
@@ -98,8 +116,9 @@ public class CopyConstructorMissesFieldInspectionTest extends LightJavaInspectio
            "}");
   }
 
+  @Test
   public void testTransient() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  transient int one;" +
            "  X(X x) {" +
            "    this();" +
@@ -108,8 +127,9 @@ public class CopyConstructorMissesFieldInspectionTest extends LightJavaInspectio
            "}");
   }
 
+  @Test
   public void testMethodCalled() {
-    doTest("import java.util.*;" +
+    inspectionFixture.get().doTest("import java.util.*;" +
            "class X {" +
            "  private List<String> list = new ArrayList<>();" +
            "  X(X x) {" +
@@ -118,19 +138,14 @@ public class CopyConstructorMissesFieldInspectionTest extends LightJavaInspectio
            "}");
   }
 
+  @Test
   public void testContainsOwnCopy() {
-    doTest("class X {" +
+    inspectionFixture.get().doTest("class X {" +
            "  int one, two;" +
            "  X copy;" +
            "  X(X x) {" +
            "    copy = x;" +
            "  }" +
            "}");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new CopyConstructorMissesFieldInspection();
   }
 }

@@ -2,24 +2,29 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/scheduledThreadPoolExecutorWithZeroCoreThreads";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
+public class ScheduledThreadPoolExecutorWithZeroCoreThreadsInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection(), getEnvironmentClasses());
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    inspectionFixture.get().getFixture().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/scheduledThreadPoolExecutorWithZeroCoreThreads");
   }
 
-  @Override
-  protected @Nullable InspectionProfileEntry getInspection() {
-    return new ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection();
-  }
-
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[]{
       """
 package java.util.concurrent;
@@ -38,7 +43,8 @@ public class ScheduledThreadPoolExecutor
     };
   }
 
+  @Test
   public void testSimple() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 }

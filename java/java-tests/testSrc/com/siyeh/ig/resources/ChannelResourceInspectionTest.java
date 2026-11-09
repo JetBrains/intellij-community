@@ -15,22 +15,32 @@
  */
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ChannelResourceInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class ChannelResourceInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ChannelResourceInspection());
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    addEnvironmentClass("package java.nio.channels;" +
+  @BeforeEach
+  void setUp() {
+    inspectionFixture.get().addEnvironmentClass("package java.nio.channels;" +
                         "public interface Channel extends java.io.Closeable {}");
-    addEnvironmentClass("package java.nio.channels;" +
+    inspectionFixture.get().addEnvironmentClass("package java.nio.channels;" +
                         "public interface FileChannel extends Channel {}");
-    addEnvironmentClass("package java.net;" +
+    inspectionFixture.get().addEnvironmentClass("package java.net;" +
                         "import java.nio.channels.FileChannel;" +
                         "public class SocketInputStream implements java.io.Closeable {" +
                         "  public FileChannel getChannel() {" +
@@ -40,8 +50,9 @@ public class ChannelResourceInspectionTest extends LightJavaInspectionTestCase {
                         "}");
   }
 
+  @Test
   public void testFactoryClosed() {
-    doTest("import java.net.*;" +
+    inspectionFixture.get().doTest("import java.net.*;" +
            "import java.io.*;" +
            "class X {" +
            "  void m() throws IOException {" +
@@ -55,8 +66,9 @@ public class ChannelResourceInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  @Test
   public void testSimple() {
-    doTest("import java.net.*;" +
+    inspectionFixture.get().doTest("import java.net.*;" +
            "import java.io.*;" +
            "class X {" +
            "  void m(SocketInputStream ss) throws IOException {" +
@@ -65,8 +77,9 @@ public class ChannelResourceInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  @Test
   public void testChannelClosed() {
-    doTest("import java.net.*;" +
+    inspectionFixture.get().doTest("import java.net.*;" +
            "import java.io.*;" +
            "class X {" +
            "  void m(SocketInputStream ss) throws IOException {" +
@@ -78,10 +91,5 @@ public class ChannelResourceInspectionTest extends LightJavaInspectionTestCase {
            "    }" +
            "  }" +
            "}");
-  }
-
-  @Override
-  protected LocalInspectionTool getInspection() {
-    return new ChannelResourceInspection();
   }
 }

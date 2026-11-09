@@ -1,17 +1,25 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryInitCauseInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class UnnecessaryInitCauseInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new UnnecessaryInitCauseInspection(), getEnvironmentClasses());
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       "package java.util;" +
       "public\n" +
@@ -22,8 +30,9 @@ public class UnnecessaryInitCauseInspectionTest extends LightJavaInspectionTestC
     };
   }
 
+  @Test
   public void testSplitDeclarationAssignment() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                    void foo() {
                         RuntimeException exception = null;
                         try {
@@ -38,8 +47,9 @@ public class UnnecessaryInitCauseInspectionTest extends LightJavaInspectionTestC
                    }""");
   }
 
+  @Test
   public void testReassigned() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                    void foo() {
                        try {
                            new java.io.FileInputStream("asdf");
@@ -52,9 +62,10 @@ public class UnnecessaryInitCauseInspectionTest extends LightJavaInspectionTestC
                    }""");
   }
 
+  @Test
   public void testIncompatibleType() {
     //noinspection EmptyTryBlock
-    doTest("import java.io.*;" +
+    inspectionFixture.get().doTest("import java.io.*;" +
            "class X {" +
            "  void m() throws Exception {" +
            "    try {" +
@@ -71,17 +82,12 @@ public class UnnecessaryInitCauseInspectionTest extends LightJavaInspectionTestC
            "}");
   }
 
+  @Test
   @SuppressWarnings("ThrowableNotThrown")
   public void testNotAccessible() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;class X {  static void z() {    RuntimeException cause = new RuntimeException();
                  MissingResourceException e = new MissingResourceException("asdf", "asdf", "asdf");
                  e.initCause(cause);  }}""");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new UnnecessaryInitCauseInspection();
   }
 }

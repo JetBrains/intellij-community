@@ -16,15 +16,27 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixtureByTestName;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class TrivialIfInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixtureByTestName(projectFixture, testName -> getInspection(testName));
 
+  @Test
   public void testParenthesesReturn() {
-    doMemberTest("boolean b(int[] array) {" +
+    inspectionFixture.get().doMemberTest("boolean b(int[] array) {" +
                  "  /*'if' statement can be simplified*/if/**/ (array.length == 10) {" +
                  "    return (true);" +
                  "  } else{" +
@@ -33,8 +45,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                  "}");
   }
 
+  @Test
   public void testParenthesesReturnNestedIf() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
 
                      boolean b(int[] array) {
                        if (array != null) {
@@ -46,8 +59,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                    """);
   }
 
+  @Test
   public void testParenthesesAssignment() {
-    doMemberTest("void b(int[] array) {" +
+    inspectionFixture.get().doMemberTest("void b(int[] array) {" +
                  "  boolean result;" +
                  "  /*'if' statement can be simplified*/if/**/ (array.length == 10) {" +
                  "    result = (true);" +
@@ -57,8 +71,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                  "}");
   }
 
+  @Test
   public void testReturn() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
 
                      boolean b(int x) {
                        if (x > 20) return true;
@@ -68,8 +83,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                    """);
   }
 
+  @Test
   public void testReturnIgnoreChain() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
 
                      boolean b(int x) {
                        if (x > 20) return true;
@@ -79,8 +95,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                    """);
   }
 
+  @Test
   public void testAssert() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
 
                      void test(int x) {
                        /*'if' statement can be simplified*/if/**/ (x > 20) assert false;
@@ -88,8 +105,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                    """);
   }
 
+  @Test
   public void testIgnoreAssert() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
 
                      void test(int x) {
                        if (x > 20) assert false;
@@ -97,8 +115,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                    """);
   }
 
+  @Test
   public void testReturnElseIf() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
 
                      boolean b(int x) {
                        if (x > 20) return true;
@@ -108,8 +127,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                    """);
   }
 
+  @Test
   public void testReturnElseIfIgnoreChain() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
 
                      boolean b(int x) {
                        if (x > 20) return true;
@@ -119,9 +139,10 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                    """);
   }
   
+  @Test
   public void testReturnEqualBranches() {
     // no warning: another inspection takes care about this
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
 
                      boolean b(int x) {
                        if (x > 20) return true;
@@ -130,8 +151,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                    """);
   }
 
+  @Test
   public void testMethodCall() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                    void test(int x, Boolean foo) {
                      if (x == 0) System.out.println(foo);
                      else {
@@ -141,8 +163,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                    }""");
   }
 
+  @Test
   public void testOverwrittenDeclaration() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                    boolean test(int x) {
                      boolean result = false;
                      /*'if' statement can be simplified*/if/**/ (x == 0) result = true;
@@ -150,8 +173,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                    }""");
   }
 
+  @Test
   public void testArrayWriteIncrement() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                  void test(int[] arr, int idx, int i, int j) {
                    arr[idx++] = i;
                    if (i != j) {
@@ -160,8 +184,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                  }""");
   }
 
+  @Test
   public void testArrayWrite() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                  void test(int[] arr, int idx, int i, int j) {
                    arr[idx] = i;
                    /*'if' statement can be simplified*/if/**/ (i != j) {
@@ -170,10 +195,9 @@ public class TrivialIfInspectionTest extends LightJavaInspectionTestCase {
                  }""");
   }
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection(String methodName) {
     TrivialIfInspection inspection = new TrivialIfInspection();
-    String testName = getTestName(false);
+    String testName = methodName;
     if (testName.endsWith("IgnoreChain")) {
       inspection.ignoreChainedIf = true;
     }

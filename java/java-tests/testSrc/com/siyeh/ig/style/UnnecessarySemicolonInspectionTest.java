@@ -15,26 +15,26 @@
  */
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class UnnecessarySemicolonInspectionTest extends LightJavaInspectionTestCase {
-  public void testUnnecessarySemicolon() { doTest(); }
-  public void testNoWarningOnRedCode() { doTest(); }
-  public void testModuleInfo() { doNamedTest("module-info"); }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
-  }
+@TestApplication
+public class UnnecessarySemicolonInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new UnnecessarySemicolonInspection());
 
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new UnnecessarySemicolonInspection();
-  }
+  @Test
+  public void testUnnecessarySemicolon() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testNoWarningOnRedCode() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testModuleInfo() { inspectionFixture.get().doNamedTest("module-info"); }
 }

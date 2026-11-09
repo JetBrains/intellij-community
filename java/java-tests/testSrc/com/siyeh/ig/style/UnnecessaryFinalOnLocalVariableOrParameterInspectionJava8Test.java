@@ -1,14 +1,25 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
+@TestApplication
+public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new UnnecessaryFinalOnLocalVariableOrParameterInspection());
+
+  @Test
   public void testFinalWithoutInnerClass() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Issue {
                  public static void main(String[] args) {
                      /*Unnecessary 'final' on variable 's'*/final/**/ int s;
@@ -27,22 +38,26 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test exten
              }""");
   }
 
+  @Test
   public void testInterfaceMethods() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
     inspection.onlyWarnOnAbstractMethods = true;
     myFixture.enableInspections(inspection);
-    doTest("interface X {" +
+    inspectionFixture.get().doTest("interface X {" +
            "  default void m(final String s) {}" +
            "  static void n(final String s) {}" +
            "  void o(/*Unnecessary 'final' on parameter 's'*/final/**/ String s);" +
            "}");
   }
   
+  @Test
   public void testTryWithResources() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
     inspection.reportLocalVariables = false;
     myFixture.enableInspections(inspection);
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.io.*;
              import java.util.*;
 
@@ -70,11 +85,13 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test exten
              }""");
   }
 
+  @Test
   public void testForeachParametersDisabled() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
     inspection.reportForeachParameters = false;
     myFixture.enableInspections(inspection);
-    doTest("""
+    inspectionFixture.get().doTest("""
                       import java.util.Arrays;
              
                       class FinalTest {
@@ -87,11 +104,13 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test exten
              """);
   }
 
+  @Test
   public void testForeachParametersEnabled() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
     inspection.reportForeachParameters = true;
     myFixture.enableInspections(inspection);
-    doTest("""
+    inspectionFixture.get().doTest("""
                       import java.util.Arrays;
              
                       class FinalTest {
@@ -104,11 +123,13 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test exten
              """);
   }
 
+  @Test
   public void testCatchParametersDisabled() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
     inspection.reportCatchParameters = false;
     myFixture.enableInspections(inspection);
-    doTest("""
+    inspectionFixture.get().doTest("""
                       import java.io.*;
              
                       class FinalTest {
@@ -124,11 +145,13 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test exten
              """);
   }
 
+  @Test
   public void testCatchParametersEnabled() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final UnnecessaryFinalOnLocalVariableOrParameterInspection inspection = new UnnecessaryFinalOnLocalVariableOrParameterInspection();
     inspection.reportCatchParameters = true;
     myFixture.enableInspections(inspection);
-    doTest("""
+    inspectionFixture.get().doTest("""
                       import java.io.*;
              
                       class FinalTest {
@@ -141,11 +164,5 @@ public class UnnecessaryFinalOnLocalVariableOrParameterInspectionJava8Test exten
                         }
                       }
              """);
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new UnnecessaryFinalOnLocalVariableOrParameterInspection();
   }
 }

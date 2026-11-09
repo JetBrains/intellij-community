@@ -16,18 +16,31 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.ArrayUtilRt;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class NativeMethodNamingConventionInspectionTest extends AbstractMethodNamingConventionInspectionTest {
+@TestApplication
+public class NativeMethodNamingConventionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection(), ArrayUtilRt.EMPTY_STRING_ARRAY, null, NewMethodNamingConventionInspection.class);
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     NewMethodNamingConventionInspection inspection = new NewMethodNamingConventionInspection();
     inspection.setEnabled(true,new NativeMethodNamingConvention().getShortName());
     return inspection;
   }
 
-  public void testNativeMethodNamingConvention() { doTest(); }
+  @Test
+  public void testNativeMethodNamingConvention() { inspectionFixture.get().doTest(); }
 }

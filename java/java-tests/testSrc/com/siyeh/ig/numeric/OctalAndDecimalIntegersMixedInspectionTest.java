@@ -15,34 +15,41 @@
  */
 package com.siyeh.ig.numeric;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class OctalAndDecimalIntegersMixedInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class OctalAndDecimalIntegersMixedInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new OctalAndDecimalIntegersMixedInspection());
 
+  @Test
   public void testSimple() {
-    doStatementTest("int[] is = /*Octal and decimal integers in the same array initializer*/{34, 987, (007), 661}/**/;");
+    inspectionFixture.get().doStatementTest("int[] is = /*Octal and decimal integers in the same array initializer*/{34, 987, (007), 661}/**/;");
   }
 
+  @Test
   public void testBinaryLiteral() {
-    doStatementTest("int[] elapsed = {1, 13, 0b11001};");
+    inspectionFixture.get().doStatementTest("int[] elapsed = {1, 13, 0b11001};");
   }
 
+  @Test
   public void testZeroesAllowed() {
-    doStatementTest("long[] ns =  new long[] {033L, 0L, 025L};");
+    inspectionFixture.get().doStatementTest("long[] ns =  new long[] {033L, 0L, 025L};");
   }
 
+  @Test
   public void testZeroesAllowed2() {
-    doStatementTest("int[] ns =  new int[] {033, 0, 025};");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new OctalAndDecimalIntegersMixedInspection();
+    inspectionFixture.get().doStatementTest("int[] ns =  new int[] {033, 0, 025};");
   }
 }

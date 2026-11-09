@@ -15,27 +15,27 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class PrivateMemberAccessBetweenOuterAndInnerClassInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class PrivateMemberAccessBetweenOuterAndInnerClassInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_9);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new PrivateMemberAccessBetweenOuterAndInnerClassInspection());
 
-  public void testSimple() { doTest(); }
-  public void testPrivateMemberAccessBetweenOuterAndInnerClass() { doTest(); }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new PrivateMemberAccessBetweenOuterAndInnerClassInspection();
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_9;
-  }
+  @Test
+  public void testSimple() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testPrivateMemberAccessBetweenOuterAndInnerClass() { inspectionFixture.get().doTest(); }
 }

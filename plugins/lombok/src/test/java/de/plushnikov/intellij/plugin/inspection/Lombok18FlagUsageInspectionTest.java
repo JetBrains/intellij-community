@@ -1,28 +1,29 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class Lombok18FlagUsageInspectionTest extends LombokInspectionTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokTestUtil.lombokInspectionFixture;
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR;
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new LombokFlagUsageInspection();
-  }
+@TestApplication
+public class Lombok18FlagUsageInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA_1_8_DESCRIPTOR);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lombokInspectionFixture(projectFixture, () -> new LombokFlagUsageInspection(), "");
 
   /**
    * Test for var on local variables with flag usage set to WARNING
    */
+  @Test
   public void testVarLocalVariableFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.var;
 
@@ -44,7 +45,9 @@ public class Lombok18FlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for var on parameters with flag usage set to WARNING
    */
+  @Test
   public void testVarParameterFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.var;
       import java.util.Arrays;

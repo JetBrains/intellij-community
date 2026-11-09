@@ -1,19 +1,29 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.Test;
 
-public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokTestUtil.lombokInspectionFixture;
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new LombokFlagUsageInspection();
-  }
+@TestApplication
+public class LombokFlagUsageInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lombokInspectionFixture(projectFixture, () -> new LombokFlagUsageInspection(), "");
 
   /**
    * Test for Data annotation with flag usage set to WARNING
    */
+  @Test
   public void testDataFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Data;
 
@@ -34,7 +44,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Data annotation with flag usage set to ERROR
    */
+  @Test
   public void testDataFlagUsageError() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Data;
 
@@ -55,7 +67,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Data annotation with flag usage set to ALLOW
    */
+  @Test
   public void testDataFlagUsageAllow() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Data;
 
@@ -76,7 +90,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Value annotation with flag usage set to WARNING
    */
+  @Test
   public void testValueFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Value;
 
@@ -97,7 +113,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Getter annotation with flag usage set to WARNING
    */
+  @Test
   public void testGetterFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Getter;
 
@@ -118,7 +136,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Setter annotation with flag usage set to WARNING
    */
+  @Test
   public void testSetterFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Setter;
 
@@ -139,7 +159,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Builder annotation with flag usage set to WARNING
    */
+  @Test
   public void testBuilderFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Builder;
 
@@ -160,7 +182,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for SuperBuilder annotation with flag usage set to WARNING
    */
+  @Test
   public void testSuperBuilderFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.experimental.SuperBuilder;
 
@@ -181,7 +205,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Experimental flag usage set to WARNING (affects SuperBuilder)
    */
+  @Test
   public void testExperimentalFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.experimental.SuperBuilder;
 
@@ -202,7 +228,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Getter(lazy=true) with lazy flag usage set to WARNING
    */
+  @Test
   public void testGetterLazyFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Getter;
 
@@ -223,7 +251,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for onX parameter with flag usage set to WARNING
    */
+  @Test
   public void testOnXFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Getter;
       import java.lang.annotation.ElementType;
@@ -252,7 +282,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for EqualsAndHashCode annotation with flag usage set to WARNING
    */
+  @Test
   public void testEqualsAndHashCodeFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.EqualsAndHashCode;
 
@@ -273,7 +305,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for ToString annotation with flag usage set to WARNING
    */
+  @Test
   public void testToStringFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.ToString;
 
@@ -294,7 +328,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for With annotation with flag usage set to WARNING
    */
+  @Test
   public void testWithFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.With;
 
@@ -315,7 +351,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for SneakyThrows annotation with flag usage set to WARNING
    */
+  @Test
   public void testSneakyThrowsFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.SneakyThrows;
 
@@ -338,7 +376,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Synchronized annotation with flag usage set to WARNING
    */
+  @Test
   public void testSynchronizedFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Synchronized;
 
@@ -361,7 +401,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Cleanup annotation with flag usage set to WARNING
    */
+  @Test
   public void testCleanupFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Cleanup;
       import java.io.FileInputStream;
@@ -386,7 +428,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for NonNull annotation with flag usage set to WARNING
    */
+  @Test
   public void testNonNullFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.NonNull;
 
@@ -407,7 +451,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Delegate annotation with flag usage set to WARNING
    */
+  @Test
   public void testDelegateFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Delegate;
       import java.util.ArrayList;
@@ -430,7 +476,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Jacksonized annotation with flag usage set to WARNING
    */
+  @Test
   public void testJacksonizedFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Builder;
       import lombok.extern.jackson.Jacksonized;
@@ -453,7 +501,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for AllArgsConstructor annotation with flag usage set to WARNING
    */
+  @Test
   public void testAllArgsConstructorFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.AllArgsConstructor;
 
@@ -475,7 +525,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for NoArgsConstructor annotation with flag usage set to WARNING
    */
+  @Test
   public void testNoArgsConstructorFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.NoArgsConstructor;
 
@@ -497,7 +549,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for RequiredArgsConstructor annotation with flag usage set to WARNING
    */
+  @Test
   public void testRequiredArgsConstructorFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.RequiredArgsConstructor;
 
@@ -519,7 +573,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for AnyConstructor flag usage set to WARNING (affects all constructor annotations)
    */
+  @Test
   public void testAnyConstructorFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.AllArgsConstructor;
 
@@ -541,7 +597,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Helper annotation with flag usage set to WARNING
    */
+  @Test
   public void testHelperFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.experimental.Helper;
 
@@ -564,7 +622,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for UtilityClass annotation with flag usage set to WARNING
    */
+  @Test
   public void testUtilityClassFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.experimental.UtilityClass;
 
@@ -587,7 +647,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Tolerate annotation with flag usage set to WARNING
    */
+  @Test
   public void testTolerateFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.experimental.Tolerate;
       import lombok.Getter;
@@ -614,7 +676,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for Locked annotation with flag usage set to WARNING
    */
+  @Test
   public void testLockedFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.Locked;
 
@@ -636,7 +700,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for val on local variables with flag usage set to WARNING
    */
+  @Test
   public void testValLocalVariableFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.val;
 
@@ -658,7 +724,9 @@ public class LombokFlagUsageInspectionTest extends LombokInspectionTest {
   /**
    * Test for val on parameters with flag usage set to WARNING
    */
+  @Test
   public void testValParameterFlagUsageWarning() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final @Language("JAVA") String testClassText = """
       import lombok.val;
       import java.util.Arrays;

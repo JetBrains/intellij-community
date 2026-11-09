@@ -2,18 +2,28 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class StringConcatenationArgumentToLogCallInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected LocalInspectionTool getInspection() {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixtureByTestName;
+
+@TestApplication
+public class StringConcatenationArgumentToLogCallInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixtureByTestName(projectFixture, testName -> getInspection(testName), getEnvironmentClasses());
+
+  private static LocalInspectionTool getInspection(String testName) {
     final StringConcatenationArgumentToLogCallInspection inspection = new StringConcatenationArgumentToLogCallInspection();
-    inspection.warnLevel = "WarnLevel".equals(getTestName(false)) ? 3 : 0; // debug level and lower
+    inspection.warnLevel = "WarnLevel".equals(testName) ? 3 : 0; // debug level and lower
     return inspection;
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[]{
       """
       package org.slf4j;
@@ -64,8 +74,9 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
     };
   }
 
+  @Test
   public void testBasic() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import org.slf4j.*;
              class X {
                void foo() {
@@ -78,8 +89,9 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
            );
   }
 
+  @Test
   public void testWarnLevel() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import org.slf4j.*;
              class X {
                Logger LOG = LoggerFactory.getLogger(X.class);
@@ -89,8 +101,9 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
              }""");
   }
 
+  @Test
   public void testLog4j2() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import org.apache.logging.log4j.*;
              class Logging {
                private static final Logger LOG = LogManager.getLogger();
@@ -101,8 +114,9 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
              }""");
   }
 
+  @Test
   public void testLog4j2FormattedLogger() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import org.apache.logging.log4j.*;
              
              final class Log4JFormatted {
@@ -115,8 +129,9 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
              }""");
   }
 
+  @Test
   public void testLog4j2LogBuilder() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import org.apache.logging.log4j.*;
              class Logging {
                private static final Logger LOG = LogManager.getLogger();
@@ -128,8 +143,9 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
   }
 
 
+  @Test
   public void testSlfStringFormat() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import org.slf4j.*;
              class X {
                void foo() {
@@ -139,8 +155,9 @@ public class StringConcatenationArgumentToLogCallInspectionTest extends LightJav
              }"""
     );
   }
+  @Test
   public void testSlfMessageFormat() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import org.slf4j.*;
              import java.text.MessageFormat;
 

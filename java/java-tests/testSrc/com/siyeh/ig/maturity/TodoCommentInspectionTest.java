@@ -3,19 +3,34 @@ package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.TodoCommentInspection;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
-public class TodoCommentInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
+@TestApplication
+public class TodoCommentInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
+
+  @Test
   public void testNoDuplicates() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class A {
              // /*TODO comment 'todo fixme'*/todo fixme/**/
              }""");
   }
 
+  @Test
   public void testOnlyHighlightLineWithTodo() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.configureByText("X.java", """
                                 /**
                                  * Very useful class
@@ -27,7 +42,9 @@ public class TodoCommentInspectionTest extends LightJavaInspectionTestCase {
     myFixture.testHighlighting(true, false, false);
   }
 
+  @Test
   public void testOnlyWarnOnEmpty() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.enableInspections(new TodoCommentInspection());
     myFixture.configureByText("X.java", """
       class X {
@@ -43,8 +60,7 @@ public class TodoCommentInspectionTest extends LightJavaInspectionTestCase {
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     final TodoCommentInspection inspection = new TodoCommentInspection();
     inspection.onlyWarnOnEmpty = false;
     return inspection;

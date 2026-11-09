@@ -15,18 +15,28 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings("AnonymousHasLambdaAlternative")
-public class ThreadLocalNotStaticFinalInspectionTest extends LightJavaInspectionTestCase {
+public class ThreadLocalNotStaticFinalInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ThreadLocalNotStaticFinalInspection());
 
+  @Test
   public void testSimple() {
-    doTest("class A {" +
+    inspectionFixture.get().doTest("class A {" +
            "  private ThreadLocal /*ThreadLocal 'tl' is not declared 'static final'*/tl/**/ = new ThreadLocal() {" +
            "    @Override " +
            "    protected Object initialValue() {" +
@@ -36,8 +46,9 @@ public class ThreadLocalNotStaticFinalInspectionTest extends LightJavaInspection
            "}");
   }
 
+  @Test
   public void testNoWarning() {
-    doTest("class A {" +
+    inspectionFixture.get().doTest("class A {" +
            "  private static final ThreadLocal tl = new ThreadLocal() {" +
            "    @Override " +
            "    protected Object initialValue() {" +
@@ -45,11 +56,5 @@ public class ThreadLocalNotStaticFinalInspectionTest extends LightJavaInspection
            "    }" +
            "  };" +
            "}");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new ThreadLocalNotStaticFinalInspection();
   }
 }

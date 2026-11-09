@@ -1,24 +1,36 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.dataflow;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class UnnecessaryLocalVariableInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new UnnecessaryLocalVariableInspection();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  public void testUnnecessaryLocalVariable() { doTest(); }
+@TestApplication
+public class UnnecessaryLocalVariableInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new UnnecessaryLocalVariableInspection());
+
+  @Test
+  public void testUnnecessaryLocalVariable() { inspectionFixture.get().doTest(); }
   
-  public void testCastNecessary() { doTest(); }
+  @Test
+  public void testCastNecessary() { inspectionFixture.get().doTest(); }
 
-  public void testTree() { doTest(); }
+  @Test
+  public void testTree() { inspectionFixture.get().doTest(); }
 
-  public void testSwitchExpression() { doTest(); }
+  @Test
+  public void testSwitchExpression() { inspectionFixture.get().doTest(); }
 
-  public void testEffectivelyFinalVariableInGuard() { doTest(); }
+  @Test
+  public void testEffectivelyFinalVariableInGuard() { inspectionFixture.get().doTest(); }
 
-  public void testUnknownExpression() { doTest(); }
+  @Test
+  public void testUnknownExpression() { inspectionFixture.get().doTest(); }
 }

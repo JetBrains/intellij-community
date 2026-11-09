@@ -15,16 +15,27 @@
  */
 package com.siyeh.ig.visibility;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class TypeParameterHidesVisibleTypeInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class TypeParameterHidesVisibleTypeInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new TypeParameterHidesVisibleTypeInspection());
 
+  @Test
   public void testSimple() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;
              abstract class TypeParameterHidesVisibleTypeInspection<List> {
                  private Map map = new HashMap();
@@ -37,8 +48,9 @@ public class TypeParameterHidesVisibleTypeInspectionTest extends LightJavaInspec
              """);
   }
 
+  @Test
   public void testHiddenTypeParameter() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;
               abstract class MyList<T> extends AbstractList<T> {
                  private List<T> elements;
@@ -49,8 +61,9 @@ public class TypeParameterHidesVisibleTypeInspectionTest extends LightJavaInspec
              """);
   }
 
+  @Test
   public void testCanNotHideFromStaticContext() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Y<T> {
                  static class X<T> {
                      T t;
@@ -61,8 +74,9 @@ public class TypeParameterHidesVisibleTypeInspectionTest extends LightJavaInspec
              }""");
   }
 
+  @Test
   public void testCannotHideFromImplicitStaticContext() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              interface G<T> {
                  class I {
                      class H<T>  {
@@ -70,10 +84,5 @@ public class TypeParameterHidesVisibleTypeInspectionTest extends LightJavaInspec
                      }
                  }
              }""");
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new TypeParameterHidesVisibleTypeInspection();
   }
 }

@@ -16,29 +16,45 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ClassEscapesItsScopeInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class ClassEscapesItsScopeInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
+
   private ClassEscapesItsScopeInspection myInspection = new ClassEscapesItsScopeInspection();
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     myInspection = null;
-    super.tearDown();
   }
 
+  @Test
   public void testClassEscapesItsScope() { doTest(true, true); }
 
+  @Test
   public void testGenericParameterEscapesItsScope() { doTest(true, true); }
 
+  @Test
   public void testExposedByPublic() {
     doTest(true, false);
   }
 
+  @Test
   public void testExposedByPackageLocal() {
     doTest(false, true);
   }
@@ -47,7 +63,7 @@ public class ClassEscapesItsScopeInspectionTest extends LightJavaInspectionTestC
     myInspection.checkPublicApi = checkPublicApi;
     myInspection.checkPackageLocal = checkPackageLocal;
     try {
-      doTest();
+      inspectionFixture.get().doTest();
     }
     finally {
       myInspection.checkPublicApi = myInspection.checkPackageLocal = false;
@@ -55,8 +71,7 @@ public class ClassEscapesItsScopeInspectionTest extends LightJavaInspectionTestC
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private InspectionProfileEntry getInspection() {
     return myInspection;
   }
 }

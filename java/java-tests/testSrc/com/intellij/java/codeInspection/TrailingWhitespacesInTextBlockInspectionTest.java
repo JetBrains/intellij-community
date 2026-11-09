@@ -2,57 +2,75 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.TrailingWhitespacesInTextBlockInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class TrailingWhitespacesInTextBlockInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  public void testBadTextBlock() { doTest(); }
+@TestApplication
+public class TrailingWhitespacesInTextBlockInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new TrailingWhitespacesInTextBlockInspection());
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    inspectionFixture.get().getFixture().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/trailingWhitespacesInTextBlock");
+  }
+
+  @Test
+  public void testBadTextBlock() { inspectionFixture.get().doTest(); }
+  @Test
   public void testBlankLine() { doTestAll(); }
+  @Test
   public void testEmptyLine() { doTestEscape(); }
+  @Test
   public void testEmptyLastLine() { doTestAll(); }
+  @Test
   public void testOneLineBlock() { doTestAll(); }
+  @Test
   public void testReplaceAtTheEnd() { doTestEscape(); }
+  @Test
   public void testStringTemplate1Java21Preview() { doTestEscape(); }
+  @Test
   public void testStringTemplate2Java21Preview() { doTestEscape(); }
+  @Test
   public void testStringTemplate3Java21Preview() { doTestEscape(); }
+  @Test
   public void testStringTemplate4Java21Preview() { doTestEscape(); }
-  public void testStringTemplate5() { doTest(); }
+  @Test
+  public void testStringTemplate5() { inspectionFixture.get().doTest(); }
+  @Test
   public void testStringTemplate6() { doTestAll(); }
+  @Test
   public void testStringTemplateOneLine() { doTestAll(); }
+  @Test
   public void testTrailingSpaces() { doTestAll(); }
+  @Test
   public void testTrailingTabs() { doTestEscape(); }
+  @Test
   public void testWithBlankLines() { doTestAll(); }
+  @Test
   public void testWithEndQuotes() { doTestAll(); }
-  public void testWithoutTrailingSpaces() { doTest(); }
+  @Test
+  public void testWithoutTrailingSpaces() { inspectionFixture.get().doTest(); }
+  @Test
   public void testWithUnicodeEscapes() { doTestEscape(); }
 
-  @Override
-  protected @Nullable InspectionProfileEntry getInspection() {
-    return new TrailingWhitespacesInTextBlockInspection();
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/trailingWhitespacesInTextBlock";
-  }
-
   private void doTestEscape() {
-    doTest();
-    checkQuickFix("Escape trailing whitespace characters");
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFix("Escape trailing whitespace characters");
   }
 
   private void doTestAll() {
-    doTest();
-    checkQuickFixAll();
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 }

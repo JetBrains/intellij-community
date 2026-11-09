@@ -1,21 +1,24 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.defUse.DefUseInspection;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokTestUtil.lombokInspectionFixture;
 
-public class DefUseInitializerTest extends LombokInspectionTest {
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/defUse";
-  }
+@TestApplication
+public class DefUseInitializerTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lombokInspectionFixture(projectFixture, () -> new DefUseInspection(), "/inspection/defUse");
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new DefUseInspection();
-  }
-
+  @Test
   public void testUnusedInitializerBuilderDefault() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 }

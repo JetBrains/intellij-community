@@ -1,20 +1,23 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import de.plushnikov.intellij.plugin.LombokTestUtil;
+import org.junit.jupiter.api.Test;
 
-public class FieldDefaultsOnEnumInspectionTest extends LombokInspectionTest {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static de.plushnikov.intellij.plugin.LombokTestUtil.lombokInspectionFixture;
 
-  @Override
-  protected String getBasePath() {
-    return super.getBasePath() + "/" + TEST_DATA_INSPECTION_DIRECTORY + "/fielddefaults";
-  }
+@TestApplication
+public class FieldDefaultsOnEnumInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LombokTestUtil.LOMBOK_JAVA21_DESCRIPTOR);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lombokInspectionFixture(projectFixture, () -> null, "/inspection/fielddefaults");
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return null;
-  }
-
+  @Test
   public void testEnumClass() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 }

@@ -15,17 +15,28 @@
  */
 package com.siyeh.ig.resources;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings("ALL")
-public class JDBCResourceInspectionTest extends LightJavaInspectionTestCase {
+public class JDBCResourceInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new JDBCResourceInspection());
 
+  @Test
   public void testCorrectClose() {
-    doTest("import java.sql.*;" +
+    inspectionFixture.get().doTest("import java.sql.*;" +
            "class X {" +
            "    public void m(Driver driver) throws SQLException {" +
            "        Connection connection = connection = driver.connect(\"foo\", null);\n" +
@@ -38,8 +49,9 @@ public class JDBCResourceInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  @Test
   public void testARM() {
-    doTest("import java.sql.*;\n" +
+    inspectionFixture.get().doTest("import java.sql.*;\n" +
            "class X {\n" +
            "  void m(Driver driver) throws SQLException {\n" +
            "    try (Connection connection = driver.connect(\"jdbc\", null);\n" +
@@ -51,8 +63,9 @@ public class JDBCResourceInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  @Test
   public void testSimple() {
-    doTest("import java.sql.*;" +
+    inspectionFixture.get().doTest("import java.sql.*;" +
            "class X {" +
            "  void m(Driver driver) throws SQLException {" +
            "    driver./*'Connection' should be opened in front of a 'try' block and closed in the corresponding 'finally' block*/connect/**/(\"jdbc\", null);" +
@@ -60,17 +73,13 @@ public class JDBCResourceInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  @Test
   public void testPreparedStatement() {
-    doTest("import java.sql.*;" +
+    inspectionFixture.get().doTest("import java.sql.*;" +
            "class X {" +
            "  void m(PreparedStatement s) throws SQLException {" +
            "    ResultSet r = s./*'ResultSet' should be opened in front of a 'try' block and closed in the corresponding 'finally' block*/executeQuery/**/();" +
            "  }" +
            "}");
-  }
-
-  @Override
-  protected LocalInspectionTool getInspection() {
-    return new JDBCResourceInspection();
   }
 }

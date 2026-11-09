@@ -2,44 +2,57 @@
 package com.siyeh.ig.logging;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixtureByTestName;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class LoggerInitializedWithForeignClassInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixtureByTestName(projectFixture, testName -> getInspection(testName), getEnvironmentClasses());
 
+  @Test
   public void testLoggerInitializedWithForeignClass() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testLog4J2() {
-    doTest();
-    checkQuickFixAll();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 
+  @Test
   public void testIgnoreNonPublicClasses() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testIgnoreNotFinalField() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection(String testName) {
     final LoggerInitializedWithForeignClassInspection inspection = new LoggerInitializedWithForeignClassInspection();
     inspection.ignoreSuperClass = true;
-    String name = getTestName(false);
+    String name = testName;
     inspection.ignoreNotFinalField = name.endsWith("IgnoreNotFinalField");
     inspection.ignoreNonPublicClasses = name.endsWith("IgnoreNonPublicClasses");
     return inspection;
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       "package java.util.logging;" +
       "public class Logger {" +

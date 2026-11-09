@@ -2,27 +2,39 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixtureByTestName;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LoopStatementsThatDontLoopInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class LoopStatementsThatDontLoopInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixtureByTestName(projectFixture, testName -> getInspection(testName));
 
+  @Test
   public void testLoopStatementsThatDontLoop() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testIgnoreForeach() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection(String testName) {
     final LoopStatementsThatDontLoopInspection inspection = new LoopStatementsThatDontLoopInspection();
-    inspection.ignoreForeach = getTestName(false).equals("IgnoreForeach");
+    inspection.ignoreForeach = testName.equals("IgnoreForeach");
     return inspection;
   }
 }

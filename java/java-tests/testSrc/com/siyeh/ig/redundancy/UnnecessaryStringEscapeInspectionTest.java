@@ -2,32 +2,57 @@
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.ArrayUtilRt;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class UnnecessaryStringEscapeInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21_ANNOTATED);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection(), ArrayUtilRt.EMPTY_STRING_ARRAY, null, UnnecessaryStringEscapeInspection.class);
 
+  @Test
   public void testEndOfTextBlockQuote() { doQuickFixTest(); }
+  @Test
   public void testNewlinesAndQuotes() { doQuickFixTest(); }
+  @Test
   public void testDoubleQuoteInChar() { doQuickFixTest(); }
+  @Test
   public void testSingleQuoteInString() { doQuickFixTest(); }
+  @Test
   public void testMultipleProblemsInSingleString() { doQuickFixTest(); }
+  @Test
   public void testEscapedNewLine() { doQuickFixTest(); }
+  @Test
   public void testStringTemplate1() { doQuickFixTest(); }
+  @Test
   public void testStringTemplate2() { doQuickFixTest(); }
+  @Test
   public void testNestedTextBlock() { doQuickFixTest(); }
 
-  public void testEscapedNewLineNotUnnecessary() { doTest(); }
-  public void testBrokenCode() { doTest(); }
+  @Test
+  public void testEscapedNewLineNotUnnecessary() { inspectionFixture.get().doTest(); }
+  @Test
+  public void testBrokenCode() { inspectionFixture.get().doTest(); }
   
-  public void testInInjection() { doTest(); }
+  @Test
+  public void testInInjection() { inspectionFixture.get().doTest(); }
 
   protected void doQuickFixTest() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.addClass("""
       package java.lang;
       public interface StringTemplate {
@@ -39,25 +64,14 @@ public class UnnecessaryStringEscapeInspectionTest extends LightJavaInspectionTe
           R process(StringTemplate stringTemplate) throws E;
         }
       }""");
-    doTest();
-    checkQuickFixAll();
-  }
-
-  @Override
-  protected Class<? extends InspectionProfileEntry> getInspectionClass() {
-    return UnnecessaryStringEscapeInspection.class;
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     final UnnecessaryStringEscapeInspection inspection = new UnnecessaryStringEscapeInspection();
     inspection.reportChars = true;
     return inspection;
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21_ANNOTATED;
   }
 }

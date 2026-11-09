@@ -15,22 +15,26 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas
  */
-public class SynchronizedOnLiteralObjectInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class SynchronizedOnLiteralObjectInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new SynchronizedOnLiteralObjectInspection());
 
+  @Test
   public void testSynchronizedOnLiteralObject() {
-    doTest();
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new SynchronizedOnLiteralObjectInspection();
+    inspectionFixture.get().doTest();
   }
 }

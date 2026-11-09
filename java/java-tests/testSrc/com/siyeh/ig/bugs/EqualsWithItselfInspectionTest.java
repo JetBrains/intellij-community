@@ -2,40 +2,46 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class EqualsWithItselfInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class EqualsWithItselfInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection(), getEnvironmentClasses());
 
   private EqualsWithItselfInspection myInspection;
 
+  @Test
   public void testEqualsWithItself() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testEqualsWithItself_ignoreNonFinalClassesInTest() {
     myInspection.ignoreNonFinalClassesInTest = true;
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
-  @Override
-  protected @NotNull InspectionProfileEntry getInspection() {
+  private @NotNull InspectionProfileEntry getInspection() {
     myInspection = new EqualsWithItselfInspection();
     return myInspection;
   }
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11;
-  }
-
   @SuppressWarnings({"unchecked", "rawtypes", "NonFinalUtilityClass"})
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[]{"""
      package org.junit.jupiter.api;
      public class Assertions{

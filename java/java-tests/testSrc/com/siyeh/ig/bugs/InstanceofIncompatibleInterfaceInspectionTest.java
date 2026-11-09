@@ -1,16 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class InstanceofIncompatibleInterfaceInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new InstanceofIncompatibleInterfaceInspection());
 
+  @Test
   public void testTooExpensiveToCheck() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.HashMap;
              import java.util.List;
              class X {
@@ -20,8 +31,9 @@ public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInsp
              }""");
   }
 
+  @Test
   public void testSimple() {
-    doTest("""
+    inspectionFixture.get().doTest("""
            class Alfa {}
            interface Bravo {}
            class Charlie {
@@ -32,8 +44,9 @@ public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInsp
            """);
   }
 
+  @Test
   public void testNoWarnOnAssertion() {
-    doTest("""
+    inspectionFixture.get().doTest("""
       interface Cat {}
       class Dog {
         Dog() {
@@ -45,8 +58,9 @@ public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInsp
       """);
   }
 
+  @Test
   public void testClasses() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Foo { }
              interface Bar { }
              final class Main213 {
@@ -62,8 +76,9 @@ public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInsp
              }""");
   }
 
+  @Test
   public void testNoWarningOnUncompilableCode() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              final class Foo { }
              interface Bar { }
              final class Main213 {
@@ -77,10 +92,5 @@ public class InstanceofIncompatibleInterfaceInspectionTest extends LightJavaInsp
                      }
                  }
              }""");
-  }
-
-  @Override
-  protected LocalInspectionTool getInspection() {
-    return new InstanceofIncompatibleInterfaceInspection();
   }
 }

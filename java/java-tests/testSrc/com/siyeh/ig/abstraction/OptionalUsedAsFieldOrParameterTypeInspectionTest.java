@@ -15,41 +15,53 @@
  */
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
+@TestApplication
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
-public class OptionalUsedAsFieldOrParameterTypeInspectionTest extends LightJavaInspectionTestCase {
+public class OptionalUsedAsFieldOrParameterTypeInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new OptionalUsedAsFieldOrParameterTypeInspection());
 
+  @Test
   public void testOptionalField() {
-    doTest("import java.util.Optional;" +
+    inspectionFixture.get().doTest("import java.util.Optional;" +
            "class X {" +
            "  private /*'Optional<String>' used as type for field 's'*/Optional<String>/**/ s;" +
            "}");
   }
 
+  @Test
   public void testOptionalParameter() {
-    doTest("import java.util.Optional;" +
+    inspectionFixture.get().doTest("import java.util.Optional;" +
            "class X {" +
            "  void m(/*'Optional<Object>' used as type for parameter 'o'*/Optional<Object>/**/ o) {}" +
            "}");
   }
 
+  @Test
   public void testOptionalDoubleField() {
-    doTest("import java.util.OptionalDouble;" +
+    inspectionFixture.get().doTest("import java.util.OptionalDouble;" +
            "class X {" +
            "  private /*'OptionalDouble' used as type for field 'd'*/OptionalDouble/**/ d;" +
            "}");
   }
 
+  @Test
   public void testNoWarnOnOptionalReturnType() {
-    doTest("import java.util.Optional;" +
+    inspectionFixture.get().doTest("import java.util.Optional;" +
            "class X {" +
            "  Optional<Integer> f() {" +
            "    return null; // don't do this\n" +
@@ -57,9 +69,10 @@ public class OptionalUsedAsFieldOrParameterTypeInspectionTest extends LightJavaI
            "}");
   }
 
+  @Test
   public void testParameterInOverridingMethod() {
     //noinspection OptionalIsPresent
-    doTest("import java.util.Optional;" +
+    inspectionFixture.get().doTest("import java.util.Optional;" +
            "import java.util.function.Function;" +
            "class X {" +
            "  " +
@@ -67,25 +80,14 @@ public class OptionalUsedAsFieldOrParameterTypeInspectionTest extends LightJavaI
            "}");
   }
 
+  @Test
   public void testForeach() {
-    doTest("import java.util.Optional;" +
+    inspectionFixture.get().doTest("import java.util.Optional;" +
            "class X {" +
            "  void x(Optional<String>[] array) {" +
            "    for(Optional<String> optional : array) {" +
            "    }" +
            "  }" +
            "}");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new OptionalUsedAsFieldOrParameterTypeInspection();
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
   }
 }

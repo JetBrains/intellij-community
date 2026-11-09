@@ -15,42 +15,57 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ClassInitializerInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class ClassInitializerInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ClassInitializerInspection());
 
+  @Test
   public void testSimple() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> {
-      doTest();
-      assertEmpty(myFixture.filterAvailableIntentions("Make 'static'"));
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_15, () -> {
+      inspectionFixture.get().doTest();
+      assertThat(myFixture.filterAvailableIntentions("Make 'static'")).isNullOrEmpty();
     });
     
   }
 
-  public void testAnonymous() { doTest(); }
+  @Test
+  public void testAnonymous() { inspectionFixture.get().doTest(); }
 
+  @Test
   public void testJava16() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_16, () -> {
-      doTest();
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_16, () -> {
+      inspectionFixture.get().doTest();
       assertEquals(1, myFixture.filterAvailableIntentions("Make 'static'").size());
     });
   }
   
+  @Test
   public void testNoConstructor() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final ClassInitializerInspection inspection = new ClassInitializerInspection();
     inspection.onlyWarnWhenConstructor = true;
     myFixture.enableInspections(inspection);
-    doTest();
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new ClassInitializerInspection();
+    inspectionFixture.get().doTest();
   }
 }

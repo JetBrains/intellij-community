@@ -15,30 +15,42 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class SuspiciousSystemArraycopyInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new SuspiciousSystemArraycopyInspection());
 
+  @Test
   public void testEmptyDst() {
-    doMemberTest("void m(int[] src) {" +
+    inspectionFixture.get().doMemberTest("void m(int[] src) {" +
                  "  System.arraycopy(src, 0,/*!Expression expected*/ /*!*/, 0, src.length);" +
                  "}");
   }
 
+  @Test
   public void testEmptySrc() {
-    doMemberTest("void m(int[] dst) {" +
+    inspectionFixture.get().doMemberTest("void m(int[] dst) {" +
                  "  System.arraycopy(/*!Expression expected*/,/*!*/ 0, dst, 0, 10);" +
                  "}");
   }
 
 
+  @Test
   public void testLengthAlwaysGreater() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                    public int[] hardCase() {
                            int[] src = new int[] { 1, 2, 3 };
                            int[] dest = new int[] { 4, 5, 6, 7, 8, 9 };
@@ -47,8 +59,9 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
                        }""");
   }
 
+  @Test
   public void testLengthNotAlwaysGreater() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                    public int[] hardCase(boolean outer) {
                            int[] src = new int[] { 1, 2, 3};
                            int[] dest = new int[] { 4, 5, 6, 7, 8, 9 };
@@ -63,16 +76,18 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
                        }""");
   }
 
+  @Test
   public void testRangesNotIntersect() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                    public void process() {
                            int[] src = new int[] { 1, 2, 3, 4 };
                            System.arraycopy(src, 0, src, 2, 2);
                        }""");
   }
 
+  @Test
   public void testRangesIntersect() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                        public void rangesIntersects() {
                            int[] src = new int[] { 1, 2, 3, 4 };
                            System./*Copying to the same array with intersecting ranges*/arraycopy/**/(src, 0, src, 1, 2);
@@ -80,8 +95,9 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
                    """);
   }
 
+  @Test
   public void testRangesIntersectSometimes() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                    public void rangesIntersects(boolean outer) {
                            int[] src = new int[] { 1, 2, 3, 4, 5 };
                            int srcPos;
@@ -94,8 +110,9 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
                        }""");
   }
 
+  @Test
   public void testRangeEndMayBeBiggerStart() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                    public void hardCase(boolean outer) {
                            int[] src = new int[] { 1, 2, 3, 4, 5, 6, 7 };
                            int length = outer ? 1 : 3;
@@ -106,8 +123,9 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
   }
 
 
+  @Test
   public void testCopyFull() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                        public static void copyFull(byte[] a2, byte[] a1) {
                            assert (a1.length == 4);
                            assert (a2.length == 8);
@@ -116,8 +134,9 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
                    """);
   }
 
+  @Test
   public void test248060() {
-    doMemberTest("""
+    inspectionFixture.get().doMemberTest("""
                    public class ArrayCopyExample {
                        private double[] margins = new double[4];
 
@@ -127,11 +146,5 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
                            System.arraycopy(original.margins, 0, margins, 0, 4);
                        }
                    }""");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new SuspiciousSystemArraycopyInspection();
   }
 }

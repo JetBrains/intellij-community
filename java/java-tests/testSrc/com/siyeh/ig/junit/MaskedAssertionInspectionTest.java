@@ -1,16 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.junit;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import com.siyeh.ig.testFrameworks.MaskedAssertionInspection;
-import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
 
-public class MaskedAssertionInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixture.INSPECTION_GADGETS_TEST_DATA_PATH;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+@TestApplication
+public class MaskedAssertionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new MaskedAssertionInspection(), getEnvironmentClasses(),
+      INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/junit/masked_assertion");
+
+  private static String[] getEnvironmentClasses() {
     return new String[]{
       "package org.junit;" +
       "import java.lang.annotation.ElementType;" +
@@ -74,21 +83,13 @@ public class AssertionFailedError extends AssertionError {
     };
   }
 
+  @Test
   public void testMaskedAssertion() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testMaskedAssertionAssertJ() {
-    doTest();
-  }
-
-  @Override
-  protected @Nullable InspectionProfileEntry getInspection() {
-    return new MaskedAssertionInspection();
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/junit/masked_assertion";
+    inspectionFixture.get().doTest();
   }
 }

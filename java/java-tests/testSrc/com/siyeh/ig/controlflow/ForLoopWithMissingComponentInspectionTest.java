@@ -16,59 +16,78 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ForLoopWithMissingComponentInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class ForLoopWithMissingComponentInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
+  @Test
   public void testMissingAllComponents() {
-    doStatementTest("/*'for' statement lacks initializer, condition and update*/for/**/ (;;) {}");
+    inspectionFixture.get().doStatementTest("/*'for' statement lacks initializer, condition and update*/for/**/ (;;) {}");
   }
 
+  @Test
   public void testMissingConditionAndUpdate() {
-    doStatementTest("/*'for' statement lacks condition and update*/for/**/ (int i = 0;;);");
+    inspectionFixture.get().doStatementTest("/*'for' statement lacks condition and update*/for/**/ (int i = 0;;);");
   }
 
+  @Test
   public void testMissingInitializationAndUpdate() {
-    doStatementTest("/*'for' statement lacks initializer and update*/for/**/ (;true;);");
+    inspectionFixture.get().doStatementTest("/*'for' statement lacks initializer and update*/for/**/ (;true;);");
   }
 
+  @Test
   public void testMissingCondition() {
-    doStatementTest("/*'for' statement lacks condition*/for/**/ (int i = 0;;i++);");
+    inspectionFixture.get().doStatementTest("/*'for' statement lacks condition*/for/**/ (int i = 0;;i++);");
   }
 
+  @Test
   public void testCorrect() {
-    doStatementTest("for(int i = 0;true;i++);");
+    inspectionFixture.get().doStatementTest("for(int i = 0;true;i++);");
   }
 
+  @Test
   public void testIterator() {
-    doMemberTest("void m(java.util.List l) {" +
+    inspectionFixture.get().doMemberTest("void m(java.util.List l) {" +
                  "  for (java.util.ListIterator it = l.listIterator(); it.hasNext();) {" +
                  "    System.out.println(it.next());" +
                  "  }" +
                  "}");
   }
 
+  @Test
   public void testListIterator() {
-    doMemberTest("void m(java.util.List l) {" +
+    inspectionFixture.get().doMemberTest("void m(java.util.List l) {" +
                  "  for (java.util.ListIterator it = l.listIterator(); it.hasPrevious();) {" +
                  "    System.out.println(it.previous());" +
                  "  }" +
                  "}");
   }
 
+  @Test
   public void testEnumeration() {
-    doStatementTest("for (java.util.Enumeration e = java.util.Collections.emptyEnumeration(); e.hasMoreElements(); );");
+    inspectionFixture.get().doStatementTest("for (java.util.Enumeration e = java.util.Collections.emptyEnumeration(); e.hasMoreElements(); );");
   }
 
+  @Test
   public void testEnumeration2() {
-    doStatementTest("for (java.util.Enumeration e = java.util.Collections.emptyEnumeration(); e.hasMoreElements() && true && true; );");
+    inspectionFixture.get().doStatementTest("for (java.util.Enumeration e = java.util.Collections.emptyEnumeration(); e.hasMoreElements() && true && true; );");
   }
 
-  @Override
-  protected LocalInspectionTool getInspection() {
+  private static LocalInspectionTool getInspection() {
     final ForLoopWithMissingComponentInspection inspection = new ForLoopWithMissingComponentInspection();
     inspection.ignoreCollectionLoops = true;
     return inspection;

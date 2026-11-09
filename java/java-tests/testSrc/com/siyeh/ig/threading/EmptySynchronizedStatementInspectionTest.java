@@ -15,31 +15,36 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class EmptySynchronizedStatementInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class EmptySynchronizedStatementInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new EmptySynchronizedStatementInspection());
 
+  @Test
   public void testSimple() {
-    doStatementTest("/*Empty 'synchronized' statement*/<caret>synchronized/**/ (new Object()) {" +
+    inspectionFixture.get().doStatementTest("/*Empty 'synchronized' statement*/<caret>synchronized/**/ (new Object()) {" +
                     "}");
-    checkQuickFix("Remove unnecessary 'synchronized'", "class X { void m() {\n" +
+    inspectionFixture.get().checkQuickFix("Remove unnecessary 'synchronized'", "class X { void m() {\n" +
                                                        "}}");
   }
 
+  @Test
   public void testNotEmpty() {
-    doStatementTest("synchronized (new Object()) {" +
+    inspectionFixture.get().doStatementTest("synchronized (new Object()) {" +
                     "  System.out.println();" +
                     "}");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new EmptySynchronizedStatementInspection();
   }
 }

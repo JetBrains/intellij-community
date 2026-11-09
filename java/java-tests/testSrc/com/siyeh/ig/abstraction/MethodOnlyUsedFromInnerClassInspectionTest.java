@@ -1,16 +1,27 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.abstraction;
 
-import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
 @SuppressWarnings("MethodMayBeStatic")
-public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspectionTestCase {
+public class MethodOnlyUsedFromInnerClassInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_15);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new MethodOnlyUsedFromInnerClassInspection());
 
+  @Test
   public void testSimple() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                private void /*Method 'foo()' is only used from inner class 'Inner'*/foo/**/() {}
               \s
@@ -20,8 +31,9 @@ public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspect
              }""");
   }
 
+  @Test
   public void testAnonymous() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                private int /*Method 'foo()' is only used from an anonymous class derived from 'Inner'*/foo/**/() {return 5;}
               \s
@@ -35,8 +47,9 @@ public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspect
              }""");
   }
 
+  @Test
   public void testAnonymousCtor() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                private int foo() {return 5;}
               \s
@@ -50,8 +63,9 @@ public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspect
              }""");
   }
 
+  @Test
   public void testLocalClass() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                private void /*Method 'foo()' is only used from local class 'Local'*/foo/**/() {}
               \s
@@ -63,11 +77,13 @@ public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspect
              }""");
   }
 
+  @Test
   public void testNoWarnLocalClass() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     final MethodOnlyUsedFromInnerClassInspection inspection = new MethodOnlyUsedFromInnerClassInspection();
     inspection.ignoreMethodsAccessedFromAnonymousClass = true;
     myFixture.enableInspections(inspection);
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {
                private void foo() {}
               \s
@@ -79,9 +95,10 @@ public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspect
              }""");
   }
 
+  @Test
   @SuppressWarnings({"PublicConstructorInNonPublicClass", "Convert2Lambda"})
   public void testIgnoreUsedOutsideInnerClass() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class OnlyUsedFromAnonymousWarning {
 
              \t public OnlyUsedFromAnonymousWarning() {
@@ -100,8 +117,9 @@ public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspect
              }""");
   }
 
+  @Test
   public void testIgnoreStaticMethodCalledFromNonStaticInnerClass() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Outer {
                  public static void main(String[] args) {
                      class Local {
@@ -117,15 +135,5 @@ public class MethodOnlyUsedFromInnerClassInspectionTest extends LightJavaInspect
                      return s != null && s.trim().isEmpty();
                  }
              }""");
-  }
-
-  @Override
-  protected LocalInspectionTool getInspection() {
-    return new MethodOnlyUsedFromInnerClassInspection();
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_15;
   }
 }

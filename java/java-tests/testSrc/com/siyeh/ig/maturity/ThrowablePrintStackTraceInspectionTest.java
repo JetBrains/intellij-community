@@ -15,30 +15,43 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ThrowablePrintStackTraceInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class ThrowablePrintStackTraceInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ThrowablePrintStackTraceInspection());
 
+  @Test
   public void testSimple() {
-    doStatementTest("new Throwable()./*Call to 'printStackTrace()' should probably be replaced with more robust logging*/printStackTrace/**/();");
+    inspectionFixture.get().doStatementTest("new Throwable()./*Call to 'printStackTrace()' should probably be replaced with more robust logging*/printStackTrace/**/();");
   }
 
+  @Test
   public void testInTestCode() {
-    addEnvironmentClass("package org.junit;" +
+    inspectionFixture.get().addEnvironmentClass("package org.junit;" +
                         "@Retention(RetentionPolicy.RUNTIME) " +
                         "@Target({ElementType.METHOD}) " +
                         "public @interface Test {}");
-    doMemberTest("@org.junit.Test public void testSomething() {" +
+    inspectionFixture.get().doMemberTest("@org.junit.Test public void testSomething() {" +
                  "  new RuntimeException()./*Call to 'printStackTrace()' should probably be replaced with more robust logging*/printStackTrace/**/();" +
                  "}");
   }
 
+  @Test
   public void testPrintStacktraceOverridden() {
-    addEnvironmentClass("""
+    inspectionFixture.get().addEnvironmentClass("""
                           public class FException extends Exception {
                               @Override
                               public void printStackTrace() {
@@ -46,11 +59,6 @@ public class ThrowablePrintStackTraceInspectionTest extends LightJavaInspectionT
                               }
                           }
                           """);
-    doStatementTest("new FException()./*Call to 'printStackTrace()' should probably be replaced with more robust logging*/printStackTrace/**/();");
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new ThrowablePrintStackTraceInspection();
+    inspectionFixture.get().doStatementTest("new FException()./*Call to 'printStackTrace()' should probably be replaced with more robust logging*/printStackTrace/**/();");
   }
 }

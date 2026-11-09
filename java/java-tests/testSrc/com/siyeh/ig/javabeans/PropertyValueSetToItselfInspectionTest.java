@@ -15,14 +15,24 @@
  */
 package com.siyeh.ig.javabeans;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class PropertyValueSetToItselfInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
+@TestApplication
+public class PropertyValueSetToItselfInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new PropertyValueSetToItselfInspection());
+
+  @Test
   public void testSimple() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Bean {
                private String x;
                public void setX(String x) {
@@ -36,8 +46,9 @@ public class PropertyValueSetToItselfInspectionTest extends LightJavaInspectionT
              }""");
   }
 
+  @Test
   public void testNoWarn() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Bean {
                private String x;
                public void setX(String x) {
@@ -48,11 +59,5 @@ public class PropertyValueSetToItselfInspectionTest extends LightJavaInspectionT
                  (b).setX(c.getX());
                }
              }""");
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new PropertyValueSetToItselfInspection();
   }
 }

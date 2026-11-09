@@ -2,49 +2,56 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.OptionalIsPresentInspection;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class OptionalIsPresentInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection/optionalIsPresent/";
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
+public class OptionalIsPresentInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11_ANNOTATED);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new OptionalIsPresentInspection());
+
+  @BeforeEach
+  void setUpTestDataPath() {
+    inspectionFixture.get().getFixture().setTestDataPath(JavaTestUtil.getJavaTestDataPath() + "/inspection/optionalIsPresent/");
   }
 
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new OptionalIsPresentInspection();
-  }
+  @Test
+  public void testAssignment() { inspectionFixture.get().doTest(); }
 
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11_ANNOTATED;
-  }
+  @Test
+  public void testConsumer() { inspectionFixture.get().doTest(); }
 
+  @Test
+  public void testConsumerIndirect() { inspectionFixture.get().doTest(); }
 
-  public void testAssignment() { doTest(); }
+  @Test
+  public void testConsumerIndirectAmbiguousOverload() { inspectionFixture.get().doTest(); }
 
-  public void testConsumer() { doTest(); }
+  @Test
+  public void testConsumerIndirectComment() { inspectionFixture.get().doTest(); }
 
-  public void testConsumerIndirect() { doTest(); }
+  @Test
+  public void testConsumerIndirectFieldInaccessible() { inspectionFixture.get().doTest(); }
 
-  public void testConsumerIndirectAmbiguousOverload() { doTest(); }
+  @Test
+  public void testConsumerIndirectTooComplex_1() { inspectionFixture.get().doTest(); }
 
-  public void testConsumerIndirectComment() { doTest(); }
+  @Test
+  public void testConsumerIndirectTooComplex_2() { inspectionFixture.get().doTest(); }
 
-  public void testConsumerIndirectFieldInaccessible() { doTest(); }
+  @Test
+  public void testConsumerIndirectTypeMismatch() { inspectionFixture.get().doTest(); }
 
-  public void testConsumerIndirectTooComplex_1() { doTest(); }
-
-  public void testConsumerIndirectTooComplex_2() { doTest(); }
-
-  public void testConsumerIndirectTypeMismatch() { doTest(); }
-
-  public void testOptional() { doTest(); }
+  @Test
+  public void testOptional() { inspectionFixture.get().doTest(); }
 }

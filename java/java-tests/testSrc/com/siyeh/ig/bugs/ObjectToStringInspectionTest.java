@@ -16,39 +16,54 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class ObjectToStringInspectionTest extends LightJavaInspectionTestCase {
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
+public class ObjectToStringInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
   private ObjectToStringInspection myInspection;
 
+  @Test
   public void testObjectToString() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testObjectToString_IGNORE_TOSTRING() {
     myInspection.IGNORE_TOSTRING = true;
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testObjectToString_IGNORE_EXCEPTION() {
     myInspection.IGNORE_EXCEPTION = true;
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testObjectToString_IGNORE_ASSERT() {
     myInspection.IGNORE_ASSERT = true;
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testObjectToString_IGNORE_NONNLS() {
     myInspection.IGNORE_NONNLS = true;
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
-  @Override
-  protected @NotNull InspectionProfileEntry getInspection() {
+  private @NotNull InspectionProfileEntry getInspection() {
     myInspection = new ObjectToStringInspection();
     return myInspection;
   }

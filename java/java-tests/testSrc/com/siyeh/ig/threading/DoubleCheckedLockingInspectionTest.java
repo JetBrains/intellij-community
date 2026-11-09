@@ -1,35 +1,48 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class DoubleCheckedLockingInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class DoubleCheckedLockingInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new DoubleCheckedLockingInspection());
 
+  @Test
   public void testDoubleCheckedLocking() {
-    doTest();
-    assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
+  @Test
   public void testQuickFix() {
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFix(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
+  @Test
   public void testQuickFixNotAvailable() {
-    doTest();
-    assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().assertQuickFixNotAvailable(InspectionGadgetsBundle.message("introduce.holder.class.quickfix"));
   }
 
+  @Test
   @SuppressWarnings("DoubleCheckedLocking")
   public void testSimple() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class A {    private  boolean initialized;
                  private void initialize() {
                      /*Double-checked locking*/if/**/ (initialized == false) {
@@ -43,8 +56,9 @@ public class DoubleCheckedLockingInspectionTest extends LightJavaInspectionTestC
              }""");
   }
 
+  @Test
   public void testVolatile() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class X {    private volatile boolean initialized;
                  private void initialize() {
                      if (initialized == false) {
@@ -58,8 +72,9 @@ public class DoubleCheckedLockingInspectionTest extends LightJavaInspectionTestC
              }""");
   }
 
+  @Test
   public void testVolatile2() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Main654 {
                private volatile int myListenPort = -1;
                private void ensureListening() {
@@ -75,15 +90,5 @@ public class DoubleCheckedLockingInspectionTest extends LightJavaInspectionTestC
                  return 0;
                }
              }""");
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new DoubleCheckedLockingInspection();
-  }
-
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11;
   }
 }

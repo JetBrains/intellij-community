@@ -15,49 +15,44 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import com.siyeh.ig.testFrameworks.SimplifiableAssertionInspection;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixture.INSPECTION_GADGETS_TEST_DATA_PATH;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class SimplifiableJUnitAssertionInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/junit/simplifiable_junit_assertion";
-  }
+@TestApplication
+public class SimplifiableJUnitAssertionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new SimplifiableAssertionInspection(), getEnvironmentClasses(),
+      INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/junit/simplifiable_junit_assertion");
 
+  @Test
   public void testSimplifiableJUnitAssertion() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
 
+  @Test
   public void testSimplifiableJUnit40Assertion() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
+  @Test
   public void testSimplifiableInstanceOf() {
-    doTest();
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new SimplifiableAssertionInspection();
+    inspectionFixture.get().doTest();
   }
 
   @SuppressWarnings({"deprecation", "NonFinalUtilityClass"})
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       """
 package junit.framework;

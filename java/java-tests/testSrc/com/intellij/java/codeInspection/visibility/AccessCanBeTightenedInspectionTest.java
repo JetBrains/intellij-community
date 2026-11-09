@@ -16,37 +16,38 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.intellij.lang.annotations.Language;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+
+@TestApplication
 @SuppressWarnings("WeakerAccess")
-public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestCase {
-  private VisibilityInspection myVisibilityInspection;
+public class AccessCanBeTightenedInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_21);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_21;
-  }
+  private VisibilityInspection myVisibilityInspection = createTool();
 
-  @Override
-  protected LocalInspectionTool getInspection() {
+  private LocalInspectionTool getInspection() {
     return myVisibilityInspection.getSharedLocalInspectionTool();
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    myVisibilityInspection = createTool();
-    super.setUp();
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     myVisibilityInspection = null;
-    super.tearDown();
   }
 
   private static VisibilityInspection createTool() {
@@ -57,9 +58,10 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     return inspection;
   }
 
+  @Test
   @SuppressWarnings("FieldMayBeStatic")
   public void testSimple() {
-    doTest("import java.util.*;\n" +
+    inspectionFixture.get().doTest("import java.util.*;\n" +
            "class C {\n" +
            "    final int /*Access can be 'private'*/fd/**/ = 0;\n" +
            "    /*Access can be 'private'*/public/**/ int fd2;\n" +
@@ -88,8 +90,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
            "  public void fff() {}" +
            "}");
   }
+  @Test
   public void testUseInAnnotation() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;
              @interface Ann{ String value(); }
              @Ann(value = C.VAL
@@ -98,8 +101,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
              }""");
   }
 
+  @Test
   public void testUseOfPackagePrivateInAnnotation() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              import java.util.*;
              @interface Ann{ String value(); }
              @Ann(value = C.VAL
@@ -108,8 +112,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
              }""");
   }
 
+  @Test
   public void testSameFile() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class C {
                private static class Err {
                  /*Access can be 'private'*/public/**/ boolean isVisible() { return true; }
@@ -118,14 +123,15 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
              }""");
   }
 
+  @Test
   public void testSameFileInheritance() {
-    doTest("class C {\n" +
+    inspectionFixture.get().doTest("class C {\n" +
            "  private static class Err {\n" +
            "    /*Access can be package-private*/public/**/ boolean notVisible() { return true; }\n" +
            "  }\n"+
            "  boolean f = new Err(){}.notVisible();\n" + //call on anonymous class!
            "}");
-    doTest("class C {\n" +
+    inspectionFixture.get().doTest("class C {\n" +
            "  private static class Err {\n" +
            "    /*Access can be 'private'*/public/**/ static boolean notVisible() { return true; }\n" +
            "  }\n"+
@@ -133,8 +139,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
            "}");
   }
 
+  @Test
   public void testSiblingInheritance() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              abstract class Impl {
                public void doSomething() {
                  run();
@@ -146,7 +153,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
              }""");
   }
 
+  @Test
   public void testAccessFromSubclass() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.allowTreeAccessForAllFiles();
     addJavaFile("x/Sub.java",
                 """
@@ -164,7 +173,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testQualifiedAccessFromSubclass() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.allowTreeAccessForAllFiles();
     addJavaFile("x/Sub.java", """
       package x; import y.C; class Sub extends C {
@@ -181,7 +192,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testQualifiedAccessFromSubclassSamePackage() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.allowTreeAccessForAllFiles();
     addJavaFile("x/Sub.java", "package x; " +
                             "import y.C; " +
@@ -201,11 +214,12 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testDoNotSuggestPrivateInAnonymousClassIfPrivatesForInnersIsOff() {
     myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
     myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS = false;
 
-    doTest("""
+    inspectionFixture.get().doTest("""
              class C {
               {
                new Runnable() {
@@ -218,16 +232,18 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
              }""");
   }
 
+  @Test
   public void testDoNotSuggestPrivateIfInExtendsOrImplements() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              abstract class C implements Comparable<C.Inner> {
                static class Inner {
                }
              }""");
   }
 
+  @Test
   public void testDoNotSuggestPrivateForAbstractIDEA151875() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class C {
                abstract static class Inner {
                  abstract void foo();
@@ -238,8 +254,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
              }""");
   }
 
+  @Test
   public void testDoNotSuggestPrivateForInnerStaticSubclass() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class A {
                  /*Access can be package-private*/protected/**/ String myElement;
                  static class B extends A {
@@ -258,7 +275,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
              }""");
   }
 
+  @Test
   public void testStupidTwoPublicClassesInTheSamePackage() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.allowTreeAccessForAllFiles();
     addJavaFile("x/Sub.java", """
       package x; public class Sub {
@@ -273,7 +292,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testInterfaceIsImplementedByLambda() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.allowTreeAccessForAllFiles();
     addJavaFile("x/MyInterface.java", """
       package x;
@@ -302,7 +323,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testInnerClassIsUnusedButItsMethodsAre() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.allowTreeAccessForAllFiles();
     addJavaFile("x/Outer.java", """
       package x;
@@ -327,8 +350,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testInnerClassIsExposedInMethodSignature() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              package x;
              class Record {
                  java.util.List<Inner> getRecord() {
@@ -349,7 +373,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
                  class /*Access can be 'private'*/Inner5/**/ {}}""");
   }
 
+  @Test
   public void testClassIsExposedInMethodSignature() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     addJavaFile("mypackage/sub1/Sub123.java",
                 """
                   package mypackage.sub1;
@@ -366,7 +392,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testNestedEnumWithReferenceByName() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.allowTreeAccessForAllFiles();
     addJavaFile("x/Outer.java", """
       package x;
@@ -390,8 +418,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testEnumMemberCanBePrivate() {
-    doTest("enum E {" +
+    inspectionFixture.get().doTest("enum E {" +
            "  A;" +
            "  void x() {" +
            "    y();" +
@@ -401,8 +430,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
            "}");
   }
 
+  @Test
   public void testRecord() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class Demo {
                  public static void main(String... args) {
                      User user = new User(null, null);
@@ -428,8 +458,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
              }""");
   }
 
+  @Test
   public void testRecordConstructor() {
-    doTest("""
+    inspectionFixture.get().doTest("""
              class InnerRecordHolder {
                  private record InnerRecord() {
                      /*Access can be 'private'*/public/**/ InnerRecord {
@@ -438,7 +469,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
              }
              """);
     myVisibilityInspection.SUGGEST_PRIVATE_FOR_INNERS = false;
-    doTest("""
+    inspectionFixture.get().doTest("""
              class InnerRecordHolder {
                  private record InnerRecord() {
                      /*Access can be package-private*/public/**/ InnerRecord {
@@ -447,7 +478,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
              }
              """);
     myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = false;
-    doTest("""
+    inspectionFixture.get().doTest("""
              class InnerRecordHolder {
                  private record InnerRecord() {
                      public InnerRecord {
@@ -457,7 +488,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
              """);
   }
 
+  @Test
   public void testSuggestPackagePrivateForTopLevelClassSetting() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.allowTreeAccessForAllFiles();
     myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = false;
     addJavaFile("x/Outer.java", """
@@ -477,7 +510,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testSuggestPackagePrivateForEntryPoint() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     addJavaFile("x/MyTest.java", """
       package x;
       public class MyTest {
@@ -528,13 +563,15 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
       public String getId() {
         return getDisplayName();
       }
-    }, getTestRootDisposable());
+    }, myFixture.getTestRootDisposable());
     myFixture.enableInspections(myVisibilityInspection.getSharedLocalInspectionTool());
     myFixture.configureByFiles("x/MyTest.java");
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testMinimalVisibilityForNonEntryPOint() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     addJavaFile("x/MyTest.java", """
       package x;
       public class MyTest {
@@ -586,13 +623,15 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
       public String getId() {
         return getDisplayName();
       }
-    }, getTestRootDisposable());
+    }, myFixture.getTestRootDisposable());
     myFixture.enableInspections(myVisibilityInspection.getSharedLocalInspectionTool());
     myFixture.configureByFiles("x/MyTest.java");
     myFixture.checkHighlighting();
   }
 
+  @Test
   public void testSuggestPackagePrivateForImplicitWrittenFields() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     addJavaFile("x/MyTest.java", """
       package x;
       public class MyTest {
@@ -613,30 +652,34 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
       public boolean isImplicitWrite(@NotNull PsiElement element) {
         return element instanceof PsiField && "foo".equals(((PsiField)element).getName());
       }
-    }, getTestRootDisposable());
+    }, myFixture.getTestRootDisposable());
     myFixture.configureByFiles("x/MyTest.java");
     myFixture.checkHighlighting();
   }
 
+  @Test
   @SuppressWarnings("FieldMayBeStatic")
   public void testSuggestForConstants() {
     myVisibilityInspection.SUGGEST_FOR_CONSTANTS = true;
-    doTest("""
+    inspectionFixture.get().doTest("""
              class SuggestForConstants {
                  /*Access can be 'private'*/public/**/ static final String MY_CONSTANT = "a";
                  private final String myField = MY_CONSTANT;}""");
   }
 
+  @Test
   @SuppressWarnings("FieldMayBeStatic")
   public void testDoNotSuggestForConstants() {
     myVisibilityInspection.SUGGEST_FOR_CONSTANTS = false;
-    doTest("""
+    inspectionFixture.get().doTest("""
              class DoNotSuggestForConstants {
                  public static final String MY_CONSTANT = "a";
                  private final String myField = MY_CONSTANT;}""");
   }
 
+  @Test
   public void testSuggestPackagePrivateForMembersOfEvenPackagePrivateClass() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.allowTreeAccessForAllFiles();
     myVisibilityInspection.SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = true;
     addJavaFile("x/Outer.java", """
@@ -667,7 +710,9 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
     myFixture.checkHighlighting();
   }
   
+  @Test
   public void testImplicitClass() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.configureByText("Implicit.java", """
       int field = 5;
       <warning descr="Access can be 'private'">protected</warning> int protectedField = 6;
@@ -687,6 +732,7 @@ public class AccessCanBeTightenedInspectionTest extends LightJavaInspectionTestC
   }
 
   private void addJavaFile(String relativePath, @Language("JAVA") String text) {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.addFileToProject(relativePath, text);
   }
 }

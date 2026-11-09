@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin;
 
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
@@ -11,8 +12,17 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.common.BazelTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.ArrayUtilRt;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.function.Supplier;
+
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 public final class LombokTestUtil {
 
@@ -79,4 +89,26 @@ public final class LombokTestUtil {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_8);
     }
   };
+
+  /**
+   * Creates the inspection fixture of a Lombok test. The test data path is {@code basePath} in the Lombok test data.
+   */
+  public static @NotNull TestFixture<LightJavaInspectionFixture> lombokInspectionFixture(@NotNull TestFixture<LightJavaProject> projectFixture,
+                                                                                       @NotNull Supplier<? extends InspectionProfileEntry> inspection,
+                                                                                       @NotNull String basePath) {
+    return lightJavaInspectionFixture(projectFixture, inspection, ArrayUtilRt.EMPTY_STRING_ARRAY, null, null, getTestDataPath() + basePath);
+  }
+
+  /**
+   * Configures the file `<test name>.java` with {@code text} and checks the highlighting.
+   * Each {@code %s} in {@code text} becomes the test name.
+   */
+  public static void configureAndTest(@NotNull LightJavaInspectionFixture inspection, String text) {
+    String className = inspection.getTestName(false);
+    String fileName = className + ".java";
+
+    JavaCodeInsightTestFixture fixture = inspection.getFixture();
+    fixture.configureByText(fileName, text.formatted(className));
+    fixture.checkHighlighting();
+  }
 }

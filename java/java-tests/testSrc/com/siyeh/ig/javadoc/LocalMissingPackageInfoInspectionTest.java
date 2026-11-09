@@ -15,23 +15,29 @@
  */
 package com.siyeh.ig.javadoc;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class LocalMissingPackageInfoInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class LocalMissingPackageInfoInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new MissingPackageInfoInspection());
 
+  @Test
   public void testLocalInspection() {
-    addEnvironmentClass("package a;" +
+    inspectionFixture.get().addEnvironmentClass("package a;" +
                         "class Y {}");
-    doTest("package /*Package 'a' is missing a 'package-info.java' file*/a/**/;" +
+    inspectionFixture.get().doTest("package /*Package 'a' is missing a 'package-info.java' file*/a/**/;" +
            "class X {}");
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new MissingPackageInfoInspection();
   }
 }

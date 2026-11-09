@@ -1,31 +1,30 @@
 package com.siyeh.ig.style;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.ArrayUtilRt;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class FieldMayBeFinalInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_11;
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixture.INSPECTION_GADGETS_TEST_DATA_PATH;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
+@TestApplication
+public class FieldMayBeFinalInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_11);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new FieldMayBeFinalInspection(), ArrayUtilRt.EMPTY_STRING_ARRAY,
+      INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/style/field_final");
+
+  @Test
   public void testFieldMayBeFinal() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
+  @Test
   public void testAnonymousObject() {
-    doTest();
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new FieldMayBeFinalInspection();
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/style/field_final";
+    inspectionFixture.get().doTest();
   }
 }

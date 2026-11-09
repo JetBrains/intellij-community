@@ -16,18 +16,25 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class MultipleTopLevelClassesInFileInspectionTest extends LightJavaInspectionTestCase {
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new MultipleTopLevelClassesInFileInspection();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
+@TestApplication
+public class MultipleTopLevelClassesInFileInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new MultipleTopLevelClassesInFileInspection());
+
+  @Test
   public void testPreview() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.configureByText("X.java", "public class X {} class Y<caret> {}");
     IntentionAction action = myFixture.findSingleIntention("Move class");
     myFixture.checkIntentionPreviewHtml(action, "Move class 'Y' to a new file in a package of your choice or convert it to an inner class of an existing one.");

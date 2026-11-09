@@ -2,26 +2,45 @@
 package com.siyeh.ig.initialization;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class OverridableMethodCallDuringObjectConstructionInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class OverridableMethodCallDuringObjectConstructionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new OverridableMethodCallDuringObjectConstructionInspection());
 
+  @Test
   public void testOverridableMethodCallDuringObjectConstruction() {
-    doTest();
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    inspectionFixture.get().doTest();
     final IntentionAction intention = myFixture.getAvailableIntention(InspectionGadgetsBundle.message("make.method.final.fix.name", "a"));
     assertNotNull(intention);
-    myFixture.checkPreviewAndLaunchAction(intention);
-    myFixture.checkResultByFile(getTestName(false) + ".after.java");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      myFixture.checkPreviewAndLaunchAction(intention);
+      myFixture.checkResultByFile(inspectionFixture.get().getTestName(false) + ".after.java");
+    });
   }
 
+  @Test
   public void testIntentionPreviewWhenMethodIsInAnotherFile() {
-    myFixture.configureByFile(getTestName(false) + ".java");
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
+    myFixture.configureByFile(inspectionFixture.get().getTestName(false) + ".java");
     myFixture.addClass("""
                          class One { 
                            public void a() {}
@@ -37,15 +56,10 @@ public class OverridableMethodCallDuringObjectConstructionInspectionTest extends
                    """, customPreviewText);
   }
 
+  @Test
   public void testNoQuickFixes() {
-    doTest();
-    assertQuickFixNotAvailable(InspectionGadgetsBundle.message("make.class.final.fix.name", "NoQuickFixes"));
-    assertQuickFixNotAvailable(InspectionGadgetsBundle.message("make.method.final.fix.name", "foo"));
-  }
-
-  @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
-    return new OverridableMethodCallDuringObjectConstructionInspection();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().assertQuickFixNotAvailable(InspectionGadgetsBundle.message("make.class.final.fix.name", "NoQuickFixes"));
+    inspectionFixture.get().assertQuickFixNotAvailable(InspectionGadgetsBundle.message("make.method.final.fix.name", "foo"));
   }
 }

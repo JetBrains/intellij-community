@@ -16,21 +16,31 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class CollectionsMustHaveInitialCapacityInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class CollectionsMustHaveInitialCapacityInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection(), getEnvironmentClasses());
+
   private final CollectionsMustHaveInitialCapacityInspection myInspection = new CollectionsMustHaveInitialCapacityInspection();
 
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private InspectionProfileEntry getInspection() {
     return myInspection;
   }
 
-  @Override
-  protected String[] getEnvironmentClasses() {
+  private static String[] getEnvironmentClasses() {
     return new String[] {
       "package java.util.concurrent;" +
       "public class ConcurrentHashMap {}",
@@ -57,13 +67,15 @@ public class CollectionsMustHaveInitialCapacityInspectionTest extends LightJavaI
     };
   }
 
+  @Test
   public void testSimple() {
-    doStatementTest("new /*'new java.util.concurrent.ConcurrentHashMap()' without initial capacity*/java.util.concurrent.ConcurrentHashMap/**/();");
+    inspectionFixture.get().doStatementTest("new /*'new java.util.concurrent.ConcurrentHashMap()' without initial capacity*/java.util.concurrent.ConcurrentHashMap/**/();");
   }
 
+  @Test
   @SuppressWarnings("UseOfObsoleteCollectionType")
   public void testMore() {
-    doTest("import java.util.*;" +
+    inspectionFixture.get().doTest("import java.util.*;" +
            "class X {" +
            "  void m() {" +
            "    new /*'new HashMap<String, String>()' without initial capacity*/HashMap<String, String>/**/();" +
@@ -86,18 +98,20 @@ public class CollectionsMustHaveInitialCapacityInspectionTest extends LightJavaI
            "}");
   }
 
+  @Test
   public void testFieldsReported() {
-    doTest("import java.util.*;" +
+    inspectionFixture.get().doTest("import java.util.*;" +
            "class X {" +
            "   HashMap m1 = new /*'new HashMap<String, String>()' without initial capacity*/HashMap<String, String>/**/();" +
            "   HashMap m2 = new HashMap<String, String>(3);" +
            "}");
   }
 
+  @Test
   public void testFieldsNotReported() {
     myInspection.myIgnoreFields = true;
     try {
-      doTest("import java.util.*;" +
+      inspectionFixture.get().doTest("import java.util.*;" +
              "class X {" +
              "   HashMap m1 = new HashMap<String, String>();" +
              "   HashMap m2 = new HashMap<String, String>(3);" +

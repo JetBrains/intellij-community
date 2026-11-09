@@ -17,19 +17,35 @@ package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.LightJavaInspectionTestCase;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.siyeh.ig.LightJavaInspectionFixture;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Bas Leijdekkers
  */
-public class AbstractMethodOverridesAbstractMethodInspectionTest extends LightJavaInspectionTestCase {
+@TestApplication
+public class AbstractMethodOverridesAbstractMethodInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture();
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> getInspection());
 
+  @Test
   public void testAbstractMethodOverridesAbstractMethod() {
-    doTest();
+    inspectionFixture.get().doTest();
   }
   
+  @Test
   public void testFix() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.addClass("""
       /**
        * @see Sub#run
@@ -73,7 +89,9 @@ public class AbstractMethodOverridesAbstractMethodInspectionTest extends LightJa
         """);
   }
   
+  @Test
   public void testFixQualifiedCall() {
+    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     myFixture.configureByText("Test.java", """
       class Test {
         interface Super {
@@ -109,8 +127,7 @@ public class AbstractMethodOverridesAbstractMethodInspectionTest extends LightJa
   }
 
   @Nullable
-  @Override
-  protected InspectionProfileEntry getInspection() {
+  private static InspectionProfileEntry getInspection() {
     final AbstractMethodOverridesAbstractMethodInspection inspection = new AbstractMethodOverridesAbstractMethodInspection();
     inspection.ignoreJavaDoc = true;
     return inspection;

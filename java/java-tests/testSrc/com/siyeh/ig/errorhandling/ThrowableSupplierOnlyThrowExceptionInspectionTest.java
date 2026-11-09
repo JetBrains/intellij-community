@@ -1,37 +1,35 @@
 // Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightJavaProject;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.intellij.util.ArrayUtilRt;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.LightJavaInspectionTestCase;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.siyeh.ig.LightJavaInspectionFixture;
+import org.junit.jupiter.api.Test;
 
-public class ThrowableSupplierOnlyThrowExceptionInspectionTest extends LightJavaInspectionTestCase {
-  @Override
-  protected @Nullable InspectionProfileEntry getInspection() {
-    return new ThrowableSupplierOnlyThrowExceptionInspection();
-  }
+import static com.intellij.testFramework.fixtures.LightJavaFixturesKt.lightJavaProjectFixture;
+import static com.siyeh.ig.LightJavaInspectionFixture.INSPECTION_GADGETS_TEST_DATA_PATH;
+import static com.siyeh.ig.LightJavaInspectionFixtureKt.lightJavaInspectionFixture;
 
-  @Override
-  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
+@TestApplication
+public class ThrowableSupplierOnlyThrowExceptionInspectionTest {
+  private static final TestFixture<LightJavaProject> projectFixture = lightJavaProjectFixture(LightJavaCodeInsightFixtureTestCase.JAVA_8);
+  private final TestFixture<LightJavaInspectionFixture> inspectionFixture =
+    lightJavaInspectionFixture(projectFixture, () -> new ThrowableSupplierOnlyThrowExceptionInspection(), ArrayUtilRt.EMPTY_STRING_ARRAY,
+      INSPECTION_GADGETS_TEST_DATA_PATH + "com/siyeh/igtest/errorhandling/throwable_supplier_only_throw_exception");
 
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/ig/com/siyeh/igtest/errorhandling/throwable_supplier_only_throw_exception";
-  }
-
+  @Test
   public void testSimple() {
-    doTest();
-    checkQuickFix(InspectionGadgetsBundle.message("throwable.supplier.only.throw.exception.quickfix"));
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFix(InspectionGadgetsBundle.message("throwable.supplier.only.throw.exception.quickfix"));
   }
 
+  @Test
   public void testSeveral() {
-    doTest();
-    checkQuickFixAll();
+    inspectionFixture.get().doTest();
+    inspectionFixture.get().checkQuickFixAll();
   }
 }
