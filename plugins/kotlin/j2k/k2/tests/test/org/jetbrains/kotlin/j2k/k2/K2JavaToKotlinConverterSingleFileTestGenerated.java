@@ -3332,6 +3332,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/inheritance/classOneExtendsBaseWithZeroParamsNonEmptyConstructor.java");
         }
 
+        @TestMetadata("implementsGenericInterfaceWithSubstitution.java")
+        public void testImplementsGenericInterfaceWithSubstitution() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/inheritance/implementsGenericInterfaceWithSubstitution.java");
+        }
+
         @TestMetadata("openModifier.java")
         public void testOpenModifier() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/inheritance/openModifier.java");
@@ -4553,9 +4558,24 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/mutableCollections/Iterator2.java");
         }
 
+        @TestMetadata("ListIterator.java")
+        public void testListIterator() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/ListIterator.java");
+        }
+
+        @TestMetadata("listOfListsForEach.java")
+        public void testListOfListsForEach() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/listOfListsForEach.java");
+        }
+
         @TestMetadata("listOfMutableList.java")
         public void testListOfMutableList() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/mutableCollections/listOfMutableList.java");
+        }
+
+        @TestMetadata("MapEntry.java")
+        public void testMapEntry() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/MapEntry.java");
         }
 
         @TestMetadata("MutableCollection.java")
@@ -4576,6 +4596,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("MutableMap.java")
         public void testMutableMap() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/mutableCollections/MutableMap.java");
+        }
+
+        @TestMetadata("MutableSet.java")
+        public void testMutableSet() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/mutableCollections/MutableSet.java");
         }
 
         @TestMetadata("Overrides.java")
@@ -5006,6 +5031,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullability/autoUnboxing.java");
         }
 
+        @TestMetadata("callExternallyAnnotatedJavaFunction.java")
+        public void testCallExternallyAnnotatedJavaFunction() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/callExternallyAnnotatedJavaFunction.java");
+        }
+
         @TestMetadata("castInNestedInterfaceConstant.java")
         public void testCastInNestedInterfaceConstant() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/castInNestedInterfaceConstant.java");
@@ -5069,6 +5099,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("kt-12050.java")
         public void testKt_12050() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullability/kt-12050.java");
+        }
+
+        @TestMetadata("lambdaNullability.java")
+        public void testLambdaNullability() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullability/lambdaNullability.java");
         }
 
         @TestMetadata("LocalValReassignment.java")
@@ -5314,6 +5349,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/arrayNewNoInitializerTodo.java");
         }
 
+        @TestMetadata("arrayOfArraysOfNull.java")
+        public void testArrayOfArraysOfNull() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/arrayOfArraysOfNull.java");
+        }
+
         @TestMetadata("assignment.java")
         public void testAssignment() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/assignment.java");
@@ -5374,6 +5414,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/libraryMethodsTodo.java");
         }
 
+        @TestMetadata("listOfWithNullLiteral.java")
+        public void testListOfWithNullLiteral() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/listOfWithNullLiteral.java");
+        }
+
         @TestMetadata("methodCallArgument.java")
         public void testMethodCallArgument() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/methodCallArgument.java");
@@ -5427,6 +5472,16 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
         @TestMetadata("nullabilityAnnotations.java")
         public void testNullabilityAnnotations() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/nullabilityAnnotations.java");
+        }
+
+        @TestMetadata("overrideWithSubstitutedParameters.java")
+        public void testOverrideWithSubstitutedParameters() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/overrideWithSubstitutedParameters.java");
+        }
+
+        @TestMetadata("overrideWithSubstitutedReturnType.java")
+        public void testOverrideWithSubstitutedReturnType() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/nullabilityGenerics/overrideWithSubstitutedReturnType.java");
         }
 
         @TestMetadata("propagateFromArrayParameter.java")
