@@ -25,15 +25,15 @@
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module-library" scope="TEST">
       <library name="ai.grazie.spell.hunspell.de" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-de:0.9.8">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-de:0.9.9">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de/0.9.8/hunspell-de-0.9.8.jar">
-              <sha256sum>a0d1820abdfc2afd2420c130f8d9125fb8fde451ec8abdb8e081ef987dcafe8e</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de/0.9.9/hunspell-de-0.9.9.jar">
+              <sha256sum>2f3e5f33baf64af98a12690b66e181ed38729e9af5ca8e33c2e5207c44818dc6</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de/0.9.8/hunspell-de-0.9.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-de/0.9.9/hunspell-de-0.9.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -41,15 +41,15 @@
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="ai.grazie.spell.hunspell.ru" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-ru:0.9.8">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-ru:0.9.9">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-ru/0.9.8/hunspell-ru-0.9.8.jar">
-              <sha256sum>c53efe2da5f3debfa9dca30a48ce0c119f0f7a1f9a4fec7b693925e9861888da</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-ru/0.9.9/hunspell-ru-0.9.9.jar">
+              <sha256sum>89bf331b2769c08bb674365e6fd01c082ff8db6fd33afc4e1161df79fc3c3d9b</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-ru/0.9.8/hunspell-ru-0.9.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-ru/0.9.9/hunspell-ru-0.9.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -57,15 +57,15 @@
     </orderEntry>
     <orderEntry type="module-library" scope="TEST">
       <library name="ai.grazie.spell.hunspell.uk" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-uk:0.9.8">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-uk:0.9.9">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-uk/0.9.8/hunspell-uk-0.9.8.jar">
-              <sha256sum>00be82b6f0a155488da481cd3a91669ca5fc8051145add19966c78391d4fa384</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-uk/0.9.9/hunspell-uk-0.9.9.jar">
+              <sha256sum>5fe6f2df75189e6d8d637c49774dd1de3efb5a34bc27d15c402de275654353a5</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-uk/0.9.8/hunspell-uk-0.9.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/spell/hunspell-uk/0.9.9/hunspell-uk-0.9.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

@@ -255,19 +255,19 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="ai.grazie.nlp.common.jvm" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common-jvm:0.9.8">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-common-jvm:0.9.9">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.8/nlp-common-jvm-0.9.8.jar">
-              <sha256sum>81c136c9aed0e9be274920371c519b8e0e7a8c1cdfe7bf11a01fbbbbd0631ec2</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.9/nlp-common-jvm-0.9.9.jar">
+              <sha256sum>d5363a4628a97438dafbac31064d77833e4423a3d4fd085d46fd6f127edef855</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.8/nlp-common-jvm-0.9.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.9/nlp-common-jvm-0.9.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.8/nlp-common-jvm-0.9.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common-jvm/0.9.9/nlp-common-jvm-0.9.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
@@ -341,19 +341,19 @@
     </orderEntry>
     <orderEntry type="module-library" exported="">
       <library name="ai.grazie.gec.util" type="repository">
-        <properties include-transitive-deps="false" maven-id="ai.grazie.gec:gec-util:0.9.8">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.gec:gec-util:0.9.9">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.8/gec-util-0.9.8.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.9/gec-util-0.9.9.jar">
               <sha256sum>f8fb06de864aa329aab665b4b02a63c0f1209e16866ddb1fdd6c304b86847bf8</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.8/gec-util-0.9.8.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.9/gec-util-0.9.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.8/gec-util-0.9.8-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/gec/gec-util/0.9.9/gec-util-0.9.9-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
