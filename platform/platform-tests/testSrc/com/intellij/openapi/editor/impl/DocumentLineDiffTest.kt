@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
-import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
+import com.intellij.testFramework.junit5.UsePMarkerImplementation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test

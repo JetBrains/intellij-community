@@ -4,14 +4,15 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.RangeMarkersImpl
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
+import com.intellij.testFramework.junit5.UsePMarkerImplementation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
+@UsePMarkerImplementation
 internal class PMarkerDirectRootShiftTest {
   private val before: DocumentText = DocumentImpl("x".repeat(200), true).core.snapshot().text()
 
@@ -184,16 +185,14 @@ internal class PMarkerDirectRootShiftTest {
   private fun MarkerEntry.shifted(delta: Int): MarkerEntry = copy(nodeStart = nodeStart + delta, nodeEnd = nodeEnd + delta)
 
   private fun withEntries(test: (List<MarkerEntry>) -> Unit) {
-    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
-      val marker = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
-      val entries = List(31) { index ->
-        val start = 20 + index / 3 * 4
-        val end = if (index == 30) start else start + 2
-        MarkerEntry(SnapshotMarkerReference.create(marker, true), start, end,
-                    MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false),
-                    flavorFlags = (index % 2).toByte(), measure = if (start == end) index + 1 else 0)
-      }
-      test(entries)
+    val marker = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+    val entries = List(31) { index ->
+      val start = 20 + index / 3 * 4
+      val end = if (index == 30) start else start + 2
+      MarkerEntry(SnapshotMarkerReference.create(marker, true), start, end,
+                  MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false),
+                  flavorFlags = (index % 2).toByte(), measure = if (start == end) index + 1 else 0)
     }
+    test(entries)
   }
 }

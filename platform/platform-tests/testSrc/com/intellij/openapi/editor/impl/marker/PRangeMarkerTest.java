@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.marker;
 
 import com.intellij.openapi.editor.impl.RangeMarkerTest;
+import com.intellij.testFramework.junit5.UsePMarkerImplementation;
 
 @UsePMarkerImplementation
 final class PRangeMarkerTest extends RangeMarkerTest {

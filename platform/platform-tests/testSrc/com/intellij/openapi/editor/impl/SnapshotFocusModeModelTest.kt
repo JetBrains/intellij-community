@@ -4,13 +4,13 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
-import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.UsePMarkerImplementation
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 

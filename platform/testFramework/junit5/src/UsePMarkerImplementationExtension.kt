@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.impl.marker
+package com.intellij.testFramework.junit5
 
 import com.intellij.openapi.editor.impl.RangeMarkersImpl
 import org.jetbrains.annotations.TestOnly
@@ -73,6 +73,7 @@ class UsePMarkerImplementationExtension : InvocationInterceptor {
 }
 
 /** Selects the range marker implementation for a JUnit 5 test and its setup and teardown methods. */
+@TestOnly
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @ExtendWith(
   UsePMarkerImplementationExtension::class

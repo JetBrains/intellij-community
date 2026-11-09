@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.UsePMarkerImplementation;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;

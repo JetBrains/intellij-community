@@ -10,10 +10,10 @@ import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
-import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.UsePMarkerImplementation
 import com.intellij.util.ref.GCWatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext

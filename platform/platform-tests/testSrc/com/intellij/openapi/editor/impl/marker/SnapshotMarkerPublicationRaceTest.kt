@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.UsePMarkerImplementation
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull

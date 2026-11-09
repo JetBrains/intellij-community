@@ -3,12 +3,13 @@ package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.RangeMarkersImpl
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
+import com.intellij.testFramework.junit5.UsePMarkerImplementation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
+@UsePMarkerImplementation
 internal class PMarkerDirectRootRemovalTest {
   @Test
   fun `removal hints preserve identity and offsets across branches and lazy shifts`() = withEntries { document, entries ->
@@ -62,15 +63,13 @@ internal class PMarkerDirectRootRemovalTest {
   private fun MarkerEntry.range(): Long = TextRangeScalarUtil.toScalarRange(nodeStart, nodeEnd)
 
   private fun withEntries(test: (DocumentImpl, List<MarkerEntry>) -> Unit) {
-    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
-      val document = DocumentImpl("x".repeat(200), true)
-      val marker = document.createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
-      val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
-      val entries = List(36) { index ->
-        val start = index / 3 * 10 + 5
-        MarkerEntry(SnapshotMarkerReference.create(marker, true), start, start + index % 3, spec, flavorFlags = 0)
-      }
-      test(document, entries)
+    val document = DocumentImpl("x".repeat(200), true)
+    val marker = document.createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val entries = List(36) { index ->
+      val start = index / 3 * 10 + 5
+      MarkerEntry(SnapshotMarkerReference.create(marker, true), start, start + index % 3, spec, flavorFlags = 0)
     }
+    test(document, entries)
   }
 }

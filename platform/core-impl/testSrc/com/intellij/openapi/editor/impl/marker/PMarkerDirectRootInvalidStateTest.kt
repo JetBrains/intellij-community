@@ -3,12 +3,13 @@ package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.RangeMarkersImpl
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
+import com.intellij.testFramework.junit5.UsePMarkerImplementation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
+@UsePMarkerImplementation
 internal class PMarkerDirectRootInvalidStateTest {
   @Test
   fun `invalid states survive later insertions and shifts`() = withEntries { entries ->
@@ -68,14 +69,12 @@ internal class PMarkerDirectRootInvalidStateTest {
   private fun MarkerEntry.range(): Long = TextRangeScalarUtil.toScalarRange(nodeStart, nodeEnd)
 
   private fun withEntries(test: (List<MarkerEntry>) -> Unit) {
-    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
-      val marker = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
-      val entries = List(5) { index ->
-        val start = (index + 1) * 10
-        MarkerEntry(SnapshotMarkerReference.create(marker, true), start, start + 2,
-                    MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), flavorFlags = 0)
-      }
-      test(entries)
+    val marker = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+    val entries = List(5) { index ->
+      val start = (index + 1) * 10
+      MarkerEntry(SnapshotMarkerReference.create(marker, true), start, start + 2,
+                  MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), flavorFlags = 0)
     }
+    test(entries)
   }
 }

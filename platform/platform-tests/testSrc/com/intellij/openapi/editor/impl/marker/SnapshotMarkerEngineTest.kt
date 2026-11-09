@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.TextRangeScalarUtil
+import com.intellij.testFramework.junit5.UsePMarkerImplementation
 import com.intellij.util.ObjectUtilsRt
 import com.intellij.util.Processor
 import com.intellij.util.ref.GCUtil

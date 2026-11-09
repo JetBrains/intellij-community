@@ -3,8 +3,8 @@ package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
-import com.intellij.openapi.editor.impl.RangeMarkersImpl
 import com.intellij.openapi.util.TextRangeScalarUtil
+import com.intellij.testFramework.junit5.UsePMarkerImplementation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
+@UsePMarkerImplementation
 internal class MarkerTransformResultTest {
   @Test
   fun `valid results preserve empty and maximum offsets`() {
@@ -34,60 +35,56 @@ internal class MarkerTransformResultTest {
 
   @Test
   fun `roots retain input offsets and predefined invalidation reasons`() {
-    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
-      val document = DocumentImpl("abcdef", true)
-      val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
-      val before = document.core.snapshot().text()
-      val patch = DocumentPatch.simple(2, 3, "x", newModStamp = 1, clearLineFlags = false)
-      val after = before.replace(patch.startOffset(), patch.endOffset(), patch.newFragment())
-      val empty = PMarkerRoot.empty()
-      for (error in MarkerTransformError.entries) {
-        val failure = MarkerTransformResult(error)
-        assertFalse(failure.isValid)
-        assertEquals(error.message, failure.errorReason)
-        val handle = SnapshotMarkerReference.create(marker, true)
-        val root = empty.insert(handle, 2, 4, spec = 0, flavorFlags = 0, policy = MarkerPolicy { _, _, _, _ -> failure })
-        val invalidated = ArrayList<SnapshotMarkerReference<*>>()
-        val affected = ArrayList<SnapshotMarkerReference<*>>()
-        val edited = root.applyPatch(patch, before, after, { invalidated.add(it) }, { affected.add(it) })
+    val document = DocumentImpl("abcdef", true)
+    val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
+    val before = document.core.snapshot().text()
+    val patch = DocumentPatch.simple(2, 3, "x", newModStamp = 1, clearLineFlags = false)
+    val after = before.replace(patch.startOffset(), patch.endOffset(), patch.newFragment())
+    val empty = PMarkerRoot.empty()
+    for (error in MarkerTransformError.entries) {
+      val failure = MarkerTransformResult(error)
+      assertFalse(failure.isValid)
+      assertEquals(error.message, failure.errorReason)
+      val handle = SnapshotMarkerReference.create(marker, true)
+      val root = empty.insert(handle, 2, 4, spec = 0, flavorFlags = 0, policy = MarkerPolicy { _, _, _, _ -> failure })
+      val invalidated = ArrayList<SnapshotMarkerReference<*>>()
+      val affected = ArrayList<SnapshotMarkerReference<*>>()
+      val edited = root.applyPatch(patch, before, after, { invalidated.add(it) }, { affected.add(it) })
 
-        assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(2, 4)), edited.resolve(handle))
-        assertEquals(error.message, edited.invalidationReason(handle))
-        assertEquals(listOf(handle), invalidated)
-        assertTrue(affected.isEmpty())
-        assertTrue(root.isValid(handle))
-        assertNull(root.invalidationReason(handle))
-        for (removed in listOf(edited.remove(handle), edited.purgeMany(listOf(handle)))) {
-          assertEquals(PMarkerResolution.ABSENT, removed.resolve(handle))
-          assertNull(removed.invalidationReason(handle))
-        }
-        assertEquals(error.message, edited.invalidationReason(handle))
+      assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(2, 4)), edited.resolve(handle))
+      assertEquals(error.message, edited.invalidationReason(handle))
+      assertEquals(listOf(handle), invalidated)
+      assertTrue(affected.isEmpty())
+      assertTrue(root.isValid(handle))
+      assertNull(root.invalidationReason(handle))
+      for (removed in listOf(edited.remove(handle), edited.purgeMany(listOf(handle)))) {
+        assertEquals(PMarkerResolution.ABSENT, removed.resolve(handle))
+        assertNull(removed.invalidationReason(handle))
       }
+      assertEquals(error.message, edited.invalidationReason(handle))
     }
   }
 
   @Test
   fun `roots apply valid offsets and preserve metadata`() {
-    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
-      val document = DocumentImpl("abcdef", true)
-      val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
-      val before = document.core.snapshot().text()
-      val patch = DocumentPatch.simple(2, 3, "x", newModStamp = 1, clearLineFlags = false)
-      val after = before.replace(patch.startOffset(), patch.endOffset(), patch.newFragment())
-      val policy = MarkerPolicy { _, _, _, _ -> MarkerTransformResult(1, 5) }
-      val spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = false)
-      val empty = PMarkerRoot.empty()
-      val handle = SnapshotMarkerReference.create(marker, true)
-      val root = empty.insert(handle, 2, 4, spec, flavorFlags = 3, policy = policy)
-      val edited = root.applyPatch(patch, before, after)
-      assertEquals(TextRangeScalarUtil.toScalarRange(1, 5), edited.resolve(handle))
-      assertNull(edited.invalidationReason(handle))
-      val entry = edited.overlappingIterator(1, 5, 0).next()
-      assertSame(handle, entry.handle)
-      assertSame(policy, entry.policy)
-      assertEquals(spec, entry.spec)
-      assertEquals(3.toByte(), entry.flavorFlags)
-      assertEquals(TextRangeScalarUtil.toScalarRange(2, 4), root.resolve(handle))
-    }
+    val document = DocumentImpl("abcdef", true)
+    val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
+    val before = document.core.snapshot().text()
+    val patch = DocumentPatch.simple(2, 3, "x", newModStamp = 1, clearLineFlags = false)
+    val after = before.replace(patch.startOffset(), patch.endOffset(), patch.newFragment())
+    val policy = MarkerPolicy { _, _, _, _ -> MarkerTransformResult(1, 5) }
+    val spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = false)
+    val empty = PMarkerRoot.empty()
+    val handle = SnapshotMarkerReference.create(marker, true)
+    val root = empty.insert(handle, 2, 4, spec, flavorFlags = 3, policy = policy)
+    val edited = root.applyPatch(patch, before, after)
+    assertEquals(TextRangeScalarUtil.toScalarRange(1, 5), edited.resolve(handle))
+    assertNull(edited.invalidationReason(handle))
+    val entry = edited.overlappingIterator(1, 5, 0).next()
+    assertSame(handle, entry.handle)
+    assertSame(policy, entry.policy)
+    assertEquals(spec, entry.spec)
+    assertEquals(3.toByte(), entry.flavorFlags)
+    assertEquals(TextRangeScalarUtil.toScalarRange(2, 4), root.resolve(handle))
   }
 }

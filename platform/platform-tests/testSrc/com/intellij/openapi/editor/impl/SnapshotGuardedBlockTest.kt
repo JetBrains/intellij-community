@@ -5,10 +5,10 @@ import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
-import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.UsePMarkerImplementation
 import com.intellij.util.ref.GCUtil
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
