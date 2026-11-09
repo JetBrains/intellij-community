@@ -158,11 +158,13 @@ class SeTabDelegate(
     // we don't want scopes in ijLight to simplify UI: all the default scopes are equivalent to each other in ijLight
     !IdeProductMode.isLight
 
+  @ApiStatus.Internal
   suspend fun getSearchScopesInfos(): List<SearchScopesInfo> {
     if (!shouldHaveScopesFilter()) return emptyList()
     return providers.getValue().getSearchScopesInfos()
   }
 
+  @ApiStatus.Internal
   suspend fun getTypeVisibilityStates(key: String = SeTypeFilterKeys.DEFAULT): List<SeTypeVisibilityStatePresentation> {
     return providers.getValue().getTypeVisibilityStates(key)
   }
