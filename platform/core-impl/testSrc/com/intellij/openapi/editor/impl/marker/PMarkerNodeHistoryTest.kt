@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.application.impl.BulkArrayQueue
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -10,6 +11,59 @@ import java.lang.ref.Reference
 
 internal class PMarkerNodeHistoryTest {
   private val branch: PMarkerNodeBranch = PMarkerNodeBranch(null, 0)
+
+  @Test
+  fun `small histories preserve values through index and branch promotion`() {
+    val history = PMarkerNodeHistory<Any>()
+    val first = Any()
+    val second = Any()
+    val replacement = Any()
+    val third = Any()
+    publish(history, version(1), first)
+    publish(history, version(2), second)
+    publish(history, version(2), replacement)
+
+    assertNull(field(history, "singleBranch"))
+    assertNull(field(history, "branches"))
+    assertSame(first, history.get(version(1)))
+    assertSame(replacement, history.get(version(2)))
+
+    publish(history, version(3), third)
+    assertNotNull(field(history, "singleBranch"))
+    assertNull(field(history, "branches"))
+    assertSame(first, history.get(version(1)))
+    assertSame(replacement, history.get(version(2)))
+    assertSame(third, history.get(version(3)))
+
+    val fork = PMarkerNodeVersion(PMarkerNodeBranch(version(2), 3), 3)
+    val forkValue = Any()
+    publish(history, fork, forkValue)
+    assertNull(field(history, "singleBranch"))
+    assertNotNull(field(history, "branches"))
+    assertSame(forkValue, history.get(fork))
+    assertSame(third, history.get(version(3)))
+    assertSame(replacement, history.get(version(2)))
+  }
+
+  @Test
+  fun `collecting the latest inline record preserves the earlier value`() {
+    val history = PMarkerNodeHistory<Any>()
+    val firstValue = Any()
+    val first = publish(history, version(1), firstValue)
+    val secondValue = Any()
+    val second = publish(history, version(2), secondValue)
+    collect(listOf(second))
+    assertSame(firstValue, history.get(version(1)))
+    assertSame(firstValue, history.get(version(2)))
+
+    val thirdValue = Any()
+    publish(history, version(3), thirdValue)
+    assertSame(firstValue, history.get(version(2)))
+    assertSame(thirdValue, history.get(version(3)))
+    collect(listOf(first))
+    assertNull(history.get(version(2)))
+    assertSame(thirdValue, history.get(version(3)))
+  }
 
   @Test
   fun `old snapshots survive head trimming and compaction`() {
@@ -122,10 +176,15 @@ internal class PMarkerNodeHistoryTest {
   }
 
   private fun indexedRecordCount(history: PMarkerNodeHistory<Any>): Int {
-    val branches = PMarkerNodeHistory::class.java.getDeclaredField("branches").apply { isAccessible = true }.get(history) as Map<*, *>
-    return branches.values.sumOf { branch ->
+    val singleBranch = field(history, "singleBranch")
+    val branches = field(history, "branches") as Map<*, *>?
+    val histories = if (singleBranch == null) branches?.values.orEmpty() else listOf(singleBranch)
+    return histories.sumOf { branch ->
       val records = branch!!.javaClass.getDeclaredField("records").apply { isAccessible = true }.get(branch) as BulkArrayQueue<*>
       records.size()
     }
   }
+
+  private fun field(history: PMarkerNodeHistory<Any>, name: String): Any? =
+    PMarkerNodeHistory::class.java.getDeclaredField(name).apply { isAccessible = true }.get(history)
 }
