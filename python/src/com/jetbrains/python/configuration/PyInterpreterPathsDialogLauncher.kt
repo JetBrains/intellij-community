@@ -41,7 +41,7 @@ object PyInterpreterPathsDialogLauncher {
    */
   suspend fun open(project: Project, sdk: Sdk, onPathsChanged: (Sdk) -> Unit = {}): Boolean {
     val strategy = PathEditorStrategy.forSdk(sdk)
-    val (editor, modified) = withContext(Dispatchers.EDT) {
+    val [added, excluded] = withContext(Dispatchers.EDT) {
       val editor = strategy.createEditor(project, sdk)
       editor.setModuleSourceRoots(moduleSourceRootsOf(project, sdk))
       // Wire the "Reload paths" toolbar action inside the paths editor to a full interpreter
@@ -53,14 +53,14 @@ object PyInterpreterPathsDialogLauncher {
       val sdkModificator = sdk.sdkModificator
       val dialog = PythonPathDialog(project, editor)
       editor.reset(sdkModificator)
-      if (!dialog.showAndGet()) return@withContext editor to false
-      if (!editor.isModified) return@withContext editor to false
+      if (!dialog.showAndGet()) return@withContext null
+      if (!editor.isModified) return@withContext null
       editor.apply(sdkModificator)
       edtWriteAction { sdkModificator.commitChanges() }
-      writeUserPaths(project, sdk, editor.addedPaths, editor.excludedPaths)
-      editor to true
-    }
-    if (!modified) return false
+      // Copies: the editor keeps its sets on the EDT.
+      editor.addedPaths.toList() to editor.excludedPaths.toList()
+    } ?: return false
+    writeUserPaths(project, sdk, added, excluded)
     PythonInterpreterRegistry.getInstance(project).interpreterOf(sdk)?.let { updateInterpreterFacts(it, project) }
     onPathsChanged(sdk)
     return true
@@ -109,7 +109,7 @@ private fun moduleSourceRootsOf(project: Project, sdk: Sdk): Collection<VirtualF
  * mappings of a remote interpreter. Does nothing for an SDK that names no interpreter of [project].
  */
 @ApiStatus.Internal
-fun writeUserPaths(project: Project, sdk: Sdk, added: Collection<VirtualFile>, excluded: Collection<VirtualFile>) {
+suspend fun writeUserPaths(project: Project, sdk: Sdk, added: Collection<VirtualFile>, excluded: Collection<VirtualFile>) {
   val key = PythonInterpreterSdks.getInstance(project).keyOf(sdk) ?: return
   val interpreter = PythonInterpreterRegistry.getInstance(project).resolveIfReady(key) ?: return
   val details = PythonInterpreterDetails.getInstance(project)

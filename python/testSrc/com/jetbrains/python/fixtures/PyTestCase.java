@@ -44,7 +44,6 @@ import com.intellij.python.community.testFramework.PyFixmeKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterDetails;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
-import com.intellij.python.sdk.backend.PythonInterpreterRoots;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -84,6 +83,7 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.SdkExtKt;
+import com.jetbrains.python.tools.sdkTools.PythonInterpreterFactsForTests;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -275,7 +275,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       }
     });
     assertNotNull(skeletonsDir);
-    PythonInterpreterRoots.getInstance(myFixture.getProject()).refresh(interpreter);
+    PythonInterpreterFactsForTests.refreshRootsForTests(myFixture.getProject(), interpreter);
     PyProjectStructureTestUtilKt.syncPythonInterpreterLibraries();
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
     runWithAdditionalFileIn(relativePath, text, skeletonsDir, fileConsumer);
@@ -366,7 +366,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     final PythonInterpreterDetails details = PythonInterpreterDetails.getInstance(module.getProject());
     final List<Path> paths = new ArrayList<>(details.facts(interpreter).getAddedPaths());
     edit.accept(paths);
-    details.writeAddedPaths(interpreter, paths);
+    PythonInterpreterFactsForTests.writeAddedPathsForTests(module.getProject(), interpreter, paths);
     // Resolve reads the roots of the interpreter library, which follows the facts of the interpreter.
     PyProjectStructureTestUtilKt.syncPythonInterpreterLibraries();
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();

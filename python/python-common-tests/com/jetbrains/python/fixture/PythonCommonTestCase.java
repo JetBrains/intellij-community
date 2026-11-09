@@ -380,13 +380,13 @@ public abstract class PythonCommonTestCase extends TestCase {
     final List<Path> before = details.facts(interpreter).getAddedPaths();
     final List<Path> added = new ArrayList<>(before);
     if (!added.contains(directory.toNioPath())) added.add(directory.toNioPath());
-    details.writeAddedPaths(interpreter, added);
+    PythonCommonInterpreterFacts.writeAddedPathsForTests(myFixture.getProject(), interpreter, added);
     myFixture.interpreterFactsChanged();
     try {
       runnable.run();
     }
     finally {
-      details.writeAddedPaths(interpreter, before);
+      PythonCommonInterpreterFacts.writeAddedPathsForTests(myFixture.getProject(), interpreter, before);
       myFixture.interpreterFactsChanged();
     }
   }

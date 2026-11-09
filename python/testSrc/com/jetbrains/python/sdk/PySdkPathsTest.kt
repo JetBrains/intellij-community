@@ -47,6 +47,8 @@ import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.tools.sdkTools.PythonMockSdkKeys
+import com.jetbrains.python.tools.sdkTools.writeAddedPathsForTests
+import com.jetbrains.python.tools.sdkTools.writeExcludedPathsForTests
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import org.junit.Assume.assumeTrue
@@ -514,12 +516,12 @@ internal class PySdkPathsTest {
 
   /** Writes [paths] as the paths that the user added to the interpreter of [sdk], see [PythonInterpreterDetails]. */
   private fun setAddedPaths(sdk: Sdk, paths: Set<VirtualFile>) {
-    PythonInterpreterDetails.getInstance(projectModel.project).writeAddedPaths(interpreterOf(sdk), paths.map { it.toNioPath() })
+    writeAddedPathsForTests(projectModel.project, interpreterOf(sdk), paths.map { it.toNioPath() })
   }
 
   /** Writes [paths] as the paths that the user excluded from the interpreter of [sdk], see [PythonInterpreterDetails]. */
   private fun setExcludedPaths(sdk: Sdk, paths: Set<VirtualFile>) {
-    PythonInterpreterDetails.getInstance(projectModel.project).writeExcludedPaths(interpreterOf(sdk), paths.mapTo(HashSet()) { it.toNioPath() })
+    writeExcludedPathsForTests(projectModel.project, interpreterOf(sdk), paths.mapTo(HashSet()) { it.toNioPath() })
   }
 
   private fun interpreterOf(sdk: Sdk): PythonInterpreter {

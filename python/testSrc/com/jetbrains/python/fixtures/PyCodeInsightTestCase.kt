@@ -108,6 +108,7 @@ import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrIn
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.TypeEvalContext.Companion.codeAnalysis
 import com.jetbrains.python.psi.types.TypeEvalContext.Companion.userInitiated
+import com.jetbrains.python.tools.sdkTools.writeAddedPathsForTests
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Unmodifiable
 import org.junit.jupiter.api.AfterAll
@@ -461,7 +462,7 @@ abstract class PyCodeInsightTestCase {
     for ([_, root] in roots.filter { it.first.type == OrderRootTypeEnum.CLASSES }) {
       if (addElseRemove) addedPaths.add(root.toNioPath()) else addedPaths.remove(root.toNioPath())
     }
-    details.writeAddedPaths(interpreter, addedPaths)
+    writeAddedPathsForTests(myFixture.project, interpreter, addedPaths)
 
     val otherRoots = roots.filter { it.first.type != OrderRootTypeEnum.CLASSES }
     if (otherRoots.isNotEmpty()) {

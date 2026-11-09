@@ -92,7 +92,7 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
    * version is a probe that could not answer, so it leaves the version alone: a remote host that is down must not erase
    * a good version. Returns whether a fact changed, and reports the change on [changes] only then.
    */
-  fun writeFacts(interpreter: PythonInterpreter, facts: PythonInterpreterFacts): Boolean {
+  suspend fun writeFacts(interpreter: PythonInterpreter, facts: PythonInterpreterFacts): Boolean {
     val written = facts.withVersionOf(facts(interpreter))
     val changed = if (isInterpreterLibraryFlowEnabled()) writeRecordFacts(interpreter, written) else writeTableSdkFacts(interpreter, written)
     if (changed) {
@@ -104,22 +104,22 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
   }
 
   /** Writes [version] as the version of [interpreter], and keeps its other facts, see [writeFacts]. */
-  fun writeVersion(interpreter: PythonInterpreter, version: String?): Boolean =
+  suspend fun writeVersion(interpreter: PythonInterpreter, version: String?): Boolean =
     version != null && writeFacts(interpreter, facts(interpreter).copy(version = version))
 
   /**
    * Writes [sysPath] as the `sys.path` of [interpreter], and keeps its other facts, see [writeFacts]. A path that is on
    * `sys.path` twice is kept once.
    */
-  fun writeSysPath(interpreter: PythonInterpreter, sysPath: List<String>): Boolean =
+  suspend fun writeSysPath(interpreter: PythonInterpreter, sysPath: List<String>): Boolean =
     writeFacts(interpreter, facts(interpreter).copy(sysPath = sysPath.distinct().mapNotNull(::toPathOrNull)))
 
   /** Writes [paths] as the paths that the user added to [interpreter], and keeps its other facts, see [writeFacts]. */
-  fun writeAddedPaths(interpreter: PythonInterpreter, paths: List<Path>): Boolean =
+  suspend fun writeAddedPaths(interpreter: PythonInterpreter, paths: List<Path>): Boolean =
     writeFacts(interpreter, facts(interpreter).copy(addedPaths = paths.distinct()))
 
   /** Writes [paths] as the paths that the user excluded from [interpreter], and keeps its other facts, see [writeFacts]. */
-  fun writeExcludedPaths(interpreter: PythonInterpreter, paths: Set<Path>): Boolean =
+  suspend fun writeExcludedPaths(interpreter: PythonInterpreter, paths: Set<Path>): Boolean =
     writeFacts(interpreter, facts(interpreter).copy(excludedPaths = paths))
 
   /** The facts that the record of [interpreter] saves. No record gives no fact. */
@@ -321,12 +321,16 @@ private fun PythonSdkAdditionalData?.addedPaths(): List<Path> = this?.addedPathF
 
 private fun PythonSdkAdditionalData?.excludedPaths(): Set<Path> = this?.excludedPathFiles.orEmpty().mapNotNullTo(HashSet()) { it.toNioPathOrNull() }
 
+/** Whether the SDK data of [sdk] holds the user paths of [facts] already, see [commitUserPaths]. */
+internal fun hasUserPaths(sdk: Sdk, facts: PythonInterpreterFacts): Boolean =
+  sdkFacts(sdk).let { it.addedPaths == facts.addedPaths && it.excludedPaths == facts.excludedPaths }
+
 /**
  * Writes the user paths of [facts] into the SDK data of [sdk], the legacy form of these facts, see
  * [PythonSdkAdditionalData.getAddedPathFiles]. A path that names no file is dropped.
  */
 internal fun commitUserPaths(sdk: Sdk, facts: PythonInterpreterFacts) {
-  if (sdkFacts(sdk).let { it.addedPaths == facts.addedPaths && it.excludedPaths == facts.excludedPaths }) return
+  if (hasUserPaths(sdk, facts)) return
   commit(sdk) { modificator ->
     val data = modificator.sdkAdditionalData as? PythonSdkAdditionalData ?: return@commit
     setUserPaths(data, facts)

@@ -261,6 +261,7 @@ jvm_library(
         "//python/python-sdk/backend",
         "//platform/testFramework/core",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/testFramework/common",
     ],
 )
 ### auto-generated section `build intellij.python.commonTests` end

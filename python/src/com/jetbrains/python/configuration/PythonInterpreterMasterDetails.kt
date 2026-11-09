@@ -283,10 +283,15 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
         ApplicationManager.getApplication().runWriteAction {
           sdkModificator.commitChanges()
         }
-        writeUserPaths(project, sdk, pathEditor.addedPaths, pathEditor.excludedPaths)
+        val added = pathEditor.addedPaths.toList()
+        val excluded = pathEditor.excludedPaths.toList()
         // now added and excluded paths are updated in `sdk` instance
         pythonPathsModified = true
-        reloadSdk(sdk)
+        // The write commits the roots in a write action on the EDT, so this EDT action must not wait for it.
+        PyPackageCoroutine.launch(project) {
+          writeUserPaths(project, sdk, added, excluded)
+          reloadSdk(sdk)
+        }
       }
     }
 

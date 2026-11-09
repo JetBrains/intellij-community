@@ -122,7 +122,7 @@ internal class PythonInterpreterBackgroundFactsStep : PythonInterpreterUpdateSte
   }
 }
 
-private fun writeEnvironmentFacts(project: Project, interpreter: PythonInterpreter, facts: PythonEnvironmentFacts) {
+private suspend fun writeEnvironmentFacts(project: Project, interpreter: PythonInterpreter, facts: PythonEnvironmentFacts) {
   val details = PythonInterpreterDetails.getInstance(project)
   details.writeVersion(interpreter, facts.version)
   facts.sysPath?.let { details.writeSysPath(interpreter, it) }
