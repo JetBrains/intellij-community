@@ -39,6 +39,7 @@ import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsAd
 import com.jetbrains.python.target.PyTargetAwareAdditionalData.Companion.pathsRemovedByUser
 import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
 import java.nio.file.Files
+import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
 import kotlin.io.path.deleteExisting
 import kotlin.io.path.div
@@ -117,6 +118,16 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
         }
       }
     }
+    else {
+      // An editable package in the project is not copied to remote_sources: the project upload volume maps it
+      val projectRoots = projectUploadRoots()
+      if (projectRoots.isNotEmpty()) {
+        execution.addParameter("--project-roots")
+        for (root in projectRoots) {
+          execution.addParameter(root.getTargetUploadPath())
+        }
+      }
+    }
 
 
     val targetIndicator = TargetProgressIndicatorAdapter(indicator)
@@ -188,6 +199,21 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
     // "remote_sources" folder may now contain new packages
     // since we copied them there not via VFS, we must refresh it, so Intellij knows about them
     pathMappings.pathMappings.mapNotNull { fs.findFileByPath(it.localRoot) }.forEach { it.refresh(false, true) }
+  }
+
+  /**
+   * The upload volumes of [targetEnvRequest] that hold the project base directory or a content root of a module.
+   */
+  private fun projectUploadRoots(): List<TargetEnvironment.UploadRoot> {
+    val projectPaths = buildList {
+      project.basePath?.let { add(Path.of(it)) }
+      for (module in project.modules) {
+        for (contentRoot in module.rootManager.contentRoots) {
+          contentRoot.fileSystem.getNioPath(contentRoot)?.let { add(it) }
+        }
+      }
+    }
+    return targetEnvRequest.uploadVolumes.filter { volume -> projectPaths.any { it.startsWith(volume.localRootPath) } }
   }
 
   override val isLocalTarget: Boolean = false
