@@ -185,6 +185,22 @@ class JoinedListValuesStringFusMetric(metric: String, enumRef: String = "kbt_${m
     )
 
 /**
+ * String FUS metric that concatenates all values.
+ * Dictionary `#kbt_$metric.ndjson` should be registered in the FUS backend.
+ * Use it instead of [JoinedListValuesStringFusMetric] when the number of
+ * allowed values is large (> 500).
+ *
+ * @param metric The name of the metric
+ */
+class JoinedListValuesStringFusMetricByDictionary(metric: String, dictionaryName: String = "kbt_${metric.lowercase()}") :
+    KotlinBuildToolFusMetric<List<String>>(
+        metric,
+        eventField = EventFields.StringListValidatedByDictionary(metric.lowercase(), "$dictionaryName.ndjson"),
+        validationStep = KotlinBuildToolListFlowValidationStep(),
+        aggregationStep = JoinListAggregationStep,
+    )
+
+/**
  * String FUS metric that uses override aggregation with regex validation.
  * The final value will be the last valid value in the list that matches the regex.
  * 

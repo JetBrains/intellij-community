@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradle.statistics.v2.flow
 
-import org.jetbrains.kotlin.config.LanguageFeature
-
 //metric name and enum should be the same: KDoc + test, + version + test
 enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>) {
     //annotation processors
@@ -445,7 +443,7 @@ enum class KotlinBuildToolFusMetricName(val metric: KotlinBuildToolFusMetric<*>)
     CLI_NATIVE_PRE_LINK_CACHES_MODE(ConcatenatedAllowedListValuesStringFusMetric("CLI_NATIVE_PRE_LINK_CACHES_MODE", listOf("disable", "enable"))),
     CLI_NATIVE_MEMORY_MODEL(ConcatenatedAllowedListValuesStringFusMetric("CLI_NATIVE_MEMORY_MODEL", listOf("strict", "experimental"))),
     CLI_NATIVE_PRODUCE_OUTPUT_KIND(ConcatenatedAllowedListValuesStringFusMetric("CLI_NATIVE_PRODUCE_OUTPUT_KIND", listOf("program", "static", "dynamic", "framework", "library", "bitcode"))),
-    CLI_MANUALLY_CONFIGURED_LANGUAGE_FEATURES(JoinedListValuesStringFusMetric("CLI_MANUALLY_CONFIGURED_LANGUAGE_FEATURES")),
+    CLI_MANUALLY_CONFIGURED_LANGUAGE_FEATURES(JoinedListValuesStringFusMetricByDictionary("CLI_MANUALLY_CONFIGURED_LANGUAGE_FEATURES")),
     CLI_JSR305_NULLABILITY_ANNOTATIONS_MODE(ConcatenatedAllowedListValuesStringFusMetric("CLI_JSR305_NULLABILITY_ANNOTATIONS_MODE", listOf("ignore", "strict", "warn", "under-migration:ignore", "under-migration:strict", "under-migration:warn"))),
     CLI_METADATA_TARGET_PLATFORM(ConcatenatedAllowedListValuesStringFusMetric("CLI_METADATA_TARGET_PLATFORM", listOf("JVM", "JS", "WasmJs", "WasmWasi", "Native"))),
     CLI_NATIVE_MANIFEST_TARGETS(JoinedListValuesStringFusMetric("CLI_NATIVE_MANIFEST_TARGETS", enumRef = MPP_PLATFORMS_ENUM_REF)),

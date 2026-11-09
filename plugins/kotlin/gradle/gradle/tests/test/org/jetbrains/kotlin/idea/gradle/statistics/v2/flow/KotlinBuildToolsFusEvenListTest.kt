@@ -25,7 +25,7 @@ class KotlinBuildToolsFusEvenListTest {
         }
     }
 
-    private val GROUP_EXPECTED_VERSION_AND_HASH = Pair(23, "17dd689233ae62bb06519ac14705ba8e")
+    private val GROUP_EXPECTED_VERSION_AND_HASH = Pair(24, "545f17279484753da7b3757106babdf7")
 
     /**
      * The source files that define the reported events and the event metrics.
