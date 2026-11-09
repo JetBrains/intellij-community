@@ -33,6 +33,7 @@ data class VMOptions(
   companion object {
     const val ALLOW_SKIPPING_FULL_SCANNING_ON_STARTUP_OPTION: String = "full.scanning.on.startup.can.be.skipped"
     const val TEST_SCRIPT_FILE_OPTION: String = "testscript.filename"
+    const val SETUP_SCRIPT_FILE_OPTION: String = "testscript.setup.filename"
 
     /** The system property from which the platform loads additional plugins, see [addPluginPath]. */
     private const val PLUGIN_PATH_PROPERTY: String = "plugin.path"
@@ -340,6 +341,19 @@ data class VMOptions(
     addSystemProperty(TEST_SCRIPT_FILE_OPTION, scriptFile)
     // Use non-success status code 1 when running IDE as a command line tool.
     addSystemProperty("testscript.must.exist.process.with.non.success.code.on.ide.error", "true")
+  }
+
+  /** Writes [commands] to the setup script. The IDE runs it right after the project opens, before the test script. */
+  fun installSetupScript(testName: String, paths: IDEDataPaths, commands: Iterable<MarshallableCommand>) {
+    val scriptText = commands.joinToString(separator = System.lineSeparator()) { it.storeToString() }
+    val scriptFile = paths.systemDir.resolve(testName.cleanPathFromSlashes(replaceWith = "_") + ".setup.text").apply {
+      parent.createDirectories()
+    }
+    scriptFile.writeText(scriptText)
+
+    logOutput("Setup commands to be executed: ${System.lineSeparator()}$scriptText")
+
+    addSystemProperty(SETUP_SCRIPT_FILE_OPTION, scriptFile)
   }
 
   fun setFlagIntegrationTests(): Unit = addSystemProperty("idea.is.integration.test", true)

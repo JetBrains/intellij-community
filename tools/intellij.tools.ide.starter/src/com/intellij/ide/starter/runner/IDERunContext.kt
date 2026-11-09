@@ -65,6 +65,9 @@ private const val KILL_MEMORY_DUMP_FILE_PREFIX: String = "memoryDump-before-kill
  * [copy] gives the copy reporting of its own — a fresh [IDEReportingDataRegistry], so a new [originalIdeReportingData], a method execution
  * index counted from one again and its own link on CI. That is what a copy standing for another IDE process wants; a copy meant to be the
  * same run would report itself twice, so copy only to start something.
+ *
+ * @property setupCommands the commands that prepare the IDE for the test, such as `%setupSDK`. The IDE runs them right after
+ * the project opens, and [commands] after them.
  */
 data class IDERunContext(
   val testContext: IDETestContext,
@@ -79,6 +82,7 @@ data class IDERunContext(
   val analyzeProcessExit: Boolean = true,
   val collectNativeThreads: Boolean = false,
   private val stdOut: ExecOutputRedirect? = null,
+  val setupCommands: Iterable<MarshallableCommand> = listOf(),
 ) {
   /**
    * What this run is called wherever the name has to stay the same across runs of the same test — the identity IJ Perf, bisect and the
@@ -189,11 +193,15 @@ data class IDERunContext(
       patchesForVMOptions.forEach { patchVMOptions -> patchVMOptions() }
 
       if (!useStartupScript) {
-        require(commands.count() > 0) { "script builder is not allowed when useStartupScript is disabled" }
+        require(commands.count() + setupCommands.count() > 0) { "script builder is not allowed when useStartupScript is disabled" }
       }
       // Allow an overridden script file, required for migration of Rider performance tests
-      else if (!this.hasOption(TEST_SCRIPT_FILE_OPTION))
+      else if (!this.hasOption(TEST_SCRIPT_FILE_OPTION)) {
         installTestScript(testName = contextName, paths = testContext.paths, commands = commands)
+        if (setupCommands.any()) {
+          installSetupScript(testName = contextName, paths = testContext.paths, commands = setupCommands)
+        }
+      }
 
       applyCustomCommandJvmArguments()
     }

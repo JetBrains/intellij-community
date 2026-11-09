@@ -17,7 +17,7 @@ import kotlinx.coroutines.withContext
  *
  * The VFS and the workspace model come from the shared `system` directory and keep the state of the test before.
  * Without this command, the IDE applies the rewound files later and undoes the startup commands that ran before,
- * for example `%setupSDK`, see AT-5404. Starter puts this command first after a rewind.
+ * for example `%setupSDK`, see AT-5404. Starter puts this command first in the setup script after a rewind.
  * The command ends without an error when the IDE closes the project during the sync.
  *
  * Syntax: %syncRestoredProjectFiles

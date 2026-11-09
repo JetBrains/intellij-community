@@ -529,14 +529,17 @@ open class IDETestContext(
     configure: suspend IDERunContext.() -> Unit = {},
   ): IDEStartResult {
     val span = TestTelemetryService.spanBuilder("runIDE").setAttribute("launchName", launchName).startSpan()
-    val finalCommands = if (testCase.sdk != null) CommandChain().setupProjectSdk(testCase.sdk).addCommands(commands.toList()) else commands
-    val runCommands = if (syncProjectFilesOnStart) CommandChain().syncRestoredProjectFiles().addCommands(finalCommands.toList()) else finalCommands
+    val setupCommands = CommandChain().apply {
+      if (syncProjectFilesOnStart) syncRestoredProjectFiles()
+      testCase.sdk?.let { setupProjectSdk(it) }
+    }
     syncProjectFilesOnStart = false
     span.makeCurrent().use {
       val runContext = IDERunContext(
         testContext = this,
         commandLine = commandLine,
-        commands = runCommands,
+        commands = commands,
+        setupCommands = setupCommands,
         runTimeout = runTimeout,
         useStartupScript = useStartupScript,
         launchName = launchName,

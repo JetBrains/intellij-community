@@ -229,14 +229,46 @@ private fun runOnProjectInit(project: Project) {
     provider.commands
   }
 
-  if (shouldOpenInSmartMode(project)) {
-    runScriptWhenInitializedAndIndexed(project, createAlarm())
+  fun startTestScript() {
+    if (shouldOpenInSmartMode(project)) {
+      runScriptWhenInitializedAndIndexed(project, createAlarm())
+    }
+    else if (SystemProperties.getBooleanProperty("performance.execute.script.after.scanning", false)) {
+      runScriptDuringIndexing(project, createAlarm())
+    }
+    else {
+      runScriptFromFile(project)
+    }
   }
-  else if (SystemProperties.getBooleanProperty("performance.execute.script.after.scanning", false)) {
-    runScriptDuringIndexing(project, createAlarm())
+
+  val setupScript = getSetupFile()
+  if (setupScript == null) {
+    startTestScript()
   }
   else {
-    runScriptFromFile(project)
+    runSetupScript(project, setupScript, ::startTestScript)
+  }
+}
+
+/**
+ * Runs the setup script right after the project opens, and then calls [startTestScript].
+ *
+ * Starter writes the commands that prepare the IDE for the test to the setup script, for example `%setupSDK`. They need
+ * no indexes. [CommandsRunner.haveCommandsFinished] stays `false` until the test script ends.
+ */
+private fun runSetupScript(project: Project, setupScript: Path, startTestScript: () -> Unit) {
+  // the test script replaces this callback when it starts
+  val testScriptStart = CompletableFuture<Any?>()
+  CommandsRunner.setActionCallback(testScriptStart)
+  val setupCallback = runScript(project, setupScript)
+  registerOnFinishRunnables(future = setupCallback, mustExitOnFailure = true)
+  setupCallback.whenComplete { _, error ->
+    if (error == null) {
+      startTestScript()
+    }
+    else {
+      testScriptStart.completeExceptionally(error)
+    }
   }
 }
 
@@ -363,6 +395,10 @@ class ProjectLoaded : ApplicationInitializedListener {
   companion object {
     @JvmField
     val TEST_SCRIPT_FILE_PATH: String? = System.getProperty("testscript.filename")
+
+    /** The script that runs right after the project opens, before the test script. */
+    @JvmField
+    val SETUP_SCRIPT_FILE_PATH: String? = System.getProperty("testscript.setup.filename")
   }
 }
 
@@ -399,21 +435,37 @@ private fun initializeProfilerSettingsForIndexing(): Pair<String, List<String>>?
   return null
 }
 
-/** Whether the startup script has a line to run. A missing script has none. */
+/** Whether the test script or the setup script has a line to run. A missing script has none. */
 internal fun hasStartupScriptCommands(): Boolean {
-  val file = ProjectLoaded.TEST_SCRIPT_FILE_PATH?.let { Path.of(it) } ?: return false
-  return Files.isRegularFile(file) && Files.readAllLines(file).any { it.isNotBlank() }
+  return listOfNotNull(ProjectLoaded.TEST_SCRIPT_FILE_PATH, ProjectLoaded.SETUP_SCRIPT_FILE_PATH).any { path ->
+    val file = Path.of(path)
+    Files.isRegularFile(file) && Files.readAllLines(file).any { it.isNotBlank() }
+  }
+}
+
+/** The setup script, or `null` when Starter gave none. */
+private fun getSetupFile(): Path? {
+  val file = Path.of(ProjectLoaded.SETUP_SCRIPT_FILE_PATH ?: return null)
+  if (!Files.isRegularFile(file)) {
+    System.err.println(PerformanceTestingBundle.message("startup.noscript", file.toAbsolutePath().toString()))
+    ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
+  }
+  return file
 }
 
 private fun runScriptFromFile(project: Project) {
-  val playback = PlaybackRunnerExtended("%include " + getTestFile(), CommandLogger(), project)
-  playback.scriptDir = getTestFile().parent.toFile()
+  val scriptCallback = runScript(project, getTestFile())
+  CommandsRunner.setActionCallback(scriptCallback)
+  registerOnFinishRunnables(future = scriptCallback, mustExitOnFailure = true)
+}
+
+private fun runScript(project: Project, file: Path): CompletableFuture<*> {
+  val playback = PlaybackRunnerExtended("%include $file", CommandLogger(), project)
+  playback.scriptDir = file.parent.toFile()
   if (SystemProperties.getBooleanProperty(ReporterCommandAsTelemetrySpan.USE_SPAN_WRAPPER_FOR_COMMAND, false)) {
     playback.setCommandStartStopProcessor(ReporterCommandAsTelemetrySpan())
   }
-  val scriptCallback = playback.run()
-  CommandsRunner.setActionCallback(scriptCallback)
-  registerOnFinishRunnables(future = scriptCallback, mustExitOnFailure = true)
+  return playback.run()
 }
 
 @Suppress("RAW_RUN_BLOCKING")

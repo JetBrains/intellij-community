@@ -2,9 +2,13 @@ package com.intellij.ide.starter
 
 import com.intellij.ide.starter.ide.InstalledIde
 import com.intellij.ide.starter.models.VMOptions
+import com.intellij.ide.starter.path.IDEDataPaths
 import com.intellij.ide.starter.utils.ReportingPathUtils.PATH_LENGTH_LIMIT
 import com.intellij.ide.starter.utils.ReportingPathUtils.WIDEST_CRASH_LOG_NAME
+import com.intellij.tools.ide.performanceTesting.commands.CommandChain
+import com.intellij.tools.ide.performanceTesting.commands.syncRestoredProjectFiles
 import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import org.junit.jupiter.api.Test
@@ -12,6 +16,7 @@ import org.junit.jupiter.api.io.TempDir
 import org.mockito.Mockito.mock
 import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.readLines
 
 class VMOptionsTest {
   @TempDir
@@ -67,6 +72,18 @@ class VMOptionsTest {
   @Test
   fun `no plugin path gives an empty list`() {
     vmOptions().pluginPaths().shouldBeEmpty()
+  }
+
+  @Test
+  fun `the setup script holds the setup commands, and its option points to it`() {
+    val paths = IDEDataPaths(tempDir, null)
+    val vmOptions = vmOptions()
+
+    vmOptions.installSetupScript("some/test", paths, CommandChain().syncRestoredProjectFiles())
+
+    val scriptFile = paths.systemDir.resolve("some_test.setup.text")
+    scriptFile.readLines() shouldBe listOf("%syncRestoredProjectFiles")
+    vmOptions.data() shouldContain "-D${VMOptions.SETUP_SCRIPT_FILE_OPTION}=${scriptFile.toAbsolutePath()}"
   }
 
   private fun vmOptions(): VMOptions = VMOptions(ide = mock(InstalledIde::class.java), data = emptyList(), env = emptyMap())
