@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFileMoveEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.codeInsight.PyCodeInsightCounters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,8 @@ public abstract class PythonPathCache {
   private final Map<String, List<QualifiedName>> myQNameCache = new ConcurrentHashMap<>();
 
   public void clearCache() {
+    if (myCache.isEmpty() && myQNameCache.isEmpty()) return;
+    PyCodeInsightCounters.inc(PyCodeInsightCounters.Counter.PATH_CACHE_CLEARS);
     myCache.clear();
     myQNameCache.clear();
   }
