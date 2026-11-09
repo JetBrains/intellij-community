@@ -116,17 +116,13 @@ public final class LicensingFacade {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(LicenseStateListener.TOPIC).licenseStateChanged(instance);
   }
 
-  private static @NotNull Gson createGson() {
-    return new GsonBuilder().setDateFormat("yyyyMMdd").create();
-  }
-
   public String toJson() {
-    return createGson().toJson(this);
+    return GsonFactory.create().toJson(this);
   }
 
   public static @Nullable LicensingFacade fromJson(String json) {
     try {
-      return createGson().fromJson(json, LicensingFacade.class);
+      return GsonFactory.create().fromJson(json, LicensingFacade.class);
     }
     catch (Throwable e) {
       return null;
@@ -145,6 +141,13 @@ public final class LicensingFacade {
     public @Nullable String confirmationStamp;
     public @Nullable Date expirationDate;
     public boolean isPersonal;
+  }
+
+  /// Keeps `Gson` out of the method signatures of [LicensingFacade], so a reflective method lookup does not load it.
+  private static final class GsonFactory {
+    static @NotNull Gson create() {
+      return new GsonBuilder().setDateFormat("yyyyMMdd").create();
+    }
   }
 
   public interface LicenseStateListener extends EventListener {
