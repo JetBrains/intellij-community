@@ -147,6 +147,7 @@ public class PyBlock implements ASTBlock {
   private List<PyBlock> mySubBlocks = null;
   private Map<ASTNode, PyBlock> mySubBlockByNode = null;
   private final boolean myEmptySequence;
+  private Boolean myHasHangingIndent = null;
 
   // Shared among multiple children sub-blocks
   private Alignment myChildAlignment = null;
@@ -404,7 +405,7 @@ public class PyBlock implements ASTBlock {
         if (childType == PyTokenTypes.RPAR) {
           childIndent = Indent.getNoneIndent();
           // Don't have hanging indent and is not going to have it due to the setting about opening parenthesis
-          if (!hasHangingIndent(myNode.getPsi()) && !settings.FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS) {
+          if (!hasOwnHangingIndent() && !settings.FROM_IMPORT_NEW_LINE_AFTER_LEFT_PARENTHESIS) {
             childAlignment = getAlignmentForChildren();
           }
           else if (settings.HANG_CLOSING_BRACKETS) {
@@ -418,7 +419,7 @@ public class PyBlock implements ASTBlock {
     }
     // TODO: merge with needChildAlignment()
     //Align elements vertically if there is an argument in the first line of parenthesized expression
-    else if (!hasHangingIndent(myNode.getPsi()) &&
+    else if (!hasOwnHangingIndent() &&
              (parentType == PyElementTypes.PARENTHESIZED_EXPRESSION ||
               (parentType == PyElementTypes.ARGUMENT_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS) ||
               (parentType == PyElementTypes.PARAMETER_LIST && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS)) &&
@@ -688,6 +689,16 @@ public class PyBlock implements ASTBlock {
     return false;
   }
 
+  /**
+   * Returns {@link #hasHangingIndent(PsiElement)} for {@link #myNode}, computed once for this block.
+   */
+  private boolean hasOwnHangingIndent() {
+    if (myHasHangingIndent == null) {
+      myHasHangingIndent = hasHangingIndent(myNode.getPsi());
+    }
+    return myHasHangingIndent;
+  }
+
   // Check https://www.python.org/dev/peps/pep-0008/#indentation
   private static boolean hasHangingIndent(@NotNull PsiElement elem) {
     if (elem instanceof PyAstCallExpression) {
@@ -936,7 +947,7 @@ public class PyBlock implements ASTBlock {
           myContext.getMode() == FormattingMode.ADJUST_INDENT) {
         return true;
       }
-      return !hasHangingIndent(myNode.getPsi())
+      return !hasOwnHangingIndent()
              && !(myNode.getElementType() == PyElementTypes.DICT_LITERAL_EXPRESSION &&
                   myContext.getPySettings().DICT_NEW_LINE_AFTER_LEFT_BRACE)
              && !(myNode.getElementType() == PyElementTypes.LIST_LITERAL_EXPRESSION &&
@@ -948,7 +959,7 @@ public class PyBlock implements ASTBlock {
                   myContext.getPySettings().TUPLE_NEW_LINE_AFTER_LEFT_PARENTHESIS);
     }
     if (myNode.getElementType() == PyElementTypes.ARGUMENT_LIST) {
-      if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS || hasHangingIndent(myNode.getPsi())) {
+      if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS || hasOwnHangingIndent()) {
         return false;
       }
       if (childType == PyTokenTypes.COMMA) {
@@ -957,7 +968,7 @@ public class PyBlock implements ASTBlock {
       return true;
     }
     if (myNode.getElementType() == PyElementTypes.PARAMETER_LIST) {
-      return !hasHangingIndent(myNode.getPsi()) && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS;
+      return !hasOwnHangingIndent() && myContext.getSettings().ALIGN_MULTILINE_PARAMETERS;
     }
     if (myNode.getElementType() == PyElementTypes.SUBSCRIPTION_EXPRESSION) {
       return false;
@@ -974,7 +985,7 @@ public class PyBlock implements ASTBlock {
       }
     }
     if (myNode.getElementType() == PyElementTypes.WITH_STATEMENT) {
-      return myNode.findChildByType(PyTokenTypes.LPAR) != null && !hasHangingIndent(myNode.getPsi());
+      return myNode.findChildByType(PyTokenTypes.LPAR) != null && !hasOwnHangingIndent();
     }
     if (myNode.getElementType() == PyElementTypes.TUPLE_EXPRESSION) {
       final ASTNode prevNode = myNode.getTreeParent();
@@ -982,7 +993,7 @@ public class PyBlock implements ASTBlock {
         return false;
       }
     }
-    return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS && !hasHangingIndent(myNode.getPsi());
+    return myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS && !hasOwnHangingIndent();
   }
 
   private static @Nullable ASTNode findPrevNonSpaceNode(@NotNull ASTNode node) {
