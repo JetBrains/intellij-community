@@ -279,7 +279,12 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
    */
   @TestOnly
   suspend fun addMockPythonInterpreter(ownerDir: Path, sdk: Sdk): PythonInterpreter {
-    (sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath = ownerDir.toString()
+    // A commit, not a change in place: the modificator of a later commit copies the data of the last commit.
+    edtWriteAction {
+      val modificator = sdk.sdkModificator
+      (modificator.sdkAdditionalData as? PythonSdkAdditionalData)?.associatedModulePath = ownerDir.toString()
+      modificator.commitChanges()
+    }
     val interpreter = addSdk(sdk)
     // The legacy flow keeps the SDK in the SDK table, which outlives the project. It goes with the project, as an SDK of
     // the interpreter library flow does.
