@@ -11,7 +11,6 @@ import com.intellij.build.createFilteringActionsGroup
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.impl.StartBuildEventImpl
 import com.intellij.debugger.impl.GenericDebuggerRunner
-import com.intellij.execution.CommandLineUtil
 import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionResult
@@ -24,9 +23,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.OSProcessHandler
-import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction
@@ -42,8 +39,6 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.ExecuteProcessException
@@ -92,10 +87,10 @@ import org.jetbrains.idea.maven.server.isMaven4
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.BufferedOutputStream
-import java.io.IOException
 import java.nio.charset.Charset
 import java.nio.charset.UnsupportedCharsetException
 import java.nio.file.Path
+import java.util.Locale
 import java.util.Properties
 import java.util.function.Function
 import kotlin.io.path.Path
@@ -111,7 +106,6 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
 
 
   private suspend fun collectParameters(eelApi: EelApi, debug: Boolean): MavenProcessExecutionData {
-    val exe = if (isWindows()) "cmd.exe" else "/bin/sh"
     val jdk = getJdk()
     val env = getEnv(eelApi.exec.fetchLoginShellEnvVariables(), jdk, debug)
 
@@ -125,15 +119,7 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       it.createConfigurator(environment, myConfiguration, context)?.configureParameters(envWithCharsets, params)
     }
 
-    return MavenProcessExecutionData(
-      isWindows(),
-      exe,
-      envWithCharsets,
-      charset,
-      params,
-      debug
-    )
-
+    return MavenProcessExecutionData(envWithCharsets, charset, params)
   }
 
   @Throws(ExecutionException::class)
@@ -159,114 +145,30 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
     return env
   }
 
+  /**
+   * Starts the Maven script at the first parameter.
+   * On Windows, Eel starts the script directly, and the Eel implementation escapes the arguments for `cmd.exe`.
+   * On POSIX, `/bin/sh` runs the script.
+   */
   private suspend fun runProcessInEel(
     eelApi: EelApi,
     parameters: MavenProcessExecutionData,
   ): KillableColoredProcessHandler.Silent {
-
-    return if (isWindows()) {
-      executeBatScriptForWindows(eelApi, parameters)
-    }
-    else {
-      doRunProcessInEel(eelApi, parameters, "${parameters.exeName} ${parameters.parametersList.list.joinToString(" ")}", null)
-    }
-  }
-
-  private suspend fun executeBatScriptForWindows(
-    eelApi: EelApi,
-    parameters: MavenProcessExecutionData,
-  ): KillableColoredProcessHandler.Silent {
-
-    val isSpyDebug = Registry.`is`("maven.spy.events.debug")
-    val tmpFile = writeParamsToBatBecauseCmdIsReallyReallyBad(parameters.parametersList, isSpyDebug)
-
-
-    MavenLog.LOG.debug("Running $tmpFile: ${parameters.parametersList.list.joinToString(" ")}")
-    return doRunProcessInEel(eelApi, parameters.copy(
-      parametersList = ParametersList().also {
-        it.add("/c")
-        it.add(tmpFile.absolutePath)
-      }), if (isSpyDebug) tmpFile.absolutePath else parameters.parametersList.list.joinToString(" ")) {
-      try {
-        tmpFile.delete()
-      }
-      catch (ignore: IOException) {
-      }
-    }
-  }
-
-
-  @SuppressWarnings("IO_FILE_USAGE") // Here should be java.io.File, since we do not support remote eel run on windows Agent
-  private fun writeParamsToBatBecauseCmdIsReallyReallyBad(params: ParametersList, isSpyDebug: Boolean): java.io.File {
-
-    val tmpData = StringBuilder()
-    val mapEnv = LinkedHashMap<String, String>()
-
-    val batParams = ParametersList()
-
-    var counter = 0
-    params.list.forEach {
-      if (it.startsWith("-D") && it.contains(" ")) {
-        val eqIndex = it.indexOf('=')
-        if (eqIndex == -1 || eqIndex == it.lastIndex) {
-          batParams.add(it)
-        }
-        else {
-          val varName = "IDEA_MVN_TMP_${++counter}"
-          val paramValue = it.substring(eqIndex + 1)
-          val paramName = it.substring(2, eqIndex)
-          mapEnv[varName] = paramValue.replace("%", "%%")
-          batParams.add("-D${paramName}=%${varName}%")
-        }
-      }
-      else {
-        batParams.add(it)
-      }
-    }
-
-    val commandPrefix = if (isSpyDebug) "" else "@"
-
-    mapEnv.forEach { name, value ->
-      tmpData.append(commandPrefix).append("set ").append(name).append("=").append(value).append("\r\n")
-    }
-
-    if (tmpData.isNotEmpty()) {
-      tmpData.append("\r\n")
-    }
-
-    tmpData.append(commandPrefix).append(batParams.list.joinToString(" ") { CommandLineUtil.escapeParameterOnWindows(it, true) })
-
-    val tempDirectory = FileUtilRt.getTempDirectory()
-    val tmpBat = FileUtil.createTempFile(java.io.File(tempDirectory), "mvn-idea-exec", ".bat", false, true)
-
-
-    tmpBat.writeText(tmpData.toString())
-    return tmpBat
-  }
-
-
-  private suspend fun doRunProcessInEel(
-    eelApi: EelApi,
-    parameters: MavenProcessExecutionData,
-    commandLineToShowUser: String,
-    onTerminate: (() -> Unit)?,
-  ): KillableColoredProcessHandler.Silent {
-    val processOptions = eelApi.exec.spawnProcess(parameters.exeName)
-      .env(parameters.env)
+    val command = parameters.parametersList.list
+    if (command.isEmpty()) throw ExecutionException(RunnerBundle.message("maven.execution.empty.command"))
+    val [exe, args] = if (isWindows()) command.first() to command.drop(1) else "/bin/sh" to command
+    val commandLine = (listOf(exe) + args).joinToString(" ")
+    MavenLog.LOG.debug("Running $commandLine")
+    val launch = if (isWindows()) movePercentPropertiesToEnv(parameters.env, args) else MavenLaunch(parameters.env, args)
+    val processOptions = eelApi.exec.spawnProcess(exe)
+      .env(launch.env)
       .workingDirectory(workingDir)
-      .args(parameters.parametersList.list)
+      .args(launch.args)
 
     try {
       val result = processOptions.eelIt()
-      return KillableColoredProcessHandler.Silent(result.convertToJVMProcess(), commandLineToShowUser, parameters.charset, emptySet())
-        .also {
-          it.addProcessListener(object : ProcessListener {
-            override fun processTerminated(event: ProcessEvent) {
-              onTerminate?.invoke()
-            }
-          })
-          it.setShouldKillProcessSoftly(true)
-        }
+      return KillableColoredProcessHandler.Silent(result.convertToJVMProcess(), commandLine, parameters.charset, emptySet())
+        .also { it.setShouldKillProcessSoftly(true) }
     }
     catch (e: ExecuteProcessException) {
       MavenLog.LOG.warn("Cannot execute maven goal: errcode: ${e.errno}, message:  ${e.message}")
@@ -609,7 +511,9 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
       val path = getPathToWrapperScript()
       val file = workingDir.resolve(path)
       if (file.asNioPath().exists()) {
-        return MavenScript(path, distribution, mavenHome = null)
+        // The Eel contract accepts no relative executable path. `/bin/sh` resolves a relative path in the working directory.
+        val scriptPath = if (isWindows()) file.normalize().toString() else path
+        return MavenScript(scriptPath, distribution, mavenHome = null)
       }
       return getMavenExecutable(distribution, BundledMaven3, eel)
     }
@@ -707,11 +611,54 @@ class MavenShCommandLineState(val environment: ExecutionEnvironment, private val
  */
 private class MavenScript(val path: String, val distribution: MavenDistribution, val mavenHome: Path?)
 
-private data class MavenProcessExecutionData(
-  val isWindows: Boolean,
-  val exeName: String,
+/** The environment and the script arguments that start a Maven process. */
+private class MavenLaunch(val env: Map<String, String>, val args: List<String>)
+
+/**
+ * Moves the `%` property values of a Windows Maven launch into the environment of the child process.
+ *
+ * `cmd.exe` expands `%` in the command line of a batch script, and a quote does not stop the expansion.
+ * This function replaces the value of each `-Dname=value` argument that contains `%` with a reference to a new variable.
+ * The variable holds the exact value, for example `-Dprobe=%IDEA_MVN_ARG_1%` and `IDEA_MVN_ARG_1=100% complete`.
+ * `cmd.exe` expands each reference one time and does not expand the value again.
+ *
+ * The function keeps a value that contains `"` or ends with `\` in its argument.
+ * The value would close or escape the quote around the reference, and a shell character could then execute.
+ * The function also keeps all other arguments and their order.
+ * A new variable name does not match an existing name in [env], with no case sensitivity.
+ *
+ * @param env the environment of the child process.
+ * @param args the arguments after the script path.
+ * @return a copy of [env] with the new variables, and a copy of [args] with the references.
+ */
+private fun movePercentPropertiesToEnv(env: Map<String, String>, args: List<String>): MavenLaunch {
+  val launchEnv = HashMap(env)
+  val usedNames = env.keys.mapTo(HashSet()) { it.uppercase(Locale.ROOT) }
+  var lastNumber = 0
+  val launchArgs = args.map { arg ->
+    val value = percentPropertyValue(arg) ?: return@map arg
+    var name: String
+    do {
+      name = "IDEA_MVN_ARG_${++lastNumber}"
+    }
+    while (!usedNames.add(name))
+    launchEnv[name] = value
+    arg.removeSuffix(value) + "%$name%"
+  }
+  return MavenLaunch(launchEnv, launchArgs)
+}
+
+/** The value of a `-Dname=value` argument that [movePercentPropertiesToEnv] moves, or null for an argument that it keeps. */
+private fun percentPropertyValue(arg: String): String? {
+  if (!arg.startsWith("-D")) return null
+  val separatorIndex = arg.indexOf('=')
+  if (separatorIndex <= "-D".length) return null
+  val value = arg.substring(separatorIndex + 1)
+  return value.takeIf { '%' in it && '"' !in it && !it.endsWith('\\') }
+}
+
+private class MavenProcessExecutionData(
   val env: Map<String, String>,
   val charset: Charset,
   val parametersList: ParametersList,
-  val debug: Boolean,
 )
