@@ -421,17 +421,15 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
     }
 
     PsiManager manager = key.getManager();
-    if (manager instanceof PsiManagerEx) {
-      FileManager fileManager = ((PsiManagerEx)manager).getFileManager();
+    if (manager instanceof PsiManagerEx managerEx) {
+      FileManager fileManager = managerEx.getFileManager();
       FileViewProvider viewProvider = fileManager.findCachedViewProvider(virtualFile);
       if (viewProvider != key) { // viewProvider was invalidated e.g. due to language level change
         if (viewProvider == null) {
           viewProvider = fileManager.findViewProvider(virtualFile);
         }
-        if (viewProvider != null) {
-          key = viewProvider;
-          astNodes = getContext().myReformatElements.remove(key);
-        }
+        key = viewProvider;
+        astNodes = getContext().myReformatElements.remove(key);
       }
     }
 
@@ -527,8 +525,8 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
                accumulatedTask.getStartOffset() == currentTask.getEndOffset() &&
                 !canStickActionsTogether(accumulatedTask, currentTask)) {
         // action can be pushed
-        if (accumulatedTask instanceof ReindentTask) {
-          indentActions.add((ReindentTask) accumulatedTask);
+        if (accumulatedTask instanceof ReindentTask reindentTask) {
+          indentActions.add(reindentTask);
         }
         else {
           freeFormattingActions.add(accumulatedTask);
@@ -590,8 +588,8 @@ public final class PostprocessReformattingAspectImpl extends PostprocessReformat
       }
     }
     if (accumulatedTask != null) {
-      if (accumulatedTask instanceof ReindentTask) {
-        indentActions.add((ReindentTask) accumulatedTask);
+      if (accumulatedTask instanceof ReindentTask reindentTask) {
+        indentActions.add(reindentTask);
       }
       else {
         freeFormattingActions.add(accumulatedTask);
