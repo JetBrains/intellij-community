@@ -52,6 +52,7 @@
   <!-- endregion -->
   <content namespace="jetbrains">
     <module name="intellij.xml.langInjection.xpath"/>
+    <module name="intellij.xpath.rt" loading="on-demand"/>
   </content>
   <depends>com.intellij.modules.xml</depends>
   <resource-bundle>messages.XPathBundle</resource-bundle>

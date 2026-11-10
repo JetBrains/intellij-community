@@ -20,7 +20,6 @@ dev_dist_plugin(
     descriptor = "xpath-lang/resources/META-INF/plugin.xml",
     jars = {
         "lib/xpath.jar": ["intellij.xpath"],
-        "lib/rt/xslt-rt.jar": ["intellij.xpath.rt"],
     },
     main_module = "intellij.xpath",
     mode_refused_content_modules = {

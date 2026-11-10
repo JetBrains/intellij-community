@@ -133,7 +133,7 @@ public final class XsltCommandLineState extends CommandLineState {
 
     PluginDescriptor plugin = PluginManager.getPluginByClass(getClass());
     if (plugin != null) {
-      Path rtPath = plugin.getPluginPath().resolve("lib/rt/xslt-rt.jar");
+      Path rtPath = plugin.getPluginPath().resolve("lib/modules/intellij.xpath.rt.jar");
       if (!Files.exists(rtPath)) {
         throw new CantRunException(XPathBundle.message("dialog.message.runtime.classes.not.found.at", rtPath));
       }

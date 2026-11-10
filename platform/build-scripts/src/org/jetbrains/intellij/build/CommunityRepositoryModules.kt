@@ -79,9 +79,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     pluginAuto(listOf("intellij.vcs.git")) { spec ->
       spec.withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
     },
-    pluginAuto(listOf("intellij.xpath")) { spec ->
-      spec.withModule("intellij.xpath.rt", "rt/xslt-rt.jar")
-    },
     pluginAuto("intellij.tasks.core") { spec ->
       spec.withModule("intellij.tasks")
       spec.withModule("intellij.tasks.compatibility")

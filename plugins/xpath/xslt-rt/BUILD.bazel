@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.xpath.rt` start
+content_module_jar(module = ":rt")
+### auto-generated section `dev intellij.xpath.rt` end
 
 ### auto-generated section `build intellij.xpath.rt` start
 jvm_library(
@@ -13,6 +18,10 @@ jvm_library(
     ),
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.xpath.rt",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.xpath.rt` end
@@ -21,6 +30,7 @@ jvm_library(
 exports_files(
     [
         "intellij.xpath.rt.iml",
+        "resources/intellij.xpath.rt.xml",
     ],
     visibility = ["//visibility:public"],
 )
