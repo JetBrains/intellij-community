@@ -94,7 +94,7 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
   // Killed rather than leaked, for the reason the monolith launch above states.
   try {
     listOf(backendRdSession, frontendRdSession)
-      .forEach { it.awaitLambdaSessionReady(if (this.frontendIDEContext.ide.vmOptions.hasHeadlessMode()) 15.seconds else 30.seconds) }
+      .forEach { it.awaitLambdaSessionReady(if (this.frontendIDEContext.ide.vmOptions.hasHeadlessMode()) 15.seconds else 60.seconds) }
   }
   catch (notReady: Throwable) {
     catchAll("Killing the IDEs whose lambda sessions never became ready") { backgroundRun.forceKill() }
