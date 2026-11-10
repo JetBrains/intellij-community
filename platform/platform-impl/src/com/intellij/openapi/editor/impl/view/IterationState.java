@@ -158,7 +158,7 @@ public final class IterationState {
     myUseOnlyFontOrForegroundAffectingHighlighters = useOnlyFontOrForegroundAffectingHighlighters;
     myStickyLinesPainting = editor instanceof EditorImpl impl && impl.isStickyLinePainting();
     myEditorRightAligned = editor instanceof EditorImpl impl && impl.isRightAligned();
-    myAutoRoundedHighlighters = editor instanceof EditorImpl impl && impl.shouldUseNewSelection();
+    myAutoRoundedHighlighters = editor instanceof EditorImpl impl && impl.isAutoRoundedHighlighters();
     myReverseIteration = iterateBackwards;
     myHighlighterIterator = useOnlyFullLineHighlighters ? null : getHighlighter(editor).createIterator(start);
     myCaretData = ObjectUtils.notNull(caretData, CaretData.getNullCaret());
@@ -625,7 +625,7 @@ public final class IterationState {
       }
 
       if (fold != null && highlighter.getLayer() < HighlighterLayer.GUARDED_BLOCKS) {
-        addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, false, false, Integer.MAX_VALUE);
+        addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, myAutoRoundedHighlighters, false, Integer.MAX_VALUE);
         fold = null;
       }
 
@@ -646,13 +646,14 @@ public final class IterationState {
 
       TextAttributes textAttributes = highlighter.getTextAttributes(myColorsScheme);
       if (textAttributes != null && textAttributes != TextAttributes.ERASE_MARKER) {
+        boolean rounded = BackgroundLayer.isRounded(highlighter.getTargetArea(), myAutoRoundedHighlighters);
         int span = highlighter.getAffectedAreaEndOffset() - highlighter.getAffectedAreaStartOffset();
-        addAttributes(textAttributes, highlighter.getLayer(), false, false, span);
+        addAttributes(textAttributes, highlighter.getLayer(), rounded, false, span);
       }
     }
 
     if (selection != null) addAttributes(selection, HighlighterLayer.SELECTION, myAutoRoundedHighlighters, false, Integer.MAX_VALUE);
-    if (fold != null) addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, false, false, Integer.MAX_VALUE);
+    if (fold != null) addAttributes(fold, HighlighterLayer.GUARDED_BLOCKS, myAutoRoundedHighlighters, false, Integer.MAX_VALUE);
     if (guard != null) addAttributes(guard, HighlighterLayer.GUARDED_BLOCKS, false, true, Integer.MAX_VALUE);
     if (caret != null) addAttributes(caret, HighlighterLayer.CARET_ROW, false, false, Integer.MAX_VALUE);
     if (syntax != null) addAttributes(syntax, HighlighterLayer.SYNTAX, false, false, Integer.MAX_VALUE);

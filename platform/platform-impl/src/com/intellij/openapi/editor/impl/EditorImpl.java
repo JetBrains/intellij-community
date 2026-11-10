@@ -2154,7 +2154,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void repaintToScreenBottom(int startLine) {
-    int yStartLine = logicalLineToY(startLine);
+    int yStartLine = visualLineToY(Math.max(0, logicalToVisualLine(startLine) - 1));
     repaintToScreenBottomStartingFrom(yStartLine);
   }
 
@@ -2188,6 +2188,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * Repaints visual lines in provided range (inclusive on both ends)
    */
   private void doRepaint(int startVisualLine, int endVisualLine) {
+    startVisualLine = Math.max(0, startVisualLine - 1);
+    endVisualLine++;
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yStart = visualLineToY(startVisualLine);
     int height = visualLineToYRange(endVisualLine)[1] + 2 - yStart;
@@ -5510,12 +5512,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @ApiStatus.Internal
-  public boolean shouldUseNewSelection() {
-    return shouldUseNewSelection(EditorRegistry.current());
+  public boolean isAutoRoundedHighlighters() {
+    return isAutoRoundedHighlighters(EditorRegistry.current());
   }
 
   @ApiStatus.Internal
-  public boolean shouldUseNewSelection(@NotNull EditorRegistry registry) {
+  public boolean isAutoRoundedHighlighters(@NotNull EditorRegistry registry) {
     return !registry.isOldFullHorizontalSelectionEnabled()
            && !isColumnMode()
            && IslandsState.Companion.isEnabled();

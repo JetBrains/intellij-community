@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view
 
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 
@@ -19,5 +20,10 @@ data class BackgroundLayer(
   companion object {
     @JvmField
     val STYLE_ORDER: Comparator<BackgroundLayer> = compareBy({ it.forcesBackground }, { it.layer }, { it.color.rgb }, { it.isRounded })
+
+    @JvmStatic
+    fun isRounded(targetArea: HighlighterTargetArea, autoRounded: Boolean): Boolean {
+      return autoRounded && targetArea == HighlighterTargetArea.EXACT_RANGE
+    }
   }
 }
