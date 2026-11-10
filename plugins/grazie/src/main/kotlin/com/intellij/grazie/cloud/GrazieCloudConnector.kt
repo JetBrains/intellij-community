@@ -1,7 +1,9 @@
 package com.intellij.grazie.cloud
 
-import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
 import com.intellij.openapi.extensions.ExtensionPointName
+import io.ktor.client.HttpClient
+
+data class GrazieCloudApi(val baseApiUrl: String, val httpClient: HttpClient)
 
 interface GrazieCloudConnector {
   /**
@@ -10,9 +12,9 @@ interface GrazieCloudConnector {
   fun seemsCloudConnected(): Boolean
 
   /**
-   * Returns the API Gateway client.
+   * Returns the connection to the JetBrains AI gateway.
    */
-  fun api(): SuspendableAPIGatewayClient?
+  fun api(): GrazieCloudApi?
 
   /**
    * Returns true if there is a quota available for the current user.
@@ -32,6 +34,6 @@ interface GrazieCloudConnector {
 
     fun hasQuota(): Boolean = EP_NAME.extensionList.firstOrNull()?.hasQuota() ?: false
 
-    fun api(): SuspendableAPIGatewayClient? = EP_NAME.extensionList.firstOrNull()?.api()
+    fun api(): GrazieCloudApi? = EP_NAME.extensionList.firstOrNull()?.api()
   }
 }

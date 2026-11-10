@@ -1,5 +1,6 @@
 package com.intellij.grazie.markdown.specification.inspection
 
+import ai.grazie.rules.cloud.JBCloudAPI
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import com.intellij.codeInspection.LocalInspectionTool
@@ -64,7 +65,8 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
     if (!isOnTheFly || !isAnalysisAvailable() || InspectionProfileManager.hasTooLowSeverity(session, this)) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
-    val client = GrazieCloudConnector.api() ?: return PsiElementVisitor.EMPTY_VISITOR
+    val cloudApi = GrazieCloudConnector.api() ?: return PsiElementVisitor.EMPTY_VISITOR
+    val api = JBCloudAPI(cloudApi.baseApiUrl, cloudApi.httpClient)
 
     return object : PsiElementVisitor() {
       override fun visitFile(file: PsiFile) {
@@ -83,7 +85,7 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
         }
         val analyzer = getAnalyzer(file)
         val dependencies = getDependencies(file)
-        val issues = SpecificationAnalyzer.analyze(analyzer, file, dependencies, client)
+        val issues = SpecificationAnalyzer.analyze(analyzer, file, dependencies, api)
         reportProblems(holder, file, dependencies, issues)
       }
     }

@@ -50,6 +50,7 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/lang-api:lang",
         "//platform/indexing-api:indexing",
+        "//libraries/ktor/client",
     ],
 )
 ### auto-generated section `build intellij.grazie.markdown.specification` end

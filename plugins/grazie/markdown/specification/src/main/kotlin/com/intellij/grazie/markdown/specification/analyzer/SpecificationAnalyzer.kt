@@ -1,6 +1,6 @@
 package com.intellij.grazie.markdown.specification.analyzer
 
-import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
+import ai.grazie.rules.cloud.JBCloudAPI
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Specification
@@ -39,7 +39,7 @@ internal object SpecificationAnalyzer {
   fun getCosts(file: PsiFile): Costs? = file.viewProvider.virtualFile.getUserData(costKey)
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun <T> analyze(analyzer: LlmAnalyzer<T>, file: PsiFile, files: Set<PsiFile>, client: SuspendableAPIGatewayClient): List<LlmIssue<T>> {
+  fun <T> analyze(analyzer: LlmAnalyzer<T>, file: PsiFile, files: Set<PsiFile>, api: JBCloudAPI): List<LlmIssue<T>> {
     @Suppress("UNCHECKED_CAST") val analyzerKey = cacheKeys
       .computeIfAbsent(analyzer.javaClass.name) { Key.create("cache key for ${analyzer.javaClass.name}") }
       as AnalyzerCacheKey<T>
@@ -59,7 +59,7 @@ internal object SpecificationAnalyzer {
           val start = System.currentTimeMillis()
           val analyzerName = analyzer::class.simpleName
           log.info("$analyzerName starts executing request with lock")
-          val analysis = analyzer.analyze(specifications, client)
+          val analysis = analyzer.analyze(specifications, api)
           val timeMs = System.currentTimeMillis() - start
           val credits = analysis.spentCredits() / Credit.CREDITS_IN_DOLLAR
           log.info("""
