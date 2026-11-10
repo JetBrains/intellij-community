@@ -2,14 +2,15 @@
 package com.intellij.java.execution.process
 
 import com.intellij.execution.CommandLineWrapperUtil
-import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
+import com.intellij.openapi.projectRoots.CommandLineWrapperClassProvider
 import com.intellij.openapi.projectRoots.JdkCommandLineSetup
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
@@ -18,9 +19,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import java.io.File
-import java.net.URLClassLoader
 import java.nio.charset.StandardCharsets
-import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -116,11 +115,13 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     assertThat(args).containsExactly("hello/hello.Main", "1\"#\"1", "\"\\\"\"2\"'\"", "line\"\\n\"-", "C:\\", "D:\\work", "E:\\work\" \"space")
   }
 
-  @Test fun `CommandLineWrapper is found through the JavaParameters class loader`() {
-    // models the layout where idea_rt.jar is in the Java plugin and the platform class loader does not see it
-    val platformLoader = URLClassLoader(arrayOf(), null)
-    assertFailsWith<ClassNotFoundException> { platformLoader.loadClass(WRAPPER_NAME) }
-    assertThat(JdkCommandLineSetup.commandLineWrapperClass(JavaParameters(), platformLoader)?.name).isEqualTo(WRAPPER_NAME)
+  @Test fun `the Java plugin gives CommandLineWrapper`() {
+    assertThat(JdkCommandLineSetup.commandLineWrapperClass()?.name).isEqualTo(WRAPPER_NAME)
+  }
+
+  @Test fun `no CommandLineWrapper without a provider`() {
+    ExtensionTestUtil.maskExtensions(CommandLineWrapperClassProvider.EP_NAME, emptyList(), testRootDisposable)
+    assertThat(JdkCommandLineSetup.commandLineWrapperClass()).isNull()
   }
 
   @Test fun javaParametersFileGeneration() {
@@ -159,7 +160,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
   private fun mapPath(p: String): String {
     val path = p.replace(File.separatorChar, '/')
     val tempDir = FileUtil.getTempDirectory().replace(File.separatorChar, '/')
-    val wrapperClass = JdkCommandLineSetup.commandLineWrapperClass(parameters)
+    val wrapperClass = JdkCommandLineSetup.commandLineWrapperClass()
     return when {
       path.matches("$tempDir/classpath\\d*.jar".toRegex()) -> "#classpath.jar#"
       path.matches("$tempDir/idea_classpath\\d*".toRegex()) -> "#classpath#"

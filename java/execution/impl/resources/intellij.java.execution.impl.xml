@@ -80,6 +80,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <execution.commandLineWrapperClassProvider implementation="com.intellij.execution.JavaCommandLineWrapperClassProvider"/>
     <notificationGroup id="Thread dump capture" displayType="BALLOON" bundle="messages.ExecutionBundle"
                        key="notification.group.thread.dump.capture"/>
     <notificationGroup id="Thread dump capture sticky" displayType="STICKY_BALLOON" bundle="messages.ExecutionBundle"

@@ -262,7 +262,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
     }
 
-    val commandLineWrapperClass = commandLineWrapperClass(javaParameters)
+    val commandLineWrapperClass = commandLineWrapperClass()
 
     if (dynamicClasspath) {
       if (javaParameters.isArgFile) {
@@ -717,47 +717,24 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     private const val COMMAND_LINE_WRAPPER = "com.intellij.rt.execution.CommandLineWrapper"
 
     /**
-     * Finds [COMMAND_LINE_WRAPPER] first through [platformLoader], then through the class loader of [javaParameters].
-     * The second loader sees `idea_rt.jar` when the jar is in the Java plugin.
+     * Returns [COMMAND_LINE_WRAPPER] from the first [CommandLineWrapperClassProvider], or `null` when no plugin registers one.
      */
     // TODO move this class to java plugin
     @ApiStatus.Internal
     @VisibleForTesting
-    fun commandLineWrapperClass(
-      javaParameters: SimpleJavaParameters,
-      platformLoader: ClassLoader = JdkCommandLineSetup::class.java.classLoader,
-    ): Class<*>? {
-      val loaders = linkedSetOf(platformLoader)
-      val parametersLoader = javaParameters.javaClass.classLoader
-      if (parametersLoader != null) {
-        loaders.add(parametersLoader)
-      }
-      for (loader in loaders) {
-        try {
-          return loader.loadClass(COMMAND_LINE_WRAPPER)
-        }
-        catch (_: ClassNotFoundException) {
-        }
-      }
-      return null
+    fun commandLineWrapperClass(): Class<*>? {
+      return CommandLineWrapperClassProvider.EP_NAME.extensionsIfPointIsRegistered.firstOrNull()?.commandLineWrapperClass
     }
 
     /**
-     * Reports a classpath shortening that falls back to the full `-classpath` because [COMMAND_LINE_WRAPPER] is not found.
+     * Reports a classpath shortening that falls back to the full `-classpath` because no plugin registers
+     * a [CommandLineWrapperClassProvider]. A product without the Java plugin has no provider.
      * The full classpath can exceed the OS command line limit, and then the process does not start.
      */
     private fun reportMissingCommandLineWrapper(javaParameters: SimpleJavaParameters) {
       val mode = if (javaParameters.isUseClasspathJar) "a classpath jar" else "a classpath file"
-      val message = "$COMMAND_LINE_WRAPPER is not found by the class loaders of ${JdkCommandLineSetup::class.java.name} " +
-                    "and ${javaParameters.javaClass.name}; the command line uses the full -classpath instead of $mode"
-      if (javaParameters.isUseClasspathJar) {
-        // only a Java run configuration requests MANIFEST, so idea_rt.jar must be reachable
-        LOG.error(message)
-      }
-      else {
-        // CLASSPATH_FILE is the default, and a product without the Java plugin has no idea_rt.jar
-        LOG.warn(message)
-      }
+      LOG.warn("No ${CommandLineWrapperClassProvider::class.java.name} gives $COMMAND_LINE_WRAPPER; " +
+               "the command line uses the full -classpath instead of $mode")
     }
 
     private fun ParametersList.isExplicitClassPath(): Boolean {
