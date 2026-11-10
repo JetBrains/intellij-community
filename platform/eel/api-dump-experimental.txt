@@ -755,12 +755,14 @@ f:com.intellij.platform.eel.channels.PeekableEelReceiveChannelKt
 - a:getRoot():com.intellij.platform.eel.path.EelPath
 - a:normalize():com.intellij.platform.eel.path.EelPath
 - *s:parse(java.lang.String,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.path.EelPath
+- *s:parseOrNull(java.lang.String,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.path.EelPath
 - a:resolve(java.lang.String):com.intellij.platform.eel.path.EelPath
 - a:startsWith(com.intellij.platform.eel.path.EelPath):Z
 - a:toDebugString():java.lang.String
 - a:toString():java.lang.String
 *f:com.intellij.platform.eel.path.EelPath$Companion
 - f:parse(java.lang.String,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.path.EelPath
+- f:parseOrNull(java.lang.String,com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.path.EelPath
 *e:com.intellij.platform.eel.path.EelPath$OS
 - java.lang.Enum
 - sf:UNIX:com.intellij.platform.eel.path.EelPath$OS

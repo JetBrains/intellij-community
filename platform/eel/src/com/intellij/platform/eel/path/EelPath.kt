@@ -34,6 +34,25 @@ sealed interface EelPath {
       return ArrayListEelAbsolutePath.parseOrNull(raw, descriptor) ?: throw EelPathException(raw, "Not a valid absolute path on $descriptor")
     }
 
+    /**
+     * Returns null when [raw] is not a valid absolute path on [descriptor]. [parse] throws with the reason instead.
+     *
+     * ```kotlin
+     * EelPath.parseOrNull("/abc", descriptor) == EelPath.parse("/abc", descriptor)
+     * EelPath.parseOrNull("abc", descriptor) == null
+     * EelPath.parseOrNull("C:\\a:b", windowsDescriptor) == null
+     * ```
+     */
+    @JvmStatic
+    fun parseOrNull(raw: String, descriptor: EelDescriptor): EelPath? {
+      return try {
+        ArrayListEelAbsolutePath.parseOrNull(raw, descriptor)
+      }
+      catch (_: EelPathException) {
+        null
+      }
+    }
+
     @Throws(EelPathException::class)
     @JvmStatic
     @ApiStatus.Internal
@@ -108,7 +127,10 @@ sealed interface EelPath {
   val parent: EelPath?
 
   /**
-   * Concatenates two paths.
+   * Appends the parts of [other] to this path.
+   *
+   * Unlike [java.nio.file.Path.resolve], an absolute [other] is appended too.
+   * To resolve a string that may be absolute, write `EelPath.parseOrNull(other, descriptor) ?: base.resolve(other)`.
    *
    * ```kotlin
    * EelPath.parse("/abc/..", descriptor).resolve("def") == EelPath.parse("/abc/../def", descriptor)
