@@ -20,6 +20,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -614,6 +616,34 @@ public final class PyUtil {
    * @param <T>     value type
    * @param <P>     key type
    */
+  /**
+   * Same as {@link #getParameterizedCachedValue(PsiElement, Object, Function)}, but keeps no answer that a recursion
+   * guard cut short. The stamp is of the whole stack, so an outer guard counts as well.
+   * <p>
+   * Use it for an answer that a partial computation would make wrong, such as whether a class has a member. Do NOT use
+   * it where the entry of a computation in progress is what ends a cycle: {@code getAncestorTypesWithMetaClassInstances}
+   * recurses through {@code getMetaClassType} and terminates because its own entry appears, and with this it overflows
+   * the recursion guard instead. That is why {@link #getParameterizedCachedValue} keeps every answer.
+   */
+  public static @NotNull <T, P> T getParameterizedCachedValueOutsideRecursion(@NotNull PsiElement element,
+                                                                              @Nullable P param,
+                                                                              @NotNull Function<P, @NotNull T> f) {
+    final CachedValuesManager manager = CachedValuesManager.getManager(element.getProject());
+    final Map<Optional<P>, T> cache = CachedValuesManager.getCachedValue(element, manager.getKeyForClass(f.getClass()), () ->
+      CachedValueProvider.Result.create(Maps.newConcurrentMap(), PsiModificationTracker.MODIFICATION_COUNT));
+    final Optional<P> wrappedParam = Optional.ofNullable(param);
+    final T cached = cache.get(wrappedParam);
+    if (cached != null) {
+      return cached;
+    }
+    final RecursionGuard.StackStamp stamp = RecursionManager.markStack();
+    final T value = f.fun(param);
+    if (stamp.mayCacheNow()) {
+      cache.put(wrappedParam, value);
+    }
+    return value;
+  }
+
   public static @NotNull <T, P> T getParameterizedCachedValue(@NotNull PsiElement element,
                                                               @Nullable P param,
                                                               @NotNull Function<P, @NotNull T> f) {

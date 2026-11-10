@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.typing
 
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.util.contextOfType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
@@ -27,7 +26,6 @@ import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
-import java.util.concurrent.ConcurrentHashMap
 
 
 fun PyClassLikeType.isProtocol(context: TypeEvalContext): Boolean = containsProtocol(getSuperClassTypes(context))
@@ -48,21 +46,14 @@ fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: Typ
 
 typealias ProtocolAndSubclassElements = Pair<PyTypeMember, List<PyTypeMember>>
 
+/** The question that [inspectProtocolSubclass] answers for a protocol, and the key of its answer. */
+private data class SubclassQuestion(val context: TypeEvalContext, val protocol: PyClassType, val subclass: PyClassType)
+
 @ApiStatus.Internal
-fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, context: TypeEvalContext): List<ProtocolAndSubclassElements> {
-  // The cached value is an empty map, so the recursion guard below decides which members it keeps
-  val forProtocol = PyUtil.getParameterizedCachedValue(protocol.pyClass, context) {
-    ConcurrentHashMap<Pair<PyClassType, PyClassType>, List<ProtocolAndSubclassElements>>()
+fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, context: TypeEvalContext): List<ProtocolAndSubclassElements> =
+  PyUtil.getParameterizedCachedValueOutsideRecursion(protocol.pyClass, SubclassQuestion(context, protocol, subclass)) {
+    computeProtocolSubclass(it.protocol, it.subclass, it.context)
   }
-  val pair = protocol to subclass
-  forProtocol[pair]?.let { return it }
-  val stamp = RecursionManager.markStack()
-  val members = computeProtocolSubclass(protocol, subclass, context)
-  if (stamp.mayCacheNow()) {
-    forProtocol[pair] = members
-  }
-  return members
-}
 
 private fun computeProtocolSubclass(
   protocol: PyClassType,

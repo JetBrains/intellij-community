@@ -1,13 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types
 
-import com.intellij.openapi.util.RecursionManager
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
 object PyABCUtil {
@@ -135,20 +133,16 @@ object PyABCUtil {
     }
   }
 
+  /** The question that [hasMethod] answers for a class, and the key of its answer. */
+  private data class MethodQuestion(val context: TypeEvalContext, val name: String, val inherited: Boolean)
+
   private fun hasMethod(cls: PyClass, name: String, inherited: Boolean, context: TypeEvalContext?): Boolean {
     if (context == null) {
       return computeHasMethod(cls, name, inherited, null)
     }
-    // The cached value is an empty map, so the recursion guard below decides which answers it keeps
-    val forClass = PyUtil.getParameterizedCachedValue(cls, context) { ConcurrentHashMap<Pair<String, Boolean>, Boolean>() }
-    val question = name to inherited
-    forClass[question]?.let { return it }
-    val stamp = RecursionManager.markStack()
-    val answer = computeHasMethod(cls, name, inherited, context)
-    if (stamp.mayCacheNow()) {
-      forClass[question] = answer
+    return PyUtil.getParameterizedCachedValueOutsideRecursion(cls, MethodQuestion(context, name, inherited)) {
+      computeHasMethod(cls, it.name, it.inherited, it.context)
     }
-    return answer
   }
 
   private fun computeHasMethod(cls: PyClass, name: String, inherited: Boolean, context: TypeEvalContext?): Boolean {
