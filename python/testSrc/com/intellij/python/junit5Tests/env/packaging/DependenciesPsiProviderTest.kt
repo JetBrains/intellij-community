@@ -3,6 +3,7 @@ package com.intellij.python.junit5Tests.env.packaging
 
 import com.intellij.codeInsight.hints.declarative.impl.inlineInlayTexts
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.idea.IJIgnore
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.Module
@@ -215,6 +216,7 @@ internal class DependenciesPsiProviderTest {
   }
 
   @Test
+  @IJIgnore(issue = "PY-93976, MRI-5853")
   fun condaDependencies() = genericProviderTest(RequirementsProviderType.ENVIRONMENT_YML)
 
   @Test
