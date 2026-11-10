@@ -21,6 +21,8 @@ import java.util.function.Function;
  * in its own read action. If PSI changed after the questions were asked, the chain runs again from its start with the answers, as
  * {@link ModPlanUiInterpreter} does.
  * <p>
+ * Use it everywhere except IDE code on the EDT.
+ * <p>
  * The questions start with the values that the storages of the forms remember, if the run loads them; otherwise with the option
  * values of the request, or the defaults of the options. Batch execution and a client without the dialogs take these values. In the
  * unit-test mode, the chain runs headless and nothing is asked, as the legacy refactorings behave in it. Set {@link #ASKS_IN_TESTS} to
