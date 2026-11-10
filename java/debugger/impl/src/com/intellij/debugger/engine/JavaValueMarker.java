@@ -5,8 +5,9 @@ import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.Promise;
 
-public class JavaValueMarker extends XValueMarkerProvider<JavaValue, ObjectReference> {
+public class JavaValueMarker extends XValueMarkerProvider<JavaValue, JavaObjectReferenceKey> {
   public JavaValueMarker() {
     super(JavaValue.class);
   }
@@ -17,11 +18,16 @@ public class JavaValueMarker extends XValueMarkerProvider<JavaValue, ObjectRefer
   }
 
   @Override
-  public ObjectReference getMarker(@NotNull JavaValue value) {
+  public JavaObjectReferenceKey getMarker(@NotNull JavaValue value) {
     Value obj = value.getDescriptor().getValue();
     if (obj instanceof ObjectReference reference) {
-      return reference;
+      return new JavaObjectReferenceKey(reference);
     }
     return null;
+  }
+
+  @Override
+  public @NotNull Promise<JavaObjectReferenceKey> markValueAsync(@NotNull JavaValue value) {
+    return JavaMarkedObject.create(value);
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JavaObjectReferenceKey;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
@@ -205,7 +206,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   public @Nullable ValueMarkup getValueMarkup() {
     Map<?, ValueMarkup> markers = getValueMarkers();
     if (!markers.isEmpty() && myThisObject != null) {
-      return markers.get(myThisObject);
+      return markers.get(new JavaObjectReferenceKey(myThisObject));
     }
     return null;
   }

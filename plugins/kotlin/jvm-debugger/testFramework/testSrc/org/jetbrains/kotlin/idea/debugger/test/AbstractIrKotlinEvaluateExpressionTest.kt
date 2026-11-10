@@ -9,6 +9,7 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl
+import com.intellij.debugger.engine.executeOnDMT
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl.createDebuggerContext
 import com.intellij.debugger.impl.DebuggerUtilsImpl
@@ -24,6 +25,8 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.request.EventRequest
 import junit.framework.TestCase
+import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.concurrency.await
 import org.jetbrains.eval4j.ObjectValue
 import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.jdi.asValue
@@ -127,21 +130,26 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
         process(data.instructions)
 
         doOnBreakpoint {
-            createDebugLabels(data.debugLabels)
+            val suspendContext = this
+            executeOnDMT(suspendContext) {
+                try {
+                    createDebugLabels(data.debugLabels)
 
-            for ((expression, expected, kind) in data.fragments) {
-                mayThrow(expression) {
-                    if (myWasUsedOnlyDefaultSuspendPolicy) {
-                        // It would be more correct to extract the policy from the breakpoint declaration (in test),
-                        // but it is not a very easy task
-                        TestCase.assertEquals("Invalid suspend policy on breakpoint", EventRequest.SUSPEND_ALL, suspendPolicy,)
+                    for ((expression, expected, kind) in data.fragments) {
+                        mayThrow(expression) {
+                            if (myWasUsedOnlyDefaultSuspendPolicy) {
+                                // It would be more correct to extract the policy from the breakpoint declaration (in test),
+                                // but it is not a very easy task
+                                TestCase.assertEquals("Invalid suspend policy on breakpoint", EventRequest.SUSPEND_ALL, suspendPolicy,)
+                            }
+                            evaluate(suspendContext, expression, kind, expected)
+                        }
                     }
-                    evaluate(this, expression, kind, expected)
+                } finally {
+                    printFrameIfNeeded(suspendContext) {
+                        resume(this)
+                    }
                 }
-            }
-
-            printFrameIfNeeded(this) {
-                resume(this)
             }
         }
 
@@ -335,12 +343,12 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
             }
     }
 
-    private fun createDebugLabels(labels: List<DebugLabel>) {
+    private suspend fun createDebugLabels(labels: List<DebugLabel>) {
         if (labels.isEmpty()) {
             return
         }
 
-        val valueMarkers = DebuggerUtilsImpl.getValueMarkers(debugProcess)
+        val valueMarkers = checkNotNull(DebuggerUtilsImpl.getValueMarkers(debugProcess))
 
         for ((name, localName) in labels) {
             val localVariable = evaluationContext.frameProxy!!.visibleVariableByName(localName)
@@ -355,7 +363,11 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
                 evaluationContext,
                 debugProcess.xdebugProcess?.nodeManager
             )
-            XDebuggerTestUtil.markValue(valueMarkers, instanceValue, ValueMarkup(name, null, name))
+            val marked = withTimeoutOrNull(XDebuggerTestUtil.TIMEOUT_MS.toLong()) {
+                valueMarkers.markValue(instanceValue, ValueMarkup(name, null, name)).await()
+                true
+            }
+            assertTrue("Timed out marking $localName", marked == true)
         }
     }
 }
