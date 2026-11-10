@@ -246,6 +246,19 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
+  /**
+   * Puts the parameters that the IDE adds before the parameters that the user configured.
+   * <p>
+   * The configured parameters can end with a script that wraps the interpreter. Each parameter after that script goes to the script.
+   */
+  @ApiStatus.Internal
+  @PyInternalExecApi
+  @VisibleForTesting
+  public static @NotNull List<String> joinInterpreterParameters(@NotNull List<String> configuredParameters,
+                                                                @NotNull List<String> additionalParameters) {
+    return Streams.concat(additionalParameters.stream(), configuredParameters.stream()).toList();
+  }
+
   private @NotNull ExecutionResult executeWithoutStartProcess(@NotNull Executor executor) throws ExecutionException {
     ProcessHandler processHandler = new SimpleProcessHandler();
     ConsoleView console = createAndAttachConsoleInEDT(myConfig.getProject(), processHandler, executor);
@@ -426,8 +439,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     // TODO Detect and discard existing overrides of configured parameters.
     List<String> allInterpreterParameters =
-      Streams.concat(getConfiguredInterpreterParameters().stream(), realPythonExecution.getAdditionalInterpreterParameters().stream())
-        .toList();
+      joinInterpreterParameters(getConfiguredInterpreterParameters(), realPythonExecution.getAdditionalInterpreterParameters());
 
     PyRunToolParameters runToolParameters = PythonCommandLineStateExKt.resolveRunToolParametersForJvm(myConfig, sdk);
 

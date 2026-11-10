@@ -47,6 +47,7 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XSessionStartedResult
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.actions.requestFocus
 import com.jetbrains.python.console.PyConsoleOptions
@@ -886,12 +887,7 @@ private class PythonDebuggerClientModeTargetedCommandLineBuilder(
       return listOf(PYTHON_DONT_WRITE_PYC_FLAG)
     }
     else {
-      for (i in existingInterpreterParameters.indices) {
-        if (existingInterpreterParameters[i].startsWith(PYTHON3_PYCACHE_PREFIX_OPTION) &&
-            i > 0 && existingInterpreterParameters[i - 1] == "-X") {
-          return emptyList()
-        }
-      }
+      if (hasPycachePrefixOption(existingInterpreterParameters)) return emptyList()
       return try {
         listOf("-X", PYTHON3_PYCACHE_PREFIX_OPTION + prepareAndGetPycacheDirectory())
       }
@@ -904,6 +900,19 @@ private class PythonDebuggerClientModeTargetedCommandLineBuilder(
 
 private const val PYTHON_DONT_WRITE_PYC_FLAG = "-B"
 private const val PYTHON3_PYCACHE_PREFIX_OPTION = "pycache_prefix="
+
+/**
+ * Tells whether [interpreterParameters] set the `pycache_prefix` option, as `-X pycache_prefix=<dir>` or as `-Xpycache_prefix=<dir>`.
+ */
+@ApiStatus.Internal
+@PyInternalExecApi
+@VisibleForTesting
+fun hasPycachePrefixOption(interpreterParameters: List<String>): Boolean =
+  interpreterParameters.withIndex().any { [i, parameter] ->
+    parameter.startsWith("-X$PYTHON3_PYCACHE_PREFIX_OPTION") ||
+    parameter.startsWith(PYTHON3_PYCACHE_PREFIX_OPTION) && interpreterParameters.getOrNull(i - 1) == "-X"
+  }
+
 private val pathSeparator: String get() = File.pathSeparator
 
 private val LOG = Logger.getInstance(PyDebugRunner::class.java)

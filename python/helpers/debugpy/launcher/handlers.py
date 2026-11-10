@@ -41,7 +41,9 @@ def launch_request(request):
     if not request("noDebug", json.default(False)):
         # see https://github.com/microsoft/debugpy/issues/861
         if sys.version_info[:2] >= (3, 11):
-            cmdline += ["-X", "frozen_modules=off"]
+            # "pythonArgs" can end with a script that wraps the interpreter, so the option goes before them.
+            python_args_index = request("pythonArgsIndex", json.default(len(cmdline)))
+            cmdline[python_args_index:python_args_index] = ["-X", "frozen_modules=off"]
 
         port = request("port", int)
         cmdline += [

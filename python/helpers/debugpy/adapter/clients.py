@@ -334,6 +334,8 @@ class Client(components.Component):
         if not len(python):
             python = [sys.executable]
 
+        # The launcher puts its own interpreter options at this index, before "pythonArgs".
+        request.arguments["pythonArgsIndex"] = len(python)
         python += request("pythonArgs", json.array(str, size=(0,)))
         request.arguments["pythonArgs"] = python[1:]
         request.arguments["python"] = python
