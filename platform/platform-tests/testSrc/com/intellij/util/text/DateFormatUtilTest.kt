@@ -4,15 +4,15 @@ package com.intellij.util.text
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.util.Clock
-import com.intellij.openapi.util.io.IoTestUtil.assumeMacOS
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.assertEquals
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.condition.EnabledOnOs
+import org.junit.jupiter.api.condition.OS.MAC
+import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -21,20 +21,19 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
-class DateFormatUtilTest {
-  @JvmField @Rule val appRule = ApplicationRule()
-  @JvmField @Rule val tempDir = TempDirectory()
-
-  @Before fun setUp() {
+@TestApplication
+internal class DateFormatUtilTest {
+  @BeforeEach
+  fun setUp() {
     Clock.reset()
   }
 
-  @Test fun macOsSystem() {
-    assumeMacOS()
+  @EnabledOnOs(MAC)
+  @Test fun macOsSystem(@TempDir tempDir: Path) {
     val testDate = LocalDateTime.of(2019, 5, 22, 13, 45).toMillis()
     val url = DateFormatUtilTest::class.java.getResource("DateFormatUtilTest_macOS")!!
     val helper = when (url.protocol) {
-      "jar" -> tempDir.newFileNio("DateFormatUtilTest_macOS").apply {
+      "jar" -> tempDir.resolve("DateFormatUtilTest_macOS").apply {
         url.openStream().use { Files.copy(it, this, StandardCopyOption.REPLACE_EXISTING) }
       }
       else -> Path.of(url.toURI())
