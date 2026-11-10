@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+    companion {
+        fun len(x: Int): Int = if (x > 0) listOf(x - 1).map(::len).sum() else 0
+    }
+}

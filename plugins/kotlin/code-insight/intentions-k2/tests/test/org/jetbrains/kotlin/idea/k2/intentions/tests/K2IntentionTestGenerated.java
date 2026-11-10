@@ -14047,9 +14047,39 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/aliasedJvmStaticFunFromCompanionObject.kt");
         }
 
+        @TestMetadata("boundCallableReference.kt")
+        public void testBoundCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/boundCallableReference.kt");
+        }
+
+        @TestMetadata("boundCallableReferenceWithoutInstanceAccess.kt")
+        public void testBoundCallableReferenceWithoutInstanceAccess() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/boundCallableReferenceWithoutInstanceAccess.kt");
+        }
+
+        @TestMetadata("boundPropertyReference.kt")
+        public void testBoundPropertyReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/boundPropertyReference.kt");
+        }
+
+        @TestMetadata("callableReferenceToCompanionObjectMember.kt")
+        public void testCallableReferenceToCompanionObjectMember() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/callableReferenceToCompanionObjectMember.kt");
+        }
+
         @TestMetadata("comments.kt")
         public void testComments() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/comments.kt");
+        }
+
+        @TestMetadata("companionBlockDeclarationReference.kt")
+        public void testCompanionBlockDeclarationReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/companionBlockDeclarationReference.kt");
+        }
+
+        @TestMetadata("companionExtensionDeclarationReference.kt")
+        public void testCompanionExtensionDeclarationReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/companionExtensionDeclarationReference.kt");
         }
 
         @TestMetadata("companionObjectUsedAsItsSupertype.kt")
@@ -14100,6 +14130,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("funFromCompanionObject.kt")
         public void testFunFromCompanionObject() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/funFromCompanionObject.kt");
+        }
+
+        @TestMetadata("implicitReceiverCallableReference.kt")
+        public void testImplicitReceiverCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/implicitReceiverCallableReference.kt");
+        }
+
+        @TestMetadata("implicitReferenceSmartCast.kt")
+        public void testImplicitReferenceSmartCast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/implicitReferenceSmartCast.kt");
         }
 
         @TestMetadata("inCompanionBlock.kt")
@@ -14222,6 +14262,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/overriddenOpenFun.kt");
         }
 
+        @TestMetadata("parentClassCompanionBlockDeclarationReference.kt")
+        public void testParentClassCompanionBlockDeclarationReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/parentClassCompanionBlockDeclarationReference.kt");
+        }
+
         @TestMetadata("plusOperator.kt")
         public void testPlusOperator() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/plusOperator.kt");
@@ -14235,6 +14280,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("protectedFun.kt")
         public void testProtectedFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/protectedFun.kt");
+        }
+
+        @TestMetadata("recursiveCallableReference.kt")
+        public void testRecursiveCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/recursiveCallableReference.kt");
+        }
+
+        @TestMetadata("recursiveCallableReferenceWithoutInstanceAccess.kt")
+        public void testRecursiveCallableReferenceWithoutInstanceAccess() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/recursiveCallableReferenceWithoutInstanceAccess.kt");
         }
 
         @TestMetadata("redeclarationConflictFunction.kt")
@@ -14272,6 +14327,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/typeParameterOfClassInProperty.kt");
         }
 
+        @TestMetadata("unboundCallableReference.kt")
+        public void testUnboundCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/unboundCallableReference.kt");
+        }
+
+        @TestMetadata("unboundCallableReferenceWithInstanceAccess.kt")
+        public void testUnboundCallableReferenceWithInstanceAccess() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/unboundCallableReferenceWithInstanceAccess.kt");
+        }
+
+        @TestMetadata("unboundPropertyReference.kt")
+        public void testUnboundPropertyReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/unboundPropertyReference.kt");
+        }
+
         @TestMetadata("updateUsages.kt")
         public void testUpdateUsages() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/updateUsages.kt");
@@ -14303,6 +14373,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("actualFun.kt")
         public void testActualFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/actualFun.kt");
+        }
+
+        @TestMetadata("boundCallableReference.kt")
+        public void testBoundCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/boundCallableReference.kt");
+        }
+
+        @TestMetadata("boundCallableReferenceWithoutInstanceAccess.kt")
+        public void testBoundCallableReferenceWithoutInstanceAccess() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/boundCallableReferenceWithoutInstanceAccess.kt");
+        }
+
+        @TestMetadata("callableReferenceToCompanionObjectMember.kt")
+        public void testCallableReferenceToCompanionObjectMember() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/callableReferenceToCompanionObjectMember.kt");
         }
 
         @TestMetadata("disabledCompanionExtensions.kt")
@@ -14505,6 +14590,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/typeParameterOfClassInProperty.kt");
         }
 
+        @TestMetadata("unboundCallableReference.kt")
+        public void testUnboundCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/unboundCallableReference.kt");
+        }
+
+        @TestMetadata("unboundCallableReferenceWithInstanceAccess.kt")
+        public void testUnboundCallableReferenceWithInstanceAccess() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/unboundCallableReferenceWithInstanceAccess.kt");
+        }
+
         @TestMetadata("usesCompanionBlockFunction.kt")
         public void testUsesCompanionBlockFunction() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/usesCompanionBlockFunction.kt");
@@ -14536,6 +14631,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("avoidNameCapture.kt")
         public void testAvoidNameCapture() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/avoidNameCapture.kt");
+        }
+
+        @TestMetadata("boundCallableReference.kt")
+        public void testBoundCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/boundCallableReference.kt");
+        }
+
+        @TestMetadata("boundCallableReferenceWithoutInstanceAccess.kt")
+        public void testBoundCallableReferenceWithoutInstanceAccess() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/boundCallableReferenceWithoutInstanceAccess.kt");
         }
 
         @TestMetadata("doNotQualifyThisLabel.kt")
@@ -14631,6 +14736,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("infixFun.kt")
         public void testInfixFun() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/infixFun.kt");
+        }
+
+        @TestMetadata("innerClassConstructorReference.kt")
+        public void testInnerClassConstructorReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/innerClassConstructorReference.kt");
+        }
+
+        @TestMetadata("innerClassConstructorReferenceWithoutOuterAccess.kt")
+        public void testInnerClassConstructorReferenceWithoutOuterAccess() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/innerClassConstructorReferenceWithoutOuterAccess.kt");
         }
 
         @TestMetadata("invokeOperator.kt")
@@ -14756,6 +14871,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("topLevelFunction.kt")
         public void testTopLevelFunction() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/topLevelFunction.kt");
+        }
+
+        @TestMetadata("unboundCallableReference.kt")
+        public void testUnboundCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/unboundCallableReference.kt");
+        }
+
+        @TestMetadata("unboundCallableReferenceWithInstanceAccess.kt")
+        public void testUnboundCallableReferenceWithInstanceAccess() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/unboundCallableReferenceWithInstanceAccess.kt");
         }
     }
 

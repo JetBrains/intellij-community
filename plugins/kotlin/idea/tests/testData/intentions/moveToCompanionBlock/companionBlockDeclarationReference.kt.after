@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+    companion {
+        fun helper(x: Int) = x
+        fun moved(xs: List<Int>) = xs.map(::helper)
+    }
+
+<caret>}

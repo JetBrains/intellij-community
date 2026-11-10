@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.utils.toCompilerVisibility
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkCallableReferenceConflictForCompanionTargets
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkFunctionOverriddenInSubclassConflict
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkImplicitPackagePrefixConflict
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkInternalMemberUsages
@@ -116,6 +117,7 @@ internal fun findAllMoveConflicts(
         putAllValues(checkNameClashConflicts(allDeclarationsToMove, targetPkg, targetKaModule, target?.getTarget() as? KtClassOrObject))
         putAllValues(checkUsedTypeParameterFromParentClassConflict(allDeclarationsToMove, target))
         putAllValues(checkSuperReferenceConflict(allDeclarationsToMove, target))
+        putAllValues(checkCallableReferenceConflictForCompanionTargets(topLevelDeclarationsToMove, usages, target))
         putAllValues(checkFunctionOverriddenInSubclassConflict(allDeclarationsToMove))
         putAllValues(checkRequiresClassInstanceConflict(usages, allDeclarationsToMove, target))
         putAllValues(checkImplicitPackagePrefixConflict(targetDir, targetPkg))

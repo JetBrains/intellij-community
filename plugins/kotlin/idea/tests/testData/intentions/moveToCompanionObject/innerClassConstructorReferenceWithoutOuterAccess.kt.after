@@ -1,0 +1,9 @@
+class Outer {
+    companion object {
+        class Inner {
+            fun get() = 1
+        }
+    }
+}
+
+fun use(outer: Outer): () -> Any = Outer.Companion::Inner

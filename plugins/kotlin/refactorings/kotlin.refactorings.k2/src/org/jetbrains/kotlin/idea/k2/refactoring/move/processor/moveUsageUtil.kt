@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
@@ -258,6 +259,12 @@ internal fun KtNamedDeclaration.usesOuterInstanceParameter(): Boolean {
     if (containingClassOrObject is KtObjectDeclaration) return false
     return collectOuterInstanceReferences(this).isNotEmpty()
 }
+
+/**
+ * Checks whether moving member to static scope will add an instance parameter
+ */
+internal fun KtNamedDeclaration.getsOuterInstanceParameter(): Boolean =
+    (this is KtNamedFunction || (this is KtClass && isInner())) && usesOuterInstanceParameter()
 
 context(_: KaSession)
 private fun KaSymbol.isStrictAncestorOf(other: KaSymbol): Boolean {
