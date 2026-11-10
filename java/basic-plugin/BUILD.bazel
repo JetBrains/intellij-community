@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -52,6 +53,23 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.java.basic.plugin` end
+
+### auto-generated section `plugin intellij.java.basic.plugin` start
+ij_plugin(
+    name = "basic-plugin_plugin",
+    descriptor_module = ":basic-plugin",
+    content_modules = [
+        # do not sort,
+        "//java/java-syntax:syntax",
+        "//java/java-frontback-psi-api:frontback-psi",
+        "//java/java-frontback-psi-impl:frontback-psi-impl",
+        "//java/java-psi-api:psi",
+        "//java/java-psi-impl:psi-impl",
+        "//java/java-frontback-impl:frontback-impl",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.java.basic.plugin` end
 
 ### auto-generated section `iml intellij.java.basic.plugin` start
 exports_files(

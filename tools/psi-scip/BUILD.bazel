@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tools.psiScip` start
@@ -52,6 +53,20 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.tools.psiScip` end
+
+### auto-generated section `plugin intellij.tools.psiScip` start
+ij_plugin(
+    name = "psi-scip_plugin",
+    descriptor_module = ":psi-scip",
+    content_modules = [] + select({
+        "@community//build:is_inside_ultimate": [
+            "@@//ultimate/psi-scip-go:tools-psiScip-go",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.tools.psiScip` end
 
 ### auto-generated section `iml intellij.tools.psiScip` start
 exports_files(

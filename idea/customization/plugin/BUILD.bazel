@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -31,6 +32,33 @@ jvm_library(
     runtime_deps = ["//idea/customization/base"],
 )
 ### auto-generated section `build intellij.idea.customization.plugin` end
+
+### auto-generated section `plugin intellij.idea.customization.plugin` start
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//idea/customization/base",
+        "//idea/customization/backend",
+        "//platform/non-modal-welcome-screen",
+        "//platform/non-modal-welcome-screen/frontend",
+        "//platform/non-modal-welcome-screen/backend",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            # do not sort,
+            "@@//ultimate/ultimate-resources/customization:idea-customization-ultimate",
+            "@@//ultimate/ultimate-resources/trial:idea-ultimate-customizationTrial",
+            "@@//platform/trialPromotion/common",
+            "@@//platform/trialPromotion/idesWithFreeTier",
+            "@@//platform/trialPromotion/idesWithFreeTier/jcef",
+            "@@//platform/trialPromotion/idesWithFreeTier/welcomeScreen",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.idea.customization.plugin` end
 
 ### auto-generated section `iml intellij.idea.customization.plugin` start
 exports_files(

@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -45,6 +46,42 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.markdown.plugin` end
+
+### auto-generated section `plugin intellij.markdown.plugin` start
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//plugins/markdown/core:markdown",
+        "//plugins/markdown/jcef",
+        "//plugins/markdown/fenceInjection",
+        "//plugins/markdown/frontmatter",
+        "//plugins/markdown/frontmatter/yaml",
+        "//plugins/markdown/frontmatter/toml",
+        "//plugins/markdown/images",
+        "//plugins/markdown/xml",
+        "//plugins/markdown/model",
+        "//plugins/markdown/spellchecker",
+        "//plugins/markdown/compose:compose-preview",
+        "//plugins/markdown/core/frontend",
+        "//plugins/markdown/core/frontend/execution",
+        "//plugins/markdown/execution",
+        "//plugins/markdown/core/backend",
+        "//plugins/markdown/java",
+        "//plugins/markdown/textMate",
+        "//plugins/markdown/projectView",
+        "//plugins/markdown/figmaAdvertiser",
+        "//plugins/markdown/vcs",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            "@@//remote-dev/cwm-guest/plugins/markdown:markdown-frontend-split",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.markdown.plugin` end
 
 ### auto-generated section `iml intellij.markdown.plugin` start
 exports_files(

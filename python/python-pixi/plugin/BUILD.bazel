@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -37,6 +38,21 @@ jvm_library(
     runtime_deps = ["//python/pluginCore:community-plugin"],
 )
 ### auto-generated section `build intellij.python.pixi.plugin` end
+
+### auto-generated section `plugin intellij.python.pixi.plugin` start
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//python/python-pixi/common",
+        "//python/python-pixi/backend",
+        "//python/python-pixi/frontend",
+        "//libraries/night-config-toml:night-config-toml_plugin_module",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.python.pixi.plugin` end
 
 ### auto-generated section `iml intellij.python.pixi.plugin` start
 exports_files(

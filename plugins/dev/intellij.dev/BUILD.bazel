@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -36,6 +37,33 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.dev` end
+
+### auto-generated section `plugin intellij.dev` start
+ij_plugin(
+    name = "dev_plugin",
+    descriptor_module = ":dev",
+    content_modules = [
+        # do not sort,
+        "//platform/statistics/devkit",
+        "//platform/statistics/devkit/backend",
+        "//platform/statistics/devkit/frontend",
+        "//platform/platform-impl/ui-inspector:ide-ui-inspector",
+        "//plugins/dev/intellij.dev.psiViewer:psiViewer",
+        "//plugins/dev/intellij.dev.codeInsight:codeInsight",
+        "//plugins/dev/intellij.dev.pluginLoading:pluginLoading",
+        "//plugins/dev/intellij.java.dev:java-dev",
+        "//plugins/dev/intellij.groovy.dev:groovy-dev",
+        "//plugins/dev/intellij.kotlin.dev:kotlin-dev",
+        "//plugins/dev/intellij.dev.core:core",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            "@@//phpstorm/dev",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.dev` end
 
 ### auto-generated section `iml intellij.dev` start
 exports_files(

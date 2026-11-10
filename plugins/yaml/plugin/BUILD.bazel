@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -29,6 +30,28 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.yaml.plugin` end
+
+### auto-generated section `plugin intellij.yaml.plugin` start
+ij_plugin(
+    name = "plugin_plugin",
+    descriptor_module = ":plugin",
+    content_modules = [
+        # do not sort,
+        "//plugins/yaml/backend",
+        "//plugins/yaml",
+        "//plugins/yaml/spellchecker",
+        "//plugins/yaml/syntax",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            # do not sort,
+            "@@//remote-dev/cwm-guest/plugins/yaml-frontend:yaml-frontend-split",
+            "@@//plugins/yaml-helm",
+        ],
+        "//conditions:default": [],
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.yaml.plugin` end
 
 ### auto-generated section `iml intellij.yaml.plugin` start
 exports_files(
