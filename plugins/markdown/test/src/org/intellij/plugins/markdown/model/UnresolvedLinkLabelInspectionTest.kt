@@ -42,6 +42,18 @@ class UnresolvedLinkLabelInspectionTest: BasePlatformTestCase() {
   }
 
   @Test
+  fun `test link label is not reported`() {
+    myFixture.addFileToProject("docs/test.kt", "")
+    listOf(
+      "[@test] docs/test.kt",
+      "A requirement uses [@test] docs/test.kt",
+      "- A requirement uses [@test] docs/test.kt",
+      "- A requirement\n  [@test] docs/test.kt",
+      "- A requirement\n  - A nested requirement\n    [@test] docs/test.kt",
+    ).forEach(::doTest)
+  }
+
+  @Test
   fun `test resolved label of collapsed reference link is not reported`() {
     doTest("""
       Here is a link to [Google][].
@@ -51,9 +63,9 @@ class UnresolvedLinkLabelInspectionTest: BasePlatformTestCase() {
   }
 
   @Test
-  fun `case and whitespace mismatched shortcut label is reported`() {
+  fun `case and whitespace mismatched shortcut label is not reported`() {
     doTest("""
-      [<warning descr="Cannot resolve link label foo">foo </warning>]
+      [foo ]
 
       [FOO]: https://google.com
     """)
@@ -69,30 +81,38 @@ class UnresolvedLinkLabelInspectionTest: BasePlatformTestCase() {
   }
 
   @Test
-  fun `test standalone bracketed text is reported`() {
+  fun `test unresolved shortcut reference link is not reported`() {
     doTest("""
-      T030 [<warning descr="Cannot resolve link label P">P</warning>] Implement the thing
+      ## [Unreleased]
+      ## [2.7.18] - 2026-11-04
     """)
   }
 
   @Test
-  fun `test bracketed text separated by a space is reported`() {
+  fun `test standalone bracketed text is not reported`() {
     doTest("""
-      T030 [<warning descr="Cannot resolve link label P">P</warning>] [<warning descr="Cannot resolve link label US3">US3</warning>] Implement the thing
+      T030 [P] Implement the thing
     """)
   }
 
   @Test
-  fun `test several bracketed texts separated by spaces are reported`() {
+  fun `test bracketed text separated by a space is not reported`() {
     doTest("""
-      T030 [<warning descr="Cannot resolve link label P">P</warning>] [<warning descr="Cannot resolve link label US3">US3</warning>] [<warning descr="Cannot resolve link label US4">US4</warning>] Implement the thing
+      T030 [P] [US3] Implement the thing
     """)
   }
 
   @Test
-  fun `an image and a reference separated by a space have separate labels`() {
+  fun `test several bracketed texts separated by spaces are not reported`() {
     doTest("""
-      ![<warning descr="Cannot resolve link label P">P</warning>] [<warning descr="Cannot resolve link label US3">US3</warning>]
+      T030 [P] [US3] [US4] Implement the thing
+    """)
+  }
+
+  @Test
+  fun `an image and bracketed text separated by a space have separate labels`() {
+    doTest("""
+      ![<warning descr="Cannot resolve link label P">P</warning>] [US3]
     """)
   }
 
@@ -131,7 +151,7 @@ class UnresolvedLinkLabelInspectionTest: BasePlatformTestCase() {
   @Test
   fun `a comment wrapper does not define a link label`() {
     doTest("""
-      [<warning descr="Cannot resolve link label //">//</warning>]
+      [//]
 
       [//]: # (A comment)
     """)
@@ -142,20 +162,48 @@ class UnresolvedLinkLabelInspectionTest: BasePlatformTestCase() {
     doTest("""
       [text][<warning descr="Cannot resolve link label label">label</warning>]
 
-      [<warning descr="Cannot resolve link label label">label</warning>]:
+      [label]:
     """)
   }
 
   @Test
-  fun `test bracketed text separated by a space inside a list item is reported`() {
+  fun `test bracketed text separated by a space inside a list item is not reported`() {
     doTest("""
-      - [ ] T030 [<warning descr="Cannot resolve link label P">P</warning>] [<warning descr="Cannot resolve link label US3">US3</warning>] Implement the thing
+      - [ ] T030 [P] [US3] Implement the thing
     """)
   }
 
-  private fun doTest(content: String) {
+  @Test
+  fun `test link markers are not reference labels`() {
+    doTest("""
+      [@test] ../../frontend/acp/testSrc/ExampleTest.kt
+      [@test] ../../frontend/acp/testSrc/OtherTest.kt (`checks the behavior`)
+      - The test checks the result.
+        [@test] ../../frontend/acp/testSrc/ResultTest.kt
+    """, fileName = "example.spec.md")
+  }
+
+  @Test
+  fun `test link markers in ordinary Markdown are not reference labels`() {
+    doTest("""
+      [@test] path/to/ExampleTest.kt
+    """)
+  }
+
+  @Test
+  fun `test markers without a test link remain reference labels`() {
+    doTest("""
+      [@test]
+
+      [text][<warning descr="Cannot resolve link label @test">@test</warning>]
+
+      [other] path/to/ExampleTest.kt
+    """, fileName = "example.spec.md")
+  }
+
+  private fun doTest(content: String, fileName: String = "some.md") {
     myFixture.enableInspections(UnresolvedLinkLabelInspection())
-    myFixture.configureByText("some.md", content.trimIndent())
+    myFixture.configureByText(fileName, content.trimIndent())
     myFixture.checkHighlighting()
   }
 }
