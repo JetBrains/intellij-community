@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JCEF Dialog Handlers</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    section { border-bottom: 1px solid #ccc; padding: 8px 0 16px; }
+    button, label { margin: 4px; }
+    #log { white-space: pre-wrap; min-height: 100px; padding: 8px; background: #f3f3f3; }
+  </style>
+</head>
+<body>
+<h1>JCEF dialog handler demo</h1>
+<p>Use the controls above the browser to switch between native dialogs, suppressed dialogs, and IJ dialogs.</p>
+
+<section>
+  <h2>JavaScript dialogs</h2>
+  <button id="alertButton">alert()</button>
+  <button id="confirmButton">confirm()</button>
+  <button id="promptButton">prompt()</button>
+</section>
+
+<section>
+  <h2>Before unload</h2>
+  <button id="reloadButton">Reload from page</button>
+</section>
+
+<section>
+  <h2>HTML file inputs</h2>
+  <label>Open one file: <input id="singleFile" type="file"></label><br>
+  <label>Open multiple files: <input id="multipleFiles" type="file" multiple></label><br>
+  <label>Open a folder: <input id="folder" type="file" webkitdirectory directory multiple></label>
+</section>
+
+<section>
+  <h2>File System Access API</h2>
+  <button id="openPickerButton">showOpenFilePicker()</button>
+  <button id="savePickerButton">showSaveFilePicker()</button>
+  <button id="directoryPickerButton">showDirectoryPicker()</button>
+</section>
+
+<h2>Page results</h2>
+<pre id="log"></pre>
+
+<script>
+  const logElement = document.getElementById('log');
+  function log(message) {
+    logElement.textContent += `${message}\n`;
+    logElement.scrollTop = logElement.scrollHeight;
+  }
+
+  document.getElementById('alertButton').addEventListener('click', () => {
+    alert('This is an alert dialog');
+    log('alert() returned');
+  });
+  document.getElementById('confirmButton').addEventListener('click', () => {
+    log(`confirm() returned ${confirm('Do you want to continue?')}`);
+  });
+  document.getElementById('promptButton').addEventListener('click', () => {
+    log(`prompt() returned ${JSON.stringify(prompt('Enter some text', 'Hello'))}`);
+  });
+
+  window.onbeforeunload = event => {
+    event.preventDefault();
+    event.returnValue = 'Changes may not be saved.';
+    return event.returnValue;
+  };
+  document.getElementById('reloadButton').addEventListener('click', () => location.reload());
+
+  function logSelectedFiles(input) {
+    const names = Array.from(input.files || []).map(file => file.webkitRelativePath || file.name);
+    log(`${input.id} selected: ${names.length ? names.join(', ') : '(none)'}`);
+  }
+  ['singleFile', 'multipleFiles', 'folder'].forEach(id => {
+    document.getElementById(id).addEventListener('change', event => logSelectedFiles(event.target));
+  });
+
+  document.getElementById('openPickerButton').addEventListener('click', async () => {
+    try {
+      if (!window.showOpenFilePicker) throw new Error('showOpenFilePicker is unavailable');
+      const handles = await window.showOpenFilePicker({ multiple: true });
+      log(`showOpenFilePicker selected: ${handles.map(handle => handle.name).join(', ')}`);
+    }
+    catch (error) { log(`showOpenFilePicker: ${error.name}: ${error.message}`); }
+  });
+  document.getElementById('savePickerButton').addEventListener('click', async () => {
+    try {
+      if (!window.showSaveFilePicker) throw new Error('showSaveFilePicker is unavailable');
+      const handle = await window.showSaveFilePicker({ suggestedName: 'demo.txt' });
+      log(`showSaveFilePicker selected: ${handle.name}`);
+    }
+    catch (error) { log(`showSaveFilePicker: ${error.name}: ${error.message}`); }
+  });
+  document.getElementById('directoryPickerButton').addEventListener('click', async () => {
+    try {
+      if (!window.showDirectoryPicker) throw new Error('showDirectoryPicker is unavailable');
+      const handle = await window.showDirectoryPicker();
+      log(`showDirectoryPicker selected: ${handle.name}`);
+    }
+    catch (error) { log(`showDirectoryPicker: ${error.name}: ${error.message}`); }
+  });
+</script>
+</body>
+</html>

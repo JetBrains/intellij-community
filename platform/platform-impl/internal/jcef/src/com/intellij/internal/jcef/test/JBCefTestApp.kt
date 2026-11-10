@@ -3,6 +3,7 @@ package com.intellij.internal.jcef.test
 
 import com.intellij.internal.jcef.test.aggrtest.AggressiveRouterTest
 import com.intellij.internal.jcef.test.cases.ContextMenu
+import com.intellij.internal.jcef.test.cases.DialogHandlersTest
 import com.intellij.internal.jcef.test.cases.BadSslCertificateTest
 import com.intellij.internal.jcef.test.cases.ClipboardTest
 import com.intellij.internal.jcef.test.cases.DetailedFrame
@@ -111,6 +112,7 @@ internal class JBCefTestAppFrame : JFrame() {
   private val testCases: List<TestCase> = listOf(
     KeyboardEvents(),
     ContextMenu(),
+    DialogHandlersTest(),
     ClipboardTest(),
     ResourceHandler(),
     PerformanceTest(),
