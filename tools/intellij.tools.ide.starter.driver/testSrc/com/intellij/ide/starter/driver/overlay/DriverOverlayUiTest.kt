@@ -235,7 +235,6 @@ class DriverOverlayUiTest {
     with(driver) {
       waitForProjectOpen(1.minutes)
       openFile(SAMPLE_FILE)
-      ideFrame { ensureFocused() }
       val editor = ideFrame().codeEditor()
       val under = pointUnderOverlay(editor)
 
@@ -271,7 +270,6 @@ class DriverOverlayUiTest {
     with(driver) {
       waitForProjectOpen(1.minutes)
       openFile(SAMPLE_FILE)
-      ideFrame { ensureFocused() }
       val editor = ideFrame().codeEditor()
       val under = pointUnderOverlay(editor)
       val withoutStep = editor.getColor(under, moveMouse = false)

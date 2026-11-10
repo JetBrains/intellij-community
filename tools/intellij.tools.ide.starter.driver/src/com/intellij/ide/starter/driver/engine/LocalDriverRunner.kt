@@ -7,6 +7,7 @@ import com.intellij.driver.sdk.waitForIndicatorsBeforeCall
 import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.isRemDevContext
+import com.intellij.ide.starter.runner.CurrentTestMethod
 import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.IDEHandle
 import com.intellij.ide.starter.runner.IDERunContext
@@ -37,8 +38,10 @@ class LocalDriverRunner : DriverRunner {
     configure: IDERunContext.() -> Unit,
   ): BackgroundRun {
     val driverOptions = DriverOptions()
+    val initialFocus = InitialFocusRequest().takeUnless { CurrentTestMethod.get()?.isPerformanceTest == true }
     val driver = DriverWithDetailedLogging(
       driver = DriverImpl(JmxHost(address = driverOptions.address), isRemDevMode = false) {
+        if (!context.isRemDevContext() || isRemDevMode) initialFocus?.requestIfNeeded(this)
         pauseOnIndicators?.let { timeout ->
           if (isConnected && !isPauseOnIndicatorsSuppressed()) {
             waitForIndicatorsBeforeCall(timeout)

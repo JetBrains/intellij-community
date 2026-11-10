@@ -11,8 +11,8 @@ data class TestMethod(
   var arguments: List<Any> = emptyList(),
   val id: String = "${testClass.name}#$name/$displayName",
   /**
-   * Tells if the test measures a performance. Such a test gets no screen recording and no Driver overlay, because they
-   * change what it measures. Only `com.intellij.ide.starter.junit5.CurrentTestMethodProvider` knows the annotation of
+   * Tells if the test measures a performance. Such a test gets no screen recording, no Driver overlay, and no initial
+   * focus request of the Driver, because they change what it measures. Only `com.intellij.ide.starter.junit5.CurrentTestMethodProvider` knows the annotation of
    * such a test, so a method from another source has no mark.
    */
   val isPerformanceTest: Boolean = false,
