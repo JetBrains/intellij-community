@@ -97,9 +97,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
         else -> dependencies
       }
     }
-    mavenArtifacts.inlineModuleDependency = { module, dependency ->
-      JewelMavenArtifacts.isPublishedJewelModule(module) && JewelMavenArtifacts.isInlinedLibraryModule(dependency)
-    }
     mavenArtifacts.addPomMetadata = { module, model ->
       when {
         JewelMavenArtifacts.isPublishedJewelModule(module) -> JewelMavenArtifacts.addPomMetadata(module, model)

@@ -10,7 +10,6 @@ idea = "2026.2.3"
 intelliJPlatformBuild = "262.10968.63"
 ideaPlugin = "2.19.0"
 jbr = "1.6.0"
-jna = "5.17.0"
 junitJupiter = "5.13.4"
 junitPlatform = "1.13.4"
 kotlin = "2.3.20"
@@ -40,7 +39,6 @@ detekt-test = { module = "dev.detekt:detekt-test", version.ref = "detekt" }
 intellijPlatform-icons = { module = "com.jetbrains.intellij.platform:icons", version.ref = "intelliJPlatformBuild" }
 intellijPlatform-util-ui = { module = "com.jetbrains.intellij.platform:util-ui", version.ref = "intelliJPlatformBuild" }
 jbr-api = { module = "org.jetbrains.runtime:jbr-api", version.ref = "jbr" }
-jna-core = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junitJupiter" }
 junit-platform-engine = { module = "org.junit.platform:junit-platform-engine", version.ref = "junitPlatform" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitPlatform" }

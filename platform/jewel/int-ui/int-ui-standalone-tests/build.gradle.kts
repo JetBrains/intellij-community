@@ -20,7 +20,6 @@ dependencies {
     testImplementation(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(compose.desktop.currentOs) { exclude(group = "org.jetbrains.compose.material") }
-    testImplementation(libs.jna.core)
 
     "spectreTestImplementation"(projects.foundation)
     "spectreTestImplementation"(projects.ui)
@@ -45,7 +44,10 @@ tasks {
         )
     }
 
-    named<Test>("test") { useJUnitPlatform() }
+    named<Test>("test") { 
+        useJUnitPlatform()
+        jvmArgs("--enable-native-access=ALL-UNNAMED")    
+    }
 
     register<Test>("spectreTest") {
         group = "verification"
