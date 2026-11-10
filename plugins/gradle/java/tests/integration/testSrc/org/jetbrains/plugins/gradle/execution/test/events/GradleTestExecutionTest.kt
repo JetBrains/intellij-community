@@ -19,16 +19,18 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.findOrCreateDirectory
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
+import com.intellij.platform.testFramework.assertion.consoleText
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.TestDisposable
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.ProgressListener
 import org.gradle.util.GradleVersion
@@ -155,13 +157,16 @@ class GradleTestExecutionTest(private val singleConsole: Boolean) : GradleTestEx
           assertNode("test")
         }
       }
-      when {
-        SystemInfo.isWindows ->
-          assertTestConsoleContains("buildscript \n" + "output\n" + "\n" + "text\n")
-        else ->
-          assertTestConsoleContains("buildscript \n" + "output\n" + "text\n")
+      assertBuildViewNode(buildView, "successful") {
+        assertThat(it.consoleText).contains("buildscript \n" + "output\n" + "\n" + "text\n")
+        assertThat(it.consoleText).contains("script output text without eol")
+        assertThat(it.consoleText).contains(": Executing")
+        assertThat(it.consoleText).contains(": Execution finished")
       }
+      assertTestConsoleContains("buildscript \n" + "output\n" + "\n" + "text\n")
       assertTestConsoleContains("script output text without eol")
+      assertTestConsoleContains(": Executing")
+      assertTestConsoleContains(": Execution finished")
       assertTestConsoleContains("test \n" + "output\n" + "\n" + "text\n")
     }
   }
@@ -651,6 +656,11 @@ class GradleTestExecutionTest(private val singleConsole: Boolean) : GradleTestEx
       """.trimMargin())
 
       executeTasks(":test", isRunAsTest = true)
+      assertBuildViewNode(buildView, "successful") {
+        assertThat(it.consoleText).contains("Green light to resolve configuration")
+        assertThat(it.consoleText).contains("Attempt to resolve configuration")
+        assertThat(it.consoleText).doesNotContain("Attempt to resolve configuration too early")
+      }
       assertTestConsoleContains("Green light to resolve configuration")
       assertTestConsoleContains("Attempt to resolve configuration")
       assertTestConsoleDoesNotContain("Attempt to resolve configuration too early")
@@ -791,6 +801,9 @@ class GradleTestExecutionTest(private val singleConsole: Boolean) : GradleTestEx
       """.trimMargin())
       executeTasks(":test", isRunAsTest = true)
       // verify the max parallel fork value did not change
+      assertBuildViewNode(buildView, "successful") {
+        assertThat(it.consoleText).contains("The max parallel fork was [$parallelForks]")
+      }
       assertTestConsoleContains("The max parallel fork was [$parallelForks]")
     }
   }

@@ -40,6 +40,7 @@ import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescrip
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -74,6 +75,7 @@ public final class GradleTestsExecutionConsoleManager
                                                                       @NotNull ExternalSystemTask task,
                                                                       @Nullable ExecutionEnvironment env,
                                                                       @Nullable ProcessHandler processHandler) {
+    assert processHandler != null;
     if (env == null) return null;
     RunConfiguration configuration;
     SMTRunnerConsoleProperties consoleProperties = null;
@@ -100,7 +102,9 @@ public final class GradleTestsExecutionConsoleManager
     }
     var testFrameworkName = externalSystemRunConfiguration.getSettings().getExternalSystemId().getReadableName();
     var splitterPropertyName = SMTestRunnerConnectionUtil.getSplitterPropertyName(testFrameworkName);
+    var consoleSettings = getExecutionConsoleSettings();
     var consoleView = new GradleTestsExecutionConsole(project, task.getId(), consoleProperties, splitterPropertyName);
+    consoleView.attachToProcess(processHandler);
     SMTestRunnerConnectionUtil.initConsoleView(consoleView, testFrameworkName);
 
     var resultsViewer = consoleView.getResultsViewer();
@@ -120,21 +124,28 @@ public final class GradleTestsExecutionConsoleManager
     testsRootNode.setExecutionId(env.getExecutionId());
     testsRootNode.setSuiteStarted();
     consoleView.getEventPublisher().onTestingStarted(testsRootNode);
-    if (processHandler != null) {
-      processHandler.addProcessListener(new ProcessListener() {
-        @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          if (testsRootNode.isInProgress()) {
-            if (event.getExitCode() == 1) {
-              testsRootNode.setTestFailed("", null, false);
-            }
-            else {
-              testsRootNode.setFinished();
-            }
+    processHandler.addProcessListener(new ProcessListener() {
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        if (testsRootNode.isInProgress()) {
+          if (event.getExitCode() == 1) {
+            testsRootNode.setTestFailed("", null, false);
+          }
+          else {
+            testsRootNode.setFinished();
           }
         }
-      });
-    }
+      }
+
+      @Override
+      public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+        // the single flow build view receives the process handler output via the external system event dispatcher
+        if (!consoleSettings.isSingleBuildConsoleView()) {
+          // the build view attaches the test console to the process handler, but the build tool window isn't attached
+          consoleView.printToBuildView(event.getText(), outputType);
+        }
+      }
+    });
 
     if (task instanceof ExternalSystemExecuteTaskTask taskTask) {
       consoleView.addMessageFilter(new ReRunTaskFilter(taskTask, env));
@@ -218,7 +229,8 @@ public final class GradleTestsExecutionConsoleManager
                        @NotNull ProcessHandler processHandler,
                        @NotNull String text,
                        @NotNull Key processOutputType) {
-    GradleTestsExecutionConsoleOutputProcessor.onOutput(executionConsole, text, processOutputType);
+    var consoleSettings = ExternalSystemUtil.getExecutionConsoleSettings(this, executionConsole);
+    GradleTestsExecutionConsoleOutputProcessor.onOutput(executionConsole, consoleSettings, processHandler, text, processOutputType);
   }
 
   @Override
@@ -283,6 +295,17 @@ public final class GradleTestsExecutionConsoleManager
 
   @Override
   public @NotNull BuildViewSettingsProvider getExecutionConsoleSettings() {
-    return GradleBuildViewSettingsProvider.INSTANCE;
+    return new BuildViewSettingsProvider() {
+      @Override
+      public boolean isExecutionViewHidden() {
+        // the test console has its own tests tree, so the run tab shows it instead of the build tree
+        return true;
+      }
+
+      @Override
+      public boolean isSingleBuildConsoleView() {
+        return GradleBuildViewSettingsProvider.INSTANCE.isSingleBuildConsoleView();
+      }
+    };
   }
 }

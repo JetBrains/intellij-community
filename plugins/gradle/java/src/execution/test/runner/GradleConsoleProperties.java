@@ -45,6 +45,7 @@ public class GradleConsoleProperties extends SMTRunnerConsoleProperties implemen
 
   public GradleConsoleProperties(@NotNull RunConfiguration config, @NotNull String testFrameworkName, @NotNull Executor executor) {
     super(config, testFrameworkName, executor);
+    setPrintTestingStartedTime(false);
   }
 
   public void setGradleTestReport(@Nullable File gradleTestReport) {

@@ -2,21 +2,19 @@
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.build.BuildViewManager;
-import com.intellij.build.BuildViewSettingsProvider;
-import com.intellij.build.events.impl.OutputBuildEventImpl;
-import com.intellij.execution.Platform;
+import com.intellij.build.events.BuildEventsNls.Message;
+import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,34 +22,28 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements BuildViewSettingsProvider {
+@Internal
+public class GradleTestsExecutionConsole extends SMTRunnerConsoleView {
 
-  private final @Nullable ExternalSystemTaskId myTaskId;
+  private final @NotNull ExternalSystemTaskId myTaskId;
   private final @NotNull SMTRunnerEventsListener myEventPublisher;
-  private final @Nullable BuildViewManager myBuildViewManager;
+  private final @NotNull BuildViewManager myBuildViewManager;
 
   private final @NotNull Map<String, SMTestProxy> testsMap = new HashMap<>();
   private final @NotNull StringBuilder myBuffer = new StringBuilder();
 
-  private boolean lastMessageWasEmptyLine;
+  private boolean myLastOutputXmlEvent;
 
   public GradleTestsExecutionConsole(
-    @NotNull TestConsoleProperties consoleProperties,
-    @NotNull String splitterProperty
-  ) {
-    this(null, null, consoleProperties, splitterProperty);
-  }
-
-  public GradleTestsExecutionConsole(
-    @Nullable Project project,
-    @Nullable ExternalSystemTaskId taskId,
+    @NotNull Project project,
+    @NotNull ExternalSystemTaskId taskId,
     @NotNull TestConsoleProperties consoleProperties,
     @NotNull String splitterProperty
   ) {
     super(consoleProperties, splitterProperty);
     myTaskId = taskId;
     myEventPublisher = consoleProperties.getProject().getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
-    myBuildViewManager = project != null ? project.getService(BuildViewManager.class) : null;
+    myBuildViewManager = project.getService(BuildViewManager.class);
   }
 
   public @NotNull SMTRunnerEventsListener getEventPublisher() {
@@ -76,43 +68,21 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements
     return GradleConsoleProperties.GRADLE_TEST_LOCATOR;
   }
 
-  @Override
-  public boolean isExecutionViewHidden() {
-    return true;
+  /**
+   * Prints the build output into the build tool window.
+   */
+  public void printToBuildView(@NotNull @Message String text, @NotNull Key<?> outputType) {
+    myBuildViewManager.onEvent(myTaskId, OutputBuildEvent.builder(text)
+      .withParentId(myTaskId)
+      .withOutputType(ProcessOutputType.fromKey(outputType))
+      .build());
   }
 
-  @Override
-  public boolean isSingleBuildConsoleView() {
-    return Registry.is("gradle.build.toolwindow.single.console");
+  public boolean isLastOutputXmlEvent() {
+    return myLastOutputXmlEvent;
   }
 
-  @Override
-  public void print(@NotNull String s, @NotNull ConsoleViewContentType contentType) {
-    if (detectUnwantedEmptyLine(s)) return;
-    super.print(s, contentType);
-    if (myBuildViewManager != null && myTaskId != null) {
-
-      ProcessOutputType outputType;
-      if (contentType == ConsoleViewContentType.ERROR_OUTPUT) outputType = ProcessOutputType.STDERR;
-      else if (contentType == ConsoleViewContentType.NORMAL_OUTPUT) outputType = ProcessOutputType.STDOUT;
-      else if (contentType == ConsoleViewContentType.SYSTEM_OUTPUT) outputType = ProcessOutputType.SYSTEM;
-      else outputType = ProcessOutputType.STDOUT;
-
-      OutputBuildEventImpl outputBuildEvent = new OutputBuildEventImpl(myTaskId, s, outputType); //NON-NLS
-      myBuildViewManager.onEvent(myTaskId, outputBuildEvent);
-    }
-  }
-
-  // IJ Gradle test runner xml events protocol produces many unwanted empty strings
-  // this is a workaround to avoid the trash in the console
-  private boolean detectUnwantedEmptyLine(@NotNull String s) {
-    if (Platform.current().lineSeparator.equals(s)) {
-      if (lastMessageWasEmptyLine) return true;
-      lastMessageWasEmptyLine = true;
-    }
-    else {
-      lastMessageWasEmptyLine = false;
-    }
-    return false;
+  public void setLastOutputXmlEvent(boolean lastOutputXmlEvent) {
+    myLastOutputXmlEvent = lastOutputXmlEvent;
   }
 }
