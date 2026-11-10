@@ -5,6 +5,7 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
@@ -41,7 +42,11 @@ import org.jetbrains.kotlin.resolution.KtResolvableCall
 
 context(session: KaSession)
 internal fun createReplacementForContextArgument(receiverValue: KaReceiverValue): String? {
-    return when (val symbol = (receiverValue.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol) {
+    val withUnwrappedSmartCasts = receiverValue.unwrapSmartCasts()
+    if (withUnwrappedSmartCasts is KaExplicitReceiverValue) {
+       return withUnwrappedSmartCasts.expression.text
+    }
+    return when (val symbol = (withUnwrappedSmartCasts as? KaImplicitReceiverValue)?.symbol) {
         is KaReceiverParameterSymbol -> symbol.containingSymbol?.name?.asString()?.let { "this@$it" } ?: "this"
 
         is KaContextParameterSymbol -> {
