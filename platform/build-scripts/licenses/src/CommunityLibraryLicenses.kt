@@ -922,6 +922,14 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
 
+  LibraryLicense("Kotlin multiplatform / multi-format serialization", libraryName = "kotlinx-serialization-cbor", url = "https://github.com/Kotlin/kotlinx.serialization")
+    .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
+    .suppliedByOrganizations(Suppliers.JETBRAINS),
+
+  LibraryLicense("Kotlin reflection library", libraryName = "kotlin-reflect", url = "https://github.com/JetBrains/kotlin")
+    .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
+    .suppliedByOrganizations(Suppliers.JETBRAINS),
+
   LibraryLicense("Kotlin RPC", libraryName = "kotlinx-rpc-core-jvm", url = "https://github.com/Kotlin/kotlinx-rpc")
     .apache("https://github.com/Kotlin/kotlinx-rpc/blob/main/LICENSE")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
@@ -946,16 +954,12 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .apache("https://github.com/Kotlin/kotlinx-rpc/blob/main/LICENSE")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-  LibraryLicense("Kotlin RPC", libraryName = "kotlinx-rpc-utils-jvm", url = "https://github.com/Kotlin/kotlinx-rpc")
+  LibraryLicense("Kotlin RPC", libraryName = "kotlinx-rpc-krpc-server-jvm", url = "https://github.com/Kotlin/kotlinx-rpc")
     .apache("https://github.com/Kotlin/kotlinx-rpc/blob/main/LICENSE")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
 
-  LibraryLicense("Kotlin multiplatform / multi-format serialization", libraryName = "kotlinx-serialization-cbor", url = "https://github.com/Kotlin/kotlinx.serialization")
-    .apache("https://github.com/Kotlin/kotlinx.serialization/blob/master/LICENSE.txt")
-    .suppliedByOrganizations(Suppliers.JETBRAINS),
-
-  LibraryLicense("Kotlin reflection library", libraryName = "kotlin-reflect", url = "https://github.com/JetBrains/kotlin")
-    .apache("https://github.com/JetBrains/kotlin/blob/master/license/LICENSE.txt")
+  LibraryLicense("Kotlin RPC", libraryName = "kotlinx-rpc-utils-jvm", url = "https://github.com/Kotlin/kotlinx-rpc")
+    .apache("https://github.com/Kotlin/kotlinx-rpc/blob/main/LICENSE")
     .suppliedByOrganizations(Suppliers.JETBRAINS),
 
   LibraryLicense("Kotlin Standard Library", libraryName = "kotlin-stdlib", url = "https://github.com/JetBrains/kotlin")
