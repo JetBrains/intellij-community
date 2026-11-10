@@ -10,7 +10,7 @@ follow it.
 | `community/tools/bt`: BT | `@bt` | `bt_rust_crate` |
 | `community/tools/vm`: the Air UI-lane tooling | `@avl` | `avl_crate` |
 | `docs/ij-void/portal-server`: the server of the docs portal | none | none |
-| `plugins/air/native`: the Air session supervisor, the library `air-ide` of the IDE, and `air-core` | `@air` | `air_session_crate`, `air_core_crate`, `air_ide_crate` |
+| `plugins/air/native`: the Air session supervisor, the library `air-ide` of the IDE, `air-core`, `air-acp` and `air-host` | `@air` | `air_session_crate`, `air_library_crate`, `air_ide_crate` |
 
 ## The files here
 
