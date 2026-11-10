@@ -618,9 +618,8 @@ private object TestCases {
   // Query name -> display names of the schemas that lack the feature.
   private val SCHEMA_INCOMPATIBLE_COMBINATIONS: Map<String, Set<String>> = mapOf(
     // GHE Server 3.10-3.15 and our vendored cloud-latest schema don't have SearchType.ISSUE_ADVANCED yet,
-    // added to github.com in March 2025. https://youtrack.jetbrains.com/issue/IJPL-255868 will fix this
-    // by updating the vendored schemas.
-    "findPullRequestsByHeadBranch.graphql" to setOf("3.10", "3.11", "3.12", "3.13", "3.14", "3.15", "cloud-latest"),
+    // added to github.com in March 2025.
+    "findPullRequestsByHeadBranch.graphql" to setOf("3.10", "3.11", "3.12", "3.13", "3.14", "3.15"),
   )
 
   fun <TestCase> constructTestCases(f: (queryName: String, pluginQueries: List<PluginQuery<*>>, GraphQLSchemaAndQueryLoaderHolder) -> List<TestCase>): List<TestCase> {
