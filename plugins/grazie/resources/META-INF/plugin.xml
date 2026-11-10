@@ -139,6 +139,7 @@
 
   <extensions defaultExtensionNs="com.intellij.grazie">
     <textExtractor language="TEXT" implementationClass="com.intellij.grazie.text.PlainTextExtractor"/>
+    <cloudConnector implementation="com.intellij.grazie.cloud.GrazieLlmEndpointCloudConnector" order="first"/>
 
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CodeProblemFilter"/>
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CommitProblemFilter"/>
@@ -172,6 +173,9 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.grazie.cloudConnector"
                     interface="com.intellij.grazie.cloud.GrazieCloudConnector"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.grazie.llmEndpointProvider"
+                    interface="com.intellij.grazie.cloud.GrazieLlmEndpointProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.grazie.commitMessageDetector"
                     interface="com.intellij.grazie.text.CommitMessageDetector"
