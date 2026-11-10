@@ -6,6 +6,8 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -16,6 +18,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isPositionalDestructuringType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.resolve.calls.util.isSingleUnderscore
 
 internal object DestructuringToFullFormFactory {
     val convertToFullFormOnShortFormNameMismatch =
@@ -33,10 +36,16 @@ internal object DestructuringToFullFormFactory {
         val declaration = entry.parent as? KtDestructuringDeclaration ?: return emptyList()
 
         if (declaration.isPositionalDestructuringType()) return emptyList()
-        val propertyNames = extractPrimaryParameters(declaration)
-            ?.take(declaration.entries.size)
-            ?.map { it.name }
-            ?: return emptyList()
+        val entries = declaration.entries
+        if (entries.all { it.isSingleUnderscore && it.initializer == null }) return emptyList()
+        val propertyNames = if (declaration.isFullForm ||
+            declaration.languageVersionSettings.supportsFeature(LanguageFeature.EnableNameBasedDestructuringShortForm)
+        ) {
+            entries.map { it.initializer?.getReferencedNameAsName() ?: it.nameAsName ?: return emptyList() }
+        } else {
+            val constructorParameters = extractPrimaryParameters(declaration) ?: return emptyList()
+            constructorParameters.take(entries.size).map { it.name }
+        }
         return listOf(ConvertNameBasedDestructuringToFullFormFix(propertyNames, declaration))
     }
 

@@ -9049,6 +9049,21 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructuringShortFormUnderscoreDiagnostics/convertFullFormUnderscoreToPositional.kt");
         }
 
+        @TestMetadata("namedUnderscoreBeyondConstructor.kt")
+        public void testNamedUnderscoreBeyondConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructuringShortFormUnderscoreDiagnostics/namedUnderscoreBeyondConstructor.kt");
+        }
+
+        @TestMetadata("namedUnderscoreComplete.kt")
+        public void testNamedUnderscoreComplete() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructuringShortFormUnderscoreDiagnostics/namedUnderscoreComplete.kt");
+        }
+
+        @TestMetadata("namedUnderscoreFullForm.kt")
+        public void testNamedUnderscoreFullForm() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructuringShortFormUnderscoreDiagnostics/namedUnderscoreFullForm.kt");
+        }
+
         @TestMetadata("shortUnderscoreToFullForm.kt")
         public void testShortUnderscoreToFullForm() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructuringShortFormUnderscoreDiagnostics/shortUnderscoreToFullForm.kt");
