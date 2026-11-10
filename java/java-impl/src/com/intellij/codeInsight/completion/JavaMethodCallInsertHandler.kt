@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
@@ -25,8 +25,6 @@ import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiCallExpression
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.psi.PsiDocumentManager
@@ -36,10 +34,8 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiNewExpression
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiTypes
-import com.intellij.psi.impl.PsiImplUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
-import kotlin.math.min
 
 public class JavaMethodCallInsertHandler(
   needExplicitTypeParameters: Boolean,
@@ -158,8 +154,6 @@ public class JavaMethodCallInsertHandler(
       val document = editor.getDocument()
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
 
-      val limit = JavaMethodCallElement.getCompletionHintsLimit()
-
       val caretModel = editor.getCaretModel()
       val offset = caretModel.offset
 
@@ -169,16 +163,11 @@ public class JavaMethodCallInsertHandler(
       }
 
       val braceOffset = offset - 1
-      val numberOfParametersToDisplay = if (parametersCount > 1 && PsiImplUtil.isVarArgs(method)) parametersCount - 1 else parametersCount
-      val numberOfCommas = min(numberOfParametersToDisplay, limit) - 1
-      val commas = if (Registry.`is`("editor.completion.hints.virtual.comma")) "" else StringUtil.repeat(", ", numberOfCommas)
-      document.insertString(offset, commas)
 
       PsiDocumentManager.getInstance(project).commitDocument(document)
       val handler = MethodParameterInfoHandler()
       val infoContext = ShowParameterInfoContext(editor, project, context.file, offset, braceOffset)
       if (!methodCall.isValid() || handler.findElementForParameterInfo(infoContext) == null) {
-        document.deleteString(offset, offset + commas.length)
         return
       }
 
@@ -192,7 +181,6 @@ public class JavaMethodCallInsertHandler(
         val hintsDisposal = Disposable { JavaMethodCallElement.setCompletionMode(methodCall, false) }
         if (Disposer.isDisposed(controller)) {
           Disposer.dispose(hintsDisposal)
-          document.deleteString(offset, offset + commas.length)
         }
         else {
           ParameterHintsPass.asyncUpdate(methodCall, editor)

@@ -316,16 +316,9 @@ public final class MethodParameterInfoHandler
             if (chosenMethod != null) {
               int parametersCount = chosenMethod.getParameterList().getParametersCount();
               boolean varArgs = chosenMethod.isVarArgs();
-              if (Registry.is("editor.completion.hints.virtual.comma")) {
-                int requiredParameters = varArgs ? parametersCount - 1 : parametersCount;
-                int actualParameters = ((PsiExpressionList)owner).getExpressionCount();
-                if (actualParameters < requiredParameters && ((PsiCall)parent).resolveMethod() == null) return false;
-              }
-              else if (((PsiExpressionList)owner).isEmpty() &&
-                       (parametersCount == 1 && !varArgs || parametersCount == 2 && varArgs) &&
-                       !overloadWithNoParametersExists(chosenMethod, context.getObjectsToView())) {
-                  return false;
-                }
+              int requiredParameters = varArgs ? parametersCount - 1 : parametersCount;
+              int actualParameters = ((PsiExpressionList)owner).getExpressionCount();
+              if (actualParameters < requiredParameters && ((PsiCall)parent).resolveMethod() == null) return false;
               }
             }
           }
@@ -343,24 +336,9 @@ public final class MethodParameterInfoHandler
                          DocumentUtil.getLineEndOffset(range.getEndOffset(), document));
   }
 
-  private static boolean overloadWithNoParametersExists(PsiMethod method, Object[] candidates) {
-    String methodName = method.getName();
-    return ContainerUtil.find(candidates, c -> {
-      PsiMethod m = getMethodFromCandidate(c);
-      return m.getParameterList().isEmpty() && m.getName().equals(methodName);
-    }) != null;
-  }
-
   private static boolean isIncompatibleParameterCount(@NotNull PsiMethod method, int numberOfParameters) {
-    int limit = JavaMethodCallElement.getCompletionHintsLimit();
     int originalNumberOfParameters = method.getParameterList().getParametersCount();
-    return Registry.is("editor.completion.hints.virtual.comma")
-           ? !PsiImplUtil.isVarArgs(method) && numberOfParameters > originalNumberOfParameters
-           : PsiImplUtil.isVarArgs(method)
-             ? originalNumberOfParameters > 2 &&
-               numberOfParameters < Math.min(limit, originalNumberOfParameters) - 1 && !(limit == 1 && numberOfParameters == 0)
-             : (originalNumberOfParameters < numberOfParameters || numberOfParameters < Math.min(limit, originalNumberOfParameters)) &&
-               !(Math.min(limit, originalNumberOfParameters) == 1 && numberOfParameters == 0);
+    return !PsiImplUtil.isVarArgs(method) && numberOfParameters > originalNumberOfParameters;
   }
 
   @Override
@@ -469,7 +447,6 @@ public final class MethodParameterInfoHandler
     CandidateWithPresentation parameterToHighlight = chosenInfo;
     if (completeMatch != null &&
         (chosenInfo == null || (args.length > 0 && !(context.isPreservedOnHintHidden() &&
-                                                     Registry.is("editor.completion.hints.virtual.comma") &&
                                                      completeMatch.presentation().parameters().size() <
                                                      chosenInfo.presentation().parameters().size())))) {
       parameterToHighlight = completeMatch;
@@ -949,7 +926,7 @@ public final class MethodParameterInfoHandler
     Project project = context.getProject();
     Editor editor = context.getEditor();
     if (editor instanceof EditorWindow) return;
-    int inlaysBeforeCaretWithComma = Registry.is("editor.completion.hints.virtual.comma") ? getInlaysBeforeCaretWithComma(editor) : 0;
+    int inlaysBeforeCaretWithComma = getInlaysBeforeCaretWithComma(editor);
     if (inlaysBeforeCaretWithComma == 0) {
       if (isAfterComma(editor)) {
         updateHintsBeforeCommandEnd(context);

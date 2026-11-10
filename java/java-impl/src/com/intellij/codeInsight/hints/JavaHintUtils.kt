@@ -1,10 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.completion.CompletionMemory
 import com.intellij.codeInsight.completion.JavaMethodCallElement
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.JavaResolveResult
 import com.intellij.psi.JavaTokenType
@@ -61,21 +60,19 @@ internal object JavaInlayHintsProvider {
           lastIndex = i
         }
       }
-      if (Registry.`is`("editor.completion.hints.virtual.comma")) {
-        for (i in lastIndex + 1 until minOf(params.size, limit)) {
-          ProgressManager.checkCanceled()
-           params[i].name.let {
-            infos.add(createHintWithComma(it, trailingOffset))
-          }
-          lastIndex = i
+      for (i in lastIndex + 1 until minOf(params.size, limit)) {
+        ProgressManager.checkCanceled()
+        params[i].name.let {
+          infos.add(createHintWithComma(it, trailingOffset))
         }
+        lastIndex = i
       }
       if (method.isVarArgs && (arguments.isEmpty() && params.size == 2 || arguments.isNotEmpty() && arguments.size == params.size - 1)) {
         params[params.size - 1].name.let {
           infos.add(createHintWithComma(it, trailingOffset))
         }
       }
-      else if (Registry.`is`("editor.completion.hints.virtual.comma") && lastIndex < (params.size - 1) ||
+      else if (lastIndex < (params.size - 1) ||
                limit == 1 && arguments.isEmpty() && params.size > 1 ||
                limit <= arguments.size && arguments.size < params.size) {
         infos.add(InlayInfo("...more", trailingOffset, false, false, true))

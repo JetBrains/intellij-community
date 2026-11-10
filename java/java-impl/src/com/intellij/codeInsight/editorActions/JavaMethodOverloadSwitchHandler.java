@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -17,7 +17,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiCall;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -92,7 +91,6 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     if (enteredParameters == null) {
       exprList.putUserData(ENTERED_PARAMETERS, enteredParameters = new HashMap<>());
     }
-    boolean virtualComma = Registry.is("editor.completion.hints.virtual.comma");
     int currentIndex;
     if (highlighted == null) {
       currentIndex = mySwitchUp ? objects.length : -1;
@@ -106,7 +104,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
       PsiExpression[] enteredExpressions = ((PsiExpressionList)exprList).getExpressions();
       int enteredCount = enteredExpressions.length;
       if (currentMethodParameterCount != enteredCount && !(enteredCount == 0 && currentMethodParameterCount == 1) &&
-          (!virtualComma || !currentMethod.isVarArgs() && enteredCount > currentMethodParameterCount)) {
+          !currentMethod.isVarArgs() && enteredCount > currentMethodParameterCount) {
         // when parameter list has been edited, but popup wasn't updated for some reason
         return;
       }
@@ -124,7 +122,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
     final PsiMethod targetMethod =
       MethodParameterInfoHandler.getMethodFromCandidate(objects[(currentIndex + (mySwitchUp ? -1 : 1) + objects.length) % objects.length]);
 
-    updateParameterValues(editor, caret, targetMethod, exprList, lbraceOffset, enteredParameters, virtualComma);
+    updateParameterValues(editor, caret, targetMethod, exprList, lbraceOffset, enteredParameters);
 
     JavaMethodCallElement.setCompletionModeIfNotSet(methodCall, controller);
 
@@ -136,24 +134,21 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
   }
 
   private static void updateParameterValues(final @NotNull Editor editor, @NotNull Caret caret, @NotNull PsiMethod targetMethod,
-                                            @NotNull PsiElement exprList, int lbraceOffset, @NotNull Map<String, String> enteredParameters,
-                                            boolean virtualComma) {
+                                            @NotNull PsiElement exprList, int lbraceOffset, @NotNull Map<String, String> enteredParameters) {
     PsiParameterList parameterList = targetMethod.getParameterList();
     final int parametersCount = parameterList.getParametersCount();
     caret.moveToOffset(lbraceOffset); // avoid caret impact on hints location
     final int endOffset = exprList.getTextRange().getEndOffset() - 1;
     int lastParameterWithValue = -1;
-    if (virtualComma) {
-      for (int i = parametersCount - 1; i >= 0; i--) {
-        String key = getParameterKey(targetMethod, i);
-        String value = enteredParameters.getOrDefault(key, "");
-        if (!value.isEmpty()) {
-          lastParameterWithValue = i;
-          break;
-        }
+    for (int i = parametersCount - 1; i >= 0; i--) {
+      String key = getParameterKey(targetMethod, i);
+      String value = enteredParameters.getOrDefault(key, "");
+      if (!value.isEmpty()) {
+        lastParameterWithValue = i;
+        break;
       }
     }
-    int paramsToInsert = virtualComma ? lastParameterWithValue + 1 : parametersCount;
+    int paramsToInsert = lastParameterWithValue + 1;
     Ref<Integer> targetCaretPosition = new Ref<>();
     WriteAction.run(() -> {
       int offset = lbraceOffset + 1;
@@ -162,7 +157,7 @@ class JavaMethodOverloadSwitchHandler extends EditorActionHandler {
         String key = getParameterKey(targetMethod, i);
         String value = enteredParameters.getOrDefault(key, "");
         if (value.isEmpty() && targetCaretPosition.isNull()) targetCaretPosition.set(offset);
-        if (i < parametersCount - 1 && (!virtualComma || i < paramsToInsert - 1 || targetCaretPosition.isNull())) value += ", ";
+        if (i < parametersCount - 1 && (i < paramsToInsert - 1 || targetCaretPosition.isNull())) value += ", ";
         editor.getDocument().insertString(offset, value);
         offset += value.length();
       }

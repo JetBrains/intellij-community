@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
-import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
@@ -12,7 +11,6 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpressionList;
@@ -61,9 +59,7 @@ public final class JavaPrevParameterHandler extends EditorActionHandler {
                 if (currentIndex >= 0) {
                   PsiMethod currentMethod = MethodParameterInfoHandler.getMethodFromCandidate(objects[currentIndex]);
                   if (currentMethod.isVarArgs() ||
-                      offset != rParOffset + 1 &&
-                      ((PsiExpressionList)exprList).getExpressionCount() >
-                      (Registry.is("editor.completion.hints.virtual.comma") ? 1 : JavaMethodCallElement.getCompletionHintsLimit())) {
+                      offset != rParOffset + 1 && ((PsiExpressionList)exprList).getExpressionCount() > 1) {
                     boolean toReturn = false;
                     if (offset == rParOffset + 1) {
                       WriteAction.run(() -> editor.getDocument().insertString(rParOffset, ", "));
