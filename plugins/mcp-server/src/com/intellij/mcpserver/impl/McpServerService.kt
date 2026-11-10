@@ -5,7 +5,7 @@ import com.intellij.mcpserver.McpToolFilter
 import com.intellij.mcpserver.elicitation.McpElicitationKind
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.components.serviceIfCreated
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
@@ -111,7 +111,7 @@ interface McpServerService {
 
   companion object {
     fun getInstance(): McpServerService = service()
-    fun getInstanceIfCreated(): McpServerService? = serviceOrNull()
+    fun getInstanceIfCreated(): McpServerService? = serviceIfCreated()
     suspend fun getInstanceAsync(): McpServerService = serviceAsync()
   }
 
