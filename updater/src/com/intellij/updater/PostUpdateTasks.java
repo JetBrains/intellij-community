@@ -24,7 +24,10 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -386,21 +389,28 @@ final class PostUpdateTasks {
       LOG.info("after-patch: no " + script);
       return null;
     }
-    var comSpec = requireNonNullElse(System.getenv("ComSpec"), "cmd.exe");
-    return List.of(comSpec, "/c", script.toString());
+    return List.of(script.toString());
   }
 
-  static void runAfterPatch(Path targetDir) {
+  static @Nullable Path afterPatchLogFile(@Nullable Path updaterLogDir) throws IOException {
+    if (updaterLogDir == null) return null;
+    var dir = Files.createDirectories(updaterLogDir.resolve("afterInstallScript"));
+    var timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss", Locale.ROOT));
+    return dir.resolve("afterInstall-" + timestamp + ".log");
+  }
+
+  static void runAfterPatch(Path targetDir, Path logDir) {
     var command = afterPatchCommand(targetDir);
     if (command == null) return;
     try {
-      LOG.info("after-patch: running " + command);
+      var outputFile = afterPatchLogFile(logDir);
+      LOG.info("after-patch: running " + command + "; output: " + outputFile);
       @SuppressWarnings("IO_FILE_USAGE")
-      var process = new ProcessBuilder(command)
+      var builder = new ProcessBuilder(command)
         .directory(targetDir.toFile())
-        .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-        .redirectError(ProcessBuilder.Redirect.DISCARD)
-        .start();
+        .redirectErrorStream(true)
+        .redirectOutput(outputFile != null ? ProcessBuilder.Redirect.to(outputFile.toFile()) : ProcessBuilder.Redirect.DISCARD);
+      var process = builder.start();
       if (!process.waitFor(AFTER_PATCH_TIMEOUT_MINUTES, TimeUnit.MINUTES)) {
         LOG.warning("after-patch: timed out after " + AFTER_PATCH_TIMEOUT_MINUTES + " min; the process is left running");
         return;

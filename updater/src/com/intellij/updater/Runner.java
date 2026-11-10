@@ -39,6 +39,7 @@ public final class Runner {
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log";  // must be equal to UpdateCheckerComponent.ERROR_LOG_FILE_NAME
 
   private static String logPath = null;
+  private static @Nullable Path logDir = null;
   private static boolean ourCaseSensitiveFs;
 
   static final Logger LOG = createLogger();
@@ -83,7 +84,7 @@ public final class Runner {
     System.setProperty("java.util.logging.config.class", Object.class.getName());
 
     String dirPath = System.getProperty("idea.updater.log", System.getProperty("java.io.tmpdir", System.getProperty("user.home", ".")));
-    Path logDir = Path.of(dirPath).toAbsolutePath().normalize();
+    logDir = Path.of(dirPath).toAbsolutePath().normalize();
     logPath = logDir.resolve(LOG_FILE_NAME).toString();
     String errorLogPath = logDir.resolve(ERROR_LOG_FILE_NAME).toString();
 
@@ -613,7 +614,7 @@ public final class Runner {
     if (Utils.IS_WINDOWS) {
       ui.startProcess(UpdaterUI.message("running.after.patch"));
       ui.setProgressIndeterminate();
-      PostUpdateTasks.runAfterPatch(targetDir);
+      PostUpdateTasks.runAfterPatch(targetDir, logDir);
     }
   }
 
