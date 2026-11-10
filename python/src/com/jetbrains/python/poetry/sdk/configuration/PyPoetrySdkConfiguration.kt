@@ -80,11 +80,11 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
   ): EnvCheckerResult = reportRawProgress {
     it.text(PyBundle.message("python.sdk.validating.environment"))
     val poetryLockExists = findPoetryLock(pyProject) != null
+    val pyProjectToml = withContext(Dispatchers.IO) { PyProjectToml.findPyProjectTomlFile(pyProject) }
 
     val isPoetryProject = if (checkToml) {
       withContext(Dispatchers.IO) {
-        PyProjectToml.findPyProjectTomlFile(pyProject)
-          ?.let { toml -> getPyProjectTomlForPoetry(toml.virtualFile) } != null || poetryLockExists
+        pyProjectToml?.let { toml -> getPyProjectTomlForPoetry(toml.virtualFile) } != null || poetryLockExists
       }
     }
     else true
@@ -94,6 +94,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
     val envNotFound = EnvCheckerResult.EnvNotFound(intentionName)
 
     if (canManage) {
+      if (pyProjectToml != null && !poetryLockExists) return@reportRawProgress envNotFound
       val basePath = pyProject.baseDir.asEelOrJustPath()
       runPoetry(basePath, "check", "--lock").getOr { return@reportRawProgress envNotFound }
       val envPath = runPoetry(basePath, "env", "info", "-p")
