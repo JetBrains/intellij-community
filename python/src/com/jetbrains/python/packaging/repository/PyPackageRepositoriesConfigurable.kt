@@ -6,8 +6,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.PyPackageService
 import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCacheService
+import com.jetbrains.python.packaging.management.ui.notify
 import com.jetbrains.python.packaging.statistics.PythonPackagesToolwindowStatisticsCollector
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +42,9 @@ internal class PyPackageRepositoriesConfigurable(private val project: Project) :
     val service = PyPackagingToolWindowService.getInstance(project)
     service.serviceScope.launch(Dispatchers.IO) {
       syncRepositories()
-      service<PythonSimpleRepositoryCacheService>().reloadAll()
+      service<PythonSimpleRepositoryCacheService>().reloadAll().onFailure {
+        it.notify(project)
+      }
       service.refreshInstalledPackages()
       withContext(Dispatchers.EDT) {
         repositoriesList.resetAllItems()

@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.unit.packaging.cache
 
+import com.intellij.idea.TestFor
 import com.intellij.openapi.components.service
 import com.intellij.python.junit5Tests.framework.pypi.MockPyPIServer
 import com.intellij.python.junit5Tests.framework.pypi.mockPyPIServerFixture
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -13,6 +15,7 @@ import com.jetbrains.python.packaging.cache.PythonSimpleRepositoryCacheService
 import com.jetbrains.python.packaging.repository.PyPackageRepositories
 import com.jetbrains.python.packaging.repository.PyPackageRepository
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -91,5 +94,31 @@ class PythonSimpleRepositoryCacheServiceTest {
     assertTrue(secondCache.contains("requests"), "requests should be in second repo cache")
     assertTrue(secondCache.contains("urllib3" ), "urllib3 should be in second repo cache")
     assertTrue(secondCache.contains("numpy" ), "numpy should not leak into second repo cache")
+  }
+
+  @Test
+  @TestFor(issues = ["PY-92435"])
+  fun `reloadAll keeps the old cache and logs no error when a repository is offline`(): Unit = runBlocking {
+    val repo = repoFixture.get()
+    val cacheService = service<PythonSimpleRepositoryCacheService>()
+    assertThat(cacheService.reloadAll()).isInstanceOf(Result.Success::class.java)
+
+    serverFixture.get().stop()
+    val refreshErrors = mutableListOf<String>()
+    val errorRecorder = object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+        if (message.startsWith("Failed to refresh repository")) {
+          refreshErrors += message
+          return Action.NONE
+        }
+        return super.processError(category, message, details, t)
+      }
+    }
+    val result = LoggedErrorProcessor.executeWith(errorRecorder).use { cacheService.reloadAll() }
+
+    assertThat(refreshErrors).isEmpty()
+    assertThat(result).isInstanceOf(Result.Failure::class.java)
+    assertThat(cacheService[repo]?.contains("numpy")).isTrue()
+    assertThat(service<PyPackageRepositories>().invalidRepositories).contains(repo)
   }
 }
