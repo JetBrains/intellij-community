@@ -212,6 +212,8 @@
 - f:renameSlot(com.intellij.platform.settings.v2.SettingsContext,java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - f:subStorage(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.SettingsKey):java.util.List
 - withTestPluginId(com.intellij.openapi.extensions.PluginId):com.intellij.platform.settings.v2.SettingsMapKey
+*:com.intellij.platform.settings.v2.SettingsMigration
+- a:migrate(com.intellij.platform.settings.v2.SettingsContext,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.settings.v2.SettingsMutationBuilder
 - a:apply(kotlin.coroutines.Continuation):java.lang.Object
 - a:context(com.intellij.platform.settings.v2.SettingsContext):com.intellij.platform.settings.v2.SettingsMutationBuilder

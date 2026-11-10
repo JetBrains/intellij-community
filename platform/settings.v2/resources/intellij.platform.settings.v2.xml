@@ -14,5 +14,11 @@
     <extensionPoint qualifiedName="com.intellij.settings.v2.layerProvider"
                     interface="com.intellij.platform.settings.v2.LayerProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.settings.v2.appMigration"
+                    interface="com.intellij.platform.settings.v2.SettingsMigration"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.settings.v2.projectMigration"
+                    interface="com.intellij.platform.settings.v2.SettingsMigration"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
