@@ -37,6 +37,7 @@ internal object DestructuringToFullFormFactory {
 
         if (declaration.isPositionalDestructuringType()) return emptyList()
         val entries = declaration.entries
+        if (entries.any { it.annotationEntries.isNotEmpty() }) return emptyList()
         if (entries.all { it.isSingleUnderscore && it.initializer == null }) return emptyList()
         val propertyNames = if (declaration.isFullForm ||
             declaration.languageVersionSettings.supportsFeature(LanguageFeature.EnableNameBasedDestructuringShortForm)

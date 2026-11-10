@@ -40,6 +40,7 @@ internal class ConvertNameBasedDestructuringShortFormToFullInspection :
         // Allow destructuring declarations with initializers OR lambda parameters
         if (element.initializer == null && element.parent !is KtParameter) return false
         if (element.entries.isEmpty()) return false
+        if (element.entries.any { it.annotationEntries.isNotEmpty() }) return false
         if (element.isFullForm) return false
         return true
     }

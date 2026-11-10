@@ -8805,6 +8805,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotatedEntryOnlySyntaxOption.kt")
+        public void testAnnotatedEntryOnlySyntaxOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/annotatedEntryOnlySyntaxOption.kt");
+        }
+
         @TestMetadata("bodyPropertiesCompleteOption.kt")
         public void testBodyPropertiesCompleteOption() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/bodyPropertiesCompleteOption.kt");
@@ -8936,6 +8941,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     public static class DestructingShortFormNameMismatchDiagnostic extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotatedEntryNameMismatchOption.kt")
+        public void testAnnotatedEntryNameMismatchOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortFormNameMismatchDiagnostic/annotatedEntryNameMismatchOption.kt");
         }
 
         @TestMetadata("completeLambda.kt")
