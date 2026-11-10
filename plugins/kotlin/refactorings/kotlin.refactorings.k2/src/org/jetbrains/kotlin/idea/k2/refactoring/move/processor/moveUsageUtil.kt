@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.simple
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
@@ -296,6 +297,7 @@ private fun traverseOuterInstanceReferences(
 
                     is KtSimpleNameExpression -> {
                         val resolvedCall = element.resolveSuccessfulExpressionCall()?.simple ?: return null
+                        if (resolvedCall.symbol.isCompanion) return null
                         val dispatchReceiver = resolvedCall.dispatchReceiver as? KaImplicitReceiverValue
                         val extensionReceiver = resolvedCall.extensionReceiver as? KaImplicitReceiverValue
                         val dispatchReceiverSymbol = dispatchReceiver?.symbol

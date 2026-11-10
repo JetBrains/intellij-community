@@ -14147,6 +14147,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/updateUsages.kt");
         }
 
+        @TestMetadata("usesCompanionBlockFunction.kt")
+        public void testUsesCompanionBlockFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/usesCompanionBlockFunction.kt");
+        }
+
+        @TestMetadata("usesCompanionBlockProperty.kt")
+        public void testUsesCompanionBlockProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/usesCompanionBlockProperty.kt");
+        }
+
         @TestMetadata("valFromCompanionObject.kt")
         public void testValFromCompanionObject() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/valFromCompanionObject.kt");
@@ -14353,6 +14363,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("typeParameterOfClassInProperty.kt")
         public void testTypeParameterOfClassInProperty() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/typeParameterOfClassInProperty.kt");
+        }
+
+        @TestMetadata("usesCompanionBlockFunction.kt")
+        public void testUsesCompanionBlockFunction() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionExtension/usesCompanionBlockFunction.kt");
         }
     }
 

@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Sample {
+    companion {
+        var targetProperty = 0
+        <caret>var movedProperty = targetProperty
+    }
+
+}

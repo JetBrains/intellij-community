@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+class Sample {
+    companion {
+        fun targetFunction() = 0
+    }
+
+}
+
+companion fun Sample.movedFunction() = targetFunction()

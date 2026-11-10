@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Sample {
+    companion {
+        fun targetFunction() = 0
+        <caret>fun movedFunction() = targetFunction()
+    }
+
+}
