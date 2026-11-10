@@ -129,8 +129,8 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon MoveToRightBottom = load("expui/actions/moveToRightBottom.svg", "actions/moveToRightBottom.svg", 2029282363, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToRightSideBySide = load("expui/actions/moveToRightSideBySide.svg", 2109229586, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToRightTop = load("expui/actions/moveToRightTop.svg", "actions/moveToRightTop.svg", 2034850953, 2);
-    /** 16x16 */ public static final @NotNull Icon MoveToTopLeft = load("actions/moveToTopLeft.svg", 1557541143, 2);
-    /** 16x16 */ public static final @NotNull Icon MoveToTopRight = load("actions/moveToTopRight.svg", 1602400676, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToTopLeft = load("expui/actions/moveToTopLeft.svg", "actions/moveToTopLeft.svg", 1557541143, 2);
+    /** 16x16 */ public static final @NotNull Icon MoveToTopRight = load("expui/actions/moveToTopRight.svg", "actions/moveToTopRight.svg", 1602400676, 2);
     /** 16x16 */ public static final @NotNull Icon MoveToWindow = load("expui/actions/moveToWindow.svg", "actions/moveToWindow.svg", 434637226, 2);
     /** 16x16 */ public static final @NotNull Icon MoveUp = load("expui/general/moveUp.svg", "actions/moveUp.svg", 462475104, 2);
     /** 16x16 */ public static final @NotNull Icon New = load("actions/new.svg", 418266197, 2);

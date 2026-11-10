@@ -344,10 +344,10 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey MoveToRightTop = new IntelliJIconKey("actions/moveToRightTop.svg", "expui/actions/moveToRightTop.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey MoveToTopLeft = new IntelliJIconKey("actions/moveToTopLeft.svg", "actions/moveToTopLeft.svg", AllIconsKeys.class);
+    public static final @NotNull IntelliJIconKey MoveToTopLeft = new IntelliJIconKey("actions/moveToTopLeft.svg", "expui/actions/moveToTopLeft.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey MoveToTopRight = new IntelliJIconKey("actions/moveToTopRight.svg", "actions/moveToTopRight.svg", AllIconsKeys.class);
+    public static final @NotNull IntelliJIconKey MoveToTopRight = new IntelliJIconKey("actions/moveToTopRight.svg", "expui/actions/moveToTopRight.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey MoveToWindow = new IntelliJIconKey("actions/moveToWindow.svg", "expui/actions/moveToWindow.svg", AllIconsKeys.class);
