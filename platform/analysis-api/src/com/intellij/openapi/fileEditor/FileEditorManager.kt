@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
@@ -29,7 +30,7 @@ import javax.swing.border.Border
 /**
  * @see FileEditorManagerListener
  */
-@Suppress("DEPRECATION")
+@Suppress("DEPRECATION", "ForbiddenInSuspectContextMethod")
 @ApiStatus.NonExtendable
 abstract class FileEditorManager {
   companion object {
@@ -133,7 +134,8 @@ abstract class FileEditorManager {
    * @deprecated Use [requestOpenFile].
    * The replacement can complete asynchronously, thus, not blocking the caller thread with potentially heavy operations.
    */
-  @Deprecated("Use non-blocking variant", ReplaceWith("requestOpenFile(file, request)"))
+  @Deprecated("Use non-blocking variant", ReplaceWith("requestOpenFile(file, FileEditorOpenRequest.withFocus(focusEditor))"))
+  @RequiresBlockingContext(ReplaceWith("openFile(file, FileEditorOpenRequest.withFocus(focusEditor))"))
   abstract fun openFile(file: VirtualFile, focusEditor: Boolean): Array<FileEditor>
 
   /**
@@ -144,6 +146,7 @@ abstract class FileEditorManager {
    * The replacement can complete asynchronously, thus, not blocking the caller thread with potentially heavy operations.
    */
   @Deprecated("Use non-blocking variant", ReplaceWith("requestOpenFile(file)"))
+  @RequiresBlockingContext(ReplaceWith("openFile(file, FileEditorOpenRequest.defaults())"))
   abstract fun openFile(file: VirtualFile): @Unmodifiable List<FileEditor>
 
   /**
@@ -156,7 +159,11 @@ abstract class FileEditorManager {
    * @deprecated Use [requestOpenFile].
    * The replacement can complete asynchronously, thus, not blocking the caller thread with potentially heavy operations.
    */
-  @Deprecated("Use non-blocking variant", ReplaceWith("requestOpenFile(file, request)"))
+  @Deprecated(
+    "Use non-blocking variant",
+    ReplaceWith("requestOpenFile(file, FileEditorOpenRequest.withFocus(focusEditor).withReuseOpen(searchForOpen))")
+  )
+  @RequiresBlockingContext(ReplaceWith("openFile(file, FileEditorOpenRequest.withFocus(focusEditor).withReuseOpen(searchForOpen))"))
   open fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor> {
     throw UnsupportedOperationException("Not implemented")
   }
@@ -189,7 +196,13 @@ abstract class FileEditorManager {
    * @deprecated Use [requestOpenTextEditor].
    * The replacement can complete asynchronously, thus, not blocking the caller thread with potentially heavy operations.
    */
-  @Deprecated("Use non-blocking variant", ReplaceWith("requestOpenTextEditor(descriptor, request)"))
+  @Deprecated(
+    "Use non-blocking variant",
+    ReplaceWith("requestOpenTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(focusEditor))")
+  )
+  @RequiresBlockingContext(
+    ReplaceWith("openTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(focusEditor))"),
+  )
   abstract fun openTextEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): Editor?
 
   /**
@@ -388,7 +401,13 @@ abstract class FileEditorManager {
    * @deprecated Use [requestOpenEditor].
    * The replacement can complete asynchronously, thus, not blocking the caller thread with potentially heavy operations.
    */
-  @Deprecated("Use non-blocking variant", ReplaceWith("requestOpenEditor(descriptor, requets)"))
+  @Deprecated(
+    "Use non-blocking variant",
+    ReplaceWith("requestOpenEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(focusEditor))")
+  )
+  @RequiresBlockingContext(
+    ReplaceWith("openEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(focusEditor))")
+  )
   @RequiresEdt
   fun openEditor(descriptor: OpenFileDescriptor, focusEditor: Boolean): @Unmodifiable List<FileEditor> {
     return openFileEditor(descriptor, focusEditor)
@@ -398,7 +417,13 @@ abstract class FileEditorManager {
    * @deprecated Use [requestOpenEditor].
    * The replacement can complete asynchronously, thus, not blocking the caller thread with potentially heavy operations.
    */
-  @Deprecated("Use non-blocking variant", ReplaceWith("requestOpenEditor(descriptor, request)"))
+  @Deprecated(
+    "Use non-blocking variant",
+    ReplaceWith("requestOpenEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(focusEditor))")
+  )
+  @RequiresBlockingContext(
+    ReplaceWith("openEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor).withRequestFocus(focusEditor))")
+  )
   @RequiresEdt
   abstract fun openFileEditor(descriptor: FileEditorNavigatable, focusEditor: Boolean): @Unmodifiable List<FileEditor>
 
