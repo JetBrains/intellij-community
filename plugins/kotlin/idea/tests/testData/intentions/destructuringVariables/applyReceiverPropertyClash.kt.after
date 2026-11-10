@@ -1,0 +1,22 @@
+// HIGHLIGHT: INFORMATION
+
+fun myFun(element: Options): State {
+    val (autoscrollToSource1, openDirectoriesWithSingleClick1, autoscrollFromSource1) = element
+    return State().apply {
+        autoscrollToSource = autoscrollToSource1
+        openDirectoriesWithSingleClick = openDirectoriesWithSingleClick1
+        autoscrollFromSource = autoscrollFromSource1
+    }
+}
+
+data class Options(
+    val autoscrollToSource: Boolean,
+    val openDirectoriesWithSingleClick: Boolean,
+    val autoscrollFromSource: Boolean,
+)
+
+class State {
+    var autoscrollToSource: Boolean = false
+    var openDirectoriesWithSingleClick: Boolean = false
+    var autoscrollFromSource: Boolean = false
+}

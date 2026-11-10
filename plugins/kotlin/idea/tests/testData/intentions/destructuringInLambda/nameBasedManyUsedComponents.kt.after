@@ -1,0 +1,19 @@
+// WITH_STDLIB
+// HIGHLIGHT: INFORMATION
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=complete
+
+data class MyDataClass(
+    val argument1: String,
+    val argument2: String,
+    val argument3: String,
+    val argument4: String,
+    val argument5: String,
+    val argument6: String,
+)
+
+fun myFun(element: MyDataClass) {
+    listOf(element).single().let { (val argument1, val argument2, val argument3, val argument4, val argument5, val argument6) ->
+        println(
+            argument1 + argument2 + argument3 + argument4 + argument5 + argument6
+        ) }
+}

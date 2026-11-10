@@ -75,7 +75,9 @@ import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.createDestructuringDeclarationByPattern
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 
 internal class DestructuringDeclarationInspection(
     @JvmField var reportNonParameterCases: Boolean = false,
@@ -98,10 +100,12 @@ internal class DestructuringDeclarationInspection(
         element.getUsageScopeElement() != null
 
     override fun getProblemHighlightType(element: KtDeclaration, context: UsagesToRemove): ProblemHighlightType {
-        val atMostOneUsedComponent = context.introducedEntries().count { !it.isUnusedComponent() } <= 1
+        val usedComponents = context.introducedEntries().count { !it.isUnusedComponent() }
+        val atMostOneUsedComponent = usedComponents <= 1
+        val tooManyFullFormEntries = context.useFullFormNameBasedDestructuring && usedComponents > maxUnusedComponentsInDestructuring
         val reportAsWarning = reportNonParameterCases || element.parent is KtForExpression || context.useFullFormNameBasedDestructuring
 
-        return if (reportAsWarning && !atMostOneUsedComponent) {
+        return if (reportAsWarning && !atMostOneUsedComponent && !tooManyFullFormEntries) {
             ProblemHighlightType.GENERIC_ERROR_OR_WARNING
         } else {
             ProblemHighlightType.INFORMATION
@@ -182,7 +186,9 @@ internal class UseDestructureDeclarationFix<T: KtDeclaration>(private val contex
             val suggestedName = if (isUnusedComponent && underscoreSupported && !allUnused && !context.useFullFormNameBasedDestructuring) {
                 "_"
             } else {
-                KotlinNameSuggester.suggestNameByName(name ?: descriptor) { nameValidator.validate(it) }
+                KotlinNameSuggester.suggestNameByName(name ?: descriptor) {
+                    nameValidator.validate(it) && it !in context.otherReferencedNames
+                }
             }
 
             runWriteActionIfPhysical(element) {
@@ -256,6 +262,11 @@ internal data class UsagesToRemove(
     val data: List<UsageData>,
     val removeSelectorInLoopRange: Boolean,
     val useFullFormNameBasedDestructuring: Boolean,
+    /**
+     * Names of the unqualified references in the usage scope that do not refer to a replaced declaration.
+     * A new entry with such a name hides the referenced declaration, for example a property of an `apply` receiver.
+     */
+    val otherReferencedNames: Set<String>,
 ) {
     /**
      * Returns the destructuring entries introduced by the fix.
@@ -365,7 +376,21 @@ private fun collectUsagesToRemove(declaration: KtDeclaration, maxUnusedComponent
         val unusedComponentsToKeep = if (allUnused) 0 else data.count { it.isUnusedComponent() }
         if (unusedComponentsToKeep > maxUnusedComponentsInDestructuring) return null
     }
-    return UsagesToRemove(data, removeSelectorInLoopRange, useFullFormNameBasedDestructuring)
+    val otherReferencedNames = usageScopeElement.collectOtherReferencedNames(declaration, data)
+    return UsagesToRemove(data, removeSelectorInLoopRange, useFullFormNameBasedDestructuring, otherReferencedNames)
+}
+
+private fun PsiElement.collectOtherReferencedNames(declaration: KtDeclaration, data: List<UsageData>): Set<String> {
+    // the fix suggests a name that starts with the entry name, for example `module1` for `module`
+    val entryNames = data.map { it.name ?: it.componentName }
+    val replacedDeclarations = data.mapNotNull { it.declarationToDrop }
+        .flatMap { (it as? KtDestructuringDeclaration)?.entries ?: listOf(it) } + declaration
+    return collectDescendantsOfType<KtNameReferenceExpression> { ref ->
+        val referencedName = ref.getReferencedName()
+        ref.getQualifiedExpressionForSelector() == null &&
+                entryNames.any { referencedName.startsWith(it) } &&
+                ref.mainReference.resolve() !in replacedDeclarations
+    }.mapTo(mutableSetOf(), KtNameReferenceExpression::getReferencedName)
 }
 
 private fun PsiElement.hasBadRefences(

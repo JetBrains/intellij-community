@@ -1312,6 +1312,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/intentions/destructuringInLambda/mapIndexedTwoOfFourWithLanguageSettings.kt");
         }
 
+        @TestMetadata("nameBasedManyUsedComponents.kt")
+        public void testNameBasedManyUsedComponents() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringInLambda/nameBasedManyUsedComponents.kt");
+        }
+
         @TestMetadata("noIt.kt")
         public void testNoIt() throws Exception {
             runTest("../../../idea/tests/testData/intentions/destructuringInLambda/noIt.kt");
@@ -1375,6 +1380,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("applyReceiverPropertyClash.kt")
+        public void testApplyReceiverPropertyClash() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/applyReceiverPropertyClash.kt");
+        }
+
         @TestMetadata("caret.kt")
         public void testCaret() throws Exception {
             runTest("../../../idea/tests/testData/intentions/destructuringVariables/caret.kt");
@@ -1403,6 +1413,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("nameBasedSkippedComponents.kt")
         public void testNameBasedSkippedComponents() throws Exception {
             runTest("../../../idea/tests/testData/intentions/destructuringVariables/nameBasedSkippedComponents.kt");
+        }
+
+        @TestMetadata("nameBasedThreeUsedComponents.kt")
+        public void testNameBasedThreeUsedComponents() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/nameBasedThreeUsedComponents.kt");
+        }
+
+        @TestMetadata("nameBasedThreeUsedComponentsInspectionSettings.kt")
+        public void testNameBasedThreeUsedComponentsInspectionSettings() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/nameBasedThreeUsedComponentsInspectionSettings.kt");
+        }
+
+        @TestMetadata("nameBasedTwoUsedComponents.kt")
+        public void testNameBasedTwoUsedComponents() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/destructuringVariables/nameBasedTwoUsedComponents.kt");
         }
 
         @TestMetadata("noInitializer.kt")
