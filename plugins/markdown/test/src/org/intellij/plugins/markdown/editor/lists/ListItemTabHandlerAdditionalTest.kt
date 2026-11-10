@@ -516,6 +516,113 @@ class ListItemTabHandlerAdditionalTest: LightPlatformCodeInsightTestCase() {
     """.trimIndent())
   }
 
+  @Test
+  fun `test tab aligns selected lines below a list item to its content column`() {
+    enableFixedSublistIndent()
+    // language=Markdown
+    configureFromFileText("some.md", """
+    - **`settings.gradle.kts`** defines the root project.
+
+    <selection>The settings script defines the project structure:
+
+    ```kotlin
+    rootProject.name = "my-project"
+        include("module-a")
+    ```</selection>
+    """.trimIndent())
+
+    indentSelection()
+    // language=Markdown
+    checkResultByText("""
+    - **`settings.gradle.kts`** defines the root project.
+
+      The settings script defines the project structure:
+
+      ```kotlin
+      rootProject.name = "my-project"
+          include("module-a")
+      ```
+    """.trimIndent())
+  }
+
+  @Test
+  fun `test tab aligns selected lines below a numbered item to its content column`() {
+    // language=Markdown
+    configureFromFileText("some.md", """
+    1. item
+
+    <selection>text</selection>
+    """.trimIndent())
+
+    indentSelection()
+    // language=Markdown
+    checkResultByText("""
+    1. item
+
+       text
+    """.trimIndent())
+  }
+
+  @Test
+  fun `test repeated tab steps through the content columns of the nested items above`() {
+    // language=Markdown
+    configureFromFileText("some.md", """
+    - a
+      - b
+
+    <selection>text</selection>
+    """.trimIndent())
+
+    indentSelection()
+    // language=Markdown
+    checkResultByText("""
+    - a
+      - b
+
+      text
+    """.trimIndent())
+
+    indentSelection()
+    // language=Markdown
+    checkResultByText("""
+    - a
+      - b
+
+        text
+    """.trimIndent())
+
+    indentSelection()
+    // language=Markdown
+    checkResultByText("""
+    - a
+      - b
+
+            text
+    """.trimIndent())
+  }
+
+  @Test
+  fun `test tab aligns selected lines inside a blockquote to the item above`() {
+    // language=Markdown
+    configureFromFileText("some.md", """
+    > * item
+    >
+    <selection>> ```
+    > code
+    > ```</selection>
+    """.trimIndent())
+
+    indentSelection()
+    // language=Markdown
+    checkResultByText("""
+    > * item
+    >
+    >   ```
+    >   code
+    >   ```
+    """.trimIndent())
+  }
+
   private fun indentSelection() {
     executeAction(IdeActions.ACTION_EDITOR_INDENT_SELECTION)
   }

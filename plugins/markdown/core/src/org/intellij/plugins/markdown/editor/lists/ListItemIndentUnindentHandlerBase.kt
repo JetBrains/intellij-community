@@ -11,8 +11,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.parentsOfType
 import com.intellij.psi.util.startOffset
+import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentInnerSpacesLength
+import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
+import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
+import org.intellij.plugins.markdown.editor.lists.Replacement.Companion.replaceSafelyIn
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeBlock
@@ -47,9 +52,12 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
       return false
     }
 
-    if (isCaretInsideNestedContentOfListItem(caret, file)) return false
-
     val firstLinesOfSelectedItems = getFirstLinesOfSelectedItems(caret, document, file)
+    if (firstLinesOfSelectedItems.isEmpty() && caret.hasSelection()) {
+      return handleLinesBelowListItem(caret, file, document)
+    }
+
+    if (isCaretInsideNestedContentOfListItem(caret, file)) return false
 
     // use lines instead of items, because items may become invalid before used
     var indentPerformed = false
@@ -105,8 +113,32 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
     return lines
   }
 
+  private fun handleLinesBelowListItem(caret: Caret, file: PsiFile, document: Document): Boolean {
+    val firstLine = document.getLineNumber(caret.selectionStart)
+    val lineAbove = (firstLine - 1 downTo 0).firstOrNull { !document.isBlankLine(it) } ?: return false
+    val itemAbove = file.getListItemAtLine(lineAbove, document) ?: return false
+
+    val lines = firstLine..document.getLineNumber(caret.selectionEnd - 1)
+    val textLines = lines.filterNot { document.isBlankLine(it) }
+    if (textLines.any { document.getQuotePrefix(it, file) != document.getQuotePrefix(lineAbove, file) }) return false
+    val indent = textLines.minOfOrNull { document.getLineIndentInnerSpacesLength(it, file)!! } ?: return false
+
+    val contentColumns = itemAbove.parentsOfType<MarkdownListItem>(withSelf = true).map { ListItemInfo(it, document).indentInfo.subItemIndent() }
+    val newIndent = getIndentBelowListItem(indent, contentColumns) ?: return false
+
+    lines.mapNotNull { ListItemIndentInfo(indent, 0).changeLineIndent(it, newIndent, document, file) }.replaceSafelyIn(document)
+    return true
+  }
+
+  /** Returns the new indent of the selected lines below a list item, or `null` to give the action to the base handler */
+  protected open fun getIndentBelowListItem(indent: Int, contentColumns: Sequence<Int>): Int? = null
+
   /** If this method returns `true`, then the document is committed and [updateNumbering] is called */
   protected abstract fun doIndentUnindent(item: MarkdownListItem, file: PsiFile, document: Document, caret: Caret): Boolean
 
   protected abstract fun updateNumbering(item: MarkdownListItem, file: PsiFile, document: Document)
+
+  private fun Document.isBlankLine(line: Int): Boolean = getLineIndentRange(line).endOffset == getLineEndOffset(line)
+
+  private fun Document.getQuotePrefix(line: Int, file: PsiFile): String = getLineIndentSpaces(line, file)!!.trimEnd()
 }

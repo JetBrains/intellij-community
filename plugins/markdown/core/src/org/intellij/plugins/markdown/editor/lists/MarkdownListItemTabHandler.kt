@@ -19,6 +19,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
  * When the caret is inside the indent before the item marker (and there is no selection),
  * only the item's own line is indented; otherwise the children (paragraphs and lists) are indented as well.
  * The indentation width follows the fixed sublist indent setting, but is never smaller than the item's marker width.
+ * Selected lines below a list item move to the next content column of that item or of its parent items.
  */
 internal class MarkdownListItemTabHandler(baseHandler: EditorActionHandler?) : ListItemIndentUnindentHandlerBase(baseHandler) {
 
@@ -34,6 +35,9 @@ internal class MarkdownListItemTabHandler(baseHandler: EditorActionHandler?) : L
     }
     return true
   }
+
+  override fun getIndentBelowListItem(indent: Int, contentColumns: Sequence<Int>): Int? =
+    contentColumns.filter { it > indent }.minOrNull()
 
   override fun updateNumbering(item: MarkdownListItem, file: PsiFile, document: Document) {
     val list = item.parent as MarkdownList
