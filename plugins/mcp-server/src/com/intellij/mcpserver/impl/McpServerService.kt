@@ -31,7 +31,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -192,7 +192,7 @@ open class McpServerService(val cs: CoroutineScope) {
       return service()
     }
 
-    fun getInstanceIfCreated(): McpServerService? = serviceOrNull()
+    fun getInstanceIfCreated(): McpServerService? = serviceIfCreated()
 
     suspend fun getInstanceAsync(): McpServerService = serviceAsync()
 
