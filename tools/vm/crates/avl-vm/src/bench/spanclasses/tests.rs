@@ -27,6 +27,7 @@ fn args(thread: SpanThread) -> ClassesArgs {
         plugins: Vec::new(),
         at: None,
         entries: None,
+        kinds: false,
         span: Some(SPAN.to_owned()),
         thread,
         run: None,

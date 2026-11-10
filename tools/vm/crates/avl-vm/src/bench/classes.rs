@@ -5,7 +5,8 @@
 //! A count or a time is the median over the valid runs. A plugin or a module that a run does not name has 0 classes in
 //! that run. A module is a loader: the main module or a content module of a plugin. The EDT and BG times are the
 //! `findClass` nanos that `plugin-classes.txt` writes per class, and a log of the old shape has none. The entries of
-//! `--entries` come from the class logs of the median run of the arm, which the record joins too.
+//! `--entries` and the kinds of `--kinds` come from the class logs of the median run of the arm, which the record joins
+//! too.
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
@@ -65,6 +66,9 @@ pub(crate) struct ClassReport {
     /// The first classes of each plugin of `by_plugin` before `at`, with `--entries`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) entries: Option<ClassEntries>,
+    /// The kinds of the classes of each row of `by_module`, with `--kinds`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub(crate) kinds: Option<ClassKinds>,
     /// The anchors that the arm has, in the order of [`CLASS_ANCHORS`].
     #[serde(skip)]
     pub(crate) anchors: Vec<&'static str>,
@@ -226,16 +230,16 @@ pub(crate) fn report(session: &Path, args: &ClassesArgs) -> Result<ClassReport, 
             totals.insert(metric, *stat);
         }
     }
-    let entries = match args.entries {
-        Some(limit) => Some(entries(
-            session,
-            arm,
-            at.as_deref(),
-            &by_plugin,
-            usize::try_from(limit).unwrap_or(usize::MAX),
-        )?),
-        None => None,
+    let median_run = match (args.entries, args.kinds) {
+        (None, false) => None,
+        (Some(_), _) => Some(MedianRunClasses::read(session, arm, at.as_deref(), "--entries")?),
+        (None, true) => Some(MedianRunClasses::read(session, arm, at.as_deref(), "--kinds")?),
     };
+    let entries = median_run
+        .as_ref()
+        .zip(args.entries)
+        .map(|(classes, limit)| entries(classes, &by_plugin, usize::try_from(limit).unwrap_or(usize::MAX)));
+    let kinds = median_run.as_ref().filter(|_| args.kinds).map(|classes| kinds(classes, &by_module));
     Ok(ClassReport {
         session: session.display().to_string(),
         arm: arm.arm.clone(),
@@ -247,6 +251,7 @@ pub(crate) fn report(session: &Path, args: &ClassesArgs) -> Result<ClassReport, 
         by_module,
         missing,
         entries,
+        kinds,
         anchors,
         total_plugins: with_classes(&plugins),
         total_modules: module_medians.values().filter(|cut| cut.classes > 0.0).count(),
@@ -413,65 +418,240 @@ fn default_anchor(arm: &Arm, anchors: &[&'static str]) -> Option<String> {
         .map(|anchor| (*anchor).to_owned())
 }
 
-/// The first `limit` classes of each plugin of `rows` that the median run of `arm` loaded before the anchor `at`, or
-/// over the whole run without one. The run needs its class-load log, its plugin log and the start of the process clock
-/// on the JVM clock, see [`record::process_start_of`]. A run without one is a usage refusal.
-fn entries(session: &Path, arm: &ArmSummary, at: Option<&str>, rows: &[ClassRow], limit: usize) -> Result<ClassEntries, Refusal> {
-    let run = arm.median_run().ok_or_else(|| {
-        Refusal::usage(format!(
-            "the {} arm of {} has no median run, so --entries has no run to read",
-            arm.arm.label(),
-            session.display()
-        ))
-    })?;
-    let dir = session.join(&run.dir);
-    let read = |name: &str| -> Result<String, Refusal> {
-        files::read_optional(&dir.join(name))
-            .map_err(|error| Refusal::usage(format!("{error:#}")))?
-            .ok_or_else(|| Refusal::usage(format!("--entries reads {name} of the median run {}, and it has none", run.dir)))
-    };
-    let refuse = |name: &'static str| move |error: anyhow::Error| Refusal::usage(format!("{name} of {}: {error:#}", run.dir));
-    let log = classload::parse(&read(CLASS_LOAD_LOG)?).map_err(refuse(CLASS_LOAD_LOG))?;
-    let owners = pluginlog::parse(&read(PLUGIN_CLASSES_FILE)?).map_err(refuse(PLUGIN_CLASSES_FILE))?;
-    let offset_ms = record::process_start_of(&dir, &log)
-        .map_err(refuse("startup-stats.json"))?
-        .ok_or_else(|| {
+/// The class logs of the median run of an arm, joined, and the bound of an anchor on the JVM clock. `--entries` and
+/// `--kinds` read it.
+struct MedianRunClasses {
+    /// The run directory.
+    run: String,
+    log: classload::ClassLoadLog,
+    owners: pluginlog::PluginLog,
+    /// The start of the process clock on the JVM clock, in milliseconds.
+    offset_ms: f64,
+    /// The anchor on the JVM clock. Without an anchor, none, and the whole run counts.
+    bound: Option<f64>,
+}
+
+impl MedianRunClasses {
+    /// Reads the median run of `arm` for the flag `flag`. The run needs its class-load log, its plugin log and the
+    /// start of the process clock on the JVM clock, see [`record::process_start_of`]. A run without one is a usage
+    /// refusal that names `flag`.
+    fn read(session: &Path, arm: &ArmSummary, at: Option<&str>, flag: &str) -> Result<Self, Refusal> {
+        let run = arm.median_run().ok_or_else(|| {
             Refusal::usage(format!(
-                "--entries needs {MAIN_CLASS} in {CLASS_LOAD_LOG} or jvm.loadingTime in startup-stats.json of {}, and it has neither",
-                run.dir
+                "the {} arm of {} has no median run, so {flag} has no run to read",
+                arm.arm.label(),
+                session.display()
             ))
-        })?
-        .uptime_ms;
-    let anchor_ms = match at {
-        None => None,
-        Some(QUIT_ANCHOR) => Timeline::read(&dir).map_err(refuse("the trace"))?.quit_ms(),
-        Some(anchor) => run.metrics.get(anchor).copied(),
-    };
-    if let (Some(at), None) = (at, anchor_ms) {
-        return Err(Refusal::usage(format!(
-            "the median run {} has no {at}, so --entries has no bound",
-            run.dir
-        )));
+        })?;
+        let dir = session.join(&run.dir);
+        let read = |name: &str| -> Result<String, Refusal> {
+            files::read_optional(&dir.join(name))
+                .map_err(|error| Refusal::usage(format!("{error:#}")))?
+                .ok_or_else(|| Refusal::usage(format!("{flag} reads {name} of the median run {}, and it has none", run.dir)))
+        };
+        let refuse = |name: &'static str| move |error: anyhow::Error| Refusal::usage(format!("{name} of {}: {error:#}", run.dir));
+        let log = classload::parse(&read(CLASS_LOAD_LOG)?).map_err(refuse(CLASS_LOAD_LOG))?;
+        let owners = pluginlog::parse(&read(PLUGIN_CLASSES_FILE)?).map_err(refuse(PLUGIN_CLASSES_FILE))?;
+        let offset_ms = record::process_start_of(&dir, &log)
+            .map_err(refuse("startup-stats.json"))?
+            .ok_or_else(|| {
+                Refusal::usage(format!(
+                    "{flag} needs {MAIN_CLASS} in {CLASS_LOAD_LOG} or jvm.loadingTime in startup-stats.json of {}, and it has neither",
+                    run.dir
+                ))
+            })?
+            .uptime_ms;
+        let anchor_ms = match at {
+            None => None,
+            Some(QUIT_ANCHOR) => Timeline::read(&dir).map_err(refuse("the trace"))?.quit_ms(),
+            Some(anchor) => run.metrics.get(anchor).copied(),
+        };
+        if let (Some(at), None) = (at, anchor_ms) {
+            return Err(Refusal::usage(format!(
+                "the median run {} has no {at}, so {flag} has no bound",
+                run.dir
+            )));
+        }
+        Ok(Self {
+            run: run.dir.clone(),
+            log,
+            owners,
+            offset_ms,
+            bound: anchor_ms.map(|ms| ms + offset_ms),
+        })
     }
-    let bound = anchor_ms.map(|ms| ms + offset_ms);
+}
+
+/// The first `limit` classes of each plugin of `rows` that the median run loaded before the anchor of `classes`.
+fn entries(classes: &MedianRunClasses, rows: &[ClassRow], limit: usize) -> ClassEntries {
     let plugins = rows
         .iter()
         .map(|row| PluginEntries {
             plugin: row.name.clone(),
-            classes: classload::of_plugin(&log, &owners, &row.name, bound)
+            classes: classload::of_plugin(&classes.log, &classes.owners, &row.name, classes.bound)
                 .take(limit)
                 .map(|class| ClassEntry {
                     name: class.name.clone(),
-                    ms: tenth(class.uptime_ms - offset_ms),
+                    ms: tenth(class.uptime_ms - classes.offset_ms),
                 })
                 .collect(),
         })
         .collect();
-    Ok(ClassEntries {
-        run: run.dir.clone(),
+    ClassEntries {
+        run: classes.run.clone(),
         limit,
         plugins,
-    })
+    }
+}
+
+/// The kinds of the classes of each module of `rows` that the median run loaded before the anchor of `classes`, in
+/// the order of `rows`.
+fn kinds(classes: &MedianRunClasses, rows: &[ModuleRow]) -> ClassKinds {
+    let mut counts: BTreeMap<&Owner, KindCounts> = BTreeMap::new();
+    for class in classes.log.named_before(classes.bound) {
+        if let Some(owner) = classes.owners.owner(&class.name) {
+            counts.entry(owner).or_default().add(ClassKind::of(&class.name));
+        }
+    }
+    let rows = rows
+        .iter()
+        .map(|row| {
+            let owner = Owner {
+                plugin: row.plugin.clone(),
+                module: row.module.clone(),
+            };
+            KindRow {
+                plugin: row.plugin.clone(),
+                module: row.module.clone(),
+                counts: counts.get(&owner).copied().unwrap_or_default(),
+            }
+        })
+        .collect();
+    ClassKinds {
+        run: classes.run.clone(),
+        rows,
+    }
+}
+
+/// The kind of a class by its binary name, as the Kotlin and Java compilers name the classes that they generate.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ClassKind {
+    /// A class with no `$` in its name that is not a file facade.
+    TopLevel,
+    /// A Kotlin file facade: a top-level name that ends with `Kt`.
+    Facade,
+    /// A named nested class, such as `Foo$Bar`.
+    Nested,
+    /// A class with a number in its name, such as `Foo$bar$1`: a lambda, an anonymous object, or the coroutine of a
+    /// suspend function.
+    Numbered,
+    /// A Kotlin `Companion` object.
+    Companion,
+    /// The `WhenMappings` of a Kotlin `when` over an enum.
+    WhenMappings,
+    /// The `$$serializer` of a kotlinx.serialization class.
+    Serializer,
+}
+
+impl ClassKind {
+    pub(crate) fn of(name: &str) -> Self {
+        let simple = name.rsplit('.').next().unwrap_or(name);
+        if simple.ends_with("$$serializer") {
+            Self::Serializer
+        } else if simple.ends_with("$WhenMappings") {
+            Self::WhenMappings
+        } else if simple.ends_with("$Companion") {
+            Self::Companion
+        } else if simple
+            .split('$')
+            .skip(1)
+            .any(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
+        {
+            Self::Numbered
+        } else if simple.contains('$') {
+            Self::Nested
+        } else if simple.ends_with("Kt") {
+            Self::Facade
+        } else {
+            Self::TopLevel
+        }
+    }
+}
+
+/// The classes of one module by their kind.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct KindCounts {
+    pub(crate) classes: u64,
+    pub(crate) top_level: u64,
+    pub(crate) facade: u64,
+    pub(crate) nested: u64,
+    pub(crate) numbered: u64,
+    pub(crate) companion: u64,
+    pub(crate) when_mappings: u64,
+    pub(crate) serializer: u64,
+}
+
+impl KindCounts {
+    const fn add(&mut self, kind: ClassKind) {
+        self.classes += 1;
+        let count = match kind {
+            ClassKind::TopLevel => &mut self.top_level,
+            ClassKind::Facade => &mut self.facade,
+            ClassKind::Nested => &mut self.nested,
+            ClassKind::Numbered => &mut self.numbered,
+            ClassKind::Companion => &mut self.companion,
+            ClassKind::WhenMappings => &mut self.when_mappings,
+            ClassKind::Serializer => &mut self.serializer,
+        };
+        *count += 1;
+    }
+
+    const fn sum(&mut self, other: &Self) {
+        self.classes += other.classes;
+        self.top_level += other.top_level;
+        self.facade += other.facade;
+        self.nested += other.nested;
+        self.numbered += other.numbered;
+        self.companion += other.companion;
+        self.when_mappings += other.when_mappings;
+        self.serializer += other.serializer;
+    }
+
+    fn cells(&self) -> [String; 8] {
+        [
+            self.classes,
+            self.top_level,
+            self.facade,
+            self.nested,
+            self.numbered,
+            self.companion,
+            self.when_mappings,
+            self.serializer,
+        ]
+        .map(|count| count.to_string())
+    }
+}
+
+/// The kinds of the classes of each module of the module table, from the class logs of one run.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ClassKinds {
+    /// The run directory: the median run of the arm.
+    pub(crate) run: String,
+    /// One per row of the module table, in its order.
+    pub(crate) rows: Vec<KindRow>,
+}
+
+/// The kinds of the classes of one loader.
+#[derive(Clone, Debug, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct KindRow {
+    pub(crate) plugin: String,
+    /// The content module. The main module of the plugin has none.
+    pub(crate) module: Option<String>,
+    #[serde(flatten)]
+    pub(crate) counts: KindCounts,
 }
 
 /// Reads `result.json` of a run directory. A file of another shape is a usage refusal that names it.
@@ -618,6 +798,9 @@ impl ClassReport {
         if let Some(entries) = &self.entries {
             entries.write(&mut text, &where_);
         }
+        if let Some(kinds) = &self.kinds {
+            kinds.write(&mut text, &where_);
+        }
         if !self.missing.is_empty() {
             let _ = writeln!(text, "no class {where_}: {}", self.missing.join(", "));
         }
@@ -651,6 +834,33 @@ impl ClassEntries {
         }
     }
 }
+
+impl ClassKinds {
+    /// The block of the text: one line per module with its kinds, a total line, and the legend.
+    fn write(&self, text: &mut String, where_: &str) {
+        let _ = writeln!(text, "the kinds of the classes by module {where_}, in the median run {}:", self.run);
+        let _ = writeln!(text, "{}", table_line("", &KIND_COLUMNS.map(str::to_owned)));
+        let mut total = KindCounts::default();
+        for row in &self.rows {
+            total.sum(&row.counts);
+            let name = Owner::loader_name(&row.plugin, row.module.as_deref());
+            let _ = writeln!(
+                text,
+                "{}",
+                table_line(&format!("  {}", clip(&name, NAME_WIDTH - 2)), &row.counts.cells())
+            );
+        }
+        let _ = writeln!(text, "{}", table_line("  total of these modules", &total.cells()));
+        let _ = writeln!(
+            text,
+            "top: a top-level class; Kt: a file facade; nested: a named nested class; $N: a lambda, an anonymous object or \
+             the coroutine of a function; Comp: a Companion; When: WhenMappings; $$ser: a serializer"
+        );
+    }
+}
+
+/// The columns of the kind block.
+const KIND_COLUMNS: [&str; 8] = ["classes", "top", "Kt", "nested", "$N", "Comp", "When", "$$ser"];
 
 /// The plugin table under its title: a line with the column names, then one line per row. A table without a row
 /// prints nothing.

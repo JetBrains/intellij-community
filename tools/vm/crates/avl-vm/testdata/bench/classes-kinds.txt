@@ -1,0 +1,43 @@
+vm bench classes session non-modal arm, 1 valid run
+anchors: frameBecameVisible, welcomeBecameVisible, welcome screen painted, quit; the tables are at quit
+classes (median of the valid runs)                            median     min     max
+totals:
+  classes.named                                                   32      32      32
+  classes.hidden                                                   5       5       5
+  classes.jdk                                                     12      12      12
+  classes.jar                                                      4       4       4
+  classes.platform                                                 4       4       4
+  classes.plugins                                                 12      12      12
+  classes.named@quit                                              32      32      32
+by plugin at quit, 7 of 7 plugins:
+                                                             classes loaders  EDT ms   BG ms
+  com.intellij                                                     4       2       -       -
+  com.intellij.dfa.analysis                                        2       1       -       -
+  com.jetbrains.performancePlugin                                  2       1       -       -
+  com.jetbrains.gateway                                            1       1       -       -
+  com.jetbrains.station                                            1       1       -       -
+  intellij.webp                                                    1       1       -       -
+  org.jetbrains.plugins.docker.gateway                             1       1       -       -
+by module at quit, 8 of 8 modules:
+                                                             classes  EDT ms   BG ms  plugin
+  intellij.platform.kernel.backend                                 2       -       -  com.intellij
+  intellij.platform.settings.local                                 2       -       -  com.intellij
+  com.intellij.dfa.analysis (main)                                 2       -       -  com.intellij.dfa.analysis
+  com.jetbrains.performancePlugin (main)                           2       -       -  com.jetbrains.performancePlugin
+  intellij.gateway.daemon.bridge                                   1       -       -  com.jetbrains.gateway
+  intellij.station.core                                            1       -       -  com.jetbrains.station
+  intellij.webp (main)                                             1       -       -  intellij.webp
+  intellij.clouds.docker.gateway.json                              1       -       -  org.jetbrains.plugins.docker.gateway
+note: no EDT ms and no BG ms: plugin-classes.txt of the runs has the old shape, without the thread and the time of a class
+the kinds of the classes by module at quit, in the median run non-modal-run-01:
+                                                             classes     top      Kt  nested      $N    Comp    When   $$ser
+  intellij.platform.kernel.backend                                 2       1       1       0       0       0       0       0
+  intellij.platform.settings.local                                 2       2       0       0       0       0       0       0
+  com.intellij.dfa.analysis (main)                                 2       2       0       0       0       0       0       0
+  com.jetbrains.performancePlugin (main)                           2       1       0       0       0       1       0       0
+  intellij.gateway.daemon.bridge                                   1       1       0       0       0       0       0       0
+  intellij.station.core                                            1       1       0       0       0       0       0       0
+  intellij.webp (main)                                             1       1       0       0       0       0       0       0
+  intellij.clouds.docker.gateway.json                              1       1       0       0       0       0       0       0
+  total of these modules                                          12      10       1       0       0       1       0       0
+top: a top-level class; Kt: a file facade; nested: a named nested class; $N: a lambda, an anonymous object or the coroutine of a function; Comp: a Companion; When: WhenMappings; $$ser: a serializer

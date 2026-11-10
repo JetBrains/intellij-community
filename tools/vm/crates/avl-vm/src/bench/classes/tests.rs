@@ -3,7 +3,7 @@ use std::path::Path;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
-use super::{ClassRow, ModuleRow, report as classes};
+use super::{ClassKind, ClassRow, ModuleRow, report as classes};
 use crate::bench::arm::Arm;
 use crate::bench::options::{ClassesArgs, DEFAULT_TOP, SpanThread};
 use crate::bench::record;
@@ -18,6 +18,7 @@ fn args() -> ClassesArgs {
         plugins: Vec::new(),
         at: None,
         entries: None,
+        kinds: false,
         span: None,
         thread: SpanThread::Edt,
         run: None,
@@ -363,4 +364,65 @@ fn a_twin_arm_answers_its_own_tables() {
     );
     let json = serde_json::to_value(&report).expect("JSON");
     assert_eq!(json["arm"], "project-without-com.intellij.air");
+}
+
+/// The kind of a class comes from its binary name, as the Kotlin compiler names the classes that it generates.
+#[test]
+fn the_kind_of_a_class_comes_from_its_name() {
+    let kinds: Vec<ClassKind> = [
+        "com.intellij.air.Foo",
+        "com.intellij.air.FooKt",
+        "com.intellij.air.Foo$Bar",
+        "com.intellij.air.Foo$bar$1",
+        "com.intellij.air.Foo$1$Bar",
+        "com.intellij.air.Foo$Companion",
+        "com.intellij.air.Foo$WhenMappings",
+        "com.intellij.air.Foo$$serializer",
+        "com.intellij.air.Foo$Bar$$serializer",
+        "Kt",
+    ]
+    .map(ClassKind::of)
+    .to_vec();
+    assert_eq!(
+        kinds,
+        [
+            ClassKind::TopLevel,
+            ClassKind::Facade,
+            ClassKind::Nested,
+            ClassKind::Numbered,
+            ClassKind::Numbered,
+            ClassKind::Companion,
+            ClassKind::WhenMappings,
+            ClassKind::Serializer,
+            ClassKind::Serializer,
+            ClassKind::Facade,
+        ]
+    );
+}
+
+/// `--kinds` counts the classes of each module of the module table by their kind in the median run, with a total line
+/// and the legend. The text equals `testdata/bench/classes-kinds.txt`.
+#[test]
+fn the_kinds_count_the_classes_of_each_module_of_the_median_run() {
+    let (_dir, session) = replayed_session();
+    let report = classes(
+        &session,
+        &ClassesArgs {
+            kinds: true,
+            at: Some("quit".to_owned()),
+            ..args()
+        },
+    )
+    .expect("a report");
+    let text = format!("{}\n", report.text().replace(&session.display().to_string(), "<session>"));
+    assert_golden("classes-kinds.txt", &text);
+    let json = serde_json::to_value(&report).expect("JSON");
+    assert_eq!(json["kinds"]["run"], "non-modal-run-01");
+    let rows = json["kinds"]["rows"].as_array().expect("rows");
+    assert_eq!(rows.len(), report.by_module.len());
+    for (row, module) in rows.iter().zip(&report.by_module) {
+        #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss, reason = "a class count is a small whole number")]
+        let median = module.classes as u64;
+        assert_eq!(row["classes"].as_u64(), Some(median), "one run, so the count equals the median: {row}");
+    }
 }
