@@ -47,15 +47,15 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   val component: Component
     get() = data.foundComponent
-            ?: kotlin.runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull()
-            ?: findThisComponent()
+            ?: runCatching { cachedComponent?.takeIf { it.isShowing() } }.getOrNull()
+            ?: findComponent()
 
   override val driver: Driver = data.driver
   override val searchService: SearchService = data.searchService
   override val robotProvider: RobotProvider = data.robotProvider
 
   val robot: Robot by lazy {
-    data.robotProvider.getRobotFor(component)
+    robotProvider.getRobotFor(component)
   }
 
   override val searchContext: SearchContext = object : SearchContext {
@@ -67,15 +67,16 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   companion object {
-    /**
-     * Waits until the element specified is found within the parent search context.
-     *
-     * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
-     */
+    /** Waits until the parent search context has this component, and returns this component. */
     fun <T : UiComponent> T.waitFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT): T {
-      findThisComponent(timeout)
+      findComponent(timeout)
       return this
     }
+  }
+
+  override fun toString(): String {
+    val name = data.readableName?.let { if (" " in it) "'$it'" else it } ?: this::class.simpleName
+    return "$name[xpath=${data.xpath}]"
   }
 
   override fun keyboard(keyboardActions: RemoteKeyboard.() -> Unit) {
@@ -83,30 +84,9 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     super.keyboard(keyboardActions)
   }
 
-  /**
-   * Waits until the element specified is not found within the parent search context.
-   *
-   * @param timeout The maximum time to wait for the element to not be found. If not specified, the default timeout is used.
-   */
-  fun waitNotFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT) {
-    waitFor(message = "There should be no $this in ${data.parentSearchContext.contextAsString}",
-            timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
-            interval = 1.seconds) {
-      !present()
-    }
-  }
-
-  override fun toString(): String {
-    return "${data.readableName?.let { if (it.contains(" ")) "'$it'" else it } ?: this::class.simpleName}[xpath=${data.xpath}]"
-  }
-
-  fun setFocus() {
-    withComponent { robot.focus(it) }
-  }
-
   open fun waitReady(timeout: Duration = DEFAULT_FIND_TIMEOUT) {}
 
-  private fun findThisComponent(timeout: Duration? = DEFAULT_FIND_TIMEOUT): Component = withoutPauseOnIndicators {
+  private fun findComponent(timeout: Duration? = DEFAULT_FIND_TIMEOUT): Component = withoutPauseOnIndicators {
     val findTimeout = timeout ?: DEFAULT_FIND_TIMEOUT
     val found = waitForOne(
       message = "Find $this in ${data.parentSearchContext.contextAsString}",
@@ -114,330 +94,76 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       interval = 1.seconds,
       getter = { data.parentSearchContext.findAll(data.xpath) }
     )
-    // Cache the component before the readiness check. The check searches inside this component,
-    // and such a search reads [component] again. Without the cache the search starts an infinite recursion.
+    // The readiness check searches inside this component. The cache lets these searches reuse the component.
+    // The flag stops a second check when a search during the check finds the component again.
     cachedComponent = found
-    waitReadyOnce(findTimeout)
+    if (!readinessCheckInProgress) {
+      readinessCheckInProgress = true
+      try {
+        waitReady(findTimeout)
+      }
+      finally {
+        readinessCheckInProgress = false
+      }
+    }
     found
   }
 
   /**
-   * Calls [waitReady] on this component, but only if no readiness check runs on it already.
-   *
-   * The cache in [findThisComponent] is not sufficient to stop a recursion.
-   * The [component] getter drops the cached value when the component is not showing,
-   * and [withComponent] drops it after an [IllegalComponentStateException].
+   * Runs [action] on the component.
+   * After an [IllegalComponentStateException], finds the component again and retries [action].
    */
-  private fun waitReadyOnce(timeout: Duration) {
-    if (readinessCheckInProgress) return
-    readinessCheckInProgress = true
-    try {
-      waitReady(timeout)
-    }
-    finally {
-      readinessCheckInProgress = false
-    }
-  }
-
   fun <T> withComponent(action: (Component) -> T): T {
-    var lastException: Exception? = null
-    var count = 0
-    while (count < 3) {
+    var attempt = 1
+    while (true) {
       try {
         return action(component)
       }
       catch (e: IllegalComponentStateException) {
-        if (data.foundComponent != null) {
-          // cannot do anything about it
-          throw e
-        }
+        // A component from the constructor cannot be found again.
+        if (data.foundComponent != null) throw e
 
-        // reset cached value, search again next time
         cachedComponent = null
-
-        lastException = e
-        count++
-
-        LOG.debug("Exception while executing action with component. Retry ${count}", e)
+        if (attempt == 3) throw e
+        LOG.debug("Exception while executing action with component. Retry $attempt", e)
+        attempt++
       }
     }
-
-    throw lastException ?: RuntimeException("Unable to execute action with component")
   }
-
-  /**
-   * Returns all UiText elements matching the optional filter without waiting.
-   *
-   * @param filter Optional predicate to filter the text elements
-   * @return List of UiText elements that match the filter, or all text elements if no filter is provided
-   * @see waitAnyTexts for waiting until text elements are found
-   * @see hasText for checking if specific text exists
-   * @see hasSubtext for checking if text containing substring exists
-   */
-  fun getAllTexts(filter: ((UiText) -> Boolean)? = null): List<UiText> {
-    return withComponent { searchService.findAllText(it) }
-      .filter { text -> filter?.invoke(UiText(this, text)) ?: true }
-      .map { UiText(this, it) }
-  }
-
-  /**
-   * Waits for a non-empty list of UiText elements matching the specified predicate.
-   *
-   * @param message Optional custom message for the waiting operation
-   * @param timeout The maximum time to wait for matching elements (default: DEFAULT_FIND_TIMEOUT)
-   * @param predicate Function to test each UiText element (default: accepts all)
-   * @return List of UiText elements that match the predicate
-   * @see waitAnyTexts for waiting for specific text content
-   * @see getAllTexts for non-blocking retrieval of text elements
-   */
-  fun waitAnyTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, predicate: (UiText) -> Boolean = { true }): List<UiText> {
-    return waitAny(message = message ?: "Finding at least some texts and filter matching predicate in $this",
-                   timeout = timeout,
-                   getter = { getAllTexts() },
-                   checker = { predicate(it) }
-    )
-  }
-
-  /**
-   * Waits for a non-empty list of UiText elements with the exact specified text.
-   *
-   * @param text The exact text to search for
-   * @param message Optional custom message for the waiting operation
-   * @param timeout The maximum time to wait for matching elements (default: DEFAULT_FIND_TIMEOUT)
-   * @return List of UiText elements with the specified text
-   * @see waitAnyTexts for waiting with custom predicate
-   * @see waitOneText for waiting for exactly one text element
-   * @see waitAnyTextsContains for waiting for text containing substring
-   */
-  fun waitAnyTexts(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
-    return waitAny(message = message ?: "Finding at least some texts and filter '$text' in $this",
-                   timeout = timeout,
-                   getter = { getAllTexts() },
-                   checker = { it.text == text }
-    )
-  }
-
-  /**
-   * Waits for exactly one UiText element with the specified exact text.
-   *
-   * @param text The exact text to search for
-   * @param message Optional custom message for the waiting operation
-   * @param timeout The maximum time to wait for the element (default: DEFAULT_FIND_TIMEOUT)
-   * @return The UiText element with the specified text
-   * @see waitAnyTexts for waiting for multiple text elements
-   * @see waitOneText for waiting with custom predicate
-   * @see waitOneContainsText for waiting for text containing substring
-   */
-  fun waitOneText(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
-    return waitForOne(message = message ?: "Finding text '$text' in $this",
-                      timeout = timeout,
-                      getter = { getAllTexts() },
-                      checker = { it.text == text }
-    )
-  }
-
-  /**
-   * Waits for exactly one UiText element matching the specified predicate.
-   *
-   * @param message Optional custom message for the waiting operation
-   * @param timeout The maximum time to wait for the element (default: DEFAULT_FIND_TIMEOUT)
-   * @param predicate Function to test each UiText element
-   * @return The UiText element that matches the predicate
-   * @see waitOneText for waiting for specific text content
-   * @see waitAnyTexts for waiting for multiple matching elements
-   */
-  fun waitOneText(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, predicate: (UiText) -> Boolean): UiText {
-    return waitForOne(message = message ?: "Finding one text matching predicate in $this",
-                      timeout = timeout,
-                      getter = { getAllTexts() },
-                      checker = { predicate(it) }
-    )
-  }
-
-  /**
-   * Waits until there are no UiText elements with the specified exact text.
-   *
-   * @param text The exact text that should not be present
-   * @param message Optional custom message for the waiting operation
-   * @param timeout The maximum time to wait for the condition (default: DEFAULT_FIND_TIMEOUT)
-   * @see waitAnyTexts for waiting until text is present
-   * @see hasText for non-blocking check if text exists
-   */
-  fun waitNoTexts(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
-    waitFor(message = message ?: "Finding no texts '$text' in $this",
-            timeout = timeout,
-            getter = { getAllTexts() },
-            checker = { it.none { it.text == text } }
-    )
-  }
-
-  /**
-   * Waits for a non-empty list of UiText elements containing the specified substring.
-   *
-   * @param text The substring to search for within text elements
-   * @param message Optional custom message for the waiting operation
-   * @param timeout The maximum time to wait for matching elements (default: DEFAULT_FIND_TIMEOUT)
-   * @return List of UiText elements containing the specified substring
-   * @see waitAnyTexts for waiting for exact text matches
-   * @see waitOneContainsText for waiting for exactly one text containing substring
-   * @see hasSubtext for non-blocking check if text containing substring exists
-   */
-  fun waitAnyTextsContains(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
-    return waitAny(message = message ?: "Finding at least some texts and contains '$text' in $this",
-                   timeout = timeout,
-                   getter = { getAllTexts() },
-                   checker = { it.text.contains(text) }
-    )
-  }
-
-  /**
-   * Checks if this component has any text that contains the specified substring.
-   *
-   * @param subtext The substring to search for within the component's text
-   * @return true if the component has text containing the specified substring, false otherwise
-   * @see hasText for checking exact text matches
-   */
-  fun hasSubtext(subtext: String): Boolean {
-    return getAllTexts { it.text.contains(subtext) }.isNotEmpty()
-  }
-
-  /**
-   * Waits until there is one UiText element that contains the specified substring.
-   *
-   * @param text The substring to search for within the component's text elements
-   * @param message Optional custom message for waiting operation
-   * @param ignoreCase Whether to ignore the case when searching for the substring (default: true)
-   * @param timeout The maximum time to wait for the element (default: DEFAULT_FIND_TIMEOUT)
-   * @return The UiText element that contains the specified substring
-   * @see waitContainsText for waiting until all text contains the substring
-   * @see hasSubtext for non-blocking check if the component has text containing a substring
-   */
-  fun waitOneContainsText(text: String, message: String? = null, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
-    return waitForOne(message = message ?: "Finding the text containing '$text' in $this",
-                      timeout = timeout,
-                      getter = { getAllTexts() },
-                      checker = { it.text.contains(other = text, ignoreCase = ignoreCase) }
-    )
-  }
-
-  /**
-   * Waits until all text in the component contains the specified substring.
-   *
-   * @param text The substring that all text must contain
-   * @param message Optional custom message for waiting operation
-   * @param ignoreCase Whether to ignore case when searching for the substring (default: true)
-   * @param timeout The maximum time to wait for the condition (default: DEFAULT_FIND_TIMEOUT)
-   * @see waitOneContainsText for waiting until one text element contains the substring
-   * @see hasSubtext for non-blocking check if component has text containing a substring
-   */
-  fun waitContainsText(text: String, message: String? = null, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
-    waitFor(message = message ?: "Finding the text containing '$text' in $this",
-            timeout = timeout,
-            getter = { getAllTexts().asString() },
-            checker = { it.contains(text, ignoreCase = ignoreCase) }
-    )
-  }
-
-  /**
-   * Checks if this component has the specified text.
-   *
-   * @param text The exact text to search for within the component
-   * @return true if the component has the specified text, false otherwise
-   * @see hasSubtext for checking if text contains a substring
-   */
-  fun hasText(text: String): Boolean {
-    return getAllTexts().any { it.text == text }
-  }
-
-
-  /**
-   * Retrieves all UI text elements in a vertically ordered manner.
-   *
-   * This method returns a list of lists of `UiText` objects. Each inner list represents a collection of UI text
-   * elements that are located at the same vertical position on the screen. The outer list represents the entire
-   * collection of vertically ordered UI text elements.
-   *
-   * The UI text elements are ordered horizontally within each vertical position, based on their `x` coordinates.
-   *
-   * @return A list of lists of `UiText` objects, representing all UI text elements ordered vertically.
-   */
-  fun getAllVerticallyOrderedUiText(): List<List<UiText>> =
-    getAllTexts().groupBy { it.point.y }.toSortedMap()
-      .values.map { it.sortedBy { it.point.x } }.toList()
-
-  /**
-   * Waits for exactly one match in the list of vertically ordered UI text elements.
-   * That list is originally returned by `getAllVerticallyOrderedUiText`
-   *
-   * This method waits until there is exactly one UI text element in the list that matches the specified conditions.
-   * The conditions can be either a full match of the text or a partial match if the `fullMatch` parameter is set to `false`.
-   *
-   * @param message An optional message to display when waiting for a match.
-   * @param text The text to match against the UI text elements.
-   * @param fullMatch Flag to indicate whether the match should be a full match or partial match.
-   * @param timeout The maximum time to wait for the match.
-   * @return A list of `UiText` objects that match the specified conditions.
-   */
-  fun waitOneMatchInVerticallyOrderedText(
-    text: String,
-    message: String? = null,
-    fullMatch: Boolean = true,
-    timeout: Duration = DEFAULT_FIND_TIMEOUT,
-  ): List<UiText> =
-    waitForOne(message ?: "Find '${text}'(fullMatch = $fullMatch) in vertically ordered text", timeout,
-               getter = { getAllVerticallyOrderedUiText() },
-               checker = {
-                 if (fullMatch) {
-                   text == it.asString()
-                 }
-                 else {
-                   it.asString().contains(text)
-                 }
-               })
 
   fun present(): Boolean {
     val found = data.parentSearchContext.findAll(data.xpath)
-
-    val present = if (found.size == 1) {
-      true
+    val present = when (found.size) {
+      0 -> false
+      1 -> true
+      else -> error("There are more than one $this in the hierarchy: $found.\n\t" +
+                    "Please use `xx()` if you need to check for more than one $this or clarify your search request.")
     }
-    else if (found.isEmpty()) {
-      false
-    }
-    else {
-      error("There are more than one $this in the hierarchy: $found.\n\t" +
-            "Please use `xx()` if you need to check for more than one $this or clarify your search request.")
-    }
-
     LOG.info("$this is present in hierarchy: $present")
     return present
   }
 
-  fun notPresent(): Boolean {
-    return !present()
+  fun notPresent(): Boolean = !present()
+
+  /** Waits until the parent search context has no such component. */
+  fun waitNotFound(timeout: Duration? = DEFAULT_FIND_TIMEOUT) {
+    waitFor(message = "There should be no $this in ${data.parentSearchContext.contextAsString}",
+            timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
+            interval = 1.seconds) {
+      notPresent()
+    }
   }
 
-  fun isFocusOwner(): Boolean {
-    return withComponent { it.isFocusOwner() }
+  fun hasVisibleComponent(child: UiComponent): Boolean {
+    return hasComponent(child, Component::isShowing)
   }
 
-  fun isEnabled(): Boolean {
-    return withComponent { it.isEnabled() }
-  }
-
-  fun hasVisibleComponent(component: UiComponent): Boolean {
-    return hasComponent(component, Component::isShowing)
-  }
-
-  fun hasComponent(component: UiComponent, check: (Component) -> Boolean): Boolean {
-    val components = searchContext.findAll(component.data.xpath)
-    if (components.isEmpty()) return false
-    return components.any { check(it) }
+  fun hasComponent(child: UiComponent, check: (Component) -> Boolean): Boolean {
+    return searchContext.findAll(child.data.xpath).any(check)
   }
 
   fun getParent(): UiComponent {
     val parent = withComponent { it.getParent() }
-
     return UiComponent(ComponentData(data.xpath + "/..", driver, searchService, robotProvider,
                                      data.parentSearchContext, parent))
   }
@@ -446,145 +172,17 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   fun findInParentContext(@Language("XPath") xpath: String): UiComponent? {
     val parentSearchContext = data.parentSearchContext
     val foundComponent = parentSearchContext.findAll(xpath).firstOrNull() ?: return null
-
     return UiComponent(ComponentData(xpath, driver, searchService, robotProvider,
                                      parentSearchContext, foundComponent))
   }
 
-  /** The colour on the screen at [point] of this component. A step overlay goes off the screen for the read. */
-  fun getColor(point: Point?, moveMouse: Boolean = true): Color {
-    if (moveMouse) moveMouse(point)
-    return withoutStepOverlays {
-      withComponent {
-        Color(robot.getColor(it, point).getRGB())
-      }
-    }
+  fun setFocus() {
+    withComponent { robot.focus(it) }
   }
 
-  // Mouse
-  fun click(point: Point? = null, mouseButton: RemoteMouseButton = RemoteMouseButton.LEFT) {
-    LOG.info("Click at $this${point?.let { ": $it" } ?: ""}")
-    if (point != null) {
-      withComponent { robot.click(it, point,  mouseButton) }
-    }
-    else {
-      withComponent { robot.click(it, mouseButton) }
-    }
-  }
+  fun isFocusOwner(): Boolean = withComponent { it.isFocusOwner() }
 
-  /**
-   * Posts a click addressed to this component and returns without waiting for it to be dispatched.
-   *
-   * Use it for a click whose effect cannot be awaited — a click that opens a modal dialog, most of all: the dialog
-   * blocks the dispatching thread while it is up, so [click] would wait for its own event forever. In exchange
-   * nothing is verified past the component being shown and enabled — not delivery, not the effect. Assert on what
-   * the click was supposed to produce, and use `IdeEventQueue.flushQueue` if a later step needs the gesture
-   * dispatched first. `Robot.postGesture` documents the full contract.
-   */
-  fun postClick(where: Point? = null) {
-    LOG.info("Post click at $this${where?.let { ": $it" } ?: ""}")
-    withComponent { robot.postGesture(it, where, RemoteMouseButton.LEFT, 1) }
-  }
-
-  /** Clicks with the left button and repeats the click until the component gets it. See [Robot.strictClick]. */
-  fun strictClick(point: Point? = null) {
-    LOG.info("strictClick at $this${point?.let { ": $it" } ?: ""}")
-    withComponent { robot.strictClick(it, point) }
-  }
-
-  @Deprecated("The click always uses the left button and ignores mouseButton", ReplaceWith("strictClick(point)"))
-  fun strictClick(point: Point? = null, mouseButton: RemoteMouseButton = RemoteMouseButton.LEFT) {
-    strictClick(point)
-  }
-
-  fun doubleClick(point: Point? = null) {
-    LOG.info("Double click at $this${point?.let { ": $it" } ?: ""}")
-    if (point != null) {
-      withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 2) }
-    }
-    else {
-      withComponent { robot.doubleClick(it) }
-    }
-  }
-
-  fun tripleClick(point: Point? = null) {
-    LOG.info("Triple click at $this${point?.let { ": $it" } ?: ""}")
-    if (point != null) {
-      withComponent { robot.click(it, point, RemoteMouseButton.LEFT, 3) }
-    }
-    else {
-      withComponent { robot.tripleClick(it) }
-    }
-  }
-
-  fun rightClick(point: Point? = null) {
-    LOG.info("Right click at $this${point?.let { ": $it" } ?: ""}")
-    if (point != null) {
-      withComponent { robot.click(it, point, RemoteMouseButton.RIGHT) }
-    }
-    else {
-      withComponent { robot.click(it, RemoteMouseButton.RIGHT) }
-    }
-  }
-
-  fun mouseWheelClick(point: Point? = null) {
-    LOG.info("Mouse wheel click at $this${point?.let { ": $it" } ?: ""}")
-    withComponent {
-      if (point != null) {
-        robot.click(it, point, RemoteMouseButton.MIDDLE)
-      }
-      else {
-        robot.click(it, RemoteMouseButton.MIDDLE)
-      }
-    }
-  }
-
-  fun moveMouse(point: Point? = null) {
-    LOG.info("Move mouse to $this${point?.let { ": $it" } ?: ""}")
-    if (point != null) {
-      withComponent { robot.moveMouse(it, point) }
-    }
-    else {
-      withComponent { robot.moveMouse(it) }
-    }
-  }
-
-  fun mousePressMoveRelease(from: Point, to: Point) {
-    with(robot) {
-      withComponent { moveMouse(it, from) }
-      pressMouse(RemoteMouseButton.LEFT)
-
-      withComponent { moveMouse(it, to) }
-      releaseMouse(RemoteMouseButton.LEFT)
-    }
-  }
-
-  @Deprecated("The method ignores the to point. Use press(from) and mouseRelease(), or mousePressMoveRelease(from, to).")
-  fun mousePressAndRelease(from: Point, to: Point) {
-    with(robot) {
-      withComponent { moveMouse(it, from) }
-      pressMouse(RemoteMouseButton.LEFT)
-      releaseMouse(RemoteMouseButton.LEFT)
-    }
-  }
-
-  fun press(point: Point? = null) {
-    LOG.info("Press at $this${point?.let { ": $it" } ?: ""}")
-    withComponent { robot.moveMouseAndPress(it, point) }
-  }
-
-  fun mouseRelease() {
-    LOG.info("Release at $this")
-    withComponent { robot.releaseMouse(RemoteMouseButton.LEFT) }
-  }
-
-  fun getBackgroundColor(): Color {
-    return withComponent { Color(it.getBackground().getRGB()) }
-  }
-
-  fun getForegroundColor(): Color {
-    return withComponent { Color(it.getForeground().getRGB()) }
-  }
+  fun isEnabled(): Boolean = withComponent { it.isEnabled() }
 
   fun getLocationOnScreen(): Point {
     check(!driver.isWayland) { "not supported on Wayland" }
@@ -596,4 +194,189 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   fun getWidth(): Int = component.width
 
   fun getHeight(): Int = component.height
+
+  fun getBackgroundColor(): Color = withComponent { Color(it.getBackground().getRGB()) }
+
+  fun getForegroundColor(): Color = withComponent { Color(it.getForeground().getRGB()) }
+
+  /** The colour on the screen at [point] of this component. A step overlay goes off the screen for the read. */
+  fun getColor(point: Point?, moveMouse: Boolean = true): Color {
+    if (moveMouse) moveMouse(point)
+    return withoutStepOverlays {
+      withComponent {
+        Color(robot.getColor(it, point).getRGB())
+      }
+    }
+  }
+
+  // Texts
+
+  /** Returns the texts of this component that match [filter], without a wait. */
+  fun getAllTexts(filter: ((UiText) -> Boolean)? = null): List<UiText> {
+    val texts = withComponent { searchService.findAllText(it) }.map { UiText(this, it) }
+    return if (filter == null) texts else texts.filter(filter)
+  }
+
+  /** Returns the texts of this component in rows. The rows go from top to bottom, and each row goes from left to right. */
+  fun getAllVerticallyOrderedUiText(): List<List<UiText>> {
+    return getAllTexts().groupBy { it.point.y }.toSortedMap().values.map { row -> row.sortedBy { it.point.x } }
+  }
+
+  fun hasText(text: String): Boolean = getAllTexts().any { it.text == text }
+
+  fun hasSubtext(subtext: String): Boolean = getAllTexts().any { it.text.contains(subtext) }
+
+  /** Waits until at least one text matches [predicate], and returns all the matching texts. */
+  fun waitAnyTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, predicate: (UiText) -> Boolean = { true }): List<UiText> {
+    return waitAny(message = message ?: "Finding at least some texts and filter matching predicate in $this",
+                   timeout = timeout,
+                   getter = { getAllTexts() },
+                   checker = predicate)
+  }
+
+  /** Waits until at least one text is equal to [text], and returns all such texts. */
+  fun waitAnyTexts(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
+    return waitAnyTexts(message ?: "Finding at least some texts and filter '$text' in $this", timeout) { it.text == text }
+  }
+
+  /** Waits until at least one text contains [text], and returns all such texts. */
+  fun waitAnyTextsContains(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
+    return waitAnyTexts(message ?: "Finding at least some texts and contains '$text' in $this", timeout) { it.text.contains(text) }
+  }
+
+  /** Waits until exactly one text matches [predicate], and returns it. */
+  fun waitOneText(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, predicate: (UiText) -> Boolean): UiText {
+    return waitForOne(message = message ?: "Finding one text matching predicate in $this",
+                      timeout = timeout,
+                      getter = { getAllTexts() },
+                      checker = predicate)
+  }
+
+  /** Waits until exactly one text is equal to [text], and returns it. */
+  fun waitOneText(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
+    return waitOneText(message ?: "Finding text '$text' in $this", timeout) { it.text == text }
+  }
+
+  /** Waits until exactly one text contains [text], and returns it. */
+  fun waitOneContainsText(text: String, message: String? = null, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT): UiText {
+    return waitOneText(message ?: "Finding the text containing '$text' in $this", timeout) {
+      it.text.contains(text, ignoreCase = ignoreCase)
+    }
+  }
+
+  /** Waits until the joined texts of this component contain [text]. */
+  fun waitContainsText(text: String, message: String? = null, ignoreCase: Boolean = true, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
+    waitFor(message = message ?: "Finding the text containing '$text' in $this",
+            timeout = timeout,
+            getter = { getAllTexts().asString() },
+            checker = { it.contains(text, ignoreCase = ignoreCase) })
+  }
+
+  /** Waits until there is no text equal to [text]. */
+  fun waitNoTexts(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
+    waitFor(message = message ?: "Finding no texts '$text' in $this",
+            timeout = timeout,
+            getter = { getAllTexts() },
+            checker = { texts -> texts.none { it.text == text } })
+  }
+
+  /**
+   * Waits until exactly one row of [getAllVerticallyOrderedUiText] matches [text], and returns that row.
+   * With [fullMatch], the joined row texts must be equal to [text]. Otherwise, they must contain [text].
+   */
+  fun waitOneMatchInVerticallyOrderedText(
+    text: String,
+    message: String? = null,
+    fullMatch: Boolean = true,
+    timeout: Duration = DEFAULT_FIND_TIMEOUT,
+  ): List<UiText> {
+    return waitForOne(message ?: "Find '${text}'(fullMatch = $fullMatch) in vertically ordered text", timeout,
+                      getter = { getAllVerticallyOrderedUiText() },
+                      checker = { row -> if (fullMatch) row.asString() == text else row.asString().contains(text) })
+  }
+
+  // Mouse
+
+  fun click(point: Point? = null, mouseButton: RemoteMouseButton = RemoteMouseButton.LEFT) {
+    logGesture("Click", point)
+    withComponent { if (point != null) robot.click(it, point, mouseButton) else robot.click(it, mouseButton) }
+  }
+
+  /**
+   * Posts a click addressed to this component and returns without waiting for it to be dispatched.
+   *
+   * Use it for a click whose effect cannot be awaited — a click that opens a modal dialog, most of all: the dialog
+   * blocks the dispatching thread while it is up, so [click] would wait for its own event forever. In exchange
+   * nothing is verified past the component being shown and enabled — not delivery, not the effect. Assert on what
+   * the click was supposed to produce, and use `IdeEventQueue.flushQueue` if a later step needs the gesture
+   * dispatched first. `Robot.postGesture` documents the full contract.
+   */
+  fun postClick(point: Point? = null) {
+    logGesture("Post click", point)
+    withComponent { robot.postGesture(it, point, RemoteMouseButton.LEFT, 1) }
+  }
+
+  /** Clicks with the left button and repeats the click until the component gets it. See [Robot.strictClick]. */
+  fun strictClick(point: Point? = null) {
+    logGesture("Strict click", point)
+    withComponent { robot.strictClick(it, point) }
+  }
+
+  @Deprecated("The click always uses the left button and ignores mouseButton", ReplaceWith("strictClick(point)"))
+  fun strictClick(point: Point? = null, mouseButton: RemoteMouseButton = RemoteMouseButton.LEFT) {
+    strictClick(point)
+  }
+
+  fun doubleClick(point: Point? = null) {
+    logGesture("Double click", point)
+    withComponent { if (point != null) robot.click(it, point, RemoteMouseButton.LEFT, 2) else robot.doubleClick(it) }
+  }
+
+  fun tripleClick(point: Point? = null) {
+    logGesture("Triple click", point)
+    withComponent { if (point != null) robot.click(it, point, RemoteMouseButton.LEFT, 3) else robot.tripleClick(it) }
+  }
+
+  fun rightClick(point: Point? = null) {
+    logGesture("Right click", point)
+    withComponent { if (point != null) robot.click(it, point, RemoteMouseButton.RIGHT) else robot.click(it, RemoteMouseButton.RIGHT) }
+  }
+
+  fun mouseWheelClick(point: Point? = null) {
+    logGesture("Mouse wheel click", point)
+    withComponent { if (point != null) robot.click(it, point, RemoteMouseButton.MIDDLE) else robot.click(it, RemoteMouseButton.MIDDLE) }
+  }
+
+  fun moveMouse(point: Point? = null) {
+    logGesture("Move mouse", point)
+    withComponent { if (point != null) robot.moveMouse(it, point) else robot.moveMouse(it) }
+  }
+
+  fun press(point: Point? = null) {
+    logGesture("Press", point)
+    withComponent { robot.moveMouseAndPress(it, point) }
+  }
+
+  fun mouseRelease() {
+    logGesture("Release", point = null)
+    withComponent { robot.releaseMouse(RemoteMouseButton.LEFT) }
+  }
+
+  fun mousePressMoveRelease(from: Point, to: Point) {
+    withComponent { robot.moveMouse(it, from) }
+    robot.pressMouse(RemoteMouseButton.LEFT)
+    withComponent { robot.moveMouse(it, to) }
+    robot.releaseMouse(RemoteMouseButton.LEFT)
+  }
+
+  @Deprecated("The method ignores the to point. Use press(from) and mouseRelease(), or mousePressMoveRelease(from, to).")
+  fun mousePressAndRelease(from: Point, to: Point) {
+    withComponent { robot.moveMouse(it, from) }
+    robot.pressMouse(RemoteMouseButton.LEFT)
+    robot.releaseMouse(RemoteMouseButton.LEFT)
+  }
+
+  private fun logGesture(gesture: String, point: Point?) {
+    LOG.info("$gesture at $this${point?.let { ": $it" } ?: ""}")
+  }
 }
