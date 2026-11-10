@@ -5,8 +5,6 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.EditorTextField
@@ -29,14 +27,9 @@ internal class PyConsoleSpecificOptionsPanel(private val project: Project) {
   private lateinit var editorTextField: EditorTextField
   private lateinit var commonOptionsForm: AbstractPyCommonOptionsForm
 
-  // Owns the SDK-table subscription set up by `commonOptionsForm.subscribe`; disposed in `disposeUIResources`.
-  private val uiDisposable: Disposable = Disposer.newDisposable()
-
   fun createPanel(optionsProvider: PyConsoleOptions.PyConsoleSettings): JComponent {
     consoleSettings = optionsProvider
-    commonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(createCommonOptionsFormData(project)).also {
-      it.subscribe(uiDisposable)
-    }
+    commonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(createCommonOptionsFormData(project))
     editorTextField = createEditorTextField(optionsProvider.myCustomStartScript)
 
     return createPanel()
@@ -53,10 +46,6 @@ internal class PyConsoleSpecificOptionsPanel(private val project: Project) {
   fun reset() {
     UIUtil.invokeLaterIfNeeded { editorTextField.text = consoleSettings.myCustomStartScript }
     consoleSettings.reset(project, commonOptionsForm)
-  }
-
-  fun disposeUIResources() {
-    Disposer.dispose(uiDisposable)
   }
 
   private fun createPanel(): DialogPanel {

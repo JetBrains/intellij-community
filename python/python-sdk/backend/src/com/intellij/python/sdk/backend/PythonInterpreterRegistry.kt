@@ -673,15 +673,12 @@ class PythonInterpreterRegistry(private val project: Project, private val scope:
   }
 
   /**
-   * Calls [listener] on the EDT each time an interpreter of any [PyProject] is added or removed, until
-   * [parentDisposable] is disposed. For a Java form that lists the interpreters of a module it can change.
+   * Emits each time the registry computes its interpreters again: after a change of the data of an interpreter and after
+   * a module change. A new collector gets a value for the current interpreters at once, or after the first computation.
+   * For a form that lists the interpreters of a module it can change.
    */
-  fun addTableChangeListener(parentDisposable: Disposable, listener: Runnable) {
-    val job = scope.launch(Dispatchers.EDT) {
-      tableFlow.drop(1).collect { listener.run() }
-    }
-    Disposer.register(parentDisposable) { job.cancel() }
-  }
+  val tableChanges: Flow<Unit>
+    get() = tableFlow.map { }
 
   companion object {
     private val REMOVE_TIMEOUT = 30.seconds

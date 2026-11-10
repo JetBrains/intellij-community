@@ -711,7 +711,6 @@ com.jetbrains.python.run.AbstractPyCommonOptionsForm
 - sf:EXPAND_PROPERTY_KEY:java.lang.String
 - a:addInterpreterModeListener(java.util.function.Consumer):V
 - a:getMainPanel():javax.swing.JComponent
-- a:subscribe(com.intellij.openapi.Disposable):V
 a:com.jetbrains.python.run.AbstractPythonRunConfiguration
 - com.intellij.execution.configuration.AbstractRunConfiguration
 - com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOption
