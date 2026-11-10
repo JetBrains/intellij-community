@@ -20,6 +20,7 @@
     <module name="intellij.junit.vcs"/>
     <module name="intellij.junit.dashboard"/>
     <module name="intellij.junit.rt" loading="embedded"/>
+    <module name="intellij.junit.v5.rt" loading="embedded"/>
   </content>
   <content>
     <module name="intellij.libraries.hamcrest" loading="embedded"/>
