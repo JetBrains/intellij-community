@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-compiler-ir" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-ir-for-ide:2.5.20-dev-3282">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-ir-for-ide:2.5.20-dev-3853">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.20-dev-3282/kotlin-compiler-ir-for-ide-2.5.20-dev-3282.jar">
-              <sha256sum>77df661b8c6d3672ed8afe9c55b3ae3367ed5559c81404888e3fa3c69f8f348b</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.20-dev-3853/kotlin-compiler-ir-for-ide-2.5.20-dev-3853.jar">
+              <sha256sum>af225504e40b295e11cd129837fa421ff6d3b7d32b91965ee75f7e2b7f533db0</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.20-dev-3282/kotlin-compiler-ir-for-ide-2.5.20-dev-3282.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.20-dev-3853/kotlin-compiler-ir-for-ide-2.5.20-dev-3853.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.20-dev-3282/kotlin-compiler-ir-for-ide-2.5.20-dev-3282-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-ir-for-ide/2.5.20-dev-3853/kotlin-compiler-ir-for-ide-2.5.20-dev-3853-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.js-plain-objects-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:js-plain-objects-compiler-plugin-for-ide:2.5.20-dev-3282">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:js-plain-objects-compiler-plugin-for-ide:2.5.20-dev-3853">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.20-dev-3282/js-plain-objects-compiler-plugin-for-ide-2.5.20-dev-3282.jar">
-              <sha256sum>efdc387570c819dbe327ec12cbeee82e99e297c4e7cec894065c3b3cefc59b70</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.20-dev-3853/js-plain-objects-compiler-plugin-for-ide-2.5.20-dev-3853.jar">
+              <sha256sum>50046e905d71bab48c620c4722fb79cebb22e31d89736efb694f69a1bdd8bc9a</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.20-dev-3282/js-plain-objects-compiler-plugin-for-ide-2.5.20-dev-3282.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.20-dev-3853/js-plain-objects-compiler-plugin-for-ide-2.5.20-dev-3853.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.20-dev-3282/js-plain-objects-compiler-plugin-for-ide-2.5.20-dev-3282-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.20-dev-3853/js-plain-objects-compiler-plugin-for-ide-2.5.20-dev-3853-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

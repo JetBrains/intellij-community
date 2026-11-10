@@ -443,7 +443,8 @@ private fun ExtractionData.registerQualifierReplacements(
     originalRef: KtReferenceExpression
 ) {
     if (referencedClassifierSymbol is KaTypeParameterSymbol) {
-        val typeParameter = referencedClassifierSymbol.psi as KtTypeParameter
+        // A type parameter synthesized for an undeclared name in a `where` clause has no declaration
+        val typeParameter = referencedClassifierSymbol.psi as? KtTypeParameter ?: return
         val listOwner = typeParameter.parentOfType<KtTypeParameterListOwner>()
         if (listOwner == null || !PsiTreeUtil.isAncestor(listOwner, targetSibling, true)) {
             parametersInfo.typeParameters.add(TypeParameter(typeParameter, typeParameter.collectRelevantConstraints()))

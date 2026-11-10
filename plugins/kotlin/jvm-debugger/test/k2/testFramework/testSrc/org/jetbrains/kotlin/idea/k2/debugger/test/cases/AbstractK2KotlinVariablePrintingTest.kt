@@ -11,3 +11,7 @@ abstract class AbstractK2IdeK2CodeKotlinVariablePrintingTest : AbstractK2IdeK1Co
 
     override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
 }
+
+abstract class AbstractInlineScopesAndK2IdeK2CodeKotlinVariablePrintingTest : AbstractK2IdeK2CodeKotlinVariablePrintingTest() {
+    override val useInlineScopes = true
+}
