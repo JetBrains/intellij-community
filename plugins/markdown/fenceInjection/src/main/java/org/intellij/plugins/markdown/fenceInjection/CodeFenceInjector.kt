@@ -38,7 +38,7 @@ internal open class CodeFenceInjector : MultiHostInjector, DumbAware {
     if (host.children.all { it.elementType != MarkdownTokenTypes.CODE_FENCE_CONTENT }) {
       return
     }
-    val (language, extension) = findLangForInjection(host) ?: return
+    val [language, extension] = findLangForInjection(host) ?: return
     if (!canBeInjected(language)) {
       return
     }
@@ -47,7 +47,7 @@ internal open class CodeFenceInjector : MultiHostInjector, DumbAware {
       return
     }
     registrar.startInjecting(language, extension)
-    injectInMultiplePlaces(host, registrar, language, places)
+    injectInMultiplePlaces(host, registrar, places)
     registrar.makeInspectionsLenient(true)
     registrar.doneInjecting()
   }
@@ -79,26 +79,21 @@ internal open class CodeFenceInjector : MultiHostInjector, DumbAware {
     }
   }
 
-  private fun injectInMultiplePlaces(host: MarkdownCodeFence, registrar: MultiHostRegistrar, language: Language, places: List<InjectionPlace>) {
-    val surroundings = FenceSurroundingsProvider.EP_NAME.extensionList.find { it.language == language }?.getCodeFenceSurroundings()
+  private fun injectInMultiplePlaces(host: MarkdownCodeFence, registrar: MultiHostRegistrar, places: List<InjectionPlace>) {
     if (places.size == 1) {
       val place = places.single()
-      registrar.addPlace(
-        combine(surroundings?.prefix, place.prefix),
-        combine(place.suffix, surroundings?.suffix),
-        host, place.range
-      )
+      registrar.addPlace(place.prefix, place.suffix, host, place.range)
       return
     }
 
     val first = places.first()
     val last = places.last()
 
-    registrar.addPlace(combine(surroundings?.prefix, first.prefix), first.suffix, host, first.range)
+    registrar.addPlace(first.prefix, first.suffix, host, first.range)
     for ((range, prefix, suffix) in places.drop(1).dropLast(1)) {
       registrar.addPlace(prefix, suffix, host, range)
     }
-    registrar.addPlace(last.prefix, combine(last.suffix, surroundings?.suffix), host, last.range)
+    registrar.addPlace(last.prefix, last.suffix, host, last.range)
   }
 
   private fun createInjectionPlaces(elements: List<PsiElement>): List<InjectionPlace> {
@@ -165,6 +160,4 @@ internal open class CodeFenceInjector : MultiHostInjector, DumbAware {
   }
 
   private data class InjectionPlace(val range: TextRange, val prefix: String = "", val suffix: String = "")
-
-  private fun combine(first: String?, second: String?): String? = (first.orEmpty() + second.orEmpty()).ifEmpty { null }
 }
