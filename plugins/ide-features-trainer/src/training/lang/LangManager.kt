@@ -10,6 +10,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.XMap
@@ -43,7 +44,8 @@ class LangManager : SimplePersistentStateComponent<LangManager.State>(State()) {
   }
 
   companion object {
-    fun getInstance() = service<LangManager>()
+    fun getInstance(): LangManager = service<LangManager>()
+    suspend fun getInstanceAsync(): LangManager = serviceAsync<LangManager>()
   }
 
   fun getLearningProjectPath(languageId: String): String? = state.languageToProjectMap[languageId]

@@ -13,9 +13,12 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
+import com.intellij.util.application
 import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
@@ -31,9 +34,13 @@ import training.util.learningPanelWasOpenedInCurrentVersion
 import training.util.learningToolWindow
 import training.util.trainerPluginConfigName
 
-private class LearnProjectStateListener : ProjectManagerListener {
-  override fun projectOpened(project: Project) {
-    val languageId = LangManager.getInstance().getLanguageId() ?: return
+internal class LearnProjectStateActivity : ProjectActivity {
+  init {
+    if (application.isHeadlessEnvironment) throw ExtensionNotApplicableException.create()
+  }
+
+  override suspend fun execute(project: Project) {
+    val languageId = LangManager.getInstanceAsync().getLanguageId() ?: return
     if (isLearningProject(project, languageId)) {
       CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, true)
     }
@@ -47,7 +54,9 @@ private class LearnProjectStateListener : ProjectManagerListener {
       considerNotifyAboutNewLessons(project)
     }
   }
+}
 
+private class LearnProjectStateListener : ProjectManagerListener {
   override fun projectClosingBeforeSave(project: Project) {
     val languageId = LangManager.getInstance().getLanguageId() ?: return
     if (isLearningProject(project, languageId)) {
@@ -68,6 +77,7 @@ private class LearnProjectStateListener : ProjectManagerListener {
 
 @State(name = "LearnProjectState", storages = [Storage(value = trainerPluginConfigName)], category = SettingsCategory.TOOLS)
 internal class LearnProjectState : PersistentStateComponent<LearnProjectState> {
+  @Volatile
   var firstTimeOpenedWay: StatisticBase.LearnProjectOpeningWay? = null
 
   override fun getState(): LearnProjectState = this

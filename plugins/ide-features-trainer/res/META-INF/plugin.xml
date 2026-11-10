@@ -106,6 +106,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="training.statistic.LearnProjectStateActivity"/>
+
     <statistics.validation.customValidationRule
       implementation="training.statistic.IdeFeaturesTrainerRuleValidator"/>
     <statistics.validation.customValidationRule
