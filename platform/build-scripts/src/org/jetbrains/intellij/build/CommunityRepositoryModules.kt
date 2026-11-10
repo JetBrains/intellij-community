@@ -82,7 +82,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
     pluginAuto("intellij.tasks.core") { spec ->
       spec.withModule("intellij.tasks")
       spec.withModule("intellij.tasks.compatibility")
-      spec.withModule("intellij.tasks.java")
     },
     // The relative paths below (`lib/maven3`, `lib/intellij.maven.server3`, ...) are a runtime contract, not an
     // internal packaging detail: the Maven plugin reads them back at runtime through
