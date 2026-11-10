@@ -5,7 +5,9 @@ import com.intellij.ide.rpc.ThrottledAccumulatedItems
 import com.intellij.ide.rpc.ThrottledItems
 import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.platform.searchEverywhere.SeItemData
+import com.intellij.platform.searchEverywhere.SeResultAddedEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
+import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
@@ -52,6 +54,10 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
     var shouldFreezeImmediately = false
 
     if (!isValid) {
+      // An end or a skipped event has no row. If it made the empty list valid, the tab would stop loading results:
+      // shouldLoadMore would become false, and an empty list never scrolls to its end to set it back.
+      if (!throttledEvent.hasAddedOrReplacedItems()) return
+
       reset()
 
       // For non-all tab right after receiving first accumulated items
@@ -129,3 +135,11 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
     }
   }
 }
+
+private fun ThrottledItems<SeResultEvent>.hasAddedOrReplacedItems(): Boolean =
+  when (this) {
+    is ThrottledOneItem<SeResultEvent> -> item.isAddedOrReplaced()
+    is ThrottledAccumulatedItems<SeResultEvent> -> items.any { it.isAddedOrReplaced() }
+  }
+
+private fun SeResultEvent.isAddedOrReplaced(): Boolean = this is SeResultAddedEvent || this is SeResultReplacedEvent
