@@ -130,9 +130,11 @@ internal inline fun <T> withFileWatcherDisabled(project: Project, block: () -> T
 /**
  * Runs [block] while it may log errors, so a logged error does not fail the test.
  *
+ * @param block gets the messages of the errors logged so far. The list grows while [block] runs, so [block] can wait
+ *   for an error that another coroutine logs.
  * @return the result of [block] and the messages of the errors it logged
  */
-internal inline fun <T> collectingErrors(block: () -> T): Pair<T, List<String>> {
+internal inline fun <T> collectingErrors(block: (loggedErrors: List<String>) -> T): Pair<T, List<String>> {
   val errors = CopyOnWriteArrayList<String>()
   val collector = object : LoggedErrorProcessor() {
     override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
@@ -140,7 +142,7 @@ internal inline fun <T> collectingErrors(block: () -> T): Pair<T, List<String>> 
       return Action.NONE
     }
   }
-  val result = LoggedErrorProcessor.executeWith(collector).use { block() }
+  val result = LoggedErrorProcessor.executeWith(collector).use { block(errors) }
   return result to errors
 }
 

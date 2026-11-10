@@ -306,5 +306,5 @@ class SettingsKeyRegistryTest {
    *
    * @return the result of [block]
    */
-  private fun <T> expectingErrors(block: () -> T): T = collectingErrors(block).first
+  private fun <T> expectingErrors(block: () -> T): T = collectingErrors { block() }.first
 }
