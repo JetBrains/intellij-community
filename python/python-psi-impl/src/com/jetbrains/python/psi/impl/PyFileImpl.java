@@ -158,14 +158,11 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
                                                @Nullable StubElement<?> stub,
                                                @NotNull LanguageLevel languageLevel,
                                                @NotNull Processor<? super PsiElement> processor) {
+      // collectAllChildren descends into an except part on both paths, so there is none to do here. It used to be
+      // done here too, which on the AST path, where the walk already descends, processed those children twice.
       for (PsiElement child : collectAllChildren(element, stub, languageLevel)) {
         if (!processor.process(child)) {
           return false;
-        }
-        if (child instanceof PyExceptPart part) {
-          if (!processDeclarations(part, part.getStub(), languageLevel, processor)) {
-            return false;
-          }
         }
       }
       return true;
@@ -910,14 +907,29 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
     return getTopLevelChildren().get(type);
   }
 
+  /**
+   * Adds the children of {@code stub} that {@code languageLevel} keeps, and the children of an except part among them.
+   * An except part is the only part of a compound statement with a stub of its own, so it is the only one that nests:
+   * the stub of a file holds the children of an {@code if} or a {@code try} body directly, but not those of an
+   * {@code except} clause. The walk over the AST descends into it, so without this the two answer differently.
+   */
+  private static void collectStubChildren(@NotNull StubElement<?> stub,
+                                          @NotNull LanguageLevel languageLevel,
+                                          @NotNull List<PsiElement> result) {
+    for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
+      result.add(child.getPsi());
+      if (child.getPsi() instanceof PyExceptPart) {
+        collectStubChildren(child, languageLevel, result);
+      }
+    }
+  }
+
   private static @NotNull List<PsiElement> collectAllChildren(@NotNull PsiElement element,
                                                               @Nullable StubElement<?> stub,
                                                               @NotNull LanguageLevel languageLevel) {
     List<PsiElement> result = new ArrayList<>();
     if (stub != null) {
-      for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
-        result.add(child.getPsi());
-      }
+      collectStubChildren(stub, languageLevel, result);
     }
     else {
       element.acceptChildren(new PyTypeCheckedTopLevelElementVisitor(languageLevel) {
