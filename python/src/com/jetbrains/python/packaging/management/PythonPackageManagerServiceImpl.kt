@@ -243,23 +243,30 @@ internal class PythonPackageManagerServiceImpl(
   @TestOnly
   internal fun interpreterPathsWatcher(interpreter: PythonInterpreter): Disposable? = cache[interpreter]?.watcher
 
+  /** The disposable that removes the entry of [interpreter] when its SDK goes, see [removeOnSdkDisposal], or `null`. */
+  @TestOnly
+  internal fun sdkRemoval(interpreter: PythonInterpreter): Disposable? = cache[interpreter]?.removal
+
   /** Whether the paths of [interpreter] are watched: its watcher has its subscription. */
   @TestOnly
   internal fun watchesInterpreterPaths(interpreter: PythonInterpreter): Boolean =
     cache[interpreter]?.let { it.watcher != null && it.subscribed } == true
 
   /**
-   * Takes the watcher from every entry before dropping them.
+   * Takes the watcher and the removal from every entry before dropping them.
    *
-   * Clearing the cache alone leaks the project: a watcher is parented to the interpreter, which lives as long as the
-   * application, and the change it runs holds this service and through it the project (PY-89433). The reference runs
-   * from the interpreter inward, so letting go of the entries does not break it — the watcher has to go.
+   * Clearing the cache alone leaks the project. The watcher and the removal have the SDK as their parent, and an SDK can
+   * live as long as the application. The watcher holds this service, and the removal holds the entry with its manager,
+   * so each one holds the project (PY-89433). The reference runs from the SDK inward, so letting go of the entries does
+   * not break it. Both have to go.
    */
   override fun dispose() {
     watchersLock.withLock {
       for (entry in cache.values) {
         entry.watcher?.let { Disposer.dispose(it) }
         entry.watcher = null
+        entry.removal?.let { Disposer.dispose(it) }
+        entry.removal = null
       }
     }
     cache.clear()

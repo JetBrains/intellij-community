@@ -178,6 +178,26 @@ internal class PythonPackageManagerUnusedSdkTest {
     assertThat(watcherGone.get()).describedAs("The watcher outlived the project that owns it").isTrue()
   }
 
+  /**
+   * The removal of an entry has the SDK as its parent, and it holds the manager and through it the project. An SDK can
+   * outlive the project, such as an SDK of the SDK table. Closing the project therefore has to take the removal too.
+   */
+  @Test
+  fun `the removal of an entry goes when the project goes`(
+    @TempDir home: Path,
+  ): Unit = timeoutRunBlocking(1.minutes) {
+    val project = projectFixture.get()
+    val interpreter = registerInterpreter("PY-93818 packages of a closed project", home)
+    val service = project.service<PythonPackageManagerService>()
+    service.forPythonInterpreter(project, interpreter)
+
+    val removalGone = AtomicBoolean()
+    Disposer.register(service.impl().sdkRemoval(interpreter)!!, Disposable { removalGone.set(true) })
+    Disposer.dispose(service.impl())
+
+    assertThat(removalGone.get()).describedAs("The removal outlived the project that owns it").isTrue()
+  }
+
   private fun PythonPackageManagerService.impl(): PythonPackageManagerServiceImpl = this as PythonPackageManagerServiceImpl
 
   /**
