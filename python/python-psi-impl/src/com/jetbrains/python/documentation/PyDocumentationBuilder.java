@@ -3,8 +3,8 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.LineTokenizer;
@@ -75,9 +75,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -108,7 +107,9 @@ public final class PyDocumentationBuilder {
   private final Map<String, HtmlBuilder> mySectionsMap = FactoryMap.createMap(item -> new HtmlBuilder(), LinkedHashMap::new);
   private final TypeEvalContext myContext;
 
+  private static final Logger LOG = Logger.getInstance(PyDocumentationBuilder.class);
   private static final Pattern ourSpacesPattern = Pattern.compile("^\\s+");
+  private static final String KEYWORD_DESCRIPTIONS_DIR = "tools/python_keywords";
 
   public PyDocumentationBuilder(@NotNull PsiElement element, @Nullable PsiElement originalElement) {
     myElement = element;
@@ -253,15 +254,16 @@ public final class PyDocumentationBuilder {
   }
 
   private void buildForKeyword(@NotNull String name) {
-    try {
-      try (FileReader reader = new FileReader(PythonHelpersLocator.findPathStringInHelpers("/tools/python_keywords/" + name),
-                                              StandardCharsets.UTF_8)) {
-        final String text = FileUtil.loadTextAndClose(reader);
-        final String converted = StringUtil.convertLineSeparators(text, "\n");
-        myContent.appendRaw(converted);
-      }
+    var description = PythonHelpersLocator.findPathInHelpers(KEYWORD_DESCRIPTIONS_DIR).resolve(name);
+    // A keyword can have no description file.
+    if (!Files.isRegularFile(description)) {
+      return;
     }
-    catch (IOException ignored) {
+    try {
+      myContent.appendRaw(StringUtil.convertLineSeparators(Files.readString(description), "\n"));
+    }
+    catch (IOException e) {
+      LOG.warn("Cannot read the keyword description " + description, e);
     }
   }
 
