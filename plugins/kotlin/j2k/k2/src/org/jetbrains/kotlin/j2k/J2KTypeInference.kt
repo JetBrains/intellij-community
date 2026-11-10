@@ -68,6 +68,7 @@ import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiRecordComponent
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiReferenceParameterList
+import com.intellij.psi.PsiReturnStatement
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiSwitchExpression
 import com.intellij.psi.PsiType
@@ -82,6 +83,7 @@ import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.JavaPsiRecordUtil
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
@@ -175,18 +177,25 @@ class J2KTypeInference(
     /** The type arguments that give the types of lambda parameters, see [linkLambdaParameters]. */
     private val lambdaParameterTypeArguments = HashMap<PsiParameter, TypeNode>()
     private val nullComparisons = ArrayList<PsiBinaryExpression>()
+    private val typeElements = ArrayList<PsiTypeElement>()
+    private val returnStatements = HashMap<PsiMethod, MutableList<PsiReturnStatement>>()
     private val originals = OriginalJavaSemanticResolver()
     private val originalFile by lazy { originals.originalElementOrSelf(file) }
 
     val decisions: Map<PsiModifierListOwner, Nullability> by lazy {
-        collectNodes()
-        collectDataflow()
-        analyzeBodies()
+        val visitor = FileVisitor(inFile = true)
+        file.accept(visitor)
+        for (component in visitor.components) shareWithImplicitMembers(component)
+        for (step in visitor.dataflowSteps) step()
+        addDeclarationDataflow()
+        for (analysis in visitor.bodyAnalyses) analysis()
         for (comparison in nullComparisons) addNullComparisonDataflow(comparison)
         for ((expression, node) in sinks) {
             if (expression !in reached) addStaticDataflow(expression, node)
         }
-        addUnreachedDereferences()
+        for (reference in visitor.dereferences) {
+            if (reference !in reached) variableNode(reference)?.needsNotNull = true
+        }
         solve()
         solveMutability()
         resolve()
@@ -194,9 +203,10 @@ class J2KTypeInference(
     }
 
     internal fun typeInferenceInfo(): TypeInferenceInfo {
+        val decided = decisions.keys
         val info = TypeInferenceInfo()
         writeAnnotatedTypes(info)
-        for (owner in decisions.keys) {
+        for (owner in decided) {
             val node = nodes.getValue(owner)
             info.write(node.type, node.result)
             writeElements(info, node)
@@ -221,17 +231,21 @@ class J2KTypeInference(
     }
 
     private fun writeAnnotatedTypes(info: TypeInferenceInfo) {
+        for (typeElement in typeElements) writeAnnotatedType(info, typeElement)
         val visitor = object : JavaRecursiveElementWalkingVisitor() {
             override fun visitTypeElement(typeElement: PsiTypeElement) {
                 super.visitTypeElement(typeElement)
-                val type = typeElement.type
-                info.writeAnnotated(type, DfaPsiUtil.getElementNullabilityForWrite(type, typeElement.parent as? PsiModifierListOwner))
-                if (type is PsiArrayType) info.writeAnnotated(type.componentType, type.componentType.nullability.nullability())
-                writeAnnotatedArguments(info, type)
+                writeAnnotatedType(info, typeElement)
             }
         }
-        file.accept(visitor)
         for (typeArgumentList in inferredTypeArguments.values) typeArgumentList.accept(visitor)
+    }
+
+    private fun writeAnnotatedType(info: TypeInferenceInfo, typeElement: PsiTypeElement) {
+        val type = typeElement.type
+        info.writeAnnotated(type, DfaPsiUtil.getElementNullabilityForWrite(type, typeElement.parent as? PsiModifierListOwner))
+        if (type is PsiArrayType) info.writeAnnotated(type.componentType, type.componentType.nullability.nullability())
+        writeAnnotatedArguments(info, type)
     }
 
     private fun writeAnnotatedArguments(info: TypeInferenceInfo, type: PsiType) {
@@ -296,70 +310,203 @@ class J2KTypeInference(
         }
     }
 
-    private fun collectNodes() {
+    /** Visits the file once. A dataflow step waits until the end of the visit, because it can read the node of a later declaration. */
+    @Suppress("UnsafeReturnStatementVisitor")
+    private inner class FileVisitor(private val inFile: Boolean) : JavaRecursiveElementWalkingVisitor() {
         val components = ArrayList<PsiRecordComponent>()
-        file.accept(object : JavaRecursiveElementWalkingVisitor() {
-            override fun visitClass(aClass: PsiClass) {
-                super.visitClass(aClass)
-                if (aClass.isRecord) return
-                val written = (aClass as? PsiExtensibleClass)?.ownMethods ?: return
-                for (method in aClass.methods) {
-                    if (method in written || method.body == null) continue
-                    notPrinted += method
-                    notPrinted += method.parameterList.parameters
-                    methods += method
-                    val returnType = method.returnType
-                    if (!method.isConstructor && returnType != null) addNode(method, returnType)
-                    for (parameter in method.parameterList.parameters) {
-                        if (!parameter.isVarArgs) addNode(parameter, parameter.type)
-                    }
+        val dataflowSteps = ArrayList<() -> Unit>()
+        val bodyAnalyses = ArrayList<() -> Unit>()
+        val dereferences = ArrayList<PsiReferenceExpression>()
+
+        private fun later(step: () -> Unit) {
+            if (inFile) dataflowSteps += step else step()
+        }
+
+        override fun visitClass(aClass: PsiClass) {
+            if (inFile && isOutsideBodies(aClass) && isConstructed(aClass)) bodyAnalyses += { analyzeConstruction(aClass) }
+            super.visitClass(aClass)
+            if (inFile) addGeneratedMethodNodes(aClass)
+        }
+
+        override fun visitField(field: PsiField) {
+            super.visitField(field)
+            if (!inFile || field is PsiEnumConstant) return
+            val node = addNode(field, field.type)
+            if (node != null && (field.hasModifierProperty(PsiModifier.PRIVATE) || searchesAllUsers(field))) node.mutable = false
+        }
+
+        override fun visitMethod(method: PsiMethod) {
+            if (inFile && isOutsideBodies(method) && !(method.isConstructor && isConstructed(method.containingClass))) {
+                bodyAnalyses += { method.body?.let(::analyze) }
+            }
+            super.visitMethod(method)
+            if (!inFile) return
+            methods += method
+            val returnType = method.returnType
+            if (!method.isConstructor && returnType != null && method.containingClass?.isAnnotationType != true) {
+                val node = addNode(method, returnType)
+                if (node != null && (method.hasModifierProperty(PsiModifier.PRIVATE) || searchesAllUsers(method))) node.mutable = false
+            }
+        }
+
+        override fun visitClassInitializer(initializer: PsiClassInitializer) {
+            if (inFile && isOutsideBodies(initializer) && !isConstructed(initializer.containingClass)) bodyAnalyses += { analyze(initializer.body) }
+            super.visitClassInitializer(initializer)
+        }
+
+        override fun visitParameter(parameter: PsiParameter) {
+            super.visitParameter(parameter)
+            if (!inFile) return
+            when (val scope = parameter.declarationScope) {
+                is PsiMethod -> if (!parameter.isVarArgs) {
+                    val node = addNode(parameter, parameter.type)
+                    if (node != null && !isImplementedByLambdas(scope)) node.mutable = false
+                }
+
+                is PsiForeachStatement -> {
+                    addNode(parameter, parameter.type)?.mutable = false
+                    notPrinted += parameter
                 }
             }
+        }
 
-            override fun visitField(field: PsiField) {
-                super.visitField(field)
-                if (field is PsiEnumConstant) return
-                val node = addNode(field, field.type)
-                if (node != null && (field.hasModifierProperty(PsiModifier.PRIVATE) || searchesAllUsers(field))) node.mutable = false
+        override fun visitLocalVariable(variable: PsiLocalVariable) {
+            super.visitLocalVariable(variable)
+            if (inFile) addNode(variable, variable.type)?.mutable = false
+        }
+
+        override fun visitRecordComponent(recordComponent: PsiRecordComponent) {
+            super.visitRecordComponent(recordComponent)
+            if (!inFile) return
+            addNode(recordComponent, recordComponent.type)
+            components += recordComponent
+        }
+
+        override fun visitTypeElement(typeElement: PsiTypeElement) {
+            super.visitTypeElement(typeElement)
+            if (inFile) typeElements += typeElement
+        }
+
+        override fun visitReturnStatement(statement: PsiReturnStatement) {
+            super.visitReturnStatement(statement)
+            if (!inFile) return
+            val method = PsiTreeUtil.getParentOfType(statement, true, PsiMethod::class.java, PsiLambdaExpression::class.java, PsiClass::class.java)
+            if (method is PsiMethod) returnStatements.getOrPut(method) { ArrayList() } += statement
+        }
+
+        override fun visitReferenceExpression(expression: PsiReferenceExpression) {
+            super.visitReferenceExpression(expression)
+            if (inFile && isDereferenced(expression)) dereferences += expression
+        }
+
+        override fun visitVariable(variable: PsiVariable) {
+            super.visitVariable(variable)
+            later {
+                val node = nodes[variable] ?: return@later
+                variable.initializer?.let { addSink(it, node) }
             }
+        }
 
-            override fun visitMethod(method: PsiMethod) {
-                super.visitMethod(method)
-                methods += method
-                val returnType = method.returnType
-                if (!method.isConstructor && returnType != null && method.containingClass?.isAnnotationType != true) {
-                    val node = addNode(method, returnType)
-                    if (node != null && (method.hasModifierProperty(PsiModifier.PRIVATE) || searchesAllUsers(method))) node.mutable = false
+        override fun visitAssignmentExpression(expression: PsiAssignmentExpression) {
+            super.visitAssignmentExpression(expression)
+            later {
+                val node = expressionNode(expression.lExpression) ?: return@later
+                if (expression.operationTokenType == JavaTokenType.EQ) {
+                    expression.rExpression?.let { addSink(it, node) }
+                } else {
+                    node.join(Nullability.NotNull)
+                    if (PsiPrimitiveType.getUnboxedType(expression.lExpression.type) != null) node.needsNotNull = true
                 }
             }
+        }
 
-            override fun visitParameter(parameter: PsiParameter) {
-                super.visitParameter(parameter)
-                when (val scope = parameter.declarationScope) {
-                    is PsiMethod -> if (!parameter.isVarArgs) {
-                        val node = addNode(parameter, parameter.type)
-                        if (node != null && !isImplementedByLambdas(scope)) node.mutable = false
-                    }
-
-                    is PsiForeachStatement -> {
-                        addNode(parameter, parameter.type)?.mutable = false
-                        notPrinted += parameter
-                    }
+        override fun visitCallExpression(callExpression: PsiCallExpression) {
+            super.visitCallExpression(callExpression)
+            later {
+                addArgumentSinks(callExpression)
+                addMutabilityDataflow(callExpression)
+                if (callExpression is PsiMethodCallExpression) addReceiverElementSinks(callExpression)
+                // The nodes of the type arguments must exist before the DFA runs
+                if (callExpression is PsiMethodCallExpression && typeArgumentElements(callExpression).isNotEmpty()) calleeNode(callExpression)
+                // The converter reads the nullability of the arguments of a generic method call
+                if (callExpression is PsiMethodCallExpression && callExpression.resolveMethod()?.hasTypeParameters() == true) {
+                    dataflowQueries.addAll(callExpression.argumentList.expressions)
                 }
             }
+        }
 
-            override fun visitLocalVariable(variable: PsiLocalVariable) {
-                super.visitLocalVariable(variable)
-                addNode(variable, variable.type)?.mutable = false
+        override fun visitTypeCastExpression(expression: PsiTypeCastExpression) {
+            super.visitTypeCastExpression(expression)
+            later {
+                // The converter reads the nullability of the cast operand
+                val operand = expression.operand ?: return@later
+                dataflowQueries += operand
+                (operand as? PsiParenthesizedExpression)?.expression?.let { dataflowQueries += it }
             }
+        }
 
-            override fun visitRecordComponent(recordComponent: PsiRecordComponent) {
-                super.visitRecordComponent(recordComponent)
-                addNode(recordComponent, recordComponent.type)
-                components += recordComponent
+        override fun visitForeachStatement(statement: PsiForeachStatement) {
+            super.visitForeachStatement(statement)
+            later {
+                val variable = nodes[statement.iterationParameter] ?: return@later
+                mutabilitySource(statement.iteratedValue)?.let { variable.mutabilitySources += it }
+                val iterated = expressionNode(statement.iteratedValue) ?: return@later
+                val element = if (iterated.type is PsiArrayType) iterated.elements.firstOrNull() else receiverElement(iterated, iterableElementType)
+                if (element != null) {
+                    edge(element, variable)
+                    linkElements(element, variable)
+                }
             }
-        })
-        for (component in components) shareWithImplicitMembers(component)
+        }
+
+        override fun visitEnumConstant(enumConstant: PsiEnumConstant) {
+            super.visitEnumConstant(enumConstant)
+            later { addArgumentSinks(enumConstant) }
+        }
+
+        override fun visitNewExpression(expression: PsiNewExpression) {
+            super.visitNewExpression(expression)
+            later { if (expression.arrayInitializer != null) newExpressionNode(expression) }
+        }
+
+        override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
+            super.visitMethodReferenceExpression(expression)
+            later {
+                val method = expression.resolve() as? PsiMethod ?: return@later
+                for (parameter in method.parameterList.parameters) nodes[parameter]?.let(::joinUnknown)
+                if (method.name in MUTATING_METHODS) markMutable(expression.qualifierExpression)
+                nodes[method]?.mutable = true
+            }
+        }
+
+        override fun visitBinaryExpression(expression: PsiBinaryExpression) {
+            super.visitBinaryExpression(expression)
+            later {
+                val reference = comparedWithNull(expression) ?: return@later
+                nullComparisons += expression
+                dataflowQueries += reference
+            }
+        }
+    }
+
+    /** The DFA analyzes a body together with the classes and lambdas inside it, so the engine does not analyze them alone. */
+    private fun isOutsideBodies(element: PsiElement): Boolean =
+        PsiTreeUtil.getParentOfType(element, true, PsiMethod::class.java, PsiClassInitializer::class.java) == null
+
+    private fun addGeneratedMethodNodes(aClass: PsiClass) {
+        if (aClass.isRecord) return
+        val written = (aClass as? PsiExtensibleClass)?.ownMethods ?: return
+        for (method in aClass.methods) {
+            if (method in written || method.body == null) continue
+            notPrinted += method
+            notPrinted += method.parameterList.parameters
+            methods += method
+            val returnType = method.returnType
+            if (!method.isConstructor && returnType != null) addNode(method, returnType)
+            for (parameter in method.parameterList.parameters) {
+                if (!parameter.isVarArgs) addNode(parameter, parameter.type)
+            }
+        }
     }
 
     private fun isImplementedByLambdas(method: PsiMethod): Boolean = method.body == null && LambdaUtil.isFunctionalClass(method.containingClass)
@@ -434,91 +581,16 @@ class J2KTypeInference(
         else -> null
     }
 
-    private fun collectDataflow() {
-        val visitor = object : JavaRecursiveElementWalkingVisitor() {
-            override fun visitVariable(variable: PsiVariable) {
-                super.visitVariable(variable)
-                val node = nodes[variable] ?: return
-                variable.initializer?.let { addSink(it, node) }
-            }
-
-            override fun visitAssignmentExpression(expression: PsiAssignmentExpression) {
-                super.visitAssignmentExpression(expression)
-                val node = expressionNode(expression.lExpression) ?: return
-                if (expression.operationTokenType == JavaTokenType.EQ) {
-                    expression.rExpression?.let { addSink(it, node) }
-                } else {
-                    node.join(Nullability.NotNull)
-                    if (PsiPrimitiveType.getUnboxedType(expression.lExpression.type) != null) node.needsNotNull = true
-                }
-            }
-
-            override fun visitCallExpression(callExpression: PsiCallExpression) {
-                super.visitCallExpression(callExpression)
-                addArgumentSinks(callExpression)
-                addMutabilityDataflow(callExpression)
-                if (callExpression is PsiMethodCallExpression) addReceiverElementSinks(callExpression)
-                // The nodes of the type arguments must exist before the DFA runs
-                if (callExpression is PsiMethodCallExpression && typeArgumentElements(callExpression).isNotEmpty()) calleeNode(callExpression)
-                // The converter reads the nullability of the arguments of a generic method call
-                if (callExpression is PsiMethodCallExpression && callExpression.resolveMethod()?.hasTypeParameters() == true) {
-                    dataflowQueries.addAll(callExpression.argumentList.expressions)
-                }
-            }
-
-            override fun visitTypeCastExpression(expression: PsiTypeCastExpression) {
-                super.visitTypeCastExpression(expression)
-                // The converter reads the nullability of the cast operand
-                val operand = expression.operand ?: return
-                dataflowQueries += operand
-                (operand as? PsiParenthesizedExpression)?.expression?.let { dataflowQueries += it }
-            }
-
-            override fun visitForeachStatement(statement: PsiForeachStatement) {
-                super.visitForeachStatement(statement)
-                val variable = nodes[statement.iterationParameter] ?: return
-                mutabilitySource(statement.iteratedValue)?.let { variable.mutabilitySources += it }
-                val iterated = expressionNode(statement.iteratedValue) ?: return
-                val element = if (iterated.type is PsiArrayType) iterated.elements.firstOrNull() else receiverElement(iterated, iterableElementType)
-                if (element != null) {
-                    edge(element, variable)
-                    linkElements(element, variable)
-                }
-            }
-
-            override fun visitEnumConstant(enumConstant: PsiEnumConstant) {
-                super.visitEnumConstant(enumConstant)
-                addArgumentSinks(enumConstant)
-            }
-
-            override fun visitNewExpression(expression: PsiNewExpression) {
-                super.visitNewExpression(expression)
-                if (expression.arrayInitializer != null) newExpressionNode(expression)
-            }
-
-            override fun visitMethodReferenceExpression(expression: PsiMethodReferenceExpression) {
-                super.visitMethodReferenceExpression(expression)
-                val method = expression.resolve() as? PsiMethod ?: return
-                for (parameter in method.parameterList.parameters) nodes[parameter]?.let(::joinUnknown)
-                if (method.name in MUTATING_METHODS) markMutable(expression.qualifierExpression)
-                nodes[method]?.mutable = true
-            }
-
-            override fun visitBinaryExpression(expression: PsiBinaryExpression) {
-                super.visitBinaryExpression(expression)
-                val reference = comparedWithNull(expression) ?: return
-                nullComparisons += expression
-                dataflowQueries += reference
-            }
-        }
-        file.accept(visitor)
-        for (owner in notPrinted) (owner as? PsiMethod)?.body?.accept(visitor)
+    private fun addDeclarationDataflow() {
+        val generatedBodies = FileVisitor(inFile = false)
+        for (owner in notPrinted) (owner as? PsiMethod)?.body?.accept(generatedBodies)
 
         for (method in methods) {
             val searchesAllUsers = searchesAllUsers(method)
             nodes[method]?.let { node ->
                 if (method.body == null && !searchesAllUsers) node.join(Nullability.Default)
-                for (statement in PsiUtil.findReturnStatements(method)) statement.returnValue?.let { addSink(it, node) }
+                val returns = if (method in notPrinted) PsiUtil.findReturnStatements(method).asList() else returnStatements[method].orEmpty()
+                for (statement in returns) statement.returnValue?.let { addSink(it, node) }
             }
             addParameterDataflow(method)
             addOverrideDataflow(method)
@@ -824,25 +896,6 @@ class J2KTypeInference(
         return ReferencesSearch.search(original, original.useScope).findAll().map { it.element }.filter { it.containingFile != originalFile }
     }
 
-    private fun analyzeBodies() {
-        file.accept(object : JavaRecursiveElementWalkingVisitor() {
-            override fun visitClass(aClass: PsiClass) {
-                if (isConstructed(aClass)) analyzeConstruction(aClass)
-                super.visitClass(aClass)
-            }
-
-            override fun visitMethod(method: PsiMethod) {
-                if (method.isConstructor && isConstructed(method.containingClass)) return
-                method.body?.let(::analyze)
-            }
-
-            override fun visitClassInitializer(initializer: PsiClassInitializer) {
-                if (isConstructed(initializer.containingClass)) return
-                analyze(initializer.body)
-            }
-        })
-    }
-
     private fun isConstructed(aClass: PsiClass?): Boolean =
         aClass != null && aClass !is PsiTypeParameter && !aClass.isInterface && !aClass.isRecord &&
             !PsiUtil.isLocalOrAnonymousClass(aClass)
@@ -1122,15 +1175,6 @@ class J2KTypeInference(
                 lambdaParameterTypeArguments[lambdaParameter] = typeArgument
             }
         }
-    }
-
-    private fun addUnreachedDereferences() {
-        file.accept(object : JavaRecursiveElementWalkingVisitor() {
-            override fun visitReferenceExpression(expression: PsiReferenceExpression) {
-                super.visitReferenceExpression(expression)
-                if (expression !in reached && isDereferenced(expression)) variableNode(expression)?.needsNotNull = true
-            }
-        })
     }
 
     private fun isDereferenced(expression: PsiExpression): Boolean = when (val parent = expression.parent) {
