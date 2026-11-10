@@ -519,7 +519,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
   /** Owns the mutable per-client status and derives an immutable [ClientRowState] for the view. */
   private inner class ClientController(val client: McpClient, val project: Project?) {
     private var isConfigured = client.isConfigured() ?: false
-    private var isPortCorrect = client.isPortCorrect()
+    private var isConfigUpToDate = client.isConfigUpToDate()
     private var autoConfigured = false
     private var errorMessage: String? = null
 
@@ -540,7 +540,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
         autoConfigured = false
       }
       isConfigured = client.isConfigured() ?: false
-      isPortCorrect = client.isPortCorrect()
+      isConfigUpToDate = client.isConfigUpToDate()
     }
 
     /** How the client stands, in the order the states override one another. */
@@ -557,7 +557,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
 
       return when {
         autoConfigured -> ClientStatus.configured(McpServerBundle.message("mcp.server.client.restart.info.settings", configured))
-        isConfigured && isPortCorrect -> ClientStatus.configured(configured)
+        isConfigured && isConfigUpToDate -> ClientStatus.configured(configured)
         isConfigured -> ClientStatus.problem(McpServerBundle.message("mcp.server.configured.port.invalid"))
         else -> ClientStatus(
           icon = ColorizeProxyIcon.Simple(McpserverIcons.Expui.StatusDisabled, JBColor.GRAY),
@@ -622,7 +622,7 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
       }.onSuccess {
         errorMessage = null
         isConfigured = true
-        isPortCorrect = true
+        isConfigUpToDate = true
         autoConfigured = true
       }
       refreshClients()

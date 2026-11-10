@@ -222,7 +222,7 @@ internal class McpServerTerminalPromotionNotifierTest {
     assertThat(determineMcpServerTerminalPromotionIssue(isServerRunning = false,
                                                         isClientConfigured = false,
                                                         hasPromotionCandidateConfig = false,
-                                                        isPortCorrect = true))
+                                                        isConfigUpToDate = true))
       .isEqualTo(McpServerTerminalPromotionIssue.ENABLE_SERVER)
   }
 
@@ -231,7 +231,7 @@ internal class McpServerTerminalPromotionNotifierTest {
     assertThat(determineMcpServerTerminalPromotionIssue(isServerRunning = true,
                                                         isClientConfigured = false,
                                                         hasPromotionCandidateConfig = false,
-                                                        isPortCorrect = true))
+                                                        isConfigUpToDate = true))
       .isEqualTo(McpServerTerminalPromotionIssue.CONFIGURE_CLIENT)
   }
 
@@ -240,7 +240,7 @@ internal class McpServerTerminalPromotionNotifierTest {
     assertThat(determineMcpServerTerminalPromotionIssue(isServerRunning = true,
                                                         isClientConfigured = true,
                                                         hasPromotionCandidateConfig = true,
-                                                        isPortCorrect = false))
+                                                        isConfigUpToDate = false))
       .isEqualTo(McpServerTerminalPromotionIssue.RECONFIGURE_CLIENT)
   }
 
@@ -249,7 +249,7 @@ internal class McpServerTerminalPromotionNotifierTest {
     assertThat(determineMcpServerTerminalPromotionIssue(isServerRunning = true,
                                                         isClientConfigured = true,
                                                         hasPromotionCandidateConfig = true,
-                                                        isPortCorrect = true)).isNull()
+                                                        isConfigUpToDate = true)).isNull()
   }
 
   @Test

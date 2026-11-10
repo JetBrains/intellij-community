@@ -200,13 +200,13 @@ internal data class McpServerTerminalPromotionCandidates(
 
   fun reconfigureClients(): List<McpClient> {
     return setupClients().filter { client ->
-      client.hasPromotionCandidateConfig() && !client.isPortCorrect()
+      client.hasPromotionCandidateConfig() && !client.isConfigUpToDate()
     }
   }
 
   fun reconfigureClients(expectedPort: Int): List<McpClient> {
     return setupClients().filter { client ->
-      client.hasPromotionCandidateConfig(expectedPort) && !client.isPortCorrect(expectedPort)
+      client.hasPromotionCandidateConfig(expectedPort) && !client.isConfigUpToDate(expectedPort)
     }
   }
 
@@ -248,10 +248,10 @@ internal fun determineMcpServerTerminalPromotionIssue(
   isServerRunning: Boolean,
   isClientConfigured: Boolean?,
   hasPromotionCandidateConfig: Boolean,
-  isPortCorrect: Boolean,
+  isConfigUpToDate: Boolean,
 ): McpServerTerminalPromotionIssue? {
   return when {
-    hasPromotionCandidateConfig && !isPortCorrect -> McpServerTerminalPromotionIssue.RECONFIGURE_CLIENT
+    hasPromotionCandidateConfig && !isConfigUpToDate -> McpServerTerminalPromotionIssue.RECONFIGURE_CLIENT
     !isServerRunning -> McpServerTerminalPromotionIssue.ENABLE_SERVER
     isClientConfigured != true -> McpServerTerminalPromotionIssue.CONFIGURE_CLIENT
     else -> null
@@ -307,7 +307,7 @@ private fun resolveTerminalPromotion(project: Project, provider: McpServerTermin
     isServerRunning = McpServerService.getInstance().isRunning,
     isClientConfigured = client.isConfigured(),
     hasPromotionCandidateConfig = client.hasPromotionCandidateConfig(),
-    isPortCorrect = client.isPortCorrect(),
+    isConfigUpToDate = client.isConfigUpToDate(),
   ) ?: return null
   return McpServerTerminalPromotion(
     provider = provider,

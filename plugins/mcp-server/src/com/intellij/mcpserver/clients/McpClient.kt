@@ -156,9 +156,12 @@ abstract class McpClient(
   }
 
   /** Whether this client's configuration already points at this IDE's MCP server. */
-  fun isConnectedToThisIde(): Boolean = isConfigured() == true && isPortCorrect()
+  fun isConnectedToThisIde(): Boolean = isConfigured() == true && isConfigUpToDate()
 
-  fun isPortCorrect(expectedPort: Int = expectedPromotionPort()): Boolean {
+  @Deprecated("The check also compares the token.", ReplaceWith("isConfigUpToDate(expectedPort)"))
+  fun isPortCorrect(expectedPort: Int = expectedPromotionPort()): Boolean = isConfigUpToDate(expectedPort)
+
+  fun isConfigUpToDate(expectedPort: Int = expectedPromotionPort()): Boolean {
     val candidates = promotionCandidateServers(expectedPort)
     return candidates.isEmpty() || candidates.any { serverConfig -> reachesThisIde(serverConfig, expectedPort) }
   }

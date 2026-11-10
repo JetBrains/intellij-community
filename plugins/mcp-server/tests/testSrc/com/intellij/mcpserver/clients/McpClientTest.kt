@@ -205,7 +205,7 @@ class McpClientTest {
     )
 
     assertTrue(client.hasPromotionCandidateConfig(expectedPort = 64342))
-    assertFalse(client.isPortCorrect(expectedPort = 64342))
+    assertFalse(client.isConfigUpToDate(expectedPort = 64342))
   }
 
   @Test
@@ -216,7 +216,7 @@ class McpClientTest {
     )
 
     assertTrue(client.hasPromotionCandidateConfig(expectedPort = 64342))
-    assertFalse(client.isPortCorrect(expectedPort = 64342))
+    assertFalse(client.isConfigUpToDate(expectedPort = 64342))
   }
 
   @Test
@@ -226,7 +226,7 @@ class McpClientTest {
     )
 
     assertTrue(client.hasPromotionCandidateConfig(expectedPort = 64342))
-    assertFalse(client.isPortCorrect(expectedPort = 64342))
+    assertFalse(client.isConfigUpToDate(expectedPort = 64342))
   }
 
   @Test
@@ -236,7 +236,7 @@ class McpClientTest {
     )
 
     assertTrue(client.hasPromotionCandidateConfig(expectedPort = 64342))
-    assertFalse(client.isPortCorrect(expectedPort = 64342))
+    assertFalse(client.isConfigUpToDate(expectedPort = 64342))
   }
 
   @Test
@@ -246,7 +246,7 @@ class McpClientTest {
     )
 
     assertFalse(client.hasPromotionCandidateConfig(expectedPort = 64342))
-    assertTrue(client.isPortCorrect(expectedPort = 64342))
+    assertTrue(client.isConfigUpToDate(expectedPort = 64342))
   }
 
   @Test
@@ -256,7 +256,7 @@ class McpClientTest {
     )
 
     assertFalse(client.hasPromotionCandidateConfig(expectedPort = 64342))
-    assertTrue(client.isPortCorrect(expectedPort = 64342))
+    assertTrue(client.isConfigUpToDate(expectedPort = 64342))
   }
 
   @Test
@@ -266,7 +266,7 @@ class McpClientTest {
     )
 
     assertFalse(client.hasPromotionCandidateConfig(expectedPort = 64342))
-    assertTrue(client.isPortCorrect(expectedPort = 64342))
+    assertTrue(client.isConfigUpToDate(expectedPort = 64342))
   }
 
   @Test
@@ -275,7 +275,7 @@ class McpClientTest {
       linkedMapOf("fallback" to ExistingConfig(url = "http://localhost:64342/stream", type = "http"))
     )
 
-    assertFalse(client.isPortCorrect(expectedPort = 64342))
+    assertFalse(client.isConfigUpToDate(expectedPort = 64342))
   }
 
   @Test
@@ -286,7 +286,7 @@ class McpClientTest {
                                                headers = mapOf(IJ_MCP_AUTH_TOKEN to token)))
     )
 
-    assertTrue(client.isPortCorrect(expectedPort = 64342))
+    assertTrue(client.isConfigUpToDate(expectedPort = 64342))
   }
 
   @Test
@@ -297,7 +297,7 @@ class McpClientTest {
       linkedMapOf("jetbrains" to ExistingConfig(command = cmd.exePath, args = cmd.parametersList.parameters, env = cmd.environment)),
     )
 
-    assertTrue(client.isPortCorrect(expectedPort = port))
+    assertTrue(client.isConfigUpToDate(expectedPort = port))
   }
 
   @Test
@@ -308,7 +308,7 @@ class McpClientTest {
       linkedMapOf("jetbrains" to ExistingConfig(command = cmd.exePath, args = cmd.parametersList.parameters, env = cmd.environment)),
     )
 
-    assertFalse(client.isPortCorrect(expectedPort = port))
+    assertFalse(client.isConfigUpToDate(expectedPort = port))
   }
 
   @Test
@@ -322,7 +322,7 @@ class McpClientTest {
       scope = scope,
     )
 
-    assertTrue(client.isPortCorrect(expectedPort = port))
+    assertTrue(client.isConfigUpToDate(expectedPort = port))
   }
 }
 

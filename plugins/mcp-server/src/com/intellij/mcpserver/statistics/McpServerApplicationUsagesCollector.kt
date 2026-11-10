@@ -80,7 +80,7 @@ internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector(
     metrics.add(MCP_ROUTER_MODE.metric(McpToolFilterSettings.getInstance().invocationMode))
 
     McpClientDetector.detectGlobalMcpClients().forEach { client ->
-      metrics.add(MCP_GLOBAL_CLIENTS.metric(client.mcpClientInfo.name, client.isConfigured() ?: false, !client.isPortCorrect()))
+      metrics.add(MCP_GLOBAL_CLIENTS.metric(client.mcpClientInfo.name, client.isConfigured() ?: false, !client.isConfigUpToDate()))
     }
 
     metrics.addAll(collectToolStateMetrics(mcpServerService))

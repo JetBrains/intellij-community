@@ -99,7 +99,7 @@ internal class McpServerPopupModelImpl(
   override suspend fun detectClients(): List<DetectedClientInfo> = withContext(Dispatchers.IO) {
     McpClientDetector.detectGlobalMcpClients().map { client ->
       val needsConfig = !client.isConnectedToThisIde()
-      val initialError = if (!client.isPortCorrect()) {
+      val initialError = if (!client.isConfigUpToDate()) {
         McpServerBundle.message("mcp.server.configured.port.mismatch")
       }
       else null
