@@ -12325,9 +12325,19 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/abstractProperty.kt");
         }
 
+        @TestMetadata("actualFun.kt")
+        public void testActualFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/actualFun.kt");
+        }
+
         @TestMetadata("avoidNameCapture.kt")
         public void testAvoidNameCapture() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/avoidNameCapture.kt");
+        }
+
+        @TestMetadata("expectFun.kt")
+        public void testExpectFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveMemberToTopLevel/expectFun.kt");
         }
 
         @TestMetadata("function.kt")

@@ -18,6 +18,7 @@ internal class MoveMemberToTopLevelIntention : MoveMemberIntention(
         if (element !is KtNamedFunction && element !is KtProperty && element !is KtClassOrObject) return null
         if (element.containingClassOrObject !is KtClassOrObject) return null
         if (element is KtObjectDeclaration && element.isCompanion()) return null
+        if (element.isExpectOrActual()) return null
         return element.nameIdentifier?.textRange
     }
 

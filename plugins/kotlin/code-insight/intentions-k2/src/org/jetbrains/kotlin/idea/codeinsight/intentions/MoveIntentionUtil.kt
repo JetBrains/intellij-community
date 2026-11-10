@@ -24,8 +24,7 @@ internal fun isApplicableForMoveMember(element: KtNamedDeclaration): Boolean {
     if (element !is KtNamedFunction && element !is KtProperty && element !is KtClassOrObject) return false
     if (element is KtEnumEntry) return false
     if (element is KtNamedFunction && element.bodyExpression == null) return false
-    if (element.isEffectivelyActual(checkConstructor = false)) return false
-    if (element.isExpectDeclaration()) return false
+    if (element.isExpectOrActual()) return false
     if (element is KtNamedFunction && element.valueParameterList == null) return false
     if ((element is KtNamedFunction || element is KtProperty) && element.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return false
     if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
@@ -38,6 +37,13 @@ internal fun isApplicableForMoveMember(element: KtNamedDeclaration): Boolean {
 
     return true
 }
+
+/**
+ * Checks if the declaration is `expect` or `actual` for move member intentions.
+ * Doesn't check constructors, they are not applicable for the intentions.
+ */
+internal fun KtNamedDeclaration.isExpectOrActual(): Boolean =
+    isEffectivelyActual(checkConstructor = false) || isExpectDeclaration()
 
 /**
  * Finds an applicability range for the intentions that move a member to a companion object/block.
