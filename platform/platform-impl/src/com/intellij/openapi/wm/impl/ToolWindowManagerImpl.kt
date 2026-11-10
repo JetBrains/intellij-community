@@ -2130,6 +2130,19 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       return
     }
 
+    doSetShowStripeButton(id, value)
+  }
+
+  /**
+   * Puts the stripe button back in both UIs; the inverse of [hideToolWindow] with `removeFromStripe = true`.
+   * It neither shows nor activates the window.
+   */
+  @ApiStatus.Internal
+  fun restoreStripeButton(id: String) {
+    doSetShowStripeButton(id, true)
+  }
+
+  private fun doSetShowStripeButton(id: String, value: Boolean) {
     val entry = idToEntry.get(id) ?: throw IllegalStateException("window with id=\"$id\" isn't registered")
     var info = layoutState.getInfo(id)
     if (info == null) {

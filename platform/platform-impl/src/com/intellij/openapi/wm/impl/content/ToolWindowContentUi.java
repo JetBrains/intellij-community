@@ -199,6 +199,10 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
 
         if (window.isToHideOnEmptyContent()) {
           window.setAvailable(true);
+          // the last content removal took the button off the stripe, so bring it back; no show, no activation
+          if (!window.isShowStripeButton()) {
+            window.toolWindowManager.restoreStripeButton(window.getId());
+          }
         }
       }
 
