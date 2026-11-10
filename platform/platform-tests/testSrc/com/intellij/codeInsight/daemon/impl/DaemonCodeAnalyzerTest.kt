@@ -7,10 +7,14 @@ import com.intellij.lang.ExternalLanguageAnnotators
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
+import com.intellij.openapi.application.WriteActionListener
 import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
@@ -31,6 +35,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
@@ -58,6 +63,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.jupiter.api.Test
 import java.beans.PropertyChangeListener
 import java.util.concurrent.atomic.AtomicBoolean
@@ -66,6 +72,8 @@ import javax.swing.JPanel
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 @Suppress("SuspiciousPackagePrivateAccess")
 @TestApplication
@@ -219,6 +227,41 @@ class DaemonCodeAnalyzerTest {
         fileEditorManager.closeFile(virtualFile)
       }
     }
+  }
+
+  /**
+   * A request of the file status queue waits for the read lock behind a pending background `edtWriteAction`.
+   * The write action needs the EDT, so the EDT must dispatch events while it waits for the queue.
+   */
+  @Test
+  fun `file status queue wait lets a pending edtWriteAction finish`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    highlighting.get() // init DaemonListeners
+    val analyzer = assertIs<DaemonCodeAnalyzerImpl>(DaemonCodeAnalyzer.getInstance(project.get()))
+    val writeBlock = { }
+    val writePending = CompletableDeferred<Unit>()
+    (ApplicationManager.getApplication() as ApplicationEx).addWriteActionListener(object : WriteActionListener {
+      override fun beforeWriteActionStart(action: Class<*>) {
+        if (action == writeBlock.javaClass) writePending.complete(Unit)
+      }
+    }, disposable)
+    val readActionRan = AtomicBoolean(false)
+    withContext(Dispatchers.EDT) {
+      analyzer.myListeners.runAfterUpdateFileStatusQueue {
+        runBlockingMaybeCancellable {
+          // The bound makes a deadlock fail the test instead of a hang of the EDT.
+          withTimeoutOrNull(5.seconds) {
+            writePending.await()
+            readAction { readActionRan.set(true) }
+          }
+        }
+      }
+      launch(Dispatchers.Default) {
+        edtWriteAction(writeBlock)
+      }
+      TestDaemonCodeAnalyzerImpl(project.get()).waitForUpdateFileStatusBackgroundQueueInTests()
+    }
+    assertTrue(writePending.isCompleted, "The edtWriteAction must become pending")
+    assertTrue(readActionRan.get(), "The queue request must get the read lock after the edtWriteAction")
   }
 
   @Test

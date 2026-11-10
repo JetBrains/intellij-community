@@ -10,7 +10,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.impl.TestOnlyThreading;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -43,6 +42,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.ui.EDT;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +52,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
@@ -367,16 +367,15 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter implements Runnable {
     if (myUpdateFileStatusAlarm.isEmpty()) {
       return;
     }
-    CountDownLatch s = new CountDownLatch(1);
-    myUpdateFileStatusAlarm.addRequest(() -> s.countDown(), 0);
-    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack(() -> {
-      try {
-        s.await();
-      }
-      catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    });
+    var done = new CompletableFuture<Void>();
+    myUpdateFileStatusAlarm.addRequest(() -> done.complete(null), 0);
+    if (EDT.isCurrentThreadEdt()) {
+      // A background edtWriteAction can hold the write lock and wait for the EDT, while a queued request waits for that lock.
+      TestDaemonCodeAnalyzerImpl.waitWhilePumping(done);
+    }
+    else {
+      done.join();
+    }
   }
 
   void runAfterUpdateFileStatusQueue(@NotNull Runnable runnable) {
