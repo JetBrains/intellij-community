@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.Bidi;
 import java.util.ArrayList;
@@ -72,8 +73,19 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   boolean hasCachedLayoutFor(int line) {
+    return getCachedLineLayout(line) != null;
+  }
+
+  /**
+   * Returns the layout of the line when the cache has one, and creates no layout.
+   * Returns null for a line outside the cache, and after the disposal.
+   */
+  @Nullable LineLayout getCachedLineLayout(int line) {
+    if (myLines == null || line < 0 || line >= myLines.size()) {
+      return null;
+    }
     LineLayout layout = myLines.get(line);
-    return layout != null && layout != BIDI_NOT_REQUIRED_MARKER;
+    return layout == BIDI_NOT_REQUIRED_MARKER ? null : layout;
   }
 
   void onChunkAccess(@NotNull LineChunk chunk) {

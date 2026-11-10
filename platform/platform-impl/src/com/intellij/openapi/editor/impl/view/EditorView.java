@@ -806,6 +806,44 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
   }
 
   /**
+   * Returns whether the text of other visual lines can reach into the line box of the visual line.
+   * The editor fonts reach only with a line spacing below 1.
+   * The fonts of font families reach from the lines nearby, when they are taller than the line box.
+   * A line outside the visible area is not painted, so it does not count.
+   * A visible line with an unknown layout counts, because its old pixels can still be on the screen.
+   */
+  @RequiresEdt
+  public boolean isOverhungByOtherLines(int visualLine) {
+    EditorViewSnapshot current = getSnapshotWithMetrics();
+    EditorViewMetrics metrics = current.metrics();
+    if (metrics.topOverhang() > 0 || metrics.bottomOverhang() > 0) {
+      return true; // the editor fonts reach outside their own line box
+    }
+    int topOverhang = Math.max(0, current.topOverhang());
+    int bottomOverhang = Math.max(0, current.bottomOverhang());
+    if (topOverhang == 0 && bottomOverhang == 0) {
+      return false; // no resolved font family is taller than the line box
+    }
+    int[] lineRange = visualLineToYRange(visualLine);
+    Rectangle visibleArea = myEditor.getScrollingModel().getVisibleArea();
+    int top = Math.max(visibleArea.y, lineRange[0] - bottomOverhang);
+    int bottom = Math.min(visibleArea.y + visibleArea.height, lineRange[1] + topOverhang);
+    VisualLinesIterator iterator = new VisualLinesIterator(this, yToVisualLine(top));
+    while (!iterator.atEnd() && iterator.getY() < bottom) {
+      int line = iterator.getVisualLine();
+      if (line != visualLine && !iterator.isCustomFoldRegionLine()) {
+        boolean above = line < visualLine;
+        int gap = above ? lineRange[0] - iterator.getY() - iterator.getLineHeight() : iterator.getY() - lineRange[1];
+        if (getFontFamiliesOverhang(iterator, above, current) > gap) {
+          return true; // a painted line nearby reaches across the gap into the line box
+        }
+      }
+      iterator.advance();
+    }
+    return false; // no painted line nearby reaches into the line box
+  }
+
+  /**
    * Returns the current snapshot with all its lazy values: the metrics, the font resolver and the prefix layout.
    * It computes the values that the snapshot does not have yet.
    */
@@ -871,6 +909,28 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
         return newPrefixLayout;
       }
     }
+  }
+
+  /**
+   * Returns how far the text of the visual line of the iterator reaches below its line box, or with {@code above} false, above it.
+   * A collapsed fold shows only the first and the last logical line. An unknown layout reaches any distance.
+   */
+  private int getFontFamiliesOverhang(VisualLinesIterator iterator, boolean above, EditorViewSnapshot current) {
+    int first = getFontFamiliesMetric(iterator.getStartLogicalLine(), above);
+    int last = getFontFamiliesMetric(iterator.getEndLogicalLine(), above);
+    if (first < 0 || last < 0) {
+      return Integer.MAX_VALUE;
+    }
+    return Math.max(first, last) - (above ? current.descent() : current.ascent());
+  }
+
+  /**
+   * Returns the largest descent, or with {@code descent} false the largest ascent, of the font families of the cached layout
+   * of the logical line, or -1 when it is unknown.
+   */
+  private int getFontFamiliesMetric(int logicalLine, boolean descent) {
+    LineLayout layout = myTextLayoutCache.getCachedLineLayout(logicalLine);
+    return layout == null ? -1 : layout.getFontFamiliesMetric(descent);
   }
 
   private @NotNull EditorViewSnapshot getSnapshotWithMetrics() {

@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.DocumentInternalUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JdkConstants.FontStyle;
@@ -51,6 +52,21 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
   }
 
   abstract void forEachChunk(@NotNull Consumer<? super LineChunk> action);
+
+  /**
+   * Returns the largest descent, or with {@code descent} false the largest ascent, of the font families of the chunks
+   * that were laid out, see {@link LineChunk#getFontFamiliesDescent()}.
+   * Returns -1 when no chunk was laid out, and 0 for a line without chunks.
+   */
+  final int getFontFamiliesMetric(boolean descent) {
+    Ref<Integer> max = Ref.create(-1);
+    Ref<Boolean> hasChunks = Ref.create(false);
+    forEachChunk(chunk -> {
+      hasChunks.set(true);
+      max.set(Math.max(max.get(), descent ? chunk.getFontFamiliesDescent() : chunk.getFontFamiliesAscent()));
+    });
+    return hasChunks.get() ? max.get() : 0;
+  }
 
   abstract boolean isLtr();
 

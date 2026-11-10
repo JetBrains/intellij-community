@@ -27,6 +27,16 @@ class LineChunk {
   private final int startOffset;
   private final int endOffset;
 
+  /**
+   * The largest ascent of the fonts of the font families in this chunk, see {@link TextFonts#ascent()}, or -1 before the first layout.
+   */
+  private int fontFamiliesAscent = -1;
+
+  /**
+   * The largest descent of the fonts of the font families in this chunk, see {@link TextFonts#descent()}, or -1 before the first layout.
+   */
+  private int fontFamiliesDescent = -1;
+
   LineChunk(int startOffset, int endOffset) {
     this(startOffset, endOffset, null);
   }
@@ -55,6 +65,22 @@ class LineChunk {
 
   void clearFragments() {
     fragments = null;
+  }
+
+  /**
+   * Returns the largest ascent of the fonts of the font families in this chunk, or -1 before its first layout.
+   * The editor fonts count as 0. The value stays after {@link #clearFragments()}, and each layout writes it again.
+   */
+  int getFontFamiliesAscent() {
+    return fontFamiliesAscent;
+  }
+
+  /**
+   * Returns the largest descent of the fonts of the font families in this chunk, or -1 before its first layout.
+   * The editor fonts count as 0. The value stays after {@link #clearFragments()}, and each layout writes it again.
+   */
+  int getFontFamiliesDescent() {
+    return fontFamiliesDescent;
   }
 
   boolean isReal() {
@@ -110,6 +136,8 @@ class LineChunk {
     TextFonts currentFonts = fontResolver.editorFonts();
     FontFamilies lastFontFamilies = null;
     TextFonts lastFonts = currentFonts;
+    int maxAscent = 0;
+    int maxDescent = 0;
     int currentStart = start;
     while (!it.atEnd()) {
       TextAttributes attributes = it.getMergedAttributes();
@@ -119,6 +147,8 @@ class LineChunk {
       if (fontFamilies != lastFontFamilies) {
         lastFonts = fontsOf(fontFamilies, fontResolver, editor, start, end);
         lastFontFamilies = fontFamilies;
+        maxAscent = Math.max(maxAscent, lastFonts.ascent());
+        maxDescent = Math.max(maxDescent, lastFonts.descent());
       }
       if (fontType != currentFontType || !color.equals(currentColor) || lastFonts != currentFonts) {
         int tokenStart = it.getStartOffset();
@@ -155,6 +185,8 @@ class LineChunk {
         view
       );
     }
+    fontFamiliesAscent = maxAscent;
+    fontFamiliesDescent = maxDescent;
     view.getSizeManager().textLayoutPerformed(start, end);
     assert !fragments.isEmpty();
   }

@@ -114,14 +114,14 @@ public final class ImmediatePainter {
     return document instanceof DocumentImpl &&
            editor.getHighlighter() instanceof LexerEditorHighlighter &&
            !(editor.getComponent().getParent() instanceof EditorTextField) &&
-           editor.myView.getTopOverhang() <= 0 && editor.myView.getBottomOverhang() <= 0 &&
            !editor.getSelectionModel().hasSelection() &&
            caretModel.getCaretCount() == 1 &&
            !isInVirtualSpace(editor, caret) &&
            !isInsertion(document, caret.getOffset()) &&
            !caret.isAtRtlLocation() &&
            !caret.isAtBidiRunBoundary() &&
-           noBorderEffectPainted(editor, caret);
+           noBorderEffectPainted(editor, caret) &&
+           !editor.myView.isOverhungByOtherLines(caret.getVisualPosition().line);
   }
 
   private static boolean isInVirtualSpace(final Editor editor, final Caret caret) {
