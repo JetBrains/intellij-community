@@ -1,5 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 filegroup(
     name = "testData",
@@ -15,6 +16,10 @@ jps_test(
     runtime_deps = [":java-decompiler-engine-tests_test_lib"],
 )
 ### skip generation section `test intellij.java.decompiler.engine.tests`
+
+### auto-generated section `dev intellij.java.decompiler.engine` start
+content_module_jar(module = ":engine")
+### auto-generated section `dev intellij.java.decompiler.engine` end
 
 ### auto-generated section `build intellij.java.decompiler.engine` start
 jvm_library(
@@ -41,6 +46,7 @@ jvm_library(
 exports_files(
     [
         "intellij.java.decompiler.engine.iml",
+        "resources/intellij.java.decompiler.engine.xml",
     ],
     visibility = ["//visibility:public"],
 )

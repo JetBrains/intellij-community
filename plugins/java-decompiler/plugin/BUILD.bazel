@@ -26,12 +26,12 @@ dev_dist_plugin(
     content_modules = ["intellij.java.decompiler.engine"],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
-        "lib/java-decompiler.jar": [
-            "intellij.java.decompiler",
-            "intellij.java.decompiler.engine",
-        ],
+        "lib/java-decompiler.jar": ["intellij.java.decompiler"],
     },
     main_module = "intellij.java.decompiler",
+    module_jar_paths = {
+        "intellij.java.decompiler.engine": "lib/intellij.java.decompiler.engine.jar",
+    },
 )
 ### auto-generated section `dev intellij.java.decompiler` end
 

@@ -31,7 +31,9 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
-  <content namespace="jetbrains"/>
+  <content namespace="jetbrains">
+    <module name="intellij.java.decompiler.engine" loading="embedded"/>
+  </content>
 
   <resource-bundle>messages.IdeaDecompilerBundle</resource-bundle>
 

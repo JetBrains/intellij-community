@@ -203,9 +203,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       // explicitly pack JaCoCo as a separate JAR
       spec.withModuleLibrary(libraryName = "JaCoCo", moduleName = "intellij.java.coverage", relativeOutputPath = "jacoco.jar")
     },
-    plugin("intellij.java.decompiler") { spec ->
-      spec.withModule("intellij.java.decompiler.engine", spec.mainJarName)
-    },
     pluginAuto("intellij.terminal") { spec ->
       spec.withResource("resources/shell-integrations", "shell-integrations")
       // bundle the libghostty-vt native library
