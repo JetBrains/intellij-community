@@ -746,14 +746,18 @@ public class FileTypesTest extends HeavyPlatformTestCase {
   }
 
   private void reInitFileTypeManagerComponent(@Nullable Element element) {
-    myFileTypeManager.INSTANTIATED.clear();
-    myFileTypeManager.getRemovedMappingTracker().clear();
-    myFileTypeManager.clearStandardFileTypesBeforeTest();
+    reInitFileTypeManagerComponent(myFileTypeManager, element);
+  }
+
+  private static void reInitFileTypeManagerComponent(@NotNull FileTypeManagerImpl fileTypeManager, @Nullable Element element) {
+    fileTypeManager.INSTANTIATED.clear();
+    fileTypeManager.getRemovedMappingTracker().clear();
+    fileTypeManager.clearStandardFileTypesBeforeTest();
     if (element != null) {
-      myFileTypeManager.loadState(element);
+      fileTypeManager.loadState(element);
     }
-    myFileTypeManager.initializeComponent();
-    myFileTypeManager.getRegisteredFileTypes();
+    fileTypeManager.initializeComponent();
+    fileTypeManager.getRegisteredFileTypes();
   }
 
   public void testReadingDefaultFileTypesClearsRemovedPluginAdvertiserMappings() {
@@ -1383,10 +1387,14 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     bean.implementationClass = MyHaskellFileType.class.getName();
     Disposable disposable = registerFileType(bean, FileTypeManagerImpl.coreIdeaPluginDescriptor());
 
-    assertInstanceOf(myFileTypeManager.findFileTypeByName(MyHaskellFileType.NAME), MyHaskellFileType.class);
-    assertInstanceOf(myFileTypeManager.getFileTypeByFileName("foo.hs"), MyHaskellFileType.class);
-
-    WriteAction.run(() -> Disposer.dispose(disposable));
+    try {
+      assertInstanceOf(myFileTypeManager.findFileTypeByName(MyHaskellFileType.NAME), MyHaskellFileType.class);
+      assertInstanceOf(myFileTypeManager.getFileTypeByFileName("foo.hs"), MyHaskellFileType.class);
+    }
+    finally {
+      WriteAction.run(() -> Disposer.dispose(disposable));
+      reInitFileTypeManagerComponent((FileTypeManagerImpl)FileTypeManagerEx.getInstanceEx(), myGlobalStateBefore);
+    }
   }
 
   private static class MyCustomImageFileType implements FileType {
