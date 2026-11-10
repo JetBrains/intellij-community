@@ -166,12 +166,12 @@ public final class PythonRunConfigurationForm implements PythonRunConfigurationP
 
   @Override
   public @NotNull String getInputFile() {
-    return content.inputFileTextFieldWithBrowseButton.getText();
+    return FileUtil.toSystemIndependentName(content.inputFileTextFieldWithBrowseButton.getText());
   }
 
   @Override
   public void setInputFile(@NotNull String inputFile) {
-    content.inputFileTextFieldWithBrowseButton.setText(inputFile);
+    content.inputFileTextFieldWithBrowseButton.setText(FileUtil.toSystemDependentName(inputFile));
   }
 
   @Override

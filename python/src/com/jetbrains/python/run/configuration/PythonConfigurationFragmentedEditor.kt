@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.components.TextComponentEmptyText
@@ -85,7 +86,7 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
           component.component.text = config.inputFile
         },
         { config, component ->
-          val filePath = component.component.text
+          val filePath = FileUtil.toSystemIndependentName(component.component.text)
           config.isRedirectInput = component.isVisible && StringUtil.isNotEmpty(filePath)
           config.inputFile = filePath
         },

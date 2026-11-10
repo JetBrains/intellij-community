@@ -262,7 +262,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration<Pytho
           }
 
           private void updateScriptName(String path) {
-            myScriptName = FileUtil.toSystemDependentName(path);
+            myScriptName = FileUtil.toSystemIndependentName(path);
           }
         };
       }

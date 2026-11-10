@@ -5,6 +5,7 @@ import com.intellij.execution.ui.CommandLinePanel
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.SettingsEditorFragmentType
 import com.intellij.openapi.ui.LabeledComponent
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.RawCommandLineEditor
 import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.TextComponentEmptyText
@@ -123,7 +124,7 @@ class PyTestTargetChooserFragment: AbstractPyRunConfigTargetChooserFragment<PyAb
     val targetType = modeToPyRunTargetVariant[mode]
     if (targetType == null) return
     val text = (fields[mode] as? TextAccessor)?.text?.trim() ?: ""
-    s.target.target = text
+    s.target.target = if (mode == SCRIPT_MODE) FileUtil.toSystemIndependentName(text) else text
     s.target.targetType = targetType
   }
 
