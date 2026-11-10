@@ -26,7 +26,6 @@ jvm_library(
         # do not sort,
         "//platform/util/jdom",
         "//platform/util-ex",
-        "//platform/platform-util-io:ide-util-io",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
     deps = [
