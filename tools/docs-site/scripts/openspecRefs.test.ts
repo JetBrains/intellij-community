@@ -54,7 +54,7 @@ A CI build MUST write each result.
 
 /** A tree with one source file, one guide, and the given files. */
 function repo(files: Record<string, string>): string {
-  return temporaryTree('openspec-refs-', { 'src/A.kt': 'class A\n', 'docs/guides/guide.md': '# Guide\n\n## The first part\n', ...files })
+  return temporaryTree('openspec-refs-', { 'src/A.kt': 'class A\n', 'docs/guides/guide.md': '# Guide\n\n## The first part\n', 'os/openspec/config.yaml': 'schema: spec-driven\n', ...files })
 }
 
 describe('the spec files of an OpenSpec root', () => {
@@ -177,5 +177,26 @@ A delta MUST add a rule. See [the guide](../../../../docs/guides/guide.md) and [
       `os/openspec/changes/one/specs/cache/spec.md:10: test-link: [@test] 'src/Gone.kt' matches no existing file`,
       `os/openspec/changes/one/specs/cache/spec.md:5: link: 'gone.md' points to a missing file`,
     ])
+  })
+})
+
+describe('the scan of an OpenSpec root', () => {
+  it('passes a root with its config.yaml and no spec yet, when the site has no suffix root', () => {
+    assert.deepEqual(specRefFindings(config(), repo({})).findings, [])
+  })
+
+  it('reports a root without config.yaml, because its path names no OpenSpec root', () => {
+    const root = temporaryTree('openspec-refs-', { 'docs/guides/guide.md': '# Guide\n' })
+    assert.deepEqual(specRefFindings(config(), root).findings, ['os/openspec: no config.yaml; the path names no OpenSpec root, so the scan is broken'])
+  })
+
+  it('reports a spec.md under specs/ that the scan does not give, because the scan is broken then', () => {
+    // a spec.md right under specs/ names no capability, so the scan does not give it
+    const root = repo({ 'os/openspec/specs/spec.md': spec(VALID) })
+    assert.deepEqual(specRefFindings(config(), root).findings, ['os/openspec: specs/ holds 1 spec.md file(s), and the scan found no spec; the scan is broken'])
+  })
+
+  it('reports a site with a suffix root and no spec, also when its OpenSpec root has config.yaml', () => {
+    assert.deepEqual(specRefFindings(config(['spec']), repo({})).findings, ['os/openspec, spec: no spec file; the scan is broken'])
   })
 })

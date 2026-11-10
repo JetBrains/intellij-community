@@ -27,15 +27,18 @@
 // A delta spec of an active change gets the test-link, link, sentence, requirement and heading rules. It has no
 // frontmatter. Its links resolve from the folder of its main spec, because the archive copies the text there.
 // The structure rules of OpenSpec itself, such as a Purpose, a SHALL or MUST, and a scenario, belong to the CLI.
+// The scan is broken when an OpenSpec root has no `config.yaml`, when it finds no spec of a root whose `specs/` holds a
+// `spec.md`, or when it finds no spec and the site has a suffix root. So an OpenSpec root with its `config.yaml` and no
+// spec passes.
 //
 // The check is one owner for two callers: the `check` script of a site, and the gate of a site, which runs on bun
 // without node_modules. So it imports nothing from npm. It throws with every finding.
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
-import { dirname, join, relative, resolve, sep } from 'node:path'
-import { contentDir, isMainModule, openspecDeltaFiles, posixRelative, repoRoot, runCheck, specFiles } from './paths.ts'
+import { basename, dirname, join, relative, resolve, sep } from 'node:path'
+import { contentDir, isMainModule, openspecDeltaFiles, posixRelative, repoRoot, runCheck, specFiles, walkFiles } from './paths.ts'
 import type { SiteConfig } from './siteConfig.ts'
-import { requirementGroup } from './sourcePaths.ts'
+import { OPENSPEC_SPEC_FILE, requirementGroup } from './sourcePaths.ts'
 
 /** The part of the site config that the check reads. */
 export type SpecRefsConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'specs'>
@@ -534,8 +537,29 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
   const files = specFiles(config, root)
   const proseDocs = proseDocFiles(config, root).filter(file => !files.some(spec => spec.file === file))
   const findings: string[] = []
-  if (files.length === 0) {
-    findings.push(`${[...(config.specs.openspec?.roots ?? []), ...config.specs.roots].join(', ')}: no spec file; the scan is broken`)
+  // an OpenSpec root proves its path by its config.yaml, so a root with no spec yet is no broken scan. A spec.md under
+  // its specs/ that the scan did not give is a broken scan. A suffix root proves its path only by a spec.
+  const openspecRoots = config.specs.openspec?.roots ?? []
+  for (const openspecRoot of openspecRoots) {
+    if (!existsSync(join(root, openspecRoot, 'config.yaml'))) {
+      findings.push(`${openspecRoot}: no config.yaml; the path names no OpenSpec root, so the scan is broken`)
+      continue
+    }
+    const specsDir = join(root, openspecRoot, 'specs')
+    if (!files.some(({ file }) => file.startsWith(specsDir + sep))) {
+      let missed = 0
+      walkFiles(specsDir, entry => entry.startsWith('.'), (file) => {
+        if (basename(file) === OPENSPEC_SPEC_FILE) {
+          missed++
+        }
+      })
+      if (missed > 0) {
+        findings.push(`${openspecRoot}: specs/ holds ${missed} ${OPENSPEC_SPEC_FILE} file(s), and the scan found no spec; the scan is broken`)
+      }
+    }
+  }
+  if (files.length === 0 && (config.specs.roots.length > 0 || openspecRoots.length === 0)) {
+    findings.push(`${[...openspecRoots, ...config.specs.roots].join(', ')}: no spec file; the scan is broken`)
   }
   if (proseDocs.length === 0) {
     findings.push(`${config.docs.guides}: no guide, explainer, decision record or extra doc; the scan is broken`)
