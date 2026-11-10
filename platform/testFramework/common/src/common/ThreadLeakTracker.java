@@ -196,21 +196,23 @@ public final class ThreadLeakTracker {
       after.values(),
       thread -> new Pair<>(thread, thread.getStackTrace())
     );
+    boolean screencastStarted = ContainerUtil.exists(stackTraces.values(), ThreadLeakTracker::isScreencastTokenWatcher);
     for (Thread thread : after.values()) {
-      waitForThread(thread, stackTraces, all, after);
+      waitForThread(thread, stackTraces, all, after, screencastStarted);
     }
   }
 
   private static void waitForThread(Thread thread,
                                     @Unmodifiable Map<Thread, StackTraceElement[]> stackTraces,
                                     Map<String, Thread> all,
-                                    Map<String, Thread> after) {
+                                    Map<String, Thread> after,
+                                    boolean screencastStarted) {
     if (!shouldWaitForThread(thread)) {
       return;
     }
     long start = System.currentTimeMillis();
     StackTraceElement[] traceBeforeWait = thread.getStackTrace();
-    if (shouldIgnore(thread, traceBeforeWait)) {
+    if (shouldIgnore(thread, traceBeforeWait, screencastStarted)) {
       return;
     }
     int WAIT_SEC = 10;
@@ -228,13 +230,13 @@ public final class ThreadLeakTracker {
       }
       // after some time, the submitted task can finish and the thread can become idle
       stackTrace = thread.getStackTrace();
-      if (shouldIgnore(thread, stackTrace)) break;
+      if (shouldIgnore(thread, stackTrace, screencastStarted)) break;
       // avoid busy-waiting, otherwise other threads might yield priority to this one (see sleepIfNeededToGivePriorityToAnotherThread)
       LockSupport.parkNanos(10_000_000);
     }
 
     // check once more because the thread name may be set via race
-    if (shouldIgnore(thread, stackTrace)) {
+    if (shouldIgnore(thread, stackTrace, screencastStarted)) {
       return;
     }
 
@@ -288,7 +290,7 @@ public final class ThreadLeakTracker {
     return true;
   }
 
-  private static boolean shouldIgnore(Thread thread, StackTraceElement[] stackTrace) {
+  private static boolean shouldIgnore(Thread thread, StackTraceElement[] stackTrace, boolean screencastStarted) {
     if (!thread.isAlive()) return true;
     if (stackTrace.length == 0) return true;
     if (isWellKnownOffender(thread.getName())) return true;
@@ -308,7 +310,46 @@ public final class ThreadLeakTracker {
            || isJfrPeriodicTasks(stackTrace)
            || isIjentMediatorThread(stackTrace)
            || windowsCompletionPortLeakForDocker(stackTrace)
-           || isSwingAccessibilityThread(stackTrace);
+           || isSwingAccessibilityThread(stackTrace)
+           || isWaylandScreencastThread(thread, stackTrace, screencastStarted);
+  }
+
+  /**
+   * On Wayland, the first {@link java.awt.Robot} screen capture starts the screencast threads of the JDK.
+   * They live until the JVM exits.
+   * The watch service threads of the token storage have no owner frame.
+   * Thus they are ignored only when the same leak check finds the "ScreencastWatcher" thread.
+   *
+   * @param screencastStarted true when the threads of the leak check include the "ScreencastWatcher" thread
+   */
+  private static boolean isWaylandScreencastThread(Thread thread, StackTraceElement[] stackTrace, boolean screencastStarted) {
+    if (isScreencastTokenWatcher(stackTrace)) return true;
+    // "auto-close screencast session" (alive) WAITING
+    // at java.base/java.lang.Object.wait(Object.java:351)
+    // at java.base/java.util.TimerThread.mainLoop(Timer.java:543)
+    if (thread.getName().equals("auto-close screencast session")) {
+      return ContainerUtil.exists(stackTrace, element -> element.getClassName().equals("java.util.TimerThread"));
+    }
+    if (!screencastStarted) return false;
+    // "FileSystemWatchService" (alive) RUNNABLE
+    // at java.base/sun.nio.fs.LinuxWatchService.poll(Native Method)
+    // at java.base/sun.nio.fs.LinuxWatchService$Poller.run(LinuxWatchService.java:307)
+    //
+    // "MRFS-drain-local" (alive) WAITING
+    // at java.base/sun.nio.fs.AbstractWatchService.take(AbstractWatchService.java:118)
+    // at com.intellij.platform.core.nio.fs.MultiRoutingWatchServiceDelegate.lambda$startDrainThread$0(MultiRoutingWatchServiceDelegate.java:67)
+    return ContainerUtil.exists(stackTrace, element ->
+      element.getClassName().equals("sun.nio.fs.LinuxWatchService$Poller") ||
+      element.getClassName().equals("com.intellij.platform.core.nio.fs.MultiRoutingWatchServiceDelegate") &&
+      element.getMethodName().contains("startDrainThread")
+    );
+  }
+
+  private static boolean isScreencastTokenWatcher(StackTraceElement[] stackTrace) {
+    // "ScreencastWatcher" (alive) WAITING
+    // at com.intellij.platform.core.nio.fs.MultiRoutingWatchServiceDelegate.take(MultiRoutingWatchServiceDelegate.java:126)
+    // at java.desktop/sun.awt.screencast.TokenStorage$WatcherThread.run(TokenStorage.java:204)
+    return ContainerUtil.exists(stackTrace, element -> element.getClassName().equals("sun.awt.screencast.TokenStorage$WatcherThread"));
   }
 
   private static boolean windowsCompletionPortLeakForDocker(StackTraceElement[] trace) {
