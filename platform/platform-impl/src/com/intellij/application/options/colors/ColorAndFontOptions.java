@@ -33,6 +33,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsSchemeImpl;
 import com.intellij.openapi.editor.markup.AttributesFlyweightSerDe;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -1090,7 +1091,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       boolean skip = scheme instanceof EditorColorsSchemeImpl && isInherited() && myIsInheritedInitial;
       if (!skip) {
         // IDEA-162844 set only if previously was not inherited (and, so, we must mark it as inherited)
-        scheme.setAttributes(key, isInherited() ? AbstractColorsScheme.INHERITED_ATTRS_MARKER : getTextAttributes());
+        // a copy, because the snapshot of the scheme must not change when the option changes later
+        scheme.setAttributes(key, isInherited() ? AbstractColorsScheme.INHERITED_ATTRS_MARKER : getTextAttributes().clone());
       }
     }
 
@@ -1110,6 +1112,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       return switch (channel) {
         case BOLD -> BitUtil.isSet(baseline.getFontType(), Font.BOLD) != BitUtil.isSet(current.getFontType(), Font.BOLD);
         case ITALIC -> BitUtil.isSet(baseline.getFontType(), Font.ITALIC) != BitUtil.isSet(current.getFontType(), Font.ITALIC);
+        case FONT_FAMILIES -> !Comparing.equal(baseline.getFontFamilies(), current.getFontFamilies());
         case FOREGROUND -> !Comparing.equal(baseline.getForegroundColor(), current.getForegroundColor());
         case BACKGROUND -> !Comparing.equal(baseline.getBackgroundColor(), current.getBackgroundColor());
         case ERROR_STRIPE -> !Comparing.equal(baseline.getErrorStripeColor(), current.getErrorStripeColor());
@@ -1146,6 +1149,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
           boolean italic = BitUtil.isSet((channel == Channel.ITALIC ? source : getTextAttributes()).getFontType(), Font.ITALIC);
           setFontType((bold ? Font.BOLD : Font.PLAIN) | (italic ? Font.ITALIC : Font.PLAIN));
         }
+        case FONT_FAMILIES -> setExternalFontFamilies(source.getFontFamilies());
         case FOREGROUND -> {
           setForegroundChecked(source.getForegroundColor() != null);
           setForegroundColor(source.getForegroundColor());
@@ -1169,6 +1173,11 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     @Override
     public boolean isErrorStripeEnabled() {
       return true;
+    }
+
+    @Override
+    boolean isFontFamiliesEnabled() {
+      return EditorRegistry.current().isFontFamiliesEnabled();
     }
 
     @Override

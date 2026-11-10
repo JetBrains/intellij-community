@@ -18,6 +18,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,13 +40,21 @@ import java.util.Set;
 
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
-final class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
+/**
+ * Lists the typographic font families of {@link FontFamilyService#getAvailableFamilies()}, the monospaced families first.
+ */
+@ApiStatus.Internal
+public final class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
 
   public static final int ITEM_WIDTH = 230;
 
   private final boolean myIsPrimary;
 
-  FontFamilyCombo(boolean isPrimary) {
+  /**
+   * Creates the combo box. A primary combo box has no {@code <None>} item.
+   * The constructor starts a scan of the fonts on a pooled thread.
+   */
+  public FontFamilyCombo(boolean isPrimary) {
     super(new MyModel(!isPrimary));
     setSwingPopup(false);
     myIsPrimary = isPrimary;

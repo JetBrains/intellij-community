@@ -4,6 +4,7 @@ package com.intellij.application.options.colors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AbstractKeyDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
@@ -199,6 +200,17 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
     return true;
   }
 
+  boolean isFontFamiliesEnabled() {
+    return false;
+  }
+
+  @Nullable FontFamilies getExternalFontFamilies() {
+    return null;
+  }
+
+  void setExternalFontFamilies(@Nullable FontFamilies fontFamilies) {
+  }
+
   public boolean isForegroundEnabled() {
     return true;
   }
@@ -224,7 +236,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
    * A single editable facet of a color option, as shown in {@link ColorAndFontDescriptionPanel}.
    */
   enum Channel {
-    BOLD, ITALIC, FOREGROUND, BACKGROUND, ERROR_STRIPE, EFFECTS
+    BOLD, ITALIC, FONT_FAMILIES, FOREGROUND, BACKGROUND, ERROR_STRIPE, EFFECTS
   }
 
   /**

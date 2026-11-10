@@ -19,8 +19,10 @@ package com.intellij.application.options.colors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.awt.Color;
@@ -96,6 +98,16 @@ public abstract class TextAttributesDescription extends ColorAndFontDescription 
   @Override
   public void setExternalErrorStripe(Color col) {
     myAttributes.setErrorStripeColor(col);
+  }
+
+  @Override
+  @Nullable FontFamilies getExternalFontFamilies() {
+    return myAttributes.getFontFamilies();
+  }
+
+  @Override
+  void setExternalFontFamilies(@Nullable FontFamilies fontFamilies) {
+    myAttributes.setFontFamilies(fontFamilies);
   }
 
   protected TextAttributes getTextAttributes() {

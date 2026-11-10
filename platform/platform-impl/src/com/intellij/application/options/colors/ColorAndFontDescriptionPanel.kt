@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors
 
+import com.intellij.application.options.editor.fonts.FontFamilyCombo
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -11,11 +12,13 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath
 import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.editor.markup.FontFamilies
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.AbstractFontCombo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColorPanel
 import com.intellij.ui.ColorUtil
@@ -25,6 +28,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.Placeholder
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.RowLayout
@@ -80,6 +84,9 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
       it.revertChannel(ColorAndFontDescription.Channel.ITALIC)
     }
   }
+  private val myFontFamilyRevert = RevertButton(ApplicationBundle.message("color.option.revert.font.family")) {
+    revertChanges { it.revertChannel(ColorAndFontDescription.Channel.FONT_FAMILIES) }
+  }
   private val myForegroundRevert = RevertButton(ApplicationBundle.message("color.option.revert.foreground")) {
     revertChanges { it.revertChannel(ColorAndFontDescription.Channel.FOREGROUND) }
   }
@@ -108,6 +115,24 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
   private lateinit var myCbItalic: JBCheckBox
   private lateinit var myLabelFont: JLabel
   private lateinit var myInheritAttributesBox: JBCheckBox
+  private lateinit var myFontFamilyLabel: JLabel
+  private lateinit var myFontFamilyRow: Row
+  private lateinit var myFontFamilyPlaceholder: Placeholder
+
+  /**
+   * The combo box of the font family row, or null before the first option with font families.
+   */
+  private var myFontFamilyCombo: AbstractFontCombo<*>? = null
+
+  /**
+   * The item that [reset] selected in [myFontFamilyCombo], so [apply] can tell it from an item that the user selects.
+   */
+  private var myFontFamilyItemOfReset: Any? = null
+
+  /**
+   * The font families that [myFontFamilyItemOfReset] stands for.
+   */
+  private var myFontFamiliesOfReset: FontFamilies? = null
 
   private var myUiEventsEnabled = true
 
@@ -120,6 +145,13 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
       myCbBold = checkBox(ApplicationBundle.message("checkbox.font.bold")).component
       myCbItalic = checkBox(ApplicationBundle.message("checkbox.font.italic")).component
     }
+    myFontFamilyRow = row {
+      myFontFamilyLabel = label(ApplicationBundle.message("primary.font"))
+        .resizableColumn()
+        .component
+      cell(myFontFamilyRevert)
+      myFontFamilyPlaceholder = placeholder()
+    }.visible(false)
     row {
       myCbForeground = checkBox(ApplicationBundle.message("checkbox.color.foreground"))
         .resizableColumn()
@@ -173,31 +205,31 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
     }.layout(RowLayout.INDEPENDENT).visible(false)
   }
 
+  private val myActionListener = ActionListener { e ->
+    if (myUiEventsEnabled) {
+      myErrorStripeColorChooser.isEnabled = myCbErrorStripe.isSelected
+      myForegroundChooser.isEnabled = myCbForeground.isSelected
+      myBackgroundChooser.isEnabled = myCbBackground.isSelected
+      myEffectsColorChooser.isEnabled = myCbEffects.isSelected
+      myEffectsCombo.isEnabled = myCbEffects.isSelected
+
+      myDispatcher.multicaster.onSettingsChanged(e)
+    }
+  }
+
   init {
     add(myPanel, BorderLayout.CENTER)
 
     border = JBUI.Borders.empty(4, 0, 4, 4)
     myPanel.border = JBUI.Borders.empty(0, 10, 10, 10)
 
-    val actionListener = ActionListener { e ->
-      if (myUiEventsEnabled) {
-        myErrorStripeColorChooser.isEnabled = myCbErrorStripe.isSelected
-        myForegroundChooser.isEnabled = myCbForeground.isSelected
-        myBackgroundChooser.isEnabled = myCbBackground.isSelected
-        myEffectsColorChooser.isEnabled = myCbEffects.isSelected
-        myEffectsCombo.isEnabled = myCbEffects.isSelected
-
-        myDispatcher.multicaster.onSettingsChanged(e)
-      }
-    }
-
     for (c in arrayOf(myCbBackground, myCbForeground, myCbEffects, myCbErrorStripe, myCbItalic, myCbBold, myInheritAttributesBox)) {
-      c.addActionListener(actionListener)
+      c.addActionListener(myActionListener)
     }
     for (c in arrayOf(myBackgroundChooser, myForegroundChooser, myEffectsColorChooser, myErrorStripeColorChooser)) {
-      c.addActionListener(actionListener)
+      c.addActionListener(myActionListener)
     }
-    myEffectsCombo.addActionListener(actionListener)
+    myEffectsCombo.addActionListener(myActionListener)
 
     @Suppress("HardCodedStringLiteral")
     Messages.configureMessagePaneUi(myInheritanceLabel, "<html>", null)
@@ -217,6 +249,7 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
       myCbBold.isEnabled = false
       myCbItalic.isSelected = false
       myCbItalic.isEnabled = false
+      myFontFamilyRow.visible(false)
       updateColorChooser(myCbForeground, myForegroundChooser, false, false, null)
       updateColorChooser(myCbBackground, myBackgroundChooser, false, false, null)
       updateColorChooser(myCbErrorStripe, myErrorStripeColorChooser, false, false, null)
@@ -238,6 +271,7 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
       val description = attrDescription as? ColorAndFontDescription
       myCurrentDescription = description
       if (description == null) {
+        myFontFamilyRow.visible(false)
         updateModificationIndicators()
         updateContrastWarning()
         return
@@ -275,6 +309,7 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
       val name = ContainerUtil.reverseMap(myEffectsMap)[effectType]
       myEffectsCombo.model.selectedItem = name
       myEffectsCombo.isEnabled = (description.isEffectsColorEnabled && description.isEffectsColorChecked) && description.isEditable
+      resetFontFamilies(description)
       setInheritanceInfo(description)
       myLabelFont.isEnabled = myCbBold.isEnabled || myCbItalic.isEnabled
       updateModificationIndicators()
@@ -303,6 +338,7 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
     myCbBold.foreground = if (boldModified) MODIFIED_ITEM_FOREGROUND else null
     myCbItalic.foreground = if (italicModified) MODIFIED_ITEM_FOREGROUND else null
 
+    updateChannelIndicator(description, ColorAndFontDescription.Channel.FONT_FAMILIES, myFontFamilyRevert, myFontFamilyLabel)
     updateChannelIndicator(description, ColorAndFontDescription.Channel.FOREGROUND, myForegroundRevert, myCbForeground)
     updateChannelIndicator(description, ColorAndFontDescription.Channel.BACKGROUND, myBackgroundRevert, myCbBackground)
     updateChannelIndicator(description, ColorAndFontDescription.Channel.ERROR_STRIPE, myErrorStripeRevert, myCbErrorStripe)
@@ -316,10 +352,10 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
   private fun updateChannelIndicator(description: ColorAndFontDescription?,
                                      channel: ColorAndFontDescription.Channel,
                                      revertButton: RevertButton,
-                                     checkBox: JCheckBox) {
+                                     component: JComponent) {
     val modified = description != null && description.isChannelModified(channel)
     revertButton.setRevertAvailable(modified)
-    checkBox.foreground = if (modified) MODIFIED_ITEM_FOREGROUND else null
+    component.foreground = if (modified) MODIFIED_ITEM_FOREGROUND else null
   }
 
   private fun revertChanges(revertAction: (ColorAndFontDescription) -> Unit) {
@@ -372,6 +408,8 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
     myCbForeground.isEnabled = isEditEnabled && description.isForegroundEnabled
     myCbBold.isEnabled = isEditEnabled && description.isFontEnabled
     myCbItalic.isEnabled = isEditEnabled && description.isFontEnabled
+    myFontFamilyLabel.isEnabled = isEditEnabled && description.isFontFamiliesEnabled
+    myFontFamilyCombo?.isEnabled = isEditEnabled && description.isFontFamiliesEnabled
     myCbEffects.isEnabled = isEditEnabled && description.isEffectsColorEnabled
     myCbErrorStripe.isEnabled = isEditEnabled && description.isErrorStripeEnabled
     myErrorStripeColorChooser.setEditable(isEditEnabled)
@@ -388,6 +426,7 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
       val baseAttributes = description.baseAttributes
       if (baseAttributes != null) {
         description.fontType = baseAttributes.fontType
+        description.externalFontFamilies = baseAttributes.fontFamilies
         description.isForegroundChecked = baseAttributes.foregroundColor != null
         description.foregroundColor = baseAttributes.foregroundColor
         description.isBackgroundChecked = baseAttributes.backgroundColor != null
@@ -409,6 +448,9 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
       if (myCbBold.isSelected) fontType = fontType or Font.BOLD
       if (myCbItalic.isSelected) fontType = fontType or Font.ITALIC
       description.fontType = fontType
+      if (description.isFontFamiliesEnabled) {
+        description.externalFontFamilies = getSelectedFontFamilies()
+      }
       description.isForegroundChecked = myCbForeground.isSelected
       description.foregroundColor = myForegroundChooser.selectedColor
       description.isBackgroundChecked = myCbBackground.isSelected
@@ -424,6 +466,56 @@ class ColorAndFontDescriptionPanel : JPanel(BorderLayout()), OptionsPanelImpl.Co
       }
     }
     description.apply(scheme)
+  }
+
+  /**
+   * Shows the font families of the description in the font row.
+   * The combo box shows the first family, or `<None>` for an option without font families.
+   */
+  private fun resetFontFamilies(description: ColorAndFontDescription) {
+    val enabled = description.isFontFamiliesEnabled
+    myFontFamilyRow.visible(enabled)
+    if (!enabled) {
+      return
+    }
+    val combo = getOrCreateFontFamilyCombo()
+    val fontFamilies = description.externalFontFamilies
+    combo.fontName = fontFamilies?.names()?.first()
+    myFontFamilyItemOfReset = combo.selectedItem
+    myFontFamiliesOfReset = fontFamilies
+  }
+
+  /**
+   * Returns the font families that the font row selects, or null for `<None>`.
+   * Until the user selects another item, the font families of [reset] stay, also a list of several families from a scheme file.
+   * The combo box shows a family that is not installed as a warning item, and its name is not a family name.
+   */
+  private fun getSelectedFontFamilies(): FontFamilies? {
+    val combo = myFontFamilyCombo
+    if (combo == null || combo.isNoFontSelected) {
+      return null
+    }
+    if (combo.selectedItem === myFontFamilyItemOfReset) {
+      return myFontFamiliesOfReset
+    }
+    return toFontFamilies(combo.fontName)
+  }
+
+  /**
+   * Returns the combo box of the font family row, and creates it on the first call.
+   * Each combo box scans the fonts, and a search in the settings creates a panel for each page.
+   */
+  private fun getOrCreateFontFamilyCombo(): AbstractFontCombo<*> {
+    val existing = myFontFamilyCombo
+    if (existing != null) {
+      return existing
+    }
+    val combo = FontFamilyCombo(false)
+    myFontFamilyLabel.labelFor = combo
+    combo.addActionListener(myActionListener)
+    myFontFamilyPlaceholder.component = combo
+    myFontFamilyCombo = combo
+    return combo
   }
 
   override fun addListener(listener: OptionsPanelImpl.ColorDescriptionPanel.Listener) {
@@ -497,6 +589,21 @@ private class RevertButton(@NlsActions.ActionText text: String, onRevert: () -> 
 
   fun setRevertAvailable(available: Boolean) {
     myButton.isVisible = available
+  }
+}
+
+/**
+ * Returns the font families with the one name, or null when [FontFamilies.of] refuses the name, for example a name with a comma.
+ */
+private fun toFontFamilies(name: String?): FontFamilies? {
+  if (name == null) {
+    return null
+  }
+  try {
+    return FontFamilies.of(name)
+  }
+  catch (_: IllegalArgumentException) {
+    return null
   }
 }
 
