@@ -188,9 +188,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withProjectLibrary("Ant", "ant", LibraryPackMode.STANDALONE_SEPARATE)
     },
     pluginAuto(listOf("intellij.gradle.java.plugin", "intellij.gradle.java")),
-    pluginAuto("intellij.junit") { spec ->
-      spec.withModule("intellij.junit.v6.rt", "junit6-rt.jar")
-    },
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },
