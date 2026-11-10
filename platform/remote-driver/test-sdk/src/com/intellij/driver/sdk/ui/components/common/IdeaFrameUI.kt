@@ -19,6 +19,7 @@ import com.intellij.driver.sdk.ui.SwingUtilities
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UIComponentsList
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
 import com.intellij.driver.sdk.ui.components.common.editor.EditorTabsManager
 import com.intellij.driver.sdk.ui.components.common.dialogs.ideStatusBar
 import com.intellij.driver.sdk.ui.components.common.toolwindows.ToolWindowLeftToolbarUi
@@ -51,11 +52,16 @@ fun Finder.currentIdeFrame(): IdeaFrameUI = ideFrames().list().let { frames ->
 
 fun Finder.ideFrames(): UIComponentsList<IdeaFrameUI> = xx(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
 
+/** Waits until the frame is found and ready, and then runs [action] on it. */
 fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
-  ideFrame().action()
+  ideFrame().waitFound().action()
 }
 
-fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit = {}): IdeaFrameUI = ui.ideFrame().apply(action)
+/** Returns the frame without a search. A check such as `ideFrame().present()` can then find no frame. */
+fun Driver.ideFrame(): IdeaFrameUI = ui.ideFrame()
+
+/** Waits until the frame is found and ready, and then runs [action] on it. */
+fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit = {}): IdeaFrameUI = ui.ideFrame().waitFound().apply(action)
 
 fun Driver.ideFrame(index: Int, action: IdeaFrameUI.() -> Unit = {}): IdeaFrameUI = ui.ideFrames().list()[index].apply(action)
 
