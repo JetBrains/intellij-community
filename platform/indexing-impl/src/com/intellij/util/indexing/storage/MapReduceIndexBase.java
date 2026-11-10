@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -38,11 +39,22 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.util.SystemProperties.getLongProperty;
 import static com.intellij.util.indexing.FileBasedIndexExtension.USE_FORWARD_INDEX_FOR_KEYS_FILTERING;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @Internal
 public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduceIndex<Key, Value, FileContent>
   implements UpdatableIndex<Key, Value, FileContent, FileCache> {
+
+  private static final Logger LOG = Logger.getInstance(MapReduceIndexBase.class);
+  private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, /*ignoreRepeatedLogsInMs: */5_000);
+
+  /// Warn if [#processAllKeys] with a non-trivial [IdFilter] takes longer than this
+  private static final long SLOW_KEYS_FILTERING_THRESHOLD_NS = MILLISECONDS.toNanos(
+    Math.max(getLongProperty("ide.indexes.slow-keys-filtering-threshold-ms", 1_000), 0L)
+  );
 
   private final boolean mySingleEntryIndex;
 
@@ -56,6 +68,18 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       throw new IllegalArgumentException("extension.getName() (=" + indexId + ") should be instance of com.intellij.util.indexing.ID");
     }
     mySingleEntryIndex = extension instanceof SingleEntryFileBasedIndexExtension;
+
+    if (USE_FORWARD_INDEX_FOR_KEYS_FILTERING
+        && (extension instanceof FileBasedIndexExtension<?, ?> fileBasedExtension)
+        && fileBasedExtension.traceKeyHashToVirtualFileMapping()
+        && canFilterKeysByFileIdWithForwardIndex() && getForwardIndex() instanceof IterableForwardIndex) {
+      // The key-hash mapping costs a write on each update, but processAllKeys() filters via ForwardIndex, and never reads it:
+      LOG.warn("Index [" + indexId + "] enables traceKeyHashToVirtualFileMapping(), but actually keys will be filtered via ForwardIndex, " +
+               "so traceKeyHashToVirtualFileMapping is effectively ignored, and just waste resources on its' maintenance. " +
+               "Use traceKeyHashToVirtualFileMapping(){ return !FileBasedIndexExtension.USE_FORWARD_INDEX_FOR_KEYS_FILTERING; } to " +
+               "skip maintenance when forward index filtering is enabled"
+      );
+    }
   }
 
   @Override
@@ -69,32 +93,46 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
   public boolean processAllKeys(@NotNull Processor<? super Key> processor,
                                 @NotNull GlobalSearchScope scope,
                                 @Nullable IdFilter idFilter) throws StorageException {
-    // Keys traversal with trivial IdFilter is usually faster via main storage, because no need for deduplication;
-    // With non-trivial IdFilter filtering via ForwardIndex is usually faster (if ForwardIndex exists & supports iteration)
-    if (idFilter == null || idFilter == IdFilter.ACCEPT_ALL
-        || !USE_FORWARD_INDEX_FOR_KEYS_FILTERING
-        || !canFilterKeysByFileIdWithForwardIndex()
-        || !(getForwardIndex() instanceof IterableForwardIndex forwardIndex)
-        || !(getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor)) {
-      return ((VfsAwareIndexStorage<Key, Value>)getStorage()).processKeys(processor, scope, idFilter);
-    }
-
-    // => Collect & filter keys via (Iterable)ForwardIndex:
-    Set<Key> alreadySeenKeys = CollectionFactory.createCustomHashingStrategySet(
-      IndexStorageUtil.adaptKeyDescriptorToStrategy(getExtension().getKeyDescriptor())
-    );
+    boolean filteringKeysWithForwardIndexAllowed = USE_FORWARD_INDEX_FOR_KEYS_FILTERING
+                                                   && canFilterKeysByFileIdWithForwardIndex();
+    long startedAtNs = System.nanoTime();
     try {
-      return forwardIndex.processFilteredKeys(
-        fileId -> idFilter.containsFileId(fileId),
-        forwardIndexAccessor,
-        key -> {
-          boolean alreadySeen = !alreadySeenKeys.add(key);
-          return alreadySeen || processor.process(key);
-        }
+      // Keys traversal with _trivial_ IdFilter is usually faster via main storage -- no need for deduplication;
+      // With _non-trivial_ IdFilter filtering via ForwardIndex is usually faster -- if ForwardIndex exists & supports iteration.
+      if (idFilter == null || idFilter == IdFilter.ACCEPT_ALL
+          || !filteringKeysWithForwardIndexAllowed
+          || !(getForwardIndex() instanceof IterableForwardIndex forwardIndex)
+          || !(getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor)) {
+        return ((VfsAwareIndexStorage<Key, Value>)getStorage()).processKeys(processor, scope, idFilter);
+      }
+
+      // => Collect & filter keys via (Iterable)ForwardIndex:
+      Set<Key> alreadySeenKeys = CollectionFactory.createCustomHashingStrategySet(
+        IndexStorageUtil.adaptKeyDescriptorToStrategy(getExtension().getKeyDescriptor())
       );
+      try {
+        return forwardIndex.processFilteredKeys(
+          fileId -> idFilter.containsFileId(fileId),
+          forwardIndexAccessor,
+          key -> {
+            boolean alreadySeen = !alreadySeenKeys.add(key);
+            return alreadySeen || processor.process(key);
+          }
+        );
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
     }
-    catch (IOException e) {
-      throw new StorageException(e);
+    finally {
+      long elapsedNs = System.nanoTime() - startedAtNs;
+      if (idFilter != null && idFilter != IdFilter.ACCEPT_ALL
+          && elapsedNs >= SLOW_KEYS_FILTERING_THRESHOLD_NS) {
+        THROTTLED_LOG.warn(
+          () -> "processAllKeys(" + indexId() + ",.." + idFilter + "): took " + NANOSECONDS.toMillis(elapsedNs) + " ms; " +
+                "filteringKeysWithForwardIndexAllowed: " + filteringKeysWithForwardIndexAllowed
+        );
+      }
     }
   }
 
