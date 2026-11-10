@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.util.StartupUiGate
 import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -134,6 +135,8 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
 
     // extensions may use registry to enable/disable URL handlers
     RegistryManager.getInstanceAsync()
+
+    StartupUiGate.awaitEditorsShown()
 
     try {
       server = BuiltInServer.start(firstPort = getDefaultPort(), portsCount = PORTS_COUNT, tryAnyPort = true)

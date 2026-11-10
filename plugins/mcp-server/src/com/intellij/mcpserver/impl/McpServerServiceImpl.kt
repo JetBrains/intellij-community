@@ -38,6 +38,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.util.StartupUiGate
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -313,6 +314,8 @@ open class McpServerServiceImpl(private val cs: CoroutineScope) : McpServerServi
 
   internal class MyProjectListener : ProjectActivity {
     override suspend fun execute(project: Project) {
+      StartupUiGate.awaitEditorsShown()
+
       val service = withContext(Dispatchers.IO) { serviceAsync<McpServerService>() } // start server if enabled
       (service as? McpServerServiceImpl)?.showForceEnabledNotificationIfNeeded(project)
     }

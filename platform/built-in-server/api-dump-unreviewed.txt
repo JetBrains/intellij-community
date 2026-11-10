@@ -160,8 +160,6 @@ f:org.jetbrains.ide.ToolboxIdeExitHandler$ExitParameters
 - f:getForce():Z
 - f:getRestart():Z
 - hashCode():I
-f:org.jetbrains.ide.ToolboxRestServiceKt
-- sf:getToolboxHandlerEP():com.intellij.openapi.extensions.ExtensionPointName
 f:org.jetbrains.ide.ToolboxSettingsActionRegistry
 - <init>(kotlinx.coroutines.CoroutineScope):V
 - f:getActions():java.util.List

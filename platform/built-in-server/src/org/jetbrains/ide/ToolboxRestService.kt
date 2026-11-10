@@ -28,6 +28,7 @@ import io.netty.handler.codec.http.HttpVersion
 import io.netty.handler.codec.http.LastHttpContent
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.io.addCommonHeaders
@@ -39,6 +40,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.writeText
 
+@ApiStatus.Internal
 val toolboxHandlerEP: ExtensionPointName<ToolboxServiceHandler<*>> = ExtensionPointName.create("com.intellij.toolboxServiceHandler")
 
 @ApiStatus.Internal
@@ -114,7 +116,7 @@ internal class ToolboxRestServiceConfig(cs: CoroutineScope) {
   init {
     val toolboxPortFilePath = System.getProperty("toolbox.notification.portFile")
     if (toolboxPortFilePath != null) {
-      cs.launch {
+      cs.launch(Dispatchers.IO) {
         val server = serviceAsync<BuiltInServerManager>()
         val port = server.waitForStart().port
         val portFile = Path.of(toolboxPortFilePath)
@@ -152,7 +154,7 @@ internal class ToolboxRestService : RestService() {
       return null
     }
 
-    val (toolboxRequest : ToolboxInnerHandler, heartbeatDelay) = try {
+    val [toolboxRequest : ToolboxInnerHandler, heartbeatDelay] = try {
       val requestJson = createJsonReader(request).use { JsonParser.parseReader(it) }
 
       val handler = findToolboxHandlerByUri(urlDecoder.path())
