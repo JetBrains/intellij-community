@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.psi.EditCommaSeparatedListHelper
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtForExpression
@@ -137,7 +138,7 @@ private fun getNewEntriesText(entryMappings: List<EntryMapping>, perEntryKeyword
 
             if (!positionBased && mapping.usedName != mapping.targetName.asString()) {
                 append(" = ")
-                append(mapping.targetName.asString())
+                append(mapping.targetName.render())
             }
         }
     }

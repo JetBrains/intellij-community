@@ -8825,6 +8825,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/entryUsedInLambda.kt");
         }
 
+        @TestMetadata("escapedPropertiesOnlySyntaxOption.kt")
+        public void testEscapedPropertiesOnlySyntaxOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/escapedPropertiesOnlySyntaxOption.kt");
+        }
+
+        @TestMetadata("escapedPropertyCompleteOption.kt")
+        public void testEscapedPropertyCompleteOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/escapedPropertyCompleteOption.kt");
+        }
+
         @TestMetadata("featureDisabled.kt")
         public void testFeatureDisabled() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/featureDisabled.kt");
