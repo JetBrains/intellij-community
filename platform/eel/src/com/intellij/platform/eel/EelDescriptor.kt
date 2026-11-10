@@ -63,6 +63,7 @@ enum class SshForwardingConsentPolicy {
   "com.intellij.docker.ijent.DockerEelDescriptor",
   "com.intellij.platform.ijent.ssh.SshEelDescriptor",
   "com.intellij.platform.ijent.ssh.impl.IjentSshAgentForwardingService",
+  "com.intellij.platform.ijent.ssh.impl.IjentSshAgentForwardingServiceTest",
 )
 interface EelDescriptorWithSshForwardingEnabled : EelDescriptor {
   /** Silent by default, so that an environment which does not override it keeps the behaviour it had before consent existed. */
