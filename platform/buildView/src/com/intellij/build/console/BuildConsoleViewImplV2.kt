@@ -84,6 +84,7 @@ internal class BuildConsoleViewImplV2(
 
 
   init {
+    delegate.editor?.configureEditor()
     Disposer.register(this, delegate)
   }
 
@@ -231,6 +232,10 @@ internal class BuildConsoleViewImplV2(
         secondaryCaret.setSelection(outputRange.startOffset, outputRange.endOffset)
       }
     }
+  }
+
+  private fun Editor.configureEditor() {
+    settings.isHighlightSelectionOccurrences = false
   }
 
   private fun isVScrollAtBottom(editor: EditorEx): Boolean {
