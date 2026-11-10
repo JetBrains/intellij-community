@@ -9,11 +9,9 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.executors.ExecutorGroup;
 import com.intellij.execution.impl.EditConfigurationsDialog;
-import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runToolbar.RunToolbarSlotManager;
 import com.intellij.execution.ui.RedesignedRunWidgetKt;
 import com.intellij.execution.ui.RunToolbarPopupKt;
@@ -37,22 +35,18 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.ActionPopupStep;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -70,10 +64,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
@@ -245,7 +237,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    ComboBoxButton button = new RunConfigurationsComboBoxButton(presentation);
+    JComponent button = RunConfigurationsComboBoxPopup.createButton(this, presentation);
     if (isNoWrapping(place)) return button;
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
@@ -267,86 +259,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
   @Override
   protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
-    DefaultActionGroup result = new DefaultActionGroup();
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
-    if (project == null) {
-      return result;
-    }
-
-    AnAction editRunConfigurationAction = getEditRunConfigurationAction();
-    if (editRunConfigurationAction != null) {
-      result.add(editRunConfigurationAction);
-    }
-    result.add(new SaveTemporaryAction());
-    result.addSeparator();
-
-
-    if (!ExperimentalUI.isNewUI()) {
-      // no need for the target list in `All configurations` in new UI, since there is a separate combobox for them
-      addTargetGroup(project, result);
-    }
-
-    result.add(new RunCurrentFileAction());
-    result.addSeparator(ExecutionBundle.message("run.configurations.popup.existing.configurations.separator.text"));
-
-    Map<ConfigurationType, Map<String, List<RunnerAndConfigurationSettings>>> configurationMap =
-      RunManagerImpl.getInstanceImpl(project).getConfigurationsGroupedByTypeAndFolder(true);
-    result.add(createRunConfigurationFolderActions(project, configurationMap.values()));
-    return result;
-  }
-
-  private @NotNull AnAction createRunConfigurationFolderActions(
-    @NotNull Project project,
-    @NotNull Collection<Map<String, List<RunnerAndConfigurationSettings>>> folderMaps) {
-    return new ActionGroup() {
-      @Override
-      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        List<AnAction> result = new ArrayList<>();
-        for (Map<String, List<RunnerAndConfigurationSettings>> folderMap : folderMaps) {
-          result.add(new ActionGroup() {
-            @Override
-            public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-              List<AnAction> result = new ArrayList<>();
-              for (Map.Entry<String, List<RunnerAndConfigurationSettings>> folderEntry : folderMap.entrySet()) {
-                @NlsSafe String folderName = folderEntry.getKey();
-                if (folderName == null) {
-                  result.addAll(ContainerUtil.map(folderEntry.getValue(), o -> createFinalAction(project, o)));
-                }
-                else {
-                  result.add(new ActionGroup() {
-                    {
-                      getTemplatePresentation().setPopupGroup(true);
-                      getTemplatePresentation().setText(folderName);
-                      getTemplatePresentation().setIcon(AllIcons.Nodes.Folder);
-                    }
-
-                    @Override
-                    public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-                      return ContainerUtil.map(folderEntry.getValue(),
-                                               o -> createFinalAction(project, o)).toArray(AnAction.EMPTY_ARRAY);
-                    }
-                  });
-                }
-              }
-              return result.toArray(AnAction.EMPTY_ARRAY);
-            }
-          });
-          result.add(Separator.getInstance());
-        }
-        return result.toArray(AnAction.EMPTY_ARRAY);
-      }
-    };
+    return RunConfigurationsComboBoxPopup.createPopupActionGroup(this, button);
   }
 
   protected void addTargetGroup(Project project, DefaultActionGroup allActionsGroup) {
-    RunnerAndConfigurationSettings selected = RunManager.getInstance(project).getSelectedConfiguration();
-    if (selected != null) {
-      ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
-      for (ExecutionTarget eachTarget : ExecutionTargetManager.getTargetsToChooseFor(project, selected.getConfiguration())) {
-        allActionsGroup.add(new SelectTargetAction(project, eachTarget, eachTarget.equals(activeTarget)));
-      }
-      allActionsGroup.addSeparator();
-    }
+    RunConfigurationsComboBoxPopup.addTargetGroup(project, allActionsGroup);
   }
 
   protected @Nullable AnAction getEditRunConfigurationAction() {
@@ -354,7 +271,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   protected @NotNull AnAction createFinalAction(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
-    return new SelectConfigAction(project, configuration);
+    return RunConfigurationsComboBoxPopup.createSelectConfigAction(project, configuration);
   }
 
   public final class RunConfigurationsComboBoxButton extends ComboBoxButton {
@@ -420,63 +337,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return popup;
   }
 
-  private static final class SaveTemporaryAction extends DumbAwareAction {
-    SaveTemporaryAction() {
-      Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(AllIcons.Actions.MenuSaveall);
-    }
-
-    @Override
-    public void actionPerformed(final @NotNull AnActionEvent e) {
-      final Project project = e.getData(CommonDataKeys.PROJECT);
-      if (project != null) {
-        RunnerAndConfigurationSettings settings = chooseTempSettings(project);
-        if (settings != null) {
-          final RunManager runManager = RunManager.getInstance(project);
-          runManager.makeStable(settings);
-        }
-      }
-    }
-
-    @Override
-    public void update(final @NotNull AnActionEvent e) {
-      final Presentation presentation = e.getPresentation();
-      final Project project = e.getData(CommonDataKeys.PROJECT);
-      if (project == null) {
-        disable(presentation);
-        return;
-      }
-      RunnerAndConfigurationSettings settings = chooseTempSettings(project);
-      if (settings == null) {
-        disable(presentation);
-      }
-      else {
-        presentation.setText(ExecutionBundle.messagePointer("save.temporary.run.configuration.action.name", Executor.shortenNameIfNeeded(settings.getName())));
-        //noinspection DialogTitleCapitalization
-        presentation.setDescription(presentation.getText());
-        presentation.setEnabledAndVisible(true);
-      }
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-
-    private static void disable(final Presentation presentation) {
-      presentation.setEnabledAndVisible(false);
-    }
-
-    private static @Nullable RunnerAndConfigurationSettings chooseTempSettings(@NotNull Project project) {
-      RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
-      if (selectedConfiguration != null && selectedConfiguration.isTemporary()) {
-        return selectedConfiguration;
-      }
-      return ContainerUtil.getFirstItem(RunManager.getInstance(project).getTempConfigurationsList());
-    }
-  }
-
-
   public static void forAllExecutors(@NotNull Consumer<? super Executor> executorProcessor) {
     for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
       if (executor instanceof ExecutorGroup) {
@@ -536,43 +396,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-
-  private static final class SelectTargetAction extends AnAction {
-    private final Project myProject;
-    private final ExecutionTarget myTarget;
-
-    private static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
-    private static final Icon CHECKED_SELECTED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
-
-    SelectTargetAction(final Project project, final ExecutionTarget target, boolean selected) {
-      myProject = project;
-      myTarget = target;
-
-      String name = target.getDisplayName();
-      Presentation presentation = getTemplatePresentation();
-      presentation.setText(name, false);
-      presentation.setDescription(ExecutionBundle.message("select.0", name));
-
-      presentation.setIcon(selected ? CHECKED_ICON : EMPTY_ICON);
-      presentation.setSelectedIcon(selected ? CHECKED_SELECTED_ICON : EMPTY_ICON);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      ExecutionTargetManager.setActiveTarget(myProject, myTarget);
-      updatePresentation(ExecutionTargetManager.getActiveTarget(myProject),
-                         RunManager.getInstance(myProject).getSelectedConfiguration(),
-                         myProject,
-                         e.getPresentation(),
-                         e.getPlace());
-    }
-
-    @Override
-    public boolean isDumbAware() {
-      RunnerAndConfigurationSettings configuration = RunManager.getInstance(myProject).getSelectedConfiguration();
-      return configuration == null || configuration.getType().isDumbAware();
-    }
-  }
 
   @ApiStatus.Internal
   public static class SelectConfigAction extends ActionGroup implements DumbAware {

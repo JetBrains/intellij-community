@@ -706,9 +706,10 @@ a:com.intellij.ide.actions.CreateElementActionBase
 - s:filterMessage(java.lang.String):java.lang.String
 - p:getCommandName():java.lang.String
 - pa:getErrorTitle():java.lang.String
-pc:com.intellij.ide.actions.CreateElementActionBase$MyInputValidator
+c:com.intellij.ide.actions.CreateElementActionBase$MyInputValidator
 - com.intellij.ide.actions.ElementCreator
 - com.intellij.openapi.ui.InputValidator
+- <init>(com.intellij.ide.actions.CreateElementActionBase,com.intellij.openapi.project.Project,com.intellij.psi.PsiDirectory):V
 - canClose(java.lang.String):Z
 - checkInput(java.lang.String):Z
 - create(java.lang.String):com.intellij.psi.PsiElement[]

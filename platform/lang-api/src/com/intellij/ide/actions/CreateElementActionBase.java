@@ -109,7 +109,7 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     return message;
   }
 
-  protected class MyInputValidator extends ElementCreator implements InputValidator {
+  public class MyInputValidator extends ElementCreator implements InputValidator {
     private final @NotNull PsiDirectory myDirectory;
     private @NotNull PsiElement @NotNull [] myCreatedElements = PsiElement.EMPTY_ARRAY;
 
