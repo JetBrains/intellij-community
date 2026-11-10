@@ -52,8 +52,9 @@ class TextMateLineIndentProvider : LineIndentProvider {
     * - improving parser using `indentationRules` from the TextMate bundle,
     * - adding TextMateFormattingModelBuilder, which will fuel `DetectableIndentOptionsProvider`
     */
-    val options: IndentOptions = CodeStyle.getSettings(project, editor.virtualFile!!)
-      .getIndentOptionsByFile(project, editor.virtualFile!!, null)
+    val virtualFile = editor.virtualFile ?: return null
+    val options: IndentOptions = CodeStyle.getSettings(project, virtualFile)
+      .getIndentOptionsByFile(project, virtualFile, null)
     val indentChange = getIndentChange(prevLineText, indentationRules, onEnterRules)
 
     if (indentChange != null) {
