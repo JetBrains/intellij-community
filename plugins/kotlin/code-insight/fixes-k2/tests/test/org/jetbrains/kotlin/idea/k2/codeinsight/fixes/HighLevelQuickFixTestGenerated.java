@@ -8805,6 +8805,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("bodyPropertiesCompleteOption.kt")
+        public void testBodyPropertiesCompleteOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/bodyPropertiesCompleteOption.kt");
+        }
+
         @TestMetadata("commentsPreserve.kt")
         public void testCommentsPreserve() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/commentsPreserve.kt");
@@ -8855,6 +8860,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/genericDataClassFullForm.kt");
         }
 
+        @TestMetadata("lambdaCompleteOption.kt")
+        public void testLambdaCompleteOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/lambdaCompleteOption.kt");
+        }
+
         @TestMetadata("multipleEntriesSameOriginalName.kt")
         public void testMultipleEntriesSameOriginalName() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/multipleEntriesSameOriginalName.kt");
@@ -8878,6 +8888,31 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("preserveFormatting.kt")
         public void testPreserveFormatting() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/destructingShortForm/preserveFormatting.kt");
+        }
+
+        @TestMetadata("renamedEntriesCompleteOption.kt")
+        public void testRenamedEntriesCompleteOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/renamedEntriesCompleteOption.kt");
+        }
+
+        @TestMetadata("reversedEntriesCompleteOption.kt")
+        public void testReversedEntriesCompleteOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/reversedEntriesCompleteOption.kt");
+        }
+
+        @TestMetadata("reversedEntriesNameMismatchOption.kt")
+        public void testReversedEntriesNameMismatchOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/reversedEntriesNameMismatchOption.kt");
+        }
+
+        @TestMetadata("reversedEntriesOnlySyntaxOption.kt")
+        public void testReversedEntriesOnlySyntaxOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/reversedEntriesOnlySyntaxOption.kt");
+        }
+
+        @TestMetadata("singleEntryCompleteOption.kt")
+        public void testSingleEntryCompleteOption() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/destructingShortForm/singleEntryCompleteOption.kt");
         }
     }
 

@@ -1,0 +1,13 @@
+// "Convert to a full name-based destructuring form" "true"
+// COMPILER_ARGUMENTS: -Xname-based-destructuring=complete
+
+data class User(val name: String, val age: Int)
+
+fun test(user: User): Int {
+    var (<caret>years = age, displayName = name) = user
+    years++
+    displayName += "!"
+    return years + displayName.length
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertNameBasedDestructuringShortFormToFullFix
