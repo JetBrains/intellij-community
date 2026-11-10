@@ -8,16 +8,25 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.callUnderOwnClassLoader
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.performancePlugin.commands.CodeAnalysisStateListener.HighlightedEditor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.UUID
 import java.util.concurrent.TimeoutException
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -33,6 +42,55 @@ internal class CodeAnalysisStateListenerTest {
     val listener = projectFixture.get().service<CodeAnalysisStateListener>()
     trackAndDispose { listener.registerDaemonStarted(listOf(it)) }
     listener.waitAnalysisToFinish(timeout = 5.seconds, throws = true, logsError = false)
+  }
+
+  @Test
+  fun `a wait after a daemon pass finished returns the moment the pass finished`(): Unit = timeoutRunBlocking {
+    val listener = projectFixture.get().service<CodeAnalysisStateListener>()
+    // a pass started in dumb mode is not final, so the listener would wait for the next one
+    IndexingTestUtil.suspendUntilIndexesAreReady(projectFixture.get())
+    val passStartedAt = System.nanoTime()
+    trackAndDispose { editor ->
+      listener.registerDaemonStarted(listOf(editor))
+      listener.registerDaemonFinishedOrCancelled(mapOf(editor to highlighted(editor)), "finished", UUID.randomUUID())
+    }
+    val waitStartedAt = System.nanoTime()
+    val finishedAt = listener.waitAnalysisToFinish(timeout = 5.seconds, throws = true, logsError = false)
+    assertTrue(finishedAt != null && finishedAt - passStartedAt >= 0 && finishedAt - waitStartedAt <= 0,
+               "finished at $finishedAt, the pass started at $passStartedAt, the wait started at $waitStartedAt")
+  }
+
+  @Test
+  fun `a wait that starts during the analysis returns the moment the pass finished`(): Unit = timeoutRunBlocking {
+    val listener = projectFixture.get().service<CodeAnalysisStateListener>()
+    // a pass started in dumb mode is not final, so the listener would wait for the next one
+    IndexingTestUtil.suspendUntilIndexesAreReady(projectFixture.get())
+    val editor = createTextEditor(LightVirtualFile("tracked.txt", "text"))
+    try {
+      withContext(Dispatchers.UiWithModelAccess) { listener.registerDaemonStarted(listOf(editor)) }
+      val wait = async(Dispatchers.Default) { listener.waitAnalysisToFinish(timeout = 5.seconds, throws = true, logsError = false) }
+      // the waiter registers after a round trip to the EDT; a later registration returns the same moment by the unlocked path
+      delay(500.milliseconds)
+      assertFalse(wait.isCompleted, "the wait ended while the analysis was in progress")
+      val passFinishesAt = System.nanoTime()
+      withContext(Dispatchers.UiWithModelAccess) {
+        listener.registerDaemonFinishedOrCancelled(mapOf(editor to highlighted(editor)), "finished", UUID.randomUUID())
+      }
+      val finishedAt = wait.await()
+      val waitEndedAt = System.nanoTime()
+      assertTrue(finishedAt != null && finishedAt - passFinishesAt >= 0 && finishedAt - waitEndedAt <= 0,
+                 "finished at $finishedAt, the pass finished after $passFinishesAt, the wait ended at $waitEndedAt")
+    }
+    finally {
+      withContext(Dispatchers.UiWithModelAccess) { Disposer.dispose(editor) }
+    }
+  }
+
+  @Test
+  fun `the release of a tracked editor is no finished analysis`(): Unit = timeoutRunBlocking {
+    val listener = projectFixture.get().service<CodeAnalysisStateListener>()
+    trackAndDispose { listener.registerOpenedEditors(listOf(it)) }
+    assertNull(listener.waitAnalysisToFinish(timeout = 5.seconds, throws = true, logsError = false))
   }
 
   @Test
@@ -87,6 +145,13 @@ internal class CodeAnalysisStateListenerTest {
       withContext(Dispatchers.UiWithModelAccess) { Disposer.dispose(tracked) }
     }
     listener.waitAnalysisToFinish(timeout = 5.seconds, throws = true, logsError = false)
+  }
+
+  private fun highlighted(editor: TextEditor): HighlightedEditor {
+    return object : HighlightedEditor {
+      override val editor = editor
+      override val shouldWaitForNextHighlighting = false
+    }
   }
 
   private suspend fun createTextEditor(file: LightVirtualFile): TextEditor {

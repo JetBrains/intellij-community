@@ -118,8 +118,14 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   private val stateLock = Any()
   private val filesYetToStartHighlighting = ConcurrentHashMap<VirtualFile, Unit>()
   private val sessions = ConcurrentHashMap<TextEditor, HighlightingSessionStart>()
-  private val waitingJobs: MutableList<CompletableFuture<Unit>> = Collections.synchronizedList(mutableListOf<CompletableFuture<Unit>>())
+  private val waitingJobs: MutableList<CompletableFuture<Long?>> = Collections.synchronizedList(mutableListOf<CompletableFuture<Long?>>())
   private var locked: Boolean = false
+
+  /**
+   * [System.nanoTime] when a daemon pass last finished the analysis of a tracked editor, `null` before the first one.
+   * The release of an editor ends its tracking but is no analysis, so it leaves the value as it is. Guarded by [stateLock].
+   */
+  private var analysisFinishedAtNanos: Long? = null
 
   init {
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
@@ -153,7 +159,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
           Total opening time is : ${(System.nanoTime() - StartUpMeasurer.getStartTime()).nanoseconds.inWholeMilliseconds} ms
          """)
         for (job in waitingJobs) {
-          job.complete(Unit)
+          job.complete(analysisFinishedAtNanos)
         }
         waitingJobs.clear()
         locked = false
@@ -172,15 +178,20 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   }
 
   /**
-   * @throws TimeoutException when stopped due to provided [timeout]
+   * Waits until no tracked analysis is in progress.
+   * The final wait blocks the calling thread and ignores cancellation; only [timeout] ends it.
+   *
+   * @return [System.nanoTime] when a daemon pass last finished a tracked analysis, earlier than the return when it finished before the wait;
+   * `null` in LightEdit, when no pass ever finished, and after a timeout that does not throw
+   * @throws TimeoutException when stopped due to provided [timeout] and [throws] is `true`
    */
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  suspend fun waitAnalysisToFinish(timeout: Duration = 5.minutes, throws: Boolean = false, logsError: Boolean = true) {
+  suspend fun waitAnalysisToFinish(timeout: Duration = 5.minutes, throws: Boolean = false, logsError: Boolean = true): Long? {
     if (EDT.isCurrentThreadEdt()) {
       throw AssertionError("waitAnalysisToFinish should not be called from EDT otherwise there will be freezes")
     }
     LOG.info("Waiting for code analysis to finish in $timeout")
-    val future = CompletableFuture<Unit>()
+    val future = CompletableFuture<Long?>()
     future.orTimeout(timeout.inWholeMilliseconds, TimeUnit.MILLISECONDS)
     coroutineScope {
       launch {
@@ -210,7 +221,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       }
     }
 
-    try {
+    val finishedAt = try {
       future.join()
     }
     catch (e: CancellationException) {
@@ -226,13 +237,15 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       if (throws) {
         throw TimeoutException(errorText)
       }
+      null
     }
     LOG.info("Code analysis complete")
+    return finishedAt
   }
 
-  private fun registerToWaitForAnalysisToFinish(future: CompletableFuture<Unit>) {
+  private fun registerToWaitForAnalysisToFinish(future: CompletableFuture<Long?>) {
     if (LightEdit.owns(project)) {
-      future.complete(Unit)
+      future.complete(null)
       return
     }
     if (!future.isDone) {
@@ -240,10 +253,10 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  private fun registerWaiter(future: CompletableFuture<Unit>) {
+  private fun registerWaiter(future: CompletableFuture<Long?>) {
     synchronized(stateLock) {
       if (!locked) {
-        future.complete(Unit)
+        future.complete(analysisFinishedAtNanos)
       }
       else {
         waitingJobs.add(future)
@@ -346,7 +359,9 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
 
   internal fun registerDaemonFinishedOrCancelled(highlightedEditors: Map<TextEditor, HighlightedEditor>, status: String, traceId: UUID) {
     val currentTime = System.currentTimeMillis()
+    val finishedAtNanos = System.nanoTime()
     synchronized(stateLock) {
+      val sessionCount = sessions.size
       val iterator = sessions.entries.iterator()
       while (iterator.hasNext()) {
         val (editor, sessionStart) = iterator.next()
@@ -384,6 +399,10 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
           LOG.info("Editor ${editor.description} was highlighted and should be removed")
           iterator.remove()
         }
+      }
+
+      if (sessions.size < sessionCount) {
+        analysisFinishedAtNanos = finishedAtNanos
       }
 
       if (!filesYetToStartHighlighting.isEmpty()) {
