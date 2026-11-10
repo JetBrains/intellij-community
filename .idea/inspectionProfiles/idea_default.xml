@@ -18,11 +18,6 @@
       <scope name="Tests" level="WARNING" enabled="true" />
       <scope name="test-framework" level="WARNING" enabled="true" />
     </inspection_tool>
-    <inspection_tool class="2e2cc069-cce3-3853-a656-4ffa3a9609ed" enabled="true" level="WARNING" enabled_by_default="false">
-      <scope name="AppCode" level="WARNING" enabled="true" />
-      <scope name="swift" level="WARNING" enabled="true" />
-      <scope name="swift-lang" level="WARNING" enabled="true" />
-    </inspection_tool>
     <inspection_tool class="4ed1243f-91f1-388d-ba02-4dbef1721d3a" enabled="true" level="WEAK WARNING" enabled_by_default="true" editorAttributes="INFO_ATTRIBUTES">
       <scope name="IDE Testing Framework" level="WARNING" enabled="true" />
     </inspection_tool>
@@ -1385,10 +1380,8 @@
             <module name="intellij.cidr.debugger" />
             <module name="intellij.cidr.debugger.dap" />
             <module name="intellij.c" />
-            <module name="intellij.swift" />
             <module name="intellij.cidr.cocoaCommon" />
             <module name="intellij.cidr.xctest" />
-            <module name="intellij.clion.swift" />
             <module name="intellij.clion.webDeployment" />
             <module name="intellij.cidr.ide" />
           </modules-set>
@@ -1615,10 +1608,8 @@
           <module name="intellij.cidr.debugger" />
           <module name="intellij.cidr.debugger.dap" />
           <module name="intellij.c" />
-          <module name="intellij.swift" />
           <module name="intellij.cidr.cocoaCommon" />
           <module name="intellij.cidr.xctest" />
-          <module name="intellij.clion.swift" />
           <module name="intellij.clion.webDeployment" />
           <module name="intellij.cidr.ide" />
         </modules-set>
@@ -2308,16 +2299,6 @@
         <constraint name="ClassLoader" within="" contains="" />
         <constraint name="String" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="Comparing Swift Types without context" description="Whether two types are equal depends on the context" suppressId="swift.type.equals" problemDescriptor="Use equalsInContext" text="$ref1$.equals($ref2$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref2" nameOfExprType="com\.jetbrains\.swift\.psi\.types\.SwiftType" exprTypeWithinHierarchy="true" within="" contains="" />
-        <constraint name="ref1" nameOfExprType="com\.jetbrains\.swift\.psi\.types\.SwiftType" exprTypeWithinHierarchy="true" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Comparing Swift Types without context" text="$ref1$.equals($ref2$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref2" nameOfExprType="com\.jetbrains\.swift\.psi\.types\.SwiftType" exprTypeWithinHierarchy="true" within="" contains="" />
-        <constraint name="ref1" nameOfExprType="com\.jetbrains\.swift\.psi\.types\.SwiftType" exprTypeWithinHierarchy="true" within="" contains="" />
-      </searchConfiguration>
       <searchConfiguration name="CompletableFuture methods using default executor" description="If executor isn't specified explicitly, ForkJoinPool is used, which doesn't support the propagation of IntelliJ platform's thread context&#10;(e.g. modality state or remote development client id).&#10;Pass some platform executor as an additional method parameter or wrap the passed task in 'captureThreadContext'." suppressId="CompletableFuture.defaultExecutor" problemDescriptor="Platform's thread context (modality state, rem-dev client id, etc) is lost when the default executor (ForkJoinPool) is used. Pass some platform executor as an additional method parameter or wrap the passed task in 'captureThreadContext'." text="$Instance$.$MethodCall$($Parameter$)" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Instance" regexp="CompletableFuture" minCount="0" within="" contains="" />
@@ -2698,31 +2679,6 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="Argument1" within="" contains="" />
         <constraint name="Argument2" regexp="0" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" description="a type can be a type alias or a single-item tuple of a desired type. And you most likely want to support them as well" suppressId="explicit.cast.to.swift.type" problemDescriptor="Please use `SwiftTypeUtil.as&lt;type&gt;` method instead" text="$ref$ instanceof $SwiftType$" recursive="true" caseInsensitive="true" type="JAVA" pattern_context="default">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" text="$ref$ is $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" text="$ref$ !is $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" text="$ref$ as $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
-      </searchConfiguration>
-      <searchConfiguration name="Explicit cast to specific SwiftType" uuid="4728e433-2984-33d6-8696-3fd7f55d9252" text="$ref$ as? $SwiftType$" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-        <constraint name="SwiftType" regexp="Swift(?!Inout)(?!Ellipsis)(?!FileElement).+Type" within="" contains="" />
       </searchConfiguration>
       <replaceConfiguration name="File.createTempFile()" uuid="dee96c73-c402-36ca-a972-4b6641585bc0" text="java.io.File.createTempFile($prefix$, $suffix$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.io.FileUtil.createTempFile($prefix$, $suffix$)">
         <constraint name="prefix" within="" contains="" />
@@ -3625,30 +3581,6 @@
         <constraint name="Param2" regexp="lifetime" nameOfExprType="libraries\.coroutines\.extra\.Lifetime" target="true" within="" contains="" _kotlinAlsoMatchVal="enabled" />
         <constraint name="Cls" script="&quot;import org.jetbrains.kotlin.psi.KtClass;  &#10;def cls = __context__ as KtClass&#10;!(&quot;Lifetimed&quot; in cls.superTypeList?.entries?.text ?: [])&quot;" within="" contains="" />
       </searchConfiguration>
-      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" description="Instances of SwiftExpression might still be a statement.&#10;Please be more explicit in what you are interested in by using either:&#10; - asSwiftExpressionThatMightBeStatement()&#10; - asSwiftExpression()&#10; - asSwiftExpressionThatIsNotUsedAsStatement()" suppressId="swift.explicit.expression.as" problemDescriptor="Use explicit function to cast as SwiftExpression" text="$ref$ as SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$ as? SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$.asSafely&lt;SwiftExpression&gt;()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Use explicit function to cast as SwiftExpression" text="$ref$?.asSafely&lt;SwiftExpression&gt;()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.asSwiftExpression()">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Use explicit function to cast SwiftExpression" description="Instances of SwiftExpression might still be a statement.&#10;Please be more explicit in what you are interested in by using either:&#10; - isSwiftExpressionThatMightBeStatement()&#10; - isSwiftExpression()&#10; - isSwiftExpressionThatIsNotUsedAsStatement()" suppressId="swift.explicit.expression.is" problemDescriptor="Use explicit function to cast SwiftExpression" text="$ref$ is SwiftExpression" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="$ref$.isSwiftExpression()">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-      </replaceConfiguration>
-      <replaceConfiguration name="Use explicit function to cast SwiftExpression" text="$ref$ instanceof SwiftExpression" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default" search_injected="false" reformatAccordingToStyle="true" shortenFQN="true" replacement="SwiftBranchStatementKt.isSwiftExpression($ref$, null)">
-        <constraint name="__context__" within="" contains="" />
-        <constraint name="ref" within="" contains="" />
-      </replaceConfiguration>
       <replaceConfiguration name="use explicit toArray() method" text="com.intellij.util.ArrayUtil.toObjectArray($collection$, $class$.class)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="false" shortenFQN="false" replacement="$collection$.toArray(new $class$[0])">
         <constraint name="__context__" within="" contains="" />
         <constraint name="class" within="" contains="" />
@@ -4329,11 +4261,6 @@
     <inspection_tool class="XsltTemplateInvocation" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="XsltUnusedDeclaration" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="XsltVariableShadowing" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="a2dc0bf7-5f01-3d14-bd26-889bfc6ceca9" enabled="true" level="WARNING" enabled_by_default="false">
-      <scope name="AppCode" level="WARNING" enabled="true" />
-      <scope name="swift" level="WARNING" enabled="true" />
-      <scope name="swift-lang" level="WARNING" enabled="true" />
-    </inspection_tool>
     <inspection_tool class="a8f5f167-f44f-3964-a6c9-98dee827110c" enabled="true" level="WARNING" enabled_by_default="false">
       <scope name="Python" level="WARNING" enabled="true" />
     </inspection_tool>

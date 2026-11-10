@@ -98,8 +98,8 @@ generator reads the layout registry rather than one packaged product.
 entry, so an entry drains as the deprecation proceeds. The issue closes when the group is empty.
 
 `intellij.kmm.plugin` packs the AppCode and the CIDR modules of the plugins that own them: `intellij.appcode`,
-`intellij.appcode.swift`, `intellij.appcode.swiftDebugger`, `intellij.cidr.cocoa`, `intellij.cidr.cocoaCommon`,
-`intellij.cidr.cocoaDevices`, `intellij.cidr.cocoaDevices.debugging`, `intellij.cidr.plist`, `intellij.cidr.strings`,
+`intellij.cidr.cocoa`, `intellij.cidr.cocoaCommon`, `intellij.cidr.cocoaDevices`,
+`intellij.cidr.cocoaDevices.debugging`, `intellij.cidr.plist`,
 `intellij.cidr.xcodeModel.core`, `intellij.cidr.xctest`, `intellij.swbuild` and `intellij.swift.packageManager`.
 
 `intellij.python.wsl` names a Windows-only plugin and a module of `intellij.python.plugin`, and each plugin packs the
