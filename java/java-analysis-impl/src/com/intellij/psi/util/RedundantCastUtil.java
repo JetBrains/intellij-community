@@ -9,6 +9,7 @@ import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.java.codeserver.highlighting.JavaErrorCollector;
 import com.intellij.java.codeserver.highlighting.errors.JavaCompilationError;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.JdkApiCompatibilityService;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.JavaFeature;
@@ -374,7 +375,8 @@ public final class RedundantCastUtil {
                 MethodSignatureUtil.isSuperMethod(targetMethod, newTargetMethod)) &&
                // see SCR11555, SCR14559
                areThrownExceptionsCompatible(targetMethod, newTargetMethod) &&
-               areNullabilityCompatible(targetMethod, newTargetMethod))) {
+               areNullabilityCompatible(targetMethod, newTargetMethod) &&
+               isApiAvailable(newTargetMethod, methodCallExpression))) {
             return true;
           }
           return false;
@@ -401,6 +403,10 @@ public final class RedundantCastUtil {
       catch (IncorrectOperationException ignore) {
         return false;
       }
+    }
+
+    private static boolean isApiAvailable(@NotNull PsiMethod method, @NotNull PsiElement context) {
+      return JdkApiCompatibilityService.getInstance().firstCompatibleLanguageLevel(method, PsiUtil.getLanguageLevel(context)) == null;
     }
 
     private static PsiElement removeCastInQualifier(PsiExpression qualifier) {

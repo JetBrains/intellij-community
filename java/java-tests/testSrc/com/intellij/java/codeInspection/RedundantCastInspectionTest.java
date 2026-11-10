@@ -6,14 +6,21 @@ import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.idea.TestFor;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspection/redundantCast")
 public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/redundantCast";
+  }
+
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return getTestName(false).equals("MethodSinceNewerJdk") ? JAVA_25 : super.getProjectDescriptor();
   }
 
   @Override
@@ -94,4 +101,9 @@ public class RedundantCastInspectionTest extends LightJavaCodeInsightFixtureTest
 
   @TestFor(issues = "IDEA-370768")
   public void testFieldQualifierGenericSuperType() {doTest();}
+
+  @TestFor(issues = "IDEA-395838")
+  public void testMethodSinceNewerJdk() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest);
+  }
 }
