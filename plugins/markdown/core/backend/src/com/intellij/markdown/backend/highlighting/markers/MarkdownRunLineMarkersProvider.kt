@@ -137,6 +137,7 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
               workingDirectoryPaths = workingDirectoryPaths,
               screenPoint = screenPoint,
               editorId = editor.editorId(),
+              fenceLanguage = lang,
             )
           )
         }

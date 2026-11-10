@@ -34,9 +34,14 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
+import org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer
+import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
+import org.jetbrains.plugins.terminal.session.guessShellName
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import org.jetbrains.plugins.terminal.util.getNow
+import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalCommandBlock
 import org.jetbrains.plugins.terminal.view.shellIntegration.TerminalOutputStatus
 import org.jetbrains.plugins.terminal.view.shellIntegration.getTypedCommandText
@@ -57,9 +62,10 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     command: String,
     @NlsContexts.TabTitle title: String,
     runInNewTerminal: Runnable,
+    shell: String?,
   ): Boolean {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID) ?: return false
-    run(toolWindow, command, title, runInNewTerminal)
+    run(toolWindow, command, title, runInNewTerminal, shell)
     return true
   }
 
@@ -68,9 +74,10 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     command: String,
     @NlsContexts.TabTitle title: String,
     runInNewTerminal: Runnable,
+    shell: String? = null,
   ) {
     val selectedContent = toolWindow.contentManager.selectedContent
-    if (selectedContent != null && runInTerminalContent(toolWindow, selectedContent, command, title)) {
+    if (selectedContent != null && runInTerminalContent(toolWindow, selectedContent, command, title, shell)) {
       return
     }
     runInNewTerminal.run()
@@ -136,9 +143,10 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     x: Int,
     y: Int,
     runInNewTerminal: Runnable,
+    shell: String?,
   ): Boolean {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID) ?: return false
-    val terminalContents = toolWindow.contentManager.contentsRecursively.filter(::isTerminal)
+    val terminalContents = toolWindow.contentManager.contentsRecursively.filter { isTerminal(it, shell) }
     val actions = DefaultActionGroup()
     actions.add(DumbAwareAction.create(ShBundle.message("sh.markdown.runner.terminal.new")) {
       runInNewTerminal.run()
@@ -148,7 +156,7 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     }
     terminalContents.forEach { content ->
       actions.add(DumbAwareAction.create(content.displayName) {
-        runInTerminalContent(toolWindow, content, command, title)
+        runInTerminalContent(toolWindow, content, command, title, shell)
       })
     }
     ActionManager.getInstance()
@@ -164,8 +172,23 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     workingDirectory: String,
     @NlsContexts.TabTitle title: String,
     sourceFileUrl: String?,
+    shell: String?,
   ) {
-    createReworkedTab(project, command, workingDirectory, title, requestFocus = true, sourceFileUrl)
+    if (shell == null) {
+      createReworkedTab(project, command, workingDirectory, title, requestFocus = true, sourceFileUrl)
+      return
+    }
+    terminalProjectScope(project).launch(Dispatchers.IO) {
+      val options = ShellStartupOptions.Builder().workingDirectory(workingDirectory).build()
+      val context = LocalOptionsConfigurer.configureStartupOptions(options, project).toExecOptions()
+      val shellCommand = if (context.execCommand.shellName.value == shell) context.execCommand.command
+                         else LocalTerminalStartCommandBuilder.convertShellPathToCommand(shell, context.eelDescriptor)
+      withContext(Dispatchers.EDT) {
+        if (!project.isDisposed) {
+          createReworkedTab(project, command, context.workingDirectory.asNioPath().toString(), title, true, sourceFileUrl, shellCommand)
+        }
+      }
+    }
   }
 
   @RequiresEdt(generateAssertion = false)
@@ -176,10 +199,12 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     @NlsContexts.TabTitle title: String,
     requestFocus: Boolean,
     sourceFileUrl: String?,
+    shellCommand: List<String>? = null,
   ) {
     val tab = TerminalToolWindowTabsManager.getInstance(project)
       .createTabBuilder()
       .workingDirectory(workingDirectory)
+      .shellCommand(shellCommand)
       .tabName(title)
       .requestFocus(requestFocus)
       // A tab that stays hidden would never start its shell, and the command would wait forever.
@@ -263,16 +288,20 @@ internal class ShFrontendTerminalRunner : ShSelectedTerminalRunner {
     content: Content,
     command: String,
     @NlsContexts.TabTitle title: String,
+    shell: String?,
   ): Boolean {
-    if (!sendCommand(content, command, title)) return false
+    if (!isTerminal(content, shell) || !sendCommand(content, command, title)) return false
 
     toolWindow.activate(null)
     content.manager?.setSelectedContent(content)
     return true
   }
 
-  private fun isTerminal(content: Content): Boolean {
-    return content.getTerminalTab()?.view != null
+  private fun isTerminal(content: Content, shell: String?): Boolean {
+    val tab = content.getTerminalTab() ?: return false
+    if (shell == null) return true
+    val options = tab.view.startupOptionsDeferred.getNow() ?: return false
+    return options.processType == TerminalProcessType.SHELL && options.guessShellName().value == shell
   }
 
   /** A directory spelled by the project's environment becomes the nio path routed to it; anything else is already a nio path. */

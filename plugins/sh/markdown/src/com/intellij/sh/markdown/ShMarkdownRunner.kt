@@ -46,18 +46,22 @@ internal class ShMarkdownRunner : MarkdownRunner {
     return runInTrustedProject(project) {
       val title = ShCommandTitleUtil.getTitle(command)
       val sourceFileUrl = context.sourceFileUrl
+      val shell = context.fenceLanguage?.trim()?.takeWhile { !it.isWhitespace() }?.lowercase()
+        ?.takeIf { it == "bash" || it == "sh" || it == "zsh" }
       val runInNewTerminal = Runnable {
         context.withWorkingDirectory(project) { directory ->
-          selectedTerminalRunner.createNewTerminal(project, command, toTerminalWorkingDirectory(project, directory), title, sourceFileUrl)
+          selectedTerminalRunner.createNewTerminal(
+            project, command, toTerminalWorkingDirectory(project, directory), title, sourceFileUrl, shell,
+          )
         }
       }
       if ((context.showTargetChooser || selectedTerminalRunner.hasTerminalStartedFrom(project, sourceFileUrl)) &&
           selectedTerminalRunner.showChooser(
-            project, command, title, context.component, context.x, context.y, runInNewTerminal,
+            project, command, title, context.component, context.x, context.y, runInNewTerminal, shell,
           )) {
         return@runInTrustedProject
       }
-      if (!selectedTerminalRunner.run(project, command, title, runInNewTerminal)) {
+      if (!selectedTerminalRunner.run(project, command, title, runInNewTerminal, shell)) {
         runInNewTerminal.run()
       }
     }

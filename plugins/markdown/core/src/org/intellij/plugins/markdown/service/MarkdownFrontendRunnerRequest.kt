@@ -19,6 +19,7 @@ data class MarkdownFrontendRunnerRequest(
   val workingDirectoryPaths: MarkdownCommandWorkingDirectoryPaths,
   val screenPoint: ScreenPoint? = null,
   val editorId: EditorId,
+  val fenceLanguage: String? = null,
 ) {
   @Serializable
   data class ScreenPoint(val x: Int, val y: Int)

@@ -75,6 +75,7 @@ class MarkdownFrontendRunnerFlowService(coroutineScope: CoroutineScope) {
         x = point.x,
         y = point.y,
         workingDirectoryPaths = request.workingDirectoryPaths,
+        fenceLanguage = request.fenceLanguage,
       ),
     )
   }

@@ -14,6 +14,7 @@ data class MarkdownRunnerContext(
   val x: Int,
   val y: Int,
   val workingDirectoryPaths: MarkdownCommandWorkingDirectoryPaths,
+  val fenceLanguage: String? = null,
 ) {
   fun withWorkingDirectory(project: Project, action: Consumer<String>) {
     withMarkdownCommandWorkingDirectory(project, workingDirectoryPaths, component, x, y, action::accept)

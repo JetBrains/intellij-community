@@ -13,6 +13,7 @@ interface ShSelectedTerminalRunner {
     command: String,
     @NlsContexts.TabTitle title: String,
     runInNewTerminal: Runnable,
+    shell: String? = null,
   ): Boolean
 
   fun hasTerminalStartedFrom(project: Project, sourceFileUrl: String): Boolean
@@ -25,6 +26,7 @@ interface ShSelectedTerminalRunner {
     x: Int,
     y: Int,
     runInNewTerminal: Runnable,
+    shell: String? = null,
   ): Boolean
 
   fun createNewTerminal(
@@ -33,5 +35,6 @@ interface ShSelectedTerminalRunner {
     workingDirectory: String,
     @NlsContexts.TabTitle title: String,
     sourceFileUrl: String?,
+    shell: String? = null,
   )
 }
