@@ -29,6 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -287,12 +288,16 @@ public class DaemonFirstPassDelayTest extends ProductionDaemonAnalyzerTestCase {
       AtomicInteger passEntries = new AtomicInteger();
       AtomicBoolean passReleased = new AtomicBoolean();
       registerMainEditorPassThatRunsUntilCanceled(passEntries, passReleased);
+      PsiFile secondPsiFile = null;
       try {
         // phase 1: the second editor opens before the first pass starts, because createEditor restarts the daemon.
         // The active embedded editor keeps the daemon off the second editor, because a finished pass of an open file enables the delay.
         EditorTracker.getInstance(getProject()).setActiveEditorsInTests(List.of(createEmbeddedEditor()));
         Editor secondEditor = createEditor(second);
         assertNotNull(secondEditor);
+        // the PSI cache holds the PSI weakly, and the daemon creates no session for a file without a cached PSI while another session runs
+        secondPsiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(secondEditor.getDocument());
+        assertNotNull(secondPsiFile);
 
         // phase 2: the first pass of the main editor starts without the delay and keeps running
         configureByText(PlainTextFileType.INSTANCE, "text");
@@ -315,6 +320,7 @@ public class DaemonFirstPassDelayTest extends ProductionDaemonAnalyzerTestCase {
       }
       finally {
         passReleased.set(true);
+        Reference.reachabilityFence(secondPsiFile);
       }
       waitUntil(() -> isForEditor(finished, getEditor()), "The first pass must finish after the release");
     });
