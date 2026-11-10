@@ -40,10 +40,10 @@ class TextMateLineIndentProvider : LineIndentProvider {
 
     val document = editor.document
     val lineNumber = document.getLineNumber(offset)
-    if (lineNumber <= 0L) return null
-    val lineOffset = document.getLineStartOffset(lineNumber)
-    if (lineOffset <= 0L) return null
-    val prevLineText = document.text.lines()[lineNumber - 1]
+    if (lineNumber <= 0) return null
+    val prevLineText = document.immutableCharSequence
+      .subSequence(document.getLineStartOffset(lineNumber - 1), document.getLineEndOffset(lineNumber - 1))
+      .toString()
 
     /*
     * This works good with .editorConfig,
