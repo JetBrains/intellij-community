@@ -16,8 +16,8 @@ internal val JAVA =
                 TokenRule.comment("//[^\n]*"),
                 // Strings (text blocks first — Java 13+)
                 TokenRule.string("\"\"\"[\\s\\S]*?\"\"\""),
-                TokenRule.string("\"(?:[^\"\\\\]|\\\\.)*\""),
-                TokenRule.string("'(?:[^'\\\\]|\\\\.)*'"),
+                TokenRule.string("\"(?:[^\"\\\\]|\\\\.)*+\""),
+                TokenRule.string("'(?:[^'\\\\]|\\\\.)*+'"),
                 // keyword.control + storage.modifier.java + storage.type.java
                 TokenRule.keyword(
                     "\\b(abstract|assert|break|case|catch|class|const|continue|default|do|else|enum|" +

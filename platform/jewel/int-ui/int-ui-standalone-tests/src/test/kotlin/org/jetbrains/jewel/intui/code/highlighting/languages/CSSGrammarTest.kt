@@ -26,6 +26,15 @@ internal class CSSGrammarTest {
     }
 
     @Test
+    fun `comment that ends in two stars stops at its own end`() = runTest {
+        val code = "/** a **/ a { color: red; } /* b */"
+        val highlighted = highlight(code)
+
+        assertEquals(testColors.comment, highlighted.colorAt(code.indexOf("**/")))
+        assertNotEquals(testColors.comment, highlighted.colorAt(code.indexOf("color")))
+    }
+
+    @Test
     fun `property name is colored as property key`() = runTest {
         // "color" starts at index 4 in "a { color: red; }"
         assertEquals(testColors.propertyKey, highlight("a { color: red; }").colorAt(4))

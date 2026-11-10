@@ -50,9 +50,9 @@ internal val JSON =
                 // string.json support.type.property-name.json
                 // Object keys must come before the generic string rule since an object key is declared just like a
                 // string value
-                TokenRule.propertyKey("\"(?:[^\"\\\\]|\\\\.)*\"(?=\\s*:)"),
+                TokenRule.propertyKey("\"(?:[^\"\\\\]|\\\\.)*+\"(?=\\s*:)"),
                 // String values
-                TokenRule.string("\"(?:[^\"\\\\]|\\\\.)*\""),
+                TokenRule.string("\"(?:[^\"\\\\]|\\\\.)*+\""),
                 // constant.language.json
                 TokenRule.constant("\\b(?:true|false|null)\\b"),
                 // constant.numeric.json, but without the tons of comments because we can't afford it here :P
