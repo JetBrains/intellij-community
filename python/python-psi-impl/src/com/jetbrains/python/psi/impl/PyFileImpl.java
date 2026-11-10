@@ -43,7 +43,6 @@ import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyCompoundStatement;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExceptPart;
@@ -60,7 +59,6 @@ import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStarImportElement;
-import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTypeAliasStatement;
@@ -105,7 +103,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
   private volatile @Nullable List<String> myDunderAll;
   private volatile boolean myDunderAllCalculated;
   private volatile @NotNull SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<>(null);
-  private volatile @NotNull SoftReference<TopLevelStubChildren> myTopLevelStubChildren = new SoftReference<>(null);
+  private volatile @NotNull SoftReference<TopLevelChildren> myTopLevelChildren = new SoftReference<>(null);
   private final @NotNull PsiModificationTracker myModificationTracker;
 
   /** The effective language level and the stamp it is valid for, see {@link #getEffectiveLanguageLevel()}. */
@@ -758,7 +756,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
     myDunderAllCalculated = false;
     myFutureFeatures.clear(); // probably no need to synchronize
     myExportedNameCache.clear();
-    myTopLevelStubChildren.clear();
+    myTopLevelChildren.clear();
   }
 
   @Override
@@ -853,28 +851,27 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
             PyImportStatement.class, PyFromImportStatement.class, PyTypeAliasStatement.class);
 
   /**
-   * The top-level children of the stub of this file, grouped by {@link #TOP_LEVEL_CHILD_TYPES}.
+   * The top-level children of this file, grouped by {@link #TOP_LEVEL_CHILD_TYPES}.
    * <p>
-   * Only the stub path is cached: one walk over the stub fills all groups. The AST path changes its traversal
-   * with the requested type, so one walk is not equivalent there.
+   * One walk fills every group, over the stub of the file or over its AST, whichever
+   * {@link #collectAllChildren} finds. The same walk serves {@link ExportedNameCache}.
    */
-  private final class TopLevelStubChildren {
+  private final class TopLevelChildren {
     private final long myModificationStamp;
     private final @NotNull LanguageLevel myLanguageLevel;
     private final Map<Class<? extends PyElement>, List<PyElement>> myByType;
 
-    private TopLevelStubChildren(@NotNull StubElement<?> stub, long modificationStamp, @NotNull LanguageLevel languageLevel) {
+    private TopLevelChildren(@Nullable StubElement<?> stub, long modificationStamp, @NotNull LanguageLevel languageLevel) {
       myModificationStamp = modificationStamp;
       myLanguageLevel = languageLevel;
       final Map<Class<? extends PyElement>, List<PyElement>> byType = new HashMap<>();
       for (Class<? extends PyElement> type : TOP_LEVEL_CHILD_TYPES) {
         byType.put(type, new ArrayList<>());
       }
-      for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
-        final PsiElement childPsi = child.getPsi();
+      for (PsiElement child : collectAllChildren(PyFileImpl.this, stub, languageLevel)) {
         for (Class<? extends PyElement> type : TOP_LEVEL_CHILD_TYPES) {
-          if (type.isInstance(childPsi)) {
-            byType.get(type).add((PyElement)childPsi);
+          if (type.isInstance(child)) {
+            byType.get(type).add((PyElement)child);
           }
         }
       }
@@ -892,57 +889,25 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
     }
   }
 
-  private @NotNull TopLevelStubChildren getTopLevelStubChildren(@NotNull StubElement<?> stub) {
-    TopLevelStubChildren cache = myTopLevelStubChildren.get();
+  private @NotNull TopLevelChildren getTopLevelChildren() {
+    TopLevelChildren cache = myTopLevelChildren.get();
     final long modificationStamp = getModificationStamp();
     // The modification stamp misses a level that changes without a PSI change
     final LanguageLevel languageLevel = getEffectiveLanguageLevel();
     if (cache != null && !cache.isValidFor(modificationStamp, languageLevel)) {
-      myTopLevelStubChildren.clear();
+      myTopLevelChildren.clear();
       cache = null;
     }
     if (cache == null) {
-      cache = new TopLevelStubChildren(stub, modificationStamp, languageLevel);
-      myTopLevelStubChildren = new SoftReference<>(cache);
+      cache = new TopLevelChildren(getGreenStub(), modificationStamp, languageLevel);
+      myTopLevelChildren = new SoftReference<>(cache);
     }
     return cache;
   }
 
+  /** The top-level children of this file of {@code type}, which {@link #TOP_LEVEL_CHILD_TYPES} must contain. */
   private @NotNull <T extends PyElement> List<T> collectChildren(Class<T> type) {
-    @Nullable StubElement<?> stub = getGreenStub();
-    if (stub != null && TOP_LEVEL_CHILD_TYPES.contains(type)) {
-      return getTopLevelStubChildren(stub).get(type);
-    }
-    @NotNull LanguageLevel languageLevel = getEffectiveLanguageLevel();
-    final List<T> result = new ArrayList<>();
-    if (stub != null) {
-      for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
-        PsiElement childPsi = child.getPsi();
-        if (type.isInstance(childPsi)) {
-          result.add(type.cast(childPsi));
-        }
-      }
-    }
-    else {
-      acceptChildren(new PyTypeCheckedTopLevelElementVisitor(languageLevel) {
-        @Override
-        protected void checkAddElement(PsiElement node) {
-          if (type.isInstance(node)) {
-            result.add(type.cast(node));
-          }
-        }
-
-        @Override
-        public void visitPyStatement(@NotNull PyStatement node) {
-          if (PyStatement.class.isAssignableFrom(type) && !(node instanceof PyCompoundStatement)) {
-            checkAddElement(node);
-            return;
-          }
-          super.visitPyStatement(node);
-        }
-      });
-    }
-    return result;
+    return getTopLevelChildren().get(type);
   }
 
   private static @NotNull List<PsiElement> collectAllChildren(@NotNull PsiElement element,
