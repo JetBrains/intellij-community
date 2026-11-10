@@ -79,11 +79,13 @@ public final class ScratchLanguageUtil {
   /**
    * Returns true when the extension of {@code file} matches its language.
    * Then a language change also changes the extension.
-   * A file without an extension matches only when it is a Home file.
+   * A Home file always matches, because its language comes only from the file name.
+   * A rename can give a Home file an extension of a file type that is not available.
    */
   public static boolean hasMatchingExtension(@NotNull Project project, @NotNull VirtualFile file) {
+    if (WelcomeFilesRootType.Util.INSTANCE.isWelcomeFile(project, file)) return true;
     String fileName = file.getName();
-    if (PathUtilRt.getFileExtension(fileName) == null) return WelcomeFilesRootType.Util.INSTANCE.isWelcomeFile(project, file);
+    if (PathUtilRt.getFileExtension(fileName) == null) return false;
     boolean caseSensitive = file.isCaseSensitive();
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     FileType expected = ScratchFileCreator.getFileTypeFromName(fileName, fileTypeManager);
