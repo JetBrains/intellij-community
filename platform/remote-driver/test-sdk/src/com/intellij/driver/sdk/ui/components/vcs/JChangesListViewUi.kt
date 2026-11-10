@@ -6,7 +6,7 @@ import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
 
 class JChangesListViewUi(data: ComponentData) : JTreeUiComponent(data) {
-  val changesFixture = driver.new(JChangesListViewFixtureRef::class, robot, component)
+  val changesFixture: JChangesListViewFixtureRef by lazy { driver.new(JChangesListViewFixtureRef::class, robot, component) }
   fun addFileName(fileName: String) {
     changesFixture.addFileName(fileName)
   }
