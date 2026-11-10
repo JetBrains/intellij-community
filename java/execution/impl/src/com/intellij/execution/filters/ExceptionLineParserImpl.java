@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.execution.filters.ExceptionAnalysisProvider.StackLine;
@@ -340,7 +340,7 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
                                                @Nullable Editor originalEditor) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile == null) return null;
-      Set<ExceptionLineRefiner.RefinerMatchResult> matchResults = getExceptionOrigin(psiFile, lineStart, lineEnd);
+      Set<ExceptionLineRefiner.RefinerMatchResult> matchResults = getExceptionOrigin(psiFile, myElementMatcher, lineStart, lineEnd);
       if (matchResults.isEmpty()) {
         return FindDivergedExceptionLineHandler.createLinkInfo(psiFile, myClassName, myMethod, myElementMatcher, lineStart, lineEnd,
                                                                targetEditor);
@@ -353,13 +353,16 @@ public class ExceptionLineParserImpl implements ExceptionLineParser {
       return null;
     }
 
-    private @NotNull Set<ExceptionLineRefiner.RefinerMatchResult> getExceptionOrigin(@NotNull PsiFile file, int lineStart, int lineEnd) {
+    static @NotNull Set<ExceptionLineRefiner.RefinerMatchResult> getExceptionOrigin(@NotNull PsiFile file,
+                                                                                    @NotNull ExceptionLineRefiner elementMatcher,
+                                                                                    int lineStart,
+                                                                                    int lineEnd) {
       if (!file.isValid()) return Set.of();
       PsiElement element = file.findElementAt(lineStart);
       Set<ExceptionLineRefiner.RefinerMatchResult> candidates = new HashSet<>();
       while (element != null && element.getTextRange().getStartOffset() < lineEnd) {
         PsiElement finalElement = element;
-        ExceptionLineRefiner.RefinerMatchResult matched = myElementMatcher.matchElement(finalElement);
+        ExceptionLineRefiner.RefinerMatchResult matched = elementMatcher.matchElement(finalElement);
         if (matched != null) {
           candidates.add(matched);
           if (candidates.size() > 1) return candidates;

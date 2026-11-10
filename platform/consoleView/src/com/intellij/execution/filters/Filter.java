@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.application.Application;
@@ -257,7 +257,9 @@ public interface Filter extends PossiblyDumbAware {
     private static @Nullable TextAttributes getGrayedHyperlinkAttributes(@NotNull TextAttributesKey normalHyperlinkAttrsKey) {
       TextAttributes grayedHyperlinkAttrs = GRAYED_BY_NORMAL_CACHE.getValue().get(normalHyperlinkAttrsKey);
       if (grayedHyperlinkAttrs == null) {
-        EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+        EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
+        if (editorColorsManager == null) return null;
+        EditorColorsScheme globalScheme = editorColorsManager.getGlobalScheme();
         TextAttributes normalHyperlinkAttrs = globalScheme.getAttributes(normalHyperlinkAttrsKey);
         if (normalHyperlinkAttrs != null) {
           grayedHyperlinkAttrs = normalHyperlinkAttrs.clone();

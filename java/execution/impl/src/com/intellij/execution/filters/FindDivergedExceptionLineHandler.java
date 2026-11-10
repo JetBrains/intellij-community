@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -39,6 +39,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -161,6 +162,12 @@ public final class FindDivergedExceptionLineHandler extends AnAction {
 
   @VisibleForTesting
   public @NotNull Supplier<Collection<PsiElement>> collector() {
+    return collector(myPsiFile, myMetaInfo, myRefiner);
+  }
+
+  private static @NotNull Supplier<Collection<PsiElement>> collector(@NotNull PsiFile psiFile,
+                                                                     @NotNull MetaInfo metaInfo,
+                                                                     @NotNull ExceptionLineRefiner refiner) {
     return () -> {
       Set<PsiElement> result = new HashSet<>();
       List<PsiElement> startPoints = new ArrayList<>();
@@ -168,17 +175,17 @@ public final class FindDivergedExceptionLineHandler extends AnAction {
 
         @Override
         public void visitClassInitializer(@NotNull PsiClassInitializer initializer) {
-          if (myMetaInfo.callType == MetaInfoCallType.STATIC_INIT) {
+          if (metaInfo.callType == MetaInfoCallType.STATIC_INIT) {
             startPoints.add(initializer);
           }
         }
 
         @Override
         public void visitField(@NotNull PsiField field) {
-          if (myMetaInfo.callType == MetaInfoCallType.STATIC_INIT && field.hasModifierProperty(PsiModifier.STATIC)) {
+          if (metaInfo.callType == MetaInfoCallType.STATIC_INIT && field.hasModifierProperty(PsiModifier.STATIC)) {
             startPoints.add(field);
           }
-          if (myMetaInfo.callType == MetaInfoCallType.NON_STATIC_INIT && !field.hasModifier(JvmModifier.STATIC)) {
+          if (metaInfo.callType == MetaInfoCallType.NON_STATIC_INIT && !field.hasModifier(JvmModifier.STATIC)) {
             startPoints.add(field);
           }
         }
@@ -186,11 +193,11 @@ public final class FindDivergedExceptionLineHandler extends AnAction {
         @Override
         public void visitMethod(@NotNull PsiMethod method) {
           ProgressManager.checkCanceled();
-          if (myMetaInfo.callType != MetaInfoCallType.LAMBDA && placeMatch(method, myMetaInfo)) {
+          if (metaInfo.callType != MetaInfoCallType.LAMBDA && placeMatch(method, metaInfo)) {
             startPoints.add(method);
           }
 
-          if (myMetaInfo.callType == MetaInfoCallType.LAMBDA) {
+          if (metaInfo.callType == MetaInfoCallType.LAMBDA) {
             super.visitMethod(method);
           }
         }
@@ -198,29 +205,29 @@ public final class FindDivergedExceptionLineHandler extends AnAction {
         @Override
         public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
           ProgressManager.checkCanceled();
-          if (myMetaInfo.callType == MetaInfoCallType.LAMBDA) {
+          if (metaInfo.callType == MetaInfoCallType.LAMBDA) {
             PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class);
-            if (method != null && placeMatch(method, myMetaInfo)) {
+            if (method != null && placeMatch(method, metaInfo)) {
               startPoints.add(expression);
             }
           }
         }
       };
-      myPsiFile.acceptChildren(fileVisitor);
+      psiFile.acceptChildren(fileVisitor);
       for (PsiElement startPoint : startPoints) {
         PsiTreeUtil.processElements(startPoint, new PsiElementProcessor<>() {
           @Override
           public boolean execute(@NotNull PsiElement element) {
             ProgressManager.checkCanceled();
-            ExceptionLineRefiner.RefinerMatchResult matchedElement = myRefiner.matchElement(element);
+            ExceptionLineRefiner.RefinerMatchResult matchedElement = refiner.matchElement(element);
             if (matchedElement != null && matchedElement.target() instanceof Navigatable) {
               PsiElement target = matchedElement.target();
               PsiMethod matchedElementMethod = PsiTreeUtil.getParentOfType(target, PsiMethod.class);
-              if (matchedElementMethod != null && placeMatch(matchedElementMethod, myMetaInfo)) {
+              if (matchedElementMethod != null && placeMatch(matchedElementMethod, metaInfo)) {
                 result.add(target);
               }
               if (matchedElementMethod == null &&
-                  (myMetaInfo.callType == MetaInfoCallType.NON_STATIC_INIT || myMetaInfo.callType == MetaInfoCallType.STATIC_INIT)) {
+                  (metaInfo.callType == MetaInfoCallType.NON_STATIC_INIT || metaInfo.callType == MetaInfoCallType.STATIC_INIT)) {
                 result.add(target);
               }
             }
@@ -268,9 +275,36 @@ public final class FindDivergedExceptionLineHandler extends AnAction {
                                                                                 int lineStart,
                                                                                 int lineEnd,
                                                                                 @Nullable Editor targetEditor) {
+    if (targetEditor == null) return null;
+    MetaInfo metaInfo = metaInfo(file, className, methodName, refiner, lineStart, lineEnd);
+    if (metaInfo == null) return null;
+    return new FindDivergedExceptionLineHandler(file, metaInfo, refiner, targetEditor);
+  }
 
+  /**
+   * @return the places where the frame may be when its line no longer matches the code, sorted by offset,
+   * or {@code null} when they cannot be searched for
+   */
+  static @Nullable Collection<PsiElement> findDivergedTargets(@Nullable PsiFile file,
+                                                              @Nullable String className,
+                                                              @Nullable String methodName,
+                                                              @Nullable ExceptionLineRefiner refiner,
+                                                              int lineStart,
+                                                              int lineEnd) {
+    MetaInfo metaInfo = metaInfo(file, className, methodName, refiner, lineStart, lineEnd);
+    if (metaInfo == null) return null;
+    return collector(file, metaInfo, refiner).get();
+  }
+
+  @Contract("null, _, _, _, _, _ -> null; _, null, _, _, _, _ -> null; _, _, null, _, _, _ -> null; _, _, _, null, _, _ -> null")
+  private static @Nullable MetaInfo metaInfo(@Nullable PsiFile file,
+                                             @Nullable String className,
+                                             @Nullable String methodName,
+                                             @Nullable ExceptionLineRefiner refiner,
+                                             int lineStart,
+                                             int lineEnd) {
     //it can be ambiguous to find lambda anonymous classes
-    if (file == null || className == null || methodName == null || refiner == null || targetEditor == null) {
+    if (file == null || className == null || methodName == null || refiner == null) {
       return null;
     }
 
@@ -312,11 +346,9 @@ public final class FindDivergedExceptionLineHandler extends AnAction {
 
     callType = findInitCallType(methodName, callType);
 
-    MetaInfo metaInfo = new MetaInfo(className, methodName, callType);
-
     if (skipByRefiner(file, refiner, lineStart, lineEnd)) return null;
 
-    return new FindDivergedExceptionLineHandler(file, metaInfo, refiner, targetEditor);
+    return new MetaInfo(className, methodName, callType);
   }
 
   private static @NotNull MetaInfoCallType findInitCallType(@NotNull String methodName, @NotNull MetaInfoCallType callType) {

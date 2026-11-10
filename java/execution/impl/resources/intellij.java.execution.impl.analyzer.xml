@@ -8,6 +8,10 @@ intellij.java.execution.impl.xml. Keep them in sync.
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.testIntegration.TestFailedLineManager"
                     serviceImplementation="com.intellij.execution.codeInspection.TestFailedLineManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.filters.ExceptionLineParserFactory"
+                        serviceImplementation="com.intellij.execution.filters.ExceptionLineParserFactoryImpl"/>
+    <applicationService serviceInterface="com.intellij.execution.filters.HyperlinkInfoFactory"
+                        serviceImplementation="com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl"/>
   </extensions>
 
   <xi:include href="/META-INF/RegistryKeysExecutionImpl.xml"/>
