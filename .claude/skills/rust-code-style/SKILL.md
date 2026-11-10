@@ -124,6 +124,9 @@ pub(crate) fn is_versioned_module_info(name: &str) -> bool {
 - The process-level tests of a binary live in `tests/cli.rs`. The run-time `CARGO_BIN_EXE_<name>` gives the binary.
   Under Bazel the path is relative, so make it absolute before the test changes the directory.
 - Shared test helpers live in a dev-only testkit crate. Shipped code never depends on it.
+- A test in `tests/` of a library links the library, as Cargo does. A test that goes through the testkit crate of its
+  own library lives there: a unit test compiles a second copy of the library, so it cannot share types with the
+  testkit.
 - A test finds `testdata/` through one lookup: the variable that the crate macro sets under Bazel, such as
   `DDT_TESTDATA_DIR`, and the run-time `CARGO_MANIFEST_DIR` under cargo. The rules_rust process wrapper refuses
   `env!("CARGO_MANIFEST_DIR")`. A file that `include_str!` reads is `compile_data` of the crate.

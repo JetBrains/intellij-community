@@ -82,7 +82,7 @@ declaration states its arguments.
 - `rust_tool_hub` binds the core to one crate hub. Starlark cannot load a file by a name that is known only at run
   time, so the `defs.bzl` of a workspace loads the functions of its hub and passes them in.
 - `rust_tool_crate` declares one crate: the library or the binary, a `<bin>-bin` per binary of a library crate, its
-  unit test, an integration test per `tests/*.rs` of a binary, the `testdata/` filegroup, the closure test, and
+  unit test, an integration test per `tests/*.rs`, the `testdata/` filegroup, the closure test, and
   `<crate>-clippy`. A workspace can give it another test rule, such as a wrapper that writes a JUnit report, which
   the integration tests use too, the run-time data and environment of the integration tests, and the constraints of a
   crate that some hosts do not build. With the `dep_data` of its hub, a package without `src/lib.rs` is a binary
