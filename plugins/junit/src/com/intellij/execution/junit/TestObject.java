@@ -60,6 +60,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -770,7 +771,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     if (JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT)) {
       return JUnitStarter.JUNIT4_PARAMETER;
     }
-    if (JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT) || isPackageRunnerPreferred(project, module)) {
+    if (JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT)) {
       return getRunner(globalSearchScope, project);
     }
 
@@ -780,6 +781,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
                               ? DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
       () -> JavaExecutionUtil.findMainClass(project, data.getMainClassName(), globalSearchScope))
                               : null;
+
+    // The Vintage engine skips an abstract class, also with @RunWith.
+    if ((psiClass == null || !psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) && isPackageRunnerPreferred(project, module)) {
+      return getRunner(globalSearchScope, project);
+    }
 
     if (psiClass != null) {
       Set<TestFramework> testFrameworks = TestFrameworks.detectApplicableFrameworks(psiClass);

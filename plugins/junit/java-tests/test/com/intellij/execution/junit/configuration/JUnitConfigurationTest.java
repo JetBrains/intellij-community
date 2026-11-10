@@ -278,6 +278,24 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     assertTrue("Expected to run as junit6 but program parameters are: " + parameters, parameters.contains("-junit6"));
   }
 
+  public void testPackageRunnerNotPreferredForAbstractClass() throws ExecutionException {
+    createModule(findFile("moduleWithBothVersions"), true, "JUnit6",
+                 IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit6", "JUnit6"));
+    Module module = getModule(3);
+    IntelliJProjectConfiguration.LibraryRoots junit4Library =
+      IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4");
+    ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
+    PsiClass testClass = findClass(module, "with4.AbstractTestCaseWithInners");
+    assertNotNull(testClass);
+    JUnitConfiguration configuration = createConfiguration(testClass);
+    assertNotNull(configuration);
+
+    JUnitRunnerSelectionPolicy.EP_NAME.getPoint().registerExtension((project, testModule) -> true, getTestRootDisposable());
+
+    List<String> parameters = checkCanRun(configuration).getProgramParametersList().getList();
+    assertTrue("Expected to run as junit4 but program parameters are: " + parameters, parameters.contains("-junit4"));
+  }
+
   public void testRunningAllInPackage() throws IOException, ExecutionException {
     Module module1 = getModule1();
     GlobalSearchScope module1AndLibraries = GlobalSearchScope.moduleWithLibrariesScope(module1);
