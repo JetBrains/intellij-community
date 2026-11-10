@@ -46,7 +46,6 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -271,18 +270,21 @@ final class DocumentFoldingInfo implements CodeFoldingState {
   }
 
   private static @NotNull Map<PsiElement, FoldingDescriptor> buildRanges(@NotNull PsiFile psiFile, @NotNull Document document) {
-    FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psiFile.getLanguage());
-    ASTNode node = psiFile.getNode();
-    if (node == null) {
-      return Collections.emptyMap();
-    }
-    FoldingDescriptor[] descriptors = LanguageFolding.buildFoldingDescriptors(foldingBuilder, psiFile, document, true);
-    Map<PsiElement, FoldingDescriptor> ranges = HashMap.newHashMap(descriptors.length);
-    for (FoldingDescriptor descriptor : descriptors) {
-      ASTNode ast = descriptor.getElement();
-      PsiElement psi = ast.getPsi();
-      if (psi != null) {
-        ranges.put(psi, descriptor);
+    var roots = psiFile.getViewProvider().getAllFiles();
+    Map<PsiElement, FoldingDescriptor> ranges = HashMap.newHashMap(roots.size());
+    for (PsiFile root : roots) {
+      FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(root.getLanguage());
+      ASTNode node = root.getNode();
+      if (foldingBuilder == null || node == null) {
+        continue;
+      }
+      FoldingDescriptor[] descriptors = LanguageFolding.buildFoldingDescriptors(foldingBuilder, root, document, true);
+      for (FoldingDescriptor descriptor : descriptors) {
+        ASTNode ast = descriptor.getElement();
+        PsiElement psi = ast.getPsi();
+        if (psi != null) {
+          ranges.put(psi, descriptor);
+        }
       }
     }
     return ranges;

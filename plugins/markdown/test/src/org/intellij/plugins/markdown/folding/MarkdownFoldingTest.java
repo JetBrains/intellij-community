@@ -1,8 +1,18 @@
 package org.intellij.plugins.markdown.folding;
 
+import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.fileEditor.impl.text.CodeFoldingState;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
+import org.jdom.Element;
+
+import java.util.Arrays;
 
 public class MarkdownFoldingTest extends BasePlatformTestCase {
   public void testOrderedList() {
@@ -39,6 +49,41 @@ public class MarkdownFoldingTest extends BasePlatformTestCase {
 
   public void testCodeFence() {
     doTest();
+  }
+
+  public void testHtmlCommentFoldingStateIsRestored() {
+    String text = """
+      <!--
+      multiline
+      comment
+      -->
+      """;
+    myFixture.configureByText("test.md", text);
+    Editor editor = myFixture.getEditor();
+    EditorTestUtil.buildInitialFoldingsInBackground(editor);
+
+    int commentStart = text.indexOf("<!--") + "<!--".length();
+    FoldRegion commentRegion = Arrays.stream(editor.getFoldingModel().getAllFoldRegions())
+      .filter(region -> region.getStartOffset() == commentStart)
+      .findFirst()
+      .orElseThrow();
+
+    CodeFoldingManager manager = CodeFoldingManager.getInstance(getProject());
+    CodeFoldingState pendingState = EdtTestUtil.runInEdtAndGet(() -> {
+      editor.getFoldingModel().runBatchFoldingOperation(() -> commentRegion.setExpanded(false));
+      CodeFoldingState state = manager.saveFoldingState(editor);
+      Element serializedState = new Element("folding");
+      manager.writeFoldingState(state, serializedState);
+      return manager.readFoldingState(serializedState, editor.getDocument());
+    });
+
+    EdtTestUtil.runInEdtAndWait(() -> {
+      editor.getFoldingModel().runBatchFoldingOperation(() -> commentRegion.setExpanded(true));
+      manager.restoreFoldingState(editor, pendingState);
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    });
+
+    assertFalse(commentRegion.isExpanded());
   }
 
   public void testBlockQuote() {
