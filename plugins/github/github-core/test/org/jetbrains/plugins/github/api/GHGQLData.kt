@@ -20,14 +20,19 @@ internal object GHGQLTestSchemas {
   val s_3_13 by lazy { loadSchema("3.13") }
   val s_3_14 by lazy { loadSchema("3.14") }
   val s_3_15 by lazy { loadSchema("3.15") }
+  // 3.16, 3.17, 3.18 schemas are not available in GitHub documentation
+  val s_3_19 by lazy { loadSchema("3.19") }
+  val s_3_20 by lazy { loadSchema("3.20") }
+  val s_3_21 by lazy { loadSchema("3.21") }
+  val s_3_22 by lazy { loadSchema("3.22") }
 
   // Cloud schemas refer to the ones used by github.com and *.ghe.com.
   val s_cloud_latest by lazy { loadSchema("cloud-latest") }
 
   // The schema we develop against (available under gen/schema.graphql).
-  val s_dev by lazy { loadSchemaByClassPath("schema.graphql", "dev") }
+  val s_dev by lazy { loadSchemaByClassPath("/schema.graphql", "dev") }
 
-  val all = listOf(s_3_10, s_3_11, s_3_12, s_3_13, s_3_14, s_3_15, s_cloud_latest /*s_dev*/)
+  val all = listOf(s_3_10, s_3_11, s_3_12, s_3_13, s_3_14, s_3_15, s_3_19, s_3_20, s_3_21, s_3_22, s_cloud_latest, s_dev)
 
   private fun loadSchema(version: String): GraphQLSchemaAndQueryLoaderHolder =
     loadSchemaByClassPath("/graphql/schemas/${version}.schema.graphql", version)
