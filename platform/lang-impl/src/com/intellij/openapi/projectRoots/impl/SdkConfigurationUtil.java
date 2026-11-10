@@ -294,7 +294,7 @@ public final class SdkConfigurationUtil {
 
     Application application = ApplicationManager.getApplication();
     Runnable runnable = () -> sdkModificator.commitChanges();
-    if (application.isDispatchThread()) {
+    if (application.isDispatchThread() || application.isWriteAccessAllowed()) {
       application.runWriteAction(runnable);
     }
     else {
