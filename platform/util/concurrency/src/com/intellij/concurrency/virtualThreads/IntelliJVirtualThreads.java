@@ -4,7 +4,6 @@ package com.intellij.concurrency.virtualThreads;
 import kotlinx.coroutines.Dispatchers;
 import kotlinx.coroutines.ExecutorsKt;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -41,26 +40,25 @@ public final class IntelliJVirtualThreads {
     virtualThreadBuilderConstructor = handle;
   }
 
+  private static Thread.Builder getVirtualBuilder() {
+    if (virtualThreadBuilderConstructor == null) {
+      return Thread.ofVirtual();
+    }
+    try {
+      Executor executor = ExecutorsKt.asExecutor(Dispatchers.getDefault());
+      return (Thread.Builder)virtualThreadBuilderConstructor.invoke(executor);
+    }
+    catch (Throwable e) {
+      return Thread.ofVirtual();
+    }
+  }
+
   /**
    * Returns a virtual thread builder.
    * <p>
    * This method is preferable to {@link Thread#ofVirtual()}, as it allows IntelliJ Platform to perform modifications to virtual threads.
    */
   public static Thread.Builder ofVirtual() {
-    return ofVirtualIn(ExecutorsKt.asExecutor(Dispatchers.getDefault()));
-  }
-
-  /// Returns a virtual thread builder, allowing virtual threads to execute in `executor`
-  @ApiStatus.Internal
-  public static Thread.Builder ofVirtualIn(@NotNull Executor executor) {
-    if (virtualThreadBuilderConstructor == null) {
-      return Thread.ofVirtual();
-    }
-    try {
-      return (Thread.Builder)virtualThreadBuilderConstructor.invoke(executor);
-    }
-    catch (Throwable e) {
-      return Thread.ofVirtual();
-    }
+    return getVirtualBuilder();
   }
 }

@@ -19,18 +19,24 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Processes the {@link #array} range from {@link #lo} to {@link #hi}.
- * Each task also helps the other tasks process their ranges.
- * The {@link #processed} array makes sure that one task processes each element.
+ * Executes {@link #processor} on {@link #array} elements in range from {@link #lo} (inclusive) to {@link #hi} (exclusive).
+ * To do this, it starts executing the processor on the first array items and, if it takes too much time, splits the work and forks the right half.
+ * The series of splits leads to a linked list of forked subtasks, each of which is a CountedCompleter of its own,
+ * having this task as its parent.
+ * After the first pass on the array, this task attempts to steal work from the recently forked off subtasks
+ * by traversing the linked subtasks list, unforking each subtask and calling execAndForkSubTasks() on each recursively.
+ * After that, the task completes itself.
+ * The process of completing traverses task parent hierarchy, decrementing each pending count until it either
+ * decrements not-zero pending count and stops or
+ * reaches the top, in which case it invokes {@link ForkJoinTask#quietlyComplete()} which causes the top level task to wake up and join successfully.
+ * The exceptions from the subtasks bubble up to the top and are saved in {@link #myThrown}.
  */
-final class ApplierCompleter<T> implements Runnable {
+final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   private final ApplierCompleter<T>[] myCompleters;
   private final int myIndex;
   private final AtomicReference<Throwable> myThrown;
@@ -38,7 +44,7 @@ final class ApplierCompleter<T> implements Runnable {
   private final boolean failFastOnAcquireReadAction;
   private final ProgressIndicator progressIndicator;
   private final @NotNull List<? extends T> array;
-  private final @NotNull Processor<? super T> processor;
+  private final @NotNull Processor<?> processor;
   private final int lo;
   private final int hi;
   /**
@@ -55,7 +61,12 @@ final class ApplierCompleter<T> implements Runnable {
   // if not empty, the read action has failed and this list contains unfinished subtasks
   private final Collection<? super ApplierCompleter<T>> failedSubTasks;
   private final ChildContext childContext;
-  private final CompletableFuture<Void> completion = new CompletableFuture<>();
+
+  @Override
+  public boolean cancel(boolean mayInterruptIfRunning) {
+    progressIndicator.cancel();
+    return super.cancel(mayInterruptIfRunning);
+  }
 
   ApplierCompleter(@NotNull ApplierCompleter<T> @NotNull [] globalCompleters,
                    int myIndex,
@@ -83,35 +94,35 @@ final class ApplierCompleter<T> implements Runnable {
     this.childContext = Propagation.createChildContextIgnoreStructuredConcurrency("ApplierCompleter");
   }
 
-  boolean isDone() {
-    return completion.isDone();
-  }
-
-  void get() throws ExecutionException, InterruptedException {
-    completion.get();
+  @Override
+  public Void getRawResult() {
+    return null;
   }
 
   @Override
-  public void run() {
-    try {
-      wrapAndRun(() -> {
-        execAll();
-        helpOtherCompleters();
-      });
-      completion.complete(null);
-    }
-    catch (Throwable e) {
-      completion.completeExceptionally(new CompletionException(e));
-    }
+  protected void setRawResult(Void value) {
+  }
+
+  @Override
+  protected boolean exec() {
+    Runnable runnable = () -> {
+      execAll();
+      helpAll();
+    };
+    wrapAndRun(runnable);
+    return true;
   }
 
   private boolean processArrayItem(int i) {
+    boolean r;
     try {
-      return processor.process(array.get(i));
+      //noinspection unchecked
+      r = ((Processor<Object>)processor).process(array.get(i));
     }
     finally {
       finishedOrUnqueuedAllOwned.incrementAndGet();
     }
+    return r;
   }
 
   private static Throwable moreImportant(Throwable throwable1, Throwable throwable2) {
@@ -164,16 +175,10 @@ final class ApplierCompleter<T> implements Runnable {
       accumulateAndRethrowUncheckedRaw(e);
     }
   }
-  void helpOtherCompleters() {
+  private void helpAll() {
     try {
       ThreadContext.resetThreadContext(() -> {
-        for (int i = myIndex == myCompleters.length - 1 ? 0 : myIndex + 1; i != myIndex; i = i == myCompleters.length - 1 ? 0 : i + 1) {
-          ApplierCompleter<T> completer = myCompleters[i];
-          if (!completer.isFinishedAll()) {
-            completer.processArrayInReverse();
-          }
-          // else skip the entire [completer.lo... completer.hi] range
-        }
+        helpOthers();
         return null;
       });
     }
@@ -219,19 +224,6 @@ final class ApplierCompleter<T> implements Runnable {
     }
     // set to true after processed all items, because some other completer could help processing them in the meantime
   }
-  private void processArrayInReverse() {
-    int lo = this.lo;
-    int hi = this.hi;
-    try (AccessToken ignored = childContext.applyContextActions(true)) {
-      for (int i = hi-1; i >= lo && !isFinishedAll(); --i) {
-        ProgressManager.checkCanceled();
-        if (unqueue(i) && !processArrayItem(i)) {
-          throw new ComputationAbortedException();
-        }
-      }
-    }
-    // set to true after processed all items, because some other completer could help processing them in the meantime
-  }
 
   private boolean isFinishedAll() {
     return finishedOrUnqueuedAllOwned.get() == hi - lo;
@@ -239,6 +231,16 @@ final class ApplierCompleter<T> implements Runnable {
 
   private boolean unqueue(int i) {
     return (boolean)booleanArrayHandle.compareAndSet(processed, i, false, true);
+  }
+
+  private void helpOthers() {
+    for (int i = myIndex == myCompleters.length - 1 ? 0 : myIndex + 1; i != myIndex; i = i == myCompleters.length - 1 ? 0 : i + 1) {
+      ApplierCompleter<T> completer = myCompleters[i];
+      if (!completer.isFinishedAll()) {
+        completer.processArray();
+      }
+      // else skip the entire [completer.lo... completer.hi] range
+    }
   }
 
   private void cancelProgress() {
