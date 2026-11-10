@@ -3,6 +3,7 @@ package com.intellij.devkit.uiDsl.sandbox
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.EditorTextField
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
@@ -103,6 +104,13 @@ internal fun <T : JTextArea> Cell<T>.initWithText(): Cell<T> {
 
 internal fun <T : JTextArea> T.addText() {
   text = (1..20).joinToString(separator = "\n") { "Line $it" }
+}
+
+/**
+ * Sets the preferred width of the field to [columns] columns, as [com.intellij.ui.dsl.builder.columns] does for a text field.
+ */
+internal fun <T : EditorTextField> T.columns(columns: Int): T = apply {
+  setPreferredWidth(columns * getFontMetrics(font).charWidth('m'))
 }
 
 internal fun items(count: Int, prefix: String = "Item"): List<String> {

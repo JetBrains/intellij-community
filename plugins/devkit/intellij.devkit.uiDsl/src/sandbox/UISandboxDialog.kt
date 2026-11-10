@@ -7,8 +7,12 @@ import com.intellij.devkit.uiDsl.sandbox.components.ActionToolbarPanel
 import com.intellij.devkit.uiDsl.sandbox.components.BadgePanel
 import com.intellij.devkit.uiDsl.sandbox.components.ComboBoxPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ComboBoxWithWidePopupPanel
+import com.intellij.devkit.uiDsl.sandbox.components.EditorTextFieldPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ExpandableTextFieldPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ExtendableTextFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.IconsPanel
 import com.intellij.devkit.uiDsl.sandbox.components.InlineBannerPanel
+import com.intellij.devkit.uiDsl.sandbox.components.IntegerFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JBIntSpinnerPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JBOptionButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JBPasswordFieldPanel
@@ -23,7 +27,12 @@ import com.intellij.devkit.uiDsl.sandbox.components.JTextFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.LinkPanel
 import com.intellij.devkit.uiDsl.sandbox.components.OnOffButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.PillButtonPanel
+import com.intellij.devkit.uiDsl.sandbox.components.PortFieldPanel
+import com.intellij.devkit.uiDsl.sandbox.components.RawCommandLineEditorPanel
 import com.intellij.devkit.uiDsl.sandbox.components.SearchTextFieldPanel
+import com.intellij.devkit.uiDsl.sandbox.components.TextFieldWithAutoCompletionPanel
+import com.intellij.devkit.uiDsl.sandbox.components.TextFieldWithBrowseButtonPanel
+import com.intellij.devkit.uiDsl.sandbox.components.TextFieldWithHistoryPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ShimmerLabelPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ThreeStateCheckBoxPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ToolbarComboButtonPanel
@@ -154,28 +163,39 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     BadgePanel(),
     ComboBoxPanel(),
     ComboBoxWithWidePopupPanel(),
+    EditorTextFieldPanel(),
+    ExpandableTextFieldPanel(),
+    ExtendableTextFieldPanel(),
     IconsPanel(),
     InlineBannerPanel(),
-    JBIntSpinnerPanel(),
     JButtonPanel(),
     JBOptionButtonPanel(),
     JBPasswordFieldPanel(),
     JBTextAreaPanel(),
     JCheckBoxPanel(),
-    JComboBoxPanel(),
     JProgressBarPanel(),
     JRadioButtonPanel(),
-    JSpinnerPanel(),
     JTextFieldPanel(),
     LinkPanel(),
     OnOffButtonPanel(),
     PillButtonPanel(),
+    RawCommandLineEditorPanel(),
     SearchTextFieldPanel(),
     ShimmerLabelPanel(),
+    TextFieldWithAutoCompletionPanel(),
+    TextFieldWithBrowseButtonPanel(),
+    TextFieldWithHistoryPanel(),
     ThreeStateCheckBoxPanel(),
     ToolbarComboButtonPanel(),
     ToolbarDecoratorPanel(),
     ToolbarSplitButtonPanel(),
+    Group("Obsolete", children = listOf(
+      IntegerFieldPanel(),
+      JBIntSpinnerPanel(),
+      JComboBoxPanel(),
+      JSpinnerPanel(),
+      PortFieldPanel(),
+    )),
   ))
 
   private fun createKotlinUIDSLNode() = Group("Kotlin UI DSL", children = listOf(
