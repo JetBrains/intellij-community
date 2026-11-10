@@ -11,6 +11,7 @@ import com.intellij.codeInsight.hints.InlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.ParameterHintsPassFactory
 import com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayHintsPassFactory
+import com.intellij.codeInsight.hints.getLanguageForSettingKey
 import com.intellij.codeInsight.hints.settings.InlayGroupSettingProvider
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
@@ -76,6 +77,7 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
   private val groups: MutableMap<InlayGroup, List<InlayProviderSettingsModel>>
   private var currentEditor: Editor? = null
   private val pendingStages = HashMap<InlayHintSettingsKey, InlayHintStage>()
+  private val pendingGroupStages = HashMap<String, InlayHintStage>()
 
   @ApiStatus.Internal
   companion object {
@@ -224,18 +226,73 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
     }
   }
 
+  private fun propagateStage(treeNode: CheckedTreeNode, stage: InlayHintStage) {
+    when (val item = treeNode.userObject) {
+      is InlayGroup -> pendingGroupStages[item.key] = stage
+      is InlayGroupSettingProvider -> pendingGroupStages[item.group.key] = stage
+      is Language -> pendingGroupStages[getLanguageForSettingKey(item).id] = stage
+      is InlayProviderSettingsModel -> {
+        val key = item.settingsKey(null)
+        if (key != null) {
+          pendingStages[key] = stage
+        }
+        treeNode.isChecked = stage.isEnabled
+        (tree.model as DefaultTreeModel).nodeChanged(treeNode)
+      }
+      is ImmediateConfigurable.Case -> {
+        val parent = treeNode.parent as CheckedTreeNode
+        val model = parent.userObject as InlayProviderSettingsModel
+        val key = model.settingsKey(item)
+        if (key != null) {
+          pendingStages[key] = stage
+        }
+        treeNode.isChecked = stage.isEnabled
+        (tree.model as DefaultTreeModel).nodeChanged(treeNode)
+      }
+    }
+    treeNode.children().iterator().forEach { propagateStage(it as CheckedTreeNode, stage) }
+  }
+
   private fun updateRightPanel(treeNode: CheckedTreeNode?) {
     rightPanel.removeAll()
     currentEditor = null
     when (val item = treeNode?.userObject) {
       is InlayGroup -> {
         addDescription(item.description)
+        val key = item.key
+        val store = XRayStageStore.getInstanceOrNull()
+        if (store != null) {
+          addStageControl(treeNode,
+                          { pendingGroupStages[key] ?: store.getGroupStage(key) },
+                          { stage -> propagateStage(treeNode, stage) },
+                          { })
+        }
       }
       is InlayGroupSettingProvider -> {
         addDescription(item.group.description)
+
+        val key = item.group.key
+        val store = XRayStageStore.getInstanceOrNull()
+        if (store != null) {
+          addStageControl(treeNode,
+                          { pendingGroupStages[key] ?: store.getGroupStage(key) },
+                          { stage -> propagateStage(treeNode, stage) },
+                          { })
+        }
+
         rightPanel.add(item.component)
       }
       is Language -> {
+
+        val key = getLanguageForSettingKey(item).id
+        val store = XRayStageStore.getInstanceOrNull()
+        if (store != null) {
+          addStageControl(treeNode,
+                          { pendingGroupStages[key] ?: store.getGroupStage(key) },
+                          { stage -> propagateStage(treeNode, stage) },
+                          { })
+        }
+
         configureLanguageNode(treeNode)?.let {
           configurePreview((treeNode.firstChild as CheckedTreeNode).userObject as InlayProviderSettingsModel, treeNode)
         }
@@ -248,13 +305,14 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
           addDescription(item.description)
         }
 
-        val key = if (item.isMergedNode) null else item.settingsKey(null)
+        val key = item.settingsKey(null)
         val store = XRayStageStore.getInstanceOrNull()
         if (key != null && store != null) {
-          addStageControl(treeNode,
-                          { pendingStages[key] ?: store.getStage(key) },
-                          { stage -> pendingStages[key] = stage },
-                          { item.onChangeListener?.settingsChanged() })
+          val storeStage: (InlayHintStage) -> Unit =
+            if (item.isMergedNode) { stage -> propagateStage(treeNode, stage) }
+            else { stage -> pendingStages[key] = stage }
+          val onChanged: () -> Unit = if (item.isMergedNode) ({ }) else ({ item.onChangeListener?.settingsChanged() })
+          addStageControl(treeNode, { pendingStages[key] ?: store.getStage(key) }, storeStage, onChanged)
         }
 
         val component = item.component
@@ -467,6 +525,7 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
 
   fun reset() {
     pendingStages.clear()
+    pendingGroupStages.clear()
     reset(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
     updateRightPanel(tree.lastSelectedPathComponent as? CheckedTreeNode)
   }
@@ -523,8 +582,12 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
       for ((key, stage) in pendingStages) {
         store.setStage(key, stage)
       }
+      for ((key, stage) in pendingGroupStages) {
+        store.setGroupStage(key, stage)
+      }
     }
     pendingStages.clear()
+    pendingGroupStages.clear()
 
     apply(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
@@ -612,7 +675,8 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
 
   fun isModified(): Boolean {
     val store = XRayStageStore.getInstanceOrNull()
-    if (store != null && pendingStages.any { (key, stage) -> store.getStage(key) != stage }) {
+    if (store != null && (pendingStages.any { (key, stage) -> store.getStage(key) != stage } ||
+                          pendingGroupStages.any { (key, stage) -> store.getGroupStage(key) != stage })) {
       return true
     }
     return isModified(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())

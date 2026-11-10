@@ -70,6 +70,19 @@ internal class XRayStageStore : SimplePersistentStateComponent<XRayStageStore.St
     return state.stages[k] ?: defaultStages[k]
   }
 
+  fun getGroupStage(key: String): InlayHintStage {
+    return state.stages[key] ?: defaultStages[key] ?: InlayHintStage.ALWAYS
+  }
+
+  fun setGroupStage(key: String, stage: InlayHintStage) {
+    state.stages[key] = stage
+    state.intIncrementModificationCount()
+  }
+
+  fun findGroupStage(key: String): InlayHintStage? {
+    return state.stages[key] ?: defaultStages[key]
+  }
+
   /**
    * Generates a key from the [InlayHintSettingsKey]
    *
