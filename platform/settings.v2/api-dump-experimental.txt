@@ -73,6 +73,8 @@
 - sf:INSTANCE:com.intellij.platform.settings.v2.LongSerializer
 - deserialize(com.intellij.platform.settings.v2.SettingsValue):java.lang.Long
 - serialize(J):com.intellij.platform.settings.v2.SettingsValue
+*:com.intellij.platform.settings.v2.ProjectAware
+- a:getProject():com.intellij.openapi.project.Project
 *f:com.intellij.platform.settings.v2.ReadOnlySettingsException
 - java.lang.IllegalStateException
 - <init>(com.intellij.platform.settings.v2.SettingsKey):V

@@ -8,6 +8,7 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.settings.v2.ProjectAware
 import com.intellij.platform.settings.v2.SettingsContext
 import com.intellij.platform.settings.v2.SettingsContextKind
 import com.intellij.testFramework.LightVirtualFile
@@ -25,16 +26,6 @@ import java.util.IdentityHashMap
 internal const val APP_CONTEXT_ID: String = "app"
 internal const val PROJECT_CONTEXT_ID: String = "project"
 internal const val FILE_CONTEXT_ID: String = "file"
-
-/**
- * Marks a context that names a project: a project context, or the context of a file or a directory in a project.
- * The context resolves [project] on demand from a stored id and never holds it, so it does not leak the project. A
- * caller can ask which project a context belongs to without a match on each concrete context type.
- */
-interface ProjectAware {
-  /** Holds the open project that this context refers to, or `null` when no open project has its id. */
-  val project: Project?
-}
 
 /** Represents the application-level context. It is the widest node of the chain and has no parent. */
 internal data object AppSettingsContext : SettingsContext {

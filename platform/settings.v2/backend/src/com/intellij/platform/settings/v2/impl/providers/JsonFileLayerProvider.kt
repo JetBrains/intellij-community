@@ -6,10 +6,10 @@ package com.intellij.platform.settings.v2.impl.providers
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.settings.v2.LayerData
+import com.intellij.platform.settings.v2.ProjectAware
 import com.intellij.platform.settings.v2.SettingsContext
 import com.intellij.platform.settings.v2.SettingsContextKind
 import com.intellij.platform.settings.v2.SettingsContextKindRange
-import com.intellij.platform.settings.v2.impl.ProjectAware
 
 /** A file layer: a `.jetbrains.json` per directory. Per-project state lives in [FileLayerService]. */
 internal class JsonFileLayerProvider : BaseLayerProvider() {

@@ -6,6 +6,7 @@ targets:
   - ../src/com/intellij/platform/settings/v2/SettingsContext.kt
   - ../src/com/intellij/platform/settings/v2/SettingsAccessContext.kt
   - ../src/com/intellij/platform/settings/v2/ContextFactory.kt
+  - ../src/com/intellij/platform/settings/v2/ProjectAware.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/SettingsContexts.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/BaseSettingsContextFactory.kt
   - ../shared/src/com/intellij/platform/settings/v2/impl/contentRoots.kt
@@ -100,6 +101,8 @@ pins the slot of a multidimensional setting without changing the context.
 - A context must carry no validity check. A stale context resolves to whatever layers exist.
   See [ADR 0081](../adr/0081-a-context-carries-no-validity-check.md).
 - A context must report its kind: application, project, or file. A directory reports the file kind.
+- A project context and a file context must name their project as a `ProjectAware`. The project is the open project
+  with the id of the context, or `null` when no open project has that id.
 - A context identity must hold no editing flag.
   See [ADR 0141](../adr/0141-a-context-has-no-editing-aspect.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsContextTest.kt

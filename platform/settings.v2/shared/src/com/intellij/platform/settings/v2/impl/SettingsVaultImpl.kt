@@ -23,6 +23,7 @@ import com.intellij.platform.settings.v2.KeyLocality
 import com.intellij.platform.settings.v2.LayerData
 import com.intellij.platform.settings.v2.LayerLocality
 import com.intellij.platform.settings.v2.LayerProvider
+import com.intellij.platform.settings.v2.ProjectAware
 import com.intellij.platform.settings.v2.ReadOnlySettingsException
 import com.intellij.platform.settings.v2.SaveResult
 import com.intellij.platform.settings.v2.SettingsChangeListener
