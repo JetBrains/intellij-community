@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -59,12 +59,6 @@ public class RedundantMethodOverrideInspectionTest {
   public void testInstanceOf() {
     JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
     IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, inspectionFixture.get()::doTest);
-  }
-
-  @Test
-  public void testForEachPatterns() {
-    JavaCodeInsightTestFixture myFixture = inspectionFixture.get().getFixture();
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_X, inspectionFixture.get()::doTest);
   }
 
   @Test

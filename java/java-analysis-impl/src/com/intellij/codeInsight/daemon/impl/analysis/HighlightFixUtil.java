@@ -984,6 +984,7 @@ public final class HighlightFixUtil {
     if (feature.isLimited()) return List.of(); //no reason for applying it because it can be outdated
     LanguageLevel applicableLevel = getApplicableLevel(element.getContainingFile(), feature);
     if (applicableLevel == LanguageLevel.JDK_X) return List.of(); // do not suggest to use experimental level
+    if (!feature.isSufficient(applicableLevel)) return List.of(); // we have disabled features, don't propose higher versions than needed
     QuickFixFactory factory = QuickFixFactory.getInstance();
     return List.of(factory.createIncreaseLanguageLevelFix(applicableLevel),
                    factory.createUpgradeSdkFor(applicableLevel),

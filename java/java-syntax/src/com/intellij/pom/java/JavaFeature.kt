@@ -270,7 +270,11 @@ enum class JavaFeature {
    * JEP 507
    * @see PATTERNS_WITH_TIGHTENED_DOMINANCE
    */
-  PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns"),
+  PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) && useSiteLevel.isLessThan(LanguageLevel.JDK_28)
+    }
+  },
 
   /**
    * JEP 511
@@ -343,7 +347,11 @@ enum class JavaFeature {
    * JEP 532 (without any changes)
    * @see PRIMITIVE_TYPES_IN_PATTERNS
    */
-  PATTERNS_WITH_TIGHTENED_DOMINANCE(LanguageLevel.JDK_26_PREVIEW, "feature.patterns.with.tightened.dominance"),
+  PATTERNS_WITH_TIGHTENED_DOMINANCE(LanguageLevel.JDK_26_PREVIEW, "feature.patterns.with.tightened.dominance") {
+    override fun isSufficient(useSiteLevel: LanguageLevel): Boolean {
+      return super.isSufficient(useSiteLevel) && useSiteLevel.isLessThan(LanguageLevel.JDK_28)
+    }
+  },
 
 
   COMPARATOR_MIN_MAX(LanguageLevel.JDK_26, "feature.comparator.min.max"),

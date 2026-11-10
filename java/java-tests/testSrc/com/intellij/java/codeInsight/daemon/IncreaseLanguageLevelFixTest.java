@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -109,6 +109,10 @@ public abstract class IncreaseLanguageLevelFixTest extends LightDaemonAnalyzerTe
 
     public void testSwitchWithPrimitivePattern() {
       IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, () -> doTest(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel()));
+    }
+
+    public void testSwitchWithPrimitivePatternWithJava28() {
+      IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_28, () -> doTest(LanguageLevel.JDK_28_PREVIEW, false));
     }
 
     public void testSwitchWithPrimitiveSelectorAndPattern() {
