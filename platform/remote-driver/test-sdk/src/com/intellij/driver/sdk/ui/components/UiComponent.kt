@@ -442,12 +442,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
                                      data.parentSearchContext, parent))
   }
 
+  /** Returns the first component that [xpath] finds in the parent search context, or `null`. */
   fun findInParentContext(@Language("XPath") xpath: String): UiComponent? {
     val parentSearchContext = data.parentSearchContext
     val foundComponent = parentSearchContext.findAll(xpath).firstOrNull() ?: return null
-    val componentPath = "${parentSearchContext.contextAsString}/$xpath"
 
-    return UiComponent(ComponentData(componentPath, driver, searchService, robotProvider,
+    return UiComponent(ComponentData(xpath, driver, searchService, robotProvider,
                                      parentSearchContext, foundComponent))
   }
 
