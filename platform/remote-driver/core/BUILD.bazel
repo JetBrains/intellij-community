@@ -37,6 +37,7 @@ jvm_library(
         "//libraries/opentelemetry",
         "//libraries/commons/lang3",
         "//platform/platform-impl:ide-impl",
+        "//platform/editor-ui-api:editor-ui",
     ],
 )
 ### auto-generated section `build intellij.driver.impl` end

@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components.common
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.DriverCallException
+import com.intellij.driver.model.DriverIllegalStateException
 import com.intellij.driver.model.LockSemantics
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.RemoteMouseButton
@@ -58,6 +59,19 @@ private fun normalizeWhitespace(text: String): String = text.replace(WHITESPACE,
 
 private fun Driver.scrollType(name: String = "CENTER") = utility(ScrollType::class).valueOf(name)
 
+@Remote("com.intellij.driver.impl.DriverTestApi")
+private interface DriverTestApi {
+  fun setText(editor: Editor, text: String)
+}
+
+/**
+ * Returns `true` if [e] tells that the IDE has no class or no method for the call.
+ * The Driver finds the call target before the call, so the call did not run.
+ */
+private fun isMissingRemoteMethod(e: Exception): Boolean =
+  (e is DriverIllegalStateException && e.cause is ClassNotFoundException) || // no class found
+  (e is DriverCallException && e.cause is IllegalStateException) // no method found
+
 fun Finder.editor(@Language("xpath") xpath: String? = null): JEditorUiComponent {
   return x(xpath ?: "//div[@class='EditorComponentImpl']",
            JEditorUiComponent::class.java)
@@ -92,11 +106,28 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     get() = document.getText()
     set(value) {
       step("Set text '$value'") {
-        driver.withWriteAction {
-          document.setText(value)
+        if (!setTextAsUserInput(value)) {
+          // An older IDE has no DriverTestApi.setText.
+          driver.withWriteAction { document.setText(value) }
         }
       }
     }
+
+  /**
+   * Sets [value] through `DriverTestApi.setText`, which also works in a modal dialog.
+   *
+   * @return `false` if the IDE has no `DriverTestApi.setText`.
+   */
+  private fun setTextAsUserInput(value: String): Boolean {
+    try {
+      driver.utility(DriverTestApi::class).setText(editor, value)
+      return true
+    }
+    catch (e: Exception) {
+      if (isMissingRemoteMethod(e)) return false
+      throw e
+    }
+  }
 
   /**
    * Pastes [text] through the system clipboard, like [pasteText], and waits until the document grows and contains [text].

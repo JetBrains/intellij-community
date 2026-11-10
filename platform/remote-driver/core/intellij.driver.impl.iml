@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.semconv" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.commons.lang3" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
   </component>
 </module>
