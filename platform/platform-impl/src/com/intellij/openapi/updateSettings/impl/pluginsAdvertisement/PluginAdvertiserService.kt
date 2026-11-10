@@ -626,7 +626,7 @@ open class PluginAdvertiserServiceImpl(
   private suspend fun rescanDependencies() {
     collectDependencyUnknownFeatures()
 
-    val dependencyUnknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
+    val dependencyUnknownFeatures = UnknownFeaturesCollector.getInstance(project).getUnknownFeaturesOfType(DEPENDENCY_SUPPORT_FEATURE)
     if (dependencyUnknownFeatures.isNotEmpty()) {
       run(
         customPlugins = computeDetached { RepositoryHelper.loadPluginsFromCustomRepositories(null) },
