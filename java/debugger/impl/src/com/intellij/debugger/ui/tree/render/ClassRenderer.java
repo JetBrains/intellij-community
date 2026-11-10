@@ -3,6 +3,8 @@ package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.codeinsight.RuntimeTypeEvaluator;
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.FieldVisibilityProvider;
@@ -23,6 +25,7 @@ import com.intellij.debugger.ui.tree.NodeDescriptorFactory;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.DifferenceFilter;
@@ -31,8 +34,11 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -334,12 +340,24 @@ public class ClassRenderer extends NodeRendererImpl {
   @Override
   public PsiElement getChildValueExpression(DebuggerTreeNode node, DebuggerContext context) throws EvaluateException {
     DescriptorWithParentObject descriptor = (DescriptorWithParentObject)node.getDescriptor();
+    ObjectReference object = descriptor.getObject();
+    Project project = context.getProject();
 
-    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(node.getProject());
+    DebugProcess debugProcess = context.getDebugProcess();
+    GlobalSearchScope scope = debugProcess != null ? debugProcess.getSearchScope() : GlobalSearchScope.allScope(project);
+    PsiClass contextClass = DebuggerUtils.findClass(object.referenceType().name(), project, scope);
+    if (contextClass == null) {
+      // Anonymous Kotlin objects have no PSI class.
+      // In such cases try and find the first named parent class to use instead.
+      contextClass = PsiTypesUtil.getPsiClass(RuntimeTypeEvaluator.getCastableRuntimeType(project, object));
+      if (contextClass == null) {
+        contextClass = DebuggerUtils.findClass(CommonClassNames.JAVA_LANG_OBJECT, project, scope);
+      }
+    }
+
+    PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     try {
-      return elementFactory.createExpressionFromText("this." + descriptor.getName(), DebuggerUtils.findClass(
-        descriptor.getObject().referenceType().name(), context.getProject(), context.getDebugProcess().getSearchScope())
-      );
+      return elementFactory.createExpressionFromText("this." + descriptor.getName(), contextClass);
     }
     catch (IncorrectOperationException e) {
       throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.field.name", descriptor.getName()), null);

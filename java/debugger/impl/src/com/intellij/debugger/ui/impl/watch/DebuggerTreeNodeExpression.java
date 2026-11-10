@@ -60,7 +60,12 @@ public final class DebuggerTreeNodeExpression {
 
     boolean castNeeded = true;
 
-    if (thisClass != null) {
+    if (howToEvaluateThisValue instanceof ObjectReference reference &&
+        reference.referenceType().name().equals(howToEvaluateThisDeclaredType)) {
+      // The declared type is the runtime type, no cast is needed.
+      castNeeded = false;
+    }
+    else if (thisClass != null) {
       PsiType type = howToEvaluateThis.getType();
       if (type == null && howToEvaluateThisDeclaredType != null) {
         // If Java resolver cannot get the type of the expression,

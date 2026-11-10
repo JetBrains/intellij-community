@@ -23,6 +23,21 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("anonymousObjectField.kt")
+    public void testAnonymousObjectField() throws Exception {
+        runTest("../testData/evaluationExpression/anonymousObjectField.kt");
+    }
+
+    @TestMetadata("anonymousObjectInferredType.kt")
+    public void testAnonymousObjectInferredType() throws Exception {
+        runTest("../testData/evaluationExpression/anonymousObjectInferredType.kt");
+    }
+
+    @TestMetadata("anonymousObjectWithoutSupertype.kt")
+    public void testAnonymousObjectWithoutSupertype() throws Exception {
+        runTest("../testData/evaluationExpression/anonymousObjectWithoutSupertype.kt");
+    }
+
     @TestMetadata("atomicfuPrefill.kt")
     public void testAtomicfuPrefill() throws Exception {
         runTest("../testData/evaluationExpression/atomicfuPrefill.kt");
