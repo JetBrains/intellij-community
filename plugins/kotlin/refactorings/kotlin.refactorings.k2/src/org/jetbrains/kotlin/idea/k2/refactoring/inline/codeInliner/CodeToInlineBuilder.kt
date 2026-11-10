@@ -64,37 +64,38 @@ open class CodeToInlineBuilder(
         }
     }
 
-    private fun markSideEffects(mainExpression: KtExpression?) {
-        if (mainExpression == null) return
-        PsiTreeUtil.findChildrenOfAnyType<KtExpression>(
-            mainExpression,
-            false,
-            KtArrayAccessExpression::class.java,
-            KtCallExpression::class.java
-        ).forEach { call ->
-            if (call is KtArrayAccessExpression) {
-                if (call.isCustomOperator()) {
-                    call.putCopyableUserData(SIDE_EFFECTS, true)
-                }
-            } else if (call is KtCallExpression) {
-                if (call.isContextOfCall()) {
-                    call.putCopyableUserData(SIDE_EFFECTS, false)
-                }
+}
+
+internal fun markSideEffects(mainExpression: KtExpression?) {
+    if (mainExpression == null) return
+    PsiTreeUtil.findChildrenOfAnyType<KtExpression>(
+        mainExpression,
+        false,
+        KtArrayAccessExpression::class.java,
+        KtCallExpression::class.java
+    ).forEach { call ->
+        if (call is KtArrayAccessExpression) {
+            if (call.isCustomOperator()) {
+                call.putCopyableUserData(SIDE_EFFECTS, true)
+            }
+        } else if (call is KtCallExpression) {
+            if (call.isContextOfCall()) {
+                call.putCopyableUserData(SIDE_EFFECTS, false)
             }
         }
     }
+}
 
-    private fun KtArrayAccessExpression.isCustomOperator(): Boolean = analyze(this) {
-        when (val function = resolveSuccessfulExpressionSymbol()?.psi) {
-            is KtDeclarationWithBody -> (function.navigationElement as? KtDeclarationWithBody)?.hasBody() == true
-            is PsiMethod -> function.body != null
-            else -> false
-        }
+private fun KtArrayAccessExpression.isCustomOperator(): Boolean = analyze(this) {
+    when (val function = resolveSuccessfulExpressionSymbol()?.psi) {
+        is KtDeclarationWithBody -> (function.navigationElement as? KtDeclarationWithBody)?.hasBody() == true
+        is PsiMethod -> function.body != null
+        else -> false
     }
+}
 
-    private fun KtCallExpression.isContextOfCall(): Boolean {
-        if (valueArguments.isNotEmpty() || lambdaArguments.isNotEmpty() || calleeExpression?.text != "contextOf") return false
-        val resolved = calleeExpression?.mainReference?.resolve() as? KtNamedFunction ?: return false
-        return resolved.fqName?.asString() == "kotlin.contextOf"
-    }
+private fun KtCallExpression.isContextOfCall(): Boolean {
+    if (valueArguments.isNotEmpty() || lambdaArguments.isNotEmpty() || calleeExpression?.text != "contextOf") return false
+    val resolved = calleeExpression?.mainReference?.resolve() as? KtNamedFunction ?: return false
+    return resolved.fqName?.asString() == "kotlin.contextOf"
 }

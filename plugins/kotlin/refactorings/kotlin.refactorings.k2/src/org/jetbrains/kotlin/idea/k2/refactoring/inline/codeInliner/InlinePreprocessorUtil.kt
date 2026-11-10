@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
@@ -285,10 +286,11 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
             if (singleCall != null) {
                 val usedContextParams = singleCall.symbol.contextParameters.zip(singleCall.contextArguments)
                     .mapNotNull { (calleeParameter, ctxArg) ->
-                        val containerParameterName = ((ctxArg as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol)
-                            ?.name?.takeUnless { it.isSpecial } ?: return@mapNotNull null
+                        val containerParameterName =
+                            ((ctxArg.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol as? KaContextParameterSymbol)
+                                ?.name?.takeUnless { it.isSpecial } ?: return@mapNotNull null
                         calleeParameter.name to containerParameterName
-                    }.toMap()
+                    }
                 if (usedContextParams.isNotEmpty()) {
                     expression.putCopyableUserData(CodeToInline.CONTEXT_PARAMETER_USAGE_KEY, usedContextParams)
                 }

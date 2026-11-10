@@ -1,0 +1,14 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+// LANGUAGE_VERSION: 2.2
+
+class Session(val user: String)
+
+fun newSession(): Session = Session("new")
+
+context(session: Session)
+fun save(): String = session.user
+
+fun caller(): String {
+    val session1 = newSession()
+    return save(session = session1) + save(session = session1)
+}

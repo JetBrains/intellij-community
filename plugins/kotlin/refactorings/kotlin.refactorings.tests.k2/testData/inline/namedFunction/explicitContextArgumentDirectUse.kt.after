@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+// LANGUAGE_VERSION: 2.2
+
+class Session(val user: String)
+
+fun caller(other: Session): String = other.user

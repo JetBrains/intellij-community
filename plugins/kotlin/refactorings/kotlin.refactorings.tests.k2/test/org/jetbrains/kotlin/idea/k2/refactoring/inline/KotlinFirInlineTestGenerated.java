@@ -2399,6 +2399,86 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("testData/inline/namedFunction/expect.kt");
             }
 
+            @TestMetadata("explicitContextArgumentAnonymousInnerParameter.kt")
+            public void testExplicitContextArgumentAnonymousInnerParameter() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentAnonymousInnerParameter.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentContextFunctionShadowing.kt")
+            public void testExplicitContextArgumentContextFunctionShadowing() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentContextFunctionShadowing.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentDirectUse.kt")
+            public void testExplicitContextArgumentDirectUse() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentDirectUse.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentDirectUseWithInnerCall.kt")
+            public void testExplicitContextArgumentDirectUseWithInnerCall() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentDirectUseWithInnerCall.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentEmptyInnerCall.kt")
+            public void testExplicitContextArgumentEmptyInnerCall() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentEmptyInnerCall.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentInfixCall.kt")
+            public void testExplicitContextArgumentInfixCall() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentInfixCall.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentInfixCallNoOuterContext.kt")
+            public void testExplicitContextArgumentInfixCallNoOuterContext() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentInfixCallNoOuterContext.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentInnerTypeArguments.kt")
+            public void testExplicitContextArgumentInnerTypeArguments() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentInnerTypeArguments.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentNameCapture.kt")
+            public void testExplicitContextArgumentNameCapture() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentNameCapture.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentNestedAnonymousCalls.kt")
+            public void testExplicitContextArgumentNestedAnonymousCalls() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentNestedAnonymousCalls.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentNestedInnerCall.kt")
+            public void testExplicitContextArgumentNestedInnerCall() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentNestedInnerCall.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentSmartCast.kt")
+            public void testExplicitContextArgumentSmartCast() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentSmartCast.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentSmartCastInBody.kt")
+            public void testExplicitContextArgumentSmartCastInBody() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentSmartCastInBody.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentUnused.kt")
+            public void testExplicitContextArgumentUnused() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentUnused.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentUnusedWithNameConflict.kt")
+            public void testExplicitContextArgumentUnusedWithNameConflict() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentUnusedWithNameConflict.kt");
+            }
+
+            @TestMetadata("explicitContextArgumentUsedTwice.kt")
+            public void testExplicitContextArgumentUsedTwice() throws Exception {
+                runTest("testData/inline/namedFunction/explicitContextArgumentUsedTwice.kt");
+            }
+
             @TestMetadata("explicitThisOnPrivateProperty.kt")
             public void testExplicitThisOnPrivateProperty() throws Exception {
                 runTest("testData/inline/namedFunction/explicitThisOnPrivateProperty.kt");
@@ -3052,6 +3132,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             @TestMetadata("userContextOfFunctionWithLambda.kt")
             public void testUserContextOfFunctionWithLambda() throws Exception {
                 runTest("testData/inline/namedFunction/userContextOfFunctionWithLambda.kt");
+            }
+
+            @TestMetadata("valueParameterNameCapture.kt")
+            public void testValueParameterNameCapture() throws Exception {
+                runTest("testData/inline/namedFunction/valueParameterNameCapture.kt");
             }
 
             @TestMetadata("varargrs.kt")

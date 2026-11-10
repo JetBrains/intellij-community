@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+// LANGUAGE_VERSION: 2.2
+
+class Session(val user: String)
+class Tx(val id: String)
+
+context(tx: Tx, session: Session)
+fun save(): String = "${tx.id}:${session.user}"
+
+fun caller(s: Session): String {
+    val s1 = Session("inner")
+    return save(tx = Tx("caller"), session = s) + s1.user
+}

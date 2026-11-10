@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+// LANGUAGE_VERSION: 2.2
+
+class Session(val user: String)
+
+context(_: Session)
+fun audit(): String = contextOf<Session>().user
+
+fun caller(): String = context(Session("caller")) { audit() }

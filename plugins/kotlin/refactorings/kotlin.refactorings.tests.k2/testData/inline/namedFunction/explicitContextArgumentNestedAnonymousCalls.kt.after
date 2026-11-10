@@ -1,0 +1,13 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+// LANGUAGE_VERSION: 2.2
+
+class Tx(val id: String)
+class Session(val user: String)
+
+context(_: Session)
+fun audit(x: String): String = x + contextOf<Session>().user
+
+context(_: Tx)
+fun id(): String = contextOf<Tx>().id
+
+fun caller(): String = context(Session("s")) { audit(context(Tx("t")) { id() }) }

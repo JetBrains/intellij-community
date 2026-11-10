@@ -1,0 +1,6 @@
+class Holder(val user: String)
+
+fun caller(s: Holder): String {
+    val s1 = Holder("inner")
+    return s.user + s1.user
+}

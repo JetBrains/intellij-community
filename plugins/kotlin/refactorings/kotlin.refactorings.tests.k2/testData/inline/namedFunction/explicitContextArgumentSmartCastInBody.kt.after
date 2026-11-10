@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+// LANGUAGE_VERSION: 2.2
+
+open class Session
+class Admin : Session()
+
+context(admin: Admin)
+fun audit(): String = "admin"
+
+fun caller(s: Session): String = if (s is Admin) audit(admin = s) else ""

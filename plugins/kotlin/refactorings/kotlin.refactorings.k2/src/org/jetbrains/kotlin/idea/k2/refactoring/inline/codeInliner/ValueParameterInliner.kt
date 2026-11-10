@@ -1,21 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaExplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.KaReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
-import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaStandardTypeClassIds
@@ -23,8 +20,11 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
 import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
 import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateValueArgumentList
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
 import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementForContextArgument
@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.A
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.DEFAULT_PARAMETER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.MAKE_ARGUMENT_NAMED_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.PARAMETER_VALUE_KEY
-import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.SIDE_EFFECTS
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.USER_CODE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_CONVERTED_TO_FUNCTION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_FUNCTION_LITERAL_ARGUMENT_KEY
@@ -45,6 +44,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ExpectActualUtils.expectDeclarationIfAny
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -65,9 +65,9 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.LambdaArgument
 import org.jetbrains.kotlin.psi.buildExpression
+import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
@@ -101,18 +101,19 @@ internal class ValueParameterInliner(
         }
     }
 
-    private val explicitContextArguments: Map<Name, String>? = analyze(call) {
+    private val explicitContextArgumentsNames: Set<Name>? = analyze(call) {
         val treeUpToCall = call.treeUpToCall() as? KtResolvableCall ?: return@analyze null
         val singleCall = treeUpToCall.tryResolveCall()?.single?.simple ?: return@analyze null
         singleCall.symbol.contextParameters.zip(singleCall.contextArguments)
-            .mapNotNull<Pair<KaContextParameterSymbol, KaReceiverValue>, Pair<Name, @NlsSafe String>> { (cp, cpArg) ->
-                val explicitArg = (cpArg as? KaExplicitReceiverValue)?.expression?.text ?: return@mapNotNull null
-                cp.name to explicitArg
-            }.toMap()
+            .mapNotNull { (cp, cpArg) ->
+                if (cpArg.unwrapSmartCasts() is KaExplicitReceiverValue) cp.name else null
+            }.toSet()
     }
 
     fun processValueParameterUsages(declaration: KtDeclaration): Collection<IntroduceValueForParameter> {
         val introduceValuesForParameters = ArrayList<IntroduceValueForParameter>()
+
+        processContextParameterUsages()
 
         // process parameters in reverse order because default values can use previous parameters
         for (parameter in declaration.valueParameters().asReversed()) {
@@ -144,27 +145,40 @@ internal class ValueParameterInliner(
             }
         }
 
-        processContextParameterUsages()
-
         return introduceValuesForParameters
     }
 
     private fun processContextParameterUsages() {
-        codeToInline.collectDescendantsOfType<KtSimpleNameExpression>().forEach { expr ->
-            val contextParameterUsage = expr.getCopyableUserData(CodeToInline.CONTEXT_PARAMETER_USAGE_KEY)
-            val oldExpression = expr.parent
-            if (contextParameterUsage != null && oldExpression is KtCallExpression) {
-                val calleeExpression = oldExpression.calleeExpression ?: return@forEach
-                val args = contextParameterUsage.mapNotNull { (calleeName, containerName) ->
-                    explicitContextArguments?.get(containerName)?.let {
-                        "${calleeName.asString()} = $it"
-                    }
-                }.joinToString()
-                if (args.isEmpty()) return@forEach
-                val firstArgs =
-                    (oldExpression.valueArgumentList?.copy() as? KtValueArgumentList)?.arguments?.joinToString { it.text }
-                val argsList = if (firstArgs != null) "$firstArgs, $args" else args
-                val replacement = KtPsiFactory.contextual(expr).createExpression(calleeExpression.text + "($argsList)" + oldExpression.lambdaArguments.joinToString { it.text })
+        if (explicitContextArgumentsNames == null) return
+        // process innermost first to avoid rewriting
+        val usages = codeToInline.collectDescendantsOfType<KtSimpleNameExpression>()
+            .sortedByDescending { PsiTreeUtil.getDepth(it, null) }
+        usages.forEach { expr ->
+            val contextParameterUsage = expr.getCopyableUserData(CodeToInline.CONTEXT_PARAMETER_USAGE_KEY) ?: return@forEach
+            val oldExpression = expr.parent as? KtExpression ?: return@forEach
+            val arguments = contextParameterUsage.filter { explicitContextArgumentsNames.contains(it.second) }
+            if (arguments.isEmpty()) return@forEach
+
+            fun contextParameterReference(name: Name): KtExpression = psiFactory.createExpression(name.render()).apply {
+                putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, name)
+            }
+
+            val callExpression = oldExpression as? KtCallExpression
+
+            if (callExpression != null) {
+                arguments.mapNotNull {
+                    if (it.first.isSpecial) return@mapNotNull null
+                    psiFactory.createArgument(contextParameterReference(it.second), it.first)
+                }.forEach {
+                    callExpression.getOrCreateValueArgumentList().appendValueArgument(it)
+                }
+            }
+
+            val contextScopeArguments = if (callExpression == null) arguments else arguments.filter { it.first.isSpecial }
+            if (contextScopeArguments.isNotEmpty()) {
+                val replacement: KtExpression = contextScopeArguments.foldRight(oldExpression) { pair, expr ->
+                    psiFactory.createExpressionByPattern("kotlin.context($0) { $1 }", contextParameterReference(pair.second), expr)
+                }
                 codeToInline.replaceExpression(oldExpression, replacement)
             }
         }
@@ -205,7 +219,8 @@ internal class ValueParameterInliner(
         if (parameter.isContextParameter) {
             val exprText = contextArguments?.getOrNull(parameter.parameterIndex()) ?: return null
             val resultExpression = KtPsiFactory(call.project).createExpressionCodeFragment(exprText, call).getContentElement() ?: return null
-            resultExpression.putCopyableUserData(SIDE_EFFECTS, false)
+            markSideEffects(resultExpression)
+            markAsUserCode(resultExpression)
             val isExpressionNullable = analyze(resultExpression) {
                 isNullableType(resultExpression.expressionType)
             }

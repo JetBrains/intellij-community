@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.isAncestor
+import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
@@ -431,6 +432,10 @@ class CodeInliner(
         lexicalScopeElement.parent.collectDescendantsOfType<KtProperty>().forEach {
             names.addIfNotNull(it.name)
         }
+        call.parentsOfType<KtFunction>().forEach { function ->
+            function.valueParameters.forEach { names.addIfNotNull(it.name) }
+            function.contextParameters.forEach { names.addIfNotNull(it.name) }
+        }
 
         val importDeclarations = codeToInline.fqNamesToImport.mapNotNull { importPath ->
             val path = importPath.importPath
@@ -537,7 +542,9 @@ class CodeInliner(
         }
         declaration2Name.forEach { (declaration, newName) ->
             for (reference in ReferencesSearchScopeHelper.search(declaration, LocalSearchScope(declaration.parent)).asIterable()) {
-                if (reference.element.startOffset < endOfScope) {
+                val element = reference.element
+                if (element.parentsWithSelf.any { it.getCopyableUserData(USER_CODE_KEY) != null }) continue
+                if (element.startOffset < endOfScope) {
                     reference.handleElementRename(newName)
                 }
             }

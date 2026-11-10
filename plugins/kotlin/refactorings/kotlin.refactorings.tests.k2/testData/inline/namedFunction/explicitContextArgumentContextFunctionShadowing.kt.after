@@ -1,0 +1,12 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments
+// LANGUAGE_VERSION: 2.2
+
+class Session(val user: String)
+
+context(_: Session)
+fun audit(): String = contextOf<Session>().user
+
+fun caller(): String {
+    fun context(value: Session, block: () -> String): String = "shadow"
+    return kotlin.context(Session("caller")) { audit() }
+}
