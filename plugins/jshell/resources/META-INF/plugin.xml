@@ -7,6 +7,7 @@
   <content namespace="jetbrains">
     <module name="intellij.java.jshell.console"/>
     <module name="intellij.java.jshell.execution" loading="embedded"/>
+    <module name="intellij.java.jshell.protocol" loading="required"/>
   </content>
 
   <description>

@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.java.backend"/>
     <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.jshell.protocol"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.syntax"/>
     <module name="intellij.platform.analysis"/>

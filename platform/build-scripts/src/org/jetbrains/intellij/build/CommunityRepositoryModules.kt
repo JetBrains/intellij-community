@@ -239,9 +239,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_RELEASE
     },
     pluginAuto(listOf("intellij.lombok.plugin")),
-    pluginAuto("intellij.java.jshell") { spec ->
-      spec.withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
-    },
   ).addingAll(allJcefPlugins().toList())
 }
 
