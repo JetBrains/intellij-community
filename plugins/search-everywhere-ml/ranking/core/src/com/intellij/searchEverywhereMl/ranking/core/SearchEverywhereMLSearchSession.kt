@@ -13,6 +13,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.searchEverywhere.SeFilterState
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.TextEmbeddingProvider
 import com.intellij.searchEverywhereMl.isLoggingEnabled
@@ -391,6 +392,8 @@ internal class SearchEverywhereMLSearchSession private constructor(
       return when {
         !orderByMl -> false
         isSemantic -> false  // Do not calculate machine learning weight for semantic items until the ranking models know how to treat them
+        provider.id == SeProviderIdUtils.RANKER_ACTIONS_ID -> false  // Keep the order of the actions ranker. The ML weight would replace it
+        originalWeight <= 0 -> false
         mlFeatures == null -> false
         else -> true
       }

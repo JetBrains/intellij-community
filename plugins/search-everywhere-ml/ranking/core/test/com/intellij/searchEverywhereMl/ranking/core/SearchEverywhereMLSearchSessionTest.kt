@@ -6,7 +6,9 @@ import com.intellij.ide.util.gotoByName.MatchMode
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultAdapter
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultProviderAdapter
@@ -259,6 +261,41 @@ internal class SearchEverywhereMLSearchSessionTest {
 
     assertEquals(true, features["is_spell_checked"])
     assertEquals(correction.confidence, features["correction_confidence"])
+  }
+
+  @Test
+  fun `ml weight is not calculated for items of the actions ranker`() {
+    val settingKey = SearchEverywhereTab.Actions.advancedSettingKey
+    val originalSetting = AdvancedSettings.getBoolean(settingKey)
+    val originalExperimentalMode = SearchEverywhereMlExperiment.isExperimentalMode
+    AdvancedSettings.setBoolean(settingKey, true)
+    SearchEverywhereMlExperiment.isExperimentalMode = false
+    try {
+      val session = SearchEverywhereMLSearchSession.createNext(null)
+      session.onStateStarted(actionsTabId, "show color picker", SearchStateChangeReason.SEARCH_START, null, false)
+      val state = session.activeState!!
+      assertTrue(state.orderByMl)
+
+      val actionsItem = state.processSearchResult(createActionAdapter(SeProviderIdUtils.ACTIONS_ID, "actions-item"))
+      val rankerItem = state.processSearchResult(createActionAdapter(SeProviderIdUtils.RANKER_ACTIONS_ID, "ranker-item"))
+
+      assertNotNull(actionsItem.mlProbability)
+      assertNull(rankerItem.mlProbability)
+      assertEquals(42, rankerItem.finalPriority)
+    }
+    finally {
+      AdvancedSettings.setBoolean(settingKey, originalSetting)
+      SearchEverywhereMlExperiment.isExperimentalMode = originalExperimentalMode
+    }
+  }
+
+  private fun createActionAdapter(providerId: String, id: String): SearchResultAdapter.Raw {
+    return TestSearchResultRawAdapter(
+      provider = SearchResultProviderAdapter.createAdapterFor(providerId),
+      originalWeight = 42,
+      stateLocalId = StateLocalId(id),
+      rawItem = createMatchedValue(),
+    )
   }
 
   private fun createCorrectedActionAdapter(correction: SearchEverywhereSpellCheckResult.Correction): SearchResultAdapter.Raw {
