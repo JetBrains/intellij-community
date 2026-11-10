@@ -132,6 +132,6 @@ describe('the spec reference check', () => {
 
   it('reports a scan that finds no spec', () => {
     const root = repo({})
-    assert.deepEqual(specRefFindings(config(), root).findings, ['spec: no .spec.md file; the scan is broken'])
+    assert.deepEqual(specRefFindings(config(), root).findings, ['spec: no spec file; the scan is broken'])
   })
 })

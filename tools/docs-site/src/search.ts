@@ -4,6 +4,7 @@
 
 import { ADR_STATUSES, adrLabel, adrNumberedTitle } from '../scripts/docMeta.ts'
 import type { SiteConfig } from '../scripts/siteConfig.ts'
+import { OPENSPEC_SPEC_FILE } from '../scripts/sourcePaths.ts'
 import { decisionRoute, docRoute, explainerRoute, guideRoute, launchRoute } from './router'
 import { site } from './site.ts'
 import { guideSlug } from './siteData.ts'
@@ -94,7 +95,7 @@ export const specSearch: SearchProvider = {
           ref: `spec:${spec.id}`,
           kind: 'Spec',
           title: spec.name,
-          detail: spec.path.endsWith(config.specs.suffix) ? spec.path.slice(0, -config.specs.suffix.length) : spec.path,
+          detail: specDetail(spec.path, config.specs.suffix),
           route: link.href,
         })
       }
@@ -143,6 +144,14 @@ export const launchSearch: SearchProvider = {
 export const KERNEL_SEARCH_PROVIDERS: readonly SearchProvider[] = [docSearch, specSearch, symbolSearch]
 
 /** The providers of a site that names none: the launch targets come after the specs when the site has a launch picker. */
+/** The path of a spec without its file name part: `build/spec/cache` for a suffix spec, the folder for an OpenSpec one. */
+function specDetail(path: string, suffix: string): string {
+  if (path.endsWith(`/${OPENSPEC_SPEC_FILE}`)) {
+    return path.slice(0, -OPENSPEC_SPEC_FILE.length - 1)
+  }
+  return path.endsWith(suffix) ? path.slice(0, -suffix.length) : path
+}
+
 export function kernelSearchProviders(config: Pick<SiteConfig, 'launchPicker'>): readonly SearchProvider[] {
   return config.launchPicker === null ? KERNEL_SEARCH_PROVIDERS : [docSearch, specSearch, launchSearch, symbolSearch]
 }

@@ -4,8 +4,9 @@
 //
 // The reference rules apply to every site:
 //   - targets: the `targets:` frontmatter list of a spec is not empty, and each entry names an existing file. An entry
-//     is relative to the folder of the spec. An entry with `*` or `?` is a glob.
-//   - test-link: each `[@test]` link of a spec names an existing file, relative to the folder of the spec.
+//     is relative to the folder of the spec, or to the repository root in an OpenSpec root. An entry with `*` or `?`
+//     is a glob.
+//   - test-link: each `[@test]` link of a spec names an existing file, on the same base as a target.
 //   - link, anchor: each relative `.md` link of a spec or a prose doc names an existing file, and its `#anchor` names
 //     a heading of that file by its GitHub slug.
 // The style rules apply when `specs.style` is `plain-1`, to each spec that declares `style: plain-1`:
@@ -13,20 +14,40 @@
 //   - requirement: a list item under `## Requirements` has at most 20 words in each sentence.
 //   - section: each `##` heading is one of `specs.templateSections`, when the site gives them.
 //   - style: each spec under the first spec root declares `style: plain-1`.
+// The OpenSpec rules apply to each spec of an OpenSpec root (`specs.openspec`), with the style `openspec-1`:
+//   - style: the spec declares `style: openspec-1`.
+//   - sentence: as for `plain-1`.
+//   - requirement: the text of a requirement, between its `###` heading and its first `####` scenario, has at most 20
+//     words in each sentence, and it holds no `[@test]` line and no table.
+//   - heading: each `###` heading under `## Requirements` is `Requirement: <Group>: <behaviour>` and unique in the
+//     spec, and the requirements of one group stand together.
+//   - group: the slug of a group is not the slug of a `##` heading. A link `#<group slug>` names the first
+//     requirement of the group.
+//   - section: each `##` heading is one of `specs.openspec.templateSections`.
+// A delta spec of an active change gets the test-link, link, sentence, requirement and heading rules. It has no
+// frontmatter. Its links resolve from the folder of its main spec, because the archive copies the text there.
+// The structure rules of OpenSpec itself, such as a Purpose, a SHALL or MUST, and a scenario, belong to the CLI.
 //
 // The check is one owner for two callers: the `check` script of a site, and the gate of a site, which runs on bun
 // without node_modules. So it imports nothing from npm. It throws with every finding.
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join, relative, resolve, sep } from 'node:path'
-import { contentDir, isMainModule, posixRelative, repoRoot, runCheck, specFiles } from './paths.ts'
+import { contentDir, isMainModule, openspecDeltaFiles, posixRelative, repoRoot, runCheck, specFiles } from './paths.ts'
 import type { SiteConfig } from './siteConfig.ts'
+import { requirementGroup } from './sourcePaths.ts'
 
 /** The part of the site config that the check reads. */
 export type SpecRefsConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'specs'>
 
 /** The style version of a spec that the style rules check. See `community/.ai/spec/SPEC_GUIDE.md`. */
 export const PLAIN_STYLE = 'plain-1'
+
+/** The style of a spec of an OpenSpec root. See `community/.ai/spec/SPEC_GUIDE.md`, section "OpenSpec roots". */
+export const OPENSPEC_STYLE = 'openspec-1'
+
+/** The `##` sections of a delta spec whose `###` headings are requirements. */
+const REQUIREMENTS_SECTION = /^(?:(?:ADDED|MODIFIED|REMOVED|RENAMED) )?Requirements$/
 
 /** The most words in a descriptive sentence of a `plain-1` spec. The limit of ASD-STE100. */
 export const MAX_SENTENCE_WORDS = 25
@@ -36,7 +57,7 @@ export const MAX_REQUIREMENT_WORDS = 20
 
 /** One spec that the check read. */
 export interface CheckedSpec {
-  /** The path relative to its spec root, without the spec suffix, for example `composition`. */
+  /** The spec id, for example `composition` (`specIdOfRepoPath`). */
   id: string
   /** The repository-relative POSIX path. */
   path: string
@@ -188,6 +209,14 @@ export function frontmatterStyle(text: string): string | null {
   return null
 }
 
+/** Where a sentence stands in a spec, for the rule that takes it. */
+export interface SentencePlace {
+  /** True for the text of an OpenSpec requirement: between its `###` heading and its first `####` scenario. */
+  inRequirementText: boolean
+  /** True for the cell of a table row. */
+  isTableCell: boolean
+}
+
 function sentence(line: number, text: string): SpecSentence {
   return { line, text, wordCount: text.split(/[ \t]/).filter(word => word.trim().length > 0).length }
 }
@@ -199,7 +228,7 @@ function sentence(line: number, text: string): SpecSentence {
  * cell of a table row is its own block. Soft-wrapped lines join back into one block first, because a markdown sentence
  * wraps across lines, and a count per line measures the wrapping, not the prose.
  */
-export function sentencesOf(text: string, accept: (section: string, isListItem: boolean) => boolean): SpecSentence[] {
+export function sentencesOf(text: string, accept: (section: string, isListItem: boolean, place: SentencePlace) => boolean): SpecSentence[] {
   const all = lines(text)
   const end = frontmatterEnd(all)
   let index = end < 0 ? 0 : end + 1
@@ -208,13 +237,15 @@ export function sentencesOf(text: string, accept: (section: string, isListItem: 
   let block = ''
   let blockLine = 0
   let blockIsListItem = false
+  let blockPlace: SentencePlace = { inRequirementText: false, isTableCell: false }
   let section = ''
+  let inRequirementText = false
   let inFence = false
 
   const flush = (): void => {
     const joined = block.trim()
     block = ''
-    if (joined.length === 0 || !accept(section, blockIsListItem)) {
+    if (joined.length === 0 || !accept(section, blockIsListItem, blockPlace)) {
       return
     }
     for (const part of joined.split(SENTENCE_BREAK)) {
@@ -225,10 +256,11 @@ export function sentencesOf(text: string, accept: (section: string, isListItem: 
     }
   }
 
-  const append = (lineNumber: number, content: string, isListItem: boolean): void => {
+  const append = (lineNumber: number, content: string, isListItem: boolean, isTableCell: boolean = false): void => {
     if (block.length === 0) {
       blockLine = lineNumber
       blockIsListItem = isListItem
+      blockPlace = { inRequirementText, isTableCell }
     }
     else {
       block += ' '
@@ -248,15 +280,23 @@ export function sentencesOf(text: string, accept: (section: string, isListItem: 
     else if (trimmed.startsWith('## ')) {
       flush()
       section = trimmed.slice('## '.length).trim()
+      inRequirementText = false
+    }
+    else if (trimmed.startsWith('### ')) {
+      flush()
+      inRequirementText = REQUIREMENTS_SECTION.test(section)
     }
     else if (trimmed.length === 0 || trimmed.startsWith('#') || trimmed.startsWith('[@test]')) {
       flush()
+      if (trimmed.startsWith('#')) {
+        inRequirementText = false
+      }
     }
     else if (trimmed.startsWith('|')) {
       flush()
       if (!TABLE_RULE.test(trimmed)) {
         for (const cell of trimmed.replace(/^\|+|\|+$/g, '').split('|')) {
-          append(index + 1, cell.trim(), false)
+          append(index + 1, cell.trim(), false, true)
           flush()
         }
       }
@@ -284,6 +324,107 @@ export function proseSentences(text: string): SpecSentence[] {
  */
 export function requirementSentences(text: string): SpecSentence[] {
   return sentencesOf(text, (section, isListItem) => section === 'Requirements' && isListItem)
+}
+
+/**
+ * The sentences of the requirement texts of an OpenSpec spec or delta: the prose and the list items between a
+ * requirement heading and its first scenario. A table cell takes the sentence budget, as in a `plain-1` spec.
+ */
+export function openspecRequirementSentences(text: string): SpecSentence[] {
+  return sentencesOf(text, (_section, _isListItem, place) => place.inRequirementText && !place.isTableCell)
+}
+
+/** One finding of the heading rules of an OpenSpec spec, with its 1-based line. */
+interface LineFinding {
+  line: number
+  rule: string
+  message: string
+}
+
+/**
+ * The heading, group and requirement-text findings of an OpenSpec spec or delta. `sections` is null for a delta,
+ * whose sections are the delta operations, and the set of the template sections for a main spec.
+ */
+export function openspecStructureFindings(text: string, sections: ReadonlySet<string> | null): LineFinding[] {
+  const all = lines(text)
+  const end = frontmatterEnd(all)
+  const findings: LineFinding[] = []
+  const sectionSlugs = new Map<string, number>()
+  const groupSlugs = new Map<string, { group: string, line: number }>()
+  const names = new Map<string, number>()
+  const closedGroups = new Set<string>()
+  let currentGroup: string | null = null
+  let section = ''
+  let inRequirementText = false
+  let inFence = false
+  for (let index = end < 0 ? 0 : end + 1; index < all.length; index++) {
+    const line = all[index]
+    const trimmed = line.trim()
+    const lineNumber = index + 1
+    if (trimmed.startsWith('```')) {
+      inFence = !inFence
+      continue
+    }
+    if (inFence) {
+      continue
+    }
+    if (line.startsWith('## ')) {
+      section = line.slice('## '.length).trim()
+      inRequirementText = false
+      sectionSlugs.set(headingSlug(section), lineNumber)
+      if (sections !== null && !sections.has(section)) {
+        findings.push({ line: lineNumber, rule: 'section', message: `'${section}' is not a template section; use one of ${[...sections].join(', ')}, or fold the content into the section that owns it` })
+      }
+      continue
+    }
+    if (line.startsWith('### ') && REQUIREMENTS_SECTION.test(section)) {
+      const heading = line.slice('### '.length).trim()
+      inRequirementText = true
+      const group = requirementGroup(heading)
+      if (!heading.startsWith('Requirement: ') || group === null) {
+        findings.push({ line: lineNumber, rule: 'heading', message: `'${heading}' is not 'Requirement: <Group>: <behaviour>'` })
+        continue
+      }
+      const first = names.get(heading)
+      if (first !== undefined) {
+        findings.push({ line: lineNumber, rule: 'heading', message: `'${heading}' repeats the requirement of line ${first}; give each requirement its own name` })
+      }
+      else {
+        names.set(heading, lineNumber)
+      }
+      if (group !== currentGroup) {
+        if (closedGroups.has(group)) {
+          findings.push({ line: lineNumber, rule: 'heading', message: `the requirements of the group '${group}' stand apart; move them together` })
+        }
+        if (currentGroup !== null) {
+          closedGroups.add(currentGroup)
+        }
+        currentGroup = group
+      }
+      const slug = headingSlug(group)
+      if (!groupSlugs.has(slug)) {
+        groupSlugs.set(slug, { group, line: lineNumber })
+      }
+      continue
+    }
+    if (trimmed.startsWith('#')) {
+      inRequirementText = false
+      continue
+    }
+    if (inRequirementText && trimmed.startsWith('[@test]')) {
+      findings.push({ line: lineNumber, rule: 'requirement', message: 'a [@test] line stands in the text of a requirement; put it under the last step of the scenario that the test proves' })
+    }
+    else if (inRequirementText && trimmed.startsWith('|')) {
+      findings.push({ line: lineNumber, rule: 'requirement', message: 'a table stands in the text of a requirement; put it into the body of a scenario' })
+      inRequirementText = false
+    }
+  }
+  for (const [slug, { group, line }] of groupSlugs) {
+    if (sectionSlugs.has(slug)) {
+      findings.push({ line, rule: 'group', message: `the group '${group}' has the slug of the section on line ${sectionSlugs.get(slug)}, so '#${slug}' is ambiguous; rename the group` })
+    }
+  }
+  return findings.sort((a, b) => a.line - b.line)
 }
 
 /** True when a file under `dir` matches `regex` by its POSIX path below `base`. */
@@ -334,7 +475,13 @@ function headingSlugs(text: string): Set<string> {
     if (inFence || !line.startsWith('#')) {
       continue
     }
-    slugs.add(headingSlug(line.replace(/^#+/, '').trim()))
+    const heading = line.replace(/^#+/, '').trim()
+    slugs.add(headingSlug(heading))
+    // a link to the group of an OpenSpec requirement names its first requirement
+    const group = line.startsWith('### ') ? requirementGroup(heading) : null
+    if (group !== null) {
+      slugs.add(headingSlug(group))
+    }
   }
   return slugs
 }
@@ -388,14 +535,15 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
   const proseDocs = proseDocFiles(config, root).filter(file => !files.some(spec => spec.file === file))
   const findings: string[] = []
   if (files.length === 0) {
-    findings.push(`${config.specs.roots.join(', ')}: no ${config.specs.suffix} file; the scan is broken`)
+    findings.push(`${[...(config.specs.openspec?.roots ?? []), ...config.specs.roots].join(', ')}: no spec file; the scan is broken`)
   }
   if (proseDocs.length === 0) {
     findings.push(`${config.docs.guides}: no guide, explainer, decision record or extra doc; the scan is broken`)
   }
 
   const linkTargets = new Set<string>()
-  const markdownLinks = (file: string): void => {
+  // a link resolves from `base`: the folder of the file, or the folder of the main spec of a delta
+  const markdownLinks = (file: string, base: string = dirname(file)): void => {
     const source = text(file)
     for (const match of source.matchAll(MARKDOWN_LINK)) {
       const link = match[1] ?? ''
@@ -404,7 +552,7 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
         continue
       }
       const at = `${path(file)}:${lineAt(source, match.index)}`
-      const target = link.length === 0 ? file : resolve(dirname(file), link)
+      const target = link.length === 0 ? file : resolve(base, link)
       if (!existsSync(target)) {
         findings.push(`${at}: link: '${link}' points to a missing file`)
         continue
@@ -416,12 +564,41 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
     }
   }
 
+  const testLinks = (file: string, base: string): void => {
+    const source = text(file)
+    const seen = new Set<string>()
+    for (const match of source.matchAll(TEST_LINK)) {
+      const link = match[1].replace(/[),.]+$/, '')
+      if (!seen.has(link)) {
+        seen.add(link)
+        if (!resolvesReference(base, link)) {
+          findings.push(`${path(file)}:${lineAt(source, match.index)}: test-link: [@test] '${link}' matches no existing file`)
+        }
+      }
+    }
+  }
+
+  const sentenceBudget = (file: string, source: string, requirements: SpecSentence[]): void => {
+    for (const { line, text: sentenceText, wordCount } of proseSentences(source)) {
+      if (wordCount > MAX_SENTENCE_WORDS) {
+        findings.push(`${path(file)}:${line}: sentence: ${wordCount} words exceed the ${MAX_SENTENCE_WORDS}-word budget; split it: "${sentenceText.slice(0, 90)}…"`)
+      }
+    }
+    for (const { line, text: sentenceText, wordCount } of requirements) {
+      if (wordCount > MAX_REQUIREMENT_WORDS) {
+        findings.push(`${path(file)}:${line}: requirement: ${wordCount} words exceed the ${MAX_REQUIREMENT_WORDS}-word budget; split it: "${sentenceText.slice(0, 90)}…"`)
+      }
+    }
+  }
+
+  const openspecSections = config.specs.openspec === undefined ? null : new Set(config.specs.openspec.templateSections)
   const plain = config.specs.style === PLAIN_STYLE
   const sections = config.specs.templateSections === null ? null : new Set(config.specs.templateSections)
   const firstRoot = join(root, config.specs.roots[0] ?? '')
-  for (const { file } of files) {
+  for (const { file, rootPaths } of files) {
     const source = text(file)
-    const specDir = dirname(file)
+    // a path of a spec of an OpenSpec root is from the repository root, because the archive moves the text of a delta
+    const base = rootPaths ? root : dirname(file)
     const targets = frontmatterTargets(source)
     if (targets === null) {
       findings.push(`${path(file)}:1: targets: the spec has no YAML frontmatter`)
@@ -431,25 +608,25 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
     }
     else {
       for (const { target, line } of targets) {
-        if (!resolvesReference(specDir, target)) {
+        if (!resolvesReference(base, target)) {
           findings.push(`${path(file)}:${line}: targets: '${target}' matches no existing file`)
         }
       }
     }
 
-    const seen = new Set<string>()
-    for (const match of source.matchAll(TEST_LINK)) {
-      const link = match[1].replace(/[),.]+$/, '')
-      if (!seen.has(link)) {
-        seen.add(link)
-        if (!resolvesReference(specDir, link)) {
-          findings.push(`${path(file)}:${lineAt(source, match.index)}: test-link: [@test] '${link}' matches no existing file`)
-        }
-      }
-    }
-
+    testLinks(file, base)
     markdownLinks(file)
 
+    if (rootPaths) {
+      if (frontmatterStyle(source) !== OPENSPEC_STYLE) {
+        findings.push(`${path(file)}:1: style: a spec of an OpenSpec root declares 'style: ${OPENSPEC_STYLE}'; see community/.ai/spec/SPEC_GUIDE.md, section "OpenSpec roots"`)
+      }
+      sentenceBudget(file, source, openspecRequirementSentences(source))
+      for (const { line, rule, message } of openspecStructureFindings(source, openspecSections)) {
+        findings.push(`${path(file)}:${line}: ${rule}: ${message}`)
+      }
+      continue
+    }
     if (!plain) {
       continue
     }
@@ -460,16 +637,7 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
       }
       continue
     }
-    for (const { line, text: sentenceText, wordCount } of proseSentences(source)) {
-      if (wordCount > MAX_SENTENCE_WORDS) {
-        findings.push(`${path(file)}:${line}: sentence: ${wordCount} words exceed the ${MAX_SENTENCE_WORDS}-word budget; split it: "${sentenceText.slice(0, 90)}…"`)
-      }
-    }
-    for (const { line, text: sentenceText, wordCount } of requirementSentences(source)) {
-      if (wordCount > MAX_REQUIREMENT_WORDS) {
-        findings.push(`${path(file)}:${line}: requirement: ${wordCount} words exceed the ${MAX_REQUIREMENT_WORDS}-word budget; split it: "${sentenceText.slice(0, 90)}…"`)
-      }
-    }
+    sentenceBudget(file, source, requirementSentences(source))
     if (sections !== null) {
       let inFence = false
       for (const [index, line] of lines(source).entries()) {
@@ -487,14 +655,23 @@ export function specRefFindings(config: SpecRefsConfig, root: string = repoRoot)
     }
   }
 
+  // a delta has no frontmatter, and its text lands in the main spec: its paths are from the repository root, and its
+  // links resolve from the folder of the main spec
+  for (const { file, capabilityDir } of openspecDeltaFiles(config, root)) {
+    const source = text(file)
+    testLinks(file, root)
+    markdownLinks(file, capabilityDir)
+    sentenceBudget(file, source, openspecRequirementSentences(source))
+    for (const { line, rule, message } of openspecStructureFindings(source, null)) {
+      findings.push(`${path(file)}:${line}: ${rule}: ${message}`)
+    }
+  }
+
   for (const file of proseDocs) {
     markdownLinks(file)
   }
 
-  const specs = files.map(({ file, specRoot }) => ({
-    id: relative(specRoot, file).split(sep).join('/').slice(0, -config.specs.suffix.length),
-    path: path(file),
-  }))
+  const specs = files.map(({ file, id }) => ({ id, path: path(file) }))
   return { specs, proseDocs: proseDocs.map(path), linkTargets: [...linkTargets].sort(), findings }
 }
 

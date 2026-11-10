@@ -6,9 +6,9 @@
 // Run by the `check` script of a site, by the gate of a site (the Air JUnit gate runs on bun), and by the harvest.
 
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { join, sep } from 'node:path'
 import { type AirDiagram, DIAGRAM_FILE_SUFFIX, findDiagramFences, parseDiagramFence, validateDiagram } from './diagram.ts'
-import { contentDir, isMainModule, posixRelative, repoRoot, runCheck, walkFiles } from './paths.ts'
+import { contentDir, isMainModule, openspecArchiveDirs, posixRelative, repoRoot, runCheck, walkFiles } from './paths.ts'
 import { diagramGrammar, type SiteConfig } from './siteConfig.ts'
 import { parseYaml } from './yamlCompat.ts'
 
@@ -64,16 +64,23 @@ export function readDiagramFiles(config: DiagramFilesConfig, root: string = repo
   return diagrams
 }
 
-/** Every diagram fence under `docs.root` and under each of `specs.roots`. */
+/**
+ * Every diagram fence under `docs.root`, each OpenSpec root, and each of `specs.roots`. A file under two of them counts
+ * once. The archive of an OpenSpec root is history, and the walk skips it.
+ */
 export function readDiagramFences(config: DiagramFilesConfig, root: string = repoRoot): DiagramFence[] {
   const content = contentDir(config, root)
   const skipDirs = new Set([...SKIP_DIRS, ...config.docs.skipDirs])
+  const archives = openspecArchiveDirs(config, root).map(dir => dir + sep)
+  const seen = new Set<string>()
   const fences: DiagramFence[] = []
-  for (const top of [join(content, config.docs.root), ...config.specs.roots.map(specRoot => join(root, specRoot))]) {
+  const tops = [join(content, config.docs.root), ...[...(config.specs.openspec?.roots ?? []), ...config.specs.roots].map(specRoot => join(root, specRoot))]
+  for (const top of tops) {
     walkFiles(top, entry => skipDirs.has(entry) || entry.startsWith('.'), (path) => {
-      if (!path.endsWith('.md')) {
+      if (!path.endsWith('.md') || seen.has(path) || archives.some(archive => path.startsWith(archive))) {
         return
       }
+      seen.add(path)
       const source = readFileSync(path, 'utf8')
       for (const fence of findDiagramFences(source)) {
         const { spec, errors } = parseDiagramFence(fence.body)

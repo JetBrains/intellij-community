@@ -111,6 +111,17 @@ export interface SiteConfig {
     style: 'plain-1' | null
     /** The `##` headings that a `plain-1` spec can use, or null when the site checks no sections. */
     templateSections: string[] | null
+    /**
+     * The OpenSpec roots, or absent when the site has none. A root holds `config.yaml`, `specs/<capability>/spec.md`
+     * and `changes/`. Its specs use the style `openspec-1`, and their `targets` and `[@test]` paths are from the
+     * repository root. See `community/.ai/spec/SPEC_GUIDE.md`.
+     */
+    openspec?: {
+      /** The root folders, relative to the repository root, for example `build/openspec`. */
+      roots: string[]
+      /** The `##` headings that a spec of an OpenSpec root can use. */
+      templateSections: string[]
+    }
   }
   /** The folders that a `source:` reference and a spec target can name, relative to the repository root. */
   sourceRoots: string[]

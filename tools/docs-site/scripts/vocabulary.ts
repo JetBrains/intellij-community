@@ -16,6 +16,7 @@ import { withoutFencedBlocks } from './fence.ts'
 import { contentDir, isMainModule, posixRelative, repoRoot, runCheck, specFiles } from './paths.ts'
 import { type DiagramFieldName, diagramFields } from './proseLint.ts'
 import type { SiteConfig, VocabularyRule } from './siteConfig.ts'
+import { requirementGroup } from './sourcePaths.ts'
 
 /** The part of the site config that the check reads. */
 export type VocabularyConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'specs' | 'vocabulary'>
@@ -130,6 +131,11 @@ export function markdownVocabularyFindings(rules: readonly VocabularyRule[], pat
       while (stack.length > 0 && stack.at(-1)!.level >= level) {
         stack.pop()
       }
+      // the group of an OpenSpec requirement is a section too: a link to its slug names the first requirement
+      const group = level === 3 ? requirementGroup(headingText(heading[2])) : null
+      if (group !== null) {
+        stack.push({ level, slug: slugify(group) })
+      }
       stack.push({ level, slug: slugify(headingText(heading[2])) })
     }
     lineStarts.push(offset)
@@ -212,11 +218,16 @@ export function diagramVocabularyFindings(rules: readonly VocabularyRule[], path
   return findings
 }
 
-/** The sections of a markdown file, as `<path>#<slug>`. */
+/** The sections of a markdown file, as `<path>#<slug>`, with the group of each OpenSpec requirement. */
 function sectionsOf(path: string, source: string): string[] {
   return withoutFencedBlocks(source).split('\n').flatMap((line) => {
     const heading = HEADING.exec(line)
-    return heading === null ? [] : [`${path}#${slugify(headingText(heading[2]))}`]
+    if (heading === null) {
+      return []
+    }
+    const text = headingText(heading[2])
+    const group = heading[1].length === 3 ? requirementGroup(text) : null
+    return [`${path}#${slugify(text)}`, ...(group === null ? [] : [`${path}#${slugify(group)}`])]
   })
 }
 
