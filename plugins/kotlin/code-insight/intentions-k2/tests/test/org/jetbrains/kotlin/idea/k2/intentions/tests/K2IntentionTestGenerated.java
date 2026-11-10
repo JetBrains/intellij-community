@@ -14578,6 +14578,31 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/propertyWithOverride.kt");
         }
 
+        @TestMetadata("protectedConstProperty.kt")
+        public void testProtectedConstProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/protectedConstProperty.kt");
+        }
+
+        @TestMetadata("protectedFunCalledFromSubclass.kt")
+        public void testProtectedFunCalledFromSubclass() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/protectedFunCalledFromSubclass.kt");
+        }
+
+        @TestMetadata("protectedFunCalledFromSubclassJs.kt")
+        public void testProtectedFunCalledFromSubclassJs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/protectedFunCalledFromSubclassJs.kt");
+        }
+
+        @TestMetadata("protectedJvmFieldProperty.kt")
+        public void testProtectedJvmFieldProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/protectedJvmFieldProperty.kt");
+        }
+
+        @TestMetadata("protectedProperty.kt")
+        public void testProtectedProperty() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/protectedProperty.kt");
+        }
+
         @TestMetadata("redeclarationConflict.kt")
         public void testRedeclarationConflict() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionObject/redeclarationConflict.kt");

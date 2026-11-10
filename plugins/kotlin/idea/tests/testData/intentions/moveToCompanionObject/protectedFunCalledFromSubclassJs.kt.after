@@ -1,0 +1,11 @@
+// JS
+
+open class Base {
+    companion object {
+        protected fun hook() = 3
+    }
+}
+
+class Sub : Base() {
+    fun callHook() = hook()
+}

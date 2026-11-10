@@ -1,0 +1,10 @@
+open class Base {
+    companion object {
+        @JvmStatic
+        protected val limit = 3
+    }
+}
+
+class Sub : Base() {
+    fun useLimit() = limit
+}

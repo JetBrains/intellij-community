@@ -1,0 +1,10 @@
+// K2_ERROR: CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT
+open class Base {
+    companion object {
+        protected const val limit = 3
+    }
+}
+
+class Sub : Base() {
+    fun useLimit() = limit
+}

@@ -1,0 +1,10 @@
+open class Base {
+    companion object {
+        @JvmStatic
+        protected fun hook() = 3
+    }
+}
+
+class Sub : Base() {
+    fun callHook() = hook()
+}
