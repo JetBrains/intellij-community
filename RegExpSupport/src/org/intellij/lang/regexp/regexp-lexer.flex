@@ -40,6 +40,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
     private boolean allowPosixBracketExpressions;
     private boolean allowTransformationEscapes;
     private boolean allowExtendedUnicodeCharacter;
+    private boolean allowLongUnicodeCharacter;
     private boolean allowOneHexCharEscape;
     private boolean allowMysqlBracketExpressions;
     private boolean allowPcreBackReferences;
@@ -81,6 +82,7 @@ import static org.intellij.lang.regexp.RegExpCapability.*;
         minOctalDigits = 3;
       }
       this.allowExtendedUnicodeCharacter = capabilities.contains(EXTENDED_UNICODE_CHARACTER);
+      this.allowLongUnicodeCharacter = capabilities.contains(LONG_UNICODE_CHARACTER);
       this.allowOneHexCharEscape = capabilities.contains(ONE_HEX_CHAR_ESCAPE);
       this.whitespaceInClass = capabilities.contains(WHITESPACE_IN_CLASS);
     }
@@ -189,6 +191,12 @@ BACK_REFERENCES_GROUP = [1-9][0-9]{0,2}
 {ESCAPE} "u" / {LBRACE}       {  if (allowExtendedUnicodeCharacter) yypushstate(EMBRACED_HEX); else return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;  }
 {ESCAPE} "u"                  { return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
 {ESCAPE} "u" {HEX_CHAR}{1,3}  { return StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN; }
+{ESCAPE} "U" {HEX_CHAR}{1,8}  {  if (allowLongUnicodeCharacter) {
+                                   return yylength() == 10 ? RegExpTT.UNICODE_CHAR : StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
+                                 }
+                                 yypushback(yylength() - 2);
+                                 return allowTransformationEscapes ? RegExpTT.CHAR_CLASS : StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
+                              }
 
 <EMBRACED_HEX> {
   {LBRACE}{HEX_CHAR}+{RBRACE}  {  yypopstate(); return (yycharat(-1) == 'u') ? RegExpTT.UNICODE_CHAR : RegExpTT.HEX_CHAR;  }

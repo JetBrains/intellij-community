@@ -15,6 +15,7 @@ import static org.intellij.lang.regexp.RegExpCapability.ALLOW_EMPTY_CHARACTER_CL
 import static org.intellij.lang.regexp.RegExpCapability.COMMENT_MODE;
 import static org.intellij.lang.regexp.RegExpCapability.DANGLING_METACHARACTERS;
 import static org.intellij.lang.regexp.RegExpCapability.EXTENDED_UNICODE_CHARACTER;
+import static org.intellij.lang.regexp.RegExpCapability.LONG_UNICODE_CHARACTER;
 import static org.intellij.lang.regexp.RegExpCapability.MAX_OCTAL_177;
 import static org.intellij.lang.regexp.RegExpCapability.MAX_OCTAL_377;
 import static org.intellij.lang.regexp.RegExpCapability.MIN_OCTAL_2_DIGITS;
@@ -850,6 +851,33 @@ public class RegExpLexerTest {
       CHARACTER ('8')
       CHARACTER ('0')
       CHARACTER ('}')""");
+  }
+
+  @Test
+  public void testLongUnicode() {
+    setLexerFactory(() -> new RegExpLexer(EnumSet.of(LONG_UNICODE_CHARACTER)));
+    doTest("\\U0001F680\\U0001f6801\\U123\\U", """
+      UNICODE_CHAR ('\\U0001F680')
+      UNICODE_CHAR ('\\U0001f680')
+      CHARACTER ('1')
+      INVALID_UNICODE_ESCAPE_TOKEN ('\\U123')
+      INVALID_CHARACTER_ESCAPE_TOKEN ('\\U')""");
+    setLexerFactory(() -> new RegExpLexer(EnumSet.noneOf(RegExpCapability.class)));
+    doTest("\\U0001F680", """
+      INVALID_CHARACTER_ESCAPE_TOKEN ('\\U')
+      CHARACTER ('0')
+      CHARACTER ('0')
+      CHARACTER ('0')
+      CHARACTER ('1')
+      CHARACTER ('F')
+      CHARACTER ('6')
+      CHARACTER ('8')
+      CHARACTER ('0')""");
+    setLexerFactory(() -> new RegExpLexer(EnumSet.of(TRANSFORMATION_ESCAPES)));
+    doTest("\\U12", """
+      CHAR_CLASS ('\\U')
+      CHARACTER ('1')
+      CHARACTER ('2')""");
   }
 
   @Test

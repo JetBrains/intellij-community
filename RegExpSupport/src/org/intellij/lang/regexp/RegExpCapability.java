@@ -105,6 +105,11 @@ public enum RegExpCapability {
   EXTENDED_UNICODE_CHARACTER,
 
   /**
+   * \\U0001F680, with exactly 8 hex digits (Python)
+   */
+  LONG_UNICODE_CHARACTER,
+
+  /**
    * Allow \x9 in addition to \x09 (ruby)
    */
   ONE_HEX_CHAR_ESCAPE,

@@ -115,6 +115,10 @@ public class RegExpCharImpl extends RegExpElementImpl implements RegExpChar {
           }
           yield length != 6 ? -1 : parseNumber(s, 2, 16);
         }
+        case 'U' -> {
+          if (length == 2) yield 'U';
+          yield length != 10 ? -1 : parseNumber(s, 2, 16);
+        }
         case '0', '1', '2', '3', '4', '5', '6', '7' -> parseNumber(s, 1, 8);
         default -> codePoint;
       };

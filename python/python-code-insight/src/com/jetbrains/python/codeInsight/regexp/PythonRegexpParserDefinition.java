@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.EnumSet;
 
 import static org.intellij.lang.regexp.RegExpCapability.DANGLING_METACHARACTERS;
+import static org.intellij.lang.regexp.RegExpCapability.LONG_UNICODE_CHARACTER;
 import static org.intellij.lang.regexp.RegExpCapability.MIN_OCTAL_3_DIGITS;
 import static org.intellij.lang.regexp.RegExpCapability.OCTAL_NO_LEADING_ZERO;
 import static org.intellij.lang.regexp.RegExpCapability.OMIT_BOTH_NUMBERS_IN_QUANTIFIERS;
@@ -28,6 +29,7 @@ public class PythonRegexpParserDefinition extends RegExpParserDefinition {
                                                                       OMIT_NUMBERS_IN_QUANTIFIERS,
                                                                       OMIT_BOTH_NUMBERS_IN_QUANTIFIERS,
                                                                       MIN_OCTAL_3_DIGITS,
+                                                                      LONG_UNICODE_CHARACTER,
                                                                       SHORTHAND_CLASS_RANGE_START_ERROR,
                                                                       SHORTHAND_CLASS_RANGE_END_ERROR);
 
