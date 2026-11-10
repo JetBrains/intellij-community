@@ -23,7 +23,6 @@ import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.java.JavaFileElement;
 import com.intellij.psi.impl.source.tree.java.MethodElement;
 import com.intellij.psi.impl.source.tree.java.ParameterElement;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightJavaProject;
@@ -52,14 +51,14 @@ public class AstLeaksTest {
     LightJavaCodeInsightTestFixture myFixture = codeInsightFixture.get();
     final PsiFile file = myFixture.addClass("class Foo {}").getContainingFile();
     ReadAction.runBlocking(() -> assertTrue(file.findElementAt(0) instanceof PsiKeyword));
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(file, JavaFileElement.class, e -> e.getPsi().equals(file)));
+    LeakHunter.checkLeak(file, JavaFileElement.class, e -> e.getPsi().equals(file));
 
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
       file.getViewProvider().getDocument().insertString(0, " ");
       PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     });
     ReadAction.runBlocking(() -> assertTrue(file.findElementAt(0) instanceof PsiWhiteSpace));
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(file, JavaFileElement.class, e -> e.getPsi().equals(file)));
+    LeakHunter.checkLeak(file, JavaFileElement.class, e -> e.getPsi().equals(file));
   }
 
   @Test
@@ -73,7 +72,7 @@ public class AstLeaksTest {
     myFixture.doHighlighting();
 
     PsiClass mainClass = ReadAction.computeBlocking(() -> ((PsiJavaFile)file).getClasses()[0]);
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(mainClass, MethodElement.class, node -> superClass.equals(node.getPsi().getParent())));
+    LeakHunter.checkLeak(mainClass, MethodElement.class, node -> superClass.equals(node.getPsi().getParent()));
   }
 
   @Test
@@ -85,7 +84,7 @@ public class AstLeaksTest {
       assertNull(((PsiFileImpl)sup).getStub());
     });
 
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(sup, MethodElement.class, it -> it.getPsi().getContainingFile().equals(sup)));
+    LeakHunter.checkLeak(sup, MethodElement.class, it -> it.getPsi().getContainingFile().equals(sup));
 
     final PsiFile foo = myFixture.addFileToProject("a.java", "class Foo extends Super { void bar() { bar(); } }");
     myFixture.configureFromExistingVirtualFile(foo.getVirtualFile());
@@ -96,8 +95,8 @@ public class AstLeaksTest {
       assertNotNull(((PsiFileImpl)foo).getTreeElement());
     });
 
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(foo, MethodElement.class, it -> it.getPsi().getContainingFile().equals(foo)));
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(sup, MethodElement.class, it -> it.getPsi().getContainingFile().equals(sup)));
+    LeakHunter.checkLeak(foo, MethodElement.class, it -> it.getPsi().getContainingFile().equals(foo));
+    LeakHunter.checkLeak(sup, MethodElement.class, it -> it.getPsi().getContainingFile().equals(sup));
   }
 
   @Test
@@ -109,7 +108,7 @@ public class AstLeaksTest {
     PsiType type = ReadAction.computeBlocking(() -> cls.getMethods()[0].getReturnType());
     assertTrue(type instanceof PsiClassReferenceType);
 
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0])));
+    LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0]));
 
     ReadAction.runBlocking(() -> {
       GCWatcher.tracking(cls.getNode()).ensureCollected();
@@ -130,8 +129,8 @@ public class AstLeaksTest {
     PsiType type = ReadAction.computeBlocking(() -> cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getType());
     assertTrue(type instanceof PsiClassReferenceType);
 
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(type, ParameterElement.class,
-                                                           node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0])));
+    LeakHunter.checkLeak(type, ParameterElement.class,
+                         node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0]));
 
     ReadAction.runBlocking(() -> {
       GCWatcher.tracking(cls.getNode()).ensureCollected();
@@ -157,8 +156,8 @@ public class AstLeaksTest {
     PsiType type = ReadAction.computeBlocking(() -> cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getType());
     assertTrue(type instanceof PsiClassReferenceType);
 
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(type, ParameterElement.class,
-                                                           node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0])));
+    LeakHunter.checkLeak(type, ParameterElement.class,
+                         node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0]));
 
     ReadAction.runBlocking(() -> {
       GCWatcher.tracking(cls.getNode()).ensureCollected();
@@ -190,8 +189,8 @@ public class AstLeaksTest {
     assertTrue(type instanceof PsiClassReferenceType);
     //don't create intermediate variables, it is necessary to skip it for gc collection
     PsiType targetType = ReadAction.computeBlocking(() -> ((PsiTypeElement)cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getChildren()[0].getChildren()[3].getChildren()[4]).getType());
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(targetType, ParameterElement.class,
-                                                           node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0])));
+    LeakHunter.checkLeak(targetType, ParameterElement.class,
+                         node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0]));
 
     ReadAction.runBlocking(() -> {
       GCWatcher.tracking(cls.getNode()).ensureCollected();
@@ -221,8 +220,8 @@ public class AstLeaksTest {
     assertTrue(type instanceof PsiClassReferenceType);
     //don't create an intermediate variables, it is necessary to skip it for gc collection
     PsiType targetType = ReadAction.computeBlocking(() -> ((PsiTypeElement)cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getChildren()[0].getChildren()[3].getChildren()[4].getChildren()[4]).getType());
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(targetType, ParameterElement.class,
-                                                           node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0])));
+    LeakHunter.checkLeak(targetType, ParameterElement.class,
+                         node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0]));
 
     ReadAction.runBlocking(() -> {
       GCWatcher.tracking(cls.getNode()).ensureCollected();
@@ -257,8 +256,8 @@ public class AstLeaksTest {
     PsiType type = ReadAction.computeBlocking(() -> cls.getMethods()[0].getParameterList().getParameters()[0].getTypeElement().getType());
     assertTrue(type instanceof PsiEllipsisType);
 
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(type, ParameterElement.class,
-                                                           node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0])));
+    LeakHunter.checkLeak(type, ParameterElement.class,
+                         node -> node.getPsi().equals(cls.getMethods()[0].getParameterList().getParameters()[0]));
 
     ReadAction.runBlocking(() -> {
       GCWatcher.tracking(cls.getNode()).ensureCollected();
@@ -281,7 +280,7 @@ public class AstLeaksTest {
     PsiType componentType = ReadAction.computeBlocking(() -> ((PsiArrayType)type).getComponentType());
     assertTrue(componentType instanceof PsiClassReferenceType);
 
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0])));
+    LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0]));
 
     ReadAction.runBlocking(() -> {
       GCWatcher.tracking(cls.getNode()).ensureCollected();
@@ -309,7 +308,7 @@ public class AstLeaksTest {
     PsiType bound = ReadAction.computeBlocking(() -> ((PsiWildcardType)parameters[1]).getExtendsBound());
     assertTrue(bound instanceof PsiClassReferenceType);
 
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0])));
+    LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0]));
 
     ReadAction.runBlocking(() -> {
       GCWatcher.tracking(cls.getNode()).ensureCollected();
@@ -331,7 +330,7 @@ public class AstLeaksTest {
     assertTrue(type instanceof PsiClassReferenceType);
     ReadAction.runBlocking(() -> assertEquals("Outer.Inner", type.getCanonicalText(true)));
 
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0])));
+    LeakHunter.checkLeak(type, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0]));
 
     ReadAction.runBlocking(() -> {
       GCWatcher.tracking(cls.getNode()).ensureCollected();
@@ -357,7 +356,7 @@ public class AstLeaksTest {
     });
     ReadAction.runBlocking(() -> assertEquals("Comp", nested.getCanonicalText(true)));
 
-    EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(nested, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0])));
+    LeakHunter.checkLeak(nested, MethodElement.class, node -> node.getPsi().equals(cls.getMethods()[0]));
 
     ReadAction.runBlocking(() -> {
       GCWatcher.tracking(cls.getNode()).ensureCollected();

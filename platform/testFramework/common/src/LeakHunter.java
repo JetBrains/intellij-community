@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -194,22 +195,29 @@ public final class LeakHunter {
                                          @NotNull PairProcessor<? super T, Object> processor) throws AssertionError {
     tryClearingNonReachableObjects();
 
-    Computable<Boolean> runnable = () -> {
-      boolean leakDetected;
-      try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
-        leakDetected = !runDetectorPass(rootsSupplier, suspectClass, isReallyLeak, leakBackLinkProcessor, shouldExamineField,
-                                        PairProcessor.alwaysFalse());
-      }
-      if (!leakDetected) {
-        return true;
-      }
-      runAdditionalCleanup();
+    boolean noLeak = runDetectorPassInReadAction(rootsSupplier, suspectClass, isReallyLeak, leakBackLinkProcessor, shouldExamineField,
+                                                 PairProcessor.alwaysFalse());
+    if (noLeak) {
+      return true;
+    }
+    // The cleanup waits for the smart mode. A background thread cannot wait for it in a read action.
+    runAdditionalCleanup();
+    return runDetectorPassInReadAction(rootsSupplier, suspectClass, isReallyLeak, leakBackLinkProcessor, shouldExamineField, processor);
+  }
+
+  private static <T> boolean runDetectorPassInReadAction(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
+                                                         @NotNull Class<T> suspectClass,
+                                                         @Nullable Predicate<? super T> isReallyLeak,
+                                                         @Nullable Predicate<? super DebugReflectionUtil.BackLink<?>> leakBackLinkProcessor,
+                                                         @NotNull Predicate<Field> shouldExamineField,
+                                                         @NotNull PairProcessor<? super T, Object> processor) {
+    Computable<Boolean> pass = () -> {
       try (AccessToken ignored = ProhibitAWTEvents.start("checking for leaks")) {
         return runDetectorPass(rootsSupplier, suspectClass, isReallyLeak, leakBackLinkProcessor, shouldExamineField, processor);
       }
     };
     Application application = ApplicationManager.getApplication();
-    return application == null ? runnable.compute() : application.runReadAction(runnable);
+    return application == null ? pass.compute() : application.runReadAction(pass);
   }
 
   private static <T> boolean runDetectorPass(@NotNull Supplier<? extends Map<Object, String>> rootsSupplier,
@@ -256,15 +264,24 @@ public final class LeakHunter {
             UIUtil.dispatchAllInvocationEvents();
           });
         }
+        ensureIndicesUpToDate(project);
       }
       else {
         DumbService.getInstance(project).waitForSmartMode();
         UIUtil.pump();
+        // The dumb mode can start again after the wait, so the read action waits for the smart mode too.
+        ReadAction.nonBlocking(() -> {
+          ensureIndicesUpToDate(project);
+          return null;
+        }).inSmartMode(project).executeSynchronously();
       }
-      FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
-      FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, project, GlobalSearchScope.allScope(project));
-      FileBasedIndex.getInstance().ensureUpToDate(TrigramIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
     }
+  }
+
+  private static void ensureIndicesUpToDate(@NotNull Project project) {
+    FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
+    FileBasedIndex.getInstance().ensureUpToDate(IdIndex.NAME, project, GlobalSearchScope.allScope(project));
+    FileBasedIndex.getInstance().ensureUpToDate(TrigramIndex.INDEX_ID, project, GlobalSearchScope.allScope(project));
   }
 
   /**

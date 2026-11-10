@@ -20,7 +20,6 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.DumbModeTestUtils;
-import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightTestFixture;
@@ -287,7 +286,7 @@ public class FindFunctionalInterfaceTest {
     Collection<PsiFunctionalExpression> all = ReadAction.computeBlocking(() -> FunctionalExpressionSearch.search(sam).findAll());
     assertThat(all).hasSize(2);
     for (PsiFunctionalExpression expression : all) {
-      EdtTestUtil.runInEdtAndWait(() -> LeakHunter.checkLeak(expression, ASTNode.class));
+      LeakHunter.checkLeak(expression, ASTNode.class);
     }
   }
 
