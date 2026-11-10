@@ -7,6 +7,7 @@ import com.intellij.python.testAssertions.PyTestAssertionSyntax.MARKER_CORNER
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.MARKER_LEFT
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.MARKER_SPAN
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.NEWLINE
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * One assertion of a test text: an expected one from the parser, or an actual one from the engine.
@@ -14,6 +15,7 @@ import com.intellij.python.testAssertions.PyTestAssertionSyntax.NEWLINE
  * The code position is the checked element. The assertion position is the comment that holds the assertion.
  * A column of -1 means "not set". An inline assertion has [codeColumnStart] -1 and applies to the whole line.
  */
+@ApiStatus.Internal
 data class PyTestAssertion(
   val codeOffsetStart: Int,
   val codeLineStart: Int,

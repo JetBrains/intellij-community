@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.testAssertions
 
+import org.jetbrains.annotations.ApiStatus
+
 /** The role of a [PyTestDirective] in a test text. */
+@ApiStatus.Internal
 enum class PyTestDirectiveKind {
   /** Checks one value at a marked position or on a line. */
   ASSERTION,
@@ -21,6 +24,7 @@ enum class PyTestDirectiveKind {
  * @property isSeverity true for a highlight severity. The engine compares such an assertion with the highlight description.
  * @property values the words that the engine can compute for this directive. An empty list means any text.
  */
+@ApiStatus.Internal
 class PyTestDirective internal constructor(
   val name: String,
   val kind: PyTestDirectiveKind,
@@ -45,6 +49,7 @@ class PyTestDirective internal constructor(
 }
 
 /** The registry of all [PyTestDirective]s. A new directive is one entry here and one computation in the engine. */
+@ApiStatus.Internal
 object PyTestDirectives {
   private val entries = mutableListOf<PyTestDirective>()
 

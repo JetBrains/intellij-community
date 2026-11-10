@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.testAssertions
 
+import org.jetbrains.annotations.ApiStatus
+
 /** The characters of the assertion mini-language and the escape of its payload. */
+@ApiStatus.Internal
 object PyTestAssertionSyntax {
   const val COMMENT_CHAR: Char = '#'
   const val MARKER_CORNER: Char = '└'

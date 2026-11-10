@@ -29,7 +29,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = ["@lib//:kotlin-stdlib"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+    ],
 )
 ### auto-generated section `build intellij.python.testAssertions` end
 

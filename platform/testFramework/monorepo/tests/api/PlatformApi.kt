@@ -4,7 +4,7 @@ package com.intellij.platform.testFramework.monorepo.api
 import com.intellij.platform.testFramework.monorepo.MonorepoProjectStructure.isFromCommunity
 import org.jetbrains.jps.model.module.JpsModule
 
-internal object PlatformApi {
+object PlatformApi {
 
   private val excludeModuleNames = setOf(
     "intellij.platform.buildScripts", // build scripts

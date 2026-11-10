@@ -7,19 +7,27 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.junit.jupiter.api.fail
 import kotlin.io.path.exists
 
-fun checkModulesDefineApiDump(modules: List<JpsModule>, filter: (JpsModule) -> Boolean = { it.isPlatformModule() }) {
+fun checkModulesDefineApiDump(modules: List<JpsModule>) {
+  checkModulesDefineApiDump(modules.filter { it.isPlatformModule() }, groupName = "Platform", acceptUnreviewed = false)
+}
+
+/**
+ * Fails when a module from [modules] with production sources has no `api-dump.txt` in the first content root.
+ * When [acceptUnreviewed] is true, `api-dump-unreviewed.txt` is also accepted.
+ */
+fun checkModulesDefineApiDump(modules: List<JpsModule>, groupName: String, acceptUnreviewed: Boolean) {
   val modulesWithoutApiDump = modules
     .filter { module ->
-      filter(module)
-      && module.hasProductionSources() // skip modules without sources, for example, modules with tests
+      module.hasProductionSources() // skip modules without sources, for example, modules with tests
       && module.firstContentRoot().let { contentRoot ->
         contentRoot != null // skip modules without content roots
         && !contentRoot.stableApiDumpPath().exists()
+        && !(acceptUnreviewed && contentRoot.unreviewedApiDumpPath().exists())
       }
     }
   if (modulesWithoutApiDump.isNotEmpty()) {
     fail {
-      "Platform modules should define 'api-dump.txt' in the first content root. " +
+      "$groupName modules should define 'api-dump.txt' in the first content root. " +
       "Modules without API dump:\n" +
       modulesWithoutApiDump.joinToString("\n") { it.name }
     }

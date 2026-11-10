@@ -2,6 +2,7 @@
 package com.intellij.python.testAssertions
 
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.NEWLINE
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.abs
 
 /**
@@ -10,6 +11,7 @@ import kotlin.math.abs
  * When the actual assertions equal the expected ones, the result equals the original text. So a test compares two texts,
  * and a failure shows the full actual text.
  */
+@ApiStatus.Internal
 object PyTestAssertionInliner {
 
   fun generateActualText(originalText: String, expectedAssertions: List<PyTestAssertion>, actualAssertions: List<PyTestAssertion>): String {

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.testAssertions
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * Marks a parameter that takes a test text with assertions.
  *
@@ -10,4 +12,5 @@ package com.intellij.python.testAssertions
 @Target(AnnotationTarget.VALUE_PARAMETER)
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
+@ApiStatus.Experimental
 annotation class PyTestAssertionText

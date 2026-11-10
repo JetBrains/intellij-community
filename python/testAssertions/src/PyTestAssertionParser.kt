@@ -6,6 +6,7 @@ import com.intellij.python.testAssertions.PyTestAssertionSyntax.MARKER_LEFT
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.NEWLINE
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.indexOfUnescapedCommentChar
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.unescape
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * A problem in the assertion syntax of a test text.
@@ -14,6 +15,7 @@ import com.intellij.python.testAssertions.PyTestAssertionSyntax.unescape
  * [start] and [end] are the offsets of the text with the problem. [end] is exclusive.
  * [fix] is the edit that removes the problem, when the parser knows one.
  */
+@ApiStatus.Internal
 data class PyTestAssertionDiagnostic(
   val line: Int,
   val column: Int,
@@ -26,6 +28,7 @@ data class PyTestAssertionDiagnostic(
 }
 
 /** An edit that removes a [PyTestAssertionDiagnostic]. The text from [start] to [end] becomes [replacement]. [end] is exclusive. */
+@ApiStatus.Internal
 data class PyTestAssertionFix(val kind: Kind, val start: Int, val end: Int, val replacement: String) {
   enum class Kind {
     /** Replaces a misspelled directive name with the name that the parser suggests. */
@@ -40,6 +43,7 @@ data class PyTestAssertionFix(val kind: Kind, val start: Int, val end: Int, val 
 }
 
 /** A part of an assertion that an editor colours. [start] and [end] are offsets in the test text. [end] is exclusive. */
+@ApiStatus.Internal
 data class PyTestAssertionToken(val start: Int, val end: Int, val kind: Kind) {
   enum class Kind {
     MARKER,
@@ -53,12 +57,14 @@ data class PyTestAssertionToken(val start: Int, val end: Int, val kind: Kind) {
  *
  * [tokens] are the markers, the known directive names and the modifiers, in the order of the text.
  */
+@ApiStatus.Internal
 data class PyTestAssertionParseResult(
   val assertions: List<PyTestAssertion>,
   val diagnostics: List<PyTestAssertionDiagnostic>,
   val tokens: List<PyTestAssertionToken>,
 )
 
+@ApiStatus.Internal
 object PyTestAssertionParser {
 
   /**

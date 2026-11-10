@@ -6,8 +6,10 @@ import com.intellij.python.testAssertions.PyTestAssertionSyntax.MARKER_CORNER
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.MARKER_LEFT
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.indexOfUnescapedCommentChar
 import com.intellij.python.testAssertions.PyTestAssertionSyntax.isAssertionMarker
+import org.jetbrains.annotations.ApiStatus
 
 /** One completion item for a test text. */
+@ApiStatus.Internal
 data class PyTestCompletionItem(val text: String, val tailText: String, val typeText: String)
 
 /**
@@ -15,6 +17,7 @@ data class PyTestCompletionItem(val text: String, val tailText: String, val type
  *
  * [prefix] is the part of the current word before the caret.
  */
+@ApiStatus.Internal
 data class PyTestCompletion(val prefix: String, val items: List<PyTestCompletionItem>)
 
 /**
@@ -23,6 +26,7 @@ data class PyTestCompletion(val prefix: String, val items: List<PyTestCompletion
  * It reads the start of the assertion as the parser does. The English texts of the items are DevKit texts for the developers of
  * the IntelliJ Platform, and this library has no message bundle. So they are not in a `*.properties` file.
  */
+@ApiStatus.Internal
 object PyTestAssertionCompletion {
 
   /** Returns the completion for [linePrefix], or null when the caret is not in an assertion comment. */
