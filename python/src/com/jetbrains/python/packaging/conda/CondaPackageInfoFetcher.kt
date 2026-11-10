@@ -10,10 +10,10 @@ import com.intellij.platform.eel.isX86
 import com.intellij.platform.eel.isX86_64
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.jetbrains.python.Result
 import com.jetbrains.python.mapError
+import kotlinx.coroutines.currentCoroutineContext
 import org.apache.commons.compress.compressors.CompressorStreamFactory
 import java.io.IOException
 import java.nio.file.FileSystems
@@ -26,15 +26,16 @@ internal object CondaPackageInfoFetcher {
   private const val REPO_DATA_JSON = "repodata.json.bz2"
   private val logger = thisLogger()
 
-  @RequiresBackgroundThread
-  fun fetchCondaChannelPackages(channel: CondaChannel, arch: CondaArch): Result<PackageVersionMap, FetcherError> =
+  suspend fun fetchCondaChannelPackages(channel: CondaChannel, arch: CondaArch): Result<PackageVersionMap, FetcherError> =
     try {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         return Result.Success(emptyMap())
       }
-      
+
       logger.info("fetching packages from $channel/$arch...")
-      
+
+      val coroutineContext = currentCoroutineContext()
+
       HttpRequests
         .request("${CONDA_BASE_URL}/$channel/$arch/$REPO_DATA_JSON")
         .gzip(false)
@@ -47,12 +48,12 @@ internal object CondaPackageInfoFetcher {
             CompressorStreamFactory()
               .createCompressorInputStream(CompressorStreamFactory.BZIP2, rawInputStream)
               .use { decompressedInputStream ->
-                CondaRepoDataStreamParser.parseVersions(decompressedInputStream)
+                CondaRepoDataStreamParser.parseVersions(decompressedInputStream, coroutineContext)
                   .mapError { ParseError(it.message) }
               }
           }
         }
-        .also { 
+        .also {
           logger.info("successfully fetched packages from $channel/$arch")
         }
     }
