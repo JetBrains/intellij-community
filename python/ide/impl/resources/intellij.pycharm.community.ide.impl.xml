@@ -203,7 +203,6 @@
                         overrides="true"/>
 
 
-    <workspaceModel.fileIndexContributor implementation="com.intellij.pycharm.community.ide.impl.workspaceModel.PyToxExcludeWorkspaceFileIndexContributor"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.pycharm.community.ide.impl.workspaceModel.PySitePackagesExcludeWorkspaceFileIndexContributor"/>
 
     <applicationService serviceImplementation="com.intellij.pycharm.community.ide.impl.newProjectWizard.welcome.PyWelcomeSettings"/>
