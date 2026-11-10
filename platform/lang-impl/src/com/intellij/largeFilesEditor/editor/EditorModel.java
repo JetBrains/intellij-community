@@ -246,7 +246,7 @@ public final class EditorModel {
 
   private void reflectRealToTargetSelection(SelectionEvent selectionEvent) {
     TextRange newSelectionRange = selectionEvent.getNewRange();
-    if (newSelectionRange == null || newSelectionRange.isEmpty()) {
+    if (newSelectionRange.isEmpty()) {
       targetSelectionState.isExists = false;
     }
     else {
