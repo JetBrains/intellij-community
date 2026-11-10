@@ -5,12 +5,16 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.assertIteratedContent
+import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.testFramework.junit5.TestApplication
@@ -20,6 +24,7 @@ import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.TreeNodeProcessingResult
+import com.intellij.util.indexing.iterateNonIndexableFilesImpl
 import com.intellij.util.indexing.testEntities.IndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
@@ -32,9 +37,11 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.nio.file.Files
 import kotlin.io.path.invariantSeparatorsPathString
 
 @TestApplication
@@ -167,6 +174,32 @@ class NonIndexableFileSetTest {
     readAction {
       assertFalse(fileIndex.isIndexable(nonIndexableFile))
     }
+  }
+
+  @Test
+  fun `non-indexable walk does not descend into symlinks`() = runBlocking {
+    assumeTrue(IoTestUtil.isSymLinkCreationSupported, "Can't create symlinks")
+    baseNonProjectDir.newVirtualFile("root/a.txt")
+    baseNonProjectDir.newVirtualFile("root/sub/b.txt")
+    val outsideDir = baseNonProjectDir.newVirtualFile("outside/c.txt").parent
+    val linkPath = customContentFileSetRoot.toNioPath().resolve("link")
+    Files.createSymbolicLink(linkPath, outsideDir.toNioPath())
+    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(linkPath))
+
+    val workspaceModel = projectModel.project.serviceAsync<WorkspaceModel>()
+    workspaceModel.update {
+      val url = customContentFileSetRoot.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())
+      it.addEntity(NonIndexableTestEntity(url, NonPersistentEntitySource))
+    }
+
+    val rootPath = customContentFileSetRoot.path
+    val visited = mutableListOf<VirtualFile>()
+    assertTrue(iterateNonIndexableFilesImpl(projectModel.project, null, ContentIterator { file -> visited.add(file) }))
+
+    val underRoot = visited.filter { it.path == rootPath || it.path.startsWith("$rootPath/") }
+    assertEquals(setOf("", "a.txt", "sub", "sub/b.txt", "link"),
+                 underRoot.mapTo(HashSet()) { it.path.removePrefix(rootPath).removePrefix("/") })
+    assertTrue(underRoot.all { it is CacheAvoidingVirtualFile }, "walk must stay on cache-avoiding files: $underRoot")
   }
 
   private fun processIndexableContentUnderDirectory(root: VirtualFile): Set<VirtualFile> {

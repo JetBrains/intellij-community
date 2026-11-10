@@ -122,7 +122,8 @@ private fun WorkspaceFileIndexEx.iterateNonIndexableFilesImpl(
   processor: ContentIterator,
 ): Boolean {
   for (root in roots) {
-    val res = VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Any?>() {
+    // a symlink is visited as a file, never descended
+    val res = VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Any?>(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
       override fun visitFileEx(file: VirtualFile): Result {
         ProgressManager.checkCanceled()
         val subtreeProcessingMode = getSubtreeProcessingModeAt(file, this@iterateNonIndexableFilesImpl, filter)
