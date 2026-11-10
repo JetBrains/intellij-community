@@ -196,6 +196,11 @@ public final class FSRecords {
     return implOrFail().processFilesWithNames(names, processor);
   }
 
+  /** Starts the file-by-name index fill, when the light mode deferred it. The call is a no-op after the start. */
+  public static void startFileNameIndexFill() {
+    implOrFail().startFileNameIndexFill();
+  }
+
 
   //========== file record fields accessors: ================================
 

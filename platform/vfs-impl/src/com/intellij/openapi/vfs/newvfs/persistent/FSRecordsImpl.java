@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.plugins.CurrentProductMode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -46,6 +47,7 @@ import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.util.io.blobstorage.ByteBufferWriter;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntLists;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +66,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -218,7 +221,14 @@ public final class FSRecordsImpl implements Closeable {
 
       PersistentFSConnection connection = initializationResult.connection;
 
-      InvertedNameIndexLazy invertedNameIndexLazy = asyncFillInvertedNameIndex(connection.records());
+      FileRecordLock fileRecordLock = new FileRecordLock();
+      // the light mode has no file-based index, so the file-by-name index fills on the move to the smart mode,
+      // see startFileNameIndexFill()
+      boolean fillOnDemand = CurrentProductMode.INSTANCE.getValue().isLight();
+      InvertedNameIndexLazy invertedNameIndexLazy = new InvertedNameIndexLazy(
+        () -> fillInvertedNameIndex(connection.records(), fileRecordLock),
+        fillOnDemand
+      );
 
       LOG.info("VFS initialized: " + NANOSECONDS.toMillis(initializationResult.totalInitializationDurationNs) + " ms, " +
                initializationResult.attemptsFailures.size() + " failed attempts, " +
@@ -237,7 +247,7 @@ public final class FSRecordsImpl implements Closeable {
         return new FSRecordsImpl(
           connection,
           contentAccessor, attributeAccessor, treeAccessor, recordAccessor,
-          invertedNameIndexLazy,
+          fileRecordLock, invertedNameIndexLazy,
           currentVersion,
           errorHandler,
           initializationResult
@@ -246,7 +256,7 @@ public final class FSRecordsImpl implements Closeable {
       catch (Throwable e) {
         try {
           //ensure async task is finished:
-          invertedNameIndexLazy.get();
+          invertedNameIndexLazy.getIfStarted();
         }
         catch (Throwable scanningEx) {
           e.addSuppressed(scanningEx);
@@ -338,7 +348,7 @@ public final class FSRecordsImpl implements Closeable {
    * mostly short, so StampedLock could be used quite effectively. Protecting children read-modify-write ops with regular write lock
    * prevents concurrent reads, which is undesirable -- hence the trick.
    */
-  private final FileRecordLock fileRecordLock = new FileRecordLock();
+  private final FileRecordLock fileRecordLock;
 
   /** Keep stacktrace of {@link #close()} call -- for better diagnostics of unexpected close */
   private volatile Exception closedStackTrace = null;
@@ -352,6 +362,7 @@ public final class FSRecordsImpl implements Closeable {
                         @NotNull PersistentFSAttributeAccessor attributeAccessor,
                         @NotNull PersistentFSTreeAccessor treeAccessor,
                         @NotNull PersistentFSRecordAccessor recordAccessor,
+                        @NotNull FileRecordLock fileRecordLock,
                         @NotNull InvertedNameIndexLazy invertedNameIndexLazy,
                         int currentVersion,
                         @NotNull ErrorHandler errorHandler,
@@ -362,6 +373,7 @@ public final class FSRecordsImpl implements Closeable {
     this.treeAccessor = treeAccessor;
     this.recordAccessor = recordAccessor;
     this.errorHandler = errorHandler;
+    this.fileRecordLock = fileRecordLock;
     this.invertedNameIndexLazy = invertedNameIndexLazy;
 
     this.currentVersion = currentVersion;
@@ -413,9 +425,11 @@ public final class FSRecordsImpl implements Closeable {
       try {
         //ensure async scanning is finished -- until that records file is still in use,
         // which could cause e.g. problems with its deletion
-        InvertedNameIndex invertedNameIndex = invertedNameIndexLazy.get();
+        InvertedNameIndex invertedNameIndex = invertedNameIndexLazy.getIfStarted();
         //Clear index is not required, but help GC by releasing huge table faster
-        invertedNameIndex.clear();
+        if (invertedNameIndex != null) {
+          invertedNameIndex.clear();
+        }
       }
       catch (Throwable t) {
         LOG.warn("VFS: invertedNameIndex building is not terminated properly", t);
@@ -570,7 +584,6 @@ public final class FSRecordsImpl implements Closeable {
     }
 
     PersistentFSRecordsStorage records = connection.records();
-    InvertedNameIndex invertedNameIndex = invertedNameIndexLazy.get();
     // delete children first:
     for (int i = childrenIds.size() - 1; i >= 0; i--) {
       int childId = childrenIds.getInt(i);
@@ -585,7 +598,7 @@ public final class FSRecordsImpl implements Closeable {
         }
         recordAccessor.markRecordAsDeleted(childId);
 
-        invertedNameIndex.updateFileName(childId, nameId, NULL_NAME_ID);
+        invertedNameIndexLazy.updateFileName(childId, nameId, NULL_NAME_ID);
       }
       finally {
         fileRecordLock.unlockForWrite(childId, lockStamp);
@@ -1157,6 +1170,12 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
+  /** Starts the file-by-name index fill, when it has not started. The file-based index calls it when it loads. */
+  void startFileNameIndexFill() {
+    checkNotClosed();
+    invertedNameIndexLazy.startFill();
+  }
+
   boolean processFilesWithNames(@NotNull Set<String> names,
                                 @NotNull IntPredicate processor) {
     checkNotClosed();
@@ -1303,7 +1322,6 @@ public final class FSRecordsImpl implements Closeable {
 
     int newNameId = getNameId(name);
 
-    InvertedNameIndex invertedNameIndex = invertedNameIndexLazy.get();
     updateRecordFields(fileId, record -> {
       int previousNameId = record.getNameId();
       if (previousNameId == newNameId) {
@@ -1312,7 +1330,7 @@ public final class FSRecordsImpl implements Closeable {
 
       record.setNameId(newNameId);
 
-      invertedNameIndex.updateFileName(fileId, previousNameId, newNameId);
+      invertedNameIndexLazy.updateFileName(fileId, previousNameId, newNameId);
       return true;
     });
     invertedNameIndexModCount.incrementAndGet();
@@ -1415,7 +1433,6 @@ public final class FSRecordsImpl implements Closeable {
     long length = attributes.isDirectory() ? -1L : attributes.length;
     int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
 
-    InvertedNameIndex filenameIndex = invertedNameIndexLazy.get();
     updateRecordFields(fileId, record -> {
       int oldNameId = record.getNameId();
       record.setParent(parentId);
@@ -1427,7 +1444,7 @@ public final class FSRecordsImpl implements Closeable {
       record.setTimestamp(timestamp);
       record.setLength(length);
 
-      filenameIndex.updateFileName(fileId, oldNameId, nameId);
+      invertedNameIndexLazy.updateFileName(fileId, oldNameId, nameId);
       return true;
     });
 
@@ -1899,63 +1916,186 @@ public final class FSRecordsImpl implements Closeable {
     return recordAccessor;
   }
 
+  /**
+   * Scans the records storage into a new index.
+   * The scan reads each record under its record lock, so a concurrent name change either reaches the scan or waits in
+   * {@link InvertedNameIndexLazy#pendingUpdates}.
+   */
   @VisibleForTesting
-  static @NotNull InvertedNameIndexLazy asyncFillInvertedNameIndex(@NotNull PersistentFSRecordsStorage recordsStorage) {
-    CompletableFuture<InvertedNameIndex> fillUpInvertedNameIndexTask = PersistentFsConnectorHelper.INSTANCE.executor().async(() -> {
-      InvertedNameIndex invertedNameIndex = new DefaultInMemoryInvertedNameIndex();
-      // fill up nameId->fileId index:
-      int maxAllocatedID = recordsStorage.maxAllocatedID();
-      for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-        int flags = recordsStorage.getFlags(fileId);
-        int nameId = recordsStorage.getNameId(fileId);
-        if (!hasDeletedFlag(flags) && nameId != NULL_NAME_ID) {
-          invertedNameIndex.updateFileName(fileId, /*old: */ NULL_NAME_ID, /*new: */ nameId);
+  static @NotNull InvertedNameIndex fillInvertedNameIndex(@NotNull PersistentFSRecordsStorage recordsStorage,
+                                                           @NotNull FileRecordLock fileRecordLock) throws IOException {
+    InvertedNameIndex invertedNameIndex = new DefaultInMemoryInvertedNameIndex();
+    // fill up nameId->fileId index:
+    int maxAllocatedID = recordsStorage.maxAllocatedID();
+    for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
+      StampedLock lock = fileRecordLock.lockFor(fileId);
+      long stamp = lock.tryOptimisticRead();
+      int flags = recordsStorage.getFlags(fileId);
+      int nameId = recordsStorage.getNameId(fileId);
+      if (!lock.validate(stamp)) {
+        stamp = lock.readLock();
+        try {
+          flags = recordsStorage.getFlags(fileId);
+          nameId = recordsStorage.getNameId(fileId);
+        }
+        finally {
+          lock.unlockRead(stamp);
         }
       }
-      LOG.info("VFS scanned: file-by-name index was populated");
-      return invertedNameIndex;
-    });
-    return new InvertedNameIndexLazy(fillUpInvertedNameIndexTask);
+      if (!hasDeletedFlag(flags) && nameId != NULL_NAME_ID) {
+        invertedNameIndex.updateFileName(fileId, /*old: */ NULL_NAME_ID, /*new: */ nameId);
+      }
+    }
+    LOG.info("VFS scanned: file-by-name index was populated");
+    return invertedNameIndex;
   }
 
   /**
-   * File-name index that the VFS fills in the background after it connects.
-   * Write paths wait with {@link #get()}, which ignores cancellation; read paths wait with {@link #getWithCheckCanceled()}.
+   * File-name index that the VFS fills from the records storage.
+   * The fill starts when the VFS connects, or with {@code fillOnDemand} on the first {@link #startFill()} or lookup.
+   * A name change before the fill starts stays in the records storage only, and the scan reads it from there.
+   * A name change while the fill runs waits in {@link #pendingUpdates}, and the fill applies it after the scan.
+   * Write paths call {@link #updateFileName(int, int, int)} under the record lock; read paths wait with {@link #getWithCheckCanceled()}.
    */
   static final class InvertedNameIndexLazy implements Supplier<InvertedNameIndex> {
-    private final @NotNull CompletableFuture<InvertedNameIndex> fillTask;
+    private final @NotNull Callable<? extends InvertedNameIndex> fill;
+    /** null until the fill starts */
+    private volatile @Nullable CompletableFuture<InvertedNameIndex> fillTask;
+    /** null until the fill completes and applies the pending updates */
+    private volatile @Nullable InvertedNameIndex filledIndex;
+    /** (fileId, oldNameId, newNameId) triples, guarded by itself */
+    private final IntList pendingUpdates = new IntArrayList();
+
+    InvertedNameIndexLazy(@NotNull Callable<? extends InvertedNameIndex> fill, boolean fillOnDemand) {
+      this.fill = fill;
+      if (!fillOnDemand) {
+        startFill();
+      }
+    }
 
     @VisibleForTesting
     InvertedNameIndexLazy(@NotNull CompletableFuture<InvertedNameIndex> fillTask) {
+      this.fill = () -> {
+        throw new IllegalStateException("The fill task is given");
+      };
       this.fillTask = fillTask;
+      fillTask.thenAccept(this::markFilled);
     }
 
+    @NotNull CompletableFuture<InvertedNameIndex> startFill() {
+      CompletableFuture<InvertedNameIndex> task = fillTask;
+      if (task != null) {
+        return task;
+      }
+      synchronized (pendingUpdates) {
+        task = fillTask;
+        if (task != null) {
+          return task;
+        }
+        // publish the task before the scan starts, so a concurrent name change reaches pendingUpdates
+        CompletableFuture<InvertedNameIndex> startedTask = new CompletableFuture<>();
+        fillTask = startedTask;
+        PersistentFsConnectorHelper.INSTANCE.executor().async(() -> {
+          InvertedNameIndex index = fill.call();
+          markFilled(index);
+          return index;
+        }).whenComplete((index, error) -> {
+          if (error != null) {
+            startedTask.completeExceptionally(error);
+          }
+          else {
+            startedTask.complete(index);
+          }
+        });
+        return startedTask;
+      }
+    }
+
+    /**
+     * Applies a name change to the index.
+     * Skips the change while the fill has not started: the scan reads the name from the records storage.
+     */
+    void updateFileName(int fileId, int oldNameId, int newNameId) {
+      InvertedNameIndex index = filledIndex;
+      if (index != null) {
+        index.updateFileName(fileId, oldNameId, newNameId);
+        return;
+      }
+      if (fillTask == null) {
+        return;
+      }
+      synchronized (pendingUpdates) {
+        index = filledIndex;
+        if (index != null) {
+          index.updateFileName(fileId, oldNameId, newNameId);
+        }
+        else {
+          pendingUpdates.add(fileId);
+          pendingUpdates.add(oldNameId);
+          pendingUpdates.add(newNameId);
+        }
+      }
+    }
+
+    /** The scan may have read a record before or after a pending change, so the replay adds a file only once */
+    private void markFilled(@NotNull InvertedNameIndex index) {
+      synchronized (pendingUpdates) {
+        for (int i = 0; i < pendingUpdates.size(); i += 3) {
+          int fileId = pendingUpdates.getInt(i);
+          int oldNameId = pendingUpdates.getInt(i + 1);
+          int newNameId = pendingUpdates.getInt(i + 2);
+          index.updateFileName(fileId, oldNameId, NULL_NAME_ID);
+          if (newNameId != NULL_NAME_ID && !containsFile(index, newNameId, fileId)) {
+            index.updateFileName(fileId, NULL_NAME_ID, newNameId);
+          }
+        }
+        pendingUpdates.clear();
+        filledIndex = index;
+      }
+    }
+
+    private static boolean containsFile(@NotNull InvertedNameIndex index, int nameId, int fileId) {
+      return !index.forEachFileIds(IntLists.singleton(nameId), id -> id != fileId);
+    }
+
+    /** Starts the fill when it has not started, and waits for it */
     @Override
     public @NotNull InvertedNameIndex get() {
-      try {
-        return fillTask.join();
-      }
-      catch (Throwable e) {
-        throw new IllegalStateException("Lazy invertedNameIndex computation is failed", e);
-      }
+      return join(startFill());
+    }
+
+    /** Waits for a started fill, and returns null when the fill has not started */
+    @Nullable InvertedNameIndex getIfStarted() {
+      CompletableFuture<InvertedNameIndex> task = fillTask;
+      return task == null ? null : join(task);
     }
 
     /**
      * Same as {@link #get()}, but throws {@link ProcessCanceledException} when the caller is canceled before the fill completes.
      */
     public @NotNull InvertedNameIndex getWithCheckCanceled() {
-      if (!fillTask.isDone()) {
+      CompletableFuture<InvertedNameIndex> task = startFill();
+      if (!task.isDone()) {
         try {
-          ProgressIndicatorUtils.awaitWithCheckCanceled(fillTask);
+          ProgressIndicatorUtils.awaitWithCheckCanceled(task);
         }
         catch (Throwable e) {
-          // get() reports a failed or canceled fill
-          if (!fillTask.isCompletedExceptionally()) {
+          // join() reports a failed or canceled fill
+          if (!task.isCompletedExceptionally()) {
             rethrowControlFlowException(e);
           }
         }
       }
-      return get();
+      return join(task);
+    }
+
+    private static @NotNull InvertedNameIndex join(@NotNull CompletableFuture<InvertedNameIndex> task) {
+      try {
+        return task.join();
+      }
+      catch (Throwable e) {
+        throw new IllegalStateException("Lazy invertedNameIndex computation is failed", e);
+      }
     }
   }
 

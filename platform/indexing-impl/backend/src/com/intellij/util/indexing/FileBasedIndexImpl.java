@@ -55,6 +55,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AsyncEventSupport;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -537,6 +538,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       // capture VFS creation time. It will be used to identify VFS epoch for dirty files queue.
       // at the moment when we write the queue, VFS might have already been disposed via shutdown hook (in the case on emergency shutdown)
       vfsCreationStamp = ManagingFS.getInstance().getCreationTimestamp();
+      // the light mode defers the VFS file-by-name index until the file-based index loads
+      FSRecords.startFileNameIndexFill();
     }
     else {
       LOG.info("Indexes are already loaded");
