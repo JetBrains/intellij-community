@@ -93,7 +93,13 @@ data class LibraryRoot(
   val type: LibraryRootTypeId,
   val inclusionOptions: InclusionOptions = InclusionOptions.ROOT_ITSELF
 ) : Serializable {
-    enum class InclusionOptions {
-        ROOT_ITSELF, ARCHIVES_UNDER_ROOT, ARCHIVES_UNDER_ROOT_RECURSIVELY
-    }
+  enum class InclusionOptions {
+    ROOT_ITSELF,
+
+    @Deprecated(message = "Use ROOT_ITSELF")
+    ARCHIVES_UNDER_ROOT,
+
+    @Deprecated(message = "Use ROOT_ITSELF")
+    ARCHIVES_UNDER_ROOT_RECURSIVELY
+  }
 }
