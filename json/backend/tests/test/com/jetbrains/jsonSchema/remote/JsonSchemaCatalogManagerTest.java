@@ -49,7 +49,6 @@ public class JsonSchemaCatalogManagerTest extends BasePlatformTestCase {
     doTest("site/.github/workflows/a/linter.yml", null);
   }
 
-  @Test
   public void testInnerDirectoryWildcard() {
     doTest("db/changelog/main.yaml", "https://json.schemastore.org/liquibase-3.2.json");
     doTest("db/changelog/v1/main.yml", "https://json.schemastore.org/liquibase-3.2.json");
@@ -58,7 +57,6 @@ public class JsonSchemaCatalogManagerTest extends BasePlatformTestCase {
     doTest("db/main.yaml", null);
   }
 
-  @Test
   public void testGroupInMask() {
     doTest("group-single.json", "https://example.com/group-single.json");
     doTest("a/group-single.yaml", "https://example.com/group-single.json");
