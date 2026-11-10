@@ -50,9 +50,11 @@ internal class PythonInterpreterDetailsTest {
       val second = newDir("second")
 
       assertThat(details.writeSysPath(interpreter, listOf(first.path))).isTrue()
+      awaitRoots()
       assertThat(interpreter.classRoots(project)).contains(first).doesNotContain(second)
 
       assertThat(details.writeSysPath(interpreter, listOf(second.path))).isTrue()
+      awaitRoots()
       assertThat(interpreter.classRoots(project)).contains(second).doesNotContain(first)
       // The SDK gets them too, for the code that still reads the roots of an SDK.
       assertThat(sdkClassRoots(interpreter)).contains(second).doesNotContain(first)
@@ -64,6 +66,7 @@ internal class PythonInterpreterDetailsTest {
     withMockInterpreter { interpreter ->
       val sysPath = listOf(newDir("same").path)
       assertThat(details.writeSysPath(interpreter, sysPath)).isTrue()
+      awaitRoots()
       val roots = PythonInterpreterRoots.getInstance(projectFixture.get())
       val before = roots.changeCountForTests
 
@@ -101,6 +104,7 @@ internal class PythonInterpreterDetailsTest {
       val added = newDir("added")
 
       assertThat(details.writeAddedPaths(interpreter, listOf(added.toNioPath()))).isTrue()
+      awaitRoots()
 
       // A run reads the paths from the SDK, which gets a copy of them. The record holds the fact.
       @Suppress("DEPRECATION") val sdk = interpreter.getSdkAPI()
@@ -108,6 +112,9 @@ internal class PythonInterpreterDetailsTest {
       assertThat(details.facts(interpreter).addedPaths).containsExactly(added.toNioPath())
     }
   }
+
+  /** Waits until the roots follow the facts. A writer does not wait for them, see [PythonInterpreterRoots.requestDerive]. */
+  private suspend fun awaitRoots() = PythonInterpreterRoots.getInstance(projectFixture.get()).awaitCommittedForTests()
 
   /** Runs [body] with a mock interpreter whose mock `sys.path` is [sysPath], when it is given. */
   private suspend fun withMockInterpreter(sysPath: List<String>? = null, body: suspend (PythonInterpreter) -> Unit) {

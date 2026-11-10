@@ -11,6 +11,7 @@ import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -113,6 +114,7 @@ internal class PythonPackageManagerCacheTest {
     WriteAction.runAndWait<RuntimeException> { modificator.commitChanges() }
     val interpreter = PythonInterpreterRegistry.getInstance(project).addMockPythonInterpreter(pyProjectFixture.get(), sdk)
     PythonInterpreterDetails.getInstance(project).writeSysPath(interpreter, listOf(sitePackages.toString()))
+    PythonInterpreterRoots.getInstance(project).awaitCommittedForTests()
     return interpreter
   }
 

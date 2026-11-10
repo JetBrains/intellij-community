@@ -6,6 +6,7 @@ package com.jetbrains.python.fixture
 import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
+import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.testFramework.dispatchAllEventsInIdeEventQueue
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -26,12 +27,16 @@ import kotlin.time.TimeSource
 @TestOnly
 @OptIn(DelicateCoroutinesApi::class)
 fun writeAddedPathsForTests(project: Project, interpreter: PythonInterpreter, paths: List<Path>) {
-  val details = PythonInterpreterDetails.getInstance(project)
+  val writeAndAwaitRoots: suspend () -> Unit = {
+    PythonInterpreterDetails.getInstance(project).writeAddedPaths(interpreter, paths)
+    // The roots follow the write on their own, so the test waits for them before it reads.
+    PythonInterpreterRoots.getInstance(project).awaitCommittedForTests()
+  }
   if (!EDT.isCurrentThreadEdt()) {
-    runBlocking { details.writeAddedPaths(interpreter, paths) }
+    runBlocking { writeAndAwaitRoots() }
     return
   }
-  val write = GlobalScope.async(Dispatchers.Default) { details.writeAddedPaths(interpreter, paths) }
+  val write = GlobalScope.async(Dispatchers.Default) { writeAndAwaitRoots() }
   val deadline = TimeSource.Monotonic.markNow() + 1.minutes
   try {
     while (!write.isCompleted) {

@@ -72,8 +72,7 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
   /**
    * An event for each change of a fact: the key of the interpreter whose facts this service wrote, or `null` for a change
    * that another writer made to the store, such as a commit of an SDK of the SDK table. A `null` event can name no
-   * interpreter, so a reader checks all of them. The roots follow a write of this service before it returns, see
-   * [PythonInterpreterRoots.refresh].
+   * interpreter, so a reader checks all of them. The roots follow each change, see [PythonInterpreterRoots.requestDerive].
    */
   val changes: Flow<PythonInterpreterKey?> get() = changeEvents
 
@@ -96,8 +95,9 @@ class PythonInterpreterDetails(private val project: Project, scope: CoroutineSco
     val written = facts.withVersionOf(facts(interpreter))
     val changed = if (isInterpreterLibraryFlowEnabled()) writeRecordFacts(interpreter, written) else writeTableSdkFacts(interpreter, written)
     if (changed) {
-      // The roots follow before the writer goes on, so a reader after the write sees them.
-      PythonInterpreterRoots.getInstance(project).refresh(interpreter)
+      // The writer asks for the roots and does not wait for them: no caller reads the roots right after a write, and a wait
+      // under a modal progress never ends (PY-93878). The request is pending before the return, so a test can wait for it.
+      PythonInterpreterRoots.getInstance(project).requestDerive(interpreter)
       changeEvents.tryEmit(interpreter.key)
     }
     return changed

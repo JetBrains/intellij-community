@@ -23,7 +23,10 @@ import java.nio.file.Path
  */
 @TestOnly
 fun writeAddedPathsForTests(project: Project, interpreter: PythonInterpreter, paths: List<Path>) {
-  runSuspendingForTests { PythonInterpreterDetails.getInstance(project).writeAddedPaths(interpreter, paths) }
+  runSuspendingForTests {
+    PythonInterpreterDetails.getInstance(project).writeAddedPaths(interpreter, paths)
+    PythonInterpreterRoots.getInstance(project).awaitCommittedForTests()
+  }
 }
 
 /**
@@ -32,22 +35,30 @@ fun writeAddedPathsForTests(project: Project, interpreter: PythonInterpreter, pa
  */
 @TestOnly
 fun writeExcludedPathsForTests(project: Project, interpreter: PythonInterpreter, paths: Set<Path>) {
-  runSuspendingForTests { PythonInterpreterDetails.getInstance(project).writeExcludedPaths(interpreter, paths) }
+  runSuspendingForTests {
+    PythonInterpreterDetails.getInstance(project).writeExcludedPaths(interpreter, paths)
+    PythonInterpreterRoots.getInstance(project).awaitCommittedForTests()
+  }
 }
 
 /**
- * Derives the roots of [interpreter] again and waits until they are committed, see [PythonInterpreterRoots.refresh].
- * For a test that cannot suspend, such as a Java fixture.
+ * Asks for a new derive of the roots of [interpreter] and waits until they are committed, see
+ * [PythonInterpreterRoots.requestDerive]. For a test that cannot suspend, such as a Java fixture.
  */
 @TestOnly
-fun refreshRootsForTests(project: Project, interpreter: PythonInterpreter) {
-  runSuspendingForTests { PythonInterpreterRoots.getInstance(project).refresh(interpreter) }
+fun deriveRootsForTests(project: Project, interpreter: PythonInterpreter) {
+  runSuspendingForTests {
+    val roots = PythonInterpreterRoots.getInstance(project)
+    roots.requestDerive(interpreter)
+    roots.awaitCommittedForTests()
+  }
 }
 
 /**
  * Runs [block] on a background thread and waits for its result, for a test that cannot suspend, such as a Java fixture.
  * On the EDT, the wait dispatches the EDT events without the write-intent lock, so a write action of [block] can run.
- * A write of the interpreter facts needs this: it waits for a write action on the EDT, see [PythonInterpreterRoots.refresh].
+ * A wait for the roots needs this: the writer commits them in a write action on the EDT, see
+ * [PythonInterpreterRoots.requestDerive].
  */
 @TestOnly
 @OptIn(DelicateCoroutinesApi::class)

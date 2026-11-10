@@ -14,14 +14,11 @@ import com.jetbrains.python.sdk.getPathsToTransfer
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -37,24 +34,34 @@ data class PythonInterpreterRootFiles(val classRoots: List<VirtualFile>, val sou
  * facts, see [PythonInterpreterDetails], and the roots of each [PythonInterpreterRootsContributor], such as the skeletons,
  * the typeshed stdlib and the stubs of the installed packages, see [factRootPaths].
  *
- * It follows the changes of the facts. A contributor whose roots change asks for a new derive, see [requestRefresh]. When
+ * It follows the changes of the facts. A contributor whose roots change asks for a new derive, see [requestDerive]. When
  * the roots of an interpreter change, it commits the class roots into the SDK of the interpreter, for the code that
  * reads the roots of an SDK, and reports the change on [changes]. A change that gives the same roots reports nothing.
  */
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class PythonInterpreterRoots(private val project: Project, private val scope: CoroutineScope) {
+class PythonInterpreterRoots(private val project: Project, scope: CoroutineScope) {
   /** The last roots of each interpreter, which [changes] reported. */
   private val roots = ConcurrentHashMap<PythonInterpreterKey, PythonInterpreterRootFiles>()
   private val changeCount = MutableStateFlow(0L)
-  /** The refresh actor of each interpreter, see [refresh]. */
-  private val refreshers = ConcurrentHashMap<PythonInterpreterKey, Refresher>()
+  /** The interpreters whose roots the writer derives and commits next, see [requestDerive]. */
+  private val pending = ConcurrentHashMap<PythonInterpreterKey, PythonInterpreter>()
+  /** The number of the last [requestDerive]. A new number wakes the writer. */
+  private val requests = MutableStateFlow(0L)
+  /** The number of the last request whose roots the writer committed, see [awaitCommittedForTests]. */
+  private val committed = MutableStateFlow(0L)
 
   init {
     scope.launch {
-      // A write of the details refreshes its interpreter itself. This follows a change that no write of the details
-      // made, such as a commit of an SDK of the SDK table.
-      PythonInterpreterDetails.getInstance(project).changes.collect { key -> if (key == null) refreshAll() }
+      // A change that names no interpreter, such as a commit of an SDK of the SDK table, can change any interpreter. A
+      // change that names one comes from [PythonInterpreterDetails.writeFacts], which asks for its roots itself.
+      PythonInterpreterDetails.getInstance(project).changes.collect { key ->
+        if (key == null) requestDeriveForAll()
+      }
+    }
+    scope.launch(Dispatchers.Default) {
+      // A state flow conflates the requests: a burst during a pass gives one more pass.
+      requests.collect { writePending() }
     }
   }
 
@@ -65,17 +72,43 @@ class PythonInterpreterRoots(private val project: Project, private val scope: Co
   val changes: Flow<Unit> get() = changeCount.map { }
 
   /**
-   * Asks for a refresh of [interpreter], see [refresh], and does not wait for it. For a contributor whose roots changed,
-   * such as after a package install. The caller can hold a lock, so the refresh does not run in its thread.
+   * Asks the writer to derive the roots of [interpreter] again and to commit them into its SDK, and does not wait. A
+   * change of the facts asks for it, and so does a contributor whose roots changed, such as after a package install. The
+   * caller can hold a lock, so the derive does not run in its thread.
+   *
+   * One writer of the project derives and commits the roots of the interpreters, one at a time. So no two commits race,
+   * and the last commit comes from the newest input. Nobody waits for the writer, so a commit that waits until a modal
+   * progress ends blocks nobody (PY-93878).
    */
-  fun requestRefresh(interpreter: PythonInterpreter) {
-    refresherOf(interpreter).request(interpreter)
+  fun requestDerive(interpreter: PythonInterpreter) {
+    pending[interpreter.key] = interpreter
+    requests.update { it + 1 }
   }
 
-  /** For tests: suspends until each interpreter committed the roots of its last request, see [requestRefresh]. */
+  /** For tests: suspends until the writer committed the roots of every request, see [requestDerive]. */
   @TestOnly
-  suspend fun awaitRefreshedForTests() {
-    for (refresher in refreshers.values) refresher.awaitCommitted(refresher.lastRequest)
+  suspend fun awaitCommittedForTests() {
+    val last = requests.value
+    committed.first { it >= last }
+  }
+
+  /**
+   * Derives and commits the roots of each pending interpreter, see [requestDerive]. The writer takes an interpreter out
+   * of [pending] before it derives, so a request during the derive asks for one more pass. A request puts its interpreter
+   * into [pending] before it takes its number, so each request up to [last] is in this pass or in an earlier one.
+   */
+  private suspend fun writePending() {
+    val last = requests.value
+    while (true) {
+      val key = pending.keys.firstOrNull() ?: break
+      val interpreter = pending.remove(key) ?: continue
+      val derived = derive(interpreter)
+      // No write action when nothing changes. A write action on the EDT, not a background one: a pending background
+      // write stops the read actions, such as of a VFS refresh, that a caller holding the write-intent lock can wait for.
+      if (needsCommit(interpreter, derived)) edtWriteAction { commit(interpreter, derived) }
+      else store(interpreter, derived)
+    }
+    committed.value = last
   }
 
   /** For tests: how many changes this service has reported, see [changes]. */
@@ -96,75 +129,21 @@ class PythonInterpreterRoots(private val project: Project, private val scope: Co
   fun sourceRoots(interpreter: PythonInterpreter): Set<VirtualFile> = rootsOf(interpreter).sourceRoots
 
   /**
-   * Derives the roots of [interpreter] again, commits the class roots into its SDK, and reports a change when they differ
-   * from the ones before. It returns when the roots of this request or of a later one are committed. A test calls it
-   * after it changes what a contributor gives, so the roots change before it goes on.
-   *
-   * One actor of each interpreter runs the refreshes one by one. A new request cancels a refresh that did not commit yet,
-   * so the roots of an older request never replace the roots of a newer one. The actor commits in a write action on the
-   * EDT, so a caller on the EDT that suspends here frees the EDT for it.
+   * Drops the roots of every interpreter whose key is not in [keys]. The registry calls it after each recompute. A pending
+   * request stays: it holds its interpreter, and a recompute can drop a key for a moment.
+   */
+  internal fun retain(keys: Set<PythonInterpreterKey>) {
+    roots.keys.retainAll(keys)
+  }
+
+  /**
+   * Stores [derived] as the roots of [interpreter] and commits them into its SDK. Runs in a write action: the legacy flow
+   * reads the class roots of the facts here, so a commit never restores the facts that a write replaced.
    *
    * The SDK of the interpreter library flow gets the class roots, because it holds no fact. The SDK of the legacy flow
    * holds the facts in its roots and in its paths to transfer, see [PythonInterpreterDetails]. It keeps the class roots
    * of the facts, and gets the other class roots after them. A path that it transfers to the module is no class root of
    * the SDK, else the module is a library, and the editor opens its files in reader mode (PY-93817).
-   */
-  suspend fun refresh(interpreter: PythonInterpreter) {
-    val refresher = refresherOf(interpreter)
-    refresher.awaitCommitted(refresher.request(interpreter))
-  }
-
-  /** Drops the roots of every interpreter whose key is not in [keys]. The registry calls it after each recompute. */
-  internal fun retain(keys: Set<PythonInterpreterKey>) {
-    roots.keys.retainAll(keys)
-    refreshers.entries.removeIf { (key, refresher) -> (key !in keys).also { gone -> if (gone) refresher.job.cancel() } }
-  }
-
-  /** The actor of [interpreter]. An actor that a failure ended gets a successor, so the next request runs. */
-  private fun refresherOf(interpreter: PythonInterpreter): Refresher =
-    refreshers.compute(interpreter.key) { _, current -> current?.takeIf { it.job.isActive } ?: Refresher() }!!
-
-  /**
-   * The refresh actor of one interpreter, see [refresh]. Each request takes the next number. The actor derives and commits
-   * the latest request only, and then records its number as committed.
-   */
-  private inner class Refresher {
-    private val requests = MutableStateFlow(Request(0, null))
-    /** The number of the last committed request, or [Long.MAX_VALUE] when the actor ended, so that no caller waits for it. */
-    private val committed = MutableStateFlow(0L)
-
-    val lastRequest: Long get() = requests.value.number
-
-    val job: Job = scope.launch(Dispatchers.Default) {
-      requests.collectLatest { request ->
-        val interpreter = request.interpreter ?: return@collectLatest
-        val derived = derive(interpreter)
-        // No write action when nothing changes. A write action on the EDT, not a background one: a pending background write
-        // stops the read actions, such as of a VFS refresh, that a caller holding the write-intent lock can wait for.
-        if (needsCommit(interpreter, derived)) edtWriteAction { commit(interpreter, derived) }
-        else store(interpreter, derived)
-        committed.update { maxOf(it, request.number) }
-      }
-    }.apply { invokeOnCompletion { committed.value = Long.MAX_VALUE } }
-
-    /** Asks for a refresh of [interpreter]. Returns the number of the request. */
-    fun request(interpreter: PythonInterpreter): Long =
-      requests.updateAndGet { Request(it.number + 1, interpreter) }.number
-
-    /**
-     * Suspends until the roots of request [number] or of a later request are committed, or until the actor ends. The actor
-     * ends when [retain] drops its interpreter, or with a failure of a refresh, which the scope reports.
-     */
-    suspend fun awaitCommitted(number: Long) {
-      committed.first { it >= number }
-    }
-  }
-
-  private class Request(val number: Long, val interpreter: PythonInterpreter?)
-
-  /**
-   * Stores [derived] as the roots of [interpreter] and commits them into its SDK. Runs in a write action: the legacy flow
-   * reads the class roots of the facts here, so a commit never restores the facts that a write replaced.
    */
   private fun commit(interpreter: PythonInterpreter, derived: PythonInterpreterRootFiles) {
     val sdk = interpreter.sdk
@@ -205,10 +184,10 @@ class PythonInterpreterRoots(private val project: Project, private val scope: Co
   private fun rootsOf(interpreter: PythonInterpreter): PythonInterpreterRootFiles =
     roots[interpreter.key] ?: derive(interpreter).also { roots.putIfAbsent(interpreter.key, it) }
 
-  /** Checks every interpreter that has roots, after a change of the facts that names no interpreter. */
-  private fun refreshAll() {
+  /** Asks for a derive of every interpreter that has roots, after a change of the facts that names no interpreter. */
+  private fun requestDeriveForAll() {
     // The iterator of the map skips a key that [retain] removes on another thread. A copy of the keys can throw then.
-    for (key in roots.keys) interpreterOf(key)?.let(::requestRefresh)
+    for (key in roots.keys) interpreterOf(key)?.let(::requestDerive)
   }
 
   private fun interpreterOf(key: PythonInterpreterKey): PythonInterpreter? =

@@ -38,5 +38,5 @@ suspend fun awaitDerivedRootsForTests(project: Project) {
     // A check of the outdated packages runs a process in the environment, so a test that deletes it waits for the check.
     manager.awaitOutdatedPackages()
   }
-  PythonInterpreterRoots.getInstance(project).awaitRefreshedForTests()
+  PythonInterpreterRoots.getInstance(project).awaitCommittedForTests()
 }

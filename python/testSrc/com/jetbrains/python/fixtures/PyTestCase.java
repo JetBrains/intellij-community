@@ -275,7 +275,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       }
     });
     assertNotNull(skeletonsDir);
-    PythonInterpreterFactsForTests.refreshRootsForTests(myFixture.getProject(), interpreter);
+    PythonInterpreterFactsForTests.deriveRootsForTests(myFixture.getProject(), interpreter);
     PyProjectStructureTestUtilKt.syncPythonInterpreterLibraries();
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
     runWithAdditionalFileIn(relativePath, text, skeletonsDir, fileConsumer);

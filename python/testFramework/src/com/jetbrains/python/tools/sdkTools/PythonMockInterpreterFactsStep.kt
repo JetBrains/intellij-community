@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.project.Project
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreterDetails
+import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateRequest
 import com.intellij.python.sdk.backend.PythonInterpreterUpdateStep
 import com.intellij.python.sdk.backend.getSdkAPI
@@ -37,6 +38,8 @@ internal class PythonMockInterpreterFactsStep : PythonInterpreterUpdateStep {
     val details = PythonInterpreterDetails.getInstance(project)
     details.writeVersion(interpreter, sdk.getUserData(PythonMockSdkKeys.VERSION) ?: sdk.versionString)
     details.writeSysPath(interpreter, PythonMockSdkKeys.sysPath(sdk))
+    // A test reads the roots right after the update. The roots follow the facts on their own, so the step waits for them.
+    PythonInterpreterRoots.getInstance(project).awaitCommittedForTests()
     return false
   }
 

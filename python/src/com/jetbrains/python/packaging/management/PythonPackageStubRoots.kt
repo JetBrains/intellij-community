@@ -37,7 +37,7 @@ class PythonPackageStubRoots : PythonInterpreterRootsContributor {
  */
 internal class PythonPackageStubRootsListener(private val project: Project) : PythonPackageManagementListener {
   override fun packagesChanged(interpreter: PythonInterpreter) {
-    PythonInterpreterRoots.getInstance(project).requestRefresh(interpreter)
+    PythonInterpreterRoots.getInstance(project).requestDerive(interpreter)
   }
 }
 

@@ -4,6 +4,7 @@ package com.intellij.python.test.env.junit5
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterRoots
 import com.intellij.python.sdk.backend.PythonInterpreterUpdater
 import com.intellij.testFramework.IndexingTestUtil
 import kotlinx.coroutines.withTimeout
@@ -26,6 +27,8 @@ suspend fun awaitPythonInterpreterReady(interpreter: PythonInterpreter, project:
   withTimeout(timeout) {
     awaitSdkUpdate(interpreter)
   }
+  // The roots follow the facts of the update on their own, so the index follows them only after they are committed.
+  PythonInterpreterRoots.getInstance(project).awaitCommittedForTests()
   IndexingTestUtil.suspendUntilIndexesAreReady(project)
 }
 

@@ -10,7 +10,7 @@ import java.nio.file.Path
  * Adds class roots to an interpreter that no fact gives, such as its skeletons, the typeshed stdlib, or the bundled stubs
  * of its installed packages, see [PythonInterpreterRoots]. A contributor gives its roots on each derive, see
  * [classRoots], in the order of the contributors. A contributor whose roots change without a change of the facts asks
- * for a new derive, see [PythonInterpreterRoots.requestRefresh].
+ * for a new derive, see [PythonInterpreterRoots.requestDerive].
  */
 @ApiStatus.Internal
 interface PythonInterpreterRootsContributor {
