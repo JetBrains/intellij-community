@@ -209,21 +209,16 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
       )
     }
 
-    lines.size.shouldBe(4)
+    lines.size.shouldBe(2)
     lines[0].shouldContain("##teamcity[testMetadata")
     lines[0].shouldContain("testName='com.example.FirstTest.simpleTest'")
     lines[0].shouldContain("type='text'")
     lines[0].shouldContain("name='Code Owner'")
     lines[0].shouldContain("value='First Team'")
-    lines[1].shouldContain("testName='com.example.FirstTest.simpleTest'")
-    lines[1].shouldContain("type='link'")
-    lines[1].shouldContain("name='|'First Team|' Owner Details'")
-    lines[1].shouldContain("value='https://codeowners.labs.jb.gg/group/First%20Team'")
     // the nested class resolves through its top-level class, the unowned class reports nothing
-    lines[2].shouldContain("testName='com.example.FirstTest${'$'}Nested.nestedTest'")
-    lines[2].shouldContain("value='First Team'")
-    lines[3].shouldContain("testName='com.example.FirstTest${'$'}Nested.nestedTest'")
-    lines[3].shouldContain("type='link'")
+    lines[1].shouldContain("testName='com.example.FirstTest${'$'}Nested.nestedTest'")
+    lines[1].shouldContain("type='text'")
+    lines[1].shouldContain("value='First Team'")
   }
 
   @Test
@@ -280,14 +275,12 @@ class BazelJUnitXmlTestMetadataBuildTargetTest {
       )
     }
 
-    lines.size.shouldBe(3)
+    lines.size.shouldBe(2)
     lines[0].shouldContain("testName='com.example.FirstTest.simpleTest'")
     lines[0].shouldContain("type='artifact'")
     lines[1].shouldContain("testName='com.example.FirstTest.simpleTest'")
     lines[1].shouldContain("name='Code Owner'")
     lines[1].shouldContain("value='First Team'")
-    lines[2].shouldContain("testName='com.example.FirstTest.simpleTest'")
-    lines[2].shouldContain("type='link'")
   }
 
   @Test

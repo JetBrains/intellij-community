@@ -8,7 +8,6 @@ import jetbrains.buildServer.messages.serviceMessages.TestSuiteStarted
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.UUID
-import java.net.URLEncoder
 
 /**
  * Builds and prints [TeamCity service messages](https://www.jetbrains.com/help/teamcity/service-messages.html).
@@ -212,8 +211,7 @@ object TeamCityReporter {
   }
 
   /**
-   * Attaches code-owner metadata to a test: a `Code Owner` text entry with the owner group name
-   * and a link to the owner group's page on codeowners.labs.jb.gg.
+   * Attaches code-owner metadata to a test: a `Code Owner` text entry with the owner group name.
    *
    * @param testName the test name to attach metadata to; `null` attaches to the currently running test
    * @param owner    the owner group name
@@ -221,13 +219,6 @@ object TeamCityReporter {
    */
   fun reportTestOwnerMetadata(testName: String?, owner: String, flowId: String? = null) {
     reportTestMetadata(testName, owner, "Code Owner", flowId, type = MetadataType.TEXT)
-    reportTestMetadata(
-      testName,
-      "https://codeowners.labs.jb.gg/group/${URLEncoder.encode(owner, Charsets.UTF_8).replace("+", "%20")}",
-      "'$owner' Owner Details",
-      flowId,
-      type = MetadataType.LINK,
-    )
   }
 
   /**
