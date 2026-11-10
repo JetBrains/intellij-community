@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -109,6 +110,25 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.junit` end
+
+### auto-generated section `plugin intellij.junit` start
+ij_plugin(
+    name = "junit_plugin",
+    descriptor_module = ":junit",
+    content_modules = [
+        # do not sort,
+        "//plugins/junit/properties",
+        "//plugins/junit/vcs",
+        "//plugins/junit/dashboard",
+        "//plugins/junit_rt:junit-rt",
+        "//plugins/junit5_rt:junit-v5-rt",
+        "//plugins/junit6_rt:junit-v6-rt",
+        "//libraries/hamcrest:hamcrest_plugin_module",
+        "//libraries/junit4:junit4_plugin_module",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.junit` end
 
 ### auto-generated section `iml intellij.junit` start
 exports_files(
