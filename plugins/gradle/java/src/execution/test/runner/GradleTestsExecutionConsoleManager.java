@@ -2,41 +2,31 @@
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.build.BuildContentManager;
-import com.intellij.build.BuildDescriptor;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildViewManager;
 import com.intellij.build.BuildViewSettingsProvider;
 import com.intellij.build.DefaultBuildDescriptor;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.EventResult;
 import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.FileMessageEvent;
 import com.intellij.build.events.FinishBuildEvent;
 import com.intellij.build.events.MessageEvent;
+import com.intellij.build.events.ProgressBuildEvent;
 import com.intellij.build.events.StartBuildEvent;
 import com.intellij.build.events.StartEvent;
-import com.intellij.build.events.impl.ProgressBuildEventImpl;
-import com.intellij.build.events.impl.StartBuildEventImpl;
-import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.actions.JavaRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testDiscovery.JvmToggleAutoTestAction;
-import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.SMTestRunnerConnectionUtil;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction;
-import com.intellij.execution.testframework.sm.runner.ui.SMRootTestProxyFormatter;
-import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.execution.testframework.sm.runner.ui.TestTreeRenderer;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -46,7 +36,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
-import com.intellij.openapi.externalSystem.model.task.event.OperationDescriptor;
 import com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager;
@@ -54,10 +43,7 @@ import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecut
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.action.GradleRerunFailedTestsAction;
@@ -91,13 +77,13 @@ public final class GradleTestsExecutionConsoleManager
     if (env == null) return null;
     RunConfiguration configuration;
     SMTRunnerConsoleProperties consoleProperties = null;
-    RunnerAndConfigurationSettings settings = env.getRunnerAndConfigurationSettings();
+    var settings = env.getRunnerAndConfigurationSettings();
     if (settings == null) {
-      RunProfile runProfile = env.getRunProfile();
-      if (runProfile instanceof AbstractImportTestsAction.ImportRunProfile) {
-        configuration = ((AbstractImportTestsAction.ImportRunProfile)runProfile).getInitialConfiguration();
-        if (configuration instanceof SMRunnerConsolePropertiesProvider) {
-          consoleProperties = ((SMRunnerConsolePropertiesProvider)configuration).createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance());
+      var runProfile = env.getRunProfile();
+      if (runProfile instanceof AbstractImportTestsAction.ImportRunProfile importRunProfile) {
+        configuration = importRunProfile.getInitialConfiguration();
+        if (configuration instanceof SMRunnerConsolePropertiesProvider consolePropertiesProvider) {
+          consoleProperties = consolePropertiesProvider.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance());
         }
       }
       else {
@@ -112,32 +98,25 @@ public final class GradleTestsExecutionConsoleManager
     if (consoleProperties == null) {
       consoleProperties = new GradleConsoleProperties(externalSystemRunConfiguration, env.getExecutor());
     }
-    String testFrameworkName = externalSystemRunConfiguration.getSettings().getExternalSystemId().getReadableName();
-    String splitterPropertyName = SMTestRunnerConnectionUtil.getSplitterPropertyName(testFrameworkName);
-    GradleTestsExecutionConsole consoleView =
-      new GradleTestsExecutionConsole(project, task.getId(), consoleProperties, splitterPropertyName);
+    var testFrameworkName = externalSystemRunConfiguration.getSettings().getExternalSystemId().getReadableName();
+    var splitterPropertyName = SMTestRunnerConnectionUtil.getSplitterPropertyName(testFrameworkName);
+    var consoleView = new GradleTestsExecutionConsole(project, task.getId(), consoleProperties, splitterPropertyName);
     SMTestRunnerConnectionUtil.initConsoleView(consoleView, testFrameworkName);
 
-    SMTestRunnerResultsForm resultsViewer = consoleView.getResultsViewer();
-    final TestTreeView testTreeView = resultsViewer.getTreeView();
+    var resultsViewer = consoleView.getResultsViewer();
+    var testTreeView = resultsViewer.getTreeView();
     if (testTreeView != null) {
-      TestTreeRenderer originalRenderer = ObjectUtils.tryCast(testTreeView.getCellRenderer(), TestTreeRenderer.class);
-      if (originalRenderer != null) {
-        originalRenderer.setAdditionalRootFormatter(new SMRootTestProxyFormatter() {
-          @Override
-          public void format(@NotNull SMTestProxy.SMRootTestProxy testProxy, @NotNull TestTreeRenderer renderer) {
-            if (!testProxy.isInProgress() && testProxy.isEmptySuite()) {
-              renderer.clear();
-              renderer.append(GradleBundle.message(
-                "gradle.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
-                              SimpleTextAttributes.REGULAR_ATTRIBUTES
-              );
-            }
+      if (testTreeView.getCellRenderer() instanceof TestTreeRenderer originalRenderer) {
+        originalRenderer.setAdditionalRootFormatter((testProxy, renderer) -> {
+          if (!testProxy.isInProgress() && testProxy.isEmptySuite()) {
+            renderer.clear();
+            renderer.append(GradleBundle.message("gradle.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found"),
+                            SimpleTextAttributes.REGULAR_ATTRIBUTES);
           }
         });
       }
     }
-    SMTestProxy.SMRootTestProxy testsRootNode = resultsViewer.getTestsRootNode();
+    var testsRootNode = resultsViewer.getTestsRootNode();
     testsRootNode.setExecutionId(env.getExecutionId());
     testsRootNode.setSuiteStarted();
     consoleView.getEventPublisher().onTestingStarted(testsRootNode);
@@ -157,12 +136,12 @@ public final class GradleTestsExecutionConsoleManager
       });
     }
 
-    if (task instanceof ExternalSystemExecuteTaskTask) {
-      consoleView.addMessageFilter(new ReRunTaskFilter((ExternalSystemExecuteTaskTask)task, env));
+    if (task instanceof ExternalSystemExecuteTaskTask taskTask) {
+      consoleView.addMessageFilter(new ReRunTaskFilter(taskTask, env));
     }
 
-    BuildViewManager buildViewManager = project.getService(BuildViewManager.class);
-    Disposable disposable = Disposer.newDisposable(buildViewManager, "Gradle test runner build event listener disposable");
+    var buildViewManager = project.getService(BuildViewManager.class);
+    var disposable = Disposer.newDisposable(buildViewManager, "Gradle test runner build event listener disposable");
     project.getService(ExternalSystemRunConfigurationViewManager.class).addListener(new BuildProgressListener() {
       @Override
       public void onEvent(@NotNull Object buildId, @NotNull BuildEvent event) {
@@ -171,31 +150,28 @@ public final class GradleTestsExecutionConsoleManager
         if (event instanceof FinishBuildEvent) {
           Disposer.dispose(disposable);
         }
-        else if (event instanceof StartBuildEvent) {
+        else if (event instanceof StartBuildEvent startBuildEvent) {
           // override start build event to use different execution console, toolbar actions etc.
-          BuildDescriptor buildDescriptor = ((StartBuildEvent)event).getBuildDescriptor();
-          DefaultBuildDescriptor defaultBuildDescriptor =
-            new DefaultBuildDescriptor(buildDescriptor.getId(), buildDescriptor.getTitle(),
-                                       buildDescriptor.getWorkingDir(), buildDescriptor.getStartTime());
+          var buildDescriptor = startBuildEvent.getBuildDescriptor();
+          var defaultBuildDescriptor = new DefaultBuildDescriptor(
+            buildDescriptor.getId(), buildDescriptor.getTitle(),
+            buildDescriptor.getWorkingDir(), buildDescriptor.getStartTime()
+          );
 
           // do not open Build tw for any error messages as it can be tests failure events
           defaultBuildDescriptor.setActivateToolWindowWhenFailed(false);
-          event = new StartBuildEventImpl(
-            null,
-            event.getMessage(),
-            null,
-            null,
-            defaultBuildDescriptor,
-            GradleBuildViewSettingsProvider.INSTANCE
-          );
+          event = StartBuildEvent.builder(event.getMessage(), defaultBuildDescriptor)
+            .withBuildViewSettings(GradleBuildViewSettingsProvider.INSTANCE)
+            .build();
         }
         buildViewManager.onEvent(buildId, event);
 
         if (event instanceof StartEvent) {
-          ProgressBuildEventImpl progressBuildEvent =
-            new ProgressBuildEventImpl(event.getId(), event.getParentId(), event.getEventTime(), event.getMessage(), -1, -1, "");
-          progressBuildEvent.setHint("- " + GradleBundle.message("gradle.test.runner.build.tw.link.title"));
-          buildViewManager.onEvent(buildId, progressBuildEvent);
+          buildViewManager.onEvent(buildId, ProgressBuildEvent.builder(event.getId(), event.getMessage())
+            .withParentId(event.getParentId())
+            .withTime(event.getEventTime())
+            .withHint("- " + GradleBundle.message("gradle.test.runner.build.tw.link.title"))
+            .build());
         }
 
         maybeOpenBuildToolWindow(event, project, testsRootNode);
@@ -208,32 +184,29 @@ public final class GradleTestsExecutionConsoleManager
                                                @NotNull Project project,
                                                @NotNull SMTestProxy.SMRootTestProxy testsRootNode) {
     // open Build tw for file error, as it usually comes from compilation
-    if ((event instanceof FileMessageEvent) && ((FileMessageEvent)event).getKind() == MessageEvent.Kind.ERROR) {
+    if (event instanceof FileMessageEvent messageEvent && messageEvent.getKind() == MessageEvent.Kind.ERROR) {
       openBuildToolWindow(project);
       return;
     }
 
     // open Build tw for recognized build failures like startup errors
-    if (event instanceof FinishBuildEvent) {
-      EventResult buildResult = ((FinishBuildEvent)event).getResult();
-      if (buildResult instanceof FailureResult) {
-        if (!((FailureResult)buildResult).getFailures().isEmpty()) {
-          openBuildToolWindow(project);
-        }
-        else {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!testsRootNode.isInProgress() && testsRootNode.isEmptySuite()) {
-              openBuildToolWindow(project);
-            }
-          });
-        }
+    if (event instanceof FinishBuildEvent finishEvent && finishEvent.getResult() instanceof FailureResult failureResult) {
+      if (!failureResult.getFailures().isEmpty()) {
+        openBuildToolWindow(project);
+      }
+      else {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          if (!testsRootNode.isInProgress() && testsRootNode.isEmptySuite()) {
+            openBuildToolWindow(project);
+          }
+        });
       }
     }
   }
 
   private static void openBuildToolWindow(@NotNull Project project) {
     ApplicationManager.getApplication().invokeLater(() -> {
-      ToolWindow toolWindow = BuildContentManager.getInstance(project).getOrCreateToolWindow();
+      var toolWindow = BuildContentManager.getInstance(project).getOrCreateToolWindow();
       if (toolWindow.isAvailable() && !toolWindow.isVisible()) {
         toolWindow.show(null);
       }
@@ -250,12 +223,12 @@ public final class GradleTestsExecutionConsoleManager
 
   @Override
   public void onStatusChange(@NotNull GradleTestsExecutionConsole executionConsole, @NotNull ExternalSystemTaskNotificationEvent event) {
-    if (event instanceof ExternalSystemTaskExecutionEvent) {
-      ExternalSystemProgressEvent progressEvent = ((ExternalSystemTaskExecutionEvent)event).getProgressEvent();
-      OperationDescriptor descriptor = progressEvent.getDescriptor();
-      if (descriptor instanceof TestOperationDescriptor) {
+    if (event instanceof ExternalSystemTaskExecutionEvent executionEvent) {
+      var progressEvent = executionEvent.getProgressEvent();
+      if (progressEvent.getDescriptor() instanceof TestOperationDescriptor) {
         //noinspection unchecked
-        GradleTestEventsProcessor.onStatusChange(executionConsole, progressEvent);
+        var testProgressEvent = (ExternalSystemProgressEvent<TestOperationDescriptor>)progressEvent;
+        GradleTestEventsProcessor.onStatusChange(executionConsole, testProgressEvent);
       }
     }
   }
@@ -263,9 +236,8 @@ public final class GradleTestsExecutionConsoleManager
   @Override
   public boolean isApplicableFor(@NotNull ExternalSystemTask task) {
     if (task instanceof ExternalSystemExecuteTaskTask taskTask) {
-      if (StringUtil.equals(taskTask.getExternalSystemId().getId(), GradleConstants.SYSTEM_ID.getId())) {
-        var isRunAsTest = taskTask.getUserData(RUN_AS_TEST_KEY);
-        if (ObjectUtils.chooseNotNull(isRunAsTest, false)) {
+      if (GradleConstants.SYSTEM_ID.equals(taskTask.getExternalSystemId())) {
+        if (Boolean.TRUE.equals(taskTask.getUserData(RUN_AS_TEST_KEY))) {
           return true;
         }
         if (hasTestTasks(taskTask)) {
@@ -303,10 +275,9 @@ public final class GradleTestsExecutionConsoleManager
   }
 
   @Override
-  public AnAction[] getRestartActions(final @NotNull GradleTestsExecutionConsole consoleView) {
-    JavaRerunFailedTestsAction rerunFailedTestsAction =
-      new GradleRerunFailedTestsAction(consoleView);
-    rerunFailedTestsAction.setModelProvider(() -> consoleView.getResultsViewer());
+  public AnAction[] getRestartActions(@NotNull GradleTestsExecutionConsole consoleView) {
+    var rerunFailedTestsAction = new GradleRerunFailedTestsAction(consoleView);
+    rerunFailedTestsAction.setModelProvider(consoleView::getResultsViewer);
     return new AnAction[]{rerunFailedTestsAction, new JvmToggleAutoTestAction()};
   }
 

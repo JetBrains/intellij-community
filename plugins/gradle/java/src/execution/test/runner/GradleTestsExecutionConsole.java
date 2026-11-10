@@ -26,37 +26,43 @@ import java.util.Map;
  */
 public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements BuildViewSettingsProvider {
 
-  private final Map<String, SMTestProxy> testsMap = new HashMap<>();
-  private final StringBuilder myBuffer = new StringBuilder();
-  private final SMTRunnerEventsListener myEventPublisher;
-  private final @Nullable BuildViewManager myBuildViewManager;
   private final @Nullable ExternalSystemTaskId myTaskId;
+  private final @NotNull SMTRunnerEventsListener myEventPublisher;
+  private final @Nullable BuildViewManager myBuildViewManager;
+
+  private final @NotNull Map<String, SMTestProxy> testsMap = new HashMap<>();
+  private final @NotNull StringBuilder myBuffer = new StringBuilder();
+
   private boolean lastMessageWasEmptyLine;
 
-  public GradleTestsExecutionConsole(TestConsoleProperties consoleProperties,
-                                     @Nullable String splitterProperty) {
+  public GradleTestsExecutionConsole(
+    @NotNull TestConsoleProperties consoleProperties,
+    @NotNull String splitterProperty
+  ) {
     this(null, null, consoleProperties, splitterProperty);
   }
 
-  public GradleTestsExecutionConsole(@Nullable Project project,
-                                     @Nullable ExternalSystemTaskId taskId,
-                                     @NotNull TestConsoleProperties consoleProperties,
-                                     @Nullable String splitterProperty) {
+  public GradleTestsExecutionConsole(
+    @Nullable Project project,
+    @Nullable ExternalSystemTaskId taskId,
+    @NotNull TestConsoleProperties consoleProperties,
+    @NotNull String splitterProperty
+  ) {
     super(consoleProperties, splitterProperty);
+    myTaskId = taskId;
     myEventPublisher = consoleProperties.getProject().getMessageBus().syncPublisher(SMTRunnerEventsListener.TEST_STATUS);
     myBuildViewManager = project != null ? project.getService(BuildViewManager.class) : null;
-    myTaskId = taskId;
   }
 
-  public SMTRunnerEventsListener getEventPublisher() {
+  public @NotNull SMTRunnerEventsListener getEventPublisher() {
     return myEventPublisher;
   }
 
-  public Map<String, SMTestProxy> getTestsMap() {
+  public @NotNull Map<String, SMTestProxy> getTestsMap() {
     return testsMap;
   }
 
-  public StringBuilder getBuffer() {
+  public @NotNull StringBuilder getBuffer() {
     return myBuffer;
   }
 
@@ -66,7 +72,7 @@ public class GradleTestsExecutionConsole extends SMTRunnerConsoleView implements
     super.dispose();
   }
 
-  public SMTestLocator getUrlProvider() {
+  public @NotNull SMTestLocator getUrlProvider() {
     return GradleConsoleProperties.GRADLE_TEST_LOCATOR;
   }
 
