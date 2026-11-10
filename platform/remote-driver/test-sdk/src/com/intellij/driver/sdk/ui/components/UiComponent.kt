@@ -106,7 +106,8 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
         readinessCheckInProgress = false
       }
     }
-    found
+    // A search during the readiness check can find the component again and cache the new one.
+    cachedComponent ?: found
   }
 
   /**
