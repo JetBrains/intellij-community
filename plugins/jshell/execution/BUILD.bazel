@@ -1,5 +1,5 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@rules_java//java:defs.bzl", "java_import")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `local-libs` start
 java_import(
@@ -18,13 +18,14 @@ exports_files(
 ### auto-generated section `local-libs` end
 
 ### auto-generated section `build intellij.java.jshell.execution` start
-jvm_library(
+ij_plugin_module(
     name = "execution",
     srcs = glob(
         [],
         allow_empty = True,
     ),
     module_name = "intellij.java.jshell.execution",
+    packed_deps = ["//plugins/jshell/execution:java-jshell-execution-jshell-frontend"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],

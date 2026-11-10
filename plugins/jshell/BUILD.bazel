@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -39,6 +40,20 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.java.jshell` end
+
+### auto-generated section `plugin intellij.java.jshell` start
+ij_plugin(
+    name = "jshell_plugin",
+    descriptor_module = ":jshell",
+    content_modules = [
+        # do not sort,
+        "//plugins/jshell/console",
+        "//plugins/jshell/execution:execution_plugin_module",
+        "//plugins/jshell/protocol",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.java.jshell` end
 
 ### auto-generated section `iml intellij.java.jshell` start
 exports_files(
