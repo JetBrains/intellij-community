@@ -5,6 +5,7 @@ package com.intellij.platform.settings.v2.impl
 
 // @spec ../../../../../../../../spec/settings-migrations.spec.md
 
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.settings.v2.SettingsContextKind
 import com.intellij.platform.settings.v2.SettingsKey
 import com.intellij.platform.settings.v2.SettingsMigration
@@ -12,17 +13,39 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.time.Instant
 
+/** Separates the plugin id from the migration id in [SettingsMigrationIdentity.ledgerEntryKey]. */
+private const val LEDGER_ENTRY_KEY_SEPARATOR = ':'
+
+/**
+ * Identifies a [SettingsMigration] in a migration ledger. The `id` of a migration is unique only within its plugin, so
+ * the identity also holds the plugin that declares the migration.
+ *
+ * @property pluginId the id of the plugin that declares the migration extension
+ * @property migrationId the `id` attribute of the migration extension
+ */
+@Internal
+data class SettingsMigrationIdentity(val pluginId: PluginId, val migrationId: String) {
+  /** Returns the key of the ledger entry of this migration: `<pluginId>:<migrationId>`. */
+  val ledgerEntryKey: String
+    get() = "${pluginId.idString}$LEDGER_ENTRY_KEY_SEPARATOR$migrationId"
+}
+
 /**
  * Holds the migrations that ran with success in one scope: the application or one project. The platform runs a
- * [SettingsMigration] only when no ledger of the scope lists its id (ADR 0170).
+ * [SettingsMigration] only when no ledger of the scope lists it (ADR 0170).
  *
- * @property completed the ISO-8601 time of the successful run of each migration, by the id of the migration
+ * @property completed the ISO-8601 time of the successful run of each migration, by its
+ *   [ledger entry key][SettingsMigrationIdentity.ledgerEntryKey]
  */
 @Internal
 @Serializable
 data class SettingsMigrationLedger(val completed: Map<String, String> = emptyMap()) {
-  /** Returns this ledger with the migration [id] recorded as run at [completedAt]. */
-  fun withCompleted(id: String, completedAt: Instant): SettingsMigrationLedger = copy(completed = completed + (id to completedAt.toString()))
+  /** Returns whether this ledger lists [migration] as run. */
+  fun isCompleted(migration: SettingsMigrationIdentity): Boolean = migration.ledgerEntryKey in completed
+
+  /** Returns this ledger with [migration] recorded as run at [completedAt], which is the current time by default. */
+  fun withCompleted(migration: SettingsMigrationIdentity, completedAt: Instant = Instant.now()): SettingsMigrationLedger =
+    copy(completed = completed + (migration.ledgerEntryKey to completedAt.toString()))
 }
 
 /**

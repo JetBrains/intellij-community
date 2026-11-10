@@ -63,6 +63,8 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
   range includes the kind has answered. The buckets install in the order in which their providers answer.
   See [ADR 0160](../adr/0160-a-reload-installs-the-layers-kind-by-kind.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKindByKindReloadTest.kt
+- After the bucket of the application kind or of the project kind installs, the settings migrations of that kind
+  must start. The [Settings Migrations](settings-migrations.spec.md) spec owns them.
 - Each bucket must install its layers, then drop its stale layers, under one lock.
   See [ADR 0065](../adr/0065-a-reload-evicts-stale-layers-by-mark-sweep.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadSweepTest.kt
@@ -165,5 +167,3 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
 - A newer reload could cancel the asks of an older overlapping reload, instead of the reload mutexes. See
   [IJPL-259868](https://youtrack.jetbrains.com/issue/IJPL-259868).
 - A slow provider with a wide range of kinds delays every context that it covers.
-- Migration of settings data is not built. The [Settings Migrations](settings-migrations.spec.md) spec holds its
-  planned behavior.
