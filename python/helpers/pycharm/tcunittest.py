@@ -155,7 +155,29 @@ class TeamcityTestResult(TestResult):
   def addSkip(self, test, reason):
     self.init_suite(test)
     self.current_failed = True
+    TestResult.addSkip(self, test, reason)
     self.messages.testIgnored(self.getTestName(test), message=reason)
+
+  def addExpectedFailure(self, test, err):
+    location = self.init_suite(test)
+    self.current_failed = True
+    TestResult.addExpectedFailure(self, test, err)
+
+    err = self._exc_info_to_string(err, test)
+
+    self.messages.testStarted(self.getTestName(test), location=location)
+    self.messages.testIgnored(self.getTestName(test), message='Expected failure: ' + err,
+                              duration=int(self.__getDuration(test)))
+
+  def addUnexpectedSuccess(self, test):
+    location = self.init_suite(test)
+    self.current_failed = True
+    TestResult.addUnexpectedSuccess(self, test)
+
+    self.messages.testStarted(self.getTestName(test), location=location)
+    self.messages.testFailed(self.getTestName(test), message='Unexpected success',
+                             details="Test should not succeed since it's marked with @unittest.expectedFailure",
+                             duration=self.__getDuration(test))
 
   def _getSuite(self, test):
     try:
@@ -186,6 +208,7 @@ class TeamcityTestResult(TestResult):
     return (suite, location, suite_location)
 
   def startTest(self, test):
+    TestResult.startTest(self, test)
     self.current_failed = False
     setattr(test, "startTime", datetime.datetime.now())
 
@@ -208,6 +231,8 @@ class TeamcityTestResult(TestResult):
     else:
       self.messages.testSuiteFinished(self.subtest_suite)
       self.subtest_suite = None
+    self._mirrorOutput = False
+    TestResult.stopTest(self, test)
 
   def __getDuration(self, test):
     start = getattr(test, "startTime", datetime.datetime.now())
@@ -219,6 +244,8 @@ class TeamcityTestResult(TestResult):
 
   def addSubTest(self, test, subtest, err):
     location = self.init_suite(test)
+    if hasattr(TestResult, 'addSubTest'):
+      TestResult.addSubTest(self, test, subtest, err)
     suite_name = self.getTestName(test)  # + " (subTests)"
     if not self.subtest_suite:
       self.subtest_suite = suite_name

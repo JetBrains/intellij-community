@@ -152,6 +152,12 @@ class DjangoTeamcityTestRunner(BaseRunner):
       self.options.update(kwargs)
       return TeamcityTestRunner.run(self, suite, **self.options)
 
+  def suite_result(self, suite, result, **kwargs):
+    failures = super(DjangoTeamcityTestRunner, self).suite_result(suite, result, **kwargs)
+    if VERSION < (4, 1):
+      failures += len(getattr(result, 'unexpectedSuccesses', ()))
+    return failures
+
   def run_tests(self, test_labels, extra_tests=None, **kwargs):
     args = (test_labels, ) if IS_EXTRA_TESTS_ARG_DEPRECATED else (test_labels, extra_tests)
 
