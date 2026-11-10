@@ -81,6 +81,17 @@ public interface FileManagerEx extends FileManager {
    */
   void processFileTypesChanged(boolean clearViewProviders);
 
+  /**
+   * Removes all view providers, also the ones of a {@link com.intellij.testFramework.LightVirtualFile}.
+   * {@link #processFileTypesChanged} keeps the view providers of a light file.
+   * Call this when the classes that build the PSI of a language change, for example after a module loads or unloads.
+   * A light file that keeps its view provider keeps the PSI classes of the old module set otherwise.
+   * <p>
+   * Also fires property-change-event with PsiTreeChangeEvent.PROP_FILE_TYPES.
+   */
+  default void processPsiClassesChanged() {
+    processFileTypesChanged(true);
+  }
 
   /**
    * Originally, all PSI was invalidated on root change, to avoid UI freeze (IDEA-172762),

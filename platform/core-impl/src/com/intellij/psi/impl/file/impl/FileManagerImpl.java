@@ -413,6 +413,15 @@ public final class FileManagerImpl implements FileManagerEx {
 
   @Override
   public void processFileTypesChanged(boolean clearViewProviders) {
+    processFileTypesChanged(clearViewProviders, false);
+  }
+
+  @Override
+  public void processPsiClassesChanged() {
+    processFileTypesChanged(true, true);
+  }
+
+  private void processFileTypesChanged(boolean clearViewProviders, boolean clearLightFiles) {
     if (myProcessingFileTypesChange) return;
     myProcessingFileTypesChange = true;
     DebugUtil.performPsiModification(null, () -> {
@@ -424,7 +433,7 @@ public final class FileManagerImpl implements FileManagerEx {
 
           possiblyInvalidatePhysicalPsi();
           if (clearViewProviders) {
-            clearViewProviders("processFileTypesChanged", false);
+            clearViewProviders("processFileTypesChanged", clearLightFiles);
           }
 
           myManager.propertyChanged(event);
