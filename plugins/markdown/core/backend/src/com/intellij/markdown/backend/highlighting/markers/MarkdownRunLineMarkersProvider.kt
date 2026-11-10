@@ -106,7 +106,7 @@ internal class MarkdownRunLineMarkersProvider: RunLineMarkerContributor(), DumbA
                         }
                         else return null
       val text = (element.parent as? MarkdownCodeFence)?.let(this::collectFenceText) ?: return null
-      val command = if (language?.id == "PowerShell") text else trimPrompt(text)
+      val command = if (language?.id == "PowerShell") text else trimPrompt(text, lang)
       val runAction = object : AnAction({ runnerTitle }, AllIcons.RunConfigurations.TestState.Run_run) {
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

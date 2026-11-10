@@ -151,7 +151,7 @@ class CommandRunnerExtension(
       if (runner == null) return ""
 
       val hash = MarkdownUtil.md5(codeFenceRawContent, "$sessionKey:$language")
-      val command = if (lang?.id == "PowerShell") codeFenceRawContent else trimPrompt(codeFenceRawContent)
+      val command = if (lang?.id == "PowerShell") codeFenceRawContent else trimPrompt(codeFenceRawContent, language)
       hash2Cmd[hash] = PreviewCommand(command, language)
       val lines = codeFenceRawContent.trimEnd().lines()
       val firstLineHash = if (lines.size > 1) processLine(lines[0], false) else null
@@ -479,14 +479,40 @@ class CommandRunnerExtension(
     private val LOG = logger<CommandRunnerExtension>()
 
     @ApiStatus.Internal
-    fun trimPrompt(cmd: String): String {
-      return cmd.lines()
-        .map { line ->
-          val withoutPrompt = if (line.startsWith("$") && line.getOrNull(1)?.isWhitespace() != false) line.drop(1) else line
-          stripTrailingShellComment(withoutPrompt)
-        }
+    fun trimPrompt(cmd: String, language: String = ""): String {
+      val lines = cmd.lines()
+      val commands = if (isConsole(language)) consoleCommands(lines) else shellCommands(lines)
+      return commands
+        .map(::stripTrailingShellComment)
         .filter { line -> line.isNotEmpty() }
         .joinToString("\n")
+    }
+
+    private fun isConsole(language: String): Boolean {
+      return language.trim().takeWhile { !it.isWhitespace() }.equals("console", ignoreCase = true)
+    }
+
+    private fun shellCommands(lines: List<String>): List<String> {
+      return lines.map { line -> if (hasPrompt(line, "$")) line.drop(1) else line }
+    }
+
+    private fun consoleCommands(lines: List<String>): List<String> {
+      val commands = mutableListOf<String>()
+      var continued = false
+      for (line in lines) {
+        val command = when {
+          continued -> line
+          hasPrompt(line, "$#") -> line.drop(1)
+          else -> null
+        }
+        continued = command != null && line.takeLastWhile { it == '\\' }.length % 2 == 1
+        if (command != null) commands.add(command)
+      }
+      return commands.ifEmpty { lines }
+    }
+
+    private fun hasPrompt(line: String, prompts: String): Boolean {
+      return line.isNotEmpty() && line[0] in prompts && line.getOrNull(1)?.isWhitespace() != false
     }
 
     private fun stripTrailingShellComment(line: String): String {

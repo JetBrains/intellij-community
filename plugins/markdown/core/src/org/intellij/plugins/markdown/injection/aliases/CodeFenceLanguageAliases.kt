@@ -37,7 +37,7 @@ internal object CodeFenceLanguageAliases {
     Entry("C#", "csharp", setOf("cs", "c#")),
     Entry("C++", "c++", setOf("cpp")),
     Entry("F#", "fsharp", setOf("fs", "f#")),
-    Entry("Shell Script", "shell", setOf("shell script", "bash", "zsh", "sh"))
+    Entry("Shell Script", "shell", setOf("shell script", "bash", "zsh", "sh", "console"))
   )
 
   fun findRegisteredEntry(value: String): String? {

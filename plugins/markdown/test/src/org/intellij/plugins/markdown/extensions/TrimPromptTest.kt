@@ -10,7 +10,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class TrimPromptTest {
 
-  private fun strip(line: String): String = CommandRunnerExtension.trimPrompt(line)
+  private fun strip(line: String, infoString: String = ""): String = CommandRunnerExtension.trimPrompt(line, infoString)
 
   @Test fun `plain command is unchanged`() {
     assertEquals("npm run dev", strip("npm run dev"))
@@ -86,5 +86,25 @@ class TrimPromptTest {
 
   @Test fun `empty input returns empty`() {
     assertEquals("", strip(""))
+  }
+
+  @Test fun `console fence keeps only dollar and hash prompt lines`() {
+    assertEquals(" echo one\n whoami", strip("$ echo one\none\n# whoami\nroot", "console"))
+  }
+
+  @Test fun `console fence keeps continued lines of a prompt line`() {
+    assertEquals(" ls \\\n  -l", strip("$ ls \\\n  -l\ntotal 0 \\\nmore output", "console"))
+  }
+
+  @Test fun `console fence without a prompt line runs every line`() {
+    assertEquals("npm install\nnpm test", strip("npm install # deps\nnpm test", "console"))
+  }
+
+  @Test fun `console info string ignores case and attributes`() {
+    assertEquals(" whoami", strip("# whoami\nroot", " Console\ttitle=demo"))
+  }
+
+  @Test fun `shell fence keeps a hash line as a comment`() {
+    assertEquals("root", strip("# whoami\nroot", "shell"))
   }
 }
