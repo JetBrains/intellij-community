@@ -135,7 +135,8 @@ class J2KTypeInference(
         var needsNotNull = isOptional(type)
         var result = Nullability.Default
         var printedByCaller = false
-        var mutable = isMappedCollection(type)
+        val className: String? = PsiUtil.resolveClassInClassTypeOnly(type)?.qualifiedName
+        var mutable = className in toKotlinMutableTypesMap
         var mutabilityFixed = false
         val targets = LinkedHashSet<TypeNode>()
         val sources = LinkedHashSet<TypeNode>()
@@ -195,6 +196,7 @@ class J2KTypeInference(
     private val lambdaParameterNodes = HashMap<PsiParameter, TypeNode>()
     private val elementLinks = ArrayList<ElementLink>()
     private val unseenArgumentOwners = ArrayList<TypeNode>()
+    private val overriders = HashMap<PsiMethod, List<PsiMethod>>()
     private val nullComparisons = ArrayList<PsiBinaryExpression>()
     private val typeElements = ArrayList<PsiTypeElement>()
     private val returnStatements = HashMap<PsiMethod, MutableList<PsiReturnStatement>>()
@@ -721,16 +723,22 @@ class J2KTypeInference(
         val receiver = expressionNode(call.methodExpression.qualifierExpression) ?: return
         if (receiver.elements.isEmpty()) return
         val parameters = call.resolveMethod()?.parameterList?.parameters ?: return
+        for ((lambdaParameter, type) in lambdaParameterTypes(call, parameters)) {
+            val node = lambdaParameterNodes[lambdaParameter] ?: continue
+            receiverElement(receiver, type)?.let { flowMutability(it, node) }
+        }
+    }
+
+    /** Returns each parameter of the lambda arguments of [call] with the type that the functional interface of [parameters] gives it. */
+    private fun lambdaParameterTypes(call: PsiMethodCallExpression, parameters: Array<PsiParameter>): List<Pair<PsiParameter, PsiType>> = buildList {
         for ((position, argument) in call.argumentList.expressions.withIndex()) {
             val lambda = PsiUtil.skipParenthesizedExprDown(argument) as? PsiLambdaExpression ?: continue
             val functionalType = parameters.getOrNull(position)?.takeIf { !it.isVarArgs }?.type ?: continue
             val samMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalType) ?: continue
             val substitutor = LambdaUtil.getSubstitutor(samMethod, PsiUtil.resolveGenericsClassInType(functionalType))
             for ((index, lambdaParameter) in lambda.parameterList.parameters.withIndex()) {
-                val node = lambdaParameterNodes[lambdaParameter] ?: continue
                 val samParameterType = samMethod.parameterList.parameters.getOrNull(index)?.type ?: continue
-                val type = substitutor.substitute(samParameterType).let { (it as? PsiWildcardType)?.bound ?: it }
-                receiverElement(receiver, type)?.let { flowMutability(it, node) }
+                add(lambdaParameter to substitutor.substitute(samParameterType).let { (it as? PsiWildcardType)?.bound ?: it })
             }
         }
     }
@@ -802,14 +810,14 @@ class J2KTypeInference(
     private fun addMutabilityDataflow(call: PsiCallExpression) {
         val method = call.resolveMethod()
         if (call is PsiMethodCallExpression && method?.name in MUTATING_METHODS) markMutable(call.methodExpression.qualifierExpression)
-        val keepsArguments = method != null && keepsArguments(method)
+        val argumentsKept by lazy { method != null && keepsArguments(method) }
         for (argument in call.argumentList?.expressions.orEmpty()) {
             val parameter = MethodCallUtils.getParameterForArgument(argument)
             if (parameter != null && parameter in nodes) continue
             val lambda = PsiUtil.skipParenthesizedExprDown(argument) as? PsiLambdaExpression
             when {
                 lambda != null -> lambdaResults(lambda).forEach(::markMutable)
-                !keepsArguments && (parameter == null || canHoldCollection(parameter.type)) -> markMutable(argument)
+                (parameter == null || canHoldCollection(parameter.type)) && !argumentsKept -> markMutable(argument)
             }
         }
     }
@@ -938,8 +946,7 @@ class J2KTypeInference(
         ) return
         val parameters = method.parameterList.parameters
         if (parameters.none { parameter -> nodes[parameter]?.let(::containsMappedCollection) == true }) return
-        for (overrider in OverridingMethodsSearch.search(originals.originalElementOrSelf(method)).findAll()) {
-            if (overrider.containingFile == originalFile) continue
+        for (overrider in overridersOutsideFile(method)) {
             for ((parameter, overriderParameter) in parameters.zip(overrider.parameterList.parameters)) {
                 val node = nodes[parameter] ?: continue
                 val kotlinParameter = (overriderParameter as? KtLightElement<*, *>)?.kotlinOrigin as? KtParameter
@@ -989,12 +996,15 @@ class J2KTypeInference(
         if (!returnNode.mutable && isMappedCollection(returnNode.type) && references.any { mayChangeOutside(it.parent) }) returnNode.makeMutable()
         if (returnNode.platformNullability != null) return
         if (method.isConstructor || method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.FINAL)) return
-        for (overrider in OverridingMethodsSearch.search(originals.originalElementOrSelf(method)).findAll()) {
-            if (overrider.containingFile == originalFile) continue
+        for (overrider in overridersOutsideFile(method)) {
             val nullability = NullableNotNullManager.getNullability(overrider).takeIf { it != JavaNullability.UNKNOWN }
                 ?: DfaUtil.inferMethodNullability(overrider)
             returnNode.join(nullability.toJ2K() ?: Nullability.Default)
         }
+    }
+
+    private fun overridersOutsideFile(method: PsiMethod): List<PsiMethod> = overriders.getOrPut(method) {
+        OverridingMethodsSearch.search(originals.originalElementOrSelf(method)).findAll().filter { it.containingFile != originalFile }
     }
 
     private fun mayChangeOutside(value: PsiElement): Boolean {
@@ -1307,18 +1317,10 @@ class J2KTypeInference(
         typeParameters: Array<PsiTypeParameter>,
         arguments: List<TypeNode>,
     ) {
-        for ((position, argument) in call.argumentList.expressions.withIndex()) {
-            val lambda = PsiUtil.skipParenthesizedExprDown(argument) as? PsiLambdaExpression ?: continue
-            val functionalType = parameters.getOrNull(position)?.takeIf { !it.isVarArgs }?.type ?: continue
-            val samMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalType) ?: continue
-            val substitutor = LambdaUtil.getSubstitutor(samMethod, PsiUtil.resolveGenericsClassInType(functionalType))
-            for ((index, lambdaParameter) in lambda.parameterList.parameters.withIndex()) {
-                val samParameterType = samMethod.parameterList.parameters.getOrNull(index)?.type ?: continue
-                val type = substitutor.substitute(samParameterType).let { (it as? PsiWildcardType)?.bound ?: it }
-                val typeParameter = PsiUtil.resolveClassInClassTypeOnly(type) as? PsiTypeParameter ?: continue
-                val typeArgument = arguments.getOrNull(typeParameters.indexOf(typeParameter)) ?: continue
-                lambdaParameterTypeArguments[lambdaParameter] = typeArgument
-            }
+        for ((lambdaParameter, type) in lambdaParameterTypes(call, parameters)) {
+            val typeParameter = PsiUtil.resolveClassInClassTypeOnly(type) as? PsiTypeParameter ?: continue
+            val typeArgument = arguments.getOrNull(typeParameters.indexOf(typeParameter)) ?: continue
+            lambdaParameterTypeArguments[lambdaParameter] = typeArgument
         }
     }
 
@@ -1388,6 +1390,9 @@ class J2KTypeInference(
     private fun solveMutability() {
         val all = allNodes() + lambdaParameterNodes.values + lambdaParameterNodes.values.flatMap { it.descendants() }
         val queue = ArrayDeque(all.filter { it.mutable })
+        val linksBySource = elementLinks.groupBy { it.source }
+        val linksByOwner = elementLinks.groupBy { it.owner }
+        val unseen = unseenArgumentOwners.flatMapTo(HashSet()) { listOf(it) + it.descendants() }
 
         fun mark(node: TypeNode) {
             if (node.mutable || node.mutabilityFixed) return
@@ -1395,27 +1400,26 @@ class J2KTypeInference(
             queue += node
         }
 
-        do {
-            while (queue.isNotEmpty()) queue.removeFirst().mutabilitySources.forEach(::mark)
-            for (link in elementLinks) {
-                if (link.source.mutable && isInvariant(link.owner, link.index)) mark(link.target)
+        fun markUnseenInvariantElements(owner: TypeNode) {
+            for ((index, element) in owner.elements.withIndex()) {
+                if (element.wildcard?.isSuper == true || isInvariant(owner, index)) mark(element)
             }
-            for (owner in unseenArgumentOwners) markUnseenInvariantElements(owner, ::mark)
-        } while (queue.isNotEmpty())
-    }
+        }
 
-    private fun markUnseenInvariantElements(owner: TypeNode, mark: (TypeNode) -> Unit) {
-        for ((index, element) in owner.elements.withIndex()) {
-            if (element.wildcard?.isSuper == true || isInvariant(owner, index)) mark(element)
-            markUnseenInvariantElements(element, mark)
+        unseen.forEach(::markUnseenInvariantElements)
+        while (queue.isNotEmpty()) {
+            val node = queue.removeFirst()
+            node.mutabilitySources.forEach(::mark)
+            linksBySource[node]?.forEach { if (isInvariant(it.owner, it.index)) mark(it.target) }
+            linksByOwner[node]?.forEach { if (it.source.mutable && isInvariant(it.owner, it.index)) mark(it.target) }
+            if (node in unseen) markUnseenInvariantElements(node)
         }
     }
 
     private fun isInvariant(owner: TypeNode, index: Int): Boolean {
         if (owner.elements[index].wildcard != null) return false
-        val ownerClass = PsiUtil.resolveClassInClassTypeOnly(owner.type)?.qualifiedName
-        if (ownerClass !in toKotlinMutableTypesMap) return true
-        return owner.mutable || ownerClass == CommonClassNames.JAVA_UTIL_MAP && index == 0
+        if (owner.className !in toKotlinMutableTypesMap) return true
+        return owner.mutable || owner.className == CommonClassNames.JAVA_UTIL_MAP && index == 0
     }
 
     private fun resolve() {
