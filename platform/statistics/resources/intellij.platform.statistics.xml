@@ -34,7 +34,6 @@
     <postStartupActivity implementation="com.intellij.internal.statistic.updater.StatisticsStateCollectorsSchedulerProjectActivity"/>
     <applicationSettings service="com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent"/>
     <applicationSettings service="com.intellij.internal.statistic.local.ContributorsLocalSummary"/>
-    <applicationSettings service="com.intellij.internal.statistic.local.ActionsLocalSummary"/>
     <appStarter id="buildEventsScheme" implementation="com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilderAppStarter" internal="true"/>
     <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter" internal="true"/>
     <applicationService serviceInterface="com.intellij.internal.statistic.JetBrainsConsentProvider" open="true"
@@ -87,7 +86,5 @@
   </extensionPoints>
   <applicationListeners>
     <listener class="com.intellij.internal.statistic.eventLog.StatisticsStartupHold$Listener" topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.internal.statistic.local.ActionsLocalSummaryListener"
-              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
 </idea-plugin>

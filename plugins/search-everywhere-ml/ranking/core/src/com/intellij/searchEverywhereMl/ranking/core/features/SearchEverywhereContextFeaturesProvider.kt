@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.core.features
 
+import com.intellij.featureStatistics.ActionsLocalSummary
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
-import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.internal.statistic.local.ContributorsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ContributorsLocalSummary
 import com.intellij.openapi.application.ApplicationManager

@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
+import com.intellij.featureStatistics.ActionsLocalSummary
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
-import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.util.registry.RegistryManager
 import kotlinx.coroutines.async

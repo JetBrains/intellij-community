@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.searchEverywhereMl.ranking.core.features
 
+import com.intellij.featureStatistics.ActionsLocalSummary
 import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
@@ -13,7 +14,6 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
-import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction

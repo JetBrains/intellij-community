@@ -4333,7 +4333,7 @@
       "name": "ActionsLocalSummary",
       "scope": "app",
       "pluginId": "com.intellij",
-      "classFqn": "com.intellij.internal.statistic.local.ActionsLocalSummary",
+      "classFqn": "com.intellij.featureStatistics.ActionsLocalSummary",
       "storage": "actionSummary.xml",
       "properties": [
         {

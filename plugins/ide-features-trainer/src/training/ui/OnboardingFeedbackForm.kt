@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
+import com.intellij.featureStatistics.ActionsLocalSummary
 import com.intellij.icons.AllIcons
 import com.intellij.ide.RecentProjectsManagerBase
-import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType

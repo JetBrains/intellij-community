@@ -889,6 +889,7 @@
     <applicationSettings service="com.intellij.util.text.DateTimeFormatManager"/>
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
     <applicationService serviceImplementation="com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs" open="true"/>
+    <applicationSettings service="com.intellij.featureStatistics.ActionsLocalSummary"/>
     <applicationService serviceInterface="com.intellij.featureStatistics.FeatureUsageTracker"
                         serviceImplementation="com.intellij.featureStatistics.FeatureUsageTrackerImpl"/>
     <applicationService serviceInterface="com.intellij.featureStatistics.ProductivityFeaturesRegistry"
@@ -2105,6 +2106,8 @@
               activeInTestMode="false" />
     <listener class="com.intellij.openapi.fileEditor.impl.FileDocumentCommonText"
               topic="com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable"/>
+    <listener class="com.intellij.featureStatistics.ActionsLocalSummaryListener"
+              topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$MyEditorManagerListener"

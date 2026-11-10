@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.statistic.local
+package com.intellij.featureStatistics
 
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -18,9 +18,11 @@ import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 import kotlin.math.min
 
+@ApiStatus.Internal
 @State(name = "ActionsLocalSummary", storages = [Storage("actionSummary.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
 @Service
 class ActionsLocalSummary : PersistentStateComponent<ActionsLocalSummaryState>, SimpleModificationTracker() {
@@ -87,6 +89,7 @@ class ActionsLocalSummary : PersistentStateComponent<ActionsLocalSummaryState>, 
   }
 }
 
+@ApiStatus.Internal
 @Tag("i")
 class ActionExtendedSummary {
   @Attribute("c")
@@ -140,6 +143,7 @@ class ActionExtendedSummary {
  *
  * @see com.intellij.ide.util.TipsOrderUtil
  */
+@ApiStatus.Internal
 @Tag("i")
 class ActionSummary {
   @Attribute("c")
@@ -161,11 +165,13 @@ class ActionSummary {
   override fun hashCode() = (31 * usageCount) + lastUsedTimestamp.hashCode()
 }
 
+@ApiStatus.Internal
 data class ActionsLocalSummaryState(
   @get:XMap(entryTagName = "e", keyAttributeName = "n") @get:Property(surroundWithTag = false)
   internal val data: MutableMap<String, ActionExtendedSummary> = HashMap()
 )
 
+@ApiStatus.Internal
 data class ActionsTotalSummary(
   var maxUsageCount: Int, var minUsageCount: Int,
   var maxUsageFromSearchEverywhere: Int, var minUsageFromSearchEverywhere: Int

@@ -5,11 +5,11 @@ package training.onboarding
 
 import com.intellij.codeInsight.documentation.render.DocRenderManager
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.featureStatistics.ActionsLocalSummary
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.OnboardingTipsInstallationInfo
-import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent

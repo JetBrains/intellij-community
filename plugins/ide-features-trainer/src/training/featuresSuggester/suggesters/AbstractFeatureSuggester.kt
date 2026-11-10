@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.featuresSuggester.suggesters
 
+import com.intellij.featureStatistics.ActionsLocalSummary
 import com.intellij.idea.ActionsBundle
-import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
 import com.intellij.openapi.keymap.KeymapUtil
