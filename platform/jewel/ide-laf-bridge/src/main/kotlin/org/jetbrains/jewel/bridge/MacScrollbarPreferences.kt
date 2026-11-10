@@ -96,7 +96,7 @@ internal object FfmMacScrollbarPreferences : MacScrollbarPreferences {
     }
 
     @JvmStatic
-    @Suppress("UNUSED_PARAMETER")
+    @Suppress("UNUSED_PARAMETER", "SSBasedInspection")
     private fun notificationReceived(self: MemorySegment, selector: MemorySegment, notification: MemorySegment) {
         runCatching {
             runCatching {

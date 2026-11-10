@@ -69,6 +69,6 @@ tasks {
             // Resolve the launcher only when the task runs, so a build that does not run the sample needs no JBR.
             doFirst { setExecutable(javaLauncher.get().executablePath.asFile.absolutePath) }
         }
-        jvmArgs("-Dcompose.interop.blending=true")
+        jvmArgs("-Dcompose.interop.blending=true", "--enable-native-access=ALL-UNNAMED")
     }
 }
