@@ -47,6 +47,7 @@ private val FUNCTION_FQ_NAMES = setOf(
     StandardKotlinNames.Collections.onEach,
     StandardKotlinNames.Collections.onEachIndexed,
 )
+private val FUNCTION_SHORT_NAMES: Set<String> = FUNCTION_FQ_NAMES.mapTo(HashSet()) { it.shortName().asString() }
 
 internal class MapToForEachInspection : KotlinApplicableInspectionBase.Simple<KtCallExpression, MapToForEachInspection.Context>() {
 
@@ -74,19 +75,17 @@ internal class MapToForEachInspection : KotlinApplicableInspectionBase.Simple<Kt
 
     override fun isApplicableByPsi(element: KtCallExpression): Boolean {
         // Skip in debugger's Evaluate Expression where the expression result is shown.
-        if (element.containingKtFile is KtCodeFragment) return false
+        val containingKtFile = element.containingKtFile
+        if (containingKtFile is KtCodeFragment) return false
 
-        val calleeText = element.calleeExpression?.text ?: return false
-        if (FUNCTION_FQ_NAMES.none { fqName ->
-                calleeText == fqName.shortName().asString() || element.containingKtFile.importDirectives.any {
-                    it.importedFqName == fqName && calleeText == it.aliasName
-                }
-            }) return false
+        if (element.valueArguments.size != 1) return false
 
         val statementCandidate = element.getQualifiedExpressionForSelectorOrThis()
         if (!KtPsiUtil.isStatement(statementCandidate)) return false
 
-        return element.valueArguments.size == 1
+        val calleeText = element.calleeExpression?.text ?: return false
+        return calleeText in FUNCTION_SHORT_NAMES ||
+                containingKtFile.findImportByAlias(calleeText)?.importedFqName in FUNCTION_FQ_NAMES
     }
 
     context(session: KaSession)

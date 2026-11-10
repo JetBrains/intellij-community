@@ -31324,6 +31324,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/mapToForEach/importAlias.kt");
         }
 
+        @TestMetadata("importSecondAlias.kt")
+        public void testImportSecondAlias() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/mapToForEach/importSecondAlias.kt");
+        }
+
         @TestMetadata("iterable.kt")
         public void testIterable() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/mapToForEach/iterable.kt");
