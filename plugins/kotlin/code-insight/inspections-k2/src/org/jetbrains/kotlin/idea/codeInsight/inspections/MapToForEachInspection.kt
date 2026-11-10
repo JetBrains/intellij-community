@@ -11,7 +11,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticCheckerKind
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
@@ -109,9 +108,7 @@ internal class MapToForEachInspection : KotlinApplicableInspectionBase.Simple<Kt
         if (resolvedCall.typeArgumentsMapping.size != functionSymbol.typeParameters.size) return null
 
         val labeledReturnExpressions = collectReturns(element) ?: return null
-        val isReturnValueNotUsed = whole.diagnostics()
-            .withCheckers(KaDiagnosticCheckerKind.ALL)
-            .any { it is KaFirDiagnostic.ReturnValueNotUsed }
+        val isReturnValueNotUsed = whole.diagnostics().any { it is KaFirDiagnostic.ReturnValueNotUsed }
 
         return Context(labeledReturnExpressions, replacementName, isReturnValueNotUsed)
     }
