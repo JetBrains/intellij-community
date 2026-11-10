@@ -53,10 +53,12 @@ internal class PythonSimpleRepositoryCacheService {
         for (repository in service.repositories.toList()) {
           val cache = PythonSimpleRepositoryCache(repository)
 
-          cache.reload().getOr {
-            LOG.warn("Failed to refresh repository ${repository.repositoryUrl}: ${it.error.message}")
-            service.markInvalid(repository.repositoryUrl)
-            return@withContext Result.Failure(PythonRepositoryIOError(it.error.message))
+          if (repository.enabled) {
+            cache.reload().getOr {
+              LOG.warn("Failed to refresh repository ${repository.repositoryUrl}: ${it.error.message}")
+              service.markInvalid(repository.repositoryUrl)
+              return@withContext Result.Failure(PythonRepositoryIOError(it.error.message))
+            }
           }
 
           newCache[repository] = cache

@@ -121,4 +121,26 @@ class PythonSimpleRepositoryCacheServiceTest {
     assertThat(cacheService[repo]?.contains("numpy")).isTrue()
     assertThat(service<PyPackageRepositories>().invalidRepositories).contains(repo)
   }
+
+  @Test
+  @TestFor(issues = ["PY-92435"])
+  fun `reloadAll skips a disabled repository`(): Unit = runBlocking {
+    val repo = repoFixture.get()
+    val missingUrl = "${serverFixture.get().simpleUrl}missing/"
+    val disabledRepo = PyPackageRepository("disabled-repo", missingUrl, null)
+    disabledRepo.enabled = false
+    val repoService = service<PyPackageRepositories>()
+    repoService.repositories.add(disabledRepo)
+    try {
+      val cacheService = service<PythonSimpleRepositoryCacheService>()
+
+      assertThat(cacheService.reloadAll()).isInstanceOf(Result.Success::class.java)
+      assertThat(cacheService[repo]?.contains("numpy")).isTrue()
+      assertThat(cacheService[disabledRepo]?.isEmpty()).isTrue()
+      assertThat(repoService.invalidRepositories).doesNotContain(disabledRepo)
+    }
+    finally {
+      repoService.repositories.remove(disabledRepo)
+    }
+  }
 }
