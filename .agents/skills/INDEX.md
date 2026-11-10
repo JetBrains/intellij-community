@@ -9,7 +9,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [actions](actions/SKILL.md) | Implement or change IntelliJ `AnAction` actions and registrations. |
 | [bazel-test-migration](bazel-test-migration/SKILL.md) | Migrate IntelliJ JPS module tests to Bazel; debug Bazel-only failures. |
 | [code-style](code-style/SKILL.md) | Apply IntelliJ Kotlin and Java code style when writing or reviewing. |
-| [commits](commits/SKILL.md) | Read before each IntelliJ commit, amend or reword: the subject SafePush accepts, the body a review reads. |
+| [commits](commits/SKILL.md) | Read before each commit, amend or reword: the subject SafePush accepts and the body. |
 | [compare-python-typecheckers](compare-python-typecheckers/SKILL.md) | Compare Python type inference with ty, pyrefly, and basedpyright. |
 | [compose-ui](compose-ui/SKILL.md) | Write or audit Compose Desktop UI state, effects, and boundaries. |
 | [conda-env-tests](conda-env-tests/SKILL.md) | Bump the pinned Miniconda version for the Python conda env tests. |
@@ -41,7 +41,6 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [registry](registry/SKILL.md) | Use the IntelliJ Registry API for registry keys and feature flags. |
 | [rust-code-style](rust-code-style/SKILL.md) | Write or review Rust in the build tools. |
 | [safe-push](safe-push/SKILL.md) | Push IntelliJ repository changes through the Safe Push workflow. |
-| [sibling-checkout-commits](sibling-checkout-commits/SKILL.md) | Take commits from a sibling checkout as patches, without a fetch. |
 | [ssr](ssr/SKILL.md) | Create or modify IntelliJ Structural Search and Replace patterns. |
 | [symbols-api](symbols-api/SKILL.md) | Use IntelliJ Symbol API for declarations, references, and rename. |
 | [testing](testing/SKILL.md) | Run or troubleshoot IntelliJ tests with `bt.cmd` or `tests.cmd`. |

@@ -34,7 +34,6 @@
 /registry/** linguist-generated
 /rust-code-style/** linguist-generated
 /safe-push/** linguist-generated
-/sibling-checkout-commits/** linguist-generated
 /ssr/** linguist-generated
 /symbols-api/** linguist-generated
 /testing/** linguist-generated
