@@ -17,10 +17,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -39,6 +41,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
@@ -294,6 +297,61 @@ public class PyStubsTest extends PyTestCase {
     finally {
       PythonLanguageLevelPusher.specifyFileLanguageLevel(vFile, null);
     }
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testTopLevelAttributesIncludeATargetOfAnExceptClause() {
+    final VirtualFile vFile = myFixture.copyFileToProject("TopLevelAttributeInExceptClause.py");
+    final PyFile file = (PyFile)myFixture.getPsiManager().findFile(vFile);
+    assertNotNull(file);
+    // An except part is the only part of a compound statement with a stub of its own, so the stub of the file does not
+    // hold its children. Without the walk descending into it, the stub answers without `threading` and the AST with it.
+    assertSameElements(ContainerUtil.map(file.getTopLevelAttributes(), PyTargetExpression::getName),
+                       List.of("GUARDED", "threading"));
+    assertNotParsed(file);
+  }
+
+  @TestFor(issues = "PY-83189")
+  public void testTopLevelChildrenAgreeBetweenTheStubAndTheAst() throws IOException {
+    final VirtualFile vFile = myFixture.copyFileToProject("TopLevelChildrenStubAndAst.py");
+    final PyFile stubFile = (PyFile)myFixture.getPsiManager().findFile(vFile);
+    assertNotNull(stubFile);
+    // The same text with no stub at all: a file from text is not physical, so nothing stubs it. A parsed physical file
+    // keeps a green stub and answers from the stub path again, which would compare that path with itself.
+    final PyFile astFile = (PyFile)PsiFileFactory.getInstance(myFixture.getProject())
+      .createFileFromText("fromText.py", PythonFileType.INSTANCE, VfsUtilCore.loadText(vFile));
+
+    assertNotNull(((PyFileImpl)stubFile).getGreenStub());
+    assertNull(((PyFileImpl)astFile).getGreenStub());
+    assertNotParsed(stubFile);
+
+    // The file guards members by sys.version_info, so both files have to answer for one level
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      final List<String> fromStub = describeTopLevelChildren(stubFile);
+      // Reading the top-level children of a stub-based file must not load its AST
+      assertNotParsed(stubFile);
+      final List<String> fromAst = describeTopLevelChildren(astFile);
+      assertEquals("The AST and the stub report different top-level children", fromStub, fromAst);
+      // The walk stops at a class and at a function, so nothing nested is top level
+      assertFalse(fromAst.toString().contains("Nested"));
+      assertFalse(fromAst.toString().contains("LocalClass"));
+      assertFalse(fromAst.toString().contains("local_function"));
+      assertFalse(fromAst.toString().contains("inner_attr"));
+      // The level selects the branch, so the 3.12 members are there and the older ones are not
+      assertTrue(fromAst.toString().contains("NewClass"));
+      assertFalse(fromAst.toString().contains("OldClass"));
+    });
+  }
+
+  private static @NotNull List<String> describeTopLevelChildren(@NotNull PyFile file) {
+    return List.of(
+      "classes=" + ContainerUtil.map(file.getTopLevelClasses(), PyClass::getName),
+      "functions=" + ContainerUtil.map(file.getTopLevelFunctions(), PyFunction::getName),
+      "attributes=" + ContainerUtil.map(file.getTopLevelAttributes(), PyTargetExpression::getName),
+      "typeAliases=" + ContainerUtil.map(file.getTypeAliasStatements(), PyTypeAliasStatement::getName),
+      // Not getText: that forces the AST on a stub-based element, which this test must not do
+      "importTargets=" + ContainerUtil.map(file.getImportTargets(), one -> String.valueOf(one.getImportedQName())),
+      "fromImports=" + ContainerUtil.map(file.getFromImports(), one -> String.valueOf(one.getImportSourceQName())));
   }
 
   @TestFor(issues = "PY-83189")
