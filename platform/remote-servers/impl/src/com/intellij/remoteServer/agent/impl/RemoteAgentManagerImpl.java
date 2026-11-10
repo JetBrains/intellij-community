@@ -121,6 +121,11 @@ public class RemoteAgentManagerImpl extends RemoteAgentManager {
       return this;
     }
 
+    @Override
+    public Builder<T> withModuleDependency(@NotNull String contentModuleName) {
+      return withModuleDependency(contentModuleName, "modules/" + contentModuleName + ".jar");
+    }
+
     private @Nullable Path resolveBuildPath(@NotNull String buildPathToJar) {
       Path pluginsRoot = Path.of(myAllPluginsRoot);
       Path specificsDir = pluginsRoot.resolve(FileUtil.toSystemDependentName(buildPathToJar));

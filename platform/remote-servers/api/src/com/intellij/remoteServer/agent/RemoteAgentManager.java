@@ -46,7 +46,16 @@ public abstract class RemoteAgentManager {
       return this;
     }
 
+    /**
+     * @deprecated use {@link #withModuleDependency(String)} instead
+     */
+    @Deprecated
     public abstract Builder<T> withModuleDependency(@NotNull String runtimeModuleName, @NotNull String buildPathToJar);
+
+    /**
+     * Adds a dependency on a content module which JAR is located in the standard location (modules/module.name.jar)
+     */
+    public abstract Builder<T> withModuleDependency(@NotNull String contentModuleName);
 
     public abstract T buildAgent(@NotNull String agentClassName) throws Exception;
   }
