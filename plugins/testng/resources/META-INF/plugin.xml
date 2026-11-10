@@ -50,6 +50,7 @@
   <content namespace="jetbrains">
     <module name="intellij.libraries.testng" loading="embedded"/>
     <module name="intellij.testng.langInjection"/>
+    <module name="intellij.testng.rt" loading="embedded"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

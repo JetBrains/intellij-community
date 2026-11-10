@@ -196,9 +196,6 @@ fun getCommunityRepositoryPlugins(): PersistentList<PluginLayout> {
       spec.withModule("intellij.junit.v5.rt", "junit5-rt.jar")
       spec.withModule("intellij.junit.v6.rt", "junit6-rt.jar")
     },
-    plugin("intellij.testng") { spec ->
-      spec.withModule("intellij.testng.rt", "testng-rt.jar")
-    },
     pluginAuto(listOf("intellij.devkit")) { spec ->
       spec.bundlingRestrictions.includeInDistribution = PluginDistribution.NOT_FOR_PUBLIC_BUILDS
     },

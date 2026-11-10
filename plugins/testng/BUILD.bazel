@@ -24,10 +24,12 @@ dev_dist_plugin(
             "intellij.libraries.testng",
             "@lib//:libraries-testng-_test_n_g",
         ],
-        "lib/testng-rt.jar": ["intellij.testng.rt"],
         "lib/testng.jar": ["intellij.testng"],
     },
     main_module = "intellij.testng",
+    module_jar_paths = {
+        "intellij.testng.rt": "lib/intellij.testng.rt.jar",
+    },
 )
 ### auto-generated section `dev intellij.testng` end
 
