@@ -85,7 +85,6 @@ The allowlist holds two groups, and the group of a name says which guard first s
 
 - `intellij.go.utils`, packed by `intellij.go.plugin` and `intellij.go.template`
 - `intellij.javaee.jax.ws.utils`, packed by `intellij.javaee.jax.rs` and `intellij.javaee.jax.ws`
-- `intellij.javaee.jax.ws.rt`, packed by `intellij.javaee.jax.rs` and `intellij.javaee.jax.ws`
 - `intellij.marketplace.statisticsCompat`, packed by `intellij.kmm.plugin` and `intellij.marketplace`
 - `intellij.libraries.kotlinc.kotlin.compiler.common`, packed by `intellij.kotlin.jsr223.plugin`,
   `intellij.kotlin.plugin`
