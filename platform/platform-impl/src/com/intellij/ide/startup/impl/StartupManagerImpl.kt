@@ -130,29 +130,13 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       return
     }
 
-    val pluginScope = createActivityScope(project, extension.javaClass)
-    when (extension) {
-      is ProjectActivity -> {
-        pluginScope.launch {
-          awaitActivityHold()
-          extension.execute(project)
-        }
-      }
-      is DumbAware -> {
-        pluginScope.launch {
-          awaitActivityHold()
-          @Suppress("UsagesOfObsoleteApi")
-          runOldActivity(extension as StartupActivity)
-        }
-      }
-      else -> {
-        pluginScope.launch {
-          awaitActivityHold()
-          DumbService.getInstance(project).runWhenSmart {
-            @Suppress("UsagesOfObsoleteApi")
-            runOldActivity(extension as StartupActivity)
-          }
-        }
+    createActivityScope(project, extension.javaClass).launch {
+      awaitActivityHold()
+      @Suppress("UsagesOfObsoleteApi")
+      when (extension) {
+        is ProjectActivity -> extension.execute(project)
+        is DumbAware -> runOldActivity(extension as StartupActivity)
+        else -> DumbService.getInstance(project).runWhenSmart { runOldActivity(extension as StartupActivity) }
       }
     }
   }
