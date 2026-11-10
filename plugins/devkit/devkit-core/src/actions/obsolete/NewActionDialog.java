@@ -107,7 +107,8 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     }
   }
 
-  NewActionDialog(Project project, @Nullable PsiDirectory directory) {
+  @ApiStatus.Internal
+  public NewActionDialog(Project project, @Nullable PsiDirectory directory) {
     super(project, false);
     myProject = project;
     myDirectory = directory;
@@ -532,7 +533,8 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
            null;
   }
 
-  String getActionName() {
+  @ApiStatus.Internal
+  public String getActionName() {
     return myActionClassNameEdit.getText();
   }
 

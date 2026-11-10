@@ -99,7 +99,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-import static org.jetbrains.idea.devkit.module.IdePluginModuleBuilderKt.DEVKIT_NEWLY_GENERATED_PROJECT;
+import static org.jetbrains.idea.devkit.module.DevKitNewlyGeneratedProjectKt.DEVKIT_NEWLY_GENERATED_PROJECT;
 
 @VisibleForTesting
 @ApiStatus.Internal

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.build
 
 import com.intellij.compiler.BaseCompilerTestCase
+import com.intellij.devkit.ide.build.PrepareToDeployAction
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module

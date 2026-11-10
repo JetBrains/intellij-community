@@ -34,6 +34,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/devkit",
+        "//plugins/devkit/intellij.devkit.ide:ide",
         "//java/testFramework",
         "//aether-dependency-resolver/plugin",
         "//java/idea-ui:ui",

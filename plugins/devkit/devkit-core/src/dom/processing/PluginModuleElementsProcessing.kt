@@ -9,6 +9,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericAttributeValue
 import com.intellij.util.xml.GenericDomValue
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.dom.Action
 import org.jetbrains.idea.devkit.dom.Component
 import org.jetbrains.idea.devkit.dom.Extension
@@ -53,7 +54,8 @@ private fun isRegistrationInExtension(element: GenericDomValue<*>, extension: Ex
  * interfaces of registered extensions.
  */
 @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-internal fun collectRegisteredClasses(root: IdeaPlugin): Set<PsiClass> {
+@ApiStatus.Internal
+fun collectRegisteredClasses(root: IdeaPlugin): Set<PsiClass> {
   val result = mutableSetOf<PsiClass>()
   root.extensionPoints.flatMapTo(result) { points ->
     points.extensionPoints.asSequence().mapNotNull { it.effectiveClass }

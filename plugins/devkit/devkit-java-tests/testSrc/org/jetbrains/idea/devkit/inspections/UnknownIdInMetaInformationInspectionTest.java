@@ -2,13 +2,13 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalInspectionEP;
+import com.intellij.devkit.ide.metaInformation.UnknownIdInMetaInformationInspection;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
-import org.jetbrains.idea.devkit.inspections.metaInformation.UnknownIdInMetaInformationInspection;
 
 @TestDataPath("$CONTENT_ROOT/testData/inspections/metaInformation")
 public class UnknownIdInMetaInformationInspectionTest extends JavaCodeInsightFixtureTestCase {

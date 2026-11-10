@@ -43,7 +43,7 @@ import org.jetbrains.annotations.Debug
  * The implementation of this structure is tightly coupled with
  * [InternalPsiVersioning.MAIN_TIMELINE_DELTA], [InternalPsiVersioning.FORKED_TIMELINE_DELTA]
  *
- * Structural changes in these classes should be reflected in `org.jetbrains.idea.devkit.hprof.PersistentSyntaxTreeHprofProcessor`
+ * Structural changes in these classes should be reflected in `com.intellij.devkit.ide.hprof.PersistentSyntaxTreeHprofProcessor`
  */
 @ApiStatus.Internal
 @Debug.Renderer(hasChildren = "size() != 0", childrenArray = "arrayOfPairs()")

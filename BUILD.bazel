@@ -550,6 +550,7 @@ jvm_library(
         "//plugins/devkit/intellij.devkit.debugger:debugger-tests_test_lib",
         "//plugins/devkit/intellij.devkit.gradle:gradle-tests_test_lib",
         "//plugins/devkit/intellij.devkit.i18n:i18n-tests_test_lib",
+        "//plugins/devkit/intellij.devkit.ide:ide-tests_test_lib",
         "//plugins/eclipse:eclipse-tests_test_lib",
         "//plugins/editorconfig/backend:backend-tests_test_lib",
         "//plugins/findUsagesMl:findUsagesMl-tests_test_lib",

@@ -101,6 +101,7 @@ jvm_library(
         "//java/compiler/impl",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/plugin",
+        "//plugins/devkit/intellij.devkit.ide:ide",
         "//plugins/devkit/intellij.devkit.mcp.inspections:mcp-inspections",
         "//java/codeserver/highlighting",
         "//java/java-frontback-psi-api:frontback-psi",

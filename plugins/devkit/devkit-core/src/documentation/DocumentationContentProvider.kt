@@ -12,6 +12,7 @@ import com.intellij.util.io.HttpRequests
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import org.jetbrains.annotations.ApiStatus
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.LoaderOptions
 import org.yaml.snakeyaml.Yaml
@@ -32,8 +33,9 @@ import kotlin.time.Duration.Companion.seconds
 private val REQUEST_TIMEOUT_MS = 5.seconds.inWholeMilliseconds
 private val CACHE_TTL_MS = 8.hours.inWholeMilliseconds
 
+@ApiStatus.Internal
 @Service(Level.APP)
-internal class DocumentationContentProvider(private val coroutineScope: CoroutineScope) {
+class DocumentationContentProvider(private val coroutineScope: CoroutineScope) {
 
   private val downloadInitialized = AtomicBoolean()
   private val contentCache = ConcurrentHashMap<DocumentationDataCoordinates, Pair<DocumentationContent, /*last updated*/ Long>?>()
@@ -50,7 +52,7 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
    *     - Download data asynchronously from [coordinates.url], so it is up to date on the next content request.
    *          The downloaded file is stored in [PathManager.getSystemDir] for future use.
    */
-  fun getContent(coordinates: DocumentationDataCoordinates): DocumentationContent? {
+  internal fun getContent(coordinates: DocumentationDataCoordinates): DocumentationContent? {
     return contentCache.compute(coordinates) { key, oldValue ->
       val now = System.currentTimeMillis()
       val lastUpdated = oldValue?.second ?: 0
@@ -79,7 +81,7 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
     }?.first
   }
 
-  fun loadLocallyCachedContent(relativeCachePath: String): DocumentationContent? {
+  internal fun loadLocallyCachedContent(relativeCachePath: String): DocumentationContent? {
     return parseDocumentationContent {
       getCachedFile(relativeCachePath)
         .takeIf { it.exists() }
@@ -91,7 +93,7 @@ internal class DocumentationContentProvider(private val coroutineScope: Coroutin
     return PathManager.getSystemDir().resolve("devkit/$relativeCachePath")
   }
 
-  fun downloadContentAsync(coordinates: DocumentationDataCoordinates) {
+  internal fun downloadContentAsync(coordinates: DocumentationDataCoordinates) {
     val request = HttpRequests.request(coordinates.url)
       .connectTimeout(REQUEST_TIMEOUT_MS.toInt())
       .readTimeout(REQUEST_TIMEOUT_MS.toInt())

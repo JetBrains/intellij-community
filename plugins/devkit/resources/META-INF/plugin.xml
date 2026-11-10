@@ -59,6 +59,7 @@
     <module name="intellij.devkit.threading"/>
     <module name="intellij.devkit.smartupdate"/>
     <module name="intellij.devkit.jps" loading="on-demand"/>
+    <module name="intellij.devkit.ide"/>
 
     <module name="intellij.platform.jewel.samples.showcase"/>
   </content>

@@ -61,7 +61,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   private static final long LOG_SEEK_WINDOW = 100 * 1024;
 
   /**
-   * used in {@link org.jetbrains.idea.devkit.run.FailedTestDebugLogConsoleFolding#shouldFoldLine}
+   * used in {@link com.intellij.devkit.ide.run.FailedTestDebugLogConsoleFolding#shouldFoldLine}
    */
   private static final char FAILED_TEST_DEBUG_OUTPUT_MARKER = '\u2003';
   private static final int MAX_BUFFER_LENGTH = Math.max(1024, Integer.getInteger("idea.single.test.log.max.length", 10_000_000));

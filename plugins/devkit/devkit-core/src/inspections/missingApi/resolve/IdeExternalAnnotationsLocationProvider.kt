@@ -40,8 +40,8 @@ internal class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvi
       "com.jetbrains.intellij.idea",
       "ideaIU",
       annotationsVersion,
-      PublicIntelliJSdkExternalAnnotationsRepository.RELEASES_REPO_URL,
-      PublicIntelliJSdkExternalAnnotationsRepository.SNAPSHOTS_REPO_URL
+      IntelliJSdkExternalAnnotationsRepository.RELEASES_REPO_URL,
+      IntelliJSdkExternalAnnotationsRepository.SNAPSHOTS_REPO_URL
     ))
   }
 }

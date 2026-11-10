@@ -8,7 +8,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.ApiStatus
 
-internal fun getRunConfigurationModuleAndJdk(configuration: JavaRunConfigurationBase): Pair<Module, Sdk>? {
+@ApiStatus.Internal
+fun getRunConfigurationModuleAndJdk(configuration: JavaRunConfigurationBase): Pair<Module, Sdk>? {
   return ReadAction.nonBlocking<Pair<Module, Sdk>?> {
     val module = configuration.configurationModule.module ?: return@nonBlocking null
     val jdk = JavaParameters.getJdkToRunModule(module, true) ?: return@nonBlocking null

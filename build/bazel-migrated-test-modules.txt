@@ -49,6 +49,7 @@ intellij.devkit.apiDump.lang.tests
 intellij.devkit.debugger.tests
 intellij.devkit.gradle.tests
 intellij.devkit.i18n.tests
+intellij.devkit.ide.tests
 intellij.devkit.java.tests
 intellij.devkit.jps.tests
 intellij.devkit.testFramework

@@ -7,7 +7,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.ContentDescriptor
-import org.jetbrains.idea.devkit.inspections.extractModule.ExtractContentModuleDescriptorToJpsModuleFix
+import org.jetbrains.idea.devkit.inspections.extractModule.ExtractToJpsModuleFixProvider
 
 internal class ContentModuleWithoutDedicatedJpsModuleInspection : DevKitPluginXmlInspectionBase() {
   override fun checkDomElement(
@@ -19,8 +19,10 @@ internal class ContentModuleWithoutDedicatedJpsModuleInspection : DevKitPluginXm
     val moduleName = contentModule.name.stringValue ?: return
     if (moduleName.contains("/")) {
       val message = DevKitBundle.message("inspection.content.module.without.dedicated.jps.module.message")
+      val fixProvider = ExtractToJpsModuleFixProvider.getInstance()
       val fixes =
-        if (IntelliJProjectUtil.isIntelliJPlatformProject(element.xmlElement?.project)) arrayOf(ExtractContentModuleDescriptorToJpsModuleFix(moduleName))
+        if (fixProvider != null && IntelliJProjectUtil.isIntelliJPlatformProject(element.xmlElement?.project))
+          arrayOf(fixProvider.extractContentModuleDescriptorToJpsModule(moduleName))
         else emptyArray()
       holder.createProblem(contentModule, message, *fixes)
     }

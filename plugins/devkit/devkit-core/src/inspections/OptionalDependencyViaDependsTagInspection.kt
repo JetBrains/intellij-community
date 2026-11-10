@@ -16,8 +16,7 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.dom.processing.collectRegisteredClasses
-import org.jetbrains.idea.devkit.inspections.extractModule.ConvertOptionalDependsToContentModuleFix
-import org.jetbrains.idea.devkit.inspections.extractModule.ExtractContentModuleFix
+import org.jetbrains.idea.devkit.inspections.extractModule.ExtractToJpsModuleFixProvider
 import org.jetbrains.jps.model.java.JavaResourceRootType
 
 internal class OptionalDependencyViaDependsTagInspection : DevKitPluginXmlInspectionBase() {
@@ -29,26 +28,27 @@ internal class OptionalDependencyViaDependsTagInspection : DevKitPluginXmlInspec
     val dependsTag = element as? Dependency ?: return
     if (dependsTag.optional.value == true) {
       val configFile = dependsTag.resolvedConfigFile
+      val fixProvider = ExtractToJpsModuleFixProvider.getInstance()
       val fixes =
-        if (configFile != null && IntelliJProjectUtil.isIntelliJPlatformProject(element.xmlElement?.project))
-          arrayOf(createQuickFix(configFile, dependsTag))
+        if (fixProvider != null && configFile != null && IntelliJProjectUtil.isIntelliJPlatformProject(element.xmlElement?.project))
+          arrayOf(createQuickFix(fixProvider, configFile, dependsTag))
         else
           emptyArray()
       holder.createProblem(dependsTag.optional, DevKitBundle.message("inspection.optional.dependency.declared.by.depends.tag.message"), *fixes)
     }
   }
 
-  private fun createQuickFix(configFile: XmlFile, dependsTag: Dependency): LocalQuickFix {
+  private fun createQuickFix(fixProvider: ExtractToJpsModuleFixProvider, configFile: XmlFile, dependsTag: Dependency): LocalQuickFix {
     val configFileElement = DomManager.getDomManager(configFile.project).getFileElement(configFile, IdeaPlugin::class.java)?.rootElement
     if (configFileElement != null) {
       val registeredClasses = collectRegisteredClasses(configFileElement)
       val pluginXmlModule = dependsTag.xmlElement?.let { ModuleUtilCore.findModuleForPsiElement(it) }
       val optionalDependencyModule = registeredClasses.mapNotNullTo(HashSet()) { ModuleUtilCore.findModuleForPsiElement(it) }.singleOrNull()
       if (optionalDependencyModule != null && pluginXmlModule != null && optionalDependencyModule != pluginXmlModule && !isContentModule(optionalDependencyModule)) {
-        return ConvertOptionalDependsToContentModuleFix(configFile.name, optionalDependencyModule.name)
+        return fixProvider.convertOptionalDependsToContentModule(configFile.name, optionalDependencyModule.name)
       }
     }
-    return ExtractContentModuleFix(configFile.name)
+    return fixProvider.extractContentModule(configFile.name)
   }
 
   private fun isContentModule(module: Module): Boolean {

@@ -2,8 +2,10 @@
 package org.jetbrains.idea.devkit.testAssistant
 
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 
-internal object TestDataDirectories {
+@ApiStatus.Internal
+object TestDataDirectories {
   private const val TEST_DATA_DIRECTORY_NAME: String = "testdata"
 
   /**

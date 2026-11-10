@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.devkit.ide.extractModule.getExtractToJpsModuleCoroutineScope
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.project.IntelliJProjectUtil
@@ -15,7 +16,6 @@ import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.idea.devkit.inspections.extractModule.getExtractToJpsModuleCoroutineScope
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test

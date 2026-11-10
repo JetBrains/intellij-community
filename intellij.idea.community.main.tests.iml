@@ -191,6 +191,7 @@
     <orderEntry type="module" module-name="intellij.devkit.debugger.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.gradle.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.i18n.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.ide.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.eclipse.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.editorconfig.backend.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.findUsagesMl.tests" scope="TEST" />

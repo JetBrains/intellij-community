@@ -33,5 +33,6 @@ class UpdateFromSourcesSettingsState : BaseState() {
   val additionalVmOptionsHistory: MutableList<String> by list()
 }
 
-internal val UpdateFromSourcesSettingsState.actualIdePath: String
+@get:ApiStatus.Internal
+val UpdateFromSourcesSettingsState.actualIdePath: String
   get() = workIdePath ?: PathManager.getHomePath()

@@ -32,6 +32,7 @@ dev_dist_plugin(
         "intellij.devkit.threading",
         "intellij.devkit.smartupdate",
         "intellij.devkit.jps",
+        "intellij.devkit.ide",
         "intellij.platform.jewel.samples.showcase",
         "intellij.libraries.workspace.model.codegen",
     ],
@@ -88,6 +89,7 @@ ij_plugin(
         "//plugins/devkit/intellij.devkit.threading:threading",
         "//plugins/devkit/intellij.devkit.smartupdate:smartupdate",
         "//plugins/devkit/jps-plugin:jps",
+        "//plugins/devkit/intellij.devkit.ide:ide",
         "//platform/jewel/samples/showcase",
         "//libraries/workspace-model-codegen:workspace-model-codegen_plugin_module",
     ] + select({
@@ -165,6 +167,7 @@ jvm_library(
         "//plugins/devkit/intellij.devkit.stacktrace:stacktrace",
         "//plugins/devkit/api-dump",
         "//plugins/devkit/api-dump-lang:apiDump-lang",
+        "//plugins/devkit/intellij.devkit.ide:ide",
     ],
 )
 ### auto-generated section `build intellij.devkit.plugin.main.noKotlin` end

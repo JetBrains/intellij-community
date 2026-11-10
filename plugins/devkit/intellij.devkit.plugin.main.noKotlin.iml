@@ -18,5 +18,6 @@
     <orderEntry type="module" module-name="intellij.devkit.stacktrace" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.apiDump" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.apiDump.lang" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.devkit.ide" scope="RUNTIME" />
   </component>
 </module>

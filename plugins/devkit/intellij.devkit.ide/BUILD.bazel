@@ -1,0 +1,192 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+jps_test(
+    name = "ide-tests_test",
+    timeout = "moderate",
+    tags = ["community-aggregator"],
+    runtime_deps = [":ide-tests_test_lib"],
+)
+### skip generation section `test intellij.devkit.ide.tests`
+
+### auto-generated section `dev intellij.devkit.ide` start
+content_module_jar(module = ":ide")
+### auto-generated section `dev intellij.devkit.ide` end
+
+### auto-generated section `build intellij.devkit.ide` start
+jvm_library(
+    name = "ide",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.devkit.ide",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+        allow_empty = True,
+        exclude = ["resources/**/icon-robots.txt"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//plugins/devkit/devkit-core:core",
+        "//java/openapi:java",
+        "//java/compiler/impl",
+        "//java/debugger/impl",
+        "//java/execution/openapi:java-execution",
+        "//java/execution/impl",
+        "//java/java-impl:impl",
+        "//java/java-psi-api:psi",
+        "//java/java-syntax:syntax",
+        "//json",
+        "//json/backend",
+        "//libraries/netty/buffer",
+        "//libraries/netty/codec-http:libraries-netty-codec-http",
+        "//libraries/stream",
+        "//platform/analysis-api:analysis",
+        "//platform/built-in-server-api:builtInServer",
+        "//platform/consoleView",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/xdebugger-impl:debugger-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/eel-provider",
+        "//platform/execution",
+        "//platform/execution-impl",
+        "//platform/extensions",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-util-netty:ide-util-netty",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/ijent/buildConstants",
+        "//platform/indexing-api:indexing",
+        "//jps/model-api:model",
+        "//platform/lang-api:lang",
+        "//platform/lang-core",
+        "//platform/lang-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/projectModel-impl",
+        "//platform/util",
+        "//platform/util-class-loader:util-classLoader",
+        "//platform/util/jdom",
+        "//platform/util:util-ui",
+        "//platform/workspace/jps",
+        "//platform/workspace/storage",
+        "//xml/dom-openapi:dom",
+        "//xml/xml-psi-api:psi",
+        "//platform/platform-impl/hprof",
+        "//libraries/fastutil",
+        "//platform/util/progress",
+        "//platform/progress/shared:ide-progress",
+        "//platform/util/coroutines",
+        "//platform/core-impl",
+        "//platform/ide-core-impl",
+        "//platform/util/text-matching",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/observable",
+        "//uast/uast-common:uast",
+        "//platform/statistics",
+        "//platform/util/concurrency",
+        "//platform/boot",
+        "//platform/project-frame",
+        "//platform/structure-view-impl:structureView",
+        "//xml/xml-structure-view-api:structureView",
+        "//xml/xml-structure-view-impl:structureView-impl",
+        "//java/compiler/openapi:java-compiler",
+        "//jps/jps-builders:build",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/protobuf",
+        "//java/java-indexing-api:indexing",
+        "//aether-dependency-resolver",
+        "//java/idea-ui:ui",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/databind",
+        "//platform/analysis-impl",
+        "//platform/backend/workspace",
+        "//platform/refactoring",
+        "//platform/usageView",
+    ],
+)
+### auto-generated section `build intellij.devkit.ide` end
+
+### auto-generated section `iml intellij.devkit.ide` start
+exports_files(
+    [
+        "intellij.devkit.ide.iml",
+        "resources/assets/devkit-Run_IDE_with_Plugin_run.xml",
+        "resources/intellij.devkit.ide.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.devkit.ide` end
+
+### auto-generated section `build intellij.devkit.ide.tests` start
+jvm_library(
+    name = "ide-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//plugins/devkit/intellij.devkit.ide:ide"],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/devkit",
+        "//xml/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//aether-dependency-resolver/plugin",
+        "//platform/testRunner/plugin",
+        "//plugins/properties/plugin",
+        "//json/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/lang-core",
+        "//platform/consoleView",
+        "//platform/util",
+        "//platform/projectModel-api:projectModel",
+        "//jps/model-api:model",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/platform-impl:ide-impl",
+        "//java/idea-ui:ui",
+        "//plugins/devkit/devkit-core:core",
+        "//platform/testFramework",
+        "//platform/testFramework/junit5",
+        "//java/testFramework",
+        "//libraries/assertj-core",
+        "//libraries/junit4",
+        "//libraries/junit6",
+    ],
+)
+### auto-generated section `build intellij.devkit.ide.tests` end
+
+### auto-generated section `iml intellij.devkit.ide.tests` start
+exports_files(
+    [
+        "intellij.devkit.ide.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.devkit.ide.tests` end

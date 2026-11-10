@@ -1,0 +1,406 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.devkit.core"/>
+    <module name="intellij.java"/>
+    <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.java.execution"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.indexing"/>
+    <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.java.ui"/>
+    <module name="intellij.json"/>
+    <module name="intellij.json.backend"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.libraries.protobuf"/>
+    <module name="intellij.libraries.stream"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.builtInServer"/>
+    <module name="intellij.platform.concurrency"/>
+    <module name="intellij.platform.consoleView"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.hprof"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.observable"/>
+    <module name="intellij.platform.ide.progress"/>
+    <module name="intellij.platform.ide.util.netty"/>
+    <module name="intellij.platform.ijent.community.buildConstants"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.jps.build"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectFrame"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.refactoring"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.structureView"/>
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.text.matching"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
+    <module name="intellij.xml.dom"/>
+    <module name="intellij.xml.psi"/>
+    <module name="intellij.xml.structureView"/>
+    <module name="intellij.xml.structureView.impl"/>
+  </dependencies>
+  <!-- endregion -->
+  <resource-bundle>messages.DevKitBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- run support -->
+    <configurationType implementation="com.intellij.devkit.ide.run.PluginConfigurationType"/>
+    <junitPatcher implementation="com.intellij.devkit.ide.run.JUnitDevKitPatcher"/>
+    <projectService serviceImplementation="com.intellij.devkit.ide.run.JUnitDevKitUnitTestingSettings"
+                    configurationSchemaKey="unitTesting"/>
+    <runConfigurationExtension implementation="com.intellij.devkit.ide.run.DevKitApplicationPatcher"/>
+    <runConfigurationExtension implementation="com.intellij.devkit.ide.run.IdeStarterRunConfigurationExtension"/>
+    <registryKey key="devkit.ide.starter.run.modes.enabled" defaultValue="true"
+                 description="Show 'Use Installer' / 'Split Mode' toggles in gutter popup and apply env variables for IDE Starter tests"/>
+    <httpRequestHandler implementation="com.intellij.devkit.ide.requestHandlers.HttpDebugListener"/>
+
+    <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
+    <console.folding order="first" implementation="com.intellij.devkit.ide.run.FailedTestDebugLogConsoleFolding"/>
+
+    <!-- INTERNAL -->
+    <consoleFilterProvider implementation="com.intellij.devkit.ide.run.ModulePathFilterProvider"/>
+    <registryKey key="devkit.module.hyperlink.show.chooser" defaultValue="false"
+                 description="Show file chooser when clicking module names in console (iml + descriptor xml)"/>
+
+    <runConfigurationExtension implementation="com.intellij.devkit.ide.dcevm.DevkitDcevmCommandLinePatcher"/>
+    <executor implementation="com.intellij.devkit.ide.dcevm.DevkitDcevmExecutor"/>
+    <programRunner implementation="com.intellij.devkit.ide.dcevm.DevkitDcevmRunner"/>
+
+    <!-- project setup -->
+    <!--suppress PluginXmlValidity -->
+    <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
+    <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
+    <moduleConfigurationEditorProvider implementation="com.intellij.devkit.ide.module.PluginModuleEditorsProvider"/>
+
+    <!-- project wizard -->
+    <registryKey key="devkit.web.based.plugin.generator.enabled"
+                 description="Enables the new IDE Plugin module builder based on web backend"
+                 defaultValue="true"/>
+    <moduleBuilder builderClass="com.intellij.devkit.ide.wizard.IdePluginModuleBuilder"/>
+    <moduleBuilder builderClass="com.intellij.devkit.ide.wizard.webstarter.IdePluginModuleWebBasedBuilder"/>
+
+    <!-- structure view -->
+    <xmlStructureViewBuilderProvider
+      implementation="com.intellij.devkit.ide.structureView.PluginDescriptorXmlStructureViewBuilderProvider"/>
+
+    <!-- extract to module quick fixes -->
+    <applicationService serviceInterface="org.jetbrains.idea.devkit.inspections.extractModule.ExtractToJpsModuleFixProvider"
+                        serviceImplementation="com.intellij.devkit.ide.extractModule.ExtractToJpsModuleFixProviderImpl"/>
+
+    <!-- build -->
+    <compileServer.plugin classpath="modules/intellij.devkit.jps.jar"/>
+    <httpRequestHandler implementation="com.intellij.devkit.ide.compiler.BuildHttpRequestHandler"/>
+    <compiler.buildTargetScopeProvider implementation="com.intellij.devkit.ide.compiler.PluginModuleBuildScopeProvider"/>
+    <registryKey key="devkit.generate.intellij.module.repository" defaultValue="true"
+                 description="Generate file with runtime module descriptors for IntelliJ project"/>
+    <compiler.buildTargetScopeProvider implementation="com.intellij.devkit.ide.compiler.IntelliJModuleRepositoryBuildScopeProvider"/>
+    <!-- Threading Model Helper -->
+    <buildProcess.parametersProvider implementation="com.intellij.devkit.ide.threadingModelHelper.TMHBuildProcessParametersProvider"/>
+    <registryKey key="tmh.generate.assertions.for.annotations" defaultValue="true"
+                 description="Generate assertions for @RequiresEdt and similar annotations.
+                 The assertions are added by instrumenting class files during compilation."/>
+    <registryKey key="tmh.generate.line.numbers" defaultValue="true"
+                 description="Generate line numbers when instrumenting @RequiresEdt and similar annotations.
+                 This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
+
+    <!-- JSON -->
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection language="JSON"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.devkit.ide.metaInformation.UnknownIdInMetaInformationInspection"
+                     key="inspection.unknown.id.in.meta.information.name"/>
+
+    <!-- test-data editor -->
+    <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem"/>
+    <editorTabTitleProvider implementation="com.intellij.devkit.ide.testAssistant.TestDataGroupEditorTabTitleProvider"/>
+    <highlightingPassFactory implementation="com.intellij.devkit.ide.testAssistant.TestDataHighlightingPassFactory"/>
+    <!--suppress SplitModeXmlApiUsage TestDataGroupVirtualFile is created on the backend by TestDataNavigationHandler; moved as is from devkit core -->
+    <fileEditorProvider implementation="com.intellij.devkit.ide.testAssistant.TestDataGroupEditorProvider"/>
+    <!-- needs the TestData.Navigate action -->
+    <codeInsight.lineMarkerProvider language="UAST"
+                                    implementationClass="org.jetbrains.idea.devkit.testAssistant.TestDataLineMarkerProvider"/>
+
+    <!-- file templates -->
+    <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
+    <internalFileTemplate name="DevKit Application Service"/>
+    <internalFileTemplate name="DevKit Project Service"/>
+    <internalFileTemplate name="DevKit Application State"/>
+    <internalFileTemplate name="DevKit Project State"/>
+    <internalFileTemplate name="DevKit Project Activity"/>
+    <internalFileTemplate name="DevKit Background Project Activity"/>
+    <internalFileTemplate name="DevKit Action"/>
+    <internalFileTemplate name="DevKit Toggle Action"/>
+    <internalFileTemplate name="DevKit MessageBundle"/>
+
+    <!-- startup activities -->
+    <postStartupActivity implementation="com.intellij.devkit.ide.documentation.InitDescriptorDocumentationsDownloadActivity"/>
+    <postStartupActivity implementation="com.intellij.devkit.ide.templates.UpdateFileTemplatesSchemeToProjectActivity"/>
+    <backgroundPostStartupActivity
+      implementation="com.intellij.devkit.ide.missingApi.IntelliJSdkExternalAnnotationsUpdateStartupActivity"/>
+
+    <!-- actions support -->
+    <applicationService serviceImplementation="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
+    <applicationSettings service="org.jetbrains.idea.devkit.actions.updateFromSources.UpdateFromSourcesSettings"/>
+    <registryKey key="devkit.obsolete.new.file.actions.enabled" defaultValue="false"
+                 description="Enables old-fashioned File-New actions for plugin modules"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="com.intellij.devkit.ide.metaInformation.MetaInformationJsonSchemaProviderFactory"/>
+    <ProviderFactory implementation="com.intellij.devkit.ide.documentation.DescriptorDocumentationYamlSchemaProviderFactory"/>
+  </extensions>
+
+  <actions>
+    <group id="IdeStarterRunModeActions">
+      <separator/>
+      <action id="ToggleInstaller"
+              class="com.intellij.devkit.ide.run.ToggleInstallerAction"/>
+      <action id="ToggleSplitMode"
+              class="com.intellij.devkit.ide.run.ToggleSplitModeAction"/>
+      <separator/>
+      <add-to-group group-id="RunLineMarkerExtraActions" relative-to-action="CreateRunConfiguration" anchor="before"/>
+    </group>
+
+    <group id="PluginDeployActions">
+      <action class="com.intellij.devkit.ide.build.PrepareToDeployAction" id="MakeJarAction"/>
+      <action class="com.intellij.devkit.ide.build.PrepareAllToDeployAction" id="MakeAllJarsAction"/>
+      <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="Compile"/>
+      <add-to-group anchor="after" group-id="BuildMenu" relative-to-action="BuildArtifact"/>
+    </group>
+
+    <!-- Available under the registry key, scheduled for removal -->
+    <group id="DevkitObsoleteNewActions" icon="AllIcons.Nodes.Plugin" popup="true"
+           class="com.intellij.devkit.ide.actions.obsolete.ObsoleteNewActionsGroup">
+      <action class="com.intellij.devkit.ide.actions.obsolete.NewActionAction" id="NewAction"/>
+      <separator/>
+      <action id="DevKit.NewMessageBundle" class="com.intellij.devkit.ide.actions.obsolete.NewMessageBundleAction"/>
+      <separator/>
+      <add-to-group group-id="NewGroup" anchor="last"/>
+    </group>
+
+    <group id="DevkitNewActions" class="com.intellij.ide.actions.NonTrivialActionGroup">
+      <action id="DevKit.NewAction" class="com.intellij.devkit.ide.actions.templates.NewActionAction"
+              icon="AllIcons.Actions.RunAnything"/>
+      <action id="DevKit.NewService" class="com.intellij.devkit.ide.actions.templates.NewServiceAction"
+              icon="com.intellij.devkit.core.icons.DevkitCoreIcons.Service"/>
+      <action id="DevKit.NewState" class="com.intellij.devkit.ide.actions.templates.NewPersistentStateAction"
+              icon="AllIcons.Ide.ConfigFile"/>
+      <action id="DevKit.NewMessageBundleObject" class="com.intellij.devkit.ide.actions.templates.NewMessageBundleAction"
+              icon="AllIcons.Nodes.ResourceBundle"/>
+      <action id="DevKit.NewStartupActivity" class="com.intellij.devkit.ide.actions.templates.NewStartupActivityAction"
+              icon="AllIcons.Toolwindows.ToolWindowRun"/>
+      <add-to-group group-id="NewGroup" relative-to-action="CreateResourceBundle" anchor="before"/>
+    </group>
+
+    <action class="com.intellij.devkit.ide.actions.GenerateComponentExternalizationAction" id="GenerateExternalization">
+      <add-to-group anchor="last" group-id="GenerateGroup"/>
+    </action>
+
+    <group id="Internal.DevKit" internal="true" popup="true">
+      <action internal="true" class="com.intellij.devkit.ide.actions.ToggleHighlightingMarkupAction" id="ToggleHighlightingMarkup"/>
+      <action class="com.intellij.devkit.ide.actions.ShuffleNamesAction" id="ShuffleNamesAction"/>
+      <action internal="true" class="com.intellij.devkit.ide.actions.ShowSerializedXmlAction" id="ShowSerializedXml"/>
+      <action internal="true" class="com.intellij.devkit.ide.actions.ShowHelpPageByIdAction" id="ShowHelpPageById"/>
+      <action id="DevKit.AnalyzePersistentSyntaxTreeOverhead" internal="true"
+              class="com.intellij.devkit.ide.hprof.AnalyzePersistentSyntaxTreeOverheadAction"/>
+      <action id="AnalyzeUnloadablePlugins" internal="true" class="com.intellij.devkit.ide.internal.AnalyzeUnloadablePluginsAction"/>
+      <action id="PluginPermissionServiceDemo" internal="true"
+              class="com.intellij.devkit.ide.plugins.PluginPermissionServiceDemoAction"/>
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
+
+    <action id="ExceptionShowCaseAction" internal="true" class="com.intellij.devkit.ide.internal.ExceptionShowCaseAction">
+      <add-to-group group-id="Internal.Errors"/>
+    </action>
+    <action id="EditorRenderingBenchmarkAction" internal="true"
+            class="com.intellij.devkit.ide.internal.EditorRenderingBenchmarkAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+    <action id="EditorAddCustomWrap" internal="true" class="com.intellij.devkit.ide.internal.AddCustomWrapAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+    <action id="EditorRemoveCustomWrapsAtCaret" internal="true"
+            class="com.intellij.devkit.ide.internal.RemoveCustomWrapsAtCaretAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+    <action id="ShowEditorHighlighterTokens" internal="true"
+            class="com.intellij.devkit.ide.internal.ShowEditorHighlighterTokensAction">
+      <add-to-group group-id="Internal.Editor"/>
+    </action>
+
+    <action id="DumpFocusableComponentHierarchyAction" internal="true"
+            class="com.intellij.devkit.ide.internal.focus.DumpFocusableComponentHierarchyAction"/>
+
+    <action id="ShowNotificationIconsDialogAction" internal="true"
+            class="com.intellij.devkit.ide.internal.ui.ShowNotificationIconsDialogAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="NotificationTestAction" internal="true" class="com.intellij.devkit.ide.internal.ui.NotificationTestAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="TestMessageBoxAction" internal="true" class="com.intellij.devkit.ide.internal.ui.TestMessageBoxAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="ShowCountdownDialog" internal="true" class="com.intellij.devkit.ide.internal.ui.ShowCountdownDialogAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="PlayTestSoundAction" internal="true" class="com.intellij.devkit.ide.internal.ui.PlayTestSoundAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="ColorBlindnessTest" internal="true" class="com.intellij.devkit.ide.internal.ui.ColorBlindnessInternalAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="UIDefaults" internal="true" class="com.intellij.devkit.ide.internal.ui.ShowUIDefaultsAction">
+      <abbreviation value="laf"/>
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="AddTestProcessAction" internal="true" class="com.intellij.devkit.ide.internal.ui.AddTestProcessAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="AddRandomNamesTestProcessAction" internal="true"
+            class="com.intellij.devkit.ide.internal.ui.AddRandomNamesTestProcessAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="AddManyTestProcesses" internal="true" class="com.intellij.devkit.ide.internal.ui.AddManyTestProcesses">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="ShowCompressibleToolbarAction" internal="true"
+            class="com.intellij.devkit.ide.internal.ui.ShowCompressibleToolbarAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="TestGestureAction" internal="true" class="com.intellij.devkit.ide.internal.ui.TestGestureAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="ShowProgressTestDialogAction" internal="true"
+            class="com.intellij.devkit.ide.internal.ui.ShowProgressTestDialogAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="ShowSouthPanelTestDialogAction" internal="true"
+            class="com.intellij.devkit.ide.internal.ui.ShowSouthPanelTestDialogAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+    <action id="TestTextFieldAction" internal="true" class="com.intellij.devkit.ide.internal.ui.TestTextFieldAction">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
+
+    <action id="LabelSizeDemoAction" internal="true" class="com.intellij.devkit.ide.internal.ui.LabelSizeDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="JEditorPaneDemoAction" internal="true" class="com.intellij.devkit.ide.internal.ui.JEditorPaneDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="JBTabsDemo" internal="true" class="com.intellij.devkit.ide.internal.ui.JBTabsDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="TestTooltipsAction" internal="true" class="com.intellij.devkit.ide.internal.ui.TestTooltipsAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="ToolbarDemo" internal="true" class="com.intellij.devkit.ide.internal.ui.ToolbarDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <action id="TreeViewModelDemo" internal="true" class="com.intellij.devkit.ide.internal.ui.TreeViewModelDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+
+    <group id="Internal.UI.Animation" internal="true" popup="true">
+      <action id="AnimationPanelTestAction" internal="true" class="com.intellij.devkit.ide.internal.ui.AnimationPanelTestAction"/>
+      <action id="AnimatorTestAction" class="com.intellij.devkit.ide.internal.ui.AnimatorTestAction"/>
+      <action id="EditorSkeletonFadeInSheet" internal="true"
+              class="com.intellij.devkit.ide.internal.ui.EditorSkeletonFadeInSheetAction"/>
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </group>
+
+    <group id="Internal.UI.Focus" internal="true" popup="true">
+      <action id="FocusDebugger" internal="true" class="com.intellij.devkit.ide.internal.focus.FocusDebuggerAction"/>
+      <action id="FocusTracer" internal="true" class="com.intellij.devkit.ide.internal.focus.FocusTracesAction"/>
+      <action id="LogFocusRequests" class="com.intellij.devkit.ide.internal.ui.LogFocusRequestsAction"/>
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </group>
+
+    <group id="Internal.UI.Icons" internal="true" popup="true">
+      <action id="RoundedIconTestAction" internal="true" class="com.intellij.devkit.ide.internal.ui.RoundedIconTestAction"/>
+      <action id="ProgressIconShowcaseAction" internal="true" class="com.intellij.devkit.ide.internal.ui.ProgressIconShowcaseAction"/>
+      <action id="IconScaleTestAction" internal="true" class="com.intellij.devkit.ide.internal.ui.ShowIconScaleTestAction"/>
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </group>
+
+    <group id="Internal.UI.KotlinUiDsl" internal="true" popup="true">
+      <action id="GridLayoutTestAction" internal="true"
+              class="com.intellij.devkit.ide.internal.ui.gridLayoutTestAction.GridLayoutTestAction"/>
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </group>
+
+    <action id="ComponentPanelTestAction" internal="true"
+            class="com.intellij.devkit.ide.internal.ui.componentPanelTestAction.ComponentPanelTestAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="WrapLayoutTestAction" internal="true" class="com.intellij.devkit.ide.internal.ui.WrapLayoutTestAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="GrayFilterConfig" internal="true" class="com.intellij.devkit.ide.internal.ui.GrayFilterConfig">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="TextGrayFilterConfig" internal="true" class="com.intellij.devkit.ide.internal.ui.TextGrayFilterConfig">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="MacMessagesTest" internal="true" class="com.intellij.devkit.ide.internal.validation.TestMacMessagesAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="UnixInfoTest" internal="true" class="com.intellij.devkit.ide.internal.ui.UnixInfoTestAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="TreeExpandAll" internal="true" class="com.intellij.devkit.ide.internal.tree.ExpandAll">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+    <action id="RulerGuide" internal="true" class="com.intellij.devkit.ide.internal.rulerguide.RulerGuideAction">
+      <add-to-group group-id="Internal.UI.Ex"/>
+    </action>
+
+    <action id="TestData.Navigate" class="org.jetbrains.idea.devkit.testAssistant.NavigateToTestDataAction" use-shortcut-of="GotoRelated">
+      <add-to-group anchor="last" group-id="TestTreePopupMenu"/>
+    </action>
+    <action id="UpdateIdeFromSources" class="com.intellij.devkit.ide.actions.updateFromSources.UpdateIdeFromSourcesAction"
+            icon="com.intellij.devkit.core.icons.DevkitCoreIcons.UpdateIdeFromSources">
+      <add-to-group group-id="BuildMenu" anchor="last"/>
+    </action>
+    <action id="UpdateIdeFromSourcesSettings" class="com.intellij.devkit.ide.actions.updateFromSources.UpdateIdeFromSourcesSettingsAction"/>
+  </actions>
+</idea-plugin>

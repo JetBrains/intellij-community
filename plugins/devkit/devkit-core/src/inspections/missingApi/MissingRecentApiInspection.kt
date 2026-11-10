@@ -24,7 +24,8 @@ import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 
-internal val MISSING_API_INSPECTION_SHORT_NAME = InspectionProfileEntry.getShortName(MissingRecentApiInspection::class.java.simpleName)
+@Internal
+val MISSING_API_INSPECTION_SHORT_NAME: String = InspectionProfileEntry.getShortName(MissingRecentApiInspection::class.java.simpleName)
 
 /**
  * Inspection that warns plugin authors if they use IntelliJ Platform's APIs that aren't available
