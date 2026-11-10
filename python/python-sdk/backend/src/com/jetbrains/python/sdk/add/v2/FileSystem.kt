@@ -21,6 +21,7 @@ import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.ToolCommandSpec
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.util.PathMappingSettings
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PyToolUIInfo
@@ -53,6 +54,7 @@ interface FileSystem<P : PathHolder> {
    */
   val eelOrTarget: EelOrTarget
 
+  @RequiresBackgroundThread
   fun createMapper(project: Project, console: PathMappingSettings, sdk: Sdk): PyRemotePathMapper
   /**
    * Path on remote machine. As an exception, MRFS path is also supported by Eel impl.

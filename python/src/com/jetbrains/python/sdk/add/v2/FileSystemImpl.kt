@@ -37,6 +37,8 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.Path
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.annotations.paths.OsPath
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
@@ -71,7 +73,7 @@ import com.intellij.python.sdk.common.PyEnvRef
 import com.intellij.python.sdk.common.PyInterpreterRef
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.util.PathMappingSettings
-import com.intellij.util.SlowOperations
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.PyToolUIInfo
@@ -148,23 +150,33 @@ data class EelFileSystem(
   override val userReadableName: @NonNls String = eelApi.descriptor.name
   override val platformAndRoot: PlatformAndRoot = eelApi.getPlatformAndRoot()
   override val eelOrTarget: EelOrTarget.IsEel = EelOrTarget.IsEel(eelApi.descriptor)
+
+  @RequiresEdt
   override fun createBrowseFolderListener(
     textField: TextFieldWithBrowseButton,
     descriptor: FileChooserDescriptor,
     fieldAccessor: TextComponentAccessor<JTextField>,
     targetHints: TargetBrowserHints,
     title: String,
-  ): ActionListener =
-    ComponentWithBrowseButton.BrowseFolderActionListener(textField, null, descriptor.withRoots(getRootsForBrowsing()), fieldAccessor)
+  ): ActionListener = ActionListener { event ->
+    // The roots are read on a click, not when the form is built: a form that is never browsed does no VFS lookup.
+    val roots = runWithModalProgressBlocking(ModalTaskOwner.component(textField), message("sdk.create.custom.browse.roots.progress")) {
+      withContext(Dispatchers.IO) { getRootsForBrowsing() }
+    }
+    ComponentWithBrowseButton.BrowseFolderActionListener(textField, null, descriptor.withRoots(roots), fieldAccessor).actionPerformed(event)
+  }
 
+  @RequiresBackgroundThread
   override fun createMapper(
     project: Project,
     console: PathMappingSettings,
     sdk: Sdk,
   ): PyRemotePathMapper = PyEelPathMapper(eelApi.descriptor)
 
+  @RequiresBackgroundThread
   private fun getRootsForBrowsing(): List<VirtualFile> {
     val vfs = LocalFileSystem.getInstance()
+    // TODO: get the roots from the eel API, not from FileSystems.getDefault()
     return if (eelDescriptor == LocalEelDescriptor) {
       FileSystems.getDefault().rootDirectories
     }
@@ -197,14 +209,21 @@ data class EelFileSystem(
     browseTitle: @Nls String,
     parentComponent: JComponent,
   ) {
-    SlowOperations.knownIssue("PY-666").use { // TODO FIX ME PLEASE if you know how
-      val descriptor = PythonSdkType.getInstance().homeChooserDescriptor.withTitle(browseTitle).withRoots(getRootsForBrowsing())
-      val home = LocalFileSystem.getInstance().findFileByNioFile(eelApi.userInfo.home.asNioPath())
-      FileChooser.chooseFile(descriptor, null, parentComponent, home) { file ->
-        val path = file?.toNioPath()
-        path?.toString()?.let {
-          fieldAccessor.setText(comboBox, it)
-        }
+    val [home, descriptor] = runWithModalProgressBlocking(
+      owner = ModalTaskOwner.component(parentComponent),
+      title = message("sdk.create.custom.browse.roots.progress")
+    ) {
+      withContext(Dispatchers.IO) {
+        val home = LocalFileSystem.getInstance().findFileByNioFile(eelApi.userInfo.home.asNioPath())
+        val descriptor = PythonSdkType.getInstance().homeChooserDescriptor.withTitle(browseTitle).withRoots(getRootsForBrowsing())
+        home to descriptor
+      }
+    }
+
+    FileChooser.chooseFile(descriptor, null, parentComponent, home) { file ->
+      val path = file?.toNioPath()
+      path?.toString()?.let {
+        fieldAccessor.setText(comboBox, it)
       }
     }
   }
@@ -507,6 +526,7 @@ internal data class TargetFileSystem(
   override suspend fun getExistingSelectableInterpreters(projectPathPrefix: Path): List<ExistingSelectableInterpreter<PathHolder.Target>> =
     emptyList()
 
+  @RequiresBackgroundThread
   override fun createMapper(
     project: Project,
     console: PathMappingSettings,

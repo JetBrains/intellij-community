@@ -8,8 +8,8 @@ import com.intellij.python.sdk.backend.impl.cachedPythonEnvironmentResult
 import com.intellij.python.sdk.backend.impl.enrichLocalPythonSdkWithHomeInfo
 import com.intellij.python.sdk.common.PyEnvId
 import com.intellij.python.sdk.common.PyInterpreterRef
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.PathMappingSettings
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.PythonHomePath
@@ -231,7 +231,7 @@ suspend fun PythonInterpreter.toFileSystem(): FileSystem<*> = sdk.toFileSystem()
  */
 @ApiStatus.Internal
 suspend fun PythonInterpreter.createMapper(project: Project, console: PathMappingSettings): PyRemotePathMapper =
-  toFileSystem().createMapper(project, console, sdk)
+  withContext(Dispatchers.IO) { toFileSystem().createMapper(project, console, sdk) }
 
 /**
  * [Sdk.pythonInterpreterResult] for a Java caller that reports a broken SDK as an [InvalidSdkException], with the message
